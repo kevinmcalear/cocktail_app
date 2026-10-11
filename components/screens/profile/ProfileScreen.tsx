@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useBarFacts } from '@/hooks/useBarFacts';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, useProfilePicks, useProfilePositions, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
@@ -16,6 +17,9 @@ import { hadStats, topFour } from '@/lib/hadDrinks';
 import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { barsCrediting, personTabs, pickedShown, profileLine } from '@/lib/profiles';
 
+import { barPlace } from '../bar/BarFactLines';
+import { BarFactsBlock } from '../bar/BarFactsBlock';
+import { OnTheMenu } from '../bar/OnTheMenu';
 import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { SignInCard } from '../published/SignInCard';
 import { LoveBarButton } from '../kept/LoveBarButton';
@@ -79,17 +83,20 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const { data: profile, isLoading, error } = useProfile(profileRef);
   // A person's page is for people who've signed in; a bar's opens to anyone.
   const gated = profile?.kind === 'person' && !signedIn;
+  // Opened from a search: the way back carries it ("martini", disc-search-bar).
+  const q = useLocalSearchParams<{ q?: string }>().q;
+  const searched = typeof q === 'string' && q.trim() ? q.trim() : null;
 
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
       <GlassButton
-        accessibilityLabel="Back"
-        icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
+        accessibilityLabel={searched ? `Back to the search for ${searched}` : 'Back'}
+        label={searched ?? undefined}
+        icon={Platform.OS === 'web' || searched ? 'chevron.left' : 'xmark'}
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       />
       {profile && !gated ? (
         <View style={styles.right}>
-          {profile.kind === 'bar' ? <LoveBarButton profileId={profile.id} name={profile.display_name} /> : null}
           <ProfileSafety profile={profile} />
         </View>
       ) : null}
@@ -147,6 +154,7 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
   const onTeam = useActiveVenue().venues.some((v) => v.id === profile.bar_id);
   const specsLocked = !person && pageLocksSpecs(profile.page_visibility, onTeam);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
+  const barType = useBarFacts(person ? null : profile.id).data?.bar_type;
   // What they said they do, or the job they picked; never a label we made up.
   const line = profileLine(profile, useProfilePositions(person ? profile : null).data ?? []);
 
@@ -166,17 +174,18 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
             {line ? <Body align="center">{line}</Body> : null}
           </>
         ) : (
-          <BarHeader profile={profile} detail={[place || 'Bar', unclaimed ? 'Not claimed yet' : 'Claimed'].join(' · ')} />
+          <BarHeader profile={profile} detail={barPlace(barType, place) || 'Bar'} love={<LoveBarButton profileId={profile.id} name={profile.display_name} labelled />} />
         )}
         <View style={[styles.chips, !person && styles.chipsStart]}>
           {originals.length > 0 && person && showsMade ? <Tag label="Creator" /> : null}
           {onMenus && showsMade ? <Tag label={`Credited on ${onMenus} bar ${onMenus === 1 ? 'menu' : 'menus'}`} /> : null}
           {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} /> : null}
-          {unclaimed && person ? <Tag label="Not claimed yet" /> : null}
+          {unclaimed ? <Tag label="Not claimed yet" /> : null}
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
         {profile.bio ? <Body align={person ? 'center' : undefined}>{profile.bio}</Body> : null}
         <ProfileLinks profile={profile} align={person ? 'center' : 'start'} />
+        {person ? null : <BarFactsBlock profileId={profile.id} />}
       </View>
 
       {person ? (
@@ -190,6 +199,9 @@ function ProfileBody({ profile, columns }: { profile: Profile; columns: number }
       )}
 
       {profile.kind === 'bar' ? <BarMatches barProfileId={profile.id} /> : null}
+
+      {/* The matches, then the menu it's pouring (b12); the rest of the page follows. */}
+      {profile.kind === 'bar' ? <OnTheMenu profileId={profile.id} /> : null}
 
       {profile.kind === 'bar' ? <BarClassics barId={profile.bar_id} /> : null}
 

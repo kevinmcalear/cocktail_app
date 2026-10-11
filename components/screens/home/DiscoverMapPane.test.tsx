@@ -41,7 +41,7 @@ jest.mock('@/hooks/useDiscoverDrinks', () => ({
     ),
 }));
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
-jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, useBarVersionLabels: () => ({}), useSpecMatches: () => ({ data: undefined }) }));
+jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, useBarVersions: () => ({}), useSpecMatches: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useBarFacts', () => ({ useBarFacts: () => ({ data: null }) }));
 jest.mock('@/components/screens/kept/LoveBarButton', () => ({ LoveBarButton: () => null }));
 // The hero's Collect and Rank have their own tests; here they only need to be there.
