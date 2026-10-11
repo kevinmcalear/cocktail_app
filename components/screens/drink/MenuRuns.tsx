@@ -14,31 +14,30 @@ import { drinkMenuCard } from '@/lib/menuEditions';
  * only says when. Nothing for a drink no menu lists.
  */
 export function MenuRuns({ runs }: { runs: DrinkMenuRun[] }) {
-  const ds = useDs();
   const router = useRouter();
   if (!runs.length) return null;
   return (
     <View style={styles.runs}>
       {runs.map((r) => {
         const { title, detail } = drinkMenuCard(r.barName, r.editionName, r);
-        return (
-          <PressableScale
-            key={r.barId}
-            role="link"
-            accessibilityLabel={`${title}. ${detail}. Open the menu`}
-            onPress={() => router.push(`/p/${r.barId}/menus/${r.editionId}` as Href)}
-            style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}
-          >
-            <IconSymbol name="calendar" size={22} color={ds.accentText} />
-            <View style={styles.text}>
-              <Body>{title}</Body>
-              <Caption tone="muted">{detail}</Caption>
-            </View>
-            <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
-          </PressableScale>
-        );
+        return <MenuCard key={r.barId} title={title} detail={detail} onPress={() => router.push(`/p/${r.barId}/menus/${r.editionId}` as Href)} />;
       })}
     </View>
+  );
+}
+
+/** A menu the drink is on: calendar, what and where, opening the menu ("On the menu now · Autumn menu at Little Rye"). */
+export function MenuCard({ title, detail, onPress }: { title: string; detail: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="link" accessibilityLabel={`${title}. ${detail}. Open the menu`} onPress={onPress} style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+      <IconSymbol name="calendar" size={22} color={ds.accentText} />
+      <View style={styles.text}>
+        <Body>{title}</Body>
+        <Caption tone="muted">{detail}</Caption>
+      </View>
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+    </PressableScale>
   );
 }
 

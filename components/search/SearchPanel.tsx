@@ -1,26 +1,31 @@
 import { useRouter } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useDrafts } from '@/hooks/useDrafts';
+import { useMineFacts } from '@/hooks/useMineFacts';
 import { recentMatchesContext } from '@/hooks/useTrackRecent';
 import type { SearchMine } from '@/hooks/useSearchMine';
-import { belongsHere } from '@/lib/barContextFilter';
-import { timeAgo } from '@/lib/commandSearchGrid';
+import { belongsHere, inSelectedContext } from '@/lib/barContextFilter';
 import { fallbackGlass } from '@/lib/itemRoutes';
 import type { Area } from '@/lib/nearMe';
+import { friendlyWhen, menuFacts } from '@/lib/searchCaptions';
 import { scopeOptions, type SearchScope } from '@/lib/searchScope';
 import { capitalize } from '@/lib/stringUtils';
 import { useRecentActivityStore, type RecentActivity } from '@/store/useRecentActivityStore';
+import type { SearchItem } from '@/types/search';
 
 import { MineResults } from './MineResults';
 import { PublicResults } from './PublicResults';
 import { ResultGroup, ResultRow } from './ResultRows';
 import { ScopeSwitch } from './ScopeSwitch';
-import { SearchField } from './SearchField';
+import { KeyCap, SearchField } from './SearchField';
+
+const NO_ITEMS: SearchItem[] = [];
 
 /** Discover's part in the search: its area and filters. */
 export interface SearchArea {
@@ -40,16 +45,33 @@ interface HeadProps {
   area?: SearchArea | null;
   autoFocus?: boolean;
   onDone?: () => void;
+  /** Return in the field; Done (onDone) when not given. */
+  onSubmit?: () => void;
+  /** The ⌘K palette: the esc key cap and "Press tab to switch" (nav-search-desk-palette). */
+  keys?: boolean;
 }
 
 /** The search field and where it looks. The same at every door: the tab, ⌘K, Library and Discover. */
-export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone }: HeadProps) {
+export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys }: HeadProps) {
   const options = scopeOptions(mine.label, area?.label ?? null);
   const placeholder = scope === 'everywhere' ? 'Search bars, drinks and people' : scope === 'area' ? `Search ${area?.label === 'This area' ? 'this area' : (area?.label ?? 'here')}` : `Search ${mine.venueId ? mine.label : 'your drinks'}`;
   return (
     <View style={styles.head}>
-      <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onDone} onDone={onDone} />
-      <ScopeSwitch options={options} scope={scope} onScope={onScope} />
+      <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys={keys} />
+      {keys ? (
+        <View style={styles.scopeRow}>
+          <View style={styles.scope}>
+            <ScopeSwitch options={options} scope={scope} onScope={onScope} />
+          </View>
+          <View style={styles.hint}>
+            <Caption tone="muted">Press</Caption>
+            <KeyCap label="tab" />
+            <Caption tone="muted">to switch</Caption>
+          </View>
+        </View>
+      ) : (
+        <ScopeSwitch options={options} scope={scope} onScope={onScope} />
+      )}
     </View>
   );
 }
@@ -77,27 +99,48 @@ export function SearchBody({ query, scope, onScope, mine, area, onJump, commands
       kinds={area?.kinds}
       onKind={area?.onKind}
       onEverywhere={() => onScope('everywhere')}
+      mine={mine}
     />
   );
 }
 
-const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', flavor: 'Flavor map' };
+const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', bar: 'Bar', flavor: 'Flavor map' };
 const JUMPS = [
-  { label: 'On menu now', show: 'on-menu' },
-  { label: 'Staff list', show: 'staff' },
-  { label: 'Past', show: 'past' },
-  { label: 'Ingredients', show: 'ingredients' },
+  { label: 'On menu now', href: '/library?show=on-menu' },
+  { label: 'Staff list', href: '/library?show=staff' },
+  { label: 'Past', href: '/library?show=past' },
+  { label: 'Drafts', href: '/drafts' },
+  { label: 'Ingredients', href: '/library?show=ingredients' },
+] as const;
+
+/** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry). */
+const ENTRIES = [
+  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'sparkles', href: '/flavor-map' },
+  { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history' },
+  { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques' },
 ] as const;
 
 function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: SearchMine; onJump?: () => void; commands?: ReactNode }) {
   const router = useRouter();
   const all = useRecentActivityStore((s) => s.items);
   const myVenueIds = useActiveVenue().venues.map((v) => v.id);
+  const venue = scope === 'mine' && !!mine.venueId;
+  const facts = useMineFacts(venue ? mine.venueId : null, NO_ITEMS);
+  const { drafts } = useDrafts();
+  const [now] = useState(() => Date.now());
   const recent = all.filter((r) => (scope === 'mine' ? recentMatchesContext(r, mine.contextIds) : belongsHere(r.barId, myVenueIds, mine.venueId)));
   const open = (r: RecentActivity) => router.push((r.kind === 'menu' && !r.isDraft ? `/menus/${encodeURIComponent(r.id)}` : r.href) as never);
-  const caption = (r: RecentActivity) => `${r.isDraft ? 'Draft' : KIND_LABEL[r.kind]} · ${timeAgo(r.at)} ago`;
+  // "Cocktail · 2 hours ago", "Menu · on now · yesterday" (nav-search-empty-venue).
+  const caption = (r: RecentActivity) => {
+    const onNow = r.kind === 'menu' && !r.isDraft && menuFacts(r.id, [], facts) === 'On now';
+    return [r.isDraft ? 'Draft' : KIND_LABEL[r.kind], onNow ? 'on now' : null, friendlyWhen(r.at, now)].filter(Boolean).join(' · ');
+  };
   const drink = (k: RecentActivity['kind']) => k === 'cocktail' || k === 'beer' || k === 'wine';
-  const venue = scope === 'mine' && !!mine.venueId;
+  const draftCount = venue ? drafts.filter((d: { bar_id?: string | null }) => inSelectedContext(d.bar_id, mine.contextIds)).length : 0;
+  const go = (href: string) => {
+    onJump?.();
+    router.navigate(href as never);
+  };
   return (
     <View style={styles.empty}>
       <ResultGroup
@@ -107,44 +150,36 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
           drink(r.kind) ? (
             <DrinkRow key={`${r.kind}-${r.id}`} name={capitalize(r.title)} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} onPress={() => open(r)} />
           ) : (
-            <ResultRow key={`${r.kind}-${r.id}`} title={capitalize(r.title)} caption={caption(r)} icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'sparkles' : 'drop.fill'} ingredient={r.kind === 'ingredient' ? { id: r.isDraft ? null : r.id } : undefined} onPress={() => open(r)} />
+            <ResultRow
+              key={`${r.kind}-${r.id}`}
+              title={capitalize(r.title)}
+              caption={caption(r)}
+              icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'sparkles' : 'drop.fill'}
+              avatar={r.kind === 'bar' ? { uri: r.imageUrl ?? null } : undefined}
+              ingredient={r.kind === 'ingredient' ? { id: r.isDraft ? null : r.id } : undefined}
+              onPress={() => open(r)}
+            />
           )
         }
       />
       {venue ? (
         <View style={styles.jumps}>
-          <Caption tone="muted" role="heading">
+          <Caption tone="muted" role="heading" style={styles.cap}>
             Jump to
           </Caption>
           <View style={styles.chips}>
-            {JUMPS.map((j) => (
-              <Chip key={j.show} label={j.label} selected={false} onPress={() => {
-                  onJump?.();
-                  router.navigate(`/library?show=${j.show}` as never);
-                }} />
+            {JUMPS.filter((j) => j.label !== 'Drafts' || draftCount > 0).map((j) => (
+              <Chip key={j.label} label={j.label === 'Drafts' ? `Drafts ${draftCount}` : j.label} selected={false} onPress={() => go(j.href)} />
             ))}
           </View>
         </View>
       ) : null}
       {commands}
-      <ResultRow
-        title="Techniques and equipment"
-        caption="Foams, clarifying, milk punch, infusions, and the kit for each"
-        icon="flask"
-        onPress={() => {
-          onJump?.();
-          router.push('/techniques' as never);
-        }}
-      />
-      <ResultRow
-        title="Cocktail history"
-        caption="Every classic's family tree, back to the punch bowl"
-        icon="book"
-        onPress={() => {
-          onJump?.();
-          router.push('/history');
-        }}
-      />
+      <View>
+        {ENTRIES.map((e) => (
+          <ResultRow key={e.href} title={e.title} caption={e.caption} icon={e.icon} onPress={() => go(e.href)} />
+        ))}
+      </View>
       <Body tone="muted">
         {scope === 'mine'
           ? `Type a drink, an ingredient or a menu. Switch to Everywhere for other bars, bartenders and classics.`
@@ -158,7 +193,11 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
 
 const styles = StyleSheet.create({
   head: { gap: space.md },
+  scopeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  scope: { flexGrow: 0, flexShrink: 1, minWidth: 240 },
+  hint: { flexDirection: 'row', alignItems: 'center', gap: space.xs, marginLeft: 'auto' },
   empty: { gap: space.lg },
   jumps: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
 });

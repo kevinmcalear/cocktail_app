@@ -2,10 +2,12 @@ import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DrinkImage, Headline, PressableScale, Tag, useDs } from '@/components/ds';
+import { Caption, DrinkImage, Headline, MatchText, PressableScale, Tag, useDs, type MatchTextProps } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { space } from '@/constants/tokens';
+import { useSearchNavRow } from '@/components/search/searchNav';
+import { displayFaces, radius, space } from '@/constants/tokens';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
+import { withAlpha } from '@/lib/color';
 import { drinkIdFromHref } from '@/lib/itemRoutes';
 
 export interface DrinkRowProps {
@@ -25,8 +27,14 @@ export interface DrinkRowProps {
   tag?: string;
   /** A second, longer line: a note of your own. */
   note?: string;
-  /** At the end of the row: a score. Say it in `caption` or `label` too, for screen readers. */
+  /** At the end of the row: a score (`RowScore` from components/ds). Say it in `caption` or `label` too, for screen readers. */
   trailing?: ReactNode;
+  /** What was searched: its words are lit in the name and the note. */
+  query?: string;
+  /** How the searched words are lit (MatchText): accent on the search page, tint on Discover. */
+  matchLook?: MatchTextProps['look'];
+  /** The name in the venue's display face, as its own menu sets it (Tonight). */
+  displayName?: boolean;
   /** What a screen reader hears, when it should say more than the name, caption and note. */
   label?: string;
 }
@@ -35,12 +43,14 @@ export interface DrinkRowProps {
 const LOGO = 18;
 
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, tag, note, trailing, label }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, tag, note, trailing, label, query, matchLook, displayName }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
   // A drink page starts loading on press, ahead of the tap.
   const prefetch = usePrefetchCocktail();
   const drinkId = onPress ? null : drinkIdFromHref(href);
+  // In the ⌘K palette: the row the arrow keys are on, which Return opens.
+  const nav = useSearchNavRow();
   // The logo sits on the caption's first line and the caption wraps beside it, never under it.
   const byline = logo ? (
     <View style={styles.byline}>
@@ -59,13 +69,16 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
       accessibilityLabel={`${label ?? [name, caption, tag, note].filter(Boolean).join('. ')}, open`}
       onPressIn={drinkId ? () => prefetch(drinkId, { name, imageUrl }) : undefined}
       onPress={onPress ?? (() => href && router.push(href as never))}
-      style={[styles.row, { borderBottomColor: ds.c.line }]}
+      nativeID={nav.nativeID}
+      style={[styles.row, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
     >
       <View style={styles.thumb}>
         <DrinkImage thumb sketchDetail="thumb" source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" />
       </View>
       <View style={styles.text}>
-        <Headline numberOfLines={1}>{name}</Headline>
+        <Headline numberOfLines={1} style={displayName ? { fontFamily: displayFaces[ds.displayFace].regular } : null}>
+          <MatchText text={name} query={query} look={matchLook} />
+        </Headline>
         {tag ? (
           <View style={styles.captionRow}>
             {byline}
@@ -76,17 +89,19 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
         )}
         {note ? (
           <Caption numberOfLines={2}>
-            {note}
+            <MatchText text={note} query={query} look={matchLook} />
           </Caption>
         ) : null}
       </View>
       {trailing}
+      {nav.active ? <Caption tone="muted">Open ↵</Caption> : null}
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
   thumb: { width: 56 },
   text: { flex: 1, gap: 2 },
   byline: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs, flexShrink: 1 },

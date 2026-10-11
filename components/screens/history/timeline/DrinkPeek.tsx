@@ -2,10 +2,12 @@ import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, PressableScale, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, DrinkImage, PressableScale, RowScore, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { useDrinkSources } from '@/hooks/useDrinkSources';
+import { useItemScores } from '@/hooks/useFlavor';
 import type { TreeNode } from '@/lib/drinkTree';
 import { yearLabel } from '@/lib/lineage';
 import { fromLine } from '@/lib/timeline';
@@ -34,14 +36,27 @@ export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: P
   const ds = useDs();
   const router = useRouter();
   const style = node.kind === 'style';
-  const where = [yearLabel(node.year, node.approx), node.bar ? `${node.bar}${node.barClosed ? ' (closed)' : ''}` : null].filter(Boolean).join(' · ');
+  const ids = style ? [] : [node.id];
+  const city = useDrinkSources(ids).data?.[node.id]?.city;
+  const score = useItemScores(ids).data?.[node.id];
+  const bar = node.bar ? [`${node.bar}${node.barClosed ? ' (closed)' : ''}`, city].filter(Boolean).join(', ') : null;
+  const where = [yearLabel(node.year, node.approx), bar].filter(Boolean).join(' · ');
   const lineage = [fromLine({ from }), kids ? `${kids} came from it` : null].filter(Boolean).join(' · ');
   return (
     <View style={styles.detail}>
-      <View style={styles.head}>
-        {style ? <Caption tone="muted">Historic style</Caption> : null}
-        <Title>{node.name}</Title>
-        {where ? <Caption tone="muted">{where}</Caption> : null}
+      {/* A drink leads with its drawing and ends with its score (b02); a style is words only. */}
+      <View style={styles.headRow}>
+        {style ? null : (
+          <View style={styles.thumb}>
+            <DrinkImage thumb sketchDetail="thumb" itemId={node.id} glass={null} accessibilityLabel={node.name} radius="control" />
+          </View>
+        )}
+        <View style={[styles.head, styles.flex]}>
+          {style ? <Caption tone="muted">Historic style</Caption> : null}
+          <Title>{node.name}</Title>
+          {where ? <Caption tone="muted">{where}</Caption> : null}
+        </View>
+        <RowScore score={score} />
       </View>
       {node.note ? <Body>{node.note}</Body> : null}
       <View style={styles.threadRow}>
@@ -100,6 +115,8 @@ export function PeekSheet({ onClose, ...props }: PeekProps & { onClose: () => vo
 const styles = StyleSheet.create({
   detail: { gap: space.md },
   head: { gap: 2 },
+  headRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  thumb: { width: 56 },
   flex: { flex: 1, minWidth: 0 },
   threadRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   dests: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

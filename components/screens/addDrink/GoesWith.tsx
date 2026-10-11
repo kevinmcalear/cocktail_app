@@ -1,10 +1,14 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, Surface, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import type { ReactNode } from 'react';
+
+import { Body, Caption, DsText, PressableScale, Surface, useDs } from '@/components/ds';
+import { layout, radius, space } from '@/constants/tokens';
+import { useClosestClassic } from '@/hooks/useClosestClassic';
 import { usePairings } from '@/hooks/usePairings';
 import { balanceOf, fixesFor } from '@/lib/balance';
+import { withArticle, type SpecIngredient } from '@/lib/closestClassic';
 import { amountOf, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 
 import { PairChip } from '../pairings/PairChip';
@@ -18,8 +22,9 @@ const listNames = (names: string[]) => (names.length < 3 ? names.join(' and ') :
  * Once a drink has ingredients, the quick adds become "Goes with": what pairs
  * with everything already in the glass, counted from real drinks. Falls back
  * to `fallback` (the common quick adds) when nothing pairs with all of them.
+ * `after` (the classic it's close to) sits under the chips.
  */
-export function GoesWith({ lines, onAdd, fallback }: { lines: readonly WizardLine[]; onAdd: (pick: WizardPick) => void; fallback: React.ReactNode }) {
+export function GoesWith({ lines, onAdd, fallback, after }: { lines: readonly WizardLine[]; onAdd: (pick: WizardPick) => void; fallback: ReactNode; after?: ReactNode }) {
   const router = useRouter();
   const known = lines.filter((l): l is WizardLine & { id: string } => !!l.id);
   const { data: pairs = [] } = usePairings(
@@ -27,7 +32,14 @@ export function GoesWith({ lines, onAdd, fallback }: { lines: readonly WizardLin
     { limit: 10 }
   );
   const fresh = pairs.filter((p) => !lines.some((l) => l.id === p.id)).slice(0, 8);
-  if (!known.length || !fresh.length) return <>{fallback}</>;
+  if (!known.length || !fresh.length) {
+    return (
+      <>
+        {fallback}
+        {after}
+      </>
+    );
+  }
   const names = known.map((l) => l.name);
   return (
     <View style={styles.stack}>
@@ -43,6 +55,7 @@ export function GoesWith({ lines, onAdd, fallback }: { lines: readonly WizardLin
           />
         ))}
       </View>
+      {after}
       <DsText
         variant="caption"
         tone="accent"
@@ -51,6 +64,26 @@ export function GoesWith({ lines, onAdd, fallback }: { lines: readonly WizardLin
       >
         Explore more on the flavor map
       </DsText>
+    </View>
+  );
+}
+
+/**
+ * "Close to a Mezcal Margarita. Make it a riff?": the catalog classic the
+ * spec is closest to by what goes in (ids, then generics). The riff
+ * is picked up again on Credits.
+ */
+export function CloseToClassic({ ingredients, riffOf, onRiff }: { ingredients: readonly SpecIngredient[]; riffOf: WizardPick | null; onRiff: (classic: WizardPick) => void }) {
+  const { data: classic } = useClosestClassic(ingredients);
+  if (!classic) return null;
+  const close = `Close to ${withArticle(classic.name)}.`;
+  if (riffOf?.id === classic.id) return <Body tone="muted">{`${close} It’s down as a riff on it.`}</Body>;
+  return (
+    <View style={styles.close}>
+      <Body tone="muted">{close}</Body>
+      <PressableScale role="button" onPress={() => onRiff(classic)} accessibilityLabel={`Make it a riff on the ${classic.name}`} style={styles.riff}>
+        <Body tone="accent">Make it a riff?</Body>
+      </PressableScale>
     </View>
   );
 }
@@ -103,6 +136,8 @@ export function BalanceCard({ lines, ingredients, onAdd }: { lines: readonly Wiz
 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
+  close: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.xs },
+  riff: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   balance: { gap: space.md, padding: space.lg },
   meterRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: space.xl },

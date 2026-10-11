@@ -1,13 +1,14 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Surface } from '@/components/ds';
+import { Button, Caption, RowScore, scoreWords, Surface } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
+import { useDrinkRank } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
-import { drinkCount } from '@/lib/discoverDrinks';
+import { drinkCount, type DiscoverDrink } from '@/lib/discoverDrinks';
 import { itemHref } from '@/lib/itemRoutes';
 import type { Area } from '@/lib/nearMe';
 
@@ -40,23 +41,37 @@ export function BarMatches({ barProfileId }: { barProfileId: string }) {
       ) : list.drinks.length ? (
         <View role="list">
           {list.drinks.map((d) => (
-            <DrinkRow
-              key={d.id}
-              name={d.name}
-              href={itemHref('Cocktail', d.id)}
-              itemId={d.id}
-              imageUrl={d.imageUrl}
-              glass={null}
-              caption={d.menu.onNow ? 'On the menu now' : undefined}
-              tag={d.menu.past ?? undefined}
-              note={(d.why ?? d.description) || undefined}
-            />
+            <BarMatchRow key={d.id} drink={d} query={query} />
           ))}
         </View>
       ) : (
         <ListNote>{`Nothing here matches “${query}”.`}</ListNote>
       )}
     </Surface>
+  );
+}
+
+/** A match at this bar: on now, where it ranks, why it matched (the word lit), and its score at the end (b02). */
+function BarMatchRow({ drink: d, query }: { drink: DiscoverDrink; query: string }) {
+  const rank = useDrinkRank(d, query, ANYWHERE);
+  const caption = [d.menu.onNow ? 'On now' : null, rank.caption].filter(Boolean).join(' · ') || undefined;
+  const note = (d.why ?? d.description) || undefined;
+  const said = scoreWords(rank.score);
+  return (
+    <DrinkRow
+      name={d.name}
+      href={itemHref('Cocktail', d.id)}
+      itemId={d.id}
+      imageUrl={d.imageUrl}
+      glass={null}
+      caption={caption}
+      tag={d.menu.past ?? undefined}
+      note={note}
+      query={query}
+      matchLook="tint"
+      trailing={<RowScore score={rank.score} />}
+      label={said ? [d.name, caption, d.menu.past, said, note].filter(Boolean).join('. ') : undefined}
+    />
   );
 }
 
