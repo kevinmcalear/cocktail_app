@@ -223,10 +223,51 @@ export function guessKind(name: string, description: string | null): 'takeover' 
   return 'other';
 }
 
-/** Words that keep an imported event with the team: a staff training isn't for guests. */
+/** Words that keep an imported event with the team: a staff training isn't for guests. A venue can set its own (venue_calendar_settings). */
 export const TEAM_WORDS = ['staff', 'team', 'training', 'clean', 'deep clean', 'delivery', 'stocktake', 'inventory', 'meeting', 'rota', 'interview'];
 
-export function looksInternal(name: string): boolean {
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The team-only word in a name, or null. */
+export function internalWord(name: string, words: readonly string[] = TEAM_WORDS): string | null {
   const t = name.toLowerCase();
-  return TEAM_WORDS.some((w) => new RegExp(`\\b${w}\\b`).test(t));
+  return words.find((w) => w.trim() && new RegExp(`\\b${escapeRe(w.trim().toLowerCase())}\\b`).test(t)) ?? null;
+}
+
+export function looksInternal(name: string, words: readonly string[] = TEAM_WORDS): boolean {
+  return internalWord(name, words) !== null;
+}
+
+/** Name words, lower case, without the joining words people put between two bars. */
+function nameTokens(name: string): string[] {
+  return name
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[×&+]/g, ' ')
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w && !['x', 'and', 'the', 'at', 'with', 'a', 'of', 'night', 'event'].includes(w));
+}
+
+/** Whether an imported entry names an event the team already added: "Pale Moth x LR" is "Pale Moth × Little Rye". */
+export function sameName(a: string, b: string): boolean {
+  const [short, long] = [nameTokens(a), nameTokens(b)].sort((x, y) => x.length - y.length);
+  if (!short.length) return false;
+  // Initials stand for a run of words: "lr" for "little rye".
+  const initials = new Set<string>();
+  for (let i = 0; i < long.length; i++) {
+    let run = '';
+    for (let j = i; j < long.length && j < i + 4; j++) {
+      run += long[j][0];
+      if (run.length > 1) initials.add(run);
+    }
+  }
+  const hits = short.filter((w) => long.includes(w) || initials.has(w)).length;
+  return hits / short.length >= 0.6;
+}
+
+/** An import is a duplicate of a team event with a matching name starting within six hours of it. */
+export function findDuplicate<T extends { id: string; name: string; starts_at: string }>(entry: { name: string; startsAt: string }, events: T[]): T | null {
+  const t = Date.parse(entry.startsAt);
+  return events.find((e) => Math.abs(Date.parse(e.starts_at) - t) <= 6 * 3600 * 1000 && sameName(entry.name, e.name)) ?? null;
 }

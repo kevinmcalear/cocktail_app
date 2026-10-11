@@ -1,8 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, PressableScale, Sheet, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, PressableScale, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
@@ -86,9 +86,9 @@ export function PeekSheet({ onClose, ...props }: PeekProps & { onClose: () => vo
   return (
     <BackbarTheme>
       <Sheet visible onClose={onClose} accessibilityLabel={props.node.name} style={[styles.sheet, { paddingBottom: insets.bottom + space.lg }]}>
-        <ScrollView contentContainerStyle={styles.body}>
+        <SheetScrollView contentContainerStyle={styles.body}>
           <DrinkDetail {...props} />
-        </ScrollView>
+        </SheetScrollView>
       </Sheet>
     </BackbarTheme>
   );
