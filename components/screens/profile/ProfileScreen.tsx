@@ -6,6 +6,7 @@ import { BackbarTheme, Body, Caption, GlassButton, useBreakpoint, useDs, useGutt
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useProfile, type Profile } from '@/hooks/useProfiles';
+import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { SignInCard } from '../published/SignInCard';
@@ -43,6 +44,8 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   // Opened from a search: the way back carries it ("martini", disc-search-bar).
   const q = useLocalSearchParams<{ q?: string }>().q;
   const searched = typeof q === 'string' && q.trim() ? q.trim() : null;
+  // A bar you open shows in Search's Recent.
+  useTrackRecent(profile?.kind === 'bar', profile ? recentEntry('bar', profile.id, profile.display_name, { href: `/p/${profile.handle || profile.id}`, imageUrl: profile.avatar_url, barId: null }) : null);
 
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>

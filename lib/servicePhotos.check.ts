@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { serviceShots, shotCaption, shotList } from './servicePhotos';
+import { photoShots, photosTaken, serviceShots, shotCaption, shotList } from './servicePhotos';
 
 const hero = { id: 'h', angle: 'hero' as const, is_generated: false, images: { url: 'hero.jpg' } };
 const side = { id: 's', angle: 'side' as const, is_generated: false, images: { url: 'side.jpg' } };
@@ -32,5 +32,11 @@ assert.deepEqual(shots.map(shotCaption), ['Side', 'Top: may be out of date', 'Ga
 
 // No links at all: four empty tiles, all on the shot list.
 assert.equal(shotList(serviceShots(undefined)).length, 4);
+
+// The whole shot list: the hero first (a link with no angle counts), then the four angles; two real photos of five.
+const all = photoShots([{ ...hero, angle: null, outdated_since: '2026-10-02' }, side, garnishSketch]);
+assert.deepEqual(all.map((s) => s.angle), ['hero', 'side', 'top', 'garnish', 'handoff']);
+assert.equal(all[0].status, 'outdated');
+assert.equal(photosTaken(all), 2);
 
 console.log('servicePhotos.check: ok');

@@ -1,8 +1,12 @@
+import { createContext, useContext } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+
+/** On a desktop browser the footer ends the step (WizardFrame), not pinned: Next is a compact pill. */
+export const FooterInline = createContext(false);
 
 interface ChipProps {
   label: string;
@@ -56,19 +60,26 @@ interface FooterProps {
   nextLabel: string;
   /** An optional step offers Skip beside Next. */
   optional: boolean;
+  /** What Skip says ("Later": leave the recipe for later). */
+  skipLabel?: string;
   canNext: boolean;
   saving: boolean;
   onSkip: () => void;
   onNext: () => void;
 }
 
-/** Pinned at the bottom of a wizard: Skip on optional steps, and Next (Save on the review). */
-export function WizardFooter({ nextLabel, optional, canNext, saving, onSkip, onNext }: FooterProps) {
+/**
+ * Pinned at the bottom of a wizard: Skip on optional steps, and Next (Save
+ * on the review). On a desktop browser it ends the step instead, Next a
+ * compact pill.
+ */
+export function WizardFooter({ nextLabel, optional, skipLabel = 'Skip', canNext, saving, onSkip, onNext }: FooterProps) {
   const ds = useDs();
+  const inline = useContext(FooterInline);
   return (
-    <View style={[styles.footer, { backgroundColor: ds.c.ground }]}>
-      {optional ? <Button label="Skip" variant="secondary" size="lg" onPress={onSkip} /> : null}
-      <Button label={nextLabel} size="lg" disabled={!canNext || saving} onPress={onNext} style={styles.flex} />
+    <View style={[styles.footer, !inline && { backgroundColor: ds.c.ground }]}>
+      {optional ? <Button label={skipLabel} variant="secondary" size="lg" onPress={onSkip} /> : null}
+      <Button label={nextLabel} size="lg" disabled={!canNext || saving} onPress={onNext} style={inline ? styles.compact : styles.flex} />
     </View>
   );
 }
@@ -80,4 +91,5 @@ const styles = StyleSheet.create({
   eyebrow: { letterSpacing: 0.6 },
   footer: { flexDirection: 'row', gap: space.md, paddingTop: space.md },
   flex: { flex: 1 },
+  compact: { minWidth: 220 },
 });
