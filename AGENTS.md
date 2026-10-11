@@ -3,7 +3,9 @@
 A platform for the life of a drink. Bars create, prep, teach and pour their drinks (venue mode). Home bartenders collect and remake them (home mode). Everyone ranks drinks and credits who made them (public layer). One Expo app for iOS, Android, web and desktop, on Supabase. Live with real bar staff; the GitHub repo is **public**.
 
 - Docs index: [llms.txt](llms.txt). How we work: [docs/dev_flow.md](docs/dev_flow.md). Design rules: [docs/design_system.md](docs/design_system.md).
-- The redesign north star is the "Back Bar" brief: https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf (read it with the Artifact tool, not WebFetch).
+- **The source of truth for every screen is the canvas "Cocktail: the whole app": https://claude.ai/artifact/KRE17t8L8SC8f4M4KFLgZe** (approved by Kevin on 10 Oct 2026; read it with the Artifact tool, not WebFetch). It supersedes the older per-feature canvases and the Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf), which stays as background.
+  - Build what the board draws, not just its decisions. A PR that touches a screen puts the board beside a screenshot of the real screen and lists every drawn element as built, changed (why) or left out; anything changed or left out needs Kevin's OK first.
+  - Keep it current: when Kevin decides something that changes a screen, update the board in the same piece of work. New screens are drawn there before they are built.
 
 ## Stack
 
