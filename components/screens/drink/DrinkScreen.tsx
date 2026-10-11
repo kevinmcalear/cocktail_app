@@ -20,7 +20,7 @@ import { useItemVersions } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { heroPictures } from '@/lib/drinkPhotos';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
-import { drinkUrl, shareLink } from '@/lib/shareLink';
+import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
@@ -129,7 +129,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   });
   const glassKey = glass?.icon_key || glass?.name || null;
   const actions = useDrinkActions(item, heroPic, lines, venue?.name ?? null);
-  const share = () => void shareLink(drinkUrl(item.id), item.name);
+  const share = () => void shareOrCopy(drinkUrl(item.id), item.name);
   const onRiff = signedIn && !preview ? () => router.push({ pathname: '/add-cocktail', params: { from: item.id, ...(item.bar_id ? { barId: item.bar_id } : {}) } } as unknown as Href) : null;
 
   // Pinned on phones (board drink-phone-venue): Batch, the accent in venue mode; at home the journey strip has I made it.
