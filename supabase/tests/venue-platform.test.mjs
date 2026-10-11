@@ -229,6 +229,10 @@ describe('venue roles', () => {
     assert.ok(head.has('costs') && head.has('edit_drinks'));
     assert.ok(!head.has('staff') && !head.has('publish'));
 
+    const maker = await caps('maker');
+    assert.ok(maker.has('costs') && maker.has('edit_drinks'), 'Drink Creator opens costs by default');
+    assert.ok(!(await caps('bartender')).has('costs'));
+
     const guest = await caps('guestBartender');
     assert.ok(guest.has('edit_drinks') && guest.has('specs'));
     assert.ok(!guest.has('house_made') && !guest.has('prep'));
@@ -440,24 +444,25 @@ describe('prep and purchasing', () => {
   });
 
   test('suppliers and pack sizes are for the prep crew and cost handlers', async () => {
-    for (const label of ['barback', 'maker', 'headBartender', 'admin']) {
+    // The guest bartender's role revokes prep, but a Drink Creator handles costs since 20261014220000.
+    for (const label of ['barback', 'maker', 'headBartender', 'guestBartender', 'admin']) {
       assert.equal((await visible(users[label].client, 'item_purchasing', 'item_id', [ids.scotch])).size, 1, label);
       assert.equal((await visible(users[label].client, 'suppliers', 'id', [ids.supplier])).size, 1, label);
     }
-    for (const label of ['bartender', 'guestBartender', 'outsider']) {
+    for (const label of ['bartender', 'outsider']) {
       assert.equal((await visible(users[label].client, 'item_purchasing', 'item_id', [ids.scotch])).size, 0, label);
       assert.equal((await visible(users[label].client, 'suppliers', 'id', [ids.supplier])).size, 0, label);
     }
   });
 
-  test('costs are for admins and roles granted costs only', async () => {
-    for (const label of ['headBartender', 'admin']) {
+  test('costs open at Drink Creator (20261014220000) and for roles granted costs', async () => {
+    for (const label of ['maker', 'headBartender', 'guestBartender', 'admin']) {
       assert.equal((await visible(users[label].client, 'item_costs', 'item_id', [ids.scotch])).size, 1, label);
     }
-    for (const label of ['maker', 'barback', 'bartender', 'otherAdmin']) {
+    for (const label of ['barback', 'bartender', 'floor', 'guest', 'otherAdmin']) {
       assert.equal((await visible(users[label].client, 'item_costs', 'item_id', [ids.scotch])).size, 0, label);
     }
-    const { error } = await users.maker.client
+    const { error } = await users.bartender.client
       .from('item_costs')
       .insert({ bar_id: ids.barOne, item_id: ids.martini, pack_cost_minor: 1 });
     assert.ok(error);

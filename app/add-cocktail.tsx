@@ -11,8 +11,9 @@ import { AddDrinkWizard } from "@/components/screens/addDrink/AddDrinkWizard";
  */
 export default function AddCocktailScreen() {
     const router = useRouter();
-    const { barId, draftId, name, menuSectionId } = useLocalSearchParams<{
+    const { barId, draftId, name, menuSectionId, from } = useLocalSearchParams<{
         barId?: string;
+        from?: string;
         draftId?: string;
         name?: string;
         menuSectionId?: string;
@@ -30,6 +31,7 @@ export default function AddCocktailScreen() {
                     barId={barId || null}
                     menuSectionId={menuSectionId}
                     initialName={name}
+                    startFrom={from || null}
                     embedded={false}
                     onClose={goBack}
                     onSaved={(id) => {

@@ -28,6 +28,10 @@ export interface CollectedDrink {
   liveMode: PublishMode | null;
   /** Not published, but it still opens for them (a classic): not a memory. */
   readable: boolean;
+  /** They can read its spec (its own row), published or not. */
+  specOpens: boolean;
+  /** A catalog classic, not a bar's drink. */
+  classic: boolean;
 }
 
 export interface CollectedRelease {
@@ -40,6 +44,8 @@ export interface CollectedRelease {
   releaseDate: string | null;
   /** Still live: its page opens. */
   live: boolean;
+  /** Its drinks, while it's live. */
+  itemIds: string[];
 }
 
 export interface Collection {
@@ -47,7 +53,8 @@ export interface Collection {
   releases: CollectedRelease[];
 }
 
-const collectionKey = (userId: string | null) => ['collection', userId] as const;
+// The last part is the shape's version: the cache is persisted, and an older shape mustn't come back.
+const collectionKey = (userId: string | null) => ['collection', userId, 2] as const;
 
 export function useCollection() {
   const userId = useUserId();
@@ -66,17 +73,20 @@ export function useCollection() {
           .order('collected_at', { ascending: false }),
         supabase
           .from('collected_releases')
-          .select('id, release_id, collected_at, name, bar_name, cover_url, release_date, release:releases(id)')
+          .select('id, release_id, collected_at, name, bar_name, cover_url, release_date, release:releases(id, release_items(item_id, sort_order))')
           .order('collected_at', { ascending: false }),
       ]);
       if (drinks.error) throw drinks.error;
       if (releases.error) throw releases.error;
       const itemIds = (drinks.data ?? []).map((d) => d.item_id).filter((id): id is string => !!id);
       const live = await fetchPublished(itemIds);
-      const unpublished = itemIds.filter((id) => !live.some((p) => p.id === id));
-      const readable = unpublished.length ? await supabase.from('items').select('id').in('id', unpublished) : { data: [], error: null };
+      // The drinks whose own row they can read: their spec opens, whatever the bar published (a classic, say).
+      const readable = itemIds.length ? await supabase.from('items').select('id, is_catalog').in('id', itemIds) : { data: [], error: null };
       if (readable.error) throw readable.error;
-      const opens = new Set((readable.data ?? []).map((r: { id: string }) => r.id));
+      const rows = (readable.data ?? []) as { id: string; is_catalog: boolean | null }[];
+      const opens = new Set(rows.map((r) => r.id));
+      const classics = new Set(rows.filter((r) => r.is_catalog).map((r) => r.id));
+      const isLive = (id: string | null) => live.some((p) => p.id === id);
       return {
         drinks: (drinks.data ?? []).map((d) => ({
           id: d.id,
@@ -89,7 +99,9 @@ export function useCollection() {
           hadOn: d.had_on,
           note: d.note,
           liveMode: live.find((p) => p.id === d.item_id)?.publishMode ?? null,
-          readable: !!d.item_id && opens.has(d.item_id),
+          readable: !!d.item_id && !isLive(d.item_id) && opens.has(d.item_id),
+          specOpens: !!d.item_id && opens.has(d.item_id),
+          classic: !!d.item_id && classics.has(d.item_id),
         })),
         releases: (releases.data ?? []).map((r) => ({
           id: r.id,
@@ -101,6 +113,8 @@ export function useCollection() {
           releaseDate: r.release_date,
           // The embed is null once the release isn't live (RLS) or is gone.
           live: !!r.release,
+          // One release per row, though the embed is typed as a list.
+          itemIds: [...((r.release as unknown as { release_items: { item_id: string; sort_order: number | null }[] } | null)?.release_items ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((i) => i.item_id),
         })),
       };
     },

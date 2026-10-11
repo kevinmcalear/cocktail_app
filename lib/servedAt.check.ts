@@ -1,7 +1,7 @@
 // Checks for lib/servedAt.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { foldIntoClassics, servedCaption, specNoteText, splitVersions, versionLabel } from './servedAt';
+import { foldIntoClassics, gatherVariations, servedCaption, specNoteText, splitVersions, variationSummary, versionLabel } from './servedAt';
 
 const bar = (name: string) => ({ name, logo: null });
 
@@ -52,3 +52,10 @@ const sm: Record<string, { spec_match: string; classic_id: string }> = {
 const folded = foldIntoClassics([at('g1', 'Gold Room'), at('g2', 'The Lions'), at('g3', 'Gold Room'), at('v1', 'FOCO'), at('m1', 'Dante'), at('x', 'Bar X')], new Set(['boul']), (id) => sm[id]);
 assert.deepEqual(folded.drinks.map((d) => d.id), ['v1', 'm1', 'x'], 'variations, classics not in the results, and unknowns stay');
 assert.deepEqual(folded.servedBy.boul.map((b) => b.name), ['Gold Room', 'The Lions']);
+
+// Variations gather under their classic in search; the rest stay listed.
+const gathered = gatherVariations([at('g1', 'Gold Room'), at('v1', 'FOCO'), at('x', 'Bar X')], new Set(['boul']), (id) => sm[id]);
+assert.deepEqual(gathered.drinks.map((d) => d.id), ['g1', 'x']);
+assert.deepEqual(gathered.variations.boul.map((d) => d.id), ['v1']);
+assert.equal(variationSummary([{ bar: 'The Lantern Room', change: 'uses Mezcal, not Gin' }, { bar: 'Ferro', change: 'adds Cold Brew' }, { bar: 'Pale Moth' }]), 'The Lantern Room uses Mezcal, not Gin, Ferro adds Cold Brew +1');
+assert.equal(variationSummary([{ bar: 'Ferro' }]), 'Ferro');

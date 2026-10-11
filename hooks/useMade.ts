@@ -19,6 +19,8 @@ export interface MadeDrink {
   swaps: Swap[];
   note: string | null;
   rankEntryId: string | null;
+  /** A catalog classic, not a bar's drink. */
+  classic: boolean;
 }
 
 interface MadeRow {
@@ -29,7 +31,7 @@ interface MadeRow {
   swaps: Swap[];
   note: string | null;
   rank_entry_id: string | null;
-  item: { name: string; item_images: ItemImageLink[] | null } | null;
+  item: { name: string; is_catalog?: boolean | null; item_images: ItemImageLink[] | null } | null;
 }
 
 const madeKey = (userId: string | null) => ['made', userId] as const;
@@ -45,7 +47,7 @@ export function useMadeDrinks() {
       // ponytail: one page. People log dozens of nights in, not thousands; page by made_on past that.
       const { data, error } = await supabase
         .from('made_drinks')
-        .select('id, item_id, made_on, compared, swaps, note, rank_entry_id, item:items!item_id(name, item_images(angle, sort_order, is_generated, images(url)))')
+        .select('id, item_id, made_on, compared, swaps, note, rank_entry_id, item:items!item_id(name, is_catalog, item_images(angle, sort_order, is_generated, images(url)))')
         .order('made_on', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -61,6 +63,7 @@ export function useMadeDrinks() {
         swaps: r.swaps ?? [],
         note: r.note,
         rankEntryId: r.rank_entry_id,
+        classic: !!r.item?.is_catalog,
       }));
     },
   });

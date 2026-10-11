@@ -31,12 +31,15 @@ function VenuePublish({ draft, set, barId }: StepProps & { barId: string }) {
     return <Body tone="muted">It stays private for now: the venue needs a public profile before its drinks can be seen outside it.</Body>;
   }
   return (
-    <PublishChoice
-      label="Who can see this drink"
-      value={draft.publish}
-      inherited={{ mode: venue.data.barDefault, source: 'bar' }}
-      onChange={(publish) => set({ publish })}
-    />
+    <>
+      <PublishChoice
+        label="Who can see this drink"
+        value={draft.publish}
+        inherited={{ mode: venue.data.barDefault, source: 'bar' }}
+        onChange={(publish) => set({ publish })}
+      />
+      <Caption tone="muted">Staff see it by their role either way. You can change this on the drink’s page.</Caption>
+    </>
   );
 }
 
@@ -45,7 +48,12 @@ function HomePublish({ draft, set }: StepProps) {
   if (!me?.isPublic || me.isModerated) {
     return <Body tone="muted">Private: only you can see it. Make your profile public on the You tab to share your drinks.</Body>;
   }
-  return <PublishChoice label="Who can see this drink" value={draft.publish ?? 'private'} onChange={(publish) => set({ publish })} />;
+  return (
+    <>
+      <PublishChoice label="Who can see this drink" value={draft.publish ?? 'private'} onChange={(publish) => set({ publish })} />
+      <Caption tone="muted">You can change this on the drink’s page.</Caption>
+    </>
+  );
 }
 
 const styles = StyleSheet.create({
