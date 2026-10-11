@@ -6,7 +6,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { requireUser } from "../_shared/auth.ts";
 import { HttpError, requireUuid, serveJson } from "../_shared/http.ts";
-import { guessKind, looksInternal, readCalendar, type CalendarEvent } from "../_shared/icsRead.ts";
+import { findDuplicate, guessKind, looksInternal, readCalendar, TEAM_WORDS, type CalendarEvent } from "../_shared/icsRead.ts";
 import { LinkError, openLink, readCapped } from "../_shared/linkRead.ts";
 import { isLocalStack, LOCAL_CALENDAR_SYNC_SECRET } from "../_shared/localStack.ts";
 
@@ -45,11 +45,11 @@ serveJson(FN, async (req) => {
     const barId = requireUuid(body.bar_id, "bar_id");
     await requireBuilder(caller.userClient, barId);
     const now = Date.now();
-    const events = await readFeed(String(body.url ?? ""), now);
+    const [events, words] = await Promise.all([readFeed(String(body.url ?? ""), now), teamWords(caller.admin, barId)]);
     return {
       events: events.map((e) => {
         const kind = guessKind(e.name, e.description);
-        return { uid: e.uid, name: e.name, starts_at: e.startsAt, ends_at: e.endsAt, kind, internal: kind === "private" || looksInternal(e.name), ticket_url: e.url };
+        return { uid: e.uid, name: e.name, starts_at: e.startsAt, ends_at: e.endsAt, kind, internal: kind === "private" || looksInternal(e.name, words), ticket_url: e.url };
       }),
     };
   }
@@ -128,6 +128,12 @@ async function syncDue(admin: SupabaseClient) {
   return { synced };
 }
 
+/** The venue's team-only words (venue_calendar_settings), or the defaults. */
+async function teamWords(admin: SupabaseClient, barId: string): Promise<string[]> {
+  const { data } = await admin.from("venue_calendar_settings").select("team_words").eq("bar_id", barId).maybeSingle();
+  return (data?.team_words as string[] | undefined) ?? TEAM_WORDS;
+}
+
 async function syncOne(admin: SupabaseClient, sourceId: string) {
   const { data: source, error } = await admin.from("calendar_sources").select("id, bar_id, url, skipped_uids").eq("id", sourceId).single<Source>();
   if (error) throw error;
@@ -146,6 +152,14 @@ async function syncOne(admin: SupabaseClient, sourceId: string) {
   const { data: existing, error: readError } = await admin.from("events").select("id, external_uid, starts_at").eq("source_id", source.id);
   if (readError) throw readError;
   const byUid = new Map((existing ?? []).map((e) => [e.external_uid as string, e]));
+  // The team's own events around the calendar's dates, to spot ones they already added by hand.
+  const { data: teamEvents } = await admin
+    .from("events")
+    .select("id, name, starts_at")
+    .eq("bar_id", source.bar_id)
+    .is("source_id", null)
+    .gte("starts_at", new Date(now - 2 * 86400000).toISOString())
+    .limit(500);
 
   let added = 0;
   let changed = 0;
@@ -158,10 +172,14 @@ async function syncOne(admin: SupabaseClient, sourceId: string) {
       continue;
     }
     const kind = guessKind(e.name, e.description);
-    // New events land Team only, whatever starts_public says: someone on the
-    // team opens each one and publishes it. starts_public only pre-selects
-    // Everyone in the app's event sheet when they do.
-    const { error: insError } = await admin.from("events").insert({ ...fields, bar_id: source.bar_id, source_id: source.id, external_uid: e.uid, kind, is_public: false });
+    // New events land Team only and unreviewed, whatever starts_public says:
+    // the team sees them on "N new from your calendars" and shares the ones
+    // guests should see. starts_public only pre-selects Everyone there.
+    // One the team already added by hand comes in as its duplicate, out of the week.
+    const duplicate = findDuplicate(e, teamEvents ?? []);
+    const { error: insError } = await admin
+      .from("events")
+      .insert({ ...fields, bar_id: source.bar_id, source_id: source.id, external_uid: e.uid, kind, is_public: false, reviewed_at: null, duplicate_of: duplicate?.id ?? null });
     if (!insError) added++;
   }
 

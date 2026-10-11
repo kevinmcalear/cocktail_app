@@ -1,9 +1,13 @@
 import { useEffect, type ReactNode } from 'react';
-import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { BackHandler, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
-import { Button, Caption, Chip, sheetIsDialog, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Button, Caption, Chip, sheetIsDialog, SheetScrollView, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { dragShade, STRETCH } from '@/components/ds/sheetDrag';
+import { SheetScrollContext, slideAway, useSheetDrag } from '@/components/ds/useSheetDrag';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { radius, space } from '@/constants/tokens';
 import { useBarCities } from '@/hooks/useDiscover';
@@ -33,6 +37,7 @@ interface DiscoverOverlayProps {
  * near the top on wide screens (like ⌘K), and never a bottom sheet on the web.
  * It sits inside the screen rather than in a Modal, so a result can open its
  * page on top and coming back finds it as it was. Android back, Escape on the web, and the scrim close it.
+ * As a bottom sheet it drags down to close like the app's Sheet (useSheetDrag).
  */
 export function DiscoverOverlay({ label, onClose, full, action, head, footer, children }: DiscoverOverlayProps) {
   const ds = useDs();
@@ -42,6 +47,19 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
   const wide = useBreakpoint() !== 'phone';
   const page = full && !wide;
   const card = wide || (sheetIsDialog && !page);
+  const sheet = !card && !page;
+  const { height: windowHeight } = useWindowDimensions();
+  const drag = useSharedValue(0);
+  const close = (velocity: number) => {
+    'worklet';
+    slideAway(drag, windowHeight, velocity, (finished) => {
+      'worklet';
+      if (finished) scheduleOnRN(onClose);
+    });
+  };
+  const { height, pan, scroll } = useSheetDrag({ drag, enabled: sheet, onClose: close });
+  const scrimStyle = useAnimatedStyle(() => ({ opacity: dragShade(drag.get(), height.get()) }));
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: drag.get() }] }));
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -61,28 +79,38 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
       : [styles.sheet, { marginTop: insets.top + space.xxxl, borderColor: ds.c.line, backgroundColor: ds.c.surface }];
   return (
     <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)} style={[StyleSheet.absoluteFill, styles.layer]}>
-      {page ? null : <Pressable accessibilityLabel="Close" onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }]} />}
-      <View role="dialog" aria-modal aria-label={label} style={frame}>
-        {card || page ? null : <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />}
-        <View style={[styles.gap, { paddingHorizontal: gutter, paddingBottom: space.md }]}>
-          {head ?? (
-            <View style={styles.head}>
-              <Title role="heading" style={styles.flex}>
-                {label}
-              </Title>
-              {action ?? <Button label="Done" variant="ghost" onPress={onClose} />}
-            </View>
-          )}
-        </View>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          style={card ? styles.shrink : styles.flex}
-          contentContainerStyle={[styles.gap, { paddingHorizontal: gutter, paddingBottom: footer ? space.lg : card ? space.xl : bottom }]}
-        >
-          {children}
-        </ScrollView>
-        {footer ? <View style={{ paddingHorizontal: gutter, paddingBottom: card ? space.lg : bottom }}>{footer}</View> : null}
-      </View>
+      {page ? null : (
+        <Animated.View style={[StyleSheet.absoluteFill, scrimStyle]}>
+          <Pressable accessibilityLabel="Close" onPress={onClose} style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }]} />
+        </Animated.View>
+      )}
+      {/* Below the screen's edge: what shows when the sheet is pulled up past the top. */}
+      {sheet ? <Animated.View style={[styles.stretch, { backgroundColor: ds.c.surface }, sheetStyle]} /> : null}
+      <GestureDetector gesture={pan}>
+        <Animated.View role="dialog" aria-modal aria-label={label} style={[frame, sheetStyle]} onLayout={(e) => height.set(e.nativeEvent.layout.height)}>
+          {sheet ? <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} /> : null}
+          <View style={[styles.gap, { paddingHorizontal: gutter, paddingBottom: space.md }]}>
+            {head ?? (
+              <View style={styles.head}>
+                <Title role="heading" style={styles.flex}>
+                  {label}
+                </Title>
+                {action ?? <Button label="Done" variant="ghost" onPress={onClose} />}
+              </View>
+            )}
+          </View>
+          <SheetScrollContext value={scroll}>
+            <SheetScrollView
+              keyboardShouldPersistTaps="handled"
+              style={card ? styles.shrink : styles.flex}
+              contentContainerStyle={[styles.gap, { paddingHorizontal: gutter, paddingBottom: footer ? space.lg : card ? space.xl : bottom }]}
+            >
+              {children}
+            </SheetScrollView>
+          </SheetScrollContext>
+          {footer ? <View style={{ paddingHorizontal: gutter, paddingBottom: card ? space.lg : bottom }}>{footer}</View> : null}
+        </Animated.View>
+      </GestureDetector>
     </Animated.View>
   );
 }
@@ -221,6 +249,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
+  stretch: { position: 'absolute', left: 0, right: 0, bottom: -STRETCH, height: STRETCH },
   grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: radius.pill, marginTop: space.md, marginBottom: space.sm },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   gap: { gap: space.lg },
