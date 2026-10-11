@@ -312,7 +312,7 @@ export function useShortPreps() {
     queryKey: [...SHELF_KEY, 'preps-short'],
     queryFn: async (): Promise<ShortPrep[]> => {
       const { data, error } = await supabase.rpc('my_bar_preps_short');
-      // ponytail: a database without 20261013200000 has no my_bar_preps_short; show no One thing short. Drop once it's in production.
+      // ponytail: a database without 20261014400000 has no my_bar_preps_short; show no One thing short. Drop once it's in production.
       if (error?.code === 'PGRST202') return [];
       if (error) throw error;
       return (data ?? []) as ShortPrep[];
@@ -389,7 +389,7 @@ export function useBottleFacts(itemId: string | null | undefined) {
   });
 }
 
-/** Missing table or function: a database without 20261013200000. */
+/** Missing table or function: a database without 20261014400000. */
 const notThereYet = (code?: string) => code === 'PGRST202' || code === 'PGRST205' || code === '42P01';
 
 /** The bottles you've finished, newest first, with their names: the bottle sheet's history and Your old bottles. */
@@ -398,7 +398,7 @@ export function useFinishedBottles() {
     queryKey: [...SHELF_KEY, 'finished'],
     queryFn: async (): Promise<FinishedBottle[]> => {
       const { data, error } = await supabase.from('home_bar_finished').select('id, item_id, bought_at, finished_at').order('finished_at', { ascending: false }).limit(500);
-      // ponytail: no home_bar_finished before 20261013200000; no history. Drop once it's in production.
+      // ponytail: no home_bar_finished before 20261014400000; no history. Drop once it's in production.
       if (notThereYet(error?.code)) return [];
       if (error) throw error;
       const rows = (data ?? []) as { id: string; item_id: string; bought_at: string | null; finished_at: string }[];
@@ -417,7 +417,7 @@ export function useFinishBottle() {
   return useMutation({
     mutationFn: async (itemId: string) => {
       const { error } = await supabase.rpc('finish_bar_item', { p_item_id: itemId });
-      // ponytail: a database without 20261013200000 keeps no history; just take it off the shelf. Drop once it's in production.
+      // ponytail: a database without 20261014400000 keeps no history; just take it off the shelf. Drop once it's in production.
       if (error?.code === 'PGRST202') {
         const { error: removeError } = await supabase.from('home_bar_items').delete().eq('item_id', itemId);
         if (removeError) throw removeError;
