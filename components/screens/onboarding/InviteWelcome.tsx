@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, DsText, useDs, useGutter } from '@/components/ds';
-import { VenueMark } from '@/components/nav/VenueSwitcher';
+import { VenueMark } from '@/components/nav/VenueMarks';
 import { WebHead } from '@/components/WebHead';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useAcceptInvite, useRemoveInvite, type MyInvite } from '@/hooks/useBarInvites';
