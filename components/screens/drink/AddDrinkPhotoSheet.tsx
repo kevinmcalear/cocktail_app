@@ -29,7 +29,7 @@ export function AddDrinkPhotoSheet({ itemId, name, uri, onClose }: { itemId: str
       subtitle={name}
       footer={<Button label={add.isPending ? 'Posting…' : 'Post photo'} icon="photo" disabled={add.isPending} onPress={post} />}
     >
-      <DrinkImage source={uri} accessibilityLabel={`Your photo of ${name}`} aspectRatio={4 / 5} radius="control" hideTag style={styles.preview} />
+      <DrinkImage source={uri} accessibilityLabel={`Your photo of ${name}`} aspectRatio={4 / 5} radius="control" style={styles.preview} />
       {ranked ? (
         <SwitchRow label="Show my score with it" detail={`You ranked it ${formatScore(ranked.score)}`} value={showScore} onValueChange={setShowScore} />
       ) : (

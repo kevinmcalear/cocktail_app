@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Caption, Headline, PalateFlower, PressableScale, sheetFrame, Spec, Tag, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Caption, Headline, PalateFlower, PressableScale, Sheet, Spec, Tag, useDs } from '@/components/ds';
 import { FamilyDot, PalateLegend } from '@/components/screens/taste/PalateParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
@@ -46,11 +46,11 @@ export function FlavorSection({ itemId }: { itemId: string }) {
         </View>
         <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
       </PressableScale>
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <Sheet visible={open} onClose={() => setOpen(false)} accessibilityLabel="Flavor" ground>
         <BackbarTheme>
-          <FlavorSheet profile={profile} onClose={() => setOpen(false)} />
+          <FlavorSheet profile={profile} />
         </BackbarTheme>
-      </Modal>
+      </Sheet>
     </>
   );
 }
@@ -63,7 +63,7 @@ const shownWords = (profile: Profile) => DIMENSIONS.filter((d) => profile[d] >= 
  * would claim more precision than a profile from the spec has). Without a
  * taste yet, the drink's own flower.
  */
-function FlavorSheet({ profile, onClose }: { profile: Profile; onClose: () => void }) {
+function FlavorSheet({ profile }: { profile: Profile }) {
   const ds = useDs();
   const [width, setWidth] = useState(0);
   const { data: me } = useMyTaste();
@@ -77,53 +77,47 @@ function FlavorSheet({ profile, onClose }: { profile: Profile; onClose: () => vo
   const size = Math.min(width, 360);
 
   return (
-    <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-      <View style={styles.avoider} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
-            <View style={styles.head}>
-              <Headline role="heading">Flavor</Headline>
-              {scored !== null ? (
-                <View style={styles.match}>
-                  <Spec color={ds.accentText}>{`${scored}%`}</Spec>
-                  <Caption tone="muted">match for you</Caption>
-                </View>
-              ) : null}
-            </View>
-            <View style={styles.center} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-              {width > 0 ? (
-                hasTaste ? (
-                  <PalateFlower values={me!.taste} compare={profile} ghost size={size} labels />
-                ) : (
-                  <PalateFlower values={profile} size={size} labels />
-                )
-              ) : null}
-            </View>
-            {hasTaste ? <PalateLegend items={['drink', 'ghost']} /> : null}
-            {hasTaste ? <Body>{matchReasons(me!.taste, profile, me!.basis, baseline)}</Body> : null}
-            {meeting && (meeting.shared.length || meeting.more || meeting.less) ? (
-              <View style={styles.tags}>
-                {meeting.shared.map((d) => (
-                  <Tag key={d} tone="accent" label={`${LABEL[d]}, like you`} />
-                ))}
-                {meeting.more ? <Tag label={`more ${LABEL[meeting.more]} than usual`} /> : null}
-                {meeting.less ? <Tag label={`less ${LABEL[meeting.less]} than usual`} /> : null}
-              </View>
-            ) : null}
-            {toGo > 0 ? <Caption tone="muted">{`Rank ${toGo} more drink${toGo === 1 ? '' : 's'} you've had to see how well this matches your taste.`}</Caption> : null}
-            <View role="list" style={[styles.words, { borderTopColor: ds.c.line }]}>
-              {words.map((d) => (
-                <View key={d} role="listitem" style={styles.word}>
-                  <FamilyDot dim={d} />
-                  <Body style={styles.flex}>{capital(LABEL[d])}</Body>
-                  <Caption tone="muted">{level(profile[d])}</Caption>
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-        </Pressable>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
+      <View style={styles.head}>
+        <Headline role="heading">Flavor</Headline>
+        {scored !== null ? (
+          <View style={styles.match}>
+            <Spec color={ds.accentText}>{`${scored}%`}</Spec>
+            <Caption tone="muted">match for you</Caption>
+          </View>
+        ) : null}
       </View>
-    </Pressable>
+      <View style={styles.center} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+        {width > 0 ? (
+          hasTaste ? (
+            <PalateFlower values={me!.taste} compare={profile} ghost size={size} labels />
+          ) : (
+            <PalateFlower values={profile} size={size} labels />
+          )
+        ) : null}
+      </View>
+      {hasTaste ? <PalateLegend items={['drink', 'ghost']} /> : null}
+      {hasTaste ? <Body>{matchReasons(me!.taste, profile, me!.basis, baseline)}</Body> : null}
+      {meeting && (meeting.shared.length || meeting.more || meeting.less) ? (
+        <View style={styles.tags}>
+          {meeting.shared.map((d) => (
+            <Tag key={d} tone="accent" label={`${LABEL[d]}, like you`} />
+          ))}
+          {meeting.more ? <Tag label={`more ${LABEL[meeting.more]} than usual`} /> : null}
+          {meeting.less ? <Tag label={`less ${LABEL[meeting.less]} than usual`} /> : null}
+        </View>
+      ) : null}
+      {toGo > 0 ? <Caption tone="muted">{`Rank ${toGo} more drink${toGo === 1 ? '' : 's'} you've had to see how well this matches your taste.`}</Caption> : null}
+      <View role="list" style={[styles.words, { borderTopColor: ds.c.line }]}>
+        {words.map((d) => (
+          <View key={d} role="listitem" style={styles.word}>
+            <FamilyDot dim={d} />
+            <Body style={styles.flex}>{capital(LABEL[d])}</Body>
+            <Caption tone="muted">{level(profile[d])}</Caption>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -139,13 +133,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   text: { flex: 1, minWidth: 0, gap: 2 },
-  scrim: { flex: 1, justifyContent: 'flex-end' },
-  // The height cap sits on the wrapper: a percentage on the sheet resolves against
-  // the content-sized wrapper and leaves a gap under a tall sheet.
-  avoider: { width: '100%', maxWidth: 560, maxHeight: '90%', alignSelf: 'center' },
-  sheet: { flexShrink: 1, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous' },
   scroll: { flexShrink: 1 },
-  body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.md },
+  body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.md },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   match: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
   center: { alignItems: 'center' },

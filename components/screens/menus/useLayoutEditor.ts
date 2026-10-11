@@ -63,7 +63,8 @@ export function useLayoutEditor(menu: MenuDetail) {
   const status = menuStatus(menu, now);
   const changed = layoutChanged(layout, saved);
   const groups = groupMenus(venueMenus.filter((m) => m.barId === menu.barId && m.id !== menu.id), now);
-  const others = [...groups.on, ...groups.upcoming];
+  // A venue's drinks already on (or going on) another of its menus. Home nights don't share drinks out like that.
+  const others = menu.barId ? [...groups.on, ...groups.upcoming] : [];
   const elsewhere: Record<string, string> = {};
   for (const m of others) for (const id of m.itemIds) elsewhere[id] ??= m.name;
   const section = (key: string | null) => layout.sections.find((s) => s.key === key) ?? null;

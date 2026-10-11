@@ -37,7 +37,7 @@ export function RailCard({ id, name, imageUrl, badge, reason, href, profile }: R
       onPress={() => router.push((href ?? itemHref('Cocktail', id)) as never)}
       style={styles.card}
     >
-      <DrinkImage thumb source={imageUrl} itemId={id} accessibilityLabel={name} hideTag />
+      <DrinkImage thumb source={imageUrl} itemId={id} accessibilityLabel={name} />
       <Headline numberOfLines={1}>{name}</Headline>
       <View style={styles.badge}>
         {profile ? <PalateFlower values={profile} size={28} rings={false} /> : null}

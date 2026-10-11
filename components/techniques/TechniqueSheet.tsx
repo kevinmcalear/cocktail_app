@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Caption, GlassButton, sheetFrame, Title, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { BackbarTheme, Caption, GlassButton, Sheet, Title, useSheetClose } from '@/components/ds';
+import { space } from '@/constants/tokens';
 
 interface Props {
   visible: boolean;
@@ -15,41 +15,32 @@ interface Props {
 /** A bottom sheet over the add-drink wizard for a technique choice (how to make a prep, which foamer). */
 export function TechniqueSheet(props: Props) {
   return (
-    <Modal visible={props.visible} transparent animationType="fade" onRequestClose={props.onClose}>
-      <BackbarTheme>
+    <BackbarTheme>
+      <Sheet visible={props.visible} onClose={props.onClose} accessibilityLabel={props.title} ground>
         <Body {...props} />
-      </BackbarTheme>
-    </Modal>
+      </Sheet>
+    </BackbarTheme>
   );
 }
 
-function Body({ onClose, eyebrow, title, children }: Props) {
-  const ds = useDs();
+function Body({ eyebrow, title, children }: Props) {
+  const close = useSheetClose();
   return (
-    <Pressable accessibilityLabel="Close" style={[styles.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-      <View style={[styles.avoider, sheetFrame.scrim]} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            <View style={styles.head}>
-              <View style={styles.flex}>
-                <Caption tone="muted">{eyebrow.toUpperCase()}</Caption>
-                <Title role="heading">{title}</Title>
-              </View>
-              <GlassButton accessibilityLabel="Close" icon="xmark" onPress={onClose} />
-            </View>
-            {children}
-          </ScrollView>
-        </Pressable>
+    <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <View style={styles.head}>
+        <View style={styles.flex}>
+          <Caption tone="muted">{eyebrow.toUpperCase()}</Caption>
+          <Title role="heading">{title}</Title>
+        </View>
+        <GlassButton accessibilityLabel="Close" icon="xmark" onPress={close} />
       </View>
-    </Pressable>
+      {children}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1 },
-  avoider: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
-  sheet: { width: '100%', maxWidth: 560, maxHeight: '92%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet },
-  body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.lg },
+  body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.lg },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
 });

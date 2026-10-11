@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, LockedSection, Segmented, sheetFrame, Spec, Tag, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, LockedSection, Segmented, Sheet, Spec, Tag, Title, useDs, useSheetClose } from '@/components/ds';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
-import { radius, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import {
   BOTTLE_SIZES,
   buildBatch,
@@ -80,20 +80,19 @@ function methodLine(method: BatchMethod, water: { pct: number } | null): string 
  */
 export function BatchSheet(props: BatchSheetProps) {
   return (
-    <Modal visible={props.visible} transparent animationType="fade" onRequestClose={props.onClose}>
-      <BackbarTheme>
-        <BrandProvider accent={props.accent}>
-          <Sheet {...props} />
-        </BrandProvider>
-      </BackbarTheme>
-    </Modal>
+    <BackbarTheme>
+      <BrandProvider accent={props.accent}>
+        <Sheet visible={props.visible} onClose={props.onClose} accessibilityLabel={`Batch ${props.name}`} ground>
+          <BatchBody {...props} />
+        </Sheet>
+      </BrandProvider>
+    </BackbarTheme>
   );
 }
 
-function Sheet({ onClose, name, lines, methodNames, lockedUntil, initialServes = 8, dilutionPct, serviceStyle, abv, canEdit }: BatchSheetProps) {
+function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, dilutionPct, serviceStyle, abv, canEdit }: BatchSheetProps) {
   const ds = useDs();
-  // A percentage max height has nothing to measure on web (the column has no height): use the window.
-  const maxHeight = useWindowDimensions().height * 0.92;
+  const close = useSheetClose();
   const [mode, setMode] = useState<Mode>('serves');
   const [serves, setServes] = useState(initialServes);
   const [unit, setUnit] = useState<VolumeUnit>('ml');
@@ -186,31 +185,22 @@ function Sheet({ onClose, name, lines, methodNames, lockedUntil, initialServes =
   );
 
   return (
-    <Pressable accessibilityLabel="Close batch" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-      <View style={styles.avoider} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground, maxHeight }]} onPress={(e) => e.stopPropagation()}>
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            <View style={styles.head}>
-              <View style={styles.flex}>
-                <Caption tone="muted">Batch</Caption>
-                <Title>{name}</Title>
-                <Caption tone="muted">{methodLine(batch.method, batch.water)}</Caption>
-              </View>
-              <Button label="Done" variant="secondary" onPress={onClose} />
-            </View>
-            {body}
-          </ScrollView>
-        </Pressable>
+    <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <View style={styles.head}>
+        <View style={styles.flex}>
+          <Caption tone="muted">Batch</Caption>
+          <Title>{name}</Title>
+          <Caption tone="muted">{methodLine(batch.method, batch.water)}</Caption>
+        </View>
+        <Button label="Done" variant="secondary" onPress={close} />
       </View>
-    </Pressable>
+      {body}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end' },
-  avoider: { width: '100%', maxWidth: 560, alignSelf: 'center' },
-  sheet: { borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous' },
-  body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.lg },
+  body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.lg },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   eyebrow: { letterSpacing: 1.2 },

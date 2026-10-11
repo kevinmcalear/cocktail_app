@@ -70,7 +70,6 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
                 priority={i === 0 ? 'high' : 'normal'}
                 accessibilityLabel={name}
                 radius={0}
-                hideTag
                 style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height }])}
               />
             </Pressable>
@@ -88,7 +87,7 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
         // Each page's label already says where it is and what it is; this is the visible copy.
         <View style={[styles.badges, { bottom }]} aria-hidden>
           {/* A solid ground behind the warning: the photo under it can be light or dark. */}
-          {tag ? <Tag label={tag} tone={shown.isSketch ? 'sketch' : 'warning'} style={shown.isSketch ? undefined : { backgroundColor: ds.c.ground }} /> : null}
+          {tag ? <Tag label={tag} tone="warning" style={{ backgroundColor: ds.c.ground }} /> : null}
           {total > 1 ? (
             <GlassSurface scheme="dark" style={styles.count}>
               <Caption color={backbar.dark.ink}>{`${index + 1} of ${total}`}</Caption>

@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, DsText, PressableScale, sheetAnimation, sheetIsDialog, Title, useDs } from '@/components/ds';
+import { Caption, DsText, PressableScale, Sheet, sheetIsDialog, Title, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
@@ -19,43 +19,48 @@ interface MenuSheetProps {
 }
 
 /**
- * The app's sheet: slides up over the screen on phones, closes on the scrim.
- * On the web it's a dialog in the middle of the window (components/ds/sheetFrame).
+ * A titled sheet with a scrolling body and an optional footer, on the app's
+ * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
 export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
-  const dialog = sheetIsDialog;
   return (
-    <Modal visible={visible} transparent animationType={sheetAnimation} onRequestClose={onClose} onShow={onShow}>
-      <View style={[styles.scrim, { backgroundColor: ds.c.scrim }]}>
-        <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={onClose} />
-        {/* Lifts the sheet over the keyboard on native (web gets no behaviour, so a plain View). The negative
-            offset lets the keyboard cover the footer's home-indicator padding instead of leaving a gap. */}
-        <KeyboardAvoidingView
-          behavior={Platform.select({ ios: 'padding', android: 'height' })}
-          keyboardVerticalOffset={footer ? -insets.bottom : 0}
-          style={[styles.avoider, dialog && styles.avoiderDialog]}
-        >
-          <View role="dialog" aria-modal accessibilityLabel={title} style={[styles.sheet, dialog && styles.dialog, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}>
-            {dialog ? null : <View style={[styles.grabber, { backgroundColor: ds.c.lineStrong }]} />}
-            <View style={styles.header}>
-              <View style={styles.flex}>
-                <Title>{title}</Title>
-                {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
-              </View>
-              <PressableScale accessibilityLabel="Close" onPress={onClose} style={styles.close}>
-                <IconSymbol name="xmark" size={18} color={ds.c.muted} />
-              </PressableScale>
-            </View>
-            <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              {children}
-            </ScrollView>
-            {footer ? <View style={[styles.footer, { paddingBottom: dialog ? space.lg : insets.bottom + space.lg, borderTopColor: ds.c.line }]}>{footer}</View> : null}
+    // The negative keyboard offset lets the keyboard cover the footer's home-indicator padding instead of leaving a gap.
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      onShow={onShow}
+      accessibilityLabel={title}
+      keyboard
+      keyboardOffset={footer ? -insets.bottom : 0}
+      style={sheetIsDialog ? styles.dialog : undefined}
+      header={
+        <View style={styles.header}>
+          <View style={styles.flex}>
+            <Title>{title}</Title>
+            {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
           </View>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
+          <SheetCloseButton />
+        </View>
+      }
+    >
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        {children}
+      </ScrollView>
+      {footer ? <View style={[styles.footer, { paddingBottom: sheetIsDialog ? space.lg : insets.bottom + space.lg, borderTopColor: ds.c.line }]}>{footer}</View> : null}
+    </Sheet>
+  );
+}
+
+/** The X: closes the sheet it's in the way a drag does, sliding it away first. */
+function SheetCloseButton() {
+  const ds = useDs();
+  const close = useSheetClose();
+  return (
+    <PressableScale accessibilityLabel="Close" onPress={close} style={styles.close}>
+      <IconSymbol name="xmark" size={18} color={ds.c.muted} />
+    </PressableScale>
   );
 }
 
@@ -107,20 +112,7 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1 },
-  avoider: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', pointerEvents: 'box-none' },
-  sheet: {
-    width: '100%',
-    maxWidth: 560,
-    maxHeight: '92%',
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderCurve: 'continuous',
-    paddingTop: space.sm,
-  },
-  avoiderDialog: { justifyContent: 'center', padding: space.xl },
-  dialog: { maxHeight: '86%', borderRadius: radius.card, paddingTop: space.md, borderWidth: StyleSheet.hairlineWidth },
-  grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: radius.pill },
+  dialog: { paddingTop: space.md },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingHorizontal: space.xl, paddingTop: space.md },
   close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.md },
   body: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.xl, gap: space.md },

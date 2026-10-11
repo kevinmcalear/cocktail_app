@@ -1,5 +1,5 @@
 import { toastDone } from '@/lib/toast';
-import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, useRouter, useLocalSearchParams, usePreventRemove } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import {
@@ -12,7 +12,7 @@ import {
 } from "react-native";
 
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
-import { CategoryPickerModal } from "@/components/CategoryPickerModal";
+import { CategoryPickerModal, type CategoryPickerHandle } from "@/components/CategoryPickerModal";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { BrandAndKindFields } from "@/components/ingredient/BrandAndKindFields";
 import { IngredientDrawing } from "@/components/ds";
@@ -89,7 +89,7 @@ function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSa
     const [abv, setAbv] = useState("");
 
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-    const categoryPickerRef = useRef<BottomSheetModal>(null);
+    const categoryPickerRef = useRef<CategoryPickerHandle>(null);
 
     // Bar Assignment and Overrides
     const [barId, setBarId] = useState<string | null>(activeBarIdProp || null);
