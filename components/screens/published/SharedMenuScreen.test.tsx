@@ -11,6 +11,8 @@ let mockMenu: SharedMenuPage | null = null;
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: null, loading: false })));
 jest.mock('@/hooks/useSharedMenu', () => ({ useSharedMenu: () => ({ data: mockMenu, isPending: false }) }));
+const mockToggle = jest.fn();
+jest.mock('./useCollectToggle', () => ({ useCollectToggle: () => ({ saved: false, toggle: mockToggle, sheet: null }) }));
 
 const drink = (id: string, name: string) => ({
   id,
@@ -53,6 +55,14 @@ describe('SharedMenuScreen', () => {
     expect(screen.queryByRole('link', { name: /House drink/ })).toBeNull();
     await fireEvent.press(screen.getByRole('link', { name: /Porch Sour/ }));
     expect(mockPush).toHaveBeenCalledWith('/d/d1');
+  });
+
+  test('each public drink has a Save to make it at home; a private one has none', async () => {
+    await renderWithTamagui(<SharedMenuScreen id="m1" />);
+    expect(screen.queryByLabelText('Save House drink to make at home')).toBeNull();
+    await fireEvent.press(screen.getByLabelText('Save Porch Sour to make at home'));
+    expect(mockToggle).toHaveBeenCalled();
+    expect(screen.getByText('Menu made with Cocktail')).toBeTruthy();
   });
 
   test('credits the owner, opening their profile', async () => {
