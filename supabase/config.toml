@@ -448,5 +448,9 @@ verify_jwt = false
 [functions.flavor-worker]
 verify_jwt = false
 
+# The cron tick calls with a shared secret; people call it signed in, and it checks their session itself.
+[functions.sync-calendar]
+verify_jwt = false
+
 [functions.pair-notes]
 verify_jwt = false

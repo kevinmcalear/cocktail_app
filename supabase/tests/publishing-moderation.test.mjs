@@ -185,10 +185,11 @@ after(async () => {
 describe('published drinks', () => {
   test('signed-out visitors see published drinks and what they reference, nothing private', async () => {
     const seen = await publishedIds(anon);
-    for (const key of ['penicillin', 'goldRush', 'riff', 'strangerRiff', 'rocks', 'scotch', 'syrup']) {
+    for (const key of ['penicillin', 'goldRush', 'riff', 'strangerRiff', 'rocks', 'scotch']) {
       assert.ok(seen.has(ids.items[key]), `${key} should be public`);
     }
-    for (const key of ['houseSour', 'staffDrink', 'monkey']) {
+    // The house syrup isn't published itself, so the spec leaves it unnamed.
+    for (const key of ['houseSour', 'staffDrink', 'monkey', 'syrup']) {
       assert.ok(!seen.has(ids.items[key]), `${key} should not be public`);
     }
   });
@@ -205,13 +206,19 @@ describe('published drinks', () => {
     assert.ok((await anon.from('published_items').select('notes').eq('id', ids.items.penicillin)).error);
   });
 
-  test('a referenced house-made ingredient shows its name only', async () => {
-    const { data, error } = await anon.from('published_items').select('*').eq('id', ids.items.syrup).single();
+  test('a referenced shared ingredient shows its name only', async () => {
+    const { data, error } = await anon.from('published_items').select('*').eq('id', ids.items.scotch).single();
     assert.ifError(error);
     assert.equal(data.is_reference, true);
-    assert.equal(data.name, `Honey-ginger syrup ${run}`);
+    assert.equal(data.name, `Blended Scotch ${run}`);
     assert.equal(data.description, null);
     assert.equal(data.bar_id, null);
+  });
+
+  test("a house-made ingredient that isn't published has no public row", async () => {
+    const { data, error } = await anon.from('published_items').select('id').eq('id', ids.items.syrup);
+    assert.ifError(error);
+    assert.deepEqual(data, []);
   });
 
   test('signed-out visitors still read no items rows directly', async () => {
@@ -247,14 +254,14 @@ describe('specs through app_recipe_presentation', () => {
     assert.equal(rows[1].amount, 22.5);
   });
 
-  test('the spec names its ingredients through published_ingredient', async () => {
+  test('the spec names its shared ingredients through published_ingredient, not the unpublished house syrup', async () => {
     const { data, error } = await anon
       .from('app_recipe_presentation')
       .select('amount, ingredient:published_ingredient(name)')
       .eq('recipe_item_id', ids.items.penicillin)
       .order('sort_order');
     assert.ifError(error);
-    assert.deepEqual(data.map((r) => r.ingredient?.name), [`Blended Scotch ${run}`, `Honey-ginger syrup ${run}`]);
+    assert.deepEqual(data.map((r) => r.ingredient?.name ?? null), [`Blended Scotch ${run}`, null]);
   });
 
   test('a description-only drink returns no spec rows to anyone outside the bar', async () => {
