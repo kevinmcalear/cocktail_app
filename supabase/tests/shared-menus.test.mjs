@@ -242,3 +242,82 @@ describe('screening what a shared menu shows', () => {
     assert.deepEqual(menu.sections.map((s) => s.name), ['Sours']);
   });
 });
+
+// 20261013300000: a venue's one-night menu shares without going live; every menu knows when it was last edited.
+describe('sharing a venue’s one-night menu', () => {
+  const night = { planned_starts_at: '2031-10-31T07:00:00Z', planned_ends_at: '2031-10-31T15:00:00Z' };
+  const nightMenu = async (name, extra = {}) => (await serviceInsert('menus', { name: `${name} ${run}`, bar_id: ids.bar, ...night, ...extra })).id;
+
+  test('a one-night venue menu shares under the venue’s public page; its night comes along', async () => {
+    const id = await nightMenu('Halloween');
+    const res = await share(users.barAdmin.client, id, true);
+    assert.ifError(res.error);
+    assert.ok(res.data[0].shared_at, 'shared');
+    const menu = await read(anon, id);
+    assert.equal(menu.owner.name, `Open Bar ${run}`);
+    assert.equal(new Date(menu.night_starts_at).toISOString(), new Date(night.planned_starts_at).toISOString());
+    // Not live: sharing put nothing on.
+    const { rows } = await db.query('SELECT starts_at, is_active FROM public.menus WHERE id = $1', [id]);
+    assert.equal(rows[0].starts_at, null);
+    assert.equal(rows[0].is_active, false);
+  });
+
+  test('someone outside the venue cannot share it', async () => {
+    const id = await nightMenu('Not yours');
+    const res = await share(users.stranger.client, id, true);
+    assert.deepEqual(res.data ?? [], []);
+    assert.equal(await read(anon, id), null);
+  });
+
+  test('a run longer than a night, an undated menu or R&D never shares', async () => {
+    const week = await nightMenu('Week', { planned_ends_at: '2031-11-07T15:00:00Z' });
+    const rnd = await serviceInsert('menus', { name: `Trials ${run}`, bar_id: ids.bar, kind: 'rnd' });
+    for (const id of [week, ids.barMenu, rnd.id]) {
+      const res = await share(users.barAdmin.client, id, true);
+      assert.ifError(res.error);
+      assert.equal(res.data[0].shared_at, null);
+      assert.equal(await read(anon, id), null);
+    }
+  });
+
+  test('stretching the night past a day stops sharing it', async () => {
+    const id = await nightMenu('Stretch');
+    await share(users.barAdmin.client, id, true);
+    const res = await users.barAdmin.client.from('menus').update({ planned_ends_at: '2031-11-03T15:00:00Z' }).eq('id', id).select('shared_at');
+    assert.ifError(res.error);
+    assert.equal(res.data[0].shared_at, null);
+  });
+
+  test('a venue with no public page cannot share', async () => {
+    await db.query('UPDATE public.profiles SET is_public = false WHERE bar_id = $1', [ids.bar]);
+    try {
+      const id = await nightMenu('Private bar');
+      const res = await share(users.barAdmin.client, id, true);
+      assert.match(res.error?.message ?? '', /public page/);
+    } finally {
+      await db.query('UPDATE public.profiles SET is_public = true WHERE bar_id = $1', [ids.bar]);
+    }
+  });
+});
+
+describe('when a menu was last edited', () => {
+  test('a new section or drink moves updated_at; the is_active sweep does not', async () => {
+    const id = await (async () => (await serviceInsert('menus', { name: `Edited ${run}`, bar_id: ids.bar })).id)();
+    await db.query("UPDATE public.menus SET updated_at = now() - interval '2 days' WHERE id = $1", [id]);
+    const at = async () => (await db.query('SELECT updated_at FROM public.menus WHERE id = $1', [id])).rows[0].updated_at.getTime();
+    const old = await at();
+    await db.query('UPDATE public.menus SET is_active = NOT COALESCE(is_active, false) WHERE id = $1', [id]);
+    assert.equal(await at(), old, 'flipping is_active is not an edit');
+    const section = await users.barAdmin.client.from('menu_sections').insert({ menu_id: id, name: 'Stirred', sort_order: 0 }).select('id').single();
+    assert.ifError(section.error);
+    assert.ok((await at()) > old, 'a new section is an edit');
+    await db.query("UPDATE public.menus SET updated_at = now() - interval '2 days' WHERE id = $1", [id]);
+    const before = await at();
+    const drink = await users.barAdmin.client.from('menu_drinks').insert({ menu_id: id, menu_section_id: section.data.id, item_id: ids.items.barDrink, sort_order: 0 }).select('id');
+    assert.ifError(drink.error);
+    assert.ok((await at()) > before, 'a new drink is an edit');
+    const renamed = await users.barAdmin.client.from('menus').update({ description: 'a control and three trials' }).eq('id', id).select('updated_at');
+    assert.ifError(renamed.error);
+    assert.ok(new Date(renamed.data[0].updated_at).getTime() > before);
+  });
+});

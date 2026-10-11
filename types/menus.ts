@@ -29,6 +29,13 @@ export interface MenuSummary {
   sharedAt: string | null;
   /** A menu, or an R&D collection (trials, flights): never dated, filed apart. */
   kind: 'menu' | 'rnd';
+  /** Last edit to the menu, its sections or its drinks: drafts say "edited yesterday". */
+  updatedAt: string;
+  /** A short note on it ("a control and three trials"). */
+  description: string | null;
+  /** A draft's planned run, or one night, picked in New menu: not live until it goes on. */
+  plannedStartsAt: string | null;
+  plannedEndsAt: string | null;
   itemIds: string[];
   /** The first few drinks' own pictures, for a menu with no cover photo. Null image: drawn from its spec. */
   pictures: MenuPicture[];
