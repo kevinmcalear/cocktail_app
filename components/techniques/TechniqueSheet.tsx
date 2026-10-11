@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Caption, GlassButton, Sheet, Title, useSheetClose } from '@/components/ds';
+import { BackbarTheme, Caption, GlassButton, Sheet, SheetScrollView, Title, useSheetClose } from '@/components/ds';
 import { space } from '@/constants/tokens';
 
 interface Props {
@@ -26,7 +26,7 @@ export function TechniqueSheet(props: Props) {
 function Body({ eyebrow, title, children }: Props) {
   const close = useSheetClose();
   return (
-    <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+    <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <View style={styles.head}>
         <View style={styles.flex}>
           <Caption tone="muted">{eyebrow.toUpperCase()}</Caption>
@@ -35,7 +35,7 @@ function Body({ eyebrow, title, children }: Props) {
         <GlassButton accessibilityLabel="Close" icon="xmark" onPress={close} />
       </View>
       {children}
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Field, Sheet, Spec, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Field, Sheet, SheetScrollView, Spec, Title, useDs } from '@/components/ds';
 import { PrepCalc } from '@/components/tools/PrepCalc';
 import { radius, space } from '@/constants/tokens';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -100,7 +100,7 @@ function ToolsBody({ tool: initial = 'dilute', volumeMl, abv, amount, prepName, 
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+    <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <Caption tone="muted">Tools</Caption>
       <Title>{TOOLS.find((t) => t.value === tool)?.label}</Title>
       <View role="radiogroup" accessibilityLabel="Calculator" style={styles.picks}>
@@ -141,7 +141,7 @@ function ToolsBody({ tool: initial = 'dilute', volumeMl, abv, amount, prepName, 
         </Spec>
         <Body tone="muted">{note}</Body>
       </View>}
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 

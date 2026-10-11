@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, DsText, PressableScale, Sheet, sheetIsDialog, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
+import { Caption, DsText, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
@@ -51,9 +51,9 @@ export function MenuSheet({ visible, onClose, title, subtitle, children, footer,
         )
       }
     >
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {children}
-      </ScrollView>
+      </SheetScrollView>
       {footer ? <View style={[styles.footer, { paddingBottom: sheetIsDialog ? space.lg : insets.bottom + space.lg, borderTopColor: ds.c.line }]}>{footer}</View> : null}
     </Sheet>
   );
