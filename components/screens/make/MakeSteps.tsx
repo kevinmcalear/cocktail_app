@@ -1,16 +1,20 @@
+import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, PressableScale, Spec, Surface, Title, useDs } from '@/components/ds';
-import { StepTimer } from '@/components/prep/StepTimer';
+import { Body, Caption, Chip, DsText, PressableScale, Spec, Surface, Title, useDs } from '@/components/ds';
+import { BigTimer } from '@/components/prep/StepTimer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import type { StepPart } from '@/lib/makeSteps';
 import type { ScaledLine } from '@/lib/scale';
 
-/** Make, second screen: everything out on the bench, ticked off as it comes out. */
-export function MakeGather({ lines, got, onToggle }: { lines: ScaledLine[]; got: string[]; onToggle: (id: string) => void }) {
+import { weighHint, type KitItem } from './makeLogic';
+
+/** Make, second screen: everything out on the bench, ticked off as it comes out, and the kit to get out with it. */
+export function MakeGather({ lines, got, onToggle, kit }: { lines: ScaledLine[]; got: string[]; onToggle: (id: string) => void; kit: KitItem[] }) {
   const ds = useDs();
+  const router = useRouter();
   const weighed = lines.filter((l) => /\b(k?g)$/.test(l.scaled)).length;
   return (
     <View style={styles.stack}>
@@ -33,13 +37,28 @@ export function MakeGather({ lines, got, onToggle }: { lines: ScaledLine[]; got:
               <Spec tone={on ? 'muted' : 'ink'} style={[styles.amount, on && styles.struck]}>
                 {l.scaled}
               </Spec>
-              <Body tone={on ? 'muted' : 'ink'} style={[styles.name, on && styles.struck]}>
-                {l.name}
-              </Body>
+              <View style={styles.name}>
+                <Body tone={on ? 'muted' : 'ink'} style={on && styles.struck}>
+                  {l.name}
+                </Body>
+                {weighHint(l) ? <Caption tone="muted">{weighHint(l)}</Caption> : null}
+              </View>
             </PressableScale>
           );
         })}
       </Surface>
+      <Caption tone="muted" role="heading" style={styles.eyebrow}>KIT</Caption>
+      <View style={styles.kit}>
+        {kit.map((k) =>
+          k.equipment ? (
+            <Chip key={k.name} label={k.name} selected={false} onPress={() => router.push(`/equipment/${k.equipment}` as never)} accessibilityLabel={`${k.name}, opens the kit page`} />
+          ) : (
+            <View key={k.name} style={[styles.kitItem, { borderColor: ds.c.lineStrong }]}>
+              <Caption>{k.name}</Caption>
+            </View>
+          ),
+        )}
+      </View>
       {weighed >= 2 ? (
         <View style={[styles.tip, { backgroundColor: ds.c.raised }]}>
           <IconSymbol name="info.circle" size={18} color={ds.c.ink} />
@@ -51,12 +70,25 @@ export function MakeGather({ lines, got, onToggle }: { lines: ScaledLine[]; got:
   );
 }
 
-/** Make, one step: big enough to read from the bench, the amounts in the words, and its timer. */
-export function MakeStep({ index, total, name, parts, timer, suggested, next }: { index: number; total: number; name: string; parts: StepPart[]; timer: number | null; suggested: boolean; next: string | null }) {
+interface MakeStepProps {
+  index: number;
+  total: number;
+  name: string;
+  /** The size being made ("750 ml"), in the eyebrow. */
+  size: string | null;
+  parts: StepPart[];
+  /** The rest of the step after its first sentence, quieter. */
+  hint: string | null;
+  timer: number | null;
+  next: string | null;
+}
+
+/** Make, one step: big enough to read from the bench, the amounts in the words, a hint, and its timer. */
+export function MakeStep({ index, total, name, size, parts, hint, timer, next }: MakeStepProps) {
   const ds = useDs();
   return (
     <View style={styles.stack}>
-      <Caption tone="muted" style={styles.eyebrow}>{`STEP ${index + 1} OF ${total} · ${name.toUpperCase()}`}</Caption>
+      <Caption tone="muted" style={styles.eyebrow}>{[`STEP ${index + 1} OF ${total}`, name, size].filter(Boolean).join(' · ').toUpperCase()}</Caption>
       <DsText variant="title">
         {parts.map((p, i) =>
           p.amount ? (
@@ -70,15 +102,8 @@ export function MakeStep({ index, total, name, parts, timer, suggested, next }: 
           ),
         )}
       </DsText>
-      {timer ? (
-        <Surface style={styles.timer}>
-          <View style={styles.name}>
-            <Body>{suggested ? 'Timer from the step' : 'Timer'}</Body>
-            <Caption tone="muted">Starts on tap. It keeps time if you leave the app.</Caption>
-          </View>
-          <StepTimer seconds={timer} />
-        </Surface>
-      ) : null}
+      {hint ? <Body tone="muted">{hint}</Body> : null}
+      {timer ? <BigTimer key={index} seconds={timer} label={`Step ${index + 1} timer`} /> : null}
       {next ? (
         <View style={[styles.next, { borderTopColor: ds.c.line }]}>
           <Caption tone="muted">UP NEXT</Caption>
@@ -100,6 +125,7 @@ const styles = StyleSheet.create({
   struck: { textDecorationLine: 'line-through' },
   tip: { flexDirection: 'row', gap: space.md, padding: space.md, borderRadius: radius.control, alignItems: 'flex-start' },
   center: { textAlign: 'center' },
-  timer: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  kit: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  kitItem: { minHeight: layout.minTapTarget - space.sm, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'center' },
   next: { gap: 2, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
 });
