@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Sheet, Title } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Sheet, SheetScrollView, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSetGlassSize, useSetIcePerServe } from '@/hooks/useGlassIce';
 import { useCanEditItem } from '@/hooks/useViewAs';
@@ -73,7 +73,7 @@ function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, canEdi
   const iceProblem = iceN !== null && !(iceN >= 0) ? 'Ice is 0 g or more.' : null;
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+    <SheetScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <Caption tone="muted">Glass and ice</Caption>
       <Title>{name}</Title>
       {glass ? (
@@ -117,7 +117,7 @@ function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, canEdi
         ) : null}
       </View>
       <DrinkMakerCredits itemId={itemId} canEdit={canEditDrink} />
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 
