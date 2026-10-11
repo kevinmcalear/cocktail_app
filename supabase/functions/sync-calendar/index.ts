@@ -109,7 +109,6 @@ interface Source {
   id: string;
   bar_id: string;
   url: string;
-  starts_public: boolean;
   skipped_uids: string[];
 }
 
@@ -130,7 +129,7 @@ async function syncDue(admin: SupabaseClient) {
 }
 
 async function syncOne(admin: SupabaseClient, sourceId: string) {
-  const { data: source, error } = await admin.from("calendar_sources").select("id, bar_id, url, starts_public, skipped_uids").eq("id", sourceId).single<Source>();
+  const { data: source, error } = await admin.from("calendar_sources").select("id, bar_id, url, skipped_uids").eq("id", sourceId).single<Source>();
   if (error) throw error;
   const now = Date.now();
   let events: CalendarEvent[];
@@ -159,10 +158,10 @@ async function syncOne(admin: SupabaseClient, sourceId: string) {
       continue;
     }
     const kind = guessKind(e.name, e.description);
-    const row = { ...fields, bar_id: source.bar_id, source_id: source.id, external_uid: e.uid, kind, is_public: source.starts_public && kind !== "private" && !looksInternal(e.name) };
-    let { error: insError } = await admin.from("events").insert(row);
-    // The content filter refused it in public: bring it in for the team instead.
-    if (insError?.code === "P0001" && row.is_public) ({ error: insError } = await admin.from("events").insert({ ...row, is_public: false }));
+    // New events land Team only, whatever starts_public says: someone on the
+    // team opens each one and publishes it. starts_public only pre-selects
+    // Everyone in the app's event sheet when they do.
+    const { error: insError } = await admin.from("events").insert({ ...fields, bar_id: source.bar_id, source_id: source.id, external_uid: e.uid, kind, is_public: false });
     if (!insError) added++;
   }
 

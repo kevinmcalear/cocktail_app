@@ -17,7 +17,7 @@ interface DayProps {
 }
 
 /** Desktop: the week as seven columns of cards, today first and underlined in the accent. `bar` names each card's bar, for home. */
-export function WeekColumns({ days, from, member, onAdd, bar }: DayProps & { bar?: boolean }) {
+export function WeekColumns({ days, from, member, onAdd, bar, imported }: DayProps & { bar?: boolean; imported?: string[] }) {
   const ds = useDs();
   return (
     <View style={styles.grid}>
@@ -32,7 +32,7 @@ export function WeekColumns({ days, from, member, onAdd, bar }: DayProps & { bar
               </DsText>
             </View>
             {items.map((item) => (
-              <WeekCard key={`${item.kind}-${item.id}`} item={item} member={member} bar={bar} />
+              <WeekCard key={`${item.kind}-${item.id}`} item={item} member={member} bar={bar} fromCalendar={item.kind === 'event' && !!imported?.includes(item.id)} />
             ))}
             {onAdd ? <AddButton day={h.date} onPress={() => onAdd(day)} /> : null}
           </View>
@@ -69,7 +69,7 @@ export function WeekAgenda({ days, from, member, onAdd, bar }: DayProps & { bar?
   );
 }
 
-function WeekCard({ item, member, bar }: { item: WeekItem; member: boolean; bar?: boolean }) {
+function WeekCard({ item, member, bar, fromCalendar }: { item: WeekItem; member: boolean; bar?: boolean; fromCalendar?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const color = useDotColor()(item);
@@ -80,6 +80,7 @@ function WeekCard({ item, member, bar }: { item: WeekItem; member: boolean; bar?
   const notes = [
     item.houseMenuOn && (item.eventKind === 'takeover' || item.eventKind === 'guest_shift') ? 'House menu still on' : null,
     host ? `Tickets on ${host}` : null,
+    fromCalendar ? 'From your calendar' : null,
   ].filter((n): n is string => !!n);
   return (
     <PressableScale

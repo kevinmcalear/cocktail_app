@@ -89,10 +89,10 @@ export function CalendarImport({ barId, onDone }: { barId: string; onDone: () =>
         </View>
       ) : null}
       {found?.length ? (
-        <View role="radiogroup" accessibilityLabel="Events from this calendar start as" style={styles.who}>
-          <Caption tone="muted">Events from this calendar start as</Caption>
-          <Choice label="Team only" detail="Open each one up when you're ready" selected={!startsPublic} onPress={() => setStartsPublic(false)} />
-          <Choice label="Everyone" detail="Staff and private ones still stay with the team" selected={startsPublic} onPress={() => setStartsPublic(true)} />
+        <View role="radiogroup" accessibilityLabel="When you publish one, start it as" style={styles.who}>
+          <Caption tone="muted">New events come in for your team only. When you open one to publish it, start it as</Caption>
+          <Choice label="Everyone" detail="Private ones still start as Team only" selected={startsPublic} onPress={() => setStartsPublic(true)} />
+          <Choice label="Team only" detail="Pick Everyone on each one yourself" selected={!startsPublic} onPress={() => setStartsPublic(false)} />
           <Caption tone="muted">We check the link every three hours. Changes in your calendar come through; your changes here stay.</Caption>
         </View>
       ) : null}
@@ -107,7 +107,7 @@ export function CalendarImport({ barId, onDone }: { barId: string; onDone: () =>
                 <Body numberOfLines={1}>{host(s.url)}</Body>
                 <Caption tone="muted">
                   {s.last_error ?? (s.last_synced_at ? `Checked ${when(s.last_synced_at)}` : 'Not checked yet')}
-                  {s.starts_public ? ' · new ones start as Everyone' : ' · new ones start as Team only'}
+                  {s.starts_public ? ' · new ones come in Team only, set to Everyone when you open them' : ' · new ones come in Team only'}
                 </Caption>
               </View>
               <Button label="Remove" variant="ghost" accessibilityLabel={`Stop bringing in ${host(s.url)}`} onPress={() => remove.mutate(s.id)} disabled={remove.isPending} />

@@ -14,7 +14,7 @@ import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { useBarProfile } from '@/hooks/useRankings';
-import { useBarWeek, useMyWeek, useWeekStart } from '@/hooks/useWeek';
+import { useBarWeek, useCalendarEventIds, useMyWeek, useWeekStart } from '@/hooks/useWeek';
 import { toDay } from '@/lib/collection';
 import { itemHref } from '@/lib/itemRoutes';
 import { menuStatus } from '@/lib/menus';
@@ -57,6 +57,8 @@ export function WeekScreen() {
   const [now] = useState(() => Date.now());
   const [filter, setFilter] = useState<WeekFilter>('all');
   const [addingOn, setAddingOn] = useState<string | null>(null);
+  const [linking, setLinking] = useState(false);
+  const { data: imported } = useCalendarEventIds(canAdd ? barId : null);
   // Dates come from the device's clock, which the static web build doesn't have.
   const hydrated = useIsHydrated();
 
@@ -77,7 +79,14 @@ export function WeekScreen() {
           subtitle={hydrated ? subtitle : null}
           width={wide ? 'wide' : 'text'}
           onBack={() => (router.canGoBack() ? router.back() : router.navigate('/'))}
-          action={canAdd ? <Button label="Add event" icon="plus" onPress={() => setAddingOn(toDay(from))} /> : null}
+          action={
+            canAdd ? (
+              <View style={styles.actions}>
+                <Button label="Calendar link" icon="link" variant="secondary" onPress={() => setLinking(true)} />
+                <Button label="Add event" icon="plus" onPress={() => setAddingOn(toDay(from))} />
+              </View>
+            ) : null
+          }
         />
         {venue ? (
           <View role="radiogroup" accessibilityLabel="Show" style={styles.chips}>
@@ -87,7 +96,7 @@ export function WeekScreen() {
           </View>
         ) : null}
         {!hydrated ? null : wide ? (
-          <WeekColumns days={days} from={from} member={venue} bar={!venue} onAdd={canAdd ? setAddingOn : undefined} />
+          <WeekColumns days={days} from={from} member={venue} bar={!venue} imported={imported} onAdd={canAdd ? setAddingOn : undefined} />
         ) : (
           <>
             <WeekRibbon days={days} today={toDay(from)} />
@@ -108,6 +117,7 @@ export function WeekScreen() {
         </View>
       </ScrollView>
       {addingOn && barId ? <EventSheet visible barId={barId} menus={eventMenus} day={addingOn} onClose={() => setAddingOn(null)} /> : null}
+      {linking && barId ? <EventSheet visible barId={barId} menus={eventMenus} tab="link" onClose={() => setLinking(false)} /> : null}
     </View>
   );
 }
@@ -197,6 +207,7 @@ function GuestView({ items, from, barId, barName }: { items: WeekItem[]; from: D
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { gap: space.lg },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   empty: { gap: space.sm, paddingVertical: space.md },
   retry: { alignSelf: 'flex-start' },

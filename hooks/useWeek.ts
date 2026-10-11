@@ -102,15 +102,41 @@ export interface EventDraft {
 
 const DRAFT_COLUMNS = 'id, bar_id, name, kind, starts_at, ends_at, is_public, house_menu_on, guest_profile_id, guest_name, description, ticket_url, menu_id';
 
+/** An event as saved, with the calendar it came from (if any): read only, never sent back on save. */
+export interface SavedEvent extends EventDraft {
+  source: { starts_public: boolean } | null;
+}
+
 export function useEventDraft(id: string | null | undefined) {
   const userId = useUserId();
   return useQuery({
     queryKey: ['week', 'draft', id, userId],
     enabled: !!id && !!userId,
-    queryFn: async (): Promise<EventDraft | null> => {
-      const { data, error } = await supabase.from('events').select(DRAFT_COLUMNS).eq('id', id!).maybeSingle();
+    queryFn: async (): Promise<SavedEvent | null> => {
+      const { data, error } = await supabase.from('events').select(`${DRAFT_COLUMNS}, source:calendar_sources(starts_public)`).eq('id', id!).maybeSingle();
       if (error) throw error;
-      return (data as EventDraft | null) ?? null;
+      return (data as SavedEvent | null) ?? null;
+    },
+  });
+}
+
+/** Which of a venue's events came in from a calendar link, for "From your calendar" on the week's cards. */
+export function useCalendarEventIds(barId: string | null | undefined) {
+  const from = useWeekStart();
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['week', 'from-calendar', barId, from.toISOString(), userId],
+    enabled: !!barId && !!userId,
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('id')
+        .eq('bar_id', barId!)
+        .not('source_id', 'is', null)
+        .gte('starts_at', new Date(from.getTime() - 86400000).toISOString())
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []).map((r) => (r as { id: string }).id);
     },
   });
 }

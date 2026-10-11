@@ -8,7 +8,7 @@ import { SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { radius, space } from '@/constants/tokens';
 import { useCreateMenu, useDeleteMenu } from '@/hooks/useMenuMutations';
 import { useBarProfile } from '@/hooks/useRankings';
-import { useSaveEvent, type EventDraft } from '@/hooks/useWeek';
+import { useSaveEvent, type SavedEvent } from '@/hooks/useWeek';
 import { toDay } from '@/lib/collection';
 import { blankSection } from '@/lib/menuLayout';
 import { cleanTicketUrl, EVENT_KINDS, type EventKind } from '@/lib/week';
@@ -32,7 +32,7 @@ interface EventSheetProps {
   barId: string;
   menus: MenuOption[];
   /** Editing: the event as saved. Adding: undefined. */
-  event?: EventDraft;
+  event?: SavedEvent;
   /** Adding from a day on the week page: that day (2026-10-14). */
   day?: string;
   /** Opens on "From a calendar link" (the week page's Calendar link button). */
@@ -79,7 +79,8 @@ export function EventSheet({ visible, onClose, barId, menus, event, day, tab: fi
   const [houseMenuOn, setHouseMenuOn] = useState(event?.house_menu_on ?? true);
   const [description, setDescription] = useState(event?.description ?? '');
   const [ticket, setTicket] = useState(event?.ticket_url ?? '');
-  const [isPublic, setIsPublic] = useState(event?.is_public ?? false);
+  // An event from a calendar comes in Team only; its calendar's setting picks the choice when someone opens it to publish.
+  const [isPublic, setIsPublic] = useState(event ? event.is_public || (!!event.source?.starts_public && event.kind !== 'private') : false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'one' | 'link'>(event ? 'one' : firstTab);
 
@@ -218,6 +219,7 @@ export function EventSheet({ visible, onClose, barId, menus, event, day, tab: fi
         ) : (
           <View role="radiogroup" accessibilityLabel="Who sees it" style={styles.who}>
             <Caption tone="muted">Who sees it</Caption>
+            {event?.source && !event.is_public ? <Caption tone="muted">From your calendar: only your team sees it until you save it for Everyone.</Caption> : null}
             <Choice label="Everyone" detail="Your page, Discover, followers" selected={isPublic} onPress={() => setIsPublic(true)} />
             <Choice label="Team only" detail="Tonight and the sidebar" selected={!isPublic} onPress={() => setIsPublic(false)} />
           </View>
