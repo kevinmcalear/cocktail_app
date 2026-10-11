@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
-import { memo, useState, type ReactNode } from 'react';
+import { memo, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Body, Button, Caption, Field, Headline, IngredientThumb, Segmented, Surface } from '@/components/ds';
+import { Body, Button, Caption, Field, Headline, IngredientThumb, RowScore, scoreWords, Segmented, Surface } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
@@ -19,10 +19,16 @@ export interface AwayGroup {
   drinks: BarItem[];
 }
 
-/** "92% match", once the person's taste is known. */
-type MatchFor = (id: string) => string | undefined;
-/** A small palate flower at the end of the row, when the drink's flavor is known. */
-type GlyphFor = (id: string) => ReactNode;
+/** "92% match" (under the score, once the person has ranked enough), or the caption's note ("Make the Simple syrup first"). */
+type TextFor = (id: string) => string | undefined;
+/** The drink's score, where people have ranked it. */
+type ScoreFor = (id: string) => number | undefined;
+/** What a What to make row says: its prep note in the caption, its score and % match at the end (g145, b47). */
+export interface MakeRowText {
+  matchFor: TextFor;
+  noteFor: TextFor;
+  scoreFor: ScoreFor;
+}
 
 /** What to make's search: what's typed, and how far each section of results is shown. */
 export function useMakeSearch() {
@@ -97,14 +103,29 @@ export function MakeHead({
 }
 
 /** A drink you can make. Memoized like the other list rows: every change to the list re-renders its rows. */
-export const MakeDrink = memo(function MakeDrink({ drink, matchFor, glyphFor }: { drink: BarItem; matchFor: MatchFor; glyphFor?: GlyphFor }) {
+export const MakeDrink = memo(function MakeDrink({ drink, text }: { drink: BarItem; text: MakeRowText }) {
   // A classic says where it's served; a bar's version says which bar, and what its variation changes:
-  // "Served at Harry's Bar, The Gold Room +5", "The Long Island Bar · uses Rye Whiskey, not Bourbon · 92% match".
+  // "Served at Harry's Bar, The Gold Room +5", "The Long Island Bar · uses Rye Whiskey, not Bourbon · Make the Simple syrup first".
   const where = drink.served ? servedCaption(drink.served.count, drink.served.bars) : drink.from?.name;
-  const caption = [where, drink.variation, matchFor(drink.id)].filter(Boolean).join(' · ') || undefined;
+  const caption = [where, drink.variation, text.noteFor(drink.id)].filter(Boolean).join(' · ') || undefined;
   const bar = drink.served?.bars[0] ?? drink.from;
   const logo = bar ? { uri: bar.logo, name: bar.name } : undefined;
-  return <DrinkRow name={drink.name} itemId={drink.id} href={itemHref('Cocktail', drink.id)} imageUrl={drink.imageUrl} glass={drink.glass} caption={caption} logo={logo} trailing={glyphFor?.(drink.id)} />;
+  const score = text.scoreFor(drink.id);
+  const match = text.matchFor(drink.id);
+  const said = scoreWords(score, match);
+  return (
+    <DrinkRow
+      name={drink.name}
+      itemId={drink.id}
+      href={itemHref('Cocktail', drink.id)}
+      imageUrl={drink.imageUrl}
+      glass={drink.glass}
+      caption={caption}
+      logo={logo}
+      trailing={<RowScore score={score} detail={match} />}
+      label={said ? [drink.name, caption, said].filter(Boolean).join('. ') : undefined}
+    />
+  );
 });
 
 /** A tab with nothing in it, and where to look instead. */
@@ -161,7 +182,7 @@ export function MakeFoot({ more, searching, onMore }: { more: number; searching?
 }
 
 /** The bottles to buy, what they open (three, then all on a tap), and Add. Memoized, as a list row. */
-export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, matchFor, glyphFor, onAdd, style }: { id: string; group: AwayGroup; open: boolean; onOpen: (id: string) => void; matchFor: MatchFor; glyphFor?: GlyphFor; onAdd: (ingredientIds: string[]) => void; style?: StyleProp<ViewStyle> }) {
+export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, text, onAdd, style }: { id: string; group: AwayGroup; open: boolean; onOpen: (id: string) => void; text: MakeRowText; onAdd: (ingredientIds: string[]) => void; style?: StyleProp<ViewStyle> }) {
   const { bottles, drinks } = group;
   const names = bottles.map((b) => b.name).join(' + ');
   const rest = drinks.length - PER_BOTTLE;
@@ -189,7 +210,7 @@ export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, 
         </View>
       </View>
       {(open ? drinks : drinks.slice(0, PER_BOTTLE)).map((d) => (
-        <MakeDrink key={d.id} drink={d} matchFor={matchFor} glyphFor={glyphFor} />
+        <MakeDrink key={d.id} drink={d} text={text} />
       ))}
       {rest > 0 && !open ? <Button label={`and ${rest} more`} variant="ghost" onPress={() => onOpen(id)} /> : null}
     </Surface>

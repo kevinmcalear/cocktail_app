@@ -6,7 +6,7 @@ import { useBarMembers } from '@/hooks/useBarDetail';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { useBarPublishing } from '@/hooks/usePublishing';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
-import { PUBLISH_COPY } from '@/lib/publishing';
+import { PAGE_COPY } from '@/lib/pageVisibility';
 import { canManageTeam } from '@/lib/team';
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -54,7 +54,7 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
         icon="globe"
         label="Publishing"
         detail="Who outside the venue sees your drinks"
-        value={publishing ? PUBLISH_COPY[publishing.barDefault].label : undefined}
+        value={publishing ? PAGE_COPY[publishing.pageVisibility]?.label : undefined}
         onPress={go('publishing')}
       />
       <RowDivider />

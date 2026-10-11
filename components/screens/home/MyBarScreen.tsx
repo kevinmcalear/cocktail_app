@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, PalateFlower, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Display, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
-import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
+import { useItemFlavors, useItemScores, useMyTaste } from '@/hooks/useFlavor';
 import { useKit } from '@/hooks/useKit';
 import { useMadePreps, useMyBar, usePantryItems, useShelfEdit, type BarItem, type ShelfItem } from '@/hooks/useHomeBar';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
@@ -21,7 +21,7 @@ import { MakeFirst } from './MakeFirst';
 import { PantrySection } from './PantrySection';
 import { Projects } from './Projects';
 import { BottleTiles, ShelfFoot, ShelfHead } from './ShelfSection';
-import { BottleGroup, MakeDrink, MakeEmpty, MakeFoot, MakeHead, MakeSearchRow, useMakeSearch, type AwayGroup } from './WhatToMake';
+import { BottleGroup, MakeDrink, MakeEmpty, MakeFoot, MakeHead, MakeSearchRow, useMakeSearch, type AwayGroup, type MakeRowText } from './WhatToMake';
 
 type Row = MyBarRow<ShelfItem, BarItem, AwayGroup>;
 
@@ -79,11 +79,8 @@ export function MyBarScreen() {
   const { data: me } = useMyTaste();
   // Match percentages only once your taste comes from enough rankings.
   const scored = me && me.basis === 'ranked' && me.rankedDrinks >= COLD_START_DRINKS ? me.taste : null;
-  const profiles = useItemFlavors([...bar.canMake, ...[...bar.oneAway, ...bar.twoAway].flatMap((g) => g.drinks)].map((d) => d.id), !!scored);
-  const glyphFor = (id: string) => {
-    const profile = profiles.data?.[id];
-    return profile ? <PalateFlower values={profile} size={28} rings={false} /> : null;
-  };
+  const makeIds = [...bar.canMake, ...[...bar.oneAway, ...bar.twoAway].flatMap((g) => g.drinks)].map((d) => d.id);
+  const profiles = useItemFlavors(makeIds, !!scored);
   // Make first: preps the shelf covers but you haven't made, kept to the ready drinks that need them.
   const made = useMadePreps();
   const toMake = (made.data ?? [])
@@ -101,9 +98,15 @@ export function MyBarScreen() {
     const mine = d.shelfUses?.find((id) => prepNames.has(id));
     if (mine && !notes.has(d.id)) notes.set(d.id, `With your ${prepNames.get(mine)}`);
   }
-  const matchFor = (id: string) => {
-    const profile = scored && profiles.data?.[id];
-    return [profile ? `${matchPercent(scored, profile)}% match` : null, notes.get(id)].filter(Boolean).join(' · ') || undefined;
+  // Each row: its score at the end with % match under it (only past the cold start), the prep note in its caption.
+  const scores = useItemScores(makeIds).data;
+  const text: MakeRowText = {
+    matchFor: (id) => {
+      const profile = scored && profiles.data?.[id];
+      return profile ? `${matchPercent(scored, profile)}% match` : undefined;
+    },
+    noteFor: (id) => notes.get(id),
+    scoreFor: (id) => scores?.[id],
   };
 
   // Projects need kit or a lab shelf to mean anything; until then the tab isn't offered.
@@ -188,7 +191,7 @@ export function MyBarScreen() {
           </View>
         );
       case 'drink':
-        return <MakeDrink drink={item.drink} matchFor={matchFor} glyphFor={glyphFor} />;
+        return <MakeDrink drink={item.drink} text={text} />;
       case 'group':
         return (
           <BottleGroup
@@ -196,8 +199,7 @@ export function MyBarScreen() {
             group={item.group}
             open={openGroups.has(item.key)}
             onOpen={openGroup}
-            matchFor={matchFor}
-            glyphFor={glyphFor}
+            text={text}
             onAdd={addIds}
             style={rows[index - 1]?.kind === 'group' ? styles.nextGroup : null}
           />

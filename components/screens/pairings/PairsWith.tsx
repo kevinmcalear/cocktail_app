@@ -2,8 +2,10 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, PressableScale, Surface, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, PressableScale, RowScore, scoreWords, Surface, useDs } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
+import { useDrinkSources } from '@/hooks/useDrinkSources';
+import { useItemScores } from '@/hooks/useFlavor';
 import { usePairDrinks, usePairings, usePairNote } from '@/hooks/usePairings';
 
 import { PairChip } from './PairChip';
@@ -39,7 +41,7 @@ export function PairsWith({ itemId, name }: { itemId: string; name: string }) {
           />
         ))}
       </View>
-      {picked ? <PairDrinks a={itemId} b={picked.id} title={`${picked.name} and ${name}`} /> : null}
+      {picked ? <PairDrinks a={itemId} b={picked.id} title={`${picked.name} and ${name}`} total={picked.together[0]} /> : null}
       <Button
         label="Open the flavor map"
         variant="secondary"
@@ -50,34 +52,54 @@ export function PairsWith({ itemId, name }: { itemId: string; name: string }) {
   );
 }
 
-/** The drinks behind one pairing, each opening its page. */
-function PairDrinks({ a, b, title }: { a: string; b: string; title: string }) {
+/**
+ * The drinks behind one pairing, each opening its page: who made it and
+ * where, Classic or Riff, its score (b02), then how many more there are.
+ */
+function PairDrinks({ a, b, title, total }: { a: string; b: string; title: string; total: number }) {
   const ds = useDs();
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
   const { data: drinks = [], isLoading } = usePairDrinks(a, b);
   const { data: note } = usePairNote(a, b);
+  const { data: sources } = useDrinkSources(drinks.map((d) => d.id));
+  const { data: scores } = useItemScores(drinks.map((d) => d.id));
+  const more = total - drinks.length;
   return (
-    <View style={styles.drinks}>
-      <Body>{title}</Body>
+    <Surface raised style={styles.drinks}>
+      <Headline>{title}</Headline>
       {note ? <Caption tone="muted">{note}</Caption> : null}
       {isLoading ? <Caption tone="muted">Finding the drinks…</Caption> : null}
-      {drinks.map((d) => (
-        <PressableScale
-          key={d.id}
-          role="link"
-          accessibilityLabel={`Open ${d.name}`}
-          onPressIn={() => prefetch(d.id, { name: d.name })}
-          onPress={() => router.push(`/cocktail/${d.id}`)}
-          style={[styles.row, { borderTopColor: ds.c.line }]}
-        >
-          <Body numberOfLines={1} style={styles.rowName}>
-            {d.name}
-          </Body>
-          <Caption tone="muted">{d.isCatalog ? 'Classic' : 'Bar'}</Caption>
-        </PressableScale>
-      ))}
-    </View>
+      {drinks.map((d) => {
+        const src = sources?.[d.id];
+        const kind = d.isCatalog || src?.classic ? 'Classic' : src?.riff ? 'Riff' : 'Original';
+        const by = src && !src.classic ? [src.by, src.city].filter(Boolean).join(', ') : null;
+        const score = scores?.[d.id];
+        return (
+          <PressableScale
+            key={d.id}
+            role="link"
+            accessibilityLabel={[`Open ${d.name}`, by, kind, scoreWords(score)].filter(Boolean).join(', ')}
+            onPressIn={() => prefetch(d.id, { name: d.name })}
+            onPress={() => router.push(`/cocktail/${d.id}`)}
+            style={[styles.row, { borderTopColor: ds.c.line }]}
+          >
+            <View style={styles.rowName}>
+              <Body numberOfLines={1}>{d.name}</Body>
+              <Caption tone="muted" numberOfLines={1}>
+                {[by, kind].filter(Boolean).join(' · ')}
+              </Caption>
+            </View>
+            <RowScore score={score} />
+          </PressableScale>
+        );
+      })}
+      {more > 0 && !isLoading ? (
+        <View style={[styles.row, { borderTopColor: ds.c.line }]}>
+          <Caption tone="muted">{`${more} more ${more === 1 ? 'drink' : 'drinks'}`}</Caption>
+        </View>
+      ) : null}
+    </Surface>
   );
 }
 
@@ -91,7 +113,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.md,
     minHeight: layout.minTapTarget,
+    paddingVertical: space.xs,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  rowName: { flex: 1 },
+  rowName: { flex: 1, minWidth: 0 },
 });
