@@ -77,10 +77,10 @@ export function ServiceSection({ itemId, barId, name, links, canEdit, glass, wid
   );
 }
 
-/** A service photo as the viewer shows it: its angle, tagged when it's a sketch or out of date. */
+/** A service photo as the viewer shows it: its angle, tagged when it's out of date. */
 function viewed(shot: ServiceShot): ViewedPhoto {
   const tag = pictureTag(shot.picture);
-  return { url: shot.picture!.url, title: shot.label, tag: tag ? { label: tag, tone: shot.picture!.isSketch ? 'sketch' : 'warning' } : null };
+  return { url: shot.picture!.url, title: shot.label, tag: tag ? { label: tag, tone: 'warning' } : null };
 }
 
 function ShotTile({ shot, name, glass, basis, onOpen }: { shot: ServiceShot; name: string; glass: string | null; basis: `${number}%`; onOpen: () => void }) {
@@ -93,10 +93,10 @@ function ShotTile({ shot, name, glass, basis, onOpen }: { shot: ServiceShot; nam
       onPress={onOpen}
       style={[styles.tile, { flexBasis: basis }]}
     >
-      <DrinkImage source={shot.picture.url} generated={shot.picture.isSketch} glass={glass} accessibilityLabel={`${name}, ${shot.label}`} aspectRatio={1} radius="control" hideTag />
+      <DrinkImage source={shot.picture.url} generated={shot.picture.isSketch} glass={glass} accessibilityLabel={`${name}, ${shot.label}`} aspectRatio={1} radius="control" />
       <View style={styles.caption}>
         <Caption>{shot.label}</Caption>
-        {tag ? <Tag label={tag} tone={shot.picture.isSketch ? 'sketch' : 'warning'} /> : null}
+        {tag ? <Tag label={tag} tone="warning" /> : null}
       </View>
     </PressableScale>
   );

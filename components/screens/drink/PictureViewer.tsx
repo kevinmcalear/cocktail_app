@@ -90,7 +90,7 @@ function Viewer({ pictures, name, startIndex, onClose }: Omit<PictureViewerProps
           </Title>
           <View style={styles.meta}>
             {total > 1 ? <Caption tone="muted">{`${index + 1} of ${total}`}</Caption> : null}
-            {tag ? <Tag label={tag} tone={picture.isSketch ? 'sketch' : 'warning'} /> : null}
+            {tag ? <Tag label={tag} tone="warning" /> : null}
           </View>
         </View>
         <GlassButton

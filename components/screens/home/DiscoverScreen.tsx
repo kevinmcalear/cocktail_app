@@ -6,7 +6,6 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Caption, Display, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { EightBallButton } from '@/components/screens/eightball/EightBallProvider';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { ClosedBars } from '@/components/screens/home/ClosedBars';
 import { areaChipLabel, FilterRow, SearchPill, type MapLayer } from '@/components/screens/home/DiscoverControls';
@@ -201,7 +200,7 @@ export function DiscoverScreen() {
       style={split ? { width: breakpoint === 'desktop' ? 560 : 420, flexGrow: 0 } : undefined}
       contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
     >
-      <ScreenHeaderSpacer title={<Display>Discover</Display>} actions={<EightBallButton />} />
+      <ScreenHeaderSpacer title={<Display>Discover</Display>} />
       <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View>
       <View style={styles.body}>
         {split && picked ? <PickedBar key={picked.id} pin={picked} filter={filter} best={mapLayer === 'best' ? drink : null} onClose={() => setPicked(null)} /> : null}
