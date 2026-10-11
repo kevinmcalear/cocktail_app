@@ -9,6 +9,7 @@ import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, type ItemCategory } from '@/lib/itemRoutes';
+import { itemIdOf } from '@/lib/libraryFilters';
 import { openSearchItem } from '@/lib/openSearchItem';
 import { groupCatalog } from '@/lib/searchScope';
 import { capitalize } from '@/lib/stringUtils';
@@ -25,7 +26,11 @@ interface MineResultsProps {
 /** The venue's library (or your own drinks) matching the query: drinks, ingredients and menus. */
 export function MineResults({ query, mine, onEverywhere }: MineResultsProps) {
   const router = useRouter();
-  const { items, isLoading } = useSearchCatalog(mine.contextIds);
+  const { items: catalog, isLoading } = useSearchCatalog(mine.contextIds);
+  const items = useMemo(() => {
+    const hidden = new Set(mine.hiddenIds);
+    return hidden.size ? catalog.filter((i) => !hidden.has(itemIdOf(i.id))) : catalog;
+  }, [catalog, mine.hiddenIds]);
   const groups = useMemo(() => groupCatalog(items, query), [items, query]);
   const q = query.trim();
   const open = (item: SearchItem) => openSearchItem(item, (href) => router.push(href as never));

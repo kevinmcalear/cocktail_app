@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import type { MenuSummary } from '@/types/menus';
 
-import { isGarnishLine, itemIdOf, menuDrinks, menuState, parseShow, venueShelves } from './libraryFilters';
+import { filterGroups, isGarnishLine, itemIdOf, menuDrinks, menuState, parseShow, prepGroup, tileLine, venueShelves, yieldText } from './libraryFilters';
 
 assert.equal(parseShow(undefined, true), 'all');
 assert.equal(parseShow('staff', true), 'staff');
@@ -93,3 +93,28 @@ assert.equal(menuState('secret', onNow, past), 'Off menu');
 assert.equal(itemIdOf('beer-0000-1'), '0000-1');
 assert.equal(itemIdOf('wine-0000-2'), '0000-2');
 assert.equal(itemIdOf('0000-3'), '0000-3');
+
+{
+  assert.deepEqual(filterGroups(true, false).map((g) => g.map((f) => f.label)), [
+    ['All', 'On menu', 'Staff list', 'Past', 'R&D'],
+    ['Batched', 'Preps', 'Garnishes', 'Bottles'],
+    ['Cocktails', 'Beer', 'Wine'],
+  ]);
+  assert.deepEqual(filterGroups(false, true).map((g) => g.map((f) => f.label)), [['Cocktails', 'Ingredients', 'Beer', 'Wine', 'Needs a price']]);
+  assert.equal(tileLine('Stirred', 'Coupe'), 'Stirred · Coupe');
+  assert.equal(tileLine('Stirred', null, 'Martini flight'), 'Stirred · Martini flight');
+  assert.equal(tileLine(null, ''), null);
+  assert.equal(prepGroup('Smoked Pear Shrub', ['Infuse']), 'Shrub');
+  assert.equal(prepGroup('Fig Leaf Cordial'), 'Cordial');
+  assert.equal(prepGroup('Clarified Lime'), 'Clarified');
+  assert.equal(prepGroup('Lime', ['Clarify']), 'Clarified');
+  assert.equal(prepGroup('Brown-Butter Rye'), 'Fat-washed');
+  assert.equal(prepGroup('Rye', ['Fat wash']), 'Fat-washed');
+  assert.equal(prepGroup('Black Walnut Tincture'), 'Infusion');
+  assert.equal(prepGroup('Burnt Honey Syrup'), 'Syrup');
+  assert.equal(prepGroup('Saline'), null);
+  assert.equal(yieldText(1000, 'ml'), '1 L');
+  assert.equal(yieldText(750, 'ml'), '750 ml');
+  assert.equal(yieldText(1500, 'g'), '1.5 kg');
+  assert.equal(yieldText(null, 'ml'), null);
+}
