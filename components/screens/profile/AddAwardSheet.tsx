@@ -55,6 +55,7 @@ export function AddAwardSheet({ visible, profileId, onClose }: { visible: boolea
       visible={visible}
       onClose={close}
       accessibilityLabel="Add an award"
+      style={styles.panel}
       keyboard
       header={
         <View style={styles.head}>
@@ -126,6 +127,7 @@ export function AddAwardSheet({ visible, profileId, onClose }: { visible: boolea
 }
 
 const styles = StyleSheet.create({
+  panel: { maxWidth: 520, padding: space.xl, paddingTop: space.sm },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   form: { gap: space.lg, paddingBottom: space.lg },
