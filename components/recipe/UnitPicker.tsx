@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { Text, useTheme } from 'tamagui';
 
+import { SheetScrollView } from '@/components/ds';
 import { AdaptiveSheetModal } from '@/components/ui/AdaptiveSheetModal';
 import { RECIPE_UNITS, isKnownUnit, unitLabel } from '@/lib/units';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -53,7 +54,7 @@ export function UnitPicker({ value, onChange, size = 'sm', onOpenChange }: UnitP
 
       <AdaptiveSheetModal visible={open} onClose={() => setVisible(false)} title="Unit">
         {/* Scrolls: the list outgrows the sheet's 70% cap on a phone. */}
-        <ScrollView style={styles.list}>
+        <SheetScrollView style={styles.list}>
           {options.map((u) => {
             const selected = u.value === current;
             return (
@@ -79,7 +80,7 @@ export function UnitPicker({ value, onChange, size = 'sm', onOpenChange }: UnitP
               </Pressable>
             );
           })}
-        </ScrollView>
+        </SheetScrollView>
       </AdaptiveSheetModal>
     </>
   );
