@@ -15,10 +15,12 @@ import { useShelf } from '@/hooks/useHomeBar';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useBarWeek, useMyWeek, useWeekStart } from '@/hooks/useWeek';
 import { groupMenus } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
 import { backBarLine, collectionLine, menusLine, shelfLine, teamLine } from '@/lib/shellNav';
 import { canManageTeam } from '@/lib/team';
+import { weekLine } from '@/lib/week';
 
 import { useNavPlaces, type Place } from './navPlaces';
 import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
@@ -63,6 +65,8 @@ function useVenueLines(venue: Venue): Record<string, string> {
   const { waiting } = useWaitingForSpot(venue.id);
   const members = useBarMembers(venue.id).data;
   const invites = useBarInvites(venue.id, canManageTeam(role)).data ?? [];
+  const week = useBarWeek(venue.id).data;
+  const from = useWeekStart();
   return {
     menus: menusLine(menus.on, menus.draft.length),
     'back-bar': backBarLine(placed, waiting.length),
@@ -70,6 +74,7 @@ function useVenueLines(venue: Venue): Record<string, string> {
     brand: 'Logo, colours and type',
     roles: 'Who sees what, by role',
     'venue-settings': 'Hours, address, units',
+    week: week ? weekLine(week, from) : 'Events, menus going on, new drinks',
     settings: 'Your account and the app',
   };
 }
@@ -78,10 +83,13 @@ function useHomeLines(): Record<string, string> {
   const bottles = useShelf().data?.length ?? 0;
   const toMake = useCollection().data?.drinks.length ?? 0;
   const menus = (useVenueMenus(null).data ?? []).filter((m) => !m.barId).length;
+  const week = useMyWeek().data;
+  const from = useWeekStart();
   return {
     bar: shelfLine(bottles),
     collection: collectionLine(toMake, menus),
     profile: 'Your profile, ranks and taste',
+    week: week ? weekLine(week, from) : 'At the bars you love',
     settings: 'Your account and the app',
   };
 }
@@ -91,21 +99,22 @@ function Places({ places, lines, onGo }: { places: Place[]; lines: Record<string
 }
 
 function VenuePlaces({ venue, onGo }: { venue: Venue; onGo: (p: Place) => void }) {
-  const { work, venuePlaces } = useNavPlaces();
-  return <Places places={[...work, ...venuePlaces, SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
+  const { work, venuePlaces, week } = useNavPlaces();
+  return <Places places={[...work, ...venuePlaces, week, SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
 }
 
 function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
   // My Bar, Collection and You: the home tabs past Discover, which the tab bar already shows.
-  const tabs = useNavPlaces().tabs.filter((t) => t.key !== 'discover');
-  return <Places places={[...tabs, SETTINGS]} lines={useHomeLines()} onGo={onGo} />;
+  const { tabs: all, week } = useNavPlaces();
+  const tabs = all.filter((t) => t.key !== 'discover');
+  return <Places places={[...tabs, week, SETTINGS]} lines={useHomeLines()} onGo={onGo} />;
 }
 
 /**
  * The venue menu, opened from the logo on phones and the tablet rail: switch
  * to home or another venue, then this venue's places (Menus, Back bar, My
- * team, Brand, Venue settings, Settings), or at home My Bar, Collection, You
- * and Settings. Everything the desktop sidebar has, in one sheet.
+ * team, Brand, Venue settings, This week, Settings), or at home My Bar,
+ * Collection, You, This week and Settings. Everything the desktop sidebar has, in one sheet.
  */
 export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
   const ds = useDs();
