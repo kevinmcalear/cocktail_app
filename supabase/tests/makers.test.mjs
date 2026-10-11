@@ -151,7 +151,7 @@ describe('maker pages', () => {
     assert.equal(rows[0].n, 0);
   });
 
-  test("a bar's glass names its maker's page, only one that makes glassware (20261012430000)", async () => {
+  test("a bar's glass names its maker's page, only one that makes glassware (20261012800000)", async () => {
     const glass = (
       await db.query(`INSERT INTO public.bar_glassware (profile_id, glass, name, maker) VALUES ($1, 'coupe', $2, $3) RETURNING id`, [
         pages.Pub,

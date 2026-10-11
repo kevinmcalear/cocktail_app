@@ -15,7 +15,7 @@ export interface BarGlass {
   name: string | null;
   maker: string | null;
   maker_profile_id: string | null;
-  /** The maker's page, when the glass names one (20261012430000). */
+  /** The maker's page, when the glass names one (20261012800000). */
   maker_page: { handle: string; display_name: string } | null;
   designer: string | null;
   series: string | null;
