@@ -13,6 +13,8 @@ import { isEditable } from '@/lib/bringInAnywhere';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { navCurrent } from '@/lib/shellNav';
 
+import { WeekNav } from '@/components/screens/week/WeekNav';
+
 import { CreateSheet } from './CreateSheet';
 import { useNavPlaces, type Place } from './navPlaces';
 import { MarksRow, NavHeading, NavRow, YouFooter } from './SideNavParts';
@@ -52,7 +54,7 @@ function SideNav() {
   const setSearching = useSearchPalette((s) => s.setOpen);
 
   // A page that isn't a row (a drink, the add wizard) keeps the row it came from lit.
-  const rows = [...places.tabs, places.history, ...places.work, ...places.venuePlaces];
+  const rows = [...places.tabs, places.history, ...places.work, ...places.venuePlaces, places.week];
   const [last, setLast] = useState<string | null>(null);
   const current = navCurrent(pathname, rows, last);
   if (current !== last) setLast(current);
@@ -119,7 +121,7 @@ function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
       {nav.map(row)}
       {work.map(row)}
       <NavRow label="New" icon="plus" role="button" look="outlined" hint="N" current={false} onPress={onNew} />
-      {/* This week goes here: PR #491 (feat/this-week-app) adds <WeekNav /> between New and the Venue section. */}
+      <WeekNav />
       {venuePlaces.length ? (
         <>
           <NavHeading>Venue</NavHeading>

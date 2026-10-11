@@ -12,3 +12,7 @@ SELECT vault.create_secret('local-image-palette-secret', 'image_palette_secret')
 -- LOCAL_FLAVOR_WORKER_SECRET; on a local stack the AI fill is always mocked.
 SELECT vault.create_secret('http://kong:8000/functions/v1/flavor-worker', 'flavor_worker_url');
 SELECT vault.create_secret('local-flavor-worker-secret', 'flavor_worker_secret');
+
+-- Lets the cron tick reach the local sync-calendar (LOCAL_CALENDAR_SYNC_SECRET).
+SELECT vault.create_secret('http://kong:8000/functions/v1/sync-calendar', 'calendar_sync_url');
+SELECT vault.create_secret('local-calendar-sync-secret', 'calendar_sync_secret');
