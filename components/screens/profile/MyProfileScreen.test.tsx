@@ -11,22 +11,29 @@ const mockSaveSharing = jest.fn();
 let mockProfile: MyProfile | null = null;
 let mockSaveError: Error | null = null;
 
-jest.mock('./JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));
-jest.mock('./PastJobs', () => ({ PastJobs: () => null }));
-jest.mock('../onboarding/CareerSteps', () => ({ PlaceStep: () => null }));
+jest.mock('@/components/ui/UserAvatar', () => ({ CurrentUserAvatar: () => null }));
 jest.mock('@/hooks/useProfiles', () => ({ useProfilePositions: () => ({ data: [] }) }));
+jest.mock('./useSharingCounts', () => ({
+  useSharingCounts: () => ({ had: { shown: 4, total: 7 }, bars: { shown: 2, total: 4 }, originals: { shown: 3, total: 3 }, awards: { shown: 0, total: 0 } }),
+  modeCount: jest.requireActual('./useSharingCounts').modeCount,
+}));
 jest.mock('@/hooks/useMyProfile', () => ({
   useMyProfile: () => ({ data: mockProfile, isPending: false, error: null }),
+  useMyHiddenCity: () => ({ data: null }),
   useSaveMyProfile: () => ({ mutate: mockMutate, isPending: false, error: mockSaveError }),
   useSaveSharing: () => ({ mutate: mockSaveSharing, isPending: false, error: null }),
 }));
 
+const profile = (over: Partial<MyProfile> = {}): MyProfile => ({
+  id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true,
+  sharing: { had: 'picked', bars: 'picked', originals: 'all' }, showsDates: false, isModerated: false,
+  tagline: 'Home bartender', headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: 'Melbourne', ...over,
+});
+
 beforeEach(() => {
-  mockPush.mockClear();
-  mockMutate.mockReset();
-  mockSaveSharing.mockReset();
+  jest.clearAllMocks();
   mockProfile = null;
   mockSaveError = null;
 });
@@ -37,43 +44,9 @@ describe('MyProfileScreen', () => {
     expect(screen.getByLabelText('Name').props.value).toBe('Jo Juniper');
     expect(screen.getByLabelText('Handle').props.value).toBe('jo.juniper');
     expect(screen.getByRole('radio', { name: 'Public', checked: true })).toBeTruthy();
-
     await fireEvent.changeText(screen.getByLabelText('Handle'), '@Jo.Home');
     await fireEvent.press(screen.getByRole('button', { name: 'Make my profile' }));
-    expect(mockMutate).toHaveBeenCalledWith(
-      { id: null, draft: { name: 'Jo Juniper', handle: '@Jo.Home', bio: '', instagram: '', isPublic: true, tagline: '', headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: null } },
-      expect.anything()
-    );
-  });
-
-  test('each section shows All, Picked or None, saved straight away', async () => {
-    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharing: { had: 'picked', bars: 'none', originals: 'all' }, showsDates: false, isModerated: false, tagline: null, headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: null };
-    await renderWithTamagui(<MyProfileScreen />);
-    // Had, Bars, Made in order, each its own All / Picked / None.
-    expect(screen.getAllByRole('radio', { name: 'Picked', checked: true })).toHaveLength(1);
-    expect(screen.getAllByRole('radio', { name: 'None', checked: true })).toHaveLength(1);
-    expect(screen.getByText(/^Only the ones you pick show/)).toBeTruthy();
-    expect(screen.getByText(/Credits still show on each drink’s own page/)).toBeTruthy();
-    await fireEvent.press(screen.getAllByRole('radio', { name: 'All' })[0]);
-    expect(mockSaveSharing).toHaveBeenCalledWith({ id: 'p1', section: 'had', mode: 'all' });
-    await fireEvent(screen.getByRole('switch', { name: 'Say when I had them' }), 'valueChange', true);
-    expect(mockSaveSharing).toHaveBeenCalledWith({ id: 'p1', showsDates: true });
-    await fireEvent.press(screen.getAllByRole('button', { name: 'Choose' })[0]);
-    expect(mockPush).toHaveBeenCalledWith('/settings/profile-picks?section=had');
-  });
-
-  test('a private profile shows nothing, so there is nothing to choose', async () => {
-    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: false, sharing: { had: 'picked', bars: 'picked', originals: 'all' }, showsDates: false, isModerated: false, tagline: null, headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: null };
-    await renderWithTamagui(<MyProfileScreen />);
-    expect(screen.queryByText('What your profile shows')).toBeNull();
-  });
-
-  test('a bad Instagram name is caught before saving', async () => {
-    await renderWithTamagui(<MyProfileScreen />);
-    await fireEvent.changeText(screen.getByLabelText('Instagram (optional)'), 'not a name');
-    await fireEvent.press(screen.getByRole('button', { name: 'Make my profile' }));
-    expect(screen.getByText(/Dots can’t sit/)).toBeTruthy();
-    expect(mockMutate).not.toHaveBeenCalled();
+    expect(mockMutate).toHaveBeenCalledWith({ id: null, draft: { name: 'Jo Juniper', handle: '@Jo.Home', bio: '', instagram: '', isPublic: true, tagline: '', headlinePositionId: null, showsPhoto: true } });
   });
 
   test('a bad handle is caught before saving', async () => {
@@ -84,24 +57,31 @@ describe('MyProfileScreen', () => {
     expect(mockMutate).not.toHaveBeenCalled();
   });
 
-  test('an existing profile edits in place, can go private, and shows the server’s words', async () => {
-    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharing: { had: 'none', bars: 'none', originals: 'all' }, showsDates: false, isModerated: false, tagline: null, headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: null };
-    mockSaveError = new Error('That handle is taken. Try another.');
+  test('the hub: three pages with their summaries, and Preview', async () => {
+    mockProfile = profile();
     await renderWithTamagui(<MyProfileScreen />);
-    await fireEvent.press(screen.getByRole('radio', { name: 'Only me' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
-    expect(mockMutate).toHaveBeenCalledWith({ id: 'p1', draft: { name: 'Jo', handle: 'jo.home', bio: '', instagram: '', isPublic: false, tagline: '', headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: null } }, expect.anything());
-    expect(screen.getByText('That handle is taken. Try another.')).toBeTruthy();
+    expect(screen.getByText('Name, photo for people on Cocktail, Home bartender, Melbourne shown')).toBeTruthy();
+    expect(screen.getByText('Drinks: Picked, 4 of 7 · Bars: Picked, 2 of 4 · Originals: All')).toBeTruthy();
+    expect(screen.getByText('0 jobs shown')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('link', { name: /^What people see/ }));
+    expect(mockPush).toHaveBeenCalledWith('/settings/profile-sharing');
+    await fireEvent.press(screen.getByLabelText('Preview'));
+    expect(mockPush).toHaveBeenCalledWith('/you');
   });
 
-  test('the line under your name: nothing by default, a ready-made one, or your own words', async () => {
-    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharing: { had: 'none', bars: 'none', originals: 'all' }, showsDates: false, isModerated: false, tagline: null, headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: null };
+  test('Who can see it saves straight away', async () => {
+    mockProfile = profile();
     await renderWithTamagui(<MyProfileScreen />);
-    expect(screen.getByRole('radio', { name: 'Nothing', checked: true })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('radio', { name: 'Home bartender' }));
-    await fireEvent.press(screen.getByRole('radio', { name: 'In my own words' }));
-    await fireEvent.changeText(screen.getByLabelText('In your own words'), 'Makes drinks for friends');
-    await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
-    expect(mockMutate.mock.calls[0][0].draft).toMatchObject({ tagline: 'Makes drinks for friends', headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: null });
+    expect(screen.getByText(/People signed in to Cocktail see your page/)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Only me' }));
+    expect(mockSaveSharing).toHaveBeenCalledWith({ id: 'p1', isPublic: false });
+  });
+
+  test('a new handle saves when you leave the field', async () => {
+    mockProfile = profile();
+    await renderWithTamagui(<MyProfileScreen />);
+    await fireEvent.changeText(screen.getByLabelText('Handle'), 'jo.bar');
+    await fireEvent(screen.getByLabelText('Handle'), 'blur');
+    expect(mockMutate.mock.calls[0][0]).toMatchObject({ id: 'p1', draft: { handle: 'jo.bar', name: 'Jo', tagline: 'Home bartender' } });
   });
 });

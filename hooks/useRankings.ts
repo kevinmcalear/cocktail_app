@@ -223,6 +223,21 @@ export function usePinDrink() {
   });
 }
 
+/** Show all or Hide all on the picks page: every drink you've had at once. Hiding unpins them too. */
+export function useSetAllHadPicks() {
+  const qc = useQueryClient();
+  const userId = useUserId();
+  return useMutation({
+    mutationFn: async (onProfile: boolean) => {
+      const change = onProfile ? { on_profile: true } : { on_profile: false, profile_pin: null };
+      const { error } = await supabase.from('rank_entries').update(change).eq('user_id', userId!);
+      if (error) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => refreshPicks(qc),
+    onError: () => {},
+  });
+}
+
 /** Say where I had it, for one drink you've had. */
 export function useSetSaysWhere() {
   const qc = useQueryClient();

@@ -20,7 +20,7 @@ import { isShownPosition } from './Positions';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 /** "riffed 12×", when other drinks name it as their classic. */
-const riffed = (d: Original) => {
+export const riffed = (d: Pick<Original, 'versions'>) => {
   const n = d.versions?.[0]?.count ?? 0;
   return n ? `riffed ${n}×` : null;
 };

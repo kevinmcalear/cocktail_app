@@ -93,3 +93,18 @@ export function groupAwards(awards: Award[]): AwardGroup[] {
   const size = (g: AwardGroup) => g.places.length + g.titles.length;
   return [...groups.values()].sort((a, b) => prestige(a.award) - prestige(b.award) || size(b) - size(a) || a.award.localeCompare(b.award));
 }
+
+/**
+ * What's wrong with an award someone is adding (AddAwardSheet), or null.
+ * Matches profile_awards: a name and title up to 80 characters, a year from
+ * 1990, and an https link to where it was published.
+ */
+export function awardDraftProblem(d: { award: string; title: string; year: string; source: string }, thisYear = new Date().getFullYear()): string | null {
+  if (!d.award.trim()) return 'Say who gave it.';
+  if (!d.title.trim()) return 'Add the title, as the award writes it.';
+  const year = Number(d.year);
+  if (!Number.isInteger(year) || year < 1990 || year > thisYear + 1) return `Use a year from 1990 to ${thisYear + 1}.`;
+  const source = d.source.trim();
+  if (!/^https:\/\/[^\s/]+\.[^\s]+$/.test(source)) return 'Add the link to where it was announced, starting https://';
+  return null;
+}

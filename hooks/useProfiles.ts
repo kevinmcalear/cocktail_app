@@ -727,3 +727,18 @@ export function useSetPick() {
     onError: () => {},
   });
 }
+
+/** Show all or Hide all of one section's bars or originals on your own profile. */
+export function useSetPicks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ profileId, section, targetIds, shown }: { profileId: string; section: Exclude<ShareSection, 'had'>; targetIds: string[]; shown: boolean }) => {
+      if (!targetIds.length) return;
+      const rows = targetIds.map((target_id) => ({ profile_id: profileId, section, target_id, shown }));
+      const { error } = await supabase.from('profile_picks').upsert(rows, { onConflict: 'profile_id,section,target_id' });
+      if (error) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-picks'] }),
+    onError: () => {},
+  });
+}

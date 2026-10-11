@@ -13,7 +13,7 @@ import { pendingNote } from './JobRequests';
  * unclaimed profiles) only once the person switches it on. RLS hides the rest
  * from everyone else; this keeps the owner's own view the same as theirs.
  */
-export const isShownPosition = (p: Pick<Position, 'is_current' | 'is_shown'>) => p.is_current || p.is_shown;
+export const isShownPosition = (p: Pick<Position, 'is_current' | 'is_shown'> & { is_hidden?: boolean }) => !p.is_hidden && (p.is_current || p.is_shown);
 
 /**
  * "Works at" and "Previously" on a person, "Current team" and "Previous" on a

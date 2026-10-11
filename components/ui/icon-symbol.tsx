@@ -107,6 +107,11 @@ const MAPPING = {
   'trophy': 'emoji-events',
   'flag': 'outlined-flag',
   'gearshape': 'settings',
+  'pin': 'push-pin',
+  'clock': 'schedule',
+  'pin.fill': 'push-pin',
+  'arrow.up.right': 'north-east',
+  'checkmark.seal.fill': 'verified',
   // Tab icons: the same Material glyphs NativeTabs uses on Android.
   'rectangle.stack': 'style',
 } satisfies IconMapping;
