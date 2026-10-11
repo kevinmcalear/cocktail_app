@@ -243,7 +243,7 @@ describe('screening what a shared menu shows', () => {
   });
 });
 
-// 20261013300000: a venue's one-night menu shares without going live; every menu knows when it was last edited.
+// 20261014500000: a venue's one-night menu shares without going live; every menu knows when it was last edited.
 describe('sharing a venue’s one-night menu', () => {
   const night = { planned_starts_at: '2031-10-31T07:00:00Z', planned_ends_at: '2031-10-31T15:00:00Z' };
   const nightMenu = async (name, extra = {}) => (await serviceInsert('menus', { name: `${name} ${run}`, bar_id: ids.bar, ...night, ...extra })).id;
