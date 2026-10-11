@@ -59,7 +59,7 @@ export function PeoplePhotos({ itemId, name, glass, wide }: { itemId: string; na
               onPress={() => setOpen(p)}
               style={[styles.tile, { width: wide ? '23%' : '48%' }]}
             >
-              <DrinkImage source={p.imageUrl} glass={glass} accessibilityLabel={`${name}, ${photoCredit(p)}`} aspectRatio={4 / 5} radius="control" hideTag />
+              <DrinkImage source={p.imageUrl} glass={glass} accessibilityLabel={`${name}, ${photoCredit(p)}`} aspectRatio={4 / 5} radius="control" />
               <Caption tone="muted">{photoCredit(p)}</Caption>
             </PressableScale>
           ))}

@@ -50,7 +50,7 @@ export function groupById(id: string | null | undefined) {
 const ACTION_GROUP: Record<string, TechniqueGroup> = {
   Blend: 'syrup', Infuse: 'infuse', Clarify: 'clarify', Syrup: 'syrup', 'Sous vide': 'infuse', Centrifuge: 'clarify',
   Distil: 'distil', Ferment: 'preserve', Freeze: 'cold', Carbonate: 'carbonate', 'Fat wash': 'wash', 'Milk wash': 'wash',
-  Dehydrate: 'preserve', Foam: 'foam',
+  Dehydrate: 'preserve', Foam: 'foam', Smoke: 'preserve', Tincture: 'infuse', Oil: 'infuse',
 };
 
 export function groupForAction(action: string): TechniqueGroup | undefined {

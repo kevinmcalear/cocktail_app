@@ -29,7 +29,7 @@ const randomFortune = () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)
  * The magic eight ball (issue #18), as the approved Shake design: the ball
  * wobbles, its window turns up a fortune, then the drink, with "Make a …",
  * why, and Another and Open recipe. Shaking again (routed in by
- * EightBallProvider through `rollRef`) is Another. With Reduce Motion on,
+ * EightBallHost through `rollRef`) is Another. With Reduce Motion on,
  * nothing moves: the answer fades in.
  */
 export function EightBall({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<(() => void) | null> }) {

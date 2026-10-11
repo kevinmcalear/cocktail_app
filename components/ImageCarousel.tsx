@@ -21,7 +21,7 @@ interface ImageCarouselProps {
     onIndexChange?: (index: number) => void;
     scrollEnabled?: boolean;
     zoomEnabled?: boolean;
-    /** A label per image ("Sketch", "May be out of date"), or null. */
+    /** A label per image ("May be out of date"), or null. Drawings carry none. */
     tags?: (string | null)[];
 }
 

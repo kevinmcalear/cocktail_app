@@ -1,10 +1,10 @@
 import * as Haptics from 'expo-haptics';
 import { useRef, useState, type ReactNode } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Display, GlassButton, Headline, sheetFrame, Tag, Title, useBreakpoint, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { Body, Button, Caption, Display, GlassButton, Headline, Sheet, Tag, Title, useBreakpoint, useSheetClose } from '@/components/ds';
+import { space } from '@/constants/tokens';
 import { useAddRankEntry, useRecordComparisons, type RankEntry, type RankVenue } from '@/hooks/useRankings';
 import { heroPicture, type ItemPicture } from '@/lib/itemImages';
 import { comparedWith, dayOf, formatScore, localDate, nextPlacement, plural, rankKeyAt, rankScore, SENTIMENTS, type Answer, type Sentiment } from '@/lib/ranking';
@@ -36,7 +36,6 @@ function whereLabel(venue: { display_name: string } | null): string {
  * the end, so closing half way leaves nothing behind.
  */
 export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, list, listFailed }: RankSheetProps) {
-  const ds = useDs();
   const insets = useSafeAreaInsets();
   const wide = useBreakpoint() !== 'phone';
   const addEntry = useAddRankEntry();
@@ -187,32 +186,33 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
     );
   }
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-        <Pressable role="dialog" aria-label={`Rank ${drink.name}`} style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]} onPress={(e) => e.stopPropagation()}>
-          <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
-            <View style={styles.close}>
-              <GlassButton accessibilityLabel="Close" icon="xmark" onPress={onClose} />
-            </View>
-            {body}
-            {saving ? <Caption tone="muted">Saving…</Caption> : null}
-            {error ? (
-              <View style={styles.actions}>
-                <Caption tone="accent">{error}</Caption>
-                <Button label="Try again" variant="secondary" onPress={() => void save(sentiment!, answers)} />
-              </View>
-            ) : null}
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+    <Sheet visible onClose={onClose} accessibilityLabel={`Rank ${drink.name}`} style={styles.sheet}>
+      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
+        <View style={styles.close}>
+          <CloseX />
+        </View>
+        {body}
+        {saving ? <Caption tone="muted">Saving…</Caption> : null}
+        {error ? (
+          <View style={styles.actions}>
+            <Caption tone="accent">{error}</Caption>
+            <Button label="Try again" variant="secondary" onPress={() => void save(sentiment!, answers)} />
+          </View>
+        ) : null}
+      </ScrollView>
+    </Sheet>
   );
 }
 
+/** The X: slides the sheet away before it closes, like the backdrop does. */
+function CloseX() {
+  const close = useSheetClose();
+  return <GlassButton accessibilityLabel="Close" icon="xmark" onPress={close} />;
+}
+
 const styles = StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
-  sheet: { width: '100%', maxWidth: 640, maxHeight: '92%', borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous' },
-  body: { padding: space.xl, gap: space.md },
+  sheet: { maxWidth: 640 },
+  body: { padding: space.xl, paddingTop: space.sm, gap: space.md },
   close: { alignSelf: 'flex-end', marginBottom: -space.xxl },
   vs: { gap: space.sm },
   vsRow: { flexDirection: 'row', alignItems: 'center' },

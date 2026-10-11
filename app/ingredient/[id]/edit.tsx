@@ -1,4 +1,4 @@
-import { BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -9,7 +9,7 @@ import {
 } from "react-native";
 
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
-import { CategoryPickerModal } from "@/components/CategoryPickerModal";
+import { CategoryPickerModal, type CategoryPickerHandle } from "@/components/CategoryPickerModal";
 import { IngredientPickerSheet } from "@/components/IngredientPickerSheet";
 import { BrandAndKindFields } from "@/components/ingredient/BrandAndKindFields";
 import { IngredientDrawing } from "@/components/ds";
@@ -73,7 +73,7 @@ export default function EditIngredientScreen({
     const [generic, setGeneric] = useState<{ id: string; name: string } | null>(null);
     const [abv, setAbv] = useState("");
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-    const categoryPickerRef = useRef<BottomSheetModal>(null);
+    const categoryPickerRef = useRef<CategoryPickerHandle>(null);
 
     const [barId, setBarId] = useState<string | null>(null);
     const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);

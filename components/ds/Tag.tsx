@@ -7,12 +7,12 @@ import { readableAccent, withAlpha } from '@/lib/color';
 import { DsText } from './Text';
 import { useDs } from './theme';
 
-export type TagTone = 'default' | 'accent' | 'sketch' | 'success' | 'warning';
+export type TagTone = 'default' | 'accent' | 'paper' | 'success' | 'warning';
 
 /**
- * A small label. `sketch` marks a generated image everywhere it appears, so
- * nobody mistakes it for a photo of the real drink. Status tones are never the
- * only signal: the label says what it means.
+ * A small label. `paper` is pencil ink on the house paper (the wizard band's
+ * "House prep"). Drawn pictures carry no tag: drawings are obviously drawings.
+ * Status tones are never the only signal: the label says what it means.
  */
 export function Tag({ label, tone = 'default', style }: { label: string; tone?: TagTone; style?: StyleProp<ViewStyle> }) {
   const ds = useDs();
@@ -20,7 +20,7 @@ export function Tag({ label, tone = 'default', style }: { label: string; tone?: 
   const look = {
     default: { bg: ds.c.raised, fg: ds.c.ink, border: 'transparent' },
     accent: { bg: withAlpha(ds.accentText, 0.14), fg: ds.accentText, border: withAlpha(ds.accentText, 0.4) },
-    sketch: { bg: ds.c.paper, fg: ds.c.sketchInk, border: withAlpha(ds.c.sketchInk, 0.35) },
+    paper: { bg: ds.c.paper, fg: ds.c.sketchInk, border: withAlpha(ds.c.sketchInk, 0.35) },
     success: { bg: withAlpha(STATUS.success, 0.14), fg: statusText(STATUS.success), border: 'transparent' },
     warning: { bg: withAlpha(STATUS.warning, 0.16), fg: statusText(STATUS.warning), border: 'transparent' },
   }[tone];

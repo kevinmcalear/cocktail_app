@@ -63,7 +63,7 @@ for (const i of TECHNICAL_INGREDIENTS) {
 }
 
 // Prep card tags lead somewhere for every action that is a technique.
-for (const a of ['Clarify', 'Fat wash', 'Infuse', 'Carbonate', 'Ferment', 'Sous vide', 'Milk wash', 'Foam']) assert.ok(groupForAction(a), a);
+for (const a of ['Clarify', 'Fat wash', 'Infuse', 'Carbonate', 'Ferment', 'Sous vide', 'Milk wash', 'Foam', 'Smoke', 'Tincture', 'Oil']) assert.ok(groupForAction(a), a);
 assert.ok(PREP_ACTIONS.includes('Milk wash' as never) && PREP_ACTIONS.includes('Foam' as never), 'prep editor offers the new tags');
 assert.equal(groupForAction('Strain'), undefined);
 

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip } from '@/components/ds';
@@ -61,11 +62,13 @@ interface BodyProps {
   area?: SearchArea | null;
   /** The palette closes itself when a jump stays on the same page (Library to a Library filter). */
   onJump?: () => void;
+  /** Rows of the door's own, shown with Techniques and History while nothing is typed (⌘K's Pick for me). */
+  commands?: ReactNode;
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query, scope, onScope, mine, area, onJump }: BodyProps) {
-  if (!query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} />;
+export function SearchBody({ query, scope, onScope, mine, area, onJump, commands }: BodyProps) {
+  if (!query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} />;
   if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} />;
   return (
     <PublicResults
@@ -86,7 +89,7 @@ const JUMPS = [
   { label: 'Ingredients', show: 'ingredients' },
 ] as const;
 
-function Recent({ scope, mine, onJump }: { scope: SearchScope; mine: SearchMine; onJump?: () => void }) {
+function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: SearchMine; onJump?: () => void; commands?: ReactNode }) {
   const router = useRouter();
   const all = useRecentActivityStore((s) => s.items);
   const myVenueIds = useActiveVenue().venues.map((v) => v.id);
@@ -123,6 +126,7 @@ function Recent({ scope, mine, onJump }: { scope: SearchScope; mine: SearchMine;
           </View>
         </View>
       ) : null}
+      {commands}
       <ResultRow
         title="Techniques and equipment"
         caption="Foams, clarifying, milk punch, infusions, and the kit for each"

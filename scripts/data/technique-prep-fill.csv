@@ -1,0 +1,1157 @@
+prep,technique,with_text,adjunct,base_text,base_match,base_kind,actions,notes
+1792 Bourbon Infused With Tahitian Vanilla,Infuse,Tahitian Vanilla,Tahitian Vanilla,1792 Bourbon,,,tag; adjunct,base is not an exact bottle or style
+A5 Wagyu Fat-Washed Hibiki Harmony,Fat wash,A5 Wagyu,,Hibiki Harmony,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Acidified & Clarified Orange Juice,Clarify,Acidified &,,Orange Juice,Orange Juice,style,tag,style already this; with-what is not an exact plain ingredient
+Aged Almond-Soy Sauce,,,,,,,,no technique in a form the rules read
+Aged Chempedak Cream,,,,,,,,no technique in a form the rules read
+Aged Chinese Mushroom Foam,,,,,,,,no technique in a form the rules read
+Aged Egg Yolk,,,,,,,,no technique in a form the rules read
+Aged Fish Stock,,,,,,,,no technique in a form the rules read
+Aged Spirit Blend,,,,,,,,no technique in a form the rules read
+Aged Vanilla Maple,,,,,,,,no technique in a form the rules read
+Aged Yoghurt Woodford Reserve Bourbon Whiskey,,,,,,,,no technique in a form the rules read
+Al Pastor Spice-Infused Altos Blanco Tequila,Infuse,Al Pastor Spice,,Altos Blanco Tequila,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Allspice Wray And Nephew Tincture,Tincture,Allspice Wray And Nephew,,,,,tag,with-what is not an exact plain ingredient
+Amachay Tincture,Tincture,Amachay,,,,,tag,with-what is not an exact plain ingredient
+Amaretto-Infused Whipped Cream,Infuse,Amaretto,Amaretto,Whipped Cream,,,tag; adjunct,"base matches a prep row, not a bottle or style"
+Amazon Citrus Distillate,Distil,Amazon Citrus,,,,,tag,with-what is not an exact plain ingredient
+Ancho-Infused Amontillado Sherry,Infuse,Ancho,,Amontillado Sherry,Amontillado Sherry,style,tag,style already this; with-what is not an exact plain ingredient
+Anise Smoke,Smoke,Anise,Anise,,,,tag; adjunct,
+"Anise, Cinnamon And Clove-Infused Espadín",Infuse,"Anise, Cinnamon And Clove",,Espadín,Espadín Mezcal,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Api Distillate,Distil,Api,,,,,tag,with-what is not an exact plain ingredient
+Apple & Miso Butter Infused Jefferson's Bourbon Whiskey,Infuse,Apple & Miso Butter,,Jefferson's Bourbon Whiskey,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Applewood Smoked Ice,Smoke,Applewood,Applewood,Ice,,,tag; adjunct,base is not an exact bottle or style
+Apricot And Absinthe Distillate,Distil,Apricot And Absinthe,,,,,tag,with-what is not an exact plain ingredient
+Apricot-Infused Bulldog Gin,Infuse,Apricot,Apricot,Bulldog Gin,,,tag; adjunct,base names only a brand with several bottles (the alias says Bulldog London Dry Gin)
+Argan Oil Cognac,,,,,,,,no technique in a form the rules read
+Argan Oil-Washed Buffalo Trace,Fat wash,Argan Oil,,Buffalo Trace,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Asiento Y Tostada-Washed Espadín,,Asiento Y Tostada,,Espadín,Espadín Mezcal,style (alias),,"washed with something that could be a fat or milk wash, or neither: no tag; style already this; with-what is not an exact plain ingredient"
+Assam Tea Infused Bourbon,Infuse,Assam Tea,Assam Tea,Bourbon,Bourbon,style,tag; adjunct,style already this
+Atmospheric Infused White Floral Tea Verjuice,Infuse,Atmospheric,,White Floral Tea Verjuice,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Avocado Fat-Washed Liqueur,Fat wash,Avocado,Avocado,Liqueur,Liqueur,style,tag; adjunct,style already this
+Avocado Fat-Washed Mezcal,Fat wash,Avocado,Avocado,Mezcal,Mezcal,style,tag; adjunct,style already this
+Avocado Fat-Washed Tequila,Fat wash,Avocado,Avocado,Tequila,Tequila,style,tag; adjunct,style already this
+Avocado Ice Cream Washed Vodka,,Avocado Ice Cream,,Vodka,Vodka,style,,"washed with something that could be a fat or milk wash, or neither: no tag; style already this; with-what is not an exact plain ingredient"
+Avocado Oil & Dry Tomato Washed Cantera Verde Gin,Fat wash,Avocado Oil & Dry Tomato,,Cantera Verde Gin,,,tag,"base matches a unsorted row, not a bottle or style; with-what is not an exact plain ingredient"
+Avocado Oil-Infused Gin,Infuse,Avocado Oil,Avocado Oil,Gin,Gin,style,tag; adjunct,style already this
+Avocado-Washed Don Fulano Fuerte,Fat wash,Avocado,Avocado,Don Fulano Fuerte,,,tag; adjunct,base is not an exact bottle or style
+Bacon Fat Wash Bulleit Bourbon,Fat wash,Bacon,Bacon Fat,Bulleit Bourbon,Bulleit Bourbon,bottle,tag; made_from; adjunct,
+Bacon Fat Washed Woodinville Bourbon,Fat wash,Bacon,Bacon Fat,Woodinville Bourbon,,,tag; adjunct,base names only a brand with several bottles (the alias says Woodinville Straight Bourbon Whiskey)
+Bacon Fat-Washed Japanese Whisky,Fat wash,Bacon,Bacon Fat,Japanese Whisky,Japanese Whisky,style,tag; adjunct,style already this
+Bacon Fat-Washed Scotch Whisky,Fat wash,Bacon,Bacon Fat,Scotch Whisky,Scotch,style (alias),tag; adjunct,style already this
+Bacon Infused Rye Whiskey,Infuse,Bacon,Bacon,Rye Whiskey,Rye Whiskey,style,tag; adjunct,style already this
+Bacon-Infused Vodka,Infuse,Bacon,Bacon,Vodka,Vodka,style,tag; adjunct,style already this
+Bacon-Washed Mezcal,Fat wash,Bacon,Bacon,Mezcal,Mezcal,style,tag; adjunct,style already this
+Bakwa Fat-Wash,Fat wash,Bakwa,,,,,tag,with-what is not an exact plain ingredient
+Banana Infused Dark Rum,Infuse,Banana,Banana,Dark Rum,Dark Rum,style,tag; adjunct,style already this
+Banana Infused Herradura Reposado Tequila,Infuse,Banana,Banana,Herradura Reposado Tequila,Herradura Reposado Tequila,bottle,tag; made_from; adjunct,
+Banana Ketchup-Infused Michter's Bourbon,Infuse,Banana Ketchup,,Michter's Bourbon,,,tag,base names only a brand with several bottles (the alias says Michter's US*1 Kentucky Straight Bourbon); with-what is not an exact plain ingredient
+Banana Peel Infused Whisky,Infuse,Banana Peel,Banana Peel,Whisky,Whiskey,style (alias),tag; adjunct,style already this
+Banana Skin-Infused Aromatic Wine,Infuse,Banana Skin,,Aromatic Wine,,,tag,Aromatic Wine is filed as a bottle but names a style; with-what is not an exact plain ingredient
+Banana-Infused Bulleit Bourbon,Infuse,Banana,Banana,Bulleit Bourbon,Bulleit Bourbon,bottle,tag; made_from; adjunct,
+Banana-Infused Dry Sherry,Infuse,Banana,Banana,Dry Sherry,Dry Sherry,style,tag; adjunct,style already this
+Banana-Infused Jefferson's Bourbon,Infuse,Banana,Banana,Jefferson's Bourbon,,,tag; adjunct,base names only a brand with several bottles (the alias says Jefferson's Very Small Batch Bourbon)
+Banana-Infused Michter's Bourbon,Infuse,Banana,Banana,Michter's Bourbon,,,tag; adjunct,made_from already this bottle
+Banana-Infused Rum,Infuse,Banana,Banana,Rum,Rum,style,,tags already there; style already this; already has recipe lines
+Banana-Infused Vodka,Infuse,Banana,Banana,Vodka,Vodka,style,tag; adjunct,style already this
+Barley Hop-Infused Punt E Mes,Infuse,Barley Hop,,Punt E Mes,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Barley Tea Infused Toki,Infuse,Barley Tea,Mugicha,Toki,,,tag; adjunct,made_from already this bottle
+Barrel-Aged Mac,Age,,,Mac,,,tag,base is not an exact bottle or style
+Barrel-Aged Peychaud's,Age,,,Peychaud's,,,tag,made_from already this bottle
+Basil And Mascarpone Fat Wash,Fat wash,Basil And Mascarpone,,,,,tag,with-what is not an exact plain ingredient
+Basil Infused Dry Vermouth,Infuse,Basil,Basil,Dry Vermouth,Dry Vermouth,style,tag; adjunct,style already this
+Basil Infusion,Infuse,Basil,Basil,,,,tag; adjunct,
+Basil Leaves Cheese Infused Gin,Infuse,Basil Leaves Cheese,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Basil oil,Oil,Basil,Basil,,,,tag; adjunct,
+Basil Olive Oil,Oil,Basil Olive,Basil,,,,tag; adjunct,
+Basil Washed Rum,,Basil,Basil,Rum,Rum,style,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; style already this"
+Basil-Infused Patrón Blanco Tequila,Infuse,Basil,Basil,Patrón Blanco Tequila,,,tag; adjunct,made_from already this bottle
+Bay Leaf Oil,Oil,Bay Leaf,Bay Leaf,,,,tag; adjunct,
+BBQ Butter-Washed Rum,Fat wash,BBQ Butter,,Rum,Rum,style,tag,style already this; with-what is not an exact plain ingredient
+BBQ Smoke,Smoke,BBQ,,,,,tag,with-what is not an exact plain ingredient
+Bee Pollen Infused Tequila,Infuse,Bee Pollen,Bee Pollen,Tequila,Tequila,style,tag; adjunct,style already this
+Beef Tallow Fat-Washed 36 South Whisky Infused With Rosemary,Infuse; Fat wash,Rosemary,,Beef Tallow Fat-Washed 36 South Whisky,,,tag,"the base names another technique too, so neither base nor with-what is read; made from scratch or a punch: no bottle read"
+Beeswax Aged Rye Whiskey,Age,Beeswax,Beeswax,Rye Whiskey,Rye Whiskey,style,tag; adjunct,style already this
+Beeswax-Infused Johnnie Walker Black,Infuse,Beeswax,Beeswax,Johnnie Walker Black,,,tag; adjunct,made_from already this bottle
+Beeswax-Infused Pastis,Infuse,Beeswax,Beeswax,Pastis,Pastis,style,tag; adjunct,style already this
+Beeswax-Infused Scotch,Infuse,Beeswax,Beeswax,Scotch,Scotch,style,tag; adjunct,style already this
+Beeswax-Washed Rum,Fat wash,Beeswax,Beeswax,Rum,Rum,style,tag; adjunct,style already this
+Beetroot And Durian Distillate,Distil,Beetroot And Durian,,,,,tag,with-what is not an exact plain ingredient
+Beetroot Distillate,Distil,Beetroot,Beetroot,,,,tag; adjunct,
+Beetroot Infused Gin,Infuse,Beetroot,Beetroot,Gin,Gin,style,tag; adjunct,style already this
+Beetroot-Infused Tequila,Infuse,Beetroot,Beetroot,Tequila,Tequila,style,tag; adjunct,style already this
+Beetroot-Washed Metaxa,,Beetroot,Beetroot,Metaxa,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; made_from already this bottle"
+Belvedere Vodka (Jasmine Infused),Infuse,Jasmine,Jasmine,Belvedere Vodka,,,tag; adjunct,made_from already this bottle
+Belvedere Vodka Re-Distilled with Salted Pistachio,Distil,Salted Pistachio,,Belvedere Vodka,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Berbere-Infused Vodka,Infuse,Berbere,Berbere,Vodka,Vodka,style,tag; adjunct,style already this
+Bergamot And Pomelo Tincture,Tincture,Bergamot And Pomelo,,,,,tag,with-what is not an exact plain ingredient
+Berry Distillate,Distil,Berry,Berries,,,,tag; adjunct,
+Berry-Infused Fortified Wine,Infuse,Berry,Berries,Fortified Wine,Fortified Wine,style,tag; adjunct,style already this
+Berry-infused Short Story Grain Vodka,Infuse,Berry,Berries,Short Story Grain Vodka,Short Story Grain Vodka,bottle,tag; made_from; adjunct,
+Biscoff Infused Vodka,Infuse,Biscoff,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Biscotti-Infused Campari,Infuse,Biscotti,Biscotti,Campari,,,tag; adjunct,made_from already this bottle
+Bitters Distillate,Distil,Bitters,Bitters,,,,tag; adjunct,
+Black Basil Tincture,Tincture,Black Basil,,,,,tag,with-what is not an exact plain ingredient
+Black Glutinous Rice-Infused Rye,Infuse,Black Glutinous Rice,Black Glutinous Rice,Rye,Rye Whiskey,style (alias),tag; adjunct,style already this
+Black Mustard Seed Distillate,Distil,Black Mustard Seed,,,,,tag,with-what is not an exact plain ingredient
+Black Pepper Tincture,Tincture,Black Pepper,Black Pepper,,,,tag; adjunct,
+Black Sesame-Infused Cognac,Infuse,Black Sesame,Black Sesame,Cognac,Cognac,style,tag; adjunct,style already this
+Black Tea Infused Pisco,Infuse,Black Tea,Black Tea,Pisco,Pisco,style,tag; adjunct,style already this
+Black Truffle Coconut Oil,Oil,Black Truffle Coconut,Black Truffle,,,,tag; adjunct,
+Black Truffle Distilled Ketel One Vodka,Distil,Black Truffle,Black Truffle,Ketel One Vodka,,,tag; adjunct,made from scratch or a punch: no bottle read
+Black-Rice-Infused Bear Brothers Vodka,Infuse,Black-Rice,Black Rice,Bear Brothers Vodka,,,tag; adjunct,base is not an exact bottle or style
+Blackened Banana Infused Johnnie Walker Black Label,Infuse,Blackened Banana,,Johnnie Walker Black Label,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Blood Orange & Eucalyptus Infused Ginger Mick Gin,Infuse,Blood Orange & Eucalyptus,,Ginger Mick Gin,Little Lon Ginger Mick Gin,bottle (alias),tag; made_from,with-what is not an exact plain ingredient
+Blood Orange Infused Campari,Infuse,Blood Orange,Blood Orange,Campari,,,tag; adjunct,made_from already this bottle
+Blue Cheese-Infused Cognac,Infuse,Blue Cheese,Blue Cheese,Cognac,Cognac,style,tag; adjunct,style already this
+Blue Spirulina Oil,Oil,Blue Spirulina,Blue Spirulina,,,,tag; adjunct,
+"Blue Tea, Barley and Buckwheat Infusion",Infuse,"Blue Tea, Barley and Buckwheat",,,,,tag,with-what is not an exact plain ingredient
+Boiled Egg White Distillate,Distil,Boiled Egg White,,,,,tag,with-what is not an exact plain ingredient
+Bone Tincture,Tincture,Bone,,,,,tag,with-what is not an exact plain ingredient
+Bourbon and Rye Infused with Vanilla Bean,Infuse,Vanilla Bean,Vanilla,Bourbon and Rye,,,tag; adjunct,base is not an exact bottle or style
+Bread Distillate,Distil,Bread,Bread,,,,tag; adjunct,
+Brown Butter and Banana Washed Monkey Shoulder,Fat wash,Brown Butter and Banana,,Monkey Shoulder,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Brown Butter and Miso-Washed Bourbon,Fat wash,Brown Butter and Miso,,Bourbon,Bourbon,style,tag,style already this; with-what is not an exact plain ingredient
+Brown Butter Fat-Washed Mezcal,Fat wash,Brown Butter,Brown Butter,Mezcal,Mezcal,style,tag; adjunct,style already this
+Brown Butter Washed Barr Hill,Fat wash,Brown Butter,Brown Butter,Barr Hill,,,tag; adjunct,base is not an exact bottle or style
+Brown Butter Washed Highland Park 12 Yr,Fat wash,Brown Butter,Brown Butter,Highland Park 12 Yr,,,tag; adjunct,base is not an exact bottle or style
+Brown Butter Washed Redwood Bourbon,Fat wash,Brown Butter,Brown Butter,Redwood Bourbon,,,tag; adjunct,base is not an exact bottle or style
+Brown Butter-Washed Bourbon,Fat wash,Brown Butter,Brown Butter,Bourbon,Bourbon,style,,tags already there; style already this; already has recipe lines
+Brown Butter-Washed Bumbu Original,Fat wash,Brown Butter,Brown Butter,Bumbu Original,,,tag; adjunct,made_from already this bottle
+Brown Butter-Washed Elijah Craig Bourbon,Fat wash,Brown Butter,Brown Butter,Elijah Craig Bourbon,,,tag; adjunct,base names only a brand with several bottles (the alias says Elijah Craig Small Batch)
+Brown Butter-Washed Teeling Small Batch,Fat wash,Brown Butter,Brown Butter,Teeling Small Batch,,,tag; adjunct,made_from already this bottle
+Brownie-Infused Guyanese Rum,Infuse,Brownie,,Guyanese Rum,Guyanese Rum,style,tag,style already Demerara Rum; with-what is not an exact plain ingredient
+Buckwheat-Infused Michter's Bourbon,Infuse,Buckwheat,Buckwheat,Michter's Bourbon,,,tag; adjunct,made_from already this bottle
+Burgundy Truffle Honey Tincture,Tincture,Burgundy Truffle Honey,,,,,tag,with-what is not an exact plain ingredient
+Burnt Butter Washed Michter's Bourbon,Fat wash,Burnt Butter,,Michter's Bourbon,,,tag,base names only a brand with several bottles (the alias says Michter's US*1 Kentucky Straight Bourbon); with-what is not an exact plain ingredient
+Burnt Butter-Infused Espolon Anejo Tequila,Infuse,Burnt Butter,,Espolon Anejo Tequila,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Burnt Lemon Oil,Oil,Burnt Lemon,,,,,tag,with-what is not an exact plain ingredient
+Burnt Toast Oil,Oil,Burnt Toast,,,,,tag,with-what is not an exact plain ingredient
+Bush Tomato Infused Apricot Brandy,Infuse,Bush Tomato,,Apricot Brandy,Apricot Brandy,style,tag,style already this; with-what is not an exact plain ingredient
+Butter And Raicilla Fat Wash,Fat wash,Butter And Raicilla,,,,,tag,with-what is not an exact plain ingredient
+Butter Fat Washed Espolòn Reposado Tequila,Fat wash,Butter,Butter,Espolòn Reposado Tequila,Espolón Reposado Tequila,bottle,tag; made_from; adjunct,
+Butter Fat-Washed Irish Whiskey,Fat wash,Butter,Butter,Irish Whiskey,Irish Whiskey,style,tag; adjunct,style already this
+Butter Fat-Washed Whiskey,Fat wash,Butter,Butter,Whiskey,Whiskey,style,tag; adjunct,style already this
+Butter Washed Bacardi Carta Oro Rum Blend,Fat wash,Butter,Butter,Bacardi Carta Oro Rum Blend,,,tag; adjunct,base is not an exact bottle or style
+Butter Washed Rye Whisky,Fat wash,Butter,Butter,Rye Whisky,Rye Whiskey,style (alias),tag; adjunct,style already this
+Butter Washed Tequila Blanco,Fat wash,Butter,Butter,Tequila Blanco,Blanco Tequila,style (alias),tag; adjunct,style already this
+Butter-Washed Bacardi Ocho Rum,Fat wash,Butter,Butter,Bacardi Ocho Rum,Bacardí 8 Años,bottle (alias),tag; made_from; adjunct,
+Butter-Washed Bourbon,Fat wash,Butter,Butter,Bourbon,Bourbon,style,tag; adjunct,style already this
+Butter-Washed Malibu,Fat wash,Butter,Butter,Malibu,,,tag; adjunct,made_from already this bottle
+Butter-Washed Old Forester Bourbon,Fat wash,Butter,Butter,Old Forester Bourbon,,,tag; adjunct,base names only a brand with several bottles (the alias says Old Forester 86 Proof)
+Butter-Washed Rum,Fat wash,Butter,Butter,Rum,Rum,style,tag; adjunct,style already this
+Butterfly Pea Flower Tincture,Tincture,Butterfly Pea Flower,Butterfly Pea,,,,tag; adjunct,
+Butterfly Pea Leaf Tincture,Tincture,Butterfly Pea Leaf,,,,,tag,with-what is not an exact plain ingredient
+Butterfly Pea-Infused Gin,Infuse,Butterfly Pea,Butterfly Pea,Gin,Gin,style,tag; adjunct,style already this
+Butternut Squash Fat-Washed Tanqueray No.TEN Gin,Fat wash,Butternut Squash,Butternut Squash,Tanqueray No.TEN Gin,,,tag; adjunct,made_from already this bottle
+Cacao Butter-Washed Dark Rum,Fat wash,Cacao Butter,Cacao Butter,Dark Rum,Dark Rum,style,tag; adjunct,style already this
+Cacao Distillate,Distil,Cacao,Cacao,,,,tag; adjunct,
+Cacao Husk-Infused Campari,Infuse,Cacao Husk,Cacao Husk,Campari,,,tag; adjunct,made_from already this bottle
+Cacao Husk-Infused Vermouth,Infuse,Cacao Husk,Cacao Husk,Vermouth,Vermouth,style,tag; adjunct,style already this
+Cacao Nib and Tonka Bean-Infused Ketel One,Infuse,Cacao Nib and Tonka Bean,,Ketel One,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Cacao Nib Distillate,Distil,Cacao Nib,Cacao Nib,,,,tag; adjunct,
+Cacao Nib-Infused Cognac,Infuse,Cacao Nib,Cacao Nib,Cognac,Cognac,style,tag; adjunct,style already this
+Cacao Nib-Infused Lalo Tequila Blanco,Infuse,Cacao Nib,Cacao Nib,Lalo Tequila Blanco,,,tag; adjunct,made_from already this bottle
+Cacao Nib-Smoked Cinzano Rosso,Smoke,Cacao Nib,Cacao Nib,Cinzano Rosso,,,tag; adjunct,made_from already this bottle
+Cacao-Distilled Vodka,Distil,Cacao,Cacao,Vodka,,,tag; adjunct,made from scratch or a punch: no bottle read
+Cacao-Infused Lillet Blanc,Infuse,Cacao,Cacao,Lillet Blanc,,,tag; adjunct,made_from already this bottle
+Cacao-Infused Nonino,Infuse,Cacao,Cacao,Nonino,,,tag; adjunct,made_from already this bottle
+Cacao-Nib-Infused Campari,Infuse,Cacao-Nib,Cacao Nib,Campari,,,,tags already there; made_from already this bottle; already has recipe lines
+Calabrian Chilli Aged Tequila,Age,Calabrian Chilli,,Tequila,Tequila,style,tag,style already Aged Tequila; with-what is not an exact plain ingredient
+Calamansi Citrus Distillate,Distil,Calamansi Citrus,,,,,tag,with-what is not an exact plain ingredient
+Calamansi Tincture,Tincture,Calamansi,Calamansi,,,,tag; adjunct,
+Calamansi Yuzu-Infused Olives,Infuse,Calamansi Yuzu,,Olives,Olive,style (alias),tag,"base style is not a drink, so not filed under it; with-what is not an exact plain ingredient"
+California Bay Tincture,Tincture,California Bay,,,,,tag,with-what is not an exact plain ingredient
+Camellia Tea-Infused Gin,Infuse,Camellia Tea,Camellia Tea,Gin,Gin,style,tag; adjunct,style already this
+Campari Infused With Betel Leaf,Infuse,Betel Leaf,Betel Leaf,Campari,,,tag; adjunct,made_from already this bottle
+Campari-Infused Honey,Infuse,Campari,,Honey,Honey,style,tag,"base style is not a drink, so not filed under it; with-what is not an exact plain ingredient"
+Caper Distillate,Distil,Caper,Caper,,,,tag; adjunct,
+Caramel Milk-Washed Bourbon,Milk wash,Caramel,,Bourbon,Bourbon,style,tag,style already this; with-what is not an exact plain ingredient
+Caramel Smoke,Smoke,Caramel,Caramel,,,,tag; adjunct,
+Cardamom Infused Vodka,Infuse,Cardamom,Cardamom,Vodka,Vodka,style,tag; adjunct,style already this
+Cardamom-Infused Ghee,Infuse,Cardamom,Cardamom,Ghee,Ghee,style,tag; adjunct,"base style is not a drink, so not filed under it"
+Cardamom-Infused Michter's Bourbon,Infuse,Cardamom,Cardamom,Michter's Bourbon,,,tag; adjunct,made_from already this bottle
+Carrot Oil and Celery Ribbon,,,,,,,,no technique in a form the rules read
+Cascara Sous-Vide Mancino Rosso Ambrato,Sous vide,Cascara,Cascara,Mancino Rosso Ambrato,,,tag; adjunct,base is not an exact bottle or style
+Cascara-Infused Islay Malt,Infuse,Cascara,Cascara,Islay Malt,,,tag; adjunct,base is not an exact bottle or style
+Cat's Claw Tincture,Tincture,Cat's Claw,,,,,tag,with-what is not an exact plain ingredient
+Caviar Distillate,Distil,Caviar,Caviar,,,,tag; adjunct,
+Cedar Leaf Tincture,Tincture,Cedar Leaf,,,,,tag,with-what is not an exact plain ingredient
+Celery Oil,Oil,Celery,Celery,,,,tag; adjunct,
+Celery Oil Washed Gin,Fat wash,Celery Oil,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Ceviche Distillate,Distil,Ceviche,,,,,tag,with-what is not an exact plain ingredient
+Ceylon Tea Ketel One Vodka Distillate,Distil,Ceylon Tea Ketel One Vodka,,,,,tag,with-what is not an exact plain ingredient
+Chai Infused Sweet Vermouth,Infuse,Chai,Chai,Sweet Vermouth,Sweet Vermouth,style,tag; adjunct,style already this
+Chai Tincture,Tincture,Chai,Chai,,,,tag; adjunct,
+Chai-Infused Italian Vermouth,Infuse,Chai,Chai,Italian Vermouth,Sweet Vermouth,style (alias),tag; adjunct,style already this
+Chai-Infused Rum,Infuse,Chai,Chai,Rum,Rum,style,tag; adjunct,style already this
+Chai-Infused Worthy Park Rum,Infuse,Chai,Chai,Worthy Park Rum,,,tag; adjunct,base is not an exact bottle or style
+Chamomile Infused Seedlip Spice,Infuse,Chamomile,Chamomile,Seedlip Spice,,,tag; adjunct,made_from already this bottle
+Chamomile Tincture,Tincture,Chamomile,Chamomile,,,,tag; adjunct,
+Chamomile-Infused Absolut Vodka,Infuse,Chamomile,Chamomile,Absolut Vodka,,,tag; adjunct,made_from already this bottle
+Chamomile-Infused Bourbon,Infuse,Chamomile,Chamomile,Bourbon,Bourbon,style,,tags already there; style already this; already has recipe lines
+Chamomile-Infused Mancino Rosso Amaranto Vermouth,Infuse,Chamomile,Chamomile,Mancino Rosso Amaranto Vermouth,,,tag; adjunct,made_from already this bottle
+Chamomile-Infused Mezcal,Infuse,Chamomile,Chamomile,Mezcal,Mezcal,style,tag; adjunct,style already this
+Char Siu Fat-Washed Bourbon,Fat wash,Char Siu,,Bourbon,Bourbon,style,tag,style already this; with-what is not an exact plain ingredient
+Cheddar Distillate,Distil,Cheddar,Cheddar,,,,tag; adjunct,
+Cheesecake-Infused Johnnie Walker Gold,Infuse,Cheesecake,Cheesecake,Johnnie Walker Gold,,,tag; adjunct,base is not an exact bottle or style
+Cheetos-Infused Siete Misterios Doba Yej Mezcal,Infuse,Cheetos,,Siete Misterios Doba Yej Mezcal,Los Siete Misterios Doba-Yej,bottle (alias),tag; made_from,with-what is not an exact plain ingredient
+Cherry Blossom-Infused Gin,Infuse,Cherry Blossom,Cherry Blossom,Gin,Gin,style,tag; adjunct,style already this
+Cherry-Infused Brandy,Infuse,Cherry,Cherry,Brandy,Brandy,style,tag; adjunct,style already this
+Cherry-Smoked Drambuie,Smoke,Cherry,Cherry,Drambuie,,,tag; adjunct,made_from already this bottle
+Cherrylyptus-Infused Tanqueray Gin,Infuse,Cherrylyptus,,Tanqueray Gin,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Chicken Oil,Oil,Chicken,Chicken,,,,tag; adjunct,
+Chile de Arbol Tincture,Tincture,Chile de Arbol,Chile de Árbol,,,,tag; adjunct,
+Chili Infused Dry Vermouth,Infuse,Chili,Chilli,Dry Vermouth,Dry Vermouth,style,tag; adjunct,style already this
+Chili Oil Fat Washed Michter's Bourbon,Fat wash,Chili Oil,Chili Oil,Michter's Bourbon,,,tag; adjunct,base names only a brand with several bottles (the alias says Michter's US*1 Kentucky Straight Bourbon)
+Chili Tincture,Tincture,Chili,Chilli,,,,tag; adjunct,
+Chili-Infused Aperol,Infuse,Chili,Chilli,Aperol,,,tag; adjunct,made_from already this bottle
+Chili-Infused Herradura Silver Tequila,Infuse,Chili,Chilli,Herradura Silver Tequila,Herradura Plata,bottle (alias),tag; made_from; adjunct,
+Chilli Crisp Infused Gin,Infuse,Chilli Crisp,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Chilli Infused Sugar Syrup,Infuse,Chilli,Chilli,Sugar Syrup,,,tag; adjunct,"base matches a prep row, not a bottle or style"
+Chilli Olive Oil,Oil,Chilli Olive,Chilli,,,,tag; adjunct,
+Chilli Tincture,Tincture,Chilli,Chilli,,,,tag,already has recipe lines
+Chilli-Infused Liqueur,Infuse,Chilli,Chilli,Liqueur,Liqueur,style,tag; adjunct,style already Chile Liqueur
+Chilli-Infused Tequila,Infuse,Chilli,Chilli,Tequila,Tequila,style,,tags already there; style already this; already has recipe lines
+Chinese Bacon Infused Michter's Bourbon,Infuse,Chinese Bacon,,Michter's Bourbon,,,tag,base names only a brand with several bottles (the alias says Michter's US*1 Kentucky Straight Bourbon); with-what is not an exact plain ingredient
+Chinese Celery-Infused Vodka,Infuse,Chinese Celery,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Chinese Fragrant Pear-Infused Gin,Infuse,Chinese Fragrant Pear,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Chipotle-Infused Vermouth,Infuse,Chipotle,Chipotle,Vermouth,Vermouth,style,tag; adjunct,style already this
+Chive Oil,Oil,Chive,Chives,,,,tag; adjunct,
+"Chive, White Pepper and Crème Fraîche Infused Belvedere 10 Vodka",Infuse,"Chive, White Pepper and Crème Fraîche",,Belvedere 10 Vodka,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Chochin 60 Nama Genshu & Terada Honke Kaikoshu Aged Sakes,,,,,,,,no technique in a form the rules read
+Chocolate Chip Infused Planteray Rum,Infuse,Chocolate Chip,,Planteray Rum,Planteray Rum,bottle,tag; made_from,with-what is not an exact plain ingredient
+Chocolate Tincture,Tincture,Chocolate,Chocolate,,,,tag; adjunct,
+Chocolate-Infused Bourbon,Infuse,Chocolate,Chocolate,Bourbon,Bourbon,style,tag; adjunct,style already this
+Chorizo Oil,Oil,Chorizo,Chorizo,,,,tag; adjunct,
+Chrysanthemum-Infused Sake,Infuse,Chrysanthemum,Chrysanthemum,Sake,Sake,style,tag; adjunct,style already this
+Cilantro-Infused Rum,Infuse,Cilantro,Cilantro,Rum,Rum,style,tag; adjunct,style already this
+Cinnamon & Orange-Infused Maple Syrup,Infuse,Cinnamon & Orange,,Maple Syrup,Maple Syrup,style,tag,"base style is not a drink, so not filed under it; with-what is not an exact plain ingredient"
+Cinnamon and clove smoke,Smoke,Cinnamon and clove,,,,,tag,with-what is not an exact plain ingredient
+Cinnamon Butter-Infused Bourbon,Infuse,Cinnamon Butter,,Bourbon,Bourbon,style,tag,style already this; with-what is not an exact plain ingredient
+Cinnamon Tincture,Tincture,Cinnamon,Cinnamon,,,,tag,already has recipe lines
+Cinnamon-Infused Souleil White Wine,Infuse,Cinnamon,Cinnamon,Souleil White Wine,,,tag; adjunct,base is not an exact bottle or style
+Citra Hop Redistillate,Distil,Citra Hop,,,,,tag,with-what is not an exact plain ingredient
+Citra Hops-Infused Tequila,Infuse,Citra Hops,Citra Hops,Tequila,Tequila,style,tag; adjunct,style already this
+Citron-Infused Chopin Vodka,Infuse,Citron,Citron,Chopin Vodka,Chopin Vodka,bottle,tag; made_from; adjunct,
+Citrus Peel-Infused Gin,Infuse,Citrus Peel,Citrus Peel,Gin,Gin,style,tag; adjunct,style already this
+Citrus-Hops Distillate,Distil,Citrus-Hops,,,,,tag,with-what is not an exact plain ingredient
+Clarified Almond,Clarify,,,Almond,Almond,style,tag,"base style is not a drink, so not filed under it"
+Clarified Almond Milk,Clarify,,,Almond Milk,Almond Milk,style,tag,"base style is not a drink, so not filed under it"
+Clarified Apple & Grape Soda,Clarify,,,Apple & Grape Soda,,,tag,base is not an exact bottle or style
+Clarified Apple Juice,Clarify,,,Apple Juice,Apple Juice,style,tag,style already this
+Clarified Apples,Clarify,,,Apples,Apple,style (alias),tag,"base style is not a drink, so not filed under it"
+Clarified Bacardi Rum Blend,Clarify,,,Bacardi Rum Blend,,,tag,base is not an exact bottle or style
+Clarified Banana,Clarify,,,Banana,Banana,style,tag,"base style is not a drink, so not filed under it"
+Clarified Banana Miso,Clarify,,,Banana Miso,,,tag,base is not an exact bottle or style
+Clarified Basil Cordial,Clarify,,,Basil Cordial,,,tag,"base matches a prep row, not a bottle or style"
+Clarified Basil Syrup,Clarify,,,Basil Syrup,,,tag,"base matches a prep row, not a bottle or style"
+Clarified Brioche Vodka,Clarify,,,Brioche Vodka,,,tag,base is not an exact bottle or style
+Clarified Butter,,,,,,,,"clarified butter is an ingredient (ghee), not the technique"
+Clarified Butter And Herb Vodka,,,,,,,,"clarified butter is an ingredient (ghee), not the technique"
+Clarified Carrot And Orange,Clarify,,,Carrot And Orange,,,tag,base is not an exact bottle or style
+Clarified Carrot Ketchup,Clarify,,,Carrot Ketchup,,,tag,base is not an exact bottle or style
+Clarified Cavendish Banana,Clarify,,,Cavendish Banana,,,tag,base is not an exact bottle or style
+Clarified Cheesecake Punch,Clarify,,,Cheesecake Punch,,,tag,base is not an exact bottle or style
+Clarified Chocolate Milk,Clarify,,,Chocolate Milk,Chocolate Milk,style,tag,"base style is not a drink, so not filed under it"
+Clarified Citrus,Clarify,,,Citrus,Citrus,style,tag,"base style is not a drink, so not filed under it"
+Clarified Citrus Mix,Clarify,,,Citrus Mix,,,tag,"base matches a prep row, not a bottle or style"
+Clarified Clamato,Clarify,,,Clamato,,,tag,made_from already this bottle
+Clarified Coconut,Clarify,,,Coconut,Coconut,style,tag,"base style is not a drink, so not filed under it"
+Clarified Coconut Custard,Clarify,,,Coconut Custard,,,tag,base is not an exact bottle or style
+Clarified Coconut Lemongrass Foam,Clarify,,,Coconut Lemongrass Foam,,,tag,base is not an exact bottle or style
+Clarified Coconut Milk,Clarify,,,Coconut Milk,Coconut Milk,style,tag,"base style is not a drink, so not filed under it"
+Clarified Coconut Milk Punch,Clarify; Milk wash,,,Coconut Milk Punch,,,tag,made from scratch or a punch: no bottle read
+Clarified Coconut-Infused Bacardi Carta Blanca,Clarify; Infuse,Coconut,Coconut,Bacardi Carta Blanca,,,tag; adjunct,made_from already this bottle
+Clarified Cognac & Jasmine Milk Punch,Clarify; Milk wash,,,Cognac & Jasmine Milk Punch,,,tag,made from scratch or a punch: no bottle read
+Clarified Coke And Planteray Rum Punch,Clarify,,,Coke And Planteray Rum Punch,,,tag,base is not an exact bottle or style
+Clarified Cola,Clarify,,,Cola,Cola,style,tag,"base style is not a drink, so not filed under it"
+Clarified Cordial,Clarify,,,Cordial,Cordial,style,tag,"base style is not a drink, so not filed under it"
+Clarified Corsican Grapefruit Cordial,Clarify,,,Corsican Grapefruit Cordial,,,tag,base is not an exact bottle or style
+Clarified Cream,Clarify,,,Cream,Cream,style,tag,"base style is not a drink, so not filed under it"
+Clarified D'ussé,Clarify,,,D'ussé,,,tag,made_from already D'USSÉ VSOP
+Clarified Dong Du Guava Cordial,Clarify,,,Dong Du Guava Cordial,,,tag,base is not an exact bottle or style
+Clarified Double Apple,Clarify,,,Double Apple,,,tag,base is not an exact bottle or style
+Clarified Ginger Milk,Clarify,,,Ginger Milk,,,tag,base is not an exact bottle or style
+Clarified Goldenberry,Clarify,,,Goldenberry,Goldenberry,style,tag,"base style is not a drink, so not filed under it"
+Clarified Grape,Clarify,,,Grape,Grape,style,tag,"base style is not a drink, so not filed under it"
+Clarified Grape Whey,Clarify,,,Grape Whey,,,tag,base is not an exact bottle or style
+Clarified Grapefruit Juice,Clarify,,,Grapefruit Juice,Grapefruit Juice,style,tag,style already this
+Clarified Grapefruit Soda,Clarify,,,Grapefruit Soda,Grapefruit Soda,style,tag,"base style is not a drink, so not filed under it"
+Clarified Greek Yoghurt,Clarify,,,Greek Yoghurt,Greek Yoghurt,style,tag,"base style is not a drink, so not filed under it"
+Clarified Green Apple,Clarify,,,Green Apple,Green Apple,style,tag,"base style is not a drink, so not filed under it"
+Clarified Green Kiwi,Clarify,,,Green Kiwi,,,tag,base is not an exact bottle or style
+Clarified Guava,Clarify,,,Guava,Guava,style,tag,"base style is not a drink, so not filed under it"
+Clarified Kiwi,Clarify,,,Kiwi,Kiwi,style,tag,"base style is not a drink, so not filed under it"
+Clarified Kiwi Juice,Clarify,,,Kiwi Juice,Kiwi Juice,style,tag,style already this
+Clarified L.G.O.,Clarify,,,L.G.O.,,,tag,base is not an exact bottle or style
+Clarified Lemon Juice,Clarify,,,Lemon Juice,Lemon Juice,style,tag,style already this
+Clarified Lime Juice,Clarify,,,Lime Juice,Lime Juice,style,tag,style already this
+Clarified Lychee,Clarify,,,Lychee,Lychee,style,tag,"base style is not a drink, so not filed under it"
+Clarified Lychee Puree,Clarify,,,Lychee Puree,Lychee Purée,style,tag,"base style is not a drink, so not filed under it"
+Clarified Mango,Clarify,,,Mango,Mango,style,tag,"base style is not a drink, so not filed under it"
+Clarified Mango Cordial,Clarify,,,Mango Cordial,,,tag,"base matches a prep row, not a bottle or style"
+Clarified Melon,Clarify,,,Melon,Melon,style,tag,"base style is not a drink, so not filed under it"
+Clarified Milk Punch,Clarify; Milk wash,,,Milk Punch,,,tag,made from scratch or a punch: no bottle read
+Clarified Mount Gay Rum & Coke Punch,Clarify,,,Mount Gay Rum & Coke Punch,,,tag,base is not an exact bottle or style
+Clarified Orange,Clarify,,,Orange,Orange,style,tag,"base style is not a drink, so not filed under it"
+Clarified Orange Juice,Clarify,,,Orange Juice,Orange Juice,style,tag,style already this
+Clarified Passion Fruit,Clarify,,,Passion Fruit,Passion Fruit,style,tag,"base style is not a drink, so not filed under it"
+Clarified Passionfruit,Clarify,,,Passionfruit,Passion Fruit,style (alias),tag,"base style is not a drink, so not filed under it"
+Clarified Peach,Clarify,,,Peach,Peach,style,tag,"base style is not a drink, so not filed under it"
+Clarified Peach Cordial,Clarify,,,Peach Cordial,,,tag,"base matches a prep row, not a bottle or style"
+Clarified Peach Soda,Clarify,,,Peach Soda,Peach Soda,style,tag,"base style is not a drink, so not filed under it"
+Clarified Peanut Milk,Clarify,,,Peanut Milk,,,tag,base is not an exact bottle or style
+Clarified Pear,Clarify,,,Pear,Pear,style,tag,"base style is not a drink, so not filed under it"
+Clarified Pina Colada,Clarify,,,Pina Colada,,,tag,"base matches a unsorted row, not a bottle or style"
+Clarified Pineapple And Coconut,Clarify,,,Pineapple And Coconut,,,tag,base is not an exact bottle or style
+Clarified Pineapple Juice,Clarify,,,Pineapple Juice,Pineapple Juice,style,tag,style already this
+Clarified Pink Grapefruit Juice,Clarify,,,Pink Grapefruit Juice,Pink Grapefruit Juice,style,tag,style already Grapefruit Juice
+Clarified Plum,Clarify,,,Plum,Plum,style,tag,"base style is not a drink, so not filed under it"
+Clarified Prickly Pear,Clarify,,,Prickly Pear,Prickly Pear,style,tag,"base style is not a drink, so not filed under it"
+Clarified Prickly Pear Cactus Juice,Clarify,,,Prickly Pear Cactus Juice,,,tag,base is not an exact bottle or style
+Clarified Raspberry,Clarify,,,Raspberry,Raspberry,style,tag,"base style is not a drink, so not filed under it"
+Clarified Rice Wine,Clarify,,,Rice Wine,Rice Wine,style,tag; generic_id,
+Clarified Ripened Banana Stock,Clarify,,,Ripened Banana Stock,,,tag,base is not an exact bottle or style
+Clarified Rum,Clarify,,,Rum,Rum,style,tag,style already this
+Clarified Strawberry & Saffron Cordial,Clarify,,,Strawberry & Saffron Cordial,,,tag,base is not an exact bottle or style
+Clarified Tofu,Clarify,,,Tofu,Tofu,style,tag,"base style is not a drink, so not filed under it"
+Clarified Tomato And Coconut Gazpacho,Clarify,,,Tomato And Coconut Gazpacho,,,tag,base is not an exact bottle or style
+Clarified Tomato Cordial,Clarify,,,Tomato Cordial,,,tag,"base matches a prep row, not a bottle or style"
+Clarified Tomato Juice,Clarify,,,Tomato Juice,Tomato Juice,style,tag,style already this
+Clarified Tomato Water,Clarify,,,Tomato Water,,,tag,"base matches a prep row, not a bottle or style"
+Clarified Watermelon,Clarify,,,Watermelon,Watermelon,style,tag,"base style is not a drink, so not filed under it"
+Clarified Watermelon Agave,Clarify,,,Watermelon Agave,,,tag,base is not an exact bottle or style
+Clarified Watermelon Juice,Clarify,,,Watermelon Juice,Watermelon Juice,style,tag,style already this
+Clarified Watermelon Soda,Clarify,,,Watermelon Soda,,,tag,"base matches a prep row, not a bottle or style"
+Clarified Whey,Clarify,,,Whey,Whey,style,tag,"base style is not a drink, so not filed under it"
+Clarified Yoghurt,Clarify,,,Yoghurt,Yogurt,style (alias),tag,"base style is not a drink, so not filed under it"
+Clarified Yogurt,Clarify,,,Yogurt,Yogurt,style,tag,"base style is not a drink, so not filed under it"
+Clavo Huasca And Vanilla Tincture,Tincture,Clavo Huasca And Vanilla,,,,,tag,with-what is not an exact plain ingredient
+Clay-infused Orange Bitters,Infuse,Clay,Clay,Orange Bitters,Orange Bitters,style,tag; adjunct,"base style is not a drink, so not filed under it"
+Clément Blanc Rhum (Osmanthus-Infused),Infuse,Osmanthus,Osmanthus,Clément Blanc Rhum,,,tag; adjunct,base is not an exact bottle or style
+Clove Tincture,Tincture,Clove,Clove,,,,tag; adjunct,
+Coastal Smoke,Smoke,Coastal,,,,,tag,with-what is not an exact plain ingredient
+Coca Leaf and Cacao Distillate,Distil,Coca Leaf and Cacao,,,,,tag,with-what is not an exact plain ingredient
+Cocchi Distillate,Distil,Cocchi,,,,,tag,with-what is not an exact plain ingredient
+Cocoa Butter Washed Torres 15 Brandy,Fat wash,Cocoa Butter,Cacao Butter,Torres 15 Brandy,,,tag; adjunct,base is not an exact bottle or style
+Cocoa Butter-Infused Grey Goose Vodka,Infuse,Cocoa Butter,Cacao Butter,Grey Goose Vodka,,,tag; adjunct,made_from already this bottle
+Cocoa Husk Sous-Vide Belvedere Vodka,Sous vide,Cocoa Husk,,Belvedere Vodka,Belvedere Vodka,bottle,tag; made_from,with-what is not an exact plain ingredient
+Cocoa Puff Infused Mezcal Espadin,Infuse,Cocoa Puff,,Mezcal Espadin,Espadín Mezcal,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Cocoa-Butter-Washed Cognac,Fat wash,Cocoa-Butter,Cacao Butter,Cognac,Cognac,style,tag; adjunct,style already this
+Coconut Butter-Washed Whisky,Fat wash,Coconut Butter,,Whisky,Whiskey,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Coconut Fat Washed Bacardi,Fat wash,Coconut,Coconut,Bacardi,,,tag; adjunct,base names only a brand with several bottles (the alias says Bacardí Carta Blanca)
+Coconut Fat-Washed Gin,Fat wash,Coconut,Coconut,Gin,Gin,style,tag; adjunct,style already this
+Coconut Fat-washed Patron Silver,Fat wash,Coconut,Coconut,Patron Silver,,,tag; adjunct,made_from already this bottle
+Coconut Fat-Washed Roku Gin,Fat wash,Coconut,Coconut,Roku Gin,,,tag; adjunct,made_from already this bottle
+Coconut Fat-Washed Rum,Fat wash,Coconut,Coconut,Rum,Rum,style,,tags already there; style already this; already has recipe lines
+Coconut Fat-Washed Whisky,Fat wash,Coconut,Coconut,Whisky,Whiskey,style (alias),tag; adjunct,style already this
+Coconut Infused Arrack,Infuse,Coconut,Coconut,Arrack,Arrack,style,tag; adjunct,style already this
+Coconut Infused Rum,Infuse,Coconut,Coconut,Rum,Rum,style,tag; adjunct,style already this
+Coconut Milk Wash,Milk wash,Coconut,Coconut Milk,,,,tag; adjunct,
+Coconut Milk Washed Cordial,Milk wash,Coconut,Coconut Milk,Cordial,Cordial,style,tag; adjunct,"base style is not a drink, so not filed under it"
+Coconut Milk Washed Gin,Milk wash,Coconut,Coconut Milk,Gin,Gin,style,tag; adjunct,style already this
+Coconut Oil Fat-Washed Tequila,Fat wash,Coconut Oil,Coconut Oil,Tequila,Tequila,style,tag; adjunct,style already this
+Coconut Oil Gin,,,,,,,,no technique in a form the rules read
+Coconut Oil Washed Blanco Tequila,Fat wash,Coconut Oil,Coconut Oil,Blanco Tequila,Blanco Tequila,style,tag; adjunct,style already this
+Coconut Oil Washed Del Maguey Puebla Mezcal,Fat wash,Coconut Oil,Coconut Oil,Del Maguey Puebla Mezcal,,,tag; adjunct,base is not an exact bottle or style
+Coconut Oil Washed Puerto Rican Rum,Fat wash,Coconut Oil,Coconut Oil,Puerto Rican Rum,Puerto Rican Rum,style,tag; adjunct,style already this
+Coconut Oil Washed Vodka,Fat wash,Coconut Oil,Coconut Oil,Vodka,Vodka,style,tag; adjunct,style already this
+Coconut Oil-Washed Ketel One,Fat wash,Coconut Oil,Coconut Oil,Ketel One,,,tag; adjunct,made_from already this bottle
+Coconut Oil-Washed Rye,Fat wash,Coconut Oil,Coconut Oil,Rye,Rye Whiskey,style (alias),tag; adjunct,style already this
+Coconut Oil-Washed White Rum,Fat wash,Coconut Oil,Coconut Oil,White Rum,White Rum,style,tag; adjunct,style already this
+Coconut Smoke,Smoke,Coconut,Coconut,,,,tag; adjunct,
+Coconut Tincture,Tincture,Coconut,Coconut,,,,tag; adjunct,
+Coconut Washed Pisco,,Coconut,Coconut,Pisco,Pisco,style,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; style already this"
+Coconut Washed Wild Turkey Rye Whiskey,,Coconut,Coconut,Wild Turkey Rye Whiskey,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; base names only a brand with several bottles (the alias says Wild Turkey Rye)"
+Coconut Yogurt Wash,Milk wash,Coconut Yogurt,Coconut Yoghurt,,,,tag; adjunct,
+Coconut-Infused Apio,Infuse,Coconut,Coconut,Apio,,,tag; adjunct,base is not an exact bottle or style
+Coconut-Shell-Aged Hazelnut Liqueur,Age,Coconut-Shell,,Hazelnut Liqueur,Hazelnut Liqueur,style,tag,style already this; with-what is not an exact plain ingredient
+Coconut-Washed Bourbon,,Coconut,Coconut,Bourbon,Bourbon,style,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; style already this"
+Coconut-Washed Bushmills 10 Year,,Coconut,Coconut,Bushmills 10 Year,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; base is not an exact bottle or style"
+Coconut-Washed Lot No. 40 Rye,,Coconut,Coconut,Lot No. 40 Rye,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; base is not an exact bottle or style"
+Coconut-Washed Rum,,Coconut,Coconut,Rum,Rum,style,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; style already this"
+Coconut-Washed Rye,,Coconut,Coconut,Rye,Rye Whiskey,style (alias),adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; style already this"
+Coconut-Washed Suze,,Coconut,Coconut,Suze,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; made_from already this bottle"
+Coconut-Washed Vodka And Gin,,Coconut,Coconut,Vodka And Gin,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; base is not an exact bottle or style"
+Coffee And Nutmeg-Infused Bulldog Gin,Infuse,Coffee And Nutmeg,,Bulldog Gin,,,tag,base names only a brand with several bottles (the alias says Bulldog London Dry Gin); with-what is not an exact plain ingredient
+Coffee Bean And Vanilla Infused Vodka,Infuse,Coffee Bean And Vanilla,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Coffee Distillate,Distil,Coffee,Coffee,,,,tag; adjunct,
+Coffee Nitro-Infused Kavalan Whisky Distillery Select,Infuse,Coffee Nitro,,Kavalan Whisky Distillery Select,,,tag,"the base names another technique too, so neither base nor with-what is read; made from scratch or a punch: no bottle read"
+Coffee Tincture,Tincture,Coffee,Coffee,,,,tag; adjunct,
+Coffee-Infused Bib & Tucker Bourbon,Infuse,Coffee,Coffee,Bib & Tucker Bourbon,,,tag; adjunct,base is not an exact bottle or style
+Coffee-Infused Campari,Infuse,Coffee,Coffee,Campari,,,,tags already there; made_from already this bottle; already has recipe lines
+Coffee-infused Vodka,Infuse,Coffee,Coffee,Vodka,Vodka,style,tag; adjunct,style already this
+Coffee-Washed Ketel One,,Coffee,Coffee,Ketel One,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; made_from already this bottle"
+Comte Washed Johnnie Walker Black Label,Fat wash,Comte,,Johnnie Walker Black Label,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Cookie Vodka Milk Punch,Milk wash,,,,,,tag,
+Copra Fat-Washed Applejack,Fat wash,Copra,,Applejack,Applejack,style,tag,style already this; with-what is not an exact plain ingredient
+Coriander Distillate,Distil,Coriander,Coriander,,,,tag; adjunct,
+Coriander-Infused Mezcal,Infuse,Coriander,Coriander,Mezcal,Mezcal,style,tag; adjunct,style already this
+Coriander-Infused Tequila,Infuse,Coriander,Coriander,Tequila,Tequila,style,tag; adjunct,style already this
+Corn Husk Infused Pisco,Infuse,Corn Husk,,Pisco,Pisco,style,tag,style already this; with-what is not an exact plain ingredient
+Corn Husk Infused Tequila,Infuse,Corn Husk,,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+Corn Pop Cereal-Infused Grey Goose Vodka,Infuse,Corn Pop Cereal,,Grey Goose Vodka,Grey Goose Vodka,bottle,tag; made_from,with-what is not an exact plain ingredient
+Cornbread Milk Wash,Milk wash,Cornbread,,,,,tag,with-what is not an exact plain ingredient
+Cranberry-Pink Peppercorn Infused Sipsmith Gin,Infuse,Cranberry-Pink Peppercorn,,Sipsmith Gin,,,tag,base names only a brand with several bottles (the alias says Sipsmith London Dry Gin); with-what is not an exact plain ingredient
+Cream-Washed Condesa,Milk wash,Cream,Cream,Condesa,,,tag; adjunct,base is not an exact bottle or style
+Croissant-Infused Derrumbes Mezcal,Infuse,Croissant,Croissant,Derrumbes Mezcal,Derrumbes Mezcal,bottle,tag; made_from; adjunct,
+Croissant-Infused Rye,Infuse,Croissant,Croissant,Rye,Rye Whiskey,style (alias),tag; adjunct,style already this
+Crumble Tincture,Tincture,Crumble,,,,,tag,with-what is not an exact plain ingredient
+Cucumber Infused Absinthe,Infuse,Cucumber,Cucumber,Absinthe,Absinthe,style,tag; adjunct,style already this
+Cucumber Infused Tequila,Infuse,Cucumber,Cucumber,Tequila,Tequila,style,tag; adjunct,style already this
+Cucumber Infusion,Infuse,Cucumber,Cucumber,,,,tag; adjunct,
+Cucumber-Infused Gin,Infuse,Cucumber,Cucumber,Gin,Gin,style,,tags already there; style already this; already has recipe lines
+Cumin-Infused Abelha Cachaca,Infuse,Cumin,Cumin,Abelha Cachaca,Abelha Cachaça,bottle,tag; made_from; adjunct,
+Curd Clarification,Clarify,Curd,,,,,tag,with-what is not an exact plain ingredient
+Curry Leaf Infused Gin or Vodka,Infuse,Curry Leaf,Curry Leaf,Gin or Vodka,Gin,style (alias),tag; adjunct,style already this
+Curry Leaf Oil,Oil,Curry Leaf,Curry Leaf,,,,tag; adjunct,
+Curry Leaf-Infused Fort Hamilton Gin,Infuse,Curry Leaf,Curry Leaf,Fort Hamilton Gin,Fort Hamilton Gin,bottle,tag; made_from; adjunct,
+Curry Oil,Oil,Curry,Curry,,,,tag; adjunct,
+Curry-Leaf-Infused Gin,Infuse,Curry-Leaf,Curry Leaf,Gin,Gin,style,tag; adjunct,style already this
+Custard Distilled Ketel One Vodka,Distil,Custard,Custard,Ketel One Vodka,,,tag; adjunct,made from scratch or a punch: no bottle read
+Dandelion-Infused Ketel One Vodka,Infuse,Dandelion,Dandelion,Ketel One Vodka,,,tag; adjunct,made_from already this bottle
+Dark Chocolate-Infused Sweet Vermouth,Infuse,Dark Chocolate,Dark Chocolate,Sweet Vermouth,Sweet Vermouth,style,tag; adjunct,style already this
+Dark Matter Chocolate-Infused Mezcal,Infuse,Dark Matter Chocolate,,Mezcal,Mezcal,style,tag,style already this; with-what is not an exact plain ingredient
+Dark Rum Infused Cacao Nibs,Infuse,Dark Rum,Dark Rum,Cacao Nibs,Cacao Nib,style (alias),tag; adjunct,"base style is not a drink, so not filed under it"
+Dill Distillate,Distil,Dill,Dill,,,,tag; adjunct,
+Dill Infused Old Forester,Infuse,Dill,Dill,Old Forester,,,tag; adjunct,made_from already this bottle
+Dill Oil,Oil,Dill,Dill,,,,tag; adjunct,
+Dill Tincture,Tincture,Dill,Dill,,,,tag; adjunct,
+Dill-Infused Barsol Pisco,Infuse,Dill,Dill,Barsol Pisco,Barsol Pisco,bottle,tag; made_from; adjunct,
+Dill-Infused Herradura Blanco Tequila,Infuse,Dill,Dill,Herradura Blanco Tequila,Herradura Blanco Tequila,bottle,tag; made_from; adjunct,
+Dilmah Tea Infused Gin,Infuse,Dilmah Tea,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Distilled Bread,Distil,Bread,Bread,Bread,,,tag; adjunct,made from scratch or a punch: no bottle read
+Distilled Chipotle,Distil,Chipotle,Chipotle,Chipotle,,,tag; adjunct,made from scratch or a punch: no bottle read
+Distilled Christmas Tree,Distil,Christmas Tree,,Christmas Tree,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Distilled Common Hogweed Seed,Distil,Common Hogweed Seed,,Common Hogweed Seed,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Distilled Falernum,Distil,Falernum,Falernum,Falernum,,,tag; adjunct,made from scratch or a punch: no bottle read
+Distilled Filo Pastry,Distil,Filo Pastry,,Filo Pastry,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Distilled Fortified Negroni,Distil,Fortified Negroni,,Fortified Negroni,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Distilled Hominy,Distil,Hominy,,Hominy,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Distilled Lavender,Distil,Lavender,Lavender,Lavender,,,tag; adjunct,made from scratch or a punch: no bottle read
+Distilled Nutmeg,Distil,Nutmeg,Nutmeg,Nutmeg,,,tag; adjunct,made from scratch or a punch: no bottle read
+Distilled Parsley,Distil,Parsley,Parsley,Parsley,,,tag; adjunct,made from scratch or a punch: no bottle read
+Distilled Pulque,Distil,Pulque,Pulque,Pulque,,,tag; adjunct,made from scratch or a punch: no bottle read
+Distilled Rue,Distil,Rue,Rue,Rue,,,tag; adjunct,made from scratch or a punch: no bottle read
+Distilled Sour Cherry,Distil,Sour Cherry,Sour Cherry,Sour Cherry,,,tag; adjunct,made from scratch or a punch: no bottle read
+Distilled Tagetes Leaf,Distil,Tagetes Leaf,,Tagetes Leaf,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Doritos Distillate,Distil,Doritos,,,,,tag,with-what is not an exact plain ingredient
+Doughnut Washed Peddlers Gin,,Doughnut,,Peddlers Gin,,,,"washed with something that could be a fat or milk wash, or neither: no tag; base names only a brand with several bottles (the alias says Peddlers Shanghai Craft Gin); with-what is not an exact plain ingredient"
+Dragon's Eye-Infused Dry Vermouth,Infuse,Dragon's Eye,,Dry Vermouth,Dry Vermouth,style,tag,style already this; with-what is not an exact plain ingredient
+Dried Chili-Infused Tequila,Infuse,Dried Chili,,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+Dried Fruit Infusion,Infuse,Dried Fruit,Dried Fruit,,,,tag; adjunct,
+Dried Kaffir Infused Gin,Infuse,Dried Kaffir,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Duck Fat Washed Benchmark Bourbon,Fat wash,Duck,Duck Fat,Benchmark Bourbon,,,tag; adjunct,base names only a brand with several bottles (the alias says Benchmark Old No. 8 Brand)
+Duck Fat-Washed Rum,Fat wash,Duck,Duck Fat,Rum,Rum,style,tag; adjunct,style already this
+Duck-Infused Jameson Black Barrel,Infuse,Duck,,Jameson Black Barrel,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Earl Grey Infused Condesa Gin,Infuse,Earl Grey,Earl Grey Tea,Condesa Gin,,,tag; adjunct,base names only a brand with several bottles (the alias says Condesa Clásica Gin)
+Earl Grey Infused Woodinville Bourbon,Infuse,Earl Grey,Earl Grey Tea,Woodinville Bourbon,,,tag; adjunct,base names only a brand with several bottles (the alias says Woodinville Straight Bourbon Whiskey)
+Earl Grey Infusion,Infuse,Earl Grey,Earl Grey Tea,,,,tag; adjunct,
+Earl Grey Tea Anise Infused,Infuse,,,,,,tag,
+Earl Grey Tea Infused Tenjaku Blended Whisky,Infuse,Earl Grey Tea,Earl Grey Tea,Tenjaku Blended Whisky,,,tag; adjunct,base is not an exact bottle or style
+Earl Grey Tea-Infused Tanqueray Gin,Infuse,Earl Grey Tea,Earl Grey Tea,Tanqueray Gin,,,tag; adjunct,made_from already this bottle
+Earl Grey-Infused Gin,Infuse,Earl Grey,Earl Grey Tea,Gin,Gin,style,,tags already there; style already this; already has recipe lines
+Earl Grey-Infused Rum,Infuse,Earl Grey,Earl Grey Tea,Rum,Rum,style,tag; adjunct,style already this
+Egg Waffle Washed Michter's Rye Whiskey,,Egg Waffle,,Michter's Rye Whiskey,,,,"washed with something that could be a fat or milk wash, or neither: no tag; base names only a brand with several bottles (the alias says Michter's US*1 Kentucky Straight Rye); with-what is not an exact plain ingredient"
+Enoki-Infused Vodka,Infuse,Enoki,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Epazote-Infused Mezcal,Infuse,Epazote,Epazote,Mezcal,Mezcal,style,tag; adjunct,style already this
+Escabeche-Infused Dolin Dry,Infuse,Escabeche,,Dolin Dry,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Espresso Bean-Infused Cocchi Barolo Chinato,Infuse,Espresso Bean,Espresso Bean,Cocchi Barolo Chinato,,,tag; adjunct,made_from already this bottle
+Espresso-Infused Campari,Infuse,Espresso,Espresso,Campari,,,tag; adjunct,made_from already this bottle
+Eucalyptus Distillate,Distil,Eucalyptus,Eucalyptus,,,,tag; adjunct,
+Eucalyptus Tincture,Tincture,Eucalyptus,Eucalyptus,,,,tag; adjunct,
+EVOO-Washed Vermouth Blend,Fat wash,EVOO,Extra Virgin Olive Oil,Vermouth Blend,,,tag; adjunct,"base matches a prep row, not a bottle or style"
+Extra Virgin Olive Oil Emulsion,,,,,,,,no technique in a form the rules read
+Fat-Washed Aguardiente de Agave,Fat wash,,,Aguardiente de Agave,,,tag,base is not an exact bottle or style
+Fat-Washed Buffalo Trace,Fat wash,,,Buffalo Trace,,,tag,made_from already this bottle
+Fat-Washed Coconut Tequila,Fat wash,,,Coconut Tequila,Coconut Tequila,style,tag,style already Tequila
+Fat-Washed Roasted Sesame,Fat wash,,,Roasted Sesame,,,tag,base is not an exact bottle or style
+Fat-Washed Shrimp Paste,Fat wash,,,Shrimp Paste,Shrimp Paste,style,tag,"base style is not a drink, so not filed under it"
+Fat-Washed Wild Turkey,Fat wash,,,Wild Turkey,Wild Turkey,bottle,tag; made_from,
+Fennel Distillate,Distil,Fennel,Fennel,,,,tag; adjunct,
+Fennel-Infused Mezcal,Infuse,Fennel,Fennel,Mezcal,Mezcal,style,tag; adjunct,style already this
+Fennel-Infused T&T Vodka,Infuse,Fennel,Fennel,T&T Vodka,,,tag; adjunct,base is not an exact bottle or style
+Fenugreek Distillate,Distil,Fenugreek,Fenugreek,,,,tag; adjunct,
+Fenugreek Tincture,Tincture,Fenugreek,Fenugreek,,,,tag; adjunct,
+Fig Infusion,Infuse,Fig,Fig,,,,tag; adjunct,
+Fig Leaf Oil,Oil,Fig Leaf,Fig Leaf,,,,tag; adjunct,
+Fig Leaf-Infused Ume Plum Liqueur,Infuse,Fig Leaf,Fig Leaf,Ume Plum Liqueur,Umeshu,style (alias),tag; adjunct,style already this
+Fig-Infused Elderflower Liqueur,Infuse,Fig,Fig,Elderflower Liqueur,Elderflower Liqueur,style,tag; adjunct,style already this
+Fig-Infused Picon Amer,Infuse,Fig,Fig,Picon Amer,,,tag; adjunct,made_from already this bottle
+Fig-Infused PX Sherry,Infuse,Fig,Fig,PX Sherry,Pedro Ximénez Sherry,style (alias),tag; adjunct,style already this
+Fig-Infused Sherry,Infuse,Fig,Fig,Sherry,Sherry,style,tag; adjunct,style already this
+Fir Distillate,Distil,Fir,,,,,tag,with-what is not an exact plain ingredient
+Fire Tincture,Tincture,Fire,,,,,tag,with-what is not an exact plain ingredient
+Firewater Tincture,Tincture,Firewater,,,,,tag,with-what is not an exact plain ingredient
+Five-Spice Duck Fat-Washed Maker's Mark Bourbon,Fat wash,Five-Spice Duck,,Maker's Mark Bourbon,,,tag,base names only a brand with several bottles (the alias says Maker's Mark); with-what is not an exact plain ingredient
+Flor de Caña Coconut and Curry Leaf Infused Rum,Infuse,Flor de Caña Coconut and Curry Leaf,,Rum,Rum,style,tag,style already this; with-what is not an exact plain ingredient
+Flower Tea Distillate,Distil,Flower Tea,Flower Tea,,,,tag; adjunct,
+Foie Gras-Washed Hennessy,Fat wash,Foie Gras,,Hennessy,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Freeze-Distilled Arrack,Distil,,,Arrack,,,tag,made from scratch or a punch: no bottle read
+French Fries Distilled Ketel One Vodka,Distil,French Fries,,Ketel One Vodka,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+French Toast Fat Wash,Fat wash,French Toast,,,,,tag,with-what is not an exact plain ingredient
+Fruit Loop Infused Milk,Infuse,Fruit Loop,,Milk,Milk,style,tag,"base style is not a drink, so not filed under it; with-what is not an exact plain ingredient"
+Garlic and Black Pepper Infused Belvedere,Infuse,Garlic and Black Pepper,,Belvedere,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Gelato Washed Aluna Coconut Rum,,Gelato,,Aluna Coconut Rum,,,,"washed with something that could be a fat or milk wash, or neither: no tag; base is not an exact bottle or style; with-what is not an exact plain ingredient"
+Genmaicha Distilled Tanqueray London Dry,Distil,Genmaicha,Genmaicha,Tanqueray London Dry,,,tag; adjunct,made from scratch or a punch: no bottle read
+Genmaicha Infused Japanese Whisky,Infuse,Genmaicha,Genmaicha,Japanese Whisky,Japanese Whisky,style,tag; adjunct,style already this
+Geranium And Niam Distillate,Distil,Geranium And Niam,,,,,tag,with-what is not an exact plain ingredient
+Geranium Hazelnut Oil,Oil,Geranium Hazelnut,Geranium,,,,tag; adjunct,
+Ghee and Five-Spice-Infused Rye,Infuse,Ghee and Five-Spice,,Rye,Rye Whiskey,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Ghee Butter-Washed Bourbon,Fat wash,Ghee Butter,Ghee,Bourbon,Bourbon,style,tag; adjunct,style already this
+Ghee-Infused Becherovka,Infuse,Ghee,Ghee,Becherovka,,,tag; adjunct,made_from already this bottle
+Gin Milk Punch,Milk wash,,,,,,tag,
+Ginger & Gula Melaka Distillate,Distil,Ginger & Gula Melaka,,,,,tag,with-what is not an exact plain ingredient
+Ginger Fiber Distillate,Distil,Ginger Fiber,,,,,tag,with-what is not an exact plain ingredient
+Ginger Infused Tequila,Infuse,Ginger,Ginger,Tequila,Tequila,style,tag; adjunct,style already this
+Ginger-Infused Cold Brew Black Tea,Infuse,Ginger,Ginger,Cold Brew Black Tea,,,tag; adjunct,"base matches a prep row, not a bottle or style"
+Ginger-infused Rum,Infuse,Ginger,Ginger,Rum,Rum,style,tag; adjunct,style already this
+Ginger-Infused Vermouth,Infuse,Ginger,Ginger,Vermouth,Vermouth,style,tag; adjunct,style already this
+Ginger-Infused Vodka,Infuse,Ginger,Ginger,Vodka,Vodka,style,tag; adjunct,style already this
+Ginger-Lemon Tea-Infused Scotch,Infuse,Ginger-Lemon Tea,,Scotch,Scotch,style,tag,style already this; with-what is not an exact plain ingredient
+Ginseng Smoke,Smoke,Ginseng,Ginseng,,,,tag; adjunct,
+Glenmorangie 12yr Cocoa Butter Washed,Fat wash,,,,,,tag,
+Goat Milk Clarification,Clarify,Goat Milk,Goat Milk,,,,tag; adjunct,
+Goat Milk Clarified,Clarify,Goat Milk,Goat Milk,,,,tag; adjunct,
+Goat's Milk-Washed Gin,Milk wash,Goat's,Goat Milk,Gin,Gin,style,tag; adjunct,style already this
+Goji and Rosehip Clarified Juice,Clarify,Goji and Rosehip,,Juice,Juice,style,tag,style already Rosehip; with-what is not an exact plain ingredient
+Goji Berry-Infused Souleil White Wine,Infuse,Goji Berry,Goji Berry,Souleil White Wine,,,tag; adjunct,base is not an exact bottle or style
+Gong Mei Tea-Infused Gin,Infuse,Gong Mei Tea,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Granola Infused Shochu,Infuse,Granola,Granola,Shochu,Shochu,style,tag; adjunct,style already this
+Grapefruit Peel-Infused Campari,Infuse,Grapefruit Peel,Grapefruit Peel,Campari,,,tag; adjunct,made_from already this bottle
+Grapefruit Tea-Infused Bulldog Gin,Infuse,Grapefruit Tea,,Bulldog Gin,,,tag,base names only a brand with several bottles (the alias says Bulldog London Dry Gin); with-what is not an exact plain ingredient
+Grapefruit-Infused Vodka,Infuse,Grapefruit,Grapefruit,Vodka,Vodka,style,tag; adjunct,style already this
+Greek Oil Washed Gin,Fat wash,Greek Oil,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Green Apple Infused Johnnie Walker Black Label,Infuse,Green Apple,Green Apple,Johnnie Walker Black Label,,,tag; adjunct,made_from already this bottle
+Green Curry-Washed Tanqueray,,Green Curry,Green Curry,Tanqueray,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; made_from already this bottle"
+Green Mango-infused Tequila,Infuse,Green Mango,Green Mango,Tequila,Tequila,style,tag; adjunct,style already this
+Green Pepper Infused Milagrito 40 Mezcal,Infuse,Green Pepper,Green Bell Pepper,Milagrito 40 Mezcal,,,tag; adjunct,"base matches a unsorted row, not a bottle or style"
+Green Peppercorn Vacuum Distillate,Distil,Green Peppercorn Vacuum,,,,,tag,with-what is not an exact plain ingredient
+Green Pine Cone Distillate,Distil,Green Pine Cone,,,,,tag,with-what is not an exact plain ingredient
+Green Smoked Guava,Smoke,Green,,Guava,Guava,style,tag,"base style is not a drink, so not filed under it; with-what is not an exact plain ingredient"
+Green Szechuan Tincture,Tincture,Green Szechuan,,,,,tag,with-what is not an exact plain ingredient
+Green Tea Distillate,Distil,Green Tea,Green Tea,,,,tag; adjunct,
+Green Tea Infusion,Infuse,Green Tea,Green Tea,,,,tag; adjunct,
+"Griotte Cherry, Thyme and Black Olive-Infused Mezcal",Infuse,"Griotte Cherry, Thyme and Black Olive",,Mezcal,Mezcal,style,tag,style already this; with-what is not an exact plain ingredient
+"Griotte Cherry, Thyme and Black Olive-Infused Tequila",Infuse,"Griotte Cherry, Thyme and Black Olive",,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+Gummy Bear Infused Vodka,Infuse,Gummy Bear,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Habanero & Lime Rind-Infused Don Julio Blanco Tequila,Infuse,Habanero & Lime Rind,,Don Julio Blanco Tequila,Don Julio Blanco Tequila,bottle,tag; made_from,with-what is not an exact plain ingredient
+Habanero Distillate,Distil,Habanero,Habanero,,,,tag; adjunct,
+Habanero Oil,Oil,Habanero,Habanero,,,,tag; adjunct,
+Habanero Olive Oil,Oil,Habanero Olive,Habanero,,,,tag; adjunct,
+Habanero Tincture,Tincture,Habanero,Habanero,,,,tag; adjunct,
+Habanero-Infused Agave,Infuse,Habanero,Habanero,Agave,,,tag; adjunct,"base matches a prep row, not a bottle or style"
+Habanero-Infused NODO Espadín,Infuse,Habanero,Habanero,NODO Espadín,,,tag; adjunct,"base matches a unsorted row, not a bottle or style"
+Habanero-Infused Patrón Tequila,Infuse,Habanero,Habanero,Patrón Tequila,,,tag; adjunct,base names only a brand with several bottles (the alias says Patrón Silver)
+Havana 3 Year Rum Infused with Tonka Beans,Infuse,Tonka Beans,Tonka Bean,Havana 3 Year Rum,,,tag; adjunct,made_from already this bottle
+Hawflake-Infused Whiskey,Infuse,Hawflake,,Whiskey,Whiskey,style,tag,style already this; with-what is not an exact plain ingredient
+Hay and Beeswax-Washed Alberta Premium Canadian Whisky,Fat wash,Hay and Beeswax,,Alberta Premium Canadian Whisky,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Hay-Infused Empirical Soka,Infuse,Hay,Hay,Empirical Soka,,,tag; adjunct,made_from already this bottle
+Hay-Smoked Olive,Smoke,Hay,Hay,Olive,Olive,style,tag; adjunct,"base style is not a drink, so not filed under it"
+Hazelnut Fat-Washed Irish Whiskey,Fat wash,Hazelnut,Hazelnut,Irish Whiskey,Irish Whiskey,style,tag; adjunct,style already this
+Hazelnut Yoghurt-Washed Whisky,Milk wash,Hazelnut Yoghurt,,Whisky,Whiskey,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Hellfire Tincture,Tincture,Hellfire,,,,,tag,with-what is not an exact plain ingredient
+Hennessy Infused With Kaffir Lime and Lemongrass,Infuse,Kaffir Lime and Lemongrass,,Hennessy,,,tag,base names only a brand with several bottles (the alias says Hennessy V.S); with-what is not an exact plain ingredient
+Herb and Cheese Waste Oil,Oil,Herb and Cheese Waste,,,,,tag,with-what is not an exact plain ingredient
+Herb Oil,Oil,Herb,Herbs,,,,tag; adjunct,
+Herb Tincture,Tincture,Herb,Herbs,,,,tag; adjunct,
+Herb-Infused Gin,Infuse,Herb,Herbs,Gin,Gin,style,tag; adjunct,style already this
+Herb-Infused Hendrick's,Infuse,Herb,Herbs,Hendrick's,,,tag; adjunct,made_from already this bottle
+Herb-Infused Pisco,Infuse,Herb,Herbs,Pisco,Pisco,style,tag; adjunct,style already this
+Hibiscus Infused Gin,Infuse,Hibiscus,Hibiscus,Gin,Gin,style,tag; adjunct,style already this
+Hibiscus Infused Iichiko Shinwa,Infuse,Hibiscus,Hibiscus,Iichiko Shinwa,,,tag; adjunct,made_from already this bottle
+Hibiscus Infused Peach Jelly,Infuse,Hibiscus,Hibiscus,Peach Jelly,,,tag; adjunct,base is not an exact bottle or style
+Hibiscus Infused Tequila,Infuse,Hibiscus,Hibiscus,Tequila,Tequila,style,tag; adjunct,style already this
+Hibiscus Infusion,Infuse,Hibiscus,Hibiscus,,,,tag; adjunct,
+Hibiscus-Infused Bulldog Gin,Infuse,Hibiscus,Hibiscus,Bulldog Gin,,,tag; adjunct,base names only a brand with several bottles (the alias says Bulldog London Dry Gin)
+Hibiscus-Infused Campari,Infuse,Hibiscus,Hibiscus,Campari,,,tag; adjunct,made_from already this bottle
+Hibiscus-Infused Código Mezcal,Infuse,Hibiscus,Hibiscus,Código Mezcal,,,tag; adjunct,base is not an exact bottle or style
+Hibiscus-Infused Lalo Blanco Tequila,Infuse,Hibiscus,Hibiscus,Lalo Blanco Tequila,LALO Blanco,bottle (alias),tag; made_from; adjunct,
+Hibiscus-Infused Mijenta Blanco Tequila,Infuse,Hibiscus,Hibiscus,Mijenta Blanco Tequila,Mijenta Blanco,bottle (alias),tag; made_from; adjunct,
+Hoji Infused Michter's Bourbon,Infuse,Hoji,,Michter's Bourbon,,,tag,base names only a brand with several bottles (the alias says Michter's US*1 Kentucky Straight Bourbon); with-what is not an exact plain ingredient
+Hojicha-Infused Vodka,Infuse,Hojicha,Hojicha,Vodka,Vodka,style,tag; adjunct,style already this
+Holy Basil Infused Tito's Vodka,Infuse,Holy Basil,Holy Basil,Tito's Vodka,Tito's Handmade Vodka,bottle (alias),tag; made_from; adjunct,
+Hops Tincture,Tincture,Hops,Hops,,,,tag; adjunct,
+Horseradish-Infused Vodka,Infuse,Horseradish,Horseradish,Vodka,Vodka,style,tag; adjunct,style already this
+House Clove Infusion,Infuse,House Clove,,,,,tag,with-what is not an exact plain ingredient
+House-Distilled Gin,Distil,,,Gin,,,tag,made from scratch or a punch: no bottle read
+House-Distilled Seasonal Gin,Distil,,,Seasonal Gin,,,tag,made from scratch or a punch: no bottle read
+House-Infused Citron Vodka,Infuse,House,,Citron Vodka,Citron Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+House-Infused Keemun Black Tea Vodka,Infuse,House,,Keemun Black Tea Vodka,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+House-Infused Tequila,Infuse,House,,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+House-Made Wasabi Infused Gin,Infuse,House-Made Wasabi,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Huitlacoche-infused Mezcal,Infuse,Huitlacoche,,Mezcal,Mezcal,style,tag,style already this; with-what is not an exact plain ingredient
+Hyeonmi Green Tea Infused Tokki Soju,Infuse,Hyeonmi Green Tea,,Tokki Soju,Tokki Soju,bottle,tag; made_from,with-what is not an exact plain ingredient
+Ice Wine Tea Infused Mijenta,Infuse,Ice Wine Tea,,Mijenta,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Infused Aquavit,Infuse,,,Aquavit,Aquavit,style,tag,style already this
+Infused Cinnamon Patron Silver,Infuse,,,Cinnamon Patron Silver,,,tag,base is not an exact bottle or style
+Infused White Rum,Infuse,,,White Rum,White Rum,style,tag,style already this
+Isabella Grape Milk Punch,Milk wash,,,,,,tag,
+Italian Basil Distillate,Distil,Italian Basil,Italian Basil,,,,tag; adjunct,
+Jackfruit Infused Tequila Blanco,Infuse,Jackfruit,Jackfruit,Tequila Blanco,Blanco Tequila,style (alias),tag; adjunct,style already this
+Jackfruit Infused Vodka,Infuse,Jackfruit,Jackfruit,Vodka,Vodka,style,tag; adjunct,style already this
+Jackfruit Infusion,Infuse,Jackfruit,Jackfruit,,,,tag; adjunct,
+Jalapeño & Ginger Infused Hot Honey,Infuse,Jalapeño & Ginger,,Hot Honey,Hot Honey,style,tag,"base style is not a drink, so not filed under it; with-what is not an exact plain ingredient"
+Jalapeño Infused Codigo Blanco Tequila,Infuse,Jalapeño,Jalapeño,Codigo Blanco Tequila,Código 1530 Blanco,bottle (alias),tag; made_from; adjunct,
+Jalapeño Infused Reposado Tequila,Infuse,Jalapeño,Jalapeño,Reposado Tequila,Reposado Tequila,style,tag; adjunct,style already this
+Jalapeno Peppercorn Tincture,Tincture,Jalapeno Peppercorn,,,,,tag,with-what is not an exact plain ingredient
+Jalapeño Tincture,Tincture,Jalapeño,Jalapeño,,,,tag; adjunct,
+Jalapeño-Infused Tequila,Infuse,Jalapeño,Jalapeño,Tequila,Tequila,style,,tags already there; style already this; already has recipe lines
+Jalapeño-Infused Tequila Blanco,Infuse,Jalapeño,Jalapeño,Tequila Blanco,Blanco Tequila,style (alias),tag; adjunct,style already this
+Jalapeño-Infused Tromba Tequila,Infuse,Jalapeño,Jalapeño,Tromba Tequila,Tromba Tequila,bottle,tag; made_from; adjunct,
+Jameson Biscoff Infusion,Infuse,Jameson Biscoff,,,,,tag,with-what is not an exact plain ingredient
+Japanese Blossom Smoke,Smoke,Japanese Blossom,,,,,tag,with-what is not an exact plain ingredient
+Jasmine Green Tea Infused Roku Gin,Infuse,Jasmine Green Tea,Jasmine Tea,Roku Gin,,,tag; adjunct,base names only a brand with several bottles (the alias says Roku Japanese Craft Gin)
+Jasmine Infused Grey Goose,Infuse,Jasmine,Jasmine,Grey Goose,,,tag; adjunct,made_from already this bottle
+Jasmine Infused Seedlip Grove,Infuse,Jasmine,Jasmine,Seedlip Grove,,,tag; adjunct,made_from already this bottle
+Jasmine Infused Vodka,Infuse,Jasmine,Jasmine,Vodka,Vodka,style,tag; adjunct,style already this
+Jasmine Pu Erh Distillate,Distil,Jasmine Pu Erh,,,,,tag,with-what is not an exact plain ingredient
+Jasmine Tea-Infused Vodka,Infuse,Jasmine Tea,Jasmine Tea,Vodka,Vodka,style,tag; adjunct,style already this
+Jasmine-Infused Merlot,Infuse,Jasmine,Jasmine,Merlot,,,tag; adjunct,base is not an exact bottle or style
+Jasmine-Infused Sake,Infuse,Jasmine,Jasmine,Sake,Sake,style,tag; adjunct,style already this
+Jujube-Infused Soju,Infuse,Jujube,Jujube,Soju,Soju,style,tag; adjunct,style already this
+Juniper-Chili Infused Iichiko,Infuse,Juniper-Chili,,Iichiko,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Juniper-Infused Sake Ono,Infuse,Juniper,Juniper Berries,Sake Ono,,,tag; adjunct,base is not an exact bottle or style
+Kaffir Lime Leaf And Lemongrass Infused Gin,Infuse,Kaffir Lime Leaf And Lemongrass,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Kaffir Lime Leaf and Lemongrass Infused Patrón Blanco,Infuse,Kaffir Lime Leaf and Lemongrass,,Patrón Blanco,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Kaffir Lime-Infused White Rum,Infuse,Kaffir Lime,Makrut Lime,White Rum,White Rum,style,tag; adjunct,style already this
+Kampot Pepper-infused Kelulut Honey,Infuse,Kampot Pepper,,Kelulut Honey,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Kedondong And Sour Plum Infused Gin,Infuse,Kedondong And Sour Plum,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Kelp-Infused Widges London Dry Gin,Infuse,Kelp,Kelp,Widges London Dry Gin,Widges London Dry Gin,bottle,tag; made_from; adjunct,
+Kiawe Wood Smoke,Smoke,Kiawe Wood,,,,,tag,with-what is not an exact plain ingredient
+Kimchi Distillate,Distil,Kimchi,Kimchi,,,,tag; adjunct,
+Kimchi Washed Tanqueray London Dry,,Kimchi,Kimchi,Tanqueray London Dry,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; made_from already this bottle"
+Kimchi-Infused Vodka,Infuse,Kimchi,Kimchi,Vodka,Vodka,style,tag; adjunct,style already this
+King Oyster Mushroom-Infused Whisky,Infuse,King Oyster Mushroom,,Whisky,Whiskey,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Kiwi Berry Oolong Tea Infused Vodka,Infuse,Kiwi Berry Oolong Tea,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Kobe beef jerky (soaked in aged soy sauce),,,,,,,,no technique in a form the rules read
+Kombu Oil,Oil,Kombu,Kombu,,,,tag; adjunct,
+Kombu-Infused Carpano Dry Vermouth,Infuse,Kombu,Kombu,Carpano Dry Vermouth,Carpano Dry,bottle (alias),tag; made_from; adjunct,
+Kombu-Infused Ichiko,Infuse,Kombu,Kombu,Ichiko,,,tag; adjunct,base is not an exact bottle or style
+Lamb-Washed Whiskey,Fat wash,Lamb,,Whiskey,Whiskey,style,tag,style already this; with-what is not an exact plain ingredient
+Langoustine Distillate,Distil,Langoustine,,,,,tag,with-what is not an exact plain ingredient
+Lapsang Souchong Distillate,Distil,Lapsang Souchong,Lapsang,,,,tag; adjunct,
+Lapsang Souchong Tea Infused Akashi Japanese Whiskey,Infuse,Lapsang Souchong Tea,Lapsang,Akashi Japanese Whiskey,,,tag; adjunct,base is not an exact bottle or style
+Lapsang Souchong-Infused LPV Gin,Infuse,Lapsang Souchong,Lapsang,LPV Gin,,,tag; adjunct,"base matches a unsorted row, not a bottle or style"
+Lapsang Tea-Infused Bourbon,Infuse,Lapsang Tea,Lapsang,Bourbon,Bourbon,style,tag; adjunct,style already this
+Lavender Infused Bacardi Rum,Infuse,Lavender,Lavender,Bacardi Rum,,,tag; adjunct,base names only a brand with several bottles (the alias says Bacardí Carta Blanca)
+Lavender Infused Sweet Vermouth,Infuse,Lavender,Lavender,Sweet Vermouth,Sweet Vermouth,style,tag; adjunct,style already this
+Lavender Tincture,Tincture,Lavender,Lavender,,,,tag; adjunct,
+Lavender-Infused Dolin Blanc Vermouth,Infuse,Lavender,Lavender,Dolin Blanc Vermouth,Dolin Vermouth Blanc,bottle (alias),tag; made_from; adjunct,
+Lavender-Infused Gin,Infuse,Lavender,Lavender,Gin,Gin,style,tag; adjunct,style already this
+Leek Distillate,Distil,Leek,,,,,tag,with-what is not an exact plain ingredient
+Lemon And Orange Peel-Infused Gin,Infuse,Lemon And Orange Peel,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Lemon and Thyme Oil,Oil,Lemon and Thyme,,,,,tag,with-what is not an exact plain ingredient
+Lemon Oil Cordial,,,,,,,,no technique in a form the rules read
+Lemon Thyme Infused Martell VS Cognac,Infuse,Lemon Thyme,Lemon Thyme,Martell VS Cognac,Martell VS Cognac,bottle,tag; made_from; adjunct,
+Lemon Zest Infused Godet No. 1 Cognac,Infuse,Lemon Zest,Lemon zest,Godet No. 1 Cognac,,,tag; adjunct,base is not an exact bottle or style
+Lemon-Infused Vodka,Infuse,Lemon,Lemon,Vodka,Vodka,style,tag; adjunct,style already this
+Lemongrass Oil,Oil,Lemongrass,Lemongrass,,,,tag; adjunct,
+Lemongrass-Infused Apio,Infuse,Lemongrass,Lemongrass,Apio,,,tag; adjunct,base is not an exact bottle or style
+Lemongrass-Infused Brunswick Aces Vodka,Infuse,Lemongrass,Lemongrass,Brunswick Aces Vodka,,,tag; adjunct,base is not an exact bottle or style
+Lemongrass-Infused Gin,Infuse,Lemongrass,Lemongrass,Gin,Gin,style,tag; adjunct,style already this
+Lemongrass-Infused Havana Club 7 Rum,Infuse,Lemongrass,Lemongrass,Havana Club 7 Rum,,,tag; adjunct,made_from already this bottle
+Lemongrass-Infused Vodka,Infuse,Lemongrass,Lemongrass,Vodka,Vodka,style,tag; adjunct,style already this
+Light Roast Coffee Distillate,Distil,Light Roast Coffee,Light Roast Coffee,,,,tag; adjunct,
+Lime Leaf Distillate,Distil,Lime Leaf,Makrut Lime Leaf,,,,tag; adjunct,
+Lime Leaf-Infused Lillet,Infuse,Lime Leaf,Makrut Lime Leaf,Lillet,,,tag; adjunct,base names only a brand with several bottles (the alias says Lillet Blanc)
+Lime Oil Mist,,,,,,,,no technique in a form the rules read
+Lobster Oil,Oil,Lobster,,,,,tag,with-what is not an exact plain ingredient
+Lobster Shell-Infused Mezcal,Infuse,Lobster Shell,,Mezcal,Mezcal,style,tag,style already this; with-what is not an exact plain ingredient
+Long Pepper-Infused Sweet Vermouth,Infuse,Long Pepper,Long Pepper,Sweet Vermouth,Sweet Vermouth,style,tag; adjunct,style already this
+Lychee-Infused Lo-Fi Dry,Infuse,Lychee,Lychee,Lo-Fi Dry,,,tag; adjunct,made_from already this bottle
+Lychee-Infused Vodka,Infuse,Lychee,Lychee,Vodka,Vodka,style,tag; adjunct,style already this
+Maca And Fig Root Tincture,Tincture,Maca And Fig Root,,,,,tag,with-what is not an exact plain ingredient
+Macadamia Distillate,Distil,Macadamia,Macadamia,,,,tag; adjunct,
+Macadamia-Infused 23rd St Brandy,Infuse,Macadamia,Macadamia,23rd St Brandy,,,tag; adjunct,base is not an exact bottle or style
+Macadamia-Infused Havana 3yr,Infuse,Macadamia,Macadamia,Havana 3yr,,,tag; adjunct,made_from already this bottle
+Maillard Reaction Distillate,Distil,Maillard Reaction,,,,,tag,with-what is not an exact plain ingredient
+Maitake Infused Manoir de Montreuil Calvados du Pays d'Auge,Infuse,Maitake,,Manoir de Montreuil Calvados du Pays d'Auge,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Makrut Leaf-Infused Mezcal,Infuse,Makrut Leaf,Makrut Lime Leaf,Mezcal,Mezcal,style,tag; adjunct,style already this
+Makrut Lime Leaf Distillate,Distil,Makrut Lime Leaf,Makrut Lime Leaf,,,,tag; adjunct,
+Makrut Lime Leaf Infused Planteray Silver,Infuse,Makrut Lime Leaf,Makrut Lime Leaf,Planteray Silver,,,tag; adjunct,base is not an exact bottle or style
+Makrut Lime Leaf Infused Ten To One Rum,Infuse,Makrut Lime Leaf,Makrut Lime Leaf,Ten To One Rum,Ten To One Rum,bottle,tag; made_from; adjunct,
+Malt Distillate,Distil,Malt,Malt,,,,tag; adjunct,
+Mambe Oil,Oil,Mambe,,,,,tag,with-what is not an exact plain ingredient
+Manchego Distillate,Distil,Manchego,,,,,tag,with-what is not an exact plain ingredient
+Mandarin-Infused Dry Vermouth,Infuse,Mandarin,Mandarin,Dry Vermouth,Dry Vermouth,style,tag; adjunct,style already this
+Mango Colada Milk Punch,Milk wash,,,,,,tag,
+Mango-Infused Dark Matter Rum,Infuse,Mango,Mango,Dark Matter Rum,,,tag; adjunct,base is not an exact bottle or style
+Mango-Infused Espolon Tequila,Infuse,Mango,Mango,Espolon Tequila,Espolon Tequila,bottle,tag; made_from; adjunct,
+Mango-Infused Gin,Infuse,Mango,Mango,Gin,Gin,style,tag; adjunct,style already this
+Mango-Infused Vodka,Infuse,Mango,Mango,Vodka,Vodka,style,tag; adjunct,style already this
+Marigold Distillate,Distil,Marigold,Marigold,,,,tag; adjunct,
+Marigold Leaf Oil,Oil,Marigold Leaf,Marigold Leaf,,,,tag; adjunct,
+Market Spice Tea-Infused Rye,Infuse,Market Spice Tea,,Rye,Rye Whiskey,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Marmite Distilled Havana 3,Distil,Marmite,,Havana 3,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Marou Cacao Nib-Infused Cognac,Infuse,Marou Cacao Nib,,Cognac,Cognac,style,tag,style already this; with-what is not an exact plain ingredient
+Masala Spice Vodka Distillate,Distil,Masala Spice Vodka,,,,,tag,with-what is not an exact plain ingredient
+Mascarpone Fat Wash,Fat wash,Mascarpone,Mascarpone,,,,tag; adjunct,
+Mascarpone Fat-Washed Nikka Days Whisky,Fat wash,Mascarpone,Mascarpone,Nikka Days Whisky,,,tag; adjunct,base is not an exact bottle or style
+Matcha Distillate,Distil,Matcha,Matcha,,,,tag; adjunct,
+Matcha-Infused Gin,Infuse,Matcha,Matcha,Gin,Gin,style,tag; adjunct,style already this
+Matcha-Infused Vodka,Infuse,Matcha,Matcha,Vodka,Vodka,style,tag; adjunct,style already this
+Mazapán-Washed Sierra Norte Red Corn Whiskey,,Mazapán,,Sierra Norte Red Corn Whiskey,,,,"washed with something that could be a fat or milk wash, or neither: no tag; made_from already this bottle; with-what is not an exact plain ingredient"
+Melon-Infused Fords Gin,Infuse,Melon,Melon,Fords Gin,,,tag; adjunct,made_from already this bottle
+Melon-Infused Tequila,Infuse,Melon,Melon,Tequila,Tequila,style,tag; adjunct,style already this
+Meyer Lemon Infused Holiday Vodka,Infuse,Meyer Lemon,Meyer Lemon,Holiday Vodka,,,tag; adjunct,"base matches a unsorted row, not a bottle or style"
+Milk & Makgeoli Washed Hennessy VSOP,Milk wash,Milk & Makgeoli,,Hennessy VSOP,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Milk Infused Cinnamon,Infuse,Milk,Milk,Cinnamon,Cinnamon,style,tag; adjunct,"base style is not a drink, so not filed under it"
+Milk Punch,Milk wash,,,,,,tag,
+Milk Wash,Milk wash,Milk,Milk,,,,tag; adjunct,
+Milk Washed Tres Tribus Mezcal,Milk wash,,Milk,Tres Tribus Mezcal,,,tag; adjunct,base is not an exact bottle or style
+Milk-washed Dark Rum,Milk wash,,Milk,Dark Rum,Dark Rum,style,tag; adjunct,style already this
+Milk-Washed Gin,Milk wash,,Milk,Gin,Gin,style,tag; adjunct,style already this
+Milk-Washed Plantation Rum,Milk wash,,Milk,Plantation Rum,Planteray Rum,bottle (alias),tag; made_from; adjunct,
+Milk-Washed Planteray Rum 5 Yr,Milk wash,,Milk,Planteray Rum 5 Yr,,,tag; adjunct,base is not an exact bottle or style
+Milk-Washed Rum,Milk wash,,Milk,Rum,Rum,style,tag; adjunct,style already this
+Milk-Washed Tanqueray No. Ten,Milk wash,,Milk,Tanqueray No. Ten,,,tag; adjunct,made_from already this bottle
+Milk-Washed Wild Turkey Rye,Milk wash,,Milk,Wild Turkey Rye,,,tag; adjunct,made_from already this bottle
+Milk-Washed Woodford Reserve Bourbon,Milk wash,,Milk,Woodford Reserve Bourbon,,,tag; adjunct,made_from already this bottle
+Mint and Absinthe Infused Mezcal,Infuse,Mint and Absinthe,,Mezcal,Mezcal,style,tag,style already this; with-what is not an exact plain ingredient
+Mint Distillate,Distil,Mint,Mint,,,,tag; adjunct,
+Mint-Infused Amaro,Infuse,Mint,Mint,Amaro,Amaro,style,tag; adjunct,style already this
+Mint-Infused Rum,Infuse,Mint,Mint,Rum,Rum,style,tag; adjunct,style already this
+Miso Butter Washed Avallen Apple,Fat wash,Miso Butter,,Avallen Apple,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Miso Distillate,Distil,Miso,Miso,,,,tag; adjunct,
+Miso Fat-Washed Mackintosh Whisky,Fat wash,Miso,Miso,Mackintosh Whisky,,,tag; adjunct,base is not an exact bottle or style
+Modern Tea Distillate Altamura Vodka,,,,,,,,no technique in a form the rules read
+Mole Distillate,Distil,Mole,Mole,,,,tag; adjunct,
+Mole Fat-washed Mezcal,Fat wash,Mole,Mole,Mezcal,Mezcal,style,tag; adjunct,style already this
+Mole Infused Rye Whiskey,Infuse,Mole,Mole,Rye Whiskey,Rye Whiskey,style,tag; adjunct,style already this
+Mumbling Powder Tincture,Tincture,Mumbling Powder,,,,,tag,with-what is not an exact plain ingredient
+Mushroom Distillate,Distil,Mushroom,Mushroom,,,,tag; adjunct,
+Mushroom Infused Tequila And Mezcal,Infuse,Mushroom,Mushroom,Tequila And Mezcal,,,tag; adjunct,base is not an exact bottle or style
+Mushroom Infused Vodka,Infuse,Mushroom,Mushroom,Vodka,Vodka,style,tag; adjunct,style already this
+Mushroom Tincture,Tincture,Mushroom,Mushroom,,,,tag; adjunct,
+Mushroom-infused Ketel One Vodka,Infuse,Mushroom,Mushroom,Ketel One Vodka,Ketel One Vodka,bottle,tag; made_from; adjunct,
+Nannari-Infused Mezcal Union,Infuse,Nannari,,Mezcal Union,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Natural Bee Honey Wax Infused Barr Hill Gin,Infuse,Natural Bee Honey Wax,,Barr Hill Gin,Barr Hill Gin,bottle,tag; made_from,with-what is not an exact plain ingredient
+Nectarine-Infused Tanqueray Gin,Infuse,Nectarine,Nectarine,Tanqueray Gin,,,tag; adjunct,made_from already this bottle
+Niam Leaf Distillate,Distil,Niam Leaf,,,,,tag,with-what is not an exact plain ingredient
+Nitrogen Smoke,,,,,,,,"nitrogen ""smoke"" is a fog, not smoke"
+Nocellara Infused Plymouth Gin,Infuse,Nocellara,,Plymouth Gin,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Nori-Infused Fino Sherry,Infuse,Nori,Nori,Fino Sherry,Fino Sherry,style,tag; adjunct,style already this
+Nori-Infused Volcan de Mi Tierra Tequila,Infuse,Nori,Nori,Volcan de Mi Tierra Tequila,Volcán De Mi Tierra Tequila,bottle,tag; made_from; adjunct,
+Nurungji-Infused Rice Vodka,Infuse,Nurungji,,Rice Vodka,Rice Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Nutmeg Distillate,Distil,Nutmeg,Nutmeg,,,,tag; adjunct,
+Nutmeg Smoke,Smoke,Nutmeg,Nutmeg,,,,tag; adjunct,
+Nutmeg Tincture,Tincture,Nutmeg,Nutmeg,,,,tag; adjunct,
+Nutmeg-Infused Hendrick's Gin,Infuse,Nutmeg,Nutmeg,Hendrick's Gin,,,tag; adjunct,made_from already this bottle
+Oat-Infused Mexican Gin,Infuse,Oat,Oat,Mexican Gin,Mexican Gin,style,tag; adjunct,style already this
+Old-book Tincture,Tincture,Old-book,,,,,tag,with-what is not an exact plain ingredient
+Olive Distillate,Distil,Olive,Olive,,,,tag; adjunct,
+Olive Oil & Herb-Infused Chopin Vodka,Infuse,Olive Oil & Herb,,Chopin Vodka,Chopin Vodka,bottle,tag; made_from,with-what is not an exact plain ingredient
+Olive Oil Fat Wash,Fat wash,Olive Oil,Olive Oil,,,,tag; adjunct,
+Olive Oil Fat Washed Gin,Fat wash,Olive Oil,Olive Oil,Gin,Gin,style,tag; adjunct,style already this
+Olive Oil Gin,,,,,,,,no technique in a form the rules read
+Olive Oil Wash,Fat wash,Olive Oil,Olive Oil,,,,tag; adjunct,
+Olive Oil Washed Vodka,Fat wash,Olive Oil,Olive Oil,Vodka,Vodka,style,tag; adjunct,style already this
+Olive Oil-Washed Gin,Fat wash,Olive Oil,Olive Oil,Gin,Gin,style,,tags already there; style already this; already has recipe lines
+Olive Oil-Washed Rye,Fat wash,Olive Oil,Olive Oil,Rye,Rye Whiskey,style (alias),tag; adjunct,style already this
+Olive-infused Belvedere Vodka,Infuse,Olive,Olive,Belvedere Vodka,Belvedere Vodka,bottle,tag; made_from; adjunct,
+Olive-Infused Spirit,Infuse,Olive,Olive,Spirit,Spirit,style,tag; adjunct,style already this
+Olive-infused Vermouth,Infuse,Olive,Olive,Vermouth,Vermouth,style,tag; adjunct,style already this
+Olive-Oil Vodka,,,,,,,,no technique in a form the rules read
+Olive-Washed Vodka,,Olive,Olive,Vodka,Vodka,style,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; style already this"
+Oolong Infused Four Roses Bourbon,Infuse,Oolong,Oolong Tea,Four Roses Bourbon,Four Roses Bourbon,bottle,tag; made_from; adjunct,
+Oolong Infused Gin,Infuse,Oolong,Oolong Tea,Gin,Gin,style,tag; adjunct,style already this
+Oolong Tea Infused Bulleit Bourbon 10yr,Infuse,Oolong Tea,Oolong Tea,Bulleit Bourbon 10yr,,,tag; adjunct,base is not an exact bottle or style
+Oolong Tea Infused Gin,Infuse,Oolong Tea,Oolong Tea,Gin,Gin,style,tag; adjunct,style already this
+Oolong Tea Infused Toki,Infuse,Oolong Tea,Oolong Tea,Toki,,,tag; adjunct,made_from already this bottle
+Oolong-Infused Rum,Infuse,Oolong,Oolong Tea,Rum,Rum,style,tag; adjunct,style already this
+Orange Infused Vodka,Infuse,Orange,Orange,Vodka,Vodka,style,tag; adjunct,style already this
+Orange Peel-Infused Cognac,Infuse,Orange Peel,Orange Peel,Cognac,Cognac,style,tag; adjunct,style already this
+Orange Pekoe Tea and Variety Coffee Infused Vodka,Infuse,Orange Pekoe Tea and Variety Coffee,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Orange-Infused Bombay Sapphire,Infuse,Orange,Orange,Bombay Sapphire,,,tag; adjunct,made_from already this bottle
+Orange-Infused Martini Vibrante,Infuse,Orange,Orange,Martini Vibrante,,,tag; adjunct,made_from already this bottle
+Oregano Infused Ford Gin,Infuse,Oregano,Oregano,Ford Gin,,,tag; adjunct,base is not an exact bottle or style
+Oregano Pepper Tincture,Tincture,Oregano Pepper,,,,,tag,with-what is not an exact plain ingredient
+Oreo Distilled Gin,Distil,Oreo,,Gin,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Osmanthus Black Tea Infused Vodka,Infuse,Osmanthus Black Tea,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Osmanthus Infused Brandy,Infuse,Osmanthus,Osmanthus,Brandy,Brandy,style,tag; adjunct,style already this
+Osmanthus Infused Hibiki Harmony Japanese Whiskey,Infuse,Osmanthus,Osmanthus,Hibiki Harmony Japanese Whiskey,Hibiki Japanese Harmony,bottle (alias),tag; made_from; adjunct,
+Overripe Banana-Infused Whisky,Infuse,Overripe Banana,,Whisky,Whiskey,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Oyster Leaf Distillate,Distil,Oyster Leaf,Oyster Leaf,,,,tag; adjunct,
+Oyster Shell Distillate,Distil,Oyster Shell,Oyster Shell,,,,tag; adjunct,
+Oyster Shell Distilled Ketel One Vodka,Distil,Oyster Shell,Oyster Shell,Ketel One Vodka,,,tag; adjunct,made from scratch or a punch: no bottle read
+Oyster-Infused Rice Wine,Infuse,Oyster,Oyster,Rice Wine,Rice Wine,style,tag; adjunct,style already this
+Palo Santo Infused Seedlip Spice,Infuse,Palo Santo,Palo Santo,Seedlip Spice,,,tag; adjunct,made_from already this bottle
+Palo Santo-Infused The Botanist Gin,Infuse,Palo Santo,Palo Santo,The Botanist Gin,,,tag; adjunct,made_from already this bottle
+Palo Santo-Infused Vodka,Infuse,Palo Santo,Palo Santo,Vodka,Vodka,style,tag; adjunct,style already this
+Pandan and Coconut Milk-Washed Beach Bum Rum,Milk wash,Pandan and Coconut,,Beach Bum Rum,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Pandan and Lemongrass Infused Gin,Infuse,Pandan and Lemongrass,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Pandan And Rose Petal Infused Gin,Infuse,Pandan And Rose Petal,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Pandan Infused Planteray 3 Stars White Rum,Infuse,Pandan,Pandan,Planteray 3 Stars White Rum,Planteray 3 Stars,bottle (alias),tag; made_from; adjunct,
+Pandan Lemongrass-Infused Vodka,Infuse,Pandan Lemongrass,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Pandan Oil,Oil,Pandan,Pandan,,,,tag; adjunct,
+Pandan-Infused Diplomático Planas,Infuse,Pandan,Pandan,Diplomático Planas,,,tag; adjunct,made_from already this bottle
+Pandan-Infused Gin,Infuse,Pandan,Pandan,Gin,Gin,style,tag; adjunct,style already this
+Pandan-Infused Grain Whiskey,Infuse,Pandan,Pandan,Grain Whiskey,,,tag; adjunct,base is not an exact bottle or style
+Pandan-Infused Kalani Rum,Infuse,Pandan,Pandan,Kalani Rum,,,tag; adjunct,base is not an exact bottle or style
+Pandan-Infused Mekhong Thai Rum,Infuse,Pandan,Pandan,Mekhong Thai Rum,,,tag; adjunct,base is not an exact bottle or style
+Pandan-Infused Mezcal,Infuse,Pandan,Pandan,Mezcal,Mezcal,style,tag; adjunct,style already this
+Pandan-Infused Punt E Mes,Infuse,Pandan,Pandan,Punt E Mes,,,tag; adjunct,made_from already this bottle
+Pandan-Infused Rye,Infuse,Pandan,Pandan,Rye,Rye Whiskey,style (alias),tag; adjunct,style already this
+Pandan-Infused Sweet Vermouth,Infuse,Pandan,Pandan,Sweet Vermouth,Sweet Vermouth,style,tag; adjunct,style already this
+Pandan-Infused Tawny Port,Infuse,Pandan,Pandan,Tawny Port,Tawny Port,style,tag; adjunct,style already this
+Pandan-Infused Whisky,Infuse,Pandan,Pandan,Whisky,Whiskey,style (alias),tag; adjunct,style already this
+Panela and Chipotle-Infused Tequila,Infuse,Panela and Chipotle,,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+Panettone-Infused Vodka,Infuse,Panettone,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Paperbark-Smoked Irish Whisky,Smoke,Paperbark,,Irish Whisky,Irish Whiskey,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Páramo Distillate,Distil,Páramo,,,,,tag,with-what is not an exact plain ingredient
+Parmesan and Comté-Washed Grey Goose Vodka,Fat wash,Parmesan and Comté,,Grey Goose Vodka,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Parmesan Basil-Infused Vodka,Infuse,Parmesan Basil,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Parmesan-Infused Procera Gin,Infuse,Parmesan,Parmesan,Procera Gin,Procera Blue Dot Gin,bottle (alias),tag; made_from; adjunct,
+Parmesan-Infused Roku Gin,Infuse,Parmesan,Parmesan,Roku Gin,,,tag; adjunct,base names only a brand with several bottles (the alias says Roku Japanese Craft Gin)
+Parsley Distillate,Distil,Parsley,Parsley,,,,tag; adjunct,
+Parsley-Infused Gin,Infuse,Parsley,Parsley,Gin,Gin,style,tag; adjunct,style already this
+Pasilla and Guajillo Chile-infused Vodka,Infuse,Pasilla and Guajillo Chile,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Passion Fruit Tea Tincture,Tincture,Passion Fruit Tea,,,,,tag,with-what is not an exact plain ingredient
+Passionfruit Distillate,Distil,Passionfruit,Passion Fruit,,,,tag; adjunct,
+Patchouli Distillate,Distil,Patchouli,Patchouli,,,,tag; adjunct,
+Peach Distillate,Distil,Peach,Peach,,,,tag; adjunct,
+Peach Infused Gin,Infuse,Peach,Peach,Gin,Gin,style,tag; adjunct,style already this
+Peach Infused Grey Goose Vodka,Infuse,Peach,Peach,Grey Goose Vodka,Grey Goose Vodka,bottle,tag; made_from; adjunct,
+Peach-Infused Pisco,Infuse,Peach,Peach,Pisco,Pisco,style,tag; adjunct,style already this
+Peanut Butter & Five Spice Distilled Ketel One Vodka,Distil,Peanut Butter & Five Spice,,Ketel One Vodka,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Peanut Butter Distillate,Distil,Peanut Butter,Peanut Butter,,,,tag; adjunct,
+Peanut Butter Washed Bourbon,Fat wash,Peanut Butter,Peanut Butter,Bourbon,Bourbon,style,tag; adjunct,style already this
+Peanut Butter Washed Brugal 1888,Fat wash,Peanut Butter,Peanut Butter,Brugal 1888,,,tag; adjunct,made_from already this bottle
+Peanut Butter Washed Whisky,Fat wash,Peanut Butter,Peanut Butter,Whisky,Whiskey,style (alias),tag; adjunct,style already this
+Peanut Butter-Infused Whiskey,Infuse,Peanut Butter,Peanut Butter,Whiskey,Whiskey,style,tag; adjunct,style already this
+Peanut Butter-Washed Bulleit Bourbon,Fat wash,Peanut Butter,Peanut Butter,Bulleit Bourbon,Bulleit Bourbon,bottle,tag; made_from; adjunct,
+Peanut Butter-Washed Rye Whiskey,Fat wash,Peanut Butter,Peanut Butter,Rye Whiskey,Rye Whiskey,style,tag; adjunct,style already this
+Peanut Chilli Oil-Washed Mezcal,Fat wash,Peanut Chilli Oil,,Mezcal,Mezcal,style,tag,style already this; with-what is not an exact plain ingredient
+Peanut Distillate,Distil,Peanut,Peanut,,,,tag; adjunct,
+Peanut Fatwash,Fat wash,Peanut,Peanut,,,,tag; adjunct,
+Peanut Oil Fat-Washed Chestnut Monkey Shoulder Blended Scotch,Fat wash,Peanut Oil,,Chestnut Monkey Shoulder Blended Scotch,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Pear & Thai Basil-Infused Mezcal,Infuse,Pear & Thai Basil,,Mezcal,Mezcal,style,tag,style already this; with-what is not an exact plain ingredient
+Pear Smoke Bubble,,,,,,,,no technique in a form the rules read
+Pear-Infused Dry Vermouth,Infuse,Pear,Pear,Dry Vermouth,Dry Vermouth,style,tag; adjunct,style already this
+Pennyroyal And Buchu Tincture,Tincture,Pennyroyal And Buchu,,,,,tag,with-what is not an exact plain ingredient
+Pepper Distillate,Distil,Pepper,Pepper,,,,tag; adjunct,
+Peppercorn-Infused Bulldog Gin,Infuse,Peppercorn,Pepper,Bulldog Gin,,,tag; adjunct,base names only a brand with several bottles (the alias says Bulldog London Dry Gin)
+Peppermint-Earl Grey Infused Julia Gin,Infuse,Peppermint-Earl Grey,,Julia Gin,,,tag,"base matches a unsorted row, not a bottle or style; with-what is not an exact plain ingredient"
+Pepperoncini Infused Absolut,Infuse,Pepperoncini,Pepperoncini,Absolut,,,tag; adjunct,made_from already this bottle
+Pequin-Pepper-Infused Patron Reposado,Infuse,Pequin-Pepper,,Patron Reposado,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Perilla Oil Emulsion,,,,,,,,no technique in a form the rules read
+Pho Spice-Infused Ketel One,Infuse,Pho Spice,,Ketel One,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Pickle and Dill Distillate,Distil,Pickle and Dill,,,,,tag,with-what is not an exact plain ingredient
+Pine Distillate,Distil,Pine,Pine,,,,tag; adjunct,
+Pine Nut Distillate,Distil,Pine Nut,,,,,tag,with-what is not an exact plain ingredient
+Pine Tincture,Tincture,Pine,Pine,,,,tag; adjunct,
+Pine-Infused Gin,Infuse,Pine,Pine,Gin,Gin,style,tag; adjunct,style already this
+Pineapple and Greek Yoghurt Milk Wash,Milk wash,Pineapple and Greek Yoghurt,,,,,tag,with-what is not an exact plain ingredient
+Pineapple Milk Punch,Milk wash,,,,,,tag,
+Pineapple Rind Infused Rum,Infuse,Pineapple Rind,,Rum,Rum,style,tag,style already this; with-what is not an exact plain ingredient
+Pineapple Skin Infused Bulleit Rye,Infuse,Pineapple Skin,,Bulleit Rye,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Pineapple-Infused Campari,Infuse,Pineapple,Pineapple,Campari,,,tag; adjunct,made_from already this bottle
+Pineapple-Infused Fords Gin,Infuse,Pineapple,Pineapple,Fords Gin,Fords Gin,bottle,tag; made_from; adjunct,
+Pineapple-Infused Gin,Infuse,Pineapple,Pineapple,Gin,Gin,style,tag; adjunct,style already this
+Pineapple-Infused Pisco,Infuse,Pineapple,Pineapple,Pisco,Pisco,style,tag; adjunct,style already this
+Pineapple-Infused Rum,Infuse,Pineapple,Pineapple,Rum,Rum,style,,tags already there; style already Pineapple Rum; already has recipe lines
+Pineapple-Infused White Rum,Infuse,Pineapple,Pineapple,White Rum,White Rum,style,tag; adjunct,style already this
+Pink Peppercorn Infused Vodka,Infuse,Pink Peppercorn,Pink Peppercorn,Vodka,Vodka,style,tag; adjunct,style already this
+Plank Smoked Bulleit Bourbon,Smoke,Plank,,Bulleit Bourbon,Bulleit Bourbon,bottle,tag; made_from,with-what is not an exact plain ingredient
+Plantain Butter-Washed Whisky,Fat wash,Plantain Butter,,Whisky,Whiskey,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Plantain Fat-Washed Appleton 8yr Rum,Fat wash,Plantain,Plantain,Appleton 8yr Rum,,,tag; adjunct,base is not an exact bottle or style
+Plum-Infused Bourbon,Infuse,Plum,Plum,Bourbon,Bourbon,style,tag; adjunct,style already this
+Plum-Infused Campari,Infuse,Plum,Plum,Campari,,,tag; adjunct,made_from already this bottle
+Plum-Infused Rémy Martin VSOP,Infuse,Plum,Plum,Rémy Martin VSOP,,,tag; adjunct,made_from already this bottle
+Poblano and Jalapeno-Infused Rosaluna Mezcal,Infuse,Poblano and Jalapeno,,Rosaluna Mezcal,Rosaluna Mezcal,bottle,tag; made_from,with-what is not an exact plain ingredient
+Popcorn Infused Tequila Blanco,Infuse,Popcorn,Popcorn,Tequila Blanco,Blanco Tequila,style (alias),tag; adjunct,style already this
+Popcorn-Infused Maker's Mark Bourbon,Infuse,Popcorn,Popcorn,Maker's Mark Bourbon,,,tag; adjunct,base names only a brand with several bottles (the alias says Maker's Mark)
+Porcini Mushroom Distillate,Distil,Porcini Mushroom,Porcini,,,,tag; adjunct,
+Porcini Tincture,Tincture,Porcini,Porcini,,,,tag; adjunct,
+Porcini-Infused Glenmorangie Triple Cask,Infuse,Porcini,Porcini,Glenmorangie Triple Cask,,,tag; adjunct,base is not an exact bottle or style
+Porcini-Infused Uruapan Rum,Infuse,Porcini,Porcini,Uruapan Rum,,,tag; adjunct,base is not an exact bottle or style
+Pork Fat-Washed NODO Reposado,Fat wash,Pork,,NODO Reposado,NODO Tequilana Reposado,bottle (alias),tag; made_from,with-what is not an exact plain ingredient
+Prik Kaeng Phed Curry Distillate,Distil,Prik Kaeng Phed Curry,,,,,tag,with-what is not an exact plain ingredient
+Prontoalivio (Lippia Alba) Distillate,Distil,Prontoalivio (Lippia Alba),,,,,tag,with-what is not an exact plain ingredient
+Prosciutto Washed Bourbon,Fat wash,Prosciutto,Prosciutto,Bourbon,Bourbon,style,tag; adjunct,style already this
+Pulque Distillate,Distil,Pulque,Pulque,,,,tag; adjunct,
+Pumpkin Seed-Infused Vodka,Infuse,Pumpkin Seed,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Purple Carrot-Infused Tequila,Infuse,Purple Carrot,,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+Quandong Infused Hayman's Sloe Gin,Infuse,Quandong,Quandong,Hayman's Sloe Gin,Hayman's Sloe Gin,bottle,tag; made_from; adjunct,
+Queenie Roe Oil,Oil,Queenie Roe,,,,,tag,with-what is not an exact plain ingredient
+Queso Blanco-Washed Blended Rum,Fat wash,Queso Blanco,Queso Blanco,Blended Rum,Blended Rum,style,tag; adjunct,style already Rum Blend
+Quince-Infused Havana 3yr,Infuse,Quince,Quince,Havana 3yr,,,tag; adjunct,made_from already this bottle
+Raisin-infused Rum,Infuse,Raisin,Raisin,Rum,Rum,style,tag; adjunct,style already this
+Raisin-infused Scotch Whisky,Infuse,Raisin,Raisin,Scotch Whisky,Scotch,style (alias),tag; adjunct,style already this
+Rapid-Infused Coffee Sweet Vermouth,Infuse,Rapid,,Coffee Sweet Vermouth,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Raspberry-infused Gin,Infuse,Raspberry,Raspberry,Gin,Gin,style,tag; adjunct,style already this
+Raspberry-Infused Lillet Rose,Infuse,Raspberry,Raspberry,Lillet Rose,Lillet Rosé,bottle,tag; made_from; adjunct,
+Raspberry-Infused Vodka,Infuse,Raspberry,Raspberry,Vodka,Vodka,style,tag; adjunct,style already this
+Red Chili-Infused Aperol,Infuse,Red Chili,Red Chilli,Aperol,,,tag; adjunct,made_from already this bottle
+Red Fir Distillate,Distil,Red Fir,,,,,tag,with-what is not an exact plain ingredient
+Red Hot Chilli Peppers Tincture,Tincture,Red Hot Chilli Peppers,,,,,tag,with-what is not an exact plain ingredient
+Red Oca Distillate,Distil,Red Oca,,,,,tag,with-what is not an exact plain ingredient
+Red Szechuan Infused Campari,Infuse,Red Szechuan,,Campari,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Redistilled Campari,Distil,Campari,,Campari,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Redistilled Macallan,Distil,Macallan,,Macallan,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Redistilled Matcha,Distil,Matcha,Matcha,Matcha,,,tag; adjunct,made from scratch or a punch: no bottle read
+Redistilled Peach Puree,Distil,Peach Puree,Peach Purée,Peach Puree,,,tag; adjunct,made from scratch or a punch: no bottle read
+Redistilled Ratafia Rossi,Distil,Ratafia Rossi,,Ratafia Rossi,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Rémy Fig Infusion,Infuse,Rémy Fig,,,,,tag,with-what is not an exact plain ingredient
+Rhubarb Infused N.I.P Gin,Infuse,Rhubarb,Rhubarb,N.I.P Gin,,,tag; adjunct,base is not an exact bottle or style
+Rhum Milk Punch,Milk wash,,,,,,tag,
+Rice Infused Patron Blanco,Infuse,Rice,Rice,Patron Blanco,,,tag; adjunct,made_from already this bottle
+Rice Wash,,Rice,Rice,,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag"
+Rice Washed Iichiko Shinwa,,Rice,Rice,Iichiko Shinwa,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; made_from already this bottle"
+Rice-Washed Pear Vodka,,Rice,Rice,Pear Vodka,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; base is not an exact bottle or style"
+Ricotta-Washed Cachaça,Fat wash,Ricotta,Ricotta,Cachaça,Cachaça,style,tag; adjunct,style already this
+Roasted Chili Oil,Oil,Roasted Chili,,,,,tag,with-what is not an exact plain ingredient
+Roasted Pineapple Infused Mezcal,Infuse,Roasted Pineapple,,Mezcal,Mezcal,style,tag,style already this; with-what is not an exact plain ingredient
+Roasted-Butter Fat-Washed Vodka,Fat wash,Roasted-Butter,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Root-Infused Vodka,Infuse,Root,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Rosaluna Mezcal Infused with Cucumber,Infuse,Cucumber,Cucumber,Rosaluna Mezcal,Rosaluna Mezcal,bottle,tag; made_from; adjunct,
+Rose Infused Mango Jelly,Infuse,Rose,Rose,Mango Jelly,,,tag; adjunct,"base matches a prep row, not a bottle or style"
+Rose Infused Vodka,Infuse,Rose,Rose,Vodka,Vodka,style,tag; adjunct,style already this
+Rose Petal Distillate,Distil,Rose Petal,Rose Petal,,,,tag; adjunct,
+Rose-Petal-Infused Gin,Infuse,Rose-Petal,Rose Petal,Gin,Gin,style,tag; adjunct,style already this
+Rosebud-Infused Mancino Rosso,Infuse,Rosebud,Rosebud,Mancino Rosso,,,tag; adjunct,made_from already this bottle
+Rosella-Infused Vodka,Infuse,Rosella,Rosella,Vodka,Vodka,style,tag; adjunct,style already this
+Roselle-Infused Campari,Infuse,Roselle,Hibiscus,Campari,,,tag; adjunct,made_from already this bottle
+Rosemary and pine needle smoke,Smoke,Rosemary and pine needle,,,,,tag,with-what is not an exact plain ingredient
+Rosemary Infused Vodka,Infuse,Rosemary,Rosemary,Vodka,Vodka,style,tag; adjunct,style already this
+Rosemary Smoke,Smoke,Rosemary,Rosemary,,,,tag; adjunct,
+Rosemary-Infused Beet Jam,Infuse,Rosemary,Rosemary,Beet Jam,,,tag; adjunct,base is not an exact bottle or style
+Rosemary-Infused Gin,Infuse,Rosemary,Rosemary,Gin,Gin,style,tag; adjunct,style already this
+S&S Cask-Aged Woodinville Straight Rye,Age,S&S Cask,,Woodinville Straight Rye,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Saffron Infused Vodka,Infuse,Saffron,Saffron,Vodka,Vodka,style,tag; adjunct,style already this
+Saffron Milk Punch,Milk wash,,,,,,tag,
+Saffron Olive Oil Dry Vermouth,,,,,,,,no technique in a form the rules read
+Saffron Tincture,Tincture,Saffron,Saffron,,,,tag; adjunct,
+Saffron-Infused Aperol,Infuse,Saffron,Saffron,Aperol,,,tag; adjunct,made_from already this bottle
+Saffron-Infused Bourbon,Infuse,Saffron,Saffron,Bourbon,Bourbon,style,tag; adjunct,style already this
+Saffron-Infused Gin,Infuse,Saffron,Saffron,Gin,Gin,style,tag; adjunct,style already this
+Saffron-infused Grappa,Infuse,Saffron,Saffron,Grappa,Grappa,style,tag; adjunct,style already this
+Saffron-Infused Mancino Secco Vermouth,Infuse,Saffron,Saffron,Mancino Secco Vermouth,Mancino Vermouth di Torino Secco,bottle (alias),tag; made_from; adjunct,
+Saffron-Infused Mancino Vermouth Secco,Infuse,Saffron,Saffron,Mancino Vermouth Secco,,,tag; adjunct,made_from already this bottle
+Saffron-Infused Vermouth,Infuse,Saffron,Saffron,Vermouth,Vermouth,style,tag; adjunct,style already this
+Sage & Lemon Oil,Oil,Sage & Lemon,,,,,tag,with-what is not an exact plain ingredient
+Sakura Leaf Infused Manojo Mezcal,Infuse,Sakura Leaf,,Manojo Mezcal,,,tag,"base matches a unsorted row, not a bottle or style; with-what is not an exact plain ingredient"
+Salmon Fat-Washed Vodka,Fat wash,Salmon,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Saltbush Infused Agave,Infuse,Saltbush,,Agave,,,tag,"base matches a prep row, not a bottle or style; with-what is not an exact plain ingredient"
+Saltbush-Infused Rhubi Rhubarb Liqueur,Infuse,Saltbush,,Rhubi Rhubarb Liqueur,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Salted Arabica Distillate,Distil,Salted Arabica,,,,,tag,with-what is not an exact plain ingredient
+Salted Butter-Washed Whiskey,Fat wash,Salted Butter,,Whiskey,Whiskey,style,tag,style already this; with-what is not an exact plain ingredient
+Salted Vetiver and Sandalwood Tinctures,Tincture,Salted Vetiver and Sandalwood,,,,,tag,with-what is not an exact plain ingredient
+Salty Pandan Tincture,Tincture,Salty Pandan,,,,,tag,with-what is not an exact plain ingredient
+Samgyetang-Infused Soju,Infuse,Samgyetang,,Soju,Soju,style,tag,style already this; with-what is not an exact plain ingredient
+Sandalwood Tincture,Tincture,Sandalwood,Sandalwood,,,,tag; adjunct,
+Sandalwood-Infused Water,Infuse,Sandalwood,Sandalwood,Water,Water,style,tag; adjunct,"base style is not a drink, so not filed under it"
+Sansho Pepper Distilled Ketel One Vodka,Distil,Sansho Pepper,Sanshō,Ketel One Vodka,,,tag; adjunct,made from scratch or a punch: no bottle read
+Sarsaparilla-Infused Tequila,Infuse,Sarsaparilla,Sarsaparilla,Tequila,Tequila,style,tag; adjunct,style already this
+Sausage-Washed Jägermeister,Fat wash,Sausage,,Jägermeister,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Scallion Oil,Oil,Scallion,,,,,tag,with-what is not an exact plain ingredient
+Scotch Bonnet & Marmite-Infused 42 Below Vodka,Infuse,Scotch Bonnet & Marmite,,42 Below Vodka,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Sea Distillate,Distil,Sea,,,,,tag,with-what is not an exact plain ingredient
+Sea Oil,Oil,Sea,,,,,tag,with-what is not an exact plain ingredient
+Seaweed Distillate,Distil,Seaweed,Seaweed,,,,tag; adjunct,
+Seaweed-Infused Gin,Infuse,Seaweed,Seaweed,Gin,Gin,style,tag; adjunct,style already this
+Sencha Green Tea-infused Vodka,Infuse,Sencha Green Tea,Sencha,Vodka,Vodka,style,tag; adjunct,style already this
+Sencha-Infused Malfy con Limone Gin,Infuse,Sencha,Sencha,Malfy con Limone Gin,,,tag; adjunct,base is not an exact bottle or style
+Serrano-Infused Honey Syrup,Infuse,Serrano,Serrano,Honey Syrup,,,tag; adjunct,"base matches a prep row, not a bottle or style"
+Sesame Distillate,Distil,Sesame,Sesame,,,,tag; adjunct,
+Sesame Oil Syrup,,,,,,,,no technique in a form the rules read
+Sesame Oil Washed Great Jones Bourbon,Fat wash,Sesame Oil,Sesame Oil,Great Jones Bourbon,Great Jones Bourbon,bottle,tag; made_from; adjunct,
+Sesame Oil-Washed Vodka,Fat wash,Sesame Oil,Sesame Oil,Vodka,Vodka,style,tag; adjunct,style already this
+Sesame-Infused Rice Soju,Infuse,Sesame,Sesame,Rice Soju,Rice Soju,style,tag; adjunct,style already Soju
+Sesame-Oil Washed Laphroaig,Fat wash,Sesame-Oil,Sesame Oil,Laphroaig,Laphroaig,bottle,tag; made_from; adjunct,
+Sesame-Washed Highland Park 12 Years Whisky,,Sesame,Sesame,Highland Park 12 Years Whisky,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; base is not an exact bottle or style"
+Sherry Sous-Vide with Tomato,Sous vide,Tomato,Tomato,Sherry,Sherry,style,tag; adjunct,style already Tomato
+Shiitake-Infused Gin,Infuse,Shiitake,Shiitake,Gin,Gin,style,tag; adjunct,style already this
+Shishito Pepper-Infused Tequila,Infuse,Shishito Pepper,Shishito Pepper,Tequila,Tequila,style,tag; adjunct,style already this
+Shiso Infused Don Julio Reposado,Infuse,Shiso,Shiso,Don Julio Reposado,,,tag; adjunct,made_from already this bottle
+Shiso Infused Local Gin,Infuse,Shiso,Shiso,Local Gin,,,tag; adjunct,base is not an exact bottle or style
+Shiso Re-Distilled Vodka,Distil,Shiso,Shiso,Vodka,,,tag; adjunct,made from scratch or a punch: no bottle read
+Shiso-Infused Fort Hamilton Vodka,Infuse,Shiso,Shiso,Fort Hamilton Vodka,,,tag; adjunct,base names only a brand with several bottles (the alias says Fort Hamilton Fortress Cucumber Vodka)
+Shiso-Infused Holiday Vodka,Infuse,Shiso,Shiso,Holiday Vodka,,,tag; adjunct,"base matches a unsorted row, not a bottle or style"
+Shiso-Infused Mizu Shochu,Infuse,Shiso,Shiso,Mizu Shochu,,,tag; adjunct,base is not an exact bottle or style
+Shiso-Infused Shochu,Infuse,Shiso,Shiso,Shochu,Shochu,style,tag; adjunct,style already this
+Shrimp Oil,Oil,Shrimp,Shrimp,,,,tag; adjunct,
+Shrimp Oil Fat-Washed Tequila,Fat wash,Shrimp Oil,,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+Sichuan Pepper-Infused Ketel One,Infuse,Sichuan Pepper,Sichuan Pepper,Ketel One,,,tag; adjunct,made_from already this bottle
+Sichuan Peppercorn Tincture,Tincture,Sichuan Peppercorn,Sichuan Pepper,,,,tag; adjunct,
+Sichuan Peppercorn-infused Lo-Fi Dry Vermouth,Infuse,Sichuan Peppercorn,Sichuan Pepper,Lo-Fi Dry Vermouth,Lo-Fi Dry Vermouth,bottle,tag; made_from; adjunct,
+Sichuan Peppercorn-Infused Vodka,Infuse,Sichuan Peppercorn,Sichuan Pepper,Vodka,Vodka,style,tag; adjunct,style already this
+Smoke 'n' Salt,,,,,,,,no technique in a form the rules read
+Smoked Agave,Smoke,,,Agave,,,tag,"base matches a prep row, not a bottle or style"
+Smoked Almond Gin,Smoke,,,Almond Gin,,,tag,base is not an exact bottle or style
+Smoked Amaretto,Smoke,,,Amaretto,Amaretto,style,tag,style already this
+Smoked Apricot & Honey Bitters,Smoke,,,Apricot & Honey Bitters,,,tag,base is not an exact bottle or style
+Smoked Avocado Pit Orgeat,Smoke,,,Avocado Pit Orgeat,,,tag,base is not an exact bottle or style
+Smoked Bacon-Infused Bourbon,Infuse,Smoked Bacon,,Bourbon,Bourbon,style,tag,style already this; with-what is not an exact plain ingredient
+Smoked Bourbon,Smoke,,,Bourbon,Bourbon,style,tag,style already this
+Smoked Cacao And Mocha Cream,Smoke,,,Cacao And Mocha Cream,,,tag,base is not an exact bottle or style
+Smoked Cachaca,Smoke,,,Cachaca,Cachaça,style,tag,style already this
+Smoked Celery Seed Salt,Smoke,,,Celery Seed Salt,,,tag,base is not an exact bottle or style
+Smoked Chili Salt,Smoke,,,Chili Salt,Chilli Salt,style (alias),tag,"base style is not a drink, so not filed under it"
+Smoked Chilli Salt,Smoke,,,Chilli Salt,Chilli Salt,style,tag,"base style is not a drink, so not filed under it"
+Smoked Cinnamon,Smoke,,,Cinnamon,Cinnamon,style,tag,"base style is not a drink, so not filed under it"
+Smoked Citrus,Smoke,,,Citrus,Citrus,style,tag,"base style is not a drink, so not filed under it"
+Smoked Cola,Smoke,,,Cola,Cola,style,tag,"base style is not a drink, so not filed under it"
+Smoked Cream,Smoke,,,Cream,Cream,style,tag,"base style is not a drink, so not filed under it"
+Smoked Cream Soda,Smoke,,,Cream Soda,Cream Soda,style,tag,"base style is not a drink, so not filed under it"
+Smoked Dried Lychee,Smoke,,,Dried Lychee,,,tag,base is not an exact bottle or style
+Smoked Dulse,Smoke,,,Dulse,,,tag,base is not an exact bottle or style
+Smoked Earl Grey Gin,Smoke,,,Earl Grey Gin,,,tag,"base matches a prep row, not a bottle or style"
+Smoked Floral Tuille,Smoke,,,Floral Tuille,,,tag,base is not an exact bottle or style
+Smoked Gin,Smoke,,,Gin,Gin,style,tag,style already this
+Smoked Grapefruit,Smoke,,,Grapefruit,Grapefruit,style,tag,"base style is not a drink, so not filed under it"
+Smoked Green Capsicum,Smoke,,,Green Capsicum,Green Bell Pepper,style (alias),tag,"base style is not a drink, so not filed under it"
+Smoked Hazelnut,Smoke,,,Hazelnut,Hazelnut,style,tag,"base style is not a drink, so not filed under it"
+Smoked Hellfire Bitters,Smoke,,,Hellfire Bitters,,,tag,made_from already this bottle
+Smoked Herbs,Smoke,,,Herbs,Herbs,style,tag,"base style is not a drink, so not filed under it"
+Smoked Honey,Smoke,,,Honey,Honey,style,tag,"base style is not a drink, so not filed under it"
+Smoked Jalapeno,Smoke,,,Jalapeno,Jalapeño,style,tag,"base style is not a drink, so not filed under it"
+Smoked Jamaican Pepper-Infused San Bartolo Mezcal,Infuse,Smoked Jamaican Pepper,,San Bartolo Mezcal,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Smoked Juniper,Smoke,,,Juniper,Juniper Berries,style (alias),tag,"base style is not a drink, so not filed under it"
+Smoked Mango Brandy,Smoke,,,Mango Brandy,Mango Eau de Vie,style (alias),tag,style already Brandy
+Smoked Maple,Smoke,,,Maple,Maple Syrup,style (alias),tag,"base style is not a drink, so not filed under it"
+Smoked Nocellara Olive,Smoke,,,Nocellara Olive,,,tag,base is not an exact bottle or style
+Smoked Olive Oil,Smoke,,,Olive Oil,Olive Oil,style,tag,"base style is not a drink, so not filed under it"
+Smoked Orange,Smoke,,,Orange,Orange,style,tag,"base style is not a drink, so not filed under it"
+Smoked Orange Bitters,Smoke,,,Orange Bitters,Orange Bitters,style,tag,"base style is not a drink, so not filed under it"
+Smoked Pandan,Smoke,,,Pandan,Pandan,style,tag,"base style is not a drink, so not filed under it"
+Smoked Pineapple,Smoke,,,Pineapple,Pineapple,style,tag,"base style is not a drink, so not filed under it"
+Smoked Pineapple Juice,Smoke,,,Pineapple Juice,Pineapple Juice,style,tag,style already this
+Smoked Plum,Smoke,,,Plum,Plum,style,tag,"base style is not a drink, so not filed under it"
+Smoked Quail Egg,Smoke,,,Quail Egg,,,tag,base is not an exact bottle or style
+Smoked Raisin,Smoke,,,Raisin,Raisin,style,tag,"base style is not a drink, so not filed under it"
+Smoked Red Wine Foam,Smoke,,,Red Wine Foam,,,tag,"base matches a prep row, not a bottle or style"
+Smoked Rooibos Soda,Smoke,,,Rooibos Soda,,,tag,base is not an exact bottle or style
+Smoked Rosemary,Smoke,,,Rosemary,Rosemary,style,tag,"base style is not a drink, so not filed under it"
+Smoked Straw-Grass,Smoke,,,Straw-Grass,,,tag,base is not an exact bottle or style
+Smoked Tequila,Smoke,,,Tequila,Tequila,style,tag,style already this
+Smoked Tomatillos,Smoke,,,Tomatillos,Tomatillo,style (alias),tag,"base style is not a drink, so not filed under it"
+Smoked Tomato,Smoke,,,Tomato,Tomato,style,tag,"base style is not a drink, so not filed under it"
+Smoked Wild Bee Honey,Smoke,,,Wild Bee Honey,,,tag,base is not an exact bottle or style
+Snap Pea-Infused Blanco Tequila,Infuse,Snap Pea,Snap Pea,Blanco Tequila,Blanco Tequila,style,tag; adjunct,style already this
+Soba Cha Infused Vodka,Infuse,Soba Cha,Soba Cha,Vodka,Vodka,style,tag; adjunct,style already this
+Soil Distillate,Distil,Soil,,,,,tag,with-what is not an exact plain ingredient
+Sour Cream Clarification,Clarify,Sour Cream,Sour Cream,,,,tag; adjunct,
+Sour Cream Fat-Washed Ojo De Tigre Mezcal,Fat wash,Sour Cream,Sour Cream,Ojo De Tigre Mezcal,,,tag; adjunct,made_from already this bottle
+Soursop Distillate,Distil,Soursop,Soursop,,,,tag; adjunct,
+Sous Vide Bitter Melon Mixture,Sous vide,,,Bitter Melon Mixture,,,tag,base is not an exact bottle or style
+Sous Vide Pineapple Wine,Sous vide,,,Pineapple Wine,Pineapple Wine,style,tag,style already Wine
+Sous Vide Pink Lady Apple,Sous vide,,,Pink Lady Apple,Pink Lady Apple,style,tag,"base style is not a drink, so not filed under it"
+Sous-Vide Cinnamon Syrup,Sous vide,,,Cinnamon Syrup,,,tag,"base matches a prep row, not a bottle or style"
+Sous-Vide Makrut Lime,Sous vide,,,Makrut Lime,Makrut Lime,style,tag,"base style is not a drink, so not filed under it"
+Soy Sauce Distilled Absolut,Distil,Soy Sauce,Soy Sauce,Absolut,,,tag; adjunct,made from scratch or a punch: no bottle read
+Soy Sauce Tincture,Tincture,Soy Sauce,Soy Sauce,,,,tag; adjunct,
+Spent Coffee Infused Bacardi,Infuse,Spent Coffee,,Bacardi,,,tag,base names only a brand with several bottles (the alias says Bacardí Carta Blanca); with-what is not an exact plain ingredient
+Spice & Citrus-Infused Sake Ono,Infuse,Spice & Citrus,,Sake Ono,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Spice Tincture,Tincture,Spice,Spices,,,,tag; adjunct,
+Spicy Jalapeno Infused Mezcal,Infuse,Spicy Jalapeno,,Mezcal,Mezcal,style,tag,style already this; with-what is not an exact plain ingredient
+Spicy Tincture,Tincture,Spicy,,,,,tag,with-what is not an exact plain ingredient
+Spruce-Infused London Dry Gin,Infuse,Spruce,Spruce,London Dry Gin,London Dry Gin,style,tag; adjunct,style already this
+Squash Blossom-Infused Gin,Infuse,Squash Blossom,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Squid Distilled Gin,Distil,Squid,,Gin,,,tag,made from scratch or a punch: no bottle read; with-what is not an exact plain ingredient
+Steak-Sauce-Infused Sweet Vermouth,Infuse,Steak-Sauce,,Sweet Vermouth,Sweet Vermouth,style,tag,style already this; with-what is not an exact plain ingredient
+Stout Butter Washed Bulleit Bourbon,Fat wash,Stout Butter,,Bulleit Bourbon,Bulleit Bourbon,bottle,tag; made_from,with-what is not an exact plain ingredient
+Strawberry And Basil Infused Gin,Infuse,Strawberry And Basil,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Strawberry and Cream Distillate,Distil,Strawberry and Cream,,,,,tag,with-what is not an exact plain ingredient
+Strawberry And Ginger Infused Gin,Infuse,Strawberry And Ginger,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Strawberry Gelato Washed Gin,,Strawberry Gelato,,Gin,Gin,style,,"washed with something that could be a fat or milk wash, or neither: no tag; style already this; with-what is not an exact plain ingredient"
+Strawberry Vanilla Yogurt Distillate,Distil,Strawberry Vanilla Yogurt,,,,,tag,with-what is not an exact plain ingredient
+Strawberry-Infused Aperol,Infuse,Strawberry,Strawberry,Aperol,,,tag; adjunct,made_from already this bottle
+Strawberry-Infused Bombay Gin,Infuse,Strawberry,Strawberry,Bombay Gin,,,tag; adjunct,base names only a brand with several bottles (the alias says Bombay Sapphire Gin)
+Strawberry-Infused Campari,Infuse,Strawberry,Strawberry,Campari,,,,tags already there; made_from already this bottle; already has recipe lines
+Strawberry-Infused Tequila,Infuse,Strawberry,Strawberry,Tequila,Tequila,style,tag; adjunct,style already this
+"Strawberry, Raspberry, Loganberry Infused White Rum",Infuse,"Strawberry, Raspberry, Loganberry",,White Rum,White Rum,style,tag,style already this; with-what is not an exact plain ingredient
+Sultana And Thyme-Infused Jack Daniel's,Infuse,Sultana And Thyme,,Jack Daniel's,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Sunflower Oil Fat-Washed Baijiu,Fat wash,Sunflower Oil,,Baijiu,Baijiu,style,tag,style already this; with-what is not an exact plain ingredient
+Sunflower Seed Infused Madre Mezcal,Infuse,Sunflower Seed,Sunflower Seed,Madre Mezcal,,,tag; adjunct,made_from already this bottle
+Sweet Basil Distillate,Distil,Sweet Basil,Basil,,,,tag; adjunct,
+Sweet Basil Infused T&T Straight Wheat Vodka,Infuse,Sweet Basil,Basil,T&T Straight Wheat Vodka,,,tag; adjunct,base is not an exact bottle or style
+Tabasco Distillate,Distil,Tabasco,,,,,tag,with-what is not an exact plain ingredient
+Taggiasca Olive-Infused Agricole Rum,Infuse,Taggiasca Olive,,Agricole Rum,Rhum Agricole,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Taggiasca Olive-Infused Brandy,Infuse,Taggiasca Olive,,Brandy,Brandy,style,tag,style already this; with-what is not an exact plain ingredient
+Tahini Fat-Washed Gin,Fat wash,Tahini,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Taiwanese Cypress Smoke,Smoke,Taiwanese Cypress,,,,,tag,with-what is not an exact plain ingredient
+Tamal Infused Sotol,Infuse,Tamal,,Sotol,Sotol,style,tag,style already this; with-what is not an exact plain ingredient
+Tamarind Infused Arrack,Infuse,Tamarind,Tamarind,Arrack,Arrack,style,tag; adjunct,style already this
+Tanqueray London Dry Gin-Infused Pandan,Infuse,Tanqueray London Dry Gin,,Pandan,Pandan,style,tag,"base style is not a drink, so not filed under it; with-what is not an exact plain ingredient"
+Tapenade Fat-Wash,Fat wash,Tapenade,,,,,tag,with-what is not an exact plain ingredient
+Tasso Ham-Infused Jameson Black Barrel,Infuse,Tasso Ham,,Jameson Black Barrel,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Tea-Infused Ice,Infuse,Tea,Tea,Ice,,,tag; adjunct,base is not an exact bottle or style
+Tea-Infused Vermouth,Infuse,Tea,Tea,Vermouth,Vermouth,style,,tags already there; style already Sweet Vermouth; already has recipe lines
+Thai Basil Distillate,Distil,Thai Basil,Thai Basil,,,,tag; adjunct,
+Thai Basil Tincture,Tincture,Thai Basil,Thai Basil,,,,tag; adjunct,
+Thai Basil-Infused Fords Gin,Infuse,Thai Basil,Thai Basil,Fords Gin,Fords Gin,bottle,tag; made_from; adjunct,
+Thai Chile Tincture,Tincture,Thai Chile,Thai Chilli,,,,tag; adjunct,
+Thai Chili-Infused Aperol,Infuse,Thai Chili,Thai Chilli,Aperol,,,tag; adjunct,made_from already this bottle
+Thyme Infused Gin,Infuse,Thyme,Thyme,Gin,Gin,style,tag; adjunct,style already this
+Thyme Sous Vide,Sous vide,Thyme,Thyme,,,,tag; adjunct,
+Thyme Tincture,Tincture,Thyme,Thyme,,,,tag; adjunct,
+Thyme-Infused Vodka,Infuse,Thyme,Thyme,Vodka,Vodka,style,tag; adjunct,style already this
+Timur Pepper-Infused Mount Gay Eclipse,Infuse,Timur Pepper,,Mount Gay Eclipse,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Toasted Bolillo-Infused Tequila,Infuse,Toasted Bolillo,,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+Toasted Coconut Infused Rum,Infuse,Toasted Coconut,Toasted Coconut,Rum,Rum,style,tag; adjunct,style already this
+Toasted Cornflake Infused Ron Santiago De Cuba 3yr Rum,Infuse,Toasted Cornflake,,Ron Santiago De Cuba 3yr Rum,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Toasted Milk-Washed Vodka,Milk wash,Toasted,,Vodka,Vodka,style,tag,style already this; with-what is not an exact plain ingredient
+Toasted Oat-Infused Coffee Liqueur,Infuse,Toasted Oat,,Coffee Liqueur,Coffee Liqueur,style,tag,style already this; with-what is not an exact plain ingredient
+Toasted Pinenuts Distillate,Distil,Toasted Pinenuts,,,,,tag,with-what is not an exact plain ingredient
+Toasted Sunflower Seed Infused Rye,Infuse,Toasted Sunflower Seed,,Rye,Rye Whiskey,style (alias),tag,style already this; with-what is not an exact plain ingredient
+Toasted-Coconut Fat-Washed Rye,Fat wash,Toasted-Coconut,Toasted Coconut,Rye,Rye Whiskey,style (alias),tag; adjunct,style already this
+Tobacco Distillate,Distil,Tobacco,Tobacco,,,,tag; adjunct,
+Tofu Clarification,Clarify,Tofu,Tofu,,,,tag; adjunct,
+Toki Japanese Whiskey Infused with Smashed Figs,Infuse,Smashed Figs,,Toki Japanese Whiskey,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Tom Yum Distillate,Distil,Tom Yum,,,,,tag,with-what is not an exact plain ingredient
+Tomato Distillate,Distil,Tomato,Tomato,,,,tag; adjunct,
+Tomato Infused Gin,Infuse,Tomato,Tomato,Gin,Gin,style,tag; adjunct,style already this
+Tomato Infused Vodka,Infuse,Tomato,Tomato,Vodka,Vodka,style,tag; adjunct,style already this
+Tomato Oil,Oil,Tomato,Tomato,,,,tag; adjunct,
+Tonka Infused Lyre's Coffee Liqueur,Infuse,Tonka,Tonka Bean,Lyre's Coffee Liqueur,,,tag; adjunct,base is not an exact bottle or style
+Truffle Distillate,Distil,Truffle,Truffle,,,,tag; adjunct,
+Truffle-Infused Vodka,Infuse,Truffle,Truffle,Vodka,Vodka,style,tag; adjunct,style already this
+Truffle-Washed Japanese Whisky,,Truffle,Truffle,Japanese Whisky,Japanese Whisky,style,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; style already this"
+Turmeric and Ginger-Infused Tequila,Infuse,Turmeric and Ginger,,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+Umami-Infused Hakushu 12 Yr,Infuse,Umami,,Hakushu 12 Yr,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Ume-Infused Empress Gin,Infuse,Ume,Ume,Empress Gin,,,tag; adjunct,base names only a brand with several bottles (the alias says Empress 1908 Indigo Gin)
+Umeshu Barrel-Aged Gin,Age,Umeshu Barrel,,Gin,Gin,style,tag,style already this; with-what is not an exact plain ingredient
+Vacuum Re-Distillate of Vietnamese Chilli,,,,,,,,no technique in a form the rules read
+Vanilla Agave Infusion,Infuse,Vanilla Agave,,,,,tag,with-what is not an exact plain ingredient
+Vanilla Ice Cream Fat-Washed Singleton 12 Whisky,Fat wash,Vanilla Ice Cream,Vanilla Ice Cream,Singleton 12 Whisky,,,tag; adjunct,base is not an exact bottle or style
+Vanilla Infused Grey Goose Vodka,Infuse,Vanilla,Vanilla,Grey Goose Vodka,Grey Goose Vodka,bottle,tag; made_from; adjunct,
+Vanilla Infused Soplica Szlachetna Vodka,Infuse,Vanilla,Vanilla,Soplica Szlachetna Vodka,,,tag; adjunct,base is not an exact bottle or style
+Vanilla Oil,Oil,Vanilla,Vanilla,,,,tag; adjunct,
+Vanilla Tincture,Tincture,Vanilla,Vanilla,,,,tag,already has recipe lines
+Vanilla Yogurt-Infused Souleil White Wine,Infuse,Vanilla Yogurt,Vanilla Yoghurt,Souleil White Wine,,,tag; adjunct,base is not an exact bottle or style
+Vanilla-Infused Grey Goose,Infuse,Vanilla,Vanilla,Grey Goose,,,tag; adjunct,made_from already this bottle
+Vanilla-Infused Rum,Infuse,Vanilla,Vanilla,Rum,Rum,style,tag; adjunct,style already this
+Vanilla-Infused Vodka,Infuse,Vanilla,Vanilla,Vodka,Vodka,style,,tags already there; style already this; already has recipe lines
+Vetiver Tincture,Tincture,Vetiver,Vetiver,,,,tag; adjunct,
+Viche Infused With Apple Mango,Infuse,Apple Mango,,Viche,Viche,style,tag,style already this; with-what is not an exact plain ingredient
+Wakame Distillate,Distil,Wakame,Wakame,,,,tag; adjunct,
+Wakaze Saké Infused with Beaufort Rinds,Infuse,Beaufort Rinds,,Wakaze Saké,,,tag,base is not an exact bottle or style; with-what is not an exact plain ingredient
+Walnut-Infused White Port,Infuse,Walnut,Walnut,White Port,White Port,style,tag; adjunct,style already this
+Wasabi Distillate,Distil,Wasabi,Wasabi,,,,tag; adjunct,
+Wasabi Infused Enemigo Tequila Blanco,Infuse,Wasabi,Wasabi,Enemigo Tequila Blanco,,,tag; adjunct,base is not an exact bottle or style
+Wasabi Pea-Infused Aquavit,Infuse,Wasabi Pea,,Aquavit,Aquavit,style,tag,style already this; with-what is not an exact plain ingredient
+Wasabi-Infused Gin,Infuse,Wasabi,Wasabi,Gin,Gin,style,tag; adjunct,style already this
+Wasabi-Redistilled Vodka,Distil,Wasabi,Wasabi,Vodka,,,tag; adjunct,made from scratch or a punch: no bottle read
+Watermelon and Cucumber Infused Tequila,Infuse,Watermelon and Cucumber,,Tequila,Tequila,style,tag,style already this; with-what is not an exact plain ingredient
+Wattleseed Infusion,Infuse,Wattleseed,Wattleseed,,,,tag; adjunct,
+White Chocolate-Washed Tanqueray Gin,,White Chocolate,White Chocolate,Tanqueray Gin,,,adjunct,"washed with something that could be a fat or milk wash, or neither: no tag; made_from already this bottle"
+White Miso-Infused Bourbon,Infuse,White Miso,White Miso,Bourbon,Bourbon,style,tag; adjunct,style already this
+White Oak Smoke,Smoke,White Oak,,,,,tag,with-what is not an exact plain ingredient
+White Pepper Tincture,Tincture,White Pepper,White Pepper,,,,tag; adjunct,
+White Pepper-Infused Vodka,Infuse,White Pepper,White Pepper,Vodka,Vodka,style,tag; adjunct,style already this
+White Tea Distilled Ketel One Vodka,Distil,White Tea,White Tea,Ketel One Vodka,,,tag; adjunct,made from scratch or a punch: no bottle read
+Wood Smoke,Smoke,Wood,,,,,tag,with-what is not an exact plain ingredient
+Wood-Aged Ketel One Vodka,Age,,,Ketel One Vodka,,,tag,made_from already this bottle
+Woodruff Tincture,Tincture,Woodruff,Woodruff,,,,tag; adjunct,
+Yamato Tea-Infused Bombay Sapphire Gin,Infuse,Yamato Tea,,Bombay Sapphire Gin,,,tag,made_from already this bottle; with-what is not an exact plain ingredient
+Yerba Mate-Infused Malbec,Infuse,Yerba Mate,Mate Tea,Malbec,Malbec,style,tag; adjunct,style already Red Wine
+Yoghurt Clarification,Clarify,Yoghurt,Yogurt,,,,tag; adjunct,
+Yoghurt Washed Widges Gin,Milk wash,Yoghurt,Yogurt,Widges Gin,Widges London Dry Gin,bottle (alias),tag; made_from; adjunct,
+Yogurt Clarified Milk Punch,Clarify; Milk wash,Yogurt,Yogurt,Milk Punch,,,tag; adjunct,made from scratch or a punch: no bottle read
+Yogurt Washed Hendrick's,Milk wash,Yogurt,Yogurt,Hendrick's,,,tag; adjunct,made_from already this bottle
+Yogurt-Washed Clarified 12-Year Rum,Milk wash; Clarify,Yogurt,Yogurt,12-Year Rum,,,tag; adjunct,base is not an exact bottle or style
+Yogurt-Washed Gin,Milk wash,Yogurt,Yogurt,Gin,Gin,style,tag; adjunct,style already this
+Yuzu Kosho-Infused Bacardi,Infuse,Yuzu Kosho,Yuzu Kosho,Bacardi,,,tag; adjunct,base names only a brand with several bottles (the alias says Bacardí Carta Blanca)
