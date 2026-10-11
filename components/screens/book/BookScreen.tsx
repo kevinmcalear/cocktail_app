@@ -2,10 +2,10 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, PressableScale, Tag, Title, useDs, useGutter } from '@/components/ds';
-import { layout, space } from '@/constants/tokens';
+import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useBook } from '@/hooks/useDrinkHistory';
-import { RELATION_LABEL, RIGHTS_LABEL, sourceByline } from '@/lib/drinkHistory';
+import { RELATION_LABEL, sourceByline } from '@/lib/drinkHistory';
 
 /** One of the old cocktail books (or another source): where to read it, and the drinks printed in it. */
 export function BookScreen() {
@@ -37,14 +37,20 @@ function BookPage() {
         {!isLoading && !error && !source ? <Body>{"This book isn't here."}</Body> : null}
         {source ? (
           <>
-            <View style={styles.header}>
-              <Caption tone="muted" style={styles.eyebrow}>
-                {[source.kind === 'book' ? 'Book' : source.kind === 'bar' ? 'Bar' : 'Source', source.year, source.city].filter(Boolean).join(' · ').toUpperCase()}
-              </Caption>
-              <Title>{source.title}</Title>
-              {sourceByline(source) ? <Body tone="muted">{sourceByline(source)}</Body> : null}
-              <View style={styles.tags}>
-                <Tag label={RIGHTS_LABEL[source.rights]} />
+            <View style={styles.top}>
+              <View style={[styles.header, styles.flex]}>
+                <Caption tone="muted" style={styles.eyebrow}>
+                  {[source.kind === 'book' ? 'Book' : source.kind === 'bar' ? 'Bar' : 'Source', source.year, source.city].filter(Boolean).join(' · ').toUpperCase()}
+                </Caption>
+                <Title>{source.title}</Title>
+                {sourceByline(source) ? <Body tone="muted">{sourceByline(source)}</Body> : null}
+              </View>
+              {/* The drawn cover (prep-hist-book): its title and year on paper. */}
+              <View aria-hidden style={[styles.cover, { backgroundColor: ds.c.paper, borderColor: ds.c.lineStrong }]}>
+                <Caption numberOfLines={4} style={styles.coverTitle}>
+                  {source.title}
+                </Caption>
+                {source.year ? <Caption tone="muted" style={styles.mono}>{String(source.year)}</Caption> : null}
               </View>
             </View>
             <View style={styles.actions}>
@@ -79,6 +85,9 @@ function BookPage() {
                 </PressableScale>
               ))}
             </View>
+            {source.rights === 'public_domain' ? (
+              <Caption tone="muted">Recipes are transcribed by us from the public-domain text and linked to the page they come from.</Caption>
+            ) : null}
           </>
         ) : null}
       </ScrollView>
@@ -98,7 +107,10 @@ const styles = StyleSheet.create({
   page: { width: '100%', maxWidth: 760, alignSelf: 'center', gap: space.lg },
   header: { gap: space.sm },
   eyebrow: { letterSpacing: 1.2 },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  top: { flexDirection: 'row', alignItems: 'flex-start', gap: space.lg },
+  cover: { width: 84, height: 112, padding: space.sm, gap: space.xs, justifyContent: 'space-between', borderRadius: radius.mark, borderWidth: 1 },
+  coverTitle: { fontFamily: fontFamilies.instrument },
+  mono: { fontFamily: fontFamilies.mono },
   actions: { gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, paddingVertical: space.sm, borderTopWidth: 1 },
   flex: { flex: 1, minWidth: 0 },
