@@ -12,7 +12,7 @@ interface PageVisibilityChoiceProps {
   onChange: (value: PageVisibility) => void;
   disabled?: boolean;
   error?: string | null;
-  /** False on its own page, where the title says it. */
+  /** False on its own page, where the title and intro say it. */
   heading?: boolean;
 }
 
@@ -26,7 +26,7 @@ export function PageVisibilityChoice({ venueName, value, onChange, disabled, err
   return (
     <View style={styles.group}>
       {heading ? <Headline role="heading">Who sees your page</Headline> : null}
-      <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption>
+      {heading ? <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption> : null}
       <View role="radiogroup" accessibilityLabel="Who sees your page" style={styles.rows}>
         {PAGE_VISIBILITIES.map((v) => (
           <Choice key={v} label={PAGE_COPY[v].label} detail={PAGE_COPY[v].detail} selected={value === v} disabled={disabled} onPress={() => onChange(v)} />
