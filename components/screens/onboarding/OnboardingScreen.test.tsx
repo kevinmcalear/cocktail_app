@@ -80,7 +80,7 @@ beforeEach(() => {
   mockSaveMenu.mockReset();
   mockSaveDrink.mockReset();
   mockSaveTaste.mockReset();
-  mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSuccess?.());
+  mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSuccess?.({ held: false }));
   mockSaveName.mockImplementation((_input, opts) => opts?.onSuccess?.('p1'));
   useSettingsStore.setState({ specUnit: 'ml', defaultUnit: 'ml' });
 });
@@ -154,7 +154,7 @@ describe('OnboardingScreen', () => {
 
   test('hospitality claims an existing profile instead of making one', async () => {
     mockPeople = [{ id: 'existing', handle: 'jo.juniper', display_name: 'Jo Juniper', city: 'London', is_claimed: false }];
-    mockClaim.mockImplementation((_input, opts) => opts?.onSuccess?.());
+    mockClaim.mockImplementation((_input, opts) => opts?.onSuccess?.({ held: false }));
     await named();
     await fireEvent.press(screen.getByRole('button', { name: 'Yes, I work in hospitality' }));
     expect(screen.getByText('Do we already have you?')).toBeTruthy();
@@ -186,7 +186,7 @@ describe('OnboardingScreen', () => {
   });
 
   test('a previous place can be a closed bar, then a menu and a cocktail', async () => {
-    mockSaveWork.mockImplementation((_input, opts) => opts?.onSuccess?.());
+    mockSaveWork.mockImplementation((_input, opts) => opts?.onSuccess?.({ held: false }));
     mockBars = [{ ...attaboy, display_name: 'Milk & Honey', locality: 'New York', is_closed: true, id: 'closed' }];
     await newCareer();
     await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
@@ -217,7 +217,7 @@ describe('OnboardingScreen', () => {
   });
 
   test('adding a bar creates the venue', async () => {
-    mockCreateBar.mockImplementation((_name, opts) => opts?.onSuccess?.());
+    mockCreateBar.mockImplementation((_name, opts) => opts?.onSuccess?.({ held: false }));
     await newCareer();
     await fireEvent.press(screen.getByRole('button', { name: 'Add your bar' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Add bar' }));
@@ -232,7 +232,7 @@ describe('OnboardingScreen', () => {
   test('an invitee accepts, names themselves with a password, picks units, and their job is saved', async () => {
     mockInvitedAt = '2026-10-07T00:00:00Z';
     mockInvites = [caretakers];
-    mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.());
+    mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.({ held: false }));
     mockSaveWork.mockImplementation((_input, opts) => opts?.onSettled?.());
     await renderWithTamagui(<OnboardingScreen />);
     expect(screen.getByText('Join Caretakers as a Bartender')).toBeTruthy();
@@ -259,7 +259,7 @@ describe('OnboardingScreen', () => {
 
   test('an invitee whose handle is taken gets the handle field on the same step', async () => {
     mockInvites = [caretakers];
-    mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.());
+    mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.({ held: false }));
     mockSaveName.mockImplementationOnce((_input, opts) => opts?.onError?.(new Error('That handle is taken. Try another.')));
     await renderWithTamagui(<OnboardingScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Accept and start' }));
@@ -272,7 +272,7 @@ describe('OnboardingScreen', () => {
 
   test('declining an invite runs the usual setup', async () => {
     mockInvites = [{ ...caretakers, bar_profile_id: null, role_level: 40, name: null, invited_by_name: null }];
-    mockDecline.mockImplementation((_id, opts) => opts?.onSuccess?.());
+    mockDecline.mockImplementation((_id, opts) => opts?.onSuccess?.({ held: false }));
     await renderWithTamagui(<OnboardingScreen />);
     expect(screen.getByText('Join Caretakers as an Admin')).toBeTruthy();
     expect(screen.getByText(/^Caretakers added you\./)).toBeTruthy();

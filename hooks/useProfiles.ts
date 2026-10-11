@@ -344,9 +344,20 @@ export interface ProfileClaim {
   evidence: ClaimEvidence | null;
   /** A moderator's words when they turn it down. */
   decline_reason: string | null;
+  /** Page settings chosen during venue setup while it waits; applied on approval (save_claim_setup). */
+  setup: ClaimSetup | null;
 }
 
-export const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, created_at, method, code, evidence, decline_reason';
+/** What save_claim_setup keeps on a waiting bar claim. */
+export interface ClaimSetup {
+  page_visibility?: 'locked' | 'description' | 'open';
+  hours?: Record<string, [string, string][]> | null;
+  timezone?: string | null;
+  phone?: string | null;
+  website?: string | null;
+}
+
+export const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, created_at, method, code, evidence, decline_reason, setup';
 
 /** The signed-in person's claims on one profile, newest first. */
 export function useMyClaims(profileId: string | null | undefined) {

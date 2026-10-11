@@ -17,6 +17,8 @@ export interface ClaimEvidence {
   matches?: boolean;
   auto?: boolean;
   review_reason?: ReviewReason | null;
+  /** An Instagram claim checked by a message from the bar's account, not its bio (20261013900000). */
+  instagram_dm?: boolean;
 }
 
 export type ReviewReason = 'shared_site' | 'page_on_larger_site' | 'closed_bar';
@@ -99,6 +101,22 @@ export function emailUnavailable(check: Extract<EmailCheck, { ok: false }>): str
 }
 
 /** '482913' -> '482 913', easier to read out. */
+/**
+ * Six digits for an Instagram message or a call, made before sending so the
+ * claim screen can show it first. start_bar_claim stores it (p_code); the
+ * code only has to tie the message to this claim, not stay secret from its
+ * sender. ponytail: crypto where the platform has it, Math.random on Hermes.
+ */
+export function newClaimCode(random: () => number = defaultRandom): string {
+  return String(Math.floor(random() * 1_000_000)).padStart(6, '0');
+}
+
+function defaultRandom(): number {
+  const c = (globalThis as { crypto?: { getRandomValues?: (a: Uint32Array) => Uint32Array } }).crypto;
+  if (c?.getRandomValues) return c.getRandomValues(new Uint32Array(1))[0] / 2 ** 32;
+  return Math.random();
+}
+
 export const spacedCode = (code: string) => code.replace(/^(\d{3})(\d{3})$/, '$1 $2');
 
 /** What a claim calls the place behind the page: a bar, or a maker's company. */
