@@ -13,15 +13,22 @@ jest.mock('expo-router', () => ({
   usePathname: () => mockPathname,
   useRouter: () => ({ navigate: mockNavigate, push: mockPush }),
 }));
-jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode }) }));
-jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: { id: 'caretakers', name: 'Caretakers' } }) }));
+const mockSetMode = jest.fn();
+const mockEnterVenue = jest.fn();
+jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode: mockSetMode }) }));
+const mockVenue = { id: 'caretakers', name: 'Caretakers', logoUrl: null, accent: null, displayFace: 'instrument', groundTint: null, roleLevel: 40 };
+const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
+jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockVenue, venues: [mockVenue, mockOther], enterVenue: mockEnterVenue }) }));
+jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: ['a', 'b', 'c'] }) }));
+jest.mock('@/components/ui/UserAvatar', () => ({ CurrentUserAvatar: () => null, useUserDisplayName: () => 'Kevin McAlear' }));
 let mockRole = 40;
 jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole }));
 // These read the signed-in person's venues from Supabase; the nav doesn't need them here.
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: unknown }) => children }));
-jest.mock('@/components/nav/VenueSwitcher', () => ({ VenueSwitcher: () => null }));
+jest.mock('@/components/nav/VenueSwitcher', () => ({ VenueSwitcher: () => null, VenueWordmark: () => null }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
-jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true }) }));
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['edit_drinks'] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
+jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true, label: 'Caretakers' }) }));
 const mockPush = jest.fn();
 
 // The keyboard test lends the sidebar a document; take it back once every render has unmounted.
@@ -31,6 +38,7 @@ const links = () => screen.getAllByRole('link').map((el) => el.props.accessibili
 
 beforeEach(() => {
   mockNavigate.mockClear();
+  mockPush.mockClear();
   mockRole = 40;
   mockMode = 'venue';
 });
@@ -40,17 +48,41 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   mockPathname = '/library';
   await renderWithTamagui(<WebSideNav />);
 
-  expect(links()).toEqual(['Tonight', 'Library', 'Discover', 'Menus', 'Back bar', 'My team', 'You']);
+  // The canvas order: the tabs and History, Menus and Back bar, then the Venue section and you at the foot.
+  expect(links()).toEqual(['Tonight', 'Library', 'Discover', 'History', 'Menus', 'Back bar', 'My team', 'Brand', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Back bar' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/back-bar');
+  expect(mockPush).toHaveBeenLastCalledWith('/back-bar');
   await fireEvent.press(screen.getByRole('link', { name: 'Menus' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/menus/all');
-  // Pages have no avatar row on wide web, so You lives here.
-  await fireEvent.press(screen.getByRole('link', { name: 'You' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/menus/all');
+  await fireEvent.press(screen.getByRole('link', { name: 'Brand' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers/brand');
+  await fireEvent.press(screen.getByRole('link', { name: 'Venue settings' }));
+  expect(mockPush).toHaveBeenLastCalledWith('/settings/bar/caretakers');
+  // Pages have no avatar on wide web, so You lives in the foot.
+  await fireEvent.press(screen.getByRole('link', { name: 'You: Kevin M., Admin at Caretakers' }));
   expect(mockPush).toHaveBeenLastCalledWith('/you');
+});
+
+test('the marks switch venues in one click', async () => {
+  await renderWithTamagui(<WebSideNav />);
+  expect(screen.getByRole('radio', { name: 'Caretakers, Admin', checked: true })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('radio', { name: 'Pale Moth, Bartender' }));
+  expect(mockEnterVenue).toHaveBeenLastCalledWith('pale');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/');
+  await fireEvent.press(screen.getByRole('radio', { name: 'Home bar' }));
+  expect(mockSetMode).toHaveBeenLastCalledWith('home');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/discover');
+});
+
+test('a page off the nav keeps the row it was opened from lit', async () => {
+  mockPathname = '/library';
+  const view = await renderWithTamagui(<WebSideNav />);
+  mockPathname = '/add-cocktail';
+  await view.rerender(<WebSideNav />);
+  expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
 });
 
 test('Menus stays marked on a menu page', async () => {
@@ -64,7 +96,7 @@ test('an employee opens My team from the sidebar', async () => {
   mockRole = 20;
   await renderWithTamagui(<WebSideNav />);
   await fireEvent.press(screen.getByRole('link', { name: 'My team' }));
-  expect(mockNavigate).toHaveBeenLastCalledWith('/team');
+  expect(mockPush).toHaveBeenLastCalledWith('/team');
 });
 
 test('a guest does not see My team', async () => {
@@ -78,7 +110,8 @@ test('home mode lists the home tabs and navigates to their routes', async () => 
   mockPathname = '/discover';
   await renderWithTamagui(<WebSideNav />);
 
-  expect(links()).toEqual(['Discover', 'My Bar', 'Collection', 'You']);
+  // No Venue section at home; the foot says your shelf.
+  expect(links()).toEqual(['Discover', 'History', 'My Bar', 'Collection', 'You', 'You: Kevin M., Home bar · 3 bottles']);
   expect(screen.getByRole('link', { name: 'Discover', selected: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('link', { name: 'Discover' }));
@@ -103,7 +136,8 @@ test('New opens the create sheet with the draft count, and each choice goes wher
 
   await fireEvent.press(screen.getByRole('button', { name: 'New' }));
   expect(screen.getByText('2')).toBeTruthy();
-  await fireEvent.press(screen.getByRole('link', { name: 'Ingredient. A bottle, or something made in house' }));
+  expect(screen.getByText('Made at Caretakers, for its library')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('link', { name: 'Ingredient or prep. A bottle, or something made in house' }));
   // Made at the venue you're in, not your home bar.
   expect(mockPush).toHaveBeenLastCalledWith('/add-ingredient?barId=caretakers');
 
