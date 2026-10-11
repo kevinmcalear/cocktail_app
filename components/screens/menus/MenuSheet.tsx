@@ -16,13 +16,15 @@ interface MenuSheetProps {
   footer?: ReactNode;
   /** Called once the sheet is on screen. */
   onShow?: () => void;
+  /** A form's header: Cancel, the title in the middle, and Save, in place of the title and X. */
+  save?: { label: string; onPress: () => void; disabled?: boolean };
 }
 
 /**
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow, save }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -36,13 +38,17 @@ export function MenuSheet({ visible, onClose, title, subtitle, children, footer,
       keyboardOffset={footer ? -insets.bottom : 0}
       style={sheetIsDialog ? styles.dialog : undefined}
       header={
-        <View style={styles.header}>
-          <View style={styles.flex}>
-            <Title>{title}</Title>
-            {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+        save ? (
+          <FormHeader title={title} save={save} />
+        ) : (
+          <View style={styles.header}>
+            <View style={styles.flex}>
+              <Title>{title}</Title>
+              {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+            </View>
+            <SheetCloseButton />
           </View>
-          <SheetCloseButton />
-        </View>
+        )
       }
     >
       <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
@@ -61,6 +67,27 @@ function SheetCloseButton() {
     <PressableScale accessibilityLabel="Close" onPress={close} style={styles.close}>
       <IconSymbol name="xmark" size={18} color={ds.c.muted} />
     </PressableScale>
+  );
+}
+
+/** Cancel (closes the way a drag does), the title, and Save. */
+function FormHeader({ title, save }: { title: string; save: NonNullable<MenuSheetProps['save']> }) {
+  const ds = useDs();
+  const close = useSheetClose();
+  return (
+    <View style={[styles.header, styles.form]}>
+      <PressableScale role="button" onPress={close} style={styles.formButton}>
+        <DsText tone="muted">Cancel</DsText>
+      </PressableScale>
+      <DsText role="heading" numberOfLines={1} style={[styles.formTitle, { fontFamily: fontFamilies.bodySemiBold }]}>
+        {title}
+      </DsText>
+      <PressableScale role="button" onPress={save.onPress} disabled={save.disabled} style={[styles.formButton, styles.formSave, save.disabled && styles.disabled]}>
+        <DsText color={ds.accentText} style={{ fontFamily: fontFamilies.bodySemiBold }}>
+          {save.label}
+        </DsText>
+      </PressableScale>
+    </View>
   );
 }
 
@@ -114,6 +141,10 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
 const styles = StyleSheet.create({
   dialog: { paddingTop: space.md },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingHorizontal: space.xl, paddingTop: space.md },
+  form: { alignItems: 'center', paddingHorizontal: space.md },
+  formButton: { minWidth: 72, minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.sm },
+  formSave: { alignItems: 'flex-end' },
+  formTitle: { flex: 1, textAlign: 'center' },
   close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.md },
   body: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.xl, gap: space.md },
   footer: { paddingHorizontal: space.xl, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, gap: space.sm },
