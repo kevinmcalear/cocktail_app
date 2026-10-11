@@ -190,7 +190,8 @@ const styles = StyleSheet.create({
   cardRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
   facts: { gap: space.xs },
   cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  // Wraps on a narrow phone: Directions and Open bar drop under All results rather than off the edge.
+  actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   right: { flexDirection: 'row', gap: space.sm },
   atBar: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderRadius: radius.mark, paddingVertical: space.sm },
 });

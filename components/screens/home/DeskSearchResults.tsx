@@ -48,8 +48,10 @@ export function DeskSearchResults({ filter, drink, results, layer, onLayer, from
   const more = best ? undefined : nearest ? { total: near.totals?.drinks ?? null, hasMore: near.hasMore, loadMore: near.loadMore, loading: near.isLoadingMore } : results.more;
   const loading = best ? top.isLoading : nearest ? near.isLoading : results.isLoading;
   const where = areaLabel(filter.area);
-  const atPicked = picked ? drinks.filter((d) => d.barId === picked.id) : [];
-  const rest = atPicked.length ? drinks.filter((d) => d !== atPicked[0]) : drinks;
+  // The picked bar's own matches, from the server: its pin may be past the loaded page.
+  const atBar = useDiscoverList(filter, { barId: picked?.id ?? null, enabled: !!picked && !picked.closed, pageSize: 100 });
+  const atPicked = picked ? (best || nearest ? drinks.filter((d) => d.barId === picked.id) : atBar.drinks) : [];
+  const rest = atPicked.length ? drinks.filter((d) => d.id !== atPicked[0].id) : drinks;
   return (
     <View style={styles.pane}>
       <ResultsHead
