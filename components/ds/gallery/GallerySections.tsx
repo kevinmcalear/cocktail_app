@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { radius, space, type, type TypeStyle } from '@/constants/tokens';
+import { rankCaption } from '@/lib/ranking';
 
 import { Button } from '../Button';
 import { Chip } from '../Chip';
@@ -10,6 +11,7 @@ import { DrinkImage } from '../DrinkImage';
 import { GlassButton } from '../Glass';
 import { LockedSection } from '../LockedSection';
 import { ReviewRow } from '../ReviewRow';
+import { MatchText, RowScore } from '../RowScore';
 import { Segmented } from '../Segmented';
 import { SpecRow } from '../SpecRow';
 import { Surface } from '../Surface';
@@ -123,6 +125,29 @@ export function GallerySections() {
         />
       </Section>
 
+      <Section title="Scores in rows">
+        {/* RowScore at the end of any drink or bar row (b02); rank captions are words, built with rankCaption. */}
+        {[
+          { name: 'Dirty Martini', caption: rankCaption({ position: 2, of: 11, name: 'Martini', where: 'near you', rankers: 23 }), score: 8.7, detail: 'Bar 9.1' },
+          { name: 'Whiskey Sour', caption: 'Classic · Make the Simple syrup first', score: 8.4, detail: '92% match' },
+          { name: 'Bourbon Collins', caption: 'Not ranked yet: % match on its own', score: null, detail: '86% match' },
+          { name: 'Little Rye', caption: 'Cocktail bar · Fitzroy', score: 9.1, detail: '212 ranked' },
+        ].map((r) => (
+          <View key={r.name} style={[styles.scoreRow, { borderBottomColor: ds.c.line }]}>
+            <View style={styles.flex}>
+              <Headline>
+                <MatchText text={r.name} query="martini" />
+              </Headline>
+              <Caption tone="muted">{r.caption}</Caption>
+            </View>
+            <RowScore score={r.score} detail={r.detail} />
+          </View>
+        ))}
+        <Body>
+          <MatchText text="Riff on a Martini, lit with a tint" query="martini" look="tint" />
+        </Body>
+      </Section>
+
       <Section title="Dates">
         <DateField label="Date" value={day} onChange={setDay} clearable hint="Opens a month calendar; the same on web, iOS and Android." />
         <TimeField label="Starts" value={time} onChange={setTime} />
@@ -214,4 +239,6 @@ const styles = StyleSheet.create({
   image: { flex: 1, gap: space.xs },
   overlay: { position: 'absolute', top: space.md, left: space.md, right: space.md, flexDirection: 'row', justifyContent: 'space-between' },
   overlayRight: { flexDirection: 'row', gap: space.sm },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  flex: { flex: 1, minWidth: 0 },
 });

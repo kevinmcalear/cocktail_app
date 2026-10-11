@@ -116,7 +116,7 @@ function You({ inTabs }: { inTabs?: boolean }) {
               made.isLoading ? (
                 <Caption tone="muted">Loading your drinks…</Caption>
               ) : (
-                <OriginalsGrid originals={made.data ?? []} selfId={profile?.id ?? ''} columns={columns} emptyText="You haven’t made a drink yet. Tap New to write one up." />
+                <OriginalsGrid originals={made.data ?? []} selfId={profile?.id ?? ''} columns={columns} layout="rows" mine emptyText="You haven’t made a drink yet. Tap New to write one up." />
               )
             ) : had.error ? (
               <Body tone="muted">Couldn’t load your drinks. Check your connection and try again.</Body>

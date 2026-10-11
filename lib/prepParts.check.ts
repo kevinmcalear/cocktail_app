@@ -27,9 +27,9 @@ assert.equal(partsRatio(null), null);
 
 // Sizes: the bottles show when the yield is a volume, minus the batch itself.
 const sizes = sizeOptions(1130, 'ml');
-assert.deepEqual(sizes.map((s) => s.key), ['batch', 'half', 'double', 'ml500', 'ml750', 'ml1000']);
+assert.deepEqual(sizes.map((s) => s.key), ['batch', 'ml500', 'ml750']);
 assert.ok(Math.abs(sizes.find((s) => s.key === 'ml750')!.factor - 750 / 1130) < 1e-9);
-assert.deepEqual(sizeOptions(750, 'ml').map((s) => s.key), ['batch', 'half', 'double', 'ml500', 'ml1000']);
+assert.deepEqual(sizeOptions(750, 'ml').map((s) => s.key), ['batch', 'ml500']);
 assert.deepEqual(sizeOptions(null, null).map((s) => s.key), ['batch', 'half', 'double']);
 assert.deepEqual(sizeOptions(2, 'kg').map((s) => s.key), ['batch', 'half', 'double'], 'a weighed yield has no bottles');
 

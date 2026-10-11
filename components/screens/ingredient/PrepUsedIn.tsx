@@ -2,8 +2,10 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, PressableScale, Spec, TextLink, useDs } from '@/components/ds';
+import { Body, Caption, Headline, PressableScale, RowScore, scoreWords, Spec, TextLink, useDs } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
+import { useDrinkSources } from '@/hooks/useDrinkSources';
+import { useItemScores } from '@/hooks/useFlavor';
 import type { PrepUsedIn as UsedIn } from '@/hooks/usePrepCard';
 import { poursPerBatch } from '@/lib/prepParts';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
@@ -23,8 +25,11 @@ export function PrepUsedIn({ name, drinks, used, yieldAmount, yieldUnit }: PrepU
   const [all, setAll] = useState(false);
   const pours = used?.pours ?? {};
   const preps = used?.preps ?? [];
-  if (!drinks.length && !preps.length) return null;
   const shown = all ? drinks : drinks.slice(0, FIRST);
+  // Who made each and its score (b02), for the rows on screen.
+  const { data: sources } = useDrinkSources(shown.map((d) => d.id));
+  const { data: scores } = useItemScores(shown.map((d) => d.id));
+  if (!drinks.length && !preps.length) return null;
   const reach = poursPerBatch(yieldAmount, yieldUnit, Object.values(pours));
 
   return (
@@ -38,7 +43,7 @@ export function PrepUsedIn({ name, drinks, used, yieldAmount, yieldUnit }: PrepU
               const q = toQuantity(pours[d.id]?.amount, pours[d.id]?.unit);
               // ½ oz reads as 15 ml, not 14.8.
               const pour = q && q.kind === 'ml' && q.value >= 5 ? { ...q, value: Math.round(q.value) } : q;
-              return <Row key={d.id} id={d.id} kind="cocktail" name={d.name} amount={pour ? formatQuantity(pour) : ''} />;
+              return <Row key={d.id} id={d.id} kind="cocktail" name={d.name} amount={pour ? formatQuantity(pour) : ''} source={sources?.[d.id]?.by ?? undefined} score={scores?.[d.id]} />;
             })}
           </View>
           {drinks.length > FIRST ? <TextLink label={all ? 'Show fewer' : `See all ${drinks.length}`} onPress={() => setAll(!all)} /> : null}
@@ -58,22 +63,28 @@ export function PrepUsedIn({ name, drinks, used, yieldAmount, yieldUnit }: PrepU
   );
 }
 
-function Row({ id, kind, name, amount }: { id: string; kind: 'cocktail' | 'ingredient'; name: string; amount: string }) {
+function Row({ id, kind, name, amount, source, score }: { id: string; kind: 'cocktail' | 'ingredient'; name: string; amount: string; source?: string; score?: number }) {
   const ds = useDs();
   const router = useRouter();
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={amount ? `${name}, ${amount}` : name}
+      accessibilityLabel={[name, amount, source, scoreWords(score)].filter(Boolean).join(', ')}
       onPress={() => router.push(`/${kind}/${id}` as never)}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
       <Spec tone="accent" style={styles.amount}>
         {amount}
       </Spec>
-      <Body numberOfLines={1} style={styles.name}>
-        {name}
-      </Body>
+      <View style={styles.name}>
+        <Body numberOfLines={1}>{name}</Body>
+        {source ? (
+          <Caption tone="muted" numberOfLines={1}>
+            {source}
+          </Caption>
+        ) : null}
+      </View>
+      <RowScore score={score} />
     </PressableScale>
   );
 }
@@ -81,7 +92,7 @@ function Row({ id, kind, name, amount }: { id: string; kind: 'cocktail' | 'ingre
 const styles = StyleSheet.create({
   section: { gap: space.xl },
   group: { gap: space.sm },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + 4, borderBottomWidth: StyleSheet.hairlineWidth },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + 4, paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
   amount: { width: 72 },
-  name: { flex: 1 },
+  name: { flex: 1, minWidth: 0 },
 });

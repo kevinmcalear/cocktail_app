@@ -8,6 +8,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
+import { useStockOnHand } from '@/hooks/useStockCounts';
 import { formatPar, locationLine } from '@/lib/backBar';
 import { roleLabel } from '@/lib/roles';
 
@@ -16,6 +17,10 @@ import { BackBarPlan } from './BackBarPlan';
 interface WhereItLivesProps {
   itemId: string;
   itemName: string;
+  /** Inside the Where it lives sheet: no card or eyebrow, the sheet has its own title. */
+  bare?: boolean;
+  /** A house prep's Recipe button (prep-ing-where): back to its recipe. */
+  onRecipe?: () => void;
 }
 
 /**
@@ -31,9 +36,11 @@ export function WhereItLives(props: WhereItLivesProps) {
   );
 }
 
-function WhereItLivesCard({ itemId, itemName }: WhereItLivesProps) {
-  const ds = useDs();
-  const router = useRouter();
+/**
+ * Where an item lives at the active venue, for the For the bar row and the
+ * sheet: whether there's anything to show, the venue, and the first spot.
+ */
+export function useWhereItLives(itemId: string) {
   const { active } = useActiveVenue();
   // Home mode has no venue, even for staff: useActiveVenue falls back to their first one.
   const home = useMode().mode === 'home';
@@ -41,13 +48,25 @@ function WhereItLivesCard({ itemId, itemName }: WhereItLivesProps) {
   const caps = useCapabilities(barId);
   const capabilities = Array.isArray(caps.data) ? caps.data : null;
   const canRead = !!capabilities?.includes('locations');
-  const canPlace = !!capabilities?.some((c) => c === 'edit_drinks' || c === 'prep');
-  const { data: opensAt } = useCapabilityOpensAt(barId, 'locations');
   const { data: zones = [] } = useBarZones(canRead ? barId : null);
   const { data: locations = [] } = useItemLocations(canRead ? barId : null);
-
+  const here = locations.filter((l) => l.item_id === itemId);
+  const zoneName = (id: string) => zones.find((z) => z.id === id)?.name ?? null;
+  const lines = here.map((l) => locationLine(zoneName(l.zone_id), l.shelf));
   // Home mode, no venue, or a venue without the back bar yet: nothing to say.
-  if (home || !active || caps.error || !capabilities) return null;
+  const shown = !home && !!active && !caps.error && !!capabilities;
+  return { shown, active, barId, capabilities, canRead, zones, here, lines };
+}
+
+function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProps) {
+  const ds = useDs();
+  const router = useRouter();
+  const { shown, active, barId, capabilities, canRead, zones, here, lines } = useWhereItLives(itemId);
+  const canPlace = !!capabilities?.some((c) => c === 'edit_drinks' || c === 'prep');
+  const { data: opensAt } = useCapabilityOpensAt(barId, 'locations');
+  const { data: onHand = [] } = useStockOnHand(canRead && here.length ? barId : null);
+
+  if (!shown || !active) return null;
   if (!canRead) {
     return (
       <LockedSection title="Where it lives" unlocked={false} opensAt={opensAt ? roleLabel(opensAt) : 'a higher role'}>
@@ -56,15 +75,14 @@ function WhereItLivesCard({ itemId, itemName }: WhereItLivesProps) {
     );
   }
 
-  const here = locations.filter((l) => l.item_id === itemId);
-  const zoneName = (id: string) => zones.find((z) => z.id === id)?.name ?? null;
-  const lines = here.map((l) => locationLine(zoneName(l.zone_id), l.shelf));
-
+  const Frame = bare ? View : Surface;
   return (
-    <Surface style={styles.card}>
-      <Caption tone="muted" role="heading" style={styles.eyebrow}>
-        WHERE IT LIVES · {active.name.toUpperCase()}
-      </Caption>
+    <Frame style={styles.card}>
+      {bare ? null : (
+        <Caption tone="muted" role="heading" style={styles.eyebrow}>
+          WHERE IT LIVES · {active.name.toUpperCase()}
+        </Caption>
+      )}
       {here.length ? (
         <>
           <BackBarPlan
@@ -74,15 +92,24 @@ function WhereItLivesCard({ itemId, itemName }: WhereItLivesProps) {
             accessibilityLabel={`${active.name} back bar plan, showing ${lines.join(' and ')}`}
           />
           {here.map((l, i) => {
-            const par = formatPar(l.par_amount, l.par_unit);
+            // Par, and what the last count found there. Made and Use by stay off until there's a batch log (b33).
+            const counted = onHand.find((r) => r.item_id === itemId && r.location_id === l.id);
+            const stats = [
+              { label: 'Par', value: formatPar(l.par_amount, l.par_unit) },
+              { label: 'On hand', value: counted ? formatPar(counted.amount, counted.unit) : null },
+            ].filter((t): t is { label: string; value: string } => !!t.value);
             return (
               <View key={l.id} style={styles.place}>
                 <Spec color={ds.accentText}>{lines[i]}</Spec>
                 {l.container ? <Body tone="muted">{l.container}</Body> : null}
-                {par ? (
-                  <View style={[styles.stat, { backgroundColor: ds.c.raised }]}>
-                    <Caption tone="muted">Par</Caption>
-                    <Spec>{par}</Spec>
+                {stats.length ? (
+                  <View style={styles.stats}>
+                    {stats.map((t) => (
+                      <View key={t.label} style={[styles.stat, { backgroundColor: ds.c.raised }]}>
+                        <Caption tone="muted">{t.label}</Caption>
+                        <Spec>{t.value}</Spec>
+                      </View>
+                    ))}
                   </View>
                 ) : null}
               </View>
@@ -95,6 +122,7 @@ function WhereItLivesCard({ itemId, itemName }: WhereItLivesProps) {
         </Body>
       )}
       <View style={styles.actions}>
+        {onRecipe ? <Button label="Recipe" variant="secondary" onPress={onRecipe} /> : null}
         {!here.length && canPlace ? (
           <Button
             label="Give it a spot"
@@ -104,7 +132,7 @@ function WhereItLivesCard({ itemId, itemName }: WhereItLivesProps) {
         ) : null}
         <Button label="Open the back bar" variant="secondary" onPress={() => router.push('/back-bar' as never)} />
       </View>
-    </Surface>
+    </Frame>
   );
 }
 
@@ -112,6 +140,7 @@ const styles = StyleSheet.create({
   card: { gap: space.md },
   eyebrow: { letterSpacing: 1.2 },
   place: { gap: space.xs },
-  stat: { alignSelf: 'flex-start', marginTop: space.xs, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
+  stat: { alignSelf: 'flex-start', paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });
