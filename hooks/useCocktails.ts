@@ -2,6 +2,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys } from '@/hooks/useDropdowns';
 import { useViewAs } from '@/hooks/useViewAs';
 import { allRowsById, byName } from '@/lib/allRows';
+import { venueListOptions } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
 import { DatabaseItem } from '@/types/types';
@@ -76,23 +77,26 @@ export function withListRecipes(data: { recipes?: ListRecipe[] | null }[] | null
 }
 
 /** Every drink the person can see, at home and every venue; screens filter by place, so switching doesn't download it again. */
-export function useCocktails() {
+export function useCocktails(barIds?: readonly string[]) {
     const { viewAsRoleLevel } = useViewAs();
     const userId = useUserId();
 
     return useQuery({
-        queryKey: ['cocktails', viewAsRoleLevel, userId],
+        queryKey: barIds ? ['cocktails', viewAsRoleLevel, userId, 'bars', barIds] : ['cocktails', viewAsRoleLevel, userId],
+        ...venueListOptions(barIds),
         queryFn: async () => {
             // By id, a page after the last id (an offset page re-sorts every row before it), then into name order here.
             const data = await allRowsById((after, size) => {
                 let query = supabase
                     .from('app_item_presentation')
                     .select(COCKTAIL_LIST_COLUMNS)
-                    .eq('item_type', 'cocktail')
-                    // Drinks credited to another bar or person with no venue behind them (a
-                    // bar's signatures, a bartender's originals) stay on that public profile,
-                    // out of the Library. Search lists them apart, under "From bars".
-                    .or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
+                    .eq('item_type', 'cocktail');
+                // Drinks credited to another bar or person with no venue behind them (a
+                // bar's signatures, a bartender's originals) stay on that public profile,
+                // out of the Library. Search lists them apart, under "From bars".
+                query = barIds
+                    ? query.in('bar_id', barIds)
+                    : query.or(`bar_id.not.is.null,and(origin_bar_profile_id.is.null,creator_profile_id.is.null)${userId ? `,created_by.eq.${userId}` : ''}`);
 
                 if (after) query = query.gt('id', after);
 

@@ -2,6 +2,8 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import type { AsyncStorage, PersistedClient, Persister } from '@tanstack/query-persist-client-core';
 import { defaultShouldDehydrateQuery, type Query } from '@tanstack/react-query';
 
+import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
+
 /**
  * Query keys (by prefix) saved between launches: small, and what the first
  * screen paints from (who you are, your venues and mode, tonight's menus,
@@ -17,7 +19,11 @@ export const PERSISTED_KEYS: readonly (readonly string[])[] = [
   ['age-check'],
   ['am-i-moderator'],
   ['profile', 'mine'],
-  ['menus-v2', 'venue-2'],
+  // Tonight's and the Menus tab's list (hooks/useMenus.ts menuKeys.venue).
+  ['menus-v2', 'venue-3'],
+  // The Library's menus and your drafts, so it paints from the saved cache.
+  [DROPDOWNS_QUERY_KEY[0], 'menus'],
+  ['drafts'],
   ['home-bar'],
   ['collection'],
   ['drink-lists'],
@@ -26,7 +32,6 @@ export const PERSISTED_KEYS: readonly (readonly string[])[] = [
   // Your taste is built from these, so it's there offline.
   ['my-had'],
   ['flavor-baseline'],
-  ['my-ranked-ids'],
   ['cocktail'],
 ];
 

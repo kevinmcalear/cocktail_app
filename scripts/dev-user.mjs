@@ -23,7 +23,7 @@ const EMAIL = 'demo@example.test';
 const password = randomBytes(18).toString('base64url');
 const admin = createClient(url, status.SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
-const { data: list, error: listError } = await admin.auth.admin.listUsers();
+const { data: list, error: listError } = await admin.auth.admin.listUsers({ perPage: 1000 });
 if (listError) throw listError;
 let user = list.users.find((u) => u.email === EMAIL);
 if (user) {

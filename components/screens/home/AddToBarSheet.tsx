@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { useDeferredValue, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, EquipmentDrawing, Field, Headline, IngredientDrawing, IngredientThumb, PressableScale, useDs } from '@/components/ds';
@@ -71,6 +71,9 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
     const items = rows.filter((r) => r.section === section);
     return items.length ? [{ section, items }] : [];
   });
+  // The sheet answers the tap at once; its tiles render just after, in the
+  // background (RAIL: a tap shows something within 100 ms).
+  const filled = useDeferredValue(visible);
   const openRecipe = (id: string) => {
     onClose();
     router.push(itemHref('Ingredient', id) as never);
@@ -98,7 +101,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
       <SectionChips sections={SHELF_SECTIONS} counts={counts} picked={filter === 'all' ? [] : [filter]} onPick={onFilter} bleed={space.xl} />
       <View style={styles.results}>
         <Caption tone="muted">{BLURBS[filter]}</Caption>
-        {filter === 'kit' ? (
+        {!filled ? null : filter === 'kit' ? (
           <KitResults query={typed} cols={cols} />
         ) : !typed ? (
           <View style={styles.group}>
@@ -168,7 +171,7 @@ function IdeaTile({ item, has, onToggle }: { item: FoundItem; has: boolean; onTo
       name={item.name}
       meta={has ? onLine : item.section === 'preps' ? 'House-made' : null}
       metaTone={has ? 'accent' : 'muted'}
-      picture={<IngredientDrawing id={item.id} name={item.name} />}
+      picture={<IngredientDrawing id={item.id} name={item.name} lazy />}
       role="checkbox"
       checked={has}
       accessibilityLabel={item.name}
@@ -220,7 +223,7 @@ function KitResults({ query, cols }: { query: string; cols: number }) {
                 name={e.name}
                 meta={has ? 'You have it' : null}
                 metaTone="accent"
-                picture={<EquipmentDrawing id={e.id} />}
+                picture={<EquipmentDrawing id={e.id} lazy />}
                 role="checkbox"
                 checked={has}
                 accessibilityLabel={e.name}

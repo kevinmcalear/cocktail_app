@@ -32,6 +32,17 @@ export interface TierOptions {
 /** Every query unless its tier or hook says otherwise: no refetch on focus. */
 export const BASE: Required<TierOptions> = { staleTime: 5 * MINUTE, gcTime: GC_TIME, refetchOnWindowFocus: false };
 
+/**
+ * Options for a whole-catalog list asked for one or more venues only (the
+ * Library): a few hundred rows instead of ~30,000, so it's saved between
+ * launches and kept as long as the saved cache. No venues yet (still
+ * loading) fetches nothing rather than the whole catalog.
+ */
+export function venueListOptions(barIds: readonly string[] | undefined) {
+  if (!barIds) return {};
+  return { enabled: barIds.length > 0, meta: { persist: true }, gcTime: KEEP, staleTime: BASE.staleTime };
+}
+
 const D = DROPDOWNS_QUERY_KEY[0];
 
 /** Discover's keys are left to its hooks (hooks/useDiscover*.ts); only the saved ones get KEEP below. */
@@ -44,7 +55,7 @@ export const TIERS: Record<'static' | 'catalog' | 'public' | 'user' | 'live', { 
   // Whole-catalog downloads: too big to refetch on a whim, refreshed by the writes that change them.
   catalog: {
     options: { staleTime: DAY },
-    keys: [[D, 'ingredients'], [D, 'ingredient-extras'], ['ingredient-search'], ['bottle-search']],
+    keys: [[D, 'ingredients'], [D, 'ingredient-extras'], ['ingredient-search']],
   },
   // Public pages that change slowly: drinks, profiles, rankings.
   public: {
@@ -60,7 +71,7 @@ export const TIERS: Record<'static' | 'catalog' | 'public' | 'user' | 'live', { 
     options: { staleTime: 15 * MINUTE, refetchOnWindowFocus: true },
     keys: [
       ['bars'], ['viewAs'], ['capabilities'], ['venue-brand'], ['age-check'], ['am-i-moderator'], ['profile', 'mine'],
-      ['menus-v2'], ['menu'], [D, 'menus'], [D, 'current_menu_drinks'], ['collection'], ['home-bar'], ['bar'], ['bar-members'], ['staff-list'],
+      ['menus-v2'], [D, 'menus'], [D, 'current_menu_drinks'], ['collection'], ['home-bar'], ['bar'], ['bar-members'], ['staff-list'],
     ],
   },
   // Shared and changing as you look: drafts, moderation, invites, claims.

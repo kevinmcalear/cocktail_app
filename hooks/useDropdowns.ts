@@ -2,7 +2,7 @@ import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { allRows, allRowsById, byName, withRow } from '@/lib/allRows';
-import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
+import { DROPDOWNS_QUERY_KEY, venueListOptions } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
 
 /** The prefix of every lookup list below (and useCurrentMenuDrinks): lib/queryDefaults.ts. */
@@ -68,28 +68,55 @@ const INGREDIENT_COLUMNS = `id, name, item_type, generic_id, description, brand_
  * Every ingredient anyone can pick (~14,000 rows, several requests), for the
  * editors' pickers, the Library and the Creator Hub, which share this one
  * download. Only screens that need the whole list ask for it; searches go
- * to the server. Too big to save between launches.
+ * to the server. Too big to save between launches; the Library asks for its
+ * venue's rows only (`barIds`), which are saved.
  * Paged by id (each page starts after the last), then sorted by name here:
  * a name-ordered offset page made the server build and sort every
  * ingredient again, so each page was as slow as the whole list.
  * ponytail: the legacy editors build trees from the whole list; move them to
  * a server search (like Search's ingredients) when the catalog passes ~20,000.
  */
-export function useAllIngredients({ enabled = true }: { enabled?: boolean } = {}) {
+export function useAllIngredients({ enabled = true, barIds }: { enabled?: boolean; barIds?: readonly string[] } = {}) {
+  const scoped = venueListOptions(barIds);
   return useQuery({
-    queryKey: INGREDIENTS_KEY,
-    enabled,
+    queryKey: barIds ? [...INGREDIENTS_KEY, 'bars', barIds] : INGREDIENTS_KEY,
     meta: { persist: false },
+    ...scoped,
+    enabled: enabled && scoped.enabled !== false,
     // By id, a page after the last id (an offset page re-sorts every row
     // before it), then into name order here.
     queryFn: async () =>
       (
         await allRowsById((after, size) => {
           let page = supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).eq('item_type', 'ingredient');
+          if (barIds) page = page.in('bar_id', barIds);
           if (after) page = page.gt('id', after);
           return page.order('id').limit(size);
         })
       ).sort(byName),
+  });
+}
+
+/**
+ * Just these ingredients, in name order (the shared ones a venue's drinks
+ * use), instead of the whole list. Saved between launches.
+ */
+export function useIngredientsById(ids: readonly string[]) {
+  const sorted = useMemo(() => [...new Set(ids)].sort(), [ids]);
+  return useQuery({
+    queryKey: [...INGREDIENTS_KEY, 'ids', sorted],
+    ...venueListOptions(sorted),
+    queryFn: async () => {
+      // ~200 ids per request keeps the URL well under PostgREST's limit.
+      const pages = await Promise.all(
+        Array.from({ length: Math.ceil(sorted.length / 200) }, (_, i) =>
+          supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).in('id', sorted.slice(i * 200, i * 200 + 200))
+        )
+      );
+      const failed = pages.find((p) => p.error);
+      if (failed) throw failed.error;
+      return pages.flatMap((p) => p.data ?? []).sort(byName);
+    },
   });
 }
 
@@ -99,7 +126,10 @@ export function useAllIngredients({ enabled = true }: { enabled?: boolean } = {}
  * request, instead of downloading the whole list again.
  */
 export async function refreshIngredients(client: QueryClient, ids: string[]) {
-  if (!ids.length || !client.getQueryData(INGREDIENTS_KEY)) return;
+  if (!ids.length) return;
+  // A venue's own list (the Library) is small: read it again.
+  void client.invalidateQueries({ queryKey: INGREDIENTS_KEY, predicate: (q) => q.queryKey.length > INGREDIENTS_KEY.length });
+  if (!client.getQueryData(INGREDIENTS_KEY)) return;
   const { data, error } = await supabase.from('app_item_presentation').select(INGREDIENT_COLUMNS).in('id', ids);
   if (error) {
     await client.invalidateQueries({ queryKey: INGREDIENTS_KEY });
