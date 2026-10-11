@@ -27,8 +27,10 @@ interface DrinkControlsProps {
   onEdit: () => void;
   /** What the edit button says to a screen reader; the ingredient page reuses these controls. */
   editLabel?: string;
-  /** Ingredients keep a favourites heart on the device; drinks go to To make. */
-  saveAs?: 'toMake' | 'favourite';
+  /** The ingredient page's More (three dots) holds edit and the rest. */
+  editIcon?: 'pencil' | 'ellipsis';
+  /** Ingredients save to your bar (My Bar); drinks go to To make. */
+  saveAs?: 'toMake' | 'bar';
 }
 
 /**
@@ -37,7 +39,7 @@ interface DrinkControlsProps {
  * sketch paper. Once the hero scrolls up, a bar in the page ground fades in
  * behind them and they take the theme's colours.
  */
-export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', saveAs = 'toMake' }: DrinkControlsProps) {
+export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, saved, onToggleSaved, inStudyPile, onToggleStudyPile, canEdit, onEdit, editLabel = 'Edit drink', editIcon = 'pencil', saveAs = 'toMake' }: DrinkControlsProps) {
   const ds = useDs();
   const router = useRouter();
   const gutter = useGutter();
@@ -75,15 +77,15 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, s
         )}
         <View style={styles.right}>
           <GlassButton
-            accessibilityLabel={saveAs === 'favourite' ? (saved ? 'Remove from favourites' : 'Add to favourites') : saved ? 'Remove from To make' : 'Add to To make'}
-            icon={`${saveAs === 'favourite' ? 'heart' : 'bookmark'}${saved ? '.fill' : ''}`}
+            accessibilityLabel={saveAs === 'bar' ? (saved ? 'Take off your bar' : 'Save to your bar') : saved ? 'Remove from To make' : 'Add to To make'}
+            icon={saved ? 'bookmark.fill' : 'bookmark'}
             scheme={right}
             onPress={onToggleSaved}
           />
           {FEATURES.study ? (
             <GlassButton accessibilityLabel={inStudyPile ? 'Remove from study pile' : 'Add to study pile'} icon={inStudyPile ? 'book.fill' : 'book'} scheme={right} onPress={onToggleStudyPile} />
           ) : null}
-          {canEdit ? <GlassButton accessibilityLabel={editLabel} icon="pencil" scheme={right} onPress={onEdit} /> : null}
+          {canEdit ? <GlassButton accessibilityLabel={editLabel} icon={editIcon} scheme={right} onPress={onEdit} /> : null}
         </View>
       </View>
     </>
