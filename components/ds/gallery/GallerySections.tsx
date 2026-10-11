@@ -21,6 +21,7 @@ import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
 import { AnimatedDrawings, GlassVariants } from './GlassVariants';
 import { KitDrawings } from './KitDrawings';
+import { SheetDemo } from './SheetDemo';
 import { IMAGES, PENICILLIN } from './samples';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -94,6 +95,10 @@ export function GallerySections() {
           <Button label="Take photo" icon="camera.fill" size="lg" />
           <Button label="Publish" disabled />
         </View>
+      </Section>
+
+      <Section title="Sheets">
+        <SheetDemo />
       </Section>
 
       <Section title="Tags and tabs">
