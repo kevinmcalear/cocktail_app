@@ -107,6 +107,10 @@ const MAPPING = {
   'trophy': 'emoji-events',
   'line.horizontal.3': 'menu',
   'star': 'star-border',
+  'phone': 'phone',
+  'clock': 'schedule',
+  'location': 'place',
+  'arrow.triangle.turn.up.right.diamond': 'directions',
   'flag': 'outlined-flag',
   'gearshape': 'settings',
   // Tab icons: the same Material glyphs NativeTabs uses on Android.

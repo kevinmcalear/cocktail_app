@@ -31,6 +31,7 @@ import { LockedOriginals } from './LockedOriginals';
 import { MakerProfile } from './MakerProfile';
 import { Positions } from './Positions';
 import { ProfileLinks } from './ProfileLinks';
+import { PublicBarPage } from './PublicBarPage';
 import { WorkedMenus } from './WorkedMenus';
 import { BarHeader, BarStats, MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
@@ -80,6 +81,8 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const { data: profile, isLoading, error } = useProfile(profileRef);
   // A person's page is for people who've signed in; a bar's opens to anyone.
   const gated = profile?.kind === 'person' && !signedIn;
+  // Signed out, a bar's page is the public web's one page (ppl-pub-bar-*), in the site's own frame.
+  if (profile?.kind === 'bar' && !signedIn) return <PublicBarPage profile={profile} />;
 
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
