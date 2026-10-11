@@ -1,7 +1,7 @@
 import { useRef, useState, type ComponentRef } from 'react';
-import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
+import { StyleSheet, View, type TextInput } from 'react-native';
 
-import { Body, Button, Caption, DateField, Field, PressableScale, Sheet, TimeField, Title, useDs } from '@/components/ds';
+import { Body, Button, Caption, DateField, Field, PressableScale, Sheet, SheetScrollView, TimeField, Title, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useCreateEvent, type VenueEvent } from '@/hooks/useEvents';
 import { toDay } from '@/lib/collection';
@@ -66,7 +66,7 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
 
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel="New event" keyboard onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}>
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Title>New event</Title>
         <Field ref={nameRef} label="Name" value={name} onChangeText={setName} placeholder="Pale Moth takeover" autoFocus={MODAL_AUTOFOCUS} />
         <DateField label="Date" value={date} onChange={setDate} min={today} />
@@ -96,7 +96,7 @@ export function NewEventSheet({ visible, onClose, barId, menus, onCreated }: New
           <Button label="Cancel" variant="ghost" onPress={onClose} />
           <Button label={create.isPending ? 'Saving…' : 'Create event'} onPress={submit} disabled={create.isPending} />
         </View>
-      </ScrollView>
+      </SheetScrollView>
     </Sheet>
   );
 }
