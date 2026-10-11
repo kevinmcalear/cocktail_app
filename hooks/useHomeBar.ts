@@ -37,6 +37,24 @@ export interface MadePrep {
   drinks: string[];
 }
 
+/** A house prep one line short of your shelf, what that line wants, and the drinks that use the prep (my_bar_preps_short). */
+export interface ShortPrep {
+  id: string;
+  name: string;
+  missing_id: string;
+  missing_name: string;
+  drinks: string[];
+}
+
+/** A bottle you finished: when it went on the shelf and when it came off (home_bar_finished). */
+export interface FinishedBottle {
+  id: string;
+  itemId: string;
+  name: string;
+  boughtAt: string | null;
+  finishedAt: string;
+}
+
 interface ItemRow {
   id: string;
   name: string;
@@ -281,6 +299,63 @@ export function useMadePreps() {
       if (error) throw error;
       return (data ?? []) as MadePrep[];
     },
+  });
+}
+
+/**
+ * House preps one ingredient away from the shelf ("Orgeat, needs almonds"):
+ * Make first's "One thing short". Under the shelf's key, so a shelf change refreshes it.
+ */
+export function useShortPreps() {
+  return useQuery({
+    queryKey: [...SHELF_KEY, 'preps-short'],
+    queryFn: async (): Promise<ShortPrep[]> => {
+      const { data, error } = await supabase.rpc('my_bar_preps_short');
+      // ponytail: a database without 20261013200000 has no my_bar_preps_short; show no One thing short. Drop once it's in production.
+      if (error?.code === 'PGRST202') return [];
+      if (error) throw error;
+      return (data ?? []) as ShortPrep[];
+    },
+  });
+}
+
+/** Missing table or function: a database without 20261013200000. */
+const notThereYet = (code?: string) => code === 'PGRST202' || code === 'PGRST205' || code === '42P01';
+
+/** The bottles you've finished, newest first, with their names: the bottle sheet's history and Your old bottles. */
+export function useFinishedBottles() {
+  return useQuery({
+    queryKey: [...SHELF_KEY, 'finished'],
+    queryFn: async (): Promise<FinishedBottle[]> => {
+      const { data, error } = await supabase.from('home_bar_finished').select('id, item_id, bought_at, finished_at').order('finished_at', { ascending: false }).limit(500);
+      // ponytail: no home_bar_finished before 20261013200000; no history. Drop once it's in production.
+      if (notThereYet(error?.code)) return [];
+      if (error) throw error;
+      const rows = (data ?? []) as { id: string; item_id: string; bought_at: string | null; finished_at: string }[];
+      const names = new Map((rows.length ? await readItems([...new Set(rows.map((r) => r.item_id))], 'id, name') : []).map((r) => [r.id, r.name]));
+      return rows.flatMap((r) => {
+        const name = names.get(r.item_id);
+        return name ? [{ id: r.id, itemId: r.item_id, name, boughtAt: r.bought_at, finishedAt: r.finished_at }] : [];
+      });
+    },
+  });
+}
+
+/** "Finished it": off the shelf and into your old bottles, in one call (finish_bar_item). */
+export function useFinishBottle() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const { error } = await supabase.rpc('finish_bar_item', { p_item_id: itemId });
+      if (error) throw error;
+    },
+    onMutate: (itemId) => {
+      const before = client.getQueryData<string[]>(SHELF_KEY);
+      client.setQueryData<string[]>(SHELF_KEY, (ids) => (ids ?? []).filter((i) => i !== itemId));
+      return { before };
+    },
+    onError: (_e, _id, ctx) => client.setQueryData(SHELF_KEY, ctx?.before),
+    onSettled: () => client.invalidateQueries({ queryKey: SHELF_KEY }),
   });
 }
 

@@ -3,8 +3,9 @@
 // two away and uses from 20261009950000_my_bar_kinds.sql, garnishes from
 // 20261009960000_my_bar_garnish.sql, the preps behind them from
 // 20261010400000_my_bar_preps.sql, only drinks with a spec from
-// 20261010510000_my_bar_ready_specs.sql), and the kit list from
-// 20261010410000_home_kit.sql. The can-make cases are
+// 20261010510000_my_bar_ready_specs.sql), the kit list from
+// 20261010410000_home_kit.sql, and the preps one thing short and finished
+// bottles from 20261013200000_my_bar_short_and_finished.sql. The can-make cases are
 // the ones lib/canMake.check.ts held when this ran on the phone. Both
 // functions run as the caller, so they must return nothing the caller
 // couldn't already read. Local stack only: `npm run test:security`.
@@ -344,6 +345,75 @@ describe('my_bar_preps', () => {
   test('nothing made from an empty shelf, and a recipe cycle stops', async () => {
     await shelve('home', []);
     assert.deepEqual(await myPreps('home'), {});
+  });
+});
+
+describe('my_bar_preps_short', () => {
+  /** This run's preps one thing short: { prep key: [missing key, [drink keys]] }. */
+  const short = async (user) => {
+    const { data, error } = await users[user].client.rpc('my_bar_preps_short');
+    assert.ifError(error);
+    const key = Object.fromEntries(Object.entries(ids).map(([k, v]) => [v, k]));
+    return Object.fromEntries(data.filter((r) => key[r.id]).map((r) => [key[r.id], [key[r.missing_id], r.drinks.map((d) => key[d]).filter(Boolean).sort()]]));
+  };
+
+  test('is for signed-in people only', async () => {
+    assert.ok((await anon.rpc('my_bar_preps_short')).error);
+  });
+
+  test('a prep one line short says what to buy, with the drinks that use it', async () => {
+    await shelve('home', ['water', 'lemon', 'mezcal', 'gin']);
+    const s = await short('home');
+    assert.deepEqual(s['honey-syrup'], ['honey', ['bees-knees', 'gold-rush']]);
+    // Honey cordial is short of the honey syrup itself, which is short too.
+    assert.deepEqual(s['honey-cordial'], ['honey-syrup', ['cordial-fizz']]);
+    // It agrees with my_bar_drinks: the bees knees is one away for honey.
+    assert.equal((await myBar('home')).away['bees-knees'], 'honey');
+  });
+
+  test('a prep the shelf covers, or one two things short, is not listed', async () => {
+    await shelve('home', ['honey', 'water', 'lemon']);
+    const s = await short('home');
+    assert.ok(!('honey-syrup' in s) && !('honey-cordial' in s));
+    await shelve('home', ['lemon']);
+    assert.ok(!('honey-syrup' in (await short('home'))));
+  });
+
+  test('works from the caller\'s own shelf only', async () => {
+    await shelve('home', ['water']);
+    await shelve('other', []);
+    assert.deepEqual(await short('other'), {});
+  });
+});
+
+describe('home_bar_finished', () => {
+  test('finishing takes a bottle off your shelf and keeps when you bought it', async () => {
+    await shelve('home', ['campari', 'gin']);
+    const { error } = await users.home.client.rpc('finish_bar_item', { p_item_id: ids.campari });
+    assert.ifError(error);
+    const shelf = await users.home.client.from('home_bar_items').select('item_id');
+    assert.deepEqual(shelf.data.map((r) => r.item_id), [ids.gin]);
+    const { data } = await users.home.client.from('home_bar_finished').select('item_id, bought_at, finished_at');
+    assert.equal(data.length, 1);
+    assert.equal(data[0].item_id, ids.campari);
+    assert.ok(data[0].bought_at && data[0].bought_at <= data[0].finished_at);
+  });
+
+  test('a bottle not on your shelf changes nothing, and signed-out callers cannot finish', async () => {
+    assert.ifError((await users.home.client.rpc('finish_bar_item', { p_item_id: ids.rye })).error);
+    assert.equal((await users.home.client.from('home_bar_finished').select('id').eq('item_id', ids.rye)).data.length, 0);
+    assert.ok((await anon.rpc('finish_bar_item', { p_item_id: ids.gin })).error);
+  });
+
+  test('old bottles are private: nobody reads, adds to or deletes from someone else\'s', async () => {
+    assert.deepEqual((await users.other.client.from('home_bar_finished').select('id')).data, []);
+    assert.ok((await users.other.client.from('home_bar_finished').insert({ user_id: users.home.id, item_id: ids.gin })).error);
+    await users.other.client.from('home_bar_finished').delete().eq('item_id', ids.campari);
+    const { rows } = await db.query('SELECT count(*)::int AS n FROM public.home_bar_finished WHERE user_id = $1', [users.home.id]);
+    assert.equal(rows[0].n, 1, 'another person\'s delete takes nothing');
+    const { data: anonRows, error: anonError } = await anon.from('home_bar_finished').select('id');
+    assert.ok(anonError || !anonRows.length, 'anon reads nothing');
+    assert.ok((await users.home.client.from('home_bar_finished').update({ bought_at: null }).eq('item_id', ids.campari).select()).data?.length !== 1, 'no edits');
   });
 });
 
