@@ -2,13 +2,13 @@ import { useRouter, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, DsText, PressableScale, RowScore, scoreWords, Spec, Title, useDs } from '@/components/ds';
+import { Body, Caption, DrinkImage, DsText, Headline, PressableScale, RowScore, scoreWords, Spec, Title, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import { useItemScores } from '@/hooks/useFlavor';
-import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile } from '@/hooks/useProfiles';
+import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile, type WorkedMenu } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
 import { rankedCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
@@ -100,16 +100,20 @@ export function OriginalsGrid({ originals, columns, emptyText, selfId, layout = 
   );
 }
 
-/** "On the menu at": bars carrying this profile's drinks, current menus first. */
-export function MenuCredits({ credits, names }: { credits: MenuCreditWithProfile[]; names: Map<string, string> }) {
+/**
+ * "On the menu at": bars carrying this profile's drinks, current menus first,
+ * then the menus a person says they worked on (g460), with the drinks they
+ * made for each when they listed them (b62).
+ */
+export function MenuCredits({ credits, names, worked = [] }: { credits: MenuCreditWithProfile[]; names: Map<string, string>; worked?: WorkedMenu[] }) {
   const ds = useDs();
   const router = useRouter();
-  if (!credits.length) return null;
+  // A worked menu already listed as a credit (same bar and name) shows once.
+  const extra = worked.filter((m) => !credits.some((c) => c.barProfileId === m.bar.id && c.menuName === m.name));
+  if (!credits.length && !extra.length) return null;
   return (
     <View style={styles.menus}>
-      <Caption tone="muted" style={styles.cap}>
-        On the menu at
-      </Caption>
+      <Headline role="heading">On the menu at</Headline>
       <View role="list">
         {credits.map((c) => {
           const drinks = c.itemIds.map((id) => names.get(id)).filter(Boolean).join(', ');
@@ -141,6 +145,29 @@ export function MenuCredits({ credits, names }: { credits: MenuCreditWithProfile
             <View key={c.menuId} role="listitem" accessible accessibilityLabel={label} style={[styles.menu, { borderBottomColor: ds.c.line }]}>
               {row}
             </View>
+          );
+        })}
+        {extra.map((m) => {
+          const drinks = (m.drinks ?? []).flatMap((d) => (d.item ? [d.item.name] : [])).join(', ');
+          const when = m.bar.is_closed ? 'Closed' : m.year ? String(m.year) : 'Past menu';
+          return (
+            <PressableScale
+              key={m.id}
+              role="link"
+              accessibilityLabel={`${m.bar.display_name}, ${m.name}${drinks ? `: ${drinks}` : ''}, ${when}. Open the bar's profile`}
+              onPress={() => router.push(`/p/${m.bar.handle}` as Href)}
+              style={[styles.menu, { borderBottomColor: ds.c.line }]}
+            >
+              <View style={styles.flex}>
+                <DsText variant="headline" numberOfLines={1}>
+                  {m.bar.display_name}
+                </DsText>
+                <Caption tone="muted" numberOfLines={2}>
+                  {[m.name, drinks].filter(Boolean).join(' · ')}
+                </Caption>
+              </View>
+              <Caption tone="muted">{when}</Caption>
+            </PressableScale>
           );
         })}
       </View>
