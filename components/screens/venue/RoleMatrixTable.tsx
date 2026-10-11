@@ -8,8 +8,8 @@ import type { RoleMatrixRow } from '@/hooks/useVenueRoles';
 import { CAPABILITY_GROUPS, cell, endsLabel, type Cell } from '@/lib/roleMatrix';
 import { roleLabel } from '@/lib/roles';
 
-const LABEL_WIDTH = 230;
-const COLUMN = 108;
+const LABEL_WIDTH = 200;
+const COLUMN = 92;
 const MARK = 14;
 const CHANGED_DOT = 7;
 

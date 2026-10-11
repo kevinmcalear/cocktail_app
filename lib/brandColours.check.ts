@@ -9,6 +9,7 @@ assert.equal(colourName('#FBE9D8'), 'Cream');
 assert.equal(colourName('#241C17'), 'Ink');
 assert.equal(colourName('#808080'), 'Stone');
 assert.equal(colourName('#2F6FD0'), 'Blue');
+assert.equal(colourName('#E4B062'), 'Amber');
 
 // Rust on Walnut, as the canvas draws it: four lines, the light-ground one deepened.
 const lines = contrastLines('#D0643B', '#1A1410', null);

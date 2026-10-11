@@ -27,8 +27,8 @@ function hsl(hex: string): { h: number; s: number; l: number } {
 
 const HUES: [number, string][] = [
   [12, 'Red'],
-  [40, 'Rust'],
-  [52, 'Amber'],
+  [28, 'Rust'],
+  [45, 'Amber'],
   [68, 'Gold'],
   [165, 'Green'],
   [200, 'Teal'],
