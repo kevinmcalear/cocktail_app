@@ -1,4 +1,4 @@
-// A bar's facts (20261013100000_bar_facts.sql): opening hours typed by the
+// A bar's facts (20261014300000_bar_facts.sql): opening hours typed by the
 // venue, phone, bar type and opened year. Anyone who can read the bar page
 // reads them (signed out too); only that venue's admins and catalog admins
 // write them; hours keep their shape and stamp when they changed; a

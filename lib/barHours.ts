@@ -6,7 +6,7 @@
  * Monday first, at most two ranges a day; a close at or before the open is
  * past midnight; a missing or empty day is closed. Times are worked out in
  * the bar's own time zone, so a reader in another city still sees the bar's
- * clock. See supabase/migrations/20261013100000_bar_facts.sql.
+ * clock. See supabase/migrations/20261014300000_bar_facts.sql.
  */
 
 export const WEEK_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
