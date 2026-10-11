@@ -4,6 +4,7 @@ import { pourSketch, wineStyle } from './pour';
 
 assert.equal(wineStyle('Yarra Valley Pinot Noir'), 'red wine');
 assert.equal(wineStyle('Clare Riesling'), 'white wine');
+assert.equal(wineStyle('Etna Rosso'), 'red wine');
 assert.equal(wineStyle('Grower Champagne'), 'sparkling wine');
 assert.equal(wineStyle('Provence Rosé'), 'rosé');
 assert.equal(wineStyle('Skin Contact Pinot Gris'), 'orange wine');

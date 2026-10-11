@@ -28,7 +28,7 @@ import { useStaffList } from '@/hooks/useStaffList';
 import { venueContextIds } from '@/lib/barContextFilter';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import type { SearchScope } from '@/lib/searchScope';
-import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, parseShow, PREP_GROUPS, tileLine, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, methodWord, parseShow, PREP_GROUPS, tileLine, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
 import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
 import type { SearchItem } from '@/types/search';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
@@ -121,7 +121,7 @@ export function LibraryScreen() {
   const lineOf = (i: SearchItem): string | null => {
     if (i.category === 'Ingredient') return prepFacts[i.id]?.line ?? null;
     if (i.category === 'Beer' || i.category === 'Wine') return tileLine(i.category, glassName(i));
-    const method = i.method_id ? (specs?.methods.find((m) => m.id === i.method_id)?.name ?? null) : null;
+    const method = i.method_id ? methodWord(specs?.methods.find((m) => m.id === i.method_id)?.name) : null;
     return tileLine(method, glassName(i), show === 'rnd' ? rndOf.get(i.id) : null);
   };
   const count = (value: Show) => (value === 'staff' ? (staff.data?.length ?? 0) : lists[value].length);
