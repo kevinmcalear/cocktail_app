@@ -27,8 +27,7 @@ beforeEach(() => {
 
 test('an old binary without the native module never loads expo-sensors', () => {
   mockRequireOptional.mockReturnValue(null);
-  const { canListenForShakes, listenForShakes } = require('./shake') as typeof import('./shake');
-  expect(canListenForShakes()).toBe(false);
+  const { listenForShakes } = require('./shake') as typeof import('./shake');
   expect(listenForShakes(jest.fn())).toBeNull();
   expect(mockRequireOptional).toHaveBeenCalledWith('ExponentAccelerometer');
   expect(mockLoaded).not.toHaveBeenCalled();

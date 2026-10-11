@@ -8,8 +8,8 @@ type AccelerometerModule = typeof import('expo-sensors').Accelerometer;
 let accelerometer: AccelerometerModule | null | undefined;
 
 /**
- * The accelerometer, or null where there isn't one we can use: web (people
- * get the button), and native binaries built before expo-sensors was added.
+ * The accelerometer, or null where there isn't one we can use: web (wide web
+ * has ⇧⌘8 instead), and native binaries built before expo-sensors was added.
  *
  * OTA guard: the 1.3.0 store binaries don't contain the ExponentAccelerometer
  * native module, but they get JS updates from main. Importing expo-sensors
@@ -30,11 +30,6 @@ function loadAccelerometer(): AccelerometerModule | null {
     accelerometer = null;
   }
   return accelerometer;
-}
-
-/** True when this device and binary can listen for shakes. */
-export function canListenForShakes(): boolean {
-  return loadAccelerometer() !== null;
 }
 
 /**

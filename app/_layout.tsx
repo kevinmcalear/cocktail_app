@@ -24,6 +24,7 @@ import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { WebSideNav } from '@/components/nav/WebSideNav';
+import { EightBallHost } from '@/components/screens/eightball/EightBallHost';
 import { SearchPalette } from '@/components/search/SearchPalette';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -206,6 +207,7 @@ function RootLayoutNav() {
           </Stack>
         </View>
         {showWebSidebar ? <SearchPalette /> : null}
+        {session ? <EightBallHost /> : null}
         {Platform.OS === 'web' && session ? <BringInAnywhere /> : null}
       </View>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
