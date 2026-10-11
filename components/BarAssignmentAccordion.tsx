@@ -1,8 +1,8 @@
 import React from "react";
-import { Modal, TouchableOpacity, FlatList, View, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
+import { TouchableOpacity, FlatList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Accordion, Label, XStack, YStack, Text, useTheme } from "tamagui";
-import { sheetAnimation, sheetFrame } from "@/components/ds";
+import { Sheet } from "@/components/ds";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useBars } from "@/hooks/useBars";
 import { PERSONAL_CONTEXT } from "@/lib/barContextFilter";
@@ -48,36 +48,37 @@ function NativeModalPicker({ value, onValueChange, items, placeholder, title }: 
                 <IconSymbol name="chevron.down" size={16} color={theme.color11?.get() as string} />
             </TouchableOpacity>
 
-            <Modal visible={open} transparent animationType={sheetAnimation} onRequestClose={() => setOpen(false)}>
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-                    <View style={[{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }, sheetFrame.scrim]}>
-                        <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
-                        <View style={[{ backgroundColor: theme.backgroundStrong?.get() as string, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: Math.max(insets.bottom, 20), maxHeight: '80%' }, sheetFrame.panel, { maxWidth: 560, borderColor: theme.borderColor?.get() as string }]}>
-                            <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: theme.borderColor?.get() as string, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Text fontSize={18} fontWeight="bold" color="$color">{title}</Text>
-                                <TouchableOpacity onPress={() => setOpen(false)} style={{ padding: 4 }}>
-                                    <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
-                                </TouchableOpacity>
-                            </View>
-                            <FlatList 
-                                data={items}
-                                keyExtractor={(item) => item.value}
-                                renderItem={({item}) => (
-                                    <TouchableOpacity 
-                                        style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: theme.borderColor?.get() as string }}
-                                        onPress={() => {
-                                            onValueChange(item.value);
-                                            setOpen(false);
-                                        }}
-                                    >
-                                        <Text color={value === item.value ? theme.color8?.get() as string : "$color11"} fontSize={16}>{item.label}</Text>
-                                    </TouchableOpacity>
-                                )}
-                            />
-                        </View>
+            <Sheet
+                visible={open}
+                onClose={() => setOpen(false)}
+                accessibilityLabel={title}
+                keyboard
+                style={{ backgroundColor: theme.backgroundStrong?.get() as string, paddingBottom: Math.max(insets.bottom, 20), maxHeight: '80%' }}
+                header={
+                    <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: theme.borderColor?.get() as string, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text fontSize={18} fontWeight="bold" color="$color">{title}</Text>
+                        <TouchableOpacity onPress={() => setOpen(false)} style={{ padding: 4 }}>
+                            <IconSymbol name="xmark" size={24} color={theme.color11?.get() as string} />
+                        </TouchableOpacity>
                     </View>
-                </KeyboardAvoidingView>
-            </Modal>
+                }
+            >
+                <FlatList
+                    data={items}
+                    keyExtractor={(item) => item.value}
+                    renderItem={({item}) => (
+                        <TouchableOpacity
+                            style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: theme.borderColor?.get() as string }}
+                            onPress={() => {
+                                onValueChange(item.value);
+                                setOpen(false);
+                            }}
+                        >
+                            <Text color={value === item.value ? theme.color8?.get() as string : "$color11"} fontSize={16}>{item.label}</Text>
+                        </TouchableOpacity>
+                    )}
+                />
+            </Sheet>
         </>
     )
 }

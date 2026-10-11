@@ -5,13 +5,10 @@ import { radius, space } from '@/constants/tokens';
 /**
  * Where a sheet sits. Phones: up from the bottom. The web, at any width: a
  * dialog in the middle of the window, because a panel docked to the bottom of
- * a browser reads as a phone screen. Every sheet takes its placement from
- * here: merge `sheetFrame.scrim` onto the full-screen layer that places the
- * sheet and `sheetFrame.panel` onto the sheet (with a `borderColor`), and drop
- * the grabber and the slide when `sheetIsDialog`.
+ * a browser reads as a phone screen. The app's Sheet (./Sheet.tsx) takes its
+ * placement from here; build sheets on Sheet rather than on these styles.
  */
 export const sheetIsDialog = Platform.OS === 'web';
-export const sheetAnimation = sheetIsDialog ? 'fade' : 'slide';
 
 const corner = radius.card;
 

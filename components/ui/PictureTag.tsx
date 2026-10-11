@@ -1,10 +1,9 @@
 import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 /**
- * A small label pinned to a picture: "Sketch" on generated images so nobody
- * mistakes one for the real drink, "May be out of date" on photos taken
- * before the spec changed. Fixed light-on-dark so it reads on paper sketches
- * and photos alike (better than 7:1 on either).
+ * A small label pinned to a picture: "May be out of date" on photos taken
+ * before the spec changed. Drawings carry none (they're obviously drawings).
+ * Fixed light-on-dark so it reads on any photo (better than 7:1).
  */
 export function PictureTag({ label, style }: { label: string | null; style?: ViewStyle }) {
   if (!label) return null;

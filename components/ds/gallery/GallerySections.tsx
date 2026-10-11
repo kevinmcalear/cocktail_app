@@ -98,7 +98,7 @@ export function GallerySections() {
         <View style={styles.wrap}>
           <Tag label="Stirred" />
           <Tag label="House-made" tone="accent" />
-          <Tag label="Sketch" tone="sketch" />
+          <Tag label="House prep" tone="paper" />
           <Tag label="Ready" tone="success" />
           <Tag label="Needs photo" tone="warning" />
         </View>

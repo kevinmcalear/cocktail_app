@@ -28,7 +28,9 @@ test('the preview sets the unsaved layout as the guest card', async () => {
   expect(screen.getByRole('heading', { name: 'Halloween party' })).toBeTruthy();
   expect(screen.getByText('Americano')).toBeTruthy();
   expect(screen.getByText('Pellican')).toBeTruthy();
-  expect(screen.getByText('Sketch')).toBeTruthy();
+  // Drawn drinks get the card's one note, never a Sketch tag.
+  expect(screen.getByText(/Drawn from each drink/)).toBeTruthy();
+  expect(screen.queryByText('Sketch')).toBeNull();
   expect(screen.queryByText(/Add drinks and they show up here/)).toBeNull();
 });
 

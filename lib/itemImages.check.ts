@@ -19,12 +19,13 @@ assert.equal(heroPicture(undefined), null);
 // Rows from before the migration (no flags selected) count as photos.
 assert.equal(heroPicture([{ images: { url: 'old.jpg' } }])?.isSketch, false);
 
-assert.equal(pictureTag(heroPicture([sketch])), 'Sketch');
+// Drawings carry no visible tag; only an out-of-date photo does.
+assert.equal(pictureTag(heroPicture([sketch])), null);
 assert.equal(pictureTag(heroPicture([photoA])), 'May be out of date');
 assert.equal(pictureTag(heroPicture([photoB])), null);
 assert.equal(pictureTag(null), null);
 // A sketch is never "out of date" to the viewer: the server redraws it.
-assert.equal(pictureTag(orderedPictures([{ ...sketch, outdated_since: 'x' }])[0]), 'Sketch');
+assert.equal(pictureTag(orderedPictures([{ ...sketch, outdated_since: 'x' }])[0]), null);
 
 // Labels say the position and the tag in words, never by colour alone.
 const pictures = orderedPictures([sketch, photoB, photoA]);

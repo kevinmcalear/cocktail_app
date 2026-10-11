@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Field, sheetFrame, Spec, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Field, Sheet, Spec, Title, useDs } from '@/components/ds';
 import { PrepCalc } from '@/components/tools/PrepCalc';
 import { radius, space } from '@/constants/tokens';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -47,20 +47,20 @@ export interface ToolsSheetProps {
 export function ToolsSheet(props: ToolsSheetProps) {
   const here = useHereVenue();
   return (
-    <Modal visible={props.visible} transparent animationType="fade" onRequestClose={props.onClose}>
-      <BackbarTheme scheme={props.scheme ?? 'light'}>
-        <BrandProvider accent={here?.accent ?? undefined}>
-          <Sheet {...props} />
-        </BrandProvider>
-      </BackbarTheme>
-    </Modal>
+    <BackbarTheme scheme={props.scheme ?? 'light'}>
+      <BrandProvider accent={here?.accent ?? undefined}>
+        <Sheet visible={props.visible} onClose={props.onClose} accessibilityLabel="Tools" ground>
+          <ToolsBody {...props} />
+        </Sheet>
+      </BrandProvider>
+    </BackbarTheme>
   );
 }
 
 const num = (s: string) => (s.trim() ? Number(s) : NaN);
 const pct = (n: number) => `${Number(n.toFixed(1))}%`;
 
-function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount, prepName, onPrepApply, applying }: ToolsSheetProps) {
+function ToolsBody({ tool: initial = 'dilute', volumeMl, abv, amount, prepName, onPrepApply, applying }: ToolsSheetProps) {
   const ds = useDs();
   // At home, the venue's currency, tax and margin aren't yours.
   const here = useHereVenue();
@@ -100,62 +100,53 @@ function Sheet({ onClose, tool: initial = 'dilute', volumeMl, abv, amount, prepN
   }
 
   return (
-    <Pressable accessibilityLabel="Close" style={[styles.scrim, sheetFrame.scrim, { backgroundColor: ds.c.scrim }]} onPress={onClose}>
-      <View style={styles.avoider} pointerEvents="box-none">
-        <Pressable style={[styles.sheet, sheetFrame.panel, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground }]} onPress={(e) => e.stopPropagation()}>
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            <Caption tone="muted">Tools</Caption>
-            <Title>{TOOLS.find((t) => t.value === tool)?.label}</Title>
-            <View role="radiogroup" accessibilityLabel="Calculator" style={styles.picks}>
-              {TOOLS.map((t) => (
-                <Chip key={t.value} label={t.label} selected={tool === t.value} onPress={() => setTool(t.value)} />
-              ))}
-            </View>
-            {tool === 'prep' ? <PrepCalc name={prepName} onApply={onPrepApply} applying={applying} /> : tool === 'dilute' || tool === 'proof' ? (
-              <>
-                <Field label="Volume you have (ml)" value={volume} onChangeText={setVolume} placeholder="700" keyboardType="decimal-pad" />
-                <Field label="Its ABV (%)" value={have} onChangeText={setHave} placeholder="40" keyboardType="decimal-pad" />
-                <Field label="ABV you want (%)" value={want} onChangeText={setWant} placeholder={tool === 'dilute' ? '28' : '22'} keyboardType="decimal-pad" />
-                {tool === 'proof' ? <Field label="Spirit you'll add, ABV (%)" value={spirit} onChangeText={setSpirit} placeholder="96" keyboardType="decimal-pad" /> : null}
-              </>
-            ) : tool === 'convert' ? (
-              <View style={styles.row}>
-                <View style={styles.flex}>
-                  <Field label="Amount" value={value} onChangeText={setValue} placeholder="50" keyboardType="decimal-pad" />
-                </View>
-                <View style={styles.flex}>
-                  <Field label="Unit" value={unit} onChangeText={setUnit} placeholder="g" autoCapitalize="none" />
-                </View>
-              </View>
-            ) : (
-              <>
-                <Field label={`Cost per serve (${currency}, without tax)`} value={cost} onChangeText={setCost} placeholder="1.90" keyboardType="decimal-pad" />
-                <Field label="Target GP (%)" value={gp} onChangeText={setGp} placeholder="80" keyboardType="decimal-pad" />
-                <Field label="Tax in the menu price (%, 0 for US menus)" value={tax} onChangeText={setTax} placeholder="20" keyboardType="decimal-pad" />
-                <Pressable role="checkbox" aria-checked={included} accessibilityLabel="Menu prices include the tax" onPress={() => setIncluded((v) => !v)} style={styles.check}>
-                  <Caption tone={included ? 'accent' : 'muted'}>{included ? 'Menu prices include the tax' : 'Tax is added at the till'} (tap to change)</Caption>
-                </Pressable>
-              </>
-            )}
-            {tool === 'prep' ? null : <View style={[styles.result, { backgroundColor: ds.c.raised }]}>
-              <Caption tone="muted">{tool === 'dilute' ? 'Add water' : tool === 'proof' ? 'Add spirit' : tool === 'convert' ? 'Reads as' : 'Menu price'}</Caption>
-              <Spec tone="accent" style={styles.big}>
-                {result ?? '…'}
-              </Spec>
-              <Body tone="muted">{note}</Body>
-            </View>}
-          </ScrollView>
-        </Pressable>
+    <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <Caption tone="muted">Tools</Caption>
+      <Title>{TOOLS.find((t) => t.value === tool)?.label}</Title>
+      <View role="radiogroup" accessibilityLabel="Calculator" style={styles.picks}>
+        {TOOLS.map((t) => (
+          <Chip key={t.value} label={t.label} selected={tool === t.value} onPress={() => setTool(t.value)} />
+        ))}
       </View>
-    </Pressable>
+      {tool === 'prep' ? <PrepCalc name={prepName} onApply={onPrepApply} applying={applying} /> : tool === 'dilute' || tool === 'proof' ? (
+        <>
+          <Field label="Volume you have (ml)" value={volume} onChangeText={setVolume} placeholder="700" keyboardType="decimal-pad" />
+          <Field label="Its ABV (%)" value={have} onChangeText={setHave} placeholder="40" keyboardType="decimal-pad" />
+          <Field label="ABV you want (%)" value={want} onChangeText={setWant} placeholder={tool === 'dilute' ? '28' : '22'} keyboardType="decimal-pad" />
+          {tool === 'proof' ? <Field label="Spirit you'll add, ABV (%)" value={spirit} onChangeText={setSpirit} placeholder="96" keyboardType="decimal-pad" /> : null}
+        </>
+      ) : tool === 'convert' ? (
+        <View style={styles.row}>
+          <View style={styles.flex}>
+            <Field label="Amount" value={value} onChangeText={setValue} placeholder="50" keyboardType="decimal-pad" />
+          </View>
+          <View style={styles.flex}>
+            <Field label="Unit" value={unit} onChangeText={setUnit} placeholder="g" autoCapitalize="none" />
+          </View>
+        </View>
+      ) : (
+        <>
+          <Field label={`Cost per serve (${currency}, without tax)`} value={cost} onChangeText={setCost} placeholder="1.90" keyboardType="decimal-pad" />
+          <Field label="Target GP (%)" value={gp} onChangeText={setGp} placeholder="80" keyboardType="decimal-pad" />
+          <Field label="Tax in the menu price (%, 0 for US menus)" value={tax} onChangeText={setTax} placeholder="20" keyboardType="decimal-pad" />
+          <Pressable role="checkbox" aria-checked={included} accessibilityLabel="Menu prices include the tax" onPress={() => setIncluded((v) => !v)} style={styles.check}>
+            <Caption tone={included ? 'accent' : 'muted'}>{included ? 'Menu prices include the tax' : 'Tax is added at the till'} (tap to change)</Caption>
+          </Pressable>
+        </>
+      )}
+      {tool === 'prep' ? null : <View style={[styles.result, { backgroundColor: ds.c.raised }]}>
+        <Caption tone="muted">{tool === 'dilute' ? 'Add water' : tool === 'proof' ? 'Add spirit' : tool === 'convert' ? 'Reads as' : 'Menu price'}</Caption>
+        <Spec tone="accent" style={styles.big}>
+          {result ?? '…'}
+        </Spec>
+        <Body tone="muted">{note}</Body>
+      </View>}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end' },
-  avoider: { width: '100%', maxWidth: 560, alignSelf: 'center' },
-  sheet: { borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, borderCurve: 'continuous', maxHeight: '92%' },
-  body: { padding: space.xl, paddingBottom: space.xxxl, gap: space.md },
+  body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.md },
   picks: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   row: { flexDirection: 'row', gap: space.sm },
   flex: { flex: 1 },

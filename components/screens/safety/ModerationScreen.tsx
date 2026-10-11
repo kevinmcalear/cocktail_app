@@ -89,7 +89,7 @@ function ReportCard({ report: r }: { report: QueuedReport }) {
           {open ? null : <Tag label={r.status === 'actioned' ? 'Actioned' : 'Dismissed'} />}
         </View>
         <Headline>{what}</Headline>
-        {r.photo_url ? <DrinkImage source={r.photo_url} accessibilityLabel={`The reported photo of ${what}`} aspectRatio={1} radius="control" style={styles.photo} hideTag /> : null}
+        {r.photo_url ? <DrinkImage source={r.photo_url} accessibilityLabel={`The reported photo of ${what}`} aspectRatio={1} radius="control" style={styles.photo} /> : null}
         {r.target_detail ? <Caption tone="muted">{r.target_kind === 'profile' || r.target_kind === 'photo' ? r.target_detail : `${r.target_kind === 'ranking' ? 'At' : 'From'} ${r.target_detail}`}</Caption> : null}
         <Caption tone="muted">{`Reported ${WHEN.format(new Date(r.created_at))}`}</Caption>
         {r.details ? <Body>{`“${r.details}”`}</Body> : <Caption tone="muted">No details given.</Caption>}

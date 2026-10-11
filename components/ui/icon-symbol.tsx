@@ -30,6 +30,7 @@ const MAPPING = {
   'trash': 'delete',
   'xmark': 'close',
   'arrow.clockwise': 'refresh',
+  'clock.arrow.circlepath': 'history',
   'pencil': 'edit',
   'heart': 'favorite-border',
   'heart.fill': 'favorite',
@@ -77,7 +78,6 @@ const MAPPING = {
   'minus.magnifyingglass': 'zoom-out',
   'arrow.up': 'arrow-upward',
   'arrow.up.and.down': 'swap-vert',
-  'square.grid.2x2': 'grid-view',
   'list.bullet': 'format-list-bulleted',
   'percent': 'percent',
   'drop.fill': 'water-drop',
@@ -108,7 +108,6 @@ const MAPPING = {
   'flag': 'outlined-flag',
   'gearshape': 'settings',
   // Tab icons: the same Material glyphs NativeTabs uses on Android.
-  'moon.stars': 'nightlife',
   'rectangle.stack': 'style',
 } satisfies IconMapping;
 

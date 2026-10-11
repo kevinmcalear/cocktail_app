@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, Tag, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { displayFaces, space } from '@/constants/tokens';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { formatPrice } from '@/lib/menus';
@@ -33,7 +33,6 @@ function DrinkThumb({ drink, drawable, size = 56 }: { drink: MenuDrink; drawable
         itemId={drawable ? drink.id : null}
         accessibilityLabel={drink.name}
         radius="control"
-        hideTag
       />
     </View>
   );
@@ -152,9 +151,8 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
           </View>
         ))}
       {drawn ? (
-        // One note for the whole card instead of a tag on every picture.
+        // One note for the whole card, and no tag: drawings are obviously drawings.
         <View style={styles.drawnNote}>
-          <Tag label="Sketch" tone="sketch" />
           <Caption tone="muted">Drawn from each drink’s spec until it has a photo</Caption>
         </View>
       ) : null}
