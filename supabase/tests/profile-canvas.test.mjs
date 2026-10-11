@@ -1,4 +1,4 @@
-// Profiles as the canvas draws them (20261013400000_profile_canvas.sql): job
+// Profiles as the canvas draws them (20261014600000_profile_canvas.sql): job
 // dates and a Shown switch on every job, awards people send themselves
 // (pending until a moderator confirms), Show my city, Say where I had it, the
 // top four's oldest pin making room, and drinks on worked menus.
