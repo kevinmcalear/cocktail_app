@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, DsText, Field, GlassButton, Headline, PressableScale, Sheet, Title, useDs, useSheetClose } from '@/components/ds';
+import { Body, Button, Caption, DsText, Field, GlassButton, Headline, PressableScale, Sheet, SheetScrollView, Title, useDs, useSheetClose } from '@/components/ds';
 import { layout, radius, space } from '@/constants/tokens';
 import { DuplicateVenueError, useAddressSearch, useAddVenue, type AddedVenue } from '@/hooks/useDiscover';
 import { ADDRESS_MIN_CHARS, type VenueAddress } from '@/lib/nearMe';
@@ -117,14 +117,14 @@ function AddBarSheetBody({ onAdded, onOpenExisting }: { onAdded: (v: AddedVenue)
   // The X and Cancel slide the sheet away, like the backdrop does.
   const close = useSheetClose();
   return (
-    <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
+    <SheetScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
       <View style={styles.close}>
         <GlassButton accessibilityLabel="Close" icon="xmark" onPress={close} />
       </View>
       <Title>Add a bar</Title>
       <Headline>{"A bar you've been to that isn't on Cocktail yet."}</Headline>
       <AddBarForm onAdded={onAdded} onCancel={close} onOpenExisting={onOpenExisting} />
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 
