@@ -1,11 +1,12 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, PressableScale, Surface, Tag, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, PressableScale, Surface, Tag, useDs, useGutter } from '@/components/ds';
+import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
+import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { WebHead } from '@/components/WebHead';
-import { layout, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarGlassware, useBarPageId, useDeleteBarGlass, useSaveBarGlass, type BarGlass } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -31,8 +32,9 @@ export function GlasswareScreen({ barId }: { barId: string }) {
 function GlasswarePage({ barId }: { barId: string }) {
   const ds = useDs();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const frame = usePageFrame('text');
   const gutter = useGutter();
+  const tabBarInset = useTabBarInset();
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const { data: caps = [] } = useCapabilities(barId);
   const canEdit = caps.includes('brand');
@@ -55,16 +57,18 @@ function GlasswarePage({ barId }: { barId: string }) {
       <WebHead>
         <title>Glassware</title>
       </WebHead>
-      <View style={[styles.nav, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
-        <GlassButton
-          accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-          icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace(`/settings/bar/${barId}` as Href))}
-        />
-      </View>
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }} keyboardShouldPersistTaps="handled">
-        <View style={styles.readable}>
-          <Title>Glassware</Title>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={{ paddingTop: frame.top, paddingBottom: tabBarInset + space.xxxl, paddingHorizontal: gutter }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={[frame.column, styles.readable]}>
+          {/* On wide web the sidebar is the way around: the "Venue settings" crumb, no Back. */}
+          <SubPageHead
+            title="Glassware"
+            crumbs={[{ label: 'Venue settings', href: `/settings/bar/${barId}` as Href }]}
+            onBack={() => (router.canGoBack() ? router.back() : router.replace(`/settings/bar/${barId}` as Href))}
+          />
           <Body tone="muted">
             The glasses {venue?.name ?? 'the venue'} pours into. Each type’s main glass is how its drinks are drawn, and a glass that names its maker’s page puts
             the venue on that page.
@@ -155,8 +159,7 @@ function GlassRow({ glass, first, canEdit, onOpen }: { glass: BarGlass; first: b
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  nav: { flexDirection: 'row', paddingBottom: space.sm, minHeight: layout.minTapTarget },
-  readable: { maxWidth: 640, width: '100%', alignSelf: 'center', gap: space.lg, paddingTop: space.md },
+  readable: { gap: space.lg },
   list: { paddingVertical: space.xs },
   card: { gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm },
