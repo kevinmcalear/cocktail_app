@@ -48,7 +48,10 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER "touch_menu" BEFORE UPDATE ON "public"."menus"
+-- Named to sort before menus_sync_active: BEFORE triggers fire in name order, and
+-- this one must see only what the caller changed. A bare is_active flip makes
+-- menus_sync_active move the dates to match; that is the sweep, not an edit.
+CREATE TRIGGER "menus_edited_at" BEFORE UPDATE ON "public"."menus"
     FOR EACH ROW
     WHEN ((OLD."name", OLD."cover_url", OLD."cover_position", OLD."starts_at", OLD."ends_at", OLD."menu_date", OLD."guest_count",
            OLD."kind", OLD."description", OLD."planned_starts_at", OLD."planned_ends_at", OLD."bar_id")
