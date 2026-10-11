@@ -56,9 +56,14 @@ ALTER TABLE "public"."profiles"
     ADD CONSTRAINT "profiles_timezone_shape" CHECK (
         "timezone" IS NULL OR ("timezone" ~ '^[A-Za-z]+(/[A-Za-z0-9_+-]+){0,2}$' AND char_length("timezone") <= 64)
     ),
-    -- Digits with the usual separators and an optional leading +.
+    -- Digits with the usual separators (spaces, parentheses, hyphens, dots), an optional
+    -- leading +, 6 to 30 characters and at least 6 digits.
     ADD CONSTRAINT "profiles_phone_shape" CHECK (
-        "phone" IS NULL OR ("phone" ~ '^\+?[0-9][0-9 ().-]{2,30}[0-9]$' AND "phone" = btrim("phone"))
+        "phone" IS NULL OR (
+            "phone" ~ '^\+?[0-9 ().-]{5,29}$'
+            AND "phone" = btrim("phone")
+            AND char_length(regexp_replace("phone", '[^0-9]', '', 'g')) >= 6
+        )
     ),
     ADD CONSTRAINT "profiles_bar_type_shape" CHECK (
         "bar_type" IS NULL OR (char_length("bar_type") BETWEEN 1 AND 40 AND "bar_type" = btrim("bar_type"))
