@@ -2,13 +2,13 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, PressableScale, Spec, Surface, Tag, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, Headline, PressableScale, Surface, Tag, useDs } from '@/components/ds';
 import { StepTimer } from '@/components/prep/StepTimer';
 import { gradeLong, Notes, Section, SourceList } from '@/components/techniques/bits';
 import { Scaler } from '@/components/techniques/Scaler';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space, type } from '@/constants/tokens';
+import { layout, radius, space } from '@/constants/tokens';
 import { equipmentById, groupById, techniqueById } from '@/lib/techniques';
 import { factTiles, swapLine } from '@/lib/techniques/facts';
 import { useKit } from '@/hooks/useKit';
@@ -49,8 +49,8 @@ export function TechniqueScreen({ id }: { id: string }) {
       <View style={styles.facts}>
         {facts.map((f) => (
           <View key={f.caption} style={[styles.fact, { backgroundColor: ds.c.raised, flexBasis: f.value.length > 16 ? '100%' : '28%' }]}>
-            {/* A figure reads big in the spec face; a sentence reads better as body text. */}
-            {f.value.length > 16 ? <Body>{f.value}</Body> : <Spec style={styles.big}>{f.value}</Spec>}
+            {/* A short value reads big; a sentence reads better as body text. */}
+            {f.value.length > 16 ? <Body>{f.value}</Body> : <Headline>{f.value}</Headline>}
             <Caption tone="muted">{f.caption}</Caption>
           </View>
         ))}
@@ -137,7 +137,6 @@ const styles = StyleSheet.create({
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   fact: { flexGrow: 1, flexShrink: 1, maxWidth: '100%', padding: space.sm, borderRadius: radius.control, gap: 2 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  big: { ...type.headline },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs },
   tap: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginLeft: -space.sm },
   box: { width: 28, height: 28, borderRadius: radius.control, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
