@@ -1,4 +1,4 @@
-// Bring in batches (20261013800000_bring_in_batches.sql): a bring-in is
+// Bring in batches (20261014800000_bring_in_batches.sql): a bring-in is
 // recorded so "Undo all" can take back what it made until tomorrow. A batch is
 // yours alone, and undo runs as you, so a batch naming someone else's things
 // removes nothing of theirs.
