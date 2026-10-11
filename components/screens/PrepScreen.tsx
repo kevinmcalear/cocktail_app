@@ -7,7 +7,7 @@ import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { BackBarLink } from '@/components/backbar/BackBarLink';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { CountScreen } from '@/components/screens/prep/CountScreen';
-import { NewEventSheet } from '@/components/screens/prep/NewEventSheet';
+import { EventSheet } from '@/components/screens/week/EventSheet';
 import { PrepLists } from '@/components/screens/prep/PrepLists';
 import { PrepSources, ServesControl, type PrepSource } from '@/components/screens/prep/PrepSources';
 import { space } from '@/constants/tokens';
@@ -141,13 +141,7 @@ export function PrepScreen() {
       </ScrollView>
       {tools ? <ToolsSheet visible onClose={() => setTools(false)} /> : null}
       {barId && creating ? (
-        <NewEventSheet
-          visible
-          onClose={() => setCreating(false)}
-          barId={barId}
-          menus={venueMenus.map((m) => ({ id: m.id, name: m.name }))}
-          onCreated={(event) => pick({ kind: 'event', event })}
-        />
+        <EventSheet visible onClose={() => setCreating(false)} barId={barId} menus={venueMenus.map((m) => ({ id: m.id, name: m.name }))} />
       ) : null}
     </View>
   );
