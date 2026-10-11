@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
-import { layout, space, springs } from '@/constants/tokens';
+import { space, springs } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 import { Eyebrow, FooterInline } from './WizardChrome';
