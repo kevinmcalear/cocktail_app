@@ -63,8 +63,8 @@ type PictureItem = { id: string; name: string; item_images: ItemImageLink[] | It
 /** Query keys, for invalidating after a write. */
 export const menuKeys = {
   all: ['menus-v2'] as const,
-  // 'venue-3': summaries gained kind, so a persisted older list isn't read back.
-  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-3', barId, userId] as const,
+  // 'venue-4': summaries gained updatedAt, description and the plan, so a persisted older list isn't read back.
+  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-4', barId, userId] as const,
   detail: (menuId: string) => ['menus-v2', 'detail', menuId] as const,
 };
 
