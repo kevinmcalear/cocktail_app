@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,7 +9,6 @@ import { useProfile, type Profile } from '@/hooks/useProfiles';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { SignInCard } from '../published/SignInCard';
-import { LoveBarButton } from '../kept/LoveBarButton';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarProfile } from './BarProfile';
 import { MakerProfile } from './MakerProfile';
@@ -41,18 +40,21 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const { data: profile, isLoading, error } = useProfile(profileRef);
   // A person's page is for people who've signed in; a bar's opens to anyone.
   const gated = profile?.kind === 'person' && !signedIn;
+  // Opened from a search: the way back carries it ("martini", disc-search-bar).
+  const q = useLocalSearchParams<{ q?: string }>().q;
+  const searched = typeof q === 'string' && q.trim() ? q.trim() : null;
 
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
       <GlassButton
-        accessibilityLabel="Back"
-        icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
+        accessibilityLabel={searched ? `Back to the search for ${searched}` : 'Back'}
+        label={searched ?? undefined}
+        icon={Platform.OS === 'web' || searched ? 'chevron.left' : 'xmark'}
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       />
       {profile && !gated ? (
         <View style={styles.right}>
           <ShareProfile profile={profile} />
-          {profile.kind === 'bar' ? <LoveBarButton profileId={profile.id} name={profile.display_name} /> : null}
           <ProfileSafety profile={profile} />
         </View>
       ) : null}

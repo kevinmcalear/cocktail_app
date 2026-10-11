@@ -33,7 +33,7 @@ export const riffed = (d: Pick<Original, 'versions'>) => {
  * a classic poured as it is (the same spec, or none to tell) sit in one line,
  * "Classics they pour", instead of a tile each; a variation says what it changes.
  */
-export function OriginalsGrid({ originals, columns, emptyText, selfId, layout = 'tiles', mine = false, ownerName }: { originals: Original[]; columns: number; emptyText: string; selfId: string; layout?: 'tiles' | 'rows'; mine?: boolean; ownerName?: string }) {
+export function OriginalsGrid({ originals, columns, emptyText, selfId, layout = 'tiles', mine = false, ownerName, runs }: { originals: Original[]; columns: number; emptyText: string; selfId: string; layout?: 'tiles' | 'rows'; mine?: boolean; ownerName?: string; runs?: Readonly<Record<string, string>> }) {
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
   const { poured, own, matches } = usePouredSplit(selfId, originals);
@@ -48,7 +48,7 @@ export function OriginalsGrid({ originals, columns, emptyText, selfId, layout = 
           {own.map((d) => {
             const hero = heroPicture(d.item_images);
             const by = others(d);
-            const caption = [mine ? 'Your original' : by.length ? `by ${by.join(' and ')}` : null, mine ? d.origin_year : null, versionLabel(matches?.[d.id]), riffed(d)].filter(Boolean).join(' · ') || undefined;
+            const caption = [mine ? 'Your original' : by.length ? `by ${by.join(' and ')}` : null, mine ? d.origin_year : runs?.[d.id], versionLabel(matches?.[d.id]), riffed(d)].filter(Boolean).join(' · ') || undefined;
             const said = scoreWords(scores?.[d.id]);
             return (
               <DrinkRow
@@ -180,30 +180,51 @@ export function MenuCredits({ credits, names, worked = [] }: { credits: MenuCred
  * The score is its drinks' scores averaged, weighted by how many people
  * ranked each. Early (under MIN_RANKERS people) gives the count, no number.
  */
-export function BarHeader({ profile, detail }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string }) {
+export function BarHeader({ profile, detail, love }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string; love?: ReactNode }) {
   const { data } = useVenueScore(profile.id);
   const score = data?.score ?? null;
   const ranked = data?.rankers ? rankedCount(data.rankers) : null;
   const scoreLabel = score !== null ? `Bar score ${formatScore(score)} out of 10` : ranked ? `No bar score until ${MIN_RANKERS} people have ranked here` : null;
+  // The score over "Bar score · 212 ranked", then a labelled Love (disc-search-bar).
   return (
-    <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.barHeader}>
-      <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
-      <View style={styles.flex}>
-        <Title>{profile.display_name}</Title>
-        <Caption tone="muted">{[detail, ranked].filter(Boolean).join(' · ')}</Caption>
+    <View style={styles.barHeader}>
+      <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={[styles.barHeader, styles.flex]}>
+        <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
+        <View style={styles.flex}>
+          <Title>{profile.display_name}</Title>
+          <Caption tone="muted">{score !== null ? detail : [detail, ranked].filter(Boolean).join(' · ')}</Caption>
+        </View>
       </View>
-      {score !== null ? <Spec tone="accent">{formatScore(score)}</Spec> : null}
+      {score !== null || love ? (
+        <View style={styles.barScore}>
+          {score !== null ? (
+            <>
+              <Spec tone="accent">{formatScore(score)}</Spec>
+              <Caption tone="muted">{['Bar score', ranked].filter(Boolean).join(' · ')}</Caption>
+            </>
+          ) : null}
+          {love}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 /** The numbers under a bar's name (its score sits in BarHeader): awards, people and originals. */
-export function BarStats({ profile, originals }: { profile: Pick<Profile, 'id' | 'kind'>; originals: number }) {
+export function BarStats({ profile, originals, onAwards }: { profile: Pick<Profile, 'id' | 'kind'>; originals: number; onAwards?: () => void }) {
   const { data: awards = [] } = useProfileAwards(profile.id);
   const people = (useProfilePositions(profile).data ?? []).filter(isShownPosition).length;
+  const awardStat = <Stat value={awards.length} label={awards.length === 1 ? 'award' : 'awards'} />;
   return (
     <Stats>
-      <Stat value={awards.length} label={awards.length === 1 ? 'award' : 'awards'} />
+      {/* Only the count shows on the page (ppl-bar-top); tapping it lists them. */}
+      {onAwards && awards.length ? (
+        <PressableScale role="button" accessibilityLabel={`${awards.length} ${awards.length === 1 ? 'award' : 'awards'}. Show them`} onPress={onAwards}>
+          {awardStat}
+        </PressableScale>
+      ) : (
+        awardStat
+      )}
       <Stat value={people} label={people === 1 ? 'person' : 'people'} />
       <Stat value={originals} label={originals === 1 ? 'original' : 'originals'} />
     </Stats>
@@ -239,6 +260,7 @@ const styles = StyleSheet.create({
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   barHeader: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  barScore: { alignItems: 'flex-end', gap: space.xs },
   stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxl },
   stat: { alignItems: 'center', minWidth: 72 },
 });

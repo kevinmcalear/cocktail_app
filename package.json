@@ -49,6 +49,7 @@
     "expo": "~58.0.2",
     "expo-application": "~58.0.3",
     "expo-blur": "~58.0.3",
+    "expo-clipboard": "~58.0.3",
     "expo-constants": "~58.0.7",
     "expo-dev-client": "~58.0.10",
     "expo-device": "~58.0.5",

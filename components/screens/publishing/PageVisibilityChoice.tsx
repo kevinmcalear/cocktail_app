@@ -12,6 +12,8 @@ interface PageVisibilityChoiceProps {
   onChange: (value: PageVisibility) => void;
   disabled?: boolean;
   error?: string | null;
+  /** False on its own page, where the title says it. */
+  heading?: boolean;
 }
 
 /**
@@ -19,11 +21,11 @@ interface PageVisibilityChoiceProps {
  * outside the venue, with what a guest will see. The database keeps the
  * specs back; each drink's own setting still applies below Open.
  */
-export function PageVisibilityChoice({ venueName, value, onChange, disabled, error }: PageVisibilityChoiceProps) {
+export function PageVisibilityChoice({ venueName, value, onChange, disabled, error, heading = true }: PageVisibilityChoiceProps) {
   const ds = useDs();
   return (
     <View style={styles.group}>
-      <Headline role="heading">Who sees your page</Headline>
+      {heading ? <Headline role="heading">Who sees your page</Headline> : null}
       <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption>
       <View role="radiogroup" accessibilityLabel="Who sees your page" style={styles.rows}>
         {PAGE_VISIBILITIES.map((v) => (

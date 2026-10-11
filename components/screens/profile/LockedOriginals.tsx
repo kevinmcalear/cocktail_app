@@ -28,11 +28,14 @@ export function LockedOriginals({
   selfId,
   details,
   emptyText,
+  runs,
 }: {
   originals: Original[];
   selfId: string;
   details: boolean;
   emptyText: string;
+  /** "on now" or "Past · 2024 to 2025" by drink id (drinkRunTags). */
+  runs?: Readonly<Record<string, string>>;
 }) {
   const ds = useDs();
   const router = useRouter();
@@ -48,7 +51,7 @@ export function LockedOriginals({
             .filter((p) => p.id !== selfId)
             .map((p) => p.display_name);
           const meta = details
-            ? [by.length ? `by ${by.join(" and ")}` : null, d.origin_year]
+            ? [by.length ? `by ${by.join(" and ")}` : null, runs?.[d.id] ?? d.origin_year]
                 .filter(Boolean)
                 .join(" · ")
             : "";

@@ -2,7 +2,8 @@ import type { GeoJSONSource, Map as MapLibreMap, MapGeoJSONFeature, Marker } fro
 import { useEffect, useRef, type ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
+import { backbar, fontFamilies, MAP_ME, radius, type } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { dotsOf, MAP_STYLE, pinDescription, pinLook, viewportFrom, type MapPin } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
@@ -102,18 +103,50 @@ function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: Disco
  * The web map: MapLibre GL, loaded only in the browser (never in the static
  * render, and never in native bundles), with OpenFreeMap tiles and HTML pins.
  */
-export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, style }: DiscoverMapProps) {
+export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, me, style }: DiscoverMapProps) {
   const host = useRef<ComponentRef<typeof View>>(null);
   const map = useRef<MapLibreMap | null>(null);
   const lib = useRef<MapLibre | null>(null);
   const markers = useRef(new Map<string, { marker: Marker; el: HTMLElement }>());
+  const meMarker = useRef<Marker | null>(null);
   const dots = useRef<GeoJSON.FeatureCollection>(dotsOf([]));
   // Set while the map is moving because we moved it.
   const ours = useRef(false);
-  const latest = useRef({ onSelect, onViewportChange, pins, selectedId, accent, camera, scheme });
+  const latest = useRef({ onSelect, onViewportChange, pins, selectedId, accent, camera, scheme, me });
   useEffect(() => {
-    latest.current = { onSelect, onViewportChange, pins, selectedId, accent, camera, scheme };
+    latest.current = { onSelect, onViewportChange, pins, selectedId, accent, camera, scheme, me };
   });
+
+  // "You are here": a dot with a halo, under the pins.
+  const syncMe = () => {
+    const m = map.current;
+    const ml = lib.current;
+    const at = latest.current.me;
+    if (!m || !ml) return;
+    if (!at) {
+      meMarker.current?.remove();
+      meMarker.current = null;
+      return;
+    }
+    if (!meMarker.current) {
+      const el = document.createElement('span');
+      el.setAttribute('role', 'img');
+      el.setAttribute('aria-label', 'You are here');
+      Object.assign(el.style, {
+        width: '18px',
+        height: '18px',
+        borderRadius: `${radius.pill}px`,
+        background: MAP_ME,
+        border: `3px solid ${backbar.dark.ink}`,
+        boxSizing: 'border-box',
+        boxShadow: `0 0 0 8px ${withAlpha(MAP_ME, 0.22)}`,
+        pointerEvents: 'none',
+        zIndex: '0',
+      });
+      meMarker.current = new ml.Marker({ element: el });
+    }
+    meMarker.current.setLngLat([at.longitude, at.latitude]).addTo(m);
+  };
 
   const syncPins = () => {
     const m = map.current;
@@ -201,6 +234,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
       }
       map.current = m;
       syncPins();
+      syncMe();
     });
     return () => {
       cancelled = true;
@@ -226,6 +260,8 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     ours.current = true;
     m.easeTo({ center: [camera.longitude, camera.latitude], zoom: camera.zoom, duration: 500 });
   }, [camera]);
+
+  useEffect(syncMe, [me?.latitude, me?.longitude]);
 
   // Only when what's pinned changes: moving every marker's styles on each render was most of the cost.
   useEffect(syncPins, [pins, selectedId, accent.fill, accent.text]);

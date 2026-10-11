@@ -1,3 +1,4 @@
+import { getLocales } from 'expo-localization';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCallback, useRef, useState, type ComponentRef } from 'react';
@@ -8,12 +9,13 @@ import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader'
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
 import { ClosedBars } from '@/components/screens/home/ClosedBars';
-import { areaChipLabel, FilterRow, SearchPill, type MapLayer } from '@/components/screens/home/DiscoverControls';
+import { FilterRow, SearchPill, type MapLayer } from '@/components/screens/home/DiscoverControls';
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
 import { DiscoverSearchHead, DiscoverSearchSheet } from '@/components/screens/home/DiscoverSearchSheet';
 import { AreaSheet, FiltersSheet } from '@/components/screens/home/DiscoverSheet';
-import { DrinksHere } from '@/components/screens/home/DrinksAtBars';
+import { DeskSearchResults } from '@/components/screens/home/DeskSearchResults';
+import { BarAway, DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { PickedBar } from '@/components/screens/home/SelectedBar';
 import { ForYou } from '@/components/screens/home/FlavorRails';
 import { TopBars } from '@/components/screens/home/TopBars';
@@ -28,8 +30,9 @@ import { useSearchMine } from '@/hooks/useSearchMine';
 import { useMode } from '@/hooks/useMode';
 import { kindsTitle } from '@/lib/discoverDrinks';
 import { areaFromViewport, type MapPin, type Viewport } from '@/lib/discoverMap';
+import { awayFrom } from '@/lib/directions';
 import { STYLES } from '@/lib/drinkStyles';
-import { areaLabel, type Area } from '@/lib/nearMe';
+import { areaLabel, usesMiles, type Area } from '@/lib/nearMe';
 import type { SearchScope } from '@/lib/searchScope';
 import { withAlpha } from '@/lib/color';
 import { useDiscoverView } from '@/store/useDiscoverView';
@@ -97,11 +100,19 @@ export function DiscoverScreen() {
   const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${locating && !searching ? 'near you' : areaLabel(shownArea)}`;
   const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
   const drink = pick ? { id: pick.id, name: pick.name } : null;
-  const hereLabel = onMap ? 'This area' : areaChipLabel(area, preferNear);
   const closed = { count: results.closed.length, shown: showClosed, onShow: setShowClosed };
   const mapResults = { ...results, title, closed: showClosed ? results.closed : [] };
   // Nearest counts from the person, else the middle of the area.
   const from = near.status === 'ready' ? near : area.kind === 'point' ? area : null;
+  // Where the person is, once found: the map's dot, and "400 m" on rows and bars.
+  const me = near.status === 'ready' ? { latitude: near.latitude, longitude: near.longitude } : null;
+  const imperial = usesMiles(getLocales()[0]);
+  const awayFor = (barId: string) => {
+    const bar = results.barsById.get(barId);
+    return bar ? awayFrom(me, bar, imperial) : null;
+  };
+  // Wide screens, searching the area or everywhere: the list pane holds the ranked results (disc-desk-search).
+  const deskSearch = split && searching && scope !== 'mine';
 
   const openSearch = () => {
     // On the map, "this area" is what the map shows: search it, as "Search this area" would.
@@ -115,13 +126,19 @@ export function DiscoverScreen() {
     onArea(next);
   };
   const close = () => setSheet(null);
+  // "This area" is what the map shows: search it, or (on the phone list) show the map to move.
+  const onThisArea = () => {
+    if (viewport.current) onMapArea(areaFromViewport(viewport.current));
+    else if (mapAvailable && !split) saveView('map');
+  };
   const addKind = (k: string) => {
     setKinds((ks) => (ks.includes(k) ? ks : [...ks, k]));
     setSearch('');
     close();
   };
   // Discover's part in the one search: its filters, and its area when it isn't everywhere.
-  const searchArea: SearchArea = { label: onMap || area.kind !== 'anywhere' ? hereLabel : null, area, kinds, onKind: addKind };
+  // The scope always reads "This area" (disc-search-typing), whatever the area chip says.
+  const searchArea: SearchArea = { label: onMap || area.kind !== 'anywhere' ? 'This area' : null, area, kinds, onKind: addKind };
   // "This area" with no area left (it went back to Anywhere) searches everywhere.
   const searchScope = scope === 'area' && !searchArea.label ? 'everywhere' : scope;
   const searchProps = { query: search, onQuery: setSearch, scope: searchScope, onScope: setScope, mine, area: searchArea, onClearKinds: () => setKinds([]), onClose: close };
@@ -132,7 +149,7 @@ export function DiscoverScreen() {
 
   // Wide screens search in the list pane itself, so the map beside it stays live.
   const controls = split && sheet === 'search' ? (
-    <DiscoverSearchHead {...searchProps} />
+    <DiscoverSearchHead {...searchProps} filters={kinds.length + (showClosed ? 1 : 0)} onFilters={() => setSheet('filters')} />
   ) : (
     <View style={styles.controls}>
       <SearchPill query={search} placeholder={onMap ? 'Search this area' : 'Search bars and drinks'} onOpen={openSearch} onClear={() => setSearch('')} />
@@ -149,11 +166,11 @@ export function DiscoverScreen() {
 
   let overlay = null;
   if (sheet === 'search' && !split) {
-    overlay = <DiscoverSearchSheet {...searchProps} />;
+    overlay = <DiscoverSearchSheet {...searchProps} filters={kinds.length + (showClosed ? 1 : 0)} onFilters={() => setSheet('filters')} />;
   } else if (sheet === 'filters') {
     overlay = <FiltersSheet kinds={kinds} onChange={setKinds} bars={signedIn && results.totals ? results.totals.bars : null} closed={closed} onClose={close} />;
   } else if (sheet === 'area') {
-    overlay = <AreaSheet area={area} near={near} preferNear={preferNear} onArea={onArea} onNearMe={onNearMe} onClose={close} />;
+    overlay = <AreaSheet area={area} near={near} preferNear={preferNear} onArea={onArea} onNearMe={onNearMe} onThisArea={onThisArea} onClose={close} />;
   } else if (sheet === 'add') {
     overlay = <AddBarSheet onClose={close} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} />;
   }
@@ -161,6 +178,7 @@ export function DiscoverScreen() {
   // Phones: the map fills the screen, under the header as it is under the tab bar, with the results in a sheet over it.
   if (phoneMap) {
     return (
+      <BarAway.Provider value={awayFor}>
       <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
         <DiscoverMapPane
           mode="sheet"
@@ -173,6 +191,7 @@ export function DiscoverScreen() {
           bottomInset={bottom}
           topInset={headerHeight}
           from={from}
+          me={me}
           top={
             <>
               {controls}
@@ -192,6 +211,7 @@ export function DiscoverScreen() {
         </View>
         {overlay}
       </View>
+      </BarAway.Provider>
     );
   }
 
@@ -206,14 +226,16 @@ export function DiscoverScreen() {
       <ScreenHeaderSpacer title={<Display>Discover</Display>} />
       <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View>
       <View style={styles.body}>
-        {split && picked ? <PickedBar key={picked.id} pin={picked} filter={filter} best={mapLayer === 'best' ? drink : null} onClose={() => setPicked(null)} /> : null}
+        {split && picked && !deskSearch ? <PickedBar key={picked.id} pin={picked} filter={filter} best={mapLayer === 'best' ? drink : null} me={me} onClose={() => setPicked(null)} /> : null}
         {note ? (
           <Caption tone="muted" role="status">
             {note}
           </Caption>
         ) : null}
         {signedIn && home && !searching ? <HomeWeekStrip /> : null}
-        {searching ? (
+        {deskSearch ? (
+          <DeskSearchResults filter={filter} drink={drink} results={results} layer={mapLayer} onLayer={setMapLayer} from={from} picked={picked} />
+        ) : searching ? (
           <SearchBody query={search} scope={searchScope} onScope={setScope} mine={mine} area={searchArea} />
         ) : (
           <DrinksHere
@@ -241,15 +263,17 @@ export function DiscoverScreen() {
   );
 
   return (
+    <BarAway.Provider value={awayFor}>
     <View style={[styles.screen, split ? styles.row : null, { backgroundColor: ds.c.ground }]}>
       {list}
       {split ? (
         <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} pick={{ id: picked?.id ?? null, onPick, onLayer: setMapLayer }} />
+          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} from={from} me={me} pick={{ id: picked?.id ?? null, onPick, layer: mapLayer, onLayer: setMapLayer }} />
         </View>
       ) : null}
       {overlay}
     </View>
+    </BarAway.Provider>
   );
 }
 

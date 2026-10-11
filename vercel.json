@@ -79,6 +79,10 @@
       "destination": "/settings/bar/[id]/publishing"
     },
     {
+      "source": "/settings/bar/:id/visibility",
+      "destination": "/settings/bar/[id]/visibility"
+    },
+    {
       "source": "/settings/bar/:id/dilution",
       "destination": "/settings/bar/[id]/dilution"
     },
