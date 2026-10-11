@@ -1,11 +1,14 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
-import { dragGripStyle, gripOnly } from '@/components/recipe/FormScrollContainer';
+import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
+import { dropIndex } from '@/lib/dropIndex';
 import { timerFromText } from '@/lib/makeSteps';
 import { keepsText, leadText, STORES, type PrepDraft } from '@/lib/prepKinds';
 import { timerLabel } from '@/lib/scale';
@@ -25,6 +28,8 @@ const KEEPS = [3 * 24, 7 * 24, 14 * 24, 21 * 24, 28 * 24, 56 * 24, 26 * 7 * 24];
 const LEADS = [20, 60, 24 * 60, 2 * 24 * 60, 3 * 24 * 60, 7 * 24 * 60];
 /** The grip column: only a touch there starts a drag, so the page still scrolls over the steps. */
 const GRIP = layout.minTapTarget;
+/** On a touch screen a drag starts after a short hold, so a swipe over the grip still scrolls. */
+const HOLD_MS = Platform.OS === 'web' ? 0 : 200;
 
 type Tile = 'keeps' | 'store' | 'start';
 
@@ -57,55 +62,60 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
   const leads = LEADS.includes(draft.leadMinutes ?? -1) || draft.leadMinutes === null ? LEADS : [...LEADS, draft.leadMinutes].sort((a, b) => a - b);
   const keepsNow = keepsText(draft);
 
-  const renderStep = ({ item: s, getIndex, drag, isActive }: RenderItemParams<StepRow>) => {
-    const i = getIndex() ?? 0;
-    return (
-      <View role="listitem" style={[styles.step, { borderBottomColor: ds.c.line, backgroundColor: isActive ? ds.c.raised : ds.c.ground }]}>
-        <PressableScale
-          role="button"
-          accessibilityLabel={`Move step ${i + 1}. Drag, or use the arrow keys`}
-          onLongPress={Platform.OS === 'web' ? undefined : drag}
-          onPressIn={Platform.OS === 'web' ? drag : undefined}
-          // @ts-expect-error onKeyDown is web-only (react-native-web)
-          onKeyDown={(e: { key: string; preventDefault: () => void }) => {
-            const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : null;
-            if (to === null) return;
-            e.preventDefault();
-            move(i, to);
-          }}
-          style={[styles.grip, dragGripStyle]}
-        >
-          <View style={[styles.number, { backgroundColor: ds.c.raised }]}>
-            <Caption>{String(i + 1)}</Caption>
-          </View>
-        </PressableScale>
-        <View style={styles.flex}>
-          {editing === s.key ? (
-            <View style={styles.editing}>
-              <View style={styles.flex}>
-                <Field label={`Step ${i + 1}`} hideLabel value={s.body} onChangeText={(body) => write(s.key, body)} placeholder="What to do" multiline autoFocus />
+  // Each row's height, for where a dragged step lands.
+  const heights = useRef<Record<string, number>>({});
+  const drop = (from: number, dy: number) => move(from, dropIndex(from, dy, steps.map((x) => heights.current[x.key] ?? 0)));
+
+  const renderStep = (s: StepRow, i: number) => (
+    <DragRow key={s.key} index={i} onDrop={drop} onHeight={(h) => (heights.current[s.key] = h)}>
+      {(grip, isActive) => (
+        <View role="listitem" style={[styles.step, { borderBottomColor: ds.c.line, backgroundColor: isActive ? ds.c.raised : ds.c.ground }]}>
+          {grip(
+            <PressableScale
+              role="button"
+              accessibilityLabel={`Move step ${i + 1}. Drag, or use the arrow keys`}
+              // @ts-expect-error onKeyDown is web-only (react-native-web)
+              onKeyDown={(e: { key: string; preventDefault: () => void }) => {
+                const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : null;
+                if (to === null) return;
+                e.preventDefault();
+                move(i, to);
+              }}
+              style={[styles.grip, dragGripStyle]}
+            >
+              <View style={[styles.number, { backgroundColor: ds.c.raised }]}>
+                <Caption>{String(i + 1)}</Caption>
               </View>
-              <PressableScale accessibilityLabel={`Done with step ${i + 1}`} onPress={() => setEditing(null)} style={styles.remove}>
-                <IconSymbol name="checkmark" size={18} color={ds.c.ink} />
-              </PressableScale>
-              <PressableScale accessibilityLabel={`Remove step ${i + 1}`} onPress={() => changeSteps(steps.filter((x) => x.key !== s.key))} style={styles.remove}>
-                <IconSymbol name="trash" size={18} color={ds.c.muted} />
-              </PressableScale>
-            </View>
-          ) : (
-            <PressableScale role="button" accessibilityLabel={`Step ${i + 1}: ${s.body || 'empty'}. Change it`} onPress={() => setEditing(s.key)} style={styles.text}>
-              <Body tone={s.body ? 'ink' : 'muted'}>{s.body || 'What to do'}</Body>
-              {s.timer ? (
-                <View style={[styles.pill, { backgroundColor: ds.c.raised }]}>
-                  <Caption>{pill(s.timer)}</Caption>
-                </View>
-              ) : null}
             </PressableScale>
           )}
+          <View style={styles.flex}>
+            {editing === s.key ? (
+              <View style={styles.editing}>
+                <View style={styles.flex}>
+                  <Field label={`Step ${i + 1}`} hideLabel value={s.body} onChangeText={(body) => write(s.key, body)} placeholder="What to do" multiline autoFocus />
+                </View>
+                <PressableScale accessibilityLabel={`Done with step ${i + 1}`} onPress={() => setEditing(null)} style={styles.remove}>
+                  <IconSymbol name="checkmark" size={18} color={ds.c.ink} />
+                </PressableScale>
+                <PressableScale accessibilityLabel={`Remove step ${i + 1}`} onPress={() => changeSteps(steps.filter((x) => x.key !== s.key))} style={styles.remove}>
+                  <IconSymbol name="trash" size={18} color={ds.c.muted} />
+                </PressableScale>
+              </View>
+            ) : (
+              <PressableScale role="button" accessibilityLabel={`Step ${i + 1}: ${s.body || 'empty'}. Change it`} onPress={() => setEditing(s.key)} style={styles.text}>
+                <Body tone={s.body ? 'ink' : 'muted'}>{s.body || 'What to do'}</Body>
+                {s.timer ? (
+                  <View style={[styles.pill, { backgroundColor: ds.c.raised }]}>
+                    <Caption>{pill(s.timer)}</Caption>
+                  </View>
+                ) : null}
+              </PressableScale>
+            )}
+          </View>
         </View>
-      </View>
-    );
-  };
+      )}
+    </DragRow>
+  );
 
   const tiles: { id: Tile; label: string; value: string }[] = [
     { id: 'keeps', label: 'Keeps', value: keepsNow ? `About ${keepsNow}` : 'Not set' },
@@ -124,15 +134,7 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
         </View>
       ) : null}
       <View role="list" aria-label="Steps">
-        <DraggableFlatList
-          data={steps}
-          keyExtractor={(s) => s.key}
-          onDragEnd={({ data }) => changeSteps(data)}
-          renderItem={renderStep}
-          scrollEnabled={false}
-          activationDistance={10}
-          dragHitSlop={gripOnly(GRIP)}
-        />
+        {steps.map(renderStep)}
       </View>
       <Button
         label="Add a step"
@@ -182,6 +184,41 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
       ) : null}
       <Caption tone="muted">{`Suggested for ${phrase ?? 'this kind'}. Tap one to change it.`}</Caption>
     </View>
+  );
+}
+
+/**
+ * A step that can be dragged by its grip: it follows the finger, lifted
+ * over the others, and lands where it's let go (lib/dropIndex). Plain
+ * transforms, no layout animations: those crash Reanimated 4 when the
+ * builder closes (as in #298).
+ */
+function DragRow({ index, onDrop, onHeight, children }: { index: number; onDrop: (from: number, dy: number) => void; onHeight: (h: number) => void; children: (grip: (node: ReactNode) => ReactNode, active: boolean) => ReactNode }) {
+  const y = useSharedValue(0);
+  const lifted = useSharedValue(0);
+  const [active, setActive] = useState(false);
+  const pan = Gesture.Pan()
+    .activateAfterLongPress(HOLD_MS)
+    .onStart(() => {
+      lifted.set(1);
+      scheduleOnRN(setActive, true);
+    })
+    .onUpdate((e) => {
+      y.set(e.translationY);
+    })
+    .onEnd((e) => {
+      scheduleOnRN(onDrop, index, e.translationY);
+    })
+    .onFinalize(() => {
+      y.set(0);
+      lifted.set(0);
+      scheduleOnRN(setActive, false);
+    });
+  const follow = useAnimatedStyle(() => ({ zIndex: lifted.get() ? 1 : 0, transform: [{ translateY: y.get() }] }));
+  return (
+    <Animated.View style={follow} onLayout={(e) => onHeight(e.nativeEvent.layout.height)}>
+      {children((node) => <GestureDetector gesture={pan}>{node}</GestureDetector>, active)}
+    </Animated.View>
   );
 }
 

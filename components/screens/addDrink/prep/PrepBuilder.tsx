@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Modal } from 'react-native';
+import { Modal, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { IngredientDrawing } from '@/components/ds';
 import { guessKind, openSlots, prepFromTechnique, prepPhrase, recipeEyebrow, startPrep, withFacts, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
@@ -48,7 +49,8 @@ export interface PrepBuilderProps {
 export function PrepBuilder(props: PrepBuilderProps) {
   return (
     <Modal visible={!!props.name} animationType="slide" presentationStyle="fullScreen" onRequestClose={props.onClose}>
-      {props.name ? <Builder {...props} name={props.name} /> : null}
+      {/* A native Modal is its own root: the method step's drag needs gestures inside it. */}
+      <GestureHandlerRootView style={styles.root}>{props.name ? <Builder {...props} name={props.name} /> : null}</GestureHandlerRootView>
     </Modal>
   );
 }
@@ -134,3 +136,7 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
     </WizardFrame>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});
