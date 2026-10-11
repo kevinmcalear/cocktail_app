@@ -4,7 +4,7 @@
 import { draftSketchInputs } from './draft';
 import type { SketchInputs } from './types';
 
-const RED = /\b(red|shiraz|syrah|cabernet|merlot|pinot noir|malbec|grenache|tempranillo|sangiovese|nebbiolo|gamay|zinfandel|rioja|chianti|barolo|beaujolais|claret)\b/i;
+const RED = /\b(red|shiraz|syrah|cabernet|merlot|pinot noir|malbec|grenache|tempranillo|sangiovese|nebbiolo|gamay|zinfandel|rioja|chianti|barolo|beaujolais|claret|rosso|tinto|rouge|nero d'avola|primitivo|montepulciano|cotes du rhone|c[oô]tes du rh[oô]ne)\b/i;
 const SPARKLING = /\b(sparkling|champagne|prosecco|cava|cr[eé]mant|sekt|lambrusco|p[eé]t[- ]?nat)\b/i;
 
 /** What the rules should read a wine as, from its name: sparkling, rosé, orange, red, else white. */

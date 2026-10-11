@@ -166,6 +166,15 @@ export function tileLine(...parts: (string | null | undefined)[]): string | null
   return shown.length ? shown.join(' · ') : null;
 }
 
+const METHOD_WORDS: Record<string, string> = { stir: 'Stirred', shake: 'Shaken', build: 'Built', blend: 'Blended', swizzle: 'Swizzled', throw: 'Thrown', roll: 'Rolled', whip: 'Whipped', dry: 'Dry shaken' };
+
+/** "Stirred" for the method Stir: how a tile says how it's made. Other names stay as they are. */
+export function methodWord(name: string | null | undefined): string | null {
+  if (!name) return null;
+  const key = name.trim().toLowerCase().replace(/\s+shake$/, '');
+  return METHOD_WORDS[key] ?? name;
+}
+
 /** What a prep is, by what was done to it: Preps' second chip row (Spec Book Shelves' "filter by action"). */
 export type PrepGroup = 'Syrup' | 'Cordial' | 'Infusion' | 'Clarified' | 'Fat-washed' | 'Shrub';
 

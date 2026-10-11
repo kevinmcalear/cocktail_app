@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import type { MenuSummary } from '@/types/menus';
 
-import { filterGroups, isGarnishLine, itemIdOf, menuDrinks, menuState, parseShow, prepGroup, tileLine, venueShelves, yieldText } from './libraryFilters';
+import { filterGroups, methodWord, isGarnishLine, itemIdOf, menuDrinks, menuState, parseShow, prepGroup, tileLine, venueShelves, yieldText } from './libraryFilters';
 
 assert.equal(parseShow(undefined, true), 'all');
 assert.equal(parseShow('staff', true), 'staff');
@@ -118,3 +118,9 @@ assert.equal(itemIdOf('0000-3'), '0000-3');
   assert.equal(yieldText(1500, 'g'), '1.5 kg');
   assert.equal(yieldText(null, 'ml'), null);
 }
+
+assert.equal(methodWord('Stir'), 'Stirred');
+assert.equal(methodWord('Shake'), 'Shaken');
+assert.equal(methodWord('Build'), 'Built');
+assert.equal(methodWord('Freezer pour'), 'Freezer pour');
+assert.equal(methodWord(null), null);
