@@ -2,21 +2,25 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Headline, Title, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, DsText, Headline, PressableScale, Title, useBreakpoint, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { backbar, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
+import { useBarProfile } from '@/hooks/useRankings';
 import { useBarWeek, useMyWeek, useWeekStart } from '@/hooks/useWeek';
 import { toDay } from '@/lib/collection';
 import { itemHref } from '@/lib/itemRoutes';
 import { menuStatus } from '@/lib/menus';
-import { byDay, filterWeek, itemDay, newDrinks, shortDay, upcoming, weekRange, type WeekFilter, type WeekItem } from '@/lib/week';
+import { shareLink } from '@/lib/shareLink';
+import { siteOrigin } from '@/lib/venueLink';
+import { byDay, filterWeek, itemDay, newDrinks, shortDay, thingsOn, upcoming, weekMonday, weekRange, type WeekFilter, type WeekItem } from '@/lib/week';
 
 import { EventSheet } from './EventSheet';
 import { WeekAgenda, WeekColumns } from './WeekColumns';
@@ -61,9 +65,9 @@ export function WeekScreen() {
   const items = filterWeek(all, filter);
   const days = byDay(items, from);
   const on = upcoming(all, from);
-  const fresh = newDrinks(items);
+  const fresh = newDrinks(items, weekMonday(from));
   const eventMenus = menus.filter((m) => m.barId === barId && menuStatus(m, now) !== 'previous').map((m) => ({ id: m.id, name: m.name }));
-  const subtitle = [weekRange(from), `${on.length} on`, fresh.length ? `${fresh.length} new ${fresh.length === 1 ? 'drink' : 'drinks'}` : null].filter(Boolean).join(' · ');
+  const subtitle = [weekRange(from), thingsOn(on.length), fresh.length ? `${fresh.length} new ${fresh.length === 1 ? 'drink' : 'drinks'}` : null].filter(Boolean).join(' · ');
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -100,7 +104,7 @@ export function WeekScreen() {
         ) : null}
         <View style={[styles.lower, wide && styles.lowerWide]}>
           <NewDrinks drinks={fresh} from={from} venue={venue} barName={active?.name} />
-          {venue ? <GuestView items={on.filter((i) => i.isPublic)} from={from} barName={active?.name} /> : null}
+          {venue ? <GuestView items={on.filter((i) => i.isPublic)} from={from} barId={barId} barName={active?.name} /> : null}
         </View>
       </ScrollView>
       {addingOn && barId ? <EventSheet visible barId={barId} menus={eventMenus} day={addingOn} onClose={() => setAddingOn(null)} /> : null}
@@ -125,11 +129,10 @@ function EmptyWeek({ venue, canAdd }: { venue: boolean; canAdd: boolean }) {
 
 function NewDrinks({ drinks, from, venue, barName }: { drinks: WeekItem[]; from: Date; venue: boolean; barName?: string }) {
   if (!drinks.length) return null;
-  const since = new Date(from.getFullYear(), from.getMonth(), from.getDate() - 7).toLocaleDateString(undefined, { weekday: 'long' });
   return (
     <View style={styles.flexPanel}>
       <DsText variant="caption" tone="muted" style={styles.caps}>
-        {venue ? `New at ${barName ?? 'your bar'} since last ${since}` : 'New at bars you love'}
+        {venue ? `New at ${barName ?? 'your bar'} since Monday` : 'New at bars you love since Monday'}
       </DsText>
       {drinks.map((d) => (
         <DrinkRow
@@ -149,11 +152,22 @@ function NewDrinks({ drinks, from, venue, barName }: { drinks: WeekItem[]; from:
 }
 
 /** What the bar page and Discover show of this week: the public things only, on paper like the menu card. */
-function GuestView({ items, from, barName }: { items: WeekItem[]; from: Date; barName?: string }) {
+function GuestView({ items, from, barId, barName }: { items: WeekItem[]; from: Date; barId: string | null; barName?: string }) {
   const paper = backbar.light;
+  const page = useBarProfile(barId).data?.id;
+  const [copied, setCopied] = useState<'copied' | 'failed' | null>(null);
+  const feed = page ? `${siteOrigin()}/api/week-ics?bar=${page}` : null;
+  const copy = async () => {
+    if (!feed) return;
+    try {
+      setCopied((await shareLink(feed, `This week at ${barName ?? 'your bar'}`, { copy: true })) === 'copied' ? 'copied' : null);
+    } catch {
+      setCopied('failed');
+    }
+  };
   return (
     <View role="region" accessibilityLabel="What guests see" style={[styles.paper, { backgroundColor: backbar.dark.paper }]}>
-      <Caption color={paper.muted}>On your bar page and in Discover</Caption>
+      <Caption color={paper.muted}>On your public page and in Discover</Caption>
       <Title color={paper.ink}>This week at {barName ?? 'your bar'}</Title>
       {items.length ? (
         items.map((i) => (
@@ -167,7 +181,15 @@ function GuestView({ items, from, barName }: { items: WeekItem[]; from: Date; ba
       ) : (
         <Body color={paper.muted}>Nothing public this week. Set an event to Everyone and it shows here.</Body>
       )}
-      <Caption color={paper.muted}>Team-only events never show here.</Caption>
+      <Caption color={paper.muted}>{`Team-only events never show here. Guests who love ${barName ?? 'your bar'} get one alert a day at most.`}</Caption>
+      {feed ? (
+        // On paper in both schemes, so the paper's own ink, not the app's.
+        <PressableScale role="button" onPress={copy} style={[styles.feed, { borderColor: paper.lineStrong }]}>
+          <IconSymbol name="link" size={16} color={paper.ink} />
+          <Body color={paper.ink}>{copied === 'copied' ? 'Copied' : 'Copy calendar feed for your website'}</Body>
+        </PressableScale>
+      ) : null}
+      {copied === 'failed' ? <Caption color={paper.muted}>{feed}</Caption> : null}
     </View>
   );
 }
@@ -185,4 +207,5 @@ const styles = StyleSheet.create({
   paper: { flex: 1, minWidth: 0, gap: space.sm, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   paperRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingBottom: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },
+  feed: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space.sm, minHeight: 44, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1 },
 });

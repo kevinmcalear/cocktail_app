@@ -60,7 +60,7 @@ function TonightCard({ event }: { event: WeekItem }) {
       onPress={() => router.push(`/e/${event.id}` as Href)}
       style={[styles.card, { backgroundColor: ds.c.surface, borderColor: color }]}
     >
-      <Caption color={color}>{`${kindLabel(event)} · ${when === 'Today' ? 'tonight' : when}`}</Caption>
+      <Caption color={color}>{`${kindLabel(event)} · ${when === 'Tonight' ? 'tonight' : when}`}</Caption>
       <Title>{event.name}</Title>
       <Caption tone="muted">{[detail, event.description].filter(Boolean).join('. ')}</Caption>
       {event.ticketUrl ? <TextLink label="Book or get tickets" onPress={() => Linking.openURL(event.ticketUrl!)} /> : null}

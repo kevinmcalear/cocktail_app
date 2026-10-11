@@ -8,11 +8,11 @@ import { detailLine, dotShape, dotTone, itemDay, kindLabel, shortDay, type WeekI
 
 const DOT = 8;
 
-/** The colour beside an item: the guest's, a tasting's, the venue accent, or quiet for a drink. Always next to its word. */
+/** The colour beside an item: the guest bar's brand (or the guest hue), a tasting's, the venue accent, or quiet for a drink. Always next to its word. */
 export function useDotColor() {
   const ds = useDs();
   const hues = palateHues[ds.scheme];
-  return (item: WeekItem) => ({ guest: hues.body, tasting: hues.green, accent: ds.accentText, muted: ds.c.muted })[dotTone(item)];
+  return (item: WeekItem) => ({ guest: item.guestColor ?? hues.body, tasting: hues.green, accent: ds.accentText, muted: ds.c.muted })[dotTone(item)];
 }
 
 export function WeekDot({ item, size = DOT }: { item: WeekItem; size?: number }) {

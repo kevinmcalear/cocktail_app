@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
-import { dayHeading, detailLine, kindLabel, type WeekItem } from '@/lib/week';
+import { dayHeading, detailLine, kindLabel, ticketHost, type WeekItem } from '@/lib/week';
 
 import { useDotColor, WeekDot, WeekLine, weekHref } from './WeekParts';
 
@@ -73,8 +73,14 @@ function WeekCard({ item, member, bar }: { item: WeekItem; member: boolean; bar?
   const ds = useDs();
   const router = useRouter();
   const color = useDotColor()(item);
-  const detail = [bar ? item.barName : null, detailLine(item)].filter(Boolean).join(' · ');
+  const detail = [bar ? item.barName : null, detailLine(item, undefined, { tickets: false })].filter(Boolean).join(' · ');
   const teamOnly = item.kind === 'event' && !item.isPublic;
+  const host = ticketHost(item.ticketUrl);
+  // The questions guests ask about a night, each on its own line.
+  const notes = [
+    item.houseMenuOn && (item.eventKind === 'takeover' || item.eventKind === 'guest_shift') ? 'House menu still on' : null,
+    host ? `Tickets on ${host}` : null,
+  ].filter((n): n is string => !!n);
   return (
     <PressableScale
       role="link"
@@ -97,6 +103,9 @@ function WeekCard({ item, member, bar }: { item: WeekItem; member: boolean; bar?
       </View>
       <DsText numberOfLines={3}>{item.name}</DsText>
       {detail ? <Caption tone="muted">{detail}</Caption> : null}
+      {notes.map((n) => (
+        <Caption key={n}>{n}</Caption>
+      ))}
       {member && item.kind !== 'drink' ? (
         <View style={styles.kind}>
           <IconSymbol name={item.isPublic ? 'globe' : 'lock.fill'} size={12} color={ds.c.muted} />

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useUserId } from '@/ctx/AuthContext';
 import { viewerScoped } from '@/lib/authCache';
 import { supabase } from '@/lib/supabase';
-import { toWeekItem, WEEK_DAYS, weekStart, type EventKind, type WeekItem, type WeekRow } from '@/lib/week';
+import { toWeekItem, WEEK_DAYS, weekStart, withGuestColors, type BarPlace, type EventKind, type WeekItem, type WeekRow } from '@/lib/week';
 
 /**
  * This week (20261012600000_this_week.sql): a bar's week for its team or its
@@ -29,7 +29,7 @@ export function useBarWeek(barId: string | null | undefined) {
     queryFn: async (): Promise<WeekItem[]> => {
       const { data, error } = await supabase.rpc('bar_week', { p_bar_id: barId, p_from: from.toISOString(), p_days: WEEK_DAYS });
       if (error) throw error;
-      return ((data ?? []) as WeekRow[]).map(toWeekItem);
+      return withGuestColors(((data ?? []) as WeekRow[]).map(toWeekItem));
     },
   });
 }
@@ -44,7 +44,7 @@ export function useMyWeek() {
     queryFn: async (): Promise<WeekItem[]> => {
       const { data, error } = await supabase.rpc('my_week', { p_from: from.toISOString(), p_days: WEEK_DAYS });
       if (error) throw error;
-      return ((data ?? []) as WeekRow[]).map(toWeekItem);
+      return withGuestColors(((data ?? []) as WeekRow[]).map(toWeekItem));
     },
   });
 }
@@ -64,6 +64,23 @@ export function useWeekEvent(id: string | null | undefined) {
   });
 }
 
+/** Where a bar is, from its public page (readable signed out), for Directions. */
+export function useBarPlace(profileId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['week', 'place', profileId],
+    enabled: !!profileId,
+    queryFn: async (): Promise<BarPlace | null> => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name, address_line, locality, postcode, city, latitude, longitude')
+        .eq('id', profileId!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as BarPlace | null) ?? null;
+    },
+  });
+}
+
 /** The team's own copy of an event, for editing: notes and the menu included. */
 export interface EventDraft {
   id?: string;
@@ -74,13 +91,15 @@ export interface EventDraft {
   ends_at: string | null;
   is_public: boolean;
   house_menu_on: boolean;
+  /** The guest, when it's a bar profile here; guest_name is the free-text fallback. */
+  guest_profile_id: string | null;
   guest_name: string | null;
   description: string | null;
   ticket_url: string | null;
   menu_id: string | null;
 }
 
-const DRAFT_COLUMNS = 'id, bar_id, name, kind, starts_at, ends_at, is_public, house_menu_on, guest_name, description, ticket_url, menu_id';
+const DRAFT_COLUMNS = 'id, bar_id, name, kind, starts_at, ends_at, is_public, house_menu_on, guest_profile_id, guest_name, description, ticket_url, menu_id';
 
 export function useEventDraft(id: string | null | undefined) {
   const userId = useUserId();

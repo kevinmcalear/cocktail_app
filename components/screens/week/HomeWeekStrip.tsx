@@ -44,7 +44,7 @@ function WeekCard({ item, from, wide }: { item: WeekItem; from: Date; wide: bool
   const router = useRouter();
   const color = useDotColor()(item);
   const day = shortDay(itemDay(item), from);
-  const when = [day === 'Today' && item.kind === 'event' ? 'Tonight' : day, item.kind === 'event' ? timeLine(item)?.split(' to ')[0] : kindLabel(item).toLowerCase()]
+  const when = [day, item.kind === 'event' ? timeLine(item)?.split(' to ')[0] : kindLabel(item).toLowerCase()]
     .filter(Boolean)
     .join(' · ');
   const detail = [item.kind === 'home_menu' ? null : item.barName, detailLine(item)].filter(Boolean).join(' · ');
@@ -55,7 +55,7 @@ function WeekCard({ item, from, wide }: { item: WeekItem; from: Date; wide: bool
       onPress={() => router.push(weekHref(item, false))}
       style={[styles.card, { width: wide ? 260 : 200, backgroundColor: ds.c.surface, borderColor: wide ? color : ds.c.line }]}
     >
-      <Caption color={day === 'Today' ? ds.accentText : ds.c.muted}>{when}</Caption>
+      <Caption color={day === 'Tonight' ? ds.accentText : ds.c.muted}>{when}</Caption>
       <DsText numberOfLines={2} variant={wide ? 'headline' : 'body'}>
         {item.name}
       </DsText>
