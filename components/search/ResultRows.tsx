@@ -2,12 +2,15 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, IngredientThumb, PressableScale, Tag, useDs, type IconName } from '@/components/ds';
+import { Button, Caption, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
-import { closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
+import { withAlpha } from '@/lib/color';
+import { closedLabel, drinkCount, type DiscoverBar } from '@/lib/discoverDrinks';
 import { groupLabel, moreCount, moreLabel, PER_GROUP } from '@/lib/searchScope';
+
+import { useSearchNavRow } from './searchNav';
 
 const THUMB = 56;
 
@@ -21,18 +24,28 @@ interface ResultRowProps {
   ingredient?: { id: string | null };
   /** A short label after the caption ("Closed 2019"); the avatar fades with it. */
   tag?: string;
+  /** At the end: a score (RowScore). Say it in `label` too. */
+  trailing?: ReactNode;
+  /** What was searched: its words are lit in the title. */
+  query?: string;
+  matchLook?: MatchTextProps['look'];
+  /** What a screen reader hears, when it should say more than the title, caption and tag. */
+  label?: string;
   onPress: () => void;
 }
 
 /** A search result that isn't a drink: the same row as DrinkRow, with an icon or avatar. */
-export function ResultRow({ title, caption, icon, avatar, ingredient, tag, onPress }: ResultRowProps) {
+export function ResultRow({ title, caption, icon, avatar, ingredient, tag, trailing, query, matchLook, label, onPress }: ResultRowProps) {
   const ds = useDs();
+  // In the ⌘K palette: the row the arrow keys are on, which Return opens.
+  const nav = useSearchNavRow();
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={[title, caption, tag].filter(Boolean).join('. ')}
+      accessibilityLabel={label ?? [title, caption, tag].filter(Boolean).join('. ')}
       onPress={onPress}
-      style={[styles.row, { borderBottomColor: ds.c.line }]}
+      nativeID={nav.nativeID}
+      style={[styles.row, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
     >
       <View style={[styles.thumb, !avatar && !ingredient && { backgroundColor: ds.c.surface }, tag ? styles.faded : null]}>
         {ingredient ? (
@@ -44,7 +57,9 @@ export function ResultRow({ title, caption, icon, avatar, ingredient, tag, onPre
         )}
       </View>
       <View style={styles.text}>
-        <Headline numberOfLines={1}>{title}</Headline>
+        <Headline numberOfLines={1}>
+          <MatchText text={title} query={query} look={matchLook} />
+        </Headline>
         <View style={styles.captionRow}>
           {caption ? (
             <Caption tone="muted" numberOfLines={1} style={styles.shrink}>
@@ -54,21 +69,33 @@ export function ResultRow({ title, caption, icon, avatar, ingredient, tag, onPre
           {tag ? <Tag label={tag} /> : null}
         </View>
       </View>
+      {trailing}
+      {nav.active ? <Caption tone="muted">Open ↵</Caption> : null}
     </PressableScale>
   );
 }
 
 const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', ');
 
-/** A bar, opening its page. A closed one says when it shut, so nobody plans a night around it. */
-export function BarResultRow({ bar }: { bar: DiscoverBar }) {
+/**
+ * A bar, opening its page: where it is (and how far, in an area), how many
+ * of its drinks match, and its bar score at the end (b02). A closed one says
+ * when it shut, so nobody plans a night around it.
+ */
+export function BarResultRow({ bar, score, away, query, matchLook }: { bar: DiscoverBar; score?: number; away?: string | null; query?: string; matchLook?: MatchTextProps['look'] }) {
   const router = useRouter();
+  const caption = [bar.locality || bar.city, away, bar.drinks ? drinkCount(bar.drinks) : null].filter(Boolean).join(' · ') || place(bar) || undefined;
+  const said = scoreWords(score, score !== undefined ? 'bar score' : null);
   return (
     <ResultRow
       title={bar.name}
-      caption={place(bar) || undefined}
+      caption={caption}
       avatar={{ uri: bar.logo }}
       tag={bar.closed ? closedLabel(bar.closedYear) : undefined}
+      trailing={bar.closed ? null : <RowScore score={score} detail={score !== undefined ? 'bar' : null} />}
+      query={query}
+      matchLook={matchLook}
+      label={said ? [bar.name, caption, said].filter(Boolean).join('. ') : undefined}
       onPress={() => router.push(`/p/${bar.handle || bar.id}`)}
     />
   );
@@ -88,7 +115,7 @@ export function ResultGroup<T>({ label, items, render }: ResultGroupProps<T>) {
   const more = moreLabel(items.length, shown.length);
   return (
     <View style={styles.group}>
-      <Caption tone="muted" role="heading">
+      <Caption tone="muted" role="heading" style={styles.cap}>
         {groupLabel(label, items.length)}
       </Caption>
       <View role="list">{shown.map(render)}</View>
@@ -104,6 +131,8 @@ const styles = StyleSheet.create({
   captionRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   shrink: { flexShrink: 1 },
   faded: { opacity: 0.5 },
+  active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
   group: { gap: space.xs },
+  cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
   more: { alignSelf: 'flex-start' },
 });

@@ -25,7 +25,7 @@ const PASSWORD = `pw-${randomUUID()}`;
 const clientOptions = { auth: { persistSession: false, autoRefreshToken: false } };
 const service = createClient(status.API_URL, status.SERVICE_ROLE_KEY, clientOptions);
 
-// costs opens at Admin (40) by default; prep at Drink Creator (35).
+// costs and prep open at Drink Creator (35) by default (costs since 20261014220000).
 const ROLES = { employee: 20, creator: 35, admin: 40 };
 const users = {};
 const ids = {};
@@ -95,17 +95,17 @@ describe('menu price', () => {
 });
 
 describe('pack prices', () => {
-  test('the creator sets the pack, only the admin the price, and only once the bar has a currency', async () => {
+  test('the creator sets the pack and the price, an employee neither, and only once the bar has a currency', async () => {
     const pack = await users.creator.client.from('item_purchasing').upsert({ bar_id: ids.bar, item_id: ids.rum, pack_size_amount: 700, pack_size_unit: 'ml' }, { onConflict: 'bar_id,item_id' });
     assert.ifError(pack.error);
-    const asCreator = await users.creator.client.from('item_costs').upsert({ bar_id: ids.bar, item_id: ids.rum, pack_cost_minor: 2200 }, { onConflict: 'bar_id,item_id' });
-    assert.ok(asCreator.error, 'costs need the costs capability');
-    const asAdmin = await users.admin.client.from('item_costs').upsert({ bar_id: ids.bar, item_id: ids.rum, pack_cost_minor: 2200 }, { onConflict: 'bar_id,item_id' }).select('pack_cost_minor').single();
-    assert.ifError(asAdmin.error);
-    assert.equal(asAdmin.data.pack_cost_minor, 2200);
-    const read = await users.creator.client.from('item_costs').select('pack_cost_minor').eq('bar_id', ids.bar);
+    const asEmployee = await users.employee.client.from('item_costs').upsert({ bar_id: ids.bar, item_id: ids.rum, pack_cost_minor: 2200 }, { onConflict: 'bar_id,item_id' });
+    assert.ok(asEmployee.error, 'costs need the costs capability');
+    const asCreator = await users.creator.client.from('item_costs').upsert({ bar_id: ids.bar, item_id: ids.rum, pack_cost_minor: 2200 }, { onConflict: 'bar_id,item_id' }).select('pack_cost_minor').single();
+    assert.ifError(asCreator.error);
+    assert.equal(asCreator.data.pack_cost_minor, 2200);
+    const read = await users.employee.client.from('item_costs').select('pack_cost_minor').eq('bar_id', ids.bar);
     assert.ifError(read.error);
-    assert.equal(read.data.length, 0, 'a Drink Creator never sees the price');
+    assert.equal(read.data.length, 0, 'an Employee never sees the price');
     await service.from('item_costs').delete().eq('bar_id', ids.bar);
     await service.from('bars').update({ currency: null }).eq('id', ids.bar);
     const noCurrency = await users.admin.client.from('item_costs').upsert({ bar_id: ids.bar, item_id: ids.rum, pack_cost_minor: 2200 }, { onConflict: 'bar_id,item_id' });

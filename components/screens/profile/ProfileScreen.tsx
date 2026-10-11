@@ -14,6 +14,7 @@ import { useBarFacts } from '@/hooks/useBarFacts';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, useProfilePicks, useProfilePositions, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
+import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { hadStats, topFour } from '@/lib/hadDrinks';
 import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { barsCrediting, personTabs, pickedShown, profileLine } from '@/lib/profiles';
@@ -84,9 +85,8 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const { data: profile, isLoading, error } = useProfile(profileRef);
   // A person's page is for people who've signed in; a bar's opens to anyone.
   const gated = profile?.kind === 'person' && !signedIn;
-  const q = useLocalSearchParams<{ q?: string }>().q; // opened from a search: the way back carries it
-  const searched = typeof q === 'string' && q.trim() ? q.trim() : null;
-
+  const searched = useLocalSearchParams<{ q?: string }>().q?.toString().trim() || null; // opened from a search: the way back carries it
+  useTrackRecent(profile?.kind === 'bar', profile ? recentEntry('bar', profile.id, profile.display_name, { href: `/p/${profile.handle || profile.id}`, imageUrl: profile.avatar_url, barId: null }) : null);
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
       <GlassButton
