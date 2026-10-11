@@ -8,7 +8,7 @@ import { CodeField } from '@/components/auth/CodeField';
 import { Button, Caption, Field, TextLink } from '@/components/ds';
 import { fontFamilies, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
-import { CODE_LENGTH, RESEND_AFTER, emailLooksRight, sendProblem, verifyProblem } from '@/lib/authCode';
+import { CODE_LENGTH, RESEND_AFTER, emailLooksRight, formatWait, sendProblem, verifyProblem } from '@/lib/authCode';
 
 /**
  * Sign in, or sign up, with a code from an email: no password. Step one asks
@@ -71,37 +71,31 @@ export function SignInScreen({ brand, subtitle }: { brand?: AuthBrand; subtitle?
   };
 
   if (sentTo) {
+    const changeEmail = () => {
+      setSentTo(null);
+      setError(null);
+    };
     return (
       <AuthShell
         title="Check your email"
+        titleSize="title"
         subtitle={`We sent a code to ${sentTo}. Type it here, or tap the button in the email on this device.`}
         brand={brand}
-        footer={<AuthLink label="Help and support" href="/support" muted />}
+        onBack={changeEmail}
       >
         <CodeField value={code} onChangeText={onCode} invalid={wrongCode} disabled={busy} />
         {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
-        <Button
-          label={busy ? 'Checking…' : 'Sign in'}
-          size="lg"
-          onPress={() => void check(code)}
-          disabled={busy || code.length < CODE_LENGTH}
-        />
+        {busy ? <Caption tone="muted">Checking…</Caption> : null}
         {Platform.OS === 'ios' ? (
           <Button label="Open Mail" variant="secondary" onPress={() => void Linking.openURL('message://').catch(() => {})} />
         ) : null}
         <View style={styles.after}>
-          <Caption tone="muted">
-            {wait > 0 ? `Nothing yet? Check spam. You can ask for a new code in ${wait}s.` : 'Nothing yet? Check spam, or send a new code.'}
-          </Caption>
+          <View style={styles.resend}>
+            <Caption tone="muted">{wait > 0 ? `Nothing yet? Check spam, or send a new code in ${formatWait(wait)}.` : 'Nothing yet? Check spam, or'}</Caption>
+            {wait > 0 ? null : <TextLink label="send a new code" onPress={() => void send(sentTo)} />}
+          </View>
           <View style={styles.links}>
-            {wait > 0 ? null : <TextLink label="Send a new code" onPress={() => void send(sentTo)} />}
-            <TextLink
-              label="Use a different email"
-              onPress={() => {
-                setSentTo(null);
-                setError(null);
-              }}
-            />
+            <TextLink label="Use a different email" onPress={changeEmail} />
           </View>
         </View>
       </AuthShell>
@@ -148,6 +142,7 @@ export function SignInScreen({ brand, subtitle }: { brand?: AuthBrand; subtitle?
 
 const styles = StyleSheet.create({
   after: { gap: space.xs },
+  resend: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.xs },
   links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.lg },
   legal: { fontFamily: fontFamilies.bodySemiBold, textDecorationLine: 'underline' },
 });

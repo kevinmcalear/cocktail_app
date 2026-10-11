@@ -15,12 +15,15 @@ export function NameStep({
   initialName,
   forceHandle,
   pendingFinish,
+  invited,
   onSaved,
   onSkip,
 }: {
   initialName: string;
   forceHandle: boolean;
   pendingFinish: boolean;
+  /** Joined through a venue's invite: other devices sign in by code, and setup can't be skipped. */
+  invited?: boolean;
   onSaved: (name: string, handle: string) => void;
   onSkip: () => void;
 }) {
@@ -52,8 +55,9 @@ export function NameStep({
           maxLength={31}
         />
       ) : null}
+      {invited ? <Caption tone="muted">On your other devices, sign in with this email and we’ll send a code. No password to remember.</Caption> : null}
       <Button label="Continue" onPress={submit} disabled={pendingFinish} />
-      <Button label="Not now" variant="ghost" onPress={onSkip} disabled={pendingFinish} />
+      {invited ? null : <Button label="Not now" variant="ghost" onPress={onSkip} disabled={pendingFinish} />}
     </View>
   );
 }

@@ -241,6 +241,8 @@ describe('OnboardingScreen', () => {
     expect(screen.getByText('Step 1 of 3')).toBeTruthy();
     expect(screen.getByLabelText('Name').props.value).toBe('Sam Rivera');
     expect(screen.queryByLabelText('Password')).toBeNull();
+    expect(screen.getByText(/On your other devices, sign in with this email/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Not now' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(mockSaveName).toHaveBeenCalledWith({ name: 'Sam Rivera', handle: 'sam.rivera', profileId: null }, expect.anything());
     expect(mockSaveWork).toHaveBeenCalledWith({ personId: 'p1', barId: 'bp', title: 'Bartender' }, expect.anything());

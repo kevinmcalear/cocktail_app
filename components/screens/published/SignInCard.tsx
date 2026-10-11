@@ -15,7 +15,7 @@ export function SignInCard({ title = 'Want to see more?', text }: { title?: stri
       <Headline role="heading">{title}</Headline>
       <Body tone="muted">{text}</Body>
       <View style={styles.actions}>
-        <Button label="Sign in or join" onPress={() => router.push('/auth/login')} />
+        <Button label="Sign in" onPress={() => router.push('/auth/login')} />
       </View>
     </Surface>
   );

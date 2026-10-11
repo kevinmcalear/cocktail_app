@@ -179,6 +179,7 @@ export function OnboardingScreen() {
           key={handleTaken ? 'handle' : 'name'}
           initialName={draft?.name || profile.data?.displayName || joined?.name || ''}
           forceHandle={handleTaken}
+          invited={!!joined}
           pendingFinish={finish.isPending || saveProfile.isPending}
           onSaved={saveName}
           onSkip={() => finish.mutate()}

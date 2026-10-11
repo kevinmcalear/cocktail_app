@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { CODE_LENGTH, cleanCode, emailLooksRight, isFirstSignIn, sendProblem, verifyProblem } from './authCode';
+import { CODE_LENGTH, cleanCode, emailLooksRight, formatWait, isFirstSignIn, sendProblem, verifyProblem } from './authCode';
 
 // Pasted codes keep their digits only, cut to the code's length.
 assert.equal(cleanCode('482 913'), '482913');
@@ -25,3 +25,9 @@ assert.match(verifyProblem({ message: 'x', code: 'over_request_rate_limit' }), /
 assert.equal(isFirstSignIn({ email_confirmed_at: '2026-10-10T12:00:00.100Z', last_sign_in_at: '2026-10-10T12:00:00.400Z' }), true);
 assert.equal(isFirstSignIn({ email_confirmed_at: '2026-09-01T12:00:00Z', last_sign_in_at: '2026-10-10T12:00:00Z' }), false);
 assert.equal(isFirstSignIn({ last_sign_in_at: '2026-10-10T12:00:00Z' }), false);
+
+// The resend countdown reads m:ss.
+assert.equal(formatWait(42), '0:42');
+assert.equal(formatWait(60), '1:00');
+assert.equal(formatWait(5), '0:05');
+assert.equal(formatWait(0), '0:00');

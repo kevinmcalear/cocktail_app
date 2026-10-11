@@ -48,3 +48,23 @@ test('a wrong code says so and how to fix it', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Use a different email' }));
   expect(screen.getByLabelText('Email').props.value).toBe('jo@example.com');
 });
+
+test('the code step signs in on its own: Back, a countdown, no Sign in button or footer', async () => {
+  await renderWithTamagui(<SignInScreen />);
+  await fireEvent.changeText(screen.getByLabelText('Email'), 'jo@example.com');
+  await fireEvent.press(screen.getByRole('button', { name: 'Email me a code' }));
+  await screen.findByText('Check your email');
+
+  expect(screen.queryByRole('button', { name: 'Sign in' })).toBeNull();
+  expect(screen.queryByText('Help and support')).toBeNull();
+  expect(screen.getByText('Nothing yet? Check spam, or send a new code in 1:00.')).toBeTruthy();
+
+  await fireEvent.press(screen.getByLabelText('Back'));
+  expect(screen.getByLabelText('Email').props.value).toBe('jo@example.com');
+});
+
+test('a venue staff link without a logo wears its initials', async () => {
+  await renderWithTamagui(<SignInScreen brand={{ name: 'Little Rye', logoUrl: null }} />);
+  expect(screen.getByLabelText('Little Rye logo')).toBeTruthy();
+  expect(screen.getByText('LR')).toBeTruthy();
+});

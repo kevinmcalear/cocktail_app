@@ -13,6 +13,12 @@ export const CODE_LENGTH = 6;
 /** Seconds before another code can be sent (Auth's own limit per address is 60). */
 export const RESEND_AFTER = 60;
 
+/** Seconds as m:ss for the resend countdown: 42 -> "0:42". */
+export function formatWait(seconds: number): string {
+  const s = Math.max(0, Math.ceil(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
 /** Digits only, at most CODE_LENGTH: a pasted "482 913" or "482-913" still works. */
 export function cleanCode(text: string): string {
   return text.replace(/\D/g, '').slice(0, CODE_LENGTH);
