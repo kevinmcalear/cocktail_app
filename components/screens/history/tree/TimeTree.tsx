@@ -129,7 +129,8 @@ export function TimeTree({
       >
         {selected ? <View style={[styles.ring, { left: cx - MARK / 2 - 4, borderColor: ds.accentText }]} /> : null}
         <View style={[styles.mark, { left: cx - MARK / 2 }, r.tier !== 'style' ? styles.round : null, mark]} />
-        <View style={[styles.label, right ? { right: W - cx + space.md, flexDirection: 'row-reverse' } : { left: cx + space.md }]}>
+        {/* The label sits on the ground, so a riff's line never runs through its text. */}
+        <View style={[styles.label, { backgroundColor: selected ? ds.c.raised : ds.c.ground }, right ? { right: W - cx + space.sm, flexDirection: 'row-reverse' } : { left: cx + space.sm }]}>
           <Caption
             numberOfLines={1}
             color={selected ? ds.accentText : undefined}
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
   mark: { position: 'absolute', width: MARK, height: MARK, top: (ROW - MARK) / 2 },
   round: { borderRadius: radius.pill },
   ring: { position: 'absolute', width: MARK + 8, height: MARK + 8, top: (ROW - MARK) / 2 - 4, borderRadius: radius.pill, borderWidth: 2 },
-  label: { position: 'absolute', top: 0, height: ROW, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  label: { position: 'absolute', top: space.xs, height: ROW - space.sm, flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.xs },
   name: { fontFamily: fontFamilies.bodyMedium },
   picked: { fontFamily: fontFamilies.bodySemiBold },
   styleName: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
