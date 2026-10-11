@@ -1,9 +1,9 @@
 import * as Haptics from 'expo-haptics';
 import { useRef, useState, type ReactNode } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Display, GlassButton, Headline, Sheet, Tag, Title, useBreakpoint, useSheetClose } from '@/components/ds';
+import { Body, Button, Caption, Display, GlassButton, Headline, Sheet, SheetScrollView, Tag, Title, useBreakpoint, useSheetClose } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useAddRankEntry, useRecordComparisons, type RankEntry, type RankVenue } from '@/hooks/useRankings';
 import { heroPicture, type ItemPicture } from '@/lib/itemImages';
@@ -199,7 +199,7 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
   }
   return (
     <Sheet visible onClose={onClose} accessibilityLabel={`Rank ${drink.name}`} style={styles.sheet}>
-      <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
+      <SheetScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
         <View style={styles.close}>
           <CloseX />
         </View>
@@ -211,7 +211,7 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
             <Button label="Try again" variant="secondary" onPress={() => void save(sentiment!, answers, skipped)} />
           </View>
         ) : null}
-      </ScrollView>
+      </SheetScrollView>
     </Sheet>
   );
 }

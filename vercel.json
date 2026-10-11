@@ -99,6 +99,10 @@
       "destination": "/settings/bar/[id]/pricing"
     },
     {
+      "source": "/settings/bar/:id/calendars",
+      "destination": "/settings/bar/[id]/calendars"
+    },
+    {
       "source": "/settings/bar/:id/releases/:releaseId",
       "destination": "/settings/bar/[id]/releases/[releaseId]"
     },

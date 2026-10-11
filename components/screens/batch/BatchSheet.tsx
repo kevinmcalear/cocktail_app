@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Caption, LockedSection, PressableScale, Segmented, Sheet, Spec, Title, useDs, useSheetClose } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, LockedSection, PressableScale, Segmented, Sheet, SheetScrollView, Spec, Title, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { layout, space } from '@/constants/tokens';
@@ -242,7 +242,7 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+    <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <View style={styles.head}>
         <View style={styles.flex}>
           <Title>Batch</Title>
@@ -253,7 +253,7 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
         </PressableScale>
       </View>
       {body}
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 

@@ -1,7 +1,7 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, DrinkImage, PressableScale, Sheet, Title, useDs, useSheetClose } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, DrinkImage, PressableScale, Sheet, SheetScrollView, Title, useDs, useSheetClose } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { topDrinkCaption, type BarTopDrink } from '@/lib/barTopDrinks';
 
@@ -31,7 +31,7 @@ function Picks({ barName, drinks, onPick }: Omit<RankPickSheetProps, 'visible' |
   const insets = useSafeAreaInsets();
   const close = useSheetClose();
   return (
-    <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.lg }]}>
+    <SheetScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + space.lg }]}>
       <Title>Rank a drink</Title>
       <Body tone="muted">{`What did you have at ${barName}?`}</Body>
       <View role="list">
@@ -57,7 +57,7 @@ function Picks({ barName, drinks, onPick }: Omit<RankPickSheetProps, 'visible' |
         })}
       </View>
       <Button label="Cancel" variant="ghost" onPress={close} />
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 
