@@ -16,7 +16,7 @@ import {
   useBreakpoint,
   useDs,
 } from '@/components/ds';
-import { VenueMark } from '@/components/nav/VenueSwitcher';
+import { VenueMark } from '@/components/nav/VenueMarks';
 import { radius, space, type DisplayFace } from '@/constants/tokens';
 
 export interface BrandLook {

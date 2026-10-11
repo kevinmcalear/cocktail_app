@@ -1,16 +1,9 @@
 import React from "react";
-import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    StyleSheet,
-    TouchableOpacity,
-    View,
-    type ViewStyle,
-} from "react-native";
+import { StyleSheet, TouchableOpacity, View, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, useTheme } from "tamagui";
 
+import { Sheet, sheetIsDialog, useSheetClose } from "@/components/ds";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 
 interface AdaptiveSheetModalProps {
@@ -23,6 +16,7 @@ interface AdaptiveSheetModalProps {
     onShow?: () => void;
 }
 
+/** The older screens' titled sheet, on the app's one Sheet (components/ds/Sheet). */
 export function AdaptiveSheetModal({
     visible,
     onClose,
@@ -33,100 +27,45 @@ export function AdaptiveSheetModal({
 }: AdaptiveSheetModalProps) {
     const theme = useTheme();
     const insets = useSafeAreaInsets();
-    const isWeb = Platform.OS === "web";
 
     return (
-        <Modal
+        <Sheet
             visible={visible}
-            transparent
-            animationType={isWeb ? "fade" : "slide"}
-            onRequestClose={onClose}
+            onClose={onClose}
             onShow={onShow}
+            accessibilityLabel={title ?? "Sheet"}
+            keyboard
+            style={{
+                backgroundColor: theme.background?.get() as string,
+                maxHeight,
+                paddingBottom: sheetIsDialog ? 24 : insets.bottom + 16,
+            }}
+            header={<Header title={title} color={theme.color11?.get() as string} />}
         >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-                style={{ flex: 1 }}
-            >
-                <View style={[styles.overlay, isWeb && styles.overlayWeb]}>
-                    <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
-                    <View
-                        style={[
-                            styles.panel,
-                            isWeb ? styles.panelWeb : styles.panelMobile,
-                            {
-                                backgroundColor: theme.background?.get() as string,
-                                maxHeight,
-                                paddingBottom: isWeb ? 24 : insets.bottom + 16,
-                            },
-                        ]}
-                    >
-                        {/* No grabber: this Modal doesn't drag, so the X is the affordance. */}
-                        {(
-                            <View style={styles.header}>
-                                {title ? (
-                                    <Text
-                                        fontSize={14}
-                                        color="$color11"
-                                        textTransform="uppercase"
-                                        letterSpacing={1}
-                                        fontWeight="600"
-                                    >
-                                        {title}
-                                    </Text>
-                                ) : (
-                                    <View />
-                                )}
-                                <TouchableOpacity onPress={onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="Close">
-                                    <IconSymbol name="xmark" size={20} color={theme.color11?.get() as string} />
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                        {children}
-                    </View>
-                </View>
-            </KeyboardAvoidingView>
-        </Modal>
+            {children}
+        </Sheet>
+    );
+}
+
+function Header({ title, color }: { title?: string; color: string }) {
+    const close = useSheetClose();
+    return (
+        <View style={styles.header}>
+            {title ? (
+                <Text fontSize={14} color="$color11" textTransform="uppercase" letterSpacing={1} fontWeight="600">
+                    {title}
+                </Text>
+            ) : (
+                <View />
+            )}
+            <TouchableOpacity onPress={close} hitSlop={12} role="button" accessibilityLabel="Close">
+                <IconSymbol name="xmark" size={20} color={color} />
+            </TouchableOpacity>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        justifyContent: "flex-end",
-    },
-    overlayWeb: {
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 24,
-    },
-    panel: {
-        width: "100%",
-    },
-    panelMobile: {
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-    },
-    panelWeb: {
-        maxWidth: 520,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.08)",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.35,
-        shadowRadius: 24,
-        boxShadow: "0 16px 48px rgba(0,0,0,0.45)",
-    },
-    grabber: {
-        alignSelf: "center",
-        width: 40,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: "rgba(255,255,255,0.35)",
-        marginTop: 10,
-        marginBottom: 8,
-    },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",

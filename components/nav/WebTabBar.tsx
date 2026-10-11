@@ -1,5 +1,5 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
@@ -9,14 +9,16 @@ import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 
+import { CalendarDayIcon } from './CalendarDayIcon';
+
 export type WebTab = { name: string; label: string; icon: IconName };
 
 const DISCOVER: WebTab = { name: 'discover', label: 'Discover', icon: 'safari' };
 
 /** Prep and Study only when they're switched on (constants/features.ts). */
 export const VENUE_TABS: WebTab[] = [
-  { name: 'index', label: 'Tonight', icon: 'moon.stars' },
-  { name: 'library', label: 'Library', icon: 'square.grid.2x2' },
+  { name: 'index', label: 'Tonight', icon: 'calendar' },
+  { name: 'library', label: 'Library', icon: 'book' },
   FEATURES.prep && { name: 'prep', label: 'Prep', icon: 'flask' },
   FEATURES.study && { name: 'test', label: 'Study', icon: 'rectangle.stack' },
   DISCOVER,
@@ -28,6 +30,11 @@ export const HOME_TABS: WebTab[] = [
   { name: 'collection', label: 'Collection', icon: 'bookmark' },
   { name: 'profile', label: 'You', icon: 'person.crop.circle' },
 ];
+
+/** A tab's icon. 'calendar' is Tonight's page with the date on it; the rest are symbols. */
+export function TabIcon({ name, size, color }: { name: IconName; size: number; color: ColorValue }) {
+  return name === 'calendar' ? <CalendarDayIcon size={size} color={color} /> : <IconSymbol name={name} size={size} color={color} />;
+}
 
 const BAR_HEIGHT = 56;
 
@@ -76,7 +83,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
                 onPress={() => go(t.name)}
                 style={[styles.tab, selected && { backgroundColor: ds.c.line }]}
               >
-                <IconSymbol name={t.icon} size={20} color={color} />
+                <TabIcon name={t.icon} size={20} color={color} />
                 <DsText variant="caption" color={color} numberOfLines={1}>
                   {t.label}
                 </DsText>

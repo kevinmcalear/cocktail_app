@@ -20,8 +20,8 @@ const NO_PICKS: StaffPick[] = [];
 const FIRST_PAINT = 12;
 
 /**
- * The staff list in Library: the drinks every new hire should know, ranked to
- * 50, with cut lines after 10 and 20. Everyone at the venue reads it; Drink
+ * The staff list in Library: the drinks everyone here should know, most
+ * important first, ranked to 50, with cut lines after 10 and 20. Everyone at the venue reads it; Drink
  * Creators and up drag to reorder, add and remove (bar_off_menu, through
  * set_staff_list_order). It is the screen's scroll view, with the screen's
  * header above it: nested in another scroll view, its drag gesture takes
@@ -95,7 +95,7 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
   const top = (
     <View style={styles.top}>
       {header}
-      <Body tone="muted">The drinks every new hire should know, in order. Drink Creators and Admins can drag to reorder.</Body>
+      <Body tone="muted">The drinks everyone here should know, most important first. Drink Creators and Admins can drag to reorder.</Body>
       {picks.isLoading ? <Caption tone="muted">Loading the staff list…</Caption> : null}
       {picks.error ? <Body tone="muted">Couldn’t load the staff list. Check your connection and try again.</Body> : null}
       {edit.error ? <Caption>{plainDbMessage(edit.error) ?? 'Couldn’t save that. Check your connection and try again.'}</Caption> : null}

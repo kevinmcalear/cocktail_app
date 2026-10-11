@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 
+import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
 import { groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, sectionRule } from './menus';
@@ -18,6 +19,16 @@ assert.equal(menuStatus({ startsAt: null, endsAt: d('2026-09-20T00:00:00Z') }, n
 // The instant it starts, it's on; the instant it ends, it's previous.
 assert.equal(menuStatus({ startsAt: new Date(now).toISOString(), endsAt: null }, now), 'on');
 assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: new Date(now).toISOString() }, now), 'previous');
+
+// --- a home menu's night: dated is a finished menu, only undated is still a draft ---
+assert.equal(menuStatus({ startsAt: null, endsAt: null, menuDate: null }, now), 'draft');
+assert.equal(menuStatus({ startsAt: null, endsAt: null, menuDate: '2026-10-04' }, now), 'upcoming');
+// Tonight is the local day, whatever time zone the check runs in.
+assert.equal(menuStatus({ startsAt: null, endsAt: null, menuDate: toDay(new Date(now)) }, now), 'on');
+assert.equal(menuStatus({ startsAt: null, endsAt: null, menuDate: '2026-09-20' }, now), 'previous');
+// The venue calendar still wins when a menu has one.
+assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: null, menuDate: '2026-10-04' }, now), 'on');
+assert.equal(menuDateLine({ startsAt: null, endsAt: null, menuDate: '2026-10-04' }, now, 'en-GB'), null, 'its night is homeMenuLine');
 
 // --- grouping and order ---
 const menu = (id: string, startsAt: string | null, endsAt: string | null, createdAt = '2026-01-01T00:00:00Z'): MenuSummary => ({

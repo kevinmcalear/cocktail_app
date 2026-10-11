@@ -65,17 +65,19 @@ export function heroPicture(links: ItemImageLink[] | null | undefined): ItemPict
   return orderedPictures(links)[0] ?? null;
 }
 
-/** The small label shown on a picture, if any. */
+/**
+ * The small label shown on a picture, if any: only a photo taken before the
+ * spec changed. A drawing carries no tag: it's obviously a drawing (decided
+ * 10 Oct 2026, it read as an edit button).
+ */
 export function pictureTag(picture: Pick<ItemPicture, 'isSketch' | 'isOutdated'> | null | undefined): string | null {
-  if (!picture) return null;
-  if (picture.isSketch) return 'Sketch';
-  if (picture.isOutdated) return 'May be out of date';
-  return null;
+  return picture && !picture.isSketch && picture.isOutdated ? 'May be out of date' : null;
 }
 
 /** What a screen reader hears for one of an item's pictures: "Photo 2 of 4, sketch". */
 export function pictureLabel(picture: Pick<ItemPicture, 'isSketch' | 'isOutdated'>, index: number, total: number): string {
-  const tag = pictureTag(picture);
+  // Screen readers still hear it's a drawing: they can't see that it obviously is one.
+  const tag = picture.isSketch ? 'Sketch' : pictureTag(picture);
   const position = total > 1 ? `Photo ${index + 1} of ${total}` : 'Photo';
   return tag ? `${position}, ${tag.toLowerCase()}` : position;
 }

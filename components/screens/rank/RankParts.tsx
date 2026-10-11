@@ -113,7 +113,7 @@ export function VsCard({ side, onPress, height }: { side: VsSide; onPress: () =>
   const ds = useDs();
   return (
     <PressableScale accessibilityLabel={`${side.title}, ${side.name}: ${side.detail}`} onPress={onPress} style={[styles.card, { height, borderColor: ds.c.lineStrong }]}>
-      <DrinkImage thumb source={side.picture?.url} generated={side.picture?.isSketch} itemId={side.itemId} accessibilityLabel={side.name} radius={0} hideTag style={styles.fill} />
+      <DrinkImage thumb source={side.picture?.url} generated={side.picture?.isSketch} itemId={side.itemId} accessibilityLabel={side.name} radius={0} style={styles.fill} />
       <View style={[styles.label, { backgroundColor: ds.c.surface }]}>
         <Body style={styles.strong} numberOfLines={1}>
           {side.title}

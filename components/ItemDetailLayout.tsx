@@ -22,7 +22,7 @@ export interface ItemDetailLayoutProps {
     id: string;
     title: string;
     images: string[];
-    /** A label per image ("Sketch", "May be out of date"), or null. */
+    /** A label per image ("May be out of date"), or null. Drawings carry none. */
     imageTags?: (string | null)[];
     isLoading?: boolean;
     isFavorite: boolean;
