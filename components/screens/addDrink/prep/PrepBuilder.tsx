@@ -90,6 +90,7 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
   return (
     <WizardFrame
       testID="add-prep"
+      overNav
       pageTitle={`New prep: ${name}`}
       band={(place) => (
         <PaperBand

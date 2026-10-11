@@ -25,6 +25,8 @@ export interface WizardFrameProps {
   pageTitle: string;
   /** Inside the desktop workspace: no safe-area padding. */
   embedded?: boolean;
+  /** Over the whole screen (a modal): there is no side nav to sit beside, so the column stays centred. */
+  overNav?: boolean;
   band: (place: BandPlace) => ReactNode;
   /** Changes with the step, so its body slides in. */
   stepKey: string;
@@ -46,13 +48,13 @@ export interface WizardFrameProps {
  * that scrolls as a page: the band as a rounded card, the step, then Skip
  * and Next at its end.
  */
-export function WizardFrame({ testID, pageTitle, embedded, band, stepKey, direction, eyebrow, title, intro, footer, onHardwareBack, children }: WizardFrameProps) {
+export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKey, direction, eyebrow, title, intro, footer, onHardwareBack, children }: WizardFrameProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
   // Beside the side nav on wide web the column sits left, next to it, never centred (b07).
-  const besideNav = useIsWideWeb() && !embedded;
+  const besideNav = useIsWideWeb() && !embedded && !overNav;
   const windowHeight = useWindowDimensions().height;
   const [height, setHeight] = useState(0);
 
