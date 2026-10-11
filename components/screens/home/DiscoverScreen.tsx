@@ -18,12 +18,14 @@ import { PickedBar } from '@/components/screens/home/SelectedBar';
 import { ForYou } from '@/components/screens/home/FlavorRails';
 import { TopBars } from '@/components/screens/home/TopBars';
 import { SearchBody, type SearchArea } from '@/components/search/SearchPanel';
+import { HomeWeekStrip } from '@/components/screens/week/HomeWeekStrip';
 import { radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useDrinkPick } from '@/hooks/useDiscover';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useDiscoverArea } from '@/hooks/useDiscoverArea';
 import { useSearchMine } from '@/hooks/useSearchMine';
+import { useMode } from '@/hooks/useMode';
 import { kindsTitle } from '@/lib/discoverDrinks';
 import { areaFromViewport, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { STYLES } from '@/lib/drinkStyles';
@@ -51,6 +53,7 @@ export function DiscoverScreen() {
   const gutter = useGutter();
   const bottom = useTabBarInset();
   const signedIn = !!useAuth().user;
+  const home = useMode().mode === 'home';
   const breakpoint = useBreakpoint();
   const { area, onArea, preferNear, near, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
   // Search's Browse chips open Discover on a style (/discover?kind=negroni).
@@ -211,6 +214,7 @@ export function DiscoverScreen() {
             {note}
           </Caption>
         ) : null}
+        {signedIn && home && !searching ? <HomeWeekStrip /> : null}
         {searching ? (
           <SearchBody query={search} scope={searchScope} onScope={setScope} mine={mine} area={searchArea} />
         ) : (
