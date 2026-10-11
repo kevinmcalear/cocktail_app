@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { saveItemAllergens } from '@/hooks/useAllergens';
 import { ensureIngredient } from '@/hooks/useCreateIngredient';
 import { isGarnishUnit } from '@/lib/batch';
 import type { NoteLine } from '@/lib/noteRecipe';
@@ -138,7 +139,12 @@ export function useLearnYield(itemId: string) {
  * storage, lead time, actions and steps. A base line that's a bottle (a fat
  * wash of Bacardí) is what the prep is made from.
  */
-export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>) {
+export async function savePrepRecipe(
+  itemId: string,
+  prep: PrepDraft,
+  ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>,
+  barId: string | null = null
+) {
   const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', itemId);
   if (role.error) throw role.error;
   const rows = [];
@@ -148,7 +154,7 @@ export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (p
     if (!line.name.trim() || line.slot) continue;
     const id = await ensure({ id: line.id, name: line.name }, 'ingredient');
     if (line.key === prep.baseKey) baseId = id;
-    rows.push({ recipe_item_id: itemId, ingredient_item_id: id, amount, unit: line.unit || null, sort_order: i });
+    rows.push({ recipe_item_id: itemId, ingredient_item_id: id, amount, unit: line.unit || null, preparation_notes: line.note?.trim() || null, sort_order: i });
   }
   if (rows.length) {
     const added = await supabase.from('recipes').insert(rows);
@@ -174,6 +180,8 @@ export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (p
     },
     steps: prep.steps,
   });
+  // Allergens the maker set by hand are declared, and checked, for where it's made.
+  if (prep.allergensSet) await saveItemAllergens(itemId, barId, prep.allergens ?? []);
 }
 
 /**

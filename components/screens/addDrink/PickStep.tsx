@@ -78,7 +78,7 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel, 
 }
 
 /** A one-line field with Add; Return adds too. */
-export function OwnField({ label, onAdd, placeholder }: { label: string; onAdd: (name: string) => void; placeholder?: string }) {
+export function OwnField({ label, onAdd, placeholder, autoFocus }: { label: string; onAdd: (name: string) => void; placeholder?: string; autoFocus?: boolean }) {
   const [text, setText] = useState('');
   const add = () => {
     const name = text.trim();
@@ -89,7 +89,7 @@ export function OwnField({ label, onAdd, placeholder }: { label: string; onAdd: 
   return (
     <View style={styles.own}>
       <View style={styles.flex}>
-        <Field label={label} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" placeholder={placeholder} maxLength={60} />
+        <Field label={label} value={text} onChangeText={setText} onSubmitEditing={add} returnKeyType="done" placeholder={placeholder} maxLength={60} autoFocus={autoFocus} />
       </View>
       <Button label="Add" variant="secondary" onPress={add} disabled={!text.trim()} />
     </View>

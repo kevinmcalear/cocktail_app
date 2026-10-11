@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, LockedSection, Tag, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, LockedSection, Tag, TextLink, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
-import { useItemVersions, useRestoreVersion, type ItemVersion } from '@/hooks/useVersions';
+import { useItemComments, useItemVersions, useRestoreVersion, type ItemVersion } from '@/hooks/useVersions';
 import { roleLabel } from '@/lib/roles';
 import { specDiff, versionLine } from '@/lib/specDiff';
 
@@ -20,22 +20,49 @@ interface HistorySectionProps {
  * Spec changes: every save of the spec as a version with what changed in
  * plain words, who and when, with restore for editors, and the team's notes
  * underneath. Versions open with the specs capability (a snapshot holds the
- * amounts); notes with talking points, so the floor can read them. Guests
- * see what changed on the public drink page, when the bar shows it
- * (PublicSpecChanges).
+ * amounts); notes with talking points, so the floor can read them. Folded to
+ * the latest version and the latest note (board drink-phone-venue) until
+ * someone opens the rest. Guests see what changed on the public drink page,
+ * when the bar shows it (PublicSpecChanges).
  */
 export function HistorySection({ itemId, barId, canEdit }: HistorySectionProps) {
+  const ds = useDs();
   const { data: capabilities } = useCapabilities(barId);
   const { data: opensAtLevel } = useCapabilityOpensAt(barId, 'specs');
   const unlocked = barId ? !!capabilities?.includes('specs') : canEdit;
   const { data: versions, isPending } = useItemVersions(itemId, unlocked);
+  const { data: notes = [] } = useItemComments(itemId, barId, unlocked && !!capabilities?.includes('talking_points'));
+  const [open, setOpen] = useState(false);
   if (!barId && !canEdit) return null;
+  const latest = versions?.[0];
+  const note = notes[notes.length - 1];
+  const earlier = (versions?.length ?? 1) - 1;
+  const more = [earlier ? `${earlier} earlier version${earlier === 1 ? '' : 's'}` : null, notes.length > 1 ? `${notes.length - 1} more note${notes.length === 2 ? '' : 's'}` : null]
+    .filter(Boolean)
+    .join(' and ');
   return (
     <LockedSection title="Spec changes" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Bartender'}>
       {isPending ? <Caption tone="muted">Loading…</Caption> : null}
       {versions && versions.length === 0 ? <Body tone="muted">No changes saved yet. Each save of the spec shows here.</Body> : null}
-      {versions?.length ? <Versions itemId={itemId} versions={versions} canEdit={canEdit} /> : null}
-      {barId ? <TeamNotes itemId={itemId} barId={barId} currentVersion={versions?.[0]?.version ?? null} /> : null}
+      {open && versions?.length ? <Versions itemId={itemId} versions={versions} canEdit={canEdit} /> : null}
+      {open && barId ? <TeamNotes itemId={itemId} barId={barId} currentVersion={latest?.version ?? null} /> : null}
+      {!open && latest ? (
+        <View accessible style={[styles.version, { borderLeftColor: ds.accentText }]}>
+          <View style={styles.head}>
+            <Headline>Version {latest.version}</Headline>
+            <Tag label="Current" tone="accent" />
+          </View>
+          <Caption tone="muted">{versionLine(latest.created_at, latest.created_by_name)}</Caption>
+          <Body>{specDiff(versions?.[1]?.snapshot ?? null, latest.snapshot).join(' · ') || latest.note || 'No changes recorded'}</Body>
+        </View>
+      ) : null}
+      {!open && note ? (
+        <View accessible style={styles.note}>
+          <Caption tone="muted">{`Team notes · ${note.author_name ?? 'Someone'}${note.version ? ` · v${note.version}` : ''}`}</Caption>
+          <Body numberOfLines={3}>{note.body}</Body>
+        </View>
+      ) : null}
+      {!open && (more || barId) && versions ? <TextLink label={more ? `${more} ›` : 'Add a team note ›'} onPress={() => setOpen(true)} /> : null}
     </LockedSection>
   );
 }
@@ -93,6 +120,7 @@ export function Versions({ itemId, versions, canEdit }: { itemId: string; versio
 const styles = StyleSheet.create({
   list: { gap: space.md },
   version: { borderLeftWidth: 2, paddingLeft: space.md, gap: space.xs },
+  note: { gap: space.xs },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   changes: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   change: { paddingHorizontal: space.sm, paddingVertical: 2, borderRadius: space.xs, overflow: 'hidden' },

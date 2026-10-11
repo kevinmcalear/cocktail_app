@@ -124,6 +124,16 @@ export function rankedAs(item: {
   return { id: item.id, name: item.name };
 }
 
+/**
+ * Where a drink stands in its area's list, as rows caption it:
+ * "#2 of 11 Martinis near you · 23 ranked". `where` is the area's words
+ * ("near you", "in New York"); a missing count is left out.
+ */
+export function rankCaption({ position, of, name, where, rankers }: { position: number; of: number; name: string; where?: string; rankers?: number }): string {
+  const place = [`#${position} of ${of} ${plural(name)}`, where].filter(Boolean).join(' ');
+  return rankers ? `${place} · ${rankers} ranked` : place;
+}
+
 /** "Martinis" for a list heading. Names already ending in s stay as they are ("Bee's Knees"). */
 export function plural(name: string): string {
   return /s$/i.test(name.trim()) ? name.trim() : `${name.trim()}s`;

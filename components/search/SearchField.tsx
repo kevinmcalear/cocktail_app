@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ComponentRef } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, PressableScale, useDs } from '@/components/ds';
+import { Button, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 
@@ -12,12 +12,24 @@ interface SearchFieldProps {
   autoFocus?: boolean;
   /** Return key: open the top result, or close the sheet. */
   onSubmit?: () => void;
-  /** Shows Done beside the field (sheets and the ⌘K palette). */
+  /** Shows Done beside the field (sheets), or the esc key cap inside it (the ⌘K palette, with `keys`). */
   onDone?: () => void;
+  /** The ⌘K palette: an esc key cap at the field's end in place of Done. */
+  keys?: boolean;
+}
+
+/** A keyboard key, as the palette's hints draw it: "esc", "tab", "↵". */
+export function KeyCap({ label }: { label: string }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.cap, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+      <Caption style={styles.capText}>{label}</Caption>
+    </View>
+  );
 }
 
 /** The search pill: an accent ring while it's in use, a clear button once something's typed. */
-export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone }: SearchFieldProps) {
+export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys }: SearchFieldProps) {
   const ds = useDs();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   // autoFocus alone loses to the button that opened the sheet, which keeps focus on web; focus once it has settled.
@@ -55,8 +67,13 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
             <IconSymbol name="xmark.circle.fill" size={22} color={ds.c.muted} />
           </PressableScale>
         ) : null}
+        {keys && onDone ? (
+          <PressableScale accessibilityLabel="Close the search (Escape)" onPress={onDone} style={styles.esc}>
+            <KeyCap label="esc" />
+          </PressableScale>
+        ) : null}
       </View>
-      {onDone ? <Button label="Done" variant="ghost" onPress={onDone} /> : null}
+      {onDone && !keys ? <Button label="Done" variant="ghost" onPress={onDone} /> : null}
     </View>
   );
 }
@@ -78,4 +95,7 @@ const styles = StyleSheet.create({
   },
   input: { ...type.body, fontFamily: fontFamilies.body, flex: 1, minWidth: 0, paddingVertical: space.md },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  esc: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingRight: space.md },
+  cap: { borderWidth: 1, borderRadius: radius.mark, paddingHorizontal: space.sm - 2, minWidth: space.xl, alignItems: 'center' },
+  capText: { fontFamily: fontFamilies.monoMedium },
 });

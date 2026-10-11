@@ -1,5 +1,5 @@
 import { useDropdowns } from '@/hooks/useDropdowns';
-import { classifyMethod, type BatchMethod } from '@/lib/batch';
+import { classifyMethod, isGarnishUnit, type BatchMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
 import { formatIce, glassFit } from '@/lib/glass';
@@ -64,16 +64,38 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const glassBy = madeBy('glassware');
   const icePerServe = item.ice_per_serve_g && measures ? `${formatIce(item.ice_per_serve_g)} per serve` : undefined;
 
+  // The finish: the last count-unit line (a twist, a pick, a pinch), with how it goes on.
+  const garnish = [...lines].reverse().find((l) => l.ingredient && isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient));
+  const serveAbv = item.serve_abv != null && !specLocked ? formatAbv(item.serve_abv) : null;
+  const serve =
+    item.serve_ml != null && measures
+      ? {
+          label: 'Serve',
+          value: formatAmount(item.serve_ml, 'ml'),
+          sub: [strength ? `after ${Number(strength.dilutionPct.toFixed(1))}% water` : 'after dilution', serveAbv ? `${serveAbv} in the glass` : null].filter(Boolean).join(' · '),
+          onPress: strengthPress,
+          accessibilityHint: strengthHint,
+        }
+      : null;
+
+  // Boards drink-phone-venue/-home/-floor/-classic: method and garnish first; family only where the serve isn't shown.
   const facts = (
     [
+      methods.length ? { label: 'Method', value: methods[0], sub: methods.slice(1).join(', ') || undefined } : null,
       glass && { label: 'Glass', value: glass.name, sub: [glassBy ? `by ${glassBy}` : null, fit?.label].filter(Boolean).join(' · ') || undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
       ice && { label: 'Ice', value: ice.name, sub: [iceBy ? `cut by ${iceBy}` : null, icePerServe].filter(Boolean).join(' · ') || undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
-      family && { label: 'Family', value: family.name },
-      abv ? { label: 'ABV', value: abv, sub: item.abv_source === 'calculated' ? 'from the spec' : 'typed in', onPress: strengthPress, accessibilityHint: strengthHint } : null,
-      item.serve_ml != null && measures
-        ? { label: 'Serve', value: formatAmount(item.serve_ml, 'ml'), sub: strength ? `after ${Number(strength.dilutionPct.toFixed(1))}% water` : 'after dilution', onPress: strengthPress, accessibilityHint: strengthHint }
+      garnish ? { label: 'Garnish', value: garnish.ingredient!, sub: garnish.note ?? undefined } : null,
+      abv
+        ? {
+            label: 'ABV',
+            value: abv,
+            sub: [item.abv_source === 'calculated' ? 'from the spec' : 'typed in', !serve && serveAbv ? `${serveAbv} in the glass` : null].filter(Boolean).join(' · '),
+            onPress: strengthPress,
+            accessibilityHint: strengthHint,
+          }
         : null,
-      item.serve_abv != null && !specLocked ? { label: 'Serve ABV', value: formatAbv(item.serve_abv)!, sub: 'in the glass', onPress: strengthPress, accessibilityHint: strengthHint } : null,
+      serve,
+      family && !serve ? { label: 'Family', value: family.name } : null,
     ] as (Fact | null | undefined)[]
   ).filter((f): f is Fact => !!f);
   const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
