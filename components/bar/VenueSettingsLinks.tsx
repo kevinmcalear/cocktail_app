@@ -1,16 +1,22 @@
 import { useRouter, type Href } from 'expo-router';
 
+import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 
-/** The venue settings that have screens of their own: publishing, calendars, dilution and pricing. */
+/** The venue settings that have screens of their own: publishing, calendars, glassware, dilution and pricing. */
 export function VenueSettingsLinks({ barId }: { barId: string }) {
   const router = useRouter();
+  const glasses = useBarGlassware(barId).data;
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="More settings">
       <SettingsRow icon="globe" label="Publishing" detail="Who outside the venue sees your drinks" onPress={go('publishing')} />
       <RowDivider />
       <SettingsRow icon="calendar" label="Calendars" detail="Calendars that bring events into This week" onPress={go('calendars')} />
+      <SettingsRow icon="wineglass" label="Glassware"
+        detail="The glasses you pour into, and who makes them"
+        value={glasses ? `${glasses.length} ${glasses.length === 1 ? 'glass' : 'glasses'}` : undefined}
+        onPress={go('glassware')} />
       <RowDivider />
       <SettingsRow icon="drop.fill" label="Dilution" detail="How much water each method adds" onPress={go('dilution')} />
       <RowDivider />

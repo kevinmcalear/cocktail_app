@@ -41,7 +41,7 @@ describe('FinishStep', () => {
     expect(screen.getByRole('radio', { name: /^Herb, chile and garlic oils/, checked: true })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Next: recipe' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
-    expect(screen.getByText('4 days')).toBeTruthy();
+    expect(screen.getByText('About 4 days')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Coconut Fat-Washed Daiquiri' }));
 
     const [line] = finish(set);

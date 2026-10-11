@@ -45,6 +45,8 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
   const venue = chosenVenue === undefined ? ownBar : chosenVenue;
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
+  // Comparisons skipped ("Skip"): placed like a tie, never recorded as one.
+  const [skipped, setSkipped] = useState<number[]>([]);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [result, setResult] = useState<{ score: number; position: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
   const others = (list ?? []).filter((e) => e.id !== existing?.id && e.id !== savedId);
   const bandOf = (s: Sentiment) => others.filter((e) => e.sentiment === s);
 
-  const save = async (s: Sentiment, given: Answer[]) => {
+  const save = async (s: Sentiment, given: Answer[], skips: number[] = skipped) => {
     const band = bandOf(s);
     const placed = nextPlacement(band.length, given);
     if (!placed.done || busy.current) return;
@@ -80,9 +82,10 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
       }
       const against = comparedWith(band.length, given);
       await record.mutateAsync(
-        given.map((a, i) => {
+        given.flatMap((a, i) => {
+          if (skips.includes(i)) return [];
           const old = band[against[i]].id;
-          return a === 'new' ? { winner_entry_id: id!, loser_entry_id: old, is_tie: false } : { winner_entry_id: old, loser_entry_id: id!, is_tie: a === 'tie' };
+          return [a === 'new' ? { winner_entry_id: id!, loser_entry_id: old, is_tie: false } : { winner_entry_id: old, loser_entry_id: id!, is_tie: a === 'tie' }];
         })
       );
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -98,12 +101,15 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
   const pick = (s: Sentiment) => {
     setSentiment(s);
     setAnswers([]);
-    void save(s, []);
+    setSkipped([]);
+    void save(s, [], []);
   };
-  const answer = (a: Answer) => {
+  const answer = (a: Answer, skip = false) => {
     const next = [...answers, a];
+    const skips = skip ? [...skipped, answers.length] : skipped;
     setAnswers(next);
-    void save(sentiment!, next);
+    setSkipped(skips);
+    void save(sentiment!, next, skips);
   };
 
   const band = sentiment ? bandOf(sentiment) : [];
@@ -158,7 +164,10 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
             <VsCard side={compareWith(band[comparing.against])} height={cardHeight} onPress={() => answer('old')} />
           </View>
         </View>
-        <Button label="Too close to call" variant="secondary" onPress={() => answer('tie')} />
+        <View style={styles.pair}>
+          <Button label="Too close to call" variant="secondary" onPress={() => answer('tie')} style={styles.flex} />
+          <Button label="Skip" variant="ghost" accessibilityHint="Place it without comparing these two" onPress={() => answer('tie', true)} style={styles.flex} />
+        </View>
       </>
     );
   } else if (sentiment) {
@@ -178,7 +187,10 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
         {existing ? <Caption tone="muted">{`You ranked this ${formatScore(existing.score)} before. Ranking it again replaces that.`}</Caption> : null}
         <Title>How was it?</Title>
         {list ? (
-          <SentimentPicker onPick={pick} />
+          <>
+            <SentimentPicker onPick={pick} />
+            <Caption tone="muted">{`No stars. Next you compare it with ${plural(rankedAs.name)} you've had, two at a time, and it lands in your order.`}</Caption>
+          </>
         ) : (
           <Body tone="muted">{listFailed ? "Couldn't load your list, so there's nothing to compare with yet. Close this and try again." : 'Loading your list…'}</Body>
         )}
@@ -196,7 +208,7 @@ export function RankSheet({ onClose, onSeeRankings, drink, rankedAs, ownBar, lis
         {error ? (
           <View style={styles.actions}>
             <Caption tone="accent">{error}</Caption>
-            <Button label="Try again" variant="secondary" onPress={() => void save(sentiment!, answers)} />
+            <Button label="Try again" variant="secondary" onPress={() => void save(sentiment!, answers, skipped)} />
           </View>
         ) : null}
       </SheetScrollView>
@@ -216,6 +228,7 @@ const styles = StyleSheet.create({
   close: { alignSelf: 'flex-end', marginBottom: -space.xxl },
   vs: { gap: space.sm },
   vsRow: { flexDirection: 'row', alignItems: 'center' },
+  pair: { flexDirection: 'row', gap: space.sm },
   flex: { flexGrow: 1, flexBasis: 0 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: space.sm, marginTop: space.sm },
 });
