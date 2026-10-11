@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, Sheet, Title } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, Sheet, SheetScrollView, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSaveItemPrep, type PrepCardData } from '@/hooks/usePrepCard';
 import { PREP_ACTIONS } from '@/lib/scale';
@@ -91,7 +91,7 @@ export function PrepEditSheet({ visible, onClose, itemId, itemName, current }: P
 
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel="Prep card" keyboard>
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Title>Prep card</Title>
         <Body tone="muted">{itemName}. What one batch of the recipe makes.</Body>
         <View style={styles.pair}>
@@ -127,7 +127,7 @@ export function PrepEditSheet({ visible, onClose, itemId, itemName, current }: P
           <Button label="Cancel" variant="ghost" onPress={onClose} />
           <Button label={save.isPending ? 'Saving…' : 'Save'} onPress={submit} disabled={save.isPending} />
         </View>
-      </ScrollView>
+      </SheetScrollView>
     </Sheet>
   );
 }

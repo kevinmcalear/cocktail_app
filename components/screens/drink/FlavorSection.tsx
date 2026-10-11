@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Caption, Headline, PalateFlower, PressableScale, Sheet, Spec, Tag, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Caption, Headline, PalateFlower, PressableScale, Sheet, SheetScrollView, Spec, Tag, useDs } from '@/components/ds';
 import { FamilyDot, PalateLegend } from '@/components/screens/taste/PalateParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
@@ -77,7 +77,7 @@ function FlavorSheet({ profile }: { profile: Profile }) {
   const size = Math.min(width, 360);
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.body}>
+    <SheetScrollView style={styles.scroll} contentContainerStyle={styles.body}>
       <View style={styles.head}>
         <Headline role="heading">Flavor</Headline>
         {scored !== null ? (
@@ -117,7 +117,7 @@ function FlavorSheet({ profile }: { profile: Profile }) {
           </View>
         ))}
       </View>
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 
