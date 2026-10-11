@@ -54,7 +54,7 @@ function SideNav() {
   const setSearching = useSearchPalette((s) => s.setOpen);
 
   // A page that isn't a row (a drink, the add wizard) keeps the row it came from lit.
-  const rows = [...places.tabs, places.history, ...places.work, ...places.venuePlaces];
+  const rows = [...places.tabs, places.history, ...places.work, ...places.venuePlaces, places.week];
   const [last, setLast] = useState<string | null>(null);
   const current = navCurrent(pathname, rows, last);
   if (current !== last) setLast(current);
