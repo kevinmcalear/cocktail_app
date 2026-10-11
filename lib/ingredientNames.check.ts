@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { existingIngredientId, ingredientKey, nearIngredient, sameIngredient, searchIngredients } from './ingredientNames';
+import { closestIngredients, existingIngredientId, ingredientKey, nearIngredient, sameIngredient, searchIngredients } from './ingredientNames';
 
 // The same keys public.ingredient_key() gives (checked against Postgres in supabase/tests/one-of-each-ingredient.test.mjs).
 assert.equal(ingredientKey('Simple Syrup, 1:1'), 'simple syrup 1:1');
@@ -53,5 +53,19 @@ assert.equal(searchIngredients('coconut oolong demerara syrup', rows, { aliases 
 assert.equal(existingIngredientId({ code: 'P0001', hint: '3f2b1c4e-1111-4222-8333-944455556666' }), '3f2b1c4e-1111-4222-8333-944455556666');
 assert.equal(existingIngredientId({ code: '23505', hint: null }), null);
 assert.equal(existingIngredientId(null), null);
+
+// Nothing called that: the closest share its flavour words, most first, core first.
+const pantry = [
+  { id: 'pj', name: 'Pineapple Juice' },
+  { id: 'ps', name: 'Pineapple Syrup' },
+  { id: 'fr', name: 'Fresno Chili' },
+  { id: 'cs', name: 'Chili Pineapple Syrup' },
+  { id: 'hid', name: 'Pineapple Rum', hide_from_search: true },
+  { id: 'ls', name: 'Lime Shrub' },
+];
+assert.deepEqual(closestIngredients('pineapple chili shrub', pantry).map((r) => r.id), ['cs', 'pj', 'ps']);
+assert.deepEqual(closestIngredients('pineapple shrub', pantry, { coreIds: new Set(['ps']) }).map((r) => r.id), ['ps', 'pj', 'cs']);
+// The kind word alone (shrub) says nothing about what's in it.
+assert.deepEqual(closestIngredients('shrub', pantry), []);
 
 console.log('ingredientNames checks passed');

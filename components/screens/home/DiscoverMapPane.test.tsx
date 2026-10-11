@@ -11,7 +11,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/useDiscover', () => ({
   useDebounced: (v: unknown) => v,
   useDiscoverRankings: () => ({ data: undefined, isLoading: false }),
-  useTopBars: () => ({ data: undefined, isLoading: false }),
+  useTopBars: () => ({ data: undefined, isLoading: false }), useDrinkPick: () => null,
 }));
 let mockScores: Record<string, number> = {};
 jest.mock('@/hooks/useFlavor', () => ({ useItemScores: () => ({ data: mockScores }) }));
@@ -230,7 +230,7 @@ test('searching on a phone with somewhere to count from, Nearest lists the close
   const drinks = [drink('d1', 'Dirty Martini', [], { kind: 'name', text: null }), drink('d2', 'Gibson', [], { kind: 'riff', text: 'Martini' }, 'Riff on a Martini')];
   await renderPane(drinks, null, 'sheet', 'martini', { from: { latitude: -37.8, longitude: 144.97 } });
   await fireEvent.press(screen.getByRole('radio', { name: 'Nearest' }));
-  const rows = screen.getAllByText(/^(Dirty Martini|Gibson)$/).map((n) => n.props.children);
+  const rows = screen.getAllByText(/^(Dirty Martini|Gibson)$/).map((n) => n.props.children?.props?.text ?? n.props.children);
   expect(rows).toEqual(['Gibson', 'Dirty Martini']);
   // Metres or miles, as the device's region uses.
   expect(screen.getByText(/400 m|0\.2 mi/)).toBeTruthy();

@@ -18,7 +18,7 @@ jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user
 jest.mock('@/components/nav/ScreenHeader', () => ({ ScreenHeader: () => null }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: mockProfile }) }));
 jest.mock('@/hooks/useProfiles', () => ({ useMyMadeDrinks: () => ({ data: [{ id: 'm1', name: 'Garden Gimlet' }], isLoading: false }) }));
-jest.mock('@/hooks/useFlavor', () => ({ useMyTaste: () => ({ data: mockTaste }), useItemFlavors: () => ({ data: {} }) }));
+jest.mock('@/hooks/useFlavor', () => ({ useMyTaste: () => ({ data: mockTaste }), useItemFlavors: () => ({ data: {} }), useItemScores: () => ({ data: {} }) }));
 jest.mock('@/hooks/useRankings', () => ({ useMyHadDrinks: () => ({ data: mockHad, isLoading: false, error: null }) }));
 jest.mock('@/hooks/useSpecMatches', () => ({ useSpecMatches: () => ({ data: undefined }) }));
 

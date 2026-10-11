@@ -2,8 +2,11 @@ import { useRouter, type Href } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, Spec, TextLink, useDs } from '@/components/ds';
-import { layout, space, type } from '@/constants/tokens';
+import { layout, radius, space, type } from '@/constants/tokens';
 import { leadRecord, readUrl, RELATION_LABEL, RIGHTS_LABEL, sourceByline, type PrintedRecipe } from '@/lib/drinkHistory';
+import { formatAmount } from '@/lib/drinkMath';
+import type { SpecLine } from '@/lib/spec';
+import { stillEqual, thenAndNow } from '@/lib/thenAndNow';
 
 import { FactRow } from './FactRow';
 
@@ -13,10 +16,11 @@ const bookHref = (key: string) => `/book/${key}` as Href;
  * A drink's first printed recipe as one fact: the year, the book and what it
  * was printed as. Opens in place to the recipe as printed (word for word only
  * from public-domain books), the page to read it on, and the later printings
- * that changed something. `records` may be its nearest classic's, named in
- * `borrowed`.
+ * that changed something, and Then and now: each printed line beside this
+ * page's ml (board drink-phone-classic). `records` may be its nearest
+ * classic's, named in `borrowed`.
  */
-export function FirstInPrint({ records, borrowed }: { records: PrintedRecipe[]; borrowed: string | null }) {
+export function FirstInPrint({ records, borrowed, lines = [] }: { records: PrintedRecipe[]; borrowed: string | null; lines?: SpecLine[] }) {
   const ds = useDs();
   const router = useRouter();
   const lead = leadRecord(records);
@@ -44,6 +48,7 @@ export function FirstInPrint({ records, borrowed }: { records: PrintedRecipe[]; 
           <Caption tone="muted">
             {[sourceByline(lead.source), lead.page_label ? `page ${lead.page_label}` : null, RIGHTS_LABEL[lead.source.rights]].filter(Boolean).join(' · ')}
           </Caption>
+          <ThenAndNow record={lead} lines={lines} />
           <View style={styles.links}>
             {url ? <TextLink label={lead.page_url ? 'See the page' : 'Read the book'} onPress={() => void Linking.openURL(url)} /> : null}
             <TextLink label="About the book" onPress={() => router.push(bookHref(lead.source.key))} />
@@ -96,6 +101,35 @@ function PrintedLines({ record }: { record: PrintedRecipe }) {
   );
 }
 
+/** The printed measures beside this page's, in ml. Nothing without amounts on both sides. */
+function ThenAndNow({ record, lines }: { record: PrintedRecipe; lines: SpecLine[] }) {
+  const ds = useDs();
+  const rows = thenAndNow(record.lines, lines);
+  if (!rows.length) return null;
+  const year = record.source.year ? String(record.source.year) : 'Then';
+  const equal = stillEqual(rows);
+  return (
+    <View style={[styles.table, { backgroundColor: ds.c.surface }]}>
+      <Caption tone="muted">Then and now</Caption>
+      <View role="table" accessibilityLabel="Then and now">
+        <View role="row" style={styles.tr}>
+          <Caption style={styles.flex} />
+          <Caption tone="muted" style={styles.td}>{year}</Caption>
+          <Caption tone="muted" style={styles.td}>Now</Caption>
+        </View>
+        {rows.map((r) => (
+          <View key={r.name} role="row" style={[styles.tr, styles.rowLine, { borderTopColor: ds.c.line }]} accessible accessibilityLabel={`${r.name}: ${r.then} in ${year}, ${r.now == null ? 'not on this page' : formatAmount(r.now, 'ml')} now`}>
+            <Body style={styles.flex} numberOfLines={1}>{r.name}</Body>
+            <Spec tone="muted" style={styles.td}>{r.then}</Spec>
+            <Spec style={styles.td}>{r.now == null ? '–' : String(r.now)}</Spec>
+          </View>
+        ))}
+      </View>
+      <Caption tone="muted">{`${equal ? `${equal} ` : ''}Now is this page's spec, in ml.`}</Caption>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   // The display face's italic, at headline size: a printed recipe, not a title.
   quote: { fontSize: type.headline.fontSize, lineHeight: type.headline.lineHeight + 2 },
@@ -118,4 +152,8 @@ const styles = StyleSheet.create({
   },
   year: { width: space.xxxl + space.sm },
   flex: { flex: 1, minWidth: 0 },
+  table: { gap: space.sm, padding: space.md, borderRadius: radius.control },
+  tr: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.xs },
+  td: { width: space.xxxl + space.lg, textAlign: 'right' },
+  rowLine: { borderTopWidth: StyleSheet.hairlineWidth },
 });
