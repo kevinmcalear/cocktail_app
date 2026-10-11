@@ -105,7 +105,7 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
         </View>
       </ScrollView>
       {setupBar ? (
-        <View style={[styles.topBar, { top: insets.top + space.sm, paddingHorizontal: gutter }]}>
+        <View style={[styles.topBar, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
           <View style={[frame.column, styles.topRow]}>
             {onBack ? <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={onBack} /> : null}
             <View style={styles.flex}>{progress ? <StepProgress {...progress} /> : null}</View>
@@ -135,7 +135,8 @@ const styles = StyleSheet.create({
   back: { position: 'absolute' },
   flex: { flex: 1, minWidth: 0 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
-  topBar: { position: 'absolute', left: 0, right: 0 },
+  // Opaque, so a long step scrolls under it rather than through it.
+  topBar: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: space.sm },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   segments: { flex: 1, flexDirection: 'row', gap: space.xs },
