@@ -1,12 +1,13 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Field, GlassButton, Surface, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Field, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { SectionHeading, SettingsSection, UnsavedBar } from '@/components/screens/settings/SettingsParts';
 import { WebHead } from '@/components/WebHead';
-import { DEFAULT_ACCENT, GROUND_TINTS, layout, space, type DisplayFace } from '@/constants/tokens';
+import { DEFAULT_ACCENT, GROUND_TINTS, space, type DisplayFace } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { pickBrandImage, useSaveVenueBrand, useVenueBrand, type VenueBrandRow } from '@/hooks/useVenueBrand';
 import { brandProblems, faceFromDb, faceToDb, normalizeHex, usableGroundTint } from '@/lib/brand';
@@ -34,6 +35,7 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
+  const frame = usePageFrame(wide ? 'wide' : 'text');
   const [draft, setDraft] = useState(() => draftFrom(row));
   const set = <K extends keyof typeof draft>(key: K) => (value: (typeof draft)[K]) => setDraft((d) => ({ ...d, [key]: value }));
   const [suggested, setSuggested] = useState<string[]>([]);
@@ -153,9 +155,9 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
       <ScrollView
         style={styles.screen}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: insets.top + space.sm, paddingBottom: insets.bottom + space.xxxl }}
+        contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: frame.top, paddingBottom: insets.bottom + space.xxxl }}
       >
-        <View style={[styles.page, wide && styles.pageWide]}>
+        <View style={[frame.column, styles.page]}>
           {header(changed)}
           {canEdit ? null : <Body tone="muted">Only venue Admins can change the brand.</Body>}
           <View style={[styles.columns, wide && styles.columnsWide]}>
@@ -167,7 +169,7 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
       </ScrollView>
       {changed ? (
         <UnsavedBar
-          maxWidth={wide ? 1040 : 680}
+          maxWidth={frame.column.maxWidth as number}
           saving={save.isPending}
           canSave={Object.keys(problems).length === 0 && !busy}
           onDiscard={() => {
@@ -186,30 +188,24 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
 export function BrandScreen({ barId }: { barId: string }) {
   const ds = useDs();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const gutter = useGutter();
+  const frame = usePageFrame('text');
   const brand = useVenueBrand(barId);
   const capabilities = useCapabilities(barId);
   const canEdit = (capabilities.data ?? []).includes('brand');
 
+  // Wide web: the "Venue settings" crumb over the title instead of Back (the sidebar is there).
   const header = (dirty: boolean) => (
-    <View style={styles.head}>
-      <GlassButton
-        accessibilityLabel="Back"
-        icon="chevron.left"
-        onPress={async () => {
-          if (!(await confirmDiscardChanges(dirty))) return;
-          if (router.canGoBack()) router.back();
-          else router.replace('/settings' as never);
-        }}
-      />
-      <View style={styles.title}>
-        <Title>Brand</Title>
-        <Caption tone="muted" numberOfLines={1}>
-          {brand.data ? `${brand.data.name} · seen by everyone at the venue` : ' '}
-        </Caption>
-      </View>
-    </View>
+    <SubPageHead
+      title="Brand"
+      subtitle={brand.data ? `${brand.data.name} · seen by everyone at the venue` : ' '}
+      crumbs={[{ label: 'Venue settings', href: `/settings/bar/${barId}` as Href }]}
+      onBack={async () => {
+        if (!(await confirmDiscardChanges(dirty))) return;
+        if (router.canGoBack()) router.back();
+        else router.replace('/settings' as never);
+      }}
+    />
   );
 
   return (
@@ -220,7 +216,7 @@ export function BrandScreen({ barId }: { barId: string }) {
       {brand.data ? (
         <BrandEditor key={brand.data.id} row={brand.data} canEdit={canEdit} header={header} />
       ) : (
-        <View style={[styles.page, { paddingHorizontal: gutter, paddingTop: insets.top + space.sm }]}>
+        <View style={[frame.column, styles.page, { paddingHorizontal: gutter, paddingTop: frame.top }]}>
           {header(false)}
           {brand.error ? <Body tone="muted">Couldn’t load this venue’s brand. Try again in a moment.</Body> : null}
         </View>
@@ -231,10 +227,7 @@ export function BrandScreen({ barId }: { barId: string }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  page: { width: '100%', maxWidth: 680, alignSelf: 'center', gap: space.xl },
-  pageWide: { maxWidth: 1040 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
-  title: { flex: 1, gap: 2, minWidth: 0 },
+  page: { gap: space.xl },
   columns: { gap: space.xl },
   columnsWide: { flexDirection: 'row', alignItems: 'flex-start' },
   form: { flex: 1, gap: space.xl, minWidth: 0 },

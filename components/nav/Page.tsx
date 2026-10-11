@@ -4,10 +4,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Caption, Display, GlassButton, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
-import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useIsWideWeb, useWebNavWidth } from '@/hooks/useIsWideWeb';
 
 import { ScreenHeader } from './ScreenHeader';
-import { WEB_SIDEBAR_WIDTH } from './WebSideNav';
 
 type ColumnWidth = 'text' | 'wide' | 'full';
 
@@ -16,8 +15,8 @@ type ColumnWidth = 'text' | 'wide' | 'full';
  * wide screens a maximum width, left-aligned next to the sidebar so every page
  * starts at the same edge. 'full' is for grids that use the whole width.
  *
- * The cap is right padding rather than maxWidth, so PageHeader's row can reach
- * past it and keep your avatar at the page's right edge, like every other page.
+ * The cap is right padding rather than maxWidth, so a list's rows can still
+ * scroll from the window's right edge.
  */
 export function usePageColumn(width: ColumnWidth = 'text'): ViewStyle {
   const gutter = useGutter();
@@ -26,13 +25,12 @@ export function usePageColumn(width: ColumnWidth = 'text'): ViewStyle {
 
 function useColumnRightPad(width: ColumnWidth): number {
   const gutter = useGutter();
-  const sidebar = useIsWideWeb();
-  const page = useWindowDimensions().width - (sidebar ? WEB_SIDEBAR_WIDTH : 0);
+  const page = useWindowDimensions().width - useWebNavWidth();
   return width === 'full' ? gutter : Math.max(gutter, page - layout.page[width] + gutter);
 }
 
 /**
- * The top of a page: the venue / New / You row (or, on a phone, a back button
+ * The top of a page: the logo / New / You row (or, on a phone, a back button
  * for a page opened from another one), then the title, with the page's main
  * action on the right. Goes first inside a usePageColumn column; pass the
  * same `width`.
@@ -40,8 +38,10 @@ function useColumnRightPad(width: ColumnWidth): number {
  * A subtitle is only for something the page doesn't already say: "2 on now",
  * not the venue's name, which the sidebar and the chip show.
  */
-export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', width = 'text' }: {
+export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', width = 'text', wordmark }: {
   title: string;
+  /** The venue's name beside the logo on a phone (Tonight only). */
+  wordmark?: boolean;
   width?: ColumnWidth;
   subtitle?: string | null;
   action?: ReactNode;
@@ -62,7 +62,7 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
       ) : (
         // ScreenHeader brings its own gutter, and runs to the page's right edge.
         <View style={{ marginLeft: -gutter, marginRight: -rightPad }}>
-          <ScreenHeader />
+          <ScreenHeader wordmark={wordmark} />
         </View>
       )}
       <View style={styles.titleRow}>

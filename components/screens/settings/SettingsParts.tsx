@@ -6,6 +6,7 @@ import { Body, Button, Caption, Chip, PressableScale, Surface, useDs, useGutter,
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { backbar, layout, space } from '@/constants/tokens';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 /**
  * A titled group of settings on one card, rows split by RowDivider. The page is
@@ -217,13 +218,15 @@ export function UnsavedBar({ saving, onDiscard, onSave, canSave = true, maxWidth
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
+  const wide = useIsWideWeb();
   return (
     <View
       role="region"
       aria-label="Unsaved changes"
       style={[styles.saveBar, { backgroundColor: ds.c.surface, borderTopColor: ds.c.line, paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter }]}
     >
-      <View style={[styles.saveRow, { maxWidth }]}>
+      {/* Lined up with the page above it: left beside the sidebar on wide web. */}
+      <View style={[styles.saveRow, { maxWidth, alignSelf: wide ? 'flex-start' : 'center' }]}>
         <Body tone="muted" style={styles.rowText}>
           Unsaved changes
         </Body>
@@ -236,7 +239,7 @@ export function UnsavedBar({ saving, onDiscard, onSave, canSave = true, maxWidth
 
 const styles = StyleSheet.create({
   saveBar: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.md },
-  saveRow: { width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  saveRow: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: space.sm },
   section: { gap: space.sm },
   sectionTitle: { textTransform: 'uppercase', letterSpacing: 0.8, paddingHorizontal: space.lg },
   note: { paddingHorizontal: space.lg },
