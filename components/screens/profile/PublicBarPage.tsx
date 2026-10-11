@@ -6,6 +6,7 @@ import { Button, Caption, Headline, useBreakpoint } from '@/components/ds';
 import { BarWeek } from '@/components/screens/week/BarWeek';
 import { space } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
+import { usePublicClassics } from '@/hooks/useStaffList';
 import { isUnclaimed, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { instagramUrl } from '@/lib/profiles';
@@ -16,10 +17,10 @@ import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { Kicker, SignInBand } from '../published/PublicChrome';
 import { PublicPage } from '../published/PublicShell';
 import { ProfileSafety } from '../safety/ProfileSafety';
-import { BarClassics } from './BarClassics';
 import { BarRankings } from './BarRankings';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
+import { ClassicsTheyPour } from './ClassicsTheyPour';
 import { LockedOriginals } from './LockedOriginals';
 import { Positions } from './Positions';
 import { PublicBarFacts } from './PublicBarFacts';
@@ -61,7 +62,7 @@ export function PublicBarPage({ profile }: { profile: Profile }) {
     <>
       {section('Top drinks', <BarRankings bar={profile} />)}
       {theirDrinks}
-      <BarClassics barId={profile.bar_id} />
+      {originals.some((d) => d.riff_of_id) ? null : <StaffClassics barId={profile.bar_id} barName={profile.display_name} />}
     </>
   );
   const facts_ = <PublicBarFacts profileId={profile.id} />;
@@ -105,6 +106,17 @@ export function PublicBarPage({ profile }: { profile: Profile }) {
       <SignInBand text="Tap any drink to see more. Sign in to rank what you had here and love the bar." />
     </PublicPage>
   );
+}
+
+/**
+ * The bar's staff list as the board draws Classics they pour: a line of
+ * pills in their order, the first few then All. Used when none of its own
+ * drinks are versions of a classic (those already show as pills).
+ */
+function StaffClassics({ barId, barName }: { barId: string | null; barName: string }) {
+  const { data = [] } = usePublicClassics(barId);
+  const drinks = data.filter((c) => c.openId).map((c) => ({ id: c.openId!, name: c.name }));
+  return <ClassicsTheyPour drinks={drinks} barName={barName} />;
 }
 
 /** Love (asks to sign in), Share and Instagram, under the bar's name; report and block at the end. */
