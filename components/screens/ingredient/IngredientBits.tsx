@@ -1,10 +1,15 @@
-import { StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import { Button, IngredientDrawing, Tag, useDs } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Button, Caption, IngredientDrawing, PressableScale, Tag, useDs } from '@/components/ds';
+import { MenuSheet } from '@/components/screens/menus/MenuSheet';
+import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { radius, space } from '@/constants/tokens';
 import type { ItemPrep } from '@/hooks/usePrepCard';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { leadTimeLabel, shelfLifeLabel } from '@/lib/scale';
+import { groupForAction } from '@/lib/techniques';
 
 import { DrinkHero } from '../drink/DrinkHero';
 import type { Fact } from '../drink/DrinkFacts';
@@ -28,17 +33,36 @@ export function IngredientHero({ id, name, pictures, height, fade }: { id: strin
   );
 }
 
-/** House prep, how it's made, and whose recipe it is; or for a bottle, its role. */
-export function IngredientTags({ isPrep, actions, venueName, shared, mine, role }: { isPrep: boolean; actions: string[]; venueName: string | null; shared: boolean; mine: boolean; role: string | null }) {
-  const tags: { label: string; accent?: boolean }[] = isPrep
-    ? [{ label: 'House prep', accent: true }, ...actions.map((a) => ({ label: a })), ...(venueName ? [{ label: venueName }] : mine ? [{ label: 'Your recipe' }] : shared ? [{ label: 'Shared recipe' }] : [])]
-    : [role === 'product' ? 'Bottle' : role === 'generic' ? 'Style' : null, venueName].filter((t): t is string => !!t).map((label) => ({ label }));
-  if (!tags.length) return null;
+/**
+ * House prep, how it's made, and whose recipe it is; or for a bottle, its role.
+ * A technique tag ("Syrup") opens the library group that teaches it.
+ */
+export function IngredientTags({ isPrep, actions, venueName, shared, mine, role, technical }: { isPrep: boolean; actions: string[]; venueName: string | null; shared: boolean; mine: boolean; role: string | null; technical: boolean }) {
+  const ds = useDs();
+  const router = useRouter();
+  const lead: { label: string; accent?: boolean }[] = isPrep
+    ? [{ label: 'House prep', accent: true }]
+    : [technical ? 'Technical ingredient' : role === 'product' ? 'Bottle' : role === 'generic' ? 'Style' : null].filter((t): t is string => !!t).map((label) => ({ label }));
+  const whose = isPrep ? (venueName ?? (mine ? 'Your recipe' : shared ? 'Shared recipe' : null)) : venueName;
+  if (!lead.length && !actions.length && !whose) return null;
   return (
     <View style={styles.tags}>
-      {tags.map((t) => (
+      {lead.map((t) => (
         <Tag key={t.label} label={t.label} tone={t.accent ? 'accent' : 'default'} />
       ))}
+      {isPrep
+        ? actions.map((a) => {
+            const group = groupForAction(a);
+            if (!group) return <Tag key={a} label={a} />;
+            return (
+              <PressableScale key={a} role="link" accessibilityLabel={`${a}: open the technique library`} onPress={() => router.push(`/techniques?group=${group}` as never)} style={[styles.techTag, { backgroundColor: ds.c.raised }]}>
+                <Caption>{a}</Caption>
+                <IconSymbol name="chevron.right" size={12} color={ds.c.muted} />
+              </PressableScale>
+            );
+          })
+        : null}
+      {whose ? <Tag label={whose} /> : null}
     </View>
   );
 }
@@ -55,20 +79,45 @@ export function prepFacts(prep: ItemPrep | null | undefined): Fact[] {
   ].filter((f): f is Fact => !!f);
 }
 
-/** Pinned under a phone page: Make, and a jump to the drinks it goes in. */
-export function MakeBar({ bottom, onMake, drinks, onDrinks }: { bottom: number; onMake: () => void; drinks: number; onDrinks: () => void }) {
+/** Pinned under a phone page: Make the size picked ("Make 1.1 L"), and a jump to the drinks it goes in. */
+export function MakeBar({ bottom, onMake, makes, drinks, onDrinks }: { bottom: number; onMake: () => void; makes: string | null; drinks: number; onDrinks: () => void }) {
   const ds = useDs();
   return (
     <View style={[styles.bar, { paddingBottom: bottom + space.md, backgroundColor: ds.c.ground, borderTopColor: ds.c.line }]}>
-      <Button label="Make" icon="flask" size="lg" onPress={onMake} style={styles.make} />
+      <Button label={makes ? `Make ${makes}` : 'Make'} icon="play.fill" size="lg" onPress={onMake} style={styles.make} />
       {drinks ? <Button label={`In ${drinks} ${drinks === 1 ? 'drink' : 'drinks'}`} variant="secondary" size="lg" onPress={onDrinks} /> : null}
     </View>
   );
 }
 
+/** The More (three dots) sheet: edit, print, proof, make your own. */
+export function MoreSheet({ name, actions, onClose }: { name: string; actions: { label: string; onPress: () => void }[]; onClose: () => void }) {
+  return (
+    <MenuSheet visible onClose={onClose} title={name}>
+      <View>
+        {actions.map((a, i) => (
+          <View key={a.label}>
+            {i > 0 ? <RowDivider /> : null}
+            <SettingsRow
+              label={a.label}
+              role="button"
+              onPress={() => {
+                onClose();
+                // iOS won't present a modal while another is still going away.
+                setTimeout(a.onPress, Platform.OS === 'ios' ? 450 : 0);
+              }}
+            />
+          </View>
+        ))}
+      </View>
+    </MenuSheet>
+  );
+}
+
 const styles = StyleSheet.create({
   hero: { width: '100%', alignItems: 'center' },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs },
+  techTag: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 24, paddingHorizontal: space.sm + 2, borderRadius: radius.pill },
   bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
   make: { flex: 1 },
 });

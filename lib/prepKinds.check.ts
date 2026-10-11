@@ -1,7 +1,7 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { flavourWords, guessKind, keepsText, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromTechnique, prepYield, slotMessage, startPrep, withFacts } from './prepKinds';
+import { flavourWords, guessKind, keepsText, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromTechnique, prepPhrase, prepYield, recipeEyebrow, slotMessage, startPrep, wayOf, withFacts } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
 import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
@@ -35,8 +35,26 @@ assert.deepEqual(prepAmounts({ ...shrub, baseAmount: 450 }).map((a) => a.amount)
 const withChili = { ...shrub, lines: shrub.lines.map((l) => (l.name === 'Chili' ? { ...l, amount: '2' } : l)) };
 assert.equal(prepAmounts(withChili)[3].amount, 2);
 
-// A hot shrub is quicker.
-assert.equal(leadText(startPrep('shrub', 'Plum shrub', true).leadMinutes), 'Start an hour ahead');
+// A hot shrub is quicker; an oleo shrub sits two days.
+assert.equal(leadText(startPrep('shrub', 'Plum shrub', 'hot').leadMinutes), 'Start an hour ahead');
+assert.equal(startPrep('shrub', 'Plum shrub', 'hot').hot, true);
+const oleo = startPrep('shrub', 'Lemon shrub', 'oleo');
+assert.equal(leadText(oleo.leadMinutes), 'Start 2 days ahead');
+assert.match(oleo.steps[0].body, /^Muddle/);
+
+// The ways and how they read: a shrub is cold unless picked otherwise.
+assert.equal(wayOf(shrub)?.id, 'cold');
+assert.equal(wayOf({ kind: 'shrub', hot: true }), wayOf({ kind: 'shrub', way: 'hot' }), 'a draft kept before ways still reads hot');
+assert.equal(wayOf(startPrep('syrup', 'Simple syrup')), null);
+assert.equal(prepPhrase(shrub), 'a cold shrub');
+assert.equal(prepPhrase(oleo), 'an oleo shrub');
+assert.equal(prepPhrase(startPrep('rich', 'Rich syrup')), 'a rich syrup');
+assert.equal(prepPhrase(startPrep('other', 'Mystery')), null);
+assert.equal(recipeEyebrow(shrub), 'Shrub, cold · equal parts by weight');
+assert.equal(recipeEyebrow(startPrep('rich', 'Rich syrup')), 'Rich syrup');
+// Allergens set by hand outlast a line change.
+const set = withFacts({ ...shrub, allergens: ['sulphites'], allergensSet: true });
+assert.deepEqual(set.allergens, ['sulphites']);
 
 // Rich syrup comes out near the real batch (1130 ml from 1 kg sugar, 500 ml water).
 const rich = startPrep('rich', 'Rich syrup');

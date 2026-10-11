@@ -1,6 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
 
 import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { usePricingSettings } from '@/hooks/usePricing';
@@ -42,11 +43,12 @@ export function VenueTeamLinks({ barId, barName, role }: { barId: string; barNam
   );
 }
 
-/** The venue settings that have screens of their own: publishing, dilution and pricing, with their current values. */
+/** The venue settings that have screens of their own: publishing, calendars, glassware, dilution and pricing, with their current values. */
 export function VenueSettingsLinks({ barId }: { barId: string }) {
   const router = useRouter();
   const publishing = useBarPublishing(barId).data;
   const pricing = usePricingSettings(barId).data;
+  const glasses = useBarGlassware(barId).data;
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="More settings">
@@ -59,6 +61,14 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
       />
       <RowDivider />
       <SettingsRow icon="calendar" label="Calendars" detail="Calendars that bring events into This week" onPress={go('calendars')} />
+      <RowDivider />
+      <SettingsRow
+        icon="wineglass"
+        label="Glassware"
+        detail="The glasses you pour into, and who makes them"
+        value={glasses ? plural(glasses.length, 'glass', 'glasses') : undefined}
+        onPress={go('glassware')}
+      />
       <RowDivider />
       <SettingsRow icon="drop.fill" label="Dilution" detail="How much water each method adds" onPress={go('dilution')} />
       <RowDivider />

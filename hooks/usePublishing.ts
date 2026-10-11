@@ -86,9 +86,10 @@ interface BarItem {
 }
 
 /** A venue's default, whether it can publish, its menus' settings, and how many drinks are public. */
-export function useBarPublishing(barId: string) {
+export function useBarPublishing(barId: string | null) {
   return useQuery({
     queryKey: ['bar-publishing', barId],
+    enabled: !!barId,
     staleTime: 0,
     queryFn: async (): Promise<BarPublishing> => {
       const [bar, profile, menus, items] = await Promise.all([
