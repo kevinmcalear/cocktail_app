@@ -1,4 +1,13 @@
+import * as Burnt from 'burnt';
 import { Platform, Share } from 'react-native';
+
+import { showMessage } from '@/lib/dialogs';
+import { siteOrigin } from '@/lib/venueLink';
+
+/** A drink's public link: its page for anyone it's published to, or a sign-in for the rest. */
+export function drinkUrl(itemId: string): string {
+  return `${siteOrigin()}/d/${itemId}`;
+}
 
 /**
  * Hands a link on: the system share sheet on phones (and on web where the
@@ -25,4 +34,35 @@ export async function shareLink(url: string, title: string, { copy = false }: { 
   }
   await navigator.clipboard.writeText(url);
   return 'copied';
+}
+
+/**
+ * Share a link the plain way: the share sheet, or the clipboard with a toast.
+ * Shows the link to copy by hand when even that is refused.
+ */
+export async function shareOrCopy(url: string, title: string): Promise<void> {
+  try {
+    if ((await shareLink(url, title)) === 'copied') Burnt.toast({ title: 'Link copied', preset: 'done', duration: 2 });
+  } catch {
+    showMessage("Couldn't share the link", url);
+  }
+}
+
+/** Share some text (a batch to make): the share sheet, or the clipboard on the web. */
+export async function shareText(text: string, title: string): Promise<void> {
+  try {
+    if (Platform.OS !== 'web') {
+      await Share.share({ message: text, title });
+      return;
+    }
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      await navigator.share({ text, title });
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    Burnt.toast({ title: 'Copied', preset: 'done', duration: 2 });
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') return;
+    showMessage("Couldn't share it", text);
+  }
 }

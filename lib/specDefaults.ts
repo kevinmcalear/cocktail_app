@@ -143,3 +143,17 @@ export function serveGuess(look: Parameters<typeof draftSketchInputs>[0]): Serve
     why: method ? why : null,
   };
 }
+
+/**
+ * Why the ice is guessed, for the ice step: "it’s shaken and served up, so
+ * no ice in the glass". Null when there's no guess or no plain reason.
+ */
+export function iceWhy(look: Parameters<typeof draftSketchInputs>[0]): string | null {
+  const guess = serveGuess(look);
+  if (!guess.ice) return null;
+  const inputs = draftSketchInputs(look);
+  const how = inputs.method === 'shake' ? 'shaken' : inputs.method === 'stir' ? 'stirred' : null;
+  if (inputs.ice === 'none') return how ? `it’s ${how} and served up, so no ice in the glass` : null;
+  if (inputs.method === 'build' || inputs.method === 'pour') return `it’s built in the glass, over ${guess.ice.toLowerCase()}`;
+  return how ? `it’s ${how}, then served over ${guess.ice.toLowerCase()}` : null;
+}

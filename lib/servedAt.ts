@@ -95,3 +95,30 @@ export function foldIntoClassics<T extends { id: string; bar: ServedBar }>(
   }
   return { drinks: kept, servedBy };
 }
+
+/**
+ * Search: bars' variations of a classic in the same results gather under it
+ * ("4 variations") instead of each being its own row. Returns the drinks
+ * still listed, and each classic's variations in the results' order.
+ */
+export function gatherVariations<T extends { id: string }>(
+  drinks: T[],
+  classicIds: ReadonlySet<string>,
+  match: (id: string) => { spec_match: string; classic_id: string } | undefined
+): { drinks: T[]; variations: Record<string, T[]> } {
+  const kept: T[] = [];
+  const variations: Record<string, T[]> = {};
+  for (const d of drinks) {
+    const m = match(d.id);
+    if (m?.spec_match === 'variation' && classicIds.has(m.classic_id)) (variations[m.classic_id] ??= []).push(d);
+    else kept.push(d);
+  }
+  return { drinks: kept, variations };
+}
+
+/** "The Lantern Room uses mezcal, Ferro adds cold brew, Pale Moth +1": the first two bars and what each changes, then how many more. */
+export function variationSummary(items: { bar: string; change?: string }[], shown = 2): string {
+  const named = items.slice(0, shown).map((i) => (i.change ? `${i.bar} ${i.change}` : i.bar));
+  const rest = items.length - named.length;
+  return `${named.join(', ')}${rest > 0 ? ` +${rest}` : ''}`;
+}

@@ -13,6 +13,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfile, useProfileOriginals, useProfilePicks, useProfilePositions, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
+import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { hadStats, topFour } from '@/lib/hadDrinks';
 import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 import { barsCrediting, personTabs, pickedShown, profileLine } from '@/lib/profiles';
@@ -81,6 +82,8 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const { data: profile, isLoading, error } = useProfile(profileRef);
   // A person's page is for people who've signed in; a bar's opens to anyone.
   const gated = profile?.kind === 'person' && !signedIn;
+  // A bar you open shows in Search's Recent.
+  useTrackRecent(profile?.kind === 'bar', profile ? recentEntry('bar', profile.id, profile.display_name, { href: `/p/${profile.handle || profile.id}`, imageUrl: profile.avatar_url, barId: null }) : null);
   // Signed out, a bar's page is the public web's one page (ppl-pub-bar-*), in the site's own frame.
   if (profile?.kind === 'bar' && !signedIn) return <PublicBarPage profile={profile} />;
 
