@@ -4,6 +4,8 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { usePageFrame } from '@/components/nav/PageFrame';
+import { useAuth } from '@/ctx/AuthContext';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 
@@ -33,6 +35,11 @@ function Page({ title, intro, kicker, children, noBack, backTo = '/settings' }: 
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
+  // Wide web: the page sits left beside the sidebar, which is the way around, so no Back.
+  // Signed out (Support, a link opened cold) there is no sidebar, so Back stays.
+  const frame = usePageFrame('text');
+  const signedIn = !!useAuth().user;
+  const sidebar = frame.wide && signedIn;
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <WebHead>
@@ -40,16 +47,16 @@ function Page({ title, intro, kicker, children, noBack, backTo = '/settings' }: 
       </WebHead>
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}
+        contentContainerStyle={{ paddingTop: sidebar ? frame.top : insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}
       >
-        <View style={styles.readable}>
+        <View style={[frame.column, styles.readable]}>
           {kicker ? <Caption tone="muted">{kicker}</Caption> : null}
           <Title role="heading">{title}</Title>
           {intro ? <Body tone="muted">{intro}</Body> : null}
           {children}
         </View>
       </ScrollView>
-      {noBack ? null : (
+      {noBack || sidebar ? null : (
         <View style={[styles.back, { top: insets.top + space.sm, left: gutter }]}>
           <GlassButton
             accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
@@ -64,6 +71,6 @@ function Page({ title, intro, kicker, children, noBack, backTo = '/settings' }: 
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  readable: { width: '100%', maxWidth: 720, alignSelf: 'center', gap: space.md },
+  readable: { gap: space.md },
   back: { position: 'absolute' },
 });
