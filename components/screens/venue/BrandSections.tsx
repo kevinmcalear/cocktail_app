@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
-import { VenueMark } from '@/components/nav/VenueSwitcher';
+import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, radius, space, type DisplayFace } from '@/constants/tokens';
 
