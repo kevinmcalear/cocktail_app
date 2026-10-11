@@ -58,6 +58,7 @@ export function TonightScreen() {
           <View style={styles.header}>
             <PageHeader
               title="Tonight"
+              wordmark
               subtitle={date ? longDate(date) : '\u00a0'}
               action={active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
             />

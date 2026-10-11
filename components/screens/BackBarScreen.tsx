@@ -176,7 +176,8 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
           title="Back bar"
           width="wide"
           subtitle={canRead && zones.length ? summaryLine(zones.length, locations, waiting.length) : null}
-          onBack={() => (router.canGoBack() ? router.back() : router.replace('/prep'))}
+          // Opened from the venue menu, Library or an ingredient page; a link opened cold goes to Tonight.
+          onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           action={
             canDraw && zones.length ? (
               <Button label={editing ? 'Done' : 'Edit the plan'} variant={editing ? 'secondary' : 'primary'} onPress={() => setEditing((e) => !e)} />
