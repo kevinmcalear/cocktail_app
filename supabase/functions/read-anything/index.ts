@@ -3,6 +3,7 @@ import { consumeAiQuota, refundAiQuota, requireUser } from "../_shared/auth.ts";
 import { describeImagesAsJson, mockAnythingReads } from "../_shared/gemini.ts";
 import { HttpError, serveJson } from "../_shared/http.ts";
 import { fetchLink, LinkError, type LinkContent } from "../_shared/linkRead.ts";
+import { readShareLink, shareLink } from "../_shared/shareLinks.ts";
 
 const FN = "read-anything";
 const MAX_FILES = 4;
@@ -15,8 +16,11 @@ const FILE_MIME_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "
 /**
  * Bring in's reader: photos, a PDF, pasted text or a link to a menu, recipes
  * or bottles. Works out which it is and reads that part, so the app can check it
- * line by line. `hint` is the screen the person started from. One AI unit per
- * call. Mocked on a local stack unless READ_MODEL=live.
+ * line by line. `hint` is the screen the person started from; `as` is what
+ * the person says it is (Bring in's "Reading as" chip). Google Doc, Google
+ * Sheet and Airtable share links are read through their export (public
+ * shares only). Lines come back with where they are on each photo. One AI
+ * unit per call. Mocked on a local stack unless READ_MODEL=live.
  */
 serveJson(FN, async (req) => {
   const mock = mockAnythingReads();
@@ -28,6 +32,7 @@ serveJson(FN, async (req) => {
   const files: unknown[] = Array.isArray(body?.files) ? body.files : [];
   const text = typeof body?.text === "string" ? body.text.trim() : "";
   const hint: ReadKind | null = READ_KINDS.includes(body?.hint) ? body.hint : null;
+  const as: ReadKind | null = READ_KINDS.includes(body?.as) ? body.as : null;
   const link = typeof body?.url === "string" ? body.url.trim() : "";
 
   if (!files.length && !text && !link) throw new HttpError(400, "Add a photo, a file, some text or a link to read.");
@@ -54,7 +59,8 @@ serveJson(FN, async (req) => {
   if (link) {
     let content: LinkContent;
     try {
-      content = await fetchLink(link, { fetch, resolve });
+      const share = shareLink(link);
+      content = share ? await readShareLink(share, { fetch, resolve }) : await fetchLink(link, { fetch, resolve });
     } catch (err) {
       await refundAiQuota(caller, FN);
       if (err instanceof LinkError) throw new HttpError(422, err.message);
@@ -65,12 +71,12 @@ serveJson(FN, async (req) => {
   }
   let raw: unknown;
   try {
-    raw = mock ? mockAnythingReply(hint) : JSON.parse(await describeImagesAsJson(images, anythingReadPrompt(hint, page), ANYTHING_READ_SCHEMA));
+    raw = mock ? mockAnythingReply(as ?? hint) : JSON.parse(await describeImagesAsJson(images, anythingReadPrompt(hint, page, as), ANYTHING_READ_SCHEMA));
   } catch (err) {
     await refundAiQuota(caller, FN);
     throw err;
   }
-  const reading = cleanAnythingReading(raw);
+  const reading = cleanAnythingReading(raw, images.length);
   if (!reading) {
     // Nothing to show for it, so it doesn't count against the day.
     await refundAiQuota(caller, FN);

@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
-import { displayFaces, space } from '@/constants/tokens';
+import { displayFaces, fontFamilies, space } from '@/constants/tokens';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { formatPrice } from '@/lib/menus';
 import type { MenuDrink, MenuSectionDetail } from '@/types/menus';
@@ -38,10 +38,23 @@ function DrinkThumb({ drink, drawable, size = 56 }: { drink: MenuDrink; drawable
   );
 }
 
-/** The name, its price and its line. On the guest card the name is set in the venue's display face. */
-function DrinkLine({ drink, centered, card = false }: { drink: MenuDrink; centered: boolean; card?: boolean | 'compact' }) {
+/** "NEW" in the accent, after the name of a drink new on this menu. */
+function NewMark() {
   const ds = useDs();
-  const price = formatPrice(drink.price);
+  return (
+    <Caption color={ds.accentText} style={styles.mono} aria-label="new">
+      NEW
+    </Caption>
+  );
+}
+
+/**
+ * The name, its price and its line, the name in the venue's display face. On
+ * a page row the price sits at the row's end instead (the row draws it).
+ */
+function DrinkLine({ drink, centered, card = false, isNew = false }: { drink: MenuDrink; centered: boolean; card?: boolean | 'compact'; isNew?: boolean }) {
+  const ds = useDs();
+  const price = card ? formatPrice(drink.price) : null;
   return (
     <View style={centered ? styles.centered : styles.flex}>
       <View style={[styles.nameRow, centered && styles.nameRowCentered]}>
@@ -54,15 +67,19 @@ function DrinkLine({ drink, centered, card = false }: { drink: MenuDrink; center
             {drink.name}
           </DsText>
         ) : (
-          <Headline style={centered ? undefined : styles.flex}>{drink.name}</Headline>
+          <Headline numberOfLines={2} style={[styles.shrink, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+            {drink.name}
+          </Headline>
         )}
-        {price ? <Spec>{price}</Spec> : null}
+        {isNew ? <NewMark /> : null}
       </View>
       {drink.line ? (
         <Caption tone="muted" align={centered ? 'center' : undefined}>
           {drink.line}
         </Caption>
       ) : null}
+      {/* The guest card's price sits under the line. */}
+      {price ? <Spec align={centered ? 'center' : undefined}>{price}</Spec> : null}
     </View>
   );
 }
@@ -76,6 +93,14 @@ interface MenuSectionsProps {
   pictures?: CardPictures;
   /** The card at preview size: smaller pictures and names. */
   compact?: boolean;
+  /** Page rows: drinks new on this menu, marked NEW. */
+  newIds?: ReadonlySet<string>;
+}
+
+/** A page row's price, in mono at the row's end. */
+function RowPrice({ drink }: { drink: MenuDrink }) {
+  const price = formatPrice(drink.price);
+  return price ? <Spec>{price}</Spec> : null;
 }
 
 /**
@@ -84,7 +109,7 @@ interface MenuSectionsProps {
  * with each drink's photo or sketch unless `pictures` is 'none'. The card is
  * your own menu, so every drink on it has a real id to draw from.
  */
-export function MenuSections({ sections, variant, hrefFor, pictures = 'above', compact = false }: MenuSectionsProps) {
+export function MenuSections({ sections, variant, hrefFor, pictures = 'above', compact = false, newIds }: MenuSectionsProps) {
   const ds = useDs();
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
@@ -99,10 +124,14 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
         .map((s) => (
           <View key={s.id} style={styles.section}>
             <View style={[styles.sectionHead, card && styles.sectionHeadCentered]}>
-              <Caption tone="muted" role="heading" style={styles.sectionTitle}>
+              <Caption tone="muted" role="heading" style={[styles.sectionTitle, !card && styles.mono]}>
                 {s.name.toUpperCase()}
               </Caption>
-              {card ? null : <Caption tone="muted">{s.drinks.length}</Caption>}
+              {card ? null : (
+                <Caption tone="muted" style={styles.mono}>
+                  {s.drinks.length}
+                </Caption>
+              )}
             </View>
             {grid ? (
               <View style={styles.cardGrid}>
@@ -127,7 +156,8 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
                 return (
                   <View key={d.id} style={card ? styles.cardRow : [styles.row, { borderBottomColor: ds.c.line }]}>
                     {card ? null : <DrinkThumb drink={d} drawable={false} />}
-                    <DrinkLine drink={d} centered={card} card={card} />
+                    <DrinkLine drink={d} centered={card} card={card} isNew={!card && !!newIds?.has(d.id)} />
+                    {card ? null : <RowPrice drink={d} />}
                   </View>
                 );
               }
@@ -135,7 +165,7 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
                 <PressableScale
                   key={d.id}
                   role="link"
-                  accessibilityLabel={[d.name, formatPrice(d.price), d.line].filter(Boolean).join(', ')}
+                  accessibilityLabel={[d.name, newIds?.has(d.id) ? 'new' : null, formatPrice(d.price), d.line].filter(Boolean).join(', ')}
                   onPressIn={() => {
                     const id = drinkIdFromHref(to);
                     if (id) prefetch(id, { name: d.name, imageUrl: d.isSketch ? null : d.imageUrl });
@@ -144,7 +174,8 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
                   style={[styles.row, { borderBottomColor: ds.c.line }]}
                 >
                   <DrinkThumb drink={d} drawable />
-                  <DrinkLine drink={d} centered={false} />
+                  <DrinkLine drink={d} centered={false} isNew={!!newIds?.has(d.id)} />
+                  <RowPrice drink={d} />
                 </PressableScale>
               );
             })}
@@ -153,7 +184,9 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
       {drawn ? (
         // One note for the whole card, and no tag: drawings are obviously drawings.
         <View style={styles.drawnNote}>
-          <Caption tone="muted">Drawn from each drink’s spec until it has a photo</Caption>
+          <Caption tone="muted" style={styles.mono}>
+            Drawn from each drink’s spec until it has a photo
+          </Caption>
         </View>
       ) : null}
     </View>
@@ -174,6 +207,8 @@ const styles = StyleSheet.create({
   cardBeside: { borderBottomWidth: 0, paddingVertical: space.sm },
   drawnNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: space.sm },
   flex: { flex: 1, gap: 2 },
+  shrink: { flexShrink: 1 },
+  mono: { fontFamily: fontFamilies.mono },
   centered: { alignItems: 'center', gap: 2 },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
   nameRowCentered: { justifyContent: 'center', flexWrap: 'wrap' },

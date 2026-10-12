@@ -48,22 +48,27 @@ beforeEach(() => {
 
 test('a work email at the bar’s own site claims it on the spot', async () => {
   await renderWithTamagui(<BarClaimScreen profileRef="pale.moth" />);
-  expect(screen.getByText('How we check')).toBeTruthy();
-  expect(screen.getByRole('radio', { name: /Work email \(instant\)/ })).toBeChecked();
+  expect(screen.getByText('Prove it’s yours')).toBeTruthy();
+  expect(screen.getByRole('radio', { name: /^Work email/ })).toBeChecked();
+  expect(screen.getByText('Instant')).toBeTruthy();
+  expect(screen.getByText(/Up to 3 claims a day/)).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Claim Pale Moth' }));
-  expect(mockStart).toHaveBeenCalledWith({ profileId: 'p1', method: 'email', barId: null, note: '' });
+  expect(mockStart).toHaveBeenCalledWith(expect.objectContaining({ profileId: 'p1', method: 'email', barId: null, note: '' }));
 });
 
-test('an email elsewhere can’t be used, so Instagram is picked and asks for a code', async () => {
+test('an email elsewhere can’t be used, so Instagram is picked and shows the code before sending', async () => {
   mockEmail = 'jo@gmail.com';
   await renderWithTamagui(<BarClaimScreen profileRef="pale.moth" />);
-  expect(screen.getByRole('radio', { name: /Work email/ })).toBeDisabled();
+  expect(screen.getByRole('radio', { name: /^Work email/ })).toBeDisabled();
   expect(screen.getByText(/signed in with an address at gmail.com, not palemoth.com/)).toBeTruthy();
-  expect(screen.getByRole('radio', { name: /Instagram bio/ })).toBeChecked();
+  expect(screen.getByRole('radio', { name: /message from the bar’s Instagram/ })).toBeChecked();
+  const code = screen.getByLabelText(/^Your code: /).props.accessibilityLabel.replace(/\D/g, '');
+  expect(code).toMatch(/^[0-9]{6}$/);
+  expect(screen.getByRole('button', { name: 'Open Instagram' })).toBeTruthy();
   await fireEvent.press(screen.getByRole('radio', { name: /A call to the bar/ }));
-  await fireEvent.changeText(screen.getByLabelText('Who should we ask for, and when?'), 'Sam, after 4pm');
-  await fireEvent.press(screen.getByRole('button', { name: 'Get my code' }));
-  expect(mockStart).toHaveBeenCalledWith({ profileId: 'p1', method: 'phone', barId: null, note: 'Sam, after 4pm' });
+  expect(screen.getByText('Slowest')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
+  expect(mockStart).toHaveBeenCalledWith({ profileId: 'p1', method: 'phone', barId: null, note: '', code });
 });
 
 test('an Admin can link a venue they run instead of making one', async () => {

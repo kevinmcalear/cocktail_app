@@ -58,6 +58,8 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
                 {from ? <Caption tone="muted">{`from ${from.name}`}</Caption> : null}
                 <Caption tone="muted">{leadText(line.prep.leadMinutes) ?? 'Your recipe'}</Caption>
               </View>
+            ) : line.later ? (
+              <Caption tone="accent">House prep, recipe to write</Caption>
             ) : line.technique ? (
               <Caption tone="accent">{`House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`}</Caption>
             ) : (
@@ -66,6 +68,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
           </PressableScale>
           <View style={styles.links}>
             {line.prep && onEditPrep ? <TextAction label="Edit the recipe" a11y={`Edit the recipe for ${line.name}`} onPress={onEditPrep} /> : null}
+            {line.later && !line.prep && onEditPrep ? <TextAction label="Write the recipe" a11y={`Write the recipe for ${line.name}`} onPress={onEditPrep} /> : null}
             {from ? (
               <TextAction
                 label={`Back to ${from.name}`}

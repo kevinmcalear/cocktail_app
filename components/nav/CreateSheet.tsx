@@ -12,6 +12,7 @@ import { useDrafts } from '@/hooks/useDrafts';
 import { useMode } from '@/hooks/useMode';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { roleLabel } from '@/lib/roles';
+import { useBringIn } from '@/store/useBringIn';
 
 import { HomeMark } from './VenueMarks';
 
@@ -96,7 +97,16 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
         {made.map((c) => (
           <Row key={c.label} label={c.label} hint={venueId ? c.hint : c.homeHint} icon={<CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(hrefOf(c))} />
         ))}
-        <Row label="Bring in" hint="Snap, drop or paste a menu, recipes or bottles" icon={<IconSymbol name="doc.on.doc" size={20} color={ds.c.ink} />} onPress={() => go('/bring-in')} />
+        <Row
+          label="Bring in"
+          hint="Snap, drop or paste a menu, recipes or bottles"
+          icon={<IconSymbol name="doc.on.doc" size={20} color={ds.c.ink} />}
+          onPress={() => {
+            onClose();
+            // Its own sheet, over the screen you were on, once this one has gone.
+            setTimeout(() => useBringIn.getState().openSheet(), 350);
+          }}
+        />
         <Row
           label="Drafts"
           hint={drafts.length ? 'Pick up where you left off' : 'Nothing unfinished'}

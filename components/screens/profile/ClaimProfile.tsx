@@ -53,7 +53,14 @@ function ClaimBar({ profile, label }: { profile: Profile; label: string }) {
           Your last claim wasn’t approved. You can try another way.
         </Caption>
       ) : null}
-      <Button label={label} variant="secondary" icon="checkmark" accessibilityHint="Prove you work here and take over this page" onPress={open} />
+      <Button
+        label={label}
+        variant="secondary"
+        icon="checkmark"
+        accessibilityHint="Prove you work here and take over this page"
+        // A bar's claim is step 2 of venue setup (b03), which carries on while it's checked. A maker's stays on its own screen.
+        onPress={() => (userId && profile.kind === 'bar' ? router.push(`/venue-setup?claim=${profile.id}` as Href) : open())}
+      />
     </View>
   );
 }

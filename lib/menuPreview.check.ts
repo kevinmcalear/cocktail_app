@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { drinksLine, isPreviewBot, isUuid, menuVersion, nightLabel, previewHtml, previewMeta, type PreviewDrink, type SharedMenuRow } from './menuPreview';
+import { createdBy, drinkKickerFor, drinkLine, drinkPreviewMeta, drinkVersion, madeBy, type PreviewDrinkCard } from './drinkPreview';
 import { paintSketch } from './sketch/paint';
 import { sceneToSvg } from './sketch/svg';
 import type { SketchInputs } from './sketch/types';
@@ -49,14 +50,15 @@ assert.notEqual(menuVersion(menu), menuVersion({ ...menu, name: 'Halloween' }));
 assert.notEqual(menuVersion(menu), menuVersion({ ...menu, sections: [{ name: 'Drinks', item_ids: ['b', 'a'] }] }));
 
 const meta = previewMeta(menu, drinks, 'https://babyvom.it');
-assert.equal(meta.title, 'Halloween "party" <3 · Saturday 31 October');
-assert.equal(meta.description, 'Americano, Last Word and 2 house drinks. A menu by Sam on Cocktail.');
+assert.equal(meta.title, 'Halloween "party" <3');
+assert.equal(meta.description, '4 drinks for Saturday 31 October. A menu on Cocktail.');
+assert.equal(previewMeta({ ...menu, menu_date: null, sections: [{ name: 'Drinks', item_ids: ['a'] }] }, drinks, 'https://babyvom.it').description, '1 drink. A menu on Cocktail.');
 assert.equal(meta.url, 'https://babyvom.it/m/00000000-0000-4000-c000-00000000aa01');
 assert.ok(meta.image.startsWith('https://babyvom.it/api/menu-og?id=00000000-0000-4000-c000-00000000aa01&v='));
 
 // A menu's name is someone's text: it can't break out of the tags.
 const html = previewHtml(meta);
-assert.ok(html.includes('<meta property="og:title" content="Halloween &quot;party&quot; &lt;3 · Saturday 31 October">'));
+assert.ok(html.includes('<meta property="og:title" content="Halloween &quot;party&quot; &lt;3">'));
 assert.ok(!html.includes('"party"'));
 assert.ok(html.includes('<meta name="twitter:card" content="summary_large_image">'));
 
@@ -74,5 +76,36 @@ assert.ok(svg.includes('<linearGradient'));
 for (const [, ref] of svg.matchAll(/url\(#([^)]+)\)/g)) assert.ok(svg.includes(`id="${ref}"`), `missing #${ref}`);
 // The same drink and seed always draw the same.
 assert.equal(svg, sceneToSvg(paintSketch(inputs, { seed: 'last-word' }), { size: 256 }));
+
+
+// --- a drink's preview (lib/drinkPreview.ts) ---
+const penicillin: PreviewDrinkCard = {
+  id: '0c2bead3-1ed9-4b1d-b79d-073f85eef5d2',
+  name: 'Penicillin',
+  description: 'Scotch, lemon, honey-ginger, an Islay float.',
+  origin: 'Modern Classic',
+  origin_year: 2005,
+  riff_of_id: null,
+  bar_id: null,
+  publish_mode: 'description',
+  image_url: null,
+  image_is_generated: null,
+  creator: 'Sam Ross',
+  bar: 'Milk & Honey',
+  ingredients: [],
+};
+const drinkMeta = drinkPreviewMeta(penicillin, 'https://babyvom.it');
+assert.equal(drinkMeta.title, 'Penicillin');
+assert.equal(drinkMeta.description, 'Scotch, lemon, honey-ginger, an Islay float. Sam Ross, 2005. On Cocktail.');
+assert.equal(drinkMeta.url, 'https://babyvom.it/d/0c2bead3-1ed9-4b1d-b79d-073f85eef5d2');
+assert.ok(drinkMeta.image.startsWith('https://babyvom.it/api/drink-og?id=0c2bead3-1ed9-4b1d-b79d-073f85eef5d2&v='));
+assert.equal(createdBy(penicillin), 'Created by Sam Ross · Milk & Honey');
+assert.equal(drinkKickerFor(penicillin), 'Modern classic · 2005');
+// A shared spec names its ingredients; a bar's own drink is "Little Rye original".
+const shared = { ...penicillin, ingredients: ['Scotch', 'Lemon', 'Honey Syrup'], bar_id: 'b', bar: 'Little Rye', creator: null, origin: 'Original', origin_year: null };
+assert.equal(drinkLine(shared), 'Scotch, lemon, honey syrup');
+assert.equal(madeBy(shared), 'Little Rye');
+assert.equal(drinkKickerFor(shared), 'Little Rye original');
+assert.notEqual(drinkVersion(penicillin), drinkVersion(shared));
 
 console.log('menuPreview: ok');

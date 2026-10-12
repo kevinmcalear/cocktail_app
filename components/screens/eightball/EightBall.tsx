@@ -153,11 +153,17 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
           variant="secondary"
           size="lg"
           onPress={roll}
-          accessibilityHint={native ? 'Or shake your phone again' : undefined}
           style={styles.action}
         />
         {drink ? <Button label="Open recipe" size="lg" onPress={open} style={styles.action} /> : null}
       </Animated.View>
+      {native ? (
+        <Animated.View style={cardStyle}>
+          <Caption tone="muted" align="center">
+            Or shake your phone again
+          </Caption>
+        </Animated.View>
+      ) : null}
     </View>
   );
 }

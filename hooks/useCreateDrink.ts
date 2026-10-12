@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
-import { useDrafts } from '@/hooks/useDrafts';
 import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
@@ -10,6 +10,7 @@ import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
 import { existingIngredientId } from '@/lib/ingredientNames';
+import type { ImageAngle } from '@/lib/itemImages';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalize } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
@@ -35,6 +36,10 @@ export interface CreateDrinkResult {
   id: string;
   /** Saved, but these parts didn't stick (said the way a person would want to hear it). */
   warnings: string[];
+  /** Ingredients and preps this save made (Bring in records them so Undo all can take them back). */
+  created: { id: string; name: string }[];
+  /** House preps added by name only ("Just add the name", Later): their recipes are still to write. */
+  later: string[];
 }
 
 type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
@@ -57,6 +62,7 @@ export function useCreateDrink() {
       const warnings: string[] = [];
       // New rows the pickers' lists don't have yet: ingredients by id, spec items (glass, method, ice) at all.
       const newIngredients: string[] = [];
+      const created: { id: string; name: string }[] = [];
       let newSpecs = false;
 
       // A picked row can be gone by now (merged into another ingredient since
@@ -113,7 +119,10 @@ export function useCreateDrink() {
         }
         if (error || !data) throw error ?? new Error(`Couldn’t add ${pick.name}.`);
         made.set(key, data.id);
-        if (type === 'ingredient') newIngredients.push(data.id);
+        if (type === 'ingredient') {
+          newIngredients.push(data.id);
+          created.push({ id: data.id, name: capitalize(pick.name) });
+        }
         else newSpecs = true;
         return data.id;
       };
@@ -142,6 +151,7 @@ export function useCreateDrink() {
         if (error || !data) throw error ?? new Error(`Couldn’t add ${line.name}.`);
         made.set(key, data.id);
         newIngredients.push(data.id);
+        created.push({ id: data.id, name });
         return data.id;
       };
 
@@ -150,11 +160,14 @@ export function useCreateDrink() {
       const preps: { id: string; technique: string }[] = [];
       // New house preps with their own recipe (made in the wizard), saved once the drink is in.
       const ownPreps: { id: string; name: string; prep: PrepDraft }[] = [];
+      const later: string[] = [];
       for (const { line, amount } of specLines(draft)) {
         const madeBefore = newIngredients.length;
-        const ownPrep = !!line.prep && !(line.id && live.has(line.id));
+        // A prep added by name only is still a house prep of its own, its recipe to come.
+        const ownPrep = (!!line.prep || !!line.later) && !(line.id && live.has(line.id));
         const ingredientId = ownPrep ? await own(line) : await ensure(line, 'ingredient');
         const isNew = newIngredients.length > madeBefore;
+        if (line.later && !line.prep && isNew) later.push(capitalize(line.name));
         if (line.prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep: line.prep });
         else if (line.technique && isNew) preps.push({ id: ingredientId, technique: line.technique });
         lines.push({
@@ -234,10 +247,21 @@ export function useCreateDrink() {
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
       }
 
+      // Photos picked on the review: the hero and the service angles. One that
+      // fails is said, not fatal: the drink is saved and photos can follow.
+      let photosMissed = 0;
+      for (const [angle, uri] of Object.entries(draft.photos ?? {}) as [ImageAngle, string][]) {
+        const image = await uploadDrinkPhoto(uri, `cocktails/${id}`).catch(() => null);
+        const linked = image ? await supabase.from('item_images').insert({ item_id: id, image_id: image.id, angle, sort_order: 0 }) : null;
+        if (!image || linked?.error) photosMissed += 1;
+      }
+      if (photosMissed) warnings.push(photosMissed === 1 ? 'One photo wasn’t added. Add it on the drink’s page.' : `${photosMissed} photos weren’t added. Add them on the drink’s page.`);
+      if (Object.keys(draft.photos ?? {}).length) void qc.invalidateQueries({ queryKey: ['cocktail', id] });
+
       // A prep made here: its recipe, method and keeping, on the row this save made.
       for (const p of ownPreps) {
         try {
-          await savePrepRecipe(p.id, p.prep, ensure);
+          await savePrepRecipe(p.id, p.prep, ensure, barId);
         } catch (e) {
           warnings.push(plainDbMessage(e) ?? `${capitalize(p.name)}’s recipe wasn’t saved. Add it on its page.`);
         }
@@ -271,7 +295,7 @@ export function useCreateDrink() {
       if (newSpecs) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
-      return { id, warnings };
+      return { id, warnings, created, later };
     },
     onSuccess: (_, { barId, menuSectionId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuSectionId }),
     // The wizard says what went wrong itself, and keeps the draft.

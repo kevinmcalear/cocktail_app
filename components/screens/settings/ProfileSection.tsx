@@ -1,13 +1,15 @@
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, Headline, useDs } from '@/components/ds';
-import { RowDivider, SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
+import { useMyProfile } from '@/hooks/useMyProfile';
 import { showMessage } from '@/lib/dialogs';
 import { useSaveProfilePhoto } from '@/hooks/useProfilePhoto';
 
@@ -29,6 +31,8 @@ function namesFrom(meta: Record<string, unknown> | undefined): [string, string] 
  * codes go to that email.
  */
 export function ProfileSection() {
+  const router = useRouter();
+  const myProfile = useMyProfile().data;
   const ds = useDs();
   const { user, updateProfile } = useAuth();
   const photo = useSaveProfilePhoto();
@@ -95,6 +99,13 @@ export function ProfileSection() {
         </View>
       ) : null}
 
+      <RowDivider />
+      <SettingsRow
+        label="Public profile"
+        detail={myProfile?.handle ? `@${myProfile.handle} · what other people see` : 'What other people see'}
+        icon="person.crop.circle"
+        onPress={() => router.push('/settings/profile')}
+      />
       <RowDivider />
       <View style={styles.signIn} accessible aria-label={`Sign-in email, ${user?.email ?? ''}. Your sign-in codes go here.`}>
         <IconSymbol name="envelope" size={20} color={ds.c.ink} />

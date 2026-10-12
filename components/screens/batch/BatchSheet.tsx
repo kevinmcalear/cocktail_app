@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, LockedSection, Segmented, Sheet, Spec, Tag, Title, useDs, useSheetClose } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, LockedSection, PressableScale, Segmented, Sheet, SheetScrollView, Spec, Title, useDs, useSheetClose } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
-import { space } from '@/constants/tokens';
+import { layout, space } from '@/constants/tokens';
+import { useShelfLives } from '@/hooks/useBatchPrep';
+import { batchPrepLines, keepsFor, bottleExpiry, expiryLine } from '@/lib/batchPrep';
 import {
   BOTTLE_SIZES,
   buildBatch,
@@ -21,6 +24,7 @@ import {
 import type { SpecLine } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
+import { BatchActions } from './BatchActions';
 import { BatchRow, Choice, FreezerCheck, ServesField, StockField } from './BatchParts';
 import { ServesRuler } from './ServesRuler';
 
@@ -43,6 +47,12 @@ export interface BatchSheetProps {
   abv?: number | null;
   /** The viewer can edit the drink, so a guessed split is theirs to set. */
   canEdit?: boolean;
+  /** "House spec · version 3": which spec this is, first in the header. */
+  specLabel?: string | null;
+  /** A venue's batch (Save as prep card, Make now); null at home (Share, Make it, tick as I go). */
+  barId?: string | null;
+  /** May make a house prep at the venue. */
+  canPrep?: boolean;
 }
 
 type Mode = 'serves' | 'bottle' | 'stock';
@@ -62,13 +72,13 @@ function methodLine(method: BatchMethod, water: { pct: number } | null): string 
   const pct = water ? `${Number(water.pct.toFixed(1))}% water in the bottle` : null;
   switch (method) {
     case 'stirred':
-      return `Stirred · ${pct ?? 'no water added'}`;
+      return `stirred · ${pct ?? 'no water added'}`;
     case 'shaken':
-      return `Shaken · ${pct ?? 'shaken to order, so no water in the bottle'}`;
+      return `shaken to order, ${pct ?? 'no water in the bottle'}`;
     case 'built':
-      return `Built · ${pct ?? 'bubbles to order'}`;
+      return `built · ${pct ?? 'bubbles to order'}`;
     default:
-      return `Method not set · ${pct ?? 'no water added'}`;
+      return `method not set · ${pct ?? 'no water added'}`;
   }
 }
 
@@ -90,7 +100,7 @@ export function BatchSheet(props: BatchSheetProps) {
   );
 }
 
-function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, dilutionPct, serviceStyle, abv, canEdit }: BatchSheetProps) {
+function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, dilutionPct, serviceStyle, abv, canEdit, specLabel, barId = null, canPrep = false }: BatchSheetProps) {
   const ds = useDs();
   const close = useSheetClose();
   const [mode, setMode] = useState<Mode>('serves');
@@ -100,6 +110,9 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
   const [stockKey, setStockKey] = useState<string | null>(null);
   const [have, setHave] = useState('');
   const [tools, setTools] = useState(false);
+  // Making it: the keys ticked off so far; null when not making.
+  const [ticked, setTicked] = useState<string[] | null>(null);
+  const tick = (key: string) => setTicked((t) => (t ? (t.includes(key) ? t.filter((k) => k !== key) : [...t, key]) : t));
   const freezerC = useSettingsStore((s) => s.freezerC);
   const setFreezerC = useSettingsStore((s) => s.setFreezerC);
 
@@ -120,6 +133,17 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
   const station = batch.lines.filter((l) => l.leaveOut);
   const bottles = `${batch.bottles} × ${bottleLabel(bottleSize)} ${batch.bottles === 1 ? 'bottle' : 'bottles'}`;
   const guessed = lines.every((l) => l.atService === null) && station.some((l) => l.leaveOut !== 'garnish');
+  // House-made lines keep for so long; the bottle is used by the shortest of them.
+  const houseIds = lines.flatMap((l) => (l.houseMade && l.ingredientId ? [l.ingredientId] : []));
+  const { data: lives = {} } = useShelfLives(houseIds);
+  const lifeOf = (key: string) => {
+    const id = lines.find((l) => l.key === key && l.houseMade)?.ingredientId;
+    return id ? (lives[id] ?? null) : null;
+  };
+  const shelfHours = bottled.map((l) => lifeOf(l.key));
+  const useBy = expiryLine(bottleExpiry(shelfHours, new Date()));
+  const shortest = shelfHours.filter((h): h is number => !!h).sort((a, b) => a - b)[0] ?? null;
+  const text = [`${name}, ${n} serves`, ...bottled.map((l) => `${l.amount} ${l.ingredient}`), ...(batch.water ? [`${batch.water.amount} water`] : []), `Pour ${batch.pour} each.`].join('\n');
   const pickServes = (v: number) => {
     setMode('serves');
     setServes(v);
@@ -139,6 +163,7 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
         <StockField lines={stock} line={stockLine} onLine={setStockKey} have={have} onHave={setHave} unit={haveUnit} />
       ) : null}
       <ServesField value={n} onChange={pickServes} />
+      {mode === 'bottle' ? <Caption tone="muted">{`${batch.total} · pour ${batch.pour} each`}</Caption> : null}
       {mode === 'serves' ? (
         <>
           <ServesRuler value={serves} min={MIN_SERVES} max={MAX_SERVES} onChange={setServes} />
@@ -151,13 +176,36 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
         <Caption tone="muted" style={styles.eyebrow}>
           IN THE BOTTLE
         </Caption>
-        {bottled.map((l) => (
-          <BatchRow key={l.key} ingredient={l.ingredient} amount={l.amount} sub={l.sub} />
-        ))}
-        {batch.water ? <BatchRow ingredient="Filtered water" amount={batch.water.amount} sub={`${Number(batch.water.pct.toFixed(1))}% of the mix before water`} /> : null}
-        <View accessible accessibilityLabel={`In the bottle: ${batch.total}, ${bottles}`} style={styles.total}>
-          <Body>{bottles}</Body>
+        {bottled.map((l) => {
+          const keeps = keepsFor(lifeOf(l.key));
+          const house = lines.some((s) => s.key === l.key && s.houseMade);
+          return (
+            <BatchRow
+              key={l.key}
+              ingredient={l.ingredient}
+              amount={l.amount}
+              sub={[l.sub, house ? ['house', keeps].filter(Boolean).join(' · ') : null].filter(Boolean).join(' · ') || null}
+              checked={ticked?.includes(l.key)}
+              onToggle={ticked ? () => tick(l.key) : undefined}
+            />
+          );
+        })}
+        {batch.water ? (
+          <BatchRow
+            ingredient="Filtered water"
+            amount={batch.water.amount}
+            sub={batch.method === 'stirred' ? `${Number(batch.water.pct.toFixed(1))}%, stands in for stirring` : `${Number(batch.water.pct.toFixed(1))}% of the mix before water`}
+            checked={ticked?.includes('water')}
+            onToggle={ticked ? () => tick('water') : undefined}
+          />
+        ) : batch.method === 'shaken' ? (
+          <BatchRow ingredient="Water" amount={unit === 'oz' ? '0 oz' : '0 ml'} sub="the shake dilutes it" />
+        ) : null}
+        <View accessible accessibilityLabel={[`In the bottle: ${batch.total}`, bottles, batch.abv !== null ? `${Math.round(batch.abv)}% ABV` : null, useBy].filter(Boolean).join(', ')} style={styles.total}>
           <Spec>{batch.total}</Spec>
+          <Caption tone="muted" style={styles.flex}>
+            {[bottles, batch.abv !== null ? `bottle ${Math.round(batch.abv)}% ABV` : null, useBy].filter(Boolean).join(' · ')}
+          </Caption>
         </View>
       </View>
 
@@ -173,29 +221,39 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
         </View>
       ) : null}
 
-      {batch.abv !== null ? <Tag label={`Bottle ${Math.round(batch.abv)}% ABV`} style={styles.tag} /> : null}
       {batch.method === 'stirred' && batch.abv !== null ? <FreezerCheck abv={batch.abv} freezerC={freezerC} onFreezerC={setFreezerC} /> : null}
       <Body tone="muted">{batch.note}</Body>
       {guessed ? (
         <Caption tone="muted">{canEdit ? 'What stays out of the bottle is guessed from the names. Set it under Service on the drink page.' : 'What stays out of the bottle is guessed from the names.'}</Caption>
       ) : null}
-      <Button label="Dilution calculator" icon="drop.fill" variant="secondary" onPress={() => setTools(true)} style={styles.tools} />
+      <BatchActions
+        name={name}
+        barId={barId}
+        canPrep={canPrep}
+        making={!!ticked}
+        onMake={() => setTicked((t) => (t ? null : []))}
+        onDilution={() => setTools(true)}
+        prep={{ lines: batchPrepLines(lines, bottled.map((l) => l.key), n), yieldMl: batch.totalMl, shelfHours: shortest }}
+        text={text}
+        onSaved={close}
+      />
       {tools ? <ToolsSheet visible onClose={() => setTools(false)} tool="dilute" volumeMl={batch.totalMl - (batch.water?.ml ?? 0)} abv={abv} scheme={ds.scheme} /> : null}
     </>
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+    <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <View style={styles.head}>
         <View style={styles.flex}>
-          <Caption tone="muted">Batch</Caption>
-          <Title>{name}</Title>
-          <Caption tone="muted">{methodLine(batch.method, batch.water)}</Caption>
+          <Title>Batch</Title>
+          <Caption tone="muted">{[specLabel ?? name, methodLine(batch.method, batch.water)].join(' · ')}</Caption>
         </View>
-        <Button label="Done" variant="secondary" onPress={close} />
+        <PressableScale accessibilityLabel="Close" onPress={close} style={styles.close}>
+          <IconSymbol name="xmark" size={18} color={ds.c.muted} />
+        </PressableScale>
       </View>
       {body}
-    </ScrollView>
+    </SheetScrollView>
   );
 }
 
@@ -204,7 +262,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   eyebrow: { letterSpacing: 1.2 },
-  total: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: space.sm, paddingTop: space.md },
-  tag: { alignSelf: 'flex-start' },
-  tools: { alignSelf: 'flex-start' },
+  total: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space.sm, paddingTop: space.md },
+  close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
 });

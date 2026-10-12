@@ -32,14 +32,15 @@ export function AgeCheckScreen() {
       {status === 'under_age' ? (
         <>
           <UnderAgeNote />
-          <Caption tone="muted">Everything else in the app, like your venue’s menus and prep, works as usual.</Caption>
+          <Caption tone="muted">Everything else, like your venue’s menus, works as usual.</Caption>
           <Button label="Continue" onPress={onward} />
         </>
       ) : status === 'unknown' ? (
         <>
           <AgeCheckForm />
           <View style={styles.later}>
-            <Button label="Not now" variant="ghost" accessibilityHint="We'll ask again when you collect, rank or publish a drink" onPress={onward} />
+            <Button label="Not now" variant="ghost" onPress={onward} />
+            <Caption tone="muted" align="center">We’ll ask again the first time you collect, rank or publish a drink.</Caption>
           </View>
         </>
       ) : (
@@ -51,5 +52,5 @@ export function AgeCheckScreen() {
 }
 
 const styles = StyleSheet.create({
-  later: { alignItems: 'center', marginTop: space.sm },
+  later: { alignItems: 'center', gap: space.xs, marginTop: space.sm },
 });

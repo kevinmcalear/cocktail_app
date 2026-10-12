@@ -17,7 +17,7 @@ import { roleLabel } from '@/lib/roles';
 
 const LOGO = 44;
 
-/** A venue's settings on a page of their own: name and brand, staff link, who sees what, more settings, team. */
+/** A venue's settings on a page of their own: name and brand, staff link, who sees what, team and roles, more settings. */
 export function VenueSettingsScreen({ barId }: { barId: string }) {
   return (
     <BackbarTheme>

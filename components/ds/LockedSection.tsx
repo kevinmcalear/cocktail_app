@@ -13,6 +13,8 @@ interface LockedSectionProps {
   unlocked: boolean;
   /** The lowest role that can, e.g. "Maker". Shown when locked. */
   opensAt: string;
+  /** Said under a locked header: what else opens with it ("Method and prep notes open with it."). */
+  note?: string;
   children: ReactNode;
 }
 
@@ -21,14 +23,14 @@ interface LockedSectionProps {
  * who can open it, so staff see there's more to learn and admins can see what
  * each role gets. The locked content is never rendered.
  */
-export function LockedSection({ title, unlocked, opensAt, children }: LockedSectionProps) {
+export function LockedSection({ title, unlocked, opensAt, note, children }: LockedSectionProps) {
   const ds = useDs();
   return (
     <View style={[styles.section, { borderTopColor: ds.c.line }]}>
       <View
         style={styles.header}
         accessible={!unlocked}
-        accessibilityLabel={unlocked ? undefined : `${title}, locked. Opens at ${opensAt}.`}
+        accessibilityLabel={unlocked ? undefined : `${title}, locked. Opens at ${opensAt}.${note ? ` ${note}` : ''}`}
       >
         <Headline tone={unlocked ? 'ink' : 'muted'} role="heading">
           {title}
@@ -40,6 +42,11 @@ export function LockedSection({ title, unlocked, opensAt, children }: LockedSect
           </View>
         )}
       </View>
+      {!unlocked && note ? (
+        <Caption tone="muted" style={styles.note} aria-hidden>
+          {note}
+        </Caption>
+      ) : null}
       {unlocked ? <View style={styles.body}>{children}</View> : null}
     </View>
   );
@@ -50,4 +57,5 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
   lock: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   body: { marginTop: space.md, gap: space.sm },
+  note: { marginTop: space.xs },
 });

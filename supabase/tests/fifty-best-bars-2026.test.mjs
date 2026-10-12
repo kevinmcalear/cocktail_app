@@ -56,7 +56,7 @@ describe("The World's 50 Best Bars 2026", () => {
   test('signed out, anyone sees Saikindō and its award', async () => {
     const { data, error } = await anon
       .from('profiles')
-      .select('display_name, city, profile_awards(award, year, title)')
+      .select('display_name, city, profile_awards!profile_awards_profile_id_fkey(award, year, title)')
       .eq('handle', 'saikindo')
       .single();
     assert.ifError(error);

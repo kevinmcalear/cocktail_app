@@ -20,8 +20,9 @@ export const supportsNestableDrag = Platform.OS !== 'web';
 export const dragGripStyle = Platform.OS === 'web' ? ({ touchAction: 'none' } as ViewStyle) : null;
 
 /**
- * A drag list's `dragHitSlop` when its grip is the first `width` points of a row:
- * only a touch there can start the drag pan. Over the whole row the pan took every
- * vertical swipe on Android, so the page wouldn't scroll over the list.
+ * A drag list's `dragHitSlop` when its grip is the first (or, with 'right', the
+ * last) `width` points of a row: only a touch there can start the drag pan. Over
+ * the whole row the pan took every vertical swipe on Android, so the page
+ * wouldn't scroll over the list.
  */
-export const gripOnly = (width: number) => ({ left: 0, width });
+export const gripOnly = (width: number, side: 'left' | 'right' = 'left') => (side === 'left' ? { left: 0, width } : { right: 0, width });

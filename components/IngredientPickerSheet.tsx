@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Button, Text, useTheme, XStack, YStack, type TamaguiElement } from "tamagui";
 
-import { IngredientThumb } from "@/components/ds";
+import { IngredientThumb, SheetScrollView } from "@/components/ds";
 import { SearchBar } from "@/components/SearchBar";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -83,6 +83,7 @@ export function IngredientPickerSheet({
                 ) : null}
             </View>
             <FlatList
+                renderScrollComponent={(props) => <SheetScrollView {...props} />}
                 style={{ maxHeight: 420 }}
                 contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
                 data={filtered}

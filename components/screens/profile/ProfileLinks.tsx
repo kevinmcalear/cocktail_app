@@ -1,9 +1,9 @@
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { PressableScale, useDs } from '@/components/ds';
-import { space } from '@/constants/tokens';
-import { profileLinks, type LinkNetwork } from '@/lib/profiles';
+import { Caption, PressableScale, useDs } from '@/components/ds';
+import { radius, space } from '@/constants/tokens';
+import { normalizeInstagram, profileLinks, type LinkNetwork } from '@/lib/profiles';
 
 /** FontAwesome 6 glyph and spoken name for each network. The brand glyphs come from its Brands font. */
 const ICON: Record<LinkNetwork, { glyph: string; name: string }> = {
@@ -25,6 +25,16 @@ export function ProfileLinks({ profile, align = 'center' }: { profile: Parameter
     <View style={[styles.row, align === 'start' && styles.start]}>
       {links.map(({ href, network }) => {
         const { glyph, name } = ICON[network];
+        // Instagram says the handle beside its glyph ("@juniper.jo", ppl-person).
+        const handle = network === 'instagram' && profile.instagram ? `@${normalizeInstagram(profile.instagram)}` : null;
+        if (handle) {
+          return (
+            <PressableScale key={href} role="link" aria-label={`${profile.display_name} on Instagram, ${handle}`} style={[styles.pill, { borderColor: ds.c.lineStrong }]} onPress={() => Linking.openURL(href)}>
+              <FontAwesome6 name={glyph} size={18} color={ds.c.ink} />
+              <Caption>{handle}</Caption>
+            </PressableScale>
+          );
+        }
         return (
           <PressableScale
             key={href}
@@ -45,4 +55,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.xs },
   start: { justifyContent: 'flex-start' },
   button: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  pill: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
 });

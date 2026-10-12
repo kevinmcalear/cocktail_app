@@ -3,13 +3,15 @@ import { useRouter, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, PressableScale, Tag, TextLink, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
 import { awardInitials, groupAwards } from '@/lib/awards';
 import { editionDates, editionDrinkLine, timelineDates, type MenuEdition } from '@/lib/menuEditions';
 
+import { SaveMenuButton } from '../kept/SaveMenuButton';
+import { ReportSheet } from '../safety/ReportSheet';
 import { AWARD_LOGOS } from './awardLogos';
 
 const FIRST_MENUS = 6;
@@ -93,6 +95,7 @@ function SourceLink({ url, label, children }: { url: string | null; label: strin
 export function MenuHistory({ profileId, name }: { profileId: string; name: string }) {
   const { data = [], isLoading } = useMenuEditions(profileId);
   const [all, setAll] = useState(false);
+  const [report, setReport] = useState(false);
   if (isLoading) return <Caption tone="muted">Loading menus…</Caption>;
   if (!data.length) return <Body tone="muted">{`No menus from ${name} here yet.`}</Body>;
   const shown = all ? data : data.slice(0, FIRST_MENUS);
@@ -106,7 +109,13 @@ export function MenuHistory({ profileId, name }: { profileId: string; name: stri
       {data.length > FIRST_MENUS && !all ? (
         <Button label={`Show all ${data.length} menus`} variant="secondary" onPress={() => setAll(true)} />
       ) : null}
-      <Caption tone="muted">Researched from the bar’s site and press. Each menu links to its source.</Caption>
+      <View style={styles.foot}>
+        <Caption tone="muted">From the bar’s site and press. Each menu links to its source. Something wrong?</Caption>
+        <TextLink label="Tell us." onPress={() => setReport(true)} />
+      </View>
+      {report ? (
+        <ReportSheet subject={`${name}'s menus`} targets={[{ label: name, target: { kind: 'profile', profileId } }]} onClose={() => setReport(false)} />
+      ) : null}
     </View>
   );
 }
@@ -123,18 +132,28 @@ function EditionRow({ edition: m, last, href }: { edition: MenuEdition; last: bo
         <View style={[styles.node, { borderColor: now ? ds.accentText : ds.c.muted, backgroundColor: now ? ds.accentText : 'transparent' }]} />
         {last ? null : <View style={[styles.line, { backgroundColor: ds.c.line }]} />}
       </View>
-      <PressableScale
-        role="link"
-        accessibilityLabel={`${m.name}. ${when}. ${drinks}. Open the menu`}
-        onPress={() => router.push(href as Href)}
-        style={[styles.entry, now ? [styles.nowCard, { backgroundColor: ds.c.surface, borderColor: withAlpha(ds.accentText, 0.4) }] : null]}
-      >
-        <Caption style={[styles.cap, { color: now ? ds.accentText : ds.c.muted }]}>{when}</Caption>
-        <DsText variant="title">{m.name}</DsText>
-        <Body tone="muted" numberOfLines={2}>
-          {drinks}
-        </Body>
-      </PressableScale>
+      {now ? (
+        // The menu on now: Open the menu and Save menu (ppl-bar-menus).
+        <View style={[styles.entry, styles.nowCard, { backgroundColor: ds.c.surface, borderColor: withAlpha(ds.accentText, 0.4) }]}>
+          <Caption style={[styles.cap, { color: ds.accentText }]}>{when}</Caption>
+          <DsText variant="title">{m.name}</DsText>
+          <Body tone="muted" numberOfLines={2}>
+            {drinks}
+          </Body>
+          <View style={styles.nowActions}>
+            <Button label="Open the menu" variant="secondary" accessibilityLabel={`Open the ${m.name} menu`} onPress={() => router.push(href as Href)} />
+            <SaveMenuButton editionId={m.id} drinkIds={m.drinks.map((d) => d.id)} />
+          </View>
+        </View>
+      ) : (
+        <PressableScale role="link" accessibilityLabel={`${m.name}. ${when}. ${drinks}. Open the menu`} onPress={() => router.push(href as Href)} style={styles.entry}>
+          <Caption style={[styles.cap, { color: ds.c.muted }]}>{when}</Caption>
+          <DsText variant="title">{m.name}</DsText>
+          <Body tone="muted" numberOfLines={2}>
+            {drinks}
+          </Body>
+        </PressableScale>
+      )}
     </View>
   );
 }
@@ -155,4 +174,6 @@ const styles = StyleSheet.create({
   entry: { flex: 1, minWidth: 0, gap: space.xs, paddingTop: space.md, paddingBottom: space.lg },
   nowCard: { paddingHorizontal: space.lg, marginBottom: space.md, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   start: { alignSelf: 'flex-start' },
+  nowActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
+  foot: { gap: space.xs, alignItems: 'flex-start' },
 });

@@ -19,18 +19,22 @@ interface DiscoverSearchProps {
   area: SearchArea;
   onClearKinds: () => void;
   onClose: () => void;
+  /** How many filters are on, and the way to them, beside the scope (disc-desk-search). */
+  filters?: number;
+  onFilters?: () => void;
 }
 
 /** The field and scope, plus a line for Discover's filters, which narrow the search too. */
-export function DiscoverSearchHead({ query, onQuery, scope, onScope, mine, area, onClearKinds, onClose }: DiscoverSearchProps) {
+export function DiscoverSearchHead({ query, onQuery, scope, onScope, mine, area, onClearKinds, onClose, filters = 0, onFilters }: DiscoverSearchProps) {
   const kinds = area.kinds;
   return (
     <View style={styles.head}>
       <SearchHead query={query} onQuery={onQuery} scope={scope} onScope={onScope} mine={mine} area={area} autoFocus onDone={onClose} />
-      {kinds.length ? (
+      {kinds.length || onFilters ? (
         <View style={styles.row}>
-          <Caption tone="muted" style={styles.flex}>{`With your filters: ${kindsTitle(kinds)}`}</Caption>
-          <Button label="Clear filters" variant="ghost" onPress={onClearKinds} />
+          {onFilters ? <Button label={filters ? `Filters · ${filters}` : 'Filters'} icon="line.3.horizontal.decrease" variant="secondary" accessibilityLabel={filters ? `Filters, ${filters} on` : 'Filters'} onPress={onFilters} /> : null}
+          <Caption tone="muted" style={styles.flex}>{kinds.length ? `With your filters: ${kindsTitle(kinds)}` : ''}</Caption>
+          {kinds.length ? <Button label="Clear filters" variant="ghost" onPress={onClearKinds} /> : null}
         </View>
       ) : null}
     </View>

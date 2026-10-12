@@ -100,7 +100,8 @@ export type MyBarRow<B, D, G> =
   | { kind: 'make-more'; key: string; section: Found; more: number }
   /** A search nothing matches. */
   | { kind: 'make-none'; key: string; query: string }
-  | { kind: 'drink'; key: string; drink: D }
+  /** `needs`: a search's drink two bottles away, listed flat with the pair it needs. */
+  | { kind: 'drink'; key: string; drink: D; needs?: { id: string; name: string }[] }
   | { kind: 'group'; key: string; group: G }
   | { kind: 'first'; key: string }
   | { kind: 'projects'; key: string }
@@ -142,11 +143,11 @@ export function searchMake<D extends Drink, G extends Group<D>>(
   return { ready: make.canMake.filter(hit), one: away(make.oneAway), two: away(make.twoAway) };
 }
 
-/** The line in place of the tabs while searching: "Nothing ready with rye. 3 one bottle away, 1 two away." */
+/** The line in place of the tabs while searching: "Nothing ready with rye. Searching every tab: 3 one bottle away, 1 two away." */
 export function searchCaption(query: string, found: Record<Found, number>): string | null {
   const away = [found.one ? `${found.one} one bottle away` : null, found.two ? `${found.two} two away` : null].filter(Boolean);
   if (!found.ready && !away.length) return null;
-  if (!found.ready) return `Nothing ready with ${query.trim()}. ${away.join(', ')}.`;
+  if (!found.ready) return `Nothing ready with ${query.trim()}. Searching every tab: ${away.join(', ')}.`;
   return `${[`${found.ready} ready`, ...away].join(', ')}.`;
 }
 
@@ -164,7 +165,9 @@ function searchRows<B, D extends Drink, G extends Group<D>>(make: NonNullable<My
   section('ready', found.ready, (d) => ({ kind: 'drink', key: `d:${d.id}`, drink: d }));
   const group = (g: G): MyBarRow<B, D, G> => ({ kind: 'group', key: groupKey(g), group: g });
   section('one', found.one, group);
-  section('two', found.two, group);
+  // Two away under a search is drink by drink, each saying the pair it needs.
+  const pairs = found.two.flatMap((g) => g.drinks.map((d) => ({ d, needs: g.bottles })));
+  section('two', pairs, ({ d, needs }) => ({ kind: 'drink', key: `t:${d.id}`, drink: d, needs }));
   if (rows.length === 1) rows.push({ kind: 'make-none', key: 'make-none', query: query.trim() });
   rows.push({ kind: 'make-foot', key: 'make-foot', more: 0, searching: true });
   return rows;

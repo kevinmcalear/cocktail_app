@@ -55,13 +55,17 @@ export function readableAccent(accent: string, ground: string): string {
 
 /**
  * A button fill in the venue's accent, and the text to put on it. Uses
- * whichever ink reads better; if neither reaches 4.5:1 (mid-tone accents),
- * the fill is deepened until the light ink does.
+ * whichever ink reads better (or the venue's `prefer`red one when it reads);
+ * if neither reaches 4.5:1 (mid-tone accents), the fill is deepened until the
+ * light ink does.
  */
-export function accentFill(accent: string, darkInk: string, lightInk: string): { fill: string; text: string } {
+export function accentFill(accent: string, darkInk: string, lightInk: string, prefer?: 'dark' | 'light'): { fill: string; text: string } {
   const best = (fill: string) => (contrast(fill, darkInk) >= contrast(fill, lightInk) ? darkInk : lightInk);
   let fill = toHex(parseHex(accent));
-  if (contrast(fill, best(fill)) >= AA) return { fill, text: best(fill) };
+  // The venue's pick (brand "Text on accent") wins whenever it reads; a light
+  // pick deepens the fill below until it does, a dark one that can't falls back.
+  if (prefer === 'dark' && contrast(fill, darkInk) >= AA) return { fill, text: darkInk };
+  if (prefer !== 'light' && contrast(fill, best(fill)) >= AA) return { fill, text: best(fill) };
   for (let step = 1; step <= 20 && contrast(fill, lightInk) < AA; step++) {
     fill = mix(accent, '#000000', step * 0.05);
   }
