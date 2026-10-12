@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useState, useSyncExternalStore } from 'react';
 import { View } from 'react-native';
 
-import { SafetyLinks } from '@/components/screens/safety/SafetyLinks';
+import { SafetyLinks, type LinkRowProps } from '@/components/screens/safety/SafetyLinks';
+import { ReportProblemSheet } from '@/components/screens/settings/ReportProblemSheet';
 import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { analyticsAvailable, analyticsOptedOut, subscribeAnalytics } from '@/lib/analytics';
 import { saveAnalyticsChoice } from '@/lib/analyticsChoice';
@@ -30,22 +31,25 @@ function AnalyticsSwitch() {
   );
 }
 
-/** Privacy, terms, help, safety, and the analytics switch. */
+/** Help, safety, privacy and terms, in the canvas's order, and the analytics switch. */
 export function AccountSection() {
   const router = useRouter();
-  const linkRow = (label: string, onPress: () => void) => (
+  const [reporting, setReporting] = useState(false);
+  const linkRow = ({ label, detail, icon, onPress }: LinkRowProps) => (
     <View key={label}>
       <RowDivider />
-      <SettingsRow label={label} onPress={onPress} />
+      <SettingsRow label={label} detail={detail} icon={icon} onPress={onPress} />
     </View>
   );
   return (
     <SettingsSection title="Privacy and support">
-      <SettingsRow label="Privacy policy" onPress={() => router.push('/legal/privacy')} />
-      {linkRow('Terms of use', () => router.push('/legal/terms'))}
-      {linkRow('Help and support', () => router.push('/support'))}
+      <SettingsRow label="Help and support" detail="Questions people ask, and how to reach a person" icon="questionmark" onPress={() => router.push('/support')} />
+      {linkRow({ label: 'Report a problem', detail: 'Something broken or wrong in the app', icon: 'exclamationmark.triangle', onPress: () => setReporting(true) })}
       <SafetyLinks row={linkRow} />
+      {linkRow({ label: 'Privacy policy', icon: 'lock.fill', onPress: () => router.push('/legal/privacy') })}
+      {linkRow({ label: 'Terms of use', icon: 'doc.text', onPress: () => router.push('/legal/terms') })}
       <AnalyticsSwitch />
+      <ReportProblemSheet visible={reporting} onClose={() => setReporting(false)} />
     </SettingsSection>
   );
 }

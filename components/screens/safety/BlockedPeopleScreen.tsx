@@ -25,8 +25,9 @@ export function BlockedPeopleScreen() {
           ))}
         </View>
       ) : (
-        <Body tone="muted">You haven’t blocked anyone. To block someone, open their profile and tap More.</Body>
+        <Body tone="muted">You haven’t blocked anyone.</Body>
       )}
+      <Caption tone="muted">To block someone, open their profile and tap More.</Caption>
     </SafetyPage>
   );
 }

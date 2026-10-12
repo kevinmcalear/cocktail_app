@@ -183,7 +183,10 @@ function PublishingPage({ barId }: { barId: string }) {
                 <View role="list" style={styles.list}>
                   {data.menus.map((m) => (
                     <View key={m.id} role="listitem" style={styles.menu}>
-                      <Body>{m.name}</Body>
+                      <View>
+                        <Body>{m.name}</Body>
+                        <Caption tone="muted">{`${m.status} · ${m.drinkCount} ${m.drinkCount === 1 ? 'drink' : 'drinks'}`}</Caption>
+                      </View>
                       <PublishChoice
                         compact
                         label={`Who can see ${m.name}`}

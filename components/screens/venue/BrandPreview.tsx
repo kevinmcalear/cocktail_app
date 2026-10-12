@@ -5,11 +5,9 @@ import { StyleSheet, View } from 'react-native';
 import {
   BackbarTheme,
   BrandProvider,
-  Button,
   Caption,
   Display,
   DsText,
-  Headline,
   PressableScale,
   Segmented,
   Tag,
@@ -17,7 +15,7 @@ import {
   useDs,
 } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
-import { radius, space, type DisplayFace } from '@/constants/tokens';
+import { displayFaces, radius, space, type DisplayFace } from '@/constants/tokens';
 
 export interface BrandLook {
   id: string;
@@ -29,30 +27,59 @@ export interface BrandLook {
   displayFace: DisplayFace;
   /** Only a readable tint (lib/brand usableGroundTint), or null. */
   groundTint: string | null;
+  /** Text on accent buttons, or null for the automatic pick. */
+  accentText?: 'cream' | 'ink' | null;
 }
 
 const SCHEMES = [
-  { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
+  { value: 'light', label: 'Light' },
 ] as const;
 
-/** A small screen in one scheme, drawn with the real components so it matches the app. */
+/** Sample drinks for the preview: the same three the canvas draws. */
+const SAMPLE = [
+  { name: 'House Martini', line: 'Gin · dry vermouth', price: '18', isNew: false },
+  { name: 'Bolo Tie', line: 'Rye · amaro · orange', price: '19', isNew: true },
+  { name: 'Champ Stamp', line: 'Bourbon · strawberry · smoke', price: '20', isNew: false },
+];
+const TABS = ['Tonight', 'Library', 'Discover'];
+
+/** Tonight in one scheme, in the draft brand, drawn with the real components so it matches the app. */
 function MiniScreen({ look }: { look: BrandLook }) {
   const ds = useDs();
   const venue = { ...look, roleLevel: 40 };
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground, borderColor: ds.c.line }]}>
-      <View style={styles.header}>
-        <VenueMark venue={venue} size={24} />
-        <Headline numberOfLines={1} style={styles.flex}>
-          {look.name}
-        </Headline>
+      <VenueMark venue={venue} size={28} />
+      <View>
+        <Display numberOfLines={1}>Tonight</Display>
+        <Caption tone="muted" numberOfLines={1}>Thu 9 Oct · Autumn menu · 8 drinks</Caption>
       </View>
-      <Display numberOfLines={1}>Tonight</Display>
-      <Caption tone="muted">Autumn menu · 8 drinks</Caption>
-      <View style={styles.row}>
-        <Button label="Start prep" />
-        <Tag label="New" tone="accent" />
+      <View style={[styles.banner, { backgroundColor: ds.c.raised }]}>
+        <Caption style={styles.flex}>2 new drinks go on at 6.</Caption>
+        <View style={[styles.cta, { backgroundColor: ds.accentFill.fill }]}>
+          <Caption color={ds.accentFill.text}>See them</Caption>
+        </View>
+      </View>
+      {SAMPLE.map((d) => (
+        <View key={d.name} style={styles.drink}>
+          <View style={[styles.tile, { backgroundColor: ds.c.paper }]} />
+          <View style={styles.flex}>
+            <View style={styles.nameRow}>
+              <DsText variant="body" numberOfLines={1} style={{ fontFamily: displayFaces[look.displayFace].regular }}>
+                {d.name}
+              </DsText>
+              {d.isNew ? <Tag label="New" tone="accent" /> : null}
+            </View>
+            <Caption tone="muted" numberOfLines={1}>{d.line}</Caption>
+          </View>
+          <DsText variant="spec">{d.price}</DsText>
+        </View>
+      ))}
+      <View style={[styles.tabs, { borderTopColor: ds.c.line }]}>
+        {TABS.map((t, i) => (
+          <Caption key={t} color={i === 0 ? ds.accentText : ds.c.muted}>{t}</Caption>
+        ))}
       </View>
     </View>
   );
@@ -85,10 +112,10 @@ export function BrandPreview({ look, stacked = false }: { look: BrandLook; stack
   const wide = useBreakpoint() !== 'phone';
   // Phones show one scheme at a time, so the controls stay close to the preview.
   const [only, setOnly] = useState<'light' | 'dark'>('dark');
-  const brand = { accent: look.accent ?? undefined, displayFace: look.displayFace, groundTint: look.groundTint ?? undefined };
-  const schemes = wide ? (['light', 'dark'] as const) : [only];
+  const brand = { accent: look.accent ?? undefined, displayFace: look.displayFace, groundTint: look.groundTint ?? undefined, accentText: look.accentText ?? undefined };
+  const schemes = wide ? (['dark', 'light'] as const) : [only];
   return (
-    <View accessibilityLabel="Preview of your brand" style={styles.wrap}>
+    <View aria-label="Live preview" style={styles.wrap}>
       {wide ? null : <Segmented options={SCHEMES} value={only} onChange={setOnly} accessibilityLabel="Preview scheme" />}
       <View style={[styles.schemes, wide && !stacked && styles.schemesWide]}>
         {schemes.map((scheme) => (
@@ -96,7 +123,9 @@ export function BrandPreview({ look, stacked = false }: { look: BrandLook; stack
             <BrandProvider {...brand}>
               <View style={styles.flex}>
                 {wide ? <Caption tone="muted">{scheme === 'light' ? 'Light' : 'Dark'}</Caption> : null}
-                <MiniScreen look={look} />
+                <View role="img" aria-label={`Tonight at ${look.name} in ${scheme} mode, with the new brand`}>
+                  <MiniScreen look={look} />
+                </View>
               </View>
             </BrandProvider>
           </BackbarTheme>
@@ -153,8 +182,12 @@ const styles = StyleSheet.create({
   schemesWide: { flexDirection: 'row' },
   flex: { flex: 1, gap: space.xs },
   screen: { gap: space.sm, padding: space.lg, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth },
-  header: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.sm },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.sm, borderRadius: radius.control },
+  cta: { paddingHorizontal: space.md, paddingVertical: space.xs, borderRadius: radius.pill },
+  drink: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  tile: { width: 36, height: 36, borderRadius: radius.control },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  tabs: { flexDirection: 'row', justifyContent: 'space-around', paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
   icon: { alignItems: 'center', gap: space.xs, width: 84 },
   iconTile: { width: 60, height: 60, borderRadius: radius.control },
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },

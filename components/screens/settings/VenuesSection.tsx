@@ -32,7 +32,7 @@ export function VenuesSection() {
     });
 
   return (
-    <SettingsSection title="Venues" note="Each venue has its own brand, access levels and team.">
+    <SettingsSection title="Venues" note="Each venue has its own brand, roles and team.">
       {isLoading ? <ListRowsSkeleton rows={2} /> : null}
       {!isLoading && venues.length === 0 ? <Body tone="muted" style={styles.empty}>You’re not on a venue’s team yet.</Body> : null}
       {venues.map((v, i) => (

@@ -41,6 +41,7 @@ test('at a venue: switch rows, then the venue’s places with their counts', asy
     'Back bar. 84 placed · 3 waiting',
     'My team. 9 people · 2 invited',
     'Brand. Logo, colours and type',
+    'Roles and access. Who sees what, by role',
     'Venue settings. Hours, address, units',
     'This week. Nothing on yet',
     'Settings. Your account and the app',
