@@ -12,8 +12,10 @@ interface PageVisibilityChoiceProps {
   onChange: (value: PageVisibility) => void;
   disabled?: boolean;
   error?: string | null;
-  /** False on its own page, where the title and intro say it. */
+  /** False on its own page or a setup step, where the title and intro say it. */
   heading?: boolean;
+  /** The line under the choice: setup says where the page stands today. */
+  note?: string;
 }
 
 /**
@@ -21,7 +23,7 @@ interface PageVisibilityChoiceProps {
  * outside the venue, with what a guest will see. The database keeps the
  * specs back; each drink's own setting still applies below Open.
  */
-export function PageVisibilityChoice({ venueName, value, onChange, disabled, error, heading = true }: PageVisibilityChoiceProps) {
+export function PageVisibilityChoice({ venueName, value, onChange, disabled, error, heading = true, note }: PageVisibilityChoiceProps) {
   const ds = useDs();
   return (
     <View style={styles.group}>
@@ -43,7 +45,7 @@ export function PageVisibilityChoice({ venueName, value, onChange, disabled, err
         </Caption>
         <Body>{PAGE_COPY[value].preview}</Body>
       </View>
-      <Caption tone="muted">Any single drink can still be kept private from its own page.</Caption>
+      <Caption tone="muted">{note ?? 'Any single drink can still be kept private from its own page.'}</Caption>
     </View>
   );
 }

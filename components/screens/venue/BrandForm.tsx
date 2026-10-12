@@ -47,7 +47,7 @@ function accentOptions(row: VenueBrandRow, suggested: string[]): AccentOption[] 
  * Colours from your logo with Text on accent, Ground tint with the contrast
  * check, Display face, and the home-screen name and icon.
  */
-export function BrandForm({ row, draft, set, suggested, busy, problems, effectiveInk, onUpload, onRemoveBackground }: {
+export function BrandForm({ row, draft, set, suggested, busy, problems, effectiveInk, onUpload, onRemoveBackground, hideIcon }: {
   row: VenueBrandRow;
   draft: BrandDraftState;
   set: <K extends keyof BrandDraftState>(key: K) => (value: BrandDraftState[K]) => void;
@@ -58,6 +58,8 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
   effectiveInk: AccentInk;
   onUpload: (kind: 'logo' | 'icon') => void;
   onRemoveBackground: () => void;
+  /** Venue setup's Look step leaves the home-screen icon to Brand. */
+  hideIcon?: boolean;
 }) {
   const ds = useDs();
   const options = accentOptions(row, suggested);
@@ -116,30 +118,32 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
         <FaceChoices name={row.name} value={draft.face} onChange={set('face')} />
       </SettingsSection>
 
-      <SettingsSection title="Home-screen icon" note="What staff see when they add your staff link to their home screen.">
-        <View style={styles.fields}>
-          <Field
-            label="Home-screen name"
-            value={draft.shortName}
-            onChangeText={set('shortName')}
-            placeholder={row.name.slice(0, SHORT_NAME_MAX)}
-            maxLength={SHORT_NAME_MAX}
-            error={problems.shortName}
-            hint={`${shortCount} of ${SHORT_NAME_MAX} characters. iOS cuts names off at about ${SHORT_NAME_MAX} characters.`}
-          />
-          <View style={styles.row}>
-            <Button
-              label={busy === 'icon' ? 'Uploading…' : draft.iconUrl ? 'Replace your icon' : 'Upload your own icon'}
-              icon="photo"
-              variant="secondary"
-              disabled={!!busy}
-              onPress={() => onUpload('icon')}
+      {hideIcon ? null : (
+        <SettingsSection title="Home-screen icon" note="What staff see when they add your staff link to their home screen.">
+          <View style={styles.fields}>
+            <Field
+              label="Home-screen name"
+              value={draft.shortName}
+              onChangeText={set('shortName')}
+              placeholder={row.name.slice(0, SHORT_NAME_MAX)}
+              maxLength={SHORT_NAME_MAX}
+              error={problems.shortName}
+              hint={`${shortCount} of ${SHORT_NAME_MAX} characters. iOS cuts names off at about ${SHORT_NAME_MAX} characters.`}
             />
-            {draft.iconUrl ? <Button label="Use the logo" variant="ghost" onPress={() => set('iconUrl')(null)} /> : null}
+            <View style={styles.row}>
+              <Button
+                label={busy === 'icon' ? 'Uploading…' : draft.iconUrl ? 'Replace your icon' : 'Upload your own icon'}
+                icon="photo"
+                variant="secondary"
+                disabled={!!busy}
+                onPress={() => onUpload('icon')}
+              />
+              {draft.iconUrl ? <Button label="Use the logo" variant="ghost" onPress={() => set('iconUrl')(null)} /> : null}
+            </View>
+            {draft.iconUrl ? null : <Caption color={ds.c.muted}>Without an icon of its own, the logo is used.</Caption>}
           </View>
-          {draft.iconUrl ? null : <Caption color={ds.c.muted}>Without an icon of its own, the logo is used.</Caption>}
-        </View>
-      </SettingsSection>
+        </SettingsSection>
+      )}
     </>
   );
 }

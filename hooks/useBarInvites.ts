@@ -35,6 +35,8 @@ export interface MyInvite {
   name: string | null;
   /** The Admin who sent it, by the name they go by. */
   invited_by_name: string | null;
+  /** They said yes; they join once the venue's claim is approved. */
+  held?: boolean;
 }
 
 /** A venue's open invites. RLS shows them to the venue's admins only. */
@@ -67,13 +69,18 @@ export function useRemoveInvite(barId: string) {
   });
 }
 
-/** Joins the venue at the invited role (accept_bar_invite checks the email). */
+/**
+ * Joins the venue at the invited role (accept_bar_invite checks the email).
+ * A venue still waiting on its claim holds them instead: `held` comes back
+ * true and they join once the claim is approved.
+ */
 export function useAcceptInvite(barId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.rpc('accept_bar_invite', { p_bar_id: barId });
+    mutationFn: async (): Promise<{ held: boolean }> => {
+      const { data, error } = await supabase.rpc('accept_bar_invite', { p_bar_id: barId });
       if (error) throw error;
+      return { held: !(data as { user_id?: string | null } | null)?.user_id };
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['bars'] });

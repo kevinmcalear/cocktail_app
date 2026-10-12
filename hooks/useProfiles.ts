@@ -392,9 +392,20 @@ export interface ProfileClaim {
   evidence: ClaimEvidence | null;
   /** A moderator's words when they turn it down. */
   decline_reason: string | null;
+  /** Page settings chosen during venue setup while it waits; applied on approval (save_claim_setup). */
+  setup: ClaimSetup | null;
 }
 
-export const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, created_at, method, code, evidence, decline_reason';
+/** What save_claim_setup keeps on a waiting bar claim. */
+export interface ClaimSetup {
+  page_visibility?: 'locked' | 'description' | 'open';
+  hours?: Record<string, [string, string][]> | null;
+  timezone?: string | null;
+  phone?: string | null;
+  website?: string | null;
+}
+
+export const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, created_at, method, code, evidence, decline_reason, setup';
 
 /** The signed-in person's claims on one profile, newest first. */
 export function useMyClaims(profileId: string | null | undefined) {
@@ -579,11 +590,13 @@ export interface PublicPerson {
   display_name: string;
   city: string | null;
   is_claimed: boolean;
+  /** Where they work now, when a job says so: "Bar Bianca". */
+  current_bar: string | null;
   /** Their current job, when they show it: "Head bartender, Little Rye". */
   job: string | null;
 }
 
-type PersonRow = Omit<PublicPerson, 'job'> & { jobs: { title: string | null; is_current: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } | null }[] | null };
+type PersonRow = Omit<PublicPerson, 'job' | 'current_bar'> & { jobs: { title: string | null; is_current: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } | null }[] | null };
 
 /** Public people by name, so someone can find a profile we already have. */
 export function usePublicPeople(search: string) {
@@ -604,7 +617,7 @@ export function usePublicPeople(search: string) {
       return ((data ?? []) as unknown as PersonRow[]).map(({ jobs, ...p }) => {
         // A current job both sides confirmed, as the profile shows it.
         const now = (jobs ?? []).find((j) => j.is_current && j.person_accepted && j.bar_accepted && j.bar);
-        return { ...p, job: now ? [now.title, now.bar!.display_name].filter(Boolean).join(', ') : null };
+        return { ...p, current_bar: now?.bar?.display_name ?? null, job: now ? [now.title, now.bar!.display_name].filter(Boolean).join(', ') : null };
       });
     },
   });

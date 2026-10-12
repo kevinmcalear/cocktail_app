@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useWithdrawClaim } from '@/hooks/useBarClaims';
 import type { Profile, ProfileClaim } from '@/hooks/useProfiles';
-import { REVIEW_REASON, claimPlace, claimProblem, pageInstagram, spacedCode } from '@/lib/claimVerification';
+import { OUR_INSTAGRAM, REVIEW_REASON, claimPlace, claimProblem, pageInstagram, spacedCode } from '@/lib/claimVerification';
 import { instagramUrl } from '@/lib/profiles';
 
 /** The claim's six digits, big enough to read out across a bar. */
@@ -33,7 +33,9 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
 
   const [title, text] =
     claim.method === 'instagram'
-      ? ['Put this code in your bio', `Add it anywhere in @${handle}’s Instagram bio and leave it there until we’ve checked, usually within a day. Then take it out.`]
+      ? claim.evidence?.instagram_dm
+        ? ['Send us this code', `Message it to ${OUR_INSTAGRAM ? `@${OUR_INSTAGRAM}` : 'us'} from @${handle}, the bar’s own account. A person checks, usually within a day.`]
+        : ['Put this code in your bio', `Add it anywhere in @${handle}’s Instagram bio and leave it there until we’ve checked, usually within a day. Then take it out.`]
       : claim.method === 'phone'
         ? ['Keep this code by the phone', `We’ll ring ${name} on a number we look up ourselves. Whoever answers reads us this code, so leave it with the team.`]
         : [
@@ -49,7 +51,11 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
       {claim.code ? <CodeCard code={claim.code} /> : null}
       {claim.method === 'phone' && claim.message ? <Caption tone="muted">{`We’ll ask for: ${claim.message}`}</Caption> : null}
       {claim.method === 'instagram' && handle ? (
-        <Button label={`Open @${handle}`} variant="secondary" icon="link" onPress={() => Linking.openURL(instagramUrl(handle))} style={styles.hug} />
+        claim.evidence?.instagram_dm ? (
+          <Button label="Open Instagram" variant="secondary" icon="link" onPress={() => Linking.openURL(OUR_INSTAGRAM ? instagramUrl(OUR_INSTAGRAM) : 'https://www.instagram.com/direct/inbox/')} style={styles.hug} />
+        ) : (
+          <Button label={`Open @${handle}`} variant="secondary" icon="link" onPress={() => Linking.openURL(instagramUrl(handle))} style={styles.hug} />
+        )
       ) : null}
       {withdraw.error ? (
         <Caption tone="accent" role="alert">

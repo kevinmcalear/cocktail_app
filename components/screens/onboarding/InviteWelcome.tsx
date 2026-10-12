@@ -55,6 +55,8 @@ function Welcome({ invite, setUp, onJoined, onDeclined }: InviteWelcomeProps) {
   const gutter = useGutter();
   const accept = useAcceptInvite(invite.bar_id);
   const decline = useRemoveInvite(invite.bar_id);
+  // The venue is still waiting on its claim: they've said yes and join once it's approved.
+  const held = !!invite.held || !!accept.data?.held;
   const busy = accept.isPending || decline.isPending;
   const who = invite.invited_by_name ?? invite.bar_name;
   const venue = {
@@ -116,13 +118,22 @@ function Welcome({ invite, setUp, onJoined, onDeclined }: InviteWelcomeProps) {
                 Couldn’t save that. Check your connection and try again.
               </Caption>
             ) : null}
-            <Button
-              label={accept.isPending ? 'Joining…' : 'Accept and start'}
-              size="lg"
-              disabled={busy}
-              onPress={() => accept.mutate(undefined, { onSuccess: onJoined })}
-            />
-            <Button label="Not me? Decline" variant="ghost" disabled={busy} onPress={() => decline.mutate(invite.id, { onSuccess: onDeclined })} />
+            {held ? (
+              <>
+                <Body role="status">{`You’re on the list. You join ${invite.bar_name} once its claim is approved, usually within a day.`}</Body>
+                <Button label="Carry on" size="lg" onPress={onDeclined} />
+              </>
+            ) : (
+              <>
+                <Button
+                  label={accept.isPending ? 'Joining…' : 'Accept and start'}
+                  size="lg"
+                  disabled={busy}
+                  onPress={() => accept.mutate(undefined, { onSuccess: (r) => (r.held ? undefined : onJoined()) })}
+                />
+                <Button label="Not me? Decline" variant="ghost" disabled={busy} onPress={() => decline.mutate(invite.id, { onSuccess: onDeclined })} />
+              </>
+            )}
           </View>
         </View>
       </ScrollView>
