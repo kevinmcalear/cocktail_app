@@ -1,23 +1,24 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, DateField } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useScheduleMenu } from '@/hooks/useMenuMutations';
-import { menuReadiness, newDrinkCount, plural } from '@/lib/menus';
+import { menuReadiness, menuStatus, plural } from '@/lib/menus';
 import type { MenuDetail, MenuSummary } from '@/types/menus';
 
 import { AnswerRow } from '../addDrink/ReviewStep';
 import { Eyebrow } from '../addDrink/WizardChrome';
 import { Choice, MenuSheet } from './MenuSheet';
-import { CardHeader, Check, ReadyChecks } from './ReviewParts';
+import { CardHeader, ReadyChecks } from './ReviewParts';
 
 type When = 'now' | 'tomorrow' | 'date';
 
 interface GoLiveSheetProps {
   visible: boolean;
   onClose: () => void;
-  menu: Pick<MenuDetail, 'id' | 'name' | 'barId' | 'sections' | 'coverUrl' | 'coverPosition'>;
+  menu: Pick<MenuDetail, 'id' | 'name' | 'barId' | 'sections' | 'coverUrl' | 'coverPosition'> & Partial<Pick<MenuDetail, 'plannedStartsAt'>>;
   /** The venue's other menus that are on now or coming up: the ones this can replace. */
   others: MenuSummary[];
   onDone: () => void;
@@ -37,15 +38,19 @@ function startFor(when: When, date: string, now: number): Date | null {
 
 /**
  * Putting a menu on, as a review step like the add-drink wizard's: the menu
- * on paper at the top, then its answers (when, what it takes off, its
- * drinks), each opening its choices in place, then what to know first.
- * Short sections stop it; missing photos and prices don't.
+ * on paper at the top (when, its name, its drinks, a link to the whole card),
+ * then "Ready to go on?" and its answers (when, what it takes off, its
+ * drinks), each opening its choices in place, then what to know first. When
+ * starts from the draft's planned day; Takes off starts with the menu that's
+ * on now. Short sections stop it; missing photos and prices don't.
  */
 export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSheetProps) {
-  const [when, setWhen] = useState<When>('now');
-  const [date, setDate] = useState(() => ymd(new Date(Date.now() + 7 * 86_400_000)));
-  const [replaceIds, setReplaceIds] = useState<string[]>([]);
+  const router = useRouter();
   const [now] = useState(() => Date.now());
+  const planned = menu.plannedStartsAt && Date.parse(menu.plannedStartsAt) > now ? new Date(menu.plannedStartsAt) : null;
+  const [when, setWhen] = useState<When>(planned ? 'date' : 'now');
+  const [date, setDate] = useState(() => ymd(planned ?? new Date(Date.now() + 7 * 86_400_000)));
+  const [replaceIds, setReplaceIds] = useState<string[]>(() => others.filter((m) => menuStatus(m, now) === 'on').map((m) => m.id));
   const schedule = useScheduleMenu();
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<'when' | 'others' | null>(null);
@@ -53,13 +58,14 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
 
   const ready = menuReadiness(menu);
   const itemIds = menu.sections.flatMap((s) => s.drinks.map((d) => d.id));
-  const fresh = newDrinkCount(itemIds, others);
   const start = startFor(when, date, now);
   const dateLabel = start?.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   const badDate = when === 'date' && !start;
   const drinks = menu.sections.flatMap((s) => s.drinks);
   const whenLabel = when === 'now' ? 'Now' : start ? `${when === 'tomorrow' ? 'Tomorrow, ' : ''}${dateLabel}` : 'Pick a day';
-  const offLabel = replaceIds.length ? others.filter((m) => replaceIds.includes(m.id)).map((m) => m.name).join(', ') : 'Nothing: the others stay as they are';
+  const offLabel = replaceIds.length
+    ? others.filter((m) => replaceIds.includes(m.id)).map((m) => `${m.name} moves to Previous`).join(', ')
+    : 'Nothing: the others stay as they are';
   const toggle = (id: string) => setReplaceIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 
   const submit = async () => {
@@ -87,7 +93,18 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
         />
       }
     >
-      <CardHeader name={menu.name} when={start ? `From ${dateLabel}` : 'From today'} coverUrl={menu.coverUrl} coverPosition={menu.coverPosition} drinks={drinks} />
+      <CardHeader
+        name={menu.name}
+        when={start ? `From ${dateLabel}` : 'From today'}
+        coverUrl={menu.coverUrl}
+        coverPosition={menu.coverPosition}
+        drinks={drinks}
+        onOpenCard={() => {
+          onClose();
+          router.push(`/menus/${menu.id}/card`);
+        }}
+      />
+      <Eyebrow>Ready to go on?</Eyebrow>
       <View role="list">
         <AnswerRow label="When" value={whenLabel} onPress={() => flip('when')} hint="Shows the choices" />
         {open === 'when' ? (
@@ -125,7 +142,6 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
       <View>
         <Eyebrow>Before it goes on</Eyebrow>
         <ReadyChecks sections={menu.sections} home={false} />
-        {fresh && menu.barId ? <Check done label={`${plural(fresh, 'drink')} new to the team`} note={`${fresh === 1 ? 'It’s' : 'They’re'} in Study once the menu is on.`} /> : null}
       </View>
       {error ? <Body tone="accent">{error}</Body> : null}
     </MenuSheet>
