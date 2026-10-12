@@ -1,3 +1,4 @@
+import type { MapsApp } from '@/lib/directions';
 import { DEFAULT_UNIT } from '@/lib/units';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
@@ -47,6 +48,9 @@ interface SettingsState {
     setFreezerC: (c: number) => void;
     setThemeMode: (mode: ThemeMode) => void;
     setDefaultUnit: (unit: string) => void;
+    /** iPhone: the maps app Directions goes straight to ("Remember my choice"); null asks each time. */
+    directionsApp: MapsApp | null;
+    setDirectionsApp: (app: MapsApp | null) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -60,6 +64,8 @@ export const useSettingsStore = create<SettingsState>()(
             setFreezerC: (c) => set({ freezerC: c }),
             setThemeMode: (mode) => set({ themeMode: mode }),
             setDefaultUnit: (unit) => set({ defaultUnit: unit, specUnit: specUnitFor(unit) }),
+            directionsApp: null,
+            setDirectionsApp: (app) => set({ directionsApp: app }),
         }),
         {
             name: 'settings-storage',

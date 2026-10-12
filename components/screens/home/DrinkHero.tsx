@@ -36,6 +36,8 @@ export function DrinkHero({ drink, query = '', area }: { drink: DiscoverDrink; q
     <View style={styles.hero}>
       <PressableScale role="link" accessibilityLabel={`${drink.name}, open`} onPress={open}>
         <DrinkImage source={drink.imageUrl} itemId={drink.id} glass={null} accessibilityLabel={drink.name} aspectRatio={2} thumb />
+        {/* On the picture, as drawn (disc-search-pin). */}
+        {menu ? <Tag label={menu} style={styles.onPicture} /> : null}
       </PressableScale>
       <View style={styles.titleRow}>
         <Title role="heading" numberOfLines={2} style={styles.flex}>
@@ -47,11 +49,6 @@ export function DrinkHero({ drink, query = '', area }: { drink: DiscoverDrink; q
         <PressableScale role="link" accessibilityLabel={`${rank.caption}. See the rankings`} onPress={() => router.push(`/rankings/${drink.id}` as never)}>
           <Caption tone="muted">{rank.caption}</Caption>
         </PressableScale>
-      ) : null}
-      {menu ? (
-        <View style={styles.tags}>
-          <Tag label={menu} />
-        </View>
       ) : null}
       {drink.why ? (
         <Body>
@@ -79,6 +76,6 @@ const styles = StyleSheet.create({
   hero: { gap: space.sm },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
-  tags: { flexDirection: 'row' },
+  onPicture: { position: 'absolute', top: space.sm, left: space.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: space.sm },
 });

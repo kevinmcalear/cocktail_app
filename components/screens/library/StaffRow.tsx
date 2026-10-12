@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, PressableScale, Spec, useDs, type IconName } from '@/components/ds';
+import { Body, Button, Caption, PressableScale, Spec, useDs } from '@/components/ds';
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
@@ -20,10 +20,8 @@ export interface StaffRowProps {
   canEdit: boolean;
   /** Lifted while being dragged. */
   active?: boolean;
-  /** Starts a drag (react-native-draggable-flatlist). Ranked rows only. */
+  /** Starts a drag (react-native-draggable-flatlist). A Not ranked row dragged above the line is ranked. */
   drag?: () => void;
-  /** Desktop web: up and down arrows beside the grip, for keyboards and mice. */
-  arrows?: boolean;
   onMove?: (by: -1 | 1) => void;
   first?: boolean;
   last?: boolean;
@@ -34,10 +32,11 @@ export interface StaffRowProps {
 
 /**
  * One drink on the staff list: its place, its name, where it stands with the
- * menus, and for editors a grip. Hold the grip and drag to move it; tap it for buttons that do the same, and screen readers
- * get Move up and Move down as actions.
+ * menus, and for editors a grip on the right (no up and down chevrons: drag
+ * works on the web too). Hold the grip and drag to move it; tap it for buttons
+ * that do the same, and screen readers get Move up and Move down as actions.
  */
-export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, active, drag, arrows, onMove, first, last, onUnrank, onRank, onRemove }: StaffRowProps) {
+export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, active, drag, onMove, first, last, onUnrank, onRank, onRemove }: StaffRowProps) {
   const ds = useDs();
   const [open, setOpen] = useState(false);
   const web = Platform.OS === 'web';
@@ -56,15 +55,9 @@ export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, acti
           </View>
           <Caption tone="muted">{status}</Caption>
         </PressableScale>
-        {canEdit && arrows && onMove ? (
-          <>
-            <Icon icon="chevron.up" label={`Move ${pick.name} up`} disabled={first} onPress={() => onMove(-1)} />
-            <Icon icon="chevron.down" label={`Move ${pick.name} down`} disabled={last} onPress={() => onMove(1)} />
-          </>
-        ) : null}
         {canEdit ? (
           <PressableScale
-            accessibilityLabel={drag ? `Reorder ${pick.name}` : `Change ${pick.name}`}
+            accessibilityLabel={`Move ${pick.name}`}
             accessibilityHint={drag ? 'Drag to move it, or tap for buttons' : undefined}
             aria-expanded={open}
             accessibilityActions={drag && onMove ? [{ name: 'moveUp', label: 'Move up' }, { name: 'moveDown', label: 'Move down' }] : undefined}
@@ -93,15 +86,6 @@ export function StaffRow({ pick, place, status, onOpen, onPressIn, canEdit, acti
   );
 }
 
-function Icon({ icon, label, disabled, onPress }: { icon: IconName; label: string; disabled?: boolean; onPress: () => void }) {
-  const ds = useDs();
-  return (
-    <PressableScale accessibilityLabel={label} aria-disabled={disabled} disabled={disabled} onPress={onPress} style={[styles.icon, disabled && styles.off]}>
-      <IconSymbol name={icon} size={16} color={ds.c.muted} />
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
   wrap: { borderBottomWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 56 },
@@ -109,7 +93,5 @@ const styles = StyleSheet.create({
   place: { width: 22 },
   name: { flex: 1, gap: 2 },
   grip: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  off: { opacity: 0.3 },
   controls: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingBottom: space.md, paddingLeft: 22 + space.md },
 });

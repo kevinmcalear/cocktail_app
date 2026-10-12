@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { TECHNIQUES } from './index';
-import { labFromNames, labNeeds, projectsFor } from './projects';
+import { labFromNames, labNeeds, madeWith, projectsFor } from './projects';
 
 const byId = (id: string) => TECHNIQUES.find((t) => t.id === id)!;
 
@@ -38,5 +38,12 @@ assert.deepEqual(ready.find((p) => p.technique.id === 'acid-adjust')?.uses, ['Fi
 const all = projectsFor(new Set(['ln2', 'rotovap', 'whipper']), new Set());
 assert.ok(!ids(all.ready).includes('liquid-nitrogen'));
 assert.ok(all.ready.every((p) => !p.technique.gate));
+
+// A catalog prep counts for a technique by its card's tag, and its name where the tag is shared.
+const tech = (id: string) => TECHNIQUES.find((t) => t.id === id)!;
+assert.ok(madeWith(tech('milk-wash'), { name: 'Milk-Washed Rum', actions: ['Milk wash'] }));
+assert.ok(!madeWith(tech('milk-wash'), { name: 'Milk-Washed Rum', actions: ['Infuse'] }), 'the tag has to say so');
+assert.ok(madeWith(tech('fat-wash'), { name: 'Brown Butter Fat-Washed Bourbon', actions: ['Fat wash'] }));
+assert.ok(TECHNIQUES.filter((t) => t.method).every((t) => !madeWith(t, { name: t.name, actions: ['Mix', 'Foam', 'Freeze'] })), 'methods make no prep');
 
 console.log('projects: ok');

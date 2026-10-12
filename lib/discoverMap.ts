@@ -43,6 +43,10 @@ export interface MapPin {
   top?: string;
   /** While searching: an unnamed pin says how many of its drinks match (disc-search-pin), unless it has a score. */
   showCount?: boolean;
+  /** While searching: its best match's picture, shown in place of the logo. */
+  image?: string | null;
+  /** While searching: its best match only mentions the word, so the pin is faded. */
+  weak?: boolean;
 }
 
 /** Pins for the rows that have coordinates: ranked first, then early. */
@@ -106,7 +110,7 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
   const height = label ? 30 : pin.logo ? logoSize + 4 : 18;
   return {
     label,
-    logo: pin.logo,
+    logo: pin.image ?? pin.logo,
     logoSize,
     minWidth: label ? 44 : height,
     height,
@@ -116,7 +120,7 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
     borderColor: selected ? accent.fill : backbar.dark.ink,
     backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks && !pin.matches ? backbar.light.muted : backbar.light.ink,
     color: selected ? accent.text : backbar.dark.ink,
-    opacity: pin.closed && !selected ? 0.6 : 1,
+    opacity: (pin.closed || pin.weak) && !selected ? (pin.weak ? 0.55 : 0.6) : 1,
     // Where pins overlap: the selected one, then scored bars (higher over lower), over plain and closed ones.
     zIndex: selected ? 300 : pin.closed ? 0 : pin.score !== null ? 100 + Math.round(pin.score * 10) : 1,
   };
