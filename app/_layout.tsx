@@ -11,7 +11,7 @@ import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { lazy, Suspense, useEffect } from "react";
+import { useEffect } from "react";
 import { palette } from "@/constants/palette";
 import "react-native-reanimated";
 import { TamaguiProvider, Theme } from 'tamagui';
@@ -24,24 +24,19 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useIsWideWeb, WEB_SIDEBAR_WIDTH } from '@/hooks/useIsWideWeb';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useUserCacheSync } from '@/hooks/useUserCacheSync';
 import { BRAND } from '@/constants/brand';
 import { authRedirect, needsOnboarding } from '@/lib/onboarding';
 import { installWebAlert } from '@/lib/dialogs';
 import { afterFirstData } from '@/lib/idleQueue';
 import { prefetchRoutes } from '@/lib/prefetchRoutes';
+import { BringIn, RootExtras, SideNav } from '@/components/nav/RootLazy';
 
 import { initMonitoring } from '@/lib/monitoring';
 import { persistOptions, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
 
-// Not on a phone's first screen (wide web, signed in, or a shake): loaded when
-// first shown, so their code isn't on every page's first load (RAIL load).
-const WebSideNav = lazy(() => import('@/components/nav/WebSideNav').then((m) => ({ default: m.WebSideNav })));
-const SearchPalette = lazy(() => import('@/components/search/SearchPalette').then((m) => ({ default: m.SearchPalette })));
-const EightBallHost = lazy(() => import('@/components/screens/eightball/EightBallHost').then((m) => ({ default: m.EightBallHost })));
-const BringInHost = lazy(() => import('@/components/screens/bringin/BringInHost').then((m) => ({ default: m.BringInHost })));
 
 export { ErrorScreen as ErrorBoundary } from '@/components/ErrorScreen';
 
@@ -119,11 +114,7 @@ function RootLayoutNav() {
         `}} />
       )}
       <View style={{ flex: 1, flexDirection: 'row' }}>
-        {showWebSidebar ? (
-          <Suspense fallback={<View style={{ width: WEB_SIDEBAR_WIDTH }} />}>
-            <WebSideNav />
-          </Suspense>
-        ) : null}
+        {showWebSidebar ? <SideNav /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -234,16 +225,9 @@ function RootLayoutNav() {
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
           {/* Over the page, beside the sidebar: Bring in's sheet, drop dialog and reading tray. */}
-          {session ? (
-            <Suspense fallback={null}>
-              <BringInHost />
-            </Suspense>
-          ) : null}
+          {session ? <BringIn /> : null}
         </View>
-        <Suspense fallback={null}>
-          {showWebSidebar ? <SearchPalette /> : null}
-          {session ? <EightBallHost /> : null}
-        </Suspense>
+        <RootExtras palette={showWebSidebar} eightBall={!!session} />
       </View>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
