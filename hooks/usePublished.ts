@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import type { CreditStatus } from '@/lib/lineage';
 import { isUuid } from '@/lib/menuPreview';
 import type { PresentationRecipe } from '@/lib/spec';
 import { supabase } from '@/lib/supabase';
@@ -34,6 +35,9 @@ export interface PublishedDrink {
   creatorProfileId: string | null;
   originBarProfileId: string | null;
   originYear: number | null;
+  /** The drink it's a riff or version of. */
+  riffOfId: string | null;
+  creditStatus: CreditStatus | null;
 }
 
 /** The bar a drink or release is credited to, from its public profile. */
@@ -58,7 +62,7 @@ export interface LiveRelease {
 }
 
 export const PUBLISHED_COLUMNS =
-  'id, name, item_type, description, bar_id, glassware_id, ice_id, family_id, origin, abv, publish_mode, published_at, image_url, image_is_generated, creator_profile_id, origin_bar_profile_id, origin_year';
+  'id, name, item_type, description, bar_id, glassware_id, ice_id, family_id, origin, abv, publish_mode, published_at, image_url, image_is_generated, creator_profile_id, origin_bar_profile_id, origin_year, riff_of_id, credit_status';
 
 interface PublishedRow {
   id: string;
@@ -78,6 +82,8 @@ interface PublishedRow {
   creator_profile_id: string | null;
   origin_bar_profile_id: string | null;
   origin_year: number | null;
+  riff_of_id?: string | null;
+  credit_status?: CreditStatus | null;
 }
 
 export function toPublishedDrink(r: PublishedRow): PublishedDrink {
@@ -99,6 +105,8 @@ export function toPublishedDrink(r: PublishedRow): PublishedDrink {
     creatorProfileId: r.creator_profile_id,
     originBarProfileId: r.origin_bar_profile_id,
     originYear: r.origin_year,
+    riffOfId: r.riff_of_id ?? null,
+    creditStatus: r.credit_status ?? null,
   };
 }
 

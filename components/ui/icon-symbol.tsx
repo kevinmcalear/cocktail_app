@@ -108,6 +108,7 @@ const MAPPING = {
   'sun.max.fill': 'wb-sunny',
   'list.number': 'format-list-numbered',
   'trophy': 'emoji-events',
+  'line.horizontal.3': 'menu',
   'flag': 'outlined-flag',
   'gearshape': 'settings',
   // Tab icons: the same Material glyphs NativeTabs uses on Android.
