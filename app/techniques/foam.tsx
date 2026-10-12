@@ -1,13 +1,17 @@
 import { Stack } from 'expo-router';
 
-import { FoamPickerScreen } from '@/components/screens/techniques/FoamPickerScreen';
+import { BackbarTheme } from '@/components/ds';
+import { TechniquesScreen } from '@/components/screens/techniques/TechniquesScreen';
 
-/** Foam from anything: four questions, one foamer to start with. */
+/** Foam from anything: the Foams and airs group with the picker open over it. */
 export default function FoamPickerRoute() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false, title: 'Foam from anything' }} />
-      <FoamPickerScreen />
+      {/* The library is drawn light, like Make: the screen's own colours read the same theme. */}
+      <BackbarTheme scheme="light">
+        <TechniquesScreen group="foam" foam />
+      </BackbarTheme>
     </>
   );
 }
