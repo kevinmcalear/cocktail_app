@@ -64,11 +64,12 @@ export function menuVersion(menu: SharedMenuRow): string {
 
 export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin: string): PreviewMeta {
   const night = nightLabel(menu.menu_date);
-  const line = drinksLine(menu, drinks);
   const count = menu.sections.reduce((n, s) => n + s.item_ids.length, 0);
+  const howMany = `${count} ${count === 1 ? 'drink' : 'drinks'}`;
   return {
-    title: night ? `${menu.name} · ${night}` : menu.name,
-    description: [line ? `${line}.` : `${count} drinks.`, `A menu by ${menu.owner.name} on Cocktail.`].join(' '),
+    // As the boards draw it (ppl-preview-imessage): the name, then "4 drinks for Saturday 31 October."
+    title: menu.name,
+    description: `${night ? `${howMany} for ${night}` : howMany}. A menu on Cocktail.`,
     image: `${origin}/api/menu-og?id=${menu.id}&v=${menuVersion(menu)}`,
     url: `${origin}/m/${menu.id}`,
   };

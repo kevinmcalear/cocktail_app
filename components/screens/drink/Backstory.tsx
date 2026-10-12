@@ -142,7 +142,7 @@ export function Backstory({ itemId, lines = [], classicName, onRiff = null }: Ba
           </FactRow>
         ) : null}
 
-        {found ? <FirstInPrint records={found.records} borrowed={borrowed} lines={lines} /> : null}
+        {found ? <FirstInPrint records={found.records} borrowed={borrowed} itemId={itemId} lines={lines} /> : null}
 
         {classics.length ? (
           <FactRow

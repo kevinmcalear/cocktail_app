@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { fetchPublished } from '@/hooks/usePublished';
 import { editionDates, type MenuDates, type MenuEdition } from '@/lib/menuEditions';
 import { supabase } from '@/lib/supabase';
 
@@ -17,7 +18,9 @@ export interface LovedBar {
   avatarUrl: string | null;
   place: string | null;
   /** The menu the bar is pouring now, when we know it. */
-  currentMenu: { id: string; name: string } | null;
+  currentMenu: { id: string; name: string; dates: MenuDates } | null;
+  /** The bar's newest live release, when it has one. */
+  latestRelease: { id: string; name: string; date: string } | null;
 }
 
 export interface SavedMenu {
@@ -28,10 +31,12 @@ export interface SavedMenu {
   barName: string;
   dates: MenuDates;
   drinkIds: string[];
+  /** Some of its drinks still show their specs (Open specs); otherwise names and what's in them. */
+  openSpecs: boolean;
 }
 
 interface LovedRow {
-  profile: { id: string; handle: string | null; display_name: string; avatar_url: string | null; locality: string | null; city: string | null } | null;
+  profile: { id: string; handle: string | null; display_name: string; avatar_url: string | null; locality: string | null; city: string | null; bar_id: string | null } | null;
 }
 
 type EditionCols = Pick<MenuEdition, 'id' | 'name' | 'year' | 'month' | 'end_year' | 'end_month' | 'is_current'>;
@@ -52,25 +57,37 @@ export function useLovedBars() {
     queryFn: async (): Promise<LovedBar[]> => {
       const { data, error } = await supabase
         .from('loved_bars')
-        .select('profile:profiles!profile_id(id, handle, display_name, avatar_url, locality, city)')
+        .select('profile:profiles!profile_id(id, handle, display_name, avatar_url, locality, city, bar_id)')
         .order('loved_at', { ascending: false });
       if (error) throw error;
       // A bar whose page went private drops out (its profile embed comes back empty).
       const bars = ((data ?? []) as unknown as LovedRow[]).flatMap((r) => (r.profile ? [r.profile] : []));
-      const current = bars.length
-        ? await supabase.from('profile_menu_editions').select('id, name, profile_id').in('profile_id', bars.map((b) => b.id)).eq('is_current', true)
-        : { data: [], error: null };
+      const ids = bars.map((b) => b.id);
+      const venueIds = bars.flatMap((b) => (b.bar_id ? [b.bar_id] : []));
+      const [current, releases] = await Promise.all([
+        ids.length
+          ? supabase.from('profile_menu_editions').select('id, name, profile_id, year, month, end_year, end_month, is_current').in('profile_id', ids).eq('is_current', true)
+          : { data: [], error: null },
+        // Live releases only (RLS); newest first, so the first per bar is its latest.
+        venueIds.length
+          ? supabase.from('releases').select('id, name, release_date, bar_id').in('bar_id', venueIds).order('release_date', { ascending: false })
+          : { data: [], error: null },
+      ]);
       if (current.error) throw current.error;
-      const menus = (current.data ?? []) as { id: string; name: string; profile_id: string }[];
+      if (releases.error) throw releases.error;
+      const menus = (current.data ?? []) as (EditionCols & { profile_id: string })[];
+      const live = (releases.data ?? []) as { id: string; name: string; release_date: string; bar_id: string }[];
       return bars.map((b) => {
         const menu = menus.find((m) => m.profile_id === b.id);
+        const release = b.bar_id ? live.find((r) => r.bar_id === b.bar_id) : undefined;
         return {
           id: b.id,
           handle: b.handle,
           name: b.display_name,
           avatarUrl: b.avatar_url,
           place: [b.locality, b.city].filter(Boolean).join(', ') || null,
-          currentMenu: menu ? { id: menu.id, name: menu.name } : null,
+          currentMenu: menu ? { id: menu.id, name: menu.name, dates: editionDates(menu) } : null,
+          latestRelease: release ? { id: release.id, name: release.name, date: release.release_date } : null,
         };
       });
     },
@@ -111,6 +128,8 @@ export function useSavedMenus() {
         : { data: [], error: null };
       if (drinks.error) throw drinks.error;
       const rows = (drinks.data ?? []) as { edition_id: string; item_id: string }[];
+      // Names only unless some drink on it still shows its spec.
+      const withSpecs = new Set((await fetchPublished([...new Set(rows.map((r) => r.item_id))])).filter((p) => p.publishMode === 'spec').map((p) => p.id));
       return editions.map((e) => ({
         editionId: e.id,
         name: e.name,
@@ -119,6 +138,7 @@ export function useSavedMenus() {
         barName: e.profile!.display_name,
         dates: editionDates(e),
         drinkIds: rows.filter((r) => r.edition_id === e.id).map((r) => r.item_id),
+        openSpecs: rows.some((r) => r.edition_id === e.id && withSpecs.has(r.item_id)),
       }));
     },
   });

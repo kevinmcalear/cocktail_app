@@ -71,6 +71,10 @@ export interface TimelineFilter {
   family: string | null;
   /** Show historic styles (Punch, Sling, Sour) as well as drinks. */
   styles: boolean;
+  /** A spirit id (lib/drinkStyles SPIRITS), or null for any. */
+  spirit?: string | null;
+  /** A city or a bar's name, or null for anywhere. */
+  place?: string | null;
 }
 
 export interface TimelineRow {
@@ -93,8 +97,26 @@ export interface TimelineSection {
 const byYear = (a: TreeNode, b: TreeNode) => (a.year ?? 0) - (b.year ?? 0) || (a.kind === b.kind ? 0 : a.kind === 'style' ? -1 : 1) || a.name.localeCompare(b.name);
 
 function passes(n: TreeNode, filter: TimelineFilter): boolean {
-  if (n.kind === 'style' && !filter.styles) return false;
-  return !filter.family || n.family === filter.family || (n.kind === 'style' && n.family === 'trunk');
+  if (n.kind === 'style') return filter.styles && (!filter.family || n.family === filter.family || n.family === 'trunk');
+  if (filter.family && n.family !== filter.family) return false;
+  if (filter.spirit && !n.spirits.includes(filter.spirit)) return false;
+  return !filter.place || n.city === filter.place || n.bar === filter.place;
+}
+
+/** Cities, then bars, that first poured a drink, most drinks first: the Bar or city menu. */
+export function placeOptions(nodes: readonly TreeNode[]): { kind: 'city' | 'bar'; name: string; count: number }[] {
+  const tally = (pick: (n: TreeNode) => string | null) => {
+    const counts = new Map<string, number>();
+    for (const n of nodes) {
+      const v = n.kind === 'drink' ? pick(n) : null;
+      if (v) counts.set(v, (counts.get(v) ?? 0) + 1);
+    }
+    return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  };
+  return [
+    ...tally((n) => n.city).map(([name, count]) => ({ kind: 'city' as const, name, count })),
+    ...tally((n) => n.bar).map(([name, count]) => ({ kind: 'bar' as const, name, count })),
+  ];
 }
 
 /** Dated nodes, oldest first, one section per era that has any. Undated ones are left out (see undatedCount). */
@@ -161,6 +183,21 @@ export function thread(nodes: readonly TreeNode[], key: string): TreeNode[] {
   return pathTo(nodes, key)
     .map((k) => byKey.get(k))
     .filter((n): n is TreeNode => !!n);
+}
+
+/**
+ * "143 years back to Whiskey Sour, 1862": from a thread's drink to its
+ * nearest classic ancestor (a dated drink that isn't a modern classic), else
+ * to the oldest dated step. Null when there's nothing dated to count to.
+ */
+export function threadBack(line: readonly TreeNode[]): string | null {
+  const last = line.at(-1);
+  if (!last || last.year == null) return null;
+  const before = line.slice(0, -1).filter((n) => n.year != null);
+  const to = [...before].reverse().find((n) => n.kind === 'drink' && !n.modern) ?? before[0];
+  if (!to || to.year == null) return null;
+  const years = last.year - to.year;
+  return years > 0 ? `${years} years back to ${to.name}, ${shortYear(to)}` : null;
 }
 
 /** "c. 1880" or "1880" for a row; "c.1880" squeezes into the year column. */

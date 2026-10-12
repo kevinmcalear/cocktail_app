@@ -1,14 +1,18 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useMode } from '@/hooks/useMode';
 import { useCoreIngredients, useIngredientNames, usePairings, type PairEra } from '@/hooks/usePairings';
+import { useTrackRecent } from '@/hooks/useTrackRecent';
 import { guessUnit, newLine } from '@/lib/drinkWizard';
 import { addPick, groupByRing, MAP_SIZE } from '@/lib/flavorMap';
 import { searchIngredients } from '@/lib/ingredientNames';
+import { siteOrigin } from '@/lib/venueLink';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -47,15 +51,22 @@ function FlavorMapPage() {
     setPicked(next);
   };
   const addPair = (p: { id: string; name: string }) => pick(addPick(picked, p.id), p.id, p.name);
+  // In venue mode a drink started here is the venue's (prep-flavor-map).
+  const { active } = useActiveVenue();
+  const venue = useMode().mode === 'home' ? null : active;
+  const href = `/flavor-map?with=${picked.join(',')}`;
+  const allNamed = picked.length > 0 && pickedNames.every((n) => n !== '…');
+  const title = `What goes with ${pickedNames.join(' and ')}`;
+  useTrackRecent(allNamed, allNamed ? { kind: 'flavor', id: picked.join(','), title, subtitle: 'Flavor map', href } : null);
+  const share = () => void Share.share(Platform.OS === 'ios' ? { message: title, url: `${siteOrigin()}${href}` } : { message: `${title}: ${siteOrigin()}${href}` });
 
   const start = () => {
-    // ponytail: a drink started here is added at home; venue mode starts from Library.
-    const place = wizardPlace(null);
+    const place = wizardPlace(venue?.id ?? null);
     const { kept, patch } = useDrinkWizardStore.getState();
     const lines = kept[place]?.draft.lines ?? [];
     const fresh = picked.filter((id) => !lines.some((l) => l.id === id));
     patch(place, { lines: [...lines, ...fresh.map((id) => newLine({ id, name: nameOf(id) }, guessUnit(nameOf(id), getPreferredUnit())))] });
-    router.push('/add-cocktail');
+    router.push((venue ? `/add-cocktail?barId=${venue.id}` : '/add-cocktail') as never);
   };
 
   return (
@@ -64,7 +75,7 @@ function FlavorMapPage() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
           styles.page,
-          { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter },
+          { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl + (picked.length ? layout.minTapTarget + space.xl : 0), paddingHorizontal: gutter },
         ]}
       >
         <View style={styles.header}>
@@ -170,14 +181,19 @@ function FlavorMapPage() {
           })}
         </View>
 
-        {picked.length ? <Button label="Start a drink with these" icon="plus" onPress={start} /> : null}
       </ScrollView>
-      <View style={[styles.back, { top: insets.top + space.sm, left: gutter }]}>
+      {picked.length ? (
+        <View style={[styles.pinned, { paddingBottom: insets.bottom + space.md, paddingHorizontal: gutter, backgroundColor: ds.c.ground, borderTopColor: ds.c.line }]}>
+          <Button label={venue ? `Start a ${venue.name} drink with these` : 'Start a drink with these'} icon="plus" size="lg" onPress={start} style={styles.pinnedButton} />
+        </View>
+      ) : null}
+      <View style={[styles.back, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
         <GlassButton
           accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
           icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         />
+        {picked.length ? <GlassButton accessibilityLabel="Share this flavor map" icon="square.and.arrow.up" onPress={share} /> : null}
       </View>
     </View>
   );
@@ -197,5 +213,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderTopWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
   count: { fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'] },
-  back: { position: 'absolute' },
+  back: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
+  pinned: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
+  pinnedButton: { width: '100%', maxWidth: 760, alignSelf: 'center' },
 });
