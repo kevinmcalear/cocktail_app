@@ -154,6 +154,8 @@ export function useProfileBars(profileId: string | null | undefined, enabled: bo
 export interface HadPick {
   onProfile: boolean | null;
   pin: number | null;
+  /** Say where I had it: off, their profile shows "At a bar". */
+  saysWhere: boolean;
 }
 
 /** Your picks for the drinks you've had, by rank entry id. Plain JSON. */
@@ -163,9 +165,11 @@ export function useMyHadPicks() {
     queryKey: ['my-had-picks', userId],
     enabled: !!userId,
     queryFn: async (): Promise<Record<string, HadPick>> => {
-      const { data, error } = await supabase.from('rank_entries').select('id, on_profile, profile_pin').eq('user_id', userId!).limit(2000);
+      const { data, error } = await supabase.from('rank_entries').select('id, on_profile, profile_pin, says_where').eq('user_id', userId!).limit(2000);
       if (error) throw error;
-      return Object.fromEntries((data ?? []).map((r) => [r.id as string, { onProfile: r.on_profile as boolean | null, pin: r.profile_pin as number | null }]));
+      return Object.fromEntries(
+        (data ?? []).map((r) => [r.id as string, { onProfile: r.on_profile as boolean | null, pin: r.profile_pin as number | null, saysWhere: r.says_where !== false }])
+      );
     },
   });
 }
@@ -191,6 +195,58 @@ export function useSetHadPick() {
       qc.invalidateQueries({ queryKey: ['profile-drinks'] });
       qc.invalidateQueries({ queryKey: ['profile-bars'] });
     },
+    onError: () => {},
+  });
+}
+
+const refreshPicks = (qc: ReturnType<typeof useQueryClient>) => {
+  qc.invalidateQueries({ queryKey: ['my-had-picks'] });
+  qc.invalidateQueries({ queryKey: ['profile-drinks'] });
+  qc.invalidateQueries({ queryKey: ['profile-bars'] });
+};
+
+/**
+ * Pins or unpins one drink you've had to your top four (pin_profile_drink).
+ * Pinning shows it; with four pinned, the oldest makes room and its rank
+ * entry id comes back, for "Martini made room for Negroni."
+ */
+export function usePinDrink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, pin }: { id: string; pin: boolean }): Promise<string | null> => {
+      const { data, error } = await supabase.rpc('pin_profile_drink', { p_entry_id: id, p_pin: pin });
+      if (error) throw new Error("Couldn't save that. Check your connection and try again.");
+      return (data as string | null) ?? null;
+    },
+    onSuccess: () => refreshPicks(qc),
+    onError: () => {},
+  });
+}
+
+/** Show all or Hide all on the picks page: every drink you've had at once. Hiding unpins them too. */
+export function useSetAllHadPicks() {
+  const qc = useQueryClient();
+  const userId = useUserId();
+  return useMutation({
+    mutationFn: async (onProfile: boolean) => {
+      const change = onProfile ? { on_profile: true } : { on_profile: false, profile_pin: null };
+      const { error } = await supabase.from('rank_entries').update(change).eq('user_id', userId!);
+      if (error) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => refreshPicks(qc),
+    onError: () => {},
+  });
+}
+
+/** Say where I had it, for one drink you've had. */
+export function useSetSaysWhere() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, saysWhere }: { id: string; saysWhere: boolean }) => {
+      const { data, error } = await supabase.from('rank_entries').update({ says_where: saysWhere }).eq('id', id).select('id');
+      if (error || !data?.length) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => refreshPicks(qc),
     onError: () => {},
   });
 }

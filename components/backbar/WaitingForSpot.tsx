@@ -26,7 +26,7 @@ export function WaitingForSpot({ items, selectedId, onSelect }: WaitingForSpotPr
   return (
     <View style={styles.wrap}>
       <Caption tone="muted" role="heading" style={styles.eyebrow}>
-        WAITING FOR A SPOT
+        {`WAITING FOR A SPOT · ${items.length}`}
       </Caption>
       <View style={styles.chips}>
         {items.map((item) => {

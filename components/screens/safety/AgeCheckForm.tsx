@@ -115,7 +115,6 @@ export function UnderAgeNote() {
       <Body>
         You’re under the drinking age where you live, so collecting drinks, ranking them and publishing your own aren’t available on this account.
       </Body>
-      <Body tone="muted">We kept only that answer, not your birth date. If it was a mistake, contact us at the address in our privacy policy.</Body>
     </View>
   );
 }

@@ -305,6 +305,39 @@ describe('venue roles', () => {
     assert.deepEqual(outsider, []);
   });
 
+  test('the roster names each member\'s venue role and when their role last changed', async () => {
+    const { data, error } = await users.floor.client.rpc('get_bar_members', { p_bar_id: ids.barOne });
+    assert.ifError(error);
+    const byUser = Object.fromEntries(data.map((r) => [r.user_id, r]));
+    assert.equal(byUser[users.barback.id].venue_role_name, 'Barback');
+    assert.ok(byUser[users.guestBartender.id].role_ends_at);
+    assert.equal(byUser[users.floor.id].venue_role_name, null);
+    assert.equal(byUser[users.expiredGuest.id], undefined);
+
+    const member = await makeUser('promoted', { signIn: false });
+    extraUserIds.push(member.id);
+    await serviceInsert('user_bars', { user_id: member.id, bar_id: ids.barOne, role_level: 20 });
+    await db.query("UPDATE public.user_bars SET role_since = now() - interval '30 days' WHERE user_id = $1", [member.id]);
+    const before = (await db.query('SELECT role_since FROM public.user_bars WHERE user_id = $1', [member.id])).rows[0].role_since;
+    // Nothing about the role changed: role_since stays put.
+    await db.query('UPDATE public.user_bars SET role_level = 20 WHERE user_id = $1', [member.id]);
+    let { rows } = await db.query('SELECT role_since FROM public.user_bars WHERE user_id = $1', [member.id]);
+    assert.equal(rows[0].role_since.getTime(), before.getTime());
+    const { error: roleError } = await users.admin.client.from('user_bars').update({ venue_role_id: ids.barbackRole })
+      .eq('user_id', member.id).eq('bar_id', ids.barOne);
+    assert.ifError(roleError);
+    ({ rows } = await db.query('SELECT role_since FROM public.user_bars WHERE user_id = $1', [member.id]));
+    assert.ok(rows[0].role_since.getTime() > before.getTime());
+  });
+
+  test('text on accent is cream, ink or automatic, and only admins set it', async () => {
+    assert.ifError((await users.admin.client.from('bars').update({ accent_text: 'ink' }).eq('id', ids.barOne)).error);
+    assert.ok((await users.admin.client.from('bars').update({ accent_text: 'white' }).eq('id', ids.barOne)).error);
+    const { data } = await users.maker.client.from('bars').update({ accent_text: 'cream' }).eq('id', ids.barOne).select('id');
+    assert.deepEqual(data, []);
+    assert.ifError((await users.admin.client.from('bars').update({ accent_text: null }).eq('id', ids.barOne)).error);
+  });
+
   test('guest staff lose access the moment their role ends', async () => {
     const client = users.expiredGuest.client;
     assert.equal((await visible(client, 'items', 'id', [ids.penicillin])).size, 0);

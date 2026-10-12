@@ -41,6 +41,8 @@ export interface SafetyPageProps {
   footer?: ReactNode;
   /** Wide web only: a rail to the left of the page (venue setup's steps). */
   aside?: ReactNode;
+  /** Top right, beside Back: Save, Preview, a count. */
+  action?: ReactNode;
 }
 
 /** The plain page the safety screens (and Not available) share: a title, a line of intro, a readable column. */
@@ -67,7 +69,7 @@ export function StepProgress({ at, of, label, name = 'Setup' }: StepProgressValu
   );
 }
 
-function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/settings', onBack, progress, topRight, footer, aside }: SafetyPageProps) {
+function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/settings', action, onBack, progress, topRight, footer, aside }: SafetyPageProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -95,6 +97,8 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
         }}
       >
         <View style={[frame.column, styles.readable]}>
+          {/* With the sidebar there's no Back row, so the action sits over the title. */}
+          {action && sidebar ? <View style={styles.inline}>{action}</View> : null}
           {kicker ? <Caption tone="muted">{kicker}</Caption> : null}
           {eyebrow ? (
             <Caption style={[styles.strong, { color: ds.accentText }]} numberOfLines={1}>
@@ -119,6 +123,7 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
           <GlassButton accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'} icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'} onPress={back} />
         </View>
       ) : null}
+      {action && !sidebar && !setupBar ? <View style={[styles.action, { top: insets.top + space.sm, right: gutter }]}>{action}</View> : null}
       {footer ? (
         <View
           onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}
@@ -153,4 +158,6 @@ const styles = StyleSheet.create({
   segment: { flex: 1, height: space.xs, borderRadius: radius.mark },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.lg, borderTopWidth: StyleSheet.hairlineWidth },
   footerColumn: { gap: space.xs },
+  action: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  inline: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space.sm },
 });

@@ -45,7 +45,7 @@ describe('TasteScreen', () => {
   test('shows where your taste comes from and where your rankings have moved it', async () => {
     await renderWithTamagui(<TasteScreen />);
     expect(screen.getByText(/Your rankings are 80% of it now/)).toBeTruthy();
-    expect(screen.getByText('Your rankings lean more smoky than you said.')).toBeTruthy();
+    expect(screen.getByText('You said smoke wasn’t for you. Your rankings say otherwise: more smoky than you said.')).toBeTruthy();
     expect(flower()).toMatch(/^Palate: bitter intensely/);
   });
 

@@ -28,6 +28,9 @@ export function ModerationScreen() {
   const isModerator = useIsModerator();
   const [list, setList] = useState<'open' | 'closed'>('open');
   const { data: reports, isLoading, error } = useReportQueue(list === 'open');
+  // The open count stays on the switch while Closed is showing.
+  const openCount = useReportQueue(true, isModerator).data?.length;
+  const lists = LISTS.map((l) => (l.value === 'open' && openCount != null ? { ...l, label: `Open · ${openCount}` } : l));
 
   if (!isModerator) {
     return (
@@ -37,9 +40,9 @@ export function ModerationScreen() {
     );
   }
   return (
-    <SafetyPage title="Reports" intro="What people have reported. Hide it if it breaks the rules. Nobody is told who reported them.">
+    <SafetyPage title="Reports" kicker="Moderators only" intro="What people have reported. Hide it if it breaks the rules. Nobody is told who reported them.">
       <JobRequests venueId={null} title="Jobs at bars not on Cocktail" />
-      <Segmented accessibilityLabel="Which reports" options={LISTS} value={list} onChange={setList} />
+      <Segmented accessibilityLabel="Which reports" options={lists} value={list} onChange={setList} />
       {error ? (
         <Body tone="muted">{`Couldn't load reports: ${error.message}`}</Body>
       ) : isLoading ? (

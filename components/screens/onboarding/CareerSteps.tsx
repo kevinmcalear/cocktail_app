@@ -124,9 +124,7 @@ function thisMonth(): JobMonth {
 
 /**
  * Where they work now (isCurrent), or a bar they used to. Closed bars stay in
- * the search. ponytail: the month fields are drawn and kept here, but
- * profile_positions has no date columns yet (b09 data comes with the profiles
- * migration), so they aren't saved.
+ * the search. The month fields save to the job's start and end dates.
  */
 export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { personId: string | null; isCurrent: boolean; onDone: (barName?: string) => void; listJobs?: boolean }) {
   const [adding, setAdding] = useState(false);
@@ -152,7 +150,8 @@ export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { pe
   const savePlace = () => {
     setTried(true);
     if (!personId || roleError(role) || !bar) return;
-    save.mutate({ personId, barId: bar.id, title: role, isCurrent: isCurrent || stillHere }, { onSuccess: () => (isCurrent ? onDone(bar.display_name) : reset()) });
+    const current = isCurrent || stillHere;
+    save.mutate({ personId, barId: bar.id, title: role, isCurrent: current, ...(from ? { start: from } : null), ...(to && !current ? { end: to } : null) }, { onSuccess: () => (isCurrent ? onDone(bar.display_name) : reset()) });
   };
   const addBar = () => {
     setTried(true);

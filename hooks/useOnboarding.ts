@@ -49,12 +49,15 @@ function savedError(error: { code?: string; message: string }, duplicate: string
 export function useSaveWorkplace() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { personId: string; barId: string; title: string; isCurrent?: boolean }) => {
+    mutationFn: async (input: { personId: string; barId: string; title: string; isCurrent?: boolean; start?: { year: number; month: number } | null; end?: { year: number; month: number } | null }) => {
       const { error } = await supabase.from('profile_positions').insert({
         person_profile_id: input.personId,
         bar_profile_id: input.barId,
         title: input.title.trim(),
         is_current: input.isCurrent !== false,
+        // The job dates (profile_positions.start_*, end_*); a current job has no end.
+        ...(input.start ? { start_year: input.start.year, start_month: input.start.month } : null),
+        ...(input.end && input.isCurrent === false ? { end_year: input.end.year, end_month: input.end.month } : null),
       });
       if (error) throw savedError(error, "You're already listed there with that role.");
     },

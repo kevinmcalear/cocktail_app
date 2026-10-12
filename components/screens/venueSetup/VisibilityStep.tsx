@@ -55,7 +55,7 @@ function Choose({ barId, name, claim, writable, onDone, current }: Props & { cur
 
   return (
     <SetupPage footer={<SetupFooter pending={busy} onPress={save} onSkip={onDone} />}>
-      <PageVisibilityChoice bare venueName={name} value={shown} onChange={setValue} disabled={busy} error={(setPublish.error ?? saveSetup.error)?.message ?? null} note={note} />
+      <PageVisibilityChoice heading={false} venueName={name} value={shown} onChange={setValue} disabled={busy} error={(setPublish.error ?? saveSetup.error)?.message ?? null} note={note} />
     </SetupPage>
   );
 }
