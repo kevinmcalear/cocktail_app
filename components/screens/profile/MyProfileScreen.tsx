@@ -1,82 +1,167 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, Headline } from '@/components/ds';
+import { Body, Button, Caption, Chip, DsText, Field, Headline, PressableScale, TextLink, useDs } from '@/components/ds';
+import { CurrentUserAvatar } from '@/components/ui/UserAvatar';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
-import { useMyProfile, useSaveMyProfile, type MyProfile } from '@/hooks/useMyProfile';
-import { DEFAULT_IDENTITY, handleFromName, normalizeHandle, profileDraftErrors, type ProfileDraft } from '@/lib/profiles';
+import { useMyHiddenCity, useMyProfile, useSaveMyProfile, useSaveSharing, type MyProfile } from '@/hooks/useMyProfile';
+import { useProfilePositions } from '@/hooks/useProfiles';
+import { DEFAULT_IDENTITY, handleFromName, normalizeHandle, profileDraftErrors, profileLine, type ProfileDraft } from '@/lib/profiles';
+import { plural } from '@/lib/menus';
 import { siteOrigin } from '@/lib/venueLink';
 
-import { PlaceStep } from '../onboarding/CareerSteps';
 import { SafetyPage } from '../safety/SafetyPage';
-import { MyJobRequests } from './JobRequests';
-import { PastJobs } from './PastJobs';
-import { ProfileIdentity } from './ProfileIdentity';
-import { SharingChoices } from './SharingChoices';
+import { isShownPosition } from './Positions';
+import { modeCount, useSharingCounts } from './useSharingCounts';
 
-const PUBLIC_MEANS =
-  'Anyone can see your name, handle, bio and Instagram, the drinks you publish and the menus you share. You need this to publish a drink or share a menu.';
+export const PUBLIC_MEANS = 'People signed in to Cocktail see your page, with only what you choose to show. You need this to publish a drink or share a menu.';
+export const PRIVATE_MEANS = 'Only you see it. Drinks you’ve published and menus you’ve shared stop showing to anyone else while it’s private.';
 
-const PRIVATE_MEANS = 'Only you see it. Drinks you’ve published and menus you’ve shared stop showing to anyone else while it’s private.';
+/** Your profile as the form edits it. */
+export const draftFrom = (p: MyProfile): ProfileDraft => ({
+  name: p.displayName,
+  handle: p.handle,
+  bio: p.bio ?? '',
+  instagram: p.instagram ?? '',
+  isPublic: p.isPublic,
+  tagline: p.tagline ?? '',
+  headlinePositionId: p.headlinePositionId,
+  showsPhoto: p.showsPhoto,
+});
 
-/** Settings › Public profile: make your profile, choose your handle, and say whether it's public. */
+/**
+ * Settings › Public profile (ppl-settings): a short hub. Your avatar, name and
+ * line with Preview, then About you, What people see and Work, each its own
+ * page with a summary, then Who can see it and Handle, which save as you
+ * change them. Before you have a profile, the few fields that make one.
+ */
 export function MyProfileScreen() {
   const { data, isPending, error } = useMyProfile();
   return (
-    <SafetyPage title="Your public profile" intro="How other people see you on the app and on the web.">
+    <SafetyPage title="Your public profile" intro="How other people see you on Cocktail and on the web.">
       {isPending ? (
         <Body tone="muted">Loading your profile…</Body>
       ) : error ? (
         <Body tone="muted">Couldn’t load your profile. Check your connection and try again.</Body>
+      ) : data ? (
+        <Hub profile={data} />
       ) : (
-        // Mounted once loaded and never re-keyed: making the profile refetches it, and the form keeps its state.
-        <ProfileForm profile={data ?? null} />
+        <MakeProfile />
       )}
     </SafetyPage>
   );
 }
 
-function ProfileForm({ profile }: { profile: MyProfile | null }) {
+function Hub({ profile }: { profile: MyProfile }) {
   const router = useRouter();
-  const user = useAuth().user;
-  const save = useSaveMyProfile();
-  const suggestedName = typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : '';
-  const [draft, setDraft] = useState<ProfileDraft>(() =>
-    profile
-      ? {
-          name: profile.displayName,
-          handle: profile.handle,
-          bio: profile.bio ?? '',
-          instagram: profile.instagram ?? '',
-          isPublic: profile.isPublic,
-          tagline: profile.tagline ?? '',
-          headlinePositionId: profile.headlinePositionId,
-          showsPhoto: profile.showsPhoto,
-        }
-      : { name: suggestedName, handle: handleFromName(suggestedName), bio: '', instagram: '', isPublic: true, ...DEFAULT_IDENTITY }
-  );
-  const [tried, setTried] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const errors = tried ? profileDraftErrors(draft) : {};
-  const handle = normalizeHandle(draft.handle);
-  const edit = (patch: Partial<ProfileDraft>) => {
-    setDraft((d) => ({ ...d, ...patch }));
-    setSaved(false);
-  };
+  const save = useSaveSharing();
+  const saveProfile = useSaveMyProfile();
+  const positions = useProfilePositions({ id: profile.id, kind: 'person' }).data ?? [];
+  const counts = useSharingCounts(profile);
+  const hiddenCity = useMyHiddenCity(!profile.showsCity).data;
+  const [handle, setHandle] = useState(profile.handle);
+  const [handleError, setHandleError] = useState<string | undefined>();
+  const isPublic = save.isPending && save.variables?.isPublic !== undefined ? save.variables.isPublic : profile.isPublic;
+  const line = profileLine({ tagline: profile.tagline, headline_position_id: profile.headlinePositionId }, positions);
 
-  const submit = () => {
-    setTried(true);
-    if (Object.keys(profileDraftErrors(draft)).length) return;
-    save.mutate({ id: profile?.id ?? null, draft }, { onSuccess: () => setSaved(true) });
+  const city = profile.showsCity ? profile.city : hiddenCity;
+  const about = ['Name', profile.showsPhoto ? 'photo for people on Cocktail' : 'initials for everyone else', line, city ? `${city} ${profile.showsCity ? 'shown' : 'hidden'}` : null].filter(Boolean).join(', ');
+  const sees = counts
+    ? [`Drinks: ${modeCount(profile.sharing.had, counts.had)}`, `Bars: ${modeCount(profile.sharing.bars, counts.bars)}`, `Originals: ${modeCount(profile.sharing.originals, counts.originals)}`].join(' · ')
+    : '';
+  const jobsShown = positions.filter((p) => p.person_accepted && isShownPosition(p)).length;
+  const asking = positions.filter((p) => !p.person_accepted).length;
+  const work = [`${plural(jobsShown, 'job')} shown`, asking ? `${plural(asking, 'bar')} asking` : null].filter(Boolean).join(' · ');
+
+  // Saved when you leave the field, like every other choice here.
+  const saveHandle = () => {
+    const next = normalizeHandle(handle);
+    if (next === profile.handle) return setHandleError(undefined);
+    const problem = profileDraftErrors({ ...draftFrom(profile), handle }).handle;
+    setHandleError(problem);
+    if (!problem) saveProfile.mutate({ id: profile.id, draft: { ...draftFrom(profile), handle } }, { onError: (e) => setHandleError(e.message) });
   };
 
   return (
-    <View style={styles.form}>
-      {profile?.isModerated ? (
-        <Body tone="accent">A moderator has hidden your profile, so nobody else can see it for now, even when it’s set to public.</Body>
-      ) : null}
+    <View style={styles.page}>
+      {profile.isModerated ? <Body tone="accent">A moderator has hidden your profile, so nobody else can see it for now, even when it’s set to public.</Body> : null}
+      <View style={styles.me}>
+        <CurrentUserAvatar size={56} />
+        <View style={styles.flex}>
+          <DsText variant="headline">{profile.displayName}</DsText>
+          <Caption tone="muted" numberOfLines={1}>
+            {[`@${profile.handle}`, line].filter(Boolean).join(' · ')}
+          </Caption>
+        </View>
+        <TextLink label="Preview" accessibilityHint="Opens You, your profile as people see it" onPress={() => router.push('/you')} />
+      </View>
+      <View role="list">
+        <HubRow title="About you" summary={about} onPress={() => router.push('/settings/profile-about' as Href)} />
+        <HubRow title="What people see" summary={sees} onPress={() => router.push('/settings/profile-sharing' as Href)} />
+        <HubRow title="Work" summary={work} onPress={() => router.push('/settings/profile-work' as Href)} />
+      </View>
+      <View style={styles.group}>
+        <Headline role="heading">Who can see it</Headline>
+        <View role="radiogroup" accessibilityLabel="Who can see your profile" style={styles.chips}>
+          <Chip label="Public" selected={isPublic} onPress={() => save.mutate({ id: profile.id, isPublic: true })} />
+          <Chip label="Only me" selected={!isPublic} onPress={() => save.mutate({ id: profile.id, isPublic: false })} />
+        </View>
+        <Caption tone="muted">{isPublic ? PUBLIC_MEANS : PRIVATE_MEANS}</Caption>
+        {save.error ? (
+          <Caption tone="accent" role="alert">
+            {save.error.message}
+          </Caption>
+        ) : null}
+      </View>
+      <Field
+        label="Handle"
+        value={handle}
+        onChangeText={setHandle}
+        onBlur={saveHandle}
+        onSubmitEditing={saveHandle}
+        error={handleError}
+        hint={`${siteOrigin().replace(/^https?:\/\//, '')}/p/${normalizeHandle(handle) || profile.handle}`}
+        autoCapitalize="none"
+        autoCorrect={false}
+        maxLength={31}
+      />
+      <Caption tone="muted">Each choice saves as you change it.</Caption>
+    </View>
+  );
+}
+
+function HubRow({ title, summary, onPress }: { title: string; summary: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="link" accessibilityLabel={`${title}. ${summary}`} onPress={onPress} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+      <View style={styles.flex}>
+        <DsText variant="headline">{title}</DsText>
+        <Caption tone="muted">{summary}</Caption>
+      </View>
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+    </PressableScale>
+  );
+}
+
+/** Before you have a profile: your name, a handle, and who sees it. The rest waits on the hub. */
+function MakeProfile() {
+  const user = useAuth().user;
+  const save = useSaveMyProfile();
+  const suggested = typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : '';
+  const [draft, setDraft] = useState<ProfileDraft>({ name: suggested, handle: handleFromName(suggested), bio: '', instagram: '', isPublic: true, ...DEFAULT_IDENTITY });
+  const [tried, setTried] = useState(false);
+  const errors = tried ? profileDraftErrors(draft) : {};
+  const edit = (patch: Partial<ProfileDraft>) => setDraft((d) => ({ ...d, ...patch }));
+  const submit = () => {
+    setTried(true);
+    if (!Object.keys(profileDraftErrors(draft)).length) save.mutate({ id: null, draft });
+  };
+  const handle = normalizeHandle(draft.handle);
+  return (
+    <View style={styles.page}>
       <Field label="Name" value={draft.name} onChangeText={(name) => edit({ name })} error={errors.name} autoComplete="name" maxLength={80} />
       <Field
         label="Handle"
@@ -88,27 +173,7 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
         autoCorrect={false}
         maxLength={31}
       />
-      <ProfileIdentity draft={draft} edit={edit} error={errors.tagline} personId={profile?.id ?? null} />
-      <Field
-        label="Bio (optional)"
-        value={draft.bio}
-        onChangeText={(bio) => edit({ bio })}
-        error={errors.bio}
-        hint={`${draft.bio.trim().length}/500`}
-        multiline
-        maxLength={500}
-      />
-      <Field
-        label="Instagram (optional)"
-        value={draft.instagram}
-        onChangeText={(instagram) => edit({ instagram })}
-        error={errors.instagram}
-        hint="Your name there, like @little.rye, or the link to your profile."
-        autoCapitalize="none"
-        autoCorrect={false}
-        autoComplete="off"
-      />
-      <View style={styles.visibility}>
+      <View style={styles.group}>
         <Headline role="heading">Who can see it</Headline>
         <View role="radiogroup" accessibilityLabel="Who can see your profile" style={styles.chips}>
           <Chip label="Public" selected={draft.isPublic} onPress={() => edit({ isPublic: true })} />
@@ -117,51 +182,17 @@ function ProfileForm({ profile }: { profile: MyProfile | null }) {
         <Caption tone="muted">{draft.isPublic ? PUBLIC_MEANS : PRIVATE_MEANS}</Caption>
       </View>
       {save.error ? <Body tone="accent">{save.error.message}</Body> : null}
-      <View style={styles.actions}>
-        <Button label={profile ? 'Save' : 'Make my profile'} onPress={submit} disabled={save.isPending} />
-        {saved && draft.isPublic && !profile?.isModerated ? (
-          <Button label="See your profile" variant="secondary" onPress={() => router.push(`/p/${handle}`)} />
-        ) : null}
-      </View>
-      {saved ? <Caption tone="muted">Saved.</Caption> : null}
-      {/* Saved straight away, not by Save: shown once there's a public profile to show them on. */}
-      {profile && profile.isPublic ? <SharingChoices profile={profile} /> : null}
-      {profile ? (
-        <View style={styles.visibility}>
-          <Headline role="heading">Where you’ve worked</Headline>
-          <Caption tone="muted">
-            Where you work now always shows. Switch on a past job to show it too. A job you add shows marked not confirmed until the bar says yes. Each switch saves
-            straight away.
-          </Caption>
-          <MyJobRequests personId={profile.id} />
-          <PastJobs personId={profile.id} />
-          <AddJob personId={profile.id} />
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-/** Add a job you have now or had before: the same search and save as onboarding. */
-function AddJob({ personId }: { personId: string }) {
-  const [when, setWhen] = useState<'now' | 'before' | null>(null);
-  if (!when) return <Button label="Add a job" variant="secondary" onPress={() => setWhen('now')} style={styles.start} />;
-  return (
-    <View style={styles.visibility}>
-      <View role="radiogroup" accessibilityLabel="When" style={styles.chips}>
-        <Chip label="I work there now" selected={when === 'now'} onPress={() => setWhen('now')} />
-        <Chip label="I used to" selected={when === 'before'} onPress={() => setWhen('before')} />
-      </View>
-      <PlaceStep key={when} personId={personId} isCurrent={when === 'now'} listJobs={false} onDone={() => setWhen(null)} />
+      <Button label="Make my profile" onPress={submit} disabled={save.isPending} style={styles.start} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  start: { alignSelf: 'flex-start' },
-  form: { gap: space.lg, marginTop: space.lg },
-  visibility: { gap: space.sm },
+  page: { gap: space.lg, marginTop: space.lg },
+  me: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  flex: { flex: 1, minWidth: 0, gap: 2 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  group: { gap: space.sm },
   chips: { flexDirection: 'row', gap: space.sm },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  start: { alignSelf: 'flex-start' },
 });

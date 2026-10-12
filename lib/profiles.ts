@@ -96,9 +96,9 @@ export function taglineProblem(raw: string): string | undefined {
  */
 export function profileLine(
   p: { tagline: string | null; headline_position_id: string | null },
-  positions: { id: string; title: string; is_current: boolean; is_shown: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } }[]
+  positions: { id: string; title: string; is_current: boolean; is_shown: boolean; is_hidden?: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } }[]
 ): string | null {
-  const job = positions.find((j) => j.id === p.headline_position_id && j.person_accepted && j.bar_accepted && (j.is_current || j.is_shown));
+  const job = positions.find((j) => j.id === p.headline_position_id && j.person_accepted && j.bar_accepted && !j.is_hidden && (j.is_current || j.is_shown));
   if (job) return `${job.title} ${job.is_current ? 'at' : 'formerly at'} ${job.bar.display_name}`;
   return p.tagline?.trim() || null;
 }
@@ -134,19 +134,20 @@ export function pickedShown(mode: ShareMode, pick: boolean | null | undefined): 
   return false;
 }
 
-const SECTION_NOTE: Record<ShareSection, string> = {
-  had: 'Only people signed in see them, with your scores, and drinks a bar hasn’t published stay out.',
-  bars: 'A bar you hide is never named, even beside a drink. Your scores still count, without your name, towards each bar’s score.',
-  originals: 'Credits still show on each drink’s own page.',
+const SECTION_NOTE: Record<ShareSection | 'awards', string> = {
+  had: 'Only people signed in see them, with your scores.',
+  bars: 'A bar you hide is never named, even beside a drink.',
+  originals: 'Credits on each drink’s own page stay.',
+  awards: 'Each links to its source. One you added says Not confirmed yet until we check it.',
 };
 
-/** A line under a section's mode in settings: what it means, then the section's own note. */
-export function modeSummary(section: ShareSection, mode: ShareMode): string {
+/** A line under a section's mode on What people see (ppl-what-people-see): what it means, then the section's own note. */
+export function modeSummary(section: ShareSection | 'awards', mode: ShareMode): string {
   const what =
     mode === 'all'
-      ? 'All of them show, new ones too. Hide any one from Choose.'
+      ? 'All of them show, new ones too. Hide any single one.'
       : mode === 'picked'
-        ? 'Only the ones you pick show. New ones stay private.'
+        ? 'Only the ones you pick show. New ones stay private until you pick them.'
         : 'None show. Your picks are kept for when you turn it back on.';
   return mode === 'none' && section !== 'originals' ? what : `${what} ${SECTION_NOTE[section]}`;
 }
@@ -272,4 +273,15 @@ export function profileQueryShows(key: readonly unknown[], data: unknown, change
   const row = data as { id?: string; bar_id?: string | null; is_claimed?: boolean } | null | undefined;
   if (!row) return false;
   return (!!change.id && row.id === change.id) || (!!change.barId && row.bar_id === change.barId) || (!!change.unclaimed && row.is_claimed === false);
+}
+
+/**
+ * A job's years (b09): "2023 to now", "2019 to 2023", "2021" for a past job
+ * with no end, or null when nobody said. Months stay in the data for the bar
+ * to confirm; the line reads in years.
+ */
+export function jobYears(p: { is_current: boolean; start_year: number | null; end_year: number | null }): string | null {
+  if (p.is_current) return p.start_year ? `${p.start_year} to now` : null;
+  if (p.start_year && p.end_year) return p.start_year === p.end_year ? String(p.start_year) : `${p.start_year} to ${p.end_year}`;
+  return p.end_year ? `Until ${p.end_year}` : p.start_year ? String(p.start_year) : null;
 }

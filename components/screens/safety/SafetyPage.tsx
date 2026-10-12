@@ -19,6 +19,8 @@ interface SafetyPageProps {
   noBack?: boolean;
   /** Where Back goes when there's no history (a link opened cold). */
   backTo?: '/settings' | '/settings/profile' | '/';
+  /** Top right, beside Back: Save, Preview, a count. */
+  action?: ReactNode;
 }
 
 /** The plain page the safety screens (and Not available) share: a title, a line of intro, a readable column. */
@@ -30,7 +32,7 @@ export function SafetyPage(props: SafetyPageProps) {
   );
 }
 
-function Page({ title, intro, kicker, children, noBack, backTo = '/settings' }: SafetyPageProps) {
+function Page({ title, intro, kicker, children, noBack, backTo = '/settings', action }: SafetyPageProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -50,6 +52,8 @@ function Page({ title, intro, kicker, children, noBack, backTo = '/settings' }: 
         contentContainerStyle={{ paddingTop: sidebar ? frame.top : insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}
       >
         <View style={[frame.column, styles.readable]}>
+          {/* With the sidebar there's no Back row, so the action sits over the title. */}
+          {action && sidebar ? <View style={styles.inline}>{action}</View> : null}
           {kicker ? <Caption tone="muted">{kicker}</Caption> : null}
           <Title role="heading">{title}</Title>
           {intro ? <Body tone="muted">{intro}</Body> : null}
@@ -65,6 +69,7 @@ function Page({ title, intro, kicker, children, noBack, backTo = '/settings' }: 
           />
         </View>
       )}
+      {action && !sidebar ? <View style={[styles.action, { top: insets.top + space.sm, right: gutter }]}>{action}</View> : null}
     </View>
   );
 }
@@ -73,4 +78,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   readable: { gap: space.md },
   back: { position: 'absolute' },
+  action: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  inline: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space.sm },
 });

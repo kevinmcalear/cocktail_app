@@ -91,6 +91,10 @@
       "destination": "/settings/bar/[id]/publishing"
     },
     {
+      "source": "/settings/bar/:id/visibility",
+      "destination": "/settings/bar/[id]/visibility"
+    },
+    {
       "source": "/settings/bar/:id/dilution",
       "destination": "/settings/bar/[id]/dilution"
     },
@@ -141,6 +145,10 @@
     {
       "source": "/settings/bar/:id/brand",
       "destination": "/settings/bar/[id]/brand"
+    },
+    {
+      "source": "/settings/bar/:id/roles",
+      "destination": "/settings/bar/[id]/roles"
     },
     {
       "source": "/d/:id",

@@ -44,11 +44,11 @@ export interface QueuedReport {
 }
 
 /** The moderator inbox: open reports oldest first, or closed ones newest first. */
-export function useReportQueue(open: boolean) {
+export function useReportQueue(open: boolean, enabled = true) {
   const userId = useUserId();
   return useQuery({
     queryKey: ['report-queue', open, userId],
-    enabled: !!userId,
+    enabled: !!userId && enabled,
     // A moderation queue: always refetch rather than trust the persisted cache.
     staleTime: 0,
     queryFn: async (): Promise<QueuedReport[]> => {

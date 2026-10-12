@@ -1,30 +1,27 @@
-import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, Segmented, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { useMyMadeDrinks } from '@/hooks/useProfiles';
-import { useMyHadDrinks } from '@/hooks/useRankings';
-import { hadStats, tallyBars } from '@/lib/hadDrinks';
+import { useMyMadeDrinks, useProfilePositions } from '@/hooks/useProfiles';
+import { useMyHadDrinks, useMyHadPicks } from '@/hooks/useRankings';
+import { hadStats } from '@/lib/hadDrinks';
+import { pickedShown, profileLine } from '@/lib/profiles';
+import { siteOrigin } from '@/lib/venueLink';
 
 import { TasteCard } from '../taste/TasteCard';
-import { BarTallies, Favourites, HadList } from './HadDrinks';
 import { MyJobRequests } from './JobRequests';
-import { OriginalsGrid, Stat, Stats } from './ProfileSections';
-
-type Tab = 'had' | 'bars' | 'made';
-const TABS = [
-  { value: 'had', label: 'Had' },
-  { value: 'bars', label: 'Bars' },
-  { value: 'made', label: 'Made' },
-] as const;
+import { MyAwards } from './PersonAwards';
+import { Stat, Stats } from './ProfileSections';
+import { TopFour, fourSlots } from './TopFour';
+import { useShareLink } from './useShareLink';
+import { YouTabs } from './YouTabs';
 
 /**
  * You: your own profile, whether or not you've made a public one. Every
@@ -48,28 +45,29 @@ function You({ inTabs }: { inTabs?: boolean }) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const tabInset = useTabBarInset();
-  const breakpoint = useBreakpoint();
-  const columns = breakpoint === 'phone' ? 2 : breakpoint === 'tablet' ? 3 : 4;
   const authName = useUserDisplayName();
   const { data: profile } = useMyProfile();
   const had = useMyHadDrinks();
+  const picks = useMyHadPicks().data ?? {};
   const made = useMyMadeDrinks(profile?.id);
-  const [tab, setTab] = useState<Tab>('had');
+  const positions = useProfilePositions(profile ? { id: profile.id, kind: 'person' } : null).data ?? [];
+  const name = profile?.displayName || authName || 'You';
+  const share = useShareLink(`${siteOrigin()}/p/${profile?.handle ?? ''}`, name);
 
   const drinks = had.data ?? [];
   const stats = hadStats(drinks);
   const madeCount = made.data?.length ?? 0;
   const shown = profile?.isPublic && !profile.isModerated;
+  // You is its own preview: the line and city as people see them.
+  const line = profile ? profileLine({ tagline: profile.tagline, headline_position_id: profile.headlinePositionId }, positions) : null;
+  const city = profile?.showsCity ? profile.city : null;
+  // Pins in order; a place whose drink doesn't show (its section is None) is Empty.
+  const pinned = drinks
+    .filter((d) => picks[d.id]?.pin && profile && pickedShown(profile.sharing.had, picks[d.id]?.onProfile))
+    .sort((a, b) => (picks[a.id]?.pin ?? 0) - (picks[b.id]?.pin ?? 0));
   const padding = inTabs
     ? { paddingBottom: tabInset }
     : { paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl };
-
-  const nothingYet = (
-    <View style={styles.empty}>
-      <Body tone="muted">Nothing here yet. Open a drink you’ve had and tap Rank it: it lands here with your score, and counts towards the bar’s.</Body>
-      <Button label="Find a drink" icon="magnifyingglass" onPress={() => router.navigate('/search')} style={styles.start} />
-    </View>
-  );
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -80,65 +78,35 @@ function You({ inTabs }: { inTabs?: boolean }) {
         {inTabs ? <ScreenHeader you={false} /> : null}
         <View style={[styles.body, inTabs && styles.underHeader, { paddingHorizontal: gutter }]}>
           <View style={styles.header}>
-            <CurrentUserAvatar size={88} />
+            <CurrentUserAvatar size={96} />
             <Title role="heading" align="center">
-              {profile?.displayName || authName || 'You'}
+              {name}
             </Title>
             <Caption tone="muted" align="center">
-              {profile ? `@${profile.handle} · ${shown ? 'Public profile' : 'Private profile'}` : 'No public profile yet'}
+              {profile ? [`@${profile.handle}`, city, shown ? 'Public profile' : 'Private profile'].filter(Boolean).join(' · ') : 'No public profile yet'}
             </Caption>
+            {line ? <Body align="center">{line}</Body> : null}
             <View style={styles.actions}>
               <Button label={profile ? 'Edit profile' : 'Make a public profile'} variant="secondary" onPress={() => router.push('/settings/profile')} />
-              {profile && shown ? <Button label="See public page" variant="ghost" icon="globe" onPress={() => router.push(`/p/${profile.handle}` as Href)} /> : null}
+              {profile && shown ? <Button label="Share" variant="ghost" icon="square.and.arrow.up" onPress={() => void share()} /> : null}
             </View>
           </View>
 
           {profile ? <MyJobRequests personId={profile.id} /> : null}
 
           <Stats>
-            <Stat value={stats.drinks} label={stats.drinks === 1 ? 'drink had' : 'drinks had'} />
+            <Stat value={stats.drinks} label={stats.drinks === 1 ? 'drink' : 'drinks'} />
             <Stat value={stats.bars} label={stats.bars === 1 ? 'bar' : 'bars'} />
-            <Stat value={madeCount} label="made" />
+            <Stat value={madeCount} label={madeCount === 1 ? 'original' : 'originals'} />
           </Stats>
 
           <TasteCard />
 
-          {drinks.some((d) => d.sentiment === 'loved') ? (
-            <View style={styles.section}>
-              <Headline role="heading">Favourites</Headline>
-              <Favourites drinks={drinks} columns={columns} />
-            </View>
-          ) : null}
+          {profile ? <TopFour slots={fourSlots(pinned)} changeHref="/settings/profile-picks?section=had" /> : null}
 
-          <View style={styles.section}>
-            <Segmented accessibilityLabel="Your drinks" options={TABS} value={tab} onChange={setTab} />
-            {tab === 'made' ? (
-              made.isLoading ? (
-                <Caption tone="muted">Loading your drinks…</Caption>
-              ) : (
-                <OriginalsGrid originals={made.data ?? []} selfId={profile?.id ?? ''} columns={columns} layout="rows" mine emptyText="You haven’t made a drink yet. Tap New to write one up." />
-              )
-            ) : had.error ? (
-              <Body tone="muted">Couldn’t load your drinks. Check your connection and try again.</Body>
-            ) : had.isLoading ? (
-              <Caption tone="muted">Loading your drinks…</Caption>
-            ) : !drinks.length ? (
-              nothingYet
-            ) : tab === 'had' ? (
-              <HadList drinks={drinks} />
-            ) : (
-              <BarTallies bars={tallyBars(drinks)} whose="Your" />
-            )}
-            {drinks.length && tab !== 'made' ? (
-              <Caption tone="muted">
-                {shown && profile?.sharing[tab === 'had' ? 'had' : 'bars'] === 'all'
-                  ? 'Shown on your public profile, apart from ones you hide and drinks a bar hasn’t published. Change it in Edit profile.'
-                  : shown && profile?.sharing[tab === 'had' ? 'had' : 'bars'] === 'picked'
-                    ? 'Only the ones you pick show on your public profile. Choose them in Edit profile.'
-                    : `Only you can see ${tab === 'had' ? 'what you’ve had and your scores' : 'your bars and your average at each'}. You can show them on a public profile.`}
-              </Caption>
-            ) : null}
-          </View>
+          {profile ? <MyAwards profileId={profile.id} mode={profile.awardsMode} /> : null}
+
+          <YouTabs profile={profile ?? null} drinks={drinks} made={made.data ?? []} loading={had.isLoading || made.isLoading} failed={!!had.error} />
         </View>
       </ScrollView>
       {inTabs ? null : (
@@ -163,7 +131,4 @@ const styles = StyleSheet.create({
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   header: { alignItems: 'center', gap: space.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.sm, marginTop: space.xs },
-  section: { gap: space.md },
-  empty: { gap: space.md, paddingVertical: space.md },
-  start: { alignSelf: 'flex-start' },
 });

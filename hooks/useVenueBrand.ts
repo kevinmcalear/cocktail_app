@@ -17,11 +17,15 @@ export interface VenueBrandRow {
   ground_tint: string | null;
   short_name: string | null;
   icon_url: string | null;
+  /** Text on accent buttons and the active tab: 'cream', 'ink', or null for the automatic pick. */
+  accent_text: AccentTextChoice | null;
 }
+
+export type AccentTextChoice = 'cream' | 'ink';
 
 export type VenueBrandPatch = Partial<Omit<VenueBrandRow, 'id' | 'name' | 'slug'>>;
 
-const COLUMNS = 'id, name, slug, logo_url, primary_color, secondary_color, display_face, ground_tint, short_name, icon_url';
+const COLUMNS = 'id, name, slug, logo_url, primary_color, secondary_color, display_face, ground_tint, short_name, icon_url, accent_text';
 
 /** A venue's brand: logo, accent, display face, dark ground tint, home-screen icon and short name. */
 export function useVenueBrand(barId: string | null | undefined) {
@@ -84,4 +88,18 @@ export async function pickBrandImage(barId: string, withColors: boolean): Promis
   if (!upload.imageUrl) throw new Error('The image didn’t upload. Try again.');
   const colors = [found?.primaryColor, found?.secondaryColor].filter((c): c is string => !!c);
   return { url: upload.imageUrl, colors };
+}
+
+/**
+ * Removes the logo's background and returns the new image's URL, or null when
+ * background removal isn't available.
+ *
+ * ponytail: always null for now. Removing a background well needs an image
+ * service (a paid API and a new key, gated: Kevin decides). When one is
+ * chosen, an edge function like upload-bar-logo takes the logo, calls it,
+ * stores the result and returns its URL here; the brand screen already
+ * handles both answers.
+ */
+export async function removeLogoBackground(_barId: string, _logoUrl: string): Promise<string | null> {
+  return null;
 }

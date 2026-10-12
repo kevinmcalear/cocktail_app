@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackBarPlan } from '@/components/backbar/BackBarPlan';
 import { AddZone, ZoneEditor } from '@/components/backbar/PlanEditor';
 import { WaitingForSpot } from '@/components/backbar/WaitingForSpot';
+import { ZoneKinds } from '@/components/backbar/ZoneKinds';
 import { ZoneInspector } from '@/components/backbar/ZoneInspector';
 import { Body, Button, Caption, LockedSection, Surface, useBreakpoint, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
@@ -129,8 +130,10 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
           zoneHint={(z) => (placing ? `Places ${placing.name} here` : moving ? `Moves ${moving.item?.name ?? 'it'} here` : undefined)}
           onPressPlan={onPressPlan}
           countFor={(id) => locations.filter((l) => l.zone_id === id).length}
+          orientation
           accessibilityLabel={`${active?.name ?? 'Venue'} back bar plan`}
         />
+        <ZoneKinds />
         {editing ? <AddZone barId={barId} zones={zones} onAdded={(z) => setSelectedId(z.id)} /> : null}
         {editing && selected ? <ZoneEditor key={selected.id} barId={barId} zone={selected} /> : null}
         {task ? (
@@ -179,8 +182,13 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
           // Opened from the venue menu, Library or an ingredient page; a link opened cold goes to Tonight.
           onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           action={
-            canDraw && zones.length ? (
-              <Button label={editing ? 'Done' : 'Edit the plan'} variant={editing ? 'secondary' : 'primary'} onPress={() => setEditing((e) => !e)} />
+            canRead && zones.length ? (
+              <View style={styles.actions}>
+                <Button label="Print labels" icon="doc.text" variant="secondary" onPress={() => router.push('/back-bar-labels')} />
+                {canDraw ? (
+                  <Button label={editing ? 'Done' : 'Edit the plan'} variant={editing ? 'secondary' : 'primary'} onPress={() => setEditing((e) => !e)} />
+                ) : null}
+              </View>
             ) : null
           }
         />
@@ -197,5 +205,6 @@ const styles = StyleSheet.create({
   stack: { gap: space.lg },
   columns: { flexDirection: 'row', gap: space.xl, alignItems: 'flex-start' },
   inspector: { width: 340, borderLeftWidth: StyleSheet.hairlineWidth, paddingLeft: space.xl },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   task: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
 });

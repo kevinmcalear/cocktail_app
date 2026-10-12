@@ -1,7 +1,7 @@
 // Checks for lib/awards.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { awardInitials, awardLines, groupAwards, sortAwards, type Award } from './awards';
+import { awardDraftProblem, awardInitials, awardLines, groupAwards, sortAwards, type Award } from './awards';
 
 const W50 = "The World's 50 Best Bars";
 
@@ -85,3 +85,13 @@ assert.deepEqual(awardLines({ award: 'Food & Wine Global Tastemakers', year: 202
   headline: 'No. 3',
   detail: 'Food & Wine Global Tastemakers 2025 · Top U.S. Bars',
 });
+
+// An award someone adds: who, the title, a sensible year and an https source.
+const draft = { award: 'Australian Bar Awards', title: 'Bartender of the Year', year: '2026', source: 'https://example.com/winners' };
+assert.equal(awardDraftProblem(draft, 2026), null);
+assert.match(awardDraftProblem({ ...draft, award: ' ' }, 2026) ?? '', /who gave it/);
+assert.match(awardDraftProblem({ ...draft, title: '' }, 2026) ?? '', /title/);
+assert.match(awardDraftProblem({ ...draft, year: '1989' }, 2026) ?? '', /1990 to 2027/);
+assert.match(awardDraftProblem({ ...draft, year: '2028' }, 2026) ?? '', /year/);
+assert.match(awardDraftProblem({ ...draft, source: 'http://example.com' }, 2026) ?? '', /https/);
+assert.match(awardDraftProblem({ ...draft, source: 'https://nowhere' }, 2026) ?? '', /https/);

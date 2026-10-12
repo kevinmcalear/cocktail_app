@@ -122,6 +122,10 @@ const MAPPING = {
   'arrow.up.right.square': 'open-in-new',
   'arrow.turn.down.right': 'subdirectory-arrow-right',
   'square.on.square': 'library-add',
+  'pin': 'push-pin',
+  'pin.fill': 'push-pin',
+  'arrow.up.right': 'north-east',
+  'checkmark.seal.fill': 'verified',
   // Tab icons: the same Material glyphs NativeTabs uses on Android.
   'rectangle.stack': 'style',
 } satisfies IconMapping;
