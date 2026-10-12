@@ -6,6 +6,7 @@ import { Body, Button, Caption, useBreakpoint, useDs, useGutter } from '@/compon
 import { PageHeader } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { useWebNav } from '@/hooks/useIsWideWeb';
+import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { SearchPill } from '@/components/screens/home/DiscoverControls';
@@ -201,6 +202,10 @@ export function LibraryScreen() {
           key={columns}
           data={shown}
           numColumns={columns}
+          // Rows, not tiles: a screen's worth first. The defaults (10 rows, 21
+          // screens) drew every drink on open, which froze iOS for seconds.
+          initialNumToRender={4}
+          windowSize={DRAWN_LIST_WINDOW}
           keyExtractor={(i) => i.id}
           columnWrapperStyle={{ gap: space.md }}
           contentContainerStyle={content}

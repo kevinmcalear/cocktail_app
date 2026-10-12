@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, GlassButton, Headline, useDs } from '@/components/ds';
+import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { MenuOnRow } from '@/components/screens/menus/MenuRows';
-import { MenuSections } from '@/components/screens/menus/MenuSections';
+import { MenuPageRowView, menuPageRows, type MenuPageRow } from '@/components/screens/menus/MenuSections';
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
@@ -33,32 +34,35 @@ export function TonightScreen() {
   // hydration (the build's date isn't the device's); a blank line keeps the header's height.
   const date = useServiceDate();
   const openMenus = () => router.push('/menus/all');
+  // Each menu's name, then its sections' heads and drinks, flat for the list.
+  const shown = blocks.filter((b) => b.sections.length);
+  const rows: (MenuPageRow | { key: string; menu: (typeof shown)[number]['menu']; count: number; first: boolean })[] = shown.flatMap((block, i) => [
+    { key: `m-${block.menu.id}`, menu: block.menu, count: block.sections.reduce((n, sec) => n + sec.drinks.length, 0), first: i === 0 },
+    ...menuPageRows(block.sections.map((sec) => ({ ...sec, drinks: sec.drinks.map((d) => ({ ...d, line: dotLine(d.line) })) })), `${block.menu.id}-`),
+  ]);
+  const newIds = new Set(shown.flatMap((b) => b.sections.flatMap((sec) => sec.drinks.filter((d) => d.isNew).map((d) => d.id))));
 
   const empty = !venuesLoading && !isLoading && drinks.length === 0;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <FlatList
-        data={blocks.filter((b) => b.sections.length)}
-        keyExtractor={(b) => b.menu.id}
-        renderItem={({ item: block }) => {
-          const count = block.sections.reduce((n, sec) => n + sec.drinks.length, 0);
-          return (
-            <View style={styles.block}>
-              <View>
-                <DsText variant="title" role="heading" style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
-                  {block.menu.name}
-                </DsText>
-                <Caption tone="muted">{`${plural(count, 'drink')}, in running order`}</Caption>
-              </View>
-              <MenuSections
-                variant="page"
-                sections={block.sections.map((sec) => ({ ...sec, drinks: sec.drinks.map((d) => ({ ...d, line: dotLine(d.line) })) }))}
-                newIds={new Set(block.sections.flatMap((sec) => sec.drinks.filter((d) => d.isNew).map((d) => d.id)))}
-              />
+        data={rows}
+        keyExtractor={(r) => r.key}
+        // One row per drink, not per menu: a long menu mounted every drink at once.
+        windowSize={DRAWN_LIST_WINDOW}
+        renderItem={({ item }) =>
+          'menu' in item ? (
+            <View style={item.first ? undefined : styles.nextBlock}>
+              <DsText variant="title" role="heading" style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+                {item.menu.name}
+              </DsText>
+              <Caption tone="muted">{`${plural(item.count, 'drink')}, in running order`}</Caption>
             </View>
-          );
-        }}
+          ) : (
+            <MenuPageRowView row={item} newIds={newIds} firstGap={space.lg} />
+          )
+        }
         contentContainerStyle={[column, { paddingBottom: bottom }]}
         ListHeaderComponent={
           <View style={styles.header}>
@@ -97,7 +101,7 @@ export function TonightScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { gap: space.sm, paddingBottom: space.lg },
-  block: { gap: space.lg, paddingBottom: space.xxl },
+  nextBlock: { paddingTop: space.xxl },
   emptyButton: { alignSelf: 'flex-start', marginTop: space.sm },
   empty: { gap: space.sm, paddingVertical: space.xl },
 });

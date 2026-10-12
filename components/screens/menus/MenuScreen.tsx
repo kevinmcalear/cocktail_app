@@ -1,10 +1,11 @@
 import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, Display, DsText, GlassButton, PressableScale, Tag, useBreakpoint, useDs, useGutter, type IconName } from '@/components/ds';
 import { Crumbs } from '@/components/nav/PageFrame';
+import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { FEATURES } from '@/constants/features';
@@ -20,7 +21,7 @@ import type { MenuStatus } from '@/types/menus';
 import { HomeNightSheet } from './HomeNight';
 import { MenuMoreSheet } from './MenuMoreSheet';
 import { MenuPaperHead } from './MenuPaperHead';
-import { MenuSections } from './MenuSections';
+import { MenuPageRowView, menuPageRows } from './MenuSections';
 import { MenuVisual } from './MenuVisual';
 import { ShareMenuSheet } from './ShareMenuSheet';
 
@@ -95,47 +96,62 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const fresh = previous.length ? newDrinkIds(pictures.map((d) => d.id), previous) : undefined;
   // A home menu, or a venue's one-night menu, shares as a link without going live (b15); other venue menus as the guest card.
   const shareable = canEdit && (!menu.barId || isOneNightMenu(menu));
+  const column = { paddingHorizontal: gutter, maxWidth: wide ? 760 : undefined, alignSelf: sidebar ? 'flex-start' : 'center' } as const;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}>
-        {menu.coverUrl ? (
-          <DrinkHero name={menu.name} pictures={[{ url: menu.coverUrl, isSketch: false, isOutdated: false }]} glass={null} height={wide ? 360 : 320} fade />
-        ) : hero ? (
-          <MenuVisual name={menu.name} coverUrl={null} pictures={pictures} height={wide ? 360 : 320} fade />
-        ) : (
-          <View style={{ height: sidebar ? space.xxl + space.sm : insets.top + 72 }} />
-        )}
-        <View style={[styles.body, { paddingHorizontal: gutter, marginTop: hero ? -84 : 0, maxWidth: wide ? 760 : undefined, alignSelf: sidebar ? 'flex-start' : 'center' }]}>
-          {sidebar ? <Crumbs trail={[home ? { label: 'Collection', href: '/collection' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
-          {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
-          {/* A home menu isn't on a venue's calendar: its night is in the line below. */}
-          {menu.barId ? (
-            <Tag label={[menu.kind === 'rnd' ? 'R&D' : STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} style={{ backgroundColor: ds.c.ground }} />
-          ) : null}
-          {home ? <MenuPaperHead name={menu.name} when={cardWhen(menu)} pictures={pictures} /> : <Display>{menu.name}</Display>}
-          <Caption tone="muted">
-            {[
-              venue?.name ?? (home ? (menu.sharedAt ? 'Shared with a link' : 'Just yours') : null),
-              // The paper card already says the night.
-              home ? (menu.guestCount ? plural(menu.guestCount, 'guest') : null) : homeMenuLine(menu, now),
-              plural(drinkCount, 'drink'),
-              plural(menu.sections.length, 'section'),
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </Caption>
-          <View style={styles.actions}>
-            {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
-            {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
-            <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (shareable ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
-            {FEATURES.study && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
-            {FEATURES.prep && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
-            {menu.barId && Array.isArray(caps.data) && caps.data.includes('costs') ? <MenuAction label="Costing" icon="dollarsign.circle.fill" onPress={() => go(`/menus/${menu.id}/costing`)} /> : null}
+      <FlatList
+        // A menu can run to dozens of drinks: rows mount as they scroll into view.
+        data={drinkCount ? menuPageRows(menu.sections) : []}
+        keyExtractor={(r) => r.key}
+        windowSize={DRAWN_LIST_WINDOW}
+        contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}
+        renderItem={({ item }) => (
+          <View style={[styles.body, column]}>
+            <MenuPageRowView row={item} newIds={fresh} firstGap={space.sm} />
           </View>
-          {drinkCount === 0 ? <Body tone="muted">No drinks on this menu yet.</Body> : <MenuSections sections={menu.sections} variant="page" newIds={fresh} />}
-        </View>
-      </ScrollView>
+        )}
+        ListHeaderComponent={
+          <>
+            {menu.coverUrl ? (
+              <DrinkHero name={menu.name} pictures={[{ url: menu.coverUrl, isSketch: false, isOutdated: false }]} glass={null} height={wide ? 360 : 320} fade />
+            ) : hero ? (
+              <MenuVisual name={menu.name} coverUrl={null} pictures={pictures} height={wide ? 360 : 320} fade />
+            ) : (
+              <View style={{ height: sidebar ? space.xxl + space.sm : insets.top + 72 }} />
+            )}
+            <View style={[styles.body, styles.head, column, { marginTop: hero ? -84 : 0 }]}>
+              {sidebar ? <Crumbs trail={[home ? { label: 'Collection', href: '/collection' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
+              {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
+              {/* A home menu isn't on a venue's calendar: its night is in the line below. */}
+              {menu.barId ? (
+                <Tag label={[menu.kind === 'rnd' ? 'R&D' : STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} style={{ backgroundColor: ds.c.ground }} />
+              ) : null}
+              {home ? <MenuPaperHead name={menu.name} when={cardWhen(menu)} pictures={pictures} /> : <Display>{menu.name}</Display>}
+              <Caption tone="muted">
+                {[
+                  venue?.name ?? (home ? (menu.sharedAt ? 'Shared with a link' : 'Just yours') : null),
+                  // The paper card already says the night.
+                  home ? (menu.guestCount ? plural(menu.guestCount, 'guest') : null) : homeMenuLine(menu, now),
+                  plural(drinkCount, 'drink'),
+                  plural(menu.sections.length, 'section'),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Caption>
+              <View style={styles.actions}>
+                {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
+                {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
+                <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (shareable ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
+                {FEATURES.study && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
+                {FEATURES.prep && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
+                {menu.barId && Array.isArray(caps.data) && caps.data.includes('costs') ? <MenuAction label="Costing" icon="dollarsign.circle.fill" onPress={() => go(`/menus/${menu.id}/costing`)} /> : null}
+              </View>
+              {drinkCount === 0 ? <Body tone="muted">No drinks on this menu yet.</Body> : null}
+            </View>
+          </>
+        }
+      />
       <View style={[styles.topBar, { top: insets.top + space.sm, paddingHorizontal: gutter }]}>
         {sidebar ? <View /> : <GlassButton icon="chevron.left" accessibilityLabel={home ? 'Back' : 'Back to Menus'} onPress={back} onMedia={!!hero} />}
         {canEdit ? <GlassButton icon="ellipsis" accessibilityLabel="More: duplicate, take off, file under R&D, delete" onPress={() => setMore(true)} onMedia={!!hero} /> : null}
@@ -151,7 +167,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   missing: { gap: space.lg },
-  body: { width: '100%', gap: space.sm },
+  body: { width: '100%' },
+  head: { gap: space.sm },
   actions: { flexDirection: 'row', gap: space.sm, marginTop: space.md, marginBottom: space.lg },
   action: { flex: 1, minHeight: 64, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center', gap: space.xs, borderCurve: 'continuous' },
   topBar: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between' },
