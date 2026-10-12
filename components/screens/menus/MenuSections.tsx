@@ -103,6 +103,82 @@ function RowPrice({ drink }: { drink: MenuDrink }) {
   return price ? <Spec>{price}</Spec> : null;
 }
 
+/** A section's name, small in capitals, with how many drinks it has on the page. Centred, with no count, on the card. */
+export function SectionHead({ name, count }: { name: string; count: number | null }) {
+  const page = count !== null;
+  return (
+    <View style={[styles.sectionHead, !page && styles.sectionHeadCentered]}>
+      <Caption tone="muted" role="heading" style={[styles.sectionTitle, page && styles.mono]}>
+        {name.toUpperCase()}
+      </Caption>
+      {page ? (
+        <Caption tone="muted" style={styles.mono}>
+          {count}
+        </Caption>
+      ) : null}
+    </View>
+  );
+}
+
+/** Where a page row opens by default: the drink's own page. */
+export const menuDrinkHref = (d: MenuDrink) => itemHref(CATEGORY[d.kind], d.id);
+
+/** A drink's row on a menu page: its picture, its line and price, opening `href` (still when null). */
+export function MenuDrinkRow({ drink: d, href, isNew = false }: { drink: MenuDrink; href: string | null; isNew?: boolean }) {
+  const ds = useDs();
+  const router = useRouter();
+  const prefetch = usePrefetchCocktail();
+  if (!href) {
+    return (
+      <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
+        <DrinkThumb drink={d} drawable={false} />
+        <DrinkLine drink={d} centered={false} isNew={isNew} />
+        <RowPrice drink={d} />
+      </View>
+    );
+  }
+  return (
+    <PressableScale
+      role="link"
+      accessibilityLabel={[d.name, isNew ? 'new' : null, formatPrice(d.price), d.line].filter(Boolean).join(', ')}
+      onPressIn={() => {
+        const id = drinkIdFromHref(href);
+        if (id) prefetch(id, { name: d.name, imageUrl: d.isSketch ? null : d.imageUrl });
+      }}
+      onPress={() => router.push(href as never)}
+      style={[styles.row, { borderBottomColor: ds.c.line }]}
+    >
+      <DrinkThumb drink={d} drawable />
+      <DrinkLine drink={d} centered={false} isNew={isNew} />
+      <RowPrice drink={d} />
+    </PressableScale>
+  );
+}
+
+/** A menu page's list, flattened for a FlatList: each section's head, then its rows. */
+export type MenuPageRow = { key: string; head: string; count: number; first: boolean } | { key: string; drink: MenuDrink };
+export function menuPageRows(sections: Pick<MenuSectionDetail, 'id' | 'name' | 'drinks'>[], prefix = ''): MenuPageRow[] {
+  return sections
+    .filter((s) => s.drinks.length > 0)
+    .flatMap((s, i) => [{ key: `${prefix}s-${s.id}`, head: s.name, count: s.drinks.length, first: i === 0 }, ...s.drinks.map((d) => ({ key: `${prefix}${s.id}-${d.id}`, drink: d }))]);
+}
+
+/** One `menuPageRows` row, spaced as MenuSections spaces them; `firstGap` sits above the first head. */
+export function MenuPageRowView({ row, newIds, firstGap = 0 }: { row: MenuPageRow; newIds?: ReadonlySet<string>; firstGap?: number }) {
+  if ('drink' in row) {
+    return (
+      <View style={styles.pageRow}>
+        <MenuDrinkRow drink={row.drink} href={menuDrinkHref(row.drink)} isNew={!!newIds?.has(row.drink.id)} />
+      </View>
+    );
+  }
+  return (
+    <View style={{ paddingTop: row.first ? firstGap : space.xl }}>
+      <SectionHead name={row.head} count={row.count} />
+    </View>
+  );
+}
+
 /**
  * A menu's sections, set like the printed menu. `page`: rows with each
  * drink's picture that open it. `card`: still, for the guest card and print,
@@ -110,11 +186,8 @@ function RowPrice({ drink }: { drink: MenuDrink }) {
  * your own menu, so every drink on it has a real id to draw from.
  */
 export function MenuSections({ sections, variant, hrefFor, pictures = 'above', compact = false, newIds }: MenuSectionsProps) {
-  const ds = useDs();
-  const router = useRouter();
-  const prefetch = usePrefetchCocktail();
   const card = variant === 'card';
-  const href = (d: MenuDrink) => (card ? null : hrefFor ? hrefFor(d) : itemHref(CATEGORY[d.kind], d.id));
+  const href = (d: MenuDrink) => (card ? null : hrefFor ? hrefFor(d) : menuDrinkHref(d));
   const grid = card && pictures === 'above';
   const drawn = card && pictures !== 'none' && sections.some((s) => s.drinks.some(isDrawn));
   return (
@@ -123,16 +196,7 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
         .filter((s) => s.drinks.length > 0)
         .map((s) => (
           <View key={s.id} style={styles.section}>
-            <View style={[styles.sectionHead, card && styles.sectionHeadCentered]}>
-              <Caption tone="muted" role="heading" style={[styles.sectionTitle, !card && styles.mono]}>
-                {s.name.toUpperCase()}
-              </Caption>
-              {card ? null : (
-                <Caption tone="muted" style={styles.mono}>
-                  {s.drinks.length}
-                </Caption>
-              )}
-            </View>
+            <SectionHead name={s.name} count={card ? null : s.drinks.length} />
             {grid ? (
               <View style={styles.cardGrid}>
                 {s.drinks.map((d) => (
@@ -152,32 +216,14 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
                   </View>
                 );
               }
-              if (!to) {
+              if (card) {
                 return (
-                  <View key={d.id} style={card ? styles.cardRow : [styles.row, { borderBottomColor: ds.c.line }]}>
-                    {card ? null : <DrinkThumb drink={d} drawable={false} />}
-                    <DrinkLine drink={d} centered={card} card={card} isNew={!card && !!newIds?.has(d.id)} />
-                    {card ? null : <RowPrice drink={d} />}
+                  <View key={d.id} style={styles.cardRow}>
+                    <DrinkLine drink={d} centered card />
                   </View>
                 );
               }
-              return (
-                <PressableScale
-                  key={d.id}
-                  role="link"
-                  accessibilityLabel={[d.name, newIds?.has(d.id) ? 'new' : null, formatPrice(d.price), d.line].filter(Boolean).join(', ')}
-                  onPressIn={() => {
-                    const id = drinkIdFromHref(to);
-                    if (id) prefetch(id, { name: d.name, imageUrl: d.isSketch ? null : d.imageUrl });
-                  }}
-                  onPress={() => router.push(to as never)}
-                  style={[styles.row, { borderBottomColor: ds.c.line }]}
-                >
-                  <DrinkThumb drink={d} drawable />
-                  <DrinkLine drink={d} centered={false} isNew={!!newIds?.has(d.id)} />
-                  <RowPrice drink={d} />
-                </PressableScale>
-              );
+              return <MenuDrinkRow key={d.id} drink={d} href={to} isNew={!!newIds?.has(d.id)} />;
             })}
           </View>
         ))}
@@ -196,6 +242,7 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
 const styles = StyleSheet.create({
   sections: { gap: space.xl },
   section: { gap: space.xs },
+  pageRow: { paddingTop: space.xs },
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between' },
   sectionHeadCentered: { justifyContent: 'center' },
   sectionTitle: { letterSpacing: 1.5 },

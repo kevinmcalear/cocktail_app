@@ -1,8 +1,11 @@
+import { Image } from 'expo-image';
 import { memo, useId, type ReactNode } from 'react';
+import { Platform, StyleSheet } from 'react-native';
 import Svg, { ClipPath, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { paintSketch } from '@/lib/sketch/paint';
 import type { Scene, SceneEl } from '@/lib/sketch/scene';
+import { sceneToSvg } from '@/lib/sketch/svg';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 import { useDs } from './theme';
@@ -109,10 +112,31 @@ export const SketchDrawing = memo(function SketchDrawing({ inputs, seed, detail 
   return <SceneSvg scene={scene} />;
 });
 
-/** Any painted scene (a drink, a bottle, a still life) on the house paper, fitted inside its frame. */
+// One picture per scene and paper colour: the scene written as an SVG document
+// (lib/sketch/svg.ts) in a data URL, built once and kept while the scene is.
+const pictures = new WeakMap<Scene, Map<string, string>>();
+function sceneUri(scene: Scene, paper: string): string {
+  let byPaper = pictures.get(scene);
+  if (!byPaper) pictures.set(scene, (byPaper = new Map()));
+  let uri = byPaper.get(paper);
+  if (!uri) byPaper.set(paper, (uri = `data:image/svg+xml;base64,${btoa(sceneToSvg(scene, { paper }))}`));
+  return uri;
+}
+
+/**
+ * Any painted scene (a drink, a bottle, a still life) on the house paper, fitted
+ * inside its frame. On iOS and Android it's one image: a scene is a few hundred
+ * paths, and as react-native-svg elements each is a native view mounted and
+ * drawn on the main thread (a list of drawn drinks froze iOS for seconds). Web
+ * keeps the inline SVG: Chrome rasterizes an SVG image on the main thread,
+ * which measured slower there than the same SVG inline.
+ */
 export const SceneSvg = memo(function SceneSvg({ scene }: { scene: Scene }) {
   const ds = useDs();
   const u = useId().replace(/[^A-Za-z0-9]/g, '');
+  if (Platform.OS !== 'web') {
+    return <Image source={{ uri: sceneUri(scene, ds.c.paper) }} style={[styles.fill, { backgroundColor: ds.c.paper }]} contentFit="contain" cachePolicy="memory" accessible={false} />;
+  }
   return (
     // The paper runs past the square when the frame is wider (a phone hero).
     <Svg width="100%" height="100%" viewBox={`0 0 ${scene.size} ${scene.size}`} preserveAspectRatio="xMidYMid meet" style={{ backgroundColor: ds.c.paper }} aria-hidden>
@@ -121,4 +145,16 @@ export const SceneSvg = memo(function SceneSvg({ scene }: { scene: Scene }) {
       {scene.els.map((el, i) => draw(el, i, u))}
     </Svg>
   );
+});
+
+/**
+ * How far ahead a list of drawn drinks mounts (FlatList windowSize, in
+ * screens). Native: two screens either side, since each drawing is one image.
+ * Web: React Native's default, which mounts the rest soon after opening, as
+ * before; an inline SVG mounted mid-scroll there dropped frames.
+ */
+export const DRAWN_LIST_WINDOW = Platform.OS === 'web' ? 21 : 5;
+
+const styles = StyleSheet.create({
+  fill: { width: '100%', height: '100%' },
 });
