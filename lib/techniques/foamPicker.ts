@@ -79,11 +79,10 @@ export function pickFoam(q: FoamQuestion): FoamAnswer {
     if (why) ruledOut.push({ agent: a, why });
     else works.push(a);
   }
-  // A shaken drink is foamed whole, so strength only matters for a foam made on its own.
-  const strongMatters = q.strong && q.kind !== 'shaken';
-  if (strongMatters) works.sort((a, b) => Number(b.strongOk) - Number(a.strongOk));
+  // Strong liquid: the foamers that hold up in spirit lead.
+  if (q.strong) works.sort((a, b) => Number(b.strongOk) - Number(a.strongOk));
   let note: string | null = null;
-  if (strongMatters) note = 'Most foamers fade above about 20% alcohol (our estimate, not a tested limit). Foam the syrup or juice and pour it over, or dilute the spirit by half first.';
+  if (q.strong) note = 'Most foamers fade above about 20% alcohol (our estimate, not a tested limit). Foam the syrup or juice and pour it over, or dilute the spirit by half first.';
   else if (!works.length) note = 'Nothing here foams that combination. Try a siphon with cream, or leave the fat out of the foam.';
   return { works, ruledOut, note };
 }
@@ -91,6 +90,13 @@ export function pickFoam(q: FoamQuestion): FoamAnswer {
 const FOAMER = /egg white|aquafaba|foamer|quillaja|versawhip|methylcellulose|sour syrup|foam/i;
 
 /** A dry shake with nothing in the spec that foams: the method step offers a foamer. */
+const FATTY = /\b(cream|butter|coconut|nut milk|almond|cashew|oat milk|milk|yolk|chocolate|fat[- ]washed|peanut)\b/i;
+
+/** The Base field names something fatty, so "Fat in it?" starts on Yes. */
+export function baseHasFat(base: string): boolean {
+  return FATTY.test(base);
+}
+
 export function needsFoamer(methods: readonly string[], lines: readonly string[]): boolean {
   return methods.some((m) => /dry shake/i.test(m)) && !lines.some((l) => FOAMER.test(l));
 }
