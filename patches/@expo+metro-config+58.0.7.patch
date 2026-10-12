@@ -23,7 +23,7 @@ index 088b0a8..341d802 100644
 +// COMMON_CHUNK_MIN_USERS async chunks do; otherwise each chunk keeps its own copy.
 +// Metro's define() skips a module id it already has, so a copy loaded twice runs
 +// once. Checked by scripts/commonChunk.check.ts.
-+const COMMON_CHUNK_MIN_USERS = 5;
++const COMMON_CHUNK_MIN_USERS = 20; // about a fifth of the routes: rarer modules ship with their routes, which are prefetched after the first screen's data (lib/prefetchRoutes.web.ts)
  function extractCommonChunk(chunks, graph, options) {
 -    const toCompare = [
 +    const asyncChunks = [

@@ -9,7 +9,6 @@ import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
-import { BringInHost } from '@/components/screens/bringin/BringInHost';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from "react";
@@ -23,9 +22,6 @@ import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
-import { WebSideNav } from '@/components/nav/WebSideNav';
-import { EightBallHost } from '@/components/screens/eightball/EightBallHost';
-import { SearchPalette } from '@/components/search/SearchPalette';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -34,9 +30,13 @@ import { BRAND } from '@/constants/brand';
 import { authRedirect, needsOnboarding } from '@/lib/onboarding';
 import { installWebAlert } from '@/lib/dialogs';
 import { afterFirstData } from '@/lib/idleQueue';
+import { prefetchRoutes } from '@/lib/prefetchRoutes';
+import { BringIn, RootExtras, SideNav } from '@/components/nav/RootLazy';
+
 import { initMonitoring } from '@/lib/monitoring';
 import { persistOptions, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
+
 
 export { ErrorScreen as ErrorBoundary } from '@/components/ErrorScreen';
 
@@ -114,7 +114,7 @@ function RootLayoutNav() {
         `}} />
       )}
       <View style={{ flex: 1, flexDirection: 'row' }}>
-        {showWebSidebar ? <WebSideNav /> : null}
+        {showWebSidebar ? <SideNav /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -225,10 +225,9 @@ function RootLayoutNav() {
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
           {/* Over the page, beside the sidebar: Bring in's sheet, drop dialog and reading tray. */}
-          {session ? <BringInHost /> : null}
+          {session ? <BringIn /> : null}
         </View>
-        {showWebSidebar ? <SearchPalette /> : null}
-        {session ? <EightBallHost /> : null}
+        <RootExtras palette={showWebSidebar} eightBall={!!session} />
       </View>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
@@ -262,9 +261,13 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts(Platform.OS === 'web' ? FIRST_PAINT_FONTS : APP_FONTS);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    // ~0.75 MB of faces the first screen rarely needs: after its data, so a slow
-    // connection fetches that first (RAIL load). Text uses a fallback till then.
-    return afterFirstData(queryClient, () => void loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e)));
+    // ~0.75 MB of faces the first screen rarely needs, and the main screens'
+    // code: after its data, so a slow connection fetches that first (RAIL
+    // load). Text uses a fallback till then.
+    return afterFirstData(queryClient, () => {
+      loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
+      void prefetchRoutes();
+    });
   }, []);
   if (!fontsLoaded && Platform.OS !== 'web') { return null; }
   return (
