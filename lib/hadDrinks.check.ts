@@ -1,7 +1,7 @@
 // Checks for lib/hadDrinks.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { favourites, fromSharedBarRow, fromSharedRow, hasDates, hadStats, topFour, sortHad, tallyBars, toHadDrink, whereLine, type HadDrink, type HadRow } from './hadDrinks';
+import { fromSharedBarRow, fromSharedRow, hasDates, hadStats, topFour, sortHad, tallyBars, toHadDrink, whereLine, type HadDrink, type HadRow } from './hadDrinks';
 
 const bellamy = { id: 'v1', handle: 'bar.bellamy', display_name: 'Bar Bellamy', avatar_url: null, locality: 'Carlton', city: 'Melbourne' };
 const shapes = { id: 'v2', handle: null, display_name: 'Shapes', avatar_url: 'https://x/logo.png', locality: null, city: 'London' };
@@ -66,7 +66,7 @@ const tally = fromSharedBarRow({ venue_id: 'v1', venue_handle: 'bar.bellamy', ve
 assert.deepEqual(tally, { key: 'v1', venue: { id: 'v1', handle: 'bar.bellamy', name: 'Bar Bellamy', avatarUrl: null, place: 'Carlton, Melbourne' }, drinks: 3, average: 7.5, best: null });
 assert.deepEqual(fromSharedBarRow({ ...{ venue_id: 'v1', venue_handle: null, venue_name: 'B', venue_avatar_url: null, venue_locality: null, venue_city: null, drinks: 1, average: 9 }, best_name: 'Gimlet', best_score: '9' }).best, { name: 'Gimlet', score: 9 });
 
-// --- Sorting, favourites, bars ---
+// --- Sorting, bars ---
 const drink = (id: string, score: number, over: Partial<HadRow> = {}): HadDrink =>
   toHadDrink(row({ id, score, sentiment: score >= 6.7 ? 'loved' : score >= 3.4 ? 'fine' : 'disliked', ...over }));
 
@@ -82,9 +82,6 @@ assert.deepEqual(sortHad(had, 'score').map((d) => d.id), ['3', '1', '4', '2', '5
 assert.deepEqual(sortHad(had, 'recent').map((d) => d.id), ['4', '2', '3', '1', '5'], 'no day given: the day it was ranked');
 assert.deepEqual(had.map((d) => d.id), ['1', '2', '3', '4', '5'], 'sorting copies');
 
-assert.deepEqual(favourites(had).map((d) => d.id), ['3', '1', '4'], 'only drinks they loved');
-assert.deepEqual(favourites(had, 2).map((d) => d.id), ['3', '1']);
-assert.deepEqual(favourites([drink('x', 5)]), []);
 
 const bars = tallyBars(had);
 assert.deepEqual(

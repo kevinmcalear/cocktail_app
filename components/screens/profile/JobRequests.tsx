@@ -30,7 +30,7 @@ export function JobRequests({ venueId, title }: { venueId: string | null; title:
               <DsText variant="headline" numberOfLines={1}>
                 {r.person_name}
               </DsText>
-              <Caption tone="muted">{`${r.is_current ? r.title : `Formerly ${r.title}`}${venueId ? '' : ` at ${r.bar_name}`}`}</Caption>
+              <Caption tone="muted">{`Says they ${r.is_current ? 'work' : 'worked'} ${venueId ? 'here' : `at ${r.bar_name}`} as ${r.title}`}</Caption>
               <View style={styles.actions}>
                 <Button label="Accept" disabled={busy} onPress={() => answer.mutate({ id: r.id, accept: true })} />
                 <Button label="Decline" variant="ghost" disabled={busy} onPress={() => answer.mutate({ id: r.id, accept: false })} />

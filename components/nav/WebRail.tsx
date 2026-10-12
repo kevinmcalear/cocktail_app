@@ -42,7 +42,7 @@ function RailItem({ place, current, onPress }: { place: Place; current: boolean;
 export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProps) {
   const ds = useDs();
   const router = useRouter();
-  const { venue, tabs, work } = useNavPlaces();
+  const { venue, tabs, work, week } = useNavPlaces();
   const name = shortPersonName(useUserDisplayName());
   const line = footerLine(venue ? { name: venue.name, role: roleLabel(venue.roleLevel) } : null, null);
   return (
@@ -50,7 +50,7 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
       <VenueSwitcher size={36} />
       <GlassButton icon="magnifyingglass" accessibilityLabel="Search" color={searching ? ds.accentText : undefined} onPress={onSearch} />
       <View style={styles.items}>
-        {[...tabs, ...work].map((p) => (
+        {[...tabs, ...work, week].map((p) => (
           <RailItem key={p.key} place={p} current={current === p.key} onPress={() => go(p)} />
         ))}
       </View>

@@ -19,6 +19,7 @@ export function VenueBrandProvider({ children }: { children: ReactNode }) {
         accent={home ? undefined : (active?.accent ?? undefined)}
         displayFace={home ? undefined : active?.displayFace}
         groundTint={home ? undefined : (active?.groundTint ?? undefined)}
+        accentText={home ? undefined : (active?.accentText ?? undefined)}
       >
         {children}
       </BrandProvider>

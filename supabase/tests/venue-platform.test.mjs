@@ -229,6 +229,10 @@ describe('venue roles', () => {
     assert.ok(head.has('costs') && head.has('edit_drinks'));
     assert.ok(!head.has('staff') && !head.has('publish'));
 
+    const maker = await caps('maker');
+    assert.ok(maker.has('costs') && maker.has('edit_drinks'), 'Drink Creator opens costs by default');
+    assert.ok(!(await caps('bartender')).has('costs'));
+
     const guest = await caps('guestBartender');
     assert.ok(guest.has('edit_drinks') && guest.has('specs'));
     assert.ok(!guest.has('house_made') && !guest.has('prep'));
@@ -299,6 +303,39 @@ describe('venue roles', () => {
 
     const { data: outsider } = await users.outsider.client.rpc('get_venue_role_matrix', { p_bar_id: ids.barOne });
     assert.deepEqual(outsider, []);
+  });
+
+  test('the roster names each member\'s venue role and when their role last changed', async () => {
+    const { data, error } = await users.floor.client.rpc('get_bar_members', { p_bar_id: ids.barOne });
+    assert.ifError(error);
+    const byUser = Object.fromEntries(data.map((r) => [r.user_id, r]));
+    assert.equal(byUser[users.barback.id].venue_role_name, 'Barback');
+    assert.ok(byUser[users.guestBartender.id].role_ends_at);
+    assert.equal(byUser[users.floor.id].venue_role_name, null);
+    assert.equal(byUser[users.expiredGuest.id], undefined);
+
+    const member = await makeUser('promoted', { signIn: false });
+    extraUserIds.push(member.id);
+    await serviceInsert('user_bars', { user_id: member.id, bar_id: ids.barOne, role_level: 20 });
+    await db.query("UPDATE public.user_bars SET role_since = now() - interval '30 days' WHERE user_id = $1", [member.id]);
+    const before = (await db.query('SELECT role_since FROM public.user_bars WHERE user_id = $1', [member.id])).rows[0].role_since;
+    // Nothing about the role changed: role_since stays put.
+    await db.query('UPDATE public.user_bars SET role_level = 20 WHERE user_id = $1', [member.id]);
+    let { rows } = await db.query('SELECT role_since FROM public.user_bars WHERE user_id = $1', [member.id]);
+    assert.equal(rows[0].role_since.getTime(), before.getTime());
+    const { error: roleError } = await users.admin.client.from('user_bars').update({ venue_role_id: ids.barbackRole })
+      .eq('user_id', member.id).eq('bar_id', ids.barOne);
+    assert.ifError(roleError);
+    ({ rows } = await db.query('SELECT role_since FROM public.user_bars WHERE user_id = $1', [member.id]));
+    assert.ok(rows[0].role_since.getTime() > before.getTime());
+  });
+
+  test('text on accent is cream, ink or automatic, and only admins set it', async () => {
+    assert.ifError((await users.admin.client.from('bars').update({ accent_text: 'ink' }).eq('id', ids.barOne)).error);
+    assert.ok((await users.admin.client.from('bars').update({ accent_text: 'white' }).eq('id', ids.barOne)).error);
+    const { data } = await users.maker.client.from('bars').update({ accent_text: 'cream' }).eq('id', ids.barOne).select('id');
+    assert.deepEqual(data, []);
+    assert.ifError((await users.admin.client.from('bars').update({ accent_text: null }).eq('id', ids.barOne)).error);
   });
 
   test('guest staff lose access the moment their role ends', async () => {
@@ -440,24 +477,25 @@ describe('prep and purchasing', () => {
   });
 
   test('suppliers and pack sizes are for the prep crew and cost handlers', async () => {
-    for (const label of ['barback', 'maker', 'headBartender', 'admin']) {
+    // The guest bartender's role revokes prep, but a Drink Creator handles costs since 20261014220000.
+    for (const label of ['barback', 'maker', 'headBartender', 'guestBartender', 'admin']) {
       assert.equal((await visible(users[label].client, 'item_purchasing', 'item_id', [ids.scotch])).size, 1, label);
       assert.equal((await visible(users[label].client, 'suppliers', 'id', [ids.supplier])).size, 1, label);
     }
-    for (const label of ['bartender', 'guestBartender', 'outsider']) {
+    for (const label of ['bartender', 'outsider']) {
       assert.equal((await visible(users[label].client, 'item_purchasing', 'item_id', [ids.scotch])).size, 0, label);
       assert.equal((await visible(users[label].client, 'suppliers', 'id', [ids.supplier])).size, 0, label);
     }
   });
 
-  test('costs are for admins and roles granted costs only', async () => {
-    for (const label of ['headBartender', 'admin']) {
+  test('costs open at Drink Creator (20261014220000) and for roles granted costs', async () => {
+    for (const label of ['maker', 'headBartender', 'guestBartender', 'admin']) {
       assert.equal((await visible(users[label].client, 'item_costs', 'item_id', [ids.scotch])).size, 1, label);
     }
-    for (const label of ['maker', 'barback', 'bartender', 'otherAdmin']) {
+    for (const label of ['barback', 'bartender', 'floor', 'guest', 'otherAdmin']) {
       assert.equal((await visible(users[label].client, 'item_costs', 'item_id', [ids.scotch])).size, 0, label);
     }
-    const { error } = await users.maker.client
+    const { error } = await users.bartender.client
       .from('item_costs')
       .insert({ bar_id: ids.barOne, item_id: ids.martini, pack_cost_minor: 1 });
     assert.ok(error);

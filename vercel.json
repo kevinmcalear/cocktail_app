@@ -39,6 +39,18 @@
       "destination": "/cocktail/[id]/batch"
     },
     {
+      "source": "/cocktail/:id/service",
+      "destination": "/cocktail/[id]/service"
+    },
+    {
+      "source": "/cocktail/:id/photos",
+      "destination": "/cocktail/[id]/photos"
+    },
+    {
+      "source": "/cocktail/:id/roles",
+      "destination": "/cocktail/[id]/roles"
+    },
+    {
       "source": "/ingredient/:id",
       "destination": "/ingredient/[id]"
     },
@@ -79,12 +91,24 @@
       "destination": "/settings/bar/[id]/publishing"
     },
     {
+      "source": "/settings/bar/:id/visibility",
+      "destination": "/settings/bar/[id]/visibility"
+    },
+    {
       "source": "/settings/bar/:id/dilution",
       "destination": "/settings/bar/[id]/dilution"
     },
     {
+      "source": "/settings/bar/:id/glassware",
+      "destination": "/settings/bar/[id]/glassware"
+    },
+    {
       "source": "/settings/bar/:id/pricing",
       "destination": "/settings/bar/[id]/pricing"
+    },
+    {
+      "source": "/settings/bar/:id/calendars",
+      "destination": "/settings/bar/[id]/calendars"
     },
     {
       "source": "/settings/bar/:id/releases/:releaseId",
@@ -123,6 +147,10 @@
       "destination": "/settings/bar/[id]/brand"
     },
     {
+      "source": "/settings/bar/:id/roles",
+      "destination": "/settings/bar/[id]/roles"
+    },
+    {
       "source": "/d/:id",
       "destination": "/d/[id]"
     },
@@ -133,6 +161,10 @@
     {
       "source": "/m/:id",
       "destination": "/m/[id]"
+    },
+    {
+      "source": "/e/:id",
+      "destination": "/e/[id]"
     }
   ],
   "headers": [

@@ -3,7 +3,8 @@ import { Image } from 'expo-image';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
-import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
+import { backbar, fontFamilies, MAP_ME, radius, type } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { dotsOf, MAP_STYLE, pinDescription, pinLook, viewportFrom } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
@@ -25,7 +26,7 @@ const RICH_PINS = 12;
  * same pins as the web map (DiscoverMap.web.tsx), so it looks the same on a
  * phone as in the browser.
  */
-export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, style }: DiscoverMapProps) {
+export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, me, style }: DiscoverMapProps) {
   const cameraRef = useRef<CameraRef>(null);
   const dotsRef = useRef<GeoJSONSourceRef>(null);
   // Rebuilt only when the pins or the selection change (the pins come memoized), never on a plain re-render.
@@ -126,6 +127,13 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
           paint={{ 'text-color': ring }}
         />
       </GeoJSONSource>
+      {me ? (
+        <Marker id="you-are-here" lngLat={[me.longitude, me.latitude]}>
+          <View role="img" aria-label="You are here" style={styles.halo}>
+            <View style={styles.me} />
+          </View>
+        </Marker>
+      ) : null}
       <Fragment key={order}>
         {rich.map((pin, i) => {
           const selected = pin.id === selectedId;
@@ -178,4 +186,6 @@ const styles = StyleSheet.create({
   pin: { flexDirection: 'row', borderRadius: radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   logo: { borderRadius: radius.pill, backgroundColor: backbar.light.surface },
   label: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize },
+  halo: { width: 34, height: 34, borderRadius: radius.pill, backgroundColor: withAlpha(MAP_ME, 0.22), alignItems: 'center', justifyContent: 'center' },
+  me: { width: 18, height: 18, borderRadius: radius.pill, backgroundColor: MAP_ME, borderWidth: 3, borderColor: backbar.dark.ink },
 });

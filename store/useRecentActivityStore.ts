@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-const KINDS = ['cocktail', 'beer', 'wine', 'ingredient', 'menu'] as const;
+// A bar you opened shows in Search's Recent too (nav-search-empty-home).
+const KINDS = ['cocktail', 'beer', 'wine', 'ingredient', 'menu', 'bar', 'flavor'] as const;
 export type RecentKind = (typeof KINDS)[number];
 
 export type RecentActivity = {

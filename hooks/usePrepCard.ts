@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { saveItemAllergens } from '@/hooks/useAllergens';
 import { ensureIngredient } from '@/hooks/useCreateIngredient';
 import { isGarnishUnit } from '@/lib/batch';
 import type { NoteLine } from '@/lib/noteRecipe';
 import { prepAmounts, prepYield, type PrepDraft } from '@/lib/prepKinds';
+import { partsRatio, prepParts } from '@/lib/prepParts';
 import { supabase } from '@/lib/supabase';
 
 export interface PrepStep {
@@ -137,7 +139,12 @@ export function useLearnYield(itemId: string) {
  * storage, lead time, actions and steps. A base line that's a bottle (a fat
  * wash of Bacardí) is what the prep is made from.
  */
-export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>) {
+export async function savePrepRecipe(
+  itemId: string,
+  prep: PrepDraft,
+  ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>,
+  barId: string | null = null
+) {
   const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', itemId);
   if (role.error) throw role.error;
   const rows = [];
@@ -147,7 +154,7 @@ export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (p
     if (!line.name.trim() || line.slot) continue;
     const id = await ensure({ id: line.id, name: line.name }, 'ingredient');
     if (line.key === prep.baseKey) baseId = id;
-    rows.push({ recipe_item_id: itemId, ingredient_item_id: id, amount, unit: line.unit || null, sort_order: i });
+    rows.push({ recipe_item_id: itemId, ingredient_item_id: id, amount, unit: line.unit || null, preparation_notes: line.note?.trim() || null, sort_order: i });
   }
   if (rows.length) {
     const added = await supabase.from('recipes').insert(rows);
@@ -173,6 +180,8 @@ export async function savePrepRecipe(itemId: string, prep: PrepDraft, ensure: (p
     },
     steps: prep.steps,
   });
+  // Allergens the maker set by hand are declared, and checked, for where it's made.
+  if (prep.allergensSet) await saveItemAllergens(itemId, barId, prep.allergens ?? []);
 }
 
 /**
@@ -256,5 +265,51 @@ export function useCopyPrep() {
       return id;
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['ingredients'] }),
+  });
+}
+
+/** "1 : 1": a prep's recipe as parts, for the Kind of row on a riff of it. Null when it doesn't read as a ratio. */
+export function usePrepRatio(itemId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['prep-ratio', itemId],
+    enabled: !!itemId,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.from('recipes').select('id, amount, unit').eq('recipe_item_id', itemId!).order('sort_order');
+      if (error) throw error;
+      const lines = ((data ?? []) as { id: string; amount: number | null; unit: string | null }[]).map((r) => ({ ...r, name: '' }));
+      return partsRatio(prepParts(lines));
+    },
+  });
+}
+
+/**
+ * A venue's own version of a shared prep: copy it to the venue, then point
+ * the venue's own drinks and preps at the copy. Everyone else keeps the
+ * shared one. Recipes RLS already limits the swap to items the person can
+ * edit, so a line they can't change stays on the shared prep.
+ */
+export function useMakeVenueVersion() {
+  const queryClient = useQueryClient();
+  const copy = useCopyPrep();
+  return useMutation({
+    mutationFn: async ({ source, name, barId }: { source: PrepCopySource; name: string; barId: string }): Promise<{ id: string; swapped: number }> => {
+      const id = await copy.mutateAsync({ source, name, barId });
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('id, item:recipe_item_id!inner(bar_id)')
+        .eq('ingredient_item_id', source.id)
+        .eq('item.bar_id', barId);
+      if (error) throw error;
+      const ids = ((data ?? []) as { id: string }[]).map((r) => r.id);
+      if (ids.length) {
+        const swapped = await supabase.from('recipes').update({ ingredient_item_id: id }).in('id', ids);
+        if (swapped.error) throw swapped.error;
+      }
+      return { id, swapped: ids.length };
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['ingredient'] });
+      void queryClient.invalidateQueries({ queryKey: ['cocktail'] });
+    },
   });
 }

@@ -150,15 +150,6 @@ export function sortHad(drinks: readonly HadDrink[], sort: HadSort): HadDrink[] 
   return [...drinks].sort(sort === 'score' ? byScore : byRecent);
 }
 
-/**
- * Favourites: the drinks they loved, best first. A score is a place in one
- * list ("my martinis"), so the top of every list is a 10; ties go to the
- * latest.
- */
-export function favourites(drinks: readonly HadDrink[], limit = 6): HadDrink[] {
-  return sortHad(drinks.filter((d) => d.sentiment === 'loved'), 'score').slice(0, limit);
-}
-
 /** Their scores at one bar (or at home), across every drink they had there. */
 export interface BarTally {
   /** The bar's profile id, or 'home'. */

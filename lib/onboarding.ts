@@ -73,6 +73,52 @@ export function inviteStepLabel(step: OnboardingStep): string | null {
   return at < 0 ? null : `Step ${at + 1} of ${INVITE_STEP_NAMES.length}`;
 }
 
+/** Where each main-path step sits on the four-segment bar (b29). */
+const MAIN_STEP_AT: Partial<Record<OnboardingStep, number>> = { name: 1, hospitality: 1, find: 2, work: 2, past: 3, menus: 4, drinks: 4, taste: 4, units: 4, bring: 4 };
+
+/**
+ * The setup bar for a step: "Step 2 of 4" on the main path, "Almost done" on
+ * taste and units, the bar alone on Bring in (its title says "Last step").
+ * The invited path counts its own three, the third being the app.
+ */
+export function stepProgress(step: OnboardingStep, joined = false): { at: number; of: number; label: string | null } | null {
+  if (joined) {
+    const at = INVITE_STEPS.indexOf(step);
+    return at < 0 ? null : { at: at + 1, of: INVITE_STEP_NAMES.length, label: `Step ${at + 1} of ${INVITE_STEP_NAMES.length}` };
+  }
+  const at = MAIN_STEP_AT[step];
+  if (!at) return null;
+  if (step === 'bring') return { at, of: 4, label: null };
+  if (step === 'taste' || step === 'units') return { at, of: 4, label: 'Almost done' };
+  return { at, of: 4, label: `Step ${at} of 4` };
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** A job's month, as profile_positions will store it (start_year and start_month). */
+export interface JobMonth {
+  year: number;
+  /** 1 to 12. */
+  month: number;
+}
+
+/** "Feb 2023". */
+export function monthLabel(m: JobMonth | null): string | null {
+  return m ? `${MONTHS[m.month - 1]} ${m.year}` : null;
+}
+
+/**
+ * "2023 to now", "2021 to 2023", "Since 2023": a job's years on its row, or
+ * null when it has no start. ponytail: profile_positions has no date columns
+ * yet (b09 data waits on the profiles migration), so rows pass none for now.
+ */
+export function jobYears(job: { start_year?: number | null; end_year?: number | null; is_current: boolean }): string | null {
+  if (!job.start_year) return null;
+  if (job.is_current) return `${job.start_year} to now`;
+  if (!job.end_year) return `Since ${job.start_year}`;
+  return job.end_year === job.start_year ? String(job.start_year) : `${job.start_year} to ${job.end_year}`;
+}
+
 /**
  * The job title saved at the venue they joined: the role, when it reads as
  * one. Guest, Employee and Admin are access levels, not jobs. They can change

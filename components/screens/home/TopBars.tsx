@@ -4,7 +4,7 @@ import { Caption, Headline } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useTopBars } from '@/hooks/useDiscover';
-import { areaLabel, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
+import { areaLabel, earlyNote, type Area } from '@/lib/nearMe';
 import { MIN_RANKERS } from '@/lib/ranking';
 
 /**
@@ -23,7 +23,7 @@ export function TopBars({ area }: { area: Area }) {
   if (error) body = <ListNote>{`Couldn't load the bars: ${error.message}`}</ListNote>;
   else if (isLoading) body = <ListNote>Loading…</ListNote>;
   else if (ranked.length) {
-    body = <AreaRankList rows={ranked} scoreDetail={(r) => `${peopleCount(r.rankers)}`} />;
+    body = <AreaRankList rows={ranked} scoreDetail={(r) => `${r.rankers} ranked`} />;
   } else if (early.length) {
     body = (
       <>

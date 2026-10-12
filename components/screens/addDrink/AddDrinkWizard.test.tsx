@@ -10,7 +10,14 @@ const mockCreate = jest.fn();
 const mockSaved = jest.fn();
 let mockBarGlasses: unknown[] = [];
 
-jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' }, loading: false }) }));
+jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' }, loading: false }), useUserId: () => 'me' }));
+let mockClosest: { id: string; name: string } | null = null;
+jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: mockClosest }) }));
+jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: [] }) }));
+jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: () => ({ data: 0 }) }));
+jest.mock('@/hooks/usePublishing', () => ({ useBarPublishing: () => ({ data: undefined }) }));
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [], isPending: false }) }));
+jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [{ id: 'bar-1', name: 'Little Rye' }], active: null }) }));
 jest.mock('@/hooks/useDropdowns', () => ({
   useDropdowns: () => ({
     data: {
@@ -37,6 +44,7 @@ beforeEach(() => {
   mockStart.mockReset();
   mockSaved.mockReset();
   mockBarGlasses = [];
+  mockClosest = null;
   useDrinkWizardStore.setState({ kept: {} });
   useSettingsStore.setState({ defaultUnit: 'ml' });
 });
@@ -127,7 +135,11 @@ describe('AddDrinkWizard', () => {
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Stir, suggested' }));
     await fireEvent.changeText(screen.getByLabelText('Your own method'), 'Smoke rinse');
     await fireEvent.press(screen.getByRole('button', { name: 'Add' }));
-    expect(screen.getByText('Stir, then Smoke rinse')).toBeTruthy();
+    expect(screen.getByText('Stir, then smoke rinse')).toBeTruthy();
+    // The picks lead as numbered steps; your own sits in a group of its own.
+    expect(screen.getByText('with ice, until cold')).toBeTruthy();
+    expect(screen.getAllByText('Smoke rinse')).toHaveLength(2);
+    expect(screen.getByRole('checkbox', { name: 'Smoke rinse', checked: true })).toBeTruthy();
     await next();
 
     // Optional steps can be skipped.
@@ -140,6 +152,8 @@ describe('AddDrinkWizard', () => {
     // On to the review and save.
     for (let i = 0; i < 5; i++) await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
     expect(screen.getByText('30 ml Gin\nCampari')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Hero photo: a sketch for now. Add a photo' })).toBeTruthy();
+    expect(screen.getByText('You can change any of it on the drink’s page.')).toBeTruthy();
     expect(mockCreate).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('button', { name: 'Save drink' }));
     expect(mockCreate).toHaveBeenCalledTimes(1);
@@ -195,6 +209,27 @@ describe('AddDrinkWizard', () => {
     await fireEvent.changeText(screen.getByLabelText('Swap Gin for…'), 'verm');
     await fireEvent.press(screen.getByRole('button', { name: 'Sweet Vermouth' }));
     expect(useDrinkWizardStore.getState().kept.home.draft.lines).toEqual([{ key: 'k1', id: 'vermouth', name: 'Sweet Vermouth', amount: '45', unit: 'ml' }]);
+  });
+
+  test('a spec close to a classic offers it as a riff, and Credits picks it up', async () => {
+    mockClosest = { id: 'c-negroni', name: 'Negroni' };
+    useDrinkWizardStore.getState().patch('bar-1', {
+      name: 'Rye Bitter',
+      lines: [
+        { key: 'k1', id: 'gin', name: 'Gin', amount: '30', unit: 'ml' },
+        { key: 'k2', id: 'campari', name: 'Campari', amount: '30', unit: 'ml' },
+      ],
+    });
+    useDrinkWizardStore.getState().setStep('bar-1', 'ingredients');
+    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    expect(screen.getByText('Close to a Negroni.')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Make it a riff on the Negroni' }));
+    expect(useDrinkWizardStore.getState().kept['bar-1'].draft.riffOf).toEqual({ id: 'c-negroni', name: 'Negroni' });
+
+    useDrinkWizardStore.getState().setStep('bar-1', 'credits');
+    expect(await screen.findByText('Picked from the ingredients step: it’s close to a Negroni.')).toBeTruthy();
+    expect(screen.getByText('It’s credited to Little Rye too.')).toBeTruthy();
   });
 
   test('a name that is a classic offers its spec, and the method step offers the guess from it', async () => {

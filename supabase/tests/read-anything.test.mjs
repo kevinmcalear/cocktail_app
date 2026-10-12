@@ -123,7 +123,8 @@ describe('read-anything function', { skip }, () => {
     assert.equal(reading.kind, 'recipes');
     assert.equal(reading.menu, null);
     assert.deepEqual(reading.recipes.map((r) => r.name), ['Negroni', 'Orchard Fizz']);
-    assert.deepEqual(reading.recipes[1].lines[2], { amount: 0.75, unit: 'oz', ingredient: 'Lemon Juice', unsure: true });
+    // Photos come back with where each line is, and a hard-to-read line says what was hard (b10).
+    assert.deepEqual(reading.recipes[1].lines[2], { amount: 0.75, unit: 'oz', ingredient: 'Lemon Juice', unsure: true, doubt: '¾ or ½?', at: { page: 0, box: [700, 90, 760, 910] } });
     assert.equal(await usage(user.id), 1);
   });
 
@@ -140,16 +141,22 @@ describe('read-anything function', { skip }, () => {
     assert.equal(await usage(user.id), 0);
   });
 
-  test('pasted text alone is enough, and the hint picks what the mock reads', async () => {
+  test('pasted text alone is enough, and the hint (or Reading as) picks what the mock reads', async () => {
     const user = await signedIn();
     const menu = await read(user.token, { text: 'Spring menu\nNegroni 16', hint: 'menu' });
     assert.equal(menu.status, 200);
     const reading = await menu.json();
     assert.equal(reading.kind, 'menu');
     assert.equal(reading.menu.sections[0].lines[1].price, '16');
+    // A dish on a menu is kept as skipped, so the check can offer Bring back; text has no places.
+    assert.deepEqual(reading.skipped, [{ name: 'Marinated Olives', price: '7', why: 'not a drink', at: null }]);
     const bottles = await (await read(user.token, { text: 'Campari', hint: 'bottles' })).json();
     assert.equal(bottles.kind, 'bottles');
     assert.equal(bottles.bottles[0].name, 'Beefeater London Dry Gin');
-    assert.equal(await usage(user.id), 2);
+    assert.equal(bottles.unreadable.length, 1);
+    // "Reading as" wins over the screen's hint.
+    const asMenu = await (await read(user.token, { text: 'Campari', hint: 'bottles', as: 'menu' })).json();
+    assert.equal(asMenu.kind, 'menu');
+    assert.equal(await usage(user.id), 3);
   });
 });

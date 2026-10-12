@@ -10,7 +10,7 @@ import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
 import { StatusBar } from "expo-status-bar";
 import { GestureRoot } from '@/components/ds/GestureRoot';
-import { lazy, Suspense, useEffect } from "react";
+import { useEffect } from "react";
 import { palette } from "@/constants/palette";
 import '@/lib/reanimatedSetup';
 import { TamaguiProvider, Theme } from 'tamagui';
@@ -23,24 +23,19 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { ViewAsBanner } from '@/components/ViewAsBanner';
 import { AuthProvider, useAuth } from "@/ctx/AuthContext";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useIsWideWeb, WEB_SIDEBAR_WIDTH } from '@/hooks/useIsWideWeb';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useUserCacheSync } from '@/hooks/useUserCacheSync';
 import { BRAND } from '@/constants/brand';
 import { authRedirect, needsOnboarding } from '@/lib/onboarding';
 import { installWebAlert } from '@/lib/dialogs';
 import { afterFirstData } from '@/lib/idleQueue';
 import { prefetchRoutes } from '@/lib/prefetchRoutes';
+import { BringIn, RootExtras, SideNav } from '@/components/nav/RootLazy';
 
 import { initMonitoring } from '@/lib/monitoring';
 import { persistOptions, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
 
-// Not on a phone's first screen (wide web, signed in, or a shake): loaded when
-// first shown, so their code isn't on every page's first load (RAIL load).
-const WebSideNav = lazy(() => import('@/components/nav/WebSideNav').then((m) => ({ default: m.WebSideNav })));
-const SearchPalette = lazy(() => import('@/components/search/SearchPalette').then((m) => ({ default: m.SearchPalette })));
-const EightBallHost = lazy(() => import('@/components/screens/eightball/EightBallHost').then((m) => ({ default: m.EightBallHost })));
-const BringInAnywhere = lazy(() => import('@/components/nav/BringInAnywhere').then((m) => ({ default: m.BringInAnywhere })));
 
 export { ErrorScreen as ErrorBoundary } from '@/components/ErrorScreen';
 
@@ -66,9 +61,9 @@ function RootLayoutNav() {
     // Privacy, terms, account-deletion and support pages must open without signing in,
     // and venue staff links (/v/<slug>) have their own branded sign-in. The
     // design gallery (/dev/gallery) shows no data. Published drinks (/d/<id>),
-    // releases (/r/<id>), public profiles (/p/<handle>) and shared home menus
-    // (/m/<id>) are public.
-    if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm') return;
+    // releases (/r/<id>), public profiles (/p/<handle>), shared home menus
+    // (/m/<id>) and public events (/e/<id>) are public.
+    if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm' || segments[0] === 'e') return;
     // Signed out, a drink opens as its public card (/d/<id>), which asks you to sign in for the rest.
     const drink = !session && /^\/cocktail\/([^/]+)$/.exec(pathname);
     if (drink) return router.replace(`/d/${drink[1]}`);
@@ -96,7 +91,9 @@ function RootLayoutNav() {
   const isWideWeb = useIsWideWeb();
   // `user`, not `session`: at launch it can be the saved session's user, whose
   // cached venues paint before auth-js finishes refreshing their token.
-  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding';
+  // The menu builder fills the whole width (its library, the menu and the guest card), as drawn.
+  const building = segments[0] === 'menus' && (segments as string[])[2] === 'edit';
+  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding' && segments[0] !== 'venue-setup' && !building;
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -116,11 +113,7 @@ function RootLayoutNav() {
         `}} />
       )}
       <View style={{ flex: 1, flexDirection: 'row' }}>
-        {showWebSidebar ? (
-          <Suspense fallback={<View style={{ width: WEB_SIDEBAR_WIDTH }} />}>
-            <WebSideNav />
-          </Suspense>
-        ) : null}
+        {showWebSidebar ? <SideNav /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -129,6 +122,9 @@ function RootLayoutNav() {
             <Stack.Screen name="d/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="r/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="m/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="week/index" options={{ headerShown: false }} />
+            <Stack.Screen name="week/review" options={{ headerShown: false }} />
             <Stack.Screen
               name="add-cocktail"
               options={{ presentation: "modal", headerShown: false }}
@@ -155,6 +151,18 @@ function RootLayoutNav() {
             />
             <Stack.Screen
               name="cocktail/[id]/batch"
+              options={{ presentation: "modal", headerShown: false }}
+            />
+            <Stack.Screen
+              name="cocktail/[id]/service"
+              options={{ presentation: "modal", headerShown: false }}
+            />
+            <Stack.Screen
+              name="cocktail/[id]/photos"
+              options={{ presentation: "modal", headerShown: false }}
+            />
+            <Stack.Screen
+              name="cocktail/[id]/roles"
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
@@ -190,7 +198,8 @@ function RootLayoutNav() {
                 (the drink or ingredient page) ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="team" options={{ headerShown: false }} />
-            <Stack.Screen name="bring-in" options={{ headerShown: false }} />
+            <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
+            <Stack.Screen name="bring-in/done" options={{ headerShown: false }} />
             <Stack.Screen name="drafts" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/menus/[edition]" options={{ headerShown: false }} />
@@ -205,21 +214,19 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/bar/[id]/publishing" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/dilution" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/pricing" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/calendars" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/all" options={{ headerShown: false }} />
-            <Stack.Screen name="menus/from-photo" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/card" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/costing" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/releases/[releaseId]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
+          {/* Over the page, beside the sidebar: Bring in's sheet, drop dialog and reading tray. */}
+          {session ? <BringIn /> : null}
         </View>
-        <Suspense fallback={null}>
-          {showWebSidebar ? <SearchPalette /> : null}
-          {session ? <EightBallHost /> : null}
-          {Platform.OS === 'web' && session ? <BringInAnywhere /> : null}
-        </Suspense>
+        <RootExtras palette={showWebSidebar} eightBall={!!session} />
       </View>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>

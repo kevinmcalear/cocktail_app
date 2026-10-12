@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { GlassVariantPicker } from '@/components/ds';
+import { Caption, GlassVariantPicker } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import { sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
@@ -55,6 +55,7 @@ export function GlassStep({ draft, set, options, barGlasses, barVariants, sugges
             notes={notes}
             accessibilityLabel="Glass shape"
           />
+          <Caption tone="muted">The sketch at the top redraws in the shape you pick.</Caption>
         </View>
       ) : null}
     </View>

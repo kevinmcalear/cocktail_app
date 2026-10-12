@@ -6,6 +6,7 @@
 import { equipmentById } from './equipment';
 import { TECHNIQUES } from './index';
 import { technicalIngredientFor, TECHNICAL_INGREDIENTS } from './ingredients';
+import { actionFor, waysToMake } from './makeIt';
 import type { Technique } from './types';
 
 export interface Project {
@@ -60,4 +61,18 @@ export function projectsFor(kit: ReadonlySet<string>, lab: ReadonlySet<string>, 
   }
   ready.sort((a, b) => b.uses.length - a.uses.length);
   return { ready, away: [...away.values()].sort((a, b) => b.techniques.length - a.techniques.length) };
+}
+
+/**
+ * Was a catalog prep made with this technique? Its card's tag says so
+ * (item_prep.actions, "Clarify"), and where a tag covers several techniques
+ * (every clarifying method is "Clarify"), its name has to point at this one
+ * ("Milk-Washed Rum" is a milk wash). Methods (a dry shake) make no prep.
+ */
+export function madeWith(t: Technique, prep: { name: string; actions: readonly string[] }): boolean {
+  if (t.method) return false;
+  const action = actionFor(t);
+  if (!prep.actions.includes(action)) return false;
+  const sharing = TECHNIQUES.filter((x) => !x.method && actionFor(x) === action);
+  return sharing.length === 1 || waysToMake(prep.name).some((x) => x.id === t.id);
 }

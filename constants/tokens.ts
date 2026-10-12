@@ -84,6 +84,16 @@ export const palateHues = {
   light: { bright: '#A86E12', green: '#4E7A3E', fire: '#B4472E', body: '#7E5F96' },
 } as const;
 
+/** The map's "You are here" dot, with a halo of itself at 22% (disc-map). Not a status colour. */
+export const MAP_ME = '#8FB7E8';
+
+/**
+ * The day a batch was made, as the stripe on its label: the kitchen day-dot
+ * colours (Monday blue to Sunday black), indexed by Date.getDay() (Sunday 0).
+ * Printed on white in both themes, and always beside the day written out.
+ */
+export const dayHues = ['#1A1714', '#2F6DB5', '#E3B505', '#C8372D', '#7A4E2D', '#3F8A3A', '#E07020'] as const;
+
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 

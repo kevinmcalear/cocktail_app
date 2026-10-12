@@ -29,6 +29,7 @@ jest.mock('@/components/nav/VenueSwitcher', () => ({ VenueSwitcher: () => null, 
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['edit_drinks'] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true, label: 'Caretakers' }) }));
+jest.mock('@/components/screens/week/WeekNav', () => ({ WeekNav: () => null }));
 const mockPush = jest.fn();
 
 // The keyboard test lends the sidebar a document; take it back once every render has unmounted.
@@ -49,7 +50,7 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   await renderWithTamagui(<WebSideNav />);
 
   // The canvas order: the tabs and History, Menus and Back bar, then the Venue section and you at the foot.
-  expect(links()).toEqual(['Tonight', 'Library', 'Discover', 'History', 'Menus', 'Back bar', 'My team', 'Brand', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
+  expect(links()).toEqual(['Tonight', 'Library', 'Discover', 'History', 'Menus', 'Back bar', 'My team', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);
   expect(screen.getByRole('link', { name: 'Library', selected: true })).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Tonight', selected: false })).toBeTruthy();
 

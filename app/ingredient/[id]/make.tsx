@@ -22,8 +22,9 @@ export default function MakeRoute() {
     const accent = useActiveVenue().venues.find((v) => v.id === ingredient?.bar_id)?.accent ?? undefined;
 
     if (!ingredient || !card) return <Waiting />;
-    const recipe: RecipeLine[] = ((data?.recipe ?? []) as unknown as { id: string; ingredient: { name: string } | null; amount: string | null; unit: string | null }[]).map((r) => ({
+    const recipe: (RecipeLine & { ingredientId: string | null })[] = ((data?.recipe ?? []) as unknown as { id: string; ingredient: { id: string; name: string } | null; amount: string | null; unit: string | null }[]).map((r) => ({
         id: r.id,
+        ingredientId: r.ingredient?.id ?? null,
         name: r.ingredient?.name || "Hidden ingredient",
         amount: r.amount,
         unit: r.unit,

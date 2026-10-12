@@ -3,10 +3,10 @@ import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
 import { VenueBasics } from '@/components/bar/VenueBasics';
-import { VenueSettingsLinks } from '@/components/bar/VenueSettingsLinks';
+import { VenueHoursEditor } from '@/components/bar/VenueHoursEditor';
+import { VenueSettingsLinks, VenueTeamLinks } from '@/components/bar/VenueSettingsLinks';
 import { BackbarTheme, Body, Caption, Surface, useDs } from '@/components/ds';
 import { RowDivider, SelectRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
-import { TeamRoster } from '@/components/screens/team/TeamRoster';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useBarEditor } from '@/hooks/useBarEditor';
@@ -70,11 +70,11 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
     }
 
     const disclosure = [
-        ['General visibility', editor.visibilityLevel, editor.setVisibilityLevel],
-        ['Generic ingredients', editor.genericLevel, editor.setGenericLevel],
-        ['Specific brands', editor.specificLevel, editor.setSpecificLevel],
-        ['Measurements', editor.measurementLevel, editor.setMeasurementLevel],
-        ['Prep instructions', editor.prepLevel, editor.setPrepLevel],
+        ['General visibility', 'Who sees the drink at all', editor.visibilityLevel, editor.setVisibilityLevel],
+        ['Generic ingredients', '“Gin”, not the brand', editor.genericLevel, editor.setGenericLevel],
+        ['Specific brands', '“Fords Gin”', editor.specificLevel, editor.setSpecificLevel],
+        ['Measurements', 'Amounts and units', editor.measurementLevel, editor.setMeasurementLevel],
+        ['Prep instructions', 'How each line is made', editor.prepLevel, editor.setPrepLevel],
     ] as const;
 
     const body = (
@@ -96,19 +96,20 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
             )}
 
             <VenueBasics editor={editor} barId={barId} />
+            <VenueHoursEditor barId={barId} canEdit={editor.canEdit} />
             {editor.slug ? <StaffLinkCard slug={editor.slug} venueName={editor.name || 'your venue'} /> : null}
 
-            <SettingsSection title="Who sees what" note="The lowest role that sees each part of a drink, unless the drink sets its own.">
-                {disclosure.map(([label, value, setValue], i) => (
+            <SettingsSection title="Who sees what" note="The lowest role that sees each part of a drink, unless the drink sets its own. Only your team: the public is under Publishing.">
+                {disclosure.map(([label, detail, value, setValue], i) => (
                     <View key={label}>
                         {i > 0 ? <RowDivider /> : null}
-                        <SelectRow label={label} options={LEVEL_CHOICES} value={value} onChange={setValue} disabled={!editor.canEdit} />
+                        <SelectRow label={label} detail={detail} options={LEVEL_CHOICES} value={value} onChange={setValue} disabled={!editor.canEdit} />
                     </View>
                 ))}
             </SettingsSection>
 
+            <VenueTeamLinks barId={barId} barName={editor.name || 'This venue'} role={editor.roleLevel} />
             <VenueSettingsLinks barId={barId} />
-            <TeamRoster barId={barId} barName={editor.name || 'this venue'} role={editor.roleLevel} />
         </View>
     );
 

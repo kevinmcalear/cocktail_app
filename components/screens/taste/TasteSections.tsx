@@ -94,7 +94,7 @@ export function SaidAnswers({ value, onChange }: { value: Taste; onChange: (next
   return (
     <View style={styles.section}>
       <Headline role="heading">What you said</Headline>
-      <Caption tone="muted">Change an answer and the flower moves with it.</Caption>
+      <Caption tone="muted">Change an answer and the flower moves with it. Tap the chosen answer again to leave it to your rankings.</Caption>
       <Surface style={styles.said}>
         {shown.map((q, i) => {
           const answer = ANSWERS.find((a) => a.value === value[q.dim]);

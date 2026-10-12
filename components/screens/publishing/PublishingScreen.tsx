@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, Field, GlassButton, Headline, Surface, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, Field, GlassButton, Headline, PressableScale, Surface, Title, useDs, useGutter } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Crumbs, usePageFrame } from '@/components/nav/PageFrame';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
@@ -11,12 +12,12 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
+import { PAGE_COPY } from '@/lib/pageVisibility';
 import { instagramProblem } from '@/lib/profiles';
 
 import { SwitchRow } from '../settings/SettingsParts';
 
 import { MakerDetailsEditor } from './MakerDetailsEditor';
-import { PageVisibilityChoice } from './PageVisibilityChoice';
 import { PublishChoice } from './PublishChoice';
 import { ReleaseList } from './ReleaseList';
 
@@ -127,13 +128,19 @@ function PublishingPage({ barId }: { barId: string }) {
               </Surface>
 
               {data.profile ? (
-                <PageVisibilityChoice
-                  venueName={venue?.name ?? 'the venue'}
-                  value={data.pageVisibility}
-                  disabled={!canPublish || set.isPending}
-                  error={errorFor('page')}
-                  onChange={(visibility) => set.mutate({ level: 'page', visibility })}
-                />
+                // Its own page (ppl-bar-visibility), with what a guest will see.
+                <PressableScale
+                  role="link"
+                  accessibilityLabel={`Who sees your page: ${PAGE_COPY[data.pageVisibility].label}`}
+                  onPress={() => router.push(`/settings/bar/${barId}/visibility` as Href)}
+                  style={[styles.linkRow, { borderColor: ds.c.line }]}
+                >
+                  <View style={styles.flex}>
+                    <Headline>Who sees your page</Headline>
+                    <Caption tone="muted">{PAGE_COPY[data.pageVisibility].label}</Caption>
+                  </View>
+                  <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+                </PressableScale>
               ) : null}
 
               {data.profile ? (
@@ -176,7 +183,10 @@ function PublishingPage({ barId }: { barId: string }) {
                 <View role="list" style={styles.list}>
                   {data.menus.map((m) => (
                     <View key={m.id} role="listitem" style={styles.menu}>
-                      <Body>{m.name}</Body>
+                      <View>
+                        <Body>{m.name}</Body>
+                        <Caption tone="muted">{`${m.status} · ${m.drinkCount} ${m.drinkCount === 1 ? 'drink' : 'drinks'}`}</Caption>
+                      </View>
                       <PublishChoice
                         compact
                         label={`Who can see ${m.name}`}
@@ -215,6 +225,8 @@ const styles = StyleSheet.create({
   card: { gap: space.md },
   ig: { gap: space.sm },
   group: { gap: space.sm },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.md, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth },
+  flex: { flex: 1, minWidth: 0 },
   list: { gap: space.lg },
   menu: { gap: space.sm },
 });

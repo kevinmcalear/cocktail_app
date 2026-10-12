@@ -1,20 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
 
-import { ensureAiConsent } from '@/lib/aiConsent';
-import { uriToBase64 } from '@/lib/imageBase64';
-import { invokeFunction } from '@/lib/invokeFunction';
-import type { ParsedMenuSection } from '@/lib/paste';
 
 /** A page of a printed menu, picked or taken. */
 export interface MenuPhoto {
   uri: string;
   mimeType: string;
-}
-
-/** What read-menu returns (supabase/functions/_shared/menuRead.ts). */
-export interface MenuReading {
-  title: string | null;
-  sections: ParsedMenuSection[];
+  /** The file's name, when it came from a file (a drop, the file chooser). */
+  name?: string;
 }
 
 export const MAX_MENU_PHOTOS = 4;
@@ -41,13 +33,4 @@ export async function takeMenuPhoto(): Promise<MenuPhoto[]> {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
   if (status !== 'granted') throw new Error('Allow camera access in Settings to photograph a menu.');
   return toPhotos(await ImagePicker.launchCameraAsync({ quality: QUALITY }));
-}
-
-/** Reads the pages (read-menu): sections, drinks, their listed ingredients and prices. */
-export async function readMenuPhotos(photos: MenuPhoto[]): Promise<MenuReading> {
-  if (!(await ensureAiConsent())) throw new Error(AI_DECLINED);
-  const encoded = await Promise.all(photos.map(async (photo) => ({ base64: await uriToBase64(photo.uri), mime_type: photo.mimeType })));
-  const reading = await invokeFunction<MenuReading>('read-menu', { photos: encoded });
-  if (!reading?.sections?.length) throw new Error('Couldn’t find any drinks in that photo. Try a closer, flatter shot of the menu.');
-  return reading;
 }

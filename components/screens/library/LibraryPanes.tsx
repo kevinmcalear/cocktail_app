@@ -67,7 +67,7 @@ function OtherPane({ item }: { item: PaneItem }) {
  * tablet board draws it. The pick lives in the URL (?pick=<id>), so a link
  * opens the same drink; with none, the first one shows.
  */
-export function LibraryPanes({ items, header, empty }: { items: PaneItem[]; header: ReactElement; empty: ReactElement | null }) {
+export function LibraryPanes<T extends PaneItem>({ items, lineOf, header, empty }: { items: T[]; lineOf?: (item: T) => string | null; header: ReactElement; empty: ReactElement | null }) {
   const ds = useDs();
   const router = useRouter();
   const { pick } = useLocalSearchParams<{ pick?: string }>();
@@ -88,7 +88,7 @@ export function LibraryPanes({ items, header, empty }: { items: PaneItem[]; head
               imageUrl={heroPicture(item.item_images ?? [])?.url ?? null}
               glass={fallbackGlass(item.category as ItemCategory)}
               itemId={item.id}
-              caption={item.category ?? undefined}
+              caption={lineOf?.(item) ?? item.category ?? undefined}
               onPress={() => router.setParams({ pick: item.id })}
             />
           </View>

@@ -2,56 +2,26 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { SafetyPage } from '@/components/screens/safety/SafetyPage';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { layout, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
 import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { inviteJobTitle, inviteStepLabel, needsOnboarding, nextStep, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
+import { inviteJobTitle, needsOnboarding, nextStep, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
 import { stageBringInFiles } from '@/lib/bringInHandoff';
 import type { ReadFile } from '@/lib/readAnything';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
-import { DrinkStep, FindStep, MenuStep, PlaceStep } from './CareerSteps';
+import { FindStep, PlaceStep } from './CareerSteps';
 import { InviteBrand, InviteWelcome } from './InviteWelcome';
 import { NameStep, TasteStep, UnitsStep } from './ProfileSteps';
-
-const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
-  invite: { title: 'You’re invited' },
-  name: { title: 'Your name', intro: 'How you show up on your profile and on drinks.' },
-  hospitality: { title: 'Do you work in hospitality?' },
-  find: {
-    title: 'Do we already have you?',
-    intro: 'If this is your profile, claim it. If not, you’ll add where you’ve worked, the menus, and the cocktails.',
-  },
-  work: {
-    title: 'Where do you work?',
-    intro: 'Pick a bar, even one that has closed. Picking one doesn’t open its menus. Adding a bar makes you its admin.',
-  },
-  past: { title: 'Where you’ve worked', intro: 'Your profile shows where you work now. Past jobs stay hidden unless you choose to show them.' },
-  menus: { title: 'Menus you worked on', intro: 'Name the list and the bar. A closed bar is fine.' },
-  drinks: {
-    title: 'Cocktails you worked on',
-    intro: 'A drink you made or helped make. It shows as a suggested credit. A closed bar can still be where it started.',
-  },
-  taste: {
-    title: 'What do you like to drink?',
-    intro: 'A few quick answers start your taste, for drinks picked for you. Every drink you rank sharpens it. Change them any time on You.',
-  },
-  units: { title: 'How do you measure?', intro: 'New specs, and the amounts you read. You can change this in Settings.' },
-  bring: {
-    title: 'Bring your bar in',
-    intro: 'Got a spec book, a menu or a back bar? Snap it, choose photos or a PDF, or paste it, and we’ll read it in as soon as you’re set up. You check everything before it’s saved.',
-  },
-};
-
-const HOME_BRING = {
-  title: 'What’s on your shelf?',
-  intro: 'Snap your bottles, or bring in recipes you’ve saved elsewhere. We’ll read them in as soon as you’re set up, and you check them before they’re saved.',
-};
+import { SetupChromeProvider, SetupFooter, SetupPage } from './SetupPage';
+import { DrinkStep, MenuStep } from './WorkedSteps';
+import { COPY, HOME_BRING } from './onboardingCopy';
 
 /**
  * After the age check, once, for a new account: name, work, taste and units. A
@@ -67,7 +37,9 @@ export function OnboardingScreen() {
   const saveProfile = useSaveOnboardingName();
   const saveJob = useSaveWorkplace();
   const enterVenue = useAppMode((s) => s.enterVenue);
-  const [chosen, setStep] = useState<OnboardingStep | null>(null);
+  const [chosen, setChosen] = useState<OnboardingStep | null>(null);
+  // The steps they came through, for Back.
+  const [trail, setTrail] = useState<OnboardingStep[]>([]);
   const [joined, setJoined] = useState<MyInvite | null>(null);
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [passwordProblem, setPasswordProblem] = useState<string | null>(null);
@@ -77,6 +49,9 @@ export function OnboardingScreen() {
   const [draft, setDraft] = useState<{ name: string; handle: string } | null>(null);
   const [handleTaken, setHandleTaken] = useState(false);
   const [home, setHome] = useState(false);
+  // The bar from "Where do you work?", for "Bring Little Rye in".
+  const [barName, setBarName] = useState<string | null>(null);
+  const [waiting, setWaiting] = useState<ReadFile[]>([]);
   // Where setup ends: the app, or Bring in with what they handed over.
   const [landing, setLanding] = useState<'/(tabs)' | '/bring-in'>('/(tabs)');
   const personId = createdId ?? profile.data?.id ?? null;
@@ -86,6 +61,14 @@ export function OnboardingScreen() {
     if (!needsOnboarding(user.user_metadata)) router.replace(landing);
   }, [loading, user, router, landing]);
 
+  const setStep = (next: OnboardingStep) => {
+    setTrail((t) => [...t, step]);
+    setChosen(next);
+  };
+  const back = () => {
+    setChosen(trail[trail.length - 1] ?? 'name');
+    setTrail((t) => t.slice(0, -1));
+  };
   const go = (from: OnboardingStep, choice: StepChoice = 'no') => {
     const next = nextStep(from, choice, !!joined);
     if (next === 'done') finish.mutate();
@@ -144,13 +127,14 @@ export function OnboardingScreen() {
     }, { name, handle });
   };
 
-  const bring = (files: ReadFile[]) => {
+  // Finish setup: Bring in reads what they handed over; Paste opens it empty.
+  const bring = (files: ReadFile[], paste = false) => {
     if (files.length) stageBringInFiles(files);
-    setLanding('/bring-in');
+    if (files.length || paste) setLanding('/bring-in');
     finish.mutate();
   };
 
-  const copy = step === 'bring' && home ? HOME_BRING : COPY[step];
+  const copy = step === 'bring' && home ? HOME_BRING : step === 'bring' && barName ? { ...COPY.bring, title: `Bring ${barName} in` } : COPY[step];
   if (profile.isPending || (invites.isLoading && !chosen)) {
     return (
       <SafetyPage title="Welcome" noBack>
@@ -176,15 +160,24 @@ export function OnboardingScreen() {
         onJoined={() => {
           setJoined(invite);
           enterVenue(invite.bar_id);
-          setStep('name');
+          setChosen('name');
         }}
-        onDeclined={() => setStep('name')}
+        onDeclined={() => setChosen('name')}
       />
     );
   }
 
+  const first = trail.length === 0 && (step === 'name' || step === 'invite');
   const page = (
-    <SafetyPage title={copy.title} intro={copy.intro} kicker={joined ? inviteStepLabel(step) : null} noBack>
+    <SetupChromeProvider
+      value={{
+        title: copy.title,
+        intro: copy.intro,
+        eyebrow: step === 'bring' && !home ? 'Last step' : joined ? joined.bar_name : null,
+        progress: stepProgress(step, !!joined),
+        onBack: first ? undefined : back,
+      }}
+    >
       {step === 'name' ? (
         <NameStep
           // A taken handle can come back while this step is still showing (the
@@ -200,9 +193,10 @@ export function OnboardingScreen() {
         />
       ) : null}
       {step === 'hospitality' ? (
-        <View style={styles.stack}>
+        <SetupPage footer={<Button label="Not now" variant="ghost" onPress={() => createProfile(() => setStep('taste'))} />}>
           <Answer
             label="Yes, I work in hospitality"
+            detail="Where you’ve worked, menus and drinks you made"
             onPress={() => {
               if (personId) setStep('work');
               else setStep('find');
@@ -210,13 +204,14 @@ export function OnboardingScreen() {
           />
           <Answer
             label="I make drinks at home"
+            detail="Straight to what you like to drink"
             onPress={() => {
               setHome(true);
               createProfile(() => setStep('taste'));
             }}
           />
           {saveProfile.error && !handleTaken ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
-        </View>
+        </SetupPage>
       ) : null}
       {step === 'find' && draft ? (
         <FindStep
@@ -227,37 +222,67 @@ export function OnboardingScreen() {
           onSkip={() => createProfile(() => setStep('taste'))}
         />
       ) : null}
-      {step === 'work' ? <PlaceStep personId={personId} isCurrent onDone={() => go('work')} /> : null}
+      {step === 'work' ? (
+        <PlaceStep
+          personId={personId}
+          isCurrent
+          onDone={(bar) => {
+            if (bar) setBarName(bar);
+            go('work');
+          }}
+        />
+      ) : null}
       {step === 'past' ? <PlaceStep personId={personId} isCurrent={false} onDone={() => go('past')} /> : null}
       {step === 'menus' ? <MenuStep personId={personId} onDone={() => go('menus')} /> : null}
       {step === 'drinks' ? <DrinkStep personId={personId} onDone={() => go('drinks')} /> : null}
       {step === 'taste' ? <TasteStep onDone={() => go('taste')} /> : null}
-      {step === 'units' ? <UnitsStep onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
-      {step === 'bring' ? <BringStep onBring={bring} onSkip={() => go('bring')} pending={finish.isPending} error={finish.error?.message} /> : null}
+      {step === 'units' ? <UnitsStep joined={!!joined} onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
+      {step === 'bring' ? (
+        <BringStep
+          onFiles={(files) => setWaiting((w) => [...w, ...files])}
+          onPaste={() => bring(waiting, true)}
+          waiting={waiting.length ? waitingLabel(waiting) : null}
+          onLater={() => finish.mutate()}
+          error={finish.error?.message}
+          footer={<SetupFooter label="Finish setup" pending={finish.isPending} onPress={() => bring(waiting)} />}
+        />
+      ) : null}
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
-    </SafetyPage>
+    </SetupChromeProvider>
   );
   // Joined: the short setup stays in the venue's colours.
   return joined ? <InviteBrand invite={joined}>{page}</InviteBrand> : page;
 }
 
-function Answer({ label, onPress }: { label: string; onPress: () => void }) {
+/** "3 photos", "a PDF and 2 photos": what's waiting to be read. */
+function waitingLabel(files: ReadFile[]): string {
+  return files.length === 1 ? 'One file' : `${files.length} files`;
+}
+
+/** One answer to a question step: a bold line, a muted one, and a chevron. */
+function Answer({ label, detail, onPress }: { label: string; detail: string; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale accessibilityLabel={label} onPress={onPress} style={[styles.answer, { backgroundColor: ds.c.raised }]}>
-      <Body style={styles.strong}>{label}</Body>
+    <PressableScale role="button" accessibilityLabel={label} accessibilityHint={detail} onPress={onPress} style={[styles.answer, { backgroundColor: ds.c.raised }]}>
+      <View style={styles.flex}>
+        <DsText variant="headline">{label}</DsText>
+        <Caption tone="muted">{detail}</Caption>
+      </View>
+      <IconSymbol name="chevron.right" size={18} color={ds.c.muted} />
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: space.md },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
+  flex: { flex: 1, minWidth: 0 },
   answer: {
-    minHeight: layout.minTapTarget,
+    minHeight: layout.minTapTarget + space.xxl,
     borderRadius: radius.card,
     borderCurve: 'continuous',
     paddingHorizontal: space.xl,
-    justifyContent: 'center',
+    paddingVertical: space.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
   },
 });

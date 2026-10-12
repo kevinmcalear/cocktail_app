@@ -1,8 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
-import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
+import { lazy, Suspense, useMemo, useState } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DrinkImage, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { PageHeader } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { useWebNav } from '@/hooks/useIsWideWeb';
@@ -10,23 +10,26 @@ import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet'
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { SearchPill } from '@/components/screens/home/DiscoverControls';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
+import { Filter, FilterRow } from '@/components/screens/library/LibraryChips';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
+import { LibraryTile } from '@/components/screens/library/LibraryTile';
 import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useDropdowns } from '@/hooks/useDropdowns';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { usePricedItemIds } from '@/hooks/usePricing';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { useStaffList } from '@/hooks/useStaffList';
 import { venueContextIds } from '@/lib/barContextFilter';
-import { heroPicture } from '@/lib/itemImages';
-import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
+import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import type { SearchScope } from '@/lib/searchScope';
-import { BATCHED_STYLES, DRINK_CATEGORIES, itemIdOf, LIST_FILTERS, menuDrinks, NEEDS_PRICE, parseShow, SHELF_FILTERS, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
-import { useVenueShelves } from '@/hooks/useVenueShelves';
+import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, methodWord, parseShow, PREP_GROUPS, tileLine, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
+import type { SearchItem } from '@/types/search';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 // The staff list drags to reorder, with gesture and animation code the rest of the
@@ -34,39 +37,6 @@ import { usePrefetchCocktail } from '@/hooks/useCocktails';
 const StaffList = lazy(() => import('@/components/screens/library/StaffList').then((m) => ({ default: m.StaffList })));
 
 const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
-
-/** A row of filters on one line that scrolls sideways, edge to edge. */
-function FilterRow({ label, gutter, children }: { label: string; gutter: number; children: ReactNode }) {
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      role="radiogroup"
-      accessibilityLabel={label}
-      style={{ marginHorizontal: -gutter }}
-      contentContainerStyle={[styles.filters, { paddingHorizontal: gutter }]}
-    >
-      {children}
-    </ScrollView>
-  );
-}
-
-function Filter({ label, count, selected, onPress }: { label: string; count?: number; selected: boolean; onPress: () => void }) {
-  const ds = useDs();
-  return (
-    <PressableScale
-      role="radio"
-      aria-checked={selected}
-      accessibilityLabel={count == null ? label : `${label}, ${count}`}
-      onPress={onPress}
-      style={[styles.filter, selected ? { backgroundColor: ds.accentFill.fill, borderColor: ds.accentFill.fill } : { borderColor: ds.c.lineStrong }]}
-    >
-      <Body color={selected ? ds.accentFill.text : ds.c.ink} style={selected ? styles.picked : undefined}>
-        {label} {count == null ? null : <Body color={selected ? ds.accentFill.text : ds.c.muted}>{count}</Body>}
-      </Body>
-    </PressableScale>
-  );
-}
 
 /**
  * Library: the venue's spec book. All its drinks, what's on the menu now (one
@@ -88,7 +58,7 @@ export function LibraryScreen() {
   // The venue in the header, not the old sidebar's multi-select contexts.
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const activeId = active?.id ?? null;
-  const params = useLocalSearchParams<{ show?: string; menu?: string }>();
+  const params = useLocalSearchParams<{ show?: string; menu?: string; kind?: string }>();
   const show = parseShow(params.show, !!activeId || venuesLoading);
   const contextIds = useMemo(() => venueContextIds(activeId, venuesLoading), [activeId, venuesLoading]);
   const { items, isLoading } = useSearchCatalog(contextIds);
@@ -106,10 +76,12 @@ export function LibraryScreen() {
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
   const { data: menus } = useVenueMenus(activeId);
   const staff = useStaffList(activeId);
+  const { data: specs } = useDropdowns();
   const [now] = useState(() => Date.now());
 
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
   const shelves = useVenueShelves(activeId, published);
+  const prepFacts = usePrepFacts(shelves.preps);
   const byMenu = useMemo(
     () => menuDrinks((menus ?? []).filter((m) => m.barId === activeId), now, params.menu ?? null),
     [menus, activeId, now, params.menu]
@@ -136,16 +108,28 @@ export function LibraryScreen() {
       batched: published.filter((i) => i.category === 'Cocktail' && BATCHED_STYLES.includes(i.serviceStyle ?? '')),
       ...shelves,
     };
-    for (const f of TYPE_FILTERS) out[f.value] = published.filter((i) => i.category === f.category);
+    // Cocktails are All's cocktails: R&D trials stay out here too.
+    for (const f of TYPE_FILTERS) out[f.value] = published.filter((i) => i.category === f.category && !rnd.has(itemIdOf(i.id)));
     return out;
   }, [published, pricedIds, canCost, byMenu, shelves]);
   const onNow = useMemo(() => new Set(byMenu.onNow), [byMenu]);
   const past = useMemo(() => new Set(byMenu.past), [byMenu]);
-  const shown = useMemo(() => [...lists[show]].sort((a, b) => a.name.localeCompare(b.name)), [lists, show]);
+  // Preps by what was done to them (Syrups, Cordials...): the groups this venue has.
+  const prepKinds = PREP_GROUPS.map((g) => ({ ...g, count: lists.preps.filter((p) => prepFacts[p.id]?.group === g.group).length })).filter((g) => g.count);
+  const kind = show === 'preps' ? prepKinds.find((g) => g.value === params.kind) : undefined;
+  const shown = [...lists[show]].filter((i) => !kind || prepFacts[i.id]?.group === kind.group).sort((a, b) => a.name.localeCompare(b.name));
+  // "Stirred · Coupe"; R&D adds the collection; beer and wine say what they are; preps what was done, yield and keeps.
+  const glassName = (i: SearchItem) => (i.glassware_id ? (specs?.glassware.find((g) => g.id === i.glassware_id)?.name ?? null) : null);
+  const rndOf = useMemo(() => new Map(byMenu.rndMenus.flatMap((m) => m.itemIds.map((id) => [id, m.name] as const))), [byMenu]);
+  const lineOf = (i: SearchItem): string | null => {
+    if (i.category === 'Ingredient') return prepFacts[i.id]?.line ?? null;
+    if (i.category === 'Beer' || i.category === 'Wine') return tileLine(i.category, glassName(i));
+    const method = i.method_id ? methodWord(specs?.methods.find((m) => m.id === i.method_id)?.name) : null;
+    return tileLine(method, glassName(i), show === 'rnd' ? rndOf.get(i.id) : null);
+  };
   const count = (value: Show) => (value === 'staff' ? (staff.data?.length ?? 0) : lists[value].length);
-  const types = activeId ? TYPE_FILTERS.filter((f) => f.value !== 'ingredients') : TYPE_FILTERS;
-  const filters = [...(activeId ? [...LIST_FILTERS, ...SHELF_FILTERS] : []), ...types, ...(canCost ? [NEEDS_PRICE] : [])];
-  const pick = (value: Show) => router.setParams({ show: value, menu: undefined });
+  const groups = filterGroups(!!activeId, canCost);
+  const pick = (value: Show) => router.setParams({ show: value, menu: undefined, kind: undefined });
   const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
   const content = { paddingHorizontal: gutter, paddingBottom: bottom, gap: space.lg };
@@ -154,30 +138,46 @@ export function LibraryScreen() {
       <PageHeader title="Library" width="full" />
       <SearchPill query="" placeholder={`Search ${active?.name ?? 'your drinks'}`} onOpen={() => setSearching(true)} onClear={() => setQuery('')} />
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
-      <FilterRow label="Show" gutter={gutter}>
-        {filters.map((f) => (
-          <Filter key={f.value} label={f.label} count={count(f.value)} selected={show === f.value} onPress={() => pick(f.value)} />
-        ))}
-      </FilterRow>
+      <FilterRow
+        label="Show"
+        gutter={gutter}
+        whole={breakpoint === 'desktop'}
+        groups={groups.map((g) => g.map((f) => <Filter key={f.value} label={f.label} count={count(f.value)} selected={show === f.value} onPress={() => pick(f.value)} />))}
+      />
       {show === 'on-menu' && byMenu.onMenus.length > 1 ? (
-        <FilterRow label="Which menu" gutter={gutter}>
-          <Filter label="Every menu on now" selected={!byMenu.onMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />
-          {byMenu.onMenus.map((m) => (
-            <Filter key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />
-          ))}
-        </FilterRow>
+        <FilterRow
+          label="Which menu"
+          gutter={gutter}
+          groups={[[
+            <Filter key="all" label="Every menu on now" selected={!byMenu.onMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />,
+            ...byMenu.onMenus.map((m) => <Filter key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />),
+          ]]}
+        />
       ) : null}
       {show === 'on-menu' && !byMenu.onMenus.length && menus ? <Caption tone="muted">No menu is on right now. Menus are built and scheduled in Menus.</Caption> : null}
       {show === 'past' ? <Caption tone="muted">Drinks from menus that have finished, and aren’t on one now.</Caption> : null}
       {show === 'rnd' && byMenu.rndMenus.length > 1 ? (
-        <FilterRow label="Which collection" gutter={gutter}>
-          <Filter label="Every R&D drink" selected={!byMenu.rndMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />
-          {byMenu.rndMenus.map((m) => (
-            <Filter key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />
-          ))}
-        </FilterRow>
+        <FilterRow
+          label="Which collection"
+          gutter={gutter}
+          groups={[[
+            <Filter key="all" label="Every R&D drink" selected={!byMenu.rndMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />,
+            ...byMenu.rndMenus.map((m) => <Filter key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />),
+          ]]}
+        />
       ) : null}
-      {show === 'rnd' ? <Caption tone="muted">Trials, flights and assignments: drinks on an R&D collection and on no menu.</Caption> : null}
+      {show === 'rnd' ? <Caption tone="muted">Trials, flights and assignments: drinks on an R&D collection and on no menu. They stay out of All and out of staff search.</Caption> : null}
+      {show === 'preps' && prepKinds.length ? (
+        <FilterRow
+          label="Which preps"
+          gutter={gutter}
+          groups={[[
+            <Filter key="all" label="All preps" count={lists.preps.length} selected={!kind} onPress={() => router.setParams({ kind: undefined })} />,
+            ...prepKinds.map((g) => <Filter key={g.value} label={g.label} count={g.count} selected={kind?.value === g.value} onPress={() => router.setParams({ kind: g.value })} />),
+          ]]}
+        />
+      ) : null}
+      {show === 'preps' ? <Caption tone="muted">What the bar makes in house. Each one has its lines, steps, yield, storage and allergens.</Caption> : null}
       {show === 'batched' ? <Caption tone="muted">Drinks served bottled, carbonated, on draught or from a batch made ahead.</Caption> : null}
       {show === 'bottles' && activeId ? (
         canEdit ? (
@@ -195,7 +195,7 @@ export function LibraryScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <LibraryPanes items={shown} header={header} empty={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>} />
+        <LibraryPanes items={shown} lineOf={lineOf} header={header} empty={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />}>
@@ -213,21 +213,14 @@ export function LibraryScreen() {
           renderItem={({ item }) => {
             const category = item.category as ItemCategory;
             return (
-              <PressableScale
-                accessibilityLabel={`${item.name}, open`}
+              <LibraryTile
+                item={item}
+                line={lineOf(item)}
+                glassName={glassName(item)}
+                width={`${100 / columns}%`}
                 onPressIn={category === 'Cocktail' ? () => prefetch(item.id, { name: item.name, item_images: item.item_images }) : undefined}
                 onPress={() => router.push(itemHref(category, item.id) as never)}
-                style={[styles.tile, { maxWidth: `${100 / columns}%` }]}
-              >
-                <DrinkImage thumb
-                  itemId={item.id}
-                  source={heroPicture(item.item_images)?.url ?? null}
-                  ingredient={category === 'Ingredient' ? { id: item.id, name: item.name } : null}
-                  glass={fallbackGlass(category)}
-                  accessibilityLabel={item.name}
-                />
-                <Body numberOfLines={2}>{item.name}</Body>
-              </PressableScale>
+              />
             );
           }}
           ListEmptyComponent={venuesLoading || isLoading ? undefined : <Body tone="muted">Nothing here yet.</Body>}
@@ -252,9 +245,5 @@ export function LibraryScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { gap: space.md, paddingBottom: space.sm },
-  filters: { flexDirection: 'row', gap: space.sm },
-  filter: { minHeight: 38, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
-  picked: { fontFamily: fontFamilies.bodySemiBold },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  tile: { flex: 1, gap: space.sm },
 });

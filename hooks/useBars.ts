@@ -23,7 +23,8 @@ export function useBars() {
                         primary_color,
                         secondary_color,
                         display_face,
-                        ground_tint
+                        ground_tint,
+                        accent_text
                     )
                 `)
                 .eq('user_id', userId);

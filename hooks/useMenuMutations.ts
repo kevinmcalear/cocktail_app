@@ -7,7 +7,6 @@ import { dropdownKeys } from '@/hooks/useDropdowns';
 import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { fetchPublished } from '@/hooks/usePublished';
 import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
-import { readMenuPhotos } from '@/lib/readMenu';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
@@ -83,7 +82,7 @@ export function useCreateMenu() {
   const invalidate = useInvalidateMenus();
   const userId = useUserId();
   return useMutation({
-    mutationFn: async ({ barId, layout, night }: { barId: string | null; layout: MenuLayout; night?: HomeNight }): Promise<string> => {
+    mutationFn: async ({ barId, layout, night, plan }: { barId: string | null; layout: MenuLayout; night?: HomeNight; plan?: { plannedStartsAt: string | null; plannedEndsAt: string | null } }): Promise<string> => {
       const { data, error } = await supabase
         .from('menus')
         .insert({
@@ -94,6 +93,9 @@ export function useCreateMenu() {
           cover_position: layout.coverPosition,
           menu_date: night?.menuDate ?? null,
           guest_count: night?.guestCount ?? null,
+          // A venue draft's planned dates (New menu's third step): not live.
+          planned_starts_at: plan?.plannedStartsAt ?? null,
+          planned_ends_at: plan?.plannedEndsAt ?? null,
         })
         .select('id')
         .single();
@@ -322,11 +324,6 @@ export function usePickMenuCover(menuId: string) {
     },
     onError: () => {},
   });
-}
-
-/** Reads photos of a printed menu (read-menu): one AI unit a call. */
-export function useReadMenu() {
-  return useMutation({ mutationFn: readMenuPhotos, onError: () => {} });
 }
 
 /** Uploads a local photo as a new menu's cover; resolves its public URL. */

@@ -1,23 +1,18 @@
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, DsText, GlassButton, useDs, useGutter } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, DsText, GlassButton, useDs, useGutter } from '@/components/ds';
+import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMenu } from '@/hooks/useMenus';
-import { menuAsText } from '@/lib/menus';
+import { cardWhen, menuAsText } from '@/lib/menus';
 import type { MenuSectionDetail } from '@/types/menus';
 
 import { MenuSections, type CardPictures } from './MenuSections';
 
-const PICTURES: { value: CardPictures; label: string }[] = [
-  { value: 'above', label: 'Above' },
-  { value: 'beside', label: 'Beside' },
-  { value: 'none', label: 'None' },
-];
+const PICTURES: CardPictures[] = ['above', 'beside', 'none'];
 
 /**
  * The guest menu: the same menu, typeset on paper with each drink's photo or
@@ -52,7 +47,8 @@ function VenueMark({ venue }: { venue: Venue }) {
 
 interface GuestCardContentProps {
   name: string;
-  startsAt: string | null;
+  /** The eyebrow: "Friday 31 October", "From Mon 1 December" (lib/menus cardWhen). */
+  when: string | null;
   venue: Venue | null;
   sections: Pick<MenuSectionDetail, 'id' | 'name' | 'drinks'>[];
   pictures: CardPictures;
@@ -60,26 +56,44 @@ interface GuestCardContentProps {
   compact?: boolean;
 }
 
-/** The card itself: the venue's mark, the menu's name and date, its sections. Inside the light theme, on paper. */
-export function GuestCardContent({ name, startsAt, venue, sections, pictures, compact = false }: GuestCardContentProps) {
+/**
+ * The card itself: when (an eyebrow), the menu's name in the display face, "at
+ * Little Rye" in italic, a rule, its sections, and the venue's mark at the
+ * foot. The editor's preview (`compact`) is just when, name and sections.
+ * Inside the light theme, on paper.
+ */
+export function GuestCardContent({ name, when, venue, sections, pictures, compact = false }: GuestCardContentProps) {
   const ds = useDs();
-  const from = startsAt ? new Date(startsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : null;
   return (
     <View style={styles.card}>
-      {venue ? <VenueMark venue={venue} /> : null}
-      {venue ? (
-        <DsText variant="headline" align="center">
-          {venue.name}
-        </DsText>
+      {when ? (
+        <Caption tone="muted" style={styles.eyebrow}>
+          {when.toUpperCase()}
+        </Caption>
       ) : null}
       <DsText variant={compact ? 'title' : 'display'} role="heading" align="center">
         {name}
       </DsText>
-      {from ? <Caption tone="muted">From {from}</Caption> : null}
+      {venue && !compact ? (
+        <DsText variant="headline" align="center" tone="muted" style={[styles.at, { fontFamily: displayFaces[ds.displayFace].italic }]}>
+          {`at ${venue.name}`}
+        </DsText>
+      ) : null}
       <View style={[styles.rule, compact && styles.ruleCompact, { backgroundColor: ds.c.lineStrong }]} />
+      {/* A one-section menu named Drinks already says it. */}
+      {compact || sections.some((sec) => /^drinks$/i.test(sec.name.trim())) ? null : (
+        <Caption tone="muted" style={styles.eyebrow}>
+          DRINKS
+        </Caption>
+      )}
       <View style={styles.sections}>
         <MenuSections sections={sections} variant="card" pictures={pictures} compact={compact} />
       </View>
+      {venue && !compact ? (
+        <View style={styles.foot}>
+          <VenueMark venue={venue} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -91,8 +105,10 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
   const gutter = useGutter();
   const { data: menu, isLoading } = useMenu(menuId);
   const web = Platform.OS === 'web';
-  // ponytail: the picture choice lasts while the card is open. Saving it per menu needs a column on menus.
-  const [pictures, setPictures] = useState<CardPictures>('above');
+  // The picture choice is the share review's "On the card" row; it arrives in the link.
+  // ponytail: not saved per menu (that needs a column on menus); the share review passes it.
+  const asked = useLocalSearchParams<{ pictures?: string }>().pictures;
+  const pictures: CardPictures = PICTURES.find((p) => p === asked) ?? 'above';
 
   const share = () => {
     if (!menu) return;
@@ -107,21 +123,13 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
       {web ? <style>{'@media print { #menu-card-controls { display: none !important; } }'}</style> : null}
       <View nativeID="menu-card-controls" style={[styles.controls, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back to the menu" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/menus/${menuId}`))} />
-        <View style={styles.controlsEnd}>
-          <View role="radiogroup" accessibilityLabel="Pictures" style={styles.pictures}>
-            <Caption tone="muted">Pictures</Caption>
-            {PICTURES.map((p) => (
-              <Chip key={p.value} label={p.label} accessibilityLabel={`Pictures ${p.label.toLowerCase()}`} quiet selected={pictures === p.value} onPress={() => setPictures(p.value)} />
-            ))}
-          </View>
-          <Button label={web ? 'Print or save as PDF' : 'Share'} icon={web ? undefined : 'square.and.arrow.up'} onPress={share} disabled={!menu} />
-        </View>
+        <Button label={web ? 'Print or save as PDF' : 'Share'} icon={web ? 'printer' : 'square.and.arrow.up'} variant="secondary" onPress={share} disabled={!menu} />
       </View>
       <ScrollView contentContainerStyle={[styles.page, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl }]}>
         {!menu ? (
           <Body tone="muted">{isLoading ? 'Setting the menu…' : 'This menu isn’t there any more.'}</Body>
         ) : (
-          <GuestCardContent name={menu.name} startsAt={menu.startsAt} venue={venue} sections={menu.sections} pictures={pictures} />
+          <GuestCardContent name={menu.name} when={cardWhen(menu)} venue={venue} sections={menu.sections} pictures={pictures} />
         )}
       </ScrollView>
     </View>
@@ -131,11 +139,12 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   controls: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.md },
-  controlsEnd: { flexShrink: 1, flexDirection: 'row', flexWrap: 'wrap-reverse', justifyContent: 'flex-end', alignItems: 'center', gap: space.md },
-  pictures: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   page: { alignItems: 'center', paddingTop: space.xl },
   card: { width: '100%', maxWidth: 640, alignItems: 'center', gap: space.sm },
   mark: { width: 48, height: 48, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.5, textAlign: 'center' },
+  at: { marginTop: -space.xs },
+  foot: { paddingTop: space.xl, alignItems: 'center' },
   rule: { width: 48, height: 1, marginVertical: space.lg },
   ruleCompact: { marginVertical: space.sm },
   sections: { width: '100%' },

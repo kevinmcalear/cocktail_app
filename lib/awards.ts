@@ -6,6 +6,16 @@ export interface Award {
   position: number | null;
   title: string | null;
   source_url: string | null;
+  /** 'pending' while a moderator checks one a person sent ("Not confirmed yet"); others only ever read confirmed ones. */
+  status?: 'confirmed' | 'pending' | 'declined';
+  /** "Finalist" rather than a win. */
+  is_finalist?: boolean;
+  /** The person's show/hide pick, or null to follow their awards mode. */
+  on_profile?: boolean | null;
+  /** Who sent it; null for one we researched. */
+  added_by?: string | null;
+  /** The bar they were at: "at Little Rye". */
+  bar?: { id: string; handle: string; display_name: string } | null;
 }
 
 /**
@@ -82,4 +92,19 @@ export function groupAwards(awards: Award[]): AwardGroup[] {
   }
   const size = (g: AwardGroup) => g.places.length + g.titles.length;
   return [...groups.values()].sort((a, b) => prestige(a.award) - prestige(b.award) || size(b) - size(a) || a.award.localeCompare(b.award));
+}
+
+/**
+ * What's wrong with an award someone is adding (AddAwardSheet), or null.
+ * Matches profile_awards: a name and title up to 80 characters, a year from
+ * 1990, and an https link to where it was published.
+ */
+export function awardDraftProblem(d: { award: string; title: string; year: string; source: string }, thisYear = new Date().getFullYear()): string | null {
+  if (!d.award.trim()) return 'Say who gave it.';
+  if (!d.title.trim()) return 'Add the title, as the award writes it.';
+  const year = Number(d.year);
+  if (!Number.isInteger(year) || year < 1990 || year > thisYear + 1) return `Use a year from 1990 to ${thisYear + 1}.`;
+  const source = d.source.trim();
+  if (!/^https:\/\/[^\s/]+\.[^\s]+$/.test(source)) return 'Add the link to where it was announced, starting https://';
+  return null;
 }

@@ -2,24 +2,48 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, Chip, Field, PressableScale, Spec, Surface, Tag, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, radius, space, type } from '@/constants/tokens';
 import { clampServes, freezingPointC } from '@/lib/batch';
 import type { SpecLine } from '@/lib/spec';
 
-/** One line of the batch: the ingredient (and why it's left out) with the amount on the right. */
-export function BatchRow({ ingredient, amount, sub, tag }: { ingredient: string; amount: string; sub?: string | null; tag?: string | null }) {
+/**
+ * One line of the batch: the ingredient (and why it's left out) with the
+ * amount on the right. With `onToggle` it's a checklist row, for making it
+ * and ticking each line off as it goes in.
+ */
+export function BatchRow({ ingredient, amount, sub, tag, checked, onToggle }: { ingredient: string; amount: string; sub?: string | null; tag?: string | null; checked?: boolean; onToggle?: () => void }) {
   const ds = useDs();
   const spoken = [amount, ingredient, sub, tag && `${tag}, not in the bottle`].filter(Boolean).join(', ');
-  return (
-    <View accessible accessibilityLabel={spoken} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+  const content = (
+    <>
+      {onToggle ? (
+        <View style={[styles.tick, { borderColor: checked ? ds.accentFill.fill : ds.c.lineStrong, backgroundColor: checked ? ds.accentFill.fill : 'transparent' }]} aria-hidden>
+          {checked ? <IconSymbol name="checkmark" size={14} color={ds.accentFill.text} /> : null}
+        </View>
+      ) : null}
       <View style={styles.name}>
-        <Body tone={tag ? 'muted' : 'ink'}>{ingredient}</Body>
+        <Body tone={tag || checked ? 'muted' : 'ink'} style={checked ? styles.done : undefined}>
+          {ingredient}
+        </Body>
         {sub ? <Caption tone="muted">{sub}</Caption> : null}
         {tag ? <Tag label={tag} tone="accent" /> : null}
       </View>
-      <Spec tone={tag ? 'muted' : 'ink'} align="right">
+      <Spec tone={tag || checked ? 'muted' : 'ink'} align="right">
         {amount}
       </Spec>
+    </>
+  );
+  if (onToggle) {
+    return (
+      <PressableScale role="checkbox" aria-checked={!!checked} accessibilityLabel={spoken} onPress={onToggle} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+        {content}
+      </PressableScale>
+    );
+  }
+  return (
+    <View accessible accessibilityLabel={spoken} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+      {content}
     </View>
   );
 }
@@ -133,6 +157,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   name: { flex: 1, gap: space.xs },
+  tick: { width: 22, height: 22, borderRadius: radius.mark, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  done: { textDecorationLine: 'line-through' },
   choice: { flexDirection: 'row', alignSelf: 'flex-start', borderWidth: 1, borderRadius: radius.pill, padding: 2 },
   option: { minHeight: layout.minTapTarget, minWidth: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   // flex-end, not baseline: iOS doesn't baseline-align a TextInput.

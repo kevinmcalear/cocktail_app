@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { changedProfiles, type ProfileClaim } from '@/hooks/useProfiles';
+import { changedProfiles, type ClaimSetup, type ProfileClaim } from '@/hooks/useProfiles';
 import { track } from '@/lib/analytics';
 import type { BarClaimMethod } from '@/lib/claimVerification';
 import { supabase } from '@/lib/supabase';
@@ -12,6 +12,8 @@ export interface NewBarClaim {
   barId: string | null;
   /** Their name and role, or when to call. */
   note: string;
+  /** The six digits the app showed before sending (lib/claimVerification newClaimCode). */
+  code?: string | null;
 }
 
 /**
@@ -22,12 +24,13 @@ export interface NewBarClaim {
 export function useStartBarClaim() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ profileId, method, barId, note }: NewBarClaim): Promise<ProfileClaim> => {
+    mutationFn: async ({ profileId, method, barId, note, code }: NewBarClaim): Promise<ProfileClaim> => {
       const { data, error } = await supabase.rpc('start_bar_claim', {
         p_profile_id: profileId,
         p_method: method,
         p_bar_id: barId,
         p_note: note.trim().slice(0, 1000) || null,
+        p_code: method === 'email' ? null : (code ?? null),
       });
       if (error) throw error;
       return data as ProfileClaim;
@@ -54,6 +57,24 @@ export function useWithdrawClaim() {
       const { data, error } = await supabase.from('profile_claims').delete().eq('id', claimId).eq('status', 'pending').select('id');
       if (error) throw error;
       if (!data?.length) throw new Error('That claim has already been checked, so it can’t be withdrawn.');
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-claims'] }),
+    onError: () => {},
+  });
+}
+
+/**
+ * Keeps page settings (who sees it, hours, phone, website) on the person's own
+ * waiting claim. They go onto the page when a moderator approves it; the
+ * public page doesn't change before that.
+ */
+export function useSaveClaimSetup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ claimId, setup }: { claimId: string; setup: ClaimSetup }): Promise<ProfileClaim> => {
+      const { data, error } = await supabase.rpc('save_claim_setup', { p_claim_id: claimId, p_setup: setup });
+      if (error) throw error;
+      return data as ProfileClaim;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-claims'] }),
     onError: () => {},

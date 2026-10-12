@@ -23,6 +23,12 @@ export interface MyProfile {
   tagline: string | null;
   headlinePositionId: string | null;
   showsPhoto: boolean;
+  /** How many of your awards show: all, the ones you pick, or none. */
+  awardsMode: ShareMode;
+  /** Show my city. Off: the city is off your public row (my_hidden_city() says which). */
+  showsCity: boolean;
+  /** The city people see, while it shows. */
+  city: string | null;
 }
 
 const myProfileKey = (userId: string | null) => ['profile', 'mine', userId] as const;
@@ -36,7 +42,7 @@ export function useMyProfile() {
     queryFn: async (): Promise<MyProfile | null> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, handle, display_name, bio, instagram, is_public, had_mode, bars_mode, made_mode, shows_dates, moderated_at, tagline, headline_position_id, shows_photo')
+        .select('id, handle, display_name, bio, instagram, is_public, had_mode, bars_mode, made_mode, shows_dates, moderated_at, tagline, headline_position_id, shows_photo, awards_mode, shows_city, city, locality')
         .eq('user_id', userId!)
         .maybeSingle();
       if (error) throw error;
@@ -54,6 +60,9 @@ export function useMyProfile() {
         tagline: data.tagline,
         headlinePositionId: data.headline_position_id,
         showsPhoto: data.shows_photo,
+        awardsMode: data.awards_mode as ShareMode,
+        showsCity: data.shows_city,
+        city: data.city ?? data.locality,
       };
     },
   });
@@ -127,23 +136,65 @@ export function useSaveProfileInstagram() {
 
 const MODE_COLUMN: Record<ShareSection, 'had_mode' | 'bars_mode' | 'made_mode'> = { had: 'had_mode', bars: 'bars_mode', originals: 'made_mode' };
 
+/** One choice on your own profile, saved as you make it. */
+export interface SharingChange {
+  id: string;
+  section?: ShareSection;
+  mode?: ShareMode;
+  showsDates?: boolean;
+  awardsMode?: ShareMode;
+  showsCity?: boolean;
+  showsPhoto?: boolean;
+  isPublic?: boolean;
+  /** One of your confirmed jobs under your name ("Bartender at Little Rye"), or null for your own line. */
+  headlinePositionId?: string | null;
+}
+
+/** The profiles columns a SharingChange writes. */
+export function sharingRow(change: Omit<SharingChange, 'id'>): Record<string, string | boolean | null> {
+  const row: Record<string, string | boolean | null> = {};
+  if (change.section && change.mode) row[MODE_COLUMN[change.section]] = change.mode;
+  if (change.showsDates !== undefined) row.shows_dates = change.showsDates;
+  if (change.awardsMode) row.awards_mode = change.awardsMode;
+  if (change.showsCity !== undefined) row.shows_city = change.showsCity;
+  if (change.showsPhoto !== undefined) row.shows_photo = change.showsPhoto;
+  if (change.isPublic !== undefined) row.is_public = change.isPublic;
+  if (change.headlinePositionId !== undefined) row.headline_position_id = change.headlinePositionId;
+  return row;
+}
+
 /**
- * One sharing choice on your own profile, saved straight away (like the job
- * switches): a section's mode, or whether your drinks say when you had them.
+ * One choice on your own profile, saved straight away (like the job
+ * switches): a section's mode, whether your drinks say when you had them,
+ * your awards' mode, your city, your photo, who sees it, or your job line.
  */
 export function useSaveSharing() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...change }: { id: string; section?: ShareSection; mode?: ShareMode; showsDates?: boolean }) => {
-      const row = change.section && change.mode ? { [MODE_COLUMN[change.section]]: change.mode } : { shows_dates: !!change.showsDates };
-      const { error } = await supabase.from('profiles').update(row).eq('id', id);
+    mutationFn: async ({ id, ...change }: SharingChange) => {
+      const { error } = await supabase.from('profiles').update(sharingRow(change)).eq('id', id);
       if (error) throw readable(error);
     },
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries(changedProfiles({ id, mine: true }));
       qc.invalidateQueries({ queryKey: ['profile-drinks'] });
       qc.invalidateQueries({ queryKey: ['profile-bars'] });
+      qc.invalidateQueries({ queryKey: ['my-hidden-city'] });
     },
     onError: () => {},
+  });
+}
+
+/** The city waiting on your profile while Show my city is off. */
+export function useMyHiddenCity(enabled: boolean) {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['my-hidden-city', userId],
+    enabled: enabled && !!userId,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.rpc('my_hidden_city');
+      if (error) throw error;
+      return (data as string | null) ?? null;
+    },
   });
 }

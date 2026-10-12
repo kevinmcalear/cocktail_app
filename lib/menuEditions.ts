@@ -68,7 +68,7 @@ export function menuState(d: MenuDates): MenuState {
 }
 
 /** "Mar 2024", or "2024" when the month isn't known. */
-function shortDate(year: number, month: number | null): string {
+export function shortDate(year: number, month: number | null): string {
   return month ? `${MONTHS[month - 1]} ${year}` : String(year);
 }
 
@@ -153,4 +153,22 @@ export function editionMenuDrinks(drinks: MenuEditionDrink[], loaded: MenuDrink[
   return drinks.map(
     (d) => byId.get(d.id) ?? { id: d.id, name: d.name, kind: 'cocktail', line: '', price: null, imageUrl: null, isSketch: false, glass: null }
   );
+}
+
+/**
+ * For each drink on a bar's menus, "on now" or "Past · Mar 2024 to Jan 2025"
+ * from the menu it was last on (ppl-bar-originals, ppl-bar-unclaimed): the
+ * one on now wins, else the latest. A drink on no menu, or one whose end
+ * nobody knows, isn't in the result.
+ */
+export function drinkRunTags(editions: readonly MenuEdition[]): Record<string, string> {
+  const tags: Record<string, string> = {};
+  for (const e of sortEditions([...editions])) {
+    const tag = searchMenuTag(editionDates(e));
+    const words = tag?.onNow ? 'on now' : tag?.past;
+    if (!words) continue;
+    // Newest first, so the first menu a drink meets is its latest; on now beats any past one.
+    for (const d of e.drinks) if (!(d.id in tags) || words === 'on now') tags[d.id] = words;
+  }
+  return tags;
 }
