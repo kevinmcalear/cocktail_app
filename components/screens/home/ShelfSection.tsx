@@ -106,7 +106,7 @@ export const BottleTiles = memo(function BottleTiles({ bottles, heading, add, co
     <View style={styles.row}>
       {heading ? <Caption tone="muted">{heading}</Caption> : null}
       <TileGrid cols={cols}>
-        {add ? <AddTile label={SECTIONS.bottles.add} onPress={onAdd} /> : null}
+        {add ? <AddTile label={SECTIONS.bottles.add} sub={SECTIONS.bottles.addSub} onPress={onAdd} /> : null}
         {bottles.map((b) => (
           <ShelfTile key={b.id} item={b} editing={editing} onRemove={onRemove} onHold={() => onHold('bottles')} />
         ))}

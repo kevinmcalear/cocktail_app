@@ -1,21 +1,21 @@
 import { useRouter } from 'expo-router';
-import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, EquipmentDrawing, Field, Headline, IngredientDrawing, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, Field, FieldButton, IngredientThumb } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useBarIdeas, useBarSearch, type FoundItem } from '@/hooks/useHomeBar';
-import { useKit } from '@/hooks/useKit';
 import { SECTIONS, type BarSection } from '@/lib/barSections';
 import { itemHref } from '@/lib/itemRoutes';
 import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
 import { SHELF_SECTIONS } from '@/lib/myBarRows';
-import { EQUIPMENT, EQUIPMENT_KINDS, TECHNICAL_INGREDIENTS } from '@/lib/techniques';
+import { foundLine } from '@/lib/myBarText';
+import { TECHNICAL_INGREDIENTS } from '@/lib/techniques';
 
+import { IdeaTile, KitResults, RecipeLink, Result, SnapRow } from './AddToBarParts';
 import { SectionChips } from './BarSections';
-import { BarTile, TileGrid, useTileCols } from './BarTile';
+import { TileGrid, useTileCols } from './BarTile';
 
 export type AddFilter = 'all' | BarSection | 'kit';
 
@@ -31,7 +31,7 @@ const BLURBS: Record<AddFilter, string> = {
 const ORDER: BarSection[] = ['bottles', 'fridge', 'lab', 'preps'];
 
 /** What each tab offers before anything is typed, by catalog name. */
-const IDEAS: Record<Exclude<AddFilter, 'kit'>, readonly string[]> = {
+export const IDEAS: Record<Exclude<AddFilter, 'kit'>, readonly string[]> = {
   all: ['Gin', 'Lemon', 'Simple Syrup', 'Campari', 'Lime', 'Sweet Vermouth', 'Angostura Bitters', 'Sugar', 'Rye Whiskey', 'Egg', 'Soda Water', 'Mezcal'],
   bottles: ['Gin', 'Campari', 'Sweet Vermouth', 'Angostura Bitters', 'Rye Whiskey', 'Bourbon', 'White Rum', 'Tequila', 'Mezcal', 'Vodka', 'Dry Vermouth', 'Aperol'],
   fridge: ['Lemon', 'Lime', 'Orange', 'Grapefruit', 'Sugar', 'Honey', 'Egg', 'Soda Water', 'Mint', 'Tonic Water', 'Heavy Cream', 'Pineapple'],
@@ -49,6 +49,8 @@ interface AddToBarSheetProps {
   counts: Partial<Record<AddFilter, number>>;
   onToggle: (item: FoundItem, add: boolean) => void;
   onClose: () => void;
+  /** Snap a bottle instead: the camera in the search field and under the results. */
+  onSnap: () => void;
 }
 
 /**
@@ -57,7 +59,7 @@ interface AddToBarSheetProps {
  * a time here; what's in them is picture tiles you tick, the same tiles as
  * My Bar. Typed results are listed under the section each goes in.
  */
-export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onToggle, onClose }: AddToBarSheetProps) {
+export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onToggle, onClose, onSnap }: AddToBarSheetProps) {
   const router = useRouter();
   const cols = useTileCols();
   const [query, setQuery] = useState('');
@@ -71,6 +73,14 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
     const items = rows.filter((r) => r.section === section);
     return items.length ? [{ section, items }] : [];
   });
+  // While typing, each chip counts its matches; otherwise what's on the bar.
+  const all = typed && filter !== 'kit' ? (found.data ?? []) : null;
+  const chipCounts = all ? Object.fromEntries(ORDER.map((sec) => [sec, all.filter((r) => r.section === sec).length])) : counts;
+  const total = all ? all.length : SHELF_SECTIONS.reduce((n, sec) => n + (counts[sec] ?? 0), 0);
+  const snap = () => {
+    onClose();
+    onSnap();
+  };
   const openRecipe = (id: string) => {
     onClose();
     router.push(itemHref('Ingredient', id) as never);
@@ -81,7 +91,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
       visible={visible}
       onClose={onClose}
       title="Add to your bar"
-      subtitle={onShelf.size ? `${onShelf.size} on your bar` : undefined}
+      subtitle={total && !all ? `${total} on your bar` : undefined}
       onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(searchRef)}
     >
       <Field
@@ -94,8 +104,14 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
         autoCapitalize="none"
         autoFocus={MODAL_AUTOFOCUS}
         returnKeyType="search"
+        trailing={
+          <>
+            {query ? <FieldButton icon="xmark.circle.fill" label="Clear search" onPress={() => setQuery('')} /> : null}
+            <FieldButton icon="camera.fill" label="Snap a bottle" onPress={snap} />
+          </>
+        }
       />
-      <SectionChips sections={SHELF_SECTIONS} counts={counts} picked={filter === 'all' ? [] : [filter]} onPick={onFilter} bleed={space.xl} />
+      <SectionChips sections={SHELF_SECTIONS} counts={chipCounts} total={total || undefined} picked={filter === 'all' ? [] : [filter]} onPick={onFilter} bleed={space.xl} />
       <View style={styles.results}>
         <Caption tone="muted">{BLURBS[filter]}</Caption>
         {filter === 'kit' ? (
@@ -123,9 +139,16 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
         ) : found.error && !rows.length ? (
           <Body tone="muted">Couldn’t search right now. Check your connection and try again.</Body>
         ) : !rows.length ? (
-          <Body tone="muted">{found.isFetching || found.isPending ? 'Looking…' : `Nothing called “${typed}” yet. Try All, or snap the bottle.`}</Body>
+          found.isFetching || found.isPending ? (
+            <Body tone="muted">Looking…</Body>
+          ) : (
+            <>
+              <Body tone="muted">{`Nothing called “${typed}” yet.${filter === 'all' ? '' : ' Try All.'}`}</Body>
+              <SnapRow onSnap={snap} />
+            </>
+          )
         ) : (
-          groups.map((g) => (
+          [...groups.map((g) => (
             <View key={g.section}>
               {filter === 'all' ? (
                 <Caption tone="muted" style={styles.heading}>
@@ -136,7 +159,8 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
                 <Result
                   key={item.id}
                   name={item.name}
-                  sub={item.section === 'preps' ? (onShelf.has(item.id) ? 'In your fridge' : 'House-made') : undefined}
+                  sub={item.section === 'preps' && onShelf.has(item.id) ? 'In your fridge' : foundLine(item)}
+                  query={typed}
                   thumb={<IngredientThumb id={item.id} name={item.name} size={48} />}
                   has={onShelf.has(item.id)}
                   onToggle={(on) => onToggle(item, on)}
@@ -144,96 +168,11 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
                 />
               ))}
             </View>
-          ))
+          )), <SnapRow key="snap" onSnap={snap} />]
         )}
       </View>
     </MenuSheet>
   );
-}
-
-/** A house prep's recipe, to make it. */
-function RecipeLink({ name, onPress }: { name: string; onPress: () => void }) {
-  return (
-    <PressableScale role="link" accessibilityLabel={`${name} recipe`} onPress={onPress} style={styles.recipe}>
-      <Caption tone="accent">Recipe</Caption>
-    </PressableScale>
-  );
-}
-
-/** An idea to tick: on your bar shows a ring and a check. */
-function IdeaTile({ item, has, onToggle }: { item: FoundItem; has: boolean; onToggle: AddToBarSheetProps['onToggle'] }) {
-  const onLine = item.section === 'preps' ? 'In your fridge' : 'On your bar';
-  return (
-    <BarTile
-      name={item.name}
-      meta={has ? onLine : item.section === 'preps' ? 'House-made' : null}
-      metaTone={has ? 'accent' : 'muted'}
-      picture={<IngredientDrawing id={item.id} name={item.name} />}
-      role="checkbox"
-      checked={has}
-      accessibilityLabel={item.name}
-      accessibilityHint={has ? 'Takes it off your bar' : 'Puts it on your bar'}
-      badge={has ? 'check' : 'plus'}
-      onPress={() => onToggle(item, !has)}
-    />
-  );
-}
-
-/** A typed result you tick to have: the drawing, the name, and a check or a plus. */
-function Result({ name, sub, thumb, has, onToggle, extra }: { name: string; sub?: string; thumb?: ReactNode; has: boolean; onToggle: (on: boolean) => void; extra?: ReactNode }) {
-  const ds = useDs();
-  return (
-    <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <PressableScale role="checkbox" aria-checked={has} accessibilityLabel={name} accessibilityHint={has ? 'Takes it off your bar' : 'Puts it on your bar'} onPress={() => onToggle(!has)} style={styles.rowMain}>
-        {thumb}
-        <View style={styles.name}>
-          <Headline numberOfLines={1}>{name}</Headline>
-          {sub ? <Caption tone={has ? 'accent' : 'muted'}>{sub}</Caption> : null}
-        </View>
-        <IconSymbol name={has ? 'checkmark.circle.fill' : 'plus.circle'} size={26} color={has ? ds.accentText : ds.c.muted} />
-      </PressableScale>
-      {extra}
-    </View>
-  );
-}
-
-/** The equipment list as tiles by kind, searched by name: what you tick here is your kit. */
-function KitResults({ query, cols }: { query: string; cols: number }) {
-  const { owned, toggle } = useKit();
-  const q = query.toLowerCase();
-  const list = q ? EQUIPMENT.filter((e) => `${e.name} ${e.what}`.toLowerCase().includes(q)) : EQUIPMENT;
-  if (!list.length) return <Body tone="muted">{`No kit called “${query}”.`}</Body>;
-  return EQUIPMENT_KINDS.flatMap((kind) => {
-    const pieces = list.filter((e) => e.kind === kind.id);
-    if (!pieces.length) return [];
-    return [
-      <View key={kind.id} style={styles.group}>
-        <Caption tone="muted" style={styles.heading}>
-          {kind.name}
-        </Caption>
-        <TileGrid cols={cols}>
-          {pieces.map((e) => {
-            const has = owned.includes(e.id);
-            return (
-              <BarTile
-                key={e.id}
-                name={e.name}
-                meta={has ? 'You have it' : null}
-                metaTone="accent"
-                picture={<EquipmentDrawing id={e.id} />}
-                role="checkbox"
-                checked={has}
-                accessibilityLabel={e.name}
-                accessibilityHint={e.what}
-                badge={has ? 'check' : 'plus'}
-                onPress={() => toggle(e.id)}
-              />
-            );
-          })}
-        </TileGrid>
-      </View>,
-    ];
-  });
 }
 
 const styles = StyleSheet.create({
@@ -242,8 +181,4 @@ const styles = StyleSheet.create({
   group: { gap: space.sm },
   heading: { paddingTop: space.md },
   withLink: { gap: 0 },
-  recipe: { alignSelf: 'flex-start', minHeight: layout.minTapTarget, justifyContent: 'center' },
-  row: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.xs },
-  rowMain: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.sm },
-  name: { flex: 1, gap: 2 },
 });
