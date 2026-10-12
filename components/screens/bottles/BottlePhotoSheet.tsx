@@ -1,113 +1,66 @@
 import * as Device from 'expo-device';
-import { Image } from 'expo-image';
-import { useEffect, useRef } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, sheetFrame, sheetIsDialog, Title, useDs, useGutter } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
-import { pickBottlePhoto, takeBottlePhoto, type BottlePhoto, type BottleReading } from '@/lib/readBottle';
+import { Body, Button, Caption, Sheet, Title } from '@/components/ds';
+import { space } from '@/constants/tokens';
+import { pickBottlePhoto, takeBottlePhoto, type BottlePhoto } from '@/lib/readBottle';
 
-import { BottleResultRow } from './BottleResultRow';
-import { useBottlePhoto, type BottleTarget } from './useBottlePhoto';
+import { useStartBringIn } from '../bringin/useStartBringIn';
+
+/** Where the bottles go: your own shelf, or a venue's ingredients. */
+export type BottleTarget = { kind: 'home' } | { kind: 'venue'; barId: string; name: string; canEdit: boolean };
 
 interface BottlePhotoSheetProps {
   visible: boolean;
   target: BottleTarget;
   onClose: () => void;
-  /** Labels Bring in already read: shown straight away, no photo needed. */
-  readings?: BottleReading[] | null;
 }
 
 /**
- * Photograph a bottle (or a few) and the labels are read and found in the
- * catalog. Sure matches come ticked, anything less sure waits for a pick, and
- * nothing goes onto your shelf (or into the venue's ingredients) until Add.
+ * Snap a bottle (or a shelf of them): the photo goes to Bring in, read as
+ * bottles, and checked there (canvas make-bringin-bottles) before anything
+ * goes onto your shelf or into the venue's ingredients.
  */
-export function BottlePhotoSheet({ visible, target, onClose, readings }: BottlePhotoSheetProps) {
-  const ds = useDs();
-  const gutter = useGutter();
+export function BottlePhotoSheet({ visible, target, onClose }: BottlePhotoSheetProps) {
   const insets = useSafeAreaInsets();
-  const flow = useBottlePhoto(target);
+  const start = useStartBringIn();
+  const [error, setError] = useState<string | null>(null);
   // The simulator has no camera, and launching it there crashes the app.
   const camera = Platform.OS !== 'web' && Device.isDevice;
   const where = target.kind === 'home' ? 'your shelf' : `${target.name}’s ingredients`;
-  const busy = flow.reading || flow.catalogLoading || flow.adding;
-
-  // Readings handed over by Bring in, placed once the catalog is there to match them.
-  const placed = useRef<BottleReading[] | null>(null);
-  useEffect(() => {
-    if (!visible || !readings?.length || flow.catalogLoading || placed.current === readings) return;
-    placed.current = readings;
-    flow.place(readings);
-  }, [visible, readings, flow]);
+  const barId = target.kind === 'venue' && target.canEdit ? target.barId : null;
 
   const get = async (from: () => Promise<BottlePhoto | null>) => {
+    setError(null);
     try {
       const photo = await from();
-      if (photo) await flow.readPhoto(photo);
+      if (!photo) return;
+      onClose();
+      start([{ files: [photo], text: null, url: null }], { as: 'bottles', barId });
     } catch (e) {
-      flow.fail(e instanceof Error ? e.message : 'Couldn’t open your photos.');
+      setError(e instanceof Error ? e.message : 'Couldn’t open your photos.');
     }
   };
-  const close = () => {
-    flow.reset();
-    onClose();
-  };
 
-  // A page sheet on phones; on the web a dialog over a scrim (components/ds/sheetFrame).
   return (
-    <Modal visible={visible} transparent={sheetIsDialog} animationType={sheetIsDialog ? 'fade' : 'slide'} presentationStyle={sheetIsDialog ? undefined : 'pageSheet'} onRequestClose={close}>
-      <View style={[styles.screen, sheetFrame.scrim, sheetIsDialog && { backgroundColor: ds.c.scrim }]}>
-        {sheetIsDialog ? <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} /> : null}
-        <View role="dialog" aria-modal aria-label="Snap a bottle" style={[styles.sheet, sheetFrame.panel, sheetIsDialog && styles.dialog, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.ground, paddingTop: Platform.OS === 'ios' ? space.lg : insets.top + space.lg }]}>
-          <View style={[styles.head, { paddingHorizontal: gutter }]}>
-            <Title>{readings?.length ? 'Check the bottles' : 'Snap a bottle'}</Title>
-            <Button label="Done" variant="secondary" onPress={close} />
-          </View>
-          <ScrollView contentContainerStyle={[styles.body, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
-            {flow.photo ? (
-              <View style={styles.top}>
-                <View style={[styles.thumb, { backgroundColor: ds.c.raised }]}>
-                  <Image source={{ uri: flow.photo.uri }} contentFit="cover" style={styles.fill} accessible accessibilityLabel="Your bottle photo" />
-                </View>
-                <Body tone="muted" style={styles.flex}>
-                  {flow.reading ? 'Reading the label…' : flow.rows.length ? `Found ${flow.rows.length === 1 ? 'a bottle' : `${flow.rows.length} bottles`}.` : ''}
-                </Body>
-              </View>
-            ) : (
-              !flow.rows.length ? <Caption tone="muted">{`Take a photo of the front labels, a few bottles side by side is fine. You check what we found before anything goes into ${where}.`}</Caption> : null
-            )}
-            {flow.error ? <Body tone="accent">{flow.error}</Body> : null}
-            {flow.error && flow.photo && !flow.reading ? <Button label="Try again" variant="secondary" onPress={flow.retry} style={styles.start} /> : null}
-            <View>
-              {flow.rows.map((row, i) => (
-                <BottleResultRow key={`${row.reading.name}-${i}`} row={row} target={target} onChoose={(chosen) => flow.choose(i, chosen)} onUndo={() => flow.undo(i)} />
-              ))}
-            </View>
-            {flow.ready ? <Button label={flow.adding ? 'Adding…' : `Add ${flow.ready} to ${where}`} size="lg" disabled={flow.adding} onPress={flow.addAll} /> : null}
-            <View style={styles.buttons}>
-              {camera ? <Button label={flow.photo ? 'Take another' : 'Take a photo'} icon="camera.fill" variant={flow.photo ? 'secondary' : 'primary'} disabled={busy} onPress={() => get(takeBottlePhoto)} /> : null}
-              <Button label={flow.photo || flow.rows.length ? 'Choose another' : 'Choose a photo'} icon="photo" variant={camera || flow.photo || flow.rows.length ? 'secondary' : 'primary'} disabled={busy} onPress={() => get(pickBottlePhoto)} />
-            </View>
-          </ScrollView>
+    <Sheet visible={visible} onClose={onClose} accessibilityLabel="Snap a bottle">
+      <View style={[styles.body, { paddingBottom: insets.bottom + space.xl }]}>
+        <Title>Snap a bottle</Title>
+        <Body tone="muted">{`The front labels, a few bottles side by side is fine. You check what we found before anything goes into ${where}.`}</Body>
+        {target.kind === 'venue' && !target.canEdit ? <Caption tone="muted">Adding to the venue opens at Drink Creator, so these come into your own shelf.</Caption> : null}
+        {error ? <Caption tone="accent">{error}</Caption> : null}
+        <View style={styles.buttons}>
+          {camera ? <Button label="Take a photo" icon="camera.fill" size="lg" onPress={() => void get(takeBottlePhoto)} /> : null}
+          <Button label="Choose a photo" icon="photo" size="lg" variant={camera ? 'secondary' : 'primary'} onPress={() => void get(pickBottlePhoto)} />
         </View>
       </View>
-    </Modal>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  sheet: { flex: 1, gap: space.md },
-  dialog: { flex: 0, flexShrink: 1, maxWidth: 560, maxHeight: '86%' },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  body: { gap: space.md, width: '100%', maxWidth: 640, alignSelf: 'center' },
-  top: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  // A fixed size, not aspectRatio: Android lays aspectRatio tiles out at zero in a row.
-  thumb: { width: 72, height: 96, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
-  fill: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
-  flex: { flex: 1 },
-  start: { alignSelf: 'flex-start' },
-  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  body: { paddingHorizontal: space.xl - 4, paddingTop: space.md, gap: space.lg },
+  buttons: { gap: space.sm },
 });

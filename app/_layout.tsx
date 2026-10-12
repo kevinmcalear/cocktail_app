@@ -9,7 +9,7 @@ import { Toaster } from 'burnt/web';
 import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { loadAsync, useFonts } from 'expo-font';
 import { WebHead } from '@/components/WebHead';
-import { BringInAnywhere } from '@/components/nav/BringInAnywhere';
+import { BringInHost } from '@/components/screens/bringin/BringInHost';
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from "react";
@@ -198,7 +198,8 @@ function RootLayoutNav() {
                 (the drink or ingredient page) ignores headerShown set from inside it. */}
             <Stack.Screen name="back-bar" options={{ headerShown: false }} />
             <Stack.Screen name="team" options={{ headerShown: false }} />
-            <Stack.Screen name="bring-in" options={{ headerShown: false }} />
+            <Stack.Screen name="bring-in/index" options={{ headerShown: false }} />
+            <Stack.Screen name="bring-in/done" options={{ headerShown: false }} />
             <Stack.Screen name="drafts" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="p/[id]/menus/[edition]" options={{ headerShown: false }} />
@@ -216,17 +217,17 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/bar/[id]/calendars" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/all" options={{ headerShown: false }} />
-            <Stack.Screen name="menus/from-photo" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/card" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/costing" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/releases/[releaseId]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
+          {/* Over the page, beside the sidebar: Bring in's sheet, drop dialog and reading tray. */}
+          {session ? <BringInHost /> : null}
         </View>
         {showWebSidebar ? <SearchPalette /> : null}
         {session ? <EightBallHost /> : null}
-        {Platform.OS === 'web' && session ? <BringInAnywhere /> : null}
       </View>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>

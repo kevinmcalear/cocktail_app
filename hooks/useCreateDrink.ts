@@ -36,6 +36,8 @@ export interface CreateDrinkResult {
   id: string;
   /** Saved, but these parts didn't stick (said the way a person would want to hear it). */
   warnings: string[];
+  /** Ingredients and preps this save made (Bring in records them so Undo all can take them back). */
+  created: { id: string; name: string }[];
   /** House preps added by name only ("Just add the name", Later): their recipes are still to write. */
   later: string[];
 }
@@ -60,6 +62,7 @@ export function useCreateDrink() {
       const warnings: string[] = [];
       // New rows the pickers' lists don't have yet: ingredients by id, spec items (glass, method, ice) at all.
       const newIngredients: string[] = [];
+      const created: { id: string; name: string }[] = [];
       let newSpecs = false;
 
       // A picked row can be gone by now (merged into another ingredient since
@@ -116,7 +119,10 @@ export function useCreateDrink() {
         }
         if (error || !data) throw error ?? new Error(`Couldn’t add ${pick.name}.`);
         made.set(key, data.id);
-        if (type === 'ingredient') newIngredients.push(data.id);
+        if (type === 'ingredient') {
+          newIngredients.push(data.id);
+          created.push({ id: data.id, name: capitalize(pick.name) });
+        }
         else newSpecs = true;
         return data.id;
       };
@@ -145,6 +151,7 @@ export function useCreateDrink() {
         if (error || !data) throw error ?? new Error(`Couldn’t add ${line.name}.`);
         made.set(key, data.id);
         newIngredients.push(data.id);
+        created.push({ id: data.id, name });
         return data.id;
       };
 
@@ -288,7 +295,7 @@ export function useCreateDrink() {
       if (newSpecs) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
-      return { id, warnings, later };
+      return { id, warnings, created, later };
     },
     onSuccess: (_, { barId, menuSectionId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuSectionId }),
     // The wizard says what went wrong itself, and keeps the draft.

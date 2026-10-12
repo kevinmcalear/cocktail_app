@@ -1,8 +1,6 @@
-import type { IngredientAlias } from '@/lib/ingredientNames';
-import { matchIngredient, matchKey, matchName, type CatalogItem } from '@/lib/match';
+import { matchName } from '@/lib/match';
 import { addDrink, addSection, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { RECIPE_UNITS } from '@/lib/units';
-import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 import type { MenuDrink } from '@/types/menus';
 
 /** Collapse case and spacing so "Roku  Gin" and "roku gin" are the same name. */
@@ -187,7 +185,7 @@ export function placedGroups(rows: PasteRow[], intoSection: boolean): PlacedGrou
 }
 
 /** A second reading (another page) after the first: a heading carried over the page break joins its section. */
-export function appendReading(sections: ParsedMenuSection[], more: ParsedMenuSection[]): ParsedMenuSection[] {
+export function appendReading<S extends ParsedMenuSection>(sections: S[], more: S[]): S[] {
   const [first, ...rest] = more;
   const last = sections[sections.length - 1];
   if (!first) return sections;
@@ -204,29 +202,6 @@ export function appendReading(sections: ParsedMenuSection[], more: ParsedMenuSec
 export function bringInText(drinks: { name: string; ingredients: string[] }[]): string {
   if (!drinks.some((drink) => drink.ingredients.length)) return drinks.map((drink) => drink.name).join('\n');
   return drinks.map((drink) => [drink.name, ...drink.ingredients.map((name) => `- ${name}`)].join('\n')).join('\n\n');
-}
-
-/** 0.75 -> "0.75", 30 -> "30": what parseAmount reads back. */
-const amountText = (n: number) => String(Math.round(n * 100) / 100);
-
-/**
- * Recipes read by read-anything as Bring in text, plus the lines that were
- * hard to read ("Orchard Fizz: Lemon Juice") so the screen can ask for a look.
- */
-export function readingText(recipes: RecipeReading[]): { text: string; unsure: string[] } {
-  const unsure: string[] = [];
-  const blocks = recipes.map((recipe) => {
-    const rows = [recipe.name];
-    for (const line of recipe.lines) {
-      if (line.unsure) unsure.push(`${recipe.name}: ${line.ingredient}`);
-      rows.push(line.amount !== null && line.unit ? `${amountText(line.amount)} ${line.unit} ${line.ingredient}` : `- ${line.ingredient}`);
-    }
-    for (const note of [recipe.method, recipe.glass, recipe.ice ? `Ice: ${recipe.ice}` : null, recipe.garnish ? `Garnish: ${recipe.garnish}` : null, recipe.by ? `By ${recipe.by}` : null, recipe.notes]) {
-      if (note) rows.push(note);
-    }
-    return rows.join('\n');
-  });
-  return { text: blocks.join('\n\n'), unsure };
 }
 
 export interface PlacedGroup {
@@ -302,99 +277,4 @@ export function parseBringIn(text: string, mode: 'drinks' | 'ingredients'): Brin
 export interface NamedItem {
   id: string;
   name: string;
-}
-
-/** A trailing line that is exactly a method or a glass is that, not a note. */
-export function classifyNotes(notes: string[], methods: NamedItem[], glasses: NamedItem[]): { methodId: string | null; glassId: string | null; notes: string[] } {
-  const find = (note: string, items: NamedItem[]) => items.find((item) => normName(item.name) === normName(note.replace(/\.$/, '')))?.id ?? null;
-  let methodId: string | null = null;
-  let glassId: string | null = null;
-  const left: string[] = [];
-  for (const note of notes) {
-    const methodHit: string | null = !methodId ? find(note, methods) : null;
-    const glassHit: string | null = !glassId ? find(note, glasses) : null;
-    if (methodHit) methodId = methodHit;
-    else if (glassHit) glassId = glassHit;
-    else left.push(note);
-  }
-  return { methodId, glassId, notes: left };
-}
-
-export interface BringWrite {
-  creates: { key: string; name: string; genericId: string | null }[];
-  items: {
-    name: string;
-    kind: 'cocktail' | 'ingredient';
-    notes: string | null;
-    methodId: string | null;
-    glassId: string | null;
-    lines: { ingredientKey: string; amount: number | null; unit: string | null }[];
-  }[];
-}
-
-/**
- * picks: "block:line" -> ingredient id, for a line with several bottles.
- * kinds: create key (matchKey) -> kind name the person typed. Missing means the suggestion.
- */
-export function compileBringIn(
-  blocks: BringBlock[],
-  catalog: CatalogItem[],
-  venueId: string | null,
-  picks: Record<string, string>,
-  kinds: Record<string, string>,
-  methods: NamedItem[],
-  glasses: NamedItem[],
-  aliases: readonly IngredientAlias[] = [],
-): { error: string | null; write: BringWrite | null } {
-  if (blocks.some((block) => !block.name.trim())) return { error: 'Start each drink with its name, then the amounts.', write: null };
-  const creates = new Map<string, { key: string; name: string; genericId: string | null }>();
-  const items: BringWrite['items'] = [];
-  const resolve = (name: string, pickKey: string): { error: string | null; ingredientKey: string | null } => {
-    const match = matchIngredient(name, catalog, venueId, aliases);
-    if (match.kind === 'one') return { error: null, ingredientKey: `id:${match.item.id}` };
-    if (match.kind === 'pick') {
-      const chosen = picks[pickKey];
-      if (!chosen || !match.items.some((item) => item.id === chosen)) return { error: `Pick which ${name.trim()} you mean.`, ingredientKey: null };
-      return { error: null, ingredientKey: `id:${chosen}` };
-    }
-    const label = name.trim();
-    const key = matchKey(label);
-    if (!creates.has(key)) {
-      const typed = key in kinds ? kinds[key] : (match.kindItem?.name ?? '');
-      let genericId: string | null = null;
-      if (typed.trim()) {
-        const kind = matchName(typed, catalog);
-        if (kind.kind !== 'one') return { error: `No single ingredient called “${typed.trim()}” to use as the kind of ${label}.`, ingredientKey: null };
-        genericId = kind.item.id;
-      }
-      creates.set(key, { key, name: label, genericId });
-    }
-    return { error: null, ingredientKey: `new:${key}` };
-  };
-
-  for (let i = 0; i < blocks.length; i++) {
-    const block = blocks[i];
-    if (block.kind === 'bottle') {
-      const resolved = resolve(block.name, `${i}:0`);
-      if (resolved.error) return { error: resolved.error, write: null };
-      continue;
-    }
-    const classified = classifyNotes(block.notes, methods, glasses);
-    const lines: BringWrite['items'][number]['lines'] = [];
-    for (let j = 0; j < block.lines.length; j++) {
-      const line = block.lines[j];
-      const resolved = resolve(line.name, `${i}:${j}`);
-      if (resolved.error || !resolved.ingredientKey) return { error: resolved.error, write: null };
-      lines.push({ ingredientKey: resolved.ingredientKey, amount: line.amount, unit: line.unit });
-    }
-    items.push({
-      name: block.name.trim(),
-      kind: block.kind === 'house' ? 'ingredient' : 'cocktail',
-      notes: classified.notes.length ? classified.notes.join('\n') : null,
-      methodId: classified.methodId,
-      glassId: classified.glassId,
-      lines,
-    });
-  }
-  return { error: null, write: { creates: [...creates.values()], items } };
 }

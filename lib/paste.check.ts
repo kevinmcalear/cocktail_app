@@ -3,18 +3,15 @@ import assert from 'node:assert/strict';
 import {
   applyMenuPaste,
   bringInText,
-  compileBringIn,
   appendReading,
   pasteRows,
   placedGroups,
-  readingText,
   parseAmount,
   parseBringIn,
   parseMenuPaste,
   parseSpecLine,
   type ParsedMenuSection,
 } from './paste';
-import type { CatalogItem } from './match';
 import { blankSection, type MenuLayout } from './menuLayout';
 import type { MenuDrink } from '@/types/menus';
 
@@ -67,20 +64,6 @@ assert.equal(placed.sections[0].drinks[0].id, 'n');
 assert.equal(placed.sections[1].name, 'Signatures');
 assert.equal(placed.sections[1].drinks[0].id, 'm');
 
-const catalog: CatalogItem[] = [
-  { id: 'gin', name: 'Gin', genericId: null, barId: null },
-  { id: 'roku', name: 'Roku', genericId: 'gin', barId: null },
-  { id: 'beef', name: 'Beefeater', genericId: 'gin', barId: 'bar' },
-  { id: 'tanq', name: 'Tanqueray', genericId: 'gin', barId: 'bar' },
-  { id: 'campari', name: 'Campari', genericId: null, barId: null },
-];
-
-const noGeneric: CatalogItem[] = [
-  { id: 'beef', name: 'Beefeater', genericId: 'gin', barId: 'bar' },
-  { id: 'tanq', name: 'Tanqueray', genericId: 'gin', barId: 'bar' },
-  { id: 'gin', name: 'Gin', genericId: null, barId: 'other' },
-];
-
 const bottles = parseBringIn('Gin\nCampari\n', 'ingredients');
 assert.equal(bottles.length, 2);
 assert.equal(bottles[0].kind, 'bottle');
@@ -93,39 +76,6 @@ assert.equal(specs[1].name, 'Martini');
 
 const house = parseBringIn('Gin syrup\n200 g sugar\n200 ml water\n', 'ingredients');
 assert.equal(house[0].kind, 'house');
-
-const compiled = compileBringIn(
-  specs,
-  catalog,
-  'bar',
-  {},
-  {},
-  [{ id: 'stir', name: 'Stirred' }],
-  [{ id: 'coupe', name: 'Coupe' }],
-);
-assert.equal(compiled.error, null);
-assert.equal(compiled.write?.items.length, 2);
-assert.equal(compiled.write?.items[0].methodId, 'stir');
-assert.equal(compiled.write?.creates.length, 0);
-assert.equal(compiled.write?.items[0].lines[0].ingredientKey, 'id:gin');
-
-const created = compileBringIn(parseBringIn('Negroni\n30 ml Roku Gin\n30 ml Roku Gin\n', 'drinks'), catalog, 'bar', {}, {}, [], []);
-assert.equal(created.write?.creates.length, 1);
-assert.equal(created.write?.creates[0].genericId, 'gin');
-assert.equal(created.write?.items[0].lines[0].ingredientKey, created.write?.items[0].lines[1].ingredientKey);
-
-const needsPick = compileBringIn([{ name: 'Negroni', lines: [{ amount: 30, unit: 'ml', name: 'Gin' }], notes: [], kind: 'cocktail' }], noGeneric, 'bar', {}, {}, [], []);
-assert.match(needsPick.error ?? '', /Pick which Gin/);
-const pickedWrite = compileBringIn(
-  [{ name: 'Negroni', lines: [{ amount: 30, unit: 'ml', name: 'Gin' }], notes: [], kind: 'cocktail' }],
-  noGeneric,
-  'bar',
-  { '0:0': 'beef' },
-  {},
-  [],
-  [],
-);
-assert.equal(pickedWrite.write?.items[0].lines[0].ingredientKey, 'id:beef');
 
 // A photo reading is matched like a paste: library drinks link, the rest
 // come back missing with what the menu listed in them.
@@ -162,34 +112,3 @@ assert.deepEqual(listed[0].lines, [
 ]);
 assert.equal(listed[1].name, 'Daiquiri');
 assert.equal(listed[1].lines.length, 0);
-const unmeasured = compileBringIn(listed, catalog, 'bar', {}, {}, [], []);
-assert.equal(unmeasured.error, null);
-assert.deepEqual(unmeasured.write?.items[0].lines.map((l) => [l.amount, l.unit]), [[null, null], [null, null]]);
-
-// A read-anything reading lands in Bring in as text it parses back the same way.
-const fromReader = readingText([
-  {
-    name: 'Orchard Fizz',
-    by: 'Little Rye',
-    lines: [
-      { amount: 1.5, unit: 'oz', ingredient: 'Calvados', unsure: false },
-      { amount: 0.75, unit: 'oz', ingredient: 'Lemon Juice', unsure: true },
-      { amount: null, unit: 'top', ingredient: 'Soda Water', unsure: false },
-    ],
-    method: 'Shaken',
-    glass: 'Collins',
-    ice: null,
-    garnish: 'Lemon twist',
-    notes: null,
-  },
-]);
-assert.deepEqual(fromReader.unsure, ['Orchard Fizz: Lemon Juice']);
-const back = parseBringIn(fromReader.text, 'drinks');
-assert.equal(back.length, 1);
-assert.equal(back[0].name, 'Orchard Fizz');
-assert.deepEqual(back[0].lines, [
-  { amount: 1.5, unit: 'oz', name: 'Calvados' },
-  { amount: 0.75, unit: 'oz', name: 'Lemon Juice' },
-  { amount: null, unit: null, name: 'Soda Water' },
-]);
-assert.deepEqual(back[0].notes, ['Shaken', 'Collins', 'Garnish: Lemon twist', 'By Little Rye']);

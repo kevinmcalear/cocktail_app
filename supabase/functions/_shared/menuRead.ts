@@ -1,6 +1,8 @@
 // Reading a photographed drinks menu. Plain TypeScript (no Deno APIs) so
 // scripts/menuRead.check.ts can run it under Node too.
 
+import { cleanPlace, type ReadPlace } from "./readPlace.ts";
+
 /**
  * What read-menu returns: the same sections and lines the paste matcher
  * (lib/paste.ts parseMenuPaste) works with, plus the ingredients a menu
@@ -11,6 +13,8 @@ export interface MenuReadLine {
   /** Digits as printed without the currency ("18", "19.50"), "MP", or null. */
   price: string | null;
   ingredients: string[];
+  /** Where it's printed (read-anything only; absent from older readers). */
+  at?: ReadPlace | null;
 }
 
 export interface MenuReadSection {
@@ -97,7 +101,7 @@ export function cleanPrice(value: unknown): string | null {
  * The model's reply, made safe to hand to the app: trimmed, capped, with
  * empty drinks and sections dropped. Anything not shaped right is skipped.
  */
-export function cleanMenuReading(raw: unknown): MenuReading {
+export function cleanMenuReading(raw: unknown, files = 0): MenuReading {
   const reply = (raw && typeof raw === "object" ? raw : {}) as { title?: unknown; sections?: unknown };
   const sections: MenuReadSection[] = [];
   let lines = 0;
@@ -107,14 +111,15 @@ export function cleanMenuReading(raw: unknown): MenuReading {
     const out: MenuReadLine[] = [];
     for (const d of Array.isArray(section.drinks) ? section.drinks : []) {
       if (lines >= MAX_LINES) break;
-      const drink = (d && typeof d === "object" ? d : {}) as { name?: unknown; price?: unknown; ingredients?: unknown };
+      const drink = (d && typeof d === "object" ? d : {}) as { name?: unknown; price?: unknown; ingredients?: unknown; page?: unknown; box?: unknown };
       const name = cleanName(drink.name, 80);
       if (!name) continue;
       const ingredients = (Array.isArray(drink.ingredients) ? drink.ingredients : [])
         .map((i) => clean(i, 60))
         .filter(Boolean)
         .slice(0, MAX_INGREDIENTS);
-      out.push({ name, price: cleanPrice(drink.price), ingredients });
+      const at = files ? cleanPlace(drink.page, drink.box, files) : null;
+      out.push(at ? { name, price: cleanPrice(drink.price), ingredients, at } : { name, price: cleanPrice(drink.price), ingredients });
       lines += 1;
     }
     if (!out.length) continue;

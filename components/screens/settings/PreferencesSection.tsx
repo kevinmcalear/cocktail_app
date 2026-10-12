@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
 import { Caption } from '@/components/ds';
-import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { ChoiceChips, ControlRow, RowDivider, SelectRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { space } from '@/constants/tokens';
+import { hasAiConsent, setAiConsent } from '@/lib/aiConsent';
 import { useMaxRealRole, useViewAs } from '@/hooks/useViewAs';
 import { roleLabel, viewAsOptions } from '@/lib/roles';
 import type { MapsApp } from '@/lib/directions';
@@ -21,6 +23,11 @@ export function PreferencesSection() {
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
   const maxRealRole = useMaxRealRole();
   const viewAsChoices = viewAsOptions(maxRealRole);
+  // "We ask once. Change it any time in Settings." (Bring in's AI OK.)
+  const [ai, setAi] = useState(false);
+  useEffect(() => {
+    void hasAiConsent().then(setAi);
+  }, []);
 
   return (
     <SettingsSection title="Preferences">
@@ -31,6 +38,16 @@ export function PreferencesSection() {
       <ControlRow label="Units" detail="Specs on drink pages, and new recipe lines">
         <ChoiceChips label="Units" options={DEFAULT_UNIT_OPTIONS} value={defaultUnit} onChange={setDefaultUnit} />
       </ControlRow>
+      <RowDivider />
+      <SwitchRow
+        label="Read with AI"
+        detail="Photos, PDFs and links you bring in are read by Google’s Gemini. Off, we ask again before the next one."
+        value={ai}
+        onValueChange={(on) => {
+          setAi(on);
+          void setAiConsent(on);
+        }}
+      />
       {Platform.OS === 'ios' ? (
         <>
           <RowDivider />

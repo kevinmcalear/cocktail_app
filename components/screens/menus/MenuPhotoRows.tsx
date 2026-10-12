@@ -22,15 +22,15 @@ export function PhotoRow({ row, onPick, onFinish }: PhotoRowProps) {
     );
   }
   if (row.status === 'add') {
-    // The price read from the photo ends the row; the detail says what happens to it.
-    return <ReviewRow state="have" title={row.drink.name} detail={['Matched in your library', row.note].filter(Boolean).join(' · ')} trailing={row.price ?? row.drink.price} />;
+    // The price read from the photo ends the row.
+    return <ReviewRow state="have" title={row.drink.name} detail={['In your bar', row.note].filter(Boolean).join(' · ')} trailing={row.price ?? row.drink.price} />;
   }
   if (row.status === 'missing') {
     return (
       <ReviewRow
         state="new"
         title={row.name}
-        detail={['New', row.ingredients.join(', ')].filter(Boolean).join(' · ')}
+        detail={['New drink', row.ingredients.join(', ')].filter(Boolean).join(' · ')}
         trailing={row.price}
         action={onFinish ? { label: 'Finish', hint: `Adds ${row.name} to the library`, onPress: () => onFinish(row.name, row.ingredients) } : undefined}
       />
