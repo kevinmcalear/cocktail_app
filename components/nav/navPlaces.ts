@@ -20,11 +20,7 @@ const tabPath = (name: string) => (name === 'index' ? '/' : `/${name}`);
 /**
  * Where the shell can take you, for the mode you're in: the tabs (the same
  * ones as the phone bar), the venue's working pages (Menus, Back bar), and
- * its Venue section (My team, Brand, Venue settings).
- *
- * ponytail: "Roles and access" (drawn in the Venue section and the venue
- * menu) has no page yet; the venue tools work adds one. Add it to `venue`
- * between Brand and Venue settings when its route lands.
+ * its Venue section (My team, Brand, Roles and access, Venue settings).
  */
 export function useNavPlaces() {
   const { mode } = useMode();
@@ -46,6 +42,7 @@ export function useNavPlaces() {
       ? [
           ...(canSeeTeam(role) ? [{ key: 'team', label: 'My team', icon: 'person.2.fill', path: '/team' } as Place] : []),
           { key: 'brand', label: 'Brand', icon: 'paintpalette.fill', path: `${settings}/brand` },
+          { key: 'roles', label: 'Roles and access', icon: 'lock.shield.fill', path: `${settings}/roles` },
           { key: 'venue-settings', label: 'Venue settings', icon: 'building.2.fill', path: settings, prefix: settings },
         ]
       : [];

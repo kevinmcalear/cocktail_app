@@ -12,6 +12,13 @@ export interface BarMember {
     joined_at?: string | null;
     /** Their Settings photo, else their profile picture. */
     avatar_url?: string | null;
+    /** The venue's own role they hold ("Head bartender"), when they hold one. */
+    venue_role_id?: string | null;
+    venue_role_name?: string | null;
+    /** Guest staff: when their role ends and they lose access. */
+    role_ends_at?: string | null;
+    /** When their role last changed (level or venue role). */
+    role_since?: string | null;
 }
 
 export function useBarDetail(barId: string) {

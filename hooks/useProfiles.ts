@@ -223,11 +223,59 @@ export function useProfileAwards(profileId: string | null | undefined) {
     queryFn: async (): Promise<Award[]> => {
       const { data, error } = await supabase
         .from('profile_awards')
-        .select('id, award, year, position, title, source_url')
+        .select('id, award, year, position, title, source_url, status, is_finalist, on_profile, added_by, bar:profiles!bar_profile_id(id, handle, display_name)')
         .eq('profile_id', profileId!);
       if (error) throw error;
-      return sortAwards((data ?? []) as Award[]);
+      return sortAwards((data ?? []) as unknown as Award[]);
     },
+  });
+}
+
+export interface NewAward {
+  profileId: string;
+  /** The awards body: "Tales of the Cocktail Spirited Awards". */
+  award: string;
+  title: string;
+  year: number;
+  isFinalist: boolean;
+  barProfileId: string | null;
+  sourceUrl: string;
+}
+
+/** Sends one of your own awards for checking. It comes in pending ("Not confirmed yet") until a moderator confirms it. */
+export function useAddAward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (a: NewAward) => {
+      const { error } = await supabase.from('profile_awards').insert({
+        profile_id: a.profileId,
+        award: a.award.trim(),
+        title: a.title.trim(),
+        year: a.year,
+        is_finalist: a.isFinalist,
+        bar_profile_id: a.barProfileId,
+        source_url: a.sourceUrl.trim(),
+      });
+      if (error?.code === '23505') throw new Error('That award is already on your profile.');
+      if (error?.code === '54000' || error?.message.startsWith('That ')) throw new Error(error.message);
+      if (error) throw new Error('Couldn’t send that. Check the link starts with https:// and try again.');
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-awards'] }),
+    // Shown inline by the sheet, not as the global toast.
+    onError: () => {},
+  });
+}
+
+/** Shows or hides one award on your own profile (its pick; profiles.awards_mode decides the rest). */
+export function useSetAwardPick() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, shown }: { id: string; shown: boolean }) => {
+      const { data, error } = await supabase.from('profile_awards').update({ on_profile: shown }).eq('id', id).select('id');
+      if (error || !data?.length) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-awards'] }),
+    onError: () => {},
   });
 }
 
@@ -509,6 +557,13 @@ export interface Position {
   is_current: boolean;
   /** The person's switch for a past job. Others read a past job only while it's on. */
   is_shown: boolean;
+  /** The person's off switch, on any job (current too). Wins over is_shown. */
+  is_hidden: boolean;
+  /** "2023 to now": months are optional, a current job has no end. */
+  start_year: number | null;
+  start_month: number | null;
+  end_year: number | null;
+  end_month: number | null;
   /** Both sides have said yes. Until then only they (and moderators) read it. */
   person_accepted: boolean;
   bar_accepted: boolean;
@@ -560,6 +615,8 @@ export interface WorkedMenu {
   name: string;
   year: number | null;
   bar: { id: string; handle: string; display_name: string; is_closed: boolean };
+  /** Drinks they made for it (b62). A drink the reader can't see comes back as null. */
+  drinks: { item: { id: string; name: string } | null }[] | null;
 }
 
 /** Menus a person says they worked on, including at a bar that has closed. */
@@ -572,7 +629,7 @@ export function useWorkedMenus(profileId: string | null | undefined) {
     queryFn: async (): Promise<WorkedMenu[]> => {
       const { data, error } = await supabase
         .from('profile_worked_menus')
-        .select('id, name, year, bar:profiles!bar_profile_id(id, handle, display_name, is_closed)')
+        .select('id, name, year, bar:profiles!bar_profile_id(id, handle, display_name, is_closed), drinks:profile_worked_menu_drinks(item:items(id, name))')
         .eq('person_profile_id', profileId!)
         .limit(50);
       if (error) throw error;
@@ -593,7 +650,7 @@ export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null
     queryFn: async (): Promise<Position[]> => {
       const { data, error } = await supabase
         .from('profile_positions')
-        .select(`id, title, is_current, is_shown, person_accepted, bar_accepted, person:profiles!person_profile_id(${POSITION_PROFILE}), bar:profiles!bar_profile_id(${POSITION_PROFILE})`)
+        .select(`id, title, is_current, is_shown, is_hidden, start_year, start_month, end_year, end_month, person_accepted, bar_accepted, person:profiles!person_profile_id(${POSITION_PROFILE}), bar:profiles!bar_profile_id(${POSITION_PROFILE})`)
         .eq(profile!.kind === 'person' ? 'person_profile_id' : 'bar_profile_id', profile!.id)
         .limit(50);
       if (error) throw error;
@@ -606,16 +663,39 @@ export function useProfilePositions(profile: Pick<Profile, 'id' | 'kind'> | null
   });
 }
 
-/** The person's switch on one past job. Only they can turn it on (a trigger checks). */
+/** The person's Shown switch on one job, current or past. Only they can turn it on (a trigger checks). */
 export function useShowPosition() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, shown }: { id: string; shown: boolean }) => {
-      const { data, error } = await supabase.from('profile_positions').update({ is_shown: shown }).eq('id', id).select('id');
+      const { data, error } = await supabase.from('profile_positions').update({ is_shown: shown, is_hidden: !shown }).eq('id', id).select('id');
       if (error || !data?.length) throw new Error("Couldn't save that. Check your connection and try again.");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-positions'] }),
     // Shown inline by PastJobs, not as the global toast.
+    onError: () => {},
+  });
+}
+
+export interface PositionEdit {
+  id: string;
+  title?: string;
+  start_year?: number | null;
+  start_month?: number | null;
+  end_year?: number | null;
+  end_month?: number | null;
+}
+
+/** Changes a job's title or dates. A new title asks the bar again (set_position_acceptance); dates don't. */
+export function useEditPosition() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...change }: PositionEdit) => {
+      const { data, error } = await supabase.from('profile_positions').update(change).eq('id', id).select('id');
+      if (error?.code === '23514') throw new Error('Check the years: a job can’t end before it starts, and one you have now has no end.');
+      if (error || !data?.length) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-positions'] }),
     onError: () => {},
   });
 }
@@ -649,6 +729,21 @@ export function useSetPick() {
       const { error } = await supabase
         .from('profile_picks')
         .upsert({ profile_id: pick.profileId, section: pick.section, target_id: pick.targetId, shown: pick.shown }, { onConflict: 'profile_id,section,target_id' });
+      if (error) throw new Error("Couldn't save that. Check your connection and try again.");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-picks'] }),
+    onError: () => {},
+  });
+}
+
+/** Show all or Hide all of one section's bars or originals on your own profile. */
+export function useSetPicks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ profileId, section, targetIds, shown }: { profileId: string; section: Exclude<ShareSection, 'had'>; targetIds: string[]; shown: boolean }) => {
+      if (!targetIds.length) return;
+      const rows = targetIds.map((target_id) => ({ profile_id: profileId, section, target_id, shown }));
+      const { error } = await supabase.from('profile_picks').upsert(rows, { onConflict: 'profile_id,section,target_id' });
       if (error) throw new Error("Couldn't save that. Check your connection and try again.");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-picks'] }),

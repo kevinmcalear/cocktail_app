@@ -6,6 +6,8 @@ import { VenueSettingsLinks } from './VenueSettingsLinks';
 
 let mockGlasses: unknown[] | undefined;
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+jest.mock('@/hooks/usePublishing', () => ({ useBarPublishing: () => ({ data: undefined }) }));
+jest.mock('@/hooks/usePricing', () => ({ usePricingSettings: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockGlasses }) }));
 
 test('the Glassware row says how many glasses the venue has', async () => {

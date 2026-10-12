@@ -15,7 +15,6 @@
     "components/ItemDetailLayout.tsx": 34,
     "components/OfflineBanner.tsx": 3,
     "components/SearchBar.tsx": 8,
-    "components/ViewAsBanner.tsx": 5,
     "components/auth/EmailLinkGate.tsx": 1,
     "components/cocktail/CocktailDetailContent.tsx": 24,
     "components/cocktail/CocktailIngredientList.tsx": 14,

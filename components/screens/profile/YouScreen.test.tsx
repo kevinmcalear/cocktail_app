@@ -17,9 +17,22 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, navigate: 
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: { full_name: 'Jo Juniper' } }, loading: false }) }));
 jest.mock('@/components/nav/ScreenHeader', () => ({ ScreenHeader: () => null }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: mockProfile }) }));
-jest.mock('@/hooks/useProfiles', () => ({ useMyMadeDrinks: () => ({ data: [{ id: 'm1', name: 'Garden Gimlet' }], isLoading: false }) }));
+const mockSetHad = jest.fn();
+let mockPicks: Record<string, { onProfile: boolean | null; pin: number | null; saysWhere: boolean }> = {};
+jest.mock('./PersonAwards', () => ({ MyAwards: () => null }));
+jest.mock('./useShareLink', () => ({ useShareLink: () => jest.fn() }));
+jest.mock('@/hooks/useProfiles', () => ({
+  useMyMadeDrinks: () => ({ data: [{ id: 'm1', name: 'Garden Gimlet', origin_year: 2025, item_images: [], glass: null }], isLoading: false }),
+  useProfilePositions: () => ({ data: [] }),
+  useProfilePicks: () => ({ data: {} }),
+  useSetPick: () => ({ mutate: jest.fn(), isPending: false, error: null }),
+}));
 jest.mock('@/hooks/useFlavor', () => ({ useMyTaste: () => ({ data: mockTaste }), useItemFlavors: () => ({ data: {} }), useItemScores: () => ({ data: {} }) }));
-jest.mock('@/hooks/useRankings', () => ({ useMyHadDrinks: () => ({ data: mockHad, isLoading: false, error: null }) }));
+jest.mock('@/hooks/useRankings', () => ({
+  useMyHadDrinks: () => ({ data: mockHad, isLoading: false, error: null }),
+  useMyHadPicks: () => ({ data: mockPicks }),
+  useSetHadPick: () => ({ mutate: mockSetHad, isPending: false, error: null }),
+}));
 jest.mock('@/hooks/useSpecMatches', () => ({ useSpecMatches: () => ({ data: undefined }) }));
 
 const rye = { id: 'v1', handle: 'little.rye', name: 'Little Rye', avatarUrl: null, place: 'Fitzroy, Melbourne' };
@@ -44,6 +57,8 @@ beforeEach(() => {
   mockProfile = null;
   mockHad = [];
   mockTaste = null;
+  mockPicks = {};
+  mockSetHad.mockClear();
 });
 
 describe('YouScreen', () => {
@@ -63,8 +78,8 @@ describe('YouScreen', () => {
     await renderWithTamagui(<YouScreen />);
     expect(screen.getByText('Jo Juniper')).toBeTruthy();
     expect(screen.getByText('No public profile yet')).toBeTruthy();
-    expect(screen.getByLabelText('0 drinks had')).toBeTruthy();
-    expect(screen.queryByText('Favourites')).toBeNull();
+    expect(screen.getByLabelText('0 drinks')).toBeTruthy();
+    expect(screen.queryByText('Top four')).toBeNull();
     expect(screen.getByText(/Open a drink you’ve had and tap Rank it/)).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Find a drink' }));
@@ -73,35 +88,35 @@ describe('YouScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/settings/profile');
   });
 
-  test('shows every drink with its score, favourites, each bar’s average, and what you made', async () => {
-    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharing: { had: 'none', bars: 'none', originals: 'all' }, showsDates: false, isModerated: false, tagline: null, headlinePositionId: null, showsPhoto: true };
-    mockHad = [
-      drink('a', 'Bolo Tie', 10),
-      drink('b', 'Penicillin', 6.6),
-      drink('c', 'Negroni', 5, { venue: null, hadOn: null }),
-    ];
+  test('its own preview: city and line, top four from your pins, an eye on every row', async () => {
+    mockProfile = { id: 'p1', handle: 'jo.home', displayName: 'Jo', bio: null, instagram: null, isPublic: true, sharing: { had: 'picked', bars: 'all', originals: 'all' }, showsDates: false, isModerated: false, tagline: 'Home bartender', headlinePositionId: null, showsPhoto: true, awardsMode: 'all', showsCity: true, city: 'Melbourne' };
+    mockHad = [drink('a', 'Bolo Tie', 10), drink('b', 'Penicillin', 6.6), drink('c', 'Negroni', 5, { venue: null, hadOn: null })];
+    mockPicks = { a: { onProfile: true, pin: 1, saysWhere: true } };
     await renderWithTamagui(<YouScreen />);
-    expect(screen.getByText('@jo.home · Public profile')).toBeTruthy();
-    expect(screen.getByLabelText('3 drinks had')).toBeTruthy();
+    expect(screen.getByText('@jo.home · Melbourne · Public profile')).toBeTruthy();
+    expect(screen.getByText('Home bartender')).toBeTruthy();
+    expect(screen.getByLabelText('3 drinks')).toBeTruthy();
     expect(screen.getByLabelText('1 bar')).toBeTruthy();
-    expect(screen.getByLabelText('1 made')).toBeTruthy();
+    expect(screen.getByLabelText('1 original')).toBeTruthy();
 
-    // Favourites: only the one they loved.
-    expect(screen.getByText('Favourites')).toBeTruthy();
-    expect(screen.getByLabelText('Bolo Tie, Little Rye, Fitzroy. Score 10.0')).toBeTruthy();
-    expect(screen.queryByLabelText(/^Penicillin, Little Rye/)).toBeNull();
+    // Top four: the pin, then three empty places.
+    expect(screen.getByLabelText('1. Bolo Tie, score 10.0')).toBeTruthy();
+    expect(screen.getAllByLabelText(/^Place \d, empty$/)).toHaveLength(3);
 
-    // Had: every drink, best first, each opening the drink.
-    const penicillin = screen.getByLabelText(/^Penicillin\. Little Rye, Fitzroy · Sep 2026\. Score 6\.6, open$/);
-    expect(screen.getByLabelText('Negroni. At home. Score 5.0, open')).toBeTruthy();
-    await fireEvent.press(penicillin);
+    // Picked: one of three shows; the others are greyed with Only you.
+    expect(screen.getByText('Picked · 1 of 3 shown')).toBeTruthy();
+    expect(screen.getAllByText('Only you')).toHaveLength(2);
+    await fireEvent.press(screen.getByRole('button', { name: 'Show Penicillin on your profile' }));
+    expect(mockSetHad).toHaveBeenCalledWith({ id: 'b', onProfile: true, pin: null });
+    await fireEvent.press(screen.getByRole('link', { name: /^Penicillin\. Little Rye/ }));
     expect(mockPush).toHaveBeenCalledWith('/cocktail/item-b');
 
     await fireEvent.press(screen.getByRole('tab', { name: 'Bars' }));
-    expect(screen.getByLabelText('Number 1: Little Rye, 2 drinks · best: Bolo Tie. Score 8.3, average')).toBeTruthy();
-    expect(screen.getByLabelText('Number 2: At home, 1 drink · best: Negroni. Score 5.0')).toBeTruthy();
+    expect(screen.getByText('All · 1 of 1 shown')).toBeTruthy();
+    expect(screen.getByText('2 drinks · Fitzroy')).toBeTruthy();
 
-    await fireEvent.press(screen.getByRole('tab', { name: 'Made' }));
+    await fireEvent.press(screen.getByRole('tab', { name: 'Originals' }));
     expect(screen.getByText('Garden Gimlet')).toBeTruthy();
+    expect(screen.getByText('Your original · 2025')).toBeTruthy();
   });
 });
