@@ -55,12 +55,12 @@ export function TechniqueRow({ t, kit }: { t: Technique; kit: ReadonlySet<string
   );
 }
 
-/** A tappable row that opens another screen in the library. */
-export function LinkRow({ title, detail, href, icon }: { title: string; detail?: string; href: string; icon?: Parameters<typeof IconSymbol>[0]['name'] }) {
+/** A tappable row that opens another screen in the library, or `onPress` (a sheet over this one). */
+export function LinkRow({ title, detail, href, icon, onPress }: { title: string; detail?: string; href: string; icon?: Parameters<typeof IconSymbol>[0]['name']; onPress?: () => void }) {
   const ds = useDs();
   const router = useRouter();
   return (
-    <PressableScale role="link" accessibilityLabel={detail ? `${title}. ${detail}` : title} onPress={() => router.push(href as never)} style={[styles.card, { backgroundColor: ds.c.surface }]}>
+    <PressableScale role="link" accessibilityLabel={detail ? `${title}. ${detail}` : title} onPress={onPress ?? (() => router.push(href as never))} style={[styles.card, { backgroundColor: ds.c.surface }]}>
       {icon ? <IconSymbol name={icon} size={20} color={ds.c.ink} /> : null}
       <View style={styles.flex}>
         <Headline>{title}</Headline>
