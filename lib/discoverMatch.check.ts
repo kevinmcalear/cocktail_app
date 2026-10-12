@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import type { MapPin } from './discoverMap';
 import { pinDescription, pinLook } from './discoverMap';
-import { barSearchHref, isStrong, matchWhy, namePins, pinName, snippet, toMatch } from './discoverMatch';
+import { barSearchHref, classicSummary, isStrong, searchTitle, matchWhy, namePins, pinName, snippet, toMatch } from './discoverMatch';
 
 // Rows: an older server sends no match; an unknown kind is ignored.
 assert.equal(toMatch(undefined, undefined), null);
@@ -18,6 +18,11 @@ assert.equal(isStrong({ kind: 'riff', text: 'Martini' }), true);
 assert.equal(isStrong({ kind: 'line', text: 'Martini Rosso' }), false);
 assert.equal(matchWhy({ kind: 'name', text: null }, null, 'martini'), null);
 assert.equal(matchWhy({ kind: 'riff', text: 'Martini' }, null, 'martini'), 'Riff on a Martini');
+// A name match that isn't the style says so; one that is says nothing.
+assert.equal(matchWhy({ kind: 'name', text: null }, null, 'martini', 'Espresso Martini'), 'A coffee cocktail, not the Martini style');
+assert.equal(matchWhy({ kind: 'name', text: null }, null, 'martini', 'Pornstar Martini'), 'Not the Martini style');
+assert.equal(matchWhy({ kind: 'name', text: null }, null, 'martini', 'Dirty Martini'), null);
+assert.equal(matchWhy({ kind: 'name', text: null }, null, 'rye', 'Rye Garden Highball'), null);
 assert.equal(matchWhy({ kind: 'riff', text: 'Old Fashioned' }, null, 'old fashioned'), 'Riff on an Old Fashioned');
 assert.equal(matchWhy({ kind: 'line', text: 'Martini Rosso' }, null, 'martini'), 'Has Martini Rosso');
 assert.equal(matchWhy({ kind: 'bar', text: null }, null, 'rye'), "Matched the bar's name");
@@ -49,9 +54,28 @@ const accent = { fill: '#c00', text: '#fff' };
 assert.equal(pinLook(named[0], false, accent).label, 'Drink 0 +2');
 assert.equal(pinLook(named[3], false, accent).label, '1', 'searching, unnamed pins keep their count');
 assert.equal(pinDescription(named[0]), 'a, 3 drinks: Drink 0');
+// Every searched pin shows its best match's picture; a weak best match fades the pin.
+const pictured = namePins([pin('a', 1, { logo: 'logo.png' }), pin('b', 1, { logo: 'logo.png' })], [
+  { barId: 'a', name: 'Gibson', imageUrl: 'gibson.png', match: { kind: 'name', text: null } },
+  { barId: 'b', name: 'Sbagliato', imageUrl: null, match: { kind: 'line', text: 'Martini Rosso' } },
+], null);
+assert.equal(pinLook(pictured[0], false, accent).logo, 'gibson.png');
+assert.equal(pinLook(pictured[0], false, accent).opacity, 1);
+assert.equal(pinLook(pictured[1], false, accent).logo, 'logo.png', 'no picture: the bar logo');
+assert.equal(pinLook(pictured[1], false, accent).opacity, 0.55);
+assert.equal(pinLook(pictured[1], true, accent).opacity, 1, 'selected never fades');
 
 // The bar's page opens on the search.
 assert.equal(barSearchHref('little.rye', ' dirty martini '), '/p/little.rye?q=dirty%20martini');
 assert.equal(barSearchHref('little.rye', ''), '/p/little.rye');
+
+// Classic or variation, by bar: a bar pouring both counts as the classic.
+const versions = [{ id: '1', barId: 'a' }, { id: '2', barId: 'a' }, { id: '3', barId: 'b' }, { id: '4', barId: 'c' }, { id: '5', barId: 'd' }];
+const verdicts = { '1': { spec_match: 'same' }, '2': { spec_match: 'variation' }, '3': { spec_match: 'variation' }, '4': { spec_match: 'same' }, '5': { spec_match: 'riff' } };
+assert.equal(classicSummary(versions, verdicts, 'near you'), '2 bars near you pour the classic, 1 pours a variation');
+assert.equal(classicSummary(versions.slice(2, 3), verdicts, 'in Melbourne'), '1 bar in Melbourne pours a variation');
+assert.equal(classicSummary(versions, {}, 'near you'), null);
+assert.equal(searchTitle('martini'), 'Martinis and more');
+assert.equal(searchTitle(' smoke '), '“smoke”');
 
 console.log('discoverMatch checks passed');

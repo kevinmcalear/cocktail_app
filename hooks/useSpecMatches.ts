@@ -74,15 +74,16 @@ export function useVersionLabel(itemId: string | undefined) {
 }
 
 /**
- * For a classic's "Best X" list, which is one row per bar: what each bar pours
- * of it, by the bar's profile id. A bar with the classic's own spec reads
- * "the classic spec" even if it also pours a variation.
+ * For a classic's "Best X" list, which is one row per bar: the drink each bar
+ * pours of it (for the row's picture) and what it is, by the bar's profile
+ * id. A bar with the classic's own spec reads "the classic spec", and shows
+ * that drink, even if it also pours a variation.
  */
-export function useBarVersionLabels(classicId: string | undefined, profileIds: string[]) {
+export function useBarVersions(classicId: string | undefined, profileIds: string[]) {
   const { data } = useQuery({
     queryKey: ['bar-version-labels', classicId, idsKey(profileIds)],
     enabled: !!classicId && profileIds.length > 0,
-    queryFn: async (): Promise<Record<string, string>> => {
+    queryFn: async (): Promise<Record<string, { itemId: string; label: string | null }>> => {
       const { data: versions, error } = await supabase
         .from('items')
         .select('id, origin_bar_profile_id')
@@ -92,13 +93,13 @@ export function useBarVersionLabels(classicId: string | undefined, profileIds: s
       const rows = (versions ?? []) as { id: string; origin_bar_profile_id: string }[];
       if (!rows.length) return {};
       const matches = new Map((await fetchSpecMatches(rows.map((r) => r.id))).map((m) => [m.item_id, m]));
-      const labels: Record<string, string> = {};
+      const out: Record<string, { itemId: string; label: string | null }> = {};
       for (const r of rows) {
-        const label = versionLabel(matches.get(r.id));
-        if (!label) continue;
-        if (label === 'the classic spec' || !labels[r.origin_bar_profile_id]) labels[r.origin_bar_profile_id] = label;
+        const label = versionLabel(matches.get(r.id)) ?? null;
+        const had = out[r.origin_bar_profile_id];
+        if (!had || (label === 'the classic spec' && had.label !== label) || (!had.label && label)) out[r.origin_bar_profile_id] = { itemId: r.id, label };
       }
-      return labels;
+      return out;
     },
   });
   return data ?? {};

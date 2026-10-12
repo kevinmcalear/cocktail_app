@@ -72,7 +72,6 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
 
   const bestSection = (
     <View style={styles.section}>
-      <Headline role="heading">{`Best ${rankedAs.name} ${scope ? `in ${where}` : 'anywhere'}`}</Headline>
       {scopes.length > 1 ? (
         <Segmented
           accessibilityLabel="Area"
@@ -86,11 +85,13 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
       ) : bestLoading ? (
         <ListNote>Loading…</ListNote>
       ) : best?.length ? (
-        <AreaRankList rows={best} classicId={rankedAs.id} />
+        <View aria-label={`Best ${rankedAs.name} ${scope ? `in ${where}` : 'anywhere'}`}>
+          <AreaRankList rows={best} classicId={rankedAs.id} />
+        </View>
       ) : (
         <ListNote>{`Not enough rankers yet ${scope ? `in ${where}` : 'anywhere'}. A bar's ${rankedAs.name} shows here once ${MIN_RANKERS} people have ranked it there.`}</ListNote>
       )}
-      <Caption tone="muted">Each score is 0 to 10, from people comparing drinks two at a time. Updated every hour.</Caption>
+      <Caption tone="muted">{`Each row is one drink at one bar. Scores are 0 to 10, from people comparing drinks two at a time, and a drink shows once ${MIN_RANKERS} people have ranked it there. Updated every hour.`}</Caption>
       {best?.length ? (
         <View style={styles.report}>
           <ReportAction
@@ -107,7 +108,7 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={[styles.page, wide && styles.pageWide]}>
           <Caption tone="muted">Ranked by comparison</Caption>
-          <Title>{plural(rankedAs.name)}</Title>
+          <Title>{`Best ${rankedAs.name}`}</Title>
           <View style={[styles.columns, wide && styles.columnsWide]}>
             <View style={wide ? styles.column : undefined}>{bestSection}</View>
             <View style={wide ? styles.column : undefined}>{mineSection}</View>
