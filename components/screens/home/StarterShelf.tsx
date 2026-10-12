@@ -87,7 +87,7 @@ export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom,
                     key={p.id}
                     name={p.name}
                     meta={has ? 'On shelf' : n ? `+${n} ${n === 1 ? 'drink' : 'drinks'}` : null}
-                    picture={<IngredientDrawing id={p.id} name={p.name} />}
+                    picture={<IngredientDrawing id={p.id} name={p.name} lazy />}
                     role="checkbox"
                     checked={has}
                     accessibilityLabel={p.name}

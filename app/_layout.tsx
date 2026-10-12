@@ -33,6 +33,7 @@ import { useUserCacheSync } from '@/hooks/useUserCacheSync';
 import { BRAND } from '@/constants/brand';
 import { authRedirect, needsOnboarding } from '@/lib/onboarding';
 import { installWebAlert } from '@/lib/dialogs';
+import { afterFirstData } from '@/lib/idleQueue';
 import { initMonitoring } from '@/lib/monitoring';
 import { persistOptions, queryClient } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
@@ -260,7 +261,10 @@ export default function RootLayout() {
   // export preloads the first-paint faces and the rest load after.
   const [fontsLoaded] = useFonts(Platform.OS === 'web' ? FIRST_PAINT_FONTS : APP_FONTS);
   useEffect(() => {
-    if (Platform.OS === 'web') loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
+    if (Platform.OS !== 'web') return;
+    // ~0.75 MB of faces the first screen rarely needs: after its data, so a slow
+    // connection fetches that first (RAIL load). Text uses a fallback till then.
+    return afterFirstData(queryClient, () => void loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e)));
   }, []);
   if (!fontsLoaded && Platform.OS !== 'web') { return null; }
   return (

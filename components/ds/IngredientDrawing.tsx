@@ -8,38 +8,40 @@ import { paintProduce } from '@/lib/sketch/produce';
 import type { Scene } from '@/lib/sketch/scene';
 
 import { SceneSvg, type SketchDetail } from './SketchDrawing';
-
-const PAPER: Scene = { size: 512, els: [] };
+import { useScene } from './useScene';
 
 // Painted once per ingredient, kinds and detail, then reused by every tile.
+// ponytail: unbounded, but a session sees a few hundred ingredients at most; add an LRU if that changes
 const scenes = new Map<string, Scene>();
+const keyFor = (names: string[], role: string | null, seed: string, detail: SketchDetail) => `${seed}|${detail}|${role}|${names.join('>')}`;
+function paint(names: string[], role: string | null, seed: string, detail: SketchDetail): Scene {
+  const art = ingredientArt(names, role, seed);
+  return art.kind === 'bottle' ? paintBottle(art.inputs, { seed, detail }) : paintProduce(art.inputs, { seed, detail });
+}
 function sceneFor(names: string[], role: string | null, seed: string, detail: SketchDetail): Scene {
-  const key = `${seed}|${detail}|${role}|${names.join('>')}`;
+  const key = keyFor(names, role, seed, detail);
   let scene = scenes.get(key);
-  if (!scene) {
-    const art = ingredientArt(names, role, seed);
-    scene = art.kind === 'bottle' ? paintBottle(art.inputs, { seed, detail }) : paintProduce(art.inputs, { seed, detail });
-    // ponytail: unbounded, but a session sees a few hundred ingredients at most; add an LRU if that changes
-    scenes.set(key, scene);
-  }
+  if (!scene) scenes.set(key, (scene = paint(names, role, seed, detail)));
   return scene;
 }
 
-type Props = { id?: string | null; name: string; detail?: SketchDetail };
+type Props = { id?: string | null; name: string; detail?: SketchDetail; lazy?: boolean };
 
-function Loaded({ id, name, detail = 'full' }: Props) {
+function Loaded({ id, name, detail = 'full', lazy = detail === 'thumb' }: Props) {
   const chain = useIngredientChain(id).data;
-  // Blank paper while the kinds load, so a drawing never swaps for another.
-  if (id && !chain) return <SceneSvg scene={PAPER} />;
   const names = chain?.names.length ? chain.names : [name];
-  return <SceneSvg scene={sceneFor(names, chain?.role ?? null, id ?? name, detail)} />;
+  const role = chain?.role ?? null;
+  // Blank paper while the kinds load (a null key), so a drawing never swaps for another.
+  const key = id && !chain ? null : keyFor(names, role, id ?? name, detail);
+  return <SceneSvg scene={useScene(scenes, key, lazy, () => paint(names, role, id ?? name, detail))} />;
 }
 
 /**
  * An ingredient drawn in the house hand: a bottle, a jar or a small still
  * life, picked from its name and the kinds above it. Without an id (a typed
  * name not in the catalog), or outside a query client (the gallery, isolated
- * tests), it draws from the name alone. Decorative.
+ * tests), it draws from the name alone. Decorative. `lazy` (thumbs, and tiles
+ * in a grid) paints when the app is idle, on blank paper till then.
  */
 export const IngredientDrawing = memo(function IngredientDrawing(props: Props) {
   if (!useContext(QueryClientContext)) return <SceneSvg scene={sceneFor([props.name], null, props.id ?? props.name, props.detail ?? 'full')} />;

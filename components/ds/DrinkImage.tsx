@@ -73,7 +73,7 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
       style={[styles.frame, { aspectRatio: aspectRatio || undefined, borderRadius, backgroundColor: (uri && placeholderColor) || ds.c.paper }, style]}
     >
       {ingredient ? (
-        <IngredientDrawing id={ingredient.id} name={ingredient.name} />
+        <IngredientDrawing id={ingredient.id} name={ingredient.name} lazy={thumb} />
       ) : uri ? (
         // Memory and disk: lists scroll the same pictures back into view. The
         // recycling key blanks a recycled list cell instead of flashing its last drink.

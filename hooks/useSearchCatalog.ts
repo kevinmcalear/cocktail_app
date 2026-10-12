@@ -4,7 +4,7 @@ import { useCocktails } from '@/hooks/useCocktails';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useAllIngredients, useDropdowns } from '@/hooks/useDropdowns';
 import { useWines } from '@/hooks/useWines';
-import { inSelectedContext } from '@/lib/barContextFilter';
+import { inSelectedContext, PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { draftMethodIds } from '@/lib/drinkMethods';
 import { batchedDrinkKey, heroPicture, nameKey, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 import { isHiddenFromSearch } from '@/lib/searchVisibility';
@@ -66,12 +66,19 @@ function draftDisplayName(d: { entity_type: string; draft_data?: any }) {
  * Pass a stable array, since it's a memo dependency.
  */
 export function useSearchCatalog(selectedContextIds: string[]) {
-  // ponytail: fetch all contexts once, filter client-side so venue toggles are instant
-  const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails();
-  const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers();
-  const { data: winesData, isLoading: winesLoading, error: winesError } = useWines();
+  // At venues, only their rows: a venue's few hundred instead of the whole
+  // ~30,000-row catalog (saved between launches, so the Library paints at
+  // once). No venues yet (still loading) asks for nothing. Your own drinks at
+  // home are the catalog's bar-less rows, so home still reads the whole lists.
+  const barIds = useMemo(
+    () => (selectedContextIds.includes(PERSONAL_CONTEXT) ? undefined : selectedContextIds),
+    [selectedContextIds]
+  );
+  const { data: cocktailsData, isLoading: cocktailsLoading, error: cocktailsError } = useCocktails(barIds);
+  const { data: beersData, isLoading: beersLoading, error: beersError } = useBeers(barIds);
+  const { data: winesData, isLoading: winesLoading, error: winesError } = useWines(barIds);
   const { data: ingredientsData, isLoading: ingredientsLoading, error: ingredientsError } =
-    useAllIngredients();
+    useAllIngredients({ barIds });
   const { data: dropdowns, isLoading: menusLoading } = useDropdowns({ menus: true });
   const { drafts, isLoading: draftsLoading } = useDrafts();
 
@@ -193,6 +200,7 @@ export function useSearchCatalog(selectedContextIds: string[]) {
   ]);
 
   const isLoading =
+    selectedContextIds.length === 0 ||
     cocktailsLoading ||
     beersLoading ||
     winesLoading ||

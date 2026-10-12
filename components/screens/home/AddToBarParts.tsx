@@ -31,7 +31,7 @@ export function IdeaTile({ item, has, onToggle }: { item: FoundItem; has: boolea
       name={item.name}
       meta={has ? onLine : foundLine(item)}
       metaTone={has ? 'accent' : 'muted'}
-      picture={<IngredientDrawing id={item.id} name={item.name} />}
+      picture={<IngredientDrawing id={item.id} name={item.name} lazy />}
       role="checkbox"
       checked={has}
       accessibilityLabel={item.name}
@@ -100,7 +100,7 @@ export function KitResults({ query, cols }: { query: string; cols: number }) {
                 name={e.name}
                 meta={has ? 'You have it' : null}
                 metaTone="accent"
-                picture={<EquipmentDrawing id={e.id} />}
+                picture={<EquipmentDrawing id={e.id} lazy />}
                 role="checkbox"
                 checked={has}
                 accessibilityLabel={e.name}

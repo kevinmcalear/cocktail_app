@@ -6,15 +6,20 @@ import type { Scene, SceneEl } from '@/lib/sketch/scene';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 import { useDs } from './theme';
+import { useScene } from './useScene';
 
 export type SketchDetail = 'full' | 'thumb';
 
 // Painted once per drink and detail, then reused while the inputs object is
 // the same (TanStack Query keeps it stable until the row changes).
 const scenes = new WeakMap<SketchInputs, Map<string, Scene>>();
-export function sceneFor(inputs: SketchInputs, seed: string, detail: SketchDetail, bands = false): Scene {
+function scenesOf(inputs: SketchInputs) {
   let byKey = scenes.get(inputs);
   if (!byKey) scenes.set(inputs, (byKey = new Map()));
+  return byKey;
+}
+export function sceneFor(inputs: SketchInputs, seed: string, detail: SketchDetail, bands = false): Scene {
+  const byKey = scenesOf(inputs);
   const key = `${seed}|${detail}|${bands}`;
   let scene = byKey.get(key);
   if (!scene) byKey.set(key, (scene = paintSketch(inputs, { seed, detail, bands })));
@@ -100,7 +105,8 @@ export interface SketchDrawingProps {
  * it carries the label.
  */
 export const SketchDrawing = memo(function SketchDrawing({ inputs, seed, detail = 'full' }: SketchDrawingProps) {
-  return <SceneSvg scene={sceneFor(inputs, seed, detail)} />;
+  const scene = useScene(scenesOf(inputs), `${seed}|${detail}|false`, detail === 'thumb', () => paintSketch(inputs, { seed, detail, bands: false }));
+  return <SceneSvg scene={scene} />;
 });
 
 /** Any painted scene (a drink, a bottle, a still life) on the house paper, fitted inside its frame. */

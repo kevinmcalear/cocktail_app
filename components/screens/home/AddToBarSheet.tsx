@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useRef, useState, type ComponentRef } from 'react';
+import { useDeferredValue, useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, Field, FieldButton, IngredientThumb } from '@/components/ds';
@@ -73,6 +73,9 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
     const items = rows.filter((r) => r.section === section);
     return items.length ? [{ section, items }] : [];
   });
+  // The sheet answers the tap at once; its tiles render just after, in the
+  // background (RAIL: a tap shows something within 100 ms).
+  const filled = useDeferredValue(visible);
   // While typing, each chip counts its matches; otherwise what's on the bar.
   const all = typed && filter !== 'kit' ? (found.data ?? []) : null;
   const chipCounts = all ? Object.fromEntries(ORDER.map((sec) => [sec, all.filter((r) => r.section === sec).length])) : counts;
@@ -114,7 +117,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
       <SectionChips sections={SHELF_SECTIONS} counts={chipCounts} total={total || undefined} picked={filter === 'all' ? [] : [filter]} onPick={onFilter} bleed={space.xl} />
       <View style={styles.results}>
         <Caption tone="muted">{BLURBS[filter]}</Caption>
-        {filter === 'kit' ? (
+        {!filled ? null : filter === 'kit' ? (
           <KitResults query={typed} cols={cols} />
         ) : !typed ? (
           <View style={styles.group}>

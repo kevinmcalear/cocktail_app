@@ -90,7 +90,7 @@ export function ShelfTile({ item, meta, metaTone = 'muted', editing, onRemove, o
       name={item.name}
       meta={line}
       metaTone={metaTone}
-      picture={<IngredientDrawing id={item.id} name={item.name} />}
+      picture={<IngredientDrawing id={item.id} name={item.name} lazy />}
       role={editing ? 'button' : 'link'}
       accessibilityLabel={editing ? `Take ${item.name} off your bar` : [item.name, line].filter(Boolean).join(', ')}
       badge={editing ? 'remove' : null}
@@ -175,7 +175,7 @@ export function KitSection({ owned, opens, cols, editing, onEdit, onToggle, onAd
             name={e.name}
             meta={opens[e.id] ? `Opens ${opens[e.id]} ${opens[e.id] === 1 ? 'project' : 'projects'}` : kindName(e.kind)}
             metaTone={opens[e.id] ? 'ink' : 'muted'}
-            picture={<EquipmentDrawing id={e.id} />}
+            picture={<EquipmentDrawing id={e.id} lazy />}
             role={editing ? 'button' : 'link'}
             accessibilityLabel={editing ? `Take ${e.name} out of your kit` : e.name}
             badge={editing ? 'remove' : null}
@@ -184,7 +184,7 @@ export function KitSection({ owned, opens, cols, editing, onEdit, onToggle, onAd
           />
         ))}
         {ideas.map((e) => (
-          <BarTile key={e.id} name={e.name} meta="Tap if you have it" picture={<EquipmentDrawing id={e.id} />} role="button" accessibilityLabel={`I have ${e.name}`} ghost badge="plus" onPress={() => onToggle(e.id)} />
+          <BarTile key={e.id} name={e.name} meta="Tap if you have it" picture={<EquipmentDrawing id={e.id} lazy />} role="button" accessibilityLabel={`I have ${e.name}`} ghost badge="plus" onPress={() => onToggle(e.id)} />
         ))}
       </TileGrid>
       <PressableScale role="link" onPress={() => router.push('/equipment' as never)} style={styles.link}>

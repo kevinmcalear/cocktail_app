@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { QueryClient } from '@tanstack/react-query';
 
 import { PERSISTED_KEYS } from './queryCachePersist';
-import { BASE, GC_TIME, KEEP, queryDefaults } from './queryDefaults';
+import { BASE, GC_TIME, KEEP, queryDefaults, venueListOptions } from './queryDefaults';
 
 const MIN = 60_000;
 const client = new QueryClient({ defaultOptions: { queries: { ...BASE } } });
@@ -25,11 +25,12 @@ assert.deepEqual(opts(['cocktail', 'id', null]), { staleTime: 10 * MIN, gcTime: 
 assert.deepEqual(opts(['bars', 'u1']), { staleTime: 60 * MIN, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['profile', 'mine', 'u1']), { staleTime: 60 * MIN, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['profile', { id: 'p' }, 'u1']), { staleTime: 10 * MIN, gcTime: GC_TIME, focus: false });
-assert.deepEqual(opts(['menus-v2', 'venue-2', 'b1']), { staleTime: 15 * MIN, gcTime: KEEP, focus: true });
+assert.deepEqual(opts(['menus-v2', 'venue-5', 'b1']), { staleTime: 15 * MIN, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['menus-v2', 'detail', 'm1']), { staleTime: 15 * MIN, gcTime: GC_TIME, focus: true });
 assert.deepEqual(opts(['dropdowns_v7', 'current_menu_drinks', 'with-glass', ['m']]), { staleTime: 15 * MIN, gcTime: KEEP, focus: true });
 // Live: half a minute, refetched on return.
-assert.deepEqual(opts(['drafts', 'u1']), { staleTime: 30_000, gcTime: GC_TIME, focus: true });
+// Drafts are saved (the Library paints from them), so kept a week; still refetched at once.
+assert.deepEqual(opts(['drafts', 'u1']), { staleTime: 30_000, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['profile-claims', 'pending']), { staleTime: 30_000, gcTime: GC_TIME, focus: true });
 // Discover keeps its own options; only what it saves stays a week.
 assert.deepEqual(opts(['discover-list', 'x']), { staleTime: 5 * MIN, gcTime: KEEP, focus: false });
@@ -38,5 +39,10 @@ assert.deepEqual(opts(['bar-cities']), { staleTime: 60 * MIN, gcTime: KEEP, focu
 
 // Every saved prefix is kept as long as the saved cache.
 for (const key of PERSISTED_KEYS) assert.equal(opts([...key, 'x']).gcTime, KEEP, key.join('/'));
+
+// The Library's venue lists: saved, kept, 5 minutes fresh; nothing until a venue is known.
+assert.deepEqual(venueListOptions(['b1']), { enabled: true, meta: { persist: true }, gcTime: KEEP, staleTime: 5 * MIN });
+assert.equal(venueListOptions([]).enabled, false);
+assert.deepEqual(venueListOptions(undefined), {});
 
 console.log('queryDefaults: ok');

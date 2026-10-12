@@ -57,7 +57,7 @@ export function PantrySection({ items, extras, shelf, onShelf, cols, editing, on
           return item ? (
             <ShelfTile key={s.id} item={{ ...item, name: s.label }} editing={editing} onRemove={onRemove} onHold={() => onEdit(true)} />
           ) : (
-            <BarTile key={s.id} name={s.label} picture={<IngredientDrawing id={s.id} name={s.name} />} role="button" accessibilityLabel={`Take ${s.label} off your bar`} badge={editing ? 'remove' : null} onPress={() => onRemove(s.id)} />
+            <BarTile key={s.id} name={s.label} picture={<IngredientDrawing id={s.id} name={s.name} lazy />} role="button" accessibilityLabel={`Take ${s.label} off your bar`} badge={editing ? 'remove' : null} onPress={() => onRemove(s.id)} />
           );
         })}
         {extras.map((x) => (
@@ -70,7 +70,7 @@ export function PantrySection({ items, extras, shelf, onShelf, cols, editing, on
                 key={s.id}
                 name={s.label}
                 meta="Tap if you keep it"
-                picture={<IngredientDrawing id={s.id} name={s.name} />}
+                picture={<IngredientDrawing id={s.id} name={s.name} lazy />}
                 role="button"
                 accessibilityLabel={`I keep ${s.label}`}
                 ghost
