@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, sectionRule } from './menus';
+import { cardWhen, EMPTY_PLAN, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -33,7 +33,7 @@ assert.equal(menuDateLine({ startsAt: null, endsAt: null, menuDate: '2026-10-04'
 // --- grouping and order ---
 const menu = (id: string, startsAt: string | null, endsAt: string | null, createdAt = '2026-01-01T00:00:00Z'): MenuSummary => ({
   id, name: id, barId: 'bar', createdBy: null, coverUrl: null, coverPosition: 50,
-  startsAt: startsAt && d(startsAt), endsAt: endsAt && d(endsAt), createdAt: d(createdAt), menuDate: null, guestCount: null, sharedAt: null, kind: 'menu', itemIds: [], pictures: [], event: null,
+  startsAt: startsAt && d(startsAt), endsAt: endsAt && d(endsAt), createdAt: d(createdAt), menuDate: null, guestCount: null, sharedAt: null, kind: 'menu', updatedAt: d(createdAt), description: null, plannedStartsAt: null, plannedEndsAt: null, itemIds: [], shortSections: 0, pictures: [], event: null,
 });
 const groups = groupMenus(
   [
@@ -130,3 +130,67 @@ console.log('menus: ok');
 // --- a cocktail's menu line: spec order, each ingredient once ---
 assert.equal(ingredientLine(['Fernet-Branca', 'Heavy Cream', 'Coffee Liqueur', 'heavy cream ', null, '']), 'Fernet-Branca, Heavy Cream, Coffee Liqueur');
 assert.equal(ingredientLine([]), '');
+
+{
+  assert.deepEqual([...newDrinkIds(['a', 'b', 'c'], [{ itemIds: ['b'] }, { itemIds: ['c'] }])], ['a']);
+  const thu = new Date(2025, 8, 25, 19);
+  assert.equal(tonightLine(thu, [{ name: 'Autumn menu' }], 8, 'en-GB'), `${thu.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} · Autumn menu · 8 drinks`);
+  assert.equal(tonightLine(thu, [{ name: 'A' }, { name: 'B' }], 12, 'en-GB').endsWith(' · 2 menus on · 12 drinks'), true);
+  assert.equal(tonightLine(thu, [], 0, 'en-GB').includes('·'), false);
+  assert.equal(dotLine('Gin, dry vermouth, orange bitters'), 'Gin · dry vermouth · orange bitters');
+}
+
+{
+  const now = new Date(2026, 9, 11, 15).getTime();
+  const at = (d: number, h = 12) => new Date(2026, 9, d, h).toISOString();
+  assert.equal(editedWhen(new Date(now - 5 * 60_000).toISOString(), now), 'edited just now');
+  assert.equal(editedWhen(at(11, 9), now), 'edited today');
+  assert.equal(editedWhen(at(10), now), 'edited yesterday');
+  assert.equal(editedWhen(at(8), now), 'edited 3 days ago');
+  assert.match(editedWhen(at(1), now, 'en-GB'), /^edited 1 Oct/);
+  assert.equal(draftLine({ itemIds: ['a', 'b'], updatedAt: at(10), shortSections: 1 }, now), '1 section short · edited yesterday');
+  assert.equal(draftLine({ itemIds: ['a', 'b'], updatedAt: at(10), shortSections: 0 }, now), '2 drinks · edited yesterday');
+  assert.equal(draftLine({ itemIds: [], updatedAt: at(10), shortSections: 0 }, now), 'No drinks yet · edited yesterday');
+  assert.ok(isOneNightRun('2026-10-31T18:00:00Z', '2026-11-01T02:00:00Z'));
+  assert.ok(!isOneNightRun('2026-10-31T18:00:00Z', '2026-11-03T02:00:00Z'));
+  assert.ok(isOneNightMenu({ startsAt: null, endsAt: null, plannedStartsAt: '2026-10-31T18:00:00Z', plannedEndsAt: '2026-11-01T02:00:00Z', kind: 'menu' }));
+  assert.ok(!isOneNightMenu({ startsAt: null, endsAt: null, plannedStartsAt: '2026-10-31T18:00:00Z', plannedEndsAt: '2026-11-01T02:00:00Z', kind: 'rnd' }));
+  const fri = new Date(2026, 9, 31, 18).toISOString();
+  const night = comingUpLine({ startsAt: fri, endsAt: new Date(2026, 10, 1, 2).toISOString(), menuDate: null, itemIds: ['a', 'b', 'c', 'd'], event: null, guestCount: null }, 'en-GB');
+  assert.match(night, /^One night · 4 drinks · Sat 31 Oct$|^One night · 4 drinks · Fri 31 Oct$/);
+  const takeover = comingUpLine({ startsAt: fri, endsAt: null, menuDate: null, itemIds: ['a'], event: { id: 'e', name: 'Pale Moth', startsAt: fri }, guestCount: null }, 'en-GB');
+  assert.match(takeover, /^Takeover · 1 drink · from /);
+  assert.equal(previousLine({ startsAt: new Date(2026, 5, 3).toISOString(), endsAt: new Date(2026, 7, 31).toISOString(), itemIds: ['a', 'b', 'a'] }, 'en-GB'), '3 Jun to 31 Aug · 2');
+}
+
+{
+  const any = ['cocktail', 'beer', 'wine'];
+  assert.deepEqual(sectionLine({ allowedTypes: any, minItems: 0, maxItems: null, drinks: [1, 2, 3] }), { text: 'Any drink · 3 in', problem: false });
+  assert.deepEqual(sectionLine({ allowedTypes: any, minItems: 2, maxItems: 3, drinks: [1] }), { text: '2 to 3 drinks · 1 in · needs one more', problem: true });
+  assert.deepEqual(sectionLine({ allowedTypes: ['beer'], minItems: 0, maxItems: 2, drinks: [1, 2, 3] }), { text: 'Beer · up to 2 · 3 in · 1 too many', problem: true });
+}
+
+{
+  const base = { startsAt: null, endsAt: null, menuDate: null, plannedStartsAt: null, plannedEndsAt: null };
+  assert.equal(cardWhen(base), null);
+  assert.equal(cardWhen({ ...base, menuDate: '2026-10-31' }, 'en-GB'), 'Saturday 31 October');
+  assert.equal(cardWhen({ ...base, plannedStartsAt: new Date(2026, 9, 31, 18).toISOString(), plannedEndsAt: new Date(2026, 10, 1, 2).toISOString() }, 'en-GB'), 'Saturday 31 October');
+  assert.equal(cardWhen({ ...base, startsAt: new Date(2026, 11, 1, 6).toISOString() }, 'en-GB'), 'From Tue 1 December');
+}
+
+{
+  assert.deepEqual(venuePlan(EMPTY_PLAN), { plannedStartsAt: null, plannedEndsAt: null });
+  assert.deepEqual(venuePlan({ kind: 'run', date: '', time: '' }), { error: 'Pick a day.' });
+  const night = venuePlan({ kind: 'night', date: '2026-10-31', time: '18:00' });
+  assert.ok(!('error' in night));
+  if (!('error' in night)) {
+    assert.equal(new Date(night.plannedStartsAt!).getHours(), 18);
+    assert.ok(isOneNightRun(night.plannedStartsAt, night.plannedEndsAt), 'a night is one night');
+    assert.equal(new Date(night.plannedEndsAt!).getDate(), 1);
+  }
+  const late = venuePlan({ kind: 'night', date: '2026-10-31', time: '01:00' });
+  if (!('error' in late)) assert.equal(new Date(late.plannedEndsAt!).getDate(), 31, 'a night from 1am ends that morning');
+  const run = venuePlan({ kind: 'run', date: '2026-12-01', time: '' });
+  if (!('error' in run)) assert.equal(run.plannedEndsAt, null);
+  assert.match(nightLine(new Date(2026, 9, 31, 18).toISOString(), 'en-US'), /^Saturday, October 31, from 6 pm$/);
+}

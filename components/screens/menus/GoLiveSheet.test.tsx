@@ -8,6 +8,7 @@ import { GoLiveSheet } from './GoLiveSheet';
 
 const MockView = View;
 const mockSchedule = jest.fn();
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/useMenuMutations', () => ({ useScheduleMenu: () => ({ mutateAsync: mockSchedule, isPending: false }) }));
 jest.mock('expo-image', () => ({ Image: () => <MockView /> }));
 jest.mock('@/components/ds/DrawnSketch', () => ({ DrawnSketch: () => null }));

@@ -41,3 +41,12 @@ test('with pictures off, the card is names and lines only', async () => {
   expect(screen.queryByText(/Drawn from each drink/)).toBeNull();
   expect(screen.getByText('Americano')).toBeTruthy();
 });
+
+test('page rows: NEW after a new drink, the price at the row end, counts in the section head', async () => {
+  const priced = [{ ...sections[0], drinks: [{ ...sections[0].drinks[0], price: '18' }, sections[0].drinks[1]] }];
+  await renderWithTamagui(<MenuSections sections={priced} variant="page" newIds={new Set(['d2'])} />);
+  expect(screen.getAllByText('NEW')).toHaveLength(1);
+  expect(screen.getByLabelText('Pellican, new, Gin, vermouth')).toBeTruthy();
+  expect(screen.getByText('18')).toBeTruthy();
+  expect(screen.getByText('2')).toBeTruthy();
+});

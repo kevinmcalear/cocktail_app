@@ -37,7 +37,8 @@ export function MenuVisual({ name, coverUrl, coverPosition = 50, pictures, heigh
         <Image source={{ uri: coverUrl }} contentFit="cover" contentPosition={{ top: `${coverPosition}%`, left: '50%' }} style={styles.fill} />
       ) : (
         shown.map((p, i) => (
-          <View key={p.id} style={[styles.tile, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderColor: ds.c.ground }]}>
+          // Faint ink dividers on the paper, and none under a fade (they ran on as dark lines through the title).
+          <View key={p.id} style={[styles.tile, i > 0 && !fade && { borderLeftWidth: StyleSheet.hairlineWidth, borderColor: withAlpha(ds.c.sketchInk, 0.18) }]}>
             <DrinkImage
               source={p.imageUrl}
               generated={p.isSketch}
@@ -49,7 +50,14 @@ export function MenuVisual({ name, coverUrl, coverPosition = 50, pictures, heigh
           </View>
         ))
       )}
-      {fade ? <LinearGradient colors={[withAlpha(ds.c.ground, 0.35), withAlpha(ds.c.ground, 0), ds.c.ground]} locations={[0, 0.4, 1]} style={styles.fill} /> : null}
+      {/* The board's stops (venue-menus-menu): a light shade for the top buttons, clear through the middle, then the page. */}
+      {fade ? (
+        <LinearGradient
+          colors={[withAlpha(ds.c.ground, 0.45), withAlpha(ds.c.ground, 0), withAlpha(ds.c.ground, 0), ds.c.ground]}
+          locations={[0, 0.26, 0.5, 1]}
+          style={styles.fill}
+        />
+      ) : null}
     </View>
   );
 }

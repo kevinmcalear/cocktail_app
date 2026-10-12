@@ -9,7 +9,7 @@ import { normalizeAllowedTypes, type SectionDrinkType } from '@/lib/sectionAllow
 import { supabase } from '@/lib/supabase';
 import type { MenuDetail, MenuDrink, MenuSummary } from '@/types/menus';
 
-const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, starts_at, ends_at, created_at, menu_date, guest_count, shared_at, kind';
+const MENU_COLUMNS = 'id, name, bar_id, created_by, cover_url, cover_position, starts_at, ends_at, created_at, menu_date, guest_count, shared_at, kind, updated_at, description, planned_starts_at, planned_ends_at';
 
 interface MenuRow {
   id: string;
@@ -25,6 +25,10 @@ interface MenuRow {
   guest_count: number | null;
   shared_at: string | null;
   kind: string | null;
+  updated_at: string | null;
+  description: string | null;
+  planned_starts_at: string | null;
+  planned_ends_at: string | null;
 }
 
 const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
@@ -44,6 +48,10 @@ function toSummaryBase(row: MenuRow) {
     guestCount: row.guest_count,
     sharedAt: row.shared_at,
     kind: row.kind === 'rnd' ? ('rnd' as const) : ('menu' as const),
+    updatedAt: row.updated_at ?? row.created_at,
+    description: row.description ?? null,
+    plannedStartsAt: row.planned_starts_at ?? null,
+    plannedEndsAt: row.planned_ends_at ?? null,
   };
 }
 
@@ -55,8 +63,8 @@ type PictureItem = { id: string; name: string; item_images: ItemImageLink[] | It
 /** Query keys, for invalidating after a write. */
 export const menuKeys = {
   all: ['menus-v2'] as const,
-  // 'venue-3': summaries gained kind, so a persisted older list isn't read back.
-  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-3', barId, userId] as const,
+  // 'venue-5': summaries gained updatedAt, description, the plan and shortSections, so a persisted older list isn't read back.
+  venue: (barId: string | null, userId: string | null) => ['menus-v2', 'venue-5', barId, userId] as const,
   detail: (menuId: string) => ['menus-v2', 'detail', menuId] as const,
 };
 
@@ -80,7 +88,7 @@ export function useVenueMenus(barId: string | null | undefined) {
         // Every drink's id (Library's "on a menu" filter), but pictures for
         // only the first few: a cover-less menu's visual shows MENU_PICTURES.
         .select(
-          `${MENU_COLUMNS}, menu_drinks(item_id), pictured:menu_drinks(sort_order, item:items!item_id(id, name, item_images(angle, sort_order, is_generated, images(url)))), events(id, name, starts_at)`
+          `${MENU_COLUMNS}, menu_drinks(item_id), pictured:menu_drinks(sort_order, item:items!item_id(id, name, item_images(angle, sort_order, is_generated, images(url)))), events(id, name, starts_at), menu_sections(min_items, menu_drinks(count))`
         )
         .or(scope)
         .order('created_at', { ascending: false })
@@ -94,6 +102,10 @@ export function useVenueMenus(barId: string | null | undefined) {
         return {
           ...toSummaryBase(row as MenuRow),
           itemIds: (row.menu_drinks ?? []).map((d) => d.item_id).filter((id): id is string => !!id),
+          // Sections still short of their least: a draft's amber "1 section short".
+          shortSections: ((row.menu_sections ?? []) as { min_items: number | null; menu_drinks: { count: number }[] }[]).filter(
+            (sec) => (sec.min_items ?? 0) > (sec.menu_drinks?.[0]?.count ?? 0)
+          ).length,
           pictures: drinks.flatMap((d) => {
             const item = one(d.item);
             if (!item) return [];
@@ -155,7 +167,7 @@ export function publishedMenuDrink(p: PublishedDrink): MenuDrink | null {
 export const MENU_DRINK_COLUMNS = `id, name, item_type, description, brand_maker, origin, price, glass:glassware_id(icon_key, name),
   item_images(angle, sort_order, is_generated, images(url)),
   recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name))`;
-const MENU_DRINK_ITEM = `item:items!item_id(${MENU_DRINK_COLUMNS})`;
+export const MENU_DRINK_ITEM = `item:items!item_id(${MENU_DRINK_COLUMNS})`;
 
 /**
  * One menu with its sections in order and each section's drinks in order.
