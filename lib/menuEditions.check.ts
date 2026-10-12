@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 
 import {
+  drinkRunTags,
   drinkMenuCard,
   editionDates,
   editionDrinkLine,
@@ -90,5 +91,14 @@ assert.deepEqual(searchMenuTag(run(2024, 3, 2025, 1)), { onNow: false, past: 'Pa
 assert.equal(searchMenuTag(run(2019, null, null, null)), undefined);
 assert.equal(searchMenuTag(null), undefined);
 assert.deepEqual([run(2025, 9, null, null, true), null, run(2019, null, null, null), run(2024, 3, 2025, 1)].map(menuOrder), [0, 1, 1, 2]);
+
+// Each drink's latest run on a bar's menus.
+const edition = (id: string, year: number, end: number | null, current: boolean, drinks: string[]) => ({
+  id, name: id, year, month: 1, end_year: end, end_month: end ? 6 : null, is_current: current, theme: null, source_url: null, drinks: drinks.map((d) => ({ id: d, name: d })),
+});
+assert.deepEqual(
+  drinkRunTags([edition('old', 2022, 2023, false, ['a', 'b']), edition('mid', 2024, 2025, false, ['b']), edition('now', 2025, null, true, ['c', 'a']), edition('lost', 2019, null, false, ['d'])]),
+  { c: 'on now', a: 'on now', b: 'Past · Jan 2024 to Jun 2025' }
+);
 
 console.log('menu editions checks passed');

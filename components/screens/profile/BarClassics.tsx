@@ -1,7 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, PressableScale } from '@/components/ds';
+import { Body, Button, Caption, Headline, PressableScale } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { usePublicClassics, type PublicClassic } from '@/hooks/useStaffList';
 import { patronGroups } from '@/lib/staffList';
@@ -12,8 +13,20 @@ import { patronGroups } from '@/lib/staffList';
  */
 export function BarClassics({ barId }: { barId: string | null }) {
   const classics = usePublicClassics(barId);
+  // Under Originals the list starts at its top ten, with the rest a tap away (ppl-bar-originals).
+  const [all, setAll] = useState(false);
   if (!barId || classics.isLoading || classics.error || !classics.data?.length) return null;
   const groups = patronGroups(classics.data);
+  const first = groups.top10.length ? groups.top10 : groups.top50.length ? groups.top50 : groups.also;
+  const more = classics.data.length - first.length;
+  if (!all && more > 0) {
+    return (
+      <View style={styles.block}>
+        <Group title={groups.top10.length ? 'Classics they pour · Top 10' : 'Classics they pour'} hint="The classic spec, with their bottles" rows={first} />
+        <Button label={`All ${classics.data.length} classics`} variant="secondary" onPress={() => setAll(true)} style={styles.start} />
+      </View>
+    );
+  }
   return (
     <View style={styles.block}>
       <Group title="Top 10" hint="The ones to ask for first" rows={groups.top10} />
@@ -64,4 +77,5 @@ const styles = StyleSheet.create({
   block: { gap: space.xl },
   group: { gap: space.sm },
   row: { gap: space.xs, paddingVertical: space.xs },
+  start: { alignSelf: 'flex-start' },
 });

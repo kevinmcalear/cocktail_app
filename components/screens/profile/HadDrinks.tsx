@@ -2,11 +2,10 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DrinkImage, DsText, PalateFlower, PressableScale, Spec } from '@/components/ds';
+import { Body, Button, Caption, Chip, RowScore } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
-import { useItemFlavors } from '@/hooks/useFlavor';
-import { favourites, hasDates, sortHad, whereLine, type BarTally, type HadDrink, type HadSort } from '@/lib/hadDrinks';
+import { hasDates, sortHad, whereLine, type BarTally, type HadDrink, type HadSort } from '@/lib/hadDrinks';
 import { itemHref } from '@/lib/itemRoutes';
 import { plural } from '@/lib/menus';
 import { dayOf, formatScore } from '@/lib/ranking';
@@ -16,41 +15,6 @@ import { RankRow } from '../rankings/RankingLists';
 const MONTH_YEAR = new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' });
 const href = (d: HadDrink) => itemHref('Cocktail', d.itemId);
 
-/**
- * The drinks they loved most, as tiles: the picture, the score, and where.
- * Or the four they picked, in their order (picked).
- */
-export function Favourites({ drinks, columns, picked }: { drinks: HadDrink[]; columns: number; picked?: HadDrink[] }) {
-  const router = useRouter();
-  // Two rows on a phone, one on wider screens.
-  const top = picked?.length ? picked : favourites(drinks, columns === 2 ? 4 : columns);
-  if (!top.length) return null;
-  return (
-    <View role="list" style={styles.grid}>
-      {top.map((d) => (
-        <PressableScale
-          key={d.id}
-          role="link"
-          accessibilityLabel={`${d.name}, ${whereLine(d)}. Score ${formatScore(d.score)}`}
-          onPress={() => router.push(href(d) as Href)}
-          style={[styles.tile, { width: `${100 / columns}%` }]}
-        >
-          <DrinkImage thumb source={d.imageUrl} generated={d.isSketch} itemId={d.itemId} accessibilityLabel={d.name} />
-          <DsText variant="headline" numberOfLines={2}>
-            {d.name}
-          </DsText>
-          <View style={styles.tileScore}>
-            <Spec>{formatScore(d.score)}</Spec>
-            <Caption tone="muted" numberOfLines={1} style={styles.flex}>
-              {whereLine(d)}
-            </Caption>
-          </View>
-        </PressableScale>
-      ))}
-    </View>
-  );
-}
-
 const SORTS: { value: HadSort; label: string }[] = [
   { value: 'score', label: 'Top scored' },
   { value: 'recent', label: 'Latest' },
@@ -59,7 +23,6 @@ const SORTS: { value: HadSort; label: string }[] = [
 /** Every drink they've had, each with its score: best first, or latest first. */
 export function HadList({ drinks }: { drinks: HadDrink[] }) {
   const [sort, setSort] = useState<HadSort>('score');
-  const flavors = useItemFlavors(drinks.map((d) => d.itemId));
   return (
     <View style={styles.section}>
       {/* Nothing to order by when they don't show when they had them. */}
@@ -83,12 +46,7 @@ export function HadList({ drinks }: { drinks: HadDrink[] }) {
                 glass={null}
                 caption={caption}
                 label={`${d.name}. ${caption}. Score ${formatScore(d.score)}`}
-                trailing={
-                  <View style={styles.trailing}>
-                    {flavors.data?.[d.itemId] ? <PalateFlower values={flavors.data[d.itemId]} size={28} rings={false} /> : null}
-                    <Spec>{formatScore(d.score)}</Spec>
-                  </View>
-                }
+                trailing={<RowScore score={d.score} />}
               />
             </View>
           );
@@ -169,11 +127,6 @@ export function SharedDrinks({ name, tab, shared, signedIn, drinks, bars, failed
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, minWidth: 0 },
   section: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space.sm / 2, rowGap: space.lg },
-  tile: { paddingHorizontal: space.sm / 2, gap: space.xs },
-  tileScore: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
-  trailing: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });

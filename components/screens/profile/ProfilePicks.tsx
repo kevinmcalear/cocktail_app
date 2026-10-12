@@ -1,139 +1,210 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Field, useDs } from '@/components/ds';
-import { backbar, space } from '@/constants/tokens';
-import { useMyProfile, useSaveSharing, type MyProfile } from '@/hooks/useMyProfile';
-import { useProfileOriginals, useProfilePicks, useSetPick } from '@/hooks/useProfiles';
-import { useMyHadDrinks, useMyHadPicks, useSetHadPick } from '@/hooks/useRankings';
-import { sortHad, tallyBars, whereLine } from '@/lib/hadDrinks';
+import { Body, Button, Caption, Chip, DrinkImage, DsText, Field, PressableScale, RowScore, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { backbar, layout, radius, space } from '@/constants/tokens';
+import { useMyProfile, type MyProfile } from '@/hooks/useMyProfile';
+import { useMyMadeDrinks, useProfilePicks, useSetPick, useSetPicks } from '@/hooks/useProfiles';
+import { useMyHadDrinks, useMyHadPicks, usePinDrink, useSetAllHadPicks, useSetHadPick } from '@/hooks/useRankings';
+import { sortHad, tallyBars, whereLine, type HadDrink } from '@/lib/hadDrinks';
 import { plural } from '@/lib/menus';
-import { modeSummary, pickedShown, SHARE_MODES, type ShareSection } from '@/lib/profiles';
-import { formatScore } from '@/lib/ranking';
+import { pickedShown, SHARE_MODES, type ShareSection } from '@/lib/profiles';
 
 import { SafetyPage } from '../safety/SafetyPage';
 
 const TITLE: Record<ShareSection, string> = { had: 'Drinks on your profile', bars: 'Bars on your profile', originals: 'Originals on your profile' };
-const INTRO: Record<ShareSection, string> = {
-  had: 'Show or hide each drink you’ve had, and pin up to four to the top of your profile.',
-  bars: 'Show or hide each bar you’ve had drinks at. A bar you hide is never named, even beside a drink.',
-  originals: 'Show or hide each drink you’ve made. Its credit still shows on the drink’s own page.',
-};
+const NOUN: Record<ShareSection, string> = { had: 'drinks', bars: 'bars', originals: 'originals' };
+const FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'shown', label: 'Shown' },
+  { value: 'hidden', label: 'Hidden' },
+] as const;
+const PIN_NOTE = 'Four fit. Pin a fifth and it takes the place of the oldest pin.';
 
 interface Row {
   key: string;
   title: string;
   detail: string;
+  score: number | null;
   pick: boolean | null | undefined;
   pin?: number | null;
+  drink?: HadDrink;
 }
 
-/** Settings › Public profile › Choose: one section's drinks, bars or originals, each with its own switch. */
+/** Settings › Public profile › Choose (ppl-pick): one section's drinks, bars or originals, each with its switch. */
 export function ProfilePicksScreen({ section }: { section: ShareSection }) {
   const { data: profile, isPending } = useMyProfile();
-  return (
-    <SafetyPage title={TITLE[section]} intro={INTRO[section]} backTo="/settings/profile">
-      {isPending ? <Body tone="muted">Loading…</Body> : profile ? <Picks profile={profile} section={section} /> : <Body tone="muted">Make your public profile first.</Body>}
-    </SafetyPage>
-  );
+  if (!profile) {
+    return (
+      <SafetyPage title={TITLE[section]} backTo="/settings/profile">
+        <Body tone="muted">{isPending ? 'Loading…' : 'Make your public profile first.'}</Body>
+      </SafetyPage>
+    );
+  }
+  return <Picks profile={profile} section={section} />;
 }
 
 function Picks({ profile, section }: { profile: MyProfile; section: ShareSection }) {
   const ds = useDs();
   const [search, setSearch] = useState('');
-  const save = useSaveSharing();
-  const mode = save.isPending && save.variables?.mode ? save.variables.mode : profile.sharing[section];
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]['value']>('all');
+  const [note, setNote] = useState(PIN_NOTE);
+  const mode = profile.sharing[section];
+  const modeLabel = SHARE_MODES.find((m) => m.value === mode)?.label ?? 'All';
   const drinks = useMyHadDrinks().data;
   const hadPicks = useMyHadPicks().data ?? {};
   const barPicks = useProfilePicks(section === 'bars' ? profile.id : null, 'bars').data ?? {};
   const madePicks = useProfilePicks(section === 'originals' ? profile.id : null, 'originals').data ?? {};
-  const originals = useProfileOriginals(section === 'originals' ? profile.id : null).data;
+  const made = useMyMadeDrinks(section === 'originals' ? profile.id : null).data;
   const setHad = useSetHadPick();
   const setPick = useSetPick();
-  const error = setHad.error ?? setPick.error;
+  const setAllHad = useSetAllHadPicks();
+  const setPicks = useSetPicks();
+  const pinDrink = usePinDrink();
+  const error = setHad.error ?? setPick.error ?? setAllHad.error ?? setPicks.error ?? pinDrink.error;
 
   const rows: Row[] | undefined =
     section === 'had'
-      ? drinks && sortHad(drinks, 'score').map((d) => ({ key: d.id, title: d.name, detail: `${whereLine(d)} · ${formatScore(d.score)}`, pick: hadPicks[d.id]?.onProfile, pin: hadPicks[d.id]?.pin }))
+      ? drinks && sortHad(drinks, 'score').map((d) => ({ key: d.id, title: d.name, detail: whereLine(d), score: d.score, pick: hadPicks[d.id]?.onProfile, pin: hadPicks[d.id]?.pin, drink: d }))
       : section === 'bars'
         ? drinks &&
-          tallyBars(drinks).flatMap((b) => (b.venue ? [{ key: b.venue.id, title: b.venue.name, detail: `${plural(b.drinks, 'drink')} · ${formatScore(b.average)} average`, pick: barPicks[b.venue.id] }] : []))
-        : originals?.map((o) => ({ key: o.id, title: o.name, detail: o.origin ?? 'Your original', pick: madePicks[o.id] }));
-  const pins = Object.values(hadPicks).flatMap((p) => (p.pin ? [p.pin] : []));
+          tallyBars(drinks).flatMap((b) => (b.venue ? [{ key: b.venue.id, title: b.venue.name, detail: plural(b.drinks, 'drink'), score: b.average, pick: barPicks[b.venue.id] }] : []))
+        : made?.map((o) => ({ key: o.id, title: o.name, detail: o.origin ?? 'Your original', score: null, pick: madePicks[o.id] }));
+  const shownOf = (r: Row) => pickedShown(mode, r.pick);
   const query = search.trim().toLowerCase();
-  const shownRows = rows?.filter((r) => !query || r.title.toLowerCase().includes(query));
+  const visible = rows?.filter((r) => (!query || r.title.toLowerCase().includes(query)) && (filter === 'all' || (filter === 'shown') === shownOf(r)));
+  const shownCount = rows?.filter(shownOf).length ?? 0;
+  const pinned = (rows ?? []).filter((r) => r.pin).sort((a, b) => (a.pin ?? 0) - (b.pin ?? 0));
 
-  const toggle = (r: Row, on: boolean) =>
-    section === 'had' ? setHad.mutate({ id: r.key, onProfile: on, pin: on ? (r.pin ?? null) : null }) : setPick.mutate({ profileId: profile.id, section, targetId: r.key, shown: on });
-  const pin = (r: Row) => {
-    if (r.pin) return setHad.mutate({ id: r.key, onProfile: true, pin: null });
-    const free = [1, 2, 3, 4].find((n) => !pins.includes(n));
-    if (free) setHad.mutate({ id: r.key, onProfile: true, pin: free });
+  const toggle = (r: Row, on: boolean) => {
+    setNote(PIN_NOTE);
+    if (section === 'had') setHad.mutate({ id: r.key, onProfile: on, pin: on ? (r.pin ?? null) : null });
+    else setPick.mutate({ profileId: profile.id, section, targetId: r.key, shown: on });
+  };
+  const pin = (r: Row) =>
+    pinDrink.mutate(
+      { id: r.key, pin: !r.pin },
+      { onSuccess: (bumped) => setNote(bumped ? `${rows?.find((x) => x.key === bumped)?.title ?? 'A drink'} made room for ${r.title}.` : PIN_NOTE) }
+    );
+  const all = (on: boolean) => {
+    setNote(PIN_NOTE);
+    if (section === 'had') setAllHad.mutate(on);
+    else setPicks.mutate({ profileId: profile.id, section, targetIds: (rows ?? []).map((r) => r.key), shown: on });
   };
 
   return (
-    <View style={styles.box}>
-      <View role="radiogroup" accessibilityLabel={TITLE[section]} style={styles.chips}>
-        {SHARE_MODES.map((m) => (
-          <Chip key={m.value} label={m.label} selected={mode === m.value} onPress={() => save.mutate({ id: profile.id, section, mode: m.value })} />
-        ))}
-      </View>
-      <Caption tone="muted">{modeSummary(section, mode)}</Caption>
-      {rows && rows.length > 8 ? <Field label="Search" value={search} onChangeText={setSearch} autoCorrect={false} /> : null}
-      {error ? (
-        <Caption tone="accent" role="alert">
-          {error.message}
-        </Caption>
-      ) : null}
-      {!shownRows ? (
-        <Caption tone="muted">Loading…</Caption>
-      ) : !rows?.length ? (
-        <Body tone="muted">{section === 'originals' ? 'No drinks are credited to you yet.' : 'Nothing here yet. Rank a drink and it shows up here.'}</Body>
-      ) : (
-        <View role="list">
-          {shownRows.map((r) => {
-            const shown = pickedShown(mode, r.pick);
-            return (
-              <View key={r.key} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
-                <View style={styles.flex}>
-                  <DsText variant="headline" numberOfLines={2}>
-                    {r.title}
-                  </DsText>
-                  <Caption tone="muted" numberOfLines={1}>
-                    {r.pin ? `Top four, number ${r.pin} · ${r.detail}` : r.detail}
-                  </Caption>
-                </View>
-                {section === 'had' && shown ? (
-                  <Button
-                    label={r.pin ? 'Unpin' : 'Pin'}
-                    variant="ghost"
-                    accessibilityLabel={r.pin ? `Unpin ${r.title} from your top four` : `Pin ${r.title} to your top four`}
-                    disabled={!r.pin && pins.length >= 4}
-                    onPress={() => pin(r)}
-                  />
-                ) : null}
-                <Switch
-                  value={shown}
-                  onValueChange={(on) => toggle(r, on)}
-                  disabled={mode === 'none'}
-                  aria-label={`Show ${r.title} on my profile`}
-                  trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
-                  thumbColor={backbar.light.surface}
-                  {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
-                />
-              </View>
-            );
-          })}
+    <SafetyPage
+      title={TITLE[section]}
+      intro={`Your ${NOUN[section]} are set to ${modeLabel}: ${mode === 'picked' ? 'only the ones you switch on show' : mode === 'all' ? 'every one shows unless you switch it off' : 'none show for now, and your choices are kept'}. The same screen picks bars and originals.`}
+      backTo="/settings/profile"
+      action={rows ? <Caption tone="muted">{`${shownCount} of ${rows.length} shown`}</Caption> : null}
+    >
+      <View style={styles.box}>
+        {section === 'had' ? (
+          <View style={styles.group}>
+            <DsText variant="headline" role="heading">
+              Top four · tap the pin on a drink
+            </DsText>
+            <View style={styles.slots}>
+              {[0, 1, 2, 3].map((i) => {
+                const d = pinned[i]?.drink;
+                return (
+                  <View key={i} style={styles.slot} accessible accessibilityLabel={d ? `Place ${i + 1}, ${d.name}` : `Place ${i + 1}, empty`}>
+                    {d ? (
+                      <>
+                        <DrinkImage thumb source={d.imageUrl} generated={d.isSketch} itemId={d.itemId} accessibilityLabel={d.name} />
+                        <Caption numberOfLines={1}>{d.name}</Caption>
+                      </>
+                    ) : (
+                      <View style={[styles.empty, { borderColor: ds.c.lineStrong }]}>
+                        <Caption tone="muted">Empty</Caption>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+            <Caption tone="muted" role="status">
+              {note}
+            </Caption>
+          </View>
+        ) : null}
+        <Field label={`Search your ${NOUN[section]}`} value={search} onChangeText={setSearch} placeholder={`Search your ${NOUN[section]}`} autoCorrect={false} />
+        <View role="radiogroup" accessibilityLabel="Filter" style={styles.chips}>
+          {FILTERS.map((f) => (
+            <Chip key={f.value} label={f.label} selected={filter === f.value} onPress={() => setFilter(f.value)} />
+          ))}
         </View>
-      )}
-      {section === 'had' && pins.length >= 4 ? <Caption tone="muted">Your top four is full. Unpin one to pin another.</Caption> : null}
-    </View>
+        {error ? (
+          <Caption tone="accent" role="alert">
+            {error.message}
+          </Caption>
+        ) : null}
+        {!visible ? (
+          <Caption tone="muted">Loading…</Caption>
+        ) : !rows?.length ? (
+          <Body tone="muted">{section === 'originals' ? 'You haven’t made a drink yet.' : 'Nothing here yet. Rank a drink and it shows up here.'}</Body>
+        ) : (
+          <View role="list">
+            {visible.map((r) => {
+              const shown = shownOf(r);
+              return (
+                <View key={r.key} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
+                  <View style={styles.flex}>
+                    <DsText variant="headline" numberOfLines={2}>
+                      {r.title}
+                    </DsText>
+                    <Caption tone="muted" numberOfLines={1}>
+                      {r.detail}
+                    </Caption>
+                  </View>
+                  <RowScore score={r.score} />
+                  {section === 'had' ? (
+                    <PressableScale
+                      role="button"
+                      aria-pressed={!!r.pin}
+                      accessibilityLabel={r.pin ? `Unpin ${r.title} from your top four` : `Pin ${r.title} to your top four`}
+                      onPress={() => pin(r)}
+                      disabled={pinDrink.isPending || mode === 'none'}
+                      style={[styles.pin, { backgroundColor: r.pin ? ds.accentFill.fill : ds.c.surface }]}
+                    >
+                      <IconSymbol name={r.pin ? 'pin.fill' : 'pin'} size={18} color={r.pin ? ds.accentFill.text : ds.c.muted} />
+                    </PressableScale>
+                  ) : null}
+                  <Switch
+                    value={shown}
+                    onValueChange={(on) => toggle(r, on)}
+                    disabled={mode === 'none'}
+                    aria-label={`Show ${r.title} on your profile`}
+                    trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
+                    thumbColor={backbar.light.surface}
+                    {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
+                  />
+                </View>
+              );
+            })}
+          </View>
+        )}
+        {rows?.length && mode !== 'none' ? (
+          <View style={styles.chips}>
+            <Button label="Show all" variant="secondary" onPress={() => all(true)} disabled={setAllHad.isPending || setPicks.isPending} />
+            <Button label="Hide all" variant="ghost" onPress={() => all(false)} disabled={setAllHad.isPending || setPicks.isPending} />
+          </View>
+        ) : null}
+      </View>
+    </SafetyPage>
   );
 }
 
 const styles = StyleSheet.create({
-  box: { gap: space.md },
+  box: { gap: space.md, marginTop: space.md },
+  group: { gap: space.sm },
+  slots: { flexDirection: 'row', gap: space.sm },
+  slot: { flex: 1, minWidth: 0, gap: space.xs },
+  empty: { aspectRatio: 1, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
-  chips: { flexDirection: 'row', gap: space.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 64, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  pin: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });

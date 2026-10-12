@@ -12,6 +12,8 @@ interface PageVisibilityChoiceProps {
   onChange: (value: PageVisibility) => void;
   disabled?: boolean;
   error?: string | null;
+  /** False on its own page, where the title and intro say it. */
+  heading?: boolean;
 }
 
 /**
@@ -19,12 +21,12 @@ interface PageVisibilityChoiceProps {
  * outside the venue, with what a guest will see. The database keeps the
  * specs back; each drink's own setting still applies below Open.
  */
-export function PageVisibilityChoice({ venueName, value, onChange, disabled, error }: PageVisibilityChoiceProps) {
+export function PageVisibilityChoice({ venueName, value, onChange, disabled, error, heading = true }: PageVisibilityChoiceProps) {
   const ds = useDs();
   return (
     <View style={styles.group}>
-      <Headline role="heading">Who sees your page</Headline>
-      <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption>
+      {heading ? <Headline role="heading">Who sees your page</Headline> : null}
+      {heading ? <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption> : null}
       <View role="radiogroup" accessibilityLabel="Who sees your page" style={styles.rows}>
         {PAGE_VISIBILITIES.map((v) => (
           <Choice key={v} label={PAGE_COPY[v].label} detail={PAGE_COPY[v].detail} selected={value === v} disabled={disabled} onPress={() => onChange(v)} />

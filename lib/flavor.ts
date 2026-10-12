@@ -205,8 +205,19 @@ export function rankingsDrift(ranked: Taste | null, answers: Taste | null): stri
   const more = dims.filter((d) => gap(d) > 0).sort((a, b) => gap(b) - gap(a)).slice(0, 2);
   const less = dims.filter((d) => gap(d) < 0).sort((a, b) => gap(a) - gap(b)).slice(0, 2);
   const parts = [more.length ? `more ${list(more.map((d) => LABEL[d]))}` : null, less.length ? `less ${list(less.map((d) => LABEL[d]))}` : null].filter(Boolean);
-  return parts.length ? `Your rankings lean ${parts.join(' and ')} than you said.` : null;
+  if (!parts.length) return null;
+  // Name the answer it goes against, when one does: "You said smoke wasn't for you."
+  const against = more.find((d) => answers[d]! <= NOT_FOR_ME);
+  const loved = against ? undefined : less.find((d) => answers[d]! >= LOVE_IT);
+  const said = against ? `You said ${NOUN[against] ? `${NOUN[against]} wasn’t` : `${LABEL[against]} drinks weren’t`} for you.` : loved ? `You said you love ${NOUN[loved] ?? `${LABEL[loved]} drinks`}.` : null;
+  if (!said) return `Your rankings lean ${parts.join(' and ')} than you said.`;
+  return `${said} Your rankings say otherwise: ${parts.length > 1 ? `${parts.join(', and ')},` : parts[0]} than you said.`;
 }
+
+/** How an answer is said back: "smoke", else "<label> drinks". */
+const NOUN: Partial<Record<Dimension, string>> = { smoky: 'smoke', botanical: 'juniper', spiced: 'warm spice' };
+const NOT_FOR_ME = 0.1;
+const LOVE_IT = 0.8;
 
 /** A question about one dimension of your taste. Each answer sets it. */
 export interface TasteQuestion {
