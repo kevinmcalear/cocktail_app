@@ -123,7 +123,7 @@ export type PasteRow =
   /** `note`: what happens to the price, if anything. */
   | { key: string; section: string | null; status: 'add'; drink: MenuDrink; price: string | null; note: string | null }
   | { key: string; section: string | null; status: 'pick'; name: string; options: MenuDrink[] }
-  | { key: string; section: string | null; status: 'missing'; name: string; ingredients: string[] }
+  | { key: string; section: string | null; status: 'missing'; name: string; ingredients: string[]; price?: string | null }
   | { key: string; section: string | null; status: 'skip'; name: string; note: string };
 
 /**
@@ -165,7 +165,7 @@ export function pasteRows(
         const chosen = match.items.find((item) => item.id === picks[key]);
         if (chosen) place(chosen);
         else out.push({ key, section: section.name, status: 'pick', name: line.name, options: match.items });
-      } else out.push({ key, section: section.name, status: 'missing', name: line.name, ingredients: line.ingredients ?? [] });
+      } else out.push({ key, section: section.name, status: 'missing', name: line.name, ingredients: line.ingredients ?? [], price: line.price ?? null });
     });
   });
   return out;

@@ -152,3 +152,62 @@ export function venueShelves(
   }
   return out;
 }
+
+/** The three groups of the chip row, in order (desktop draws a thin line between them). */
+export function filterGroups(atVenue: boolean, canCost: boolean): { value: Show; label: string }[][] {
+  const types = atVenue ? TYPE_FILTERS.filter((f) => f.value !== 'ingredients') : TYPE_FILTERS;
+  const groups = atVenue ? [LIST_FILTERS, SHELF_FILTERS] : [];
+  return [...groups, [...types, ...(canCost ? [NEEDS_PRICE] : [])]];
+}
+
+/** "Stirred · Coupe", "Stirred · Martini · Martini flight", "Beer · Pint": a tile's second line. */
+export function tileLine(...parts: (string | null | undefined)[]): string | null {
+  const shown = parts.filter((p): p is string => !!p && !!p.trim());
+  return shown.length ? shown.join(' · ') : null;
+}
+
+const METHOD_WORDS: Record<string, string> = { stir: 'Stirred', shake: 'Shaken', build: 'Built', blend: 'Blended', swizzle: 'Swizzled', throw: 'Thrown', roll: 'Rolled', whip: 'Whipped', dry: 'Dry shaken' };
+
+/** "Stirred" for the method Stir: how a tile says how it's made. Other names stay as they are. */
+export function methodWord(name: string | null | undefined): string | null {
+  if (!name) return null;
+  const key = name.trim().toLowerCase().replace(/\s+shake$/, '');
+  return METHOD_WORDS[key] ?? name;
+}
+
+/** What a prep is, by what was done to it: Preps' second chip row (Spec Book Shelves' "filter by action"). */
+export type PrepGroup = 'Syrup' | 'Cordial' | 'Infusion' | 'Clarified' | 'Fat-washed' | 'Shrub';
+
+export const PREP_GROUPS: { value: string; label: string; group: PrepGroup }[] = [
+  { value: 'syrups', label: 'Syrups', group: 'Syrup' },
+  { value: 'cordials', label: 'Cordials', group: 'Cordial' },
+  { value: 'infusions', label: 'Infusions', group: 'Infusion' },
+  { value: 'clarified', label: 'Clarified', group: 'Clarified' },
+  { value: 'fat-washed', label: 'Fat-washed', group: 'Fat-washed' },
+  { value: 'shrubs', label: 'Shrubs', group: 'Shrub' },
+];
+
+/**
+ * A prep's group. Cordial and Shrub aren't prep actions (lib/scale.ts
+ * PREP_ACTIONS), so the name decides those; clarifying and fat-washing are
+ * what was done whatever it's called; then infusions and syrups, by action or name.
+ */
+export function prepGroup(name: string, actions: readonly string[] = []): PrepGroup | null {
+  const has = (a: string) => actions.includes(a);
+  if (/\bshrub\b/i.test(name)) return 'Shrub';
+  if (/\bcordial\b/i.test(name)) return 'Cordial';
+  if (has('Clarify') || has('Milk wash') || /\bclarified\b|\bmilk[- ]?washed\b/i.test(name)) return 'Clarified';
+  if (has('Fat wash') || /\bfat[- ]?washed\b|\bbrown[- ]butter\b/i.test(name)) return 'Fat-washed';
+  if (has('Infuse') || has('Tincture') || /\binfus(ed|ion)\b|\btincture\b/i.test(name)) return 'Infusion';
+  if (has('Syrup') || /\bsyrup\b|\bgomme\b|\boleo\b/i.test(name)) return 'Syrup';
+  return null;
+}
+
+/** "1 L", "750 ml", "2 kg": a prep's yield as the board writes it. */
+export function yieldText(amount: number | null | undefined, unit: string | null | undefined): string | null {
+  if (!amount || amount <= 0) return null;
+  const u = (unit ?? '').trim();
+  if (u.toLowerCase() === 'ml' && amount >= 1000) return `${Number((amount / 1000).toFixed(2))} L`;
+  if (u.toLowerCase() === 'g' && amount >= 1000) return `${Number((amount / 1000).toFixed(2))} kg`;
+  return u ? `${Number(amount.toFixed(2))} ${u}` : String(Number(amount.toFixed(2)));
+}

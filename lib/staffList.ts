@@ -83,3 +83,16 @@ export function candidatesFor(
   }
   return out;
 }
+
+/** Where the ranked rows stop in a dragged list: the "Not ranked" line. */
+export const NOT_RANKED = '--not-ranked--';
+
+/**
+ * The ranking after a drag over the whole list, ranked rows then the "Not
+ * ranked" line then the rest: everything above the line is ranked, in order,
+ * up to the cap. Drag a Not ranked drink above the line to rank it.
+ */
+export function rankedAbove(order: readonly string[]): string[] {
+  const line = order.indexOf(NOT_RANKED);
+  return (line < 0 ? order : order.slice(0, line)).slice(0, STAFF_LIST_MAX);
+}

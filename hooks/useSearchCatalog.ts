@@ -88,6 +88,7 @@ export function useSearchCatalog(selectedContextIds: string[]) {
         description: b.description,
         category: 'Beer' as const,
         price: b.price,
+        glassware_id: b.glassware_id ?? null,
         item_categories: b.item_categories,
         ...searchImage(b.item_images),
       }));
@@ -100,6 +101,7 @@ export function useSearchCatalog(selectedContextIds: string[]) {
         description: w.description,
         category: 'Wine' as const,
         price: w.price,
+        glassware_id: w.glassware_id ?? null,
         item_categories: w.item_categories,
         ...searchImage(w.item_images),
       }));

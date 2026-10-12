@@ -4,7 +4,7 @@ import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
 import { space } from '@/constants/tokens';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import type { SearchScope } from '@/lib/searchScope';
-import { Stack, useIsFocused } from 'expo-router';
+import { Stack, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,7 +34,14 @@ function Search() {
   const insets = useSafeAreaInsets();
   const bottom = useTabBarInset();
   const mine = useSearchMine();
-  const [query, setQuery] = useState('');
+  // ?q= carries a search in from elsewhere (My Bar's "Search every drink for “rye”").
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const [query, setQuery] = useState(q ?? '');
+  const [carried, setCarried] = useState(q);
+  if (q !== carried) {
+    setCarried(q);
+    if (q) setQuery(q);
+  }
   const [picked, setScope] = useState<SearchScope | null>(null);
   const scope = picked ?? mine.defaultScope;
   // Native tabs stay mounted, so focus follows the tab rather than the first mount.

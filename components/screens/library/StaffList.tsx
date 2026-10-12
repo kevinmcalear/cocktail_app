@@ -1,22 +1,25 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState, type ReactElement } from 'react';
-import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import DraggableFlatList, { type RenderItemParams } from 'react-native-draggable-flatlist';
 
-import { Body, Button, Caption, Field, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, useDs } from '@/components/ds';
 import { fontFamilies, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useBarRiffs, useStaffList, useStaffListEdit, type StaffPick } from '@/hooks/useStaffList';
 import { plainDbMessage } from '@/lib/dbError';
 import { itemHref } from '@/lib/itemRoutes';
 import { menuState } from '@/lib/libraryFilters';
-import { candidatesFor, CUTS, moved, ranked, STAFF_LIST_MAX, staffOrder, unranked } from '@/lib/staffList';
+import { candidatesFor, CUTS, moved, NOT_RANKED, ranked, rankedAbove, STAFF_LIST_MAX, staffOrder, unranked } from '@/lib/staffList';
 
 import { StaffRow } from './StaffRow';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 const NO_PICKS: StaffPick[] = [];
-/** Rows in the first paint: a phone screen under the header. */
+/** The "Not ranked" line, as a row of the dragged list: drag a drink above it to rank it. */
+type Row = StaffPick | { itemId: typeof NOT_RANKED };
+const LINE: Row = { itemId: NOT_RANKED };
+/** Rows in the first paint: a phone screen under the header (plus the Not ranked line). */
 const FIRST_PAINT = 12;
 
 /**
@@ -38,8 +41,6 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
 }) {
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
-  const breakpoint = useBreakpoint();
-  const arrows = Platform.OS === 'web' && breakpoint !== 'phone';
   const picks = useStaffList(barId);
   const [adding, setAdding] = useState(false);
   const riffs = useBarRiffs(adding ? barId : null);
@@ -57,6 +58,12 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
   );
   const full = ids.length >= STAFF_LIST_MAX;
   const reorder = (itemIds: string[] | null) => itemIds && edit.mutate({ op: 'order', itemIds });
+  // Ranked, the Not ranked line, then the rest: one list, so a Not ranked drink drags into the ranking.
+  const data: Row[] = order.unranked.length ? [...order.ranked, LINE, ...order.unranked] : order.ranked;
+  const dropped = (rows: Row[]) => {
+    const next = rankedAbove(rows.map((r) => r.itemId));
+    if (next.join() !== ids.join()) reorder(next);
+  };
   const remove = (pick: StaffPick) => {
     // Close the gap first, so the places stay 1, 2, 3.
     if (pick.rank != null) reorder(unranked(ids, pick.itemId));
@@ -72,8 +79,12 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
     onRemove: () => remove(pick),
   });
 
-  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<StaffPick>) => {
+  const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Row>) => {
+    if (!('name' in item)) return <CutLine label="Not ranked" quiet />;
     const i = getIndex() ?? 0;
+    if (i > ids.length) {
+      return <StaffRow {...row(item, null)} active={isActive} drag={drag} onRank={full ? undefined : () => reorder(ranked(ids, item.itemId))} />;
+    }
     const cut = CUTS.find((c) => c === i + 1);
     return (
       <View>
@@ -81,7 +92,6 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
           {...row(item, i + 1)}
           active={isActive}
           drag={drag}
-          arrows={arrows}
           onMove={(by) => reorder(moved(ids, item.itemId, by))}
           first={i === 0}
           last={i === ids.length - 1}
@@ -104,14 +114,6 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
   );
   const bottom = (
     <View style={styles.list}>
-      {order.unranked.length ? (
-        <>
-          <CutLine label="Not ranked" quiet />
-          {order.unranked.map((pick) => (
-            <StaffRow key={pick.itemId} {...row(pick, null)} onRank={full ? undefined : () => reorder(ranked(ids, pick.itemId))} />
-          ))}
-        </>
-      ) : null}
       {canEdit ? (
         <View style={styles.add}>
           <Caption tone="muted">{`Up to ${STAFF_LIST_MAX} drinks. ${ids.length} ranked.`}</Caption>
@@ -139,10 +141,10 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
 
   return (
     <DraggableFlatList
-      data={order.ranked}
+      data={data}
       keyExtractor={(p) => p.itemId}
       renderItem={renderItem}
-      onDragEnd={({ data }) => reorder(data.map((p) => p.itemId))}
+      onDragEnd={({ data: rows }) => dropped(rows)}
       ListHeaderComponent={top}
       ListFooterComponent={bottom}
       contentContainerStyle={contentContainerStyle}
@@ -152,7 +154,7 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
       // Fifty rows at most. The first screen paints, the rest mount in one batch
       // right after, and the default window (21 screens) keeps all fifty mounted,
       // so a drag never lands on an unrendered row.
-      initialNumToRender={FIRST_PAINT}
+      initialNumToRender={FIRST_PAINT + 1}
       maxToRenderPerBatch={STAFF_LIST_MAX}
       activationDistance={10}
     />

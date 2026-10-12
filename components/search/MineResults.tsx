@@ -14,6 +14,7 @@ import type { SearchMine } from '@/hooks/useSearchMine';
 import { findDrinks } from '@/lib/discover';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, type ItemCategory } from '@/lib/itemRoutes';
+import { itemIdOf } from '@/lib/libraryFilters';
 import { openSearchItem } from '@/lib/openSearchItem';
 import { drinkFacts, ingredientFacts, menuFacts } from '@/lib/searchCaptions';
 import { groupCatalog } from '@/lib/searchScope';
@@ -36,7 +37,11 @@ interface MineResultsProps {
  */
 export function MineResults({ query, mine, onEverywhere }: MineResultsProps) {
   const router = useRouter();
-  const { items, isLoading } = useSearchCatalog(mine.contextIds);
+  const { items: catalog, isLoading } = useSearchCatalog(mine.contextIds);
+  const items = useMemo(() => {
+    const hidden = new Set(mine.hiddenIds);
+    return hidden.size ? catalog.filter((i) => !hidden.has(itemIdOf(i.id))) : catalog;
+  }, [catalog, mine.hiddenIds]);
   const groups = useMemo(() => groupCatalog(items, query), [items, query]);
   const facts = useMineFacts(mine.venueId, items);
   const q = query.trim();

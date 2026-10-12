@@ -1,6 +1,6 @@
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, Caption, GlassButton, useDs } from '@/components/ds';
+import { Button, Caption, DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, radius, space, type } from '@/constants/tokens';
 
@@ -48,63 +48,88 @@ export function useHomeMenu(editor: LayoutEditor): boolean {
   return !editor.menu.barId;
 }
 
-/**
- * Save and Go live, or just Save for a menu that's already on (or a home
- * menu, which has its own night). With nothing to save, Save gives way to a
- * quiet "Saved", so the accent only marks something to do.
- */
-export function EditorActions({ editor, size = 'lg' }: { editor: LayoutEditor; size?: 'md' | 'lg' }) {
+/** The save status line (b27: no save button): "Saving…", "Saved", "Not saved" when it couldn't. */
+export function saveStatus(editor: LayoutEditor): { text: string; ok: boolean } {
+  if (editor.saving || (editor.changed && !editor.error)) return { text: 'Saving…', ok: true };
+  if (editor.changed) return { text: 'Not saved', ok: false };
+  return { text: editor.savedAt ? 'Saved just now' : 'Saved', ok: true };
+}
+
+/** The quiet line with a check: where saving stands. */
+export function SaveLine({ editor }: { editor: LayoutEditor }) {
   const ds = useDs();
-  const home = useHomeMenu(editor);
-  const on = editor.status === 'on' || home;
+  const { text, ok } = saveStatus(editor);
   return (
-    <View style={styles.actions}>
-      {editor.changed || editor.saving ? (
-        <Button
-          label={editor.saving ? 'Saving…' : on ? 'Save changes' : 'Save draft'}
-          size={size}
-          variant={on ? 'primary' : 'secondary'}
-          onPress={editor.persist}
-          disabled={editor.saving}
-          style={styles.flex}
-        />
-      ) : (
-        <View style={[styles.flex, styles.saved]} aria-live="polite">
-          <IconSymbol name="checkmark" size={14} color={ds.c.muted} />
-          <Caption tone="muted">Saved</Caption>
-        </View>
-      )}
-      {home ? (
-        // Sharing is the home menu's next step: in the accent once there's nothing left to save.
-        <Button label="Share…" icon="square.and.arrow.up" size={size} variant={editor.changed || editor.saving ? 'secondary' : 'primary'} onPress={editor.share} disabled={editor.saving} style={styles.flex} />
-      ) : on ? null : (
-        <Button label={editor.status === 'upcoming' ? 'Change date…' : 'Go live…'} size={size} onPress={editor.goLive} disabled={editor.saving} style={styles.flex} />
-      )}
+    <View style={styles.saved} aria-live="polite">
+      {ok && text !== 'Saving…' ? <IconSymbol name="checkmark" size={14} color={ds.c.muted} /> : null}
+      <Caption tone={ok ? 'muted' : 'accent'}>{text}</Caption>
     </View>
   );
 }
 
-/** Every section, in order, then adding one. */
-export function EditorSections({ editor, targetable }: { editor: LayoutEditor; targetable?: boolean }) {
+/**
+ * The editor's next step, the one accent: Next: go live for a venue's draft,
+ * Change date for one coming up, Share for a home menu; nothing for a menu
+ * that's on. On a phone it sits beside Add a section.
+ */
+export function NextStep({ editor, size = 'lg', label }: { editor: LayoutEditor; size?: 'md' | 'lg'; label?: string }) {
   const home = useHomeMenu(editor);
+  if (home) return <Button label="Share…" icon="square.and.arrow.up" size={size} onPress={editor.share} disabled={editor.saving} style={styles.flex} />;
+  if (editor.status === 'on' || editor.status === 'previous') return null;
+  return <Button label={editor.status === 'upcoming' ? 'Change date…' : (label ?? 'Next: go live')} size={size} onPress={editor.goLive} disabled={editor.saving} style={styles.flex} />;
+}
+
+/** A phone's bottom bar: Add a section, then the next step. */
+export function EditorActions({ editor }: { editor: LayoutEditor }) {
+  return (
+    <View style={styles.actions}>
+      <Button label="Add a section" icon="plus" variant="secondary" onPress={editor.addSection} style={styles.flex} />
+      <NextStep editor={editor} />
+    </View>
+  );
+}
+
+/** The section a phone's one Add a drink adds to: the first one short of its rule, else the last. */
+function addTarget(editor: LayoutEditor): string | null {
+  const { sections } = editor.layout;
+  return (sections.find((s) => s.drinks.length < s.minItems) ?? sections[sections.length - 1])?.key ?? null;
+}
+
+/**
+ * Every section, in order. Desktop adds into the section marked Adding here and
+ * ends with Add a section; a phone has one dashed Add a drink after them all
+ * (Add a section is in its bottom bar). Paste a list is in each section's ... menu.
+ */
+export function EditorSections({ editor, targetable }: { editor: LayoutEditor; targetable?: boolean }) {
+  const ds = useDs();
+  const home = useHomeMenu(editor);
+  const target = addTarget(editor);
   return (
     <View style={styles.sections}>
       {editor.layout.sections.map((s) => (
         <EditorSection
           key={s.key}
           section={s}
+          sections={editor.layout.sections}
           targeted={targetable && editor.targetKey === s.key}
           onTarget={targetable ? () => editor.setTargetKey(s.key) : undefined}
-          onAdd={() => editor.setSheet({ kind: 'add', key: s.key })}
+          onAdd={targetable && editor.targetKey === s.key ? () => editor.setSheet({ kind: 'add', key: s.key }) : undefined}
           onSettings={() => editor.setSheet({ kind: 'section', key: s.key })}
           home={home}
           onRemove={(id) => editor.remove(s.key, id)}
           onReorder={(drinks) => editor.reorder(s.key, drinks)}
           onMove={(from, to) => editor.move(s.key, from, to)}
+          onMoveTo={(id, toKey) => editor.moveTo(s.key, id, toKey)}
         />
       ))}
-      <Button label="Add a section" icon="plus" variant="secondary" onPress={editor.addSection} style={styles.addSection} />
-      <Button label="Paste a list" icon="doc.text" variant="secondary" onPress={() => editor.setSheet({ kind: 'paste', key: null })} style={styles.addSection} />
+      {targetable ? (
+        <Button label="Add a section" icon="plus" variant="secondary" onPress={editor.addSection} style={styles.addSection} />
+      ) : target ? (
+        <PressableScale accessibilityLabel="Add a drink" onPress={() => editor.setSheet({ kind: 'add', key: target })} style={[styles.addDrink, { borderColor: ds.c.lineStrong }]}>
+          <IconSymbol name="plus" size={16} color={ds.c.ink} />
+          <DsText variant="caption">Add a drink</DsText>
+        </PressableScale>
+      ) : null}
     </View>
   );
 }
@@ -115,7 +140,8 @@ const styles = StyleSheet.create({
   name: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: space.xs },
   sections: { gap: space.lg },
   addSection: { alignSelf: 'flex-start' },
+  addDrink: { minHeight: 48, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   actions: { flexDirection: 'row', gap: space.sm },
-  saved: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, minHeight: 44 },
+  saved: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 44 },
   flex: { flex: 1 },
 });

@@ -36,6 +36,8 @@ interface ReviewRowProps {
   markAtEnd?: boolean;
   /** At the very end (a price in Geist Mono). */
   end?: ReactNode;
+  /** In mono at the row's end: a price read from a menu ("18"). */
+  trailing?: string | null;
   /** The options for a pick, shown inline. */
   choices?: ReviewChoice[];
   chosen?: string | null;
@@ -53,12 +55,18 @@ interface ReviewRowProps {
   children?: ReactNode;
 }
 
-/** A text action in the venue's accent ("Bring back", "Finish"), at least 44 tall. */
-export function TextLink({ label, onPress, accessibilityHint }: { label: string; onPress: () => void; accessibilityHint?: string }) {
+/** A text action, in the venue's accent unless `tone` says ink ("Add another page", "Finish"), at least 44 tall. */
+export function TextLink({ label, onPress, accessibilityHint, tone = 'accent' }: {
+  label: string;
+  onPress: () => void;
+  accessibilityHint?: string;
+  /** `ink` where the screen's one accent is already spoken for (a menu's Guest card beside Go live). */
+  tone?: 'accent' | 'ink';
+}) {
   const ds = useDs();
   return (
     <PressableScale accessibilityLabel={label} accessibilityHint={accessibilityHint} onPress={onPress} style={styles.link}>
-      <DsText variant="body" color={ds.accentText}>
+      <DsText variant="body" color={tone === 'ink' ? ds.c.ink : ds.accentText}>
         {label}
       </DsText>
     </PressableScale>
@@ -102,7 +110,7 @@ export function ReviewMark({ state, size = MARK }: { state: ReviewState; size?: 
  * One line of a review: a drink on a menu, a line in a spec, a bottle on a
  * shelf. The same four states everywhere (docs/design_system.md, "Bring in").
  */
-export function ReviewRow({ state, title, detail, amount, onAmount, lead, markAtEnd, end, choices, chosen = null, onChoose, action, onPress, pressHint, flag, mutedTitle, children }: ReviewRowProps) {
+export function ReviewRow({ state, title, detail, amount, trailing, onAmount, lead, markAtEnd, end, choices, chosen = null, onChoose, action, onPress, pressHint, flag, mutedTitle, children }: ReviewRowProps) {
   const ds = useDs();
   const skipped = state === 'skip';
   // An amount is its own column, like a spec (canvas make-bringin-recipe); the mark then sits in the detail line.
@@ -135,6 +143,7 @@ export function ReviewRow({ state, title, detail, amount, onAmount, lead, markAt
         ) : null}
       </View>
       {action ? <TextLink label={action.label} accessibilityHint={action.hint} onPress={action.onPress} /> : null}
+      {trailing ? <Spec tone={skipped ? 'muted' : 'ink'}>{trailing}</Spec> : null}
       {end}
       {markAtEnd ? <ReviewMark state={state} size={24} /> : null}
     </View>

@@ -68,7 +68,7 @@ export function menuState(d: MenuDates): MenuState {
 }
 
 /** "Mar 2024", or "2024" when the month isn't known. */
-function shortDate(year: number, month: number | null): string {
+export function shortDate(year: number, month: number | null): string {
   return month ? `${MONTHS[month - 1]} ${year}` : String(year);
 }
 

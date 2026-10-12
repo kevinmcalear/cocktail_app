@@ -1,8 +1,8 @@
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Caption, GlassSurface, Title, useDs } from '@/components/ds';
+import { GlassSurface, useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { AlsoMentions, DrinkAtBarList, DrinkAtBarRow, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
 import { layout, radius, space } from '@/constants/tokens';
@@ -12,13 +12,14 @@ import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscov
 import { useMapMoves } from '@/hooks/useMapMoves';
 import { barPins, byScore, closedPins, scorePins, venueScores, withBarScores, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
-import { namePins } from '@/lib/discoverMatch';
-import { areaLabel, areaParams, earlyNote, peopleCount, type Area } from '@/lib/nearMe';
+import { namePins, searchTitle } from '@/lib/discoverMatch';
+import { areaLabel, areaParams, earlyNote, type Area } from '@/lib/nearMe';
 import { MIN_RANKERS, plural } from '@/lib/ranking';
 
 import { MapLayers, SearchHere, type MapLayer } from './DiscoverControls';
 import { DiscoverMap } from './DiscoverMap';
 import { MapCredit } from './MapCredit';
+import { ClassicLine, resultsCaption, ResultsHead } from './ResultsHead';
 import { SelectedBar } from './SelectedBar';
 
 interface DiscoverMapPaneProps {
@@ -33,7 +34,7 @@ interface DiscoverMapPaneProps {
    * default layer, a page at a time (`more`). `barsById`: the area's bars.
    * Closed bars pin on every layer when given.
    */
-  results: { drinks: DiscoverDrink[]; more: MoreDrinks; barsById: ReadonlyMap<string, DiscoverBar>; isLoading: boolean; title: string; closed?: DiscoverBar[] };
+  results: { drinks: DiscoverDrink[]; more: MoreDrinks; barsById: ReadonlyMap<string, DiscoverBar>; isLoading: boolean; title: string; closed?: DiscoverBar[]; totals?: { drinks: number; bars: number } | null };
   /** What the map shows once the person has moved it (null after a refit), so search can stay in view. */
   onViewport?: (viewport: Viewport | null) => void;
   /** sheet: phones, the list in a bottom sheet over the map. side: wide screens, the list is beside it. */
@@ -46,8 +47,10 @@ interface DiscoverMapPaneProps {
   topInset?: number;
   /** Nearest (phones, searching): where distances count from, the person else the area's middle. */
   from?: { latitude: number; longitude: number } | null;
-  /** Wide screens: the tapped pin is the screen's, shown in its list rather than over the map. */
-  pick?: { id: string | null; onPick: (pin: MapPin | null) => void; onLayer: (layer: MapLayer) => void };
+  /** Where the person is: the "You are here" dot, and how far a tapped bar is. */
+  me?: { latitude: number; longitude: number } | null;
+  /** Wide screens: the tapped pin and the layer are the screen's; the pin shows in its list rather than over the map, and searching, the sort chips sit in the list (disc-desk-search). */
+  pick?: { id: string | null; onPick: (pin: MapPin | null) => void; layer?: MapLayer; onLayer: (layer: MapLayer) => void };
 }
 
 /** Stand-ins for "nothing yet" that keep the same identity between renders, so the pins aren't rebuilt. */
@@ -56,8 +59,10 @@ const drinkKey = (d: DiscoverDrink) => d.id;
 /** How long after the drinks land before the other layers load behind them. */
 const PREFETCH_AFTER_MS = 2000;
 
-/** Collapsed phone sheet: the grabber and the results title, so the map stays usable. */
-const SHEET_PEEK = layout.minTapTarget + space.sm;
+/** Collapsed phone sheet: the grabber, the count, the title and the chips (disc-map), until the head measures itself. */
+const SHEET_PEEK = 172;
+/** The sheet's grabber, above its head. */
+const HANDLE = layout.minTapTarget - space.lg;
 
 /**
  * Discover on a map: pins for the bars with matching drinks, for the drink's
@@ -68,23 +73,24 @@ const SHEET_PEEK = layout.minTapTarget + space.sm;
  * asks. The camera fits the results whenever the area, drink or layer
  * changes, but never after a search of the map, so the person's view stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewport, mode, top, bottomInset = 0, topInset = 0, from = null, pick }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewport, mode, top, bottomInset = 0, topInset = 0, from = null, me = null, pick }: DiscoverMapPaneProps) {
   const ds = useDs();
   const sheetRef = useRef<BottomSheet>(null);
   // Searching, the layers read as a sort of what was found, pins name the best drinks, and a tapped bar leads with its best match (as filtering does).
   const searching = !!filter.search.trim();
-  const [chosen, setChosen] = useState<MapLayer>('drinks');
+  const [own, setOwn] = useState<MapLayer>('drinks');
+  const chosen = pick?.layer ?? own;
   const setLayer = (next: MapLayer) => {
-    setChosen(next);
+    setOwn(next);
     pick?.onLayer(next);
   };
-  const canNear = searching && mode === 'sheet' && !!from;
+  const canNear = searching && !!from;
+  const [peek, setPeek] = useState(SHEET_PEEK);
   const layer = chosen === 'nearest' && !canNear ? 'drinks' : chosen;
   const nearest = layer === 'nearest';
   const byDrinks = layer === 'drinks' || nearest;
   const byDrink = layer === 'best' && !!drink;
-  // The other layers load a moment after the drinks are in (not while the map is still drawing),
-  // so switching to one is instant.
+  // The other layers load a moment after the drinks are in (not while the map draws), so switching is instant.
   const [warm, setWarm] = useState(false);
   useEffect(() => {
     if (results.isLoading || warm) return;
@@ -96,8 +102,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   // Browsing, the list follows the map (a tapped bar stays open); a search, or anywhere, waits for "Search this area".
   const follow = !searching && area.kind !== 'anywhere';
   const moves = useMapMoves(fit?.camera ?? null, follow, (v: Viewport) => onArea(areaFromViewport(v)));
-  // Pins on the drinks layer: the area's bars with matching drinks first, then, once the person
-  // moves the map, the bars in view a tile at a time (anywhere already has every bar).
+  // Drinks layer pins: the area's bars with matches, then the bars in view a tile at a time once the map moves.
   const areaBars = useDiscoverBars(area, filter, byDrinks);
   const tileBars = useTileBars(area.kind === 'anywhere' ? null : moves.settled, filter, byDrinks);
   // "Best Martini": every martini here, scored where people have ranked it, best first.
@@ -122,8 +127,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   // A tapped bar's own drinks, from the server on the drinks layer (its pin may be outside the area).
   const atBar = useDiscoverList({ ...filter, area }, { barId: selected?.id, enabled: !!selected && byDrinks && !selected.closed, pageSize: 100 });
 
-  // Refit when what's shown changes, not after "Search this area". Near me stays on the person; elsewhere the area
-  // while it loads, then its own pins, not the last area's.
+  // Refit when what's shown changes, not after "Search this area"; near me stays on the person.
   const nearMe = area.kind === 'point' && area.source === 'me';
   const fitting = rows.isLoading || (byDrinks && areaBars.isPlaceholderData);
   const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, !nearMe && fitting]);
@@ -133,7 +137,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   }
   useEffect(() => onViewport?.(moves.settled), [moves.settled, onViewport]);
 
-  const title = byDrinks ? results.title : `${byDrink ? `Best ${drink.name}` : 'Top bars'} ${areaLabel(area)}`;
+  const title = byDrinks ? (searching ? searchTitle(filter.search) : results.title) : `${byDrink ? `Best ${drink.name}` : 'Top bars'} ${areaLabel(area)}`;
   const layers = <MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} />;
   const offer = moves.offer;
   const searchHere = offer ? <SearchHere onPress={() => moves.search(offer)} /> : null;
@@ -161,7 +165,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
       <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map${follow ? '' : ' and search this area'}, or pick another style.`}</ListNote>
     )
   ) : ranked.length ? (
-    <AreaRankList rows={ranked} scoreDetail={(r) => peopleCount(r.rankers)} />
+    <AreaRankList rows={ranked} scoreDetail={(r) => `${r.rankers} ranked`} />
   ) : early.length ? (
     <>
       <ListNote>{earlyNote(early, MIN_RANKERS)}</ListNote>
@@ -174,6 +178,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   const map = (
     <DiscoverMap
       pins={searching && byDrinks ? namePins(pins, results.drinks, selectedId) : pins}
+      me={me}
       selectedId={selectedId}
       // On phones a tapped bar opens the sheet halfway on it: its matching drink, then the bar.
       onSelect={(id) => {
@@ -193,12 +198,12 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
       <View style={styles.fill}>
         {map}
         <View pointerEvents="box-none" style={[styles.overlay, styles.overlayTop]}>
-          <GlassSurface style={styles.glassRow}>{layers}</GlassSurface>
+          {searching && pick ? null : <GlassSurface style={styles.glassRow}>{layers}</GlassSurface>}
           {searchHere}
         </View>
         {selected && !pick ? (
           <View pointerEvents="box-none" style={[styles.overlay, styles.overlayBottom]}>
-            <SelectedBar key={selected.id} pin={selected} drinks={drinkLayer ? barDrinks : []} scores={shown} query={filter.search} area={area} lead={lead} onClose={() => setSelectedId(null)} />
+            <SelectedBar key={selected.id} pin={selected} drinks={drinkLayer ? barDrinks : []} scores={shown} query={filter.search} area={area} lead={lead} me={me} onClose={() => setSelectedId(null)} />
           </View>
         ) : null}
       </View>
@@ -216,7 +221,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
       <View pointerEvents="box-none" style={[styles.sheetBox, { top: topInset, bottom: bottomInset }]}>
         <BottomSheet
           ref={sheetRef}
-          snapPoints={[SHEET_PEEK, '50%', '88%']}
+          snapPoints={[peek, '50%', '88%']}
           backgroundStyle={{ backgroundColor: ds.c.surface, borderRadius: radius.sheet }}
           handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
           accessibilityLabel="Results"
@@ -228,7 +233,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
             renderItem={({ item, index }: { item: DiscoverDrink; index: number }) => (
               <>
                 {searching ? <AlsoMentions drinks={sheetDrinks} index={index} search={filter.search} /> : null}
-                <DrinkAtBarRow drink={item} scores={shown} query={filter.search} />
+                <DrinkAtBarRow drink={item} scores={shown} query={filter.search} atBar={!!selected} />
               </>
             )}
             extraData={shown}
@@ -236,24 +241,22 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
             ListHeaderComponent={
               <View style={styles.sheetHead}>
                 {selected && !selected.closed ? (
-                  <SelectedBar key={selected.id} variant="sheet" pin={selected} drinks={drinkLayer ? barDrinks : []} scores={shown} query={filter.search} area={area} lead={lead} onClose={() => setSelectedId(null)} />
+                  <SelectedBar key={selected.id} variant="sheet" pin={selected} drinks={drinkLayer ? barDrinks : []} scores={shown} query={filter.search} area={area} lead={lead} me={me} total={results.more.total ?? results.drinks.length} onClose={() => setSelectedId(null)} />
                 ) : (
-                  <>
-                    {/* The peek line opens the sheet too, for anyone who taps rather than swipes. */}
-                    <Pressable role="button" accessibilityLabel="Show the list" onPress={() => sheetRef.current?.snapToIndex(1)}>
-                      <Caption tone="muted" numberOfLines={1}>
-                        {rows.isLoading
-                          ? 'Loading…'
-                          : selected?.closed
-                            ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
-                            : `${pins.length} ${pins.length === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`}
-                      </Caption>
-                    </Pressable>
-                    <Title role="heading" numberOfLines={1}>
-                      {title}
-                    </Title>
-                    {layers}
-                  </>
+                  <ResultsHead
+                    caption={
+                      rows.isLoading
+                        ? 'Loading…'
+                        : selected?.closed
+                          ? `${selected.name}: ${selected.closed.toLowerCase()}, kept for its history`
+                          : resultsCaption(searching && byDrinks, results.totals, areaLabel(area), pins.length)
+                    }
+                    title={title}
+                    chips={layers}
+                    below={searching && byDrinks ? <ClassicLine drinks={results.drinks} search={filter.search} where={areaLabel(area)} /> : null}
+                    onOpen={() => sheetRef.current?.snapToIndex(1)}
+                    onLayout={(e) => setPeek(Math.max(SHEET_PEEK, Math.ceil(e.nativeEvent.layout.height) + HANDLE + space.md))}
+                  />
                 )}
               </View>
             }
