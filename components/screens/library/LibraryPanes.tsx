@@ -1,10 +1,10 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import type { ReactElement } from 'react';
+import { lazy, Suspense, type ReactElement } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Display, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
-import { DrinkLoading, DrinkScreen } from '@/components/screens/drink/DrinkScreen';
+import { DrinkLoading } from '@/components/screens/drink/DrinkLoading';
 import { radius, space } from '@/constants/tokens';
 import { useCocktail } from '@/hooks/useCocktails';
 import { useStudyPile } from '@/hooks/useStudyPile';
@@ -12,6 +12,10 @@ import { useCanEditItem } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
+
+// The drink pane (and the animation code its scroll header runs on) loads when a
+// drink is first picked, not with the Library.
+const DrinkScreen = lazy(() => import('@/components/screens/drink/DrinkScreen').then((m) => ({ default: m.DrinkScreen })));
 
 /** What a Library row needs: the catalog's shape. */
 export interface PaneItem {
@@ -33,14 +37,16 @@ function DrinkPane({ id }: { id: string }) {
   const canEdit = useCanEditItem(drink);
   if (!drink) return <DrinkLoading seed={query.isPlaceholderData ? query.data : null} />;
   return (
-    <DrinkScreen
-      pane
-      item={drink}
-      inStudyPile={isInStudyPile(drink.id)}
-      onToggleStudyPile={() => toggleStudyPile(drink.id)}
-      canEdit={canEdit}
-      onEdit={() => router.push(`/cocktail/${drink.id}/edit` as Href)}
-    />
+    <Suspense fallback={<DrinkLoading seed={drink} />}>
+      <DrinkScreen
+        pane
+        item={drink}
+        inStudyPile={isInStudyPile(drink.id)}
+        onToggleStudyPile={() => toggleStudyPile(drink.id)}
+        canEdit={canEdit}
+        onEdit={() => router.push(`/cocktail/${drink.id}/edit` as Href)}
+      />
+    </Suspense>
   );
 }
 

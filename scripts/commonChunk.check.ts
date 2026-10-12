@@ -1,7 +1,7 @@
 // @expo/metro-config's chunk splitting is patched
 // (patches/@expo+metro-config+58.0.7.patch): the common chunk every web page
-// loads takes a module only when the root layout or at least 20 async chunks
-// use it. This fails if an upgrade drops the patch.
+// loads takes a module only when the root layout or at least 20 route chunks
+// use it (lazy chunks don't count). This fails if an upgrade drops the patch.
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
@@ -23,18 +23,22 @@ const drinkScreen = mod('components/DrinkScreen.tsx');
 const theme = mod('constants/theme.ts');
 const routes = Array.from({ length: 20 }, (_, i) => mod(`app/r${i}.tsx`));
 const tabBits = mod('components/TabBits.tsx');
+const animation = mod('node_modules/react-native-reanimated/index.js');
+const lazyChunks = Array.from({ length: 25 }, (_, i) => chunk(mod(`components/Lazy${i}.tsx`), animation));
 const rootLayout = chunk(mod('app/_layout.tsx'), theme);
 const chunks = new Set<FakeChunk>([
   rootLayout,
   chunk(routes[0], react, drinkScreen, theme),
   chunk(routes[1], react, drinkScreen),
   ...routes.slice(2).map((r, i) => (i < 17 ? chunk(r, react, tabBits) : chunk(r, react))),
+  ...lazyChunks,
 ]);
 
 const common = extractCommonChunk(chunks, graph, options) as FakeChunk;
-const routeChunks = [...chunks].filter((c) => c !== rootLayout);
+const routeChunks = [...chunks].filter((c) => c !== rootLayout && !lazyChunks.includes(c));
 assert.ok(common.deps.has(react), 'a module 20 routes use goes to the common chunk');
 assert.ok(!common.deps.has(tabBits), 'a module 17 routes use stays with them');
+assert.ok(!common.deps.has(animation) && lazyChunks.every((c) => c.deps.has(animation)), 'a module only lazy chunks use (25 of them) stays with them');
 assert.ok(common.deps.has(theme), 'a module the root layout and one route use goes to the common chunk');
 assert.ok(!common.deps.has(drinkScreen), 'a module only 2 routes use stays out of it');
 assert.ok(routeChunks[0].deps.has(drinkScreen) && routeChunks[1].deps.has(drinkScreen), '...and each of those routes keeps a copy');

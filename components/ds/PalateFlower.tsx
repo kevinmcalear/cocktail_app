@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useReducedMotion } from 'react-native-reanimated';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 
 import { fontFamilies, palateHues, springs } from '@/constants/tokens';

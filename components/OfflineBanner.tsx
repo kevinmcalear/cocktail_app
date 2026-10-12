@@ -1,9 +1,10 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useNetInfo } from '@react-native-community/netinfo';
 import React from 'react';
-import Animated, { SlideInUp, SlideOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View, useTheme } from 'tamagui';
+
+import { Appear } from '@/components/ds/Appear';
 
 export function OfflineBanner() {
     const netInfo = useNetInfo();
@@ -16,9 +17,9 @@ export function OfflineBanner() {
     if (!isOffline) return null;
 
     return (
-        <Animated.View
-            entering={SlideInUp.duration(400)}
-            exiting={SlideOutUp.duration(400)}
+        <Appear
+            kind="slide"
+            duration={400}
             // Centred, so it clears the floating back button on the left.
             style={{
                 position: 'absolute',
@@ -52,6 +53,6 @@ export function OfflineBanner() {
                     Offline · showing saved data
                 </Text>
             </View>
-        </Animated.View>
+        </Appear>
     );
 }
