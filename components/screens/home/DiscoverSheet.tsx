@@ -172,11 +172,19 @@ interface AreaSheetProps {
   preferNear: boolean;
   onArea: (area: Area) => void;
   onNearMe: () => void;
+  /** "This area": what the map shows; Discover searches it, or shows the map to move. */
+  onThisArea: () => void;
   onClose: () => void;
 }
 
-/** Where: near me, anywhere, the map's area, or a city with bars. */
-export function AreaSheet({ area, near, preferNear, onArea, onNearMe, onClose }: AreaSheetProps) {
+/** What the Where sheet says about where Discover is looking (disc-where). */
+function whereLine(area: Area, pinOn: boolean): string {
+  const near = area.kind === 'point' && area.source === 'me' ? `Near you, within ${Math.round(area.radiusKm)} km.` : pinOn ? 'Near you.' : area.kind === 'city' ? `In ${area.label}.` : area.kind === 'anywhere' ? 'Anywhere.' : 'This area, as the map shows it.';
+  return `${near} This area is what the map shows after you move it.`;
+}
+
+/** Where: near me, anywhere, the map's area (always offered), or a city with bars. */
+export function AreaSheet({ area, near, preferNear, onArea, onNearMe, onThisArea, onClose }: AreaSheetProps) {
   const { data: cities } = useBarCities();
   const pinOn = (area.kind === 'point' && area.source === 'me') || (preferNear && area.kind === 'anywhere');
   const note = areaStatus(near);
@@ -189,9 +197,11 @@ export function AreaSheet({ area, near, preferNear, onArea, onNearMe, onClose }:
       <View role="radiogroup" accessibilityLabel="Where" style={styles.chips}>
         <Chip label="Near me" selected={pinOn} onPress={() => (onNearMe(), onClose())} />
         <Chip label="Anywhere" selected={area.kind === 'anywhere' && !pinOn} onPress={() => pick({ kind: 'anywhere' })} />
-        {area.kind === 'point' && area.source === 'map' ? <Chip label="This area" selected onPress={onClose} /> : null}
+        <Chip label="This area" selected={area.kind === 'point' && area.source === 'map'} onPress={() => (onThisArea(), onClose())} />
       </View>
-      {note ? <Caption tone="muted" role="status">{note}</Caption> : null}
+      <Caption tone="muted" role="status">
+        {note ?? whereLine(area, pinOn)}
+      </Caption>
       {cities?.length ? (
         <View style={styles.group}>
           <Caption tone="muted">Cities</Caption>

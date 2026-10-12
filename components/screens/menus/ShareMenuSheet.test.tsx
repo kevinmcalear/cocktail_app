@@ -8,6 +8,7 @@ const mockPush = jest.fn();
 const mockShare = jest.fn();
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
+jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useMenuMutations', () => ({ useShareMenu: () => ({ mutateAsync: mockShare, isPending: false }) }));
 
 const menu = { id: 'm1', name: 'Saturday at home', sharedAt: null };
@@ -22,7 +23,7 @@ describe('ShareMenuSheet', () => {
     mockShare.mockRejectedValue(new Error('You need a public profile before you can share a menu.'));
     const onClose = jest.fn();
     await renderWithTamagui(<ShareMenuSheet menu={menu} onClose={onClose} />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Share a link' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Share link' }));
     expect(mockShare).toHaveBeenCalledWith({ menuId: 'm1', shared: true });
     expect(await screen.findByText(/You need a public profile/)).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Set up your public profile' }));
@@ -33,7 +34,7 @@ describe('ShareMenuSheet', () => {
   test('any other failure just says so', async () => {
     mockShare.mockRejectedValue(new Error('That didn’t work. Try again.'));
     await renderWithTamagui(<ShareMenuSheet menu={menu} onClose={() => {}} />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Share a link' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Share link' }));
     expect(await screen.findByText('That didn’t work. Try again.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Set up your public profile' })).toBeNull();
   });

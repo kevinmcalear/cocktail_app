@@ -1,5 +1,5 @@
 import { getLocales } from 'expo-localization';
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Headline, RowScore, scoreWords as rowScoreWords, type MatchTextProps } from '@/components/ds';
@@ -44,17 +44,29 @@ export function scoreWords(drink?: number, bar?: number): string | null {
 }
 
 /**
- * One drink at its bar: the bar and where it is under the name, what it is to
- * its classic ("the classic spec", or what its variation changes), the scores
- * (when given) at the end, and the searched word lit (tint on Discover).
+ * How far each bar is from the person ("400 m"), for the rows' sub line;
+ * Discover provides it from its bars' coordinates once it knows where the
+ * person is. Null when it doesn't.
  */
-export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint' }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look'] }) {
+export const BarAway = createContext<(barId: string) => string | null>(() => null);
+
+/**
+ * One drink at its bar, the sub line plain as drawn (disc-list): the bar,
+ * how far it is (else where), what it is to its classic ("the classic
+ * spec", or what its variation changes) and "on now"; the scores (when
+ * given) at the end, and the searched word lit (tint on Discover). `atBar`:
+ * a tapped bar's own drinks (disc-map-bar), so the bar isn't repeated.
+ */
+export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean }) {
   const bar = d.bar;
   const version = useVersionLabel(d.id);
-  const away = d.distance === null || d.distance === undefined ? null : formatDistance(d.distance / 1000, usesMiles(getLocales()[0]));
-  const caption = [bar.name, away ?? place(bar), version, d.menu.onNow ? 'on now' : null].filter(Boolean).join(' · ');
+  const near = useContext(BarAway)(d.barId);
+  const away = d.distance === null || d.distance === undefined ? near : formatDistance(d.distance / 1000, usesMiles(getLocales()[0]));
+  // A tapped bar's rows say what the drink is instead (ponytail: its description; the ingredient line needs discover_list to return the spec's lines).
+  const what = atBar ? (d.why ?? version ?? d.description) : (d.why ?? version);
+  const caption = (atBar ? [what, d.menu.onNow ? 'on now' : null] : [bar.name, away ?? place(bar), what, d.menu.onNow ? 'on now' : null]).filter(Boolean).join(' · ');
   const drinkScore = scores?.drinks[d.id];
-  const barScore = scores?.bars[d.barId]?.score;
+  const barScore = atBar ? undefined : scores?.bars[d.barId]?.score;
   const said = scoreWords(drinkScore, barScore);
   return (
     <DrinkRow
@@ -64,13 +76,11 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint' }: {
       imageUrl={d.imageUrl}
       glass={null}
       caption={caption}
-      logo={{ uri: bar.logo, name: bar.name }}
       tag={d.menu.past ?? undefined}
-      note={(d.why ?? d.description) || undefined}
       trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
       query={query}
       matchLook={matchLook}
-      label={said ? [d.name, caption, d.menu.past, said, d.why ?? d.description].filter(Boolean).join('. ') : undefined}
+      label={said ? [d.name, caption, d.menu.past, said].filter(Boolean).join('. ') : undefined}
     />
   );
 }

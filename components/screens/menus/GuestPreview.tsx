@@ -6,10 +6,11 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSeque
 import { BackbarTheme, Body, BrandProvider, TextLink, useDs } from '@/components/ds';
 import { radius, space, springs } from '@/constants/tokens';
 import type { Venue } from '@/hooks/useActiveVenue';
+import { cardWhen } from '@/lib/menus';
 
-import { Eyebrow } from '../addDrink/WizardChrome';
 import { GuestCardContent } from './MenuCardScreen';
 import type { LayoutEditor } from './useLayoutEditor';
+import { MonoLabel } from './ReviewParts';
 
 /**
  * What guests see, live: the guest card set from the menu as it stands in
@@ -26,14 +27,14 @@ export function GuestPreview({ editor, venue }: { editor: LayoutEditor; venue: V
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <Eyebrow>What guests see</Eyebrow>
-        <TextLink label="Open the card" onPress={() => router.push(`/menus/${editor.menu.id}/card`)} />
+        <MonoLabel>What guests see</MonoLabel>
+        <TextLink tone="ink" label="Open the card" onPress={() => router.push(`/menus/${editor.menu.id}/card`)} />
       </View>
       <Animated.View style={bounce}>
         <BackbarTheme scheme="light">
           <BrandProvider accent={venue?.accent ?? undefined}>
             <Paper count={count}>
-              <GuestCardContent name={editor.layout.name.trim() || 'Menu'} startsAt={editor.menu.startsAt} venue={venue} sections={sections} pictures="above" compact />
+              <GuestCardContent name={editor.layout.name.trim() || 'Menu'} when={cardWhen(editor.menu)} venue={venue} sections={sections} pictures="above" compact />
             </Paper>
           </BrandProvider>
         </BackbarTheme>

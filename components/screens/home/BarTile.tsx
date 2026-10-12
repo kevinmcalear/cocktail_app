@@ -16,7 +16,8 @@ interface BarTileProps {
   name: string;
   /** One line under the name: "In 12 drinks", "Made yesterday". */
   meta?: string | null;
-  metaTone?: 'muted' | 'accent';
+  /** Muted; ink when it matters (a prep's use-by close, kit that opens projects); accent only for a tick. */
+  metaTone?: 'muted' | 'accent' | 'ink';
   /** The drawing, filling the square (IngredientDrawing). */
   picture: ReactNode;
   onPress: () => void;
@@ -58,7 +59,7 @@ export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role
           {name}
         </Body>
         {meta ? (
-          <Caption tone={metaTone} numberOfLines={1}>
+          <Caption tone={metaTone} numberOfLines={2}>
             {meta}
           </Caption>
         ) : null}
@@ -69,11 +70,12 @@ export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role
 
 /**
  * The way to add to a section, as the first tile in its grid: where the next
- * thing will go, dashed so it never reads as something you have.
+ * thing will go, dashed so it never reads as something you have. `sub`: what
+ * goes there ("Search or snap", "Acids, enzymes").
  */
-export function AddTile({ label, onPress }: { label: string; onPress: () => void }) {
+export function AddTile({ label, sub, onPress }: { label: string; sub?: string; onPress: () => void }) {
   const ds = useDs();
-  return <BarTile name={label} picture={<View style={styles.plus}><IconSymbol name="plus" size={28} color={ds.c.ink} /></View>} role="button" accessibilityLabel={label} ghost onPress={onPress} />;
+  return <BarTile name={label} meta={sub} picture={<View style={styles.plus}><IconSymbol name="plus" size={28} color={ds.c.ink} /></View>} role="button" accessibilityLabel={sub ? `${label}: ${sub}` : label} ghost onPress={onPress} />;
 }
 
 function TileBadge({ badge }: { badge: Badge }) {

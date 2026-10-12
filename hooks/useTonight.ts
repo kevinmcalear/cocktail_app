@@ -1,20 +1,10 @@
 import { useMemo, useState } from 'react';
 
 import { useCurrentMenuDrinks } from '@/hooks/useCurrentMenuDrinks';
-import { useVenueMenus } from '@/hooks/useMenus';
-import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
+import { toMenuDrink, useVenueMenus } from '@/hooks/useMenus';
 import { fallbackGlass, type ItemCategory } from '@/lib/itemRoutes';
-import { groupMenus } from '@/lib/menus';
-
-type Glass = { icon_key: string | null; name: string | null };
-
-interface MenuItem {
-  id: string;
-  name: string;
-  item_type: string;
-  glass: Glass | Glass[] | null;
-  item_images?: ItemImageLink[] | ItemImageLink | null;
-}
+import { groupMenus, newDrinkIds } from '@/lib/menus';
+import type { MenuDrink, MenuSummary } from '@/types/menus';
 
 export interface TonightDrink {
   id: string;
@@ -26,41 +16,70 @@ export interface TonightDrink {
   menuId: string;
 }
 
+/** A drink on Tonight: as the menu shows it, and whether it's new on this menu. */
+export interface TonightRow extends MenuDrink {
+  isNew: boolean;
+}
+
+/** One menu that's on, with its sections in running order. */
+export interface TonightBlock {
+  menu: MenuSummary;
+  sections: { id: string; name: string; drinks: TonightRow[] }[];
+}
+
 const CATEGORY: Record<string, ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
 
 /**
  * What's pouring tonight at a venue: its menus on now (oldest first, the
- * running order) and their drinks. Reads the same menu list as Tonight's
- * menu cards, so it waits on nothing bigger.
+ * running order), each with its sections and their drinks. A drink is new
+ * when no menu that has finished had it (and there is one to compare with). `drinks` is every drink, flat, for
+ * the back bar and Study.
  */
 export function useTonight(venueId: string | null) {
   const { data: venueMenus, isLoading: menusLoading } = useVenueMenus(venueId);
   const [now] = useState(() => Date.now());
-  const menus = useMemo(() => {
-    const here = (venueMenus ?? []).filter((m) => !!venueId && m.barId === venueId);
-    return groupMenus(here, now).on.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const { menus, previous } = useMemo(() => {
+    const groups = groupMenus((venueMenus ?? []).filter((m) => !!venueId && m.barId === venueId), now);
+    return { menus: groups.on.sort((a, b) => a.createdAt.localeCompare(b.createdAt)), previous: groups.previous };
   }, [venueMenus, venueId, now]);
   const { data: rows, isLoading: drinksLoading } = useCurrentMenuDrinks(menus.map((m) => m.id));
 
-  const drinks = useMemo<TonightDrink[]>(() => {
-    const out: TonightDrink[] = [];
-    for (const row of rows ?? []) {
-      const item = (Array.isArray(row.item) ? row.item[0] : row.item) as MenuItem | null;
-      if (!item) continue;
-      const category = CATEGORY[item.item_type] ?? 'Cocktail';
-      const images = Array.isArray(item.item_images) ? item.item_images : item.item_images ? [item.item_images] : null;
-      const glass = Array.isArray(item.glass) ? item.glass[0] : item.glass;
-      out.push({
-        id: item.id,
-        name: item.name,
-        category,
-        imageUrl: heroPicture(images)?.url ?? null,
-        glass: glass?.icon_key || glass?.name || fallbackGlass(category),
-        menuId: row.menu_id,
-      });
-    }
-    return out;
-  }, [rows]);
+  const blocks = useMemo<TonightBlock[]>(
+    () =>
+      menus.map((menu) => {
+        // With no finished menu to compare against, nothing is marked new.
+        const fresh = previous.length ? newDrinkIds(menu.itemIds, previous) : new Set<string>();
+        const sections = (rows ?? [])
+          .filter((s) => s.menu_id === menu.id)
+          .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
+          .map((s) => ({
+            id: s.id,
+            name: s.name,
+            drinks: [...(s.menu_drinks ?? [])]
+              .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
+              .map((d) => (Array.isArray(d.item) ? d.item[0] : d.item))
+              .map((item) => (item ? toMenuDrink(item) : null))
+              .filter((d): d is MenuDrink => !!d)
+              .map((d) => ({ ...d, isNew: fresh.has(d.id) })),
+          }))
+          .filter((s) => s.drinks.length);
+        return { menu, sections };
+      }),
+    [menus, previous, rows]
+  );
 
-  return { menus, drinks, isLoading: menusLoading || (menus.length > 0 && drinksLoading) };
+  const drinks = useMemo<TonightDrink[]>(
+    () =>
+      blocks.flatMap((b) =>
+        b.sections.flatMap((s) =>
+          s.drinks.map((d) => {
+            const category = CATEGORY[d.kind] ?? 'Cocktail';
+            return { id: d.id, name: d.name, category, imageUrl: d.imageUrl, glass: d.glass || fallbackGlass(category), menuId: b.menu.id };
+          })
+        )
+      ),
+    [blocks]
+  );
+
+  return { menus, blocks, drinks, isLoading: menusLoading || (menus.length > 0 && drinksLoading) };
 }

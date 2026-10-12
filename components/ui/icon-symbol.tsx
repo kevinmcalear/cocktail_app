@@ -92,6 +92,9 @@ const MAPPING = {
   'doc.on.doc': 'content-copy',
   'paintpalette.fill': 'palette',
   'map.fill': 'map',
+  'clock': 'schedule',
+  'phone': 'phone',
+  'arrow.triangle.turn.up.right.diamond': 'directions',
   'lock.shield.fill': 'security',
   'lock.fill': 'lock',
   'lock.open.fill': 'lock-open',
@@ -111,6 +114,13 @@ const MAPPING = {
   'line.horizontal.3': 'menu',
   'flag': 'outlined-flag',
   'gearshape': 'settings',
+  // Menus: the R&D tile, printing, and a builder row's ... menu.
+  'square.grid.2x2': 'grid-view',
+  'printer': 'print',
+  'arrow.up.to.line': 'vertical-align-top',
+  'arrow.up.right.square': 'open-in-new',
+  'arrow.turn.down.right': 'subdirectory-arrow-right',
+  'square.on.square': 'library-add',
   // Tab icons: the same Material glyphs NativeTabs uses on Android.
   'rectangle.stack': 'style',
 } satisfies IconMapping;

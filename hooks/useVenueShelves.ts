@@ -1,8 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useAllIngredients } from '@/hooks/useDropdowns';
 import { type ItemImageLink } from '@/lib/itemImages';
-import { venueShelves, type ShelfIngredient } from '@/lib/libraryFilters';
+import { prepGroup, tileLine, venueShelves, yieldText, type PrepGroup, type ShelfIngredient } from '@/lib/libraryFilters';
+import { shelfLifeLabel } from '@/lib/scale';
+import { supabase } from '@/lib/supabase';
 import type { SearchItem } from '@/types/search';
 
 type Shelves = Record<'preps' | 'garnishes' | 'bottles', SearchItem[]>;
@@ -30,4 +33,50 @@ export function useVenueShelves(venueId: string | null, items: SearchItem[]): Sh
     const tiles = (ids: string[]) => ids.map(tile).filter((t): t is SearchItem => !!t);
     return { preps: tiles(shelves.preps), garnishes: tiles(shelves.garnishes), bottles: tiles(shelves.bottles) };
   }, [venueId, ingredients, items]);
+}
+
+interface PrepRow {
+  item_id: string;
+  yield_amount: number | null;
+  yield_unit: string | null;
+  shelf_life_hours: number | null;
+  actions: string[] | null;
+}
+
+export interface PrepFacts {
+  group: PrepGroup | null;
+  /** "Cordial · 1 L · keeps 2 weeks". */
+  line: string | null;
+}
+
+/**
+ * The Preps shelf's tiles' facts: what was done (Syrups, Cordials...), yield
+ * and how long it keeps, from each prep's card (item_prep). A prep with no card
+ * still gets its group from its name.
+ * ponytail: one request for the shelf's ids (a venue has tens of preps, under
+ * the 1,000-row page); page it if a shelf ever passes that.
+ */
+export function usePrepFacts(preps: SearchItem[]): Record<string, PrepFacts> {
+  const ids = useMemo(() => preps.map((p) => p.id).sort(), [preps]);
+  const { data } = useQuery({
+    queryKey: ['prep-facts', ids],
+    enabled: ids.length > 0,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<PrepRow[]> => {
+      const { data, error } = await supabase.from('item_prep').select('item_id, yield_amount, yield_unit, shelf_life_hours, actions').in('item_id', ids);
+      if (error) throw error;
+      return (data ?? []) as PrepRow[];
+    },
+  });
+  return useMemo(() => {
+    const cards = new Map((data ?? []).map((r) => [r.item_id, r]));
+    const out: Record<string, PrepFacts> = {};
+    for (const p of preps) {
+      const card = cards.get(p.id);
+      const group = prepGroup(p.name, card?.actions ?? []);
+      const keeps = shelfLifeLabel(card?.shelf_life_hours ?? null);
+      out[p.id] = { group, line: tileLine(group, yieldText(card?.yield_amount, card?.yield_unit), keeps ? `keeps ${keeps}` : null) };
+    }
+    return out;
+  }, [data, preps]);
 }

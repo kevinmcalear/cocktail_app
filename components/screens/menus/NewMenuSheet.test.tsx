@@ -53,15 +53,30 @@ test('with no name, making it goes back to the name step and says why', async ()
   expect(screen.getByText('1 of 3')).toBeTruthy();
 });
 
-test('a venue menu takes two steps, with no night', async () => {
+test('a venue menu takes three steps: name, start from, dates; a night is planned, not put on', async () => {
   mockMode = 'venue';
   mockCreate.mockResolvedValue('venue-id');
   await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
-  expect(screen.getByText('1 of 2')).toBeTruthy();
+  expect(screen.getByText('1 of 3')).toBeTruthy();
+  await fireEvent.changeText(screen.getByLabelText('Name'), 'Halloween');
+  await fireEvent.press(screen.getByRole('button', { name: 'Next: start from' }));
+  expect(screen.getByText('2 of 3')).toBeTruthy();
+  expect(screen.getByRole('radio', { name: /^Paste a list/ })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Next: dates' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Create draft' }));
+  expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ barId: 'bar', night: undefined, plan: { plannedStartsAt: null, plannedEndsAt: null } }));
+});
+
+test('Paste a list makes the draft and opens the builder on the paste sheet', async () => {
+  mockMode = 'venue';
+  mockCreate.mockResolvedValue('venue-id');
+  await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Spring menu');
   await fireEvent.press(screen.getByRole('button', { name: 'Next: start from' }));
+  await fireEvent.press(screen.getByRole('radio', { name: /^Paste a list/ }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Next: dates' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Create draft' }));
-  expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ barId: 'bar', night: undefined }));
+  expect(mockPush).toHaveBeenCalledWith('/menus/venue-id/edit?paste=1');
 });
 
 // A Bartender at a venue whose settings let Bartenders build menus got another venue, or a personal menu.
@@ -72,6 +87,7 @@ test('a venue menu is for the venue you are in, even below Drink Creator', async
   await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Spring menu');
   await fireEvent.press(screen.getByRole('button', { name: 'Next: start from' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Next: dates' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Create draft' }));
   expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ barId: 'bar' }));
 });
