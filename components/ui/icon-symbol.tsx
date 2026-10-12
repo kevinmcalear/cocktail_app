@@ -112,6 +112,7 @@ const MAPPING = {
   'list.number': 'format-list-numbered',
   'trophy': 'emoji-events',
   'line.horizontal.3': 'menu',
+  'location': 'place',
   'flag': 'outlined-flag',
   'gearshape': 'settings',
   // Menus: the R&D tile, printing, and a builder row's ... menu.

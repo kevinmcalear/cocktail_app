@@ -14,14 +14,14 @@ import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarProfile } from './BarProfile';
 import { MakerProfile } from './MakerProfile';
 import { PersonProfile } from './PersonProfile';
+import { PublicBarPage } from './PublicBarPage';
 import { useShareLink } from './useShareLink';
 
 /**
  * A public profile: a person or a bar, the same kind of page (a maker's has
- * its own, MakerProfile). Who they are,
- * the drinks credited to them, and the bars that put those drinks on a menu
- * (the credit that matters most). A person who chooses to can show the
- * drinks they've had, with their scores.
+ * its own, MakerProfile). Who they are, the drinks credited to them, and the
+ * bars that put those drinks on a menu (the credit that matters most). A
+ * person who chooses to can show the drinks they've had, with their scores.
  */
 export function ProfileScreen({ profileRef }: { profileRef: string | string[] | undefined }) {
   return (
@@ -46,6 +46,7 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   const searched = typeof q === 'string' && q.trim() ? q.trim() : null;
   // A bar you open shows in Search's Recent.
   useTrackRecent(profile?.kind === 'bar', profile ? recentEntry('bar', profile.id, profile.display_name, { href: `/p/${profile.handle || profile.id}`, imageUrl: profile.avatar_url, barId: null }) : null);
+  if (profile?.kind === 'bar' && !signedIn) return <PublicBarPage profile={profile} />; // signed out: the public web's one bar page (ppl-pub-bar-*)
 
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
