@@ -1,41 +1,50 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
-import { Body, Button, Caption, Field, GlassButton, Headline, useDs } from '@/components/ds';
+import { Body, Button, Caption, GlassButton, useDs } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
-import { space } from '@/constants/tokens';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useSaveLayout } from '@/hooks/useMenuMutations';
-import { cannotAdd, filterLibrary, libraryNote } from '@/lib/menuLayout';
-import { menuDateLine, plural } from '@/lib/menus';
+import { useCreateMenu, useSaveLayout } from '@/hooks/useMenuMutations';
+import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
+import { cannotAdd, copySections, filterLibrary, libraryNote } from '@/lib/menuLayout';
 
 import { LibraryRow } from './AddDrinkSheet';
-import { Eyebrow } from '../addDrink/WizardChrome';
-import { EDITOR_STATUS, EditorActions, EditorSections, MenuCoverEdit, MenuNameInput, useHomeMenu } from './EditorParts';
+import { EDITOR_STATUS, EditorSections, MenuCoverEdit, MenuNameInput, NextStep, SaveLine, useHomeMenu } from './EditorParts';
 import { GuestPreview } from './GuestPreview';
-import { Check, ReadyChecks } from './ReviewParts';
-import { Choice } from './MenuSheet';
+import { Check, MonoLabel, ReadyChecks, type CheckTarget } from './ReviewParts';
+import { Choice, MenuSheet } from './MenuSheet';
 import type { LayoutEditor } from './useLayoutEditor';
 
+const CATEGORY: Record<string, ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
 
-/** Desktop: the library to add from, the menu, and its settings side by side. */
+/**
+ * Desktop: the library to add from, the menu, and what guests see side by
+ * side, the whole width (no app sidebar). The header says "Menus · Draft ·
+ * Little Rye" over the name, then a quiet save line, a ... for the layout and
+ * a copy, the guest card, and Go live, the one accent.
+ */
 export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
   const ds = useDs();
   const router = useRouter();
-  const [now] = useState(() => Date.now());
+  const { venues } = useActiveVenue();
+  const venue = venues.find((v) => v.id === editor.menu.barId);
+  const [more, setMore] = useState(false);
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <View style={[styles.header, { borderBottomColor: ds.c.line }]}>
-        <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={editor.leave} />
+        <GlassButton icon="chevron.left" accessibilityLabel="Back to Menus" onPress={editor.leave} />
         <View style={styles.flex}>
-          <Caption tone="muted">{`Menus › ${EDITOR_STATUS[editor.status]}${editor.changed ? ' · unsaved changes' : ''}`}</Caption>
+          <MonoLabel>{['Menus', EDITOR_STATUS[editor.status], venue?.name].filter(Boolean).join(' · ')}</MonoLabel>
           <MenuNameInput editor={editor} />
-          <Caption tone="muted">{[menuDateLine(editor.menu, now), plural(editor.layout.sections.reduce((n, s) => n + s.drinks.length, 0), 'drink')].filter(Boolean).join(' · ')}</Caption>
         </View>
+        <SaveLine editor={editor} />
+        <GlassButton icon="ellipsis" accessibilityLabel={`More for ${editor.layout.name}: save layout for next time, duplicate`} onPress={() => setMore(true)} />
         <Button label="Guest card" variant="secondary" onPress={() => router.push(`/menus/${editor.menu.id}/card`)} />
-        <View style={styles.actions}>
-          <EditorActions editor={editor} size="md" />
+        <View style={styles.next}>
+          <NextStep editor={editor} size="md" label="Go live" />
         </View>
       </View>
       <View style={styles.columns}>
@@ -44,23 +53,36 @@ export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
           {editor.error ? <Body tone="accent">{editor.error}</Body> : null}
           <EditorSections editor={editor} targetable />
         </FormScrollContainer>
-        <Inspector editor={editor} />
+        <Inspector editor={editor} venueName={venue?.name ?? null} />
       </View>
+      {more ? <MoreSheet editor={editor} onClose={() => setMore(false)} /> : null}
     </View>
   );
 }
 
 function LibraryPanel({ editor }: { editor: LayoutEditor }) {
   const ds = useDs();
+  const { venues } = useActiveVenue();
   const [query, setQuery] = useState('');
   const [freeOnly, setFreeOnly] = useState(false);
   const target = editor.section(editor.targetKey) ?? editor.layout.sections[0] ?? null;
   const drinks = target ? filterLibrary(editor.library, target, query, freeOnly, editor.elsewhere) : [];
+  const where = venues.find((v) => v.id === editor.menu.barId)?.name ?? 'your drinks';
   return (
     <View style={[styles.side, { borderRightColor: ds.c.line }]}>
-      <Headline>{target ? `Add to ${target.name}` : 'Add a section first'}</Headline>
-      <Caption tone="muted">Click a section to add to it instead.</Caption>
-      <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search drinks" autoCapitalize="none" />
+      <MonoLabel>{target ? `Add to ${target.name}` : 'Add a section first'}</MonoLabel>
+      <View style={[styles.search, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+        <IconSymbol name="magnifyingglass" size={16} color={ds.c.muted} />
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          aria-label={`Search ${where}`}
+          placeholder={`Search ${where}`}
+          placeholderTextColor={ds.c.faint}
+          autoCapitalize="none"
+          style={[type.body, styles.searchInput, { color: ds.c.ink }]}
+        />
+      </View>
       <View role="radiogroup" accessibilityLabel="Show" style={styles.wrap}>
         <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
         <Choice label="Not on a menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />
@@ -69,81 +91,113 @@ function LibraryPanel({ editor }: { editor: LayoutEditor }) {
         {target && drinks.length === 0 ? <Body tone="muted">No drinks that fit {target.name}.</Body> : null}
         {target
           ? drinks.map((d) => (
-              <LibraryRow
-                key={d.id}
-                drink={d}
-                note={libraryNote(d, target, editor.elsewhere)}
-                added={!!cannotAdd(target, d)}
-                onAdd={() => editor.add(target.key, d)}
-              />
+              <LibraryRow key={d.id} drink={d} note={libraryNote(d, target, editor.elsewhere)} added={!!cannotAdd(target, d)} onAdd={() => editor.add(target.key, d)} />
             ))
           : null}
       </ScrollView>
+      {/* ponytail: tap + only. Dragging from here into a section needs drag across lists (board venue-menus-builder-desktop). */}
+      <Caption tone="muted">Tap + to add to the section marked Adding here, or click another section.</Caption>
     </View>
   );
 }
 
-function Inspector({ editor }: { editor: LayoutEditor }) {
+function Inspector({ editor, venueName }: { editor: LayoutEditor; venueName: string | null }) {
   const ds = useDs();
+  const router = useRouter();
   const { venues } = useActiveVenue();
-  const saveLayout = useSaveLayout();
-  const [layoutSaved, setLayoutSaved] = useState(false);
-  // A home menu has no photos to shoot, prices or venue layouts.
+  // A home menu has no photos to shoot, prices or venue dates.
   const home = useHomeMenu(editor);
-  const venue = venues.find((v) => v.id === editor.menu.barId);
-  const keepLayout = async () => {
-    try {
-      await saveLayout.mutateAsync({ name: `${editor.layout.name.trim()} layout`, sections: editor.layout.sections });
-      setLayoutSaved(true);
-    } catch {
-      setLayoutSaved(false);
-    }
-  };
+  const venue = venues.find((v) => v.id === editor.menu.barId) ?? null;
   const { coverUrl } = editor.layout;
+  const dated = !!(editor.menu.startsAt ?? editor.menu.plannedStartsAt);
+  // A checklist row opens what it names: the short section, the dates, a drink that needs a photo or a price.
+  const open = (target: CheckTarget) => {
+    if (target.kind === 'dates') return void editor.goLive();
+    if (target.kind === 'section') {
+      const s = editor.layout.sections.find((x) => x.name === target.name);
+      if (s) editor.setTargetKey(s.key);
+      return;
+    }
+    const drink = editor.layout.sections.flatMap((s) => s.drinks).find((d) => d.name === target.name);
+    if (drink) router.push(itemHref(CATEGORY[drink.kind] ?? 'Cocktail', drink.id) as never);
+  };
   // The preview card wants room, but the menu in the middle comes first: narrower under 1440.
   const width = useWindowDimensions().width >= 1440 ? 380 : 320;
   return (
     <ScrollView style={[styles.side, styles.inspector, { width, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.inspectorBody}>
-      <GuestPreview editor={editor} venue={venue ?? null} />
-      <View style={styles.checks}>
-        <Eyebrow>{home ? 'Before you share' : 'Before it goes on'}</Eyebrow>
-        <ReadyChecks sections={editor.layout.sections} home={home} />
+      <GuestPreview editor={editor} venue={venue} />
+      <View>
+        <MonoLabel>{home ? 'Before you share' : 'Before it goes on'}</MonoLabel>
+        <ReadyChecks sections={editor.layout.sections} home={home} dated={home ? undefined : dated} onOpen={open} />
+        {/* Kept (g743): the cover lives here on desktop. */}
         <Check
           done={!!coverUrl}
           label={coverUrl ? 'Cover photo' : 'Cover'}
-          note={coverUrl ? (venue ? `For ${venue.name}` : 'Just yours') : 'Drawn from your drinks until you add a photo'}
+          note={coverUrl ? (venueName ? `For ${venueName}` : 'Just yours') : 'Drawn from your drinks until you add a photo'}
           action={<MenuCoverEdit editor={editor} height={96} />}
         />
       </View>
-      {home ? null : (
-        <>
-          <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
-          <Headline>Layout</Headline>
-          <Body tone="muted">{`${plural(editor.layout.sections.length, 'section')}. Changes here stay on this menu.`}</Body>
-          <Button
-            label={layoutSaved ? 'Layout saved' : saveLayout.isPending ? 'Saving…' : 'Save layout for next time'}
-            variant="secondary"
-            onPress={keepLayout}
-            disabled={layoutSaved || saveLayout.isPending}
-          />
-          {saveLayout.error ? <Caption tone="accent">{saveLayout.error.message}</Caption> : null}
-        </>
-      )}
     </ScrollView>
+  );
+}
+
+/** The header's ...: keep this layout for next time, or copy the menu as a new draft. */
+function MoreSheet({ editor, onClose }: { editor: LayoutEditor; onClose: () => void }) {
+  const router = useRouter();
+  const saveLayout = useSaveLayout();
+  const create = useCreateMenu();
+  const home = useHomeMenu(editor);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const keepLayout = async () => {
+    setError(null);
+    try {
+      await saveLayout.mutateAsync({ name: `${editor.layout.name.trim()} layout`, sections: editor.layout.sections });
+      setDone(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Couldn’t save the layout.');
+    }
+  };
+  const duplicate = async () => {
+    setError(null);
+    try {
+      const { layout } = editor;
+      const id = await create.mutateAsync({ barId: editor.menu.barId, layout: { ...layout, name: `${layout.name} copy`, sections: copySections(layout.sections, true) } });
+      onClose();
+      router.replace(`/menus/${id}/edit`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Couldn’t copy the menu.');
+    }
+  };
+  return (
+    <MenuSheet visible onClose={onClose} title={editor.layout.name || 'Menu'}>
+      {home ? null : (
+        <Button
+          label={done ? 'Layout saved' : saveLayout.isPending ? 'Saving…' : 'Save layout for next time'}
+          icon="square.on.square"
+          variant="secondary"
+          onPress={keepLayout}
+          disabled={done || saveLayout.isPending}
+        />
+      )}
+      <Button label={create.isPending ? 'Copying…' : 'Duplicate'} icon="doc.on.doc" variant="secondary" onPress={duplicate} disabled={create.isPending} />
+      {error ? <Caption tone="accent">{error}</Caption> : null}
+    </MenuSheet>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'flex-end', gap: space.lg, paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
-  actions: { width: 300 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: space.lg, paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
+  // A row, so the button's flex: 1 widens it instead of squashing its height.
+  next: { minWidth: 160, flexDirection: 'row' },
   columns: { flex: 1, flexDirection: 'row', minHeight: 0 },
-  side: { width: 280, flexGrow: 0, padding: space.lg, gap: space.md, borderRightWidth: StyleSheet.hairlineWidth },
+  side: { width: 320, flexGrow: 0, padding: space.lg, gap: space.md, borderRightWidth: StyleSheet.hairlineWidth },
   inspector: { borderRightWidth: 0, borderLeftWidth: StyleSheet.hairlineWidth, padding: 0 },
   inspectorBody: { padding: space.lg, gap: space.xl },
-  checks: { gap: 0 },
   center: { padding: space.xl, gap: space.lg, maxWidth: 760, width: '100%', alignSelf: 'center' },
-  rule: { height: StyleSheet.hairlineWidth },
+  search: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.control, paddingHorizontal: space.md, minHeight: 44 },
+  searchInput: { flex: 1, minWidth: 0, paddingVertical: space.sm },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
 });

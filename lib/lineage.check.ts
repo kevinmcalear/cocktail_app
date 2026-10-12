@@ -6,6 +6,7 @@ import {
   creditText,
   creators,
   hasLineage,
+  nameCredit,
   joinNames,
   MAX_ANCESTORS,
   shortNames,
@@ -72,6 +73,16 @@ async function main() {
   assert.equal(creditLabel('claimed'), 'Claimed');
   assert.equal(creditLabel('suggested'), 'Suggested');
   assert.equal(creditLabel(null), null);
+
+  // Under the name: "Created by", the bar's place after its name, a classic's own lead.
+  const sam = drink('pen', 'goldrush', { creator: person, origin_bar: bar, origin_year: 2005, is_catalog: true });
+  assert.equal(creditText(nameCredit(sam, { id: 'goldrush', name: 'Gold Rush' })), 'Created by Sam Ross at Milk & Honey, New York, 2005');
+  const riff = drink('smoke', 'naked', { origin_bar: { ...bar, display_name: 'Little Rye', locality: 'Brunswick' } });
+  assert.equal(creditText(nameCredit(riff, { id: 'naked', name: 'Naked and Famous' })), 'Riff of Naked and Famous at Little Rye, Brunswick');
+  const lastWord = drink('lw', null, { is_catalog: true, origin_year: 1916, origin_year_approx: true, origin_bar: { ...bar, display_name: 'Detroit Athletic Club', locality: null } });
+  assert.equal(creditText(nameCredit(lastWord, null)), 'Classic, about 1916 · at Detroit Athletic Club');
+  assert.equal(creditText(nameCredit(drink('daiq', null, { is_catalog: true }), null)), 'Classic');
+  assert.equal(creditText(nameCredit(drink('mine', null, { creator: person }), null)), 'Created by Sam Ross');
 
   // Credit sentences leave out what isn't known and keep links on names.
   const full = drink('penicillin', 'goldrush', { creator: person, origin_bar: bar, origin_year: 2005 });

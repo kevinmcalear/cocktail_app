@@ -40,13 +40,13 @@ test('reads in order with where each drink stands, and a cut line after the top 
   expect(screen.getByLabelText('2. Drink 2 Off menu, open')).toBeTruthy();
   expect(screen.getByLabelText('11. Paloma Past, open')).toBeTruthy();
   expect(screen.getByText('NOT RANKED')).toBeTruthy();
-  expect(screen.queryByLabelText('Reorder Paloma')).toBeNull();
+  expect(screen.queryByLabelText('Move Paloma')).toBeNull();
   expect(screen.queryByText('Add a drink')).toBeNull();
 });
 
 test('a Drink Creator moves a drink with the buttons behind its grip', async () => {
   await show(true);
-  await fireEvent.press(screen.getByLabelText('Reorder Paloma'));
+  await fireEvent.press(screen.getByLabelText('Move Paloma'));
   await fireEvent.press(screen.getByRole('button', { name: 'Move up' }));
   expect(mockMutate).toHaveBeenLastCalledWith({ op: 'order', itemIds: [...ranked.slice(0, 9), 'paloma', 'd10'] });
 
@@ -56,15 +56,21 @@ test('a Drink Creator moves a drink with the buttons behind its grip', async () 
 
 test('screen readers move a drink with actions on its grip', async () => {
   await show(true);
-  await fireEvent(screen.getByLabelText('Reorder Drink 2'), 'accessibilityAction', { nativeEvent: { actionName: 'moveUp' } });
+  await fireEvent(screen.getByLabelText('Move Drink 2'), 'accessibilityAction', { nativeEvent: { actionName: 'moveUp' } });
   expect(mockMutate).toHaveBeenLastCalledWith({ op: 'order', itemIds: ['d2', 'd1', ...ranked.slice(2)] });
 });
 
 test('ranks an unranked drink at the end, and removes one', async () => {
   await show(true);
-  await fireEvent.press(screen.getByLabelText('Change House Daiquiri'));
+  await fireEvent.press(screen.getByLabelText('Move House Daiquiri'));
   await fireEvent.press(screen.getByRole('button', { name: 'Rank it' }));
   expect(mockMutate).toHaveBeenLastCalledWith({ op: 'order', itemIds: [...ranked, 'daiquiri'] });
   await fireEvent.press(screen.getByRole('button', { name: 'Remove from the list' }));
   expect(mockMutate).toHaveBeenLastCalledWith({ op: 'remove', itemId: 'daiquiri' });
+});
+
+test('a Not ranked drink has the same grip, and every row drops chevrons', async () => {
+  await show(true);
+  expect(screen.getByLabelText('Move House Daiquiri')).toBeTruthy();
+  expect(screen.queryByLabelText('Move Paloma up')).toBeNull();
 });

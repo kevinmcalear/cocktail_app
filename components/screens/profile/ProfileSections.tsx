@@ -2,10 +2,12 @@ import { useRouter, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, DsText, PressableScale, Spec, Title, useDs } from '@/components/ds';
+import { Body, Caption, DrinkImage, DsText, PressableScale, RowScore, scoreWords, Spec, Title, useDs } from '@/components/ds';
+import { DrinkRow } from '@/components/screens/DrinkRow';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
+import { useItemScores } from '@/hooks/useFlavor';
 import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
 import { rankedCount } from '@/lib/nearMe';
@@ -17,48 +19,83 @@ import { ClassicsTheyPour, usePouredSplit } from './ClassicsTheyPour';
 import { isShownPosition } from './Positions';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
+/** "riffed 12×", when other drinks name it as their classic. */
+const riffed = (d: Original) => {
+  const n = d.versions?.[0]?.count ?? 0;
+  return n ? `riffed ${n}×` : null;
+};
+
 /**
- * A profile's credited drinks as tiles; each opens the drink. The profile's
- * own name is left out of each tile. Their copies of a classic poured as it is
- * (the same spec, or none to tell) sit in one line, "Classics they pour",
- * instead of a tile each; a variation's tile says what it changes.
+ * A profile's credited drinks; each opens the drink. Tiles on a person's page
+ * ("8.4 · riffed 12×" under the name); rows on a bar's page (who made it, its
+ * description) and on You ("Your original · 2026 · riffed 2×"), each with its
+ * score at the end (b02). The profile's own name is left out. Their copies of
+ * a classic poured as it is (the same spec, or none to tell) sit in one line,
+ * "Classics they pour", instead of a tile each; a variation says what it changes.
  */
-export function OriginalsGrid({ originals, columns, emptyText, selfId }: { originals: Original[]; columns: number; emptyText: string; selfId: string }) {
+export function OriginalsGrid({ originals, columns, emptyText, selfId, layout = 'tiles', mine = false, ownerName }: { originals: Original[]; columns: number; emptyText: string; selfId: string; layout?: 'tiles' | 'rows'; mine?: boolean; ownerName?: string }) {
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
   const { poured, own, matches } = usePouredSplit(selfId, originals);
+  const { data: scores } = useItemScores(originals.map((d) => d.id));
   if (!originals.length) return <Body tone="muted">{emptyText}</Body>;
+  const others = (d: Original) => [d.creator, d.origin_bar].filter((p) => p && p.id !== selfId).map((p) => p!.display_name);
   return (
     <View style={styles.originals}>
-      <ClassicsTheyPour drinks={poured} />
-      <View role="list" style={styles.grid}>
-        {own.map((d) => {
-          const hero = heroPicture(d.item_images);
-          const others = [d.creator, d.origin_bar].filter((p) => p && p.id !== selfId).map((p) => p!.display_name);
-          const meta = [d.origin_year, ...others, versionLabel(matches?.[d.id])].filter(Boolean).join(' · ');
-          return (
-            <PressableScale
-              key={d.id}
-              role="link"
-              accessibilityLabel={[d.name, meta].filter(Boolean).join('. ')}
-              onPressIn={() => prefetch(d.id, { name: d.name, item_images: d.item_images })}
-              onPress={() => router.push(`/cocktail/${d.id}` as Href)}
-              style={[styles.tile, { width: `${100 / columns}%` }]}
-            >
-              <DrinkImage thumb source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} />
-              <DsText variant="headline" numberOfLines={2}>
-                {d.name}
-              </DsText>
-              {meta ? (
-                <Caption tone="muted" numberOfLines={1}>
-                  {meta}
-                </Caption>
-              ) : null}
-              <CreditTag status={d.credit_status} />
-            </PressableScale>
-          );
-        })}
-      </View>
+      <ClassicsTheyPour drinks={poured} scores={scores} barName={ownerName} />
+      {layout === 'rows' ? (
+        <View role="list">
+          {own.map((d) => {
+            const hero = heroPicture(d.item_images);
+            const by = others(d);
+            const caption = [mine ? 'Your original' : by.length ? `by ${by.join(' and ')}` : null, mine ? d.origin_year : null, versionLabel(matches?.[d.id]), riffed(d)].filter(Boolean).join(' · ') || undefined;
+            const said = scoreWords(scores?.[d.id]);
+            return (
+              <DrinkRow
+                key={d.id}
+                name={d.name}
+                href={`/cocktail/${d.id}`}
+                itemId={d.id}
+                imageUrl={hero?.url ?? null}
+                glass={d.glass?.icon_key ?? null}
+                caption={caption}
+                note={mine ? undefined : (d.description ?? undefined)}
+                trailing={<RowScore score={scores?.[d.id]} />}
+                label={said ? [d.name, caption, said].filter(Boolean).join('. ') : undefined}
+              />
+            );
+          })}
+        </View>
+      ) : (
+        <View role="list" style={styles.grid}>
+          {own.map((d) => {
+            const hero = heroPicture(d.item_images);
+            const score = scores?.[d.id];
+            const meta = [score !== undefined ? formatScore(score) : null, riffed(d), d.origin_year, ...others(d), versionLabel(matches?.[d.id])].filter(Boolean).join(' · ');
+            return (
+              <PressableScale
+                key={d.id}
+                role="link"
+                accessibilityLabel={[d.name, score !== undefined ? scoreWords(score) : null, meta].filter(Boolean).join('. ')}
+                onPressIn={() => prefetch(d.id, { name: d.name, item_images: d.item_images })}
+                onPress={() => router.push(`/cocktail/${d.id}` as Href)}
+                style={[styles.tile, { width: `${100 / columns}%` }]}
+              >
+                <DrinkImage thumb source={hero?.url} generated={hero?.isSketch} glass={d.glass?.icon_key} itemId={d.id} accessibilityLabel={d.name} />
+                <DsText variant="headline" numberOfLines={2}>
+                  {d.name}
+                </DsText>
+                {meta ? (
+                  <Caption tone="muted" numberOfLines={1}>
+                    {meta}
+                  </Caption>
+                ) : null}
+                <CreditTag status={d.credit_status} />
+              </PressableScale>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
@@ -116,19 +153,32 @@ export function MenuCredits({ credits, names }: { credits: MenuCreditWithProfile
  * The score is its drinks' scores averaged, weighted by how many people
  * ranked each. Early (under MIN_RANKERS people) gives the count, no number.
  */
-export function BarHeader({ profile, detail }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string }) {
+export function BarHeader({ profile, detail, love }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string; love?: ReactNode }) {
   const { data } = useVenueScore(profile.id);
   const score = data?.score ?? null;
   const ranked = data?.rankers ? rankedCount(data.rankers) : null;
   const scoreLabel = score !== null ? `Bar score ${formatScore(score)} out of 10` : ranked ? `No bar score until ${MIN_RANKERS} people have ranked here` : null;
+  // The score over "Bar score · 212 ranked", then a labelled Love (disc-search-bar).
   return (
-    <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.barHeader}>
-      <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
-      <View style={styles.flex}>
-        <Title>{profile.display_name}</Title>
-        <Caption tone="muted">{[detail, ranked].filter(Boolean).join(' · ')}</Caption>
+    <View style={styles.barHeader}>
+      <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={[styles.barHeader, styles.flex]}>
+        <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
+        <View style={styles.flex}>
+          <Title>{profile.display_name}</Title>
+          <Caption tone="muted">{score !== null ? detail : [detail, ranked].filter(Boolean).join(' · ')}</Caption>
+        </View>
       </View>
-      {score !== null ? <Spec tone="accent">{formatScore(score)}</Spec> : null}
+      {score !== null || love ? (
+        <View style={styles.barScore}>
+          {score !== null ? (
+            <>
+              <Spec tone="accent">{formatScore(score)}</Spec>
+              <Caption tone="muted">{['Bar score', ranked].filter(Boolean).join(' · ')}</Caption>
+            </>
+          ) : null}
+          {love}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -175,6 +225,7 @@ const styles = StyleSheet.create({
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   barHeader: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  barScore: { alignItems: 'flex-end', gap: space.xs },
   stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxl },
   stat: { alignItems: 'center', minWidth: 72 },
 });

@@ -6,7 +6,6 @@ import { IngredientScreen } from "@/components/screens/ingredient/IngredientScre
 import type { PrepLine } from "@/components/screens/ingredient/PrepRecipe";
 import { FEATURES } from "@/constants/features";
 import { space } from "@/constants/tokens";
-import { useFavorites } from "@/hooks/useFavorites";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
@@ -25,7 +24,6 @@ interface RecipeRow {
 export default function IngredientDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const { isFavorite, toggleFavorite } = useFavorites();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
 
     // isPending, not isLoading: "no data yet" includes the static prerender and the
@@ -70,8 +68,6 @@ export default function IngredientDetailScreen() {
             drinks={(data?.usedIn ?? []).map((u) => ({ id: u.cocktail.id, name: u.cocktail.name }))}
             bottles={data?.bottles ?? []}
             pictures={orderedPictures(data?.heroImages)}
-            isFavorite={isFavorite(key)}
-            onToggleFavorite={() => toggleFavorite(key)}
             inStudyPile={isInStudyPile(key)}
             onToggleStudyPile={() => (FEATURES.study ? toggleStudyPile(key) : undefined)}
             canEdit={canEdit}

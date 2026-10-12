@@ -18,7 +18,7 @@ build(['cocktails', [], null]).setData([1]);
 build(['bars', 'u1']).setData([1]);
 build(['profile', 'mine', 'u1']).setData({});
 build(['profile', 'someone', 'u1']).setData({});
-build(['menus-v2', 'venue-3', 'b1', 'u1']).setData([]);
+build(['menus-v2', 'venue-5', 'b1', 'u1']).setData([]);
 build(['menus-v2', 'detail', 'm1']).setData({});
 build(['item-sketch', 'c1']).setData({});
 build(['bars', 'denied'], false).setData([1]);
@@ -30,7 +30,7 @@ assert.deepEqual(saved.sort(), [
   '["cocktail","c1",null]',
   '["dropdowns_v7","current_menu_drinks","with-glass",["m1"]]',
   '["dropdowns_v7","specs"]',
-  '["menus-v2","venue-3","b1","u1"]',
+  '["menus-v2","venue-5","b1","u1"]',
   '["profile","mine","u1"]',
 ], 'only the allowlist and meta.persist true; persist false always wins');
 

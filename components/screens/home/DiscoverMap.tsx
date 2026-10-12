@@ -16,6 +16,8 @@ export interface DiscoverMapProps {
   scheme: 'light' | 'dark';
   /** The pin colour: the venue accent, contrast-checked. */
   accent: { fill: string; text: string };
+  /** Where the person is: a "You are here" dot with a halo. */
+  me?: { latitude: number; longitude: number } | null;
   /** Phones: no zoom buttons (pinch instead), and the credit goes in the sheet (MapCredit). */
   compact?: boolean;
   style?: StyleProp<ViewStyle>;

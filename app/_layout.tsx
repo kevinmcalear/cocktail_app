@@ -92,7 +92,9 @@ function RootLayoutNav() {
   const isWideWeb = useIsWideWeb();
   // `user`, not `session`: at launch it can be the saved session's user, whose
   // cached venues paint before auth-js finishes refreshing their token.
-  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding';
+  // The menu builder fills the whole width (its library, the menu and the guest card), as drawn.
+  const building = segments[0] === 'menus' && (segments as string[])[2] === 'edit';
+  const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding' && !building;
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -122,7 +124,8 @@ function RootLayoutNav() {
             <Stack.Screen name="r/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="m/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="week" options={{ headerShown: false }} />
+            <Stack.Screen name="week/index" options={{ headerShown: false }} />
+            <Stack.Screen name="week/review" options={{ headerShown: false }} />
             <Stack.Screen
               name="add-cocktail"
               options={{ presentation: "modal", headerShown: false }}
@@ -149,6 +152,18 @@ function RootLayoutNav() {
             />
             <Stack.Screen
               name="cocktail/[id]/batch"
+              options={{ presentation: "modal", headerShown: false }}
+            />
+            <Stack.Screen
+              name="cocktail/[id]/service"
+              options={{ presentation: "modal", headerShown: false }}
+            />
+            <Stack.Screen
+              name="cocktail/[id]/photos"
+              options={{ presentation: "modal", headerShown: false }}
+            />
+            <Stack.Screen
+              name="cocktail/[id]/roles"
               options={{ presentation: "modal", headerShown: false }}
             />
             <Stack.Screen
@@ -199,6 +214,7 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/bar/[id]/publishing" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/dilution" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/pricing" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/calendars" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/all" options={{ headerShown: false }} />
             <Stack.Screen name="menus/from-photo" options={{ headerShown: false }} />

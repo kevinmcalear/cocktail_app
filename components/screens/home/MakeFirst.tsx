@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, IngredientThumb, Surface } from '@/components/ds';
+import { Body, Button, Caption, Headline, IngredientThumb, PressableScale, Surface, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
+
+import { CheckList } from './CheckList';
 
 /** Drinks named on a card before "and N more". */
 const NAMED = 3;
@@ -14,18 +16,34 @@ export interface PrepToMake {
   name: string;
   /** The ready drinks that need it, in What to make's order. */
   drinks: BarItem[];
+  /** "Overnight · keeps about a week", when its card or technique says. */
+  meta: string | null;
+  /** What of yours goes in it: every line is covered, or it wouldn't be here. */
+  has: string[];
 }
+
+/** A prep one ingredient short, what that is, and the drinks one away for it that use the prep. */
+export interface PrepShort {
+  id: string;
+  name: string;
+  missing: { id: string; name: string };
+  drinks: BarItem[];
+}
+
+const opens = (n: number) => `Opens up ${n} ${n === 1 ? 'drink' : 'drinks'}`;
 
 /**
  * What to make first: house preps your shelf covers but you haven't made,
  * the ones that open the most drinks first. "I made it" puts it on the
- * shelf, where it counts like a bottle. One row of My Bar's list.
+ * shelf, where it counts like a bottle. Then One thing short: preps one
+ * ingredient away, with Add. One row of My Bar's list.
  */
-export function MakeFirst({ preps, onMade }: { preps: PrepToMake[]; onMade: (id: string) => void }) {
+export function MakeFirst({ preps, short, onMade, onAdd }: { preps: PrepToMake[]; short: PrepShort[]; onMade: (id: string) => void; onAdd: (ids: string[]) => void }) {
   const router = useRouter();
+  const ds = useDs();
   return (
     <View style={styles.list}>
-      <Caption tone="muted">Preps you can make from what’s on your bar, and the drinks each one opens up.</Caption>
+      <Caption tone="muted">Preps you can make from what’s on your bar, and the drinks each one opens up. Most drinks first.</Caption>
       {preps.map((p) => {
         const named = p.drinks.slice(0, NAMED).map((d) => d.name);
         const more = p.drinks.length - named.length;
@@ -35,12 +53,13 @@ export function MakeFirst({ preps, onMade }: { preps: PrepToMake[]; onMade: (id:
               <IngredientThumb id={p.id} name={p.name} size={44} />
               <View style={styles.flex}>
                 <Headline role="heading">{p.name}</Headline>
-                <Caption tone="accent">You have everything for it</Caption>
+                {p.meta ? <Caption tone="muted">{p.meta}</Caption> : null}
               </View>
             </View>
+            <CheckList names={p.has} />
             <Body>
-              <Body tone="accent">{`Opens up ${p.drinks.length} ${p.drinks.length === 1 ? 'drink' : 'drinks'}: `}</Body>
-              {more > 0 ? `${named.join(', ')} and ${more} more` : named.join(', ')}
+              <Body>{`${opens(p.drinks.length)}: `}</Body>
+              <Body tone="muted">{more > 0 ? `${named.join(', ')} and ${more} more` : named.join(', ')}</Body>
             </Body>
             <View style={styles.actions}>
               <Button label="Recipe" variant="secondary" onPress={() => router.push(itemHref('Ingredient', p.id) as never)} style={styles.flex} />
@@ -49,6 +68,52 @@ export function MakeFirst({ preps, onMade }: { preps: PrepToMake[]; onMade: (id:
           </Surface>
         );
       })}
+      {short.length ? (
+        <View style={styles.short}>
+          <Headline role="heading">One thing short</Headline>
+          {short.map((p) => (
+            <View key={p.id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+              <PressableScale role="link" accessibilityLabel={`${p.name}, ${opens(p.drinks.length)}, needs ${p.missing.name}`} onPress={() => router.push(itemHref('Ingredient', p.id) as never)} style={styles.rowMain}>
+                <IngredientThumb id={p.id} name={p.name} size={40} />
+                <View style={styles.flex}>
+                  <Body>{p.name}</Body>
+                  <Caption tone="muted">{`${opens(p.drinks.length)} · Needs ${p.missing.name.toLowerCase()}`}</Caption>
+                </View>
+              </PressableScale>
+              <Button label={`Add ${p.missing.name}`} variant="secondary" onPress={() => onAdd([p.missing.id])} />
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** Desktop Ready: the preps to make first as small cards above the drinks. */
+export function MakeFirstStrip({ preps }: { preps: PrepToMake[] }) {
+  const router = useRouter();
+  if (!preps.length) return null;
+  return (
+    <View style={styles.strip}>
+      <Caption tone="muted">Make one of these first and open up more</Caption>
+      <View style={styles.stripCards}>
+        {preps.slice(0, 3).map((p) => (
+          <PressableScale key={p.id} role="link" accessibilityLabel={[p.name, p.meta, opens(p.drinks.length)].filter(Boolean).join(', ')} onPress={() => router.push(itemHref('Ingredient', p.id) as never)} style={styles.stripCard}>
+            <Surface style={styles.stripInner}>
+              <View style={styles.top}>
+                <IngredientThumb id={p.id} name={p.name} size={36} />
+                <View style={styles.flex}>
+                  <Body numberOfLines={1}>{p.name}</Body>
+                  <Caption tone="muted" numberOfLines={2}>
+                    {[p.meta, p.has.join(', ')].filter(Boolean).join(' · ')}
+                  </Caption>
+                </View>
+              </View>
+              <Caption>{opens(p.drinks.length)}</Caption>
+            </Surface>
+          </PressableScale>
+        ))}
+      </View>
     </View>
   );
 }
@@ -59,4 +124,11 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1 },
   actions: { flexDirection: 'row', gap: space.sm },
+  short: { gap: space.xs, paddingTop: space.lg },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
+  strip: { gap: space.sm, paddingTop: space.xs },
+  stripCards: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  stripCard: { flexGrow: 1, flexBasis: 220 },
+  stripInner: { gap: space.sm },
 });

@@ -25,8 +25,8 @@ const clientOptions = { auth: { persistSession: false, autoRefreshToken: false }
 const service = createClient(status.API_URL, status.SERVICE_ROLE_KEY, clientOptions);
 const anon = createClient(status.API_URL, status.ANON_KEY, clientOptions);
 
-// costs opens at Admin (40); a Drink Creator (35) has prep but not costs.
-const ROLES = { creator: 35, admin: 40 };
+// costs opens at Drink Creator (35) since 20261014220000; a Bartender (30) has neither costs nor prep.
+const ROLES = { bartender: 30, creator: 35, admin: 40 };
 const users = {};
 const ids = {};
 
@@ -119,8 +119,13 @@ describe('drink_cost', () => {
     assert.equal(c.liquid_minor, 199 + 14, '22.5 ml at 60p per 100 ml');
   });
 
-  test('nothing for a Drink Creator, an outsider or a signed-out visitor', async () => {
-    assert.equal(await cost(users.creator.client), null);
+  test('a Drink Creator gets it too', async () => {
+    const c = await cost(users.creator.client);
+    assert.equal(c.missing, 0);
+  });
+
+  test('nothing for a Bartender, an outsider or a signed-out visitor', async () => {
+    assert.equal(await cost(users.bartender.client), null);
     const outsider = await makeUser('outsider');
     assert.equal(await cost(outsider.client), null);
     await service.auth.admin.deleteUser(outsider.id);

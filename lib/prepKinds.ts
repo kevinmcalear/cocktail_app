@@ -34,6 +34,8 @@ export interface PrepDraftLine {
   slot?: string;
   /** Lifted off or strained out (the fat cap, the curds): not in what it makes. */
   removed?: boolean;
+  /** How it goes in ("Sliced, seeds in for more heat"): saved as the line's preparation note. */
+  note?: string;
 }
 
 export interface PrepDraftStep {
@@ -45,6 +47,8 @@ export interface PrepDraft {
   kind: PrepKindId;
   /** Shrubs: made cold (days, brighter) or hot (an hour, jammier). */
   hot?: boolean;
+  /** The kind's way it's made (KIND_WAYS): a shrub cold, hot or as an oleo shrub. */
+  way?: string;
   /** The line everything follows, and how much of it. */
   baseKey: string;
   baseAmount: number;
@@ -61,8 +65,10 @@ export interface PrepDraft {
   technique?: string;
   /** The bottle or ingredient it changes, when one was picked (for made_from_id). */
   madeFrom?: { id: string | null; name: string } | null;
-  /** From the line names (lib/techniques/template prepFacts): keys from lib/allergens. */
+  /** From the line names (lib/techniques/template prepFacts), or set by hand: keys from lib/allergens. */
   allergens?: Allergen[];
+  /** The maker set the allergens themselves: kept as they are, and saved as checked. */
+  allergensSet?: boolean;
   /** Diet flags outside the 14 allergens: "Pork". */
   contains?: string[];
   /** null while a line is still a stand-in. */
@@ -106,6 +112,63 @@ const KIND_WORDS: [RegExp, PrepKindId][] = [
   [/\bsyrup\b|\bgomme\b/i, 'syrup'],
 ];
 
+/** One way to make a kind (a cold shrub), as "How?" lists them under the kinds. */
+export interface PrepWay {
+  id: string;
+  name: string;
+  /** Start to ready, in words: "3 days". */
+  time: string;
+  kit: string[];
+  /** What it's like: "brighter fruit". */
+  note?: string;
+  /** When to pick it: "Best with citrus peel in it". */
+  tip?: string;
+  /** How it's made, in a sentence, for the amounts box. */
+  how: string;
+  /** The library technique whose sources grade it (lib/techniques). */
+  technique: string;
+}
+
+export const KIND_WAYS: Partial<Record<PrepKindId, PrepWay[]>> = {
+  shrub: [
+    { id: 'cold', name: 'Cold', time: '3 days', kit: ['Jar', 'fine strainer'], note: 'brighter fruit', how: 'The sugar pulls the juice for a day in the fridge, then the vinegar goes in.', technique: 'shrub' },
+    { id: 'hot', name: 'Hot', time: 'An hour', kit: ['Pot', 'fine strainer'], note: 'jammier', how: 'The fruit cooks down with the sugar, then the vinegar goes in once it’s cool.', technique: 'shrub' },
+    { id: 'oleo', name: 'Oleo shrub', time: '2 days', kit: ['Jar', 'muddler'], tip: 'Best with citrus peel in it', how: 'The fruit and peel are muddled with the sugar until it turns to syrup, then the vinegar goes in.', technique: 'shrub' },
+  ],
+};
+
+/** The way a draft is made, when its kind has ways: a shrub without one is cold. */
+export function wayOf(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'technique'>): PrepWay | null {
+  const ways = d.technique ? undefined : KIND_WAYS[d.kind];
+  if (!ways) return null;
+  return ways.find((w) => w.id === (d.way ?? (d.hot ? 'hot' : 'cold'))) ?? ways[0];
+}
+
+/** "a cold shrub", "a rich syrup", "an oleo shrub"; null for a technique or something else. */
+export function prepPhrase(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'technique'>): string | null {
+  if (d.technique || d.kind === 'other') return null;
+  const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name.toLowerCase() ?? '';
+  const way = wayOf(d);
+  const words = way ? (way.id === 'oleo' ? way.name.toLowerCase() : `${way.name.toLowerCase()} ${kind}`) : kind;
+  return `${/^[aeiou]/.test(words) ? 'an' : 'a'} ${words}`;
+}
+
+/**
+ * The recipe step's eyebrow: the kind and its way, and the ratio when it's
+ * plain ("Shrub, cold · equal parts by weight"); null for a technique or
+ * something else (the name shows instead).
+ */
+export function recipeEyebrow(d: PrepDraft): string | null {
+  if (d.technique || d.kind === 'other') return null;
+  const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name ?? '';
+  const way = wayOf(d);
+  const head = way ? (way.id === 'oleo' ? way.name : `${kind}, ${way.name.toLowerCase()}`) : kind;
+  const parted = d.lines.filter((l) => l.parts !== null && !l.slot);
+  const equal = parted.length > 1 && parted.every((l) => l.parts === parted[0].parts && l.unit === parted[0].unit);
+  const by = parted[0]?.unit === 'g' ? 'by weight' : parted[0]?.unit === 'ml' ? 'by volume' : null;
+  return equal && by ? `${head} · equal parts ${by}` : head;
+}
+
 /** The kind a name says it is ("Pineapple chili shrub" is a shrub), or null. */
 export function guessKind(name: string): PrepKindId | null {
   return KIND_WORDS.find(([re]) => re.test(name))?.[1] ?? null;
@@ -136,11 +199,13 @@ const STORE_TEXT: Record<string, (typeof STORES)[number]> = { fridge: STORES[0],
  * A new prep's draft from a kind and its name: the kind's parts with the
  * name's flavour as the base, its method, keeps and lead time.
  */
-export function startPrep(kind: PrepKindId, name: string, hot = false): PrepDraft {
+export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDraft {
   const [flavour = '', ...extra] = flavourWords(name);
   const extras = extra.map((w) => line(w, null, '', 0));
+  const shrubWay = kind === 'shrub' ? (way ?? 'cold') : undefined;
+  const hot = shrubWay === 'hot';
   const draft = (lines: PrepDraftLine[], baseAmount: number, steps: PrepDraftStep[], keepsHours: number | null, storage: string, leadMinutes: number | null, actions: string[]): PrepDraft =>
-    withFacts({ kind, hot: kind === 'shrub' ? hot : undefined, baseKey: lines[0].key, baseAmount, lines, steps, keepsHours, storage, leadMinutes, actions });
+    withFacts({ kind, hot: kind === 'shrub' ? hot : undefined, way: shrubWay, baseKey: lines[0].key, baseAmount, lines, steps, keepsHours, storage, leadMinutes, actions });
   const s = (body: string, timer_seconds: number | null = null) => ({ body, timer_seconds });
   const fridge = 'Fridge, sealed bottle';
   switch (kind) {
@@ -154,7 +219,14 @@ export function startPrep(kind: PrepKindId, name: string, hot = false): PrepDraf
       ], rich ? 8 * WEEK : 4 * WEEK, fridge, 20, ['Syrup']);
     }
     case 'shrub':
-      return draft([flavour ? line(flavour, 1, 'g', 0.6) : slotLine('Fruit', 'fruit', 1, 'g', 0.6), line('Sugar', 1, 'g', 0.62), line('Apple cider vinegar', 1, 'g', 1), ...extras], 300, hot
+      return draft([flavour ? line(flavour, 1, 'g', 0.6) : slotLine('Fruit', 'fruit', 1, 'g', 0.6), line('Sugar', 1, 'g', 0.62), line('Apple cider vinegar', 1, 'g', 1), ...extras], 300, shrubWay === 'oleo'
+        ? [
+            s('Muddle the fruit, and any citrus peel, with the sugar.'),
+            s('Cover and leave at room temperature until the sugar has turned to syrup.', DAY * 3600),
+            s('Strain, pressing hard. Scrape in any sugar left behind.'),
+            s('Stir in the vinegar, bottle and rest in the fridge for a day before using.'),
+          ]
+        : hot
         ? [
             s('Chop the fruit. Warm it with the sugar and a splash of water, stirring, until it breaks down.', 20 * 60),
             s('Strain, pressing the fruit, and leave to cool.'),
@@ -166,7 +238,7 @@ export function startPrep(kind: PrepKindId, name: string, hot = false): PrepDraf
             s('Strain, pressing the fruit. Scrape in any sugar left behind.'),
             s('Stir in the vinegar until the sugar is gone.'),
             s('Bottle and rest in the fridge for 2 days before using.'),
-          ], 3 * WEEK, fridge, hot ? 60 : 3 * DAY * 60, ['Infuse', 'Strain']); // 3 to 6 weeks if opened often: the shorter.
+          ], 3 * WEEK, fridge, hot ? 60 : shrubWay === 'oleo' ? 2 * DAY * 60 : 3 * DAY * 60, ['Infuse', 'Strain']); // 3 to 6 weeks if opened often: the shorter.
     case 'cordial':
       return draft([flavour ? line(`${flavour} juice`, 1, 'g', 1) : slotLine('Juice', 'juice', 1, 'g', 1), line('Sugar', 1, 'g', 0.62), line('Citric acid', 0.02, 'g', 0), ...extras], 500, [
         s('Stir the sugar and citric acid into the juice until they dissolve. No heat.'),
@@ -270,7 +342,8 @@ export function slotMessage(d: Pick<PrepDraft, 'lines'>): string | null {
 /** Allergens and vegan, read again from the lines as they are now (a line swapped or added). */
 export function withFacts<D extends PrepDraft>(d: D): D {
   const facts = prepFacts(d.lines.filter((l) => !l.slot).map((l) => l.name), d.lines.some((l) => l.slot));
-  return { ...d, allergens: facts.allergens, contains: facts.contains, vegan: facts.vegan };
+  // Allergens set by hand stay as they were set.
+  return { ...d, allergens: d.allergensSet ? d.allergens : facts.allergens, contains: facts.contains, vegan: facts.vegan };
 }
 
 /** What a library technique says about its batch (lib/techniques Technique, structurally). */

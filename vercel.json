@@ -39,6 +39,18 @@
       "destination": "/cocktail/[id]/batch"
     },
     {
+      "source": "/cocktail/:id/service",
+      "destination": "/cocktail/[id]/service"
+    },
+    {
+      "source": "/cocktail/:id/photos",
+      "destination": "/cocktail/[id]/photos"
+    },
+    {
+      "source": "/cocktail/:id/roles",
+      "destination": "/cocktail/[id]/roles"
+    },
+    {
       "source": "/ingredient/:id",
       "destination": "/ingredient/[id]"
     },
@@ -83,8 +95,16 @@
       "destination": "/settings/bar/[id]/dilution"
     },
     {
+      "source": "/settings/bar/:id/glassware",
+      "destination": "/settings/bar/[id]/glassware"
+    },
+    {
       "source": "/settings/bar/:id/pricing",
       "destination": "/settings/bar/[id]/pricing"
+    },
+    {
+      "source": "/settings/bar/:id/calendars",
+      "destination": "/settings/bar/[id]/calendars"
     },
     {
       "source": "/settings/bar/:id/releases/:releaseId",

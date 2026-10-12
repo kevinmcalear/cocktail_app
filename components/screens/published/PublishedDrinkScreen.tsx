@@ -2,22 +2,27 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, Headline, PressableScale, SpecRow, Surface, Tag, useBreakpoint } from '@/components/ds';
-import { DrinkFacts, type Fact } from '@/components/screens/drink/DrinkFacts';
-import { space } from '@/constants/tokens';
+import { Body, Button, Display, Headline, PressableScale, Surface, Tag, Title, useBreakpoint, useDs } from '@/components/ds';
+import { UserAvatar } from '@/components/ui/UserAvatar';
+import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useCollection, type CollectedDrink } from '@/hooks/useCollection';
+import { usePublicDrinkMore } from '@/hooks/usePublicDrink';
 import { usePublishedDrink, type BarCredit } from '@/hooks/usePublished';
 import { hadOnLine } from '@/lib/collection';
-import { specLines } from '@/lib/spec';
+import type { ItemPicture } from '@/lib/itemImages';
+import { createdByLine, drinkKicker } from '@/lib/publicDrink';
 
-import { RankActions } from '../rank/RankActions';
+import { RankFlow } from '../rank/RankActions';
+import { useAgeGate } from '../safety/AgeGate';
 import { ReportAction } from '../safety/ReportSheet';
 import { CollectButton } from './CollectButton';
 import { MemorySheet } from './MemorySheet';
-import { loadFailure, PublicMissing, PublicShell } from './PublicShell';
-import { PublicSpecChanges } from './PublicSpecChanges';
-import { SignInCard } from './SignInCard';
+import { Kicker, SignInBand } from './PublicChrome';
+import { PublicFamilyTree } from './PublicFamilyTree';
+import { loadFailure, PublicMissing, PublicPage, PublicPicture } from './PublicShell';
+import { PublicSpec } from './PublicSpec';
+import { PublicWhereToDrink } from './PublicWhereToDrink';
 
 /** The bar a public page is credited to, opening its profile. */
 export function BarLink({ bar }: { bar: BarCredit | null }) {
@@ -45,79 +50,179 @@ export function MemoryCard({ memory, onEdit }: { memory: CollectedDrink; onEdit:
   );
 }
 
+/** "To make" and "Had it? Rank it". Signed out, each asks you to sign in. */
+function PublicActions({ id, name, barId, picture, releaseId }: { id: string; name: string; barId: string | null; picture: ItemPicture | null; releaseId?: string | null }) {
+  const router = useRouter();
+  const signedIn = useSignedIn();
+  const ageGate = useAgeGate();
+  const [ranking, setRanking] = useState(false);
+  return (
+    <View style={styles.actions}>
+      <CollectButton target={{ kind: 'drink', itemId: id, releaseId }} name={name} quiet labels={['To make', 'To make']} />
+      <Button
+        label="Had it? Rank it"
+        icon="star"
+        variant="secondary"
+        accessibilityHint={`Ranks ${name} against others you've had`}
+        onPress={() => (signedIn ? ageGate.gate(() => setRanking(true)) : router.push('/auth/login'))}
+      />
+      {ranking ? <RankFlow item={{ id, name, bar_id: barId }} picture={picture} onClose={() => setRanking(false)} /> : null}
+      {ageGate.sheet}
+    </View>
+  );
+}
+
 /**
- * A published drink as anyone sees it: the menu card, and the spec (generic
- * ingredients and amounts) when the bar shares it. Collect keeps it, Rank it
- * puts it in your list; your memory of it shows here once you've collected it.
- * Signed out, the card is all: the rest waits behind signing in.
+ * A published drink as anyone sees it (ppl-pub-drink-desktop, -phone,
+ * -phone-teaser): the picture with To make and Had it? Rank it; the kicker,
+ * name, credit, description and family tree; Where to drink it and the spec.
+ * Signed out the spec shows its ingredient names, the rest behind Sign in.
  */
 export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?: string | null }) {
-  const wide = useBreakpoint() !== 'phone';
+  const bp = useBreakpoint();
+  const wide = bp !== 'phone';
   const signedIn = useSignedIn();
   const query = usePublishedDrink(id);
   const { data, isPending } = query;
+  const { data: more } = usePublicDrinkMore(data?.drink);
   const { data: collection } = useCollection();
   const [editing, setEditing] = useState(false);
   if (!data) return <PublicMissing loading={isPending} what="drink" failed={loadFailure(query)} />;
 
   const { drink, bar } = data;
   const mine = collection?.drinks.find((d) => d.itemId === id);
-  const facts: Fact[] = [
-    data.glass && { label: 'Glass', value: data.glass.name },
-    data.ice && { label: 'Ice', value: data.ice },
-    data.family && { label: 'Family', value: data.family },
-    drink.abv ? { label: 'ABV', value: `${drink.abv}%` } : null,
-  ].filter((f): f is Fact => !!f);
-  const lines = specLines(data.recipes);
-  const measured = lines.some((l) => l.amount);
-  const who = bar?.name ?? 'The bar';
-  const picture = drink.imageUrl ? { url: drink.imageUrl, isSketch: drink.imageIsGenerated, isOutdated: false, credit: null, sourceUrl: null } : null;
+  const picture = drink.imageUrl
+    ? {
+        url: drink.imageUrl,
+        isSketch: drink.imageIsGenerated,
+        isOutdated: false,
+        credit: null,
+        sourceUrl: null,
+      }
+    : null;
+  const venue = more?.venue ?? null;
+  const barName = bar?.name ?? venue?.display_name ?? null;
+  const credit = createdByLine(more?.creator ?? null, barName ? { name: barName, place: venue?.locality ?? venue?.city } : null, drink.creditStatus);
+  const shared = drink.publishMode === 'spec' && data.recipes.length > 0;
+  const classic = !drink.barId && /^(modern )?classic$/i.test(drink.origin?.trim() ?? '');
+
+  const pictureColumn = (
+    <View style={[styles.pictureColumn, wide && styles.pictureWide]}>
+      <PublicPicture name={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} itemId={drink.id} glass={data.glass?.iconKey ?? data.glass?.name} />
+      {wide ? <PublicActions id={id} name={drink.name} barId={drink.barId} picture={picture} releaseId={releaseId} /> : null}
+    </View>
+  );
+  const main = (
+    <View style={[styles.main, wide && styles.mainWide]}>
+      <Kicker>
+        {drinkKicker(
+          {
+            origin: drink.origin,
+            originYear: drink.originYear,
+            riffOfId: drink.riffOfId,
+          },
+          barName,
+        )}
+      </Kicker>
+      {wide ? <Display>{drink.name}</Display> : <Title>{drink.name}</Title>}
+      {credit ? <CreditCard line={credit} who={more?.creator ?? venue} /> : null}
+      {drink.description ? (
+        <Body tone="muted" style={styles.description}>
+          {drink.description}
+        </Body>
+      ) : null}
+      {wide ? null : <PublicActions id={id} name={drink.name} barId={drink.barId} picture={picture} releaseId={releaseId} />}
+      {mine ? <MemoryCard memory={mine} onEdit={() => setEditing(true)} /> : null}
+      {more ? <PublicFamilyTree drink={drink} more={more} /> : null}
+    </View>
+  );
+  const aside = (
+    <View style={[styles.aside, wide && styles.asideWide]}>
+      {more ? <PublicWhereToDrink rankedAs={more.rankedAs} venue={venue} /> : null}
+      <PublicSpec page={data} barClaimed={!!venue?.is_claimed} classic={classic} />
+    </View>
+  );
 
   return (
-    <PublicShell title={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} itemId={drink.id} glass={data.glass?.iconKey ?? data.glass?.name}>
-      <BarLink bar={bar} />
-      <Display>{drink.name}</Display>
-      {drink.description ? <Body tone="muted">{drink.description}</Body> : null}
-      <View style={styles.actions}>
-        <CollectButton target={{ kind: 'drink', itemId: id, releaseId }} name={drink.name} />
-        <RankActions item={{ id, name: drink.name, bar_id: drink.barId }} picture={picture} />
+    <PublicPage title={drink.name}>
+      <View style={wide ? styles.columns : styles.stack}>
+        {pictureColumn}
+        {main}
+        {aside}
       </View>
-      {mine ? <MemoryCard memory={mine} onEdit={() => setEditing(true)} /> : null}
-      {signedIn ? (
-        <>
-          <DrinkFacts facts={facts} columns={wide ? 4 : 2} />
-          <View style={styles.section}>
-            <Headline role="heading">Spec</Headline>
-            {drink.publishMode === 'spec' && lines.length ? (
-              <>
-                <Caption tone="muted">{`As ${who} shares it: the ingredients, not the brands.`}</Caption>
-                <View>
-                  {lines.map((l) => (
-                    <SpecRow key={l.key} amount={l.amount ?? ''} alignAmount={measured} ingredient={l.ingredient ?? 'House ingredient'} ingredientId={l.ingredient ? l.ingredientId : undefined} optional={l.optional} />
-                  ))}
-                </View>
-              </>
-            ) : (
-              <Body tone="muted">{`${who} shares this drink’s menu description, not its spec.`}</Body>
-            )}
-          </View>
-          {drink.publishMode === 'spec' ? <PublicSpecChanges itemId={id} who={who} /> : null}
-        </>
-      ) : (
-        <SignInCard text={`Sign in to see how ${drink.name} is made, its glass and ice, and what people think of it.`} />
-      )}
+      {!signedIn && !shared && !classic ? <SignInBand text="Sign in to save it, rank it, and see your score beside the city’s." /> : null}
       <View style={styles.report}>
         <ReportAction subject={drink.name} targets={[{ label: drink.name, target: { kind: 'item', itemId: id } }]} />
       </View>
       {editing && mine ? <MemorySheet memory={mine} onClose={() => setEditing(false)} /> : null}
-    </PublicShell>
+    </PublicPage>
+  );
+}
+
+/** "Created by Sam Ross at Milk & Honey, New York · Verified", with the maker's picture, opening their page. */
+function CreditCard({
+  line,
+  who,
+}: {
+  line: string;
+  who: {
+    handle: string;
+    display_name: string;
+    avatar_url: string | null;
+  } | null;
+}) {
+  const ds = useDs();
+  const router = useRouter();
+  const inner = (
+    <>
+      <View aria-hidden>
+        <UserAvatar uri={who?.avatar_url} name={who?.display_name} size={40} />
+      </View>
+      <Body style={styles.flex}>{line}</Body>
+    </>
+  );
+  const frame = [styles.credit, { backgroundColor: ds.c.surface }];
+  if (!who) return <View style={frame}>{inner}</View>;
+  return (
+    <PressableScale role="link" accessibilityLabel={`${line}. Open ${who.display_name}`} onPress={() => router.push(`/p/${who.handle}`)} style={frame}>
+      {inner}
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1, minWidth: 0 },
   bar: { alignSelf: 'flex-start' },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: space.sm },
-  section: { gap: space.md },
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    gap: space.sm,
+  },
+  columns: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    gap: space.xxl + space.xs,
+  },
+  stack: { gap: space.xl },
+  pictureColumn: { gap: space.lg },
+  pictureWide: { flexGrow: 1, flexShrink: 1, flexBasis: 280, maxWidth: 320 },
+  main: { gap: space.lg },
+  mainWide: { flexGrow: 2, flexShrink: 1, flexBasis: 440, minWidth: 0 },
+  aside: { gap: space.xl },
+  asideWide: { flexGrow: 1, flexShrink: 1, flexBasis: 280, maxWidth: 340 },
+  description: { maxWidth: 560 },
+  credit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    paddingHorizontal: space.md + 2,
+    paddingVertical: space.sm + 2,
+    borderRadius: radius.card,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+  },
   memory: { gap: space.xs, padding: space.lg },
   edit: { alignSelf: 'flex-start', marginTop: space.xs },
   report: { alignItems: 'flex-start' },

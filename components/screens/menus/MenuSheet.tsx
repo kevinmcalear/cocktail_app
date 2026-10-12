@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, DsText, PressableScale, Sheet, sheetIsDialog, Title, useDs, useSheetClose } from '@/components/ds';
+import { Caption, DsText, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
@@ -51,9 +51,9 @@ export function MenuSheet({ visible, onClose, title, subtitle, children, footer,
         )
       }
     >
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {children}
-      </ScrollView>
+      </SheetScrollView>
       {footer ? <View style={[styles.footer, { paddingBottom: sheetIsDialog ? space.lg : insets.bottom + space.lg, borderTopColor: ds.c.line }]}>{footer}</View> : null}
     </Sheet>
   );
@@ -99,10 +99,12 @@ interface ChoiceProps {
   kind?: 'radio' | 'checkbox';
   detail?: string;
   disabled?: boolean;
+  /** A wide row's leading icon, on a raised tile (New menu's start options). */
+  icon?: IconName;
 }
 
 /** One option in a group: a pill, or a wider row when it has a detail line. */
-export function Choice({ label, selected, onPress, kind = 'radio', detail, disabled }: ChoiceProps) {
+export function Choice({ label, selected, onPress, kind = 'radio', detail, disabled, icon }: ChoiceProps) {
   const ds = useDs();
   const ink = selected && !detail ? ds.c.ground : ds.c.ink;
   return (
@@ -121,6 +123,11 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
         disabled && styles.disabled,
       ]}
     >
+      {icon && detail ? (
+        <View style={[styles.iconTile, { backgroundColor: ds.c.raised }]} aria-hidden>
+          <IconSymbol name={icon} size={20} color={ds.c.ink} />
+        </View>
+      ) : null}
       {/* Only the full-width row stretches its text; in a content-sized pill,
           flex: 1 collapses the label to nothing on iOS. */}
       <View style={detail ? styles.flex : styles.label}>
@@ -152,6 +159,7 @@ const styles = StyleSheet.create({
   label: { gap: 2 },
   pill: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center', flexDirection: 'row', alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
+  iconTile: { width: 44, height: 44, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   mark: { width: 22, height: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   disabled: { opacity: 0.45 },
 });

@@ -8,7 +8,7 @@ import { useAgeGate } from '../safety/AgeGate';
  * The heart on a bar's page: keeps the bar in Collection's Bars. Signed in
  * only; loving a bar needs a confirmed age, like the rest of Collection.
  */
-export function LoveBarButton({ profileId, name }: { profileId: string; name: string }) {
+export function LoveBarButton({ profileId, name, labelled = false }: { profileId: string; name: string; labelled?: boolean }) {
   const signedIn = useSignedIn();
   const loved = useLovedBars().data?.some((b) => b.id === profileId) ?? false;
   const love = useLoveBar();
@@ -21,6 +21,7 @@ export function LoveBarButton({ profileId, name }: { profileId: string; name: st
       <GlassButton
         accessibilityLabel={on ? `Stop loving ${name}` : `Love ${name}: keep it in your Collection`}
         icon={on ? 'heart.fill' : 'heart'}
+        label={labelled ? (on ? 'Loved' : 'Love') : undefined}
         onPress={() => (on ? love.mutate({ profileId, love: false }) : age.gate(() => love.mutate({ profileId, love: true })))}
       />
       {age.sheet}

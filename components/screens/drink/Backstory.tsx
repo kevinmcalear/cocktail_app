@@ -8,20 +8,16 @@ import { fontFamilies, space } from '@/constants/tokens';
 import { useDrinkHistory } from '@/hooks/useDrinkHistory';
 import { useLineage } from '@/hooks/useLineage';
 import { historyFor } from '@/lib/drinkHistory';
-import { creditSentence, creditText, joinNames, shortNames, yearLabel, type CreditProfile, type LineageDrink } from '@/lib/lineage';
+import { joinNames, shortNames, yearLabel, type CreditProfile, type LineageDrink } from '@/lib/lineage';
+import type { SpecLine } from '@/lib/spec';
 
-import { BarVersions, useVersionGroups, versionCounts } from './BarVersions';
 import { CreditTag } from './DrinkCredit';
 import { FactRow } from './FactRow';
 import { FirstInPrint } from './FirstInPrint';
+import { byLine, RankedRiffs } from './RankedRiffs';
+import { useVersionGroups } from './ServedAt';
 
 const drinkHref = (id: string) => `/cocktail/${id}` as Href;
-
-/** "By Jo Marsh at Pale Moth, 2025" for a riff row; names only, no links. */
-function byLine(d: LineageDrink): string {
-  const text = creditText(creditSentence(d, null));
-  return text || (d.origin ?? '');
-}
 
 /** A drink in a list under a fact: name, then who made it where. */
 function DrinkRow({ d, onPress }: { d: LineageDrink; onPress: () => void }) {
@@ -69,13 +65,24 @@ function Faces({ drinks }: { drinks: LineageDrink[] }) {
   );
 }
 
+interface BackstoryProps {
+  itemId: string;
+  /** This page's spec, for First in print's Then and now. */
+  lines?: SpecLine[];
+  /** A bar's copy of a classic: the classic's backstory, said so (board drink-phone-barcopy). */
+  classicName?: string | null;
+  /** Start a new drink from this one; null hides Riff on this. */
+  onRiff?: (() => void) | null;
+}
+
 /**
  * The drink's backstory, on the side of its page: its line back through the
  * classics and the historic styles to Punch, what changed from its parent,
- * its first printing, and what came from it. One fact per row, each a tap
- * from the whole story. Hidden when there's nothing to tell.
+ * its first printing, what came from it, and the riffs on it, best first.
+ * One fact per row, each a tap from the whole story. Hidden when there's
+ * nothing to tell.
  */
-export function Backstory({ itemId }: { itemId: string }) {
+export function Backstory({ itemId, lines = [], classicName, onRiff = null }: BackstoryProps) {
   const ds = useDs();
   const router = useRouter();
   const { data } = useLineage(itemId);
@@ -95,11 +102,12 @@ export function Backstory({ itemId }: { itemId: string }) {
     ...lineStyles.map((s) => ({ key: s.id, name: s.name, year: yearLabel(s.year, s.year_approx), isStyle: true })),
     ...ancestors.map((d) => ({ key: d.id, name: d.name, year: yearLabel(d.origin_year, d.origin_year_approx), isStyle: false })),
   ];
+  // A classic's bars that pour it, and their variations, sit under its spec (ServedAt); its riffs stay here.
   const versions = useVersionGroups(drink?.is_catalog ? drink.id : null, riffs);
+  const ranked = drink?.is_catalog ? versions.riffs : riffs;
   // The hook reads the best 100, so a count at the cap says so.
   const capped = riffs.length >= 100;
-  const versionLine = `${versionCounts(versions)}${capped ? ' in the first 100' : ''}`;
-  if (!steps.length && !drink?.lineage_note && !found && !classics.length && !riffs.length) return null;
+  if (!steps.length && !drink?.lineage_note && !found && !classics.length && !ranked.length) return null;
   const focus = drink?.is_catalog ? drink.id : ancestors.findLast((a) => a.is_catalog)?.id;
   const inTree = !!drink && (!!focus || lineStyles.length > 0);
   const borrowed = found && found.itemId !== family[0].id ? (family.find((f) => f.id === found.itemId)?.name ?? null) : null;
@@ -107,6 +115,7 @@ export function Backstory({ itemId }: { itemId: string }) {
   return (
     <View style={styles.section}>
       <Headline role="heading">Backstory</Headline>
+      {classicName ? <Caption tone="muted">{`From the classic ${classicName}: family, riffs and credit.`}</Caption> : null}
       <View style={[styles.list, { borderBottomColor: ds.c.line }]}>
         {steps.length ? (
           <FactRow
@@ -133,7 +142,7 @@ export function Backstory({ itemId }: { itemId: string }) {
           </FactRow>
         ) : null}
 
-        {found ? <FirstInPrint records={found.records} borrowed={borrowed} /> : null}
+        {found ? <FirstInPrint records={found.records} borrowed={borrowed} itemId={itemId} lines={lines} /> : null}
 
         {classics.length ? (
           <FactRow
@@ -148,27 +157,26 @@ export function Backstory({ itemId }: { itemId: string }) {
           </FactRow>
         ) : null}
 
-        {riffs.length ? (
-          <FactRow
-            label={drink?.is_catalog ? "Bars' versions" : 'Riffs on this'}
-            mark={capped ? '100+' : String(riffs.length)}
-            accessibilityLabel={`${drink?.is_catalog ? "Bars' versions" : 'Riffs on this'}: ${drink?.is_catalog ? versionLine : makersLine(riffs)}`}
-            more={
+        {ranked.length ? (
+          <RankedRiffs
+            label={drink?.is_catalog ? 'Riffs' : 'Riffs on this'}
+            mark={capped ? '100+' : String(ranked.length)}
+            riffs={ranked}
+            accessibilityLabel={`${drink?.is_catalog ? 'Riffs' : 'Riffs on this'}: ${drink?.is_catalog ? 'the best, ranked' : makersLine(ranked)}`}
+            onRiff={onRiff}
+            summary={
               drink?.is_catalog ? (
-                // Served at, variations and riffs, by spec match.
-                <BarVersions groups={versions} />
+                <Body>The best, ranked</Body>
               ) : (
-                riffs.map((r) => <DrinkRow key={r.id} d={r} onPress={() => router.push(drinkHref(r.id))} />)
+                <View style={styles.riffLine}>
+                  <Faces drinks={ranked} />
+                  <Body numberOfLines={2} style={styles.flex}>
+                    {makersLine(ranked)}
+                  </Body>
+                </View>
               )
             }
-          >
-            <View style={styles.riffLine}>
-              <Faces drinks={riffs} />
-              <Body numberOfLines={2} style={styles.flex}>
-                {drink?.is_catalog ? versionLine : makersLine(riffs)}
-              </Body>
-            </View>
-          </FactRow>
+          />
         ) : null}
       </View>
     </View>
