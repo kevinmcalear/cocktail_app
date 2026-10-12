@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 // A bar you opened shows in Search's Recent too (nav-search-empty-home).
-const KINDS = ['cocktail', 'beer', 'wine', 'ingredient', 'menu', 'bar'] as const;
+const KINDS = ['cocktail', 'beer', 'wine', 'ingredient', 'menu', 'bar', 'flavor'] as const;
 export type RecentKind = (typeof KINDS)[number];
 
 export type RecentActivity = {

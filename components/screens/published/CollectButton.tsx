@@ -6,12 +6,24 @@ import { space } from '@/constants/tokens';
 import { useCollectToggle, type CollectTarget } from './useCollectToggle';
 
 /** Collect a published drink or a live release, or let it go again (useCollectToggle). */
-export function CollectButton({ target, name, quiet = false }: { target: CollectTarget; name: string; /** Outlined even before it's collected, beside a stronger action. */ quiet?: boolean }) {
+export function CollectButton({
+  target,
+  name,
+  quiet = false,
+  labels = ['Collect', 'Collected'],
+}: {
+  target: CollectTarget;
+  name: string;
+  /** Outlined even before it's collected, beside a stronger action. */
+  quiet?: boolean;
+  /** Its words before and after: the public drink page says "To make" (ppl-pub-drink-desktop). */
+  labels?: [string, string];
+}) {
   const { saved, toggle, error, pending, sheet } = useCollectToggle(target, name);
   return (
     <View style={styles.wrap}>
       <Button
-        label={saved ? 'Collected' : 'Collect'}
+        label={saved ? labels[1] : labels[0]}
         icon={saved ? 'bookmark.fill' : 'bookmark'}
         variant={saved || quiet ? 'secondary' : 'primary'}
         disabled={pending}

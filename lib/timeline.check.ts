@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import type { TreeNode } from './drinkTree';
-import { DECADES, decadeCounts, eraBands, eraOf, eraX, fromLine, locate, locateKey, thread, timelineSections, undatedCount, yearAt } from './timeline';
+import { DECADES, decadeCounts, eraBands, eraOf, eraX, fromLine, locate, locateKey, placeOptions, thread, threadBack, timelineSections, undatedCount, yearAt } from './timeline';
 
 const node = (key: string, family: string, parentKey: string | null, year: number | null, extra: Partial<TreeNode> = {}): TreeNode => ({
   key,
@@ -18,6 +18,9 @@ const node = (key: string, family: string, parentKey: string | null, year: numbe
   bar: null,
   barId: null,
   barClosed: false,
+  city: null,
+  modern: false,
+  spirits: [],
   versions: 0,
   ...extra,
 });
@@ -87,9 +90,27 @@ assert.equal(locateKey(all, 'd:Undated'), null);
 
 // Thread.
 assert.deepEqual(thread(nodes, 'd:Penicillin').map((n) => n.name), ['Punch', 'Sour', 'Whiskey Sour', 'Gold Rush', 'Penicillin']);
+// Back to the nearest classic: a modern classic in between is skipped; no classic counts to the oldest step.
+const penicillin = thread(nodes, 'd:Penicillin').map((n) => (n.name === 'Gold Rush' ? { ...n, modern: true } : n));
+assert.equal(threadBack(penicillin), '143 years back to Whiskey Sour, 1862');
+assert.equal(threadBack(thread(nodes, 'd:Whiskey Sour')), '230 years back to Punch, 1632');
+assert.equal(threadBack(thread(nodes, 's:Punch')), null);
 
 assert.equal(fromLine({ from: nodes[5] }), 'Riff of Manhattan, 1882');
 assert.equal(fromLine({ from: nodes[1] }), 'From Sour, 1856');
 assert.equal(fromLine({ from: null }), null);
+
+// Spirit and Bar or city filters (drinks only; styles follow the Styles switch).
+const placed = [
+  node('s:Sour', 'sour', null, 1856),
+  node('d:Penicillin', 'sour', null, 2005, { spirits: ['whisky'], city: 'New York', bar: 'Milk & Honey' }),
+  node('d:Gold Rush', 'sour', null, 2000, { spirits: ['whisky'], city: 'New York', bar: 'Milk & Honey' }),
+  node('d:Mai Tai', 'tiki', null, 1944, { spirits: ['rum'], city: 'Oakland', bar: "Trader Vic's" }),
+];
+const names = (f: Parameters<typeof timelineSections>[1]) => timelineSections(placed, f).flatMap((s) => s.data.map((r) => r.node.name));
+assert.deepEqual(names({ family: null, styles: false, spirit: 'rum' }), ['Mai Tai']);
+assert.deepEqual(names({ family: null, styles: true, place: 'New York' }), ['Sour', 'Gold Rush', 'Penicillin']);
+assert.deepEqual(names({ family: null, styles: false, place: "Trader Vic's" }), ['Mai Tai']);
+assert.deepEqual(placeOptions(placed).map((p) => `${p.kind}:${p.name}:${p.count}`), ['city:New York:2', 'city:Oakland:1', 'bar:Milk & Honey:2', "bar:Trader Vic's:1"]);
 
 console.log('timeline checks passed');

@@ -20,8 +20,11 @@ interface PeekProps {
   from: TreeNode | null;
   /** How many classics in the tree came from it. */
   kids: number;
+  /** How many drinks on the timeline its maker made ("5 drinks here"). */
+  byMaker: number;
   threadOn: boolean;
-  onThread: () => void;
+  /** Show or hide its thread; left out in the desktop inspector, which always shows it. */
+  onThread?: () => void;
 }
 
 /**
@@ -29,7 +32,7 @@ interface PeekProps {
  * person who made it, the bar it was first poured at, and its thread back to
  * the punch bowl.
  */
-export function DrinkDetail({ node, from, kids, threadOn, onThread }: PeekProps) {
+export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: PeekProps) {
   const ds = useDs();
   const router = useRouter();
   const style = node.kind === 'style';
@@ -60,7 +63,7 @@ export function DrinkDetail({ node, from, kids, threadOn, onThread }: PeekProps)
         <Caption tone="muted" style={styles.flex}>
           {lineage || 'The first of its line'}
         </Caption>
-        <Button label={threadOn ? 'Hide its thread' : 'Show its thread'} variant="secondary" onPress={onThread} />
+        {onThread ? <Button label={threadOn ? 'Hide its thread' : 'Show its thread'} variant="secondary" onPress={onThread} /> : null}
       </View>
       {style ? null : <Button label={`Open ${node.name}`} onPress={() => router.push(drinkHref(node.id))} />}
       {node.creatorId || node.barId ? (
@@ -72,7 +75,7 @@ export function DrinkDetail({ node, from, kids, threadOn, onThread }: PeekProps)
                 <Caption numberOfLines={1} style={styles.destName}>
                   {node.creator}
                 </Caption>
-                <Caption tone="muted">Made it</Caption>
+                <Caption tone="muted">{byMaker > 1 ? `${byMaker} drinks here` : 'Made it'}</Caption>
               </View>
             </PressableScale>
           ) : null}
@@ -85,7 +88,7 @@ export function DrinkDetail({ node, from, kids, threadOn, onThread }: PeekProps)
                 <Caption numberOfLines={1} style={styles.destName}>
                   {node.bar}
                 </Caption>
-                <Caption tone="muted">{node.barClosed ? 'Bar · closed' : 'Bar'}</Caption>
+                <Caption tone="muted">{['Bar', node.city, node.barClosed ? 'closed' : null].filter(Boolean).join(' · ')}</Caption>
               </View>
             </PressableScale>
           ) : null}
