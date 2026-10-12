@@ -1,34 +1,11 @@
 import { useRouter } from 'expo-router';
-import { memo, useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { Body, Button, Caption, Field, Headline, IngredientThumb, RowScore, scoreWords, Segmented, Surface } from '@/components/ds';
-import { DrinkRow } from '@/components/screens/DrinkRow';
+import { Body, Button, Caption, Field, FieldButton, Headline, Segmented } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import type { BarItem } from '@/hooks/useHomeBar';
-import { itemHref } from '@/lib/itemRoutes';
 import { MAKE_PAGE, searchCaption, type Found, type MakeSearchRowData, type MakeTab } from '@/lib/myBarRows';
-import { servedCaption } from '@/lib/servedAt';
-
-/** Drinks under each bottle before "and N more". */
-const PER_BOTTLE = 3;
-
-/** Drinks one or two bottles away, under what to buy. */
-export interface AwayGroup {
-  bottles: BarItem[];
-  drinks: BarItem[];
-}
-
-/** "92% match" (under the score, once the person has ranked enough), or the caption's note ("Make the Simple syrup first"). */
-type TextFor = (id: string) => string | undefined;
-/** The drink's score, where people have ranked it. */
-type ScoreFor = (id: string) => number | undefined;
-/** What a What to make row says: its prep note in the caption, its score and % match at the end (g145, b47). */
-export interface MakeRowText {
-  matchFor: TextFor;
-  noteFor: TextFor;
-  scoreFor: ScoreFor;
-}
+import { footLine, tabIntro } from '@/lib/myBarText';
 
 /** What to make's search: what's typed, and how far each section of results is shown. */
 export function useMakeSearch() {
@@ -57,14 +34,20 @@ export function MakeHead({
   tab,
   onTab,
   counts,
+  bottles,
   search,
   found,
+  children,
 }: {
   tab: MakeTab;
   onTab: (tab: MakeTab) => void;
   counts: { ready: number; first: number; one: number; two: number; projects?: number };
+  /** Bottles on the shelf, for the line under the heading. */
+  bottles: number;
   search: { query: string; onQuery: (query: string) => void };
   found?: Record<Found, number>;
+  /** Under the tabs: the desktop's Make first strip on Ready. */
+  children?: ReactNode;
 }) {
   const options: { value: MakeTab; label: string }[] = [{ value: 'ready', label: `Ready · ${counts.ready}` }];
   if (counts.first) options.push({ value: 'first', label: `Make first · ${counts.first}` });
@@ -76,7 +59,10 @@ export function MakeHead({
   if (counts.projects !== undefined) options.push({ value: 'projects', label: `Projects · ${counts.projects}` });
   return (
     <View style={styles.section}>
-      <Headline role="heading">What to make</Headline>
+      <View style={styles.title}>
+        <Headline role="heading">What to make</Headline>
+        <Caption tone="muted">{`From your ${bottles} ${bottles === 1 ? 'bottle' : 'bottles'} and your pantry. Nothing here needs a trip to the shop unless it says so.`}</Caption>
+      </View>
       <Field
         label="Search what you can make"
         hideLabel
@@ -85,48 +71,26 @@ export function MakeHead({
         placeholder="A drink, or a bottle you want to use"
         inputMode="search"
         returnKeyType="search"
-        clearButtonMode="while-editing"
         autoCorrect={false}
         autoCapitalize="none"
+        trailing={search.query ? <FieldButton icon="xmark.circle.fill" label="Clear search" onPress={() => search.onQuery('')} /> : null}
       />
       {found ? (
         <Caption tone="muted" aria-live="polite">
           {searchCaption(search.query, found)}
         </Caption>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
-        </ScrollView>
+        <>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
+          </ScrollView>
+          {tabIntro(tab) ? <Caption tone="muted">{tabIntro(tab)}</Caption> : null}
+          {children}
+        </>
       )}
     </View>
   );
 }
-
-/** A drink you can make. Memoized like the other list rows: every change to the list re-renders its rows. */
-export const MakeDrink = memo(function MakeDrink({ drink, text }: { drink: BarItem; text: MakeRowText }) {
-  // A classic says where it's served; a bar's version says which bar, and what its variation changes:
-  // "Served at Harry's Bar, The Gold Room +5", "The Long Island Bar · uses Rye Whiskey, not Bourbon · Make the Simple syrup first".
-  const where = drink.served ? servedCaption(drink.served.count, drink.served.bars) : drink.from?.name;
-  const caption = [where, drink.variation, text.noteFor(drink.id)].filter(Boolean).join(' · ') || undefined;
-  const bar = drink.served?.bars[0] ?? drink.from;
-  const logo = bar ? { uri: bar.logo, name: bar.name } : undefined;
-  const score = text.scoreFor(drink.id);
-  const match = text.matchFor(drink.id);
-  const said = scoreWords(score, match);
-  return (
-    <DrinkRow
-      name={drink.name}
-      itemId={drink.id}
-      href={itemHref('Cocktail', drink.id)}
-      imageUrl={drink.imageUrl}
-      glass={drink.glass}
-      caption={caption}
-      logo={logo}
-      trailing={<RowScore score={score} detail={match} />}
-      label={said ? [drink.name, caption, said].filter(Boolean).join('. ') : undefined}
-    />
-  );
-});
 
 /** A tab with nothing in it, and where to look instead. */
 export function MakeEmpty({ tab, oneAway }: { tab: MakeTab; oneAway: number }) {
@@ -163,69 +127,36 @@ export function MakeSearchRow({ row, onMore }: { row: MakeSearchRowData; onMore:
 }
 
 /**
- * "Show more" while there are, then the way to every other drink. Under a
- * search it holds a screen's height, so fewer results don't pull the list up
- * and slide the search box under the keyboard.
+ * "Show more" while there are, then the way to every other drink: under a
+ * search, the search itself carried over ("Search every drink for “rye”").
+ * Under a search it holds a screen's height, so fewer results don't pull the
+ * list up and slide the search box under the keyboard.
  */
-export function MakeFoot({ more, searching, onMore }: { more: number; searching?: boolean; onMore: () => void }) {
+export function MakeFoot({ more, tab, query, onMore }: { more: number; tab: MakeTab; query?: string; onMore: () => void }) {
   const router = useRouter();
   const { height } = useWindowDimensions();
+  const q = query?.trim();
   return (
-    <View style={[styles.foot, searching ? { minHeight: height } : null]}>
+    <View style={[styles.foot, q ? { minHeight: height } : null]}>
       {more > 0 ? <Button label={`Show more (${more})`} variant="ghost" onPress={onMore} /> : null}
       <View style={styles.more}>
-        <Caption tone="muted">Looking for a drink you can’t make yet?</Caption>
-        <Button label="Search every drink" icon="magnifyingglass" variant="secondary" onPress={() => router.push('/search')} />
+        {q ? <Caption tone="muted">{`Want a ${q} drink you’re further from?`}</Caption> : <Caption tone="muted">{footLine(tab)}</Caption>}
+        <Button
+          label={q ? `Search every drink for “${q}”` : 'Search every drink'}
+          icon="magnifyingglass"
+          variant={q ? 'secondary' : 'ghost'}
+          onPress={() => router.push((q ? `/search?q=${encodeURIComponent(q)}` : '/search') as never)}
+        />
+        {q ? <Caption tone="muted">{footLine('ready')}</Caption> : null}
       </View>
     </View>
   );
 }
 
-/** The bottles to buy, what they open (three, then all on a tap), and Add. Memoized, as a list row. */
-export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, text, onAdd, style }: { id: string; group: AwayGroup; open: boolean; onOpen: (id: string) => void; text: MakeRowText; onAdd: (ingredientIds: string[]) => void; style?: StyleProp<ViewStyle> }) {
-  const { bottles, drinks } = group;
-  const names = bottles.map((b) => b.name).join(' + ');
-  const rest = drinks.length - PER_BOTTLE;
-  return (
-    <Surface style={[styles.group, style]}>
-      <View style={styles.groupHead}>
-        <View style={styles.thumbs}>
-          {bottles.map((b) => (
-            <IngredientThumb key={b.id} id={b.id} name={b.name} size={bottles.length > 1 ? 36 : 44} />
-          ))}
-        </View>
-        <View style={styles.groupText}>
-          <Headline>{names}</Headline>
-          <View style={styles.opens}>
-            <Caption tone="muted" style={styles.grow}>
-              Opens {drinks.length} {drinks.length === 1 ? 'drink' : 'drinks'}
-            </Caption>
-            <Button
-              label={bottles.length > 1 ? 'Add both' : 'Add'}
-              variant="secondary"
-              accessibilityLabel={`Add ${names} to your shelf`}
-              onPress={() => onAdd(bottles.map((b) => b.id))}
-            />
-          </View>
-        </View>
-      </View>
-      {(open ? drinks : drinks.slice(0, PER_BOTTLE)).map((d) => (
-        <MakeDrink key={d.id} drink={d} text={text} />
-      ))}
-      {rest > 0 && !open ? <Button label={`and ${rest} more`} variant="ghost" onPress={() => onOpen(id)} /> : null}
-    </Surface>
-  );
-});
-
 const styles = StyleSheet.create({
   section: { gap: space.md, paddingBottom: space.md },
+  title: { gap: 2 },
   heading: { paddingTop: space.lg, paddingBottom: space.xs },
-  group: { gap: space.xs },
-  groupHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
-  thumbs: { flexDirection: 'row', gap: space.xs },
-  groupText: { flex: 1, gap: 2 },
-  opens: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  grow: { flex: 1 },
   foot: { gap: space.md, paddingTop: space.md },
   more: { gap: space.sm, alignItems: 'flex-start', paddingTop: space.md },
 });

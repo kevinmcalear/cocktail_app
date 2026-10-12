@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { PERSONAL_CONTEXT, venueContextIds } from '@/lib/barContextFilter';
+import { menuDrinks } from '@/lib/libraryFilters';
 import type { SearchScope } from '@/lib/searchScope';
 
 /**
@@ -22,6 +24,10 @@ export function useSearchMine() {
     [mode, active?.id, isLoading]
   );
   const { data: capabilities } = useCapabilities(venue?.id ?? null);
+  // R&D trials stay out of the venue's search, as they stay out of Library's All.
+  const { data: menus } = useVenueMenus(venue?.id ?? null);
+  const [now] = useState(() => Date.now());
+  const hiddenIds = useMemo(() => (venue && menus ? menuDrinks(menus, now, null).rnd : []), [venue, menus, now]);
   return {
     label: venue?.name ?? 'Your drinks',
     contextIds,
@@ -29,6 +35,8 @@ export function useSearchMine() {
     defaultScope: (venue ? 'mine' : 'everywhere') as SearchScope,
     /** May add a drink here when nothing matches: Drink Creator and up at a venue, anyone signed in at home. */
     canAdd: venue ? !!capabilities?.includes('edit_drinks') : signedIn,
+    /** Drinks the venue's search leaves out: R&D trials on no menu. Item ids. */
+    hiddenIds,
   };
 }
 

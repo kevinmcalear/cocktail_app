@@ -153,19 +153,32 @@ export function MenuCredits({ credits, names }: { credits: MenuCreditWithProfile
  * The score is its drinks' scores averaged, weighted by how many people
  * ranked each. Early (under MIN_RANKERS people) gives the count, no number.
  */
-export function BarHeader({ profile, detail }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string }) {
+export function BarHeader({ profile, detail, love }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string; love?: ReactNode }) {
   const { data } = useVenueScore(profile.id);
   const score = data?.score ?? null;
   const ranked = data?.rankers ? rankedCount(data.rankers) : null;
   const scoreLabel = score !== null ? `Bar score ${formatScore(score)} out of 10` : ranked ? `No bar score until ${MIN_RANKERS} people have ranked here` : null;
+  // The score over "Bar score · 212 ranked", then a labelled Love (disc-search-bar).
   return (
-    <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.barHeader}>
-      <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
-      <View style={styles.flex}>
-        <Title>{profile.display_name}</Title>
-        <Caption tone="muted">{[detail, ranked].filter(Boolean).join(' · ')}</Caption>
+    <View style={styles.barHeader}>
+      <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={[styles.barHeader, styles.flex]}>
+        <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
+        <View style={styles.flex}>
+          <Title>{profile.display_name}</Title>
+          <Caption tone="muted">{score !== null ? detail : [detail, ranked].filter(Boolean).join(' · ')}</Caption>
+        </View>
       </View>
-      {score !== null ? <Spec tone="accent">{formatScore(score)}</Spec> : null}
+      {score !== null || love ? (
+        <View style={styles.barScore}>
+          {score !== null ? (
+            <>
+              <Spec tone="accent">{formatScore(score)}</Spec>
+              <Caption tone="muted">{['Bar score', ranked].filter(Boolean).join(' · ')}</Caption>
+            </>
+          ) : null}
+          {love}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -212,6 +225,7 @@ const styles = StyleSheet.create({
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   barHeader: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  barScore: { alignItems: 'flex-end', gap: space.xs },
   stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxl },
   stat: { alignItems: 'center', minWidth: 72 },
 });

@@ -29,6 +29,8 @@ interface ReviewRowProps {
   detail?: string | null;
   /** A spec amount before the title ("30 ml"). */
   amount?: string | null;
+  /** In mono at the row's end: a price read from a menu ("18"). */
+  trailing?: string | null;
   /** The options for a pick, shown inline. */
   choices?: ReviewChoice[];
   chosen?: string | null;
@@ -39,12 +41,18 @@ interface ReviewRowProps {
   children?: ReactNode;
 }
 
-/** A text action in the venue's accent ("Add another page", "Finish"), at least 44 tall. */
-export function TextLink({ label, onPress, accessibilityHint }: { label: string; onPress: () => void; accessibilityHint?: string }) {
+/** A text action, in the venue's accent unless `tone` says ink ("Add another page", "Finish"), at least 44 tall. */
+export function TextLink({ label, onPress, accessibilityHint, tone = 'accent' }: {
+  label: string;
+  onPress: () => void;
+  accessibilityHint?: string;
+  /** `ink` where the screen's one accent is already spoken for (a menu's Guest card beside Go live). */
+  tone?: 'accent' | 'ink';
+}) {
   const ds = useDs();
   return (
     <PressableScale accessibilityLabel={label} accessibilityHint={accessibilityHint} onPress={onPress} style={styles.link}>
-      <DsText variant="body" color={ds.accentText}>
+      <DsText variant="body" color={tone === 'ink' ? ds.c.ink : ds.accentText}>
         {label}
       </DsText>
     </PressableScale>
@@ -85,7 +93,7 @@ function Mark({ state }: { state: ReviewState }) {
  * One line of a review: a drink on a menu, a line in a spec, a bottle on a
  * shelf. The same four states everywhere (docs/design_system.md, "Bring in").
  */
-export function ReviewRow({ state, title, detail, amount, choices, chosen = null, onChoose, action, children }: ReviewRowProps) {
+export function ReviewRow({ state, title, detail, amount, trailing, choices, chosen = null, onChoose, action, children }: ReviewRowProps) {
   const ds = useDs();
   const skipped = state === 'skip';
   return (
@@ -102,6 +110,7 @@ export function ReviewRow({ state, title, detail, amount, choices, chosen = null
           {detail ? <Caption tone={state === 'new' ? 'accent' : 'muted'}>{detail}</Caption> : null}
         </View>
         {action ? <TextLink label={action.label} accessibilityHint={action.hint} onPress={action.onPress} /> : null}
+        {trailing ? <Spec tone={skipped ? 'muted' : 'ink'}>{trailing}</Spec> : null}
       </View>
       {choices?.length && onChoose ? (
         <View role="radiogroup" aria-label={`Which ${title}`} style={styles.choices}>

@@ -4,10 +4,11 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { radius as radii } from '@/constants/tokens';
+import type { SketchInputs } from '@/lib/sketch/types';
 import { markNoThumb, thumbToTry } from '@/lib/thumbnails';
 
 import { DrawnSketch } from './DrawnSketch';
-import type { SketchDetail } from './SketchDrawing';
+import { SketchDrawing, type SketchDetail } from './SketchDrawing';
 import { IngredientDrawing } from './IngredientDrawing';
 import { useDs } from './theme';
 
@@ -41,6 +42,8 @@ export interface DrinkImageProps {
   placeholderColor?: string | null;
   /** Load order: 'high' for the one picture a screen is about (a drink page's hero). */
   priority?: 'low' | 'normal' | 'high';
+  /** With no image: draw from these inputs instead of the stored ones (beer and wine, lib/sketch/pour.ts). */
+  sketch?: SketchInputs | null;
 }
 
 /**
@@ -48,7 +51,7 @@ export interface DrinkImageProps {
  * yet, it shows a sketch drawn from the drink's own spec (glass, colour, ice,
  * foam, garnish), or until that exists, its glass icon on the house paper.
  */
-export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', style, ingredient, thumb = false, animate, sketchDetail, placeholderColor, priority }: DrinkImageProps) {
+export function DrinkImage({ source, generated, glass, itemId, accessibilityLabel, aspectRatio = 1, radius = 'card', style, ingredient, thumb = false, animate, sketchDetail, placeholderColor, priority, sketch }: DrinkImageProps) {
   const ds = useDs();
   const borderRadius = radius === 0 ? 0 : radii[radius];
   const uri = ingredient ? null : (source ?? null);
@@ -91,6 +94,10 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
               : undefined
           }
         />
+      ) : sketch ? (
+        <View style={styles.fill}>
+          <SketchDrawing inputs={sketch} seed={itemId ?? accessibilityLabel} detail={sketchDetail} />
+        </View>
       ) : itemId ? (
         <DrawnSketch itemId={itemId} fallback={glassIcon} animate={animate} detail={sketchDetail} />
       ) : (

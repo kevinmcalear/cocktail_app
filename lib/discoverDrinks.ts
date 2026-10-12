@@ -124,7 +124,7 @@ export function toDiscoverDrink(r: DrinkRow, search = ''): DiscoverDrink {
     menu: { onNow: !!tag?.onNow, past: tag?.past ?? null, order: menuOrder(dates) },
     rank: r.rank,
     match,
-    why: matchWhy(match, r.description, search),
+    why: matchWhy(match, r.description, search, r.name),
     distance: r.distance_m ?? null,
   };
 }

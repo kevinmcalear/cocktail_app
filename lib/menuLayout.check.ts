@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import type { MenuDrink } from '@/types/menus';
 
 import {
+  moveToSection,
   addDrink,
   addSection,
   cannotAdd,
@@ -105,3 +106,13 @@ assert.equal(libraryNote({ id: 'Champ Stamp' }, section, elsewhere), 'On Autumn 
 assert.equal(libraryNote({ id: 'Bolo Tie' }, section, elsewhere), 'Not on a menu');
 
 console.log('menuLayout: ok');
+
+{
+  const d = (id: string, kind: MenuDrink['kind'] = 'cocktail'): MenuDrink => ({ id, name: id, kind, line: '', price: null, imageUrl: null, isSketch: false, glass: null });
+  const sec = (key: string, drinks: MenuDrink[], allowedTypes: MenuDrink['kind'][] = ['cocktail', 'beer', 'wine']) => ({ key, id: key, name: key, minItems: 0, maxItems: null, allowedTypes, drinks });
+  const l = { name: 'M', coverUrl: null, coverPosition: 50, sections: [sec('a', [d('x'), d('y')]), sec('b', [d('z')]), sec('beer', [], ['beer'])] };
+  const moved = moveToSection(l, 'a', 'x', 'b');
+  assert.deepEqual(moved.sections.map((s) => s.drinks.map((x) => x.id)), [['y'], ['z', 'x'], []]);
+  assert.equal(moveToSection(l, 'a', 'x', 'beer'), l, 'a cocktail does not move into a beer-only section');
+  assert.equal(moveToSection(l, 'a', 'x', 'a'), l);
+}

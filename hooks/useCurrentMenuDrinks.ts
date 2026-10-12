@@ -1,29 +1,38 @@
-import { dropdownKeys } from '@/hooks/useDropdowns';
-import { inRunningOrder } from '@/lib/currentFromMenus';
-import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
-/** Drinks on current (is_active) menus, in running order (menuIds order, then sort_order). */
+import { dropdownKeys } from '@/hooks/useDropdowns';
+import { MENU_DRINK_ITEM, type MenuItemRow } from '@/hooks/useMenus';
+import { supabase } from '@/lib/supabase';
+
+export interface CurrentSectionRow {
+  id: string;
+  menu_id: string;
+  name: string;
+  sort_order: number | null;
+  menu_drinks: { sort_order: number | null; item: MenuItemRow | MenuItemRow[] | null }[] | null;
+}
+
+/**
+ * The sections of the menus on now, each with its drinks (their line and
+ * price), for Tonight. Rows as they come (plain JSON: saved between launches);
+ * useTonight puts them in running order.
+ */
 export function useCurrentMenuDrinks(menuIds: string[]) {
   const key = [...menuIds].sort();
   return useQuery({
-    queryKey: [...dropdownKeys.currentMenuDrinks, 'with-glass', key],
+    queryKey: [...dropdownKeys.currentMenuDrinks, 'sections', key],
     enabled: key.length > 0,
     // Tonight's first paint: saved between launches.
     meta: { persist: true },
-    queryFn: async () => {
+    queryFn: async (): Promise<CurrentSectionRow[]> => {
       const { data, error } = await supabase
-        .from('menu_drinks')
-        .select(
-          'menu_id, sort_order, item:items!item_id(id, name, item_type, glass:glassware_id(icon_key, name), item_images(angle, sort_order, is_generated, outdated_since, images(url)))'
-        )
+        .from('menu_sections')
+        .select(`id, menu_id, name, sort_order, menu_drinks(sort_order, ${MENU_DRINK_ITEM})`)
         .in('menu_id', key)
         .order('sort_order', { ascending: true });
       if (error) throw error;
-      return data || [];
+      return (data ?? []) as unknown as CurrentSectionRow[];
     },
-    // The cache key sorts menu ids; re-apply the caller's menu order on read.
-    select: (rows) => inRunningOrder(rows, menuIds),
     staleTime: 1000 * 60 * 5,
   });
 }

@@ -1,7 +1,7 @@
 // Checks for lib/barHours.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { clockLabel, hoursLine, hoursStatus, parseHours, weekRows, type WeekHours } from './barHours';
+import { clockLabel, hoursLine, hoursSource, hoursStatus, parseHours, weekRows, type WeekHours } from './barHours';
 
 const LITTLE_RYE: WeekHours = {
   mon: [],
@@ -74,3 +74,9 @@ assert.equal(weekRows(split, mel('2026-10-10T21:00:00'), MEL)[4].text, 'noon to 
 assert.equal(parseHours(null), null);
 assert.equal(parseHours([]), null);
 assert.deepEqual(parseHours({ mon: [['17:00', '25:00'], ['17:00', '23:00']], tue: 'x', xyz: [] }), { mon: [['17:00', '23:00']] });
+
+// Where they come from.
+const oct = new Date(2026, 9, 10);
+assert.equal(hoursSource(true, new Date(2026, 9, 3, 12).toISOString(), oct), 'From the bar · updated 3 Oct');
+assert.equal(hoursSource(false, new Date(2025, 0, 9, 12).toISOString(), oct), 'Hours checked 9 Jan 2025 · may have changed');
+assert.equal(hoursSource(true, null, oct), 'From the bar');

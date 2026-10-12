@@ -11,12 +11,12 @@ import { formatScore } from '@/lib/ranking';
 const TOP = 3;
 
 /**
- * "Top drinks here" on the map's bar card, under its name and above the
+ * "Top drinks here" ("Also good here" under a searched drink) on the map's bar card, under its name and above the
  * drinks matching Discover's search: the bar's three best-scored drinks,
  * each opening the drink. Nothing until a drink has a score, so an early
  * bar's card stays as it was.
  */
-export function BarTopDrinks({ barId }: { barId: string }) {
+export function BarTopDrinks({ barId, title = 'Top drinks here' }: { barId: string; title?: string }) {
   const router = useRouter();
   const { data } = useBarTopDrinks(barId, TOP);
   const top = splitTopDrinks(data ?? []).scored;
@@ -24,7 +24,7 @@ export function BarTopDrinks({ barId }: { barId: string }) {
   return (
     <View style={styles.block}>
       <Caption tone="muted" style={styles.cap}>
-        Top drinks here
+        {title}
       </Caption>
       <View role="list">
         {top.map((d) => (
