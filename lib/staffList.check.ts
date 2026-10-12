@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { appendRank, candidatesFor, moved, patronGroups, ranked, staffOrder, unranked } from './staffList';
+import { appendRank, candidatesFor, moved, NOT_RANKED, patronGroups, ranked, rankedAbove, staffOrder, unranked } from './staffList';
 
 
 const rows = [
@@ -55,3 +55,11 @@ assert.equal(candidatesFor(
   'riff',
   new Set(),
 ).length, 8);
+
+{
+  assert.deepEqual(rankedAbove(['a', 'b', NOT_RANKED, 'c']), ['a', 'b']);
+  assert.deepEqual(rankedAbove(['a', 'c', NOT_RANKED, 'b']), ['a', 'c'], 'a Not ranked drink dragged above the line is ranked');
+  assert.deepEqual(rankedAbove([NOT_RANKED, 'a']), []);
+  assert.deepEqual(rankedAbove(['a', 'b']), ['a', 'b'], 'no line: every row is ranked');
+  assert.equal(rankedAbove([...Array.from({ length: 52 }, (_, i) => `d${i}`), NOT_RANKED]).length, 50, 'never past the cap');
+}

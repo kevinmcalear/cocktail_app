@@ -43,7 +43,7 @@ test("a venue's Admins see only their venue's requests, and accept or decline ea
 test('moderators see requests at bars with no venue, with the bar named', async () => {
   await renderWithTamagui(<JobRequests venueId={null} title="Jobs at bars not on Cocktail" />);
   expect(screen.getByText('Ana Amaro')).toBeTruthy();
-  expect(screen.getByText('Head bartender at Bar 2')).toBeTruthy();
+  expect(screen.getByText('Says they work at Bar 2 as Head bartender')).toBeTruthy();
 });
 
 test('the person accepts a job a bar listed them in, and sees what waits on the bar', async () => {

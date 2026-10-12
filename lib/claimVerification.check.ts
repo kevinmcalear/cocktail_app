@@ -2,7 +2,7 @@
 // The same cases run against the database in supabase/tests/bar-claims.test.mjs.
 import assert from 'node:assert/strict';
 
-import { claimPlace, claimProblem, emailCheck, isSharedHost, pageInstagram, siteHost, siteIsRoot, spacedCode } from './claimVerification';
+import { claimPlace, claimProblem, emailCheck, isSharedHost, newClaimCode, pageInstagram, siteHost, siteIsRoot, spacedCode } from './claimVerification';
 
 // Hosts lose the scheme, www., port, path and case.
 assert.equal(siteHost('https://www.PaleMoth.com/en?x=1'), 'palemoth.com');
@@ -50,3 +50,9 @@ assert.equal(claimProblem({ code: '23505', message: 'You already have a claim wa
 assert.equal(claimPlace('maker'), 'company');
 assert.equal(claimPlace('bar'), 'bar');
 assert.match(claimProblem(null), /connection/);
+
+// A claim code is always six digits, padded, from whatever random source.
+assert.equal(newClaimCode(() => 0), '000000');
+assert.equal(newClaimCode(() => 0.4829131), '482913');
+assert.equal(newClaimCode(() => 0.9999999), '999999');
+assert.match(newClaimCode(), /^[0-9]{6}$/);

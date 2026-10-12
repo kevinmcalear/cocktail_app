@@ -25,7 +25,7 @@ assert.deepEqual(opts(['cocktail', 'id', null]), { staleTime: 10 * MIN, gcTime: 
 assert.deepEqual(opts(['bars', 'u1']), { staleTime: 60 * MIN, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['profile', 'mine', 'u1']), { staleTime: 60 * MIN, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['profile', { id: 'p' }, 'u1']), { staleTime: 10 * MIN, gcTime: GC_TIME, focus: false });
-assert.deepEqual(opts(['menus-v2', 'venue-3', 'b1']), { staleTime: 15 * MIN, gcTime: KEEP, focus: true });
+assert.deepEqual(opts(['menus-v2', 'venue-5', 'b1']), { staleTime: 15 * MIN, gcTime: KEEP, focus: true });
 assert.deepEqual(opts(['menus-v2', 'detail', 'm1']), { staleTime: 15 * MIN, gcTime: GC_TIME, focus: true });
 assert.deepEqual(opts(['dropdowns_v7', 'current_menu_drinks', 'with-glass', ['m']]), { staleTime: 15 * MIN, gcTime: KEEP, focus: true });
 // Live: half a minute, refetched on return.

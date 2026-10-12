@@ -58,11 +58,14 @@ function shortDay(iso: string, locale?: string): string {
   return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 }
 
-/** "since Mon 1 Sep", "starts Fri 3 Oct", "3 Jun to 31 Aug", or null for a draft or a home menu (its night is homeMenuLine). */
-export function menuDateLine(menu: Dated, now: number, locale?: string): string | null {
+/**
+ * "since Mon 1 Sep", "starts Fri 3 Oct", "3 Jun to 31 Aug", or null for a
+ * draft or a home menu (its night is homeMenuLine). `short`: "since 1 Sep".
+ */
+export function menuDateLine(menu: Dated, now: number, locale?: string, short = false): string | null {
   if (!menu.startsAt && !menu.endsAt) return null;
   const status = menuStatus(menu, now);
-  if (status === 'on') return `since ${day(menu.startsAt!, locale)}`;
+  if (status === 'on') return `since ${(short ? shortDay : day)(menu.startsAt!, locale)}`;
   if (status === 'upcoming') return `starts ${day(menu.startsAt!, locale)}`;
   if (status === 'previous') {
     return menu.startsAt ? `${shortDay(menu.startsAt, locale)} to ${shortDay(menu.endsAt!, locale)}` : `off since ${shortDay(menu.endsAt!, locale)}`;
@@ -158,10 +161,26 @@ export function menuReadiness(menu: { sections: Pick<MenuSectionDetail, 'name' |
   return { short, over, needsPhoto, noPrice, canGoLive: hasDrinks && short.length === 0 && over.length === 0 };
 }
 
-/** Drinks on this menu that weren't on any of the others: new for the team to learn. */
-export function newDrinkCount(itemIds: string[], others: { itemIds: string[] }[]): number {
+/** Drinks on this menu that weren't on any of the others: new for the team to learn (the NEW marker). */
+export function newDrinkIds(itemIds: string[], others: { itemIds: string[] }[]): Set<string> {
   const known = new Set(others.flatMap((m) => m.itemIds));
-  return new Set(itemIds.filter((id) => !known.has(id))).size;
+  return new Set(itemIds.filter((id) => !known.has(id)));
+}
+
+export function newDrinkCount(itemIds: string[], others: { itemIds: string[] }[]): number {
+  return newDrinkIds(itemIds, others).size;
+}
+
+/** Tonight's line: "Thu 25 Sep · Autumn menu · 8 drinks", or "Thu 25 Sep · 2 menus on · 12 drinks". */
+export function tonightLine(date: Date, menus: { name: string }[], drinks: number, locale?: string): string {
+  const day = date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+  if (!menus.length) return day;
+  return [day, menus.length === 1 ? menus[0].name : `${menus.length} menus on`, plural(drinks, 'drink')].join(' · ');
+}
+
+/** "Gin · dry vermouth · orange bitters": a menu line as Tonight's rows read it. */
+export function dotLine(line: string): string {
+  return line.split(/,\s*/).filter(Boolean).join(' · ');
 }
 
 /** "Cocktails · 3 to 5", "Beer · up to 3", "Any drink". */
@@ -171,6 +190,23 @@ export function sectionRule(section: { allowedTypes: string[]; minItems: number;
   const { minItems: min, maxItems: max } = section;
   const count = max !== null ? (min > 0 ? `${min} to ${max}` : `up to ${max}`) : min > 1 ? `${min} or more` : null;
   return count ? `${kinds} · ${count}` : kinds;
+}
+
+/**
+ * A builder section's one line: its rule, how many are in, and what's wrong
+ * ("2 to 3 drinks · 1 in · needs one more"). `problem` says to set it in amber.
+ */
+export function sectionLine(section: { allowedTypes: string[]; minItems: number; maxItems: number | null; drinks: unknown[] }): { text: string; problem: boolean } {
+  const { minItems: min, maxItems: max } = section;
+  const n = section.drinks.length;
+  const any = section.allowedTypes.length === 3;
+  const range = max !== null ? (min > 0 ? (min === max ? `${min}` : `${min} to ${max}`) : `up to ${max}`) : min > 1 ? `${min} or more` : null;
+  const rule = any ? (range ? `${range} drinks` : 'Any drink') : sectionRule(section);
+  const short = min - n;
+  const over = max !== null ? n - max : 0;
+  const words = ['one', 'two', 'three'];
+  const problem = short > 0 ? `needs ${words[short - 1] ?? short} more` : over > 0 ? `${over} too many` : null;
+  return { text: [rule, `${n} in`, problem].filter(Boolean).join(' · '), problem: !!problem };
 }
 
 /** The menu as plain text, for the share sheet: sections, then each drink with its price and line. */
@@ -185,4 +221,102 @@ export function menuAsText(menu: Pick<MenuDetail, 'name' | 'sections'>, venueNam
     }
   }
   return lines.join('\n');
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** A run that is one night: a start and an end a day apart at most. */
+export function isOneNightRun(starts: string | null, ends: string | null): boolean {
+  if (!starts || !ends) return false;
+  const span = Date.parse(ends) - Date.parse(starts);
+  return span > 0 && span <= DAY_MS;
+}
+
+/** A venue menu that is one night, scheduled or only planned: it can be shared without going live (b15). */
+export function isOneNightMenu(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'plannedStartsAt' | 'plannedEndsAt' | 'kind'>): boolean {
+  return menu.kind !== 'rnd' && isOneNightRun(menu.startsAt ?? menu.plannedStartsAt, menu.endsAt ?? menu.plannedEndsAt);
+}
+
+/** "edited just now", "edited today", "edited yesterday", "edited 3 days ago", "edited 4 Oct". */
+export function editedWhen(updatedAt: string, now: number, locale?: string): string {
+  const at = new Date(updatedAt);
+  const ago = now - at.getTime();
+  if (ago < 60 * 60 * 1000) return 'edited just now';
+  const days = Math.round((new Date(toDay(new Date(now))).getTime() - new Date(toDay(at)).getTime()) / DAY_MS);
+  if (days <= 0) return 'edited today';
+  if (days === 1) return 'edited yesterday';
+  if (days < 7) return `edited ${days} days ago`;
+  return `edited ${at.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}`;
+}
+
+/** A draft's amber line: what's missing, then when it was edited. "1 section short · edited yesterday". */
+export function draftLine(menu: Pick<MenuSummary, 'itemIds' | 'updatedAt'> & { shortSections: number }, now: number, locale?: string): string {
+  const missing = menu.shortSections ? `${plural(menu.shortSections, 'section')} short` : menu.itemIds.length ? null : 'No drinks yet';
+  return [missing ?? plural(new Set(menu.itemIds).size, 'drink'), editedWhen(menu.updatedAt, now, locale)].join(' · ');
+}
+
+/** A coming-up row's caption: the kind, the drinks, the date. "Takeover · 9 drinks · from Fri 3 Oct", "One night · 4 drinks · Fri 31 Oct". */
+export function comingUpLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'menuDate' | 'itemIds' | 'event' | 'guestCount'>, locale?: string): string {
+  const night = isOneNightRun(menu.startsAt, menu.endsAt) || (!menu.startsAt && !!menu.menuDate);
+  const start = menu.event?.startsAt ?? menu.startsAt ?? (menu.menuDate ? `${menu.menuDate}T00:00:00` : null);
+  const date = start ? day(start, locale) : null;
+  return [
+    menu.event ? 'Takeover' : night ? 'One night' : null,
+    menu.guestCount ? plural(menu.guestCount, 'guest') : null,
+    plural(new Set(menu.itemIds).size, 'drink'),
+    date ? (night ? date : `from ${date}`) : null,
+  ].filter(Boolean).join(' · ');
+}
+
+/** A previous menu's line, in mono at the row's end: "3 Jun to 31 Aug · 10". */
+export function previousLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'itemIds'>, locale?: string): string {
+  const dates = menu.endsAt ? (menu.startsAt ? `${shortDay(menu.startsAt, locale)} to ${shortDay(menu.endsAt, locale)}` : `off ${shortDay(menu.endsAt, locale)}`) : null;
+  return [dates, String(new Set(menu.itemIds).size)].filter(Boolean).join(' · ');
+}
+
+/**
+ * When, as the guest card's eyebrow says it: a night ("Friday 31 October"),
+ * or a run's start ("From Mon 1 December"), or null for an undated draft.
+ */
+export function cardWhen(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'menuDate'> & Partial<Pick<MenuSummary, 'plannedStartsAt' | 'plannedEndsAt'>>, locale?: string): string | null {
+  const starts = menu.startsAt ?? menu.plannedStartsAt ?? null;
+  const ends = menu.startsAt ? menu.endsAt : (menu.plannedEndsAt ?? null);
+  const night = starts ? (isOneNightRun(starts, ends) ? starts : null) : menu.menuDate ? `${menu.menuDate}T00:00:00` : null;
+  if (night) return new Date(night).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+  return starts ? `From ${new Date(starts).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'long' })}` : null;
+}
+
+/** A venue draft's planned dates as New menu's third step picks them (b23). */
+export interface PlanDraft {
+  kind: 'none' | 'run' | 'night';
+  /** 2026-10-31 */
+  date: string;
+  /** 18:00, for a night. */
+  time: string;
+}
+
+export const EMPTY_PLAN: PlanDraft = { kind: 'none', date: '', time: '18:00' };
+
+/**
+ * The plan to save: a run starts at the start of its day; a night starts at
+ * its time and ends at 6 the next morning (the service day turning over), so
+ * it's always one night. Not live: Go live starts from it.
+ */
+export function venuePlan(draft: PlanDraft): { plannedStartsAt: string | null; plannedEndsAt: string | null } | { error: string } {
+  if (draft.kind === 'none') return { plannedStartsAt: null, plannedEndsAt: null };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.date)) return { error: 'Pick a day.' };
+  if (draft.kind === 'run') return { plannedStartsAt: new Date(`${draft.date}T00:00:00`).toISOString(), plannedEndsAt: null };
+  if (!/^\d{2}:\d{2}$/.test(draft.time)) return { error: 'Pick a time it starts.' };
+  const starts = new Date(`${draft.date}T${draft.time}:00`);
+  const ends = new Date(`${draft.date}T06:00:00`);
+  if (starts.getHours() >= 6) ends.setDate(ends.getDate() + 1);
+  return { plannedStartsAt: starts.toISOString(), plannedEndsAt: ends.toISOString() };
+}
+
+/** "Friday 31 October, from 6 pm": a one-night menu's night, as the share review says it. */
+export function nightLine(startsAt: string, locale?: string): string {
+  const d = new Date(startsAt);
+  const day = d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+  const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: d.getMinutes() ? '2-digit' : undefined }).replace(/\s?([AP])M$/i, (_, x: string) => ` ${x.toLowerCase()}m`);
+  return `${day}, from ${time}`;
 }

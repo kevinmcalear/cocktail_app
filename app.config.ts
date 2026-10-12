@@ -49,6 +49,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       appleTeamId: 'X992AGRP7X',
       // Only standard HTTPS/TLS: exempt from export compliance paperwork.
       config: { usesNonExemptEncryption: false },
+      // Directions (components/screens/bar/Directions.tsx) offers Google Maps
+      // and Waze only when installed; iOS answers canOpenURL only for schemes listed here.
+      infoPlist: { ...config.ios?.infoPlist, LSApplicationQueriesSchemes: ['comgooglemaps', 'waze'] },
     },
     android: {
       ...config.android,

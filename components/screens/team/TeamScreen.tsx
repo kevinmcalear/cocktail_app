@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,6 +7,7 @@ import { Body, Button, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { canManageTeam, canSeeTeam } from '@/lib/team';
@@ -18,6 +20,8 @@ import { TeamRoster } from './TeamRoster';
  */
 export function TeamScreen() {
   const ds = useDs();
+  const router = useRouter();
+  const wide = useIsWideWeb();
   const insets = useSafeAreaInsets();
   const column = usePageColumn();
   const home = useMode().mode === 'home';
@@ -39,7 +43,8 @@ export function TeamScreen() {
       >
         <PageHeader
           title="My team"
-          action={visible && canManageTeam(role) ? <Button label="Invite someone" icon="person.badge.plus" onPress={() => setInviting(true)} /> : null}
+          onBack={() => (router.canGoBack() ? router.back() : router.navigate('/'))}
+          action={visible && canManageTeam(role) ? <Button label={wide ? 'Invite someone' : 'Invite'} accessibilityLabel="Invite someone" icon="person.badge.plus" onPress={() => setInviting(true)} /> : null}
         />
         {body}
       </ScrollView>

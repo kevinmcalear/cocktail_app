@@ -8,7 +8,7 @@ import { BackbarTheme, Caption, PressableScale, TextLink, useDs, useGutter } fro
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { backbar, fontFamilies, layout, radius, space } from '@/constants/tokens';
 
-import { EDITOR_STATUS, MenuCoverEdit, MenuNameInput } from './EditorParts';
+import { EDITOR_STATUS, MenuCoverEdit, MenuNameInput, saveStatus } from './EditorParts';
 import { usePourBounce } from './GuestPreview';
 import type { LayoutEditor } from './useLayoutEditor';
 
@@ -34,7 +34,7 @@ function Band({ editor }: { editor: LayoutEditor }) {
   const ink = ds.c.sketchInk;
   const count = editor.layout.sections.reduce((n, s) => n + s.drinks.length, 0);
   const bounce = usePourBounce(count);
-  const status = `${EDITOR_STATUS[editor.status]} · ${editor.changed ? 'unsaved changes' : 'saved'}`;
+  const status = `${EDITOR_STATUS[editor.status]} · ${saveStatus(editor).text}`;
   return (
     <View style={[styles.band, { backgroundColor: ds.c.paper, paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
       <View style={styles.controls}>
@@ -44,7 +44,7 @@ function Band({ editor }: { editor: LayoutEditor }) {
         <Caption color={ink} style={styles.status} numberOfLines={1}>
           {status.toUpperCase()}
         </Caption>
-        <TextLink label="Guest card" onPress={() => router.push(`/menus/${editor.menu.id}/card`)} />
+        <TextLink tone="ink" label="Guest card" onPress={() => router.push(`/menus/${editor.menu.id}/card`)} />
       </View>
       <Animated.View style={bounce}>
         <MenuCoverEdit editor={editor} height={128} />

@@ -11,11 +11,12 @@ import { STATUS } from '@/constants/palette';
 import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useBarInvites, useRemoveInvite, useSendInviteEmail } from '@/hooks/useBarInvites';
-import { useBarMembers, useRemoveMember, useSetMemberRole, type BarMember } from '@/hooks/useBarDetail';
+import { useBarMembers, useRemoveMember, type BarMember } from '@/hooks/useBarDetail';
+import { useRoleMatrix, useSetMemberRoleChoice, type MemberRoleChoice } from '@/hooks/useVenueRoles';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
 import { roleLabel } from '@/lib/roles';
-import { canManageTeam, joinedLabel, personName, roster, TEAM_MANAGE } from '@/lib/team';
+import { agoLabel, canManageTeam, joinedLabel, memberRoleName, personName, roster, TEAM_MANAGE } from '@/lib/team';
 
 import { InviteSheet, type InviteNote } from './InviteSheet';
 import { MemberSheet } from './MemberSheet';
@@ -46,24 +47,22 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
   barId: string;
   barName: string;
   role: number;
-  /**
-   * My team puts Invite in its title row and opens the sheet from there. Left
-   * out (venue settings), the roster shows its own Invite button.
-   */
-  inviting?: boolean;
-  onCloseInvite?: () => void;
+  /** My team puts Invite in its title row and opens the sheet from there. */
+  inviting: boolean;
+  onCloseInvite: () => void;
 }) {
   const myId = useUserId();
   const manage = canManageTeam(role);
   const members = useBarMembers(barId);
-  const change = useSetMemberRole(barId);
+  const venueRoles = (useRoleMatrix(manage ? barId : null).data ?? []).filter((r) => r.role_id);
+  const change = useSetMemberRoleChoice(barId);
   const remove = useRemoveMember(barId);
   const { data: invites = [] } = useBarInvites(barId, manage);
   const cancel = useRemoveInvite(barId);
   const send = useSendInviteEmail(barId);
   const [query, setQuery] = useState('');
-  const [ownInviting, setOwnInviting] = useState(false);
-  const ownButton = !onCloseInvite;
+  // For "Invited 2 days ago": read once, so a render never sees the clock move.
+  const [now] = useState(Date.now);
   const [note, setNote] = useState<InviteNote | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const busy = change.isPending || remove.isPending || cancel.isPending || send.isPending;
@@ -83,16 +82,17 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
     });
   };
 
-  const setRole = async (m: BarMember, level: number) => {
+  const setRole = async (m: BarMember, choice: MemberRoleChoice, label: string, level: number) => {
     const who = personName(m);
     const ok =
-      level !== TEAM_MANAGE ||
+      level < TEAM_MANAGE ||
+      m.role_level >= TEAM_MANAGE ||
       (await confirmAsync({
-        title: `Make ${who} an Admin?`,
+        title: label === roleLabel(TEAM_MANAGE) ? `Make ${who} an Admin?` : `Make ${who} ${label}?`,
         message: 'Admins can change the venue and everyone’s role, including yours.',
         confirmText: 'Make Admin',
       }));
-    if (ok && m.email) change.mutate({ email: m.email, roleLevel: level });
+    if (ok) change.mutate({ userId: m.user_id, choice });
   };
 
   const removeMember = async (m: BarMember) => {
@@ -111,16 +111,10 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
   return (
     <View style={styles.roster}>
       <View style={styles.section}>
-        {/* Only worth a heading when the invites below make it one list of two. */}
-        {invites.length > 0 ? <SectionHeading>{`Team · ${all.length}`}</SectionHeading> : null}
         {manage ? (
-          <View style={styles.toolbar}>
-            <View style={styles.search}>
-              <Field label="Search the team" hideLabel value={query} onChangeText={setQuery} placeholder="Search by name or email" autoCapitalize="none" autoCorrect={false} />
-            </View>
-            {ownButton ? <Button label="Invite someone" icon="person.badge.plus" onPress={() => setOwnInviting(true)} disabled={busy} /> : null}
-          </View>
+          <Field label="Search the team" hideLabel value={query} onChangeText={setQuery} placeholder="Search by name or email" autoCapitalize="none" autoCorrect={false} />
         ) : null}
+        <SectionHeading>{`Team · ${all.length}`}</SectionHeading>
         {note ? (
           <Caption tone={note.failed ? 'accent' : 'muted'} role={note.failed ? 'alert' : 'status'}>
             {note.text}
@@ -140,7 +134,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
                 me={m.user_id === myId}
                 showEmail={manage}
                 lineUp={manage}
-                onPress={manage && m.user_id !== myId && m.email ? () => setOpenId(m.user_id) : undefined}
+                onPress={manage && m.user_id !== myId ? () => setOpenId(m.user_id) : undefined}
               />
             </View>
           ))}
@@ -159,6 +153,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
                   name={inv.name}
                   email={inv.email}
                   roleLevel={inv.role_level}
+                  ago={agoLabel(inv.created_at, now)}
                   busy={busy}
                   onResend={() => emailInvite(inv.email)}
                   onCancel={() => cancel.mutate(inv.id)}
@@ -166,6 +161,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
               </View>
             ))}
           </Surface>
+          <Caption tone="muted">They join when they accept, from the email or your staff link. You can change their role once they’re in.</Caption>
         </View>
       ) : null}
 
@@ -174,8 +170,8 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
 
       {manage ? (
         <>
-          <InviteSheet visible={ownButton ? ownInviting : !!inviting} onClose={onCloseInvite ?? (() => setOwnInviting(false))} barId={barId} barName={barName} ceiling={role} onDone={setNote} />
-          <MemberSheet member={open} barName={barName} ceiling={role} busy={busy} onClose={() => setOpenId(null)} onRole={setRole} onRemove={removeMember} />
+          <InviteSheet visible={inviting} onClose={onCloseInvite} barId={barId} barName={barName} ceiling={role} onDone={setNote} />
+          <MemberSheet member={open} barName={barName} ceiling={role} venueRoles={venueRoles} busy={busy} onClose={() => setOpenId(null)} onRole={setRole} onRemove={removeMember} />
         </>
       ) : null}
     </View>
@@ -206,22 +202,23 @@ function MemberRow({ member, me, showEmail, lineUp, onPress }: {
         </Body>
         {line ? <Caption tone="muted" numberOfLines={1}>{line}</Caption> : null}
       </View>
-      <Tag label={roleLabel(member.role_level)} tone={member.role_level >= TEAM_MANAGE ? 'accent' : 'default'} style={styles.tag} />
+      <Tag label={memberRoleName(member)} tone={member.role_level >= TEAM_MANAGE ? 'accent' : 'default'} style={styles.tag} />
       {onPress ? <IconSymbol name="chevron.right" size={CHEVRON} color={ds.c.muted} /> : lineUp ? <View style={styles.chevronSpace} /> : null}
     </>
   );
   if (!onPress) return <View style={styles.row}>{content}</View>;
   return (
-    <PressableScale role="button" onPress={onPress} accessibilityLabel={`${name}, ${roleLabel(member.role_level)}. Manage`} style={styles.row}>
+    <PressableScale role="button" onPress={onPress} accessibilityLabel={`${name}, ${memberRoleName(member)}. Manage`} style={styles.row}>
       {content}
     </PressableScale>
   );
 }
 
-function InviteRow({ name, email, roleLevel, busy, onResend, onCancel }: {
+function InviteRow({ name, email, roleLevel, ago, busy, onResend, onCancel }: {
   name?: string | null;
   email: string;
   roleLevel: number;
+  ago: string | null;
   busy: boolean;
   onResend: () => void;
   onCancel: () => void;
@@ -235,7 +232,7 @@ function InviteRow({ name, email, roleLevel, busy, onResend, onCancel }: {
         </View>
         <View style={styles.text}>
           <Body numberOfLines={1}>{name || email}</Body>
-          <Caption tone="muted" numberOfLines={1}>{`${name ? `${email} · ` : ''}Invited as ${roleLabel(roleLevel)}`}</Caption>
+          <Caption tone="muted" numberOfLines={1}>{`${name ? `${email} · ` : ''}Invited as ${roleLabel(roleLevel)}${ago ? ` · ${ago}` : ''}`}</Caption>
         </View>
       </View>
       <View style={styles.inviteActions}>
@@ -248,8 +245,6 @@ function InviteRow({ name, email, roleLevel, busy, onResend, onCancel }: {
 
 const styles = StyleSheet.create({
   roster: { gap: space.xl },
-  toolbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md },
-  search: { flexGrow: 1, flexBasis: 240 },
   section: { gap: space.md },
   card: { paddingVertical: space.xs, gap: 0 },
   empty: { paddingVertical: space.md },

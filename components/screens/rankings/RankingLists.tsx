@@ -2,11 +2,11 @@ import { getLocales } from 'expo-localization';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
+import { Body, Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
-import { useBarVersionLabels } from '@/hooks/useSpecMatches';
+import { useBarVersions } from '@/hooks/useSpecMatches';
 import { formatDistance, rankedCount, usesMiles, type DiscoverRow } from '@/lib/nearMe';
 import { dayOf, formatScore, type Sentiment } from '@/lib/ranking';
 
@@ -22,12 +22,14 @@ interface RowProps {
   scoreDetail?: string;
   /** The bar's logo (initials when null). Undefined leaves the logo out. */
   logo?: string | null;
+  /** One drink at one bar: its picture leads instead of the logo. */
+  drinkId?: string;
   /** Makes the row a link, e.g. to the bar's profile. */
   onPress?: () => void;
 }
 
 /** A numbered row with a score at the end: a bar in an area list, a drink in your own. */
-export function RankRow({ position, title, detail, score, scoreDetail, logo, onPress }: RowProps) {
+export function RankRow({ position, title, detail, score, scoreDetail, logo, drinkId, onPress }: RowProps) {
   const ds = useDs();
   const label = `Number ${position}: ${title}, ${detail}. Score ${formatScore(score)}${scoreDetail ? `, ${scoreDetail}` : ''}`;
   const body = (
@@ -35,7 +37,7 @@ export function RankRow({ position, title, detail, score, scoreDetail, logo, onP
       <DsText variant="title" tone="accent" style={styles.position}>
         {position}
       </DsText>
-      {logo !== undefined ? <UserAvatar uri={logo} name={title} size={LOGO} /> : null}
+      {drinkId ? <DrinkImage itemId={drinkId} glass={null} accessibilityLabel="" radius="control" style={styles.drink} thumb /> : logo !== undefined ? <UserAvatar uri={logo} name={title} size={LOGO} /> : null}
       <View style={styles.flex}>
         <Headline numberOfLines={1}>{title}</Headline>
         <Caption tone="muted" numberOfLines={1}>
@@ -96,26 +98,31 @@ type AreaRow = AreaRanking & { distance_km?: number | null; avatar_url?: string 
 
 /**
  * Bars in an area, best first. Each opens the bar's profile. For a classic's
- * list (`classicId`), each says what the bar pours of it: "the classic spec",
- * or what its variation changes.
+ * list (`classicId`), each row is one drink at one bar (disc-rankings): it
+ * leads with that drink's picture and says what the bar pours of it, "the
+ * classic spec" or what its variation changes; other lists lead with the logo.
  */
 export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked` }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string }) {
   const router = useRouter();
-  const pours = useBarVersionLabels(classicId, rows.map((r) => r.venue_profile_id));
+  const pours = useBarVersions(classicId, rows.map((r) => r.venue_profile_id));
   return (
     <View>
-      {rows.map((r) => (
-        <RankRow
-          key={r.venue_profile_id}
-          position={r.position}
-          title={r.display_name}
-          detail={[placeOf(r), pours[r.venue_profile_id]].filter(Boolean).join(' · ')}
-          score={r.score}
-          scoreDetail={scoreDetail(r)}
-          logo={r.avatar_url}
-          onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
-        />
-      ))}
+      {rows.map((r) => {
+        const pour = pours[r.venue_profile_id];
+        return (
+          <RankRow
+            key={r.venue_profile_id}
+            position={r.position}
+            title={r.display_name}
+            detail={[placeOf(r), pour?.label].filter(Boolean).join(' · ')}
+            score={r.score}
+            scoreDetail={scoreDetail(r)}
+            logo={classicId ? undefined : r.avatar_url}
+            drinkId={classicId ? (pour?.itemId ?? classicId) : undefined}
+            onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
+          />
+        );
+      })}
     </View>
   );
 }
@@ -163,6 +170,7 @@ export function ListNote({ children }: { children: string }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  drink: { width: LOGO + space.sm, height: LOGO + space.sm },
   position: { minWidth: space.xl, textAlign: 'center' },
   flex: { flex: 1, minWidth: 0 },
   score: { alignItems: 'flex-end' },

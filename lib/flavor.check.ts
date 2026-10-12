@@ -67,8 +67,9 @@ assert.ok(near(answerShare(20), 0.2) && answerShare(100) < 0.05, 'and fade as yo
 const changed = blendTaste(negroni, 40, { bitter: 0.1 });
 assert.ok(changed.taste.bitter! < negroni.bitter, 'changing an answer still moves a well-ranked taste');
 
-assert.equal(rankingsDrift(negroni, { bitter: 0.1, sour: 0.8, smoky: 0.1 }), 'Your rankings lean more bitter and less sour than you said.');
-assert.equal(rankingsDrift(p({ smoky: 0.9 }), { smoky: 0.1, bitter: 0.45 }), 'Your rankings lean more smoky and less bitter than you said.');
+assert.equal(rankingsDrift(negroni, { bitter: 0.1, sour: 0.8, smoky: 0.1 }), 'You said bitter drinks weren’t for you. Your rankings say otherwise: more bitter, and less sour, than you said.');
+assert.equal(rankingsDrift(negroni, { bitter: 0.45, sour: 0.45 }), 'Your rankings lean more bitter and less sour than you said.', 'no answer to name');
+assert.equal(rankingsDrift(p({ smoky: 0.9 }), { smoky: 0.1, bitter: 0.45 }), 'You said smoke wasn’t for you. Your rankings say otherwise: more smoky, and less bitter, than you said.');
 assert.equal(rankingsDrift(negroni, { bitter: 0.8 }), null, 'close enough says nothing');
 assert.equal(rankingsDrift(null, { bitter: 0.8 }), null);
 

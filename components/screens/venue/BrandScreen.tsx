@@ -1,45 +1,59 @@
 import { useRouter, type Href } from 'expo-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Field, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
-import { SectionHeading, SettingsSection, UnsavedBar } from '@/components/screens/settings/SettingsParts';
+import { SetupPage } from '@/components/screens/onboarding/SetupPage';
+import { SectionHeading, UnsavedBar } from '@/components/screens/settings/SettingsParts';
 import { WebHead } from '@/components/WebHead';
-import { DEFAULT_ACCENT, GROUND_TINTS, space, type DisplayFace } from '@/constants/tokens';
+import { DEFAULT_ACCENT, space, type DisplayFace } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
-import { pickBrandImage, useSaveVenueBrand, useVenueBrand, type VenueBrandRow } from '@/hooks/useVenueBrand';
+import { useViewAs } from '@/hooks/useViewAs';
+import { pickBrandImage, removeLogoBackground, useSaveVenueBrand, useVenueBrand, type VenueBrandRow } from '@/hooks/useVenueBrand';
 import { brandProblems, faceFromDb, faceToDb, normalizeHex, usableGroundTint } from '@/lib/brand';
+import { ACCENT_INK, type AccentInk } from '@/lib/brandColours';
+import { accentFill } from '@/lib/color';
 import { confirmDiscardChanges } from '@/lib/dialogs';
 
-import { BrandPreview, Swatches } from './BrandPreview';
-import { FaceChoices, LogoRow } from './BrandSections';
+import { BrandForm, type BrandDraftState } from './BrandForm';
+import { BrandPreview } from './BrandPreview';
 
 const PREVIEW_WIDTH = 380;
+/** Preview as staff shows the app as a Bartender sees it. */
+const STAFF_PREVIEW = 30;
 // The preview column stays in view while the settings beside it scroll (web).
 const sticky = Platform.OS === 'web' ? ({ position: 'sticky', top: space.lg } as unknown as ViewStyle) : null;
 
-function draftFrom(row: VenueBrandRow) {
+function draftFrom(row: VenueBrandRow): BrandDraftState {
   return {
     logoUrl: row.logo_url,
     iconUrl: row.icon_url,
     accent: row.primary_color ?? '',
+    custom: false,
+    ink: row.accent_text,
     face: faceFromDb(row.display_face) as DisplayFace,
     tint: row.ground_tint ?? '',
     shortName: row.short_name ?? '',
   };
 }
 
-function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: boolean; header: (dirty: boolean) => ReactNode }) {
+/** Venue setup's Look step (canvas make-venue-look): this editor, saved by the step's Continue. */
+export interface BrandSetupMode {
+  footer: (s: { save: (then: () => void) => void; saving: boolean; ok: boolean }) => ReactNode;
+}
+
+function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canEdit: boolean; header: (dirty: boolean) => ReactNode; setup?: BrandSetupMode }) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const wide = useBreakpoint() !== 'phone';
+  // In setup the preview sits above the settings at every width.
+  const wide = useBreakpoint() !== 'phone' && !setup;
   const frame = usePageFrame(wide ? 'wide' : 'text');
   const [draft, setDraft] = useState(() => draftFrom(row));
-  const set = <K extends keyof typeof draft>(key: K) => (value: (typeof draft)[K]) => setDraft((d) => ({ ...d, [key]: value }));
+  const set = <K extends keyof BrandDraftState>(key: K) => (value: BrandDraftState[K]) => setDraft((d) => ({ ...d, [key]: value }));
   const [suggested, setSuggested] = useState<string[]>([]);
-  const [busy, setBusy] = useState<'logo' | 'icon' | null>(null);
+  const [busy, setBusy] = useState<'logo' | 'icon' | 'background' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const save = useSaveVenueBrand(row.id);
 
@@ -51,24 +65,9 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
     display_face: faceToDb(draft.face),
     ground_tint: normalizeHex(draft.tint),
     short_name: draft.shortName.trim() || null,
+    accent_text: draft.ink,
   };
   const changed = canEdit && (Object.keys(patch) as (keyof typeof patch)[]).some((k) => (patch[k] ?? null) !== (row[k] ?? null));
-
-  const accentOptions = useMemo(() => {
-    const named = [
-      ...suggested.map((hex) => ({ label: 'From logo', hex })),
-      { label: 'Current', hex: row.primary_color },
-      { label: 'Second colour', hex: row.secondary_color },
-      { label: 'App default', hex: DEFAULT_ACCENT },
-    ];
-    const seen = new Set<string>();
-    return named.flatMap((o) => {
-      const hex = o.hex ? normalizeHex(o.hex) : null;
-      if (!hex || seen.has(hex)) return [];
-      seen.add(hex);
-      return [{ label: o.label, hex }];
-    });
-  }, [suggested, row.primary_color, row.secondary_color]);
 
   const upload = async (kind: 'logo' | 'icon') => {
     setBusy(kind);
@@ -87,68 +86,71 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
     }
   };
 
+  const removeBackground = async () => {
+    if (!draft.logoUrl) return;
+    setBusy('background');
+    setMessage(null);
+    try {
+      const url = await removeLogoBackground(row.id, draft.logoUrl);
+      if (url) set('logoUrl')(url);
+      else setMessage('Background removal isn’t available yet. For now, upload a PNG with a transparent background.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const accent = normalizeHex(draft.accent);
   const look = {
     id: row.id,
     name: row.name,
     logoUrl: draft.logoUrl,
     iconUrl: draft.iconUrl,
     shortName: draft.shortName,
-    accent: normalizeHex(draft.accent),
+    accent,
+    accentText: draft.ink,
     displayFace: draft.face,
     groundTint: usableGroundTint(normalizeHex(draft.tint)),
   };
+  // What buttons use when the venue hasn't picked: whichever ink reads better.
+  const autoInk: AccentInk = accentFill(accent ?? DEFAULT_ACCENT, ACCENT_INK.ink, ACCENT_INK.cream).text === ACCENT_INK.ink ? 'ink' : 'cream';
 
   const settings = (
     <View style={styles.form} pointerEvents={canEdit ? 'auto' : 'none'} aria-disabled={!canEdit}>
-      <SettingsSection title="Logo" note="Picking a logo suggests accent colours from it.">
-        <LogoRow venue={{ id: row.id, name: row.name, accent: look.accent }} logoUrl={draft.logoUrl} busy={busy === 'logo'} onPick={() => void upload('logo')} />
-      </SettingsSection>
-
-      <SettingsSection title="Accent colour" note="Buttons, links and highlights. Light mode uses a deeper shade automatically so text stays readable.">
-        <View style={styles.fields}>
-          <Swatches label="Accent colour" options={accentOptions} value={normalizeHex(draft.accent)} onChange={(hex) => set('accent')(hex ?? '')} />
-          <Field label="Hex" value={draft.accent} onChangeText={set('accent')} placeholder="e.g. #D0643B" autoCapitalize="characters" autoCorrect={false} error={problems.accent} />
-        </View>
-      </SettingsSection>
-
-      <SettingsSection title="Display face" note="The typeface for big titles, like your venue’s name and Tonight.">
-        <FaceChoices name={row.name} value={draft.face} onChange={set('face')} />
-      </SettingsSection>
-
-      <SettingsSection title="Dark mode" note="A tint behind everything in dark mode. Tints too light for text to read on are refused.">
-        <View style={styles.fields}>
-          <Swatches
-            label="Dark mode ground"
-            options={[{ label: 'Standard', hex: null }, ...GROUND_TINTS.map((t) => ({ label: t.label, hex: t.hex }))]}
-            value={normalizeHex(draft.tint)}
-            onChange={(hex) => set('tint')(hex ?? '')}
-          />
-          <Field label="Hex (optional)" value={draft.tint} onChangeText={set('tint')} placeholder="e.g. #1A1410" autoCapitalize="characters" autoCorrect={false} error={problems.groundTint} />
-        </View>
-      </SettingsSection>
-
-      <SettingsSection title="Home screen" note="What staff see when they add your staff link to their phone’s home screen.">
-        <View style={styles.fields}>
-          <Field label="Short name" value={draft.shortName} onChangeText={set('shortName')} placeholder={row.name} maxLength={16} error={problems.shortName} hint="Shown under the icon. Up to 12 characters." />
-          <View style={styles.row}>
-            <Button label={busy === 'icon' ? 'Uploading…' : draft.iconUrl ? 'Change icon' : 'Upload an icon'} icon="photo" variant="secondary" disabled={!!busy} onPress={() => void upload('icon')} />
-            {draft.iconUrl ? <Button label="Use the logo" variant="ghost" onPress={() => set('iconUrl')(null)} /> : null}
-          </View>
-          {draft.iconUrl ? null : <Caption tone="muted">Without an icon of its own, the logo is used.</Caption>}
-        </View>
-      </SettingsSection>
+      <BrandForm
+        row={row}
+        draft={draft}
+        set={set}
+        suggested={suggested}
+        busy={busy}
+        problems={problems}
+        effectiveInk={autoInk}
+        onUpload={(kind) => void upload(kind)}
+        onRemoveBackground={() => void removeBackground()}
+        hideIcon={!!setup}
+      />
       {message ? <Caption role="status">{message}</Caption> : null}
     </View>
   );
 
   const preview = (
     <View style={[styles.preview, wide && styles.previewSide, wide && sticky]}>
-      <SectionHeading>Preview</SectionHeading>
+      <SectionHeading>Live preview</SectionHeading>
       <Surface>
         <BrandPreview look={look} stacked={wide} />
       </Surface>
     </View>
   );
+
+  if (setup) {
+    const ok = Object.keys(problems).length === 0 && !busy;
+    const saveThen = (then: () => void) => (changed ? save.mutate(patch, { onSuccess: then, onError: (e) => setMessage(e.message) }) : then());
+    return (
+      <SetupPage footer={setup.footer({ save: saveThen, saving: save.isPending, ok })}>
+        {preview}
+        {settings}
+      </SetupPage>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -184,6 +186,13 @@ function BrandEditor({ row, canEdit, header }: { row: VenueBrandRow; canEdit: bo
   );
 }
 
+/** The Look step of venue setup: the brand editor without the page around it or the home-screen icon (that stays on Brand). */
+export function BrandSetup({ barId, setup }: { barId: string; setup: BrandSetupMode }) {
+  const brand = useVenueBrand(barId);
+  if (!brand.data) return <SetupPage>{brand.error ? <Body tone="muted">Couldn’t load this venue’s brand. Try again in a moment.</Body> : null}</SetupPage>;
+  return <BrandEditor key={brand.data.id} row={brand.data} canEdit header={() => null} setup={setup} />;
+}
+
 /** Brand settings for a venue, with a live preview. Admins edit; others can look. */
 export function BrandScreen({ barId }: { barId: string }) {
   const ds = useDs();
@@ -195,11 +204,18 @@ export function BrandScreen({ barId }: { barId: string }) {
   const canEdit = (capabilities.data ?? []).includes('brand');
 
   // Wide web: the "Venue settings" crumb over the title instead of Back (the sidebar is there).
+  const { setViewAsRoleLevel, isSaving } = useViewAs();
+  // Preview as staff: the app as a Bartender sees it, with the banner to come back.
+  const previewAsStaff = async () => {
+    await setViewAsRoleLevel(STAFF_PREVIEW);
+    router.navigate('/');
+  };
   const header = (dirty: boolean) => (
     <SubPageHead
       title="Brand"
       subtitle={brand.data ? `${brand.data.name} · seen by everyone at the venue` : ' '}
       crumbs={[{ label: 'Venue settings', href: `/settings/bar/${barId}` as Href }]}
+      trailing={canEdit && !dirty ? <Button label="Preview as staff" icon="eye" variant="secondary" disabled={isSaving} onPress={() => void previewAsStaff()} /> : null}
       onBack={async () => {
         if (!(await confirmDiscardChanges(dirty))) return;
         if (router.canGoBack()) router.back();
@@ -231,8 +247,6 @@ const styles = StyleSheet.create({
   columns: { gap: space.xl },
   columnsWide: { flexDirection: 'row', alignItems: 'flex-start' },
   form: { flex: 1, gap: space.xl, minWidth: 0 },
-  fields: { gap: space.md, paddingVertical: space.md },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   preview: { gap: space.sm },
   previewSide: { width: PREVIEW_WIDTH },
 });

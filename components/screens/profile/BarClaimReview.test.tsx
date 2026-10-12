@@ -19,6 +19,7 @@ const claim = (fields: Partial<ClaimForReview>): ClaimForReview => ({
   code: '482913',
   evidence: { instagram: 'palemoth' },
   decline_reason: null,
+  setup: null,
   profile: {
     id: 'p1',
     kind: 'bar',
@@ -48,6 +49,12 @@ test('an Instagram claim puts the page’s handle beside the claimant’s code',
   expect(screen.getByText(/look for 482 913 in the bio/)).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Approve' }));
   expect(onReview).toHaveBeenCalledWith({ claimId: 'c1', approve: true, code: undefined });
+});
+
+test('an Instagram claim from venue setup is checked in our messages, not the bio', async () => {
+  await renderWithTamagui(<BarClaimCard claim={claim({ evidence: { instagram: 'palemoth', instagram_dm: true } })} busy={false} onOpen={jest.fn()} onReview={onReview} />);
+  expect(screen.getByText(/messages for one from @palemoth with 482 913/)).toBeTruthy();
+  expect(screen.queryByText(/in the bio/)).toBeNull();
 });
 
 test('a phone claim hides the code and only approves once the moderator types what they heard', async () => {

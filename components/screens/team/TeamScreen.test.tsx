@@ -33,9 +33,19 @@ jest.mock('@/hooks/useBarDetail', () => ({
   useSetMemberRole: () => ({ mutate: mockMutate, mutateAsync: mockAdd, isPending: false, error: null }),
   useRemoveMember: () => ({ mutate: mockRemove, isPending: false, error: null }),
 }));
+const mockChoose = jest.fn();
+jest.mock('@/hooks/useVenueRoles', () => ({
+  useRoleMatrix: () => ({
+    data: [
+      { role_id: null, name: null, base_level: 20, ends_at: null, granted: [], revoked: [], capabilities: ['menu'] },
+      { role_id: 'bb', name: 'Barback', base_level: 20, ends_at: null, granted: ['prep'], revoked: [], capabilities: ['menu', 'prep'] },
+    ],
+  }),
+  useSetMemberRoleChoice: () => ({ mutate: mockChoose, isPending: false, error: null }),
+}));
 jest.mock('@/hooks/useBarInvites', () => ({
   useBarInvites: (_barId: string, enabled: boolean) => ({
-    data: enabled ? [{ id: 'i1', email: 'new@example.test', role_level: 30, name: 'Nia' }] : [],
+    data: enabled ? [{ id: 'i1', email: 'new@example.test', role_level: 30, name: 'Nia', created_at: '2026-01-01T00:00:00Z' }] : [],
   }),
   useRemoveInvite: () => ({ mutate: mockMutate, isPending: false, error: null }),
   useSendInviteEmail: () => ({ mutate: mockSend, mutateAsync: mockSendAsync, isPending: false, error: null }),
@@ -44,6 +54,7 @@ jest.mock('@/hooks/useBarInvites', () => ({
 beforeEach(() => {
   mockRole = 40;
   mockMutate.mockClear();
+  mockChoose.mockClear();
   mockRemove.mockClear();
   mockAdd.mockReset();
   mockSend.mockReset();
@@ -52,12 +63,12 @@ beforeEach(() => {
 
 test('an admin can look someone up, then change their role and remove them from their sheet', async () => {
   await renderWithTamagui(<TeamScreen />);
-  // The sidebar names the venue; the heading only shows beside the invites.
+  // The sidebar names the venue.
   expect(screen.queryByText('Caretakers')).toBeNull();
   expect(screen.getByText('Team · 2')).toBeTruthy();
   expect(screen.getByText('jo@example.test')).toBeTruthy();
   expect(screen.getByText('Nia')).toBeTruthy();
-  expect(screen.getByText('new@example.test · Invited as Bartender')).toBeTruthy();
+  expect(screen.getByText(/^new@example\.test · Invited as Bartender · \d+ months ago$/)).toBeTruthy();
   // Your own row has no sheet: nobody demotes or removes themselves here.
   expect(screen.queryByRole('button', { name: /^Ada, Admin/ })).toBeNull();
 
@@ -68,7 +79,11 @@ test('an admin can look someone up, then change their role and remove them from 
   expect(screen.getByText('Joined 4 Mar 2026')).toBeTruthy();
   expect(within(screen.getByLabelText('Role for Jo')).getByRole('radio', { name: 'Guest. Sees the menu only' })).toBeTruthy();
   await fireEvent.press(within(screen.getByLabelText('Role for Jo')).getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list' }));
-  expect(mockMutate).toHaveBeenCalledWith({ email: 'jo@example.test', roleLevel: 30 });
+  expect(mockChoose).toHaveBeenCalledWith({ userId: 'jo', choice: { level: 30 } });
+  // The venue's own roles sit under the base levels.
+  expect(screen.getByText('CARETAKERS’S ROLES')).toBeTruthy();
+  await fireEvent.press(within(screen.getByLabelText('Role for Jo')).getByRole('radio', { name: 'Barback. From Employee, plus prep' }));
+  expect(mockChoose).toHaveBeenLastCalledWith({ userId: 'jo', choice: { venueRoleId: 'bb' } });
 
   await fireEvent.press(screen.getByRole('button', { name: 'Remove from Caretakers' }));
   expect(mockRemove).toHaveBeenCalledWith('jo', expect.anything());
@@ -114,8 +129,8 @@ test('an employee sees the team and cannot manage it', async () => {
   expect(screen.getByText('Only Admins can invite people or change roles.')).toBeTruthy();
   expect(screen.queryByRole('button', { name: /Manage$/ })).toBeNull();
   expect(screen.queryByLabelText('Search the team')).toBeNull();
-  expect(screen.queryByText('Team · 2')).toBeNull();
+  expect(screen.getByText('Team · 2')).toBeTruthy();
   expect(screen.queryByText('Invite someone')).toBeNull();
   expect(screen.queryByText('jo@example.test')).toBeNull();
-  expect(screen.queryByText('new@example.test · Invited as Bartender')).toBeNull();
+  expect(screen.queryByText(/Invited as Bartender/)).toBeNull();
 });

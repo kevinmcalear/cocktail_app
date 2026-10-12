@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useMenuLibrary, usePickMenuCover, useSaveMenu } from '@/hooks/useMenuMutations';
 import { useVenueMenus } from '@/hooks/useMenus';
@@ -12,6 +12,7 @@ import {
   layoutProblem,
   moveDrink,
   moveSection,
+  moveToSection,
   removeDrink,
   removeSection,
   setDrinks,
@@ -26,17 +27,23 @@ import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | { kind: 'share' } | null;
 
+/** How long after the last change the builder saves (b27: no save button). */
+const AUTOSAVE_MS = 800;
+
 /**
  * Everything the menu editor does, for its phone and desktop layouts: the
- * layout being edited, saving it in one go, and what the sheets need.
+ * layout being edited, saved on its own a moment after each change (a status
+ * line says so), and what the sheets need.
  */
-export function useLayoutEditor(menu: MenuDetail) {
+export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: boolean } = {}) {
   const router = useRouter();
   const [layout, setLayout] = useState<MenuLayout>(() => layoutFromMenu(menu));
   const [saved, setSaved] = useState<MenuLayout>(layout);
-  const [sheet, setSheet] = useState<EditorSheet>(null);
+  // New menu's "Paste a list" opens the builder on the paste sheet.
+  const [sheet, setSheet] = useState<EditorSheet>(paste ? { kind: 'paste', key: null } : null);
   const [targetKey, setTargetKey] = useState<string | null>(layout.sections[0]?.key ?? null);
   const [error, setError] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
   const [now] = useState(() => Date.now());
   const save = useSaveMenu(menu.id);
   const cover = usePickMenuCover(menu.id);
@@ -75,22 +82,35 @@ export function useLayoutEditor(menu: MenuDetail) {
   };
 
   /** Saves if anything changed. Resolves false (with the error shown) when it couldn't. */
-  const persist = async (): Promise<boolean> => {
+  const saveLayout = save.mutateAsync;
+  const persist = useCallback(async (): Promise<boolean> => {
     const problem = layoutProblem(layout);
     if (problem) {
       setError(problem);
       return false;
     }
     if (!changed) return true;
+    // What this save writes: edits made while it's on the way save after it.
+    const snapshot = layout;
     try {
-      await save.mutateAsync(layout);
-      setSaved(layout);
+      await saveLayout(snapshot);
+      setSaved(snapshot);
+      setSavedAt(Date.now());
       return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t save. Your changes are still here; try again.');
       return false;
     }
-  };
+  }, [layout, changed, saveLayout]);
+
+  // Autosave: a moment after the last change, one save at a time. A layout that
+  // can't be saved (a section with no name) waits, with the problem shown.
+  const saving = save.isPending;
+  useEffect(() => {
+    if (!changed || saving || layoutProblem(layout)) return;
+    const timer = setTimeout(() => void persist(), AUTOSAVE_MS);
+    return () => clearTimeout(timer);
+  }, [layout, changed, saving, persist]);
 
   return {
     menu,
@@ -98,6 +118,7 @@ export function useLayoutEditor(menu: MenuDetail) {
     status,
     changed,
     saving: save.isPending,
+    savedAt,
     error,
     library,
     elsewhere,
@@ -113,6 +134,7 @@ export function useLayoutEditor(menu: MenuDetail) {
     remove: (key: string, drinkId: string) => edit(removeDrink(layout, key, drinkId)),
     reorder: (key: string, drinks: MenuDrink[]) => edit(setDrinks(layout, key, drinks)),
     move: (key: string, from: number, to: number) => edit(moveDrink(layout, key, from, to)),
+    moveTo: (fromKey: string, drinkId: string, toKey: string) => edit(moveToSection(layout, fromKey, drinkId, toKey)),
     addSection: () => {
       const next = addSection(layout);
       edit(next);
@@ -139,8 +161,9 @@ export function useLayoutEditor(menu: MenuDetail) {
     share: async () => {
       if (await persist()) setSheet({ kind: 'share' });
     },
+    // Saves what's left first; only asks when that can't be saved.
     leave: async () => {
-      if (!(await confirmDiscardChanges(changed))) return;
+      if (changed && !(await persist()) && !(await confirmDiscardChanges(true))) return;
       if (router.canGoBack()) router.back();
       else router.replace(`/menus/${menu.id}`);
     },

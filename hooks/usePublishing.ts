@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { changedProfiles } from '@/hooks/useProfiles';
+import { menuStatus } from '@/lib/menus';
 import type { PageVisibility } from '@/lib/pageVisibility';
 import { effectivePublish, type PublishMode, type PublishSource } from '@/lib/publishing';
 import { supabase } from '@/lib/supabase';
@@ -48,6 +49,9 @@ export function useItemPublishing(itemId: string, barId: string | null) {
   });
 }
 
+/** A menu's place in its life, as Publishing lists it. */
+const MENU_STATUS_WORDS = { on: 'On now', upcoming: 'Coming up', draft: 'Not on the floor', previous: 'Past menu' } as const;
+
 export interface BarPublishing {
   barDefault: PublishMode;
   /** Who outside the venue sees its page: Locked, names and descriptions, or Open. */
@@ -56,7 +60,8 @@ export interface BarPublishing {
   showSpecChanges: boolean;
   /** The venue's public page, which has to exist before anything goes public. */
   profile: PublishingProfile | null;
-  menus: { id: string; name: string; publish_mode: PublishMode | null }[];
+  /** Each menu with where it is ("On now", "Past menu") and how many drinks it has. */
+  menus: { id: string; name: string; publish_mode: PublishMode | null; status: string; drinkCount: number }[];
   /** Drinks (not ingredients) by what the public sees. */
   counts: Record<PublishMode, number>;
   /** The venue's drinks by name, with what the public sees of each. */
@@ -81,15 +86,16 @@ interface BarItem {
 }
 
 /** A venue's default, whether it can publish, its menus' settings, and how many drinks are public. */
-export function useBarPublishing(barId: string) {
+export function useBarPublishing(barId: string | null) {
   return useQuery({
     queryKey: ['bar-publishing', barId],
+    enabled: !!barId,
     staleTime: 0,
     queryFn: async (): Promise<BarPublishing> => {
       const [bar, profile, menus, items] = await Promise.all([
         supabase.from('bars').select('default_publish_mode, page_visibility, show_spec_changes').eq('id', barId).single(),
         supabase.from('profiles').select('id, handle, instagram, kind, makes, serves').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
-        supabase.from('menus').select('id, name, publish_mode, menu_drinks(item_id)').eq('bar_id', barId).order('name'),
+        supabase.from('menus').select('id, name, publish_mode, starts_at, ends_at, menu_drinks(item_id)').eq('bar_id', barId).order('name'),
         supabase.from('items').select('id, name, item_type, publish_mode').eq('bar_id', barId).in('item_type', ['cocktail', 'beer', 'wine']),
       ]);
       for (const r of [bar, profile, menus, items]) if (r.error) throw r.error;
@@ -98,7 +104,15 @@ export function useBarPublishing(barId: string) {
         page_visibility: PageVisibility;
         show_spec_changes: boolean;
       };
-      const menuRows = (menus.data ?? []) as { id: string; name: string; publish_mode: PublishMode | null; menu_drinks: { item_id: string }[] }[];
+      const menuRows = (menus.data ?? []) as {
+        id: string;
+        name: string;
+        publish_mode: PublishMode | null;
+        starts_at: string | null;
+        ends_at: string | null;
+        menu_drinks: { item_id: string }[];
+      }[];
+      const now = Date.now();
       const menusOf = new Map<string, (PublishMode | null)[]>();
       for (const m of menuRows) for (const d of m.menu_drinks) menusOf.set(d.item_id, [...(menusOf.get(d.item_id) ?? []), m.publish_mode]);
       const counts: Record<PublishMode, number> = { private: 0, description: 0, spec: 0 };
@@ -111,7 +125,13 @@ export function useBarPublishing(barId: string) {
         pageVisibility,
         showSpecChanges,
         profile: (profile.data as PublishingProfile | null) ?? null,
-        menus: menuRows.map(({ id, name, publish_mode }) => ({ id, name, publish_mode })),
+        menus: menuRows.map(({ id, name, publish_mode, starts_at, ends_at, menu_drinks }) => ({
+          id,
+          name,
+          publish_mode,
+          status: MENU_STATUS_WORDS[menuStatus({ startsAt: starts_at, endsAt: ends_at }, now)],
+          drinkCount: new Set(menu_drinks.map((d) => d.item_id)).size,
+        })),
         counts,
         drinks,
       };

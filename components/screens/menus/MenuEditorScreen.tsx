@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,8 +22,8 @@ import { ShareMenuSheet } from './ShareMenuSheet';
 import { useLayoutEditor, type LayoutEditor } from './useLayoutEditor';
 
 /**
- * Editing a menu: its name, cover, sections and drinks. Changes stay on the
- * device until Save, which writes the whole layout in one go.
+ * Editing a menu: its name, cover, sections and drinks. It saves on its own a
+ * moment after each change (b27), writing the whole layout in one go.
  */
 export function MenuEditorScreen({ menuId }: { menuId: string }) {
   const ds = useDs();
@@ -52,7 +52,7 @@ export function MenuEditorScreen({ menuId }: { menuId: string }) {
 }
 
 function EditorBody({ menu }: { menu: MenuDetail }) {
-  const editor = useLayoutEditor(menu);
+  const editor = useLayoutEditor(menu, { paste: useLocalSearchParams<{ paste?: string }>().paste === '1' });
   const desktop = useBreakpoint() === 'desktop';
   return (
     <>
@@ -138,6 +138,7 @@ function EditorSheets({ editor }: { editor: LayoutEditor }) {
             id: editor.menu.id,
             name: editor.layout.name,
             barId: editor.menu.barId,
+            plannedStartsAt: editor.menu.plannedStartsAt,
             coverUrl: editor.layout.coverUrl,
             coverPosition: editor.layout.coverPosition,
             sections: editor.layout.sections.map((s) => ({ ...s, id: s.id ?? s.key })),

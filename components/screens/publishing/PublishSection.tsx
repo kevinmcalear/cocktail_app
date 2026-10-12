@@ -2,28 +2,39 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Headline } from '@/components/ds';
+import { Body, Button, Headline, LockedSection } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
-import { useCapabilities } from '@/hooks/useCapabilities';
+import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useItemPublishing, useSetPublish } from '@/hooks/usePublishing';
 import { describePublish, PUBLISH_COPY } from '@/lib/publishing';
+import { roleLabel } from '@/lib/roles';
 
 import { PublishChoice } from './PublishChoice';
 
 /**
  * "Who can see it" on a drink or ingredient page: what the public sees and
  * where that comes from, and the drink's own override. For people who can
- * publish at its venue, or the creator of a personal drink.
+ * publish at its venue, or the creator of a personal drink. With `showLocked`
+ * (the venue's own team on a drink page), everyone else sees it as a locked
+ * "Publishing" row that says who opens it.
  */
-export function PublishSection({ itemId, barId, noun = 'drink' }: { itemId: string; barId: string | null; noun?: string }) {
+export function PublishSection({ itemId, barId, noun = 'drink', showLocked }: { itemId: string; barId: string | null; noun?: string; showLocked?: boolean }) {
   const router = useRouter();
   const userId = useUserId();
-  const { data: caps = [] } = useCapabilities(barId);
+  const { data: caps = [], isSuccess: capsLoaded } = useCapabilities(barId);
   const { data } = useItemPublishing(itemId, barId);
   const set = useSetPublish(barId);
   const [open, setOpen] = useState(false);
+  const { data: opensAt } = useCapabilityOpensAt(showLocked ? barId : null, 'publish');
 
+  if (showLocked && barId && capsLoaded && !caps.includes('publish')) {
+    return (
+      <LockedSection title="Publishing" unlocked={false} opensAt={opensAt ? roleLabel(opensAt) : 'Admin'}>
+        {null}
+      </LockedSection>
+    );
+  }
   if (!data || !(barId ? caps.includes('publish') : !!userId && data.createdBy === userId)) return null;
   return (
     <View style={styles.section}>

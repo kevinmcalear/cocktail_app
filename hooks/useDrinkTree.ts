@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { fetchStyles } from '@/hooks/useLineage';
 import type { TreeNode } from '@/lib/drinkTree';
+import { spiritsOf } from '@/lib/drinkStyles';
 import { supabase } from '@/lib/supabase';
 
 interface TreeDrinkRow {
@@ -13,15 +14,19 @@ interface TreeDrinkRow {
   lineage_parent_id: string | null;
   lineage_style_id: string | null;
   lineage_note: string | null;
+  origin: string | null;
   creator: { id: string; display_name: string } | null;
-  origin_bar: { id: string; display_name: string; is_closed: boolean } | null;
+  origin_bar: { id: string; display_name: string; is_closed: boolean; city: string | null } | null;
   versions: { count: number }[] | null;
+  lines: { ingredient: { name: string } | null }[] | null;
 }
 
-const COLUMNS = `id, name, origin_year, origin_year_approx, lineage_family, lineage_parent_id, lineage_style_id, lineage_note,
+// The ingredient names are read once here for the Timeline's Spirit filter; only the spirits are kept.
+const COLUMNS = `id, name, origin_year, origin_year_approx, lineage_family, lineage_parent_id, lineage_style_id, lineage_note, origin,
   creator:profiles!items_creator_profile_id_fkey(id, display_name),
-  origin_bar:profiles!items_origin_bar_profile_id_fkey(id, display_name, is_closed),
-  versions:items!riff_of_id(count)`;
+  origin_bar:profiles!items_origin_bar_profile_id_fkey(id, display_name, is_closed, city),
+  versions:items!riff_of_id(count),
+  lines:recipes!recipe_item_id(ingredient:items!ingredient_item_id(name))`;
 
 /**
  * Every historic style and every catalog classic in the family tree, as one
@@ -31,7 +36,7 @@ const COLUMNS = `id, name, origin_year, origin_year_approx, lineage_family, line
  */
 export function useDrinkTree() {
   return useQuery({
-    queryKey: ['drink-tree'],
+    queryKey: ['drink-tree', 2],
     queryFn: async (): Promise<TreeNode[]> => {
       const [styles, drinks] = await Promise.all([
         fetchStyles(),
@@ -53,6 +58,9 @@ export function useDrinkTree() {
         bar: null,
         barId: null,
         barClosed: false,
+        city: null,
+        modern: false,
+        spirits: [],
         versions: 0,
       }));
       const drinkNodes: TreeNode[] = ((drinks.data ?? []) as unknown as TreeDrinkRow[]).map((d) => ({
@@ -70,6 +78,9 @@ export function useDrinkTree() {
         bar: d.origin_bar?.display_name ?? null,
         barId: d.origin_bar?.id ?? null,
         barClosed: !!d.origin_bar?.is_closed,
+        city: d.origin_bar?.city ?? null,
+        modern: d.origin === 'Modern Classic',
+        spirits: spiritsOf({ name: d.name, ingredients: (d.lines ?? []).flatMap((l) => (l.ingredient ? [l.ingredient.name] : [])) }),
         versions: d.versions?.[0]?.count ?? 0,
       }));
       return [...styleNodes, ...drinkNodes];

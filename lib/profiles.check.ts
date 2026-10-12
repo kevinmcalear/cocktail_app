@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { barsCrediting, DEFAULT_IDENTITY, modeSummary, pickedShown, profileLine, taglineProblem, personTabs, type ShareMode, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, profileQueryShows, type MenuDrinkRow } from './profiles';
+import { barsCrediting, DEFAULT_IDENTITY, jobYears, modeSummary, pickedShown, profileLine, taglineProblem, personTabs, type ShareMode, groupMenuCredits, handleFromName, instagramProblem, normalizeHandle, normalizeInstagram, parseProfileRef, profileDraftErrors, profileLinks, profileQueryShows, type MenuDrinkRow } from './profiles';
 
 // Ids and handles, with or without the @; junk never reaches a query.
 assert.deepEqual(parseProfileRef('3F2504E0-4F89-41D3-9A0C-0305E82C3301'), { id: '3f2504e0-4f89-41d3-9a0c-0305e82c3301' });
@@ -66,7 +66,8 @@ assert.equal(pickedShown('none', true), false);
 assert.match(modeSummary('bars', 'all'), /never named, even beside a drink/);
 assert.match(modeSummary('had', 'picked'), /^Only the ones you pick show/);
 assert.equal(modeSummary('had', 'none'), 'None show. Your picks are kept for when you turn it back on.');
-assert.match(modeSummary('originals', 'none'), /Credits still show/);
+assert.match(modeSummary('originals', 'none'), /Credits on each drink’s own page stay/);
+assert.match(modeSummary('awards', 'picked'), /Not confirmed yet/);
 
 // A person's tabs: sections they show, everything to the owner.
 const sharing = (h: ShareMode, b: ShareMode, m: ShareMode) => ({ had_mode: h, bars_mode: b, made_mode: m });
@@ -130,13 +131,23 @@ assert.equal(taglineProblem(' Home bartender '), undefined);
 assert.equal(taglineProblem(''), undefined);
 assert.ok(taglineProblem('x'.repeat(41)));
 assert.ok(taglineProblem('two\nlines'));
-const job = (over: Partial<{ id: string; is_current: boolean; is_shown: boolean; person_accepted: boolean; bar_accepted: boolean }>) => ({
+const job = (over: Partial<{ id: string; is_current: boolean; is_shown: boolean; is_hidden: boolean; person_accepted: boolean; bar_accepted: boolean }>) => ({
   id: 'j1', title: 'Head bartender', is_current: true, is_shown: false, person_accepted: true, bar_accepted: true, bar: { display_name: 'Little Rye' }, ...over,
 });
 assert.equal(profileLine({ tagline: 'Home bartender', headline_position_id: null }, [job({})]), 'Home bartender');
 assert.equal(profileLine({ tagline: 'Home bartender', headline_position_id: 'j1' }, [job({})]), 'Head bartender at Little Rye');
+// A job they switched off never stands under their name.
+assert.equal(profileLine({ tagline: 'Home bartender', headline_position_id: 'j1' }, [job({ is_hidden: true })]), 'Home bartender');
 assert.equal(profileLine({ tagline: null, headline_position_id: 'j1' }, [job({ is_current: false, is_shown: true })]), 'Head bartender formerly at Little Rye');
 // Not confirmed by the bar, or a past job they hid: back to their words.
 assert.equal(profileLine({ tagline: 'Home bartender', headline_position_id: 'j1' }, [job({ bar_accepted: false })]), 'Home bartender');
 assert.equal(profileLine({ tagline: null, headline_position_id: 'j1' }, [job({ is_current: false })]), null);
 assert.equal(profileLine({ tagline: '  ', headline_position_id: null }, []), null);
+
+// Years on a job.
+assert.equal(jobYears({ is_current: true, start_year: 2023, end_year: null }), '2023 to now');
+assert.equal(jobYears({ is_current: true, start_year: null, end_year: null }), null);
+assert.equal(jobYears({ is_current: false, start_year: 2019, end_year: 2023 }), '2019 to 2023');
+assert.equal(jobYears({ is_current: false, start_year: 2021, end_year: 2021 }), '2021');
+assert.equal(jobYears({ is_current: false, start_year: null, end_year: 2018 }), 'Until 2018');
+console.log('profiles: job years ok');

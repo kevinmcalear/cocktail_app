@@ -83,7 +83,7 @@ export function useLineage(itemId: string | null | undefined) {
 }
 
 export type CreditDrink = LineageDrink & {
-  riff_of: Pick<LineageDrink, 'id' | 'name'> | null;
+  riff_of: Pick<LineageDrink, 'id' | 'name' | 'is_catalog'> | null;
   lineage_parent: Pick<LineageDrink, 'id' | 'name'> | null;
 };
 
@@ -99,7 +99,7 @@ export function useDrinkCredit(itemId: string | null | undefined) {
     queryFn: async (): Promise<CreditDrink | null> => {
       const { data, error } = await supabase
         .from('items')
-        .select(`${LINEAGE_COLUMNS}, riff_of:riff_of_id(id, name), lineage_parent:lineage_parent_id(id, name)`)
+        .select(`${LINEAGE_COLUMNS}, riff_of:riff_of_id(id, name, is_catalog), lineage_parent:lineage_parent_id(id, name)`)
         .eq('id', itemId!)
         .maybeSingle();
       if (error) throw error;

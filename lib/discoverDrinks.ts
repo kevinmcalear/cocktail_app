@@ -124,7 +124,7 @@ export function toDiscoverDrink(r: DrinkRow, search = ''): DiscoverDrink {
     menu: { onNow: !!tag?.onNow, past: tag?.past ?? null, order: menuOrder(dates) },
     rank: r.rank,
     match,
-    why: matchWhy(match, r.description, search),
+    why: matchWhy(match, r.description, search, r.name),
     distance: r.distance_m ?? null,
   };
 }
@@ -292,8 +292,19 @@ export function barScoresFor(drinks: readonly DiscoverDrink[], drinkScores: Read
     const s = drinkScores[d.id];
     if (s !== undefined && s > (out[d.barId]?.score ?? -1)) out[d.barId] = { score: s, rankers: 0 };
   }
+  return Object.assign(out, venueScores(ranked));
+}
+
+/** Each ranked bar's own score (discover_top_bars rows), for "Bar 9.1" under a drink and the score on its pin. */
+export function venueScores(ranked: readonly DiscoverRow[]): Record<string, BarScore> {
+  const out: Record<string, BarScore> = {};
   for (const r of ranked) if (r.score !== null) out[r.venue_profile_id] = { score: r.score, rankers: r.rankers };
   return out;
+}
+
+/** The drinks layer's pins with their bar's score, which the pin then shows (b02); bars without one stay dots. */
+export function withBarScores(pins: readonly MapPin[], bars: Readonly<Record<string, BarScore>>): MapPin[] {
+  return pins.map((p) => (bars[p.id] ? { ...p, score: bars[p.id].score, rankers: bars[p.id].rankers } : p));
 }
 
 /** Scored drinks first, best first; the rest stay in the order they came. */

@@ -17,6 +17,9 @@ const node = (key: string, family: string, parentKey: string | null, extra: Part
   bar: null,
   barId: null,
   barClosed: false,
+  city: null,
+  modern: false,
+  spirits: [],
   versions: 0,
   ...extra,
 });

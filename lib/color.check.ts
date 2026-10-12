@@ -41,3 +41,17 @@ assert.ok(isHexColor('#D0643B') && isHexColor('#fff'));
 assert.ok(!isHexColor('red') && !isHexColor(null) && !isHexColor('#12345'));
 
 console.log('color: ok');
+
+// A venue's pick for text on accent wins when it reads, else the safe fallback.
+{
+  const cream = backbar.dark.ink;
+  const ink = backbar.dark.ground;
+  // Rust reads with ink; asking for ink keeps the fill.
+  assert.deepEqual(accentFill('#D0643B', ink, cream, 'dark'), { fill: '#D0643B', text: ink });
+  // Asking for cream on rust deepens the fill until cream passes 4.5:1.
+  const deep = accentFill('#D0643B', ink, cream, 'light');
+  assert.equal(deep.text, cream);
+  assert.ok(contrast(deep.fill, cream) >= 4.5);
+  // Ink on a dark accent can't read: the fallback picks cream.
+  assert.equal(accentFill('#241C17', ink, cream, 'dark').text, cream);
+}
