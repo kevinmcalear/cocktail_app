@@ -91,7 +91,7 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
     router.push('/add-cocktail');
   };
   return (
-    <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle}>
+    <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle} plain>
       <View>
         {locked && venueId ? <LockedRow barId={venueId} /> : null}
         {made.map((c) => (

@@ -43,7 +43,7 @@ export function useNavPlaces() {
           ...(canSeeTeam(role) ? [{ key: 'team', label: 'My team', icon: 'person.2.fill', path: '/team' } as Place] : []),
           { key: 'brand', label: 'Brand', icon: 'paintpalette.fill', path: `${settings}/brand` },
           { key: 'roles', label: 'Roles and access', icon: 'lock.shield.fill', path: `${settings}/roles` },
-          { key: 'venue-settings', label: 'Venue settings', icon: 'building.2.fill', path: settings, prefix: settings },
+          { key: 'venue-settings', label: 'Venue settings', icon: 'slider.horizontal.3', path: settings, prefix: settings },
         ]
       : [];
   // History sits under Discover in the sidebar (decided on the canvas), in both modes.

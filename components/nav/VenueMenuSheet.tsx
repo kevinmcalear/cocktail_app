@@ -28,7 +28,7 @@ import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
 function SwitchRow({ mark, name, detail, selected, onPress }: { mark: React.ReactNode; name: string; detail: string; selected: boolean; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale role="radio" aria-checked={selected} accessibilityLabel={`${name}, ${detail}`} onPress={onPress} style={styles.switchRow}>
+    <PressableScale role="radio" aria-checked={selected} accessibilityLabel={`${name}, ${detail}`} onPress={onPress} style={[styles.switchRow, { borderBottomColor: ds.c.line }]}>
       {mark}
       <View style={styles.rowText}>
         <Body style={styles.strong}>{name}</Body>
@@ -42,7 +42,7 @@ function SwitchRow({ mark, name, detail, selected, onPress }: { mark: React.Reac
 function PlaceRow({ icon, label, detail, onPress }: { icon: IconName; label: string; detail: string; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={`${label}. ${detail}`} onPress={onPress} style={styles.placeRow}>
+    <PressableScale role="link" accessibilityLabel={`${label}. ${detail}`} onPress={onPress} style={[styles.placeRow, { borderBottomColor: ds.c.line }]}>
       <View style={[styles.tile, { backgroundColor: ds.c.raised }]}>
         <IconSymbol name={icon} size={18} color={ds.c.ink} />
       </View>
@@ -50,6 +50,7 @@ function PlaceRow({ icon, label, detail, onPress }: { icon: IconName; label: str
         <Body style={styles.strong}>{label}</Body>
         <Caption tone="muted">{detail}</Caption>
       </View>
+      <IconSymbol name="chevron.right" size={18} color={ds.c.muted} />
     </PressableScale>
   );
 }
@@ -133,7 +134,7 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
   };
   const venue = home ? null : active;
   return (
-    <MenuSheet visible onClose={onClose} title="Switch to">
+    <MenuSheet visible onClose={onClose} title="Switch to" plain>
       <View role="radiogroup" accessibilityLabel="Switch to" style={[styles.group, { borderBottomColor: ds.c.line }]}>
         <SwitchRow mark={<HomeMark size={40} />} name="Home bar" detail="Your shelf and collection" selected={home} onPress={() => choose('home')} />
         {venues.map((v) => (
@@ -152,8 +153,9 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
 
 const styles = StyleSheet.create({
   group: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.sm },
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60 },
-  placeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56 },
+  // Hairlines between rows and a chevron on each place, as the board draws them.
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, borderBottomWidth: StyleSheet.hairlineWidth },
+  placeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth },
   tile: { width: 36, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   rowText: { flex: 1, gap: 2 },
   strong: { fontFamily: fontFamilies.bodySemiBold },

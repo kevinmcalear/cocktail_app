@@ -64,18 +64,20 @@ interface GlassButtonProps {
   onMedia?: boolean;
   /** One scheme's glass and ink whatever the theme: 'light' on the cream sketch paper. */
   scheme?: BackbarScheme;
+  /** A bigger circle (the tab bar's search, as tall as the tab pill). */
+  size?: number;
 }
 
 /** A floating circle (icon only) or pill (with a label) over content. */
-export function GlassButton({ accessibilityLabel, icon, label, onPress, color, onMedia, scheme }: GlassButtonProps) {
+export function GlassButton({ accessibilityLabel, icon, label, onPress, color, onMedia, scheme, size }: GlassButtonProps) {
   const ds = useDs();
   const forced = scheme ?? (onMedia ? 'dark' : undefined);
   const ink = color ?? (forced ? backbar[forced].ink : ds.c.ink);
   return (
     <PressableScale onPress={onPress} accessibilityLabel={accessibilityLabel} hitSlop={4}>
-      <GlassSurface interactive scheme={forced} style={label ? styles.pill : styles.circle}>
+      <GlassSurface interactive scheme={forced} style={label ? styles.pill : [styles.circle, size ? { width: size, height: size } : null]}>
         <View style={styles.row}>
-          {icon ? <IconSymbol name={icon} size={18} color={ink} /> : null}
+          {icon ? <IconSymbol name={icon} size={size ? 22 : 18} color={ink} /> : null}
           {label ? (
             <DsText variant="caption" color={ink} style={{ fontFamily: fontFamilies.bodySemiBold }}>
               {label}

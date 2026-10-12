@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, DsText, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
+import { Caption, DsText, Headline, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
@@ -18,13 +18,15 @@ interface MenuSheetProps {
   onShow?: () => void;
   /** A form's header: Cancel, the title in the middle, and Save, in place of the title and X. */
   save?: { label: string; onPress: () => void; disabled?: boolean };
+  /** A menu of places or actions (New, Switch to): the title in the body face, as the canvas draws those. */
+  plain?: boolean;
 }
 
 /**
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow, save }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow, save, plain }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -43,7 +45,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, children, footer,
         ) : (
           <View style={styles.header}>
             <View style={styles.flex}>
-              <Title>{title}</Title>
+              {plain ? <Headline role="heading">{title}</Headline> : <Title>{title}</Title>}
               {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
             </View>
             <SheetCloseButton />
