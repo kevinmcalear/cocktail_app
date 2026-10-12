@@ -30,6 +30,8 @@ const drink = (id: string, name: string) => ({
   creatorProfileId: null,
   originBarProfileId: null,
   originYear: null,
+  riffOfId: null,
+  creditStatus: null,
 });
 
 beforeEach(() => {

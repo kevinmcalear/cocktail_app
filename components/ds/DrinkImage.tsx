@@ -23,6 +23,7 @@ export interface DrinkImageProps {
   itemId?: string | null;
   /** What the image shows, for screen readers (usually the drink's name). */
   accessibilityLabel: string;
+  /** Width over height; 0 to size by `style` alone. */
   aspectRatio?: number;
   radius?: keyof typeof radii | 0;
   style?: StyleProp<ViewStyle>;
@@ -69,7 +70,7 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
       accessible
       role="img"
       accessibilityLabel={ingredient ? `${accessibilityLabel}, drawing` : uri ? (generated ? `${accessibilityLabel}, sketch` : accessibilityLabel) : `${accessibilityLabel}, no photo yet`}
-      style={[styles.frame, { aspectRatio, borderRadius, backgroundColor: (uri && placeholderColor) || ds.c.paper }, style]}
+      style={[styles.frame, { aspectRatio: aspectRatio || undefined, borderRadius, backgroundColor: (uri && placeholderColor) || ds.c.paper }, style]}
     >
       {ingredient ? (
         <IngredientDrawing id={ingredient.id} name={ingredient.name} />

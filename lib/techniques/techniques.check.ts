@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import { PREP_ACTIONS } from '../scale';
-import { pickFoam } from './foamPicker';
+import { baseHasFat, pickFoam } from './foamPicker';
 import {
   canMake, EQUIPMENT, formatDose, groupForAction, GROUPS, scaleParts, searchTechniques, technicalIngredientFor,
   TECHNICAL_INGREDIENTS, techniqueById, TECHNIQUES, unlocks,
@@ -105,7 +105,11 @@ assert.deepEqual(new Set(fatty.works.map((a) => a.id)), new Set(['gelatin', 'cre
 const strongAir = pickFoam({ kind: 'air', fat: false, strong: true, diet: 'none' });
 assert.equal(strongAir.works[0].id, 'sucro');
 assert.ok(strongAir.note);
-assert.equal(pickFoam({ kind: 'shaken', fat: false, strong: true, diet: 'none' }).note, null, 'strength only matters for a separate foam');
+const strongSour = pickFoam({ kind: 'shaken', fat: false, strong: true, diet: 'none' });
+assert.ok(strongSour.note, 'strength is always asked, so it always counts');
+assert.equal(strongSour.works.at(-1)?.id, 'versawhip', 'weak in spirit goes last');
+assert.ok(baseHasFat('Coconut cream and lime'));
+assert.ok(!baseHasFat('Ginger syrup and lemon'));
 assert.ok(pickFoam({ kind: 'shaken', fat: false, strong: false, diet: 'no-soy' }).ruledOut.some((r) => r.agent.id === 'versawhip'));
 
 console.log('techniques.check: ok');
