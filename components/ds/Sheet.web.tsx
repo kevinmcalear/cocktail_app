@@ -7,6 +7,7 @@ import type { SheetProps } from './Sheet';
 import { sheetFrame } from './sheetFrame';
 import { useDs } from './theme';
 import { EASE_IN, EASE_OUT, webMotion } from './webMotion';
+import { attachSheetDrag } from './webSheetDrag';
 
 /** As on native: in over about 200 ms easing out, out over 180 ms easing in. */
 const IN_MS = 200;
@@ -24,7 +25,8 @@ export function useSheetClose(): () => void {
 /**
  * The web's Sheet: the same dialog in the middle of the window over the same
  * fading backdrop (Sheet.tsx), faded with CSS transitions so the web needn't
- * load Reanimated or Gesture Handler. There's no drag on the web.
+ * load Reanimated or Gesture Handler. A finger drags it down to close it
+ * (webSheetDrag), as on native.
  */
 export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss }: SheetProps) {
   const ds = useDs();
@@ -45,15 +47,23 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
     setEntered(false);
     setClosing(false);
   };
-  // Ours to close: fade out, then tell the parent.
-  const dismiss = () => {
+  // Ours to close: fade out (or slide out after a drag, over leaveMs), then tell the parent.
+  const dismiss = (leaveMs = outMs) => {
     setClosing(true);
     clearTimeout(leaving.current);
     leaving.current = setTimeout(() => {
       settle();
       onClose();
-    }, outMs);
+    }, leaveMs);
   };
+  const close = () => dismiss();
+  // The drag attaches once per panel and reads these when a finger lets go.
+  const latest = useRef({ dismiss, reduceMotion });
+  useEffect(() => {
+    latest.current = { dismiss, reduceMotion };
+  });
+  const dragRef = (el: React.ComponentRef<typeof View> | null) =>
+    el ? attachSheetDrag(el as unknown as HTMLElement, (ms) => latest.current.dismiss(ms), () => latest.current.reduceMotion) : undefined;
 
   useEffect(() => {
     if (!visible || gone) return;
@@ -78,13 +88,14 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
   const opacity = { opacity: shown ? 1 : 0 };
 
   return (
-    <Modal visible={visible || !gone} transparent animationType="none" onRequestClose={dismiss} onShow={onShow} onDismiss={onDismiss}>
-      <CloseContext value={dismiss}>
+    <Modal visible={visible || !gone} transparent animationType="none" onRequestClose={close} onShow={onShow} onDismiss={onDismiss}>
+      <CloseContext value={close}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, fade, opacity]}>
-          <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={dismiss} />
+          <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} />
         </View>
         <View style={[styles.place, sheetFrame.scrim]}>
           <View
+            ref={dragRef}
             role="dialog"
             aria-modal
             aria-label={accessibilityLabel}
