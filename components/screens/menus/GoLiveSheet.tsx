@@ -9,9 +9,8 @@ import { menuReadiness, menuStatus, plural } from '@/lib/menus';
 import type { MenuDetail, MenuSummary } from '@/types/menus';
 
 import { AnswerRow } from '../addDrink/ReviewStep';
-import { Eyebrow } from '../addDrink/WizardChrome';
 import { Choice, MenuSheet } from './MenuSheet';
-import { CardHeader, ReadyChecks } from './ReviewParts';
+import { CardHeader, MonoLabel, ReadyChecks } from './ReviewParts';
 
 type When = 'now' | 'tomorrow' | 'date';
 
@@ -104,7 +103,7 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
           router.push(`/menus/${menu.id}/card`);
         }}
       />
-      <Eyebrow>Ready to go on?</Eyebrow>
+      <MonoLabel>Ready to go on?</MonoLabel>
       <View role="list">
         <AnswerRow label="When" value={whenLabel} onPress={() => flip('when')} hint="Shows the choices" />
         {open === 'when' ? (
@@ -140,7 +139,7 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
       </View>
 
       <View>
-        <Eyebrow>Before it goes on</Eyebrow>
+        <MonoLabel>Before it goes on</MonoLabel>
         <ReadyChecks sections={menu.sections} home={false} />
       </View>
       {error ? <Body tone="accent">{error}</Body> : null}

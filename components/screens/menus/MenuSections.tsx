@@ -184,7 +184,9 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
       {drawn ? (
         // One note for the whole card, and no tag: drawings are obviously drawings.
         <View style={styles.drawnNote}>
-          <Caption tone="muted">Drawn from each drink’s spec until it has a photo</Caption>
+          <Caption tone="muted" style={styles.mono}>
+            Drawn from each drink’s spec until it has a photo
+          </Caption>
         </View>
       ) : null}
     </View>

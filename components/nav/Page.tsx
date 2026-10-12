@@ -7,6 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb, useWebNavWidth } from '@/hooks/useIsWideWeb';
 
+import { Crumbs, type Crumb } from './PageFrame';
 import { ScreenHeader } from './ScreenHeader';
 
 type ColumnWidth = 'text' | 'wide' | 'full';
@@ -39,7 +40,7 @@ function useColumnRightPad(width: ColumnWidth): number {
  * A subtitle is only for something the page doesn't already say: "2 on now",
  * not the venue's name, which the sidebar and the chip show.
  */
-export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', wordmark }: {
+export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', wordmark, crumbs }: {
   title: string;
   /** The venue's name beside the logo on a phone (Tonight only). */
   wordmark?: boolean;
@@ -53,6 +54,8 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
   backText?: string;
   /** With a phone's back row: the action sits at that row's right, not beside the title. */
   actionOnTop?: boolean;
+  /** Wide web: the pages above this one, over the title (the sidebar stands in for Back there). */
+  crumbs?: Crumb[];
 }) {
   const ds = useDs();
   const gutter = useGutter();
@@ -65,8 +68,8 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
         <View style={[styles.back, { paddingTop: insets.top + space.sm }]}>
           {backText ? (
             <PressableScale role="link" accessibilityLabel={backLabel} onPress={onBack} style={styles.backText}>
-              <IconSymbol name="chevron.left" size={18} color={ds.accentText} />
-              <Body color={ds.accentText}>{backText}</Body>
+              <IconSymbol name="chevron.left" size={18} color={ds.c.ink} />
+              <Body>{backText}</Body>
             </PressableScale>
           ) : (
             <GlassButton icon="chevron.left" accessibilityLabel={backLabel} onPress={onBack} />
@@ -81,6 +84,7 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
       )}
       <View style={styles.titleRow}>
         <View style={styles.title}>
+          {sidebar && crumbs?.length ? <Crumbs trail={crumbs} /> : null}
           <Display>{title}</Display>
           {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
         </View>

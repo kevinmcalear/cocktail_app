@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
-import { Body, Button, Caption, GlassButton, Headline, useDs } from '@/components/ds';
+import { Body, Button, Caption, GlassButton, useDs } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, type } from '@/constants/tokens';
@@ -12,10 +12,9 @@ import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { cannotAdd, copySections, filterLibrary, libraryNote } from '@/lib/menuLayout';
 
 import { LibraryRow } from './AddDrinkSheet';
-import { Eyebrow } from '../addDrink/WizardChrome';
 import { EDITOR_STATUS, EditorSections, MenuCoverEdit, MenuNameInput, NextStep, SaveLine, useHomeMenu } from './EditorParts';
 import { GuestPreview } from './GuestPreview';
-import { Check, ReadyChecks, type CheckTarget } from './ReviewParts';
+import { Check, MonoLabel, ReadyChecks, type CheckTarget } from './ReviewParts';
 import { Choice, MenuSheet } from './MenuSheet';
 import type { LayoutEditor } from './useLayoutEditor';
 
@@ -38,7 +37,7 @@ export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
       <View style={[styles.header, { borderBottomColor: ds.c.line }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back to Menus" onPress={editor.leave} />
         <View style={styles.flex}>
-          <Caption tone="muted">{['Menus', EDITOR_STATUS[editor.status], venue?.name].filter(Boolean).join(' · ')}</Caption>
+          <MonoLabel>{['Menus', EDITOR_STATUS[editor.status], venue?.name].filter(Boolean).join(' · ')}</MonoLabel>
           <MenuNameInput editor={editor} />
         </View>
         <SaveLine editor={editor} />
@@ -71,7 +70,7 @@ function LibraryPanel({ editor }: { editor: LayoutEditor }) {
   const where = venues.find((v) => v.id === editor.menu.barId)?.name ?? 'your drinks';
   return (
     <View style={[styles.side, { borderRightColor: ds.c.line }]}>
-      <Headline>{target ? `Add to ${target.name}` : 'Add a section first'}</Headline>
+      <MonoLabel>{target ? `Add to ${target.name}` : 'Add a section first'}</MonoLabel>
       <View style={[styles.search, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
         <IconSymbol name="magnifyingglass" size={16} color={ds.c.muted} />
         <TextInput
@@ -128,7 +127,7 @@ function Inspector({ editor, venueName }: { editor: LayoutEditor; venueName: str
     <ScrollView style={[styles.side, styles.inspector, { width, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.inspectorBody}>
       <GuestPreview editor={editor} venue={venue} />
       <View>
-        <Eyebrow>{home ? 'Before you share' : 'Before it goes on'}</Eyebrow>
+        <MonoLabel>{home ? 'Before you share' : 'Before it goes on'}</MonoLabel>
         <ReadyChecks sections={editor.layout.sections} home={home} dated={home ? undefined : dated} onOpen={open} />
         {/* Kept (g743): the cover lives here on desktop. */}
         <Check
@@ -190,7 +189,8 @@ function MoreSheet({ editor, onClose }: { editor: LayoutEditor; onClose: () => v
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.lg, paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
-  next: { minWidth: 160 },
+  // A row, so the button's flex: 1 widens it instead of squashing its height.
+  next: { minWidth: 160, flexDirection: 'row' },
   columns: { flex: 1, flexDirection: 'row', minHeight: 0 },
   side: { width: 320, flexGrow: 0, padding: space.lg, gap: space.md, borderRightWidth: StyleSheet.hairlineWidth },
   inspector: { borderRightWidth: 0, borderLeftWidth: StyleSheet.hairlineWidth, padding: 0 },

@@ -41,12 +41,18 @@ interface ReviewRowProps {
   children?: ReactNode;
 }
 
-/** A text action in the venue's accent ("Add another page", "Finish"), at least 44 tall. */
-export function TextLink({ label, onPress, accessibilityHint }: { label: string; onPress: () => void; accessibilityHint?: string }) {
+/** A text action, in the venue's accent unless `tone` says ink ("Add another page", "Finish"), at least 44 tall. */
+export function TextLink({ label, onPress, accessibilityHint, tone = 'accent' }: {
+  label: string;
+  onPress: () => void;
+  accessibilityHint?: string;
+  /** `ink` where the screen's one accent is already spoken for (a menu's Guest card beside Go live). */
+  tone?: 'accent' | 'ink';
+}) {
   const ds = useDs();
   return (
     <PressableScale accessibilityLabel={label} accessibilityHint={accessibilityHint} onPress={onPress} style={styles.link}>
-      <DsText variant="body" color={ds.accentText}>
+      <DsText variant="body" color={tone === 'ink' ? ds.c.ink : ds.accentText}>
         {label}
       </DsText>
     </PressableScale>
