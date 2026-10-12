@@ -104,7 +104,7 @@ export function SearchBody({ query, scope, onScope, mine, area, onJump, commands
   );
 }
 
-const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', bar: 'Bar' };
+const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', bar: 'Bar', flavor: 'Flavor map' };
 const JUMPS = [
   { label: 'On menu now', href: '/library?show=on-menu' },
   { label: 'Staff list', href: '/library?show=staff' },
@@ -154,7 +154,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
               key={`${r.kind}-${r.id}`}
               title={capitalize(r.title)}
               caption={caption(r)}
-              icon={r.kind === 'menu' ? 'list.bullet' : 'drop.fill'}
+              icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'sparkles' : 'drop.fill'}
               avatar={r.kind === 'bar' ? { uri: r.imageUrl ?? null } : undefined}
               ingredient={r.kind === 'ingredient' ? { id: r.isDraft ? null : r.id } : undefined}
               onPress={() => open(r)}

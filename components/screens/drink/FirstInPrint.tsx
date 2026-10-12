@@ -1,9 +1,10 @@
 import { useRouter, type Href } from 'expo-router';
+import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, Spec, TextLink, useDs } from '@/components/ds';
 import { layout, radius, space, type } from '@/constants/tokens';
-import { leadRecord, readUrl, RELATION_LABEL, RIGHTS_LABEL, sourceByline, type PrintedRecipe } from '@/lib/drinkHistory';
+import { leadRecord, readUrl, RELATION_LABEL, RIGHTS_LABEL, sourceByline, throughTheYears, type PrintedRecipe } from '@/lib/drinkHistory';
 import { formatAmount } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
 import { stillEqual, thenAndNow } from '@/lib/thenAndNow';
@@ -20,11 +21,13 @@ const bookHref = (key: string) => `/book/${key}` as Href;
  * page's ml (board drink-phone-classic). `records` may be its nearest
  * classic's, named in `borrowed`.
  */
-export function FirstInPrint({ records, borrowed, lines = [] }: { records: PrintedRecipe[]; borrowed: string | null; lines?: SpecLine[] }) {
+export function FirstInPrint({ records, borrowed, itemId, lines = [] }: { records: PrintedRecipe[]; borrowed: string | null; itemId: string; lines?: SpecLine[] }) {
   const ds = useDs();
   const router = useRouter();
+  const [later, setLater] = useState(false);
   const lead = leadRecord(records);
   if (!lead) return null;
+  const years = throughTheYears(records);
   const rest = records.filter((r) => r.id !== lead.id);
   const url = readUrl(lead);
   // Whose printing it is comes first: a borrowed one must never be cut off.
@@ -53,7 +56,25 @@ export function FirstInPrint({ records, borrowed, lines = [] }: { records: Print
             {url ? <TextLink label={lead.page_url ? 'See the page' : 'Read the book'} onPress={() => void Linking.openURL(url)} /> : null}
             <TextLink label="About the book" onPress={() => router.push(bookHref(lead.source.key))} />
           </View>
-          {rest.length ? (
+          <Caption tone="muted" role="heading" style={styles.eyebrow}>
+            THROUGH THE YEARS
+          </Caption>
+          <View role="list" accessibilityLabel="Through the years">
+            {years.map((y) => (
+              <View key={y.key} role="listitem" style={[styles.row, { borderTopColor: ds.c.line }]}>
+                <Spec style={[styles.year, { color: ds.accentText }]}>{y.year}</Spec>
+                <Body style={styles.flex}>{y.line}</Body>
+              </View>
+            ))}
+            {borrowed ? null : (
+              <PressableScale role="link" accessibilityLabel="Now: on bar menus here. Open its rankings" onPress={() => router.push(`/rankings/${itemId}` as Href)} style={[styles.row, { borderTopColor: ds.c.line }]}>
+                <Spec style={[styles.year, { color: ds.accentText }]}>Now</Spec>
+                <Body style={styles.flex}>{'On bar menus here ›'}</Body>
+              </PressableScale>
+            )}
+          </View>
+          {rest.length && !later ? <TextLink label={`${rest.length} later ${rest.length === 1 ? 'printing' : 'printings'} ›`} onPress={() => setLater(true)} /> : null}
+          {rest.length && later ? (
             <View role="list" accessibilityLabel="Later printings">
               {rest.map((r) => (
                 <PressableScale
@@ -151,6 +172,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   year: { width: space.xxxl + space.sm },
+  eyebrow: { letterSpacing: 1, paddingTop: space.sm },
   flex: { flex: 1, minWidth: 0 },
   table: { gap: space.sm, padding: space.md, borderRadius: radius.control },
   tr: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.xs },

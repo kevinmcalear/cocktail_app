@@ -4,24 +4,28 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, BrandProvider, Button, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, BrandProvider, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useLearnYield, type PrepCardData } from '@/hooks/usePrepCard';
 import { allergenLabel } from '@/lib/allergens';
 import { initials, stepParts, timerFromText, useByDate } from '@/lib/makeSteps';
+import { siteOrigin } from '@/lib/venueLink';
 import { toQuantity } from '@/lib/quantity';
 import { factorForLine, scaledYield, scaleRecipe, type RecipeLine } from '@/lib/scale';
 
-import { MakeDone, shareLabel, type BatchLabel } from './MakeDone';
-import { MakeHowMuch, type MakeMode } from './MakeHowMuch';
+import { copyForTape, MakeDone, shareLabel, type BatchLabel } from './MakeDone';
+import { BATCHES, FILLS, MakeHowMuch, type MakeMode } from './MakeHowMuch';
+import { makeKit, splitHint } from './makeLogic';
 import { MakeGather, MakeStep } from './MakeSteps';
+import { useMakeSpot } from './useMakeSpot';
 
 interface MakeScreenProps {
   itemId: string;
   name: string;
-  recipe: RecipeLine[];
+  /** The recipe's lines; `ingredientId` draws each line's picture. */
+  recipe: (RecipeLine & { ingredientId?: string | null })[];
   card: PrepCardData;
   accent?: string;
   /** The size picked on the page, as a factor of one batch. */
@@ -57,7 +61,9 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
   const prep = card.prep;
   const yieldQ = toQuantity(prep?.yield_amount, prep?.yield_unit);
   const canFill = yieldQ?.kind === 'ml';
-  const startBatches = [0.5, 1, 2, 3, 4, 6].includes(startFactor) ? startFactor : 1;
+  // The four tiles, plus a bigger whole-batch size the page asked for (4, 6).
+  const batchOptions: number[] = BATCHES.includes(startFactor as (typeof BATCHES)[number]) || !Number.isInteger(startFactor) ? [...BATCHES] : [...BATCHES, startFactor];
+  const startBatches = batchOptions.includes(startFactor) ? startFactor : 1;
   const [mode, setMode] = useState<MakeMode>(startMode ?? (canFill && !Number.isInteger(startFactor * 2) ? 'fill' : 'batches'));
   const [batches, setBatches] = useState(startBatches);
   const [fill, setFill] = useState(canFill && yieldQ ? nearestFill(startFactor * yieldQ.value) : 750);
@@ -68,18 +74,22 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
   const [got, setGot] = useState<string[]>([]);
   const [made, setMade] = useState<string | null>(null);
   const [madeAt] = useState(() => new Date());
+  const [copied, setCopied] = useState(false);
+  const spot = useMakeSpot(itemId);
   const learn = useLearnYield(itemId);
   const me = useMyProfile().data;
   const allergens = useDrinkAllergens(itemId).data;
 
   const line = recipe.find((l) => l.id === haveLine) ?? null;
+  // "What I have" opens on the line's own amount: one batch.
+  const haveValue = have || (line?.amount != null ? String(line.amount) : '');
   const factor =
     mode === 'batches'
       ? batches
       : mode === 'fill' && yieldQ
         ? fill / yieldQ.value
         : line
-          ? factorForLine(line, toQuantity(have, line.unit))
+          ? factorForLine(line, toQuantity(haveValue, line.unit))
           : null;
   const f = factor ?? 1;
   const scaled = scaleRecipe(recipe, f);
@@ -98,7 +108,9 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
     amount: makes,
     storage: prep?.storage ?? null,
     allergens: allergens ? (allergens.allergens.length ? allergens.allergens.map((a) => allergenLabel(a.allergen)).join(', ') : 'No allergens') : '',
+    url: `${siteOrigin()}/ingredient/${itemId}`,
   };
+  const container = mode === 'fill' ? (FILLS.find((x) => x.ml === fill)?.container ?? null) : null;
 
   const close = () => {
     // A batch that came out different teaches the recipe its real yield.
@@ -113,32 +125,42 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
   const next = () => setAt((a) => Math.min(n, a + 1));
   const back = () => setAt((a) => Math.max(-2, a - 1));
   const forward =
-    at === -2 ? { label: 'Start', disabled: factor === null } : at === -1 ? { label: n ? 'Step 1' : 'Done', disabled: false } : at < n - 1 ? { label: 'Next', disabled: false } : at === n - 1 ? { label: 'Done, label it', disabled: false } : null;
+    at === -2 ? { label: n ? `Start · ${n} ${n === 1 ? 'step' : 'steps'}` : 'Start', disabled: factor === null } : at === -1 ? { label: n ? 'Step 1' : 'Done', disabled: false } : at < n - 1 ? { label: 'Next', disabled: false } : at === n - 1 ? { label: 'Done, label it', disabled: false } : null;
 
   let screen;
   if (at === -2) {
-    const hint = mode === 'have' && have && factor === null ? `Enter the amount in ${line?.unit ?? 'the same unit'}.` : null;
+    const hint = mode === 'have' && haveValue && factor === null ? `Enter the amount in ${line?.unit ?? 'the same unit'}.` : null;
     screen = (
       <MakeHowMuch
         name={name} mode={mode} onMode={setMode} canFill={canFill}
-        batches={batches} onBatches={setBatches} fill={fill} onFill={setFill}
-        lines={recipe} haveLine={haveLine} onHaveLine={setHaveLine} have={have} onHave={setHave} haveUnit={line?.unit ?? ''}
+        batchOptions={batchOptions} batches={batches} onBatches={setBatches} fill={fill} onFill={setFill}
+        lines={recipe} haveLine={haveLine} onHaveLine={(id) => { setHaveLine(id); setHave(''); }} have={haveValue} onHave={setHave} haveUnit={line?.unit ?? ''}
         scaled={scaled} makes={makes} hint={hint}
       />
     );
   } else if (at === -1) {
-    screen = <MakeGather lines={scaled} got={got} onToggle={(id) => setGot((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]))} />;
+    screen = (
+      <MakeGather
+        lines={scaled}
+        got={got}
+        onToggle={(id) => setGot((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]))}
+        kit={makeKit(scaled, steps.map((s) => s.body), container)}
+      />
+    );
   } else if (at < n) {
     const s = steps[at];
     const timer = s.timer_seconds ?? timerFromText(s.body);
-    screen = <MakeStep index={at} total={n} name={name} parts={stepParts(s.body, named)} timer={timer} suggested={!s.timer_seconds} next={at + 1 < n ? steps[at + 1].body : null} />;
+    const { main, hint } = splitHint(s.body);
+    screen = <MakeStep index={at} total={n} name={name} size={makes} parts={stepParts(main, named)} hint={hint} timer={timer} next={at + 1 < n ? steps[at + 1].body : null} />;
   } else {
-    screen = <MakeDone label={label} made={yieldQ ? madeValue : null} onMade={setMade} madeUnit={yieldQ?.unit ?? null} />;
+    screen = <MakeDone label={label} goesIn={spot ?? prep?.storage ?? null} made={yieldQ ? madeValue : null} onMade={setMade} madeUnit={yieldQ?.unit ?? null} />;
   }
 
   // Gather, each step, then done: the bar along the top (nothing lit on "How much?").
   const total = n + 2;
   const progress = at + 1;
+  // Right of the bars: the size while getting it out, "2 of 3" on a step.
+  const corner = at === -1 ? makes : at >= 0 && at < n ? `${at + 1} of ${n}` : null;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm }]}>
@@ -149,6 +171,7 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
             <View key={i} style={[styles.bar, { backgroundColor: i <= progress ? ds.c.ink : ds.c.lineStrong }]} />
           ))}
         </View>
+        {corner ? <Caption tone="muted">{corner}</Caption> : null}
       </View>
       <ScrollView contentContainerStyle={[styles.body, { paddingHorizontal: gutter }, wide && styles.wide]} keyboardShouldPersistTaps="handled">
         {screen}
@@ -158,10 +181,19 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
         {forward ? (
           <Button label={forward.label} size="lg" disabled={forward.disabled} onPress={next} style={styles.grow} />
         ) : (
-          <>
-            <Button label="Print or share label" variant="secondary" size="lg" onPress={() => void shareLabel(label)} style={styles.grow} />
-            <Button label="Done" size="lg" onPress={close} style={styles.grow} />
-          </>
+          <View style={styles.done}>
+            <Button label="Print or share label" size="lg" onPress={() => void shareLabel(label)} />
+            <View style={styles.footerRow}>
+              <Button
+                label={copied ? 'Copied' : 'Copy for tape'}
+                variant="secondary"
+                size="lg"
+                onPress={() => void copyForTape(label).then(setCopied)}
+                style={styles.grow}
+              />
+              <Button label="Done" variant="secondary" size="lg" onPress={close} style={styles.grow} />
+            </View>
+          </View>
         )}
       </View>
     </View>
@@ -182,4 +214,6 @@ const styles = StyleSheet.create({
   wide: { maxWidth: 640, width: '100%', alignSelf: 'flex-start' },
   footer: { flexDirection: 'row', gap: space.sm, paddingTop: space.md },
   grow: { flex: 1 },
+  done: { flex: 1, gap: space.sm },
+  footerRow: { flexDirection: 'row', gap: space.sm },
 });
