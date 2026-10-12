@@ -3,8 +3,13 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
-import { amountLabel, finishLabel, STEP_COPY, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
+import { useCapabilities } from '@/hooks/useCapabilities';
+import { useBarPublishing } from '@/hooks/usePublishing';
+import { amountLabel, finishLabel, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { PUBLISH_COPY } from '@/lib/publishing';
+import { draftSketchInputs } from '@/lib/sketch/draft';
+
+import { ReviewPhotos } from './ReviewPhotos';
 
 function credits(d: WizardDraft, hasProfile: boolean): string {
   const by = d.creator === 'nobody' ? '' : typeof d.creator === 'object' && d.creator ? `By ${d.creator.name}` : hasProfile ? 'By you' : '';
@@ -13,8 +18,23 @@ function credits(d: WizardDraft, hasProfile: boolean): string {
   return [[by, withThem].filter(Boolean).join(' '), riff].filter(Boolean).join(', ');
 }
 
-/** Every answer on one screen; tap a row to go back and change it. */
-export function ReviewStep({ draft, onJump, atVenue, hasProfile }: { draft: WizardDraft; onJump: (s: WizardStep) => void; atVenue: boolean; hasProfile: boolean }) {
+interface ReviewStepProps extends StepProps {
+  onJump: (s: WizardStep) => void;
+  /** The venue it's added at, and its name ("Little Rye"); null at home. */
+  barId: string | null;
+  venueName: string;
+  hasProfile: boolean;
+  barVariants: readonly string[];
+}
+
+/** The photo slots, then every answer on one screen; tap a row to go back and change it. */
+export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, barVariants }: ReviewStepProps) {
+  const venue = useBarPublishing(barId).data;
+  const caps = useCapabilities(barId).data;
+  // A venue's drink takes photos from those who may add them; at home it's yours.
+  const canPhoto = !barId || !!caps?.includes('photos');
+  // Not chosen: it follows the venue's default, once the venue has a public page.
+  const followed = !venue ? 'Same as the venue' : venue.profile ? `${PUBLISH_COPY[venue.barDefault].label}, ${venueName}’s default` : 'Private for now';
   const rows: [WizardStep, string][] = [
     ['name', draft.name.trim()],
     ['ingredients', draft.lines.map((l) => `${amountLabel(l)} ${l.name}`.trim()).join('\n')],
@@ -24,14 +44,19 @@ export function ReviewStep({ draft, onJump, atVenue, hasProfile }: { draft: Wiza
     ['garnish', draft.garnishes.map(finishLabel).join(', ')],
     ['credits', credits(draft, hasProfile)],
     ['notes', [draft.description.trim(), draft.notes.trim()].filter(Boolean).join('\n\n')],
-    ['publish', draft.publish ? PUBLISH_COPY[draft.publish].label : atVenue ? 'Same as the venue' : 'Private'],
+    ['publish', draft.publish ? PUBLISH_COPY[draft.publish].label : barId ? followed : 'Private'],
   ];
   return (
-    <ReviewList
-      rows={rows.map(([step, value]) => ({ key: step, label: STEP_COPY[step].short, value }))}
-      onJump={(s) => onJump(s as WizardStep)}
-      after="You can change any of it on the drink’s page, and add photos there."
-    />
+    <View style={styles.review}>
+      {canPhoto ? (
+        <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, barVariants))} seed={draft.id ?? 'new-drink'} />
+      ) : null}
+      <ReviewList
+        rows={rows.map(([step, value]) => ({ key: step, label: STEP_COPY[step].short, value }))}
+        onJump={(s) => onJump(s as WizardStep)}
+        after="You can change any of it on the drink’s page."
+      />
+    </View>
   );
 }
 
@@ -98,6 +123,7 @@ export function AnswerRow({
 }
 
 const styles = StyleSheet.create({
+  review: { gap: space.xl },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   text: { flex: 1, gap: 2 },
   after: { marginTop: space.lg },

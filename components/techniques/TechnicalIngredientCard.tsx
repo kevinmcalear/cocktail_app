@@ -3,14 +3,16 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, PressableScale, Spec, Surface, Tag, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
+import { doseLine } from '@/lib/doseLine';
 import { technicalIngredientFor, techniqueById } from '@/lib/techniques';
 
 import { BuyList, GradeTag } from './bits';
 
 /**
  * On a technical ingredient's page (xanthan, agar, lecithin...): what it does,
- * how much for each job, how to mix it in, and the techniques that use it.
- * Nothing shows for an ordinary ingredient.
+ * how much for each job worked out for a litre, how to mix it in, and the
+ * techniques that use it. It sits straight under the title; Where to buy is
+ * its own section after it. Nothing shows for an ordinary ingredient.
  */
 export function TechnicalIngredientCard({ name }: { name: string }) {
   const ds = useDs();
@@ -18,6 +20,7 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
   const t = technicalIngredientFor(name);
   if (!t) return null;
   const facts = [t.vegan ? 'Vegan' : 'Not vegan', t.alcohol, ...(t.allergens ?? [])].filter((f): f is string => !!f);
+  const perLitre = doseLine(t.jobs.map((j) => j.dose));
 
   return (
     <Surface style={styles.card}>
@@ -30,6 +33,7 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
           <Tag key={f} label={f} />
         ))}
       </View>
+      <Headline>How much, by job</Headline>
       <View role="list">
         {t.jobs.map((j) => (
           <View key={j.job} role="listitem" style={[styles.job, { borderBottomColor: ds.c.line }]}>
@@ -39,22 +43,16 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
           </View>
         ))}
       </View>
+      {perLitre || t.perTsp ? <Body tone="muted">{[perLitre, t.perTsp ? `No fine scale? A level 5 ml teaspoon is roughly ${t.perTsp} g.` : null].filter(Boolean).join(' ')}</Body> : null}
       <View style={styles.block}>
         <Headline>Mix it in</Headline>
         <Body>{t.mix}</Body>
-        {t.perTsp ? <Caption tone="muted">{`No fine scale? A level 5 ml teaspoon is roughly ${t.perTsp} g.`}</Caption> : null}
       </View>
       {t.watch?.map((w) => (
         <Caption key={w} tone="muted">
           {w}
         </Caption>
       ))}
-      {t.buy?.length ? (
-        <View style={styles.block}>
-          <Headline>Where to buy</Headline>
-          <BuyList links={t.buy} />
-        </View>
-      ) : null}
       <View style={styles.tags}>
         {t.techniques.map((id) => {
           const tech = techniqueById(id);
@@ -66,6 +64,18 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
         })}
       </View>
     </Surface>
+  );
+}
+
+/** Where to buy a technical ingredient: its own section, after How to use it. */
+export function WhereToBuy({ name }: { name: string }) {
+  const t = technicalIngredientFor(name);
+  if (!t?.buy?.length) return null;
+  return (
+    <View style={styles.block}>
+      <Headline role="heading">Where to buy</Headline>
+      <BuyList links={t.buy} />
+    </View>
   );
 }
 

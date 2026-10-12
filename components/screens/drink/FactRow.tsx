@@ -16,6 +16,8 @@ interface FactRowProps {
   onPress?: () => void;
   /** Or opens more under the row, in place. */
   more?: ReactNode;
+  /** `more` starts open (the riffs, the first printing on a classic). */
+  defaultOpen?: boolean;
   /** The fact, in a line or two. */
   children: ReactNode;
 }
@@ -25,9 +27,9 @@ interface FactRowProps {
  * one way deeper (a page, or more in place). Facts from the data only, never
  * a sentence the app works out for itself.
  */
-export function FactRow({ label, mark, accessibilityLabel, onPress, more, children }: FactRowProps) {
+export function FactRow({ label, mark, accessibilityLabel, onPress, more, defaultOpen = false, children }: FactRowProps) {
   const ds = useDs();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const head = (
     <>
       <View style={styles.text}>

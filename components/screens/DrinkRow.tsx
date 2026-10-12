@@ -4,8 +4,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, Headline, MatchText, PressableScale, Tag, useDs, type MatchTextProps } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { displayFaces, space } from '@/constants/tokens';
+import { useSearchNavRow } from '@/components/search/searchNav';
+import { displayFaces, radius, space } from '@/constants/tokens';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
+import { withAlpha } from '@/lib/color';
 import { drinkIdFromHref } from '@/lib/itemRoutes';
 
 export interface DrinkRowProps {
@@ -49,6 +51,8 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
   // A drink page starts loading on press, ahead of the tap.
   const prefetch = usePrefetchCocktail();
   const drinkId = onPress ? null : drinkIdFromHref(href);
+  // In the ⌘K palette: the row the arrow keys are on, which Return opens.
+  const nav = useSearchNavRow();
   // The logo sits on the caption's first line and the caption wraps beside it, never under it.
   const byline = logo ? (
     <View style={styles.byline}>
@@ -67,7 +71,8 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
       accessibilityLabel={`${label ?? [name, caption, tag, note].filter(Boolean).join('. ')}, open`}
       onPressIn={drinkId ? () => prefetch(drinkId, { name, imageUrl }) : undefined}
       onPress={onPress ?? (() => href && router.push(href as never))}
-      style={[styles.row, { borderBottomColor: ds.c.line }]}
+      nativeID={nav.nativeID}
+      style={[styles.row, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
     >
       <View style={styles.thumb}>
         <DrinkImage thumb sketchDetail="thumb" source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" />
@@ -92,12 +97,14 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
         {below}
       </View>
       {trailing}
+      {nav.active ? <Caption tone="muted">Open ↵</Caption> : null}
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
   thumb: { width: 56 },
   text: { flex: 1, gap: 2 },
   byline: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs, flexShrink: 1 },

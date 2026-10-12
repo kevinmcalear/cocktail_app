@@ -6,10 +6,9 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import { listAllergens } from '@/lib/allergens';
+import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
 import { partsText, prepAmounts, prepYield, slotMessage, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
-import { prepFacts } from '@/lib/techniques/template';
 
 import { IngredientSearch, type CatalogIngredient } from '../IngredientSearch';
 
@@ -37,11 +36,15 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
   const ds = useDs();
   const [view, setView] = useState<'parts' | 'amounts'>('parts');
   const [swapKey, setSwapKey] = useState<string | null>(null);
+  const [noteKey, setNoteKey] = useState<string | null>(null);
+  const [allergensOpen, setAllergensOpen] = useState(false);
   const amounts = prepAmounts(draft);
   const base = draft.lines.find((l) => l.key === draft.baseKey);
   const makes = prepYield(draft);
   const waiting = slotMessage(draft);
-  const facts = prepFacts(draft.lines.filter((l) => !l.slot).map((l) => l.name));
+  const allergens = draft.allergens ?? [];
+  const toggleAllergen = (key: Allergen) => set({ allergens: allergens.includes(key) ? allergens.filter((k) => k !== key) : [...allergens, key], allergensSet: true });
+  const contains = [listAllergens(allergens), ...(draft.contains ?? []).map((c) => c.toLowerCase())].filter(Boolean).join(', ');
   const change = (key: string, c: Partial<PrepDraftLine>) => set({ lines: draft.lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
   const remove = (l: PrepDraftLine) => {
     const lines = draft.lines.filter((x) => x.key !== l.key);
@@ -71,10 +74,31 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
           ) : (
             <View key={l.key} role="listitem" style={[styles.line, { borderBottomColor: ds.c.line }]}>
               <IngredientThumb id={l.id} name={l.name} size={36} />
-              <PressableScale accessibilityLabel={l.slot ? `Pick the ${l.slot}` : `${l.name}. Swap it`} onPress={() => setSwapKey(l.key)} style={styles.name}>
-                <Body numberOfLines={1} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
-                {isBase ? <Caption tone="accent">The base</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'parts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
-              </PressableScale>
+              <View style={styles.name}>
+                <PressableScale accessibilityLabel={l.slot ? `Pick the ${l.slot}` : `${l.name}. Swap it`} onPress={() => setSwapKey(l.key)} style={styles.swapName}>
+                  <Body numberOfLines={1} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
+                  {isBase ? <Caption tone="accent">The base, everything follows it</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'parts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
+                </PressableScale>
+                {l.slot ? null : noteKey === l.key ? (
+                  <TextInput
+                    value={l.note ?? ''}
+                    onChangeText={(note) => change(l.key, { note })}
+                    onBlur={() => setNoteKey(null)}
+                    onSubmitEditing={() => setNoteKey(null)}
+                    autoFocus
+                    returnKeyType="done"
+                    placeholder="How it goes in: sliced, seeds in"
+                    placeholderTextColor={ds.c.muted}
+                    aria-label={`Note on ${l.name}`}
+                    maxLength={120}
+                    style={[styles.note, type.caption, { fontFamily: fontFamilies.body, color: ds.c.ink, borderColor: ds.c.lineStrong }]}
+                  />
+                ) : (
+                  <PressableScale role="button" accessibilityLabel={l.note ? `Note on ${l.name}: ${l.note}. Change it` : `Add a note to ${l.name}`} onPress={() => setNoteKey(l.key)} style={styles.noteButton}>
+                    <Caption tone={l.note ? 'muted' : 'accent'} numberOfLines={2}>{l.note?.trim() || 'Note'}</Caption>
+                  </PressableScale>
+                )}
+              </View>
               {isBase && l.parts !== null ? (
                 <View style={[styles.box, { backgroundColor: ds.c.raised }]}>
                   <PressableScale accessibilityLabel={`Less ${l.name}`} onPress={() => set({ baseAmount: Math.max(step, draft.baseAmount - step) })} style={styles.tap}>
@@ -111,13 +135,36 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
           <Caption tone="muted">Makes about</Caption>
           <Body>{makes ? formatQuantity({ kind: 'ml', value: makes, unit: 'ml' }) : 'Set by your first batch'}</Body>
         </View>
-        {facts.allergens.length || facts.contains.length ? (
-          <View style={[styles.fact, { backgroundColor: ds.c.raised }]}>
-            <Caption tone="muted">Contains</Caption>
-            <Body>{[listAllergens(facts.allergens), ...facts.contains.map((c) => c.toLowerCase())].filter(Boolean).join(', ')}</Body>
-          </View>
-        ) : null}
+        <PressableScale
+          role="button"
+          aria-expanded={allergensOpen}
+          accessibilityLabel={`Allergens: ${contains || 'none'}. ${draft.allergensSet ? 'Change them' : 'Set them'}`}
+          onPress={() => setAllergensOpen(!allergensOpen)}
+          style={[styles.fact, { backgroundColor: ds.c.raised }]}
+        >
+          <Caption tone="muted">Allergens</Caption>
+          <Body>{`${contains ? contains[0].toUpperCase() + contains.slice(1) : 'None'} · ${draft.allergensSet ? 'tap to change' : 'tap to set'}`}</Body>
+        </PressableScale>
       </View>
+      {allergensOpen ? (
+        <View role="group" accessibilityLabel="Allergens in it" style={styles.toggles}>
+          {ALLERGENS.map((a) => {
+            const on = allergens.includes(a.key);
+            return (
+              <PressableScale
+                key={a.key}
+                role="checkbox"
+                aria-checked={on}
+                accessibilityLabel={a.label}
+                onPress={() => toggleAllergen(a.key)}
+                style={[styles.toggle, { backgroundColor: on ? ds.c.ink : ds.c.raised, borderColor: on ? ds.c.ink : ds.c.line }]}
+              >
+                <Caption color={on ? ds.c.ground : ds.c.ink}>{a.label}</Caption>
+              </PressableScale>
+            );
+          })}
+        </View>
+      ) : null}
       <Caption tone="muted">“Makes about” is a guess from the weights. Your first batch in Make mode sets the real number.</Caption>
     </View>
   );
@@ -154,7 +201,12 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
   swap: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  name: { flex: 1, minHeight: layout.minTapTarget, justifyContent: 'center' },
+  name: { flex: 1, justifyContent: 'center', paddingVertical: space.xs },
+  swapName: { minHeight: layout.minTapTarget, justifyContent: 'center' },
+  noteButton: { minHeight: 32, justifyContent: 'center', alignSelf: 'flex-start' },
+  note: { minHeight: layout.minTapTarget, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.sm },
+  toggles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  toggle: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
   box: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, minHeight: 40, paddingHorizontal: space.xs },
   tap: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   own: { flexDirection: 'row', alignItems: 'center', gap: space.xs },

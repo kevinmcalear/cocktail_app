@@ -21,8 +21,8 @@ interface PrepRecipeProps {
   lines: PrepLine[];
   yieldAmount: number | null;
   yieldUnit: string | null;
-  /** The size picked, as a factor of one batch, so Make opens on it. */
-  onFactor: (factor: number) => void;
+  /** The size picked, as a factor of one batch, and what it makes ("750 ml"), so Make opens on it. */
+  onSize: (factor: number, makes: string | null) => void;
   /** "From what I have": straight into Make, scaled from one line. */
   onFromWhatIHave: () => void;
 }
@@ -34,10 +34,10 @@ const VIEWS = [
 
 /**
  * A prep's recipe on its page: as parts when it reads as a ratio, or as amounts
- * scaled to a batch, half, double or a bottle. Scaling here never changes the
- * saved recipe.
+ * scaled to a batch or a bottle. The sizes stay in both views, since they also
+ * set what Make makes. Scaling here never changes the saved recipe.
  */
-export function PrepRecipe({ lines, yieldAmount, yieldUnit, onFactor, onFromWhatIHave }: PrepRecipeProps) {
+export function PrepRecipe({ lines, yieldAmount, yieldUnit, onSize, onFromWhatIHave }: PrepRecipeProps) {
   const ds = useDs();
   const router = useRouter();
   const parts = prepParts(lines);
@@ -62,8 +62,7 @@ export function PrepRecipe({ lines, yieldAmount, yieldUnit, onFactor, onFromWhat
         </View>
         {parts ? <Choice label="Show the recipe as" options={VIEWS} value={view} onChange={setView} /> : null}
       </View>
-      {showParts ? null : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sizes}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sizes} role="radiogroup" aria-label="How much">
           {sizes.map((s) => (
             <Chip
               key={s.key}
@@ -71,14 +70,13 @@ export function PrepRecipe({ lines, yieldAmount, yieldUnit, onFactor, onFromWhat
               selected={s.key === size.key}
               onPress={() => {
                 setSizeKey(s.key);
-                onFactor(s.factor);
+                onSize(s.factor, scaledYield(yieldAmount, yieldUnit, s.factor));
               }}
-              accessibilityLabel={`Show amounts for ${s.label}`}
+              accessibilityLabel={`Make ${s.label}`}
             />
           ))}
           <Chip label="From what I have" selected={false} quiet onPress={onFromWhatIHave} accessibilityLabel="Make it from what you have of one ingredient" />
-        </ScrollView>
-      )}
+      </ScrollView>
       {measured ? (
         <View style={styles.ratio} aria-hidden>
           {shares.map((s, i) =>
