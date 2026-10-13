@@ -210,6 +210,10 @@ export const eightBall = {
   /** The faces next to it, tipping away into the dark. */
   neighbour: '#0C1856',
   text: '#E4ECFF',
+  /** The other side: a white circle with a black 8, shown while the bar thinks. */
+  eightFace: '#F3EFE8',
+  eightShade: '#CFC8BC',
+  eightInk: '#0B0A09',
   /** The window's clear rim and the shine on it. */
   rim: 'rgba(255,255,255,0.10)',
   glass: '#FFFFFF',
