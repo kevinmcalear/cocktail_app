@@ -1,12 +1,7 @@
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-    ActivityIndicator,
-    Alert,
-    Switch,
-    TouchableOpacity,
-} from "react-native";
+import { ActivityIndicator, Alert, Switch, TouchableOpacity } from "react-native";
 
 import { BarAssignmentAccordion } from "@/components/BarAssignmentAccordion";
 import { CategoryPickerModal, type CategoryPickerHandle } from "@/components/CategoryPickerModal";
@@ -16,6 +11,7 @@ import { IngredientDrawing } from "@/components/ds";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { PrepCalcButton } from "@/components/tools/ToolsSheet";
+import { useAskAtSave } from "@/components/screens/ingredient/AskAtSave";
 import { useDrafts } from "@/hooks/useDrafts";
 import { refreshIngredients, useDropdowns } from "@/hooks/useDropdowns";
 import { useIngredient } from "@/hooks/useIngredients";
@@ -24,9 +20,7 @@ import { renameIngredientEntity } from "@/lib/drafts";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import type { EditorChromeState } from "@/lib/editorChrome";
 import { applyIngredientHandoff } from "@/lib/ingredientHandoff";
-import {
-    mapPresentationRecipeToEditItem,
-} from "@/lib/recipeUtils";
+import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
@@ -191,7 +185,8 @@ export default function EditIngredientScreen({
             .then(([recipes, { data: raw, error }]) => {
                 if (cancelled) return;
                 if (error || !raw) throw error ?? new Error("Ingredient not found");
-                setRecipeItems(recipes.map((r) => mapPresentationRecipeToEditItem(r)));
+                // Someone who can't edit the recipe reads it as shown; Save then asks for their own version (useAskAtSave).
+                setRecipeItems((recipes.length ? recipes : (data.recipe ?? [])).map((r) => mapPresentationRecipeToEditItem(r)));
                 setOverrideVisibility(raw.override_visibility_level?.toString() || null);
                 setOverrideGeneric(raw.override_generic_ingredient_level?.toString() || null);
                 setOverrideSpecific(raw.override_specific_brand_level?.toString() || null);
@@ -317,11 +312,13 @@ export default function EditIngredientScreen({
         }
     };
 
+    // A prep other drinks use, or one that isn't yours, asks how to save first (prep-prep-edit-shared).
+    const askAtSave = useAskAtSave(id as string, { name, description, abv, lines: recipeItems }, () => void handleSave());
     useEffect(() => {
         if (!isInline || !onChromeState || loading) return;
         onChromeState({
             save: async () => {
-                await handleSave();
+                if (!askAtSave.ask()) await handleSave();
             },
             cancel: handleClose,
             saving,
@@ -342,6 +339,7 @@ export default function EditIngredientScreen({
     return (
         <BottomSheetModalProvider>
             {!isInline && <Stack.Screen options={{ headerShown: false, presentation: "modal" }} />}
+            {askAtSave.sheet}
 
             <ItemDetailLayout
                 id={id as string}
@@ -361,13 +359,7 @@ export default function EditIngredientScreen({
                 }}
                 onBack={isInline ? undefined : handleClose}
                 onCancelEdit={isInline ? undefined : handleClose}
-                onSave={
-                    isInline
-                        ? undefined
-                        : () => {
-                              void handleSave();
-                          }
-                }
+                onSave={isInline ? undefined : () => (askAtSave.ask() ? undefined : void handleSave())}
                 saving={saving}
                 isDirty={isDirty}
             >
