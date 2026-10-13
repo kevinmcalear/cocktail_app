@@ -105,10 +105,15 @@ interface ChoiceProps {
   icon?: IconName;
 }
 
-/** One option in a group: a pill, or a wider row when it has a detail line. */
+/**
+ * One option in a group: a pill, or a wider row when it has a detail line.
+ * A row leads with its radio (or check box), as the canvas draws every choice
+ * list; the chosen row is raised and ringed in the accent.
+ */
 export function Choice({ label, selected, onPress, kind = 'radio', detail, disabled, icon }: ChoiceProps) {
   const ds = useDs();
   const ink = selected && !detail ? ds.c.ground : ds.c.ink;
+  const radio = kind === 'radio';
   return (
     <PressableScale
       role={kind}
@@ -120,11 +125,16 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
       style={[
         detail ? styles.row : styles.pill,
         detail
-          ? { borderColor: selected ? ds.accentText : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }
+          ? { borderColor: selected ? ds.accentText : ds.c.line, backgroundColor: selected ? ds.c.raised : ds.c.surface }
           : { backgroundColor: selected ? ds.c.ink : ds.c.raised },
         disabled && styles.disabled,
       ]}
     >
+      {detail ? (
+        <View aria-hidden style={[styles.mark, { borderColor: selected ? ds.accentText : ds.c.lineStrong, backgroundColor: selected && !radio ? ds.accentText : 'transparent', borderRadius: radio ? radius.pill : radius.mark }]}>
+          {selected ? radio ? <View style={[styles.dot, { backgroundColor: ds.accentText }]} /> : <IconSymbol name="checkmark" size={12} color={ds.c.ground} /> : null}
+        </View>
+      ) : null}
       {icon && detail ? (
         <View style={[styles.iconTile, { backgroundColor: ds.c.raised }]} aria-hidden>
           <IconSymbol name={icon} size={20} color={ds.c.ink} />
@@ -133,16 +143,11 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
       {/* Only the full-width row stretches its text; in a content-sized pill,
           flex: 1 collapses the label to nothing on iOS. */}
       <View style={detail ? styles.flex : styles.label}>
-        <DsText variant="body" color={ink} style={{ fontFamily: selected ? fontFamilies.bodySemiBold : fontFamilies.body }}>
+        <DsText variant="body" color={ink} style={{ fontFamily: detail ? fontFamilies.bodyMedium : selected ? fontFamilies.bodySemiBold : fontFamilies.body }}>
           {label}
         </DsText>
         {detail ? <Caption tone="muted">{detail}</Caption> : null}
       </View>
-      {detail ? (
-        <View style={[styles.mark, { borderColor: selected ? ds.accentText : ds.c.lineStrong, backgroundColor: selected ? ds.accentText : 'transparent', borderRadius: kind === 'radio' ? radius.pill : radius.mark }]}>
-          {selected ? <IconSymbol name="checkmark" size={12} color={ds.c.ground} /> : null}
-        </View>
-      ) : null}
     </PressableScale>
   );
 }
@@ -160,8 +165,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
   label: { gap: 2 },
   pill: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center', flexDirection: 'row', alignItems: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md + 2, paddingHorizontal: space.lg, borderRadius: radius.control + 4, borderWidth: 1.5, borderCurve: 'continuous' },
   iconTile: { width: 44, height: 44, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
-  mark: { width: 22, height: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  mark: { width: 22, height: 22, marginTop: 1, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  dot: { width: 10, height: 10, borderRadius: radius.pill },
   disabled: { opacity: 0.45 },
 });
