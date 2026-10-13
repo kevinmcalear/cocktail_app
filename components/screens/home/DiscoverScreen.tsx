@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Display, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Button, Caption, Title, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
@@ -225,7 +225,7 @@ export function DiscoverScreen() {
       style={split ? { width: breakpoint === 'desktop' ? 560 : 420, flexGrow: 0 } : undefined}
       contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
     >
-      <ScreenHeaderSpacer title={<Display>Discover</Display>} />
+      <ScreenHeaderSpacer title={<Title>Discover</Title>} />
       <View style={[styles.sticky, { backgroundColor: ds.c.ground }]}>{controls}</View>
       <View style={styles.body}>
         {split && picked && !deskSearch ? <PickedBar key={picked.id} pin={picked} filter={filter} best={mapLayer === 'best' ? drink : null} me={me} onClose={() => setPicked(null)} /> : null}

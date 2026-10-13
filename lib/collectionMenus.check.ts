@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import type { MenuDates } from './menuEditions';
-import { averageScore, barMenuPicks, barNews, dateTile, daysAway, initials, nightLong, shelfReady, splitHomeMenus } from './collectionMenus';
+import { averageScore, barMenuPicks, listMenuPicks, barNews, dateTile, daysAway, initials, nightLong, shelfReady, splitHomeMenus } from './collectionMenus';
 
 const now = new Date(2026, 9, 9, 20, 0).getTime(); // Fri 9 Oct 2026, evening
 
@@ -78,3 +78,18 @@ assert.deepEqual(picks.news.map((n) => n.title), ['Oriole put out a new menu', '
 assert.equal(picks.news[0].sub, 'Album · Aug 2026 · 2 drinks');
 assert.equal(picks.news[1].sub, 'You had 1 drink from it · keep them as memories');
 assert.deepEqual(barMenuPicks([], editions, new Set(), now), { featured: null, rail: [], news: [] });
+
+// Nothing ranked yet: the 50 Best bars' menus on now, best placed first, saved ones left out.
+const places = [
+  { barId: 'kinsman', position: 7, award: 'The World’s 50 Best Bars', year: 2026 },
+  { barId: 'oriole', position: 2, award: 'The World’s 50 Best Bars', year: 2026 },
+  { barId: 'gone', position: 1, award: 'The World’s 50 Best Bars', year: 2026 },
+  { barId: 'rye', position: 3, award: 'The World’s 50 Best Bars', year: 2026 },
+];
+assert.deepEqual(
+  listMenuPicks(places, editions, new Set(['Saved one'])).map((p) => [p.edition.id, p.reason]),
+  [
+    ['Album', 'No. 2, The World’s 50 Best Bars 2026'],
+    ['Chinatowns', 'No. 7, The World’s 50 Best Bars 2026'],
+  ],
+);

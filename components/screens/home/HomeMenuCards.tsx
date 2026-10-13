@@ -52,14 +52,19 @@ export function PaperMenuCard({ menu, ready, now, compact }: { menu: MenuSummary
           <Title italic color={paper.ink} align="center" role={undefined}>
             {menu.name}
           </Title>
-          <View style={[styles.rule, { backgroundColor: paper.rule }]} />
+          {/* The ornament under the title: a line, a diamond, a line. */}
+          <View style={styles.ornament} aria-hidden>
+            <View style={[styles.rule, { backgroundColor: paper.rule }]} />
+            <View style={[styles.diamond, { borderColor: paper.soft }]} />
+            <View style={[styles.rule, { backgroundColor: paper.rule }]} />
+          </View>
           {drinks.slice(0, LINES).map((d) => (
             <View key={d.id} style={styles.drink}>
               <DsText variant="caption" color={paper.ink} style={styles.drinkName} align="center">
                 {d.name.toUpperCase()}
               </DsText>
               {!compact && d.line ? (
-                <DsText variant="caption" color={paper.soft} align="center" numberOfLines={2}>
+                <DsText variant="body" color={paper.soft} align="center" numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
                   {d.line}
                 </DsText>
               ) : null}
@@ -187,7 +192,9 @@ const styles = StyleSheet.create({
   frame: { borderWidth: 1, borderRadius: radius.mark, paddingTop: space.xl, paddingBottom: space.lg, paddingHorizontal: space.lg, alignItems: 'center', gap: space.md, minHeight: 380 },
   frameCompact: { minHeight: 320, paddingTop: space.lg + 4 },
   when: { letterSpacing: 2 },
-  rule: { width: 96, height: StyleSheet.hairlineWidth },
+  ornament: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  rule: { width: 40, height: StyleSheet.hairlineWidth },
+  diamond: { width: 6, height: 6, borderWidth: 1, transform: [{ rotate: '45deg' }] },
   drink: { alignSelf: 'stretch', gap: 2 },
   drinkName: { letterSpacing: 1.6 },
   pics: { flexDirection: 'row', gap: space.sm + 2, marginTop: 'auto' },
