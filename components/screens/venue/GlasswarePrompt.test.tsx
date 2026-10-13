@@ -13,7 +13,6 @@ const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: mockCaps }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [{ id: 'bar-1', name: 'Little Rye' }] }) }));
-jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 const mockRocks ={ id: 'bg', glass: 'rocks', variant: null, is_default: true, bar_name: 'Little Rye' } as unknown as BarGlass;
 jest.mock('@/hooks/useBarGlassware', () => ({
   useBarGlassware: () => ({ data: [mockRocks] }),

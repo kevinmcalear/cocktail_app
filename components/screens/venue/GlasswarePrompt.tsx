@@ -2,14 +2,13 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Body, Button, Caption, Surface, TextLink } from '@/components/ds';
+import { Body, Button, Caption, Surface, TextLink, useToast } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { barGlassFor, useBarGlassware, useBarPageId, useSaveBarGlass } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { GLASS_TYPE_LABEL, glassPromptKey, glassToAdd, hasGlass } from '@/lib/glassware';
 import type { SketchGlass } from '@/lib/sketch/types';
-import { toastDone } from '@/lib/toast';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 interface GlasswarePromptProps {
@@ -32,6 +31,7 @@ interface GlasswarePromptProps {
  */
 export function GlasswarePrompt({ barId, glass, variant, name, style }: GlasswarePromptProps) {
   const router = useRouter();
+  const toast = useToast();
   const { data: caps = [] } = useCapabilities(barId);
   const { data: pageId } = useBarPageId(barId);
   const { data: rows } = useBarGlassware(barId);
@@ -62,7 +62,7 @@ export function GlasswarePrompt({ barId, glass, variant, name, style }: Glasswar
     save.mutate(glassToAdd(rows, glass, drawn, name), {
       onSuccess: () => {
         setAdded(key);
-        toastDone('Added to your glassware', label);
+        toast.show({ title: 'Added to your glassware', detail: label });
       },
     });
   return (
