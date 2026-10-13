@@ -60,14 +60,14 @@ export interface IceNeed {
   forDrinks: string[];
 }
 
-/** The ice an event needs, by type: each drink's ice per serve times its serves. */
-export function iceForEvent(drinks: { name: string; iceType: string | null; icePerServeG: number | null }[], servesPerDrink: number): IceNeed[] {
+/** The ice an event needs, by type: each drink's ice per serve times its serves (its own, else `servesPerDrink`). */
+export function iceForEvent(drinks: { name: string; iceType: string | null; icePerServeG: number | null; serves?: number | null }[], servesPerDrink: number): IceNeed[] {
   const byType = new Map<string, IceNeed>();
   for (const d of drinks) {
     if (!d.icePerServeG || d.icePerServeG <= 0) continue;
     const type = d.iceType ?? 'Ice';
     const need = byType.get(type) ?? { type, grams: 0, forDrinks: [] };
-    need.grams += d.icePerServeG * servesPerDrink;
+    need.grams += d.icePerServeG * (d.serves ?? servesPerDrink);
     need.forDrinks.push(d.name);
     byType.set(type, need);
   }

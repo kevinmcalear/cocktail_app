@@ -21,7 +21,7 @@ export interface SwapDrink {
   lines: SwapLine[];
 }
 
-export function lineHits(line: SwapLine, findId: string, replaceId: string, mode: SwapMode): boolean {
+export function lineHits(line: Pick<SwapLine, 'ingredientId' | 'genericId'>, findId: string, replaceId: string, mode: SwapMode): boolean {
   if (!line.ingredientId || line.ingredientId === replaceId) return false;
   if (mode === 'bottle') return line.ingredientId === findId;
   return line.ingredientId === findId || line.genericId === findId;
