@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, GlassButton, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, GlassButton, PressableScale, useDs, type IconName } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -19,12 +19,12 @@ import { HomeMark } from './VenueMarks';
 // The same five things the old create button made, and where each is made.
 // `atVenue`: made at the venue you're in, so it needs its bar and the right to add there.
 // `homeHint`: what it says at home, where it lands in your own drinks and shelf.
-const CREATE: { label: string; hint: string; homeHint: string; icon: string; href: string; atVenue?: boolean }[] = [
+const CREATE: { label: string; hint: string; homeHint: string; icon: string; symbol?: IconName; href: string; atVenue?: boolean }[] = [
   { label: 'Drink', hint: 'A cocktail and its spec', homeHint: 'A cocktail and its spec, in your drinks', icon: 'TabDrinks', href: '/add-cocktail', atVenue: true },
   { label: 'Ingredient or prep', hint: 'A bottle, or something made in house', homeHint: 'A bottle for your shelf, or something you make', icon: 'TabIngredients', href: '/add-ingredient', atVenue: true },
   { label: 'Beer', hint: 'For the list or a menu', homeHint: 'For your shelf or a home menu', icon: 'Beer', href: '/add-beer', atVenue: true },
   { label: 'Wine', hint: 'For the list or a menu', homeHint: 'For your shelf or a home menu', icon: 'Wine', href: '/add-wine', atVenue: true },
-  { label: 'Menu', hint: 'Start fresh or copy one', homeHint: 'A night in: start fresh or from a saved menu', icon: 'TabMenus', href: '/menus/all?new=1' },
+  { label: 'Menu', hint: 'Start fresh or copy one', homeHint: 'A night in: start fresh or from a saved menu', icon: 'TabMenus', symbol: 'line.3.horizontal', href: '/menus/all?new=1' },
 ];
 
 function Row({ icon, label, hint, trailing, onPress }: { icon: React.ReactNode; label: string; hint: string; trailing?: React.ReactNode; onPress: () => void }) {
@@ -95,12 +95,12 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
       <View>
         {locked && venueId ? <LockedRow barId={venueId} /> : null}
         {made.map((c) => (
-          <Row key={c.label} label={c.label} hint={venueId ? c.hint : c.homeHint} icon={<CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(hrefOf(c))} />
+          <Row key={c.label} label={c.label} hint={venueId ? c.hint : c.homeHint} icon={c.symbol ? <IconSymbol name={c.symbol} size={20} color={ds.c.ink} /> : <CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(hrefOf(c))} />
         ))}
         <Row
           label="Bring in"
           hint="Snap, drop or paste a menu, recipes or bottles"
-          icon={<IconSymbol name="doc.on.doc" size={20} color={ds.c.ink} />}
+          icon={<IconSymbol name="square.and.arrow.down" size={20} color={ds.c.ink} />}
           onPress={() => {
             onClose();
             // Its own sheet, over the screen you were on, once this one has gone.
