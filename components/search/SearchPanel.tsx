@@ -15,7 +15,6 @@ import { fallbackGlass } from '@/lib/itemRoutes';
 import type { Area } from '@/lib/nearMe';
 import { friendlyWhen, menuFacts } from '@/lib/searchCaptions';
 import { scopeOptions, type SearchScope } from '@/lib/searchScope';
-import { capitalize } from '@/lib/stringUtils';
 import { useRecentActivityStore, type RecentActivity } from '@/store/useRecentActivityStore';
 import type { SearchItem } from '@/types/search';
 
@@ -158,11 +157,11 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
         items={recent}
         render={(r) =>
           drink(r.kind) ? (
-            <DrinkRow key={`${r.kind}-${r.id}`} name={capitalize(r.title)} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} onPress={() => open(r)} />
+            <DrinkRow key={`${r.kind}-${r.id}`} name={r.title} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} onPress={() => open(r)} />
           ) : (
             <ResultRow
               key={`${r.kind}-${r.id}`}
-              title={capitalize(r.title)}
+              title={r.title}
               caption={caption(r)}
               icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'target' : 'drop.fill'}
               accentIcon={r.kind === 'flavor'}

@@ -94,7 +94,7 @@ describe("Caretaker's Cottage menus", () => {
       [profileId]
     );
     assert.equal(doublethink.rows.length, 6);
-    assert.deepEqual(doublethink.rows[0], { ingredient: 'Purple Carrot-Infused Tequila', generic: 'Tequila' });
+    assert.deepEqual(doublethink.rows[0], { ingredient: 'Purple carrot-infused tequila', generic: 'Tequila' });
 
     // A bottle or prep the seed adds carries its generic on the item too,
     // so the generics backfill (ingredient-generics.test.mjs) stays a no-op.
@@ -103,14 +103,14 @@ describe("Caretaker's Cottage menus", () => {
        FROM public.items i
        LEFT JOIN public.items g ON g.id = i.generic_id
        WHERE i.item_type = 'ingredient' AND i.bar_id IS NULL
-         AND i.name IN ('Purple Carrot-Infused Tequila', 'Chamomile-Infused Mezcal', 'Olive Oil-Washed Rye', 'Four Pillars Christmas Gin')
+         AND i.name IN ('Purple carrot-infused tequila', 'Chamomile-infused mezcal', 'Olive oil-washed rye', 'Four Pillars Christmas Gin')
        ORDER BY i.name`
     );
     assert.deepEqual(bottles, [
-      { name: 'Chamomile-Infused Mezcal', generic: 'Mezcal' },
+      { name: 'Chamomile-infused mezcal', generic: 'Mezcal' },
       { name: 'Four Pillars Christmas Gin', generic: 'Gin' },
-      { name: 'Olive Oil-Washed Rye', generic: 'Rye Whiskey' },
-      { name: 'Purple Carrot-Infused Tequila', generic: 'Tequila' },
+      { name: 'Olive oil-washed rye', generic: 'Rye whiskey' },
+      { name: 'Purple carrot-infused tequila', generic: 'Tequila' },
     ]);
   });
 

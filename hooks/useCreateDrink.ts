@@ -12,7 +12,7 @@ import { creatorProfileId, likeExactly, specLines, type WizardDraft, type Wizard
 import { existingIngredientId } from '@/lib/ingredientNames';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { PrepDraft } from '@/lib/prepKinds';
-import { capitalize } from '@/lib/stringUtils';
+import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
 import { prepCardFor } from '@/lib/techniques/makeIt';
 import type { SketchInputs } from '@/lib/sketch/types';
@@ -108,7 +108,7 @@ export function useCreateDrink() {
         }
         const { data, error } = await supabase
           .from('items')
-          .insert({ name: capitalize(pick.name), item_type: type, bar_id: type === 'ingredient' ? barId : null })
+          .insert({ name: type === 'ingredient' ? capitalizeFirst(pick.name) : capitalize(pick.name), item_type: type, bar_id: type === 'ingredient' ? barId : null })
           .select('id')
           .single();
         // The database knows a name we didn't (an alias added since): it says which to use.
@@ -121,7 +121,7 @@ export function useCreateDrink() {
         made.set(key, data.id);
         if (type === 'ingredient') {
           newIngredients.push(data.id);
-          created.push({ id: data.id, name: capitalize(pick.name) });
+          created.push({ id: data.id, name: capitalizeFirst(pick.name) });
         }
         else newSpecs = true;
         return data.id;
@@ -135,7 +135,7 @@ export function useCreateDrink() {
         const key = `own:${line.name.trim().replace(/\s+/g, ' ').toLowerCase()}`;
         const known = made.get(key);
         if (known) return known;
-        const name = capitalize(line.name);
+        const name = capitalizeFirst(line.name);
         const insert = (row: { name: string; generic_id?: string }) =>
           supabase.from('items').insert({ ...row, item_type: 'ingredient', bar_id: barId, ingredient_role: 'prep' }).select('id').single();
         let { data, error } = await insert({ name });
