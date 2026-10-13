@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Platform, type LayoutChangeEvent } from 'react-native';
 import { Gesture } from 'react-native-gesture-handler';
 import { useAnimatedStyle, useFrameCallback, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -36,26 +36,25 @@ export function useRollingBall({ still, insets }: { still: boolean; insets: { to
   const squashX = useSharedValue(0);
   const squashY = useSharedValue(0);
   const lastBuzz = useSharedValue(0);
-  const layout = useSharedValue({ width: 0, height: 0, columnX: 0, columnY: 0, slotX: 0, slotY: 0 });
+  // A ref, not a shared value: the three layout events land together, and a shared value read back on the JS thread can miss the last write.
+  const layout = useRef({ width: 0, height: 0, columnX: 0, columnY: 0, slotX: 0, slotY: 0 });
   const drag = useSharedValue({ x: 0, y: 0 });
 
-  function measure(part: 'screen' | 'column' | 'slot') {
-    return (e: LayoutChangeEvent) => {
-      const { x, y, width, height } = e.nativeEvent.layout;
-      const l = { ...layout.get() };
-      if (part === 'screen') Object.assign(l, { width, height });
-      else if (part === 'column') Object.assign(l, { columnX: x, columnY: y });
-      else Object.assign(l, { slotX: x, slotY: y });
-      layout.set(l);
-      const left = l.columnX + l.slotX;
-      const top = l.columnY + l.slotY;
-      bounds.set({
-        minX: Math.min(0, EDGE - left),
-        maxX: Math.max(0, l.width - EDGE - left - BALL),
-        minY: Math.min(0, insets.top + EDGE - top),
-        maxY: Math.max(0, l.height - insets.bottom - EDGE - top - BALL),
-      });
-    };
+  // The walls: the screen's edges inside the safe area, as offsets from the ball's home.
+  function place(e: LayoutChangeEvent, part: 'screen' | 'column' | 'slot') {
+    const { x, y, width, height } = e.nativeEvent.layout;
+    const l = layout.current;
+    if (part === 'screen') Object.assign(l, { width, height });
+    else if (part === 'column') Object.assign(l, { columnX: x, columnY: y });
+    else Object.assign(l, { slotX: x, slotY: y });
+    const left = l.columnX + l.slotX;
+    const top = l.columnY + l.slotY;
+    bounds.set({
+      minX: Math.min(0, EDGE - left),
+      maxX: Math.max(0, l.width - EDGE - left - BALL),
+      minY: Math.min(0, insets.top + EDGE - top),
+      maxY: Math.max(0, l.height - insets.bottom - EDGE - top - BALL),
+    });
   }
 
   const frames = useFrameCallback((frame) => {
@@ -101,8 +100,13 @@ export function useRollingBall({ still, insets }: { still: boolean; insets: { to
       });
     })
     .onFinalize((e) => {
-      const fling = (v: number) => Math.min(MAX_FLING, Math.max(-MAX_FLING, v));
-      roll.set({ ...roll.get(), held: false, vx: fling(e.velocityX), vy: fling(e.velocityY) });
+      // Inline on purpose: React Compiler hoists a helper arrow out of the worklet, and the UI thread can't call it.
+      roll.set({
+        ...roll.get(),
+        held: false,
+        vx: Math.min(MAX_FLING, Math.max(-MAX_FLING, e.velocityX)),
+        vy: Math.min(MAX_FLING, Math.max(-MAX_FLING, e.velocityY)),
+      });
     });
 
   function kick() {
@@ -121,5 +125,13 @@ export function useRollingBall({ still, insets }: { still: boolean; insets: { to
     ],
   }));
 
-  return { roll, pan, style, kick, onScreenLayout: measure('screen'), onColumnLayout: measure('column'), onSlotLayout: measure('slot') };
+  return {
+    roll,
+    pan,
+    style,
+    kick,
+    onScreenLayout: (e: LayoutChangeEvent) => place(e, 'screen'),
+    onColumnLayout: (e: LayoutChangeEvent) => place(e, 'column'),
+    onSlotLayout: (e: LayoutChangeEvent) => place(e, 'slot'),
+  };
 }
