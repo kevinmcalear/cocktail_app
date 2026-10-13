@@ -36,7 +36,7 @@ jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }) }));
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));
 const mockStart = jest.fn();
-jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }) }));
+jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }), useClassicPreview: () => ({ data: null }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 
 beforeEach(() => {
@@ -190,7 +190,7 @@ describe('AddDrinkWizard', () => {
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
     expect(screen.getByText('WHICH SHAPE?')).toBeTruthy();
     expect(screen.getByText('Little Rye uses this')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: 'Tapered', checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Tapered. Little Rye uses this', checked: true })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Heavy base' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.glassVariant).toBe('rocks_heavy');
