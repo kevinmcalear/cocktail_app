@@ -57,6 +57,27 @@ export function useTabBarInset() {
 }
 
 /**
+ * How far the top of the floating tab bar is from the bottom of a tab screen,
+ * for things that sit right on it (Discover's map sheet). The web draws its
+ * own bar; on iOS the system bar is inside the bottom safe area; Android's is
+ * docked below the screen.
+ */
+export function useTabBarTop() {
+  const bottom = useSafeAreaInsets().bottom;
+  const wide = useIsWideWeb();
+  if (Platform.OS === 'web') return wide ? 0 : bottom + space.md + WEB_TAB_BAR_HEIGHT;
+  return Platform.OS === 'ios' ? bottom : 0;
+}
+
+/**
+ * The pill's sides and corners, for things that match it: the board's (12 in
+ * from the screen's sides, 64 tall) on the web, and the iOS 26 system bar's
+ * (21 in, about 62 tall, measured on an iPhone 17 Pro).
+ * ponytail: iOS doesn't report its bar's frame; measured, not read. Read it if NativeTabs ever exposes it.
+ */
+export const TAB_PILL = Platform.OS === 'ios' ? { inset: 21, radius: 31 } : { inset: space.md, radius: WEB_TAB_BAR_HEIGHT / 2 };
+
+/**
  * The redesigned tab bar for phone-width web: labelled tabs in a glass pill,
  * with search as its own circle, like the system bar on iOS 26.
  */
@@ -119,7 +140,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: space.md, right: space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  wrap: { position: 'absolute', left: TAB_PILL.inset, right: TAB_PILL.inset, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tabs: { flex: 1, height: WEB_TAB_BAR_HEIGHT },
   row: { flex: 1, flexDirection: 'row', padding: space.xs },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: WEB_TAB_BAR_HEIGHT / 2, gap: 2 },
