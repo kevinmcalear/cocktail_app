@@ -105,6 +105,7 @@ const MAPPING = {
   'exclamationmark.circle': 'alert-circle',
   'eye': 'eye',
   'eye.slash': 'eye-off',
+  'nosign': 'slash',
   'hand.tap': 'mouse-pointer',
   'exclamationmark.triangle': 'alert-triangle',
   'doc.text': 'file-text',

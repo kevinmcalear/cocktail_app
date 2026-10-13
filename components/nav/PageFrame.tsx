@@ -50,11 +50,12 @@ export function Crumbs({ trail }: { trail: Crumb[] }) {
 }
 
 /** Back on a phone: a chevron on the web, an X on native, where these pages open as sheets. */
-export function BackButton({ onPress }: { onPress: () => void }) {
+export function BackButton({ onPress, close }: { onPress: () => void; close?: boolean }) {
+  const shut = close || Platform.OS !== 'web';
   return (
     <GlassButton
-      accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-      icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
+      accessibilityLabel={shut ? 'Close' : 'Back'}
+      icon={shut ? 'xmark' : 'chevron.left'}
       onPress={onPress}
     />
   );
@@ -66,8 +67,10 @@ export function BackButton({ onPress }: { onPress: () => void }) {
  * button, and the trail of pages above (`crumbs`) sits over the title.
  * `leading` goes before the title (a venue's logo), `trailing` after it.
  */
-export function SubPageHead({ title, subtitle, crumbs, onBack, leading, trailing }: {
+export function SubPageHead({ title, subtitle, crumbs, onBack, leading, trailing, close }: {
   title: string;
+  /** A page opened over the app (Settings): an X instead of a back arrow, on the web too. */
+  close?: boolean;
   subtitle?: ReactNode;
   crumbs?: Crumb[];
   onBack: () => void;
@@ -77,7 +80,7 @@ export function SubPageHead({ title, subtitle, crumbs, onBack, leading, trailing
   const wide = useIsWideWeb();
   return (
     <View style={styles.head}>
-      {wide ? null : <BackButton onPress={onBack} />}
+      {wide ? null : <BackButton onPress={onBack} close={close} />}
       {leading}
       <View style={styles.title}>
         {wide && crumbs?.length ? <Crumbs trail={crumbs} /> : null}

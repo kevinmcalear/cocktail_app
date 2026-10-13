@@ -103,12 +103,15 @@ interface ChoiceProps {
   disabled?: boolean;
   /** A wide row's leading icon, on a raised tile (New menu's start options). */
   icon?: IconName;
+  /** A wide radio row with its dot first, filled in the accent when picked (ppl-bar-visibility, the report sheet). */
+  dotFirst?: boolean;
 }
 
 /** One option in a group: a pill, or a wider row when it has a detail line. */
-export function Choice({ label, selected, onPress, kind = 'radio', detail, disabled, icon }: ChoiceProps) {
+export function Choice({ label, selected, onPress, kind = 'radio', detail, disabled, icon, dotFirst }: ChoiceProps) {
   const ds = useDs();
   const ink = selected && !detail ? ds.c.ground : ds.c.ink;
+  const dot = dotFirst && detail ? <View style={[styles.dot, { borderColor: selected ? ds.accentText : ds.c.lineStrong, borderWidth: selected ? 7 : 2 }]} aria-hidden /> : null;
   return (
     <PressableScale
       role={kind}
@@ -119,12 +122,14 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
       onPress={onPress}
       style={[
         detail ? styles.row : styles.pill,
+        dot ? styles.dotRow : null,
         detail
-          ? { borderColor: selected ? ds.accentText : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }
+          ? { borderColor: selected ? ds.accentText : ds.c.line, borderWidth: selected && !dotFirst ? 2 : 1, backgroundColor: ds.c.ground }
           : { backgroundColor: selected ? ds.c.ink : ds.c.raised },
         disabled && styles.disabled,
       ]}
     >
+      {dot}
       {icon && detail ? (
         <View style={[styles.iconTile, { backgroundColor: ds.c.raised }]} aria-hidden>
           <IconSymbol name={icon} size={20} color={ds.c.ink} />
@@ -138,7 +143,7 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
         </DsText>
         {detail ? <Caption tone="muted">{detail}</Caption> : null}
       </View>
-      {detail ? (
+      {detail && !dot ? (
         <View style={[styles.mark, { borderColor: selected ? ds.accentText : ds.c.lineStrong, backgroundColor: selected ? ds.accentText : 'transparent', borderRadius: kind === 'radio' ? radius.pill : radius.mark }]}>
           {selected ? <IconSymbol name="checkmark" size={12} color={ds.c.ground} /> : null}
         </View>
@@ -163,5 +168,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   iconTile: { width: 44, height: 44, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   mark: { width: 22, height: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  dot: { width: 22, height: 22, borderRadius: radius.pill, marginTop: 1 },
+  dotRow: { alignItems: 'flex-start', borderRadius: radius.control },
   disabled: { opacity: 0.45 },
 });
