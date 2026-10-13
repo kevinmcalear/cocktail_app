@@ -69,7 +69,7 @@ export function BrandAndKindFields({ brandMaker, onBrandMaker, generic, onGeneri
                 ingredients={ingredients}
                 excludeId={excludeId}
                 title="Kind of ingredient"
-                onSelect={(item) => onGeneric({ id: item.id, name: capitalize(item.name) })}
+                onSelect={(item) => onGeneric({ id: item.id, name: item.name })}
             />
         </>
     );
@@ -96,7 +96,7 @@ function SameIngredientNotice({
     const near = match ? null : nearIngredient(name, rows, aliases);
     const shown = match ?? (near && near.id !== excludeId ? near : null);
     if (!shown || generic?.id === shown.id) return null;
-    const label = capitalize(shown.name ?? "");
+    const label = shown.name ?? "";
     return (
         <YStack gap="$2" padding="$3" borderRadius="$4" borderWidth={1} borderColor="$borderColor" role="alert">
             <Text color="$color" fontWeight="600">

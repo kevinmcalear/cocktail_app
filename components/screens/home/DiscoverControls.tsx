@@ -15,17 +15,20 @@ export function areaChipLabel(area: Area, preferNear: boolean): string {
 /**
  * Discover's one search: a pill that opens the search sheet. It shows the
  * query once there is one, with a clear button that's always there.
+ * `compact`: 44 tall, to sit in a header row beside the logo and you.
+ * `label`: what a screen reader hears before there's a query, when the
+ * placeholder is shortened to fit.
  */
-export function SearchPill({ query, placeholder, onOpen, onClear }: { query: string; placeholder: string; onOpen: () => void; onClear: () => void }) {
+export function SearchPill({ query, placeholder, label = placeholder, onOpen, onClear, compact }: { query: string; placeholder: string; label?: string; onOpen: () => void; onClear: () => void; compact?: boolean }) {
   const ds = useDs();
   const q = query.trim();
   return (
-    <GlassSurface interactive style={styles.pill}>
+    <GlassSurface interactive style={[styles.pill, compact ? styles.compact : null]}>
       <PressableScale
         role="button"
-        accessibilityLabel={q ? `Search: ${q}. Change the search` : placeholder}
+        accessibilityLabel={q ? `Search: ${q}. Change the search` : label}
         onPress={onOpen}
-        style={styles.pillOpen}
+        style={[styles.pillOpen, compact ? styles.compactOpen : null]}
       >
         <IconSymbol name="magnifyingglass" size={18} color={ds.c.muted} />
         <Body numberOfLines={1} tone={q ? 'ink' : 'muted'} style={styles.flex}>
@@ -63,25 +66,15 @@ interface FilterRowProps {
   filters: number;
   onArea: () => void;
   onFilters: () => void;
-  /** Phones: switch between the list and the map. */
-  view?: { showing: 'list' | 'map'; onToggle: () => void };
 }
 
-/** Where (the area chip), what (Filters), and the list or map, in one row. */
-export function FilterRow({ area, preferNear, filters, onArea, onFilters, view }: FilterRowProps) {
+/** Where (the area chip) and what (Filters) in one row, on wide screens. Phones have them in the header's options. */
+export function FilterRow({ area, preferNear, filters, onArea, onFilters }: FilterRowProps) {
   const where = areaChipLabel(area, preferNear);
   return (
     <View style={styles.row}>
       <RowButton icon="mappin.and.ellipse" label={where} a11y={`Where: ${where}. Change`} active={false} onPress={onArea} />
       <FiltersChip filters={filters} onPress={onFilters} />
-      <View style={styles.flex} />
-      {view ? (
-        view.showing === 'map' ? (
-          <GlassButton accessibilityLabel="Show the list" label="List" icon="list.bullet" onPress={view.onToggle} />
-        ) : (
-          <GlassButton accessibilityLabel="Show the map" label="Map" icon="map.fill" onPress={view.onToggle} />
-        )
-      ) : null}
     </View>
   );
 }
@@ -145,6 +138,8 @@ const styles = StyleSheet.create({
     paddingRight: space.xs,
   },
   pillOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, minHeight: layout.minTapTarget + space.xs, paddingLeft: space.lg + 2 },
+  compact: { minHeight: layout.minTapTarget },
+  compactOpen: { minHeight: layout.minTapTarget, paddingLeft: space.md + 2, gap: space.sm },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   buttonWrap: { maxWidth: 200 },

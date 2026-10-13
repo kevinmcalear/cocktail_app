@@ -10,7 +10,7 @@ import { IngredientThumb } from "@/components/ds";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useDragMergeDwell } from "@/hooks/useDragMergeDwell";
 import { isDefaultBatchName } from "@/lib/mergeRecipeItems";
-import { capitalize } from "@/lib/stringUtils";
+import { capitalizeFirst } from "@/lib/stringUtils";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { STATUS } from '@/constants/palette';
 
@@ -92,7 +92,7 @@ function EditIngredientRow({
 
     const commitName = () => {
         setEditingName(false);
-        const next = capitalize(item.name.trim());
+        const next = capitalizeFirst(item.name);
         if (!next) {
             onUpdateItem(index, { name: committedNameRef.current });
             return;

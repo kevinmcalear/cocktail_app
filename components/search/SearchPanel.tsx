@@ -15,7 +15,6 @@ import { fallbackGlass } from '@/lib/itemRoutes';
 import type { Area } from '@/lib/nearMe';
 import { friendlyWhen, menuFacts } from '@/lib/searchCaptions';
 import { scopeOptions, type SearchScope } from '@/lib/searchScope';
-import { capitalize } from '@/lib/stringUtils';
 import { useRecentActivityStore, type RecentActivity } from '@/store/useRecentActivityStore';
 import type { SearchItem } from '@/types/search';
 
@@ -53,12 +52,19 @@ interface HeadProps {
   cancel?: boolean;
 }
 
+/** What the field says it searches: the venue, the area or everywhere. */
+export function searchPlaceholder(scope: SearchScope, mine: SearchMine, area?: SearchArea | null): string {
+  if (scope === 'everywhere') return 'Search bars, drinks and people';
+  if (scope === 'area') return `Search ${area?.label === 'This area' ? 'this area' : (area?.label ?? 'here')}`;
+  return `Search ${mine.venueId ? mine.label : 'your drinks'}`;
+}
+
 /** The search field and where it looks. The same at every door: the tab, ⌘K, Library and Discover. */
 export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys, cancel }: HeadProps) {
   const ds = useDs();
   const gutter = useGutter();
   const options = scopeOptions(mine.label, area?.label ?? null);
-  const placeholder = scope === 'everywhere' ? 'Search bars, drinks and people' : scope === 'area' ? `Search ${area?.label === 'This area' ? 'this area' : (area?.label ?? 'here')}` : `Search ${mine.venueId ? mine.label : 'your drinks'}`;
+  const placeholder = searchPlaceholder(scope, mine, area);
   return (
     <View style={styles.head}>
       <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys={keys} cancel={cancel} />
@@ -158,11 +164,11 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
         items={recent}
         render={(r) =>
           drink(r.kind) ? (
-            <DrinkRow key={`${r.kind}-${r.id}`} name={capitalize(r.title)} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} onPress={() => open(r)} />
+            <DrinkRow key={`${r.kind}-${r.id}`} name={r.title} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} onPress={() => open(r)} />
           ) : (
             <ResultRow
               key={`${r.kind}-${r.id}`}
-              title={capitalize(r.title)}
+              title={r.title}
               caption={caption(r)}
               icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'target' : 'drop.fill'}
               accentIcon={r.kind === 'flavor'}

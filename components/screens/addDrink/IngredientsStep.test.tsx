@@ -57,7 +57,7 @@ describe('IngredientsStep', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to the drink' }));
     const line = set.mock.calls[0][0].lines[0];
-    expect(line).toMatchObject({ id: null, name: 'Clarified Grapefruit', technique: 'agar-quick' });
+    expect(line).toMatchObject({ id: null, name: 'Clarified grapefruit', technique: 'agar-quick' });
     expect(line.prep.technique).toBe('agar-quick');
     expect(line.prep.lines.length).toBeGreaterThan(1);
   });
@@ -90,14 +90,14 @@ describe('IngredientsStep', () => {
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'pineapple chili shrub');
     expect(screen.queryByText('Nothing called that yet. Closest:')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Just add the name “pineapple chili shrub”' }));
-    expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: null, name: 'Pineapple Chili Shrub', later: true });
+    expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: null, name: 'Pineapple chili shrub', later: true });
 
     await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines: set.mock.calls[0][0].lines }} set={set} ingredients={[CAMPARI]} />);
     // The row stays one ingredient and its pour; what it is and what to do sit behind a tap on the name.
     expect(screen.queryByText('House prep, recipe to write')).toBeNull();
-    await fireEvent.press(screen.getByRole('button', { name: /^Pineapple Chili Shrub, / }));
+    await fireEvent.press(screen.getByRole('button', { name: /^Pineapple chili shrub, / }));
     expect(screen.getByText('House prep, recipe to write')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Write the recipe for Pineapple Chili Shrub' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Write the recipe for Pineapple chili shrub' })).toBeTruthy();
   });
 
   test('nothing called that: the closest ingredients, then make it or just add the name', async () => {
