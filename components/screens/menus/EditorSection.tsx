@@ -11,7 +11,8 @@ import { readableAccent } from '@/lib/color';
 import { sectionLine } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
-import { EditorRow, GRIP } from './EditorRow';
+import { DropSlot, EditorRow, GRIP } from './EditorRow';
+import { dropSection } from './useMenuDrag';
 
 interface EditorSectionProps {
   section: EditSection;
@@ -29,7 +30,11 @@ interface EditorSectionProps {
   onRemove: (drinkId: string) => void;
   onReorder: (drinks: MenuDrink[]) => void;
   onMove: (from: number, to: number) => void;
+  /** Desktop web: the browser's drag and drop (useMenuDrag) instead of the grip drag. */
+  drag?: { at: number | null; dragging: string | null };
 }
+
+const noDrag = () => {};
 
 const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
 
@@ -38,7 +43,7 @@ const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : Draggab
  * reorder), and adding more. No box of its own: on desktop the section the
  * library adds to sits on a raised ground, tagged "Adding here".
  */
-export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, onRemove, onReorder, onMove, onMoveTo }: EditorSectionProps) {
+export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, onRemove, onReorder, onMove, onMoveTo, drag: web }: EditorSectionProps) {
   const ds = useDs();
   const count = section.drinks.length;
   const line = sectionLine(section);
@@ -51,7 +56,8 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
       count={count}
       home={home}
       active={isActive}
-      drag={drag}
+      drag={web ? noDrag : drag}
+      web={web ? { from: section.key, slot: web.at === getIndex() ? 'before' : web.at === count && getIndex() === count - 1 ? 'after' : null, dragging: web.dragging === item.id } : undefined}
       onRemove={() => onRemove(item.id)}
       onMove={onMove}
       others={others}
@@ -60,7 +66,7 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
   );
 
   return (
-    <View style={[styles.section, targeted && { backgroundColor: ds.c.surface }]}>
+    <View {...(web ? dropSection(section.key) : {})} style={[styles.section, targeted && { backgroundColor: ds.c.surface }]}>
       <View style={styles.head}>
         <PressableScale
           accessibilityLabel={onTarget ? `${section.name}: add drinks here` : section.name}
@@ -99,6 +105,7 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
           dragHitSlop={gripOnly(GRIP, 'right')}
         />
       ) : null}
+      {web && !count && web.at === 0 ? <DropSlot /> : null}
       {onAdd ? (
         <PressableScale accessibilityLabel={`Add a drink to ${section.name}`} onPress={onAdd} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
           <IconSymbol name="plus" size={16} color={ds.c.ink} />

@@ -7,6 +7,7 @@ import { displayFaces, radius, space, type } from '@/constants/tokens';
 import { EditorSection } from './EditorSection';
 import { MenuVisual } from './MenuVisual';
 import type { LayoutEditor } from './useLayoutEditor';
+import type { MenuDrag } from './useMenuDrag';
 
 /** Where the menu stands, for the editor's header. */
 export const EDITOR_STATUS = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' } as const;
@@ -100,7 +101,7 @@ function addTarget(editor: LayoutEditor): string | null {
  * ends with Add a section; a phone has one dashed Add a drink after them all
  * (Add a section is in its bottom bar). Paste a list is in each section's ... menu.
  */
-export function EditorSections({ editor, targetable }: { editor: LayoutEditor; targetable?: boolean }) {
+export function EditorSections({ editor, targetable, drag }: { editor: LayoutEditor; targetable?: boolean; drag?: MenuDrag }) {
   const ds = useDs();
   const home = useHomeMenu(editor);
   const target = addTarget(editor);
@@ -120,6 +121,7 @@ export function EditorSections({ editor, targetable }: { editor: LayoutEditor; t
           onReorder={(drinks) => editor.reorder(s.key, drinks)}
           onMove={(from, to) => editor.move(s.key, from, to)}
           onMoveTo={(id, toKey) => editor.moveTo(s.key, id, toKey)}
+          drag={drag?.on ? { at: drag.at?.key === s.key ? drag.at.index : null, dragging: drag.dragging } : undefined}
         />
       ))}
       {targetable ? (
