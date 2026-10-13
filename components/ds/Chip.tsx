@@ -16,9 +16,9 @@ import { useDs } from './theme';
  * `disabled` dims it and ignores presses, for a choice the person can see but not change.
  * `accessibilityLabel` names it when the label alone is ambiguous in a list ("I have it" beside each tool).
  * `leading` sits before the label: a small decorative picture (an ingredient drawing).
- * `count` follows the label, quieter: how many are in it ("Bottles 12").
+ * `count` follows the label, quieter: how many are in it ("Bottles 12"), or a word ("Negronis the style").
  */
-export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel, leading, count }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string; leading?: ReactNode; count?: number }) {
+export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel, leading, count }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string; leading?: ReactNode; count?: number | string }) {
   const ds = useDs();
   return (
     <PressableScale

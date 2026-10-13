@@ -18,6 +18,12 @@ const byName = checkShelf(lines, { ready: false, buy: [{ id: 'other', name: 'aga
 assert.deepEqual(byName.missing, ['r-ag', 'r-cyn']);
 assert.equal(shelfNeed(byName), 'You have 3 of 5');
 
+// The server asks for the kind (Herbal Liqueur) when the spec names a bottle of it (the Last Word's Green Chartreuse).
+const lastWord = specLines([row('gin', 'Gin', 22.5, 'ml'), row('gc', 'Green Chartreuse', 22.5, 'ml'), row('mar', 'Maraschino Liqueur', 22.5, 'ml'), row('lime', 'Lime Juice', 22.5, 'ml')]);
+const kind = checkShelf(lastWord, { ready: false, buy: [{ id: 'herbal', name: 'Herbal Liqueur' }] }, { gc: 'herbal', mar: 'liqueur' })!;
+assert.deepEqual(kind.missing, ['r-gc']);
+assert.equal(shelfCaption(kind), 'You have 3 of 4');
+
 // Ready, and too far for the server to say.
 assert.equal(shelfCaption(checkShelf(lines, { ready: true })!), 'You have them all');
 assert.equal(shelfNeed(checkShelf(lines, { ready: true })!), 'Ready to make');

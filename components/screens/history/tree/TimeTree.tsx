@@ -2,14 +2,14 @@ import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from '
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
-import { Caption, PressableScale, useDs } from '@/components/ds';
-import { familyHues, fontFamilies, radius, space } from '@/constants/tokens';
+import { Caption, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { familyHues, fontFamilies, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { AXIS_TICKS, axisEras, axisX, TIER_LABEL, type AxisFamily, type AxisRow } from '@/lib/timeTree';
 
 /** Taller than the board's 26 so each row is a fair tap. */
 const ROW = 34;
-const HEAD = 60;
+const HEAD = 68;
 const GAP = 14;
 const AXIS = 52;
 /** The board's chart width; phones swipe across it. */
@@ -30,6 +30,30 @@ function layoutOf(families: AxisFamily[]) {
     y += f.rows.length * ROW + GAP;
   }
   return { heads, tops, height: y + space.lg };
+}
+
+/** Rows the first screen of the chart shows. */
+const FIRST_SCREEN = 16;
+
+/**
+ * Where to open a chart wider than the screen: the window with the most of
+ * the first screen's drinks in it, the later one on a tie (it swipes back for
+ * earlier years).
+ */
+export function openingX(families: AxisFamily[], W: number, viewW: number): number {
+  const xs = families.flatMap((f) => f.rows).slice(0, FIRST_SCREEN).map((r) => r.x * W);
+  const max = W - viewW;
+  let best = max;
+  let most = -1;
+  for (let x = max; x >= 0; x -= 20) {
+    // A label runs right of its mark, so leave it room before the window's edge.
+    const seen = xs.filter((cx) => cx >= x + space.xxl && cx <= x + viewW - space.xxxl * 2).length;
+    if (seen > most) {
+      most = seen;
+      best = x;
+    }
+  }
+  return best;
 }
 
 /**
@@ -55,6 +79,7 @@ export function TimeTree({
   bottomPad: number;
 }) {
   const ds = useDs();
+  const wideHead = useBreakpoint() === 'desktop';
   const hues = familyHues[ds.scheme];
   const hueOf = (family: string) => hues[family as keyof typeof hues] ?? hues.trunk;
   const vertical = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -69,12 +94,12 @@ export function TimeTree({
   const W = Math.max(MIN_W, viewW);
   const { heads, tops, height } = layoutOf(families);
 
-  // Open on the recent years: the right-hand end.
+  // Open where the first screen has drinks on it (board prep-hist-tree-phone), not on an empty stretch of years.
   const opened = useRef(false);
   useEffect(() => {
-    if (opened.current || !viewW || W <= viewW) return;
+    if (opened.current || !viewW || W <= viewW || !families.length) return;
     opened.current = true;
-    across.current?.scrollTo({ x: W - viewW, animated: false });
+    across.current?.scrollTo({ x: openingX(families, W, viewW), animated: false });
   });
 
   useEffect(() => {
@@ -117,7 +142,7 @@ export function TimeTree({
     const selected = n.key === selectedKey;
     const right = r.x > 0.68;
     const meta = [r.undated ? 'no year' : `${n.approx ? 'c.' : ''}${n.year}`, n.creator].filter(Boolean).join(' · ');
-    const mark = r.tier === 'style' ? { backgroundColor: hue, borderRadius: radius.mark } : r.tier === 'modern' ? { backgroundColor: ds.c.ground, borderColor: hue, borderWidth: 2 } : { backgroundColor: hue };
+    const mark = r.tier === 'style' ? { backgroundColor: hue, borderRadius: radius.mark / 2 } : r.tier === 'modern' ? { backgroundColor: ds.c.ground, borderColor: hue, borderWidth: 2 } : { backgroundColor: hue };
     return (
       <PressableScale
         key={n.key}
@@ -177,9 +202,12 @@ export function TimeTree({
             {families.flatMap((f) => f.rows.map((r) => row(r, f)))}
             <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, pinned]}>
               {families.map((f) => (
-                <View key={f.key} role="heading" aria-level={2} style={[styles.head, { top: heads.find((h) => h.key === f.key)!.y + space.md }]}>
-                  <Caption style={[styles.picked, { color: hueOf(f.key) }]}>{f.name}</Caption>
-                  <Caption tone="muted">{`${f.blurb.replace(/\.$/, '')} · ${f.drinks} drink${f.drinks === 1 ? '' : 's'}`}</Caption>
+                <View key={f.key} role="heading" aria-level={2} style={[styles.head, { top: heads.find((h) => h.key === f.key)!.y + space.sm }]}>
+                  {/* The family in the display face, as drawn; its colour is on its marks and chips. */}
+                  <DsText variant="title" numberOfLines={1} style={wideHead ? styles.familyWide : styles.family}>
+                    {f.name}
+                  </DsText>
+                  <Caption tone="muted" numberOfLines={1}>{`${f.blurb.replace(/\.$/, '')} · ${f.drinks} drink${f.drinks === 1 ? '' : 's'}`}</Caption>
                 </View>
               ))}
             </Animated.View>
@@ -208,5 +236,7 @@ const styles = StyleSheet.create({
   picked: { fontFamily: fontFamilies.bodySemiBold },
   styleName: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
   meta: { fontFamily: fontFamilies.mono },
-  head: { position: 'absolute', left: space.xs, gap: 2 },
+  head: { position: 'absolute', left: space.xs },
+  family: { fontSize: type.headline.fontSize + 2, lineHeight: type.headline.lineHeight + 2 },
+  familyWide: { fontSize: type.headline.fontSize + 6, lineHeight: type.headline.lineHeight + 4 },
 });

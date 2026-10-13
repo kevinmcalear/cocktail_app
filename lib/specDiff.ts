@@ -1,8 +1,10 @@
 /**
  * What changed between two versions of a drink, in plain words: "Demerara
- * 7.5 → 6 g", "+ 1 dash Saline", "− Orange bitters", "Method Stir → Shake".
+ * 7.5 g to 6 g", "+ 1 dash Saline", "− Orange bitters", "Method Stir → Shake".
  * Reads the snapshots private.drink_snapshot writes. Pure.
  */
+
+import { barMl, ML_PER_OZ } from './drinkMath';
 
 export interface SnapshotLine {
   ingredient_item_id: string | null;
@@ -27,9 +29,12 @@ export interface Snapshot {
 
 const ARROW = '→';
 
+/** An amount as the spec reads it; ounces in the page's ml bar measures, so a change never mixes units. */
 function amountOf(l: SnapshotLine): string {
   const n = l.amount === null || l.amount === '' ? null : Number(l.amount);
   if (n === null || Number.isNaN(n)) return l.unit ?? '';
+  const unit = (l.unit ?? '').toLowerCase();
+  if (unit === 'oz' || unit === 'fl oz') return `${barMl(n * ML_PER_OZ)} ml`;
   return [String(Number(n.toFixed(3))), l.unit].filter(Boolean).join(' ');
 }
 
@@ -53,7 +58,7 @@ export function specDiff(prev: Snapshot | null, next: Snapshot): string[] {
     }
     const a = amountOf(was);
     const b = amountOf(l);
-    if (a !== b) out.push(`${name(l)} ${a || 'no amount'} ${ARROW} ${b || 'no amount'}`);
+    if (a !== b) out.push(`${name(l)} ${a || 'no amount'} to ${b || 'no amount'}`);
     if ((was.note ?? '') !== (l.note ?? '')) out.push(`${name(l)}: prep note ${l.note ? 'changed' : 'removed'}`);
     if (!!was.optional !== !!l.optional) out.push(`${name(l)} ${l.optional ? 'now optional' : 'no longer optional'}`);
   }

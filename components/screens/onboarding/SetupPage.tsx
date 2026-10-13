@@ -44,6 +44,7 @@ export function SetupFooter({
   pending,
   skipLabel = 'Not now',
   onSkip,
+  compact,
 }: {
   label?: string;
   onPress: () => void;
@@ -53,10 +54,12 @@ export function SetupFooter({
   skipLabel?: string;
   /** Leave out for a step that can't be skipped. */
   onSkip?: () => void;
+  /** The button as wide as its label, at the left (the last step's Finish setup). */
+  compact?: boolean;
 }) {
   return (
     <>
-      <Button label={pending ? 'Saving…' : label} size="lg" onPress={onPress} disabled={disabled || pending} />
+      <Button label={pending ? 'Saving…' : label} size="lg" onPress={onPress} disabled={disabled || pending} style={compact ? styles.compact : undefined} />
       {onSkip ? <Button label={skipLabel} variant="ghost" onPress={onSkip} disabled={pending} /> : null}
     </>
   );
@@ -64,4 +67,5 @@ export function SetupFooter({
 
 const styles = StyleSheet.create({
   inline: { gap: space.md },
+  compact: { alignSelf: 'flex-start' },
 });

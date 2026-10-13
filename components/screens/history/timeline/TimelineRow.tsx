@@ -1,11 +1,14 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, PressableScale, Title, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, PressableScale, Title, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { familyHues, fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { ERAS, fromLine, shortYear, type TimelineRow as Row, type TimelineSection } from '@/lib/timeline';
 
 const YEAR_W = 52;
 const SPINE_W = 20;
+const TILE = 44;
+const TILE_WIDE = 36;
 
 /** The family's hue for this scheme; Punch and unknown families get the trunk's. */
 export function useFamilyHue(family: string): string {
@@ -30,14 +33,20 @@ export function TimelineRowView({
   inThread,
   dimmed,
   wide,
+  compact,
   onPress,
+  threadSpine = null,
 }: {
   row: Row;
   selected: boolean;
   inThread: boolean;
   dimmed: boolean;
   wide: boolean;
+  /** Following a thread on a phone: the name and who made it, nothing more (board prep-hist-timeline-thread). */
+  compact?: boolean;
   onPress: () => void;
+  /** Where the thread's accent line runs through this row's spine: from its dot down, up to it, or right through. */
+  threadSpine?: 'down' | 'up' | 'through' | null;
 }) {
   const ds = useDs();
   const hue = useFamilyHue(row.node.family);
@@ -65,7 +74,10 @@ export function TimelineRowView({
         ) : null}
       </View>
       <View style={styles.spine}>
-        <View style={[styles.line, { backgroundColor: inThread ? ds.accentText : ds.c.lineStrong }]} />
+        <View style={[styles.line, { backgroundColor: ds.c.lineStrong }]} />
+        {threadSpine ? (
+          <View style={[styles.line, threadSpine === 'down' ? styles.lower : threadSpine === 'up' ? styles.upper : null, { backgroundColor: ds.accentText }]} />
+        ) : null}
         <View
           style={[
             styles.dot,
@@ -88,15 +100,18 @@ export function TimelineRowView({
             {maker}
           </Caption>
         ) : null}
-        {style && n.note ? (
+        {style && n.note && !compact ? (
           <Caption tone="muted" numberOfLines={2}>
             {n.note}
           </Caption>
         ) : null}
-        {from ? (
-          <Caption tone="muted" numberOfLines={1}>
-            {from}
-          </Caption>
+        {from && !compact ? (
+          <View style={styles.from}>
+            <IconSymbol name="arrow.uturn.backward" size={13} color={ds.c.muted} />
+            <Caption tone="muted" numberOfLines={1} style={styles.flex}>
+              {from}
+            </Caption>
+          </View>
         ) : null}
       </View>
       {wide ? (
@@ -104,21 +119,56 @@ export function TimelineRowView({
           {style ? '' : (n.note ?? '')}
         </Caption>
       ) : null}
+      {/* Rows carry year, maker and a sketch tile; styles are words only (board prep-hist-timeline-phone). */}
+      {style || compact ? null : (
+        <View style={[styles.tile, { width: wide ? TILE_WIDE : TILE, height: wide ? TILE_WIDE : TILE }]} aria-hidden>
+          <DrinkImage thumb sketchDetail="thumb" itemId={n.id} glass={null} accessibilityLabel={n.name} radius="control" />
+        </View>
+      )}
     </PressableScale>
   );
 }
 
-/** "1860 to 1919 · 123 drinks", the era's name and one line about it. Sticky above its rows. */
-export function EraHeader({ section }: { section: TimelineSection }) {
+/**
+ * A stretch of drinks off a followed thread, folded: the thread's accent line
+ * runs dashed through it. Tap to show them.
+ */
+export function FoldRow({ count, onPress }: { count: number; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel={`Show the ${count} drinks in between`} onPress={onPress} style={styles.fold}>
+      <View style={styles.year} />
+      <View style={styles.spine}>
+        <View style={[styles.dashed, { borderColor: ds.accentText }]} />
+      </View>
+      <Caption tone="muted" style={styles.foldText}>{`${count} more`}</Caption>
+    </PressableScale>
+  );
+}
+
+/** "1860 to 1919 · 123 drinks", the era's name and one line about it (not while following a thread). Sticky above its rows. */
+export function EraHeader({ section, wide, compact }: { section: TimelineSection; wide?: boolean; compact?: boolean }) {
   const ds = useDs();
   const i = ERAS.findIndex((e) => e.key === section.era.key);
   const next = ERAS[i + 1];
   const range = `${section.era.start} to ${next ? next.start - 1 : 'now'}`;
+  const count = `${range} · ${section.drinks} drink${section.drinks === 1 ? '' : 's'}`;
+  // Desktop: the era's name with its range beside it, one line (board prep-hist-timeline-desktop).
+  if (wide) {
+    return (
+      <View style={[styles.era, styles.eraWide, { backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }]}>
+        <Title>{section.era.name}</Title>
+        <Caption tone="muted" style={styles.eyebrow}>
+          {count}
+        </Caption>
+      </View>
+    );
+  }
   return (
     <View style={[styles.era, { backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }]}>
-      <Caption tone="muted" style={styles.eyebrow}>{`${range} · ${section.drinks} drink${section.drinks === 1 ? '' : 's'}`}</Caption>
+      <Caption tone="muted" style={styles.eyebrow}>{count}</Caption>
       <Title>{section.era.name}</Title>
-      <Caption tone="muted">{section.era.blurb}</Caption>
+      {compact ? null : <Caption tone="muted">{section.era.blurb}</Caption>}
     </View>
   );
 }
@@ -129,12 +179,22 @@ const styles = StyleSheet.create({
   mono: { fontFamily: fontFamilies.mono, fontVariant: ['tabular-nums'] },
   spine: { width: SPINE_W, alignItems: 'center' },
   line: { position: 'absolute', top: 0, bottom: 0, width: 2 },
+  // The thread's line starts or stops at the dot.
+  lower: { top: space.md + 9 },
+  upper: { bottom: undefined, height: space.md + 9 },
+  from: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2 },
+  flex: { flex: 1, minWidth: 0 },
+  tile: { marginTop: space.sm + 2, marginLeft: space.sm },
   dot: { width: 12, height: 12, borderRadius: radius.pill, marginTop: space.md + 3 },
   text: { flex: 1, minWidth: 0, gap: 2, paddingVertical: space.sm + 2 },
   nameLine: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   name: { fontFamily: fontFamilies.instrument },
   styleTag: { fontFamily: fontFamilies.mono, letterSpacing: 1, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.mark, paddingHorizontal: space.xs + 2 },
+  fold: { flexDirection: 'row', minHeight: layout.minTapTarget, columnGap: space.sm },
+  dashed: { position: 'absolute', top: 0, bottom: 0, borderLeftWidth: 2, borderStyle: 'dashed' },
+  foldText: { alignSelf: 'center' },
   note: { flex: 1.1, minWidth: 0, paddingTop: space.md + 2, paddingRight: space.sm },
   era: { paddingTop: space.lg, paddingBottom: space.md, gap: 2, borderBottomWidth: StyleSheet.hairlineWidth },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
+  eraWide: { flexDirection: 'row', alignItems: 'baseline', gap: space.md, paddingHorizontal: space.sm },
 });

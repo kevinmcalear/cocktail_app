@@ -3,9 +3,9 @@ import { useState, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Caption, DrinkImage, DsText, GlassButton, GlassSurface, LockedSection, PressableScale, Spec, Tag, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, DrinkImage, DsText, GlassButton, LockedSection, Segmented, Spec, Tag, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useServiceNotes } from '@/hooks/useServiceNotes';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
@@ -72,20 +72,17 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
             radius={0}
             style={StyleSheet.flatten([styles.fill, { height: heroHeight, aspectRatio: undefined }])}
           />
-          <View style={[styles.angles, { bottom: space.lg, left: gutter, right: gutter }]}>
-            <GlassSurface scheme={glass} style={styles.tabs}>
-              <View role="tablist" accessibilityLabel="Angle" style={styles.tabRow}>
-                {shots.slice(1).map((s) => {
-                  const on = s.angle === angle;
-                  return (
-                    <PressableScale key={s.angle} role="tab" aria-selected={on} accessibilityLabel={s.label} onPress={() => setAngle(s.angle as ServiceAngle)} style={[styles.tab, on && { backgroundColor: backbar[glass].lineStrong }]}>
-                      <Caption color={backbar[glass].ink}>{s.label}</Caption>
-                    </PressableScale>
-                  );
-                })}
-              </View>
-            </GlassSurface>
-          </View>
+        </View>
+        {/* The angles as a full-width control under the picture (board drink-phone-service). */}
+        <View style={[styles.angles, { paddingHorizontal: gutter }]}>
+          <Segmented
+            accessibilityLabel="Angle"
+            options={shots.slice(1).map((s) => ({ value: s.angle as ServiceAngle, label: s.label }))}
+            value={angle}
+            onChange={setAngle}
+            variant="pill"
+            stretch
+          />
         </View>
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
           <View>
@@ -104,10 +101,8 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
               <Group title="HAND-OFF">
                 <View role="list">
                   {notes.handoff.map((step, i) => (
-                    <View key={`${i}-${step}`} role="listitem" style={styles.step}>
-                      <View style={[styles.num, { borderColor: ds.c.lineStrong }]}>
-                        <Caption>{String(i + 1)}</Caption>
-                      </View>
+                    <View key={`${i}-${step}`} role="listitem" style={[styles.step, { borderBottomColor: ds.c.line }]}>
+                      <View style={[styles.bullet, { backgroundColor: ds.accentText }]} />
                       <Body style={styles.flex}>{step}</Body>
                     </View>
                   ))}
@@ -153,7 +148,7 @@ function Group({ title, tag, children }: { title: string; tag?: string | null; c
         <Caption tone="muted" style={styles.eyebrow}>
           {title}
         </Caption>
-        {tag ? <Tag label={tag} tone="accent" /> : null}
+        {tag ? <Tag label={tag} /> : null}
       </View>
       {children}
     </View>
@@ -175,16 +170,13 @@ function Line({ amount, name }: { amount: string; name: string }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   fill: { width: '100%' },
-  angles: { position: 'absolute', alignItems: 'center' },
-  tabs: { padding: space.xs },
-  tabRow: { flexDirection: 'row', gap: space.xs },
-  tab: { minHeight: layout.minTapTarget - space.sm, paddingHorizontal: space.md, justifyContent: 'center', borderRadius: radius.pill },
+  angles: { paddingTop: space.lg },
   body: { gap: space.lg, paddingTop: space.xl },
   group: { gap: space.xs },
   groupHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  eyebrow: { letterSpacing: 1.2 },
-  step: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.xs },
-  num: { width: 24, height: 24, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
+  step: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderBottomWidth: StyleSheet.hairlineWidth },
+  bullet: { width: 6, height: 6, borderRadius: radius.pill },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderBottomWidth: StyleSheet.hairlineWidth },
   amount: { width: 96 },
   lock: { flexDirection: 'row', alignItems: 'center', gap: space.xs },

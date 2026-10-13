@@ -1,3 +1,4 @@
+import { usePathname } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,8 +16,10 @@ export function ViewAsBanner() {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving } = useViewAs();
+  const pathname = usePathname();
 
-  if (viewAsRoleLevel == null) return null;
+  // Setting up a venue or an account is the person's own work, not a role's view, and the pill would sit over the setup's Back and progress.
+  if (viewAsRoleLevel == null || SETUP_ROUTES.some((r) => pathname.startsWith(r))) return null;
 
   return (
     <View
@@ -28,6 +31,8 @@ export function ViewAsBanner() {
     </View>
   );
 }
+
+const SETUP_ROUTES = ['/venue-setup', '/onboarding', '/age-check'];
 
 const styles = StyleSheet.create({
   banner: {

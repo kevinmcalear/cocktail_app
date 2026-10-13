@@ -65,7 +65,7 @@ for (let i = 0; i < shown.length; i++) {
 
 // The list groups the same way the rings do.
 assert.deepEqual(groupByRing(pairs).map((g) => g.items.length), [4, 6, 8]);
-assert.deepEqual(groupByRing(pairs.slice(0, 5)).map((g) => g.ring.label), ['Closest', 'Strong']);
+assert.deepEqual(groupByRing(pairs.slice(0, 5)).map((g) => g.ring.label), ['Close: most often together', 'Often']);
 
 // Bouncing keeps the last three picks, never a duplicate.
 assert.deepEqual(addPick(['a'], 'b'), ['a', 'b']);

@@ -10,6 +10,8 @@ import { useAcceptInvite, useRemoveInvite, type MyInvite } from '@/hooks/useBarI
 import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { isHexColor } from '@/lib/color';
 import { INVITE_STEP_NAMES, withArticle } from '@/lib/onboarding';
+
+import { Monogram } from './SetupParts';
 import { roleLabel } from '@/lib/roles';
 
 interface InviteWelcomeProps {
@@ -82,9 +84,16 @@ function Welcome({ invite, setUp, onJoined, onDeclined }: InviteWelcomeProps) {
       >
         <View style={styles.column}>
           <View style={styles.intro}>
-            <View style={[styles.mark, { borderColor: ds.accentText }]}>
-              <VenueMark venue={venue} size={88} />
-            </View>
+            {invite.bar_logo_url ? (
+              <View style={[styles.mark, { borderColor: ds.accentText }]}>
+                <VenueMark venue={venue} size={88} />
+              </View>
+            ) : (
+              // No logo: the venue's initials in its italic, ringed in its accent (canvas make-onboarding-invite).
+              <View style={styles.monogram}>
+                <Monogram name={invite.bar_name} size={88} accent italic />
+              </View>
+            )}
             <Caption tone="accent" style={styles.kicker}>
               YOU’RE INVITED
             </Caption>
@@ -156,7 +165,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: space.lg,
   },
-  kicker: { letterSpacing: 0.8, fontFamily: fontFamilies.bodySemiBold },
+  monogram: { marginBottom: space.lg },
+  kicker: { letterSpacing: 0.6, fontFamily: fontFamilies.bodyMedium },
   steps: { gap: space.xs, marginTop: space.md },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   number: { width: 28, height: 28, borderRadius: radius.pill, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
