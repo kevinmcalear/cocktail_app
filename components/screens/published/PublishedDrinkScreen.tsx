@@ -79,7 +79,7 @@ function PublicActions({ id, name, barId, picture, releaseId }: { id: string; na
  * name, credit, description and family tree; Where to drink it and the spec.
  * Signed out the spec shows its ingredient names, the rest behind Sign in.
  */
-export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?: string | null }) {
+export function PublishedDrinkScreen({ id, releaseId }: { /** The drink's id, or its slug (/d/penicillin). */ id: string; releaseId?: string | null }) {
   const bp = useBreakpoint();
   const wide = bp !== 'phone';
   const signedIn = useSignedIn();
@@ -91,7 +91,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
   if (!data) return <PublicMissing loading={isPending} what="drink" failed={loadFailure(query)} />;
 
   const { drink, bar } = data;
-  const mine = collection?.drinks.find((d) => d.itemId === id);
+  const mine = collection?.drinks.find((d) => d.itemId === drink.id);
   const picture = drink.imageUrl
     ? {
         url: drink.imageUrl,
@@ -112,7 +112,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
   const pictureColumn = (
     <View style={[styles.pictureColumn, wide && styles.pictureWide]}>
       <PublicPicture name={drink.name} imageUrl={drink.imageUrl} generated={drink.imageIsGenerated} itemId={drink.id} glass={data.glass?.iconKey ?? data.glass?.name} />
-      {wide ? <PublicActions id={id} name={drink.name} barId={drink.barId} picture={picture} releaseId={releaseId} /> : null}
+      {wide ? <PublicActions id={drink.id} name={drink.name} barId={drink.barId} picture={picture} releaseId={releaseId} /> : null}
     </View>
   );
   const main = (
@@ -134,7 +134,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
           {drink.description}
         </Body>
       ) : null}
-      {wide ? null : <PublicActions id={id} name={drink.name} barId={drink.barId} picture={picture} releaseId={releaseId} />}
+      {wide ? null : <PublicActions id={drink.id} name={drink.name} barId={drink.barId} picture={picture} releaseId={releaseId} />}
       {mine ? <MemoryCard memory={mine} onEdit={() => setEditing(true)} /> : null}
       {more ? <PublicFamilyTree drink={drink} more={more} /> : null}
     </View>
@@ -155,7 +155,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
       </View>
       {!signedIn && !shared && !classic ? <SignInBand text="Sign in to save it, rank it, and see your score beside the city’s." /> : null}
       <View style={styles.report}>
-        <ReportAction subject={drink.name} targets={[{ label: drink.name, target: { kind: 'item', itemId: id } }]} />
+        <ReportAction subject={drink.name} targets={[{ label: drink.name, target: { kind: 'item', itemId: drink.id } }]} />
       </View>
       {editing && mine ? <MemorySheet memory={mine} onClose={() => setEditing(false)} /> : null}
     </PublicPage>

@@ -84,6 +84,13 @@ export const palateHues = {
   light: { bright: '#A86E12', green: '#4E7A3E', fire: '#B4472E', body: '#7E5F96' },
 } as const;
 
+/**
+ * A house prep's proportion bar (canvas make-create-prep-recipe): each line's
+ * share in one of these, by the colour its drawing uses (lib/prepShares.ts).
+ * Clear and white things are paper; vinegars, oils and fats are tan.
+ */
+export const prepTones = { yellow: '#E8C25A', paper: '#EFE9DD', tan: '#C9A06A', red: '#E0614A' } as const;
+
 /** The map's "You are here" dot, with a halo of itself at 22% (disc-map). Not a status colour. */
 export const MAP_ME = '#8FB7E8';
 

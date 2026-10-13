@@ -16,6 +16,6 @@ const scenes = new Map<string, Scene>();
  * appliance box. Decorative. `lazy` (thumbs, and tiles in a grid) paints when
  * the app is idle, on blank paper till then.
  */
-export const EquipmentDrawing = memo(function EquipmentDrawing({ id, detail = 'full', lazy = detail === 'thumb' }: { id: string; detail?: SketchDetail; lazy?: boolean }) {
-  return <SceneSvg scene={useScene(scenes, `${id}|${detail}`, lazy, () => paintKit(kitArt(id), { seed: id, detail }))} />;
+export const EquipmentDrawing = memo(function EquipmentDrawing({ id, detail = 'full', lazy = detail === 'thumb', bare }: { id: string; detail?: SketchDetail; lazy?: boolean; /** No paper behind it (SceneSvg). */ bare?: boolean }) {
+  return <SceneSvg bare={bare} scene={useScene(scenes, `${id}|${detail}`, lazy, () => paintKit(kitArt(id), { seed: id, detail }))} />;
 });

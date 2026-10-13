@@ -10,6 +10,8 @@ let mockShown = false;
 let mockPending = false;
 let mockOnlyPast = false;
 
+// BarMark reads a bar's public brand; none here.
+jest.mock('@/hooks/useBarBrands', () => ({ useBarBrand: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/useProfiles', () => ({
   useProfilePositions: () => ({

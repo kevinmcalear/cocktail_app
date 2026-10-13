@@ -92,7 +92,7 @@ export const PREP_KINDS: PrepKind[] = [
   { id: 'syrup', name: 'Syrup', ratio: 'Sugar and water, 1 : 1' },
   { id: 'rich', name: 'Rich syrup', ratio: 'Sugar and water, 2 : 1' },
   { id: 'shrub', name: 'Shrub', ratio: 'Fruit, sugar, vinegar' },
-  { id: 'cordial', name: 'Cordial', ratio: 'Juice, sugar, citric acid, no heat' },
+  { id: 'cordial', name: 'Cordial', ratio: 'Juice, sugar, acid' },
   { id: 'oleo', name: 'Oleo saccharum', ratio: 'Peels and sugar' },
   { id: 'infusion', name: 'Infusion', ratio: 'Spirit plus a flavour' },
   { id: 'super', name: 'Super juice', ratio: 'Peels, acids, water' },
@@ -253,7 +253,7 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
             s('Cover and leave in the fridge until it’s syrupy.', DAY * 3600),
             s('Strain, pressing the fruit. Scrape in any sugar left behind.'),
             s('Stir in the vinegar until the sugar is gone.'),
-            s('Bottle and rest in the fridge for 2 days before using.'),
+            s('Bottle and rest in the fridge before using.', 2 * DAY * 3600),
           ], 3 * WEEK, fridge, hot ? 60 : shrubWay === 'oleo' ? 2 * DAY * 60 : 3 * DAY * 60, ['Infuse', 'Strain']); // 3 to 6 weeks if opened often: the shorter.
     case 'cordial':
       return draft([flavour ? line(`${flavour} juice`, 1, 'g', 1) : slotLine('Juice', 'juice', 1, 'g', 1), line('Sugar', 1, 'g', 0.62), line('Citric acid', 0.02, 'g', 0), ...extras], 500, [
@@ -473,6 +473,6 @@ export function prepFromTechnique(
   // With no base (orgeat, kombucha), what it's made of leads and the flavour follows.
   const all = base ? [base, ...lines, ...extra] : [...extra, ...lines];
   if (!all.length) all.push(...blank.lines);
-  const steps = t.base && t.parts?.length ? card.steps.slice(1) : card.steps;
-  return finish(all, all[0].key, t.base ? (t.base.amounts[Math.min(1, t.base.amounts.length - 1)] ?? 100) : 100, steps);
+  // The card's first step gives the usual batch's amounts ("For 750 ml spirit: 60 ml melted fat."), as the canvas keeps it.
+  return finish(all, all[0].key, t.base ? (t.base.amounts[Math.min(1, t.base.amounts.length - 1)] ?? 100) : 100, card.steps);
 }

@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   stack: { gap: space.xl - 4 },
   head: { gap: space.xs + 2 },
   tiles: { flexDirection: 'row', gap: space.sm },
-  tile: { flex: 1, minWidth: 0, minHeight: 112, paddingVertical: space.md, paddingHorizontal: space.sm + 2, borderRadius: radius.control + 4, borderWidth: 1, justifyContent: 'space-between' },
+  tile: { flex: 1, minWidth: 0, minHeight: 112, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.control + 4, borderWidth: 1, justifyContent: 'space-between' },
   semibold: { fontFamily: fontFamilies.bodyMedium },
   clip: { borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.control + 4, paddingVertical: space.md + 2, paddingHorizontal: space.lg, gap: space.sm + 2 },
   clipHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },

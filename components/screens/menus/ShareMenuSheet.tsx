@@ -6,6 +6,7 @@ import { Body, Button } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useShareMenu } from '@/hooks/useMenuMutations';
+import { useShareSlug } from '@/hooks/useShareSlug';
 import { cardWhen, homeMenuLine, nightLine } from '@/lib/menus';
 import { siteOrigin } from '@/lib/venueLink';
 import type { MenuDetail } from '@/types/menus';
@@ -43,7 +44,10 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
   const [pictures, setPictures] = useState<CardPictures>('above');
   const [choosing, setChoosing] = useState(false);
   const [now] = useState(() => Date.now());
-  const url = `${siteOrigin()}/m/${menu.id}`;
+  // The readable link (/m/halloween-party) once shared; the id link works too.
+  const slug = useShareSlug('m', menu.id, !!menu.sharedAt).data;
+  const menuUrl = (key: string) => `${siteOrigin()}/m/${key}`;
+  const url = menuUrl(slug ?? menu.id);
   const web = Platform.OS === 'web';
   const drinks = (menu.sections ?? []).flatMap((s) => s.drinks);
   const venue = venues.find((v) => v.id === menu.barId) ?? null;
@@ -52,12 +56,12 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
   const night = nightStart ? nightLine(nightStart) : homeMenuLine({ menuDate: menu.menuDate ?? null, guestCount: menu.guestCount ?? null }, now);
   const card = `/menus/${menu.id}/card?pictures=${pictures}`;
 
-  const setShared = async (shared: boolean): Promise<boolean> => {
+  /** The slug when sharing turns on (null when there's none yet), or false when it failed. */
+  const setShared = async (shared: boolean): Promise<string | null | false> => {
     setError(null);
     setCopied(false);
     try {
-      await share.mutateAsync({ menuId: menu.id, shared });
-      return true;
+      return (await share.mutateAsync({ menuId: menu.id, shared })) ?? null;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'That didn’t work. Try again.');
       return false;
@@ -65,14 +69,19 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
   };
 
   const send = async () => {
-    if (!menu.sharedAt && !(await setShared(true))) return;
+    let link = url;
+    if (!menu.sharedAt) {
+      const made = await setShared(true);
+      if (made === false) return;
+      link = menuUrl(made ?? menu.id);
+    }
     setError(null);
     try {
       if (!web) {
-        await Share.share({ message: url, url, title: menu.name });
+        await Share.share({ message: link, url: link, title: menu.name });
         return;
       }
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(link);
       setCopied(true);
     } catch {
       // The browser can refuse clipboard access; the link is on screen to copy by hand.

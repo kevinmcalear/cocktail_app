@@ -28,8 +28,8 @@ interface LineRowProps {
 /**
  * One spec line, everything in sight: the ingredient (tap to swap it), its
  * amount (type it, or − and + through the pours bartenders use), its unit
- * (tap to change) and remove. On a phone the controls sit under the name; on
- * a wider screen they share its line.
+ * (tap to change) and remove. On a phone the controls sit under the name and
+ * its links; on a wider screen they share its line, on the right.
  */
 export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS }: LineRowProps) {
   const ds = useDs();
@@ -43,41 +43,45 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
       <View style={styles.row}>
         <IngredientThumb id={line.id} name={line.name} size={40} />
         <View style={styles.main}>
-          <PressableScale
-            onPress={onSwap}
-            haptic={false}
-            role="button"
-            accessibilityLabel={`${line.name}, ${amountLabel}`}
-            accessibilityHint="Swaps it for another ingredient"
-            style={styles.name}
-          >
-            <Body numberOfLines={2}>{line.name}</Body>
-            {line.id ? null : line.prep ? (
-              <View style={styles.prepNote}>
-                <Tag label="House-made" tone="accent" />
-                {from ? <Caption tone="muted">{`from ${from.name}`}</Caption> : null}
-                <Caption tone="muted">{leadText(line.prep.leadMinutes) ?? 'Your recipe'}</Caption>
-              </View>
-            ) : line.later ? (
-              <Caption tone="accent">House prep, recipe to write</Caption>
-            ) : line.technique ? (
-              <Caption tone="accent">{`House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`}</Caption>
-            ) : (
-              <Caption tone="muted">New, added when you save</Caption>
-            )}
-          </PressableScale>
-          <View style={styles.links}>
-            {line.prep && onEditPrep ? <TextAction label="Edit the recipe" a11y={`Edit the recipe for ${line.name}`} onPress={onEditPrep} /> : null}
-            {line.later && !line.prep && onEditPrep ? <TextAction label="Write the recipe" a11y={`Write the recipe for ${line.name}`} onPress={onEditPrep} /> : null}
-            {from ? (
-              <TextAction
-                label={`Back to ${from.name}`}
-                a11y={`Back to plain ${from.name}`}
-                onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })}
-              />
-            ) : null}
-            {!line.prep && !line.technique && line.id && onMakeHouse ? <TextAction label="Make it house" a11y={`Make ${line.name} house: wash, infuse, clarify`} onPress={onMakeHouse} /> : null}
-            {noting ? null : <TextAction label="Note" a11y={`Add a note to ${line.name}`} onPress={() => setNoting(true)} />}
+          <View style={styles.head}>
+            <PressableScale
+              onPress={onSwap}
+              haptic={false}
+              role="button"
+              accessibilityLabel={`${line.name}, ${amountLabel}`}
+              accessibilityHint="Swaps it for another ingredient"
+              style={styles.name}
+            >
+              <Body numberOfLines={2}>{line.name}</Body>
+              {line.id ? null : line.prep ? (
+                <View style={styles.prepNote}>
+                  <Tag label="House-made" tone="accent" />
+                  {from ? <Caption tone="muted">{`from ${from.name}`}</Caption> : null}
+                  <Caption tone="muted">{leadText(line.prep.leadMinutes) ?? 'Your recipe'}</Caption>
+                </View>
+              ) : line.later ? (
+                <Caption tone="accent">House prep, recipe to write</Caption>
+              ) : line.technique ? (
+                <Caption tone="accent">{`House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`}</Caption>
+              ) : (
+                <Caption tone="muted">New, added when you save</Caption>
+              )}
+            </PressableScale>
+            {/* The recipe links lead in the accent; Note and Make it house stay quiet (the accent is for the one primary action). */}
+            <View style={styles.links}>
+              {line.prep && onEditPrep ? <TextAction label="Edit the recipe" a11y={`Edit the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
+              {line.later && !line.prep && onEditPrep ? <TextAction label="Write the recipe" a11y={`Write the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
+              {from ? (
+                <TextAction
+                  label={`Back to ${from.name}`}
+                  a11y={`Back to plain ${from.name}`}
+                  onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })}
+                  accent
+                />
+              ) : null}
+              {noting ? null : <TextAction label="Note" a11y={`Add a note to ${line.name}`} onPress={() => setNoting(true)} />}
+              {!line.prep && !line.technique && line.id && onMakeHouse ? <TextAction label="Make it house" a11y={`Make ${line.name} house: wash, infuse, clarify`} onPress={onMakeHouse} /> : null}
+            </View>
           </View>
           <View style={styles.controls}>
             <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
@@ -160,11 +164,11 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
   );
 }
 
-/** A small text button under the name: Edit the recipe, Make it house, Note. */
-function TextAction({ label, a11y, onPress }: { label: string; a11y: string; onPress: () => void }) {
+/** A small text button under the name: Edit the recipe (accent), Note and Make it house (quiet). */
+function TextAction({ label, a11y, onPress, accent }: { label: string; a11y: string; onPress: () => void; accent?: boolean }) {
   return (
     <PressableScale onPress={onPress} role="button" accessibilityLabel={a11y} style={styles.link}>
-      <Caption tone="accent">{label}</Caption>
+      <Caption tone={accent ? 'accent' : 'muted'}>{label}</Caption>
     </PressableScale>
   );
 }
@@ -180,14 +184,15 @@ function Round({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: string
 
 const styles = StyleSheet.create({
   prepNote: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap', paddingTop: 2 },
-  links: { flexBasis: '100%', flexDirection: 'row', flexWrap: 'wrap', columnGap: space.lg },
+  links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.lg },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   note: { minHeight: layout.minTapTarget, marginLeft: 40 + space.md, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.md },
   wrap: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
-  // Name and controls wrap: two lines on a phone, one on a wide screen.
+  // The name (with its links) and the controls wrap: two lines on a phone, one on a wide screen.
   main: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md, rowGap: space.xs },
-  name: { flexGrow: 1, flexBasis: 150, minHeight: layout.minTapTarget, justifyContent: 'center' },
+  head: { flexGrow: 1, flexShrink: 1, flexBasis: 150 },
+  name: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, height: layout.minTapTarget },
   step: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
@@ -206,5 +211,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   remove: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingLeft: 40 + space.md },
+  // Five units to a phone row, as drawn.
+  units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2, paddingLeft: 40 + space.md },
 });

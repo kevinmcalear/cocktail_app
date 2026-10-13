@@ -21,10 +21,10 @@ function draggedOf(e: DragEvent): Dragged[] {
     .map((item) => ({ kind: item.type === 'application/pdf' ? 'pdf' : item.type.startsWith('image/') ? 'photo' : /^text\/|csv/.test(item.type) ? 'text' : 'other' }));
 }
 
-const CARD: Record<Dragged['kind'], { icon: 'doc.text' | 'photo' | 'doc.plaintext'; label: string }> = {
+const CARD: Record<Dragged['kind'], { icon: 'doc.text' | 'photo' | 'text.alignleft'; label: string }> = {
   pdf: { icon: 'doc.text', label: 'A PDF' },
   photo: { icon: 'photo', label: 'A photo' },
-  text: { icon: 'doc.plaintext', label: 'Text or a .csv' },
+  text: { icon: 'text.alignleft', label: 'A text file' },
   other: { icon: 'doc.text', label: 'A file we can’t read' },
 };
 
@@ -104,8 +104,10 @@ export function BringInAnywhere() {
   const key = /Mac|iP/.test(navigator.platform) ? '⌘V' : 'Ctrl+V';
   return (
     <View style={[styles.scrim, { backgroundColor: ds.c.scrim }]} pointerEvents="none">
+      {/* The page behind dims almost to black, so the copy never runs over a photo grid. */}
+      <View style={[styles.frame, styles.dim, { backgroundColor: withAlpha(ds.c.ground, 0.85) }]} />
       <View role="dialog" aria-label="Drop to bring in" style={[styles.frame, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.05) }]}>
-        <IconSymbol name="square.and.arrow.down" size={56} color={ds.accentText} />
+        <IconSymbol name="square.and.arrow.down" size={36} color={ds.accentText} />
         <View style={styles.words}>
           <Display align="center">Drop to bring in</Display>
           <Body tone="muted" align="center">
@@ -116,7 +118,7 @@ export function BringInAnywhere() {
           <View role="list" aria-label="Files" style={styles.cards}>
             {dragging.slice(0, 6).map((file, i) => (
               <View key={i} role="listitem" style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.glassBorder }]}>
-                <IconSymbol name={CARD[file.kind].icon} size={28} color={ds.c.ink} />
+                <IconSymbol name={CARD[file.kind].icon} size={24} color={ds.c.ink} />
                 <View style={styles.flex}>
                   <Body numberOfLines={1}>{CARD[file.kind].label}</Body>
                   <Caption tone="muted">{file.kind === 'other' ? 'Left out' : 'We’ll work out what it is'}</Caption>
@@ -152,6 +154,7 @@ const styles = StyleSheet.create({
     gap: space.xl + 4,
     padding: space.xxl + 8,
   },
+  dim: { borderWidth: 0 },
   words: { gap: space.sm, alignItems: 'center' },
   cards: { width: '100%', maxWidth: 820, flexDirection: 'row', flexWrap: 'wrap', gap: space.md + 2, justifyContent: 'center' },
   card: { flexBasis: 240, flexGrow: 1, maxWidth: 270, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.control + 4, borderWidth: 1 },

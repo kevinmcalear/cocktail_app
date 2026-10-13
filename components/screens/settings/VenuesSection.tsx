@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { Body } from '@/components/ds';
+import { Body, useDs } from '@/components/ds';
 import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
-import { radius, space } from '@/constants/tokens';
+import { backbar, displayFaces, radius, space, type, type DisplayFace } from '@/constants/tokens';
+import { accentFill } from '@/lib/color';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { roleLabel } from '@/lib/roles';
 
@@ -26,19 +27,32 @@ export function VenuesSection() {
           <SettingsRow
             label={v.name}
             detail={roleLabel(v.roleLevel)}
-            icon="building.2.fill"
-            leading={v.logoUrl ? <Image source={{ uri: v.logoUrl }} style={styles.logo} /> : undefined}
+            leading={v.logoUrl ? <Image source={{ uri: v.logoUrl }} style={styles.logo} /> : <VenueTile name={v.name} accent={v.accent} face={v.displayFace} />}
             onPress={() => router.push(`/settings/bar/${v.id}` as Href)}
           />
         </View>
       ))}
       {venues.length > 0 || isLoading ? <RowDivider /> : null}
-      <SettingsRow label="Set up your bar" icon="plus" role="button" trailing={<View />} onPress={() => router.push('/venue-setup' as Href)} />
+      <SettingsRow label="Create a venue" icon="plus" role="button" trailing={<View />} onPress={() => router.push('/venue-setup' as Href)} />
     </SettingsSection>
   );
 }
 
+/** A venue without a logo: its initial in its display face's italic on its accent (tools-settings-phone). */
+function VenueTile({ name, accent, face }: { name: string; accent: string | null; face: DisplayFace }) {
+  const ds = useDs();
+  return (
+    <View aria-hidden style={[styles.logo, styles.tile, { backgroundColor: accent ?? ds.c.raised }]}>
+      <Text style={[styles.initial, { fontFamily: displayFaces[face].italic, color: accent ? accentFill(accent, backbar.light.ink, backbar.dark.ink).text : ds.c.ink }]} allowFontScaling={false}>
+        {name.trim().charAt(0).toUpperCase()}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  tile: { alignItems: 'center', justifyContent: 'center' },
+  initial: { fontSize: type.headline.fontSize, lineHeight: LOGO },
   empty: { paddingVertical: space.md },
-  logo: { width: LOGO, height: LOGO, borderRadius: radius.mark },
+  logo: { width: LOGO, height: LOGO, borderRadius: radius.control - space.xs + 1 },
 });

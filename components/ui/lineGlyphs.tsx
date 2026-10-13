@@ -21,6 +21,8 @@ const GLYPHS = {
     'M9 12l2 2 4-4',
   ],
   updown: ['M8 4v16M4.5 7.5L8 4l3.5 3.5', 'M16 20V4M12.5 16.5L16 20l3.5-3.5'],
+  // The one filled glyph: a bar you love (ppl-bar-top's Loved pill).
+  heartFill: ['M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z'],
   // Menus, drafts, Bring in, a menu document and Settings, as the shell boards draw them (nav-new-venue, nav-switcher).
   lines: ['M5 6h14M5 12h14M5 18h9'],
   draft: ['M6 3h8l4 4v14H6z', 'M14 3v4h4M9 12h6M9 16h6'],
@@ -38,7 +40,7 @@ const GRIP_DOTS = [6, 12, 18].flatMap((y) => [9, 15].map((x) => ({ x, y })));
 
 export function LineGlyph({ name, size, color }: { name: LineGlyphName; size: number; color: ColorValue }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={name === 'heartFill' ? color : 'none'} stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
       {name === 'dot' ? (
         <Circle cx={12} cy={12} r={6} fill={color} stroke="none" />
       ) : name === 'grip' ? (

@@ -9,6 +9,7 @@ import { useProfile, type Profile } from '@/hooks/useProfiles';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { siteOrigin } from '@/lib/venueLink';
 
+import { LoveBarButton } from '../kept/LoveBarButton';
 import { SignInCard } from '../published/SignInCard';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarProfile } from './BarProfile';
@@ -59,6 +60,8 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
       {profile && !gated ? (
         <View style={styles.right}>
           <ShareProfile profile={profile} />
+          {/* A bar's Love sits beside Share (ppl-bar-top). */}
+          {profile.kind === 'bar' ? <LoveBarButton profileId={profile.id} name={profile.display_name} labelled /> : null}
           <ProfileSafety profile={profile} />
         </View>
       ) : null}

@@ -13,6 +13,7 @@ import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
 import { useDrinkMakerCredits } from '@/hooks/useMakers';
 import { useMode } from '@/hooks/useMode';
+import { useShareSlug } from '@/hooks/useShareSlug';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
 import { useTeamRole } from '@/hooks/useTeamRole';
@@ -130,7 +131,9 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   });
   const glassKey = glass?.icon_key || glass?.name || null;
   const actions = useDrinkActions(item, heroPic, lines, venue?.name ?? null);
-  const share = () => void shareOrCopy(drinkUrl(item.id), item.name);
+  // A public drink shares its readable link (/d/penicillin); any other its id link, which asks the rest to sign in.
+  const slug = useShareSlug('d', preview ? null : item.id).data;
+  const share = () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name);
   const onRiff = signedIn && !preview ? () => router.push({ pathname: '/add-cocktail', params: { from: item.id, ...(item.bar_id ? { barId: item.bar_id } : {}) } } as unknown as Href) : null;
 
   // Pinned on phones (board drink-phone-venue): Batch, the accent in venue mode; at home the journey strip has I made it.

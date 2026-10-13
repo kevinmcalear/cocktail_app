@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, Display, PressableScale, Spec, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useUndoBringIn } from '@/hooks/useBringInBatches';
 import { canUndo, fromLine, type BatchSummary } from '@/lib/bringInBatch';
 import { useBringIn } from '@/store/useBringIn';
@@ -137,19 +137,24 @@ export function BroughtIn({ view }: { view: BroughtInView }) {
         <View style={styles.row}>
           <Button label="Bring in more" size="lg" variant="secondary" onPress={() => useBringIn.getState().openSheet()} style={styles.flex} />
           {undoable ? (
-            <Button
-              label={undo.isPending ? 'Undoing…' : 'Undo all until tomorrow'}
-              icon="arrow.uturn.backward"
-              size="lg"
-              variant="secondary"
-              disabled={undo.isPending}
-              onPress={() => undo.mutate(view.batchId!, { onSuccess: setUndone })}
-              style={styles.flex}
-            />
+            <UndoAll pending={undo.isPending} onPress={() => undo.mutate(view.batchId!, { onSuccess: setUndone })} />
           ) : null}
         </View>
       </View>
     </View>
+  );
+}
+
+/** "Undo all until tomorrow", a secondary button whose label wraps to two lines beside Bring in more (canvas make-bringin-done). */
+function UndoAll({ pending, onPress }: { pending: boolean; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" onPress={onPress} disabled={pending} aria-disabled={pending} accessibilityLabel="Undo all until tomorrow" style={[styles.undo, { borderColor: ds.c.lineStrong, opacity: pending ? 0.45 : 1 }]}>
+      <IconSymbol name="arrow.uturn.backward" size={16} color={ds.c.muted} />
+      <Body numberOfLines={2} align="center" style={styles.undoLabel}>
+        {pending ? 'Undoing…' : 'Undo all until tomorrow'}
+      </Body>
+    </PressableScale>
   );
 }
 
@@ -163,4 +168,6 @@ const styles = StyleSheet.create({
   footer: { width: '100%', maxWidth: 640, alignSelf: 'center', gap: space.sm + 2, paddingTop: space.md },
   row: { flexDirection: 'row', gap: space.sm + 2 },
   flex: { flex: 1 },
+  undo: { flex: 1, minHeight: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
+  undoLabel: { flexShrink: 1, fontFamily: fontFamilies.bodySemiBold },
 });

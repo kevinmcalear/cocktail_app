@@ -2,11 +2,12 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, PressableScale, Segmented, Tag, Title } from '@/components/ds';
+import { Body, Button, Caption, PressableScale, Segmented, Tag, TextLink, Title } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
-import { space } from '@/constants/tokens';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
+import { useProfileMade, useSetMadeShown } from '@/hooks/useMade';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfileAwards, useProfileOriginals, useProfilePicks, useProfilePositions, useWorkedMenus, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
@@ -60,6 +61,8 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
   const showsMade = profile.made_mode !== 'none';
   const had = useProfileDrinks(profile.id, profile.had_mode !== 'none');
   const bars = useProfileBars(profile.id, profile.bars_mode !== 'none');
+  const made = useProfileMade(profile.id, profile.had_mode !== 'none').data;
+  const setMadeShown = useSetMadeShown();
   const madePicks = useProfilePicks(profile.id, 'originals').data ?? {};
   const { data: credited = [], isLoading } = useProfileOriginals(profile.id);
   const originals = credited.filter((d) => pickedShown(profile.made_mode, madePicks[d.id]));
@@ -83,7 +86,7 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
       <View style={styles.header}>
         <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={88} />
         <Title align="center">{profile.display_name}</Title>
-        <Caption tone="muted" align="center">
+        <Caption tone="muted" align="center" style={styles.mono}>
           {[`@${profile.handle}`, place].filter(Boolean).join(' · ')}
         </Caption>
         {line ? <Body align="center">{line}</Body> : null}
@@ -114,7 +117,7 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
 
       {showsMade ? <MenuCredits credits={credits} names={names} worked={worked} /> : null}
 
-      {tab ? <Segmented accessibilityLabel="Profile sections" options={tabs} value={tab} onChange={setTab} /> : null}
+      {tab ? <Segmented accessibilityLabel="Profile sections" variant="ink" stretch options={tabs} value={tab} onChange={setTab} /> : null}
       {mine && tab ? (
         <View style={styles.mine}>
           <Caption tone="muted" style={styles.flex}>
@@ -132,6 +135,8 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
           drinks={had.data}
           bars={bars.data}
           failed={!!(tab === 'had' ? had.error : bars.error)}
+          made={made}
+          onHideMade={mine ? (id) => setMadeShown.mutate({ id, shown: false }) : undefined}
         />
       ) : tab === 'originals' && !showsMade ? (
         <View style={styles.section}>
@@ -151,7 +156,9 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
               emptyText="No drinks credited to them yet."
             />
             {originals.length > FIRST_ORIGINALS && !allOriginals ? (
-              <Button label={`All ${originals.length} originals`} variant="secondary" onPress={() => setAllOriginals(true)} style={styles.start} />
+              <View style={styles.start}>
+                <TextLink label={`All ${originals.length} originals`} onPress={() => setAllOriginals(true)} />
+              </View>
             ) : null}
           </View>
         )
@@ -168,4 +175,5 @@ const styles = StyleSheet.create({
   start: { alignSelf: 'flex-start' },
   mine: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
+  mono: { fontFamily: fontFamilies.monoMedium },
 });

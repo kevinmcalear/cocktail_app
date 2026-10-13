@@ -47,7 +47,10 @@ interface SketchHeaderProps {
  * rules the saved drink is drawn with.
  */
 export function SketchHeader({ draft, step, barVariants, ...band }: SketchHeaderProps) {
-  const inputs = inputsFor(sketchLook(draft, barVariants));
+  const look = sketchLook(draft, barVariants);
+  // Nothing in it yet: a coupe waiting to be filled, as the canvas draws the first step.
+  const empty = !look.glass && !look.lines.length && !look.methods?.length;
+  const inputs = inputsFor(empty ? { ...look, glass: 'Coupe' } : look);
   const at = WIZARD_STEPS.indexOf(step);
   const counted = Math.min(at + 1, COUNTED_STEPS);
   // The review step draws the finished drink again from a blank page; a tap replays it.

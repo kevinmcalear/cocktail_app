@@ -36,7 +36,12 @@ function Section({ title, aside, note, children, onLayout }: { title: string; as
 function StatusPill({ drink, shelf }: { drink: CollectedDrink; shelf: string | undefined }) {
   if (drink.liveMode === 'description' && !drink.specOpens) return <Tag label="Names only" tone="outline" icon="lock.fill" />;
   if (!shelf) return null;
-  return <Tag label={shelf} tone={shelf === 'Ready' ? 'accent' : 'outline'} />;
+  // A long bottle name ("Need Bittersweet Orange Aperitivo") truncates rather than squeezing the drink's name.
+  return (
+    <View style={styles.pill}>
+      <Tag label={shelf} tone={shelf === 'Ready' ? 'accent' : 'outline'} />
+    </View>
+  );
 }
 
 /**
@@ -97,6 +102,7 @@ export function CollectionDrinks({ onJump }: { onJump?: (y: number) => void }) {
             {toMake.map((d) => (
               <View role="listitem" key={d.id}>
                 <DrinkRow
+                  compact
                   name={d.name}
                   itemId={d.itemId}
                   // A bar's published drink opens its public page; a classic its own.
@@ -127,6 +133,7 @@ export function CollectionDrinks({ onJump }: { onJump?: (y: number) => void }) {
                 {group.drinks.map((d) => (
                   <View role="listitem" key={d.id}>
                     <DrinkRow
+                      compact
                       name={d.name}
                       itemId={d.itemId}
                       onPress={() => setEditing(d)}
@@ -150,6 +157,7 @@ export function CollectionDrinks({ onJump }: { onJump?: (y: number) => void }) {
 }
 
 const styles = StyleSheet.create({
+  pill: { maxWidth: '45%', flexShrink: 1 },
   wrap: { gap: space.xl },
   section: { gap: space.xs },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md },

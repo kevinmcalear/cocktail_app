@@ -35,7 +35,8 @@ export function CollectionScreen() {
   const ds = useDs();
   const [tab, setTab] = useState<Tab>('drinks');
   // The desktop Menus tab is a grid of cards (home-collection-desktop-menus), up to the wide column.
-  const wide = useBreakpoint() === 'desktop' && tab === 'menus';
+  const desk = useBreakpoint() === 'desktop';
+  const wide = desk && tab === 'menus';
   const column = usePageColumn(wide ? 'wide' : 'text');
   const bottom = useTabBarInset();
   const bar = useMyBar();
@@ -53,7 +54,10 @@ export function CollectionScreen() {
             width={wide ? 'wide' : 'text'}
             action={wide ? <Button label="New menu" icon="plus" variant="secondary" onPress={() => setCreating(true)} /> : undefined}
           />
-          <Segmented options={TABS} value={tab} onChange={setTab} accessibilityLabel="Collection" />
+          {/* Full width on a phone; on a desktop the switch keeps to its own width, as drawn. */}
+          <View style={desk ? styles.tabs : null}>
+            <Segmented variant="ink" stretch options={TABS} value={tab} onChange={setTab} accessibilityLabel="Collection" />
+          </View>
           {tab === 'drinks' ? (
             <View onLayout={(e) => (top.current = e.nativeEvent.layout.y)}>
               <CollectionDrinks onJump={(y) => scroll.current?.scrollTo({ y: top.current + y - space.lg, animated: true })} />
@@ -75,6 +79,7 @@ export function CollectionScreen() {
 }
 
 const styles = StyleSheet.create({
+  tabs: { maxWidth: 440 },
   screen: { flex: 1 },
   content: { gap: space.xl },
   menus: { gap: space.xxl },

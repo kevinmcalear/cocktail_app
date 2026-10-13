@@ -44,7 +44,7 @@ export function TonightWeek({ barId }: { barId: string }) {
       {later.length ? (
         <View>
           {later.map((item) => (
-            <WeekLine key={`${item.kind}-${item.id}`} item={item} from={from} member />
+            <WeekLine key={`${item.kind}-${item.id}`} item={item} from={from} member dot={false} />
           ))}
         </View>
       ) : (

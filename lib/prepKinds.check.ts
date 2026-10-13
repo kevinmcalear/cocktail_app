@@ -92,7 +92,7 @@ const fromAgar = prepFromTechnique(
   { steps: [{ body: 'For 400 g juice: 0.8 g agar, 100 ml water.', timer_seconds: null }, { body: 'Boil the agar in the water.', timer_seconds: 60 }], leadMinutes: 45, actions: ['Clarify'] },
 );
 assert.deepEqual(prepAmounts(fromAgar).map((a) => a.amount), [400, 0.8, 100]);
-assert.deepEqual(fromAgar.steps.map((s) => s.body), ['Boil the agar in the water.'], 'the "For 400 g" line is the recipe now');
+assert.deepEqual(fromAgar.steps.map((s) => s.body), ['For 400 g juice: 0.8 g agar, 100 ml water.', 'Boil the agar in the water.'], 'the usual batch\'s amounts stay the first step (canvas make-create-house-method)');
 assert.equal(fromAgar.technique, 'agar-quick');
 assert.equal(prepFromTechnique({ id: 'smoke' }, 'Smoked salt', { steps: [{ body: 'Smoke it.', timer_seconds: null }], leadMinutes: 10, actions: ['Infuse'] }).steps.length, 1);
 
