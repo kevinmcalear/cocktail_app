@@ -3,7 +3,7 @@ import { BackHandler, Keyboard, KeyboardAvoidingView, Platform, ScrollView, Styl
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Caption, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space, springs } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -34,6 +34,10 @@ export interface WizardFrameProps {
   eyebrow: string;
   title: string;
   intro?: string;
+  /** Right of the title: a small control for the whole step (Parts or Amounts). */
+  aside?: ReactNode;
+  /** Just above the footer: a moment's confirmation (WizardNotice). */
+  notice?: ReactNode;
   footer: ReactNode;
   /** Android's back button: true when it stepped back, false to leave. */
   onHardwareBack: () => boolean;
@@ -48,7 +52,7 @@ export interface WizardFrameProps {
  * that scrolls as a page: the band as a rounded card, the step, then Skip
  * and Next at its end.
  */
-export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKey, direction, eyebrow, title, intro, footer, onHardwareBack, children }: WizardFrameProps) {
+export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKey, direction, eyebrow, title, intro, aside, notice, footer, onHardwareBack, children }: WizardFrameProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
@@ -104,8 +108,9 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
             <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.page, { paddingHorizontal: gutter }]}>
               {band({ top: space.lg, side: space.lg, rounded: true, folded: false })}
               <SlideIn key={stepKey} direction={direction}>
-                <Heading eyebrow={eyebrow} title={title} intro={intro} />
+                <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />
                 {children}
+                {notice}
                 <FooterInline.Provider value>{footer}</FooterInline.Provider>
               </SlideIn>
             </ScrollView>
@@ -114,11 +119,14 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
               {band({ top: column ? space.lg : statusBar + space.sm, side: column ? space.lg : gutter, rounded: column, folded: typing && !column })}
               <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex} contentContainerStyle={[styles.scroll, { paddingHorizontal: side }]}>
                 <SlideIn key={stepKey} direction={direction}>
-                  <Heading eyebrow={eyebrow} title={title} intro={intro} />
+                  <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />
                   {children}
                 </SlideIn>
               </ScrollView>
-              <View style={{ paddingHorizontal: side }}>{footer}</View>
+              <View style={[styles.foot, { paddingHorizontal: side }]}>
+                {notice}
+                {footer}
+              </View>
             </>
           )}
         </View>
@@ -127,12 +135,17 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
   );
 }
 
-function Heading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) {
+function Heading({ eyebrow, title, intro, aside }: { eyebrow: string; title: string; intro?: string; aside?: ReactNode }) {
   return (
     <View style={styles.heading}>
       <Eyebrow>{eyebrow}</Eyebrow>
-      <Title role="heading">{title}</Title>
-      {intro ? <Body tone="muted">{intro}</Body> : null}
+      <View style={styles.titleRow}>
+        <Title role="heading" style={styles.flex}>
+          {title}
+        </Title>
+        {aside}
+      </View>
+      {intro ? <Caption tone="muted">{intro}</Caption> : null}
     </View>
   );
 }
@@ -163,5 +176,8 @@ const styles = StyleSheet.create({
   scroll: { paddingTop: space.lg, paddingBottom: space.xl },
   page: { gap: space.lg, paddingTop: space.xxl, paddingBottom: space.xxxl },
   body: { gap: space.lg },
-  heading: { gap: space.xs },
+  // The canvas spaces the kicker, title and intro like the step's own rows.
+  heading: { gap: space.lg },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  foot: { gap: space.md },
 });
