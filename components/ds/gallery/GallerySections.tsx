@@ -16,6 +16,7 @@ import { Segmented } from '../Segmented';
 import { SpecRow } from '../SpecRow';
 import { Surface } from '../Surface';
 import { Tag } from '../Tag';
+import { useToast } from '../Toast';
 import { TimeField } from '../TimeField';
 import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
@@ -63,6 +64,7 @@ export function GallerySections() {
   const [pick, setPick] = useState<string | null>(null);
   const [day, setDay] = useState('');
   const [time, setTime] = useState('19:00');
+  const toast = useToast();
   return (
     <View>
       <Section title="Colour">
@@ -100,6 +102,7 @@ export function GallerySections() {
 
       <Section title="Sheets">
         <SheetDemo />
+        <Button label="Show a toast" variant="secondary" onPress={() => toast.show({ title: 'Penicillin now uses Fernhill', detail: 'The old spec is in its history.', action: { label: 'Undo', onPress: () => {} } })} />
       </Section>
 
       <Section title="Tags and tabs">
