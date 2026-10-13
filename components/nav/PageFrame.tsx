@@ -50,11 +50,12 @@ export function Crumbs({ trail }: { trail: Crumb[] }) {
 }
 
 /** Back on a phone: a chevron on the web, an X on native, where these pages open as sheets. */
-export function BackButton({ onPress }: { onPress: () => void }) {
+export function BackButton({ onPress, close }: { onPress: () => void; close?: boolean }) {
+  const shut = close || Platform.OS !== 'web';
   return (
     <GlassButton
-      accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-      icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
+      accessibilityLabel={shut ? 'Close' : 'Back'}
+      icon={shut ? 'xmark' : 'chevron.left'}
       onPress={onPress}
     />
   );
@@ -66,8 +67,12 @@ export function BackButton({ onPress }: { onPress: () => void }) {
  * button, and the trail of pages above (`crumbs`) sits over the title.
  * `leading` goes before the title (a venue's logo), `trailing` after it.
  */
-export function SubPageHead({ title, subtitle, crumbs, onBack, leading, trailing }: {
+export function SubPageHead({ title, subtitle, crumbs, onBack, leading, trailing, close, stacked }: {
   title: string;
+  /** A page opened over the app (Settings): an X instead of a back arrow, on the web too. */
+  close?: boolean;
+  /** A phone's back button on its own row, the title and subtitle wrapping under it (a long title, as on Review imports). */
+  stacked?: boolean;
   subtitle?: ReactNode;
   crumbs?: Crumb[];
   onBack: () => void;
@@ -75,14 +80,15 @@ export function SubPageHead({ title, subtitle, crumbs, onBack, leading, trailing
   trailing?: ReactNode;
 }) {
   const wide = useIsWideWeb();
+  const stack = stacked && !wide;
   // A phone page with a subtitle or actions: Back and the actions on their own
   // row, then the title (with `leading` beside it, one line as before) and the
   // whole subtitle under it (tools-brand-phone). Crumbs are wide-only.
-  if (!wide && (subtitle || trailing)) {
+  if (!wide && !stack && (subtitle || trailing)) {
     return (
       <View style={styles.stack}>
         <View style={styles.head}>
-          <BackButton onPress={onBack} />
+          <BackButton onPress={onBack} close={close} />
           <View style={styles.title} />
           {trailing}
         </View>
@@ -97,14 +103,14 @@ export function SubPageHead({ title, subtitle, crumbs, onBack, leading, trailing
     );
   }
   return (
-    <View style={styles.head}>
-      {wide ? null : <BackButton onPress={onBack} />}
+    <View style={[styles.head, stack ? styles.stacked : null]}>
+      {wide ? null : <BackButton onPress={onBack} close={close} />}
       {leading}
       <View style={styles.title}>
         {wide && crumbs?.length ? <Crumbs trail={crumbs} /> : null}
-        <Title numberOfLines={wide ? undefined : 1}>{title}</Title>
+        <Title numberOfLines={wide || stack ? undefined : 1}>{title}</Title>
         {typeof subtitle === 'string' ? (
-          <Caption tone="muted" numberOfLines={1}>
+          <Caption tone="muted" numberOfLines={stack ? undefined : 1}>
             {subtitle}
           </Caption>
         ) : (
@@ -121,5 +127,6 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   stack: { gap: space.xs },
   title: { flex: 1, gap: 2, minWidth: 0 },
+  stacked: { flexDirection: 'column', alignItems: 'flex-start', gap: space.lg },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 });

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -9,6 +9,9 @@ import type { WizardPick } from '@/lib/drinkWizard';
 import { closestIngredients, nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
 import { guessKind, PREP_KINDS } from '@/lib/prepKinds';
 import { looksMadeInHouse } from '@/lib/techniques/makeIt';
+
+// The pill's accent border shows focus. Chrome draws `outline-style: auto` at any width, so it's switched off (as SearchField does).
+const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
 // The generated view types call `images` a list; it's one row per link.
 export type CatalogIngredient = { id: string; name: string | null; bar_id?: string | null; hide_from_search?: boolean | null; generic_id?: string | null; item_images?: unknown };
@@ -50,6 +53,8 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const { ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping, allowNew = true, onMake, onLater, makeFirst, captions, shelf } = props;
   const ds = useDs();
   const [query, setQueryState] = useState('');
+  // The whole pill rings in the accent while it has focus (no browser focus box inside it).
+  const [focused, setFocused] = useState(false);
   const setQuery = (q: string) => {
     setQueryState(q);
     onTyping?.(!!q.trim());
@@ -66,7 +71,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const done = () => setQuery('');
   const makeRow = onMake ? (
     <ResultRow
-      label={`Make “${q}” in house`}
+      label={`Make “${q.charAt(0).toUpperCase()}${q.slice(1)}” in house`}
       sub={exact ? 'Your own version, with your recipe. We’ll start you off.' : 'Your own house prep. We’ll start you off.'}
       icon="make"
       onPress={() => {
@@ -102,9 +107,11 @@ export function IngredientSearch(props: IngredientSearchProps) {
 
   return (
     <View style={styles.stack}>
-      <View style={[styles.field, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-        <IconSymbol name={onCancel || !allowNew ? 'magnifyingglass' : 'plus'} size={18} color={ds.c.muted} />
+      <View style={[styles.field, { backgroundColor: ds.c.surface, borderColor: focused ? ds.accentText : ds.c.line }]}>
+        <IconSymbol name={q || onCancel || !allowNew ? 'magnifyingglass' : 'plus'} size={18} color={ds.c.muted} />
         <TextInput
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           value={query}
           onChangeText={setQuery}
           placeholder={label}
@@ -118,7 +125,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
             if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
             else if (allowNew && q && !loading) pick({ id: null, name: q });
           }}
-          style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }]}
+          style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }, NO_OUTLINE]}
         />
         {onCancel ? (
           <PressableScale onPress={onCancel} role="button" accessibilityLabel="Keep it as it was" style={styles.cancel}>
@@ -167,14 +174,14 @@ function UseCaption({ id, onShelf }: { id: string; onShelf: boolean }) {
   return n ? <Caption tone="muted">{`In ${n} ${n === 1 ? 'drink' : 'drinks'}`}</Caption> : null;
 }
 
-/** A found ingredient with its drawing, or an action row (make it in house, add the name) with its tile. */
+/** A found ingredient with its drawing, or an action row with its tile: make it in house (+, and on to the builder), or just the name (lines). */
 function ResultRow({ id, label, a11y, sub, caption, icon, onPress }: { id?: string; label: string; a11y?: string; sub?: string; caption?: ReactNode; icon?: 'make' | 'new'; onPress: () => void }) {
   const ds = useDs();
   return (
     <PressableScale role="button" onPress={onPress} accessibilityLabel={a11y ?? label} accessibilityHint={sub} style={[styles.result, { borderBottomColor: ds.c.line }]}>
       {icon ? (
         <View style={[styles.tile, { backgroundColor: icon === 'make' ? ds.accentFill.fill : ds.c.raised }]}>
-          <IconSymbol name={icon === 'make' ? 'sparkles' : 'plus'} size={16} color={icon === 'make' ? ds.accentFill.text : ds.c.ink} />
+          <IconSymbol name={icon === 'make' ? 'plus' : 'text.alignleft'} size={16} color={icon === 'make' ? ds.accentFill.text : ds.c.muted} />
         </View>
       ) : (
         <IngredientThumb id={id} name={label} size={36} />
@@ -183,6 +190,7 @@ function ResultRow({ id, label, a11y, sub, caption, icon, onPress }: { id?: stri
         <Body numberOfLines={icon ? 2 : 1}>{label}</Body>
         {sub ? <Caption tone="muted">{sub}</Caption> : caption}
       </View>
+      {icon === 'make' ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
     </PressableScale>
   );
 }

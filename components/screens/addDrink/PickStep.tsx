@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Field } from '@/components/ds';
@@ -7,8 +7,8 @@ import { samePick, type WizardPick } from '@/lib/drinkWizard';
 
 import { WizardChip } from './WizardChrome';
 
-/** How many chips show before "More". */
-const FIRST = 8;
+/** How many chips show before "More": the canvas draws seven glasses, then More. */
+const FIRST = 7;
 
 interface PickStepProps {
   label: string;
@@ -23,13 +23,15 @@ interface PickStepProps {
   suggested?: string | null;
   /** Why we guess it: "It has citrus, so it's shaken". */
   why?: string | null;
+  /** Between the chips and the field for your own: the glass's shapes. */
+  children?: ReactNode;
 }
 
 /**
  * Big chips for a step's common choices (existing rows first, so nothing is
  * duplicated) and a field for your own, made when the drink is saved.
  */
-export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why }: PickStepProps) {
+export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why, children }: PickStepProps) {
   const [all, setAll] = useState(false);
   // Your own choices stay on the list once added.
   const extra = selected.filter((s) => !options.some((o) => samePick(o, s)));
@@ -65,6 +67,7 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel, 
       </View>
       {guess && why ? <Caption tone="muted">{`Suggested: ${why}.`}</Caption> : null}
       {multi && selected.length > 1 ? <Caption tone="muted">{selected.map((s) => s.name).join(', then ')}</Caption> : null}
+      {children}
       <OwnField
         label={ownLabel}
         onAdd={(name) => {

@@ -1,10 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Platform, StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Field, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, Segmented, Switch } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { backbar, space } from '@/constants/tokens';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyHiddenCity, useMyProfile, useSaveMyProfile, useSaveSharing, type MyProfile } from '@/hooks/useMyProfile';
 import { useSaveProfilePhoto } from '@/hooks/useProfilePhoto';
@@ -13,6 +13,11 @@ import { profileDraftErrors, type ProfileDraft } from '@/lib/profiles';
 import { SafetyPage } from '../safety/SafetyPage';
 import { draftFrom } from './MyProfileScreen';
 import { ProfileIdentity } from './ProfileIdentity';
+
+const PHOTO_CHOICES = [
+  { value: 'members', label: 'People on Cocktail' },
+  { value: 'me', label: 'Only me' },
+] as const;
 
 const PHOTO_HINT = {
   members: 'Signed-in people see your photo. Anyone else sees your initials.',
@@ -30,7 +35,6 @@ export function AboutYouScreen() {
 }
 
 function AboutForm({ profile }: { profile: MyProfile }) {
-  const ds = useDs();
   const user = useAuth().user;
   const save = useSaveMyProfile();
   const saveChoice = useSaveSharing();
@@ -62,7 +66,7 @@ function AboutForm({ profile }: { profile: MyProfile }) {
     <SafetyPage title="About you" backTo="/settings/profile" action={<Button label={saved ? 'Saved' : 'Save'} onPress={submit} disabled={save.isPending} />}>
       <View style={styles.form}>
         <View style={styles.photo}>
-          <UserAvatar uri={draft.showsPhoto ? accountPhoto : null} name={draft.name || '?'} size={96} />
+          <UserAvatar uri={draft.showsPhoto ? accountPhoto : null} name={draft.name || '?'} size={96} neutral />
           <View style={styles.photoActions}>
             <Button label={accountPhoto ? 'Change photo' : 'Add a photo'} variant="secondary" onPress={() => void pickPhoto()} disabled={photo.isPending} />
             {accountPhoto ? <Button label={draft.showsPhoto ? 'Use my initials instead' : 'Use my photo'} variant="ghost" onPress={() => edit({ showsPhoto: !draft.showsPhoto })} /> : null}
@@ -70,11 +74,15 @@ function AboutForm({ profile }: { profile: MyProfile }) {
         </View>
         {photo.error ? <Caption tone="accent">Your photo didn’t save. Try again.</Caption> : null}
         <View style={styles.group}>
-          <DsText variant="headline">Who sees your photo</DsText>
-          <View role="radiogroup" accessibilityLabel="Who sees your photo" style={styles.chips}>
-            <Chip label="People on Cocktail" selected={draft.showsPhoto} onPress={() => edit({ showsPhoto: true })} />
-            <Chip label="Only me" selected={!draft.showsPhoto} onPress={() => edit({ showsPhoto: false })} />
-          </View>
+          <Body style={styles.strong}>Who sees your photo</Body>
+          <Segmented
+            variant="ink" stretch
+            choice
+            accessibilityLabel="Who sees your photo"
+            options={PHOTO_CHOICES}
+            value={draft.showsPhoto ? 'members' : 'me'}
+            onChange={(v) => edit({ showsPhoto: v === 'members' })}
+          />
           <Caption tone="muted">{PHOTO_HINT[draft.showsPhoto ? 'members' : 'me']}</Caption>
         </View>
         <Field label="Name" value={draft.name} onChangeText={(name) => edit({ name })} error={errors.name} autoComplete="name" maxLength={80} />
@@ -99,10 +107,7 @@ function AboutForm({ profile }: { profile: MyProfile }) {
             <Switch
               value={showsCity}
               onValueChange={(on) => saveChoice.mutate({ id: profile.id, showsCity: on })}
-              aria-label="Show my city"
-              trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
-              thumbColor={backbar.light.surface}
-              {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
+              label="Show my city"
             />
           </View>
         ) : null}
@@ -118,7 +123,7 @@ const styles = StyleSheet.create({
   photo: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   photoActions: { flex: 1, gap: space.xs, alignItems: 'flex-start' },
   group: { gap: space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
 });

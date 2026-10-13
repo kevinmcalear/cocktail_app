@@ -3,7 +3,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, PressableScale, Tag, TextLink, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
@@ -93,6 +93,7 @@ function SourceLink({ url, label, children }: { url: string | null; label: strin
  * months") or an unknown end said plainly. Each opens its menu.
  */
 export function MenuHistory({ profileId, name }: { profileId: string; name: string }) {
+  const ds = useDs();
   const { data = [], isLoading } = useMenuEditions(profileId);
   const [all, setAll] = useState(false);
   const [report, setReport] = useState(false);
@@ -109,12 +110,12 @@ export function MenuHistory({ profileId, name }: { profileId: string; name: stri
       {data.length > FIRST_MENUS && !all ? (
         <Button label={`Show all ${data.length} menus`} variant="secondary" onPress={() => setAll(true)} />
       ) : null}
-      <View style={styles.foot}>
-        <Caption tone="muted">
-          {data.every((m) => m.from_venue) ? `From ${name}’s own menus. Something wrong?` : 'From the bar’s site and press. Each menu links to its source. Something wrong?'}
+      <Caption tone="muted" style={styles.foot}>
+        {data.every((m) => m.from_venue) ? `From ${name}’s own menus. Something wrong? ` : 'From the bar’s site and press. Each menu links to its source. Something wrong? '}
+        <Caption role="link" accessibilityLabel="Tell us what's wrong" onPress={() => setReport(true)} style={[styles.underline, { color: ds.accentText }]}>
+          Tell us.
         </Caption>
-        <TextLink label="Tell us." onPress={() => setReport(true)} />
-      </View>
+      </Caption>
       {report ? (
         <ReportSheet subject={`${name}'s menus`} targets={[{ label: name, target: { kind: 'profile', profileId } }]} onClose={() => setReport(false)} />
       ) : null}
@@ -178,5 +179,6 @@ const styles = StyleSheet.create({
   nowCard: { paddingHorizontal: space.lg, marginBottom: space.md, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   start: { alignSelf: 'flex-start' },
   nowActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
-  foot: { gap: space.xs, alignItems: 'flex-start' },
+  foot: { marginLeft: 14 + space.md },
+  underline: { textDecorationLine: 'underline' },
 });

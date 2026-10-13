@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, EquipmentDrawing, Headline, IngredientDrawing, MatchText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
 import { layout, radius, space } from '@/constants/tokens';
 import type { FoundItem } from '@/hooks/useHomeBar';
 import { useKit } from '@/hooks/useKit';
@@ -88,9 +89,9 @@ export function KitResults({ query, cols }: { query: string; cols: number }) {
     if (!pieces.length) return [];
     return [
       <View key={kind.id} style={styles.group}>
-        <Caption tone="muted" style={styles.heading}>
-          {kind.name}
-        </Caption>
+        <View style={styles.heading}>
+          <Eyebrow>{kind.name}</Eyebrow>
+        </View>
         <TileGrid cols={cols}>
           {pieces.map((e) => {
             const has = owned.includes(e.id);

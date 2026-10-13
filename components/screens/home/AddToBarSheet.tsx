@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useDeferredValue, useRef, useState, type ComponentRef } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, Field, FieldButton, IngredientThumb } from '@/components/ds';
+import { Body, Field, FieldButton, IngredientThumb } from '@/components/ds';
+import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { space } from '@/constants/tokens';
 import { useBarIdeas, useBarSearch, type FoundItem } from '@/hooks/useHomeBar';
@@ -103,6 +104,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
         value={query}
         onChangeText={setQuery}
         placeholder="Gin, lemons, malic acid, a shaker…"
+        icon="magnifyingglass"
         autoCorrect={false}
         autoCapitalize="none"
         autoFocus={MODAL_AUTOFOCUS}
@@ -116,14 +118,12 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
       />
       <SectionChips sections={SHELF_SECTIONS} counts={chipCounts} total={total || undefined} picked={filter === 'all' ? [] : [filter]} onPick={onFilter} bleed={space.xl} />
       <View style={styles.results}>
-        <Caption tone="muted">{BLURBS[filter]}</Caption>
+        {typed ? null : <Body tone="muted">{BLURBS[filter]}</Body>}
         {!filled ? null : filter === 'kit' ? (
           <KitResults query={typed} cols={cols} />
         ) : !typed ? (
           <View style={styles.group}>
-            <Caption tone="muted" style={styles.heading}>
-              {filter === 'all' ? 'Most used in drinks' : `Common ${SECTIONS[filter].short.toLowerCase()}`}
-            </Caption>
+            <Eyebrow>{filter === 'all' ? 'Most used in drinks' : `Common ${SECTIONS[filter].short.toLowerCase()}`}</Eyebrow>
             <TileGrid cols={cols}>
               {(ideas.data ?? []).map((item) => {
                 const has = onShelf.has(item.id);
@@ -154,9 +154,9 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
           [...groups.map((g) => (
             <View key={g.section}>
               {filter === 'all' ? (
-                <Caption tone="muted" style={styles.heading}>
-                  {SECTIONS[g.section].title}
-                </Caption>
+                <View style={styles.heading}>
+                  <Eyebrow>{SECTIONS[g.section].title}</Eyebrow>
+                </View>
               ) : null}
               {g.items.map((item) => (
                 <Result

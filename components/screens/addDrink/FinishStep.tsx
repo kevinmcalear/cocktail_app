@@ -13,7 +13,7 @@ import { capitalize } from '@/lib/stringUtils';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
 import { PrepBuilder } from './prep/PrepBuilder';
-import { Eyebrow, WizardChip } from './WizardChrome';
+import { WizardChip } from './WizardChrome';
 
 /** Garnish chips shown before More. */
 const SHOWN = 8;
@@ -123,7 +123,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
       {typing ? null : (
         <>
           <View style={styles.group}>
-            <Eyebrow>Drops, mist, rinse</Eyebrow>
+            <Caption tone="muted">Drops, mist, rinse</Caption>
             <View role="group" accessibilityLabel="Drops, mist, rinse" style={styles.chips}>
               {FINISH_CHIPS.map((c) => (
                 <WizardChip
@@ -137,12 +137,12 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
             </View>
           </View>
           <View style={styles.group}>
-            <Eyebrow>Garnish</Eyebrow>
+            <Caption tone="muted">Garnish</Caption>
             <View role="group" accessibilityLabel="Garnish" style={styles.chips}>
               {garnishes.map((c) => (
                 <WizardChip key={c.label} kind="checkbox" label={c.label} selected={has(c.name, c.unit)} onPress={() => toggle(c.name, c.unit, c.amount)} />
               ))}
-              {garnishes.length < GARNISH_CHIPS.length ? <WizardChip label="More" kind="button" onPress={() => setAll(true)} /> : null}
+              {garnishes.length < GARNISH_CHIPS.length ? <WizardChip label="More" kind="button" dashed onPress={() => setAll(true)} /> : null}
             </View>
           </View>
           <Caption tone="muted">The finish goes at the end of the spec.</Caption>

@@ -25,15 +25,15 @@ function sceneFor(names: string[], role: string | null, seed: string, detail: Sk
   return scene;
 }
 
-type Props = { id?: string | null; name: string; detail?: SketchDetail; lazy?: boolean };
+type Props = { id?: string | null; name: string; detail?: SketchDetail; lazy?: boolean; /** No paper behind it (SceneSvg). */ bare?: boolean };
 
-function Loaded({ id, name, detail = 'full', lazy = detail === 'thumb' }: Props) {
+function Loaded({ id, name, detail = 'full', lazy = detail === 'thumb', bare }: Props) {
   const chain = useIngredientChain(id).data;
   const names = chain?.names.length ? chain.names : [name];
   const role = chain?.role ?? null;
   // Blank paper while the kinds load (a null key), so a drawing never swaps for another.
   const key = id && !chain ? null : keyFor(names, role, id ?? name, detail);
-  return <SceneSvg scene={useScene(scenes, key, lazy, () => paint(names, role, id ?? name, detail))} />;
+  return <SceneSvg bare={bare} scene={useScene(scenes, key, lazy, () => paint(names, role, id ?? name, detail))} />;
 }
 
 /**
@@ -44,6 +44,6 @@ function Loaded({ id, name, detail = 'full', lazy = detail === 'thumb' }: Props)
  * in a grid) paints when the app is idle, on blank paper till then.
  */
 export const IngredientDrawing = memo(function IngredientDrawing(props: Props) {
-  if (!useContext(QueryClientContext)) return <SceneSvg scene={sceneFor([props.name], null, props.id ?? props.name, props.detail ?? 'full')} />;
+  if (!useContext(QueryClientContext)) return <SceneSvg bare={props.bare} scene={sceneFor([props.name], null, props.id ?? props.name, props.detail ?? 'full')} />;
   return <Loaded {...props} />;
 });

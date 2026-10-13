@@ -3,7 +3,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { BackbarTheme, useDs, useGutter } from '@/components/ds';
+import { useDs, useGutter } from '@/components/ds';
+import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { AccountSection, SignOutSection } from '@/components/screens/settings/AccountSection';
 import { PreferencesSection } from '@/components/screens/settings/PreferencesSection';
 import { ProfileSection } from '@/components/screens/settings/ProfileSection';
@@ -19,10 +20,11 @@ import { confirmAsync } from '@/lib/dialogs';
  * each venue's settings open on a page of their own.
  */
 export function SettingsScreen() {
+  // In venue mode the page takes the venue's accent and ground (tools-settings-phone).
   return (
-    <BackbarTheme>
+    <VenueBrandProvider>
       <Settings />
-    </BackbarTheme>
+    </VenueBrandProvider>
   );
 }
 
@@ -58,7 +60,7 @@ function Settings() {
         }}
       >
         <View style={[frame.column, styles.page]}>
-          <SubPageHead title="Settings" onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+          <SubPageHead title="Settings" close onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
           <ProfileSection />
           <VenuesSection />
           <PreferencesSection />

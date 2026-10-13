@@ -4,6 +4,8 @@ import { renderWithTamagui } from '@/jest.setup';
 
 import { PrepBuilder } from './PrepBuilder';
 
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 
 // The builder draws after its first layout, as the wizard does on iOS.
