@@ -5,7 +5,7 @@
 // these run on Vercel, outside the app's bundle.
 
 import type { PreviewMeta } from './menuPreview';
-import { drinkKicker } from './publicDrink';
+import { drinkKicker, ingredientsLine, type IngredientName } from './publicDrink';
 
 interface Supabase {
   url: string;
@@ -27,8 +27,8 @@ export interface PreviewDrinkCard {
   /** Who made it, and the bar it's from (a venue's own, or the one it's credited to). */
   creator: string | null;
   bar: string | null;
-  /** Generic ingredient names, only for a drink shared with its spec. */
-  ingredients: string[];
+  /** Its ingredient names, never amounts (public_drink_ingredients); empty on a locked bar page. */
+  ingredients: IngredientName[];
 }
 
 async function get<T>(db: Supabase, path: string): Promise<T[]> {
@@ -50,26 +50,17 @@ export async function fetchPreviewDrinkCard(db: Supabase, id: string): Promise<P
   const [people, venue, lines] = await Promise.all([
     ids.length ? get<{ id: string; display_name: string }>(db, `profiles?select=id,display_name&is_public=eq.true&id=in.(${ids.join(',')})`) : Promise.resolve([]),
     d.bar_id ? get<{ display_name: string }>(db, `profiles?select=display_name&kind=eq.bar&is_public=eq.true&bar_id=eq.${d.bar_id}`) : Promise.resolve([]),
-    d.publish_mode === 'spec'
-      ? get<{ sort_order: number | null; display_ingredient: { name: string } | { name: string }[] | null }>(
-          db,
-          `app_recipe_presentation?select=sort_order,display_ingredient:published_ingredient(name)&recipe_item_id=eq.${id}&order=sort_order`
-        )
-      : Promise.resolve([]),
+    get<IngredientName>(db, `rpc/public_drink_ingredients?p_item_ids=%7B${id}%7D`),
   ]);
   const name = (pid: string | null) => people.find((p) => p.id === pid)?.display_name ?? null;
-  const ingredients = lines
-    .map((l) => (Array.isArray(l.display_ingredient) ? l.display_ingredient[0] : l.display_ingredient)?.name)
-    .filter((n): n is string => !!n)
-    .filter((n, i, all) => all.indexOf(n) === i);
+  const ingredients = lines.map(({ name, brand }) => ({ name, brand }));
   const { creator_profile_id, origin_bar_profile_id, ...rest } = d;
   return { ...rest, creator: name(creator_profile_id), bar: venue[0]?.display_name ?? name(origin_bar_profile_id), ingredients };
 }
 
-/** "Scotch, lemon, honey syrup, ginger": the spec's names when it's shared, else the description. */
+/** "Scotch, lemon, honey syrup, ginger": its ingredient names, else the description. */
 export function drinkLine(d: Pick<PreviewDrinkCard, 'ingredients' | 'description'>): string | null {
-  if (d.ingredients.length) return d.ingredients.map((n, i) => (i ? n.toLowerCase() : n)).join(', ');
-  return d.description?.trim().replace(/\.$/, '') || null;
+  return ingredientsLine(d.ingredients) ?? (d.description?.trim().replace(/\.$/, '') || null);
 }
 
 /** "Sam Ross, 2005", or the bar when nobody's named. */
