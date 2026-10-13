@@ -15,6 +15,7 @@ import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
 import { DiscoverSearchHead, DiscoverSearchSheet } from '@/components/screens/home/DiscoverSearchSheet';
 import { AreaSheet, FiltersSheet } from '@/components/screens/home/DiscoverSheet';
 import { DeskSearchResults } from '@/components/screens/home/DeskSearchResults';
+import { AllowLocation } from '@/components/screens/home/DiscoverArea';
 import { BarAway, DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { PickedBar } from '@/components/screens/home/SelectedBar';
 import { ForYou } from '@/components/screens/home/FlavorRails';
@@ -58,7 +59,7 @@ export function DiscoverScreen() {
   const signedIn = !!useAuth().user;
   const home = useMode().mode === 'home';
   const breakpoint = useBreakpoint();
-  const { area, onArea, preferNear, near, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
+  const { area, onArea, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
   // Search's Browse chips open Discover on a style (/discover?kind=negroni).
   const { kind } = useLocalSearchParams<{ kind?: string }>();
   const [kinds, setKinds] = useState<string[]>(() => (typeof kind === 'string' && kind ? [kind] : []));
@@ -172,7 +173,7 @@ export function DiscoverScreen() {
   } else if (sheet === 'filters') {
     overlay = <FiltersSheet kinds={kinds} onChange={setKinds} bars={signedIn && results.totals ? results.totals.bars : null} closed={closed} onClose={close} />;
   } else if (sheet === 'area') {
-    overlay = <AreaSheet area={area} near={near} preferNear={preferNear} onArea={onArea} onNearMe={onNearMe} onThisArea={onThisArea} onClose={close} />;
+    overlay = <AreaSheet area={area} near={near} access={access} preferNear={preferNear} onArea={onArea} onNearMe={onNearMe} onThisArea={onThisArea} onClose={close} />;
   } else if (sheet === 'add') {
     overlay = <AddBarSheet onClose={close} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} />;
   }
@@ -201,6 +202,7 @@ export function DiscoverScreen() {
                 // On glass: bare text over the map is lost under the pins.
                 <GlassSurface style={styles.mapNote}>
                   <Caption role="status">{note}</Caption>
+                  <AllowLocation near={near} access={access} onAsk={onNearMe} />
                 </GlassSurface>
               ) : null}
             </>
@@ -234,6 +236,7 @@ export function DiscoverScreen() {
             {note}
           </Caption>
         ) : null}
+        {note ? <AllowLocation near={near} access={access} onAsk={onNearMe} /> : null}
         {signedIn && home && !searching ? <HomeWeekStrip /> : null}
         {deskSearch ? (
           <DeskSearchResults filter={filter} drink={drink} results={results} layer={mapLayer} onLayer={setMapLayer} from={from} picked={picked} />
@@ -287,7 +290,7 @@ const styles = StyleSheet.create({
   mapHeader: { position: 'absolute', top: 0, left: 0, right: 0 },
   // Runs past the header so the fade ends softly over the map.
   mapFade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: -space.xl },
-  mapNote: { borderRadius: radius.card, paddingHorizontal: space.lg, paddingVertical: space.md },
+  mapNote: { borderRadius: radius.card, paddingHorizontal: space.lg, paddingVertical: space.md, gap: space.sm },
   controls: { gap: space.sm },
   sticky: { paddingVertical: space.md },
   body: { gap: space.xl, paddingTop: space.sm },
