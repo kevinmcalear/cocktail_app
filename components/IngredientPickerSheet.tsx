@@ -8,7 +8,6 @@ import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { calculateDraftProgress } from "@/lib/draftProgress";
 import { focusInModal, MODAL_AUTOFOCUS, type FocusableRef } from '@/lib/modalAutoFocus';
-import { capitalize } from "@/lib/stringUtils";
 
 export type IngredientPickerItem = {
     id: string;
@@ -108,7 +107,7 @@ export function IngredientPickerSheet({
                             <XStack gap="$3" alignItems="center" flexShrink={1}>
                                 <IngredientThumb id={item.id} name={item.name} size={36} />
                                 <Text color="$color" fontSize={16}>
-                                    {capitalize(item.name)}
+                                    {item.name}
                                 </Text>
                                 {childProgress ? (
                                     <View

@@ -1,12 +1,17 @@
 import React, { useMemo, useState } from "react";
+import { StyleSheet } from "react-native";
 import { XStack } from "tamagui";
 
 import { SpecBadge } from "@/components/cocktail/SpecBadge";
 import { SpecPickerSheet } from "@/components/cocktail/SpecPickerSheet";
+import { GlasswarePrompt } from "@/components/screens/venue/GlasswarePrompt";
+import { useBarGlassware } from "@/hooks/useBarGlassware";
 import type { useCocktailDraftEditor } from "@/hooks/useCocktailDraftEditor";
 import type { SpecCategory, useCocktailEditor } from "@/hooks/useCocktailEditor";
 import { buildOriginOptions } from "@/lib/cocktailOrigins";
+import { isVenueGlassName } from "@/lib/glassware";
 import { capitalize } from "@/lib/stringUtils";
+import { glassFromName } from "@/supabase/functions/_shared/sketch";
 
 type Editor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
 
@@ -67,6 +72,13 @@ export function SpecBadgeRow({ isEditing, viewSpec, editor }: SpecBadgeRowProps)
         return { iconKey: item?.icon_key ?? null, iconUrl: item?.icon_url ?? null };
     };
 
+    // At a venue, its own glasses lead the glass list ("Your glasses").
+    const barGlasses = useBarGlassware(isEditing ? editor?.barId : null).data ?? [];
+    const glassware = editor?.glassware ?? [];
+    const ownGlasses = glassware.filter((g) => isVenueGlassName(barGlasses, g.name));
+    const glassOptions = [...ownGlasses, ...glassware.filter((g) => !isVenueGlassName(barGlasses, g.name))];
+    const glassName = editor ? getEditorName("glassware", editor.getSpecId("glassware")) : null;
+
     const originValue = isEditing && editor ? editor.origin : viewSpec.origin;
     const originOptions = useMemo(() => buildOriginOptions(editor?.origin), [editor?.origin]);
 
@@ -116,6 +128,16 @@ export function SpecBadgeRow({ isEditing, viewSpec, editor }: SpecBadgeRowProps)
                 )}
             </XStack>
 
+            {isEditing && editor ? (
+                <GlasswarePrompt
+                    barId={editor.barId}
+                    glass={glassFromName(glassName)}
+                    variant={"sketchVariant" in editor ? editor.sketchVariant : null}
+                    name={glassName}
+                    style={styles.prompt}
+                />
+            ) : null}
+
             {editor &&
                 SPEC_FIELDS.map(({ key, label }) => (
                     <SpecPickerSheet
@@ -127,7 +149,7 @@ export function SpecBadgeRow({ isEditing, viewSpec, editor }: SpecBadgeRowProps)
                             key === "method"
                                 ? editor.methods
                                 : key === "glassware"
-                                  ? editor.glassware
+                                  ? glassOptions
                                   : key === "family"
                                     ? editor.families
                                     : editor.iceTypes
@@ -142,6 +164,7 @@ export function SpecBadgeRow({ isEditing, viewSpec, editor }: SpecBadgeRowProps)
                         onAdd={(name) => editor.handleAddPill(key, name)}
                         onAddGlassware={key === "glassware" ? editor.handleAddGlassware : undefined}
                         onIdentifyGlassware={key === "glassware" ? editor.identifyGlassware : undefined}
+                        lead={key === "glassware" && ownGlasses.length ? { label: "Your glasses", rest: "Other glasses", count: ownGlasses.length } : undefined}
                     />
                 ))}
 
@@ -164,3 +187,7 @@ export function SpecBadgeRow({ isEditing, viewSpec, editor }: SpecBadgeRowProps)
         </>
     );
 }
+
+const styles = StyleSheet.create({
+    prompt: { marginHorizontal: 24, marginTop: -8, marginBottom: 24 },
+});
