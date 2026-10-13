@@ -76,9 +76,10 @@ export function teamLine(people: number, invited: number): string {
   return [plural(people, 'person', 'people'), invited ? `${invited} invited` : null].filter(Boolean).join(' · ');
 }
 
-/** My Bar: "46 bottles". */
-export function shelfLine(bottles: number): string {
-  return bottles ? plural(bottles, 'bottle') : 'Add what’s on your shelf';
+/** My Bar: "4 bottles · 7 drinks ready". */
+export function shelfLine(bottles: number, ready = 0): string {
+  if (!bottles) return 'Add what’s on your shelf';
+  return [plural(bottles, 'bottle'), ready ? `${plural(ready, 'drink')} ready` : null].filter(Boolean).join(' · ');
 }
 
 /** Collection: "12 to make · 3 menus". */
