@@ -124,7 +124,8 @@ describe('made_drinks', () => {
     assert.equal(mine.data.length, 1);
     assert.deepEqual(mine.data[0].swaps, [{ from: 'Amaro Nonino', to: 'Amaro Montenegro' }]);
     assert.deepEqual((await users.other.client.from('made_drinks').select('id').eq('item_id', ids.classic)).data, []);
-    const { data: anonRows, error: anonError } = await anon.from('made_drinks').select('id');
+    // Not shown on a profile (20261016400000), so signed out reads none of it.
+    const { data: anonRows, error: anonError } = await anon.from('made_drinks').select('id').eq('item_id', ids.classic);
     assert.ok(anonError || !anonRows.length, 'anon reads nothing');
   });
 
