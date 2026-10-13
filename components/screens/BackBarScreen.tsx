@@ -10,7 +10,7 @@ import { ZoneKinds } from '@/components/backbar/ZoneKinds';
 import { ZoneInspector } from '@/components/backbar/ZoneInspector';
 import { Body, Button, Caption, LockedSection, Surface, useBreakpoint, useDs } from '@/components/ds';
 import { usePageColumn } from '@/components/nav/Page';
-import { SubPageHead } from '@/components/nav/PageFrame';
+import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations, useLocationMutations, useWaitingForSpot, useZoneMutations } from '@/hooks/useBackBar';
@@ -27,6 +27,7 @@ import type { BarZone, ItemLocation } from '@/types/backBar';
 export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
   const ds = useDs();
   const column = usePageColumn('wide');
+  const { top } = usePageFrame('wide');
   const wide = useBreakpoint() !== 'phone';
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -175,7 +176,7 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[column, styles.body, { paddingBottom: insets.bottom + space.xxl }]}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[column, styles.body, { paddingTop: top, paddingBottom: insets.bottom + space.xxl }]}>
         {/* A venue tool's head (tools-backbar): the title at Title size, its line, the actions at the end. */}
         <SubPageHead
           title="Back bar"
@@ -185,7 +186,8 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
           trailing={
             canRead && zones.length ? (
               <View style={styles.actions}>
-                <Button label="Print labels" icon="printer" variant="secondary" onPress={() => router.push('/back-bar-labels')} />
+                {/* Labels are printed from a computer; a phone's head has room for Edit the plan alone (tools-backbar-phone). */}
+                {wide ? <Button label="Print labels" icon="printer" variant="secondary" onPress={() => router.push('/back-bar-labels')} /> : null}
                 {canDraw ? (
                   <Button label={editing ? 'Done' : 'Edit the plan'} icon={editing ? undefined : 'pencil'} variant={editing ? 'secondary' : 'primary'} onPress={() => setEditing((e) => !e)} />
                 ) : null}
