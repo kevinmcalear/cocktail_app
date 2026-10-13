@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import type { CreditStatus } from '@/lib/lineage';
+import { resolveShareKey } from '@/hooks/useShareSlug';
 import { isUuid } from '@/lib/menuPreview';
 import type { PresentationRecipe } from '@/lib/spec';
 import { supabase } from '@/lib/supabase';
@@ -213,16 +214,17 @@ export interface PublishedDrinkPage {
   recipes: PresentationRecipe[];
 }
 
-/** One published drink's public page, or null when it isn't (or is no longer) published. */
+/** One published drink's public page, by id or slug, or null when it isn't (or is no longer) published. */
 export function usePublishedDrink(id: string | null | undefined) {
   return useQuery({
     queryKey: ['published', 'drink', id],
     meta: { public: true },
     enabled: !!id,
     queryFn: async (): Promise<PublishedDrinkPage | null> => {
-      // A mangled link is Not available, not a failed load.
-      if (!isUuid(id)) return null;
-      const [drink] = await fetchPublished([id]);
+      // The id or the readable slug (/d/penicillin). A mangled link is Not available, not a failed load.
+      const drinkId = id ? await resolveShareKey('d', id) : null;
+      if (!drinkId) return null;
+      const [drink] = await fetchPublished([drinkId]);
       if (!drink) return null;
       const refIds = [drink.glasswareId, drink.iceId, drink.familyId].filter((x): x is string => !!x);
       const [refs, bar, recipes] = await Promise.all([

@@ -4,7 +4,8 @@ import { PublishedDrinkScreen } from '@/components/screens/published/PublishedDr
 import { DrinkingAgeGate } from '@/components/screens/safety/DrinkingAgeGate';
 
 /**
- * A published drink's public page: /d/<id>, from a release with ?release=<id>.
+ * A published drink's public page: /d/<id> or /d/<slug> (/d/penicillin), from
+ * a release with ?release=<id>.
  * Opens signed out, behind the drinking-age question on web.
  */
 export default function PublishedDrinkRoute() {
