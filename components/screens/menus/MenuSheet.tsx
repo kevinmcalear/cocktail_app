@@ -25,13 +25,19 @@ interface MenuSheetProps {
   form?: boolean;
   /** A menu of places or actions (New, Switch to): the title in the body face, as the canvas draws those. */
   plain?: boolean;
+  /**
+   * The children are the body's own list: a FlatList scrolling on
+   * SheetScrollView, padded with menuSheetBody. Long lists (a venue's whole
+   * library) then draw only the rows in view.
+   */
+  list?: boolean;
 }
 
 /**
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children, footer, onShow, save, plain, form }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children, footer, onShow, save, plain, form, list }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -63,9 +69,13 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children
         )
       }
     >
-      <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        {children}
-      </SheetScrollView>
+      {list ? (
+        children
+      ) : (
+        <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          {children}
+        </SheetScrollView>
+      )}
       {footer ? <View style={[styles.footer, { paddingBottom: sheetIsDialog ? space.lg : insets.bottom + space.lg, borderTopColor: ds.c.line }]}>{footer}</View> : null}
     </Sheet>
   );
@@ -211,3 +221,6 @@ const styles = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: radius.pill },
   disabled: { opacity: 0.45 },
 });
+
+/** A `list` body's padding and spacing, as the scrolling body has. */
+export const menuSheetBody = styles.body;
