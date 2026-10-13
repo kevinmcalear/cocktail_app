@@ -9,13 +9,11 @@ import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarFacts } from '@/hooks/useBarFacts';
 import { isUnclaimed, useMenuCredits, useMenuEditions, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
-import { hoursSource } from '@/lib/barHours';
 import { drinkRunTags } from '@/lib/menuEditions';
 import { plural } from '@/lib/menus';
 import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 
 import { barPlace } from '../bar/BarFactLines';
-import { BarFactsBlock } from '../bar/BarFactsBlock';
 import { OnTheMenu } from '../bar/OnTheMenu';
 import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { BarClassics } from './BarClassics';
@@ -28,6 +26,7 @@ import { ClaimProfile } from './ClaimProfile';
 import { LockedOriginals } from './LockedOriginals';
 import { Positions } from './Positions';
 import { BarHeader, BarStats, MenuCredits, OriginalsGrid } from './ProfileSections';
+import { PublicBarFacts } from './PublicBarFacts';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'people';
 /** A bar's page leads with its menus. */
@@ -42,9 +41,12 @@ const TABS = [
 ] as const;
 
 /**
- * A bar's page: who it is, its numbers, This week, what matches a search, its
- * classics and awards, then Menus, Originals, Top drinks and People. A page
- * that keeps its specs back (unclaimed, or not open) shows names, a lock, and why.
+ * A bar's page on a phone, signed in (ppl-bar-top, -menus, -originals,
+ * -unclaimed): who it is, hours and location, what matches a search, its
+ * numbers between two rules, an unclaimed bar's facts, This week, then Menus,
+ * Originals, Top drinks and People as tabs. A page that keeps its specs back
+ * (unclaimed, or not open) shows names, a lock, and why. Wider screens get
+ * the drawn desktop page (PublicBarPage signed in).
  */
 export function BarProfile({ profile, columns }: { profile: Profile; columns: number }) {
   const [tab, setTab] = useState<Tab>('menus');
@@ -70,28 +72,28 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       <WebHead>
         <title>{`${profile.display_name} (@${profile.handle})`}</title>
       </WebHead>
-      <View style={styles.head}>
-        <BarHeader
-          profile={profile}
-          detail={[barPlace(facts?.bar_type, place) || 'Bar', here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ')}
-          // Opened from a search: the facts and actions, then straight into what matched (disc-search-bar).
-          tag={
-            searched ? null : (
-              <View style={styles.chips}>
-                <Tag label={unclaimed ? 'Not claimed yet' : 'Claimed'} tone={unclaimed ? 'default' : 'outline'} />
-                {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} tone="outline" /> : null}
-                {profile.is_public ? null : <Tag label="Private" tone="outline" />}
-              </View>
-            )
-          }
-        />
-        {/* No bio or link icons on a bar's page (ppl-bar-top, ppl-bar-unclaimed): Website sits with Directions and Call, Instagram under Online. */}
-        <BarFactsBlock profileId={profile.id} />
-        {unclaimed && facts?.hours ? <Caption tone="muted">{hoursSource(false, facts.hours_updated_at)}</Caption> : null}
-      </View>
+      <BarHeader
+        profile={profile}
+        detail={[barPlace(facts?.bar_type, place) || 'Bar', here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ')}
+        tagInline={unclaimed}
+        // Opened from a search: the facts and actions, then straight into what matched (disc-search-bar).
+        tag={
+          searched ? null : (
+            <View style={styles.chips}>
+              <Tag label={unclaimed ? 'Not claimed yet' : 'Claimed'} tone={unclaimed ? 'default' : 'outline'} />
+              {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} tone="outline" /> : null}
+              {profile.is_public ? null : <Tag label="Private" tone="outline" />}
+            </View>
+          )
+        }
+      />
+      {/* Hours, the address, then Directions, Call and Website three across (b32: claimed or not), and where the hours came from. */}
+      <PublicBarFacts profileId={profile.id} />
 
       {/* A search's matches (nothing without one) come right under the header. */}
       <BarMatches barProfileId={profile.id} />
+      {/* Opened from a search, the menu it's pouring follows the matches (disc-search-bar); the plain page has it under Menus (ppl-bar-menus). */}
+      {searched ? <OnTheMenu profileId={profile.id} /> : null}
 
       <BarStats profile={profile} originals={own.length} onAwards={() => setAwardsOpen((v) => !v)} />
 
@@ -99,16 +101,11 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
 
       {unclaimed ? <BarFactsList profile={profile} /> : null}
 
-      <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />
-
-      {/* The menu it's pouring (b12, as Discover's bar view); the rest follows. */}
-      <OnTheMenu profileId={profile.id} />
-
       {unclaimed && !specsLocked ? <ClaimProfile profile={profile} /> : null}
 
-      <MenuCredits credits={credits} names={names} />
+      <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />
 
-      <Segmented accessibilityLabel="Profile sections" options={TABS} value={tab} onChange={setTab} />
+      <Segmented accessibilityLabel="Bar sections" stretch accent options={TABS} value={tab} onChange={setTab} />
       {tab === 'menus' ? (
         <MenuHistory profileId={profile.id} name={profile.display_name} />
       ) : tab === 'originals' ? (
@@ -132,6 +129,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
             ) : null}
             {/* Classics they pour sit with the originals now, not above the tabs (ppl-bar-originals). */}
             <BarClassics barId={profile.bar_id} />
+            <MenuCredits credits={credits} names={names} />
           </View>
         )
       ) : tab === 'rankings' ? (
@@ -153,8 +151,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
 }
 
 const styles = StyleSheet.create({
-  body: { gap: space.xl },
-  head: { gap: space.sm },
+  body: { gap: space.lg + space.xs },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   tab: { gap: space.lg },
   start: { alignSelf: 'flex-start' },

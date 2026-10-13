@@ -1,7 +1,7 @@
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Caption, Spec, TextLink, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { Caption, DsText, PressableScale, Spec, useDs } from '@/components/ds';
+import { radius, space, type } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useBarFacts } from '@/hooks/useBarFacts';
 import { useCollection } from '@/hooks/useCollection';
@@ -38,10 +38,10 @@ export function BarYours({ profileId, drinkIds }: { profileId: string; drinkIds:
     { value: String(made), label: 'made at home' },
   ].filter((c): c is { value: string; label: string } => !!c);
   return (
-    <View role="list" accessibilityLabel="Your drinks here" style={[styles.strip, { backgroundColor: ds.c.surface }]}>
+    <View role="list" accessibilityLabel="Your drinks here" style={styles.strip}>
       {cells.map((c) => (
-        <View key={c.label} role="listitem" accessible accessibilityLabel={`${c.value} ${c.label}`} style={styles.cell}>
-          <Spec>{c.value}</Spec>
+        <View key={c.label} role="listitem" accessible accessibilityLabel={`${c.value} ${c.label}`} style={[styles.cell, { backgroundColor: ds.c.surface }]}>
+          <Spec style={type.headline}>{c.value}</Spec>
           <Caption tone="muted">{c.label}</Caption>
         </View>
       ))}
@@ -67,19 +67,25 @@ export function BarFactsList({ profile }: { profile: Profile }) {
   return (
     <View role="list" style={styles.facts}>
       {rows.map((r) => (
-        <View key={r.term} role="listitem" style={[styles.fact, { borderBottomColor: ds.c.line }]}>
-          <Caption tone="muted" style={styles.term}>
+        <View key={r.term} role="listitem" style={styles.fact}>
+          <DsText variant="body" tone="muted" style={[styles.text, styles.term]}>
             {r.term}
-          </Caption>
-          <Caption style={styles.flex}>{r.value}</Caption>
+          </DsText>
+          <DsText variant="body" style={[styles.text, styles.flex]}>
+            {r.value}
+          </DsText>
         </View>
       ))}
       {profile.instagram ? (
-        <View role="listitem" style={[styles.fact, { borderBottomColor: ds.c.line }]}>
-          <Caption tone="muted" style={styles.term}>
+        <View role="listitem" style={styles.fact}>
+          <DsText variant="body" tone="muted" style={[styles.text, styles.term]}>
             Online
-          </Caption>
-          <TextLink label="Instagram" accessibilityHint={`@${normalizeInstagram(profile.instagram)}, opens Instagram`} onPress={() => void Linking.openURL(instagramUrl(normalizeInstagram(profile.instagram!)))} />
+          </DsText>
+          <PressableScale role="link" accessibilityLabel="Instagram" accessibilityHint={`@${normalizeInstagram(profile.instagram)}, opens Instagram`} onPress={() => void Linking.openURL(instagramUrl(normalizeInstagram(profile.instagram!)))}>
+            <DsText variant="body" color={ds.accentText} style={styles.text}>
+              Instagram
+            </DsText>
+          </PressableScale>
         </View>
       ) : null}
     </View>
@@ -87,10 +93,13 @@ export function BarFactsList({ profile }: { profile: Profile }) {
 }
 
 const styles = StyleSheet.create({
-  strip: { flexDirection: 'row', borderRadius: radius.card, paddingVertical: space.md },
-  cell: { flex: 1, alignItems: 'center', gap: 2 },
-  facts: { gap: 0 },
-  fact: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 44, borderBottomWidth: StyleSheet.hairlineWidth },
-  term: { width: 80 },
+  // Three cards, the number over its label (ppl-bar-top).
+  strip: { flexDirection: 'row', gap: space.sm },
+  cell: { flex: 1, minWidth: 0, gap: 2, padding: space.md, borderRadius: radius.control + space.xs, borderCurve: 'continuous' },
+  // Term and value in two columns, 15 on 22 (ppl-bar-unclaimed's facts).
+  facts: { gap: space.sm },
+  fact: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  term: { width: 96 - space.md },
+  text: { fontSize: type.label.fontSize, lineHeight: 22 },
   flex: { flex: 1, minWidth: 0 },
 });
