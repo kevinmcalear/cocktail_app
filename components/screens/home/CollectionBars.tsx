@@ -26,7 +26,7 @@ function LovedRow({ bar, had }: { bar: LovedBar; had: HadDrink[] }) {
   return (
     <View style={[styles.loved, { borderBottomColor: ds.c.line }]}>
       <View style={styles.row}>
-        <BarMark name={bar.name} logoUrl={bar.avatarUrl} size={52} />
+        <BarMark name={bar.name} logoUrl={bar.avatarUrl} profileId={bar.id} size={52} />
         <PressableScale role="link" accessibilityLabel={[bar.name, bar.place, avg !== null ? `you average ${formatScore(avg)} over ${count}` : null].filter(Boolean).join('. ')} onPress={() => router.push(barHref(bar))} style={styles.flex}>
           <Headline numberOfLines={1}>{bar.name}</Headline>
           <Caption tone="muted">
@@ -68,7 +68,7 @@ function WishRow({ bar }: { bar: LovedBar }) {
   const detail = [bar.place, bar.currentMenu ? `${bar.currentMenu.name} on now` : null].filter(Boolean).join(' · ');
   return (
     <PressableScale role="link" accessibilityLabel={`${bar.name}${detail ? `. ${detail}` : ''}`} onPress={() => router.push(barHref(bar))} style={[styles.row, styles.wish, { borderBottomColor: ds.c.line }]}>
-      <BarMark name={bar.name} logoUrl={bar.avatarUrl} size={44} />
+      <BarMark name={bar.name} logoUrl={bar.avatarUrl} profileId={bar.id} size={44} />
       <View style={styles.flex}>
         <Headline numberOfLines={1}>{bar.name}</Headline>
         {detail ? <Caption tone="muted">{detail}</Caption> : null}

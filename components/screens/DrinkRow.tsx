@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, Headline, MatchText, PressableScale, Tag, useDs, type MatchTextProps } from '@/components/ds';
-import { UserAvatar } from '@/components/ui/UserAvatar';
+import { BarMark } from '@/components/screens/home/BarMark';
 import { useSearchNavRow } from '@/components/search/searchNav';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
@@ -22,7 +22,8 @@ export interface DrinkRowProps {
   itemId?: string | null;
   caption?: string;
   /** A small logo before the caption, for the bar that pours the drink (initials when it has none). */
-  logo?: { uri: string | null; name: string };
+  /** With `profileId` (the bar page) a logo-less bar shows its initials in its venue's colours. */
+  logo?: { uri: string | null; name: string; profileId?: string };
   /** Drawn in place of the logo's picture: a bar's monogram in its colours (What to make). */
   mark?: ReactNode;
   /** A list of many short rows (What to make): the name a size down, as the canvas draws those. */
@@ -60,7 +61,7 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
   // The logo sits on the caption's first line and the caption wraps beside it, never under it.
   const byline = logo || mark ? (
     <View style={styles.byline}>
-      {mark ?? (logo ? <UserAvatar uri={logo.uri} name={logo.name} size={LOGO} /> : null)}
+      {mark ?? (logo ? <BarMark name={logo.name} logoUrl={logo.uri} profileId={logo.profileId} size={LOGO} filled /> : null)}
       {caption ? (
         <Caption tone="muted" style={styles.shrink}>
           {caption}
