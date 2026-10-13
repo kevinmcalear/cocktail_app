@@ -105,9 +105,8 @@ export function MyBarScreen() {
       case 'top':
         return split ? null : (
           <View>
-            <ScreenHeaderSpacer />
+            <ScreenHeaderSpacer title="My Bar" />
             <View style={styles.top}>
-              <Title>My Bar</Title>
               <Caption tone="muted">{bar.isLoading ? 'Checking your shelf…' : barSubtitle(bar.canMake.length, toMake.length)}</Caption>
               {bar.error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
             </View>
