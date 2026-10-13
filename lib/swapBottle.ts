@@ -91,3 +91,56 @@ export function swappedLines(drink: SwapDrink, findId: string, replaceId: string
     is_optional: line.optional,
   }));
 }
+
+/** A spec line as the raw recipes table has it (fetchEditableRecipes). */
+export interface RawSpecLine {
+  id: string;
+  ingredient_item_id: string | null;
+  amount: number | string | null;
+  unit: string | null;
+  preparation_notes: string | null;
+  is_optional: boolean | null;
+}
+
+/**
+ * Every line of the drink as it is, with one line pointed at another bottle
+ * (and given a new amount, when one is passed). Null when the line is gone or
+ * a line has no ingredient: saving would then rewrite the spec blind.
+ */
+export function oneLineSwapped(rows: RawSpecLine[], lineId: string, ingredientId: string, amount?: number | null): SpecLineInput[] | null {
+  if (!rows.some((row) => row.id === lineId) || rows.some((row) => !row.ingredient_item_id)) return null;
+  return rows.map((row) => {
+    const hit = row.id === lineId;
+    const was = row.amount === null || row.amount === '' ? null : Number(row.amount);
+    return {
+      id: row.id,
+      ingredient_item_id: hit ? ingredientId : (row.ingredient_item_id as string),
+      amount: hit && amount !== undefined ? amount : was,
+      unit: row.unit,
+      preparation_notes: row.preparation_notes,
+      is_optional: !!row.is_optional,
+    };
+  });
+}
+
+export interface BottleOption {
+  id: string;
+  name: string | null;
+  bar_id?: string | null;
+  generic_id?: string | null;
+  hide_from_search?: boolean | null;
+}
+
+/**
+ * What to offer in place of a line's ingredient before anything is typed:
+ * the bottles of that kind when the line names a kind ("Blended Scotch":
+ * Ballantine's, Ardray), else the other bottles of its kind. Only shared
+ * bottles and this venue's own, the venue's first.
+ */
+export function bottlesFor<T extends BottleOption>(ingredientId: string, catalog: readonly T[], barId: string | null, limit = 6): T[] {
+  const usable = (item: T) => item.id !== ingredientId && !item.hide_from_search && !!item.name && (!item.bar_id || item.bar_id === barId);
+  const line = catalog.find((item) => item.id === ingredientId);
+  let picks = catalog.filter((item) => item.generic_id === ingredientId && usable(item));
+  if (!picks.length && line?.generic_id) picks = catalog.filter((item) => item.generic_id === line.generic_id && usable(item));
+  return picks.sort((a, b) => Number(!!b.bar_id) - Number(!!a.bar_id) || (a.name ?? '').localeCompare(b.name ?? '')).slice(0, limit);
+}

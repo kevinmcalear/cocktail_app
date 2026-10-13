@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { lineHits, planSwap, swappedLines, type SwapDrink } from './swapBottle';
+import { bottlesFor, lineHits, oneLineSwapped, planSwap, swappedLines, type SwapDrink } from './swapBottle';
 
 const drink = (id: string, itemType: SwapDrink['itemType'], lines: SwapDrink['lines']): SwapDrink => ({
   id,
@@ -50,3 +50,33 @@ assert.equal(next[0].id, 'a');
 assert.equal(next[0].amount, 30);
 assert.equal(next[1].ingredient_item_id, 'campari');
 assert.equal(next[1].id, 'b');
+
+// --- one line, from the drink page ---
+const raw = [
+  { id: 'r1', ingredient_item_id: 'blended', amount: '2', unit: 'oz', preparation_notes: null, is_optional: false },
+  { id: 'r2', ingredient_item_id: 'lemon', amount: 0.75, unit: 'oz', preparation_notes: 'fresh', is_optional: null },
+];
+const one = oneLineSwapped(raw, 'r1', 'ballantines');
+assert.ok(one);
+assert.equal(one[0].ingredient_item_id, 'ballantines');
+assert.equal(one[0].amount, 2);
+assert.equal(one[0].id, 'r1');
+assert.deepEqual(one[1], { id: 'r2', ingredient_item_id: 'lemon', amount: 0.75, unit: 'oz', preparation_notes: 'fresh', is_optional: false });
+assert.equal(oneLineSwapped(raw, 'r1', 'ballantines', 1.5)?.[0].amount, 1.5);
+assert.equal(oneLineSwapped(raw, 'r1', 'ballantines', null)?.[0].amount, null);
+assert.equal(oneLineSwapped(raw, 'gone', 'ballantines'), null);
+assert.equal(oneLineSwapped([...raw, { ...raw[0], id: 'r3', ingredient_item_id: null }], 'r1', 'x'), null);
+
+const catalog = [
+  { id: 'scotch', name: 'Scotch', generic_id: 'whisky' },
+  { id: 'blended', name: 'Blended Scotch', generic_id: 'scotch' },
+  { id: 'ballantines', name: "Ballantine's", generic_id: 'blended' },
+  { id: 'ardray', name: 'Ardray', generic_id: 'blended' },
+  { id: 'house', name: 'House blend', generic_id: 'blended', bar_id: 'rye' },
+  { id: 'theirs', name: 'Their blend', generic_id: 'blended', bar_id: 'moth' },
+  { id: 'islay', name: 'Islay Scotch', generic_id: 'scotch' },
+];
+assert.deepEqual(bottlesFor('blended', catalog, 'rye').map((b) => b.id), ['house', 'ardray', 'ballantines']);
+assert.deepEqual(bottlesFor('ardray', catalog, 'rye').map((b) => b.id), ['house', 'ballantines']);
+assert.deepEqual(bottlesFor('islay', catalog, null).map((b) => b.id), ['blended']);
+assert.deepEqual(bottlesFor('nothing', catalog, null), []);

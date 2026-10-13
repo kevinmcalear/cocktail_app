@@ -7,7 +7,8 @@ import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import type { CatalogItem } from '@/lib/match';
 import type { NamedItem } from '@/lib/paste';
-import { swappedLines, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
+import { fetchEditableRecipes } from '@/lib/editableRecipes';
+import { oneLineSwapped, swappedLines, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
 import { readAnything } from '@/lib/readAnything';
 import { supabase } from '@/lib/supabase';
 
@@ -160,6 +161,40 @@ export function useApplySwap() {
       }
     },
     onSuccess: (result) => void refresh({ drinkIds: result.undone.map((row) => row.itemId) }),
+  });
+}
+
+export interface LineSwap {
+  itemId: string;
+  lineId: string;
+  ingredientId: string;
+  /** Left out: the amount stays as it is. */
+  amount?: number | null;
+  note: string;
+}
+
+/**
+ * One line of one drink (the drink page's "Swap"): rereads the raw spec, so
+ * nothing a role mask hid is written back blank, and saves it through
+ * save_drink_spec, so the old spec stays as a version. Resolves the version
+ * Undo puts back.
+ */
+export function useSwapSpecLine() {
+  const refresh = useRefreshSpecs();
+  return useMutation({
+    mutationFn: async (input: LineSwap): Promise<{ itemId: string; version: number }> => {
+      const [rows, methods] = await Promise.all([
+        fetchEditableRecipes(input.itemId),
+        supabase.from('item_methods').select('method_item_id, sort_order').eq('item_id', input.itemId),
+      ]);
+      if (methods.error) throw methods.error;
+      const lines = oneLineSwapped(rows, input.lineId, input.ingredientId, input.amount);
+      if (!lines) throw new Error('The spec changed while this was open. Close it and try again.');
+      const version = await saveDrinkSpec(input.itemId, lines, orderedMethodIds(methods.data), input.note);
+      return { itemId: input.itemId, version: version - 1 };
+    },
+    onSuccess: (result) => void refresh({ drinkIds: [result.itemId] }),
+    onError: () => {},
   });
 }
 

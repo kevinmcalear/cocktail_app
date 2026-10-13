@@ -93,6 +93,9 @@ describe('IngredientsStep', () => {
     expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: null, name: 'Pineapple Chili Shrub', later: true });
 
     await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines: set.mock.calls[0][0].lines }} set={set} ingredients={[CAMPARI]} />);
+    // The row stays one ingredient and its pour; what it is and what to do sit behind a tap on the name.
+    expect(screen.queryByText('House prep, recipe to write')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: /^Pineapple Chili Shrub, / }));
     expect(screen.getByText('House prep, recipe to write')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Write the recipe for Pineapple Chili Shrub' })).toBeTruthy();
   });
@@ -128,6 +131,7 @@ describe('IngredientsStep', () => {
     const draft = { ...EMPTY_DRAFT, lines: [{ key: 'a', id: null, name: 'Mint oil', amount: '', unit: 'drop', prep }] };
     await renderWithTamagui(<IngredientsStep draft={draft} set={set} ingredients={[CAMPARI]} />);
     await fireEvent.press(screen.getByRole('button', { name: /^Mint oil, / }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Swap Mint oil for another ingredient' }));
     await fireEvent.changeText(screen.getByLabelText('Swap Mint oil for…'), 'Campari');
     expect(screen.getByRole('button', { name: 'Make “Campari” in house' })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Campari' }));
@@ -157,6 +161,7 @@ describe('IngredientsStep', () => {
   test('any spirit line can be made house: what did you do to it?', async () => {
     await renderWithTamagui(<IngredientsStep draft={{ ...daiquiri, name: 'Daiquiri' }} set={jest.fn()} ingredients={[CAMPARI, BACARDI, WHITE_RUM]} />);
     expect(screen.queryByText(/The name says/)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: /^Bacardí Carta Blanca, / }));
     await fireEvent.press(screen.getByRole('button', { name: /^Make Bacardí Carta Blanca house/ }));
     expect(screen.getByText('What did you do to it?')).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Fat washing,/ })).toBeTruthy();
@@ -166,9 +171,12 @@ describe('IngredientsStep', () => {
   test('a line that isn’t a spirit or juice has no Make it house', async () => {
     const draft = { ...EMPTY_DRAFT, lines: [{ key: 'c', id: 'campari', name: 'Campari', amount: '30', unit: 'ml' }] };
     await renderWithTamagui(<IngredientsStep draft={draft} set={jest.fn()} ingredients={[CAMPARI]} />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Campari, / }));
     expect(screen.getByRole('button', { name: /^Make Campari house/ })).toBeTruthy();
     const plain = { ...EMPTY_DRAFT, lines: [{ key: 's', id: 'syrup', name: 'Simple syrup', amount: '15', unit: 'ml' }] };
     await renderWithTamagui(<IngredientsStep draft={plain} set={jest.fn()} ingredients={[{ id: 'syrup', name: 'Simple syrup' }]} />);
+    await fireEvent.press(screen.getByRole('button', { name: /^Simple syrup, / }));
+    expect(screen.getByRole('button', { name: 'Swap Simple syrup for another ingredient' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Make Simple syrup house/ })).toBeNull();
   });
 });
