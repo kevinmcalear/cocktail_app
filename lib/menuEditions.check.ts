@@ -7,6 +7,7 @@ import {
   editionDates,
   editionDrinkLine,
   editionMenuDrinks,
+  editionSections,
   menuOrder,
   menuRange,
   menuState,
@@ -35,6 +36,22 @@ assert.deepEqual(set.map((d) => d.id), ['a', 'b']);
 assert.equal(set[0].name, 'Ay');
 assert.equal(set[0].line, '');
 assert.equal(set[1], full);
+
+// A venue's menu: an unread drink keeps the venue's price; drinks fall into their sections in order.
+const venue = [
+  { id: 'a', name: 'Ay', price: '18', section: 'Stirred' },
+  { id: 'b', name: 'Bee', price: null, section: 'Long' },
+  { id: 'c', name: 'Sea', section: 'Stirred' },
+];
+const venueSet = editionMenuDrinks(venue, []);
+assert.equal(venueSet[0].price, '18');
+assert.equal(venueSet[2].price, null);
+assert.deepEqual(
+  editionSections({ id: 'm', drinks: venue }, venueSet).map((s) => [s.name, s.drinks.map((d) => d.id)]),
+  [['Stirred', ['a', 'c']], ['Long', ['b']]]
+);
+// A researched menu has no sections: one "Cocktails".
+assert.deepEqual(editionSections({ id: 'm', drinks: [{ id: 'a', name: 'Ay' }] }, set.slice(0, 1)).map((s) => s.name), ['Cocktails']);
 
 // When a menu was on: past with an end, on now, or open-ended when the record stops.
 const run = (startYear: number, startMonth: number | null, endYear: number | null, endMonth: number | null, isCurrent = false) => ({
