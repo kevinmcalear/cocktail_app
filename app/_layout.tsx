@@ -17,6 +17,7 @@ import { TamaguiProvider, Theme } from 'tamagui';
 import tamaguiConfig from '../tamagui.config';
 
 import { DialogHost } from '@/components/DialogHost';
+import { ToastHost } from '@/components/ds/Toast';
 import { APP_FONTS, FIRST_PAINT_FONTS, LATER_FONTS } from '@/components/ds/fonts';
 import { ObservabilityProvider } from '@/components/ObservabilityProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
@@ -284,6 +285,7 @@ export default function RootLayout() {
               </ObservabilityProvider>
             </AuthProvider>
             <DialogHost />
+            <ToastHost />
             {Platform.OS === 'web' ? <Toaster /> : null}
           </GestureRoot>
         </PersistQueryClientProvider>
