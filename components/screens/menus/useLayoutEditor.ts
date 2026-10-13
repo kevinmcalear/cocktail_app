@@ -13,6 +13,7 @@ import {
   moveDrink,
   moveSection,
   moveToSection,
+  dropDrink,
   removeDrink,
   removeSection,
   setDrinks,
@@ -135,6 +136,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     reorder: (key: string, drinks: MenuDrink[]) => edit(setDrinks(layout, key, drinks)),
     move: (key: string, from: number, to: number) => edit(moveDrink(layout, key, from, to)),
     moveTo: (fromKey: string, drinkId: string, toKey: string) => edit(moveToSection(layout, fromKey, drinkId, toKey)),
+    drop: (drink: MenuDrink, fromKey: string | null, toKey: string, index: number) => edit(dropDrink(layout, drink, fromKey, toKey, index)),
     addSection: () => {
       const next = addSection(layout);
       edit(next);

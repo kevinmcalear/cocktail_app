@@ -16,7 +16,7 @@ export function StaffLinkSignIn({ slug, brand }: { slug: string; brand: AuthBran
       retryLabel="Sign in"
       waitingTitle={`Join ${brand.name}`}
       waitingSubtitle="Tap continue to sign in and see your invite."
-      noLink={<SignInScreen brand={brand} subtitle={`Drinks, menus and training for the ${brand.name} team.`} />}
+      noLink={<SignInScreen brand={brand} subtitle={`Staff sign in for ${brand.name}: tonight’s menu, specs and prep.`} />}
     >
       {null}
     </EmailLinkGate>

@@ -12,6 +12,7 @@ import { formatPrice } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
 import { RowMenu, useRowMenu, type RowMenuItem } from './RowMenu';
+import { dragSource, dropRow, dropSlot } from './useMenuDrag';
 
 /** The grip's width: only a touch there starts a drag (gripOnly). */
 export const GRIP = 28;
@@ -31,6 +32,18 @@ interface EditorRowProps {
   /** The other sections, for "Move to another section". */
   others: { key: string; name: string }[];
   onMoveTo: (toKey: string) => void;
+  /** Desktop web drag and drop: the row's section, a drop slot above or below it, and whether it's the one being dragged. */
+  web?: { from: string; slot: 'before' | 'after' | null; dragging: boolean };
+}
+
+/** Where a dragged drink will land, as the board draws it: a dashed slot the height of a row. */
+export function DropSlot() {
+  const ds = useDs();
+  return (
+    <View aria-hidden {...dropSlot} style={styles.slotSpace}>
+      <View style={[styles.slot, { borderColor: ds.c.lineStrong }]} />
+    </View>
+  );
 }
 
 const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
@@ -42,7 +55,7 @@ const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail'
  * another section, Open the drink, Move to top (and on a phone, Remove). On a
  * desktop browser, Remove and ... show on hover or keyboard focus.
  */
-export function EditorRow({ drink, index: i, count, home, active, drag, onRemove, onMove, others, onMoveTo }: EditorRowProps) {
+export function EditorRow({ drink, index: i, count, home, active, drag, onRemove, onMove, others, onMoveTo, web: dnd }: EditorRowProps) {
   const ds = useDs();
   const router = useRouter();
   const [menu, setMenu] = useState<'open' | 'sections'>('open');
@@ -81,8 +94,13 @@ export function EditorRow({ drink, index: i, count, home, active, drag, onRemove
   const nameSize = quiet ? styles.nameWide : styles.namePhone;
   return (
     <ScaleDecorator activeScale={1.02}>
-      <View {...hover} style={[styles.wrap, { borderBottomColor: ds.c.line }, (active || (quiet && hot)) && [styles.lifted, { backgroundColor: ds.c.raised }]]}>
-        <View style={styles.row}>
+      {dnd?.slot === 'before' ? <DropSlot /> : null}
+      <View
+        {...hover}
+        {...(dnd ? dragSource(drink.id, dnd.from) : {})}
+        style={[styles.wrap, { borderBottomColor: ds.c.line }, (active || (quiet && hot)) && [styles.lifted, { backgroundColor: ds.c.raised }], dnd?.dragging && styles.held]}
+      >
+        <View {...(dnd ? dropRow : {})} style={styles.row}>
           <View style={quiet ? styles.thumbWide : styles.thumb}>
             <DrinkImage thumb sketchDetail="thumb" aspectRatio={TILE} source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" />
           </View>
@@ -133,6 +151,7 @@ export function EditorRow({ drink, index: i, count, home, active, drag, onRemove
         </View>
         <RowMenu anchor={popover.anchor} label={menu === 'sections' ? `Move ${drink.name} to` : `${drink.name} options`} items={items} onClose={popover.close} />
       </View>
+      {dnd?.slot === 'after' ? <DropSlot /> : null}
     </ScaleDecorator>
   );
 }
@@ -152,4 +171,9 @@ const styles = StyleSheet.create({
   icon: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   // Still focusable, so keyboard focus brings it back.
   hidden: { opacity: 0 },
+  // Being dragged: it stays in place, faint, until it lands.
+  held: { opacity: 0.4 },
+  // Its whole height is what it pushes the rows down by (useMenuDrag), so no margins.
+  slotSpace: { paddingVertical: space.xs },
+  slot: { height: 72, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed' },
 });
