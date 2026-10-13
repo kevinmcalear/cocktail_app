@@ -25,7 +25,10 @@ let mockRole = 40;
 jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole }));
 // These read the signed-in person's venues from Supabase; the nav doesn't need them here.
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: unknown }) => children }));
-jest.mock('@/components/nav/VenueSwitcher', () => ({ VenueSwitcher: () => null, VenueWordmark: () => null }));
+jest.mock('@/components/nav/VenueSwitcher', () => {
+  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
+  return { VenueSwitcher: () => <Text>venue switcher</Text>, VenueWordmark: () => null };
+});
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['edit_drinks'] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
 jest.mock('@/hooks/useSearchMine', () => ({ useSearchMine: () => ({ venueId: 'caretakers', canAdd: true, label: 'Caretakers' }) }));
@@ -67,15 +70,12 @@ test('venue mode lists search and the venue tabs, marking the current one', asyn
   expect(mockPush).toHaveBeenLastCalledWith('/you');
 });
 
-test('the marks switch venues in one click', async () => {
+test('the top of the sidebar is one mark with a chevron (the switcher), never a row of venues', async () => {
   await renderWithTamagui(<WebSideNav />);
-  expect(screen.getByRole('radio', { name: 'Caretakers, Admin', checked: true })).toBeTruthy();
-  await fireEvent.press(screen.getByRole('radio', { name: 'Pale Moth, Bartender' }));
-  expect(mockEnterVenue).toHaveBeenLastCalledWith('pale');
-  expect(mockNavigate).toHaveBeenLastCalledWith('/');
-  await fireEvent.press(screen.getByRole('radio', { name: 'Home bar' }));
-  expect(mockSetMode).toHaveBeenLastCalledWith('home');
-  expect(mockNavigate).toHaveBeenLastCalledWith('/discover');
+  // Kevin, 13 Oct: one mark with an arrow that opens the venue menu (VenueSwitcher, tested on its own).
+  expect(screen.getByText('venue switcher')).toBeTruthy();
+  expect(screen.queryByRole('radio', { name: 'Pale Moth, Bartender' })).toBeNull();
+  expect(screen.queryByRole('radio', { name: 'Home bar' })).toBeNull();
 });
 
 test('a page off the nav keeps the row it was opened from lit', async () => {

@@ -5,15 +5,14 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
 import { fontFamilies, radius, space } from '@/constants/tokens';
-import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
+import type { Venue } from '@/hooks/useActiveVenue';
 import { useShelf } from '@/hooks/useHomeBar';
-import { useMode } from '@/hooks/useMode';
 import { currentProps } from '@/lib/a11yState';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { footerLine, shortPersonName } from '@/lib/shellNav';
 
-import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
+import { VenueSwitcher } from './VenueSwitcher';
 import { TabIcon } from './WebTabBar';
 
 /** A keyboard hint at the end of a row: ⌘K, N. */
@@ -68,33 +67,15 @@ export function NavHeading({ children }: { children: ReactNode }) {
   );
 }
 
-function Mark({ selected, label, onPress, children }: { selected: boolean; label: string; onPress: () => void; children: ReactNode }) {
-  const ds = useDs();
-  return (
-    <PressableScale role="radio" aria-checked={selected} accessibilityLabel={label} onPress={onPress} style={styles.markButton}>
-      <View style={[styles.ring, { borderColor: selected ? ds.accentText : 'transparent' }]}>{children}</View>
-    </PressableScale>
-  );
-}
-
 /**
- * The top of the sidebar: a mark for home and each venue, the one you're in
- * ringed, each switching in one click. Its name and your role are its label.
+ * The top of the sidebar: where you are, one mark (the venue's, or the house
+ * at home) and a chevron that opens the venue menu, the same switcher as the
+ * phone header (Kevin, 13 Oct: one mark with an arrow, never a row of them).
  */
 export function MarksRow() {
-  const { venues, active } = useActiveVenue();
-  const home = useMode().mode === 'home';
-  const switchTo = useSwitchTo();
   return (
-    <View role="radiogroup" accessibilityLabel="Where you are" style={styles.marks}>
-      <Mark selected={home} label="Home bar" onPress={() => switchTo('home')}>
-        <HomeMark />
-      </Mark>
-      {venues.map((v) => (
-        <Mark key={v.id} selected={!home && v.id === active?.id} label={`${v.name}, ${roleLabel(v.roleLevel)}`} onPress={() => switchTo(v)}>
-          <VenueMark venue={v} />
-        </Mark>
-      ))}
+    <View style={styles.marks}>
+      <VenueSwitcher />
     </View>
   );
 }
@@ -135,8 +116,7 @@ const styles = StyleSheet.create({
   strong: { fontFamily: fontFamilies.bodySemiBold },
   kbd: { fontFamily: fontFamilies.monoMedium, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.mark, overflow: 'hidden' },
   heading: { fontFamily: fontFamilies.monoMedium, textTransform: 'uppercase', letterSpacing: 1, marginTop: space.lg, marginBottom: space.xs, marginHorizontal: space.md },
-  marks: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs, paddingBottom: space.sm },
-  markButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  marks: { flexDirection: 'row', alignItems: 'center', paddingBottom: space.sm },
   ring: { padding: 2, borderWidth: 2, borderRadius: MARK * 0.28 + 4 },
   footer: { marginTop: 'auto', flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.md, paddingHorizontal: space.sm, paddingBottom: space.xs, borderTopWidth: StyleSheet.hairlineWidth },
   footerText: { flex: 1, minWidth: 0 },
