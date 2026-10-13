@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Field, useDs } from '@/components/ds';
-import { SettingsSection } from '@/components/screens/settings/SettingsParts';
+import { SectionHeading, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { DEFAULT_ACCENT, GROUND_TINTS, space, type DisplayFace } from '@/constants/tokens';
 import type { VenueBrandRow } from '@/hooks/useVenueBrand';
 import { normalizeHex, usableGroundTint } from '@/lib/brand';
@@ -126,12 +126,21 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
 
       {setup ? null : tintSection}
 
-      <SettingsSection
-        title="Display face"
-        note={setup ? 'For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed.' : 'For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed so they stay readable.'}
-      >
-        <FaceChoices name={row.name} value={draft.face} onChange={set('face')} />
-      </SettingsSection>
+      {setup ? (
+        // Setup draws the faces straight on the page, no card around them (canvas make-venue-look).
+        <View style={styles.section}>
+          <SectionHeading>Display face</SectionHeading>
+          <FaceChoices setup name={row.name} value={draft.face} onChange={set('face')} />
+          <Caption tone="muted" style={styles.note}>For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed.</Caption>
+        </View>
+      ) : (
+        <SettingsSection
+          title="Display face"
+          note="For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed so they stay readable."
+        >
+          <FaceChoices name={row.name} value={draft.face} onChange={set('face')} />
+        </SettingsSection>
+      )}
 
       {setup ? tintSection : (
         <SettingsSection title="Home-screen icon" note="What staff see when they add your staff link to their home screen.">
@@ -165,5 +174,8 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
 
 const styles = StyleSheet.create({
   fields: { gap: space.md, paddingVertical: space.md },
+  // Matches SettingsSection's spacing for the one group setup draws without a card.
+  section: { gap: space.sm },
+  note: { paddingHorizontal: space.lg },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

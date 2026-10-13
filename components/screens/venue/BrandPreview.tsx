@@ -6,7 +6,6 @@ import {
   BackbarTheme,
   BrandProvider,
   Caption,
-  Chip,
   Display,
   DsText,
   PressableScale,
@@ -16,7 +15,8 @@ import {
   useDs,
 } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
-import { displayFaces, radius, space, type DisplayFace } from '@/constants/tokens';
+import { displayFaces, fontFamilies, radius, space, type DisplayFace } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 
 export interface BrandLook {
   id: string;
@@ -138,7 +138,7 @@ export function BrandPreview({ look, stacked = false, setup = false }: { look: B
         <>
           <View role="radiogroup" accessibilityLabel="Preview scheme" style={styles.chips}>
             {SCHEMES.map((o) => (
-              <Chip key={o.value} quiet label={o.label} selected={only === o.value} onPress={() => setOnly(o.value)} />
+              <SchemeChip key={o.value} label={o.label} selected={only === o.value} onPress={() => setOnly(o.value)} />
             ))}
           </View>
           <Caption tone="muted">Tonight, as your staff will see it. Changes as you pick.</Caption>
@@ -151,6 +151,25 @@ export function BrandPreview({ look, stacked = false, setup = false }: { look: B
 }
 
 /** A row of colour choices, each named, with the chosen one heavily ringed. */
+/** Dark or Light under the setup preview: the picked one ringed in the accent over a faint accent wash (canvas make-venue-look). */
+function SchemeChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale
+      role="radio"
+      aria-checked={selected}
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[
+        styles.scheme,
+        { borderColor: selected ? ds.accentText : ds.c.lineStrong, backgroundColor: selected ? withAlpha(ds.accentText, 0.16) : 'transparent' },
+      ]}
+    >
+      <Caption style={selected ? styles.picked : null}>{label}</Caption>
+    </PressableScale>
+  );
+}
+
 export function Swatches({
   label,
   options,
@@ -193,6 +212,8 @@ export function Swatches({
 const styles = StyleSheet.create({
   wrap: { gap: space.lg },
   chips: { flexDirection: 'row', gap: space.sm },
+  scheme: { minHeight: 40, minWidth: 64, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  picked: { fontFamily: fontFamilies.bodySemiBold },
   schemes: { gap: space.md },
   schemesWide: { flexDirection: 'row' },
   flex: { flex: 1, gap: space.xs },
@@ -205,8 +226,8 @@ const styles = StyleSheet.create({
   tabs: { flexDirection: 'row', justifyContent: 'space-around', paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
   icon: { alignItems: 'center', gap: space.xs, width: 84 },
   iconTile: { width: 60, height: 60, borderRadius: radius.control },
-  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   swatch: { alignItems: 'center', gap: space.xs, minWidth: 56 },
   ring: { padding: 3, borderRadius: radius.pill, borderWidth: 2 },
-  dot: { width: 36, height: 36, borderRadius: radius.pill, borderWidth: 1 },
+  dot: { width: 40, height: 40, borderRadius: radius.pill, borderWidth: 1 },
 });

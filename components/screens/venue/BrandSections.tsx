@@ -67,10 +67,12 @@ export function LogoRow({ venue, logoUrl, busy, onPick, onRemoveBackground, onRe
 }
 
 /** The display faces, each showing the venue's name set in it. */
-export function FaceChoices({ name, value, onChange }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void }) {
+/** `setup`: venue setup's Look step draws bigger names and an ink ring (canvas make-venue-look). */
+export function FaceChoices({ name, value, onChange, setup }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void; setup?: boolean }) {
   const ds = useDs();
+  const ring = setup ? ds.c.ink : ds.accentText;
   return (
-    <View role="radiogroup" accessibilityLabel="Display face" style={styles.faces}>
+    <View role="radiogroup" accessibilityLabel="Display face" style={[styles.faces, setup && styles.bare]}>
       {FACES.map((face) => {
         const selected = face === value;
         return (
@@ -80,15 +82,15 @@ export function FaceChoices({ name, value, onChange }: { name: string; value: Di
             aria-checked={selected}
             accessibilityLabel={displayFaces[face].label}
             onPress={() => onChange(face)}
-            style={[styles.face, { borderColor: selected ? ds.accentText : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }]}
+            style={[styles.face, { borderColor: selected ? ring : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }]}
           >
             <View style={styles.flex}>
-              <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[face].regular }}>
+              <DsText variant={setup ? 'title' : 'headline'} numberOfLines={1} style={{ fontFamily: displayFaces[face].regular }}>
                 {name}
               </DsText>
               <Caption tone="muted">{displayFaces[face].label}</Caption>
             </View>
-            {selected ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
+            {selected ? <IconSymbol name="checkmark" size={18} color={ring} /> : null}
           </PressableScale>
         );
       })}
@@ -103,5 +105,6 @@ const styles = StyleSheet.create({
   logoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   logo: { width: LOGO, height: LOGO, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth },
   faces: { gap: space.sm, paddingVertical: space.md },
+  bare: { paddingVertical: 0 },
   face: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
 });

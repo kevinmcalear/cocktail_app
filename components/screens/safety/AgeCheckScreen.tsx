@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption } from '@/components/ds';
+import { Body, Button, Caption } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useAgeCheck } from '@/hooks/useAgeCheck';
@@ -31,8 +31,9 @@ export function AgeCheckScreen() {
     <SafetyPage title={status === 'under_age' ? 'Welcome' : 'One more thing'} noBack>
       {status === 'under_age' ? (
         <>
-          <UnderAgeNote />
-          <Caption tone="muted">We kept only that answer, not your birth date. If it was a mistake, contact us at the address in our privacy policy.</Caption>
+          <UnderAgeNote>
+            <Body tone="muted">We kept only that answer, not your birth date. If it was a mistake, contact us at the address in our privacy policy.</Body>
+          </UnderAgeNote>
           <Caption tone="muted">Everything else in the app, like your venue’s menus and prep, works as usual.</Caption>
           <Button label="Continue" onPress={onward} />
         </>
