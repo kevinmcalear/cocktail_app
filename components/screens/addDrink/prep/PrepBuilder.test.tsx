@@ -51,7 +51,7 @@ describe('PrepBuilder', () => {
     expect(screen.getByText('New prep · 1 of 3')).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Cold\. 3 days · Jar, fine strainer · brighter fruit/, checked: true })).toBeTruthy();
     expect(screen.getByText('300 g pineapple')).toBeTruthy();
-    expect(screen.getByText('300 g sugar, 300 g apple cider vinegar, chili')).toBeTruthy();
+    expect(screen.getByText('300 g white sugar, 300 g apple cider vinegar, 2 whole fresno chili')).toBeTruthy();
     await fireEvent.press(screen.getByRole('radio', { name: /^Oleo shrub/ }));
     expect(screen.getByRole('radio', { name: /^Oleo shrub/, checked: true })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'All steps' }));
@@ -62,8 +62,9 @@ describe('PrepBuilder', () => {
     expect(screen.getByText('OLEO SHRUB · EQUAL PARTS BY WEIGHT')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /^Allergens: none/ }));
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Sulphites' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Add a note to Chili' }));
-    await fireEvent.changeText(screen.getByLabelText('Note on Chili'), 'Sliced, seeds in');
+    // The chili starts with the canvas's note (make-create-prep-recipe); it can still be changed.
+    await fireEvent.press(screen.getByRole('button', { name: 'Note on Fresno chili: Sliced, seeds in for more heat. Change it' }));
+    await fireEvent.changeText(screen.getByLabelText('Note on Fresno chili'), 'Sliced, seeds in');
     await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
     expect(screen.getByText(/^An oleo shrub, filled in from the recipe\./)).toBeTruthy();
     expect(screen.getByText('1 day')).toBeTruthy();
@@ -75,7 +76,7 @@ describe('PrepBuilder', () => {
     expect(prep.storage).toBe('Freezer');
     expect(prep.allergens).toEqual(['sulphites']);
     expect(prep.allergensSet).toBe(true);
-    expect(prep.lines.find((l: { name: string }) => l.name === 'Chili').note).toBe('Sliced, seeds in');
+    expect(prep.lines.find((l: { name: string }) => l.name === 'Fresno chili').note).toBe('Sliced, seeds in');
     expect(onLater).not.toHaveBeenCalled();
   });
 

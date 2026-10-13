@@ -17,7 +17,7 @@ const DIRECTIONS_OPTIONS = [
   { id: 'waze', label: 'Waze' },
 ];
 
-/** How the app looks and behaves on this device. Everything saves as it changes. */
+/** How the app looks and behaves. Everything saves as it changes: View as to the account, the rest to this device. */
 export function PreferencesSection() {
   const { themeMode, setThemeMode, defaultUnit, setDefaultUnit, directionsApp, setDirectionsApp } = useSettingsStore();
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving: viewAsSaving } = useViewAs();
@@ -72,12 +72,14 @@ export function PreferencesSection() {
             onChange={(id) => void setViewAsRoleLevel(id === 'off' ? null : Number(id))}
           />
           <Caption tone="muted" style={styles.note}>
-            View as never raises what you can see, only lowers it. The banner stays until you exit, on every screen.
+            View as never raises what you can see, only lowers it. It’s saved to your account, so the banner stays on every screen and every device until you exit.
           </Caption>
         </>
       ) : null}
       <RowDivider />
-      <Caption tone="muted" style={styles.note}>Saved on this device as you change them.</Caption>
+      <Caption tone="muted" style={styles.note}>
+        {viewAsChoices.length > 0 ? 'Saved as you change them. View as is saved to your account, the rest on this device.' : 'Saved on this device as you change them.'}
+      </Caption>
     </SettingsSection>
   );
 }

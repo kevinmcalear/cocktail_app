@@ -87,6 +87,8 @@ const MAPPING = {
   'percent': 'percent',
   'drop.fill': 'droplet',
   'sparkles': 'svg:sparkles',
+  // The flavor map's target ring (prep-flavor-entry).
+  'target': 'target',
   'ellipsis': 'more-horizontal',
   'dollarsign.circle.fill': 'dollar-sign',
   'mappin.and.ellipse': 'map-pin',

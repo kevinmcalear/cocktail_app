@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, PressableScale, Surface, Tag, useDs } from '@/components/ds';
+import { Body, Caption, DsText, Headline, PressableScale, Surface, Tag, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { doseLine } from '@/lib/doseLine';
 import { technicalIngredientFor, techniqueById } from '@/lib/techniques';
@@ -40,7 +40,9 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
           <View key={j.job} role="listitem" style={[styles.job, { borderBottomColor: ds.c.line }]}>
             <Body style={styles.flex}>{j.job}</Body>
             <View style={styles.dose}>
-              <Caption style={styles.doseText}>{j.dose}</Caption>
+              <DsText variant="label" style={styles.doseText}>
+                {j.dose}
+              </DsText>
               <GradeTag grade={j.grade} />
             </View>
           </View>

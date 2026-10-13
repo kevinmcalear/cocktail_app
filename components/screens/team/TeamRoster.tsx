@@ -236,8 +236,8 @@ function InviteRow({ name, email, roleLevel, ago, busy, onResend, onCancel }: {
         </View>
       </View>
       <View style={styles.inviteActions}>
-        <Button label="Resend" variant="ghost" accessibilityLabel={`Email the invite to ${email} again`} disabled={busy} onPress={onResend} style={styles.compact} />
-        <Button label="Cancel" variant="ghost" accessibilityLabel={`Cancel the invite for ${email}`} disabled={busy} onPress={onCancel} style={styles.compact} />
+        <Button label="Resend" variant="ghost" accessibilityLabel={`Email the invite to ${email} again`} disabled={busy} onPress={onResend} size="sm" />
+        <Button label="Cancel" variant="ghost" accessibilityLabel={`Cancel the invite for ${email}`} disabled={busy} onPress={onCancel} size="sm" />
       </View>
     </View>
   );
@@ -256,5 +256,4 @@ const styles = StyleSheet.create({
   envelope: { width: AVATAR, height: AVATAR, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   inviteRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md },
   inviteActions: { flexDirection: 'row', marginLeft: 'auto' },
-  compact: { paddingHorizontal: space.md },
 });
