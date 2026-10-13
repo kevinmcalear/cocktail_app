@@ -41,11 +41,15 @@ before(async () => {
   const item = async (row) => (await serviceInsert('items', { item_type: 'cocktail', ...row })).id;
   ids.gin = await item({ name: `Gin ${run}`, item_type: 'ingredient' });
   ids.prep = await item({ name: `Secret Cordial ${run}`, item_type: 'ingredient', bar_id: ids.bar });
+  ids.bottle = await item({ name: `Brand Vermouth ${run}`, item_type: 'ingredient' });
+  ids.vermouth = await item({ name: `Vermouth ${run}`, item_type: 'ingredient' });
+  await db.query('UPDATE public.items SET generic_id = $2 WHERE id = $1', [ids.bottle, ids.vermouth]);
   ids.drink = await item({ name: `Names Martini ${run}`, bar_id: ids.bar, publish_mode: 'description' });
   ids.hidden = await item({ name: `Hidden Martini ${run}`, bar_id: ids.bar, publish_mode: 'private' });
   for (const key of ['drink', 'hidden']) {
     await serviceInsert('recipes', { recipe_item_id: ids[key], ingredient_item_id: ids.gin, amount: 60, unit: 'ml', sort_order: 0 });
     await serviceInsert('recipes', { recipe_item_id: ids[key], ingredient_item_id: ids.prep, amount: 15, unit: 'ml', sort_order: 1 });
+    await serviceInsert('recipes', { recipe_item_id: ids[key], ingredient_item_id: ids.bottle, amount: 10, unit: 'ml', sort_order: 2 });
   }
   ids.parent = await item({ name: `Parent Classic ${run}`, is_catalog: true });
   ids.child = await item({ name: `Child Classic ${run}`, is_catalog: true, lineage_parent_id: ids.parent });
@@ -64,7 +68,8 @@ test('signed out, a description-only drink names its shared ingredients, with no
   const rows = await names('drink');
   assert.deepEqual(
     rows.map((r) => r.name),
-    [`Gin ${run}`]
+    [`Gin ${run}`, `Vermouth ${run}`],
+    "a bar's bottle is named by its generic, so the brand stays with the bar"
   );
   assert.deepEqual(Object.keys(rows[0]).sort(), ['item_id', 'name', 'sort_order']);
 });

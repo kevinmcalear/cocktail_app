@@ -10,11 +10,13 @@
 -- items.lineage_parent_id, which published_items doesn't carry, so the public
 -- family tree stops at the drink (ppl-pub-drink-desktop draws the ancestors).
 
--- Names only: never amounts, units or prep. Named as a shared spec names them
--- (published_items' reference rows, #502): the line's parent, else the
--- bottle's generic, else the ingredient itself, and only when that is a shared
--- catalog ingredient (no bar, no creator); a bar's house prep stays unnamed.
--- A locked bar page shows none.
+-- Names only: never amounts, units or prep. Named as app_recipe_presentation
+-- names them to a reader outside the bar: a drink with no bar (a classic, a
+-- credited signature) by its own ingredient; a bar's drink by the line's
+-- parent, else the bottle's generic, so its brands stay with the bar. Only a
+-- shared catalog ingredient (no bar, no creator) is named, as published_items'
+-- reference rows do (#502); a bar's house prep stays unnamed. A locked bar
+-- page shows none.
 create or replace function public.public_drink_ingredients(p_item_ids uuid[])
 returns table (item_id uuid, sort_order integer, name text)
 language sql
@@ -27,7 +29,10 @@ as $$
   join public.recipes r on r.recipe_item_id operator(pg_catalog.=) l.id
   left join public.items s on s.id operator(pg_catalog.=) r.ingredient_item_id
   join public.items pi
-    on pi.id operator(pg_catalog.=) coalesce(r.parent_ingredient_id, s.generic_id, r.ingredient_item_id)
+    on pi.id operator(pg_catalog.=) case
+      when l.bar_id is null then r.ingredient_item_id
+      else coalesce(r.parent_ingredient_id, s.generic_id, r.ingredient_item_id)
+    end
    and pi.bar_id is null and pi.created_by is null and pi.moderated_at is null
   where l.id operator(pg_catalog.=) any (p_item_ids[1:200])
     and l.effective_mode operator(pg_catalog.<>) 'private'::public.item_publish_mode
