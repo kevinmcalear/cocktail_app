@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Caption, DsText, Headline, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 
 interface MenuSheetProps {
   visible: boolean;
@@ -103,13 +104,30 @@ interface ChoiceProps {
   disabled?: boolean;
   /** A wide row's leading icon, on a raised tile (New menu's start options). */
   icon?: IconName;
+  /**
+   * A pill's look. Left out: ink when picked, raised otherwise. 'accent': the
+   * venue accent when picked, a line otherwise (the builder's library filter).
+   * 'outline': ink with a tick when picked, a line otherwise (New menu's saved menus).
+   */
+  pill?: 'accent' | 'outline';
+  /** A wide row without its radio: the card's border and tint say it's picked (New menu's start options). */
+  noMark?: boolean;
+  /** Under a wide row, inside its card: what the pick opens (New menu's saved menus). */
+  children?: ReactNode;
 }
 
 /** One option in a group: a pill, or a wider row when it has a detail line. */
-export function Choice({ label, selected, onPress, kind = 'radio', detail, disabled, icon }: ChoiceProps) {
+export function Choice({ label, selected, onPress, kind = 'radio', detail, disabled, icon, pill, noMark, children }: ChoiceProps) {
   const ds = useDs();
-  const ink = selected && !detail ? ds.c.ground : ds.c.ink;
-  return (
+  const accentPill = !detail && pill === 'accent' && selected;
+  const ink = accentPill ? ds.accentFill.text : selected && !detail ? ds.c.ground : ds.c.ink;
+  const pillLook = accentPill
+    ? { backgroundColor: ds.accentFill.fill }
+    : pill && !selected
+      ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: ds.c.lineStrong }
+      : { backgroundColor: selected ? ds.c.ink : ds.c.raised };
+  const card = { borderColor: selected ? ds.accentText : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: selected && noMark ? withAlpha(ds.accentFill.fill, 0.08) : ds.c.ground };
+  const row = (
     <PressableScale
       role={kind}
       aria-checked={selected}
@@ -117,19 +135,14 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
       disabled={disabled}
       accessibilityLabel={detail ? `${label}. ${detail}` : label}
       onPress={onPress}
-      style={[
-        detail ? styles.row : styles.pill,
-        detail
-          ? { borderColor: selected ? ds.accentText : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }
-          : { backgroundColor: selected ? ds.c.ink : ds.c.raised },
-        disabled && styles.disabled,
-      ]}
+      style={[detail ? styles.row : [styles.pill, pill ? styles.pillSmall : null], detail ? (children ? null : card) : pillLook, disabled && styles.disabled]}
     >
       {icon && detail ? (
         <View style={[styles.iconTile, { backgroundColor: ds.c.raised }]} aria-hidden>
           <IconSymbol name={icon} size={20} color={ds.c.ink} />
         </View>
       ) : null}
+      {pill === 'outline' && selected ? <IconSymbol name="checkmark" size={14} color={ink} /> : null}
       {/* Only the full-width row stretches its text; in a content-sized pill,
           flex: 1 collapses the label to nothing on iOS. */}
       <View style={detail ? styles.flex : styles.label}>
@@ -138,12 +151,19 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
         </DsText>
         {detail ? <Caption tone="muted">{detail}</Caption> : null}
       </View>
-      {detail ? (
+      {detail && !noMark ? (
         <View style={[styles.mark, { borderColor: selected ? ds.accentText : ds.c.lineStrong, backgroundColor: selected ? ds.accentText : 'transparent', borderRadius: kind === 'radio' ? radius.pill : radius.mark }]}>
           {selected ? <IconSymbol name="checkmark" size={12} color={ds.c.ground} /> : null}
         </View>
       ) : null}
     </PressableScale>
+  );
+  if (!children) return row;
+  return (
+    <View style={[styles.cardWrap, card]}>
+      {row}
+      <View style={styles.inside}>{children}</View>
+    </View>
   );
 }
 
@@ -160,6 +180,10 @@ const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
   label: { gap: 2 },
   pill: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center', flexDirection: 'row', alignItems: 'center' },
+  pillSmall: { minHeight: 36, paddingHorizontal: space.md, gap: space.xs + 2 },
+  cardWrap: { borderRadius: radius.card, borderCurve: 'continuous' },
+  // Under the row's text: past the icon tile (44) and its gap.
+  inside: { paddingLeft: space.lg + 44 + space.md, paddingRight: space.lg, paddingBottom: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   iconTile: { width: 44, height: 44, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   mark: { width: 22, height: 22, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
