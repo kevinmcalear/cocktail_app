@@ -8,7 +8,7 @@ import { houseNudge, houseWays } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { PREP_KINDS, type PrepDraft } from '@/lib/prepKinds';
 import { suggestAmount } from '@/lib/specDefaults';
-import { capitalize } from '@/lib/stringUtils';
+import { capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById, type Technique } from '@/lib/techniques';
 import { startsFrom } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
@@ -66,8 +66,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   const [nudgeOff, setNudgeOff] = useState(false);
   /** A prep just made in the builder: "Shrub saved to your preps…" for a moment. */
   const [madePrep, setMadePrep] = useState<string | null>(null);
-  // Shown the way it saves ("coconut fat washed rum" is "Coconut Fat Washed Rum").
-  const make = (name: string, key?: string) => setMaking({ name: capitalize(name), key, replace: !!key });
+  // Shown the way it saves ("coconut fat washed rum" is "Coconut fat washed rum").
+  const make = (name: string, key?: string) => setMaking({ name: capitalizeFirst(name), key, replace: !!key });
   const generic = (id: string | null) => {
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
@@ -199,7 +199,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         onPick={add}
         onTyping={setTyping}
         onMake={forDrink ? (name) => make(name) : undefined}
-        onLater={forDrink ? (name) => add({ id: null, name: capitalize(name) }, undefined, true) : undefined}
+        onLater={forDrink ? (name) => add({ id: null, name: capitalizeFirst(name) }, undefined, true) : undefined}
         captions={forDrink}
         shelf={shelf}
       />
