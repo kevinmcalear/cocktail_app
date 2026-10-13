@@ -139,6 +139,14 @@
       "destination": "/menus/[id]/costing"
     },
     {
+      "source": "/menus/:id/run-sheet",
+      "destination": "/menus/[id]/run-sheet"
+    },
+    {
+      "source": "/menus/:id/run-sheet/print",
+      "destination": "/menus/[id]/run-sheet/print"
+    },
+    {
       "source": "/study/:deck",
       "destination": "/study/[deck]"
     },
