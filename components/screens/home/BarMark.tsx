@@ -17,9 +17,10 @@ export interface BarBrand {
  * initials in its display face and accent on its ground. `filled` is the
  * accent disc with dark initials (Bar menus for you). `letter`: one letter,
  * for the small mark before a What to make caption.
- * ponytail: guests can't read a bar's brand yet (bars is members only under
- * RLS), so `brand` falls back to the app's accent and face. Pass it once a
- * public read of a bar profile's brand exists.
+ * Without `brand` it takes the app's accent and face. What to make passes
+ * the served bar's accent (my_bar_drinks's served_at).
+ * ponytail: Collection's marks still have no brand to read (bars is members
+ * only under RLS); pass it once a public read of a bar page's brand exists.
  */
 export function BarMark({ name, logoUrl, size, brand, filled, letter }: { name: string; logoUrl?: string | null; size: number; brand?: BarBrand | null; filled?: boolean; /** One letter, for a mark a caption line tall (What to make). */ letter?: boolean }) {
   const ds = useDs();
