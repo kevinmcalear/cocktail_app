@@ -60,6 +60,24 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       ...config.android,
       package: appId,
+      // Android app links for the same paths (public/.well-known/assetlinks.json).
+      // ponytail: assetlinks lists the EAS upload key only; add Play App
+      // Signing's SHA-256 once the app is in Play, or Play installs won't verify.
+      ...(variant === 'production'
+        ? {
+            intentFilters: [
+              {
+                action: 'VIEW',
+                autoVerify: true,
+                data: [
+                  { scheme: 'https', host: 'babyvom.it', path: '/auth/callback' },
+                  { scheme: 'https', host: 'babyvom.it', pathPrefix: '/v/' },
+                ],
+                category: ['BROWSABLE', 'DEFAULT'],
+              },
+            ],
+          }
+        : {}),
     },
     // Over-the-air JS updates from EAS Update. A new store binary is needed
     // whenever the app version (and so the runtime) changes.
