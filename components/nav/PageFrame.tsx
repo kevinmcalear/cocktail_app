@@ -76,17 +76,22 @@ export function SubPageHead({ title, subtitle, crumbs, onBack, leading, trailing
 }) {
   const wide = useIsWideWeb();
   // A phone page with a subtitle or actions: Back and the actions on their own
-  // row, then the title and the whole subtitle under it (tools-brand-phone).
+  // row, then the title (with `leading` beside it, one line as before) and the
+  // whole subtitle under it (tools-brand-phone). Crumbs are wide-only.
   if (!wide && (subtitle || trailing)) {
     return (
       <View style={styles.stack}>
         <View style={styles.head}>
           <BackButton onPress={onBack} />
-          {leading}
           <View style={styles.title} />
           {trailing}
         </View>
-        <Title>{title}</Title>
+        <View style={styles.titleRow}>
+          {leading}
+          <Title numberOfLines={1} style={styles.title}>
+            {title}
+          </Title>
+        </View>
         {typeof subtitle === 'string' ? <Body tone="muted">{subtitle}</Body> : subtitle}
       </View>
     );
@@ -116,4 +121,5 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   stack: { gap: space.xs },
   title: { flex: 1, gap: 2, minWidth: 0 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 });
