@@ -35,6 +35,7 @@ jest.mock('@/hooks/useOnboarding', () => ({
   useRemoveWorkedMenu: () => ({ mutate: jest.fn(), isPending: false, error: null }),
   useRemoveCareerDrink: () => ({ mutate: jest.fn(), isPending: false, error: null }),
   useFinishOnboarding: () => ({ mutate: mockFinish, isPending: false, error: null }),
+  useVenueSpecUnit: () => ({ data: 'oz' }),
 }));
 jest.mock('@/hooks/useFlavor', () => ({
   useSaveTasteAnswers: () => ({ mutate: mockSaveTaste, isPending: false, error: null }),
@@ -247,6 +248,7 @@ describe('OnboardingScreen', () => {
     expect(screen.getByLabelText('Name').props.value).toBe('Sam Rivera');
     expect(screen.queryByLabelText('Password')).toBeNull();
     expect(screen.getByText(/On your other devices, sign in with this email/)).toBeTruthy();
+    expect(screen.getByText('Your job at Caretakers is saved for you as Bartender. Change it on your profile.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Not now' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(mockSaveName).toHaveBeenCalledWith({ name: 'Sam Rivera', handle: 'sam.rivera', profileId: null }, expect.anything());
@@ -254,6 +256,8 @@ describe('OnboardingScreen', () => {
 
     expect(await screen.findByText('Step 2 of 3')).toBeTruthy();
     expect(screen.queryByText('Do you work in hospitality?')).toBeNull();
+    expect(screen.getByRole('radio', { name: 'oz', checked: true }) && !screen.queryByRole('radio', { name: 'g' })).toBeTruthy();
+    expect(screen.getByText('Caretakers writes its specs in oz. You can still read them in ml any time.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Have a look around' }));
     expect(mockFinish).toHaveBeenCalled();
   });

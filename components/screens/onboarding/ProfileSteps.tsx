@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DsText, Field, PalateFlower, Surface, Title } from '@/components/ds';
+import { Caption, DsText, Field, PalateFlower, PressableScale, Surface, Title, useDs } from '@/components/ds';
 import { TasteAnswers } from '@/components/screens/taste/TasteAnswers';
-import { fontFamilies, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useSaveTasteAnswers } from '@/hooks/useFlavor';
+import { useVenueSpecUnit } from '@/hooks/useOnboarding';
 import { QUICK_QUESTIONS, tasteHeadline, type Taste } from '@/lib/flavor';
 import { MEASURE_UNITS, handleError, nameError, type MeasureUnit } from '@/lib/onboarding';
 import { convertPour } from '@/lib/drinkWizard';
@@ -19,6 +20,7 @@ export function NameStep({
   forceHandle,
   pendingFinish,
   invited,
+  job,
   onSaved,
   onSkip,
 }: {
@@ -27,6 +29,8 @@ export function NameStep({
   pendingFinish: boolean;
   /** Joined through a venue's invite: other devices sign in by code, and setup can't be skipped. */
   invited?: boolean;
+  /** Invited to a venue with a bar page: the job saved for them there. */
+  job?: { bar: string; title: string } | null;
   onSaved: (name: string, handle: string) => void;
   onSkip: () => void;
 }) {
@@ -46,7 +50,7 @@ export function NameStep({
   return (
     <SetupPage footer={<SetupFooter onPress={submit} disabled={pendingFinish} onSkip={invited ? undefined : onSkip} />}>
       <Field label="Name" value={name} onChangeText={setName} error={problem ?? undefined} autoComplete="name" maxLength={80} />
-      {handle === null && name.trim() ? <Caption tone="muted" style={styles.strong}>{`Your handle is @${chosen}. You can change it on You.`}</Caption> : null}
+      {handle === null && name.trim() && !invited ? <Caption tone="muted" style={styles.strong}>{`Your handle is @${chosen}. You can change it on You.`}</Caption> : null}
       {handle !== null ? (
         <Field
           label="Handle"
@@ -60,6 +64,7 @@ export function NameStep({
         />
       ) : null}
       {invited ? <Caption tone="muted">On your other devices, sign in with this email and we’ll send a code. No password to remember.</Caption> : null}
+      {job ? <Caption tone="muted">{`Your job at ${job.bar} is saved for you as ${job.title}. Change it on your profile.`}</Caption> : null}
     </SetupPage>
   );
 }
@@ -96,12 +101,36 @@ const PREVIEW = [
   { ml: 22.5, name: 'Lime juice' },
 ];
 
-/** ml, oz or g for new specs and reading. Joined from an invite, it's the last step before the app. */
-export function UnitsStep({ onDone, pending, error, joined = false }: { onDone: () => void; pending: boolean; error?: string; joined?: boolean }) {
+/** One unit as a big tile in mono, the chosen one ringed in the accent (canvas make-onboarding-units). */
+function UnitTile({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale
+      role="radio"
+      aria-checked={selected}
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[styles.tile, { borderColor: selected ? ds.accentText : ds.c.line, backgroundColor: selected ? ds.c.raised : ds.c.surface }]}
+    >
+      <DsText variant="headline" style={styles.mono}>
+        {label}
+      </DsText>
+    </PressableScale>
+  );
+}
+
+/**
+ * ml, oz or g for new specs and reading. Joined from an invite, it's the last
+ * step before the app: oz or ml, starting on the venue's own unit.
+ */
+export function UnitsStep({ onDone, pending, error, joined = null }: { onDone: () => void; pending: boolean; error?: string; joined?: { barId: string; name: string } | null }) {
   const specUnit = useSettingsStore((s) => s.specUnit);
   const setSpecUnit = useSettingsStore((s) => s.setSpecUnit);
   const setDefaultUnit = useSettingsStore((s) => s.setDefaultUnit);
-  const [unit, setUnit] = useState<MeasureUnit>(specUnit);
+  const venueUnit = useVenueSpecUnit(joined?.barId ?? null).data ?? null;
+  const [picked, setUnit] = useState<MeasureUnit | null>(null);
+  const unit = picked ?? (joined && venueUnit ? venueUnit : specUnit);
+  const units = joined ? MEASURE_UNITS.filter((u) => u.id !== 'g') : MEASURE_UNITS;
 
   const save = () => {
     setSpecUnit(unit);
@@ -111,11 +140,14 @@ export function UnitsStep({ onDone, pending, error, joined = false }: { onDone: 
 
   return (
     <SetupPage footer={<SetupFooter label={joined ? 'Have a look around' : 'Continue'} pending={pending} onPress={save} />}>
-      <View role="radiogroup" accessibilityLabel="How do you measure?" style={styles.chips}>
-        {MEASURE_UNITS.map((u) => (
-          <Chip key={u.id} label={u.label} selected={unit === u.id} onPress={() => setUnit(u.id)} />
+      <View role="radiogroup" accessibilityLabel="How do you measure?" style={styles.tiles}>
+        {units.map((u) => (
+          <UnitTile key={u.id} label={u.label} selected={unit === u.id} onPress={() => setUnit(u.id)} />
         ))}
       </View>
+      {joined && venueUnit ? (
+        <Caption tone="muted">{`${joined.name} writes its specs in ${venueUnit}. You can still read them in ${venueUnit === 'oz' ? 'ml' : 'oz'} any time.`}</Caption>
+      ) : null}
       {joined ? null : (
         <>
           <Surface style={styles.preview}>
@@ -140,7 +172,9 @@ export function UnitsStep({ onDone, pending, error, joined = false }: { onDone: 
 }
 
 const styles = StyleSheet.create({
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  tiles: { flexDirection: 'row', gap: space.sm },
+  tile: { flex: 1, minHeight: 64, borderRadius: radius.control, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  mono: { fontFamily: fontFamilies.monoMedium },
   flower: { alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
   strong: { fontFamily: fontFamilies.bodySemiBold },
   preview: { gap: space.sm },

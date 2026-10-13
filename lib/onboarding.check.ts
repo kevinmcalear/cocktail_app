@@ -1,7 +1,7 @@
 // Checks for lib/onboarding.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { afterAgeCheck, authRedirect, barNameError, drinkNameError, handleError, inviteJobTitle, inviteStepLabel, menuNameError, nameError, needsOnboarding, nextStep, roleError, splitName, venueLabel, withArticle, yearError } from './onboarding';
+import { afterAgeCheck, authRedirect, barNameError, drinkNameError, handleError, inviteJobTitle, inviteStepLabel, majorityUnit, menuNameError, nameError, needsOnboarding, nextStep, roleError, splitName, venueLabel, withArticle, yearError } from './onboarding';
 
 assert.equal(needsOnboarding(null), false);
 assert.equal(needsOnboarding({}), false);
@@ -87,3 +87,9 @@ assert.equal(authRedirect({ ...base, hasSession: true, segment: '(tabs)', needsO
 assert.equal(authRedirect({ ...base, hasSession: true, segment: 'onboarding', needsOnboarding: true }), null);
 assert.equal(authRedirect({ ...base, hasSession: true, segment: 'age-check', needsOnboarding: true }), null);
 assert.equal(authRedirect({ ...base, hasSession: true, segment: '(tabs)' }), null);
+
+// The invited units step starts on the venue's own unit.
+assert.equal(majorityUnit(['oz', 'oz', 'ml', 'dash']), 'oz');
+assert.equal(majorityUnit(['ml', null, 'g']), 'ml');
+assert.equal(majorityUnit(['oz', 'ml']), null);
+assert.equal(majorityUnit([]), null);
