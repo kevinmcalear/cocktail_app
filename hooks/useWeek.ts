@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { useUserId } from '@/ctx/AuthContext';
+import { addGuestStaff } from '@/hooks/useEventStaff';
 import { viewerScoped } from '@/lib/authCache';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
@@ -30,7 +31,7 @@ export function useBarWeek(barId: string | null | undefined) {
     queryFn: async (): Promise<WeekItem[]> => {
       const { data, error } = await supabase.rpc('bar_week', { p_bar_id: barId, p_from: from.toISOString(), p_days: WEEK_DAYS });
       if (error) throw error;
-      return withGuestColors(((data ?? []) as WeekRow[]).map(toWeekItem));
+      return addGuestStaff(withGuestColors(((data ?? []) as WeekRow[]).map(toWeekItem)));
     },
   });
 }
@@ -45,7 +46,7 @@ export function useMyWeek() {
     queryFn: async (): Promise<WeekItem[]> => {
       const { data, error } = await supabase.rpc('my_week', { p_from: from.toISOString(), p_days: WEEK_DAYS });
       if (error) throw error;
-      return withGuestColors(((data ?? []) as WeekRow[]).map(toWeekItem));
+      return addGuestStaff(withGuestColors(((data ?? []) as WeekRow[]).map(toWeekItem)));
     },
   });
 }

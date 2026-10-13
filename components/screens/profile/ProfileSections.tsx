@@ -188,7 +188,7 @@ export function BarHeader({ profile, detail, tag, neutral, size = 64 }: { profil
   // The mark, then the name, its tag and the place line; the score over "bar score" and "212 people ranked" (ppl-bar-top).
   return (
     <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.barHeader}>
-      <BarMark name={profile.display_name} logoUrl={profile.avatar_url} size={size} neutral={neutral} />
+      <BarMark name={profile.display_name} logoUrl={profile.avatar_url} profileId={profile.id} size={size} neutral={neutral} />
       <View style={[styles.flex, styles.barName]}>
         <Title>{profile.display_name}</Title>
         {tag}

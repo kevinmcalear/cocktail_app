@@ -18,6 +18,7 @@ import { directionsUrl, kindLabel, timeLine, type WeekItem } from '@/lib/week';
 
 import { EventDrinks } from './EventDrinks';
 import { EventSheet } from './EventSheet';
+import { EventStaff } from './EventStaff';
 import { useDotColor } from './WeekParts';
 
 /**
@@ -133,6 +134,7 @@ function EventPage({ id }: { id: string }) {
         </View>
         <EventDrinks event={event} />
         {canEdit && event.menuId ? <TextLink label="Open the menu" onPress={() => router.push(`/menus/${event.menuId}` as Href)} /> : null}
+        <EventStaff event={event} canEdit={canEdit} />
         {shared === 'failed' ? <Caption tone="muted">{link}</Caption> : null}
         {canEdit ? <Button label="Delete event" variant="danger" onPress={confirmDelete} disabled={remove.isPending} style={styles.delete} /> : null}
       </ScrollView>

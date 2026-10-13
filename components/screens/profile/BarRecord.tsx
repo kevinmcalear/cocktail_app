@@ -111,7 +111,7 @@ export function MenuHistory({ profileId, name }: { profileId: string; name: stri
         <Button label={`Show all ${data.length} menus`} variant="secondary" onPress={() => setAll(true)} />
       ) : null}
       <Caption tone="muted" style={styles.foot}>
-        {'From the bar’s site and press. Each menu links to its source. Something wrong? '}
+        {data.every((m) => m.from_venue) ? `From ${name}’s own menus. Something wrong? ` : 'From the bar’s site and press. Each menu links to its source. Something wrong? '}
         <Caption role="link" accessibilityLabel="Tell us what's wrong" onPress={() => setReport(true)} style={[styles.underline, { color: ds.accentText }]}>
           Tell us.
         </Caption>
@@ -145,7 +145,8 @@ function EditionRow({ edition: m, last, href }: { edition: MenuEdition; last: bo
           </Body>
           <View style={styles.nowActions}>
             <Button label="Open the menu" variant="secondary" accessibilityLabel={`Open the ${m.name} menu`} onPress={() => router.push(href as Href)} />
-            <SaveMenuButton editionId={m.id} drinkIds={m.drinks.map((d) => d.id)} />
+            {/* ponytail: a venue's own menu can't be saved until saved_menu_editions takes a menu id. */}
+            {m.from_venue ? null : <SaveMenuButton editionId={m.id} drinkIds={m.drinks.map((d) => d.id)} />}
           </View>
         </View>
       ) : (

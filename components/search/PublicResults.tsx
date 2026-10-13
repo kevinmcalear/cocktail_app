@@ -11,7 +11,7 @@ import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useRowScores } from '@/hooks/useBestDrink';
 import { useDrinkLists, useDrinkPick } from '@/hooks/useDiscover';
-import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
+import { useDiscoverBars, useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useDrinkLines } from '@/hooks/useDrinkSources';
 import { useItemScores } from '@/hooks/useFlavor';
 import { usePublicIngredientSearch } from '@/hooks/useIngredients';
@@ -69,6 +69,8 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const look = onKind ? 'tint' : 'accent';
   const atHome = !mine?.venueId;
   const results = useDiscoverResults({ kinds: [...kinds], search: q, area: area ?? ANYWHERE });
+  // The search page's bar rows count what the search matched and what's on now ("Fitzroy · 14 drinks on now").
+  const { data: searchedBars } = useDiscoverBars(area ?? ANYWHERE, { kinds, search: q, onNow: true }, signedIn && !onKind && q.length > 1);
   const { data: publicBars } = usePublicBars(everywhere && !signedIn ? q : '');
   const { data: people } = usePublicPeople(everywhere ? q : '');
   const { data: classicList } = useDrinkLists();
@@ -80,7 +82,8 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const yours = useMemo(() => (everywhere && atHome ? groupCatalog(catalog.items, q).drinks : []), [everywhere, atHome, catalog.items, q]);
 
   const bars = useMemo((): DiscoverBar[] => {
-    if (signedIn) return findBars(area ? results.bars.filter((b) => barInArea(b, area)) : results.bars, q);
+    const all = searchedBars ?? results.bars;
+    if (signedIn) return findBars(area ? all.filter((b) => barInArea(b, area)) : all, q);
     return (publicBars ?? []).map((b) => ({
       id: b.id,
       handle: '',
@@ -95,7 +98,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       closedYear: b.closed_year ?? null,
       drinks: 0,
     }));
-  }, [signedIn, area, results.bars, publicBars, q]);
+  }, [signedIn, area, searchedBars, results.bars, publicBars, q]);
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
   const ingredients = useMemo(() => (everywhere && ingredientHits ? findDrinks(ingredientHits, q) : []), [everywhere, ingredientHits, q]);
   // A bar's copy of a classic in these results folds into it ("served at 7 bars"); its variations gather under it.

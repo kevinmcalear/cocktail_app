@@ -1,13 +1,19 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, PressableScale, Title, useDs } from '@/components/ds';
+import { Body, Caption, GlassButton, PressableScale, Title, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { useZonePhoto } from '@/hooks/useZonePhoto';
 import { formatPar } from '@/lib/backBar';
-import type { BarZone, ItemLocation } from '@/types/backBar';
+import type { BarZone, BarZoneKind, ItemLocation } from '@/types/backBar';
 
 import { selectedProps } from './BackBarPlan';
 import { LocationEditor } from './LocationEditor';
+
+/** "Add a photo of this fridge": what each kind of zone is called in a sentence. */
+const KIND_NOUN: Partial<Record<BarZoneKind, string>> = {
+  shelf: 'shelf', fridge: 'fridge', freezer: 'freezer', speed_rail: 'rail', well: 'well', garnish: 'tray', glass_rack: 'rack', sink: 'sink', bar_top: 'bar top', storeroom: 'storeroom',
+};
 
 /** Items grouped by shelf, in the order the shelves first appear ("Top", "Middle", "Bottom"). */
 function shelves(contents: ItemLocation[]): { shelf: string; items: ItemLocation[] }[] {
@@ -39,14 +45,16 @@ interface ZoneInspectorProps {
   onOpenLocation: (id: string | null) => void;
   /** Starts "tap a zone to move it there" for a location. */
   onMove: (location: ItemLocation) => void;
+  /** Someone who can draw the plan can photograph the zone. */
+  canPhoto?: boolean;
 }
 
 /** The selected zone: its photo, where it is, and what lives in it, shelf by shelf. */
-export function ZoneInspector({ barId, zone, contents, canPlace, openLocationId, onOpenLocation, onMove }: ZoneInspectorProps) {
+export function ZoneInspector({ barId, zone, contents, canPlace, openLocationId, onOpenLocation, onMove, canPhoto }: ZoneInspectorProps) {
   const ds = useDs();
+  const photo = useZonePhoto(barId);
   return (
     <View style={styles.wrap}>
-      {/* ponytail: shows a zone photo when one is set; taking one arrives with the photo pipeline's storage folder. */}
       <View style={[styles.photo, { backgroundColor: ds.c.paper }]}>
         {zone.photo_url ? (
           <Image source={{ uri: zone.photo_url }} style={styles.photoImage} contentFit="cover" accessibilityLabel={`Photo of ${zone.name}`} />
@@ -58,7 +66,23 @@ export function ZoneInspector({ barId, zone, contents, canPlace, openLocationId,
             ))}
           </View>
         )}
+        {canPhoto ? (
+          <View style={styles.photoButton}>
+            <GlassButton
+              icon="camera"
+              label={photo.isPending ? 'Uploading…' : `${zone.photo_url ? 'Change the photo' : 'Add a photo'} of this ${KIND_NOUN[zone.kind] ?? 'spot'}`}
+              accessibilityLabel={`${zone.photo_url ? 'Change the photo' : 'Add a photo'} of ${zone.name}`}
+              onPress={() => photo.mutate(zone.id)}
+              onMedia
+            />
+          </View>
+        ) : null}
       </View>
+      {photo.error ? (
+        <Caption tone="accent" role="alert">
+          {photo.error.message}
+        </Caption>
+      ) : null}
       <View style={styles.head}>
         <Title>{zone.name}</Title>
         <Body tone="muted">{zoneLine(zone.description, contents.length)}</Body>
@@ -117,6 +141,7 @@ export function ZoneInspector({ barId, zone, contents, canPlace, openLocationId,
 
 const styles = StyleSheet.create({
   wrap: { gap: space.lg },
+  photoButton: { position: 'absolute', right: space.sm, bottom: space.sm },
   photo: { height: 160, borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   photoImage: { width: '100%', height: '100%' },
   head: { gap: space.xs },

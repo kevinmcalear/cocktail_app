@@ -133,6 +133,16 @@ describe('uploads', () => {
     assert.ok(over.error, 'the 301st upload is refused');
   });
 
+  // A back bar zone's photo (20261015200000): its own folder, still only the app's folders.
+  test('zone photos go under backbar/, and a folder the app does not use is refused', async () => {
+    const path = `backbar/limits-${run}/fridge.png`;
+    const ok = await users.catalogAdmin.client.storage.from('drinks').upload(path, png, { contentType: 'image/png', upsert: false });
+    assert.ifError(ok.error);
+    uploaded.drinks.push(path);
+    const stray = await users.catalogAdmin.client.storage.from('drinks').upload(`elsewhere/limits-${run}/x.png`, png, { contentType: 'image/png', upsert: false });
+    assert.ok(stray.error, 'only the app folders take uploads');
+  });
+
   test('catalog admins are not limited', async () => {
     const folder = `cocktails/limits-admin-${run}`;
     await prefillUploads('drinks', folder, users.catalogAdmin.id, 300);
