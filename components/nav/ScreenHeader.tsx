@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Display, GlassButton, PressableScale, Title, useGutter } from '@/components/ds';
 import { CurrentUserAvatar } from '@/components/ui/UserAvatar';
 import { layout, space } from '@/constants/tokens';
+import { useBottomBar } from '@/hooks/useBottomBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 
@@ -35,6 +36,9 @@ export function ScreenHeader({ you = true, title, display, actions, center, crea
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useIsWideWeb();
+  // Settings › Try it: New lives in the tab bar, and home mode's You tab makes way for it.
+  const bottomBar = useBottomBar();
+  const youTab = home && !bottomBar;
   const settings = <GlassButton accessibilityLabel="Settings" icon="gearshape" onPress={() => router.push('/settings')} />;
   if (wide) {
     const trailing = you ? actions : (
@@ -75,16 +79,16 @@ export function ScreenHeader({ you = true, title, display, actions, center, crea
         {actions}
         {you ? (
           <>
-            {create ? <CreateButton /> : null}
+            {create && !bottomBar ? <CreateButton /> : null}
             {/* Home mode has You as a tab; venue mode opens it over the tabs. */}
-            <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => (home ? router.navigate('/profile') : router.push('/you'))} style={styles.avatar}>
+            <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => (youTab ? router.navigate('/profile') : router.push('/you'))} style={styles.avatar}>
               <CurrentUserAvatar size={32} />
             </PressableScale>
           </>
         ) : (
           <>
             {settings}
-            <CreateButton />
+            {bottomBar ? null : <CreateButton />}
           </>
         )}
       </View>

@@ -52,12 +52,19 @@ interface HeadProps {
   cancel?: boolean;
 }
 
+/** What the field says it searches: the venue, the area or everywhere. */
+export function searchPlaceholder(scope: SearchScope, mine: SearchMine, area?: SearchArea | null): string {
+  if (scope === 'everywhere') return 'Search bars, drinks and people';
+  if (scope === 'area') return `Search ${area?.label === 'This area' ? 'this area' : (area?.label ?? 'here')}`;
+  return `Search ${mine.venueId ? mine.label : 'your drinks'}`;
+}
+
 /** The search field and where it looks. The same at every door: the tab, ⌘K, Library and Discover. */
 export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys, cancel }: HeadProps) {
   const ds = useDs();
   const gutter = useGutter();
   const options = scopeOptions(mine.label, area?.label ?? null);
-  const placeholder = scope === 'everywhere' ? 'Search bars, drinks and people' : scope === 'area' ? `Search ${area?.label === 'This area' ? 'this area' : (area?.label ?? 'here')}` : `Search ${mine.venueId ? mine.label : 'your drinks'}`;
+  const placeholder = searchPlaceholder(scope, mine, area);
   return (
     <View style={styles.head}>
       <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys={keys} cancel={cancel} />
