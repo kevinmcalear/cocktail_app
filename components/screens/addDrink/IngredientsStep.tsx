@@ -36,6 +36,8 @@ interface IngredientsStepProps extends StepProps {
   forDrink?: boolean;
   /** At home: the bottles on your shelf, so search says "On your shelf". */
   shelf?: ReadonlySet<string>;
+  /** A prep just made in the builder: what to say over the footer for a moment (null clears it). */
+  onNotice?: (text: string | null) => void;
 }
 
 /**
@@ -44,7 +46,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, onNotice }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   /** The bottle line "What did you do to it?" is open for. */
   const [houseKey, setHouseKey] = useState<string | null>(null);
   const [nudgeOff, setNudgeOff] = useState(false);
-  /** A prep just made in the builder: "Shrub added" for a moment. */
+  /** A prep just made in the builder: "Shrub saved to your preps…" for a moment. */
   const [madePrep, setMadePrep] = useState<string | null>(null);
   // Shown the way it saves ("coconut fat washed rum" is "Coconut Fat Washed Rum").
   const make = (name: string, key?: string) => setMaking({ name: capitalize(name), key, replace: !!key });
@@ -90,9 +92,13 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   }, [removed]);
   useEffect(() => {
     if (!madePrep) return;
-    const t = setTimeout(() => setMadePrep(null), UNDO_MS);
+    onNotice?.(madePrep);
+    const t = setTimeout(() => {
+      setMadePrep(null);
+      onNotice?.(null);
+    }, UNDO_MS);
     return () => clearTimeout(t);
-  }, [madePrep]);
+  }, [madePrep, onNotice]);
 
   const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean) => {
     const unit = guessUnit(pick.name, getPreferredUnit());
@@ -131,7 +137,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 <Body numberOfLines={1} style={styles.flex}>
                   {l.name}
                 </Body>
-                <Spec tone="muted">{amountLabel(l)}</Spec>
+                <Spec>{amountLabel(l)}</Spec>
               </View>
             ) : l.key === swapKey ? (
               <View key={l.key} style={[styles.swap, { borderBottomColor: ds.c.line }]}>
@@ -203,11 +209,6 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         captions={forDrink}
         shelf={shelf}
       />
-      {madePrep ? (
-        <View role="status" style={[styles.undo, { backgroundColor: ds.c.raised }]}>
-          <Body style={[styles.flex, styles.status]}>{madePrep}</Body>
-        </View>
-      ) : null}
       <PrepBuilder
         name={makingName}
         drinkName={draft.name.trim()}
@@ -222,8 +223,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
           else if (editingKey) change(editingKey, { prep, technique: prep.technique, later: undefined });
           else if (makingName) add({ id: null, name: makingName }, prep);
           setMaking(null);
-          // ponytail: the prep is saved with the drink, not before, so this says so rather than "saved".
-          if (!editingKey || replacing) setMadePrep(`${prepWord(prep, makingName ?? 'The prep')} added. It’s saved to your preps with the drink.`);
+          // The prep is saved with the drink, not before, so this says when rather than "saved" (canvas make-create-house-line).
+          if (!editingKey) setMadePrep(`${prepWord(prep, makingName ?? 'The prep')} saved to your preps when you save the drink. Its page is ready then.`);
+          else if (replacing) setMadePrep(`Saved to your bar’s preps when you save the drink. Next time, type “${(makingName ?? '').split(/[\s-]/)[0].toLowerCase()}”.`);
         }}
         onLater={() => {
           if (editingKey) change(editingKey, { id: null, name: makingName ?? '', prep: undefined, technique: undefined, later: true });
@@ -269,7 +271,6 @@ const styles = StyleSheet.create({
   nudgeButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs },
   flex: { flex: 1 },
-  status: { paddingVertical: space.md },
   compact: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderBottomWidth: StyleSheet.hairlineWidth },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

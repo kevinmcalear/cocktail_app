@@ -62,7 +62,8 @@ describe('IngredientsStep', () => {
 
   test('a shrub starts from its name: the fruit as the base, equal parts, a cold method', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, name: 'Pineapple Heat' }} set={set} ingredients={[CAMPARI]} />);
+    const onNotice = jest.fn();
+    await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, name: 'Pineapple Heat' }} set={set} ingredients={[CAMPARI]} onNotice={onNotice} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Pineapple chili shrub');
     await fireEvent.press(screen.getByRole('button', { name: 'Make “Pineapple chili shrub” in house' }));
     await laidOut();
@@ -78,8 +79,8 @@ describe('IngredientsStep', () => {
     expect(prep.kind).toBe('shrub');
     expect(prep.lines.map((l: { name: string }) => l.name)).toEqual(['Pineapple', 'Sugar', 'Apple cider vinegar', 'Chili']);
     expect(prep.leadMinutes).toBe(3 * 24 * 60);
-    // Back in the drink: it says the prep is on, and saved with the drink.
-    expect(screen.getByText('Shrub added. It’s saved to your preps with the drink.')).toBeTruthy();
+    // Back in the drink: over the footer, it says the prep is saved with the drink.
+    expect(onNotice).toHaveBeenCalledWith('Shrub saved to your preps when you save the drink. Its page is ready then.');
   });
 
   test('a prep can be left for later: the name now, its recipe to write, and the line offers it', async () => {
@@ -101,8 +102,8 @@ describe('IngredientsStep', () => {
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'pineapple chili shrub');
     expect(screen.getByText('Nothing called that yet. Closest:')).toBeTruthy();
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
-    expect(rows.indexOf('Pineapple Juice')).toBeLessThan(rows.indexOf('Make “pineapple chili shrub” in house'));
-    expect(rows.indexOf('Make “pineapple chili shrub” in house')).toBeLessThan(rows.indexOf('Just add the name “pineapple chili shrub”'));
+    expect(rows.indexOf('Pineapple Juice')).toBeLessThan(rows.indexOf('Make “Pineapple chili shrub” in house'));
+    expect(rows.indexOf('Make “Pineapple chili shrub” in house')).toBeLessThan(rows.indexOf('Just add the name “pineapple chili shrub”'));
   });
 
   test('an ordinary new name is added by name first, and can still be made in house', async () => {

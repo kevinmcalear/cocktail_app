@@ -8,12 +8,15 @@ import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
 import { partsText, prepAmounts, prepYield, slotMessage, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
+import { prepShares } from '@/lib/prepShares';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 
 import { IngredientSearch, type CatalogIngredient } from '../IngredientSearch';
 
 interface PrepRecipeStepProps {
   draft: PrepDraft;
+  /** Parts of the base, or the amounts they come to (RecipeView, beside the title). */
+  view: RecipeViewKind;
   set: (change: Partial<PrepDraft>) => void;
   ingredients: readonly CatalogIngredient[];
   aliases?: readonly IngredientAlias[];
@@ -24,6 +27,12 @@ const VIEWS = [
   { value: 'amounts', label: 'Amounts' },
 ] as const;
 const UNITS = ['g', 'ml', 'tsp', 'drop', 'each', ''] as const;
+export type RecipeViewKind = (typeof VIEWS)[number]['value'];
+
+/** Parts or Amounts, right of the recipe step's title. */
+export function RecipeView({ value, onChange }: { value: RecipeViewKind; onChange: (v: RecipeViewKind) => void }) {
+  return <Choice label="Show as" options={VIEWS} value={value} onChange={onChange} />;
+}
 
 /**
  * New prep, the recipe: parts of one base line, which carries the amount
@@ -32,9 +41,8 @@ const UNITS = ['g', 'ml', 'tsp', 'drop', 'each', ''] as const;
  * stand-in from a technique ("Spirit") shows as "Pick the spirit" and has to
  * be picked or taken out before the prep can be added.
  */
-export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeStepProps) {
+export function PrepRecipeStep({ draft, view, set, ingredients, aliases }: PrepRecipeStepProps) {
   const ds = useDs();
-  const [view, setView] = useState<'parts' | 'amounts'>('parts');
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [noteKey, setNoteKey] = useState<string | null>(null);
   const [allergensOpen, setAllergensOpen] = useState(false);
@@ -57,11 +65,9 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
 
   return (
     <View style={styles.stack}>
-      <View style={styles.head}>
-        {/* A bottle keeps its label's capitals (Bacardí Carta Blanca); a plain base reads in lower case (the white rum). */}
-        <Caption tone="muted">{base ? `Everything follows the ${base.name === draft.madeFrom?.name ? base.name : base.name.toLowerCase()}.` : 'Add what goes in.'}</Caption>
-        <Choice label="Show as" options={VIEWS} value={view} onChange={setView} />
-      </View>
+      <Shares draft={draft} />
+      {/* A bottle keeps its label's capitals (Bacardí Carta Blanca); a plain base reads in lower case (the white rum). */}
+      <Caption tone="muted">{base ? `Everything follows the ${base.name === draft.madeFrom?.name ? base.name : base.name.toLowerCase()}.` : 'Add what goes in.'}</Caption>
       <View role="list">
         {draft.lines.map((l, i) => {
           const isBase = l.key === draft.baseKey;
@@ -76,8 +82,8 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
               <IngredientThumb id={l.id} name={l.name} size={36} />
               <View style={styles.name}>
                 <PressableScale accessibilityLabel={l.slot ? `Pick the ${l.slot}` : `${l.name}. Swap it`} onPress={() => setSwapKey(l.key)} style={styles.swapName}>
-                  <Body numberOfLines={1} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
-                  {isBase ? <Caption tone="accent">The base, everything follows it</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'parts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
+                  <Body numberOfLines={3} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
+                  {isBase ? <Caption tone="accent">The base, everything follows it</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'amounts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
                 </PressableScale>
                 {l.slot ? null : noteKey === l.key ? (
                   <TextInput
@@ -95,7 +101,7 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
                   />
                 ) : (
                   <PressableScale role="button" accessibilityLabel={l.note ? `Note on ${l.name}: ${l.note}. Change it` : `Add a note to ${l.name}`} onPress={() => setNoteKey(l.key)} style={styles.noteButton}>
-                    <Caption tone={l.note ? 'muted' : 'accent'} numberOfLines={2}>{l.note?.trim() || 'Note'}</Caption>
+                    <Caption tone="muted" numberOfLines={2}>{l.note?.trim() || 'Note'}</Caption>
                   </PressableScale>
                 )}
               </View>
@@ -165,7 +171,21 @@ export function PrepRecipeStep({ draft, set, ingredients, aliases }: PrepRecipeS
           })}
         </View>
       ) : null}
-      <Caption tone="muted">“Makes about” is a guess from the weights. Your first batch in Make mode sets the real number.</Caption>
+      <Caption tone="muted">“Makes about” is a guess from the weights. Log your first batch and it uses the real number.</Caption>
+    </View>
+  );
+}
+
+/** Each line's share of the recipe as one segmented bar, in the colours it's drawn in. */
+function Shares({ draft }: { draft: PrepDraft }) {
+  const ds = useDs();
+  const shares = prepShares(draft);
+  if (shares.length < 2) return null;
+  return (
+    <View aria-label={`In it: ${shares.map((s) => `${s.name} ${Math.round(s.share * 100)}%`).join(', ')}`} style={styles.shares}>
+      {shares.map((s) => (
+        <View key={s.key} style={[styles.share, { flexGrow: s.share, backgroundColor: s.hex ?? ds.c.muted }]} />
+      ))}
     </View>
   );
 }
@@ -198,7 +218,8 @@ function NumberField({ label, value, onChange, suffix, placeholder }: { label: s
 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
+  shares: { flexDirection: 'row', gap: 2, height: 6 },
+  share: { flexBasis: 0, borderRadius: radius.pill },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
   swap: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   name: { flex: 1, justifyContent: 'center', paddingVertical: space.xs },
