@@ -12,6 +12,8 @@ import { formatScore, rankedAs as rankedAsOf, rankScore } from '@/lib/ranking';
 import { useShelfCheck } from '@/hooks/useShelfCheck';
 import type { SpecLine } from '@/lib/spec';
 
+import { MadePhoto, ShowOnProfile } from './MadeSheetParts';
+
 const NOTE_LIMIT = 1000;
 const COMPARE: { value: Compared; label: string }[] = [
   { value: 'better', label: 'Better' },
@@ -35,7 +37,8 @@ interface MadeSheetProps {
  * bar, say how yours compared: that places your home version beside the
  * bar's in your rankings (a made-at-home rank_entries row), which is the
  * score your profile shows if you share rankings. Then what you swapped,
- * when, and a note. Open it after the age check.
+ * when, a photo and a note, and whether it shows on your profile (off until
+ * you tick it). Open it after the age check.
  */
 export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: MadeSheetProps) {
   const { data: target } = useRankTarget(item.id);
@@ -59,6 +62,8 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
   const [edited, setSwaps] = useState<Swap[] | null>(null);
   const swaps = edited ?? fromShelf;
   const [note, setNote] = useState('');
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [shown, setShown] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const saving = addEntry.isPending || record.isPending || log.isPending;
   const names = [...new Set(ingredients.filter(Boolean))];
@@ -100,7 +105,7 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
             : { winner_entry_id: barEntry.id, loser_entry_id: row.id, is_tie: compared === 'same' },
         ]);
       }
-      await log.mutateAsync({ item_id: item.id, made_on: madeOn, compared, swaps: cleanSwaps(swaps), note: note.trim() || null, rank_entry_id: rankEntryId });
+      await log.mutateAsync({ item_id: item.id, made_on: madeOn, compared, swaps: cleanSwaps(swaps), note: note.trim() || null, rank_entry_id: rankEntryId, on_profile: shown, photoUri: photo });
       onClose();
     } catch (e) {
       // Supabase errors are plain objects, not Errors: say what went wrong either way.
@@ -115,7 +120,12 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
       onClose={onClose}
       title={item.name}
       subtitle={(barName ?? barEntry?.venue?.display_name) ? `Your version of ${barName ?? barEntry?.venue?.display_name}'s` : 'Your version'}
-      footer={<Button label={saving ? 'Saving…' : 'Save'} size="lg" onPress={submit} disabled={saving} />}
+      footer={
+        <View style={styles.footer}>
+          <ShowOnProfile on={shown} onChange={setShown} />
+          <Button label={saving ? 'Saving…' : 'Save'} size="lg" onPress={submit} disabled={saving} />
+        </View>
+      }
     >
       {barEntry ? (
         <>
@@ -148,14 +158,19 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
         <Choice label="Yesterday" selected={date === yesterday} onPress={() => setDate(yesterday)} />
       </View>
       <DateField label="Date" value={date} onChange={setDate} max={today} />
-      <Field
-        label="Note"
-        value={note}
-        onChangeText={(t) => setNote(t.slice(0, NOTE_LIMIT))}
-        placeholder="How it came out, what you'd change next time"
-        multiline
-        hint={note.length > NOTE_LIMIT - 100 ? `${NOTE_LIMIT - note.length} characters left` : 'Only you see this.'}
-      />
+      <View style={styles.photoNote}>
+        <MadePhoto uri={photo} name={item.name} onChange={setPhoto} />
+        <View style={styles.flex}>
+          <Field
+            label="Note"
+            value={note}
+            onChangeText={(t) => setNote(t.slice(0, NOTE_LIMIT))}
+            placeholder="How it came out, what you'd change next time"
+            multiline
+            hint={note.length > NOTE_LIMIT - 100 ? `${NOTE_LIMIT - note.length} characters left` : undefined}
+          />
+        </View>
+      </View>
       {error ? <Body tone="accent">{error}</Body> : null}
     </MenuSheet>
   );
@@ -163,4 +178,7 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
 
 const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  photoNote: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  flex: { flex: 1, minWidth: 0 },
+  footer: { gap: space.sm },
 });
