@@ -94,5 +94,6 @@ const styles = StyleSheet.create({
   doseText: { flexShrink: 1, textAlign: 'right', fontFamily: fontFamilies.monoMedium },
   block: { gap: space.xs },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.control, maxWidth: '100%' },
-  flex: { flex: 1, minWidth: 0 },
+  // Room for a whole word (Suspension) beside the dose: a long dose wraps instead.
+  flex: { flex: 1, minWidth: space.xxxl * 2 },
 });
