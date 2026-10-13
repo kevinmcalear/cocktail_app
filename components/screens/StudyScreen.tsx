@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, Headline, Surface, Tag, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Headline, Surface, Tag, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { radius, space } from '@/constants/tokens';
@@ -61,9 +61,8 @@ export function StudyScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <ScreenHeader />
+        <ScreenHeader title="Study" display />
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
-          <Display>Study</Display>
           {run > 0 ? (
             <Tag label={`${run}-day streak`} tone="accent" />
           ) : (

@@ -100,7 +100,7 @@ describe('edit mode', () => {
     expect(props.onUpdateItem).toHaveBeenLastCalledWith(0, { unit: 'cl' });
   });
 
-  test('renaming commits a capitalised name and renames the ingredient', async () => {
+  test('renaming commits the name, first letter up, and renames the ingredient', async () => {
     const props = handlers();
     await renderWithTamagui(<EditList items={[gin, lime]} {...props} />);
 
@@ -108,9 +108,9 @@ describe('edit mode', () => {
     await fireEvent.changeText(screen.getByPlaceholderText('Ingredient name'), '  fresh lime ');
     await fireEvent(screen.getByPlaceholderText('Ingredient name'), 'submitEditing');
 
-    expect(props.onUpdateItem).toHaveBeenLastCalledWith(1, { name: 'Fresh Lime' });
-    expect(props.onRenameIngredient.mock.calls).toEqual([['lime', 'Fresh Lime']]);
-    expect(screen.getByText('Fresh Lime')).toBeTruthy();
+    expect(props.onUpdateItem).toHaveBeenLastCalledWith(1, { name: 'Fresh lime' });
+    expect(props.onRenameIngredient.mock.calls).toEqual([['lime', 'Fresh lime']]);
+    expect(screen.getByText('Fresh lime')).toBeTruthy();
   });
 
   test('clearing a name puts the old one back without renaming', async () => {

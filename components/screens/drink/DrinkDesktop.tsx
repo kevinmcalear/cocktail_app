@@ -6,7 +6,7 @@ import { layout, radius, space } from '@/constants/tokens';
 
 import type { DrinkSections } from './DrinkSections';
 
-type Tab = 'spec' | 'service' | 'backstory';
+type Tab = 'spec' | 'service' | 'more';
 
 interface DrinkDesktopProps {
   sections: DrinkSections;
@@ -27,9 +27,11 @@ const HERO_H = 640;
 
 /**
  * The drink page from tablet width up (board drink-desktop): the hero as a
- * card on the left, the page beside it with Spec | Service | Backstory tabs,
+ * card on the left, the page beside it with Spec | Service | More tabs,
  * and on desktop an inspector on the right. It sits left, beside the sidebar,
- * in the 1240 column (docs/design_system.md, Layout).
+ * in the 1240 column (docs/design_system.md, Layout). As on the phone
+ * (13 Oct), the Spec tab is just what you need to make it; strength,
+ * allergens, flavor, the backstory and the rest are under More.
  */
 export function DrinkDesktop({ sections: s, hero, heroActions, actions, inspector, staff, top }: DrinkDesktopProps) {
   const ds = useDs();
@@ -39,7 +41,7 @@ export function DrinkDesktop({ sections: s, hero, heroActions, actions, inspecto
   const tabs = [
     { value: 'spec' as const, label: 'Spec' },
     ...(staff ? [{ value: 'service' as const, label: 'Service' }] : []),
-    { value: 'backstory' as const, label: 'Backstory' },
+    { value: 'more' as const, label: 'More' },
   ];
   const shown = tabs.some((t) => t.value === tab) ? tab : 'spec';
 
@@ -52,35 +54,29 @@ export function DrinkDesktop({ sections: s, hero, heroActions, actions, inspecto
         </View>
         <View style={styles.body}>
           {s.header}
-          {s.banner}
-          {s.journey}
-          {s.menus}
-          {s.description}
+          {s.intro}
           <Segmented options={tabs} value={shown} onChange={setTab} accessibilityLabel="Drink" variant="ink" />
           {shown === 'spec' ? (
-            <View style={styles.tab}>
+            <View style={[styles.tab, styles.make]}>
+              {s.spec}
+              {actions}
+              {s.journey}
               {s.floor}
-              {/* The spec, method and actions beside the fact tiles; the staff rows under both (board drink-desktop). */}
-              <View style={styles.split}>
-                <View style={styles.specCol}>
-                  {s.spec}
-                  {s.method}
-                  {actions}
-                </View>
-                <View style={styles.factCol}>
-                  {s.facts}
-                  {s.flavor}
-                </View>
-              </View>
-              {s.servedAt}
-              {s.allergens}
-              {s.history}
-              {s.cost}
             </View>
           ) : null}
           {shown === 'service' ? <View style={styles.tab}>{s.service}</View> : null}
-          {shown === 'backstory' ? (
+          {shown === 'more' ? (
             <View style={styles.tab}>
+              {s.standing}
+              {s.banner}
+              {s.description}
+              {s.facts}
+              {s.allergens}
+              {s.flavor}
+              {s.servedAt}
+              {s.menus}
+              {s.history}
+              {s.cost}
               {s.backstory}
               {s.photos}
               {s.classicLink}
@@ -101,7 +97,6 @@ const styles = StyleSheet.create({
   heroActions: { position: 'absolute', top: space.md, right: space.md, flexDirection: 'row', gap: space.sm },
   body: { flex: 1, minWidth: 0, gap: space.lg },
   tab: { gap: space.xl, paddingTop: space.sm },
-  split: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: space.lg },
-  specCol: { flexGrow: 1, flexBasis: 200, minWidth: 0, gap: space.lg },
-  factCol: { flexGrow: 1, flexBasis: 180, minWidth: 0, gap: space.sm },
+  // A recipe card's width: the amounts stay near their ingredients.
+  make: { maxWidth: 560 },
 });

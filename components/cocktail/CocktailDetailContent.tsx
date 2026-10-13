@@ -17,7 +17,6 @@ import { useDrafts } from "@/hooks/useDrafts";
 import { useRecipeMergeHandler } from "@/hooks/useRecipeMergeHandler";
 import { renameIngredientEntity } from "@/lib/drafts";
 import { applyIngredientHandoff } from "@/lib/ingredientHandoff";
-import { capitalize } from "@/lib/stringUtils";
 import { useAppStore } from "@/store/useAppStore";
 import { getPreferredUnit } from "@/store/useSettingsStore";
 
@@ -426,7 +425,7 @@ export function CocktailDetailContent({
                         ...editor.recipeItems,
                         {
                             ingredient_id: item.id,
-                            name: capitalize(item.name),
+                            name: item.name,
                             amount: "",
                             unit: getPreferredUnit(),
                             preparation_notes: "",

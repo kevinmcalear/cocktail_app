@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { GlassSurface, useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { AlsoMentions, DrinkAtBarList, DrinkAtBarRow, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
-import { layout, radius, space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useBestDrink, useRowScores } from '@/hooks/useBestDrink';
 import { useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
@@ -19,6 +19,7 @@ import { MIN_RANKERS, plural } from '@/lib/ranking';
 import { MapLayers, SearchHere, type MapLayer } from './DiscoverControls';
 import { DiscoverMap } from './DiscoverMap';
 import { MapCredit } from './MapCredit';
+import { SHEET_HANDLE, useMapSheetChrome } from './mapSheetChrome';
 import { ClassicLine, resultsCaption, ResultsHead } from './ResultsHead';
 import { SelectedBar } from './SelectedBar';
 
@@ -41,8 +42,6 @@ interface DiscoverMapPaneProps {
   mode: 'sheet' | 'side';
   /** Controls over the top of the map (phones: search, where, filters, and back to the list). */
   top?: ReactNode;
-  /** Room for the tab bar: the phone sheet floats above it rather than behind it. */
-  bottomInset?: number;
   /** Room for the screen header over the top of the map: the controls and the open sheet stay below it. */
   topInset?: number;
   /** Nearest (phones, searching): where distances count from, the person else the area's middle. */
@@ -60,9 +59,7 @@ const drinkKey = (d: DiscoverDrink) => d.id;
 const PREFETCH_AFTER_MS = 2000;
 
 /** Collapsed phone sheet: the grabber, the count, the title and the chips (disc-map), until the head measures itself. */
-const SHEET_PEEK = 172;
-/** The sheet's grabber, above its head. */
-const HANDLE = layout.minTapTarget - space.lg;
+const SHEET_PEEK = 136;
 
 /**
  * Discover on a map: pins for the bars with matching drinks, for the drink's
@@ -73,9 +70,10 @@ const HANDLE = layout.minTapTarget - space.lg;
  * asks. The camera fits the results whenever the area, drink or layer
  * changes, but never after a search of the map, so the person's view stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink: given, filter, results, onViewport, mode, top, bottomInset = 0, topInset = 0, from = null, me = null, pick }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink: given, filter, results, onViewport, mode, top, topInset = 0, from = null, me = null, pick }: DiscoverMapPaneProps) {
   const ds = useDs();
   const sheetRef = useRef<BottomSheet>(null);
+  const chrome = useMapSheetChrome();
   // Searching, the layers read as a sort of what was found, pins name the best drinks, and a tapped bar leads with its best match (as filtering does).
   const searching = !!filter.search.trim();
   // Wide browsing shows Drinks | Top bars (disc-desk-browse); a drink's best once a style is picked.
@@ -219,14 +217,8 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
         {searchHere}
       </View>
       {/* The sheet lives in a box that ends above the tab bar, so nothing of it shows behind the bar. */}
-      <View pointerEvents="box-none" style={[styles.sheetBox, { top: topInset, bottom: bottomInset }]}>
-        <BottomSheet
-          ref={sheetRef}
-          snapPoints={[peek, '50%', '88%']}
-          backgroundStyle={{ backgroundColor: ds.c.surface, borderRadius: radius.sheet }}
-          handleIndicatorStyle={{ backgroundColor: ds.c.lineStrong }}
-          accessibilityLabel="Results"
-        >
+      <View pointerEvents="box-none" style={[styles.sheetBox, chrome.box, { top: topInset }]}>
+        <BottomSheet ref={sheetRef} snapPoints={[peek, '50%', '88%']} {...chrome.sheet} accessibilityLabel="Results">
           {/* A virtualized list: "anywhere" can load hundreds of drinks, and only the ones on screen are drawn. */}
           <BottomSheetFlatList
             data={sheetDrinks}
@@ -256,7 +248,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
                     chips={layers}
                     below={searching && byDrinks ? <ClassicLine drinks={results.drinks} search={filter.search} where={areaLabel(area)} /> : null}
                     onOpen={() => sheetRef.current?.snapToIndex(1)}
-                    onLayout={(e) => setPeek(Math.max(SHEET_PEEK, Math.ceil(e.nativeEvent.layout.height) + HANDLE + space.md))}
+                    onLayout={(e) => setPeek(Math.max(SHEET_PEEK, Math.ceil(e.nativeEvent.layout.height) + SHEET_HANDLE + space.sm))}
                   />
                 )}
               </View>
@@ -290,10 +282,10 @@ const styles = StyleSheet.create({
   // Clear of the map's attribution line.
   overlayBottom: { bottom: space.xxxl, maxWidth: 420 },
   glassRow: { alignSelf: 'flex-start', padding: space.xs, borderRadius: radius.pill },
-  sheet: { paddingHorizontal: space.lg, paddingBottom: space.xl },
-  sheetHead: { gap: space.md, paddingBottom: space.md },
+  sheet: { paddingHorizontal: space.lg, paddingBottom: space.lg },
+  sheetHead: { gap: space.sm, paddingBottom: space.sm },
   sheetEmpty: { gap: space.md },
   sheetFoot: { gap: space.md, paddingTop: space.md },
-  // Floats above the tab bar, clear of the screen edges, like the tab bar itself.
-  sheetBox: { position: 'absolute', left: space.sm, right: space.sm, overflow: 'hidden', borderBottomLeftRadius: radius.sheet, borderBottomRightRadius: radius.sheet },
+  // Sits on the tab bar, as wide as it (mapSheetChrome).
+  sheetBox: { position: 'absolute', overflow: 'hidden' },
 });
