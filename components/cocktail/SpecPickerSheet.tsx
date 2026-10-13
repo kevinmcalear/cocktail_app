@@ -2,6 +2,7 @@ import React from "react";
 import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
 import * as FilePicker from "expo-image-picker";
 
+import { Caption } from "@/components/ds";
 import { SpecPillButton } from "@/components/SpecPillButton";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { GlasswareIcon } from "@/components/ui/GlasswareIcon";
@@ -37,6 +38,8 @@ interface SpecPickerSheetProps {
         iconUrl: string | null;
     }) => Promise<string | void>;
     onIdentifyGlassware?: (imageBase64: string, mimeType: string) => Promise<GlasswareIdentifyResult>;
+    /** The first `count` options are the venue's own, under `label`; the rest under `rest`. */
+    lead?: { label: string; rest: string; count: number };
 }
 
 // Alert.alert shows the in-app dialog on web (lib/dialogs installWebAlert).
@@ -57,6 +60,7 @@ export function SpecPickerSheet({
     onAdd,
     onAddGlassware,
     onIdentifyGlassware,
+    lead,
 }: SpecPickerSheetProps) {
     const theme = useTheme();
     const [adding, setAdding] = React.useState(false);
@@ -213,14 +217,8 @@ export function SpecPickerSheet({
                                     />
                                 </YStack>
                             </XStack>
-                            {scanResult.matchedIcon && (
-                                <Text color="$color11" fontSize={12}>
-                                    Shape matched to {scanResult.matchedIcon}. Edit the name if needed.
-                                </Text>
-                            )}
-                            <Text color="$color11" fontSize={12}>
-                                Tap &quot;Use this glass&quot; to add it, then save your cocktail.
-                            </Text>
+                            {scanResult.matchedIcon && <Text color="$color11" fontSize={12}>Shape matched to {scanResult.matchedIcon}. Edit the name if needed.</Text>}
+                            <Text color="$color11" fontSize={12}>Tap &quot;Use this glass&quot; to add it, then save your cocktail.</Text>
                             <XStack gap="$3" justifyContent="flex-end">
                                 <Button chromeless onPress={() => setScanResult(null)}>
                                     <Text color="$color11">Back</Text>
@@ -240,9 +238,10 @@ export function SpecPickerSheet({
 
                     {!scanResult && (
                         <XStack flexWrap="wrap" gap="$2">
-                            {options.map((opt) => (
+                            {options.map((opt, i) => (
+                                <React.Fragment key={opt.id}>
+                                {lead && (i === 0 || i === lead.count) ? <Caption tone="muted" style={styles.lead}>{i ? lead.rest : lead.label}</Caption> : null}
                                 <SpecPillButton
-                                    key={opt.id}
                                     name={opt.name}
                                     iconKey={opt.icon_key}
                                     iconUrl={opt.icon_url}
@@ -252,6 +251,7 @@ export function SpecPickerSheet({
                                         if (!selectedIds) onClose();
                                     }}
                                 />
+                                </React.Fragment>
                             ))}
                             {onAdd && !adding && (
                                 <Button
@@ -320,10 +320,8 @@ export function SpecPickerSheet({
 }
 
 const styles = StyleSheet.create({
-    contentWrap: {
-        position: "relative",
-        minHeight: 120,
-    },
+    contentWrap: { position: "relative", minHeight: 120 },
+    lead: { width: "100%" },
     scanOverlay: {
         ...StyleSheet.absoluteFill,
         backgroundColor: "rgba(0,0,0,0.72)",

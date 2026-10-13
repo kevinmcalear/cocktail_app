@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { RowDivider, SectionHeading } from '@/components/screens/settings/SettingsParts';
-import { Body, Button, Caption, Field, PressableScale, Surface, Tag, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, Field, PressableScale, Segmented, Surface, Tag, useDs } from '@/components/ds';
 import { MakerCreditRequests } from '@/components/maker/MakerCreditRequests';
 import { JobRequests } from '@/components/screens/profile/JobRequests';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -16,7 +16,8 @@ import { useRoleMatrix, useSetMemberRoleChoice, type MemberRoleChoice } from '@/
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
 import { roleLabel } from '@/lib/roles';
-import { agoLabel, canManageTeam, joinedLabel, memberRoleName, personName, roster, TEAM_MANAGE } from '@/lib/team';
+import { agoLabel, canManageTeam, joinedLabel, memberRoleName, personName, rosterGroups, TEAM_MANAGE, TEAM_SORTS } from '@/lib/team';
+import { useTeamSort } from '@/store/useTeamSort';
 
 import { InviteSheet, type InviteNote } from './InviteSheet';
 import { MemberSheet } from './MemberSheet';
@@ -61,6 +62,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
   const cancel = useRemoveInvite(barId);
   const send = useSendInviteEmail(barId);
   const [query, setQuery] = useState('');
+  const { sort, setSort } = useTeamSort();
   // For "Invited 2 days ago": read once, so a render never sees the clock move.
   const [now] = useState(Date.now);
   const [note, setNote] = useState<InviteNote | null>(null);
@@ -71,7 +73,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
   if (members.error) return <Body tone="muted">Couldn’t load the team. Check your connection and try again.</Body>;
 
   const all = members.data ?? [];
-  const people = roster(all, manage ? query : '');
+  const groups = rosterGroups(all, manage ? query : '', sort);
   const open = all.find((m) => m.user_id === openId) ?? null;
 
   const emailInvite = (to: string) => {
@@ -114,7 +116,10 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
         {manage ? (
           <Field label="Search the team" hideLabel value={query} onChangeText={setQuery} placeholder="Search by name or email" autoCapitalize="none" autoCorrect={false} />
         ) : null}
-        <SectionHeading>{`Team · ${all.length}`}</SectionHeading>
+        <View style={styles.head}>
+          <SectionHeading>{`Team · ${all.length}`}</SectionHeading>
+          {all.length > 1 ? <Segmented variant="pill" choice accessibilityLabel="Sort the team" options={TEAM_SORTS} value={sort} onChange={setSort} /> : null}
+        </View>
         {note ? (
           <Caption tone={note.failed ? 'accent' : 'muted'} role={note.failed ? 'alert' : 'status'}>
             {note.text}
@@ -122,23 +127,31 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
         ) : null}
         {error && !open ? <ErrorText>{error}</ErrorText> : null}
 
-        <Surface style={styles.card}>
-          {people.length === 0 ? (
+        {groups.length === 0 ? (
+          <Surface style={styles.card}>
             <Body tone="muted" style={styles.empty}>{query.trim() ? 'No one matches that.' : 'No one is on this team yet.'}</Body>
-          ) : null}
-          {people.map((m, i) => (
-            <View key={m.user_id}>
-              {i > 0 ? <RowDivider /> : null}
-              <MemberRow
-                member={m}
-                me={m.user_id === myId}
-                showEmail={manage}
-                lineUp={manage}
-                onPress={manage && m.user_id !== myId ? () => setOpenId(m.user_id) : undefined}
-              />
-            </View>
-          ))}
-        </Surface>
+          </Surface>
+        ) : null}
+        {groups.map((g) => (
+          <View key={g.title ?? 'everyone'} style={styles.group}>
+            {g.title ? <DsText variant="label" tone="muted" role="heading" style={styles.groupTitle}>{`${g.title} · ${g.people.length}`}</DsText> : null}
+            <Surface style={styles.card}>
+              {g.people.map((m, i) => (
+                <View key={m.user_id}>
+                  {i > 0 ? <RowDivider /> : null}
+                  <MemberRow
+                    member={m}
+                    me={m.user_id === myId}
+                    showEmail={manage}
+                    showRole={!g.title}
+                    lineUp={manage}
+                    onPress={manage && m.user_id !== myId ? () => setOpenId(m.user_id) : undefined}
+                  />
+                </View>
+              ))}
+            </Surface>
+          </View>
+        ))}
         {manage ? null : <Caption tone="muted">Only Admins can invite people or change roles.</Caption>}
       </View>
 
@@ -179,10 +192,12 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
 }
 
 /** A teammate: photo, name, a line about them, and their role. Opens their sheet when an Admin can manage them. */
-function MemberRow({ member, me, showEmail, lineUp, onPress }: {
+function MemberRow({ member, me, showEmail, showRole, lineUp, onPress }: {
   member: BarMember;
   me: boolean;
   showEmail: boolean;
+  /** Off under a role heading, which already names it. */
+  showRole: boolean;
   /** Keeps role tags in a column when other rows have a chevron. */
   lineUp: boolean;
   onPress?: () => void;
@@ -202,7 +217,7 @@ function MemberRow({ member, me, showEmail, lineUp, onPress }: {
         </Body>
         {line ? <Caption tone="muted" numberOfLines={1}>{line}</Caption> : null}
       </View>
-      <Tag label={memberRoleName(member)} tone={member.role_level >= TEAM_MANAGE ? 'accent' : 'default'} style={styles.tag} />
+      {showRole ? <Tag label={memberRoleName(member)} tone={member.role_level >= TEAM_MANAGE ? 'accent' : 'default'} style={styles.tag} /> : null}
       {onPress ? <IconSymbol name="chevron.right" size={CHEVRON} color={ds.c.muted} /> : lineUp ? <View style={styles.chevronSpace} /> : null}
     </>
   );
@@ -246,6 +261,9 @@ function InviteRow({ name, email, roleLevel, ago, busy, onResend, onCancel }: {
 const styles = StyleSheet.create({
   roster: { gap: space.xl },
   section: { gap: space.md },
+  head: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  group: { gap: space.sm },
+  groupTitle: { paddingHorizontal: space.lg },
   card: { paddingVertical: space.xs, gap: 0 },
   empty: { paddingVertical: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },

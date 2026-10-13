@@ -28,3 +28,5 @@ export { sheetFrame, sheetIsDialog } from './sheetFrame';
 export { Sheet, useSheetClose, type SheetProps } from './Sheet';
 export { MatchText, RowScore, scoreWords, type MatchTextProps, type RowScoreProps } from './RowScore';
 export { SheetScrollView } from './SheetScrollView';
+export { dragDismissesKeyboard } from './keyboardDrag';
+export { HidingHeadScroll } from './HidingHeadScroll';
