@@ -8,7 +8,7 @@ import {
 } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import type { PrepDraft } from '@/lib/prepKinds';
-import { capitalize } from '@/lib/stringUtils';
+import { capitalizeFirst } from '@/lib/stringUtils';
 
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
@@ -104,7 +104,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
         makeFirst
         onPick={add}
         onTyping={setTyping}
-        onMake={(name) => setMaking({ name: capitalize(name) })}
+        onMake={(name) => setMaking({ name: capitalizeFirst(name) })}
       />
       <PrepBuilder
         name={makingName}

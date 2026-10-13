@@ -546,14 +546,15 @@ export function usePantryItems() {
         .select('id, name')
         .eq('item_type', 'ingredient')
         .is('bar_id', null)
-        .in('name', names)
+        // Any letter case: catalog names went sentence case in 20261016600000.
+        .or(names.map((n) => `name.ilike."${likeExactly(n).replace(/"/g, '\\"')}"`).join(','))
         .order('id');
       if (error) throw error;
       // One row per name (the shared list has one of each since 20261008100200).
       const byName = new Map<string, string>();
-      for (const r of (data ?? []) as { id: string; name: string }[]) if (!byName.has(r.name)) byName.set(r.name, r.id);
+      for (const r of (data ?? []) as { id: string; name: string }[]) if (!byName.has(r.name.toLowerCase())) byName.set(r.name.toLowerCase(), r.id);
       return names.flatMap((name) => {
-        const id = byName.get(name);
+        const id = byName.get(name.toLowerCase());
         return id ? [{ name, id }] : [];
       });
     },

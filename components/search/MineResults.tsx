@@ -86,7 +86,7 @@ export function MineResults({ query, mine, onEverywhere }: MineResultsProps) {
           return (
             <DrinkRow
               key={i.id}
-              name={capitalize(i.name)}
+              name={i.name}
               itemId={i.id}
               imageUrl={i.image?.uri ?? heroPicture(i.item_images)?.url ?? null}
               glass={fallbackGlass(i.category as ItemCategory)}
@@ -94,7 +94,7 @@ export function MineResults({ query, mine, onEverywhere }: MineResultsProps) {
               tag={why.tag}
               query={q}
               trailing={<RowScore score={score} />}
-              label={said ? [capitalize(i.name), why.caption, why.tag, said].filter(Boolean).join('. ') : undefined}
+              label={said ? [i.name, why.caption, why.tag, said].filter(Boolean).join('. ') : undefined}
               onPress={() => open(i)}
             />
           );
@@ -103,7 +103,7 @@ export function MineResults({ query, mine, onEverywhere }: MineResultsProps) {
       <ResultGroup
         label="Ingredients"
         items={groups.ingredients}
-        render={(i) => <ResultRow key={i.id} title={capitalize(i.name)} caption={i.isDraft ? 'Draft' : ingredientFacts(i.id, facts)} ingredient={{ id: i.isDraft ? null : i.id }} query={q} onPress={() => open(i)} />}
+        render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : ingredientFacts(i.id, facts)} ingredient={{ id: i.isDraft ? null : i.id }} query={q} onPress={() => open(i)} />}
       />
       <ResultGroup
         label="Menus"

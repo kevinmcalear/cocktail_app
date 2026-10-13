@@ -45,7 +45,7 @@ describe('FinishStep', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Coconut Fat-Washed Daiquiri' }));
 
     const [line] = finish(set);
-    expect(line).toMatchObject({ id: null, name: 'Mint Oil', unit: 'drop', amount: '3', technique: 'infused-oil' });
+    expect(line).toMatchObject({ id: null, name: 'Mint oil', unit: 'drop', amount: '3', technique: 'infused-oil' });
     expect(line.prep.technique).toBe('infused-oil');
     expect(line.prep.keepsHours).toBe(96);
   });

@@ -154,7 +154,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
         return (
           <DrinkRow
             key={i.id}
-            name={capitalize(i.name)}
+            name={i.name}
             itemId={i.id}
             imageUrl={i.image?.uri ?? heroPicture(i.item_images)?.url ?? null}
             glass={fallbackGlass(i.category as ItemCategory)}
