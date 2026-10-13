@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { AccessibilityInfo, Modal, Platform, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs } from '@/components/ds';
@@ -11,6 +11,7 @@ import { GestureRoot } from '@/components/ds/GestureRoot';
 import { space, springs } from '@/constants/tokens';
 import { useEightBallPool } from '@/hooks/useEightBall';
 import { FORTUNES, makeA, pickDrink, RECENT, type Candidate } from '@/lib/eightBall';
+import { randomPose, SQUARE } from '@/lib/eightBallFace';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { BallArt } from './BallArt';
@@ -57,6 +58,8 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const insets = useSafeAreaInsets();
   const { pool, isLoading } = useEightBallPool();
   const [answer, setAnswer] = useState<Answer>(() => ({ state: 'thinking', fortune: randomFortune() }));
+  // How the die lands against the window, new each time it floats up. Square on with Reduce Motion.
+  const [pose, setPose] = useState(SQUARE);
   const latest = useRef({ pool, isLoading });
   const recent = useRef<string[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,6 +72,15 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   useEffect(() => {
     latest.current = { pool, isLoading };
   });
+
+  // A new landing for the die once the old face has sunk out of sight (bringUp's first 90 ms).
+  const turnDie = () => {
+    if (!reduceMotion) setTimeout(() => setPose(randomPose()), 90);
+  };
+
+  // The die sinks fast, then floats up slowly through the liquid, as the real one does.
+  const floatUp = () =>
+    rise.set(reduceMotion ? withTiming(1, { duration: 200 }) : withSequence(withTiming(0, { duration: 90 }), withTiming(1, { duration: 1000, easing: Easing.out(Easing.cubic) })));
 
   const bringUp = (value: SharedValue<number>) =>
     value.set(reduceMotion ? withTiming(1, { duration: 200 }) : withSequence(withTiming(0, { duration: 90 }), withSpring(1, springs.pour)));
@@ -85,7 +97,8 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     // Open recipe is a ds Button (no press-in): load the page as the answer shows.
     if (drink) prefetch(drink.id, { name: drink.name, imageUrl: drink.imageUrl });
     setAnswer({ state: 'shown', drink });
-    bringUp(rise);
+    turnDie();
+    floatUp();
     bringUp(card);
     if (native) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     // Android and web read the live region; iOS needs telling.
@@ -95,7 +108,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   function think() {
     if (timer.current) clearTimeout(timer.current);
     card.set(withTiming(0, { duration: 150 }));
-    bringUp(rise);
+    floatUp();
     // A jolt, then the pour spring rings it out like a ball settling in the hand.
     if (!reduceMotion) wobble.set(withSequence(withTiming(1, { duration: 70 }), withSpring(0, springs.pour)));
     rolling.kick();
@@ -105,6 +118,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
 
   function roll() {
     setAnswer({ state: 'thinking', fortune: randomFortune() });
+    turnDie();
     think();
   }
 
@@ -151,6 +165,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
             <Animated.View style={rolling.style}>
               <BallArt
                 text={answer.state === 'thinking' ? answer.fortune : (drink?.name ?? 'Ask again later')}
+                pose={pose}
                 wobble={wobble}
                 rise={rise}
                 roll={rolling.roll}

@@ -192,16 +192,32 @@ export const layout = {
 } as const;
 
 /**
- * The magic eight ball (components/screens/eightball). A black ball with an
- * ink-blue window in both themes, like the toy; its ring and triangle edge
- * take the venue accent.
+ * The magic eight ball (components/screens/eightball), in both themes and
+ * every venue, like the toy: a black ball, a black window, and a glowing
+ * electric-blue die face with small white capitals. No venue accent: the
+ * real one has none.
  */
 export const eightBall = {
   shine: '#3A352F',
   body: '#141210',
   edge: '#0A0908',
-  window: '#0F131C',
-  triangle: '#1F2E4A',
+  window: '#040507',
+  /** The face: bright in the middle, darker at its edges, a soft glow around it. */
+  faceCore: '#4A72FF',
+  face: '#2747E6',
+  faceEdge: '#1A2FAE',
+  glow: '#2D50FF',
+  /** The faces next to it, tipping away into the dark. */
+  neighbour: '#0C1856',
+  text: '#E4ECFF',
+  /** The window's clear rim and the shine on it. */
+  rim: 'rgba(255,255,255,0.10)',
+  glass: '#FFFFFF',
+  /** The answer's size on the face: capitals, the first letter of each word a little bigger, as printed on the toy. */
+  type: {
+    normal: { lead: 12, rest: 9, lineHeight: 11, letterSpacing: 0.5 },
+    small: { lead: 9.5, rest: 7.5, lineHeight: 9, letterSpacing: 0.3 },
+  },
 } as const;
 
 /** Reanimated withSpring configs. Use these three and nothing else. */
