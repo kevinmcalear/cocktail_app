@@ -546,7 +546,7 @@ export function usePantryItems() {
         .select('id, name')
         .eq('item_type', 'ingredient')
         .is('bar_id', null)
-        // Any letter case: catalog names went sentence case in 20261016600000.
+        // Any letter case: catalog names went sentence case in 20261016750000.
         .or(names.map((n) => `name.ilike."${likeExactly(n).replace(/"/g, '\\"')}"`).join(','))
         .order('id');
       if (error) throw error;

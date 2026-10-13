@@ -22,7 +22,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-export const OUT = 'supabase/migrations/20261016600000_catalog_sentence_case.sql';
+export const OUT = 'supabase/migrations/20261016750000_catalog_sentence_case.sql';
 const WORDS = 'scripts/data/catalog-case-words.json';
 
 export function loadWords(path = WORDS) {
