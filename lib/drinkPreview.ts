@@ -79,8 +79,8 @@ export function createdBy(d: Pick<PreviewDrinkCard, 'creator' | 'bar'>): string 
 export const drinkKickerFor = (d: PreviewDrinkCard) => drinkKicker({ origin: d.origin, originYear: d.origin_year, riffOfId: d.riff_of_id }, d.bar_id ? d.bar : null);
 
 /** Changes whenever what the image shows changes. */
-export function drinkVersion(d: PreviewDrinkCard): string {
-  const text = [d.name, d.origin, d.origin_year, d.image_url, d.creator, d.bar, drinkLine(d)].join('|');
+export function drinkVersion(d: PreviewDrinkCard, drawn = ''): string {
+  const text = [d.name, d.origin, d.origin_year, d.image_url, d.creator, d.bar, drinkLine(d), drawn].join('|');
   let h = 5381;
   for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
   return h.toString(36);
@@ -88,15 +88,15 @@ export function drinkVersion(d: PreviewDrinkCard): string {
 
 /**
  * Title "Penicillin"; description "Scotch, lemon, honey-ginger, an Islay float. Sam Ross, 2005. On Cocktail."
- * `link` is what the shared link named the drink by: its slug, or its id.
+ * `link` is what the shared link named the drink by: its slug, or its id. `drawn` is drawingsKey's.
  */
-export function drinkPreviewMeta(d: PreviewDrinkCard, origin: string, link: string = d.id): PreviewMeta {
+export function drinkPreviewMeta(d: PreviewDrinkCard, origin: string, link: string = d.id, drawn = ''): PreviewMeta {
   const line = drinkLine(d);
   const by = madeBy(d);
   return {
     title: d.name,
     description: [line ? `${line}.` : null, by ? `${by}.` : null, 'On Cocktail.'].filter(Boolean).join(' '),
-    image: `${origin}/api/drink-og?id=${d.id}&v=${drinkVersion(d)}`,
+    image: `${origin}/api/drink-og?id=${d.id}&v=${drinkVersion(d, drawn)}`,
     url: `${origin}/d/${link}`,
   };
 }

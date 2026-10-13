@@ -116,5 +116,8 @@ assert.equal(drinkLine(shared), 'Scotch, lemon, honey syrup');
 assert.equal(madeBy(shared), 'Little Rye');
 assert.equal(drinkKickerFor(shared), 'Little Rye original');
 assert.notEqual(drinkVersion(penicillin), drinkVersion(shared));
+// A new sketch colour or glass drawing is a new image (middleware.ts passes drawingsKey's key).
+assert.notEqual(drinkVersion(penicillin, 'x:martini_pony:'), drinkVersion(penicillin, 'x:martini_pony:#6f1426'));
+assert.notEqual(menuVersion(menu, 'a::'), menuVersion(menu, 'a::#6f1426'));
 
 console.log('menuPreview: ok');
