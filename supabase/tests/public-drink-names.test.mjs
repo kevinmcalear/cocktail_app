@@ -71,7 +71,8 @@ test('signed out, a description-only drink names its shared ingredients, with no
     [`Gin ${run}`, `Vermouth ${run}`],
     "a bar's bottle is named by its generic, so the brand stays with the bar"
   );
-  assert.deepEqual(Object.keys(rows[0]).sort(), ['item_id', 'name', 'sort_order']);
+  assert.deepEqual(Object.keys(rows[0]).sort(), ['brand', 'item_id', 'name', 'sort_order']);
+  assert.deepEqual(rows.map((r) => r.brand), [false, false], 'neither is a product');
 });
 
 test("a bar's house prep stays unnamed", async () => {

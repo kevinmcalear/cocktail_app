@@ -36,7 +36,7 @@ export function PublicSpec({
   const who = bar?.name ?? 'The bar';
 
   if (!shared && classic) {
-    if (!signedIn) return <Teaser names={[...new Set(page.names)]} />;
+    if (!signedIn) return <Teaser names={[...new Set(page.names.map((n) => n.name))]} />;
     return (
       <View style={styles.section}>
         <Kicker>The spec</Kicker>

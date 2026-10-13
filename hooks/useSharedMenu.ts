@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
 import { isUuid } from '@/lib/menuPreview';
+import type { IngredientName } from '@/lib/publicDrink';
 import { supabase } from '@/lib/supabase';
 
 /** A home menu someone shared, as anyone reads it: /m/<id>. */
@@ -14,7 +15,7 @@ export interface SharedMenuPage {
   /** Each entry is a public drink, or null for one that isn't public (its name stays private). */
   sections: { id: string; name: string; drinks: (PublishedDrink | null)[] }[];
   /** Each public drink's ingredient names, never amounts, by drink id. */
-  ingredients: Record<string, string[]>;
+  ingredients: Record<string, IngredientName[]>;
 }
 
 interface SharedMenuRow {
@@ -47,8 +48,8 @@ export function useSharedMenu(id: string | null | undefined) {
       const ids = row.sections.flatMap((s) => s.item_ids).filter((x): x is string => !!x);
       const [drinks, names] = await Promise.all([fetchPublished(ids), ids.length ? supabase.rpc('public_drink_ingredients', { p_item_ids: ids }) : Promise.resolve({ data: [], error: null })]);
       if (names.error) throw names.error;
-      const ingredients: Record<string, string[]> = {};
-      for (const n of (names.data ?? []) as { item_id: string; name: string }[]) (ingredients[n.item_id] ??= []).push(n.name);
+      const ingredients: Record<string, IngredientName[]> = {};
+      for (const n of (names.data ?? []) as (IngredientName & { item_id: string })[]) (ingredients[n.item_id] ??= []).push({ name: n.name, brand: n.brand });
       return {
         id: row.id,
         name: row.name,

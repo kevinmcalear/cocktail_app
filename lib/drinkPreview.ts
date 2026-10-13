@@ -5,7 +5,7 @@
 // these run on Vercel, outside the app's bundle.
 
 import type { PreviewMeta } from './menuPreview';
-import { drinkKicker, ingredientsLine } from './publicDrink';
+import { drinkKicker, ingredientsLine, type IngredientName } from './publicDrink';
 
 interface Supabase {
   url: string;
@@ -28,7 +28,7 @@ export interface PreviewDrinkCard {
   creator: string | null;
   bar: string | null;
   /** Its ingredient names, never amounts (public_drink_ingredients); empty on a locked bar page. */
-  ingredients: string[];
+  ingredients: IngredientName[];
 }
 
 async function get<T>(db: Supabase, path: string): Promise<T[]> {
@@ -50,10 +50,10 @@ export async function fetchPreviewDrinkCard(db: Supabase, id: string): Promise<P
   const [people, venue, lines] = await Promise.all([
     ids.length ? get<{ id: string; display_name: string }>(db, `profiles?select=id,display_name&is_public=eq.true&id=in.(${ids.join(',')})`) : Promise.resolve([]),
     d.bar_id ? get<{ display_name: string }>(db, `profiles?select=display_name&kind=eq.bar&is_public=eq.true&bar_id=eq.${d.bar_id}`) : Promise.resolve([]),
-    get<{ name: string }>(db, `rpc/public_drink_ingredients?p_item_ids=%7B${id}%7D`),
+    get<IngredientName>(db, `rpc/public_drink_ingredients?p_item_ids=%7B${id}%7D`),
   ]);
   const name = (pid: string | null) => people.find((p) => p.id === pid)?.display_name ?? null;
-  const ingredients = lines.map((l) => l.name).filter((n, i, all) => n && all.indexOf(n) === i);
+  const ingredients = lines.map(({ name, brand }) => ({ name, brand }));
   const { creator_profile_id, origin_bar_profile_id, ...rest } = d;
   return { ...rest, creator: name(creator_profile_id), bar: venue[0]?.display_name ?? name(origin_bar_profile_id), ingredients };
 }

@@ -75,9 +75,10 @@ describe('SharedMenuScreen', () => {
   });
 
   test("a drink's line is its ingredients when there are names, else its description", async () => {
-    mockMenu = { ...mockMenu!, ingredients: { d1: ['Rye', 'Lemon', 'Rye'] } };
+    const g = (name: string, brand = false) => ({ name, brand });
+    mockMenu = { ...mockMenu!, ingredients: { d1: [g('Rye'), g('Lemon Juice'), g('Rye'), g('Green Chartreuse', true)] } };
     await renderWithTamagui(<SharedMenuScreen id="m1" />);
-    expect(screen.getByText('Rye, lemon')).toBeTruthy();
+    expect(screen.getByText('Rye, lemon juice, Green Chartreuse')).toBeTruthy();
     expect(screen.queryByText('Porch Sour notes')).toBeNull();
   });
 

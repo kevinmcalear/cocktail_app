@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { CreditStatus } from '@/lib/lineage';
 import { isUuid } from '@/lib/menuPreview';
+import type { IngredientName } from '@/lib/publicDrink';
 import type { PresentationRecipe } from '@/lib/spec';
 import { supabase } from '@/lib/supabase';
 
@@ -212,7 +213,7 @@ export interface PublishedDrinkPage {
   /** Only for a drink published with its spec: generic ingredients, amounts, units. */
   recipes: PresentationRecipe[];
   /** Its ingredient names, never amounts: what a drink without a shared spec shows signed out. */
-  names: string[];
+  names: IngredientName[];
 }
 
 /** One published drink's public page, or null when it isn't (or is no longer) published. */
@@ -250,7 +251,7 @@ export function usePublishedDrink(id: string | null | undefined) {
         ice: ref(drink.iceId)?.name ?? null,
         family: ref(drink.familyId)?.name ?? null,
         // published_ingredient returns a set, so PostgREST embeds an array.
-        names: ((names.data ?? []) as { name: string }[]).map((n) => n.name),
+        names: ((names.data ?? []) as IngredientName[]).map(({ name, brand }) => ({ name, brand })),
         recipes: (recipes.data ?? []).map((r) => {
           type Ing = { id: string; name: string; abv: number | null; image_url: string | null };
           const ing = r.display_ingredient as Ing[] | Ing | null;

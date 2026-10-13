@@ -16,15 +16,17 @@
 -- parent, else the bottle's generic, so its brands stay with the bar. Only a
 -- shared catalog ingredient (no bar, no creator) is named, as published_items'
 -- reference rows do (#502); a bar's house prep stays unnamed. A locked bar
--- page shows none.
-create or replace function public.public_drink_ingredients(p_item_ids uuid[])
-returns table (item_id uuid, sort_order integer, name text)
+-- page shows none. brand says the name is a product's (Green Chartreuse), so a
+-- line keeps its capitals where a generic reads in lower case ("sweet vermouth").
+drop function if exists public.public_drink_ingredients(uuid[]);
+create function public.public_drink_ingredients(p_item_ids uuid[])
+returns table (item_id uuid, sort_order integer, name text, brand boolean)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select r.recipe_item_id, r.sort_order, pi.name
+  select r.recipe_item_id, r.sort_order, pi.name, pi.ingredient_role is not distinct from 'product'
   from private.published_listing l
   join public.recipes r on r.recipe_item_id operator(pg_catalog.=) l.id
   left join public.items s on s.id operator(pg_catalog.=) r.ingredient_item_id

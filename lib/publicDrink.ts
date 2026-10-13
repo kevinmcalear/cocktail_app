@@ -53,13 +53,31 @@ export function makerLabel(p: Pick<PublicProfile, 'kind' | 'handle' | 'display_n
   return p.kind === 'person' ? `@${p.handle}` : p.display_name;
 }
 
+/** One ingredient's name on a public page, and whether it's a product's (public_drink_ingredients). */
+export interface IngredientName {
+  name: string;
+  brand: boolean;
+}
+
+// ponytail: the place and proper words a generic's name keeps capitalised ("Islay Scotch"); grow it as names need, or store a reading name per ingredient.
+const PROPER = new Set(['scotch', 'islay', 'irish', 'japanese', 'jamaican', 'mexican', 'french', 'italian', 'thai', 'london', 'earl', 'grey', 'campari', 'chartreuse']);
+
+/** A generic's name as it reads mid-sentence: "Sweet Vermouth" is "sweet vermouth", "Islay Scotch" stays. */
+function midSentence(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => (PROPER.has(w.toLowerCase()) ? w : w.toLowerCase()))
+    .join(' ');
+}
+
 /**
- * "Scotch, lemon, honey syrup, ginger": a drink's ingredient names as one
- * line, each once, in spec order (public_drink_ingredients). Null with none.
+ * "Gin, Green Chartreuse, maraschino, lime": a drink's ingredient names as one
+ * line, each once, in spec order. A product keeps its capitals, a generic
+ * reads in lower case (ppl-pub-menu-phone). Null with none.
  */
-export function ingredientsLine(names: readonly string[]): string | null {
-  const once = names.filter((n, i) => n && names.indexOf(n) === i);
-  return once.length ? once.map((n, i) => (i ? n.toLowerCase() : n)).join(', ') : null;
+export function ingredientsLine(names: readonly IngredientName[]): string | null {
+  const once = names.filter((n, i) => n.name && names.findIndex((o) => o.name === n.name) === i);
+  return once.length ? once.map((n, i) => (i && !n.brand ? midSentence(n.name) : n.name)).join(', ') : null;
 }
 
 /** An ancestor's line under its name in the tree: "Classic", or "Milk & Honey, 2000s"-style maker and year. */
