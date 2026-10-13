@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DrinkImage, Headline, MatchText, RowScore, Surface } from '@/components/ds';
+import { Button, Caption, DrinkImage, Headline, MatchText, RowScore, Surface, useDs } from '@/components/ds';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
-import { radius, space } from '@/constants/tokens';
+import { displayFaces, radius, space } from '@/constants/tokens';
 import { useBestDrink, useDrinkRank, useRowScores } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
 import { byScore, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
@@ -40,18 +40,22 @@ interface DeskSearchResultsProps {
 export function DeskSearchResults({ filter, drink, results, layer, onLayer, from, picked }: DeskSearchResultsProps) {
   const nearest = layer === 'nearest' && !!from;
   const best = layer === 'best' && !!drink;
-  const top = useBestDrink(drink, filter, { load: best, active: best });
+  const ranked = useBestDrink(drink, filter, { load: best, active: best });
   const near = useDiscoverList(filter, { from, enabled: nearest });
-  const drinks = top.scores ? byScore(top.picked, top.scores.drinks) : nearest ? near.drinks : results.drinks;
-  const browse = useRowScores(drinks, filter.area, !top.scores);
-  const scores = top.scores ?? browse;
+  const drinks = ranked.scores ? byScore(ranked.picked, ranked.scores.drinks) : nearest ? near.drinks : results.drinks;
+  const browse = useRowScores(drinks, filter.area, !ranked.scores);
+  const scores = ranked.scores ?? browse;
   const more = best ? undefined : nearest ? { total: near.totals?.drinks ?? null, hasMore: near.hasMore, loadMore: near.loadMore, loading: near.isLoadingMore } : results.more;
-  const loading = best ? top.isLoading : nearest ? near.isLoading : results.isLoading;
+  const loading = best ? ranked.isLoading : nearest ? near.isLoading : results.isLoading;
   const where = areaLabel(filter.area);
   // The picked bar's own matches, from the server: its pin may be past the loaded page.
   const atBar = useDiscoverList(filter, { barId: picked?.id ?? null, enabled: !!picked && !picked.closed, pageSize: 100 });
   const atPicked = picked ? (best || nearest ? drinks.filter((d) => d.barId === picked.id) : atBar.drinks) : [];
-  const rest = atPicked.length ? drinks.filter((d) => d.id !== atPicked[0].id) : drinks;
+  // A clicked row opens in place at the top, the map keeping its pins (disc-desk-search). A new pin replaces it.
+  const [opened, setOpened] = useState<{ drink: DiscoverDrink; pin: string | null } | null>(null);
+  const open = opened && opened.pin === (picked?.id ?? null) ? opened.drink : null;
+  const top = open ? { drink: open, also: [] as DiscoverDrink[], bar: barOf(open) } : picked && atPicked[0] ? { drink: atPicked[0], also: atPicked.slice(1), bar: picked } : null;
+  const rest = top ? drinks.filter((d) => d.id !== top.drink.id) : drinks;
   return (
     <View style={styles.pane}>
       <ResultsHead
@@ -60,8 +64,14 @@ export function DeskSearchResults({ filter, drink, results, layer, onLayer, from
         chips={<MapLayers layer={nearest ? 'nearest' : best ? 'best' : 'drinks'} onLayer={onLayer} drinkName={drink?.name ?? null} searching nearest={!!from} />}
         below={<ClassicLine drinks={results.drinks} search={filter.search} where={where} />}
       />
-      {picked && atPicked[0] ? <PickedRow drink={atPicked[0]} also={atPicked.slice(1)} pin={picked} filter={filter} score={scores.drinks[atPicked[0].id]} /> : null}
-      {loading ? <ListNote>Loading…</ListNote> : rest.length ? <DrinkAtBarList key={layer} drinks={rest} limit={20} scores={scores} more={more} /> : <ListNote>{`Nothing ${where} matches. Try Everywhere.`}</ListNote>}
+      {top ? <PickedRow key={top.drink.id} drink={top.drink} also={top.also} pin={top.bar} filter={filter} score={scores.drinks[top.drink.id]} /> : null}
+      {loading ? (
+        <ListNote>Loading…</ListNote>
+      ) : rest.length ? (
+        <DrinkAtBarList key={layer} drinks={rest} limit={20} scores={scores} more={more} query={filter.search} onOpen={(d) => setOpened({ drink: d, pin: picked?.id ?? null })} />
+      ) : (
+        <ListNote>{`Nothing ${where} matches. Try Everywhere.`}</ListNote>
+      )}
     </View>
   );
 }
@@ -71,7 +81,15 @@ export function DeskSearchResults({ filter, drink, results, layer, onLayer, from
  * picture, name and score, where it ranks, the menu and description, the
  * bar and its other matches, then Open drink and the bar.
  */
-function PickedRow({ drink, also, pin, filter, score }: { drink: DiscoverDrink; also: DiscoverDrink[]; pin: MapPin; filter: DrinkFilter; score?: number }) {
+type PickedBar = Pick<MapPin, 'id' | 'name' | 'handle' | 'place'>;
+
+/** The bar a result row names, for its card. */
+function barOf(d: DiscoverDrink): PickedBar {
+  return { id: d.barId, name: d.bar.name, handle: d.bar.handle, place: [d.bar.locality, d.bar.city].filter(Boolean).join(', ') };
+}
+
+function PickedRow({ drink, also, pin, filter, score }: { drink: DiscoverDrink; also: DiscoverDrink[]; pin: PickedBar; filter: DrinkFilter; score?: number }) {
+  const ds = useDs();
   const router = useRouter();
   const rank = useDrinkRank(drink, filter.search, filter.area);
   const away = useContext(BarAway)(pin.id);
@@ -83,7 +101,7 @@ function PickedRow({ drink, also, pin, filter, score }: { drink: DiscoverDrink; 
         <DrinkImage source={drink.imageUrl} itemId={drink.id} glass={null} accessibilityLabel={drink.name} radius="control" style={styles.thumb} thumb />
         <View style={styles.flex}>
           <View style={styles.titleRow}>
-            <Headline numberOfLines={1} style={styles.flex}>
+            <Headline numberOfLines={2} style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
               <MatchText text={drink.name} query={filter.search} look="tint" />
             </Headline>
             <RowScore score={rank.score ?? score} />
@@ -109,7 +127,7 @@ const styles = StyleSheet.create({
   pane: { gap: space.lg },
   picked: { gap: space.md, padding: space.lg, borderRadius: radius.card },
   row: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
-  thumb: { width: 72, height: 72 },
+  thumb: { width: 92, height: 92 },
   flex: { flex: 1, minWidth: 0 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

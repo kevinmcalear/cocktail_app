@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Caption, GlassButton, Headline, Segmented, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Caption, GlassButton, Headline, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { ScopeSwitch } from '@/components/search/ScopeSwitch';
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { areaFor, useDrinkRankings, useMyRankList, type RankScope, type RankVenue } from '@/hooks/useRankings';
@@ -73,12 +74,7 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
   const bestSection = (
     <View style={styles.section}>
       {scopes.length > 1 ? (
-        <Segmented
-          accessibilityLabel="Area"
-          options={scopes.map((s) => ({ value: s, label: scopeLabel(place!, s) }))}
-          value={scope!}
-          onChange={setPicked}
-        />
+        <ScopeSwitch accessibilityLabel="Area" options={scopes.map((s) => ({ value: s, label: scopeLabel(place!, s) }))} scope={scope!} onScope={setPicked} />
       ) : null}
       {bestError ? (
         <ListNote>{`Couldn't load the rankings: ${bestError.message}`}</ListNote>
@@ -107,7 +103,7 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={[styles.page, wide && styles.pageWide]}>
-          <Caption tone="muted">Ranked by comparison</Caption>
+          <Caption tone="muted" style={styles.eyebrow}>RANKED BY COMPARISON</Caption>
           <Title>{`Best ${rankedAs.name}`}</Title>
           <View style={[styles.columns, wide && styles.columnsWide]}>
             <View style={wide ? styles.column : undefined}>{bestSection}</View>
@@ -136,4 +132,5 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   back: { position: 'absolute' },
   report: { alignItems: 'flex-start' },
+  eyebrow: { letterSpacing: 1 },
 });

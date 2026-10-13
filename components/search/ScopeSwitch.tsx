@@ -4,17 +4,19 @@ import { DsText, PressableScale, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import type { SearchScope } from '@/lib/searchScope';
 
-interface ScopeSwitchProps {
-  options: readonly { value: SearchScope; label: string }[];
-  scope: SearchScope;
-  onScope: (scope: SearchScope) => void;
+interface ScopeSwitchProps<T extends string> {
+  options: readonly { value: T; label: string }[];
+  scope: T;
+  onScope: (scope: T) => void;
+  /** What the group is called (an area on the rankings page). */
+  accessibilityLabel?: string;
 }
 
-/** Where to search: the venue, this area or everywhere, the picked side filled. */
-export function ScopeSwitch({ options, scope, onScope }: ScopeSwitchProps) {
+/** Where to search: the venue, this area or everywhere, the picked side filled. Also the rankings page's area (disc-rankings). */
+export function ScopeSwitch<T extends string = SearchScope>({ options, scope, onScope, accessibilityLabel = 'Where to search' }: ScopeSwitchProps<T>) {
   const ds = useDs();
   return (
-    <View role="tablist" accessibilityLabel="Where to search" style={[styles.switch, { backgroundColor: ds.c.surface }]}>
+    <View role="tablist" accessibilityLabel={accessibilityLabel} style={[styles.switch, { backgroundColor: ds.c.surface }]}>
       {options.map((o) => {
         const on = scope === o.value;
         return (
