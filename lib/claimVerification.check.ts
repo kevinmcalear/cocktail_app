@@ -48,6 +48,7 @@ assert.equal(claimProblem({ code: 'P0001', message: 'This page has already been 
 assert.equal(claimProblem({ code: '23505', message: 'duplicate key' }), 'You already have a claim waiting on this bar.');
 assert.equal(claimProblem({ code: '23505', message: 'You already have a claim waiting on this maker.' }), 'You already have a claim waiting on this maker.');
 assert.equal(claimPlace('maker'), 'company');
+assert.equal(claimPlace('supplier'), 'company');
 assert.equal(claimPlace('bar'), 'bar');
 assert.match(claimProblem(null), /connection/);
 
