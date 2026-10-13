@@ -4,7 +4,8 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Body, Button, Caption, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useSetServes, type RunSheetData } from '@/hooks/useRunSheet';
-import { clampServes, RUN_SHEET_MAX_SERVES, type RunDrink, type RunParty } from '@/lib/runSheet';
+import { MAX_SERVES } from '@/lib/batch';
+import { clampServes, type RunDrink, type RunParty } from '@/lib/runSheet';
 import { nightLine } from '@/lib/runSheetText';
 
 import { PartySheet } from './PartySheet';
@@ -47,7 +48,7 @@ function Stepper({ drink, onSet }: { drink: RunDrink; onSet: (n: number | null) 
         <DsText variant="headline" tone="muted">−</DsText>
       </PressableScale>
       <ServesInput label={`${drink.name} serves`} value={drink.serves} onCommit={onSet} />
-      <PressableScale accessibilityLabel={`One more ${drink.name}`} role="button" onPress={() => step(1)} disabled={n >= RUN_SHEET_MAX_SERVES} style={styles.stepButton}>
+      <PressableScale accessibilityLabel={`One more ${drink.name}`} role="button" onPress={() => step(1)} disabled={n >= MAX_SERVES} style={styles.stepButton}>
         <DsText variant="headline" tone="muted">+</DsText>
       </PressableScale>
     </View>

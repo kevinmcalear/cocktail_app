@@ -130,7 +130,7 @@ describe('generic ingredients', () => {
     const byName = Object.fromEntries(rows.map((r) => [r.name.startsWith('angostura') ? 'angostura bitters' : r.name, r]));
     assert.equal(byName['sweet vermouth']?.generic, 'Vermouth');
     assert.equal(byName['dry vermouth']?.generic, 'Vermouth');
-    assert.equal(byName['angostura bitters']?.generic, 'Aromatic Bitters');
+    assert.equal(byName['angostura bitters']?.generic, 'Aromatic bitters');
     // Gin is a core ingredient, under the Spirit family since 20261008100100.
     assert.ok([null, 'Spirit'].includes(byName.gin?.generic ?? null), 'a generic sits at the top, or under its family');
     // The spirit categories are production data; the local seed has none.
