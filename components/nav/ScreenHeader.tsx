@@ -24,8 +24,12 @@ import { VenueSwitcher } from './VenueSwitcher';
  * on the page (you live in the sidebar's foot): the title (at display size
  * with `display`) and `actions` share one line, or the row is just the space
  * above the page's own title.
+ *
+ * `center` (phones) fills the middle of the row, between the logo and you,
+ * and the title becomes a heading only screen readers hear (Discover's
+ * search pill). `create={false}` leaves New out of the row.
  */
-export function ScreenHeader({ you = true, title, display, actions }: { you?: boolean; title?: string; display?: boolean; actions?: ReactNode }) {
+export function ScreenHeader({ you = true, title, display, actions, center, create = true }: { you?: boolean; title?: string; display?: boolean; actions?: ReactNode; center?: ReactNode; create?: boolean }) {
   const router = useRouter();
   const home = useMode().mode === 'home';
   const insets = useSafeAreaInsets();
@@ -51,17 +55,27 @@ export function ScreenHeader({ you = true, title, display, actions }: { you?: bo
     <View style={[styles.row, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
       <View style={styles.start}>
         {you ? <VenueSwitcher /> : null}
-        {title ? (
+        {title && !center ? (
           <Title aria-level={1} numberOfLines={1} style={styles.title}>
             {title}
           </Title>
         ) : null}
       </View>
+      {center ? (
+        <View style={styles.center}>
+          {title ? (
+            <Title aria-level={1} numberOfLines={1} style={styles.readerOnly}>
+              {title}
+            </Title>
+          ) : null}
+          {center}
+        </View>
+      ) : null}
       <View style={styles.end}>
         {actions}
         {you ? (
           <>
-            <CreateButton />
+            {create ? <CreateButton /> : null}
             {/* Home mode has You as a tab; venue mode opens it over the tabs. */}
             <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => (home ? router.navigate('/profile') : router.push('/you'))} style={styles.avatar}>
               <CurrentUserAvatar size={32} />
@@ -85,6 +99,9 @@ const styles = StyleSheet.create({
   wideTitled: { minHeight: space.xxl + space.md, paddingTop: space.md },
   start: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1 },
   title: { flexShrink: 1 },
+  center: { flex: 1, minWidth: 0 },
+  // In the reading order, off the screen.
+  readerOnly: { position: 'absolute', left: -10000, width: 1, height: 1, overflow: 'hidden' },
   end: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   avatar: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'flex-end', justifyContent: 'center' },
 });
