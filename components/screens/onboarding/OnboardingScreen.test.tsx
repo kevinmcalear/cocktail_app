@@ -7,7 +7,7 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { OnboardingScreen } from './OnboardingScreen';
 
 const [mockReplace, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockClaim] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
-const [mockSaveMenu, mockSaveDrink, mockAccept, mockDecline, mockUpdatePassword, mockSaveTaste] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
+const [mockSaveMenu, mockSaveDrink, mockAccept, mockDecline, mockSaveTaste] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
 let mockMeta: { onboarded?: boolean } = { onboarded: false };
 let mockInvitedAt: string | undefined;
 type Invite = { id: string; bar_id: string; bar_name: string; bar_slug: string; bar_logo_url: null; bar_color: string | null; bar_display_face: null; bar_ground_tint: null; bar_profile_id: string | null; role_level: number; name: string | null; invited_by_name: string | null };
@@ -18,7 +18,7 @@ let mockBars: { id: string; display_name: string; locality: string | null; postc
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/ctx/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false, updatePassword: mockUpdatePassword }),
+  useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false }),
 }));
 jest.mock('@/hooks/useBarInvites', () => ({
   useMyInvites: () => ({ data: mockInvites, isLoading: false }),
@@ -58,8 +58,7 @@ beforeEach(() => {
   mockMeta = { onboarded: false };
   mockInvitedAt = undefined;
   mockInvites = [];
-  for (const m of [mockAccept, mockDecline, mockUpdatePassword, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockClaim, mockSaveMenu, mockSaveDrink, mockSaveTaste]) m.mockReset();
-  mockUpdatePassword.mockResolvedValue({ error: null });
+  for (const m of [mockAccept, mockDecline, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockClaim, mockSaveMenu, mockSaveDrink, mockSaveTaste]) m.mockReset();
   mockPeople = [];
   mockBars = [attaboy];
   mockReplace.mockClear();
@@ -232,7 +231,7 @@ describe('OnboardingScreen', () => {
     expect(mockCreateBar).toHaveBeenCalledWith('Little Rye', expect.anything());
   });
 
-  test('an invitee accepts, names themselves with a password, picks units, and their job is saved', async () => {
+  test('an invitee accepts, names themselves (no password), picks units, and their job is saved', async () => {
     mockInvitedAt = '2026-10-07T00:00:00Z';
     mockInvites = [caretakers];
     mockAccept.mockImplementation((_v, opts) => opts?.onSuccess?.({ held: false }));
@@ -246,11 +245,10 @@ describe('OnboardingScreen', () => {
 
     expect(screen.getByText('Step 1 of 3')).toBeTruthy();
     expect(screen.getByLabelText('Name').props.value).toBe('Sam Rivera');
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    expect(screen.getByText(/On your other devices, sign in with this email/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Not now' })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    expect(screen.getByText('Use at least 6 characters.')).toBeTruthy();
-    await fireEvent.changeText(screen.getByLabelText('Password'), 'local-pass');
-    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    expect(mockUpdatePassword).toHaveBeenCalledWith('local-pass');
     expect(mockSaveName).toHaveBeenCalledWith({ name: 'Sam Rivera', handle: 'sam.rivera', profileId: null }, expect.anything());
     expect(mockSaveWork).toHaveBeenCalledWith({ personId: 'p1', barId: 'bp', title: 'Bartender' }, expect.anything());
 

@@ -18,7 +18,7 @@ import { useVersionGroups } from './ServedAt';
  * so, so it never reads as the bar's own. Nothing for a riff with its own
  * spec (its family row says so) or before the verdict loads.
  */
-export function VersionBanner({ itemId }: { itemId: string }) {
+export function VersionBanner({ itemId, inline = false, venueName = null }: { itemId: string; inline?: boolean; venueName?: string | null }) {
   const ds = useDs();
   const router = useRouter();
   const { data } = useLineage(itemId);
@@ -33,7 +33,8 @@ export function VersionBanner({ itemId }: { itemId: string }) {
   const filled = source?.spec_source === 'classic';
   if (!drink || !classic?.is_catalog || !match || (match.spec_match === 'riff' && !filled)) return null;
   const bar = drink.origin_bar;
-  const barName = bar?.display_name ?? 'This bar';
+  // A venue's own drink has no origin bar: the venue it belongs to names it, and its tile leads (board drink-phone-venue).
+  const barName = bar?.display_name ?? venueName ?? 'This bar';
   const note = specNoteText(match.notes);
   const others = served.filter((v) => v.id !== itemId && v.origin_bar?.id !== bar?.id).length;
   const text = filled
@@ -46,6 +47,14 @@ export function VersionBanner({ itemId }: { itemId: string }) {
         ? `${barName} pours the classic spec.`
         : `${barName} pours the ${classic.name}. Its own spec isn't listed here.`;
   const link = others ? `See the classic and ${others} other bar${others === 1 ? '' : 's'} ›` : `See the ${classic.name} ›`;
+  // Desktop: one accent line under the score, no card (board drink-desktop).
+  if (inline) {
+    return (
+      <PressableScale role="link" accessibilityLabel={`${text} ${link.replace(' ›', '')}`} onPress={() => router.push(`/cocktail/${classic.id}` as Href)} style={styles.inline}>
+        <DsText variant="body" color={ds.accentText}>{`${text} ${link}`}</DsText>
+      </PressableScale>
+    );
+  }
   return (
     <PressableScale
       role="link"
@@ -53,9 +62,9 @@ export function VersionBanner({ itemId }: { itemId: string }) {
       onPress={() => router.push(`/cocktail/${classic.id}` as Href)}
       style={[styles.banner, { backgroundColor: ds.c.raised }]}
     >
-      {bar ? (
+      {bar || venueName ? (
         <View aria-hidden>
-          <UserAvatar uri={bar.avatar_url} name={bar.display_name} size={32} />
+          <UserAvatar uri={bar?.avatar_url ?? null} name={bar?.display_name ?? venueName ?? ''} size={32} />
         </View>
       ) : null}
       <View style={styles.text}>
@@ -71,4 +80,5 @@ export function VersionBanner({ itemId }: { itemId: string }) {
 const styles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md + 2, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   text: { flex: 1, minWidth: 0, gap: space.xs },
+  inline: { alignSelf: 'flex-start' },
 });

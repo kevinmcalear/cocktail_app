@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, DsText, Field, Headline, PressableScale, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useSaveWorkplace, useCreateOnboardingBar } from '@/hooks/useOnboarding';
 import { useClaimProfile, usePublicPeople, type PublicPerson } from '@/hooks/useProfiles';
@@ -13,6 +12,7 @@ import { barNameError, roleError, venueLabel, type JobMonth } from '@/lib/onboar
 import { CLAIM_PAST_JOBS, PastJobs } from '../profile/PastJobs';
 import { MonthField } from './MonthField';
 import { SetupFooter, SetupPage } from './SetupPage';
+import { Monogram } from './SetupParts';
 
 /** Search for a profile we already have. Claiming it does not make a second one. */
 export function FindStep({
@@ -74,11 +74,11 @@ export function FindStep({
       {found?.length ? (
         <View role="list" style={styles.rows}>
           {found.map((p) => (
-            <PressableScale key={p.id} role="button" accessibilityLabel={personLabel(p)} onPress={() => setPicked(p)} style={[styles.person, { borderColor: ds.c.line }]}>
-              <UserAvatar uri={null} name={p.display_name} size={36} />
-              <Body style={styles.flex} numberOfLines={1}>
+            <PressableScale key={p.id} role="button" accessibilityLabel={personLabel(p)} onPress={() => setPicked(p)} style={[styles.person, { borderColor: ds.c.lineStrong }]}>
+              <Monogram name={p.display_name.charAt(0)} size={28} quiet plain />
+              <Caption style={[styles.shrink, styles.strong]} numberOfLines={1}>
                 {personLabel(p)}
-              </Body>
+              </Caption>
             </PressableScale>
           ))}
         </View>
@@ -90,9 +90,9 @@ export function FindStep({
 }
 
 /** The bar they picked, with Change. */
-function PickedBar({ bar, onChange }: { bar: RankVenue; onChange: () => void }) {
+function PickedBar({ bar, onChange, flat }: { bar: RankVenue; onChange: () => void; flat?: boolean }) {
   return (
-    <Surface style={styles.picked}>
+    <Surface style={[styles.picked, flat && styles.flat]}>
       <View style={styles.flex}>
         <DsText variant="headline" numberOfLines={1}>{bar.display_name}</DsText>
         <Caption tone="muted" numberOfLines={1}>
@@ -167,9 +167,8 @@ export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { pe
     <SetupFooter onPress={() => onDone()} onSkip={() => onDone()} />
   );
 
-  return (
-    <SetupPage footer={footer}>
-      {!isCurrent && personId && listJobs ? <PastJobs personId={personId} /> : null}
+  const form = (
+    <>
       {!isCurrent ? <Headline role="heading">Add a past job</Headline> : null}
       {adding ? (
         <>
@@ -178,7 +177,9 @@ export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { pe
         </>
       ) : (
         <>
-          {bar ? <PickedBar bar={bar} onChange={() => setBar(null)} /> : <BarPick bar={null} onPick={(v) => { setBar(v); setTried(false); }} />}
+          {/* Where they work now keeps the search above the bar they picked (canvas make-onboarding-work). */}
+          {bar && isCurrent ? <Field label="Search bars" value={bar.display_name} onChangeText={() => setBar(null)} autoCorrect={false} /> : null}
+          {bar ? <PickedBar bar={bar} flat={!isCurrent} onChange={() => setBar(null)} /> : <BarPick bar={null} onPick={(v) => { setBar(v); setTried(false); }} />}
           {bar ? (
             <>
               <Field label="Your role" value={role} onChangeText={setRole} placeholder="Bartender" error={tried ? (roleError(role) ?? undefined) : undefined} maxLength={60} />
@@ -206,14 +207,21 @@ export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { pe
           ) : null}
           {isCurrent ? (
             <>
-              <Button label="Add your bar" variant="secondary" onPress={() => setAdding(true)} />
+              <Button label="Add your bar" variant="secondary" onPress={() => setAdding(true)} style={styles.compact} />
               <Caption tone="muted">Picking a bar doesn’t open its menus. Adding a new bar makes you its admin.</Caption>
             </>
-          ) : (
-            <Caption tone="muted">Past jobs stay hidden unless you show them. Dates are only on your profile if you turn a job on.</Caption>
-          )}
+          ) : null}
         </>
       )}
+    </>
+  );
+
+  return (
+    <SetupPage footer={footer}>
+      {!isCurrent && personId && listJobs ? <PastJobs personId={personId} /> : null}
+      {/* A past job's form sits in a raised card under the list (canvas make-onboarding-worked). */}
+      {isCurrent ? form : <Surface style={styles.card}>{form}</Surface>}
+      {isCurrent || adding ? null : <Caption tone="muted">Past jobs stay hidden unless you show them. Dates are only on your profile if you turn a job on.</Caption>}
     </SetupPage>
   );
 }
@@ -255,8 +263,14 @@ function claimMessage(error: unknown): string {
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   rows: { gap: space.sm },
-  person: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1 },
+  // A match as a pill with a small initial (canvas make-onboarding-find).
+  person: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', maxWidth: '100%', gap: space.sm, minHeight: layout.minTapTarget, paddingLeft: space.sm, paddingRight: space.lg, borderRadius: radius.pill, borderWidth: 1 },
+  shrink: { flexShrink: 1 },
   picked: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  card: { gap: space.md },
+  compact: { alignSelf: 'flex-start' },
+  // Inside the past job's card the bar needs no box of its own.
+  flat: { padding: 0, backgroundColor: 'transparent' },
   pair: { flexDirection: 'row', gap: space.md },
   check: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   box: { width: 22, height: 22, borderRadius: radius.mark, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },

@@ -11,8 +11,6 @@ import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
 import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { inviteJobTitle, needsOnboarding, nextStep, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
-import { stageBringInFiles } from '@/lib/bringInHandoff';
-import type { ReadFile } from '@/lib/readAnything';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
@@ -30,7 +28,7 @@ import { COPY, HOME_BRING } from './onboardingCopy';
  */
 export function OnboardingScreen() {
   const router = useRouter();
-  const { user, loading, updatePassword } = useAuth();
+  const { user, loading } = useAuth();
   const profile = useMyProfile();
   const invites = useMyInvites();
   const finish = useFinishOnboarding();
@@ -41,8 +39,6 @@ export function OnboardingScreen() {
   // The steps they came through, for Back.
   const [trail, setTrail] = useState<OnboardingStep[]>([]);
   const [joined, setJoined] = useState<MyInvite | null>(null);
-  const [passwordSaved, setPasswordSaved] = useState(false);
-  const [passwordProblem, setPasswordProblem] = useState<string | null>(null);
   const invite = invites.data?.[0] ?? null;
   const step: OnboardingStep = chosen ?? (invite ? 'invite' : 'name');
   const [createdId, setCreatedId] = useState<string | null>(null);
@@ -51,7 +47,8 @@ export function OnboardingScreen() {
   const [home, setHome] = useState(false);
   // The bar from "Where do you work?", for "Bring Little Rye in".
   const [barName, setBarName] = useState<string | null>(null);
-  const [waiting, setWaiting] = useState<ReadFile[]>([]);
+  // Handed something to read on the last step: setup ends in Bring in, where it's being read.
+  const [handed, setHanded] = useState(false);
   // Where setup ends: the app, or Bring in with what they handed over.
   const [landing, setLanding] = useState<'/(tabs)' | '/bring-in'>('/(tabs)');
   const personId = createdId ?? profile.data?.id ?? null;
@@ -100,23 +97,12 @@ export function OnboardingScreen() {
     );
   };
 
-  // An account made from an invite email has no password yet.
-  const askPassword = !!joined && !!user?.invited_at && !passwordSaved;
-  const saveName = async (name: string, handle: string, password: string) => {
+  const saveName = (name: string, handle: string) => {
     setDraft({ name, handle });
     setHandleTaken(false);
     if (!joined) {
       go('name');
       return;
-    }
-    if (askPassword) {
-      setPasswordProblem(null);
-      const { error } = await updatePassword(password);
-      if (error) {
-        setPasswordProblem(error.message);
-        return;
-      }
-      setPasswordSaved(true);
     }
     // Their job at the venue, when it has a public bar profile. A failure here
     // isn't worth stopping setup for: they can add it on their profile.
@@ -127,10 +113,9 @@ export function OnboardingScreen() {
     }, { name, handle });
   };
 
-  // Finish setup: Bring in reads what they handed over; Paste opens it empty.
-  const bring = (files: ReadFile[], paste = false) => {
-    if (files.length) stageBringInFiles(files);
-    if (files.length || paste) setLanding('/bring-in');
+  // Finish setup: Bring in shows what it's reading; Paste opens it empty.
+  const bring = (paste = false) => {
+    if (handed || paste) setLanding('/bring-in');
     finish.mutate();
   };
 
@@ -174,6 +159,8 @@ export function OnboardingScreen() {
         title: copy.title,
         intro: copy.intro,
         eyebrow: step === 'bring' && !home ? 'Last step' : joined ? joined.bar_name : null,
+        // The invited path wears the venue's brand, its name in the accent; "Last step" is quiet.
+        eyebrowTone: joined && step !== 'bring' ? 'accent' : 'muted',
         progress: stepProgress(step, !!joined),
         onBack: first ? undefined : back,
       }}
@@ -185,8 +172,7 @@ export function OnboardingScreen() {
           key={handleTaken ? 'handle' : 'name'}
           initialName={draft?.name || profile.data?.displayName || joined?.name || ''}
           forceHandle={handleTaken}
-          askPassword={askPassword}
-          passwordProblem={passwordProblem}
+          invited={!!joined}
           pendingFinish={finish.isPending || saveProfile.isPending}
           onSaved={saveName}
           onSkip={() => finish.mutate()}
@@ -239,12 +225,12 @@ export function OnboardingScreen() {
       {step === 'units' ? <UnitsStep joined={!!joined} onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
       {step === 'bring' ? (
         <BringStep
-          onFiles={(files) => setWaiting((w) => [...w, ...files])}
-          onPaste={() => bring(waiting, true)}
-          waiting={waiting.length ? waitingLabel(waiting) : null}
+          barId={null}
+          onFiles={() => setHanded(true)}
+          onPaste={() => bring(true)}
           onLater={() => finish.mutate()}
           error={finish.error?.message}
-          footer={<SetupFooter label="Finish setup" pending={finish.isPending} onPress={() => bring(waiting)} />}
+          footer={<SetupFooter label="Finish setup" compact pending={finish.isPending} onPress={() => bring()} />}
         />
       ) : null}
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
@@ -252,11 +238,6 @@ export function OnboardingScreen() {
   );
   // Joined: the short setup stays in the venue's colours.
   return joined ? <InviteBrand invite={joined}>{page}</InviteBrand> : page;
-}
-
-/** "3 photos", "a PDF and 2 photos": what's waiting to be read. */
-function waitingLabel(files: ReadFile[]): string {
-  return files.length === 1 ? 'One file' : `${files.length} files`;
 }
 
 /** One answer to a question step: a bold line, a muted one, and a chevron. */

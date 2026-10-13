@@ -32,7 +32,7 @@ export function SafetyLinks({ row }: { row: (props: LinkRowProps) => ReactNode }
   return (
     <>
       {row({ label: 'Your reports', detail: 'What you reported and what happened', icon: 'flag', onPress: go('/settings/reports') })}
-      {row({ label: 'Blocked people', detail: blocked ? plural(blocked, 'person', 'people') : 'Nobody', icon: 'eye.slash', onPress: go('/settings/blocked') })}
+      {row({ label: 'Blocked people', detail: blocked ? plural(blocked, 'person', 'people') : 'Nobody', icon: 'nosign', onPress: go('/settings/blocked') })}
       {isModerator
         ? row({ label: 'Reports', detail: `Moderators only · ${open} open`, icon: 'lock.shield.fill', onPress: go('/settings/moderation') })
         : null}

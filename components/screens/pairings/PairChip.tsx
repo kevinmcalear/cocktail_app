@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { Body, Caption, PressableScale, useDs } from '@/components/ds';
+import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
@@ -13,6 +13,7 @@ export function PairChip({
   count,
   add,
   selected,
+  accent,
   onPress,
   accessibilityLabel,
 }: {
@@ -20,23 +21,26 @@ export function PairChip({
   count?: string | number | null;
   add?: boolean;
   selected?: boolean;
+  /** Selected fills in the accent rather than ink (an ingredient page's Pairs with). */
+  accent?: boolean;
   onPress: () => void;
   accessibilityLabel: string;
 }) {
   const ds = useDs();
-  const ink = selected ? ds.c.ground : ds.c.ink;
+  const fill = accent ? ds.accentFill.fill : ds.c.ink;
+  const ink = selected ? (accent ? ds.accentFill.text : ds.c.ground) : ds.c.ink;
   return (
     <PressableScale
       role="button"
       aria-pressed={selected}
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={[styles.chip, add && styles.add, { backgroundColor: selected ? ds.c.ink : ds.c.raised, borderColor: ds.c.line }]}
+      style={[styles.chip, add && styles.add, { backgroundColor: selected ? fill : ds.c.raised, borderColor: ds.c.line }]}
     >
       {add ? <IconSymbol name="plus" size={14} color={ds.accentText} /> : null}
-      <Body color={ink}>{label}</Body>
+      <DsText variant="label" color={ink}>{label}</DsText>
       {count != null && count !== '' ? (
-        <Caption color={selected ? ds.c.ground : ds.c.muted} style={styles.count}>
+        <Caption color={selected ? ink : ds.c.muted} style={styles.count}>
           {String(count)}
         </Caption>
       ) : null}
@@ -47,11 +51,11 @@ export function PairChip({
 const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     gap: space.sm,
     minHeight: layout.minTapTarget,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
     borderRadius: radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },

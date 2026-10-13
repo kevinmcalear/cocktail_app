@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, Chip, DsText, PressableScale, Spec, Surface, Title, useDs } from '@/components/ds';
 import { BigTimer } from '@/components/prep/StepTimer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import type { StepPart } from '@/lib/makeSteps';
 import type { ScaledLine } from '@/lib/scale';
@@ -15,7 +15,8 @@ import { weighHint, type KitItem } from './makeLogic';
 export function MakeGather({ lines, got, onToggle, kit }: { lines: ScaledLine[]; got: string[]; onToggle: (id: string) => void; kit: KitItem[] }) {
   const ds = useDs();
   const router = useRouter();
-  const weighed = lines.filter((l) => /\b(k?g)$/.test(l.scaled)).length;
+  // Two or more things that can go on the scale: tare between them (prep-make-gather).
+  const weighed = lines.filter((l) => /\b(k?g)$/.test(l.scaled) || !!weighHint(l)).length;
   return (
     <View style={styles.stack}>
       <Title>Get it all out</Title>
@@ -53,7 +54,7 @@ export function MakeGather({ lines, got, onToggle, kit }: { lines: ScaledLine[];
           k.equipment ? (
             <Chip key={k.name} label={k.name} selected={false} onPress={() => router.push(`/equipment/${k.equipment}` as never)} accessibilityLabel={`${k.name}, opens the kit page`} />
           ) : (
-            <View key={k.name} style={[styles.kitItem, { borderColor: ds.c.lineStrong }]}>
+            <View key={k.name} style={[styles.kitItem, { backgroundColor: ds.c.raised }]}>
               <Caption>{k.name}</Caption>
             </View>
           ),
@@ -65,7 +66,6 @@ export function MakeGather({ lines, got, onToggle, kit }: { lines: ScaledLine[];
           <Body style={styles.name}>Put the pan on the scale and press tare before each pour. Fewer things to wash.</Body>
         </View>
       ) : null}
-      <Caption tone="muted" style={styles.center}>{`${got.length} of ${lines.length} out`}</Caption>
     </View>
   );
 }
@@ -116,7 +116,7 @@ export function MakeStep({ index, total, name, size, parts, hint, timer, next }:
 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
-  eyebrow: { letterSpacing: 0.6 },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
   list: { paddingVertical: 0 },
   check: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md },
   box: { width: 26, height: 26, borderRadius: radius.control / 2, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
@@ -124,8 +124,7 @@ const styles = StyleSheet.create({
   name: { flex: 1 },
   struck: { textDecorationLine: 'line-through' },
   tip: { flexDirection: 'row', gap: space.md, padding: space.md, borderRadius: radius.control, alignItems: 'flex-start' },
-  center: { textAlign: 'center' },
   kit: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  kitItem: { minHeight: layout.minTapTarget - space.sm, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'center' },
+  kitItem: { minHeight: layout.minTapTarget - space.sm, paddingHorizontal: space.md, borderRadius: radius.pill, justifyContent: 'center' },
   next: { gap: 2, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
 });

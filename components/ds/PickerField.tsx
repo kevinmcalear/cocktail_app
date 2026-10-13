@@ -18,13 +18,15 @@ interface PickerFieldProps {
   error?: string;
   /** The picker, shown under the field while it's open. */
   children: ReactNode;
+  /** A row of a grouped card: no box of its own (Field's `bare`). */
+  bare?: boolean;
 }
 
 /**
  * The shell DateField and TimeField share: a labelled box that looks like a
  * Field and opens its picker under it, inside the sheet, on every platform.
  */
-export function PickerField({ label, text, placeholder, open, onToggle, hint, error, children }: PickerFieldProps) {
+export function PickerField({ label, text, placeholder, open, onToggle, hint, error, children, bare }: PickerFieldProps) {
   const ds = useDs();
   const toggle = () => {
     // A keyboard left up from a field above would cover the picker.
@@ -39,12 +41,12 @@ export function PickerField({ label, text, placeholder, open, onToggle, hint, er
         aria-expanded={open}
         accessibilityLabel={`${label}: ${text ?? 'none'}`}
         onPress={toggle}
-        style={[styles.input, { backgroundColor: ds.c.raised, borderColor: error ? ds.accentText : open ? ds.c.lineStrong : ds.c.line }]}
+        style={[styles.input, bare ? styles.bare : { backgroundColor: ds.c.raised, borderColor: error ? ds.accentText : open ? ds.c.lineStrong : ds.c.line }]}
       >
         <Body color={text ? ds.c.ink : ds.c.faint} style={styles.flex} numberOfLines={1}>
           {text ?? placeholder}
         </Body>
-        <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={18} color={ds.c.muted} />
+        {bare ? null : <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={18} color={ds.c.muted} />}
       </Pressable>
       {open ? <View style={[styles.panel, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>{children}</View> : null}
       {error ? <Caption tone="accent">{error}</Caption> : hint ? <Caption tone="muted">{hint}</Caption> : null}
@@ -106,6 +108,7 @@ export const pickerStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+  bare: { borderWidth: 0, paddingHorizontal: 0, minHeight: 28 },
   field: { gap: space.xs },
   input: { minHeight: layout.minTapTarget, borderRadius: radius.control, borderWidth: 1, paddingHorizontal: space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1 },

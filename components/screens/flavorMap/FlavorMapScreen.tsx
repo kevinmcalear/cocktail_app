@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Platform, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { IconSymbol } from '@/components/ui/icon-symbol';
+
 import { BackbarTheme, Body, Button, Caption, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -16,7 +18,6 @@ import { siteOrigin } from '@/lib/venueLink';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
-import { PairChip } from '../pairings/PairChip';
 import { RingMap } from './RingMap';
 
 /** What goes with what: pick an ingredient, tap a partner to bounce to what goes with both. */
@@ -95,9 +96,12 @@ function FlavorMapPage() {
           ]}
           value={era}
           onChange={setEra}
+          variant="pill"
+          stretch
         />
 
-        <View style={[styles.field, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+        <View style={[styles.field, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}>
+          <IconSymbol name="magnifyingglass" size={16} color={ds.c.muted} />
           <TextInput
             value={query}
             onChangeText={setQuery}
@@ -129,23 +133,39 @@ function FlavorMapPage() {
 
         {picked.length ? (
           <View role="group" aria-label="Picked" style={styles.chips}>
+            {/* Picked, in the accent (board prep-flavor-map). */}
             {picked.map((id) => (
-              <PairChip
+              <PressableScale
                 key={id}
-                label={nameOf(id)}
-                count={picked.length > 1 ? '×' : null}
-                selected
-                onPress={() => picked.length > 1 && setPicked(picked.filter((p) => p !== id))}
+                role="button"
                 accessibilityLabel={picked.length > 1 ? `Remove ${nameOf(id)}` : nameOf(id)}
-              />
+                onPress={() => picked.length > 1 && setPicked(picked.filter((p) => p !== id))}
+                style={[styles.picked, { backgroundColor: ds.accentFill.fill }]}
+              >
+                <Body color={ds.accentFill.text} style={styles.pickedName}>
+                  {nameOf(id)}
+                </Body>
+                {picked.length > 1 ? <IconSymbol name="xmark" size={12} color={ds.accentFill.text} /> : null}
+              </PressableScale>
             ))}
           </View>
         ) : null}
 
-        {picked.length ? <RingMap pairs={pairs} centre={pickedNames} onPick={(id) => {
-              const p = pairs.find((x) => x.id === id);
-              if (p) addPair(p);
-            }} /> : null}
+        {picked.length ? (
+          <>
+            <View style={[styles.panel, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+              <RingMap
+                pairs={pairs}
+                centre={picked.length > 1 ? [`${picked.length} picked`] : pickedNames}
+                onPick={(id) => {
+                  const p = pairs.find((x) => x.id === id);
+                  if (p) addPair(p);
+                }}
+              />
+            </View>
+            <Caption tone="muted">Tap anything to add it. Closer rings go together more often.</Caption>
+          </>
+        ) : null}
 
         {picked.length && !isLoading && !pairs.length ? (
           <Body tone="muted">
@@ -193,7 +213,7 @@ function FlavorMapPage() {
           icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         />
-        {picked.length ? <GlassButton accessibilityLabel="Share this flavor map" icon="square.and.arrow.up" onPress={share} /> : null}
+        {picked.length ? <GlassButton accessibilityLabel="Share this flavor map" icon="square.and.arrow.up" label="Share" onPress={share} /> : null}
       </View>
     </View>
   );
@@ -203,13 +223,16 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { width: '100%', maxWidth: 760, alignSelf: 'center', gap: space.lg },
   header: { gap: space.sm },
-  field: { minHeight: 52, borderRadius: radius.pill, borderWidth: 1, paddingHorizontal: space.lg, justifyContent: 'center' },
-  input: { minHeight: layout.minTapTarget },
+  field: { minHeight: 52, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  input: { flex: 1, minHeight: layout.minTapTarget },
+  picked: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget - space.xs, paddingHorizontal: space.md, borderRadius: radius.pill },
+  pickedName: { fontFamily: fontFamilies.bodyMedium },
+  panel: { borderRadius: radius.card, borderCurve: 'continuous', borderWidth: StyleSheet.hairlineWidth, paddingVertical: space.md, overflow: 'hidden' },
   results: { borderRadius: radius.control, borderWidth: 1, overflow: 'hidden' },
   result: { minHeight: layout.minTapTarget + 4, justifyContent: 'center', paddingHorizontal: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   ring: { paddingTop: space.md },
-  ringLabel: { letterSpacing: 1, paddingBottom: space.sm },
+  ringLabel: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, paddingBottom: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderTopWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
   count: { fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'] },

@@ -32,7 +32,7 @@ export function useNavPlaces() {
   const tabs: Place[] = (home ? HOME_TABS : VENUE_TABS).map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: tabPath(t.name), tab: true }));
   const work: Place[] = venue
     ? [
-        { key: 'menus', label: 'Menus', icon: 'list.bullet', path: '/menus/all', prefix: '/menus' },
+        { key: 'menus', label: 'Menus', icon: 'text.alignleft', path: '/menus/all', prefix: '/menus' },
         { key: 'back-bar', label: 'Back bar', icon: 'map.fill', path: '/back-bar' },
       ]
     : [];

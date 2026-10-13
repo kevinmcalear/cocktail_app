@@ -68,7 +68,7 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
   const { data: layouts = [] } = useMenuLayouts(barId);
   // "A menu you saved": the venue's latest menus, then its saved layouts, as pills.
   const saved = [
-    ...copyable.map((m) => ({ key: m.id, name: m.name.replace(/ menu$/i, ''), start: { kind: 'copy', menuId: m.id } as Start })),
+    ...copyable.map((m) => ({ key: m.id, name: m.name, start: { kind: 'copy', menuId: m.id } as Start })),
     ...layouts.map((l) => ({ key: l.id, name: l.name, start: { kind: 'layout', layoutId: l.id } as Start })),
   ];
   const { data: source } = useMenu(start.kind === 'copy' ? start.menuId : null);
@@ -85,7 +85,7 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
 
   const startLabel =
     start.kind === 'copy'
-      ? `A copy of ${copyable.find((m) => m.id === start.menuId)?.name ?? 'another menu'}`
+      ? `Copy of ${copyable.find((m) => m.id === start.menuId)?.name ?? 'another menu'}`
       : start.kind === 'layout'
         ? (layouts.find((l) => l.id === start.layoutId)?.name ?? 'A saved layout')
         : start.kind === 'photo'
@@ -202,25 +202,28 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
       {step === 'start' ? (
         <>
           <View role="radiogroup" accessibilityLabel="Start from" style={styles.list}>
-            <Choice label="Blank" detail="One section. Add more as you go." icon="plus" selected={start.kind === 'blank'} onPress={() => setStart({ kind: 'blank' })} />
+            {/* No radios: the picked card's border and tint say it (venue-menus-new). */}
+            <Choice label="Blank" detail="One section. Add more as you go." icon="plus" noMark selected={start.kind === 'blank'} onPress={() => setStart({ kind: 'blank' })} />
             {saved.length ? (
               <Choice
                 label="A menu you saved"
-                detail="Its sections, and a menu's drinks. Swap what's changing."
+                detail="Its sections and drinks, ready to change."
                 icon="doc.on.doc"
+                noMark
                 selected={start.kind === 'copy' || start.kind === 'layout'}
                 onPress={() => (start.kind === 'copy' || start.kind === 'layout' ? null : setStart(saved[0].start))}
-              />
+              >
+                {start.kind === 'copy' || start.kind === 'layout' ? (
+                  <View role="radiogroup" accessibilityLabel="Which menu" style={styles.wrap}>
+                    {saved.map((m) => (
+                      <Choice key={m.key} label={m.name} pill="outline" selected={m.key === (start.kind === 'copy' ? start.menuId : start.layoutId)} onPress={() => setStart(m.start)} />
+                    ))}
+                  </View>
+                ) : null}
+              </Choice>
             ) : null}
-            {start.kind === 'copy' || start.kind === 'layout' ? (
-              <View role="radiogroup" accessibilityLabel="Which one" style={[styles.wrap, styles.indent]}>
-                {saved.map((m) => (
-                  <Choice key={m.key} label={m.name} selected={m.key === (start.kind === 'copy' ? start.menuId : start.layoutId)} onPress={() => setStart(m.start)} />
-                ))}
-              </View>
-            ) : null}
-            <Choice label="From a photo" detail="Read a printed menu: its sections, drinks and prices." icon="camera.fill" selected={start.kind === 'photo'} onPress={() => setStart({ kind: 'photo' })} />
-            <Choice label="Paste a list" detail="Drink names, one a line. We match your drinks." icon="list.bullet" selected={start.kind === 'paste'} onPress={() => setStart({ kind: 'paste' })} />
+            <Choice label="From a photo" detail="Read a printed menu: its sections, drinks and prices." icon="camera.fill" noMark selected={start.kind === 'photo'} onPress={() => setStart({ kind: 'photo' })} />
+            <Choice label="Paste a list" detail="Drink names, one a line. We match your drinks." icon="list.bullet" noMark selected={start.kind === 'paste'} onPress={() => setStart({ kind: 'paste' })} />
           </View>
           {start.kind === 'photo' ? <MenuPhotos photos={photos} onChange={setPhotos} onError={setError} /> : null}
         </>
@@ -238,5 +241,4 @@ const styles = StyleSheet.create({
   list: { gap: space.sm },
   footer: { flexDirection: 'row', gap: space.md },
   flex: { flex: 1 },
-  indent: { paddingLeft: space.lg },
 });

@@ -9,8 +9,9 @@ import { formatScore } from '@/lib/ranking';
 
 /**
  * Under the credit: the drink's score and where it places ("8.9 · #2 in
- * Fitzroy · 146 ranked"), opening its rankings, and a Rankings pill beside it
- * that's always there (decision b13: the caption alone may hide the way in).
+ * Fitzroy · 146 ranked"), opening its rankings. The canvas draws only the
+ * chip (12 Oct: the canvas wins over decision b13); a drink nobody has
+ * scored yet keeps a Rankings pill, so the way in never disappears.
  */
 export function ScoreCaption({ itemId, name }: { itemId: string; name: string }) {
   const ds = useDs();
@@ -33,10 +34,12 @@ export function ScoreCaption({ itemId, name }: { itemId: string; name: string })
           <Caption tone="muted">{`${score.rankers} ranked`}</Caption>
         </PressableScale>
       ) : null}
-      <PressableScale role="link" accessibilityLabel={`Rankings for ${name}`} onPress={open} style={[styles.pill, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}>
-        <IconSymbol name="trophy" size={16} color={ds.c.ink} />
-        <Caption style={styles.strong}>Rankings</Caption>
-      </PressableScale>
+      {score ? null : (
+        <PressableScale role="link" accessibilityLabel={`Rankings for ${name}`} onPress={open} style={[styles.pill, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}>
+          <IconSymbol name="trophy" size={16} color={ds.c.ink} />
+          <Caption style={styles.strong}>Rankings</Caption>
+        </PressableScale>
+      )}
     </View>
   );
 }

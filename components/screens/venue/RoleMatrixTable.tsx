@@ -3,12 +3,12 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { RoleMatrixRow } from '@/hooks/useVenueRoles';
 import { CAPABILITY_GROUPS, cell, endsLabel, type Cell } from '@/lib/roleMatrix';
 import { roleLabel } from '@/lib/roles';
 
-const LABEL_WIDTH = 200;
+const LABEL_WIDTH = 240;
 const COLUMN = 92;
 const MARK = 14;
 const CHANGED_DOT = 7;
@@ -46,8 +46,9 @@ export function RoleMatrixTable({ matrix, barName, onEdit }: {
   return (
     <View style={styles.wrap}>
       <Surface style={styles.card}>
+        {/* The table fills the card; it scrolls sideways only when the card is too narrow. */}
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.scroll}>
-          <View role="table" accessibilityLabel={`What each ${barName} role can do`}>
+          <View role="table" accessibilityLabel={`What each ${barName} role can do`} style={styles.table}>
             <View role="row" style={[styles.row, { borderBottomColor: ds.c.lineStrong }]}>
               <View role="columnheader" style={styles.label}>
                 <Caption tone="muted">What they can do</Caption>
@@ -57,7 +58,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit }: {
                 const sub = c.role_id ? (endsLabel(c.ends_at) ? `Ends ${endsLabel(c.ends_at)}` : `From ${roleLabel(c.base_level)}`) : `Base · ${c.base_level}`;
                 const head = (
                   <>
-                    <Body style={styles.center} numberOfLines={2}>{name}</Body>
+                    <Body style={[styles.center, styles.head]} numberOfLines={2}>{name}</Body>
                     <Caption tone="muted" style={styles.center}>{sub}</Caption>
                   </>
                 );
@@ -84,7 +85,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit }: {
                   <View key={r.id} role="row" style={[styles.row, { borderBottomColor: ds.c.line }]}>
                     <View role="rowheader" style={[styles.label, styles.labelRow]}>
                       <View style={styles.labelText}>
-                        <Body>{r.label}</Body>
+                        <Body numberOfLines={1}>{r.label}</Body>
                         {r.detail ? <Caption tone="muted">{r.detail}</Caption> : null}
                       </View>
                       {r.levelBound ? (
@@ -136,14 +137,16 @@ export function RoleMatrixTable({ matrix, barName, onEdit }: {
 const styles = StyleSheet.create({
   wrap: { gap: space.md },
   card: { paddingVertical: space.xs, paddingHorizontal: 0 },
-  scroll: { paddingHorizontal: space.lg },
+  scroll: { flexGrow: 1, paddingHorizontal: space.lg },
+  table: { flexGrow: 1 },
+  head: { fontFamily: fontFamilies.bodySemiBold },
   row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
   groupRow: { paddingTop: space.lg, paddingBottom: space.xs },
   groupTitle: { letterSpacing: 0.8 },
   label: { width: LABEL_WIDTH, paddingVertical: space.sm, paddingRight: space.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   labelText: { flexShrink: 1, gap: 2 },
-  column: { width: COLUMN, alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs, paddingHorizontal: space.xs },
+  column: { flexGrow: 1, flexBasis: COLUMN, minWidth: COLUMN, alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs, paddingHorizontal: space.xs },
   center: { textAlign: 'center' },
   edit: { alignItems: 'center', gap: 2, paddingVertical: space.xs, paddingHorizontal: space.sm, borderRadius: radius.control, borderWidth: 1 },
   cell: { width: 40, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },

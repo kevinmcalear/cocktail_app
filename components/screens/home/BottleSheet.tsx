@@ -2,8 +2,8 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, IngredientDrawing, IngredientThumb, PressableScale, Sheet, Tag, Title, useDs } from '@/components/ds';
-import { layout, radius, space } from '@/constants/tokens';
+import { Body, Button, Caption, Headline, IngredientDrawing, IngredientThumb, PressableScale, Sheet, Tag, TextLink, Title, useDs } from '@/components/ds';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useItemFlavor } from '@/hooks/useFlavor';
 import { useBottleFacts, useFinishedBottles, type BarItem, type FinishedBottle, type ShelfItem } from '@/hooks/useHomeBar';
 import { NOTE_KINDS, NOTE_MIN, noteWord } from '@/lib/flavor';
@@ -85,22 +85,27 @@ function Bottle({ item, shelf, canMake, oneAway, onAdd, onFinish, onOld, onPage 
   };
   return (
     <>
-      <View style={[styles.picture, { backgroundColor: ds.c.surface }]}>
-        <IngredientDrawing id={item.id} name={item.name} />
-      </View>
-      <View style={styles.title}>
-        {kindLine ? <Caption tone="muted">{kindLine}</Caption> : null}
-        <Title>{item.name}</Title>
-        {item.addedAt ? <Caption tone="muted">{`On your shelf since ${day(item.addedAt)}`}</Caption> : null}
+      {/* The drawing at the left, what it is beside it (home-mybar-bottle). */}
+      <View style={styles.hero}>
+        <View style={[styles.picture, { backgroundColor: ds.c.paper }]}>
+          <IngredientDrawing id={item.id} name={item.name} />
+        </View>
+        <View style={styles.title}>
+          {kindLine ? <Caption tone="muted">{kindLine}</Caption> : null}
+          <Title>{item.name}</Title>
+          {item.addedAt ? <Caption tone="muted">{`On your shelf since ${day(item.addedAt)}`}</Caption> : null}
+        </View>
       </View>
       {rows.length ? (
-        <View>
+        <View style={styles.facts}>
           {rows.map(([k, v]) => (
-            <View key={k} style={[styles.fact, { borderBottomColor: ds.c.line }]}>
-              <Caption tone="muted" style={styles.factKey}>{k}</Caption>
-              <Body style={styles.flex}>{v}</Body>
+            <View key={k} style={[styles.fact, { backgroundColor: ds.c.raised }]}>
+              <Caption tone="muted">{k}</Caption>
+              <Body style={styles.factValue}>{v}</Body>
             </View>
           ))}
+          {/* Three to a row however many there are, so one fact keeps a tile's width. */}
+          {rows.length < 3 ? Array.from({ length: 3 - rows.length }, (_, i) => <View key={i} style={styles.fact} />) : null}
         </View>
       ) : null}
       {tastes.length ? (
@@ -133,23 +138,25 @@ function Bottle({ item, shelf, canMake, oneAway, onAdd, onFinish, onOld, onPage 
             <Button label="Add" variant="secondary" accessibilityLabel={`Add ${g.bottles[0].name} to your shelf`} onPress={() => onAdd(g.bottles.map((b) => b.id))} />
           </View>
         ))}
-        <PressableScale role="link" onPress={page} style={styles.link}>
-          <Body>{`Every drink with ${item.name}`}</Body>
-        </PressableScale>
+        <TextLink label={`Every drink with ${item.name}`} onPress={page} />
       </View>
       <View style={styles.block}>
-        <Button label="Finished it, take it off my shelf" variant="secondary" onPress={() => onFinish(item.id)} />
+        <Button label="Finished it, take it off my shelf" variant="danger" onPress={() => onFinish(item.id)} />
         <Caption tone="muted">It moves to Your old bottles, so you can buy it again.</Caption>
       </View>
       {mine.length || finished.length ? (
         <View style={styles.block}>
-          {mine.length ? <Headline role="heading">You’ve finished this before</Headline> : null}
+          <View style={styles.oldHead}>
+            {mine.length ? (
+              <Headline role="heading" style={styles.flex}>
+                You’ve finished this before
+              </Headline>
+            ) : null}
+            <TextLink label={`Your old bottles · ${finished.length}`} onPress={onOld} />
+          </View>
           {mine.map((f) => (
             <OldRow key={f.id} f={f} />
           ))}
-          <PressableScale role="button" onPress={onOld} style={styles.link}>
-            <Body>{`Your old bottles · ${finished.length}`}</Body>
-          </PressableScale>
         </View>
       ) : null}
     </>
@@ -191,10 +198,13 @@ function OldBottles({ onBack, onAdd }: { onBack: () => void; onAdd: (ids: string
 
 const styles = StyleSheet.create({
   body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.lg },
-  picture: { alignSelf: 'center', width: 160, aspectRatio: 1, borderRadius: radius.card, overflow: 'hidden' },
-  title: { gap: 2 },
-  fact: { flexDirection: 'row', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  factKey: { width: 88 },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  picture: { width: 124, height: 164, borderRadius: radius.control, overflow: 'hidden' },
+  title: { flex: 1, minWidth: 0, gap: 2 },
+  facts: { flexDirection: 'row', gap: space.sm },
+  fact: { flex: 1, minWidth: 0, gap: 2, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
+  factValue: { fontFamily: fontFamilies.bodySemiBold },
+  oldHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   flex: { flex: 1 },
   block: { gap: space.sm },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },

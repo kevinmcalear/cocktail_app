@@ -48,7 +48,7 @@ export function MakerProfile({ profile, columns }: { profile: Profile; columns: 
         <title>{`${profile.display_name} (@${profile.handle})`}</title>
       </WebHead>
       <View style={styles.head}>
-        <BarHeader profile={profile} detail={[makesLine(profile.makes), place, unclaimed ? 'Not claimed yet' : 'Claimed'].filter(Boolean).join(' · ')} />
+        <BarHeader profile={profile} size={52} neutral detail={[makesLine(profile.makes), place, unclaimed ? 'Not claimed yet' : 'Claimed'].filter(Boolean).join(' · ')} />
         {group ? <TextLink label={`Part of ${group.display_name}`} onPress={() => router.push(`/p/${group.handle}` as Href)} /> : null}
         {serves ? <Caption tone="muted">{serves}</Caption> : null}
         {profile.bio ? <Body>{profile.bio}</Body> : null}

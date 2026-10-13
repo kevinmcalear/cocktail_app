@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Caption, GlassButton, Headline, Segmented, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Caption, Display, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { ScopeSwitch } from '@/components/search/ScopeSwitch';
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { areaFor, useDrinkRankings, useMyRankList, type RankScope, type RankVenue } from '@/hooks/useRankings';
@@ -23,7 +24,11 @@ export interface RankingsScreenProps {
 type Place = Pick<RankVenue, 'postcode' | 'city' | 'country_code' | 'locality'>;
 
 function scopeLabel(place: Place, scope: RankScope): string {
-  if (scope === 'postcode') return [place.postcode, place.locality].filter(Boolean).join(' ');
+  if (scope === 'postcode') {
+    // "3065 Fitzroy" as drawn; a long neighbourhood ("70130 French Quarter") drops the number so all three areas fit.
+    const both = [place.postcode, place.locality].filter(Boolean).join(' ');
+    return both.length > 14 && place.locality ? place.locality : both;
+  }
   if (scope === 'city') return place.city ?? '';
   return countryName(place.country_code);
 }
@@ -73,12 +78,7 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
   const bestSection = (
     <View style={styles.section}>
       {scopes.length > 1 ? (
-        <Segmented
-          accessibilityLabel="Area"
-          options={scopes.map((s) => ({ value: s, label: scopeLabel(place!, s) }))}
-          value={scope!}
-          onChange={setPicked}
-        />
+        <ScopeSwitch fit accessibilityLabel="Area" options={scopes.map((s) => ({ value: s, label: scopeLabel(place!, s) }))} scope={scope!} onScope={setPicked} />
       ) : null}
       {bestError ? (
         <ListNote>{`Couldn't load the rankings: ${bestError.message}`}</ListNote>
@@ -107,8 +107,8 @@ function RankingsPage({ rankedAs, home }: RankingsScreenProps) {
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={[styles.page, wide && styles.pageWide]}>
-          <Caption tone="muted">Ranked by comparison</Caption>
-          <Title>{`Best ${rankedAs.name}`}</Title>
+          <Caption tone="muted" style={styles.eyebrow}>RANKED BY COMPARISON</Caption>
+          <Display>{`Best ${rankedAs.name}`}</Display>
           <View style={[styles.columns, wide && styles.columnsWide]}>
             <View style={wide ? styles.column : undefined}>{bestSection}</View>
             <View style={wide ? styles.column : undefined}>{mineSection}</View>
@@ -136,4 +136,5 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   back: { position: 'absolute' },
   report: { alignItems: 'flex-start' },
+  eyebrow: { letterSpacing: 1 },
 });

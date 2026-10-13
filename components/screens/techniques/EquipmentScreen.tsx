@@ -1,25 +1,28 @@
 import { useRouter } from 'expo-router';
-import { Platform, StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, PressableScale, Spec, Surface, useDs } from '@/components/ds';
+import { Body, Caption, DsText, PressableScale, Surface, useDs } from '@/components/ds';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
-import { backbar, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useKit } from '@/hooks/useKit';
 import { canMake, EQUIPMENT, TECHNIQUES, TIER_LABEL, unlocks, type Equipment } from '@/lib/techniques';
 
 /** My kit: one list of tools with a switch each. What you have filters the technique library. */
 export function EquipmentScreen() {
+  const ds = useDs();
   const { kit, toggle } = useKit();
   const can = TECHNIQUES.filter((t) => canMake(t, kit)).length;
   return (
     <TechniquePage
-      eyebrow="Techniques"
       title="My kit"
       intro={<Body tone="muted">Tell us what you have. Pots, jars, strainers, a fridge and a freezer are taken as given. Techniques that need something else move to the end.</Body>}
     >
-      <View aria-live="polite" style={styles.summary}>
-        <Spec>{String(can)}</Spec>
-        <Body tone="muted">{`of ${TECHNIQUES.length} techniques you can make`}</Body>
+      {/* The count on an ink card, the number big (prep-tech-kit). */}
+      <View aria-live="polite" style={[styles.summary, { backgroundColor: ds.c.ink }]}>
+        <DsText variant="title" color={ds.c.ground} style={styles.count}>
+          {String(can)}
+        </DsText>
+        <Body color={ds.c.ground}>{`of ${TECHNIQUES.length} techniques you can make`}</Body>
       </View>
       <Surface style={styles.list}>
         {EQUIPMENT.map((e, i) => (
@@ -42,22 +45,27 @@ function KitRow({ e, kit, onToggle, last }: { e: Equipment; kit: ReadonlySet<str
         <Body>{e.name}</Body>
         <Caption tone="muted">{[e.tier, opens].filter(Boolean).join(' · ')}</Caption>
       </PressableScale>
-      <Switch
-        value={have}
-        onValueChange={() => onToggle(e.id)}
-        aria-label={`I have it: ${e.name}`}
-        accessibilityLabel={`I have it: ${e.name}`}
-        trackColor={{ false: ds.c.lineStrong, true: ds.c.ink }}
-        thumbColor={backbar.light.surface}
-        {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
-      />
+      <Toggle on={have} label={`I have it: ${e.name}`} onPress={() => onToggle(e.id)} />
     </View>
   );
 }
 
+/** A large switch as drawn: an ink track with a white knob, tan when off. */
+function Toggle({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="switch" aria-checked={on} accessibilityLabel={label} onPress={onPress} style={[styles.track, { backgroundColor: on ? ds.c.ink : ds.c.lineStrong }]}>
+      <View style={[styles.knob, { backgroundColor: ds.c.surface, alignSelf: on ? 'flex-end' : 'flex-start' }]} />
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
-  summary: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space.sm },
+  summary: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space.sm, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
+  count: { fontFamily: fontFamilies.monoMedium },
   list: { paddingVertical: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
   flex: { flex: 1, minWidth: 0, gap: 2 },
+  track: { width: 52, height: 32, borderRadius: radius.pill, padding: 3, justifyContent: 'center' },
+  knob: { width: 26, height: 26, borderRadius: radius.pill },
 });

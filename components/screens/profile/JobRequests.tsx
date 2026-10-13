@@ -6,6 +6,8 @@ import { space } from '@/constants/tokens';
 import { useAnswerPosition, usePositionRequests } from '@/hooks/usePositionRequests';
 import { useProfilePositions } from '@/hooks/useProfiles';
 
+import { BarMark } from '../home/BarMark';
+
 /**
  * Jobs people listed at a bar, waiting for the bar's yes. On the Team screen
  * for a venue's Admins (venueId), and in Reports for moderators, who answer
@@ -67,7 +69,7 @@ export function MyJobRequests({ personId }: { personId: string }) {
       <View role="list" aria-label="Jobs waiting">
         {asked.map((p) => (
           <View key={p.id} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
-            <UserAvatar uri={p.bar.avatar_url} name={p.bar.display_name} size={40} />
+            <BarMark name={p.bar.display_name} logoUrl={p.bar.avatar_url} size={40} />
             <View style={styles.flex}>
               <DsText variant="headline" numberOfLines={2}>{`${p.title}, ${p.bar.display_name}`}</DsText>
               <Caption tone="muted">{`${p.bar.display_name} listed you. It shows on your profile once you accept.`}</Caption>
@@ -80,7 +82,7 @@ export function MyJobRequests({ personId }: { personId: string }) {
         ))}
         {waiting.map((p) => (
           <View key={p.id} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
-            <UserAvatar uri={p.bar.avatar_url} name={p.bar.display_name} size={40} />
+            <BarMark name={p.bar.display_name} logoUrl={p.bar.avatar_url} size={40} />
             <View style={styles.flex}>
               <DsText variant="headline" numberOfLines={2}>{`${p.title}, ${p.bar.display_name}`}</DsText>
               <Caption tone="muted">On your profile, marked not confirmed, until the bar says yes.</Caption>

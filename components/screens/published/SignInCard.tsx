@@ -16,7 +16,6 @@ export function SignInCard({ title = 'Want to see more?', text }: { title?: stri
       <Body tone="muted">{text}</Body>
       <View style={styles.actions}>
         <Button label="Sign in" onPress={() => router.push('/auth/login')} />
-        <Button label="Create an account" variant="ghost" onPress={() => router.push('/auth/sign-up')} />
       </View>
     </Surface>
   );

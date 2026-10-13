@@ -1,15 +1,16 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, LockedSection, Spec, Surface, useDs } from '@/components/ds';
+import { Body, Button, Caption, LockedSection, Spec, Surface, TextLink, useDs } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
 import { useStockOnHand } from '@/hooks/useStockCounts';
 import { formatPar, locationLine } from '@/lib/backBar';
+import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 
 import { BackBarPlan } from './BackBarPlan';
@@ -94,10 +95,12 @@ function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProp
           {here.map((l, i) => {
             // Par, and what the last count found there. Made and Use by stay off until there's a batch log (b33).
             const counted = onHand.find((r) => r.item_id === itemId && r.location_id === l.id);
+            // Under par shows in the accent (prep-ing-where).
+            const low = !!counted && l.par_amount != null && counted.unit === l.par_unit && Number(counted.amount) < Number(l.par_amount);
             const stats = [
-              { label: 'Par', value: formatPar(l.par_amount, l.par_unit) },
-              { label: 'On hand', value: counted ? formatPar(counted.amount, counted.unit) : null },
-            ].filter((t): t is { label: string; value: string } => !!t.value);
+              { label: 'Par', value: formatPar(l.par_amount, l.par_unit), low: false },
+              { label: 'On hand', value: counted ? formatPar(counted.amount, counted.unit) : null, low },
+            ].filter((t): t is { label: string; value: string; low: boolean } => !!t.value);
             return (
               <View key={l.id} style={styles.place}>
                 <Spec color={ds.accentText}>{lines[i]}</Spec>
@@ -105,9 +108,9 @@ function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProp
                 {stats.length ? (
                   <View style={styles.stats}>
                     {stats.map((t) => (
-                      <View key={t.label} style={[styles.stat, { backgroundColor: ds.c.raised }]}>
+                      <View key={t.label} style={[styles.stat, { backgroundColor: t.low ? withAlpha(ds.accentText, 0.18) : ds.c.raised }]}>
                         <Caption tone="muted">{t.label}</Caption>
-                        <Spec>{t.value}</Spec>
+                        <Spec color={t.low ? ds.accentText : undefined}>{t.value}</Spec>
                       </View>
                     ))}
                   </View>
@@ -121,26 +124,36 @@ function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProp
           {itemName} doesn’t have a spot at {active.name} yet.
         </Body>
       )}
-      <View style={styles.actions}>
-        {onRecipe ? <Button label="Recipe" variant="secondary" onPress={onRecipe} /> : null}
-        {!here.length && canPlace ? (
-          <Button
-            label="Give it a spot"
-            icon="map.fill"
-            onPress={() => router.push({ pathname: '/back-bar', params: { place: itemId, name: itemName } } as never)}
-          />
-        ) : null}
-        <Button label="Open the back bar" variant="secondary" onPress={() => router.push('/back-bar' as never)} />
-      </View>
+      {here.length ? (
+        // Placed: Recipe is the one button in the sheet, the back bar a link (prep-ing-where); a bottle's card opens the back bar (prep-ing-campari).
+        <View style={styles.stack}>
+          {onRecipe ? <Button label="Recipe" size="lg" onPress={onRecipe} /> : null}
+          {bare ? <View style={styles.center}><TextLink label="Open the back bar" onPress={() => router.push('/back-bar' as never)} /></View> : <Button label="Open the back bar" variant="secondary" onPress={() => router.push('/back-bar' as never)} />}
+        </View>
+      ) : (
+        <View style={styles.actions}>
+          {onRecipe ? <Button label="Recipe" variant="secondary" onPress={onRecipe} /> : null}
+          {canPlace ? (
+            <Button
+              label="Give it a spot"
+              icon="map.fill"
+              onPress={() => router.push({ pathname: '/back-bar', params: { place: itemId, name: itemName } } as never)}
+            />
+          ) : null}
+          <Button label="Open the back bar" variant="secondary" onPress={() => router.push('/back-bar' as never)} />
+        </View>
+      )}
     </Frame>
   );
 }
 
 const styles = StyleSheet.create({
   card: { gap: space.md },
-  eyebrow: { letterSpacing: 1.2 },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
   place: { gap: space.xs },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
-  stat: { alignSelf: 'flex-start', paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },
+  stat: { flex: 1, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  stack: { gap: space.sm },
+  center: { alignSelf: 'center' },
 });

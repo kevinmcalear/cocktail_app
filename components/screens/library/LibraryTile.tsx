@@ -40,7 +40,7 @@ export function LibraryTile({ item, line, glassName, width, onPress, onPressIn }
           {item.name}
         </Headline>
         {line ? (
-          <Caption tone="muted" numberOfLines={1}>
+          <Caption tone="muted" numberOfLines={2}>
             {line}
           </Caption>
         ) : null}

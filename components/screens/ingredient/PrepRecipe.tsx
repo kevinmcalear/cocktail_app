@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Caption, Chip, Headline, SpecRow, useDs } from '@/components/ds';
 import { Choice } from '@/components/screens/batch/BatchParts';
@@ -48,7 +48,6 @@ export function PrepRecipe({ lines, yieldAmount, yieldUnit, onSize, onFromWhatIH
   const showParts = view === 'parts' && !!parts;
   const scaled = scaleRecipe(lines, size.factor);
   const ratio = partsRatio(parts);
-  const makes = scaledYield(yieldAmount, yieldUnit, size.factor);
   const byWeight = lines.every((l) => toQuantity(l.amount, l.unit)?.kind !== 'ml');
   const shares = lines.map((l) => toQuantity(l.amount, l.unit)).map((q) => (q && q.kind !== 'count' ? q.value : 0));
   const measured = shares.filter((s) => s > 0).length >= 2;
@@ -62,7 +61,8 @@ export function PrepRecipe({ lines, yieldAmount, yieldUnit, onSize, onFromWhatIH
         </View>
         {parts ? <Choice label="Show the recipe as" options={VIEWS} value={view} onChange={setView} /> : null}
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sizes} role="radiogroup" aria-label="How much">
+      {/* The sizes wrap, so From what I have stays on screen (prep-prep-phone). */}
+      <View style={styles.sizes} role="radiogroup" aria-label="How much">
           {sizes.map((s) => (
             <Chip
               key={s.key}
@@ -76,7 +76,7 @@ export function PrepRecipe({ lines, yieldAmount, yieldUnit, onSize, onFromWhatIH
             />
           ))}
           <Chip label="From what I have" selected={false} quiet onPress={onFromWhatIHave} accessibilityLabel="Make it from what you have of one ingredient" />
-      </ScrollView>
+      </View>
       {measured ? (
         <View style={styles.ratio} aria-hidden>
           {shares.map((s, i) =>
@@ -99,7 +99,6 @@ export function PrepRecipe({ lines, yieldAmount, yieldUnit, onSize, onFromWhatIH
           />
         ))}
       </View>
-      {makes && !showParts ? <Caption tone="muted">{`Makes about ${makes}`}</Caption> : null}
     </View>
   );
 }
@@ -108,6 +107,6 @@ const styles = StyleSheet.create({
   section: { gap: space.md },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
   title: { gap: 2 },
-  sizes: { gap: space.sm },
+  sizes: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   ratio: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden', gap: 2 },
 });

@@ -36,7 +36,7 @@
     "components/ui/GlassView.tsx": 3,
     "components/ui/GlasswareIcon.tsx": 1,
     "components/ui/PictureTag.tsx": 4,
-    "components/ui/UserAvatar.tsx": 9,
+    "components/ui/UserAvatar.tsx": 6,
     "hooks/useBarEditor.ts": 4,
     "hooks/useCocktailDraftEditor.ts": 7,
     "hooks/useCocktailEditor.ts": 5,

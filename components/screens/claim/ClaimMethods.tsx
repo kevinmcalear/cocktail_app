@@ -1,6 +1,6 @@
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DsText, PressableScale, Tag, useDs, type IconName } from '@/components/ds';
+import { Button, Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { Profile } from '@/hooks/useProfiles';
@@ -44,7 +44,7 @@ export function methodDetails(profile: Profile, email: string | null | undefined
   };
 }
 
-const ICONS: Record<BarClaimMethod, IconName> = { email: 'envelope', instagram: 'paperplane.fill', phone: 'building.2' };
+const ICONS: Record<BarClaimMethod, IconName> = { email: 'envelope', instagram: 'paperplane.fill', phone: 'phone' };
 
 /** How fast each way is, as the pill on its card. */
 function speed(method: BarClaimMethod, d: MethodDetail): string | null {
@@ -86,24 +86,26 @@ export function ClaimMethods({
           const pill = speed(m, d);
           const label = m === 'phone' ? `A call to the ${claimPlace(profile.kind)}` : METHOD_COPY[m].label;
           return (
-            <View key={m} style={[styles.card, { borderColor: on ? ds.accentText : ds.c.line, borderWidth: on ? 2 : 1, backgroundColor: ds.c.raised }, !d.available && styles.off]}>
+            <View key={m} style={[styles.card, { borderColor: on ? ds.accentText : ds.c.line, backgroundColor: on ? ds.c.raised : ds.c.surface }, !d.available && styles.off]}>
               <PressableScale role="radio" aria-checked={on} aria-disabled={!d.available || disabled} disabled={!d.available || disabled} accessibilityLabel={`${label}. ${d.detail}`} onPress={() => onPick(m)} style={styles.choice}>
                 <View style={[styles.dot, { borderColor: on ? ds.accentText : ds.c.lineStrong, borderWidth: on ? 7 : 2 }]} />
                 <View style={styles.flex}>
                   <View style={styles.titleRow}>
-                    <IconSymbol name={ICONS[m]} size={16} color={ds.c.ink} />
-                    <DsText variant="headline" style={styles.shrink}>{label}</DsText>
+                    <IconSymbol name={ICONS[m]} size={16} color={ds.c.muted} />
+                    <DsText variant="body" style={[styles.shrink, styles.strong]}>
+                      {label}
+                      {pill ? <Caption tone="muted" style={styles.medium}>{`  ${pill}`}</Caption> : null}
+                    </DsText>
                   </View>
-                  {pill ? <Tag label={pill} tone={m === 'email' ? 'success' : 'default'} style={styles.pill} /> : null}
                   <Caption tone="muted">{d.detail}</Caption>
                 </View>
               </PressableScale>
               {on && m !== 'email' ? (
-                <View style={[styles.code, { borderColor: ds.c.lineStrong }]}>
+                <View style={[styles.code, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]}>
                   <Caption tone="muted" style={styles.eyebrow}>
                     YOUR CODE
                   </Caption>
-                  <DsText variant="display" selectable style={styles.digits} accessibilityLabel={`Your code: ${code.split('').join(' ')}`}>
+                  <DsText variant="title" selectable style={styles.digits} accessibilityLabel={`Your code: ${code.split('').join(' ')}`}>
                     {spacedCode(code)}
                   </DsText>
                   <Caption tone="muted">
@@ -129,16 +131,18 @@ export function ClaimMethods({
 
 const styles = StyleSheet.create({
   cards: { gap: space.sm },
-  card: { borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
+  card: { borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden', borderWidth: 1 },
   off: { opacity: 0.55 },
   choice: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, padding: space.lg },
   dot: { width: 22, height: 22, borderRadius: radius.pill, marginTop: 1 },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
   shrink: { flexShrink: 1 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  pill: { alignSelf: 'flex-start' },
-  code: { marginHorizontal: space.lg, marginBottom: space.lg, padding: space.lg, gap: space.xs, borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.control, alignItems: 'center' },
-  eyebrow: { letterSpacing: 1.2, fontFamily: fontFamilies.bodySemiBold },
-  digits: { fontVariant: ['tabular-nums'], letterSpacing: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
+  medium: { fontFamily: fontFamilies.bodyMedium },
+  // The code in mono, left under the way it goes with (canvas make-venue-claim).
+  code: { marginLeft: space.lg + 22 + space.md, marginRight: space.lg, marginBottom: space.lg, padding: space.md, gap: space.sm, borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.control },
+  eyebrow: { letterSpacing: 1.2, fontFamily: fontFamilies.bodyMedium },
+  digits: { fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'], letterSpacing: 2 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

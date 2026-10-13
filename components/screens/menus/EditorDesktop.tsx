@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
 
 import { Body, Button, Caption, GlassButton, useDs } from '@/components/ds';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
@@ -17,6 +17,7 @@ import { GuestPreview } from './GuestPreview';
 import { Check, MonoLabel, ReadyChecks, type CheckTarget } from './ReviewParts';
 import { Choice, MenuSheet } from './MenuSheet';
 import type { LayoutEditor } from './useLayoutEditor';
+import { dragSource, useMenuDrag, type MenuDrag } from './useMenuDrag';
 
 const CATEGORY: Record<string, ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
 
@@ -24,7 +25,8 @@ const CATEGORY: Record<string, ItemCategory> = { cocktail: 'Cocktail', beer: 'Be
  * Desktop: the library to add from, the menu, and what guests see side by
  * side, the whole width (no app sidebar). The header says "Menus · Draft ·
  * Little Rye" over the name, then a quiet save line, a ... for the layout and
- * a copy, the guest card, and Go live, the one accent.
+ * a copy, the guest card, and Go live, the one accent. On the web, library
+ * drinks and menu rows drag into any section (useMenuDrag).
  */
 export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
   const ds = useDs();
@@ -32,8 +34,9 @@ export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
   const { venues } = useActiveVenue();
   const venue = venues.find((v) => v.id === editor.menu.barId);
   const [more, setMore] = useState(false);
+  const [root, drag] = useMenuDrag(editor);
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+    <View ref={root} style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <View style={[styles.header, { borderBottomColor: ds.c.line }]}>
         <GlassButton icon="chevron.left" accessibilityLabel="Back to Menus" onPress={editor.leave} />
         <View style={styles.flex}>
@@ -48,10 +51,10 @@ export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
         </View>
       </View>
       <View style={styles.columns}>
-        <LibraryPanel editor={editor} />
+        <LibraryPanel editor={editor} drag={drag} />
         <FormScrollContainer style={styles.flex} contentContainerStyle={styles.center}>
           {editor.error ? <Body tone="accent">{editor.error}</Body> : null}
-          <EditorSections editor={editor} targetable />
+          <EditorSections editor={editor} targetable drag={drag} />
         </FormScrollContainer>
         <Inspector editor={editor} venueName={venue?.name ?? null} />
       </View>
@@ -60,7 +63,7 @@ export function EditorDesktop({ editor }: { editor: LayoutEditor }) {
   );
 }
 
-function LibraryPanel({ editor }: { editor: LayoutEditor }) {
+function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }) {
   const ds = useDs();
   const { venues } = useActiveVenue();
   const [query, setQuery] = useState('');
@@ -84,19 +87,20 @@ function LibraryPanel({ editor }: { editor: LayoutEditor }) {
         />
       </View>
       <View role="radiogroup" accessibilityLabel="Show" style={styles.wrap}>
-        <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
-        <Choice label="Not on a menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />
+        <Choice label="All" pill="accent" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
+        <Choice label="Not on a menu" pill="accent" selected={freeOnly} onPress={() => setFreeOnly(true)} />
       </View>
       <ScrollView style={styles.flex}>
         {target && drinks.length === 0 ? <Body tone="muted">No drinks that fit {target.name}.</Body> : null}
         {target
           ? drinks.map((d) => (
-              <LibraryRow key={d.id} drink={d} note={libraryNote(d, target, editor.elsewhere)} added={!!cannotAdd(target, d)} onAdd={() => editor.add(target.key, d)} />
+              <View key={d.id} {...(drag.on ? dragSource(d.id) : {})} style={drag.on && styles.grab}>
+                <LibraryRow drink={d} note={libraryNote(d, target, editor.elsewhere)} added={!!cannotAdd(target, d)} onAdd={() => editor.add(target.key, d)} />
+              </View>
             ))
           : null}
       </ScrollView>
-      {/* ponytail: tap + only. Dragging from here into a section needs drag across lists (board venue-menus-builder-desktop). */}
-      <Caption tone="muted">Tap + to add to the section marked Adding here, or click another section.</Caption>
+      <Caption tone="muted">{drag.on ? 'Tap + or drag a drink into any section.' : 'Tap + to add to the section marked Adding here, or click another section.'}</Caption>
     </View>
   );
 }
@@ -200,4 +204,6 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, minWidth: 0, paddingVertical: space.sm },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
+  // Web only: React Native's cursor type stops at pointer.
+  grab: { cursor: 'grab' } as unknown as ViewStyle,
 });

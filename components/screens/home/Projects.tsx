@@ -2,9 +2,10 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, PressableScale, Sheet, Surface, Title, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, Sheet, Surface, TextLink, Title, useDs } from '@/components/ds';
+import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
 import { DrinkRow } from '@/components/screens/DrinkRow';
-import { layout, space } from '@/constants/tokens';
+import { fontFamilies, space } from '@/constants/tokens';
 import type { TechniqueDrink } from '@/hooks/useTechniqueDrinks';
 import { itemHref } from '@/lib/itemRoutes';
 import { keepsFor } from '@/lib/myBarText';
@@ -59,20 +60,20 @@ export function Projects({ ready, away, drinks, onKit, onLab }: ProjectsProps) {
         const more = list.length - named.length;
         return (
           <Surface key={t.id} style={styles.card}>
-            <View>
-              <Caption tone="muted">{groupById(t.group)?.name ?? ''}</Caption>
-              <Headline role="heading">{t.name}</Headline>
+            <View style={styles.cardHead}>
+              <Eyebrow>{groupById(t.group)?.name ?? ''}</Eyebrow>
+              <Title>{t.name}</Title>
               <Caption tone="muted">{timeLine(t)}</Caption>
             </View>
-            <CheckList names={uses} />
+            <CheckList names={uses} chips />
             {list.length ? (
               <Body>
-                <Body>{`${drinksWord(list.length)}: `}</Body>
+                <Body style={styles.strong}>{`${drinksWord(list.length)}: `}</Body>
                 <Body tone="muted">{more > 0 ? `${named.join(', ')} and ${more} more` : named.join(', ')}</Body>
               </Body>
             ) : null}
             <View style={styles.actions}>
-              <Button label="Method" variant="secondary" onPress={() => router.push(`/techniques/${t.id}` as never)} style={styles.flex} />
+              <Button label="Method" variant="ink" onPress={() => router.push(`/techniques/${t.id}` as never)} style={styles.flex} />
               {list.length ? <Button label="The drinks" variant="secondary" accessibilityLabel={`The drinks with ${t.name}`} onPress={() => setShowing(t)} style={styles.flex} /> : null}
             </View>
           </Surface>
@@ -80,28 +81,26 @@ export function Projects({ ready, away, drinks, onKit, onLab }: ProjectsProps) {
       })}
       {nearly.length ? (
         <View style={styles.away}>
-          <Headline role="heading">{kitOnly ? 'One piece of kit away' : 'One thing away'}</Headline>
+          <Eyebrow>{kitOnly ? 'One piece of kit away' : 'One thing away'}</Eyebrow>
           {nearly.map(({ t, missing }) => {
             const n = drinks?.[t.id]?.length ?? 0;
             return (
               <View key={`${t.id}:${missing.id}`} style={[styles.row, { borderBottomColor: ds.c.line }]}>
                 <View style={styles.flex}>
-                  <Body>{t.name}</Body>
+                  <Headline>{t.name}</Headline>
                   <Caption tone="muted">{[n ? drinksWord(n) : null, `needs ${article(missing.name)}`].filter(Boolean).join(' · ')}</Caption>
                 </View>
                 {missing.kind === 'kit' ? (
                   <Button label="Add to kit" variant="secondary" accessibilityLabel={`Add ${missing.name} to your kit`} onPress={() => onKit(missing.id)} />
                 ) : (
-                  <Button label="Add" icon="plus" variant="secondary" accessibilityLabel={`Add ${missing.name}`} onPress={onLab} />
+                  <Button label="Add to lab" variant="secondary" accessibilityLabel={`Add ${missing.name} to your lab shelf`} onPress={onLab} />
                 )}
               </View>
             );
           })}
         </View>
       ) : null}
-      <PressableScale role="link" onPress={() => router.push('/techniques' as never)} style={styles.link}>
-        <Body>All techniques</Body>
-      </PressableScale>
+      <TextLink label="All techniques" onPress={() => router.push('/techniques' as never)} />
       <Sheet visible={!!showing} onClose={() => setShowing(null)} accessibilityLabel={showing ? `The drinks with ${showing.name}` : 'The drinks'}>
         <ScrollView contentContainerStyle={styles.sheet}>
           <Title>{showing?.name ?? ''}</Title>
@@ -118,10 +117,11 @@ export function Projects({ ready, away, drinks, onKit, onLab }: ProjectsProps) {
 const styles = StyleSheet.create({
   list: { gap: space.md, paddingTop: space.md },
   card: { gap: space.md },
+  cardHead: { gap: 2 },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
   actions: { flexDirection: 'row', gap: space.sm },
   flex: { flex: 1 },
   away: { gap: space.xs, paddingTop: space.lg },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  link: { alignSelf: 'flex-start', minHeight: layout.minTapTarget, justifyContent: 'center' },
   sheet: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.sm },
 });

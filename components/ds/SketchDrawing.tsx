@@ -131,16 +131,17 @@ function sceneUri(scene: Scene, paper: string): string {
  * keeps the inline SVG: Chrome rasterizes an SVG image on the main thread,
  * which measured slower there than the same SVG inline.
  */
-export const SceneSvg = memo(function SceneSvg({ scene }: { scene: Scene }) {
+export const SceneSvg = memo(function SceneSvg({ scene, bare }: { scene: Scene; /** No paper: just the drawing, for a faded suggestion on the dark ground. */ bare?: boolean }) {
   const ds = useDs();
   const u = useId().replace(/[^A-Za-z0-9]/g, '');
+  const paper = bare ? 'transparent' : ds.c.paper;
   if (Platform.OS !== 'web') {
-    return <Image source={{ uri: sceneUri(scene, ds.c.paper) }} style={[styles.fill, { backgroundColor: ds.c.paper }]} contentFit="contain" cachePolicy="memory" accessible={false} />;
+    return <Image source={{ uri: sceneUri(scene, paper) }} style={[styles.fill, { backgroundColor: paper }]} contentFit="contain" cachePolicy="memory" accessible={false} />;
   }
   return (
     // The paper runs past the square when the frame is wider (a phone hero).
-    <Svg width="100%" height="100%" viewBox={`0 0 ${scene.size} ${scene.size}`} preserveAspectRatio="xMidYMid meet" style={{ backgroundColor: ds.c.paper }} aria-hidden>
-      <Rect x={0} y={0} width={scene.size} height={scene.size} fill={ds.c.paper} />
+    <Svg width="100%" height="100%" viewBox={`0 0 ${scene.size} ${scene.size}`} preserveAspectRatio="xMidYMid meet" style={{ backgroundColor: paper }} aria-hidden>
+      {bare ? null : <Rect x={0} y={0} width={scene.size} height={scene.size} fill={paper} />}
       <Defs>{defsFor(scene.els, u, [])}</Defs>
       {scene.els.map((el, i) => draw(el, i, u))}
     </Svg>

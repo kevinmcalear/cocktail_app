@@ -48,14 +48,14 @@ function Choose({ barId, name, claim, writable, onDone, current }: Props & { cur
     else onDone();
   };
   const note = pending
-    ? `Today ${name}’s page is unclaimed, so it shows drink names and descriptions. This takes over once your claim is approved. Any single drink can still be kept private from its own page, and you can change this in Publishing.`
+    ? `Today ${name}’s page is unclaimed, so it shows names and descriptions. This takes over once your claim is approved. Any single drink can still be kept private from its own page, and you can change this in Publishing.`
     : writable
       ? 'Any single drink can still be kept private from its own page, and you can change this in Publishing.'
       : 'This applies once your bar’s page is claimed. Any single drink can still be kept private from its own page.';
 
   return (
     <SetupPage footer={<SetupFooter pending={busy} onPress={save} onSkip={onDone} />}>
-      <PageVisibilityChoice heading={false} venueName={name} value={shown} onChange={setValue} disabled={busy} error={(setPublish.error ?? saveSetup.error)?.message ?? null} note={note} />
+      <PageVisibilityChoice radios heading={false} venueName={name} value={shown} onChange={setValue} disabled={busy} error={(setPublish.error ?? saveSetup.error)?.message ?? null} note={note} />
     </SetupPage>
   );
 }

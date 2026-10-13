@@ -91,6 +91,23 @@ export function moveToSection(layout: MenuLayout, fromKey: string, drinkId: stri
   return addDrink(removeDrink(layout, fromKey, drinkId), toKey, drink);
 }
 
+/**
+ * Where a drag lands in the desktop builder: a library drink (fromKey null) or
+ * a menu row goes into toKey before the row at index, counting the dragged row
+ * where it still sits. Unchanged when that section doesn't take the drink.
+ */
+export function dropDrink(layout: MenuLayout, drink: MenuDrink, fromKey: string | null, toKey: string, index: number): MenuLayout {
+  const to = layout.sections.find((s) => s.key === toKey);
+  if (!to) return layout;
+  if (fromKey === toKey) {
+    const from = to.drinks.findIndex((d) => d.id === drink.id);
+    const at = from < index ? index - 1 : index;
+    return from < 0 || at === from ? layout : moveDrink(layout, toKey, from, at);
+  }
+  if (cannotAdd(to, drink)) return layout;
+  return addDrink(fromKey ? removeDrink(layout, fromKey, drink.id) : layout, toKey, drink, index);
+}
+
 /** The whole order of a section at once, as a drag-and-drop list reports it. */
 export function setDrinks(layout: MenuLayout, sectionKey: string, drinks: MenuDrink[]): MenuLayout {
   return mapSection(layout, sectionKey, (s) => ({ ...s, drinks }));
