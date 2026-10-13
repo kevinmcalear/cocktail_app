@@ -8,7 +8,7 @@ import { inSelectedContext, PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { draftMethodIds } from '@/lib/drinkMethods';
 import { batchedDrinkKey, heroPicture, nameKey, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 import { isHiddenFromSearch } from '@/lib/searchVisibility';
-import { capitalize } from '@/lib/stringUtils';
+import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { useMemo } from 'react';
 
 const DRAFT_CATEGORY: Record<string, SearchItem['category']> = {
@@ -165,7 +165,7 @@ export function useSearchCatalog(selectedContextIds: string[]) {
           recipes:
             data.recipeItems?.map((ri: any) => ({
               ingredient_item_id: ri.ingredient_id,
-              ingredient: { name: capitalize(ri.name || 'Unknown') },
+              ingredient: { name: capitalizeFirst(ri.name || 'Unknown') },
             })) || [],
           image: data.localImages?.[0]?.url
             ? { uri: data.localImages[0].url }

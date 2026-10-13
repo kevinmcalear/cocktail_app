@@ -210,7 +210,7 @@ test('a house prep made for the finish is saved like an ingredient’s: its own 
     barId: null,
     myProfileId: null,
   });
-  expect(mockIngredientInserts.map((r) => [r.name, r.ingredient_role])).toEqual([['Mint Oil', 'prep']]);
+  expect(mockIngredientInserts.map((r) => [r.name, r.ingredient_role])).toEqual([['Mint oil', 'prep']]);
   expect(mockSavePrepRecipe).toHaveBeenCalledTimes(1);
   expect(mockSavePrepRecipe.mock.calls[0][1]).toBe(prep);
   const [, lines] = mockSaveSpec.mock.calls[0];
