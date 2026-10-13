@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { AllergenSection } from '@/components/allergens/AllergenSection';
 import { useWhereItLives, WhereItLives } from '@/components/backbar/WhereItLives';
 import { PriceSection } from '@/components/costs/PriceSection';
-import { Headline, Surface } from '@/components/ds';
+import { Headline } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { PublishSection } from '@/components/screens/publishing/PublishSection';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
@@ -46,27 +46,28 @@ export function ForTheBar({ item, houseMade, canEditItem, whereRow }: ForTheBarP
   const publish = usePublishValue(item.id, item.bar_id);
   const close = () => setOpen(null);
 
-  const rows: { key: Exclude<Open, null>; label: string; value: string; body: ReactNode }[] = [
+  const rows: { key: Exclude<Open, null>; label: string; value: string; body: ReactNode; readOnly?: boolean }[] = [
     { key: 'allergens', label: 'Allergens', value: allergens, body: <AllergenSection itemId={item.id} houseMade={houseMade} canEditItem={canEditItem} /> },
     ...(whereRow && where.shown
       ? [{ key: 'where' as const, label: 'Where it lives', value: !where.canRead ? 'Locked' : (where.lines[0] ?? 'No spot yet'), body: <WhereItLives itemId={item.id} itemName={item.name} bare onRecipe={houseMade ? close : undefined} /> }]
       : []),
     ...(cost ? [{ key: 'cost' as const, label: 'Cost', value: cost, body: <PriceSection itemId={item.id} /> }] : []),
-    ...(publish ? [{ key: 'publish' as const, label: 'Who can see it', value: publish, body: <PublishSection itemId={item.id} barId={item.bar_id} noun="ingredient" /> }] : []),
+    ...(publish ? [{ key: 'publish' as const, label: 'Who can see it', value: publish.value, readOnly: !publish.canChange, body: <PublishSection itemId={item.id} barId={item.bar_id} noun="ingredient" /> }] : []),
   ];
   const shown = rows.find((r) => r.key === open);
 
   return (
     <View style={styles.section}>
       <Headline role="heading">For the bar</Headline>
-      <Surface style={styles.card}>
+      {/* Plain rows on the page, not a card (prep-prep-phone). */}
+      <View>
         {rows.map((r, i) => (
           <View key={r.key}>
             {i > 0 ? <RowDivider /> : null}
-            <SettingsRow label={r.label} value={r.value} onPress={() => setOpen(r.key)} />
+            {r.readOnly ? <SettingsRow label={r.label} value={r.value} trailing={<View />} disabled onPress={() => undefined} /> : <SettingsRow label={r.label} value={r.value} onPress={() => setOpen(r.key)} />}
           </View>
         ))}
-      </Surface>
+      </View>
       {shown ? (
         <MenuSheet visible onClose={close} title={shown.key === 'where' ? item.name : shown.label} subtitle={shown.key === 'where' ? `Where it lives${where.active ? ` · ${where.active.name}` : ''}` : item.name}>
           {shown.body}
@@ -108,16 +109,21 @@ function useCostValue(itemId: string, houseMade: boolean): string | null {
   return money ? `${money} a ${houseMade ? 'batch' : 'pack'}` : canCost ? 'Needs a price' : 'Pack';
 }
 
-/** "Full spec": who sees it, for people who can change it (as PublishSection decides). */
-function usePublishValue(itemId: string, barId: string | null): string | null {
+/**
+ * "Full spec": who sees it. People who can change it (as PublishSection
+ * decides) open the section; everyone else just reads it, and a shared
+ * recipe is open to everyone.
+ */
+function usePublishValue(itemId: string, barId: string | null): { value: string; canChange: boolean } | null {
   const userId = useUserId();
   const { data: caps = [] } = useCapabilities(barId);
   const { data } = useItemPublishing(itemId, barId);
-  if (!data || !(barId ? caps.includes('publish') : !!userId && data.createdBy === userId)) return null;
-  return PUBLISH_COPY[data.mode].label;
+  if (!data) return null;
+  const canChange = barId ? caps.includes('publish') : !!userId && data.createdBy === userId;
+  if (!canChange && !barId) return { value: 'Everyone', canChange };
+  return { value: PUBLISH_COPY[data.mode].label, canChange };
 }
 
 const styles = StyleSheet.create({
-  section: { gap: space.sm },
-  card: { paddingVertical: 0 },
+  section: { gap: space.xs },
 });

@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 
 export interface Fact {
   label: string;
@@ -29,7 +29,7 @@ export function DrinkTags({ tags }: { tags: string[] }) {
  * Glass, ice, family, strength: the facts you check before you reach for a
  * glass. A small grid, not a card per fact.
  */
-export function DrinkFacts({ facts, columns }: { facts: Fact[]; columns: number }) {
+export function DrinkFacts({ facts, columns, compact }: { facts: Fact[]; columns: number; /** Smaller tiles, four to a phone row (a prep's Makes, Keeps, Store, Takes). */ compact?: boolean }) {
   const ds = useDs();
   if (!facts.length) return null;
   return (
@@ -43,10 +43,10 @@ export function DrinkFacts({ facts, columns }: { facts: Fact[]; columns: number 
             accessibilityLabel={`${f.label}: ${f.value}${f.sub ? `, ${f.sub}` : ''}`}
             accessibilityHint={f.accessibilityHint}
             onPress={f.onPress}
-            style={[styles.fact, { backgroundColor: ds.c.raised, width: `${100 / columns - 2}%` }]}
+            style={[styles.fact, compact && styles.compact, { backgroundColor: ds.c.raised, width: `${100 / columns - 2}%` }]}
           >
             <Caption tone="muted">{f.label}</Caption>
-            <DsText variant="headline" numberOfLines={2}>
+            <DsText variant={compact ? 'body' : 'headline'} numberOfLines={2} style={compact ? styles.medium : null}>
               {f.value}
             </DsText>
             {f.sub ? <Caption tone="muted">{f.sub}</Caption> : null}
@@ -61,4 +61,6 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, justifyContent: 'space-between' },
   fact: { borderRadius: radius.control, padding: space.md, gap: 2, flexGrow: 1 },
+  compact: { paddingVertical: space.sm, paddingHorizontal: space.sm + 2 },
+  medium: { fontFamily: fontFamilies.bodyMedium },
 });

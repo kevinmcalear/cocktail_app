@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, LockedSection, Spec, Surface, useDs } from '@/components/ds';
+import { Body, Button, Caption, LockedSection, Spec, Surface, TextLink, useDs } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
@@ -121,26 +121,36 @@ function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProp
           {itemName} doesn’t have a spot at {active.name} yet.
         </Body>
       )}
-      <View style={styles.actions}>
-        {onRecipe ? <Button label="Recipe" variant="secondary" onPress={onRecipe} /> : null}
-        {!here.length && canPlace ? (
-          <Button
-            label="Give it a spot"
-            icon="map.fill"
-            onPress={() => router.push({ pathname: '/back-bar', params: { place: itemId, name: itemName } } as never)}
-          />
-        ) : null}
-        <Button label="Open the back bar" variant="secondary" onPress={() => router.push('/back-bar' as never)} />
-      </View>
+      {here.length ? (
+        // Placed: Recipe is the one button in the sheet, the back bar a link (prep-ing-where); a bottle's card opens the back bar (prep-ing-campari).
+        <View style={styles.stack}>
+          {onRecipe ? <Button label="Recipe" size="lg" onPress={onRecipe} /> : null}
+          {bare ? <View style={styles.center}><TextLink label="Open the back bar" onPress={() => router.push('/back-bar' as never)} /></View> : <Button label="Open the back bar" variant="secondary" onPress={() => router.push('/back-bar' as never)} />}
+        </View>
+      ) : (
+        <View style={styles.actions}>
+          {onRecipe ? <Button label="Recipe" variant="secondary" onPress={onRecipe} /> : null}
+          {canPlace ? (
+            <Button
+              label="Give it a spot"
+              icon="map.fill"
+              onPress={() => router.push({ pathname: '/back-bar', params: { place: itemId, name: itemName } } as never)}
+            />
+          ) : null}
+          <Button label="Open the back bar" variant="secondary" onPress={() => router.push('/back-bar' as never)} />
+        </View>
+      )}
     </Frame>
   );
 }
 
 const styles = StyleSheet.create({
   card: { gap: space.md },
-  eyebrow: { letterSpacing: 1.2 },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
   place: { gap: space.xs },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.xs },
-  stat: { alignSelf: 'flex-start', paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },
+  stat: { flex: 1, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  stack: { gap: space.sm },
+  center: { alignSelf: 'center' },
 });

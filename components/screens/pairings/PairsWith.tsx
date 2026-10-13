@@ -8,8 +8,12 @@ import { useDrinkSources } from '@/hooks/useDrinkSources';
 import { useItemScores } from '@/hooks/useFlavor';
 import { usePairDrinks, usePairings, usePairNote } from '@/hooks/usePairings';
 
+import { IconSymbol } from '@/components/ui/icon-symbol';
+
 import { PairChip } from './PairChip';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
+
+const FIRST = 3;
 
 /**
  * On an ingredient's page: what bartenders put it with, each with the number
@@ -18,12 +22,13 @@ import { usePrefetchCocktail } from '@/hooks/useCocktails';
  */
 export function PairsWith({ itemId, name }: { itemId: string; name: string }) {
   const router = useRouter();
-  const { data: pairs = [] } = usePairings([itemId], { limit: 12 });
+  const { data: pairs = [] } = usePairings([itemId], { limit: 8 });
   const [open, setOpen] = useState<string | null>(null);
   const picked = pairs.find((p) => p.id === open) ?? null;
   if (!pairs.length) return null;
 
   return (
+    <View style={styles.stack}>
     <Surface style={styles.stack}>
       <View style={styles.head}>
         <Headline>Pairs with</Headline>
@@ -36,12 +41,12 @@ export function PairsWith({ itemId, name }: { itemId: string; name: string }) {
             label={p.name}
             count={p.together[0]}
             selected={p.id === open}
+            accent
             onPress={() => setOpen(p.id === open ? null : p.id)}
             accessibilityLabel={`${p.name}, in ${p.together[0]} drinks with ${name}. Show them`}
           />
         ))}
       </View>
-      {picked ? <PairDrinks a={itemId} b={picked.id} title={`${picked.name} and ${name}`} total={picked.together[0]} /> : null}
       <Button
         label="Open the flavor map"
         variant="secondary"
@@ -49,6 +54,9 @@ export function PairsWith({ itemId, name }: { itemId: string; name: string }) {
         onPress={() => router.push({ pathname: '/flavor-map', params: { with: itemId } })}
       />
     </Surface>
+    {/* The tapped pairing's drinks are their own card under it (decided on the canvas). */}
+    {picked ? <PairDrinks key={picked.id} a={itemId} b={picked.id} title={`${picked.name} and ${name}`} total={picked.together[0]} /> : null}
+    </View>
   );
 }
 
@@ -60,13 +68,16 @@ function PairDrinks({ a, b, title, total }: { a: string; b: string; title: strin
   const ds = useDs();
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
-  const { data: drinks = [], isLoading } = usePairDrinks(a, b);
+  const [all, setAll] = useState(false);
+  const { data: loaded = [], isLoading } = usePairDrinks(a, b);
+  // Three, then the rest a tap away (prep-ing-campari).
+  const drinks = all ? loaded : loaded.slice(0, FIRST);
   const { data: note } = usePairNote(a, b);
   const { data: sources } = useDrinkSources(drinks.map((d) => d.id));
   const { data: scores } = useItemScores(drinks.map((d) => d.id));
   const more = total - drinks.length;
   return (
-    <Surface raised style={styles.drinks}>
+    <Surface style={styles.drinks}>
       <Headline>{title}</Headline>
       {note ? <Caption tone="muted">{note}</Caption> : null}
       {isLoading ? <Caption tone="muted">Finding the drinks…</Caption> : null}
@@ -86,18 +97,28 @@ function PairDrinks({ a, b, title, total }: { a: string; b: string; title: strin
           >
             <View style={styles.rowName}>
               <Body numberOfLines={1}>{d.name}</Body>
-              <Caption tone="muted" numberOfLines={1}>
-                {[by, kind].filter(Boolean).join(' · ')}
-              </Caption>
+              {by ? (
+                <Caption tone="muted" numberOfLines={1}>
+                  {by}
+                </Caption>
+              ) : null}
             </View>
+            <Caption tone="muted">{kind}</Caption>
             <RowScore score={score} />
           </PressableScale>
         );
       })}
       {more > 0 && !isLoading ? (
-        <View style={[styles.row, { borderTopColor: ds.c.line }]}>
-          <Caption tone="muted">{`${more} more ${more === 1 ? 'drink' : 'drinks'}`}</Caption>
-        </View>
+        all || loaded.length <= drinks.length ? (
+          <View style={[styles.row, { borderTopColor: ds.c.line }]}>
+            <Caption tone="muted">{`${more} more ${more === 1 ? 'drink' : 'drinks'}`}</Caption>
+          </View>
+        ) : (
+          <PressableScale role="button" accessibilityLabel={`Show ${more} more drinks`} onPress={() => setAll(true)} style={[styles.row, { borderTopColor: ds.c.line }]}>
+            <Body style={styles.rowName}>{`${more} more ${more === 1 ? 'drink' : 'drinks'}`}</Body>
+            <IconSymbol name="chevron.right" size={14} color={ds.c.muted} />
+          </PressableScale>
+        )
       ) : null}
     </Surface>
   );

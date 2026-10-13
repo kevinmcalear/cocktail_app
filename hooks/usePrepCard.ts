@@ -274,7 +274,8 @@ export function usePrepRatio(itemId: string | null | undefined) {
     queryKey: ['prep-ratio', itemId],
     enabled: !!itemId,
     queryFn: async (): Promise<string | null> => {
-      const { data, error } = await supabase.from('recipes').select('id, amount, unit').eq('recipe_item_id', itemId!).order('sort_order');
+      // The presentation view: the raw recipes table is for the prep's editors only (RLS), so a riff's page showed no ratio.
+      const { data, error } = await supabase.from('app_recipe_presentation').select('id, amount, unit').eq('recipe_item_id', itemId!).order('sort_order');
       if (error) throw error;
       const lines = ((data ?? []) as { id: string; amount: number | null; unit: string | null }[]).map((r) => ({ ...r, name: '' }));
       return partsRatio(prepParts(lines));
