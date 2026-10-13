@@ -1,8 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { chunk } from '@/lib/commandSearchGrid';
-import { ingredientLine } from '@/lib/menus';
-import { inSentence } from '@/lib/myBarText';
+import { ingredientLine, readingName } from '@/lib/menus';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { supabase } from '@/lib/supabase';
 
@@ -88,10 +87,7 @@ export function useDrinkLines(itemIds: readonly string[]) {
       if (error) throw error;
       return Object.fromEntries(
         ((data ?? []) as unknown as LineRow[]).map((r) => {
-          const names = sortRecipesByOrder(r.recipes ?? []).map((x) => {
-            const ing = one(x.display_ingredient);
-            return ing ? inSentence(ing.name, ing.ingredient_role === 'generic' || ing.ingredient_role === 'prep') : null;
-          });
+          const names = sortRecipesByOrder(r.recipes ?? []).map((x) => readingName(one(x.display_ingredient)));
           return [r.id, ingredientLine(names).split(', ').slice(0, LINE_MAX).join(', ')];
         })
       );

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { cardWhen, EMPTY_PLAN, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
+import { cardWhen, EMPTY_PLAN, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -130,6 +130,11 @@ console.log('menus: ok');
 // --- a cocktail's menu line: spec order, each ingredient once ---
 assert.equal(ingredientLine(['Fernet-Branca', 'Heavy Cream', 'Coffee Liqueur', 'heavy cream ', null, '']), 'Fernet-Branca, Heavy Cream, Coffee Liqueur');
 assert.equal(ingredientLine([]), '');
+assert.equal(readingName({ name: 'Dry Vermouth', ingredient_role: 'generic' }), 'dry vermouth');
+assert.equal(readingName({ name: 'Campari', ingredient_role: 'product' }), 'Campari');
+assert.equal(readingName({ name: 'Fig Leaf Syrup', ingredient_role: 'prep' }), 'fig leaf syrup');
+assert.equal(readingName(null), null);
+assert.equal(sentenceLine(ingredientLine(['gin', 'dry vermouth', 'Campari'])), 'Gin, dry vermouth, Campari');
 
 {
   assert.deepEqual([...newDrinkIds(['a', 'b', 'c'], [{ itemIds: ['b'] }, { itemIds: ['c'] }])], ['a']);
