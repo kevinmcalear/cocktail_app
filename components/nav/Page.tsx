@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Caption, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { Body, Caption, Display, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb, useWebNavWidth } from '@/hooks/useIsWideWeb';
@@ -40,7 +40,7 @@ function useColumnRightPad(width: ColumnWidth): number {
  * A subtitle is only for something the page doesn't already say: "2 on now",
  * not the venue's name, which the sidebar and the chip show.
  */
-export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', wordmark, crumbs, above }: {
+export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', wordmark, crumbs, above, display }: {
   title: string;
   /** The venue's name beside the logo on a phone (Tonight only). */
   wordmark?: boolean;
@@ -58,6 +58,8 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
   crumbs?: Crumb[];
   /** Over the title: an event's two bar marks and its kind. */
   above?: ReactNode;
+  /** The venue's own pages (Tonight, Library, Menus, a menu) draw their title at display size; the rest at title size. */
+  display?: boolean;
 }) {
   const ds = useDs();
   const gutter = useGutter();
@@ -88,7 +90,7 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
         <View style={styles.title}>
           {sidebar && crumbs?.length ? <Crumbs trail={crumbs} /> : null}
           {above}
-          <Title>{title}</Title>
+          {display ? <Display>{title}</Display> : <Title>{title}</Title>}
           {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
         </View>
         {action && !(actionOnTop && onBack && !sidebar) ? <View style={styles.action}>{action}</View> : null}

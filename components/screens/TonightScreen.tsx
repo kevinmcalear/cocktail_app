@@ -70,6 +70,7 @@ export function TonightScreen() {
           <View style={styles.header}>
             <PageHeader
               title="Tonight"
+              display
               wordmark
               subtitle={date ? tonightLine(date, menus, drinks.length) : '\u00a0'}
               action={active && !phone ? menusButton : null}

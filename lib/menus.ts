@@ -192,7 +192,7 @@ export function tonightLine(date: Date, menus: { name: string }[], drinks: numbe
 
 /** "Gin · dry vermouth · orange bitters": a menu line as Tonight's rows read it. */
 export function dotLine(line: string): string {
-  return line.split(/,\s*/).filter(Boolean).join(' · ');
+  return line.replace(/\.\s*$/, '').split(/,\s*/).filter(Boolean).join(' · ');
 }
 
 /** "Cocktails · 3 to 5", "Beer · up to 3", "Any drink". */
