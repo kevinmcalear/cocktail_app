@@ -15,15 +15,17 @@ export function SetupBanner({ count, onPress }: { count: number; onPress?: () =>
   const what = count === 0 ? 'pick up where you left off' : `${count} ${count === 1 ? 'thing' : 'things'} on ${count === 1 ? 'its' : 'their'} way`;
   const body = (
     <>
-      <IconSymbol name="sparkles" size={16} color={ds.accentText} />
+      <IconSymbol name="clock" size={16} color={ds.c.muted} />
       <Body style={styles.flex} numberOfLines={1}>
         <Body style={styles.strong}>Setup:</Body>
         {` ${what}`}
       </Body>
-      <Caption style={[styles.strong, { color: ds.accentText }]}>See</Caption>
+      <View style={[styles.see, { borderColor: ds.c.lineStrong }]}>
+        <Caption style={styles.strong}>See</Caption>
+      </View>
     </>
   );
-  const style = [styles.banner, { backgroundColor: ds.c.raised }];
+  const style = [styles.banner, { backgroundColor: ds.c.surface, borderColor: ds.c.line }];
   if (!onPress) return <View role="img" aria-label={`The banner Tonight shows until setup is finished: Setup, ${what}`} style={style}>{body}</View>;
   return (
     <PressableScale role="button" accessibilityLabel={`Setup: ${what}. See`} onPress={onPress} style={style}>
@@ -45,7 +47,8 @@ export function TonightSetupBanner({ barId }: { barId: string }) {
 }
 
 const styles = StyleSheet.create({
-  banner: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.md, paddingLeft: space.lg, paddingRight: space.sm, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
+  see: { minHeight: 36, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
 });

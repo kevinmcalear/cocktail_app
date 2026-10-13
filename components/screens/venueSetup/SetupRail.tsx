@@ -2,8 +2,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { UserAvatar } from '@/components/ui/UserAvatar';
+import { VenueMark } from '@/components/nav/VenueMarks';
 import { fontFamilies, radius, space } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { STEP_NAMES, VENUE_STEPS, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
 
 const WIDTH = 300;
@@ -18,7 +19,8 @@ export function SetupRail({ name, logoUrl, at, done, status, onPick, onLeave }: 
   return (
     <View role="navigation" accessibilityLabel="Venue setup steps" style={[styles.rail, { borderRightColor: ds.c.line }]}>
       <View style={styles.head}>
-        <UserAvatar uri={logoUrl} name={name || 'Venue'} size={40} />
+        {/* The venue's own mark in its brand (canvas make-venue-desktop). */}
+        <VenueMark venue={{ id: name, name: name || 'Venue', logoUrl, accent: ds.accentFill.fill, displayFace: ds.displayFace, groundTint: null, roleLevel: 40 }} size={40} />
         <View style={styles.flex}>
           <Caption tone="muted" style={styles.eyebrow}>VENUE SETUP</Caption>
           <DsText variant="headline" numberOfLines={1}>{name || 'Your bar'}</DsText>
@@ -30,8 +32,8 @@ export function SetupRail({ name, logoUrl, at, done, status, onPick, onLeave }: 
           const ticked = done.includes(s);
           return (
             <PressableScale key={s} role="link" aria-current={current ? 'step' : undefined} accessibilityLabel={`${i + 1}. ${STEP_NAMES[s]}${ticked ? ', done' : ''}`} onPress={() => onPick(s)} style={[styles.step, current && { backgroundColor: ds.c.raised }]}>
-              <View style={[styles.num, { borderColor: ticked ? ds.accentFill.fill : ds.c.lineStrong, backgroundColor: ticked ? ds.accentFill.fill : 'transparent' }]}>
-                {ticked ? <IconSymbol name="checkmark" size={12} color={ds.accentFill.text} /> : <Caption tone={current ? 'ink' : 'muted'}>{String(i + 1)}</Caption>}
+              <View style={[styles.num, ticked ? { borderColor: 'transparent', backgroundColor: withAlpha(ds.accentText, 0.18) } : current ? { borderColor: ds.accentFill.fill, backgroundColor: ds.accentFill.fill } : { borderColor: ds.c.lineStrong }]}>
+                {ticked ? <IconSymbol name="checkmark" size={12} color={ds.accentText} /> : <Caption color={current ? ds.accentFill.text : ds.c.muted}>{String(i + 1)}</Caption>}
               </View>
               <View style={styles.flex}>
                 <DsText variant="body" style={current ? styles.strong : null}>{STEP_NAMES[s]}</DsText>
