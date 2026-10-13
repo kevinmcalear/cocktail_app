@@ -19,7 +19,6 @@ import { CreateSheet } from './CreateSheet';
 import { useNavPlaces, type Place } from './navPlaces';
 import { MarksRow, NavHeading, NavRow, YouFooter } from './SideNavParts';
 import { VenueBrandProvider } from './VenueBrandProvider';
-import { VenueWordmark } from './VenueSwitcher';
 import { WebRail } from './WebRail';
 
 /** What the sidebar and the rail share: where to go, which row is lit, and opening New and Search. */
@@ -112,11 +111,6 @@ function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
   return (
     <View role="navigation" accessibilityLabel="Main" style={[styles.nav, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line }]}>
       <MarksRow />
-      {venue ? (
-        <View style={styles.wordmark}>
-          <VenueWordmark venue={venue} />
-        </View>
-      ) : null}
       <NavRow label="Search" icon="magnifyingglass" role="button" look="filled" hint={isApplePlatform() ? '⌘K' : 'Ctrl K'} current={searching} onPress={onSearch} />
       {nav.map(row)}
       {work.map(row)}
@@ -135,5 +129,4 @@ function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
 
 const styles = StyleSheet.create({
   nav: { width: WEB_SIDEBAR_WIDTH, height: '100%', flexShrink: 0, paddingVertical: space.lg, paddingHorizontal: space.md, gap: 2, borderRightWidth: StyleSheet.hairlineWidth },
-  wordmark: { paddingHorizontal: space.xs, paddingBottom: space.md },
 });
