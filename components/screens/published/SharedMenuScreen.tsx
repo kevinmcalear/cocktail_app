@@ -166,7 +166,7 @@ function MenuRow({ drink: d, open }: { drink: MenuDrink; open: (() => void) | nu
         {d.name}
       </DsText>
       {d.line ? (
-        <Caption tone="muted" numberOfLines={1}>
+        <Caption tone="muted" numberOfLines={2}>
           {d.line}
         </Caption>
       ) : null}
