@@ -36,7 +36,7 @@ export function PhotosScreen({ item, angle }: { item: DatabaseItem; angle?: stri
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
   return (
     <BackbarTheme>
-      <BrandProvider accent={venue?.accent ?? undefined}>
+      <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace}>
         <Photos item={item} start={angle} />
       </BrandProvider>
     </BackbarTheme>
