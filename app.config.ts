@@ -50,7 +50,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const identity = IDENTITY[variant];
   const appId = `${APP.bundleId}${identity.idSuffix}`;
 
-  return {
+  return withoutPushEntitlement({
     ...config,
     name: identity.name,
     slug: 'cocktail_app',
@@ -83,11 +83,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     // environment). Build-time only: the native SDK is already linked, so
     // crash capture itself doesn't depend on this. Not in dev or preview
     // builds, which have nothing to upload to.
-    plugins: [...(config.plugins ?? []), ...(variant === 'production' ? ['@sentry/react-native'] : []), withoutPushEntitlement],
+    plugins: [...(config.plugins ?? []), ...(variant === 'production' ? ['@sentry/react-native'] : [])],
     updates: { url: `https://u.expo.dev/${config.extra?.eas?.projectId}` },
     extra: {
       ...config.extra,
       appVariant: variant,
     },
-  };
+  });
 };
