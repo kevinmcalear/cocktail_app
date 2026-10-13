@@ -35,7 +35,8 @@ jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) 
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [{ id: 'c-negroni', name: 'Negroni', imageUrl: null }] }) }));
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
-jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }) }));
+// "Is this one of your glasses?" (components/screens/venue/GlasswarePrompt.test.tsx) asks no one here: nobody has brand.
+jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }), useBarPageId: () => ({ data: 'page-1' }), useSaveBarGlass: () => ({ mutate: jest.fn() }) }));
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));
 const mockStart = jest.fn();
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }), useClassicPreview: () => ({ data: null }) }));
@@ -200,6 +201,9 @@ describe('AddDrinkWizard', () => {
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.glassVariant).toBeNull();
+    // Only someone who may change the glassware is asked to add a glass.
+    await fireEvent.press(screen.getByRole('radio', { name: 'Coupe' }));
+    expect(screen.queryByText('Is this one of your glasses?')).toBeNull();
   });
 
   test('tapping a name, then Swap, swaps the ingredient and keeps its amount', async () => {

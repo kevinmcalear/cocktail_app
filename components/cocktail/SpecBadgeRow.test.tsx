@@ -4,6 +4,10 @@ import type { ComponentProps } from 'react';
 import { SpecBadgeRow } from '@/components/cocktail/SpecBadgeRow';
 import { renderWithTamagui } from '@/jest.setup';
 
+// The venue's glassware and "Is this one of your glasses?" have tests of their own (AddDrinkWizard, lib/glassware.check.ts).
+jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: [] }) }));
+jest.mock('@/components/screens/venue/GlasswarePrompt', () => ({ GlasswarePrompt: () => null }));
+
 type Editor = NonNullable<ComponentProps<typeof SpecBadgeRow>['editor']>;
 
 const names = (els: { props: { accessibilityLabel?: string; 'aria-label'?: string } }[]) =>
