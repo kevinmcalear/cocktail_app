@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 import { drinksBucketUrl } from "../_shared/drinksUrl.ts";
+import { iconBackground, type IconBackground } from "../_shared/iconBackground.ts";
 import { decodableSize } from "../_shared/imageSize.ts";
 import { corsHeaders } from "../_shared/http.ts";
 import { isLocalStack } from "../_shared/localStack.ts";
@@ -31,7 +32,11 @@ interface Branding {
   /** Set on the brand screen; the name and logo stand in when they're empty. */
   short_name: string | null;
   icon_url: string | null;
+  ground_tint: string | null;
+  /** The icon's background, picked on Brand: the accent, the dark ground or cream; null for the logo's own. */
+  icon_background: IconBackground | null;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -103,8 +108,9 @@ const iconMemo = new Map<string, Promise<Uint8Array<ArrayBuffer> | null>>();
 const ICON_MEMO_MAX = 200;
 
 /**
- * The venue's home-screen icon (or its logo) centred on a square, padded with its own
- * background (its corner pixel) or white if the logo is transparent.
+ * The venue's home-screen icon (or its logo) centred on a square, on the
+ * background picked on Brand, else padded with its own background (its corner
+ * pixel) or white if the logo is transparent.
  * Opaque, as iOS fills transparency with black. Venues without a logo, or
  * with one too big to fetch or decode, get the network icon.
  */
@@ -112,7 +118,7 @@ async function icon(branding: Branding, size: number): Promise<Response> {
   if (!ICON_SIZES.has(size)) return new Response("Unsupported size", { status: 400, headers: corsHeaders });
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const source = drinksBucketUrl(branding.icon_url ?? branding.logo_url ?? "", supabaseUrl);
-  const png = source ? await memoIcon(source, size, supabaseUrl) : null;
+  const png = source ? await memoIcon(source, size, supabaseUrl, iconBackground(branding)) : null;
   if (!png) {
     return new Response(null, {
       status: 302,
@@ -122,12 +128,12 @@ async function icon(branding: Branding, size: number): Promise<Response> {
   return new Response(png, { headers: { ...corsHeaders, "Content-Type": "image/png", "Cache-Control": ICON_CACHE } });
 }
 
-function memoIcon(source: string, size: number, supabaseUrl: string): Promise<Uint8Array<ArrayBuffer> | null> {
-  const key = `${size} ${source}`;
+function memoIcon(source: string, size: number, supabaseUrl: string, fill: number | null): Promise<Uint8Array<ArrayBuffer> | null> {
+  const key = `${size} ${fill ?? "own"} ${source}`;
   let drawn = iconMemo.get(key);
   if (!drawn) {
     if (iconMemo.size >= ICON_MEMO_MAX) iconMemo.delete(iconMemo.keys().next().value!);
-    drawn = drawIcon(source, size, supabaseUrl).catch((err) => {
+    drawn = drawIcon(source, size, supabaseUrl, fill).catch((err) => {
       // A logo that can't be fetched now may be back later: don't keep the miss.
       iconMemo.delete(key);
       console.error("venue-app icon:", err);
@@ -138,14 +144,15 @@ function memoIcon(source: string, size: number, supabaseUrl: string): Promise<Ui
   return drawn;
 }
 
-async function drawIcon(source: string, size: number, supabaseUrl: string): Promise<Uint8Array<ArrayBuffer> | null> {
+async function drawIcon(source: string, size: number, supabaseUrl: string, fill: number | null): Promise<Uint8Array<ArrayBuffer> | null> {
   const bytes = await fetchLogo(source, supabaseUrl);
   // A small file can still decode to an enormous bitmap: check the header first.
   if (!bytes || !decodableSize(bytes)) return null;
   const logo = await Image.decode(bytes);
 
   const corner = logo.getPixelAt(1, 1);
-  const background = (corner & 0xff) < 250 ? 0xffffffff : corner;
+  // The venue's pick, else the logo's own corner colour (white behind a transparent logo).
+  const background = fill ?? ((corner & 0xff) < 250 ? 0xffffffff : corner);
 
   // Keep the logo inside the central 80%, which maskable icons never crop.
   const box = Math.round(size * 0.8);

@@ -36,6 +36,7 @@ function draftFrom(row: VenueBrandRow): BrandDraftState {
     face: faceFromDb(row.display_face) as DisplayFace,
     tint: row.ground_tint ?? '',
     shortName: row.short_name ?? '',
+    iconBackground: row.icon_background,
   };
 }
 
@@ -66,6 +67,7 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     ground_tint: normalizeHex(draft.tint),
     short_name: draft.shortName.trim() || null,
     accent_text: draft.ink,
+    icon_background: draft.iconBackground,
   };
   const changed = canEdit && (Object.keys(patch) as (keyof typeof patch)[]).some((k) => (patch[k] ?? null) !== (row[k] ?? null));
 
@@ -110,6 +112,7 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     accentText: draft.ink,
     displayFace: draft.face,
     groundTint: usableGroundTint(normalizeHex(draft.tint)),
+    iconBackground: draft.iconBackground,
   };
   // What buttons use when the venue hasn't picked: whichever ink reads better.
   const autoInk: AccentInk = accentFill(accent ?? DEFAULT_ACCENT, ACCENT_INK.ink, ACCENT_INK.cream).text === ACCENT_INK.ink ? 'ink' : 'cream';

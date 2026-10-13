@@ -8,6 +8,7 @@ import { normalizeHex, usableGroundTint } from '@/lib/brand';
 import { colourName, contrastLines, type AccentInk } from '@/lib/brandColours';
 
 import { AccentCards, AccentInkChoice, ContrastCheck, type AccentOption } from './BrandColours';
+import { IconChoices, type IconBackground } from './BrandIcon';
 import { Swatches } from './BrandPreview';
 import { FaceChoices, LogoRow } from './BrandSections';
 
@@ -23,6 +24,7 @@ export interface BrandDraftState {
   face: DisplayFace;
   tint: string;
   shortName: string;
+  iconBackground: IconBackground | null;
 }
 
 /** The accent cards: the current accent, colours from the logo, and the app's default, each once. */
@@ -121,6 +123,13 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
       {hideIcon ? null : (
         <SettingsSection title="Home-screen icon" note="What staff see when they add your staff link to their home screen.">
           <View style={styles.fields}>
+            {draft.iconUrl ? null : (
+              <IconChoices
+                look={{ name: row.name, logoUrl: draft.logoUrl, accent, groundTint: tint, displayFace: draft.face }}
+                value={draft.iconBackground}
+                onChange={set('iconBackground')}
+              />
+            )}
             <Field
               label="Home-screen name"
               value={draft.shortName}
