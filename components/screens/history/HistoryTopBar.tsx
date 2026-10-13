@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Caption, Field, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
-import { layout, space } from '@/constants/tokens';
-import { FAMILIES, rowMeta, searchTree, type TreeNode } from '@/lib/drinkTree';
+import { Caption, GlassButton, Segmented, Title, useDs, useGutter } from '@/components/ds';
+import { fontFamilies, layout, space } from '@/constants/tokens';
+import { useViewAs } from '@/hooks/useViewAs';
+import type { TreeNode } from '@/lib/drinkTree';
+
+import { HistorySearch } from './HistorySearch';
 
 export type HistoryView = 'tree' | 'timeline';
 const VIEWS = [
@@ -13,10 +16,10 @@ const VIEWS = [
 ] as const;
 
 /**
- * History's header, as drawn: on phones a compact bar (Back, Tree | Timeline,
- * a search button that opens the field); on desktop the eyebrow, "History"
- * and the tabs at the right, with the search field under them. Search works
- * in both views: a match jumps to the drink.
+ * History's header, as drawn: on phones a compact bar (Back, Tree | Timeline
+ * in the middle, a search button that opens the field); on desktop the
+ * eyebrow, "History" and the tabs at the right. Desktop's search sits in the
+ * content row (HistorySearch). A match jumps to the drink.
  */
 export function HistoryTopBar({
   view,
@@ -39,73 +42,56 @@ export function HistoryTopBar({
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const results = searchTree(nodes, query);
+  // View as's banner floats at the top of the screen: on a phone, the bar starts under it so the tabs stay tappable.
+  const viewingAs = useViewAs().viewAsRoleLevel != null;
   const tabs = <Segmented accessibilityLabel="History view" options={VIEWS} value={view} onChange={onView} />;
-  const field = (
-    <Field
-      label="Find a drink, bartender or bar"
-      value={query}
-      onChangeText={setQuery}
-      placeholder="Penicillin, Ada Coleman, Pegu Club"
-      autoCorrect={false}
-      autoCapitalize="none"
-      autoFocus={!wide}
-    />
-  );
-  const pick = (key: string) => {
-    onJump(key);
-    setQuery('');
-    setOpen(false);
-  };
 
   return (
-    <View style={[styles.bar, { paddingTop: insets.top + (wide ? space.xl : space.sm), paddingHorizontal: gutter, borderBottomColor: ds.c.line }]}>
+    <View
+      style={[
+        styles.bar,
+        wide ? null : { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth },
+        { paddingTop: insets.top + (wide ? space.xl : space.sm + (viewingAs ? layout.minTapTarget + space.sm : 0)), paddingHorizontal: gutter },
+      ]}
+    >
       {wide ? (
         <View style={styles.wideHead}>
           <View style={styles.flex}>
-            {eyebrow ? <Caption tone="muted">{eyebrow}</Caption> : null}
+            {eyebrow ? (
+              <Caption tone="muted" style={styles.eyebrow}>
+                {eyebrow}
+              </Caption>
+            ) : null}
             <Title>History</Title>
           </View>
-          <View style={styles.wideTabs}>{tabs}</View>
+          {tabs}
         </View>
       ) : (
         <View style={styles.row}>
-          <GlassButton
-            accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-            icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-            onPress={onBack}
-          />
-          <View style={styles.flex}>{tabs}</View>
+          <GlassButton accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'} icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'} onPress={onBack} />
+          <View style={styles.center}>{tabs}</View>
           <GlassButton accessibilityLabel={open ? 'Close search' : 'Find a drink, bartender or bar'} icon={open ? 'xmark' : 'magnifyingglass'} onPress={() => setOpen(!open)} />
         </View>
       )}
-      {wide || open ? field : null}
-      {query.trim() ? (
-        <View role="list" aria-label="Matches">
-          {results.length ? (
-            results.map((n) => (
-              <PressableScale key={n.key} role="button" accessibilityLabel={`Show ${n.name}`} onPress={() => pick(n.key)} style={[styles.result, { borderBottomColor: ds.c.line }]}>
-                <Body numberOfLines={1}>{n.name}</Body>
-                <Caption tone="muted" numberOfLines={1}>
-                  {[FAMILIES.find((f) => f.key === n.family)?.name, rowMeta(n)].filter(Boolean).join(' · ')}
-                </Caption>
-              </PressableScale>
-            ))
-          ) : (
-            <Caption tone="muted">{`Nothing in the history matches "${query.trim()}".`}</Caption>
-          )}
-        </View>
+      {!wide && open ? (
+        <HistorySearch
+          nodes={nodes}
+          autoFocus
+          onJump={(key) => {
+            onJump(key);
+            setOpen(false);
+          }}
+        />
       ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { gap: space.md, paddingBottom: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  bar: { gap: space.md, paddingBottom: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  center: { flex: 1, minWidth: 0, alignItems: 'center' },
   wideHead: { flexDirection: 'row', alignItems: 'flex-end', gap: space.lg },
-  wideTabs: { width: 260 },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
   flex: { flex: 1, minWidth: 0 },
-  result: { minHeight: layout.minTapTarget + space.sm, justifyContent: 'center', paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
 });

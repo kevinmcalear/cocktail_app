@@ -16,6 +16,8 @@ export interface Source {
   euvs_url: string | null;
   archive_url: string | null;
   url: string | null;
+  /** One paragraph about the book, on its page only (the book query reads it). */
+  summary?: string | null;
 }
 
 export interface PrintedLine {

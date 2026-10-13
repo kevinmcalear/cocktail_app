@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, Headline, TextLink, useDs, type IconName } from '@/components/ds';
+import { Caption, DsText, TextLink, useDs, type IconName } from '@/components/ds';
+import { VenueMark } from '@/components/nav/VenueMarks';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
+import { SetupHead } from '@/components/screens/onboarding/SetupParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import type { Venue } from '@/hooks/useActiveVenue';
 import { GROUND_TINTS, displayFaces, radius, space } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
 import { useBarInvites, useSendInviteEmail } from '@/hooks/useBarInvites';
@@ -11,21 +14,39 @@ import { useBarPublishing } from '@/hooks/usePublishing';
 import type { ProfileClaim } from '@/hooks/useProfiles';
 import { useVenueBrand } from '@/hooks/useVenueBrand';
 import { faceFromDb, normalizeHex } from '@/lib/brand';
-import { METHOD_COPY } from '@/lib/claimVerification';
+import { colourName } from '@/lib/brandColours';
+import { withAlpha } from '@/lib/color';
 import { PAGE_COPY, type PageVisibility } from '@/lib/pageVisibility';
 import { namesLine, onItsWay, type ClaimState } from '@/lib/venueSetup';
 
 import { SetupBanner } from './SetupBanner';
 
+/** How the claim is being checked, in a few words. */
+const CLAIM_LINE = { email: 'Work email', instagram: 'A code sent from the bar’s Instagram', phone: 'A call to the bar', note: 'A call to the bar' } as const;
+
+/** The summary's mark: the venue's logo with a check in the accent beside it. */
+export function DoneMark({ venue }: { venue: Venue }) {
+  const ds = useDs();
+  return (
+    <View style={styles.head} aria-hidden>
+      <VenueMark venue={venue} size={64} />
+      <View style={[styles.badge, { backgroundColor: ds.accentFill.fill }]}>
+        <IconSymbol name="checkmark" size={16} color={ds.accentFill.text} />
+      </View>
+    </View>
+  );
+}
+
+/** One line of the summary: still on its way (a dashed ring) or done (a tinted check). */
 function Line({ icon, title, line, end, waiting }: { icon: IconName; title: string; line: string; end?: ReactNode; waiting?: boolean }) {
   const ds = useDs();
   return (
-    <View role="listitem" style={styles.line}>
-      <View style={[styles.mark, { backgroundColor: waiting ? ds.c.raised : ds.accentFill.fill }]}>
-        <IconSymbol name={icon} size={14} color={waiting ? ds.c.ink : ds.accentFill.text} />
+    <View role="listitem" style={[styles.line, { borderBottomColor: ds.c.line }]}>
+      <View style={[styles.mark, waiting ? { borderColor: ds.c.lineStrong, borderWidth: 1, borderStyle: 'dashed' } : { backgroundColor: withAlpha(ds.accentText, 0.18) }]}>
+        <IconSymbol name={icon} size={13} color={waiting ? ds.c.ink : ds.accentText} />
       </View>
       <View style={styles.flex}>
-        <DsText variant="headline">{title}</DsText>
+        <DsText variant="body">{title}</DsText>
         <Caption tone="muted">{line}</Caption>
       </View>
       {end}
@@ -64,17 +85,19 @@ export function DoneStep({
   const shown = claimState === 'pending' ? (held ?? 'locked') : (visibility ?? 'locked');
   const names = invites.map((i) => i.name?.trim().split(/\s+/)[0] || i.email);
   const count = onItsWay({ claim: claimState, invites: invites.length, waitingFiles });
-  const tint = GROUND_TINTS.find((t) => normalizeHex(t.hex) === normalizeHex(brand?.ground_tint ?? ''))?.label ?? 'Standard ground';
-  const look = brand ? [brand.primary_color ? normalizeHex(brand.primary_color) : 'App colours', displayFaces[faceFromDb(brand.display_face)].label, tint].join(', ') : '';
+  const tint = `${GROUND_TINTS.find((t) => normalizeHex(t.hex) === normalizeHex(brand?.ground_tint ?? ''))?.label ?? 'Standard'} ground`;
+  const accent = brand?.primary_color ? normalizeHex(brand.primary_color) : null;
+  // "Rust, Instrument Serif, Walnut ground": the colour by name, as the Look step showed it.
+  const look = brand ? [accent ? colourName(accent) : 'App colours', displayFaces[faceFromDb(brand.display_face)].label, tint].join(', ') : '';
 
   return (
     <SetupPage footer={<SetupFooter label="Open Tonight" onPress={onOpen} />}>
       {count ? (
         <>
-          <Headline role="heading">On its way</Headline>
+          <SetupHead>On its way</SetupHead>
           <View role="list" style={styles.list}>
             {claimState === 'pending' && claim ? (
-              <Line waiting icon="clock.arrow.circlepath" title="Claim being checked" line={`${METHOD_COPY[claim.method === 'note' ? 'phone' : claim.method].short}. Usually within a day.`} />
+              <Line waiting icon="lock.shield.fill" title="Claim being checked" line={`${CLAIM_LINE[claim.method]}. Usually within a day.`} />
             ) : null}
             {invites.length ? (
               <Line
@@ -85,11 +108,11 @@ export function DoneStep({
                 end={<TextLink label={resend.isPending ? 'Sending…' : 'Resend'} onPress={() => invites.forEach((i) => resend.mutate(i.email))} />}
               />
             ) : null}
-            {waitingFiles ? <Line waiting icon="doc.text" title="Spec book waiting" line="We read it when you open Bring in. You check every drink before it’s saved." /> : null}
+            {waitingFiles ? <Line waiting icon="arrow.clockwise" title="Spec book waiting" line="We’ll tap you when it’s ready to check." /> : null}
           </View>
         </>
       ) : null}
-      <Headline role="heading">Done</Headline>
+      <SetupHead>Done</SetupHead>
       <View role="list" style={styles.list}>
         <Line icon="checkmark" title="You’re Admin" line={name} />
         {facts ? <Line icon="checkmark" title="Location and hours" line={[facts.address_line, facts.locality ?? facts.city].filter(Boolean).join(', ') || 'Typed by you'} /> : null}
@@ -98,7 +121,7 @@ export function DoneStep({
       </View>
       {count ? (
         <>
-          <Headline role="heading">On Tonight</Headline>
+          <SetupHead>On Tonight</SetupHead>
           <SetupBanner count={count} />
         </>
       ) : null}
@@ -107,8 +130,10 @@ export function DoneStep({
 }
 
 const styles = StyleSheet.create({
-  list: { gap: space.md },
-  line: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  mark: { width: 28, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  list: { gap: 0 },
+  line: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  mark: { width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.md },
+  badge: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
 });

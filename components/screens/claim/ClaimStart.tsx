@@ -22,7 +22,8 @@ export function ClaimStart({ profile, declined }: { profile: Profile; declined: 
   const { user } = useAuth();
   const adminVenues = useActiveVenue().venues.filter((v) => v.roleLevel >= 40);
   const details = methodDetails(profile, user?.email_confirmed_at ? user.email : null);
-  const [method, setMethod] = useState<BarClaimMethod>(() => BAR_CLAIM_METHODS.find((m) => details[m].available) ?? 'phone');
+  // From a bar's page the quickest way that works is picked first (an instant work email); setup leads with Instagram (b19).
+  const [method, setMethod] = useState<BarClaimMethod>(() => (details.email.available ? 'email' : (BAR_CLAIM_METHODS.find((m) => details[m].available) ?? 'phone')));
   const [code] = useState(() => newClaimCode());
   const [venue, setVenue] = useState(NEW_VENUE);
   const start = useStartBarClaim();

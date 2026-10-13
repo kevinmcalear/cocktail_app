@@ -31,9 +31,9 @@ export function DrinkActionBar({ actions, pinned }: { actions: BarAction[]; pinn
   const gutter = useGutter();
   if (!actions.length) return null;
   const row = (
-    <View style={[styles.row, pinned ? { left: gutter, right: gutter, bottom: insets.bottom + space.xl, position: 'absolute' } : null]}>
+    <View style={[styles.row, pinned ? { left: gutter, right: gutter, bottom: insets.bottom + space.xl, position: 'absolute' } : styles.wrap]}>
       {actions.map((a) => (
-        <BarButton key={a.key} action={a} />
+        <BarButton key={a.key} action={a} pinned={pinned} />
       ))}
     </View>
   );
@@ -50,23 +50,24 @@ export function DrinkActionBar({ actions, pinned }: { actions: BarAction[]; pinn
   );
 }
 
-function BarButton({ action }: { action: BarAction }) {
+/** Pinned, the buttons share the bar; under the spec on wide screens they're text pills that wrap (board drink-desktop). */
+function BarButton({ action, pinned }: { action: BarAction; pinned: boolean }) {
   const ds = useDs();
   const ink = action.primary ? ds.accentFill.text : ds.c.ink;
   const content = (
     <View style={styles.inner}>
-      <IconSymbol name={action.icon} size={18} color={ink} />
+      {pinned ? <IconSymbol name={action.icon} size={18} color={ink} /> : null}
       <DsText variant="body" color={ink} style={styles.label} numberOfLines={1}>
         {action.label}
       </DsText>
     </View>
   );
   return (
-    <PressableScale accessibilityLabel={action.accessibilityLabel} onPress={action.onPress} style={styles.flex}>
+    <PressableScale accessibilityLabel={action.accessibilityLabel} onPress={action.onPress} style={pinned ? styles.flex : null}>
       {action.primary ? (
-        <View style={[styles.button, { backgroundColor: ds.accentFill.fill }]}>{content}</View>
+        <View style={[styles.button, pinned ? null : styles.pill, { backgroundColor: ds.accentFill.fill }]}>{content}</View>
       ) : (
-        <GlassSurface interactive style={styles.button}>
+        <GlassSurface interactive style={[styles.button, pinned ? null : styles.pill]}>
           {content}
         </GlassSurface>
       )}
@@ -77,8 +78,10 @@ function BarButton({ action }: { action: BarAction }) {
 const styles = StyleSheet.create({
   fade: { position: 'absolute', left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
   row: { flexDirection: 'row', gap: space.sm },
+  wrap: { flexWrap: 'wrap' },
   flex: { flex: 1 },
   button: { height: 52, borderRadius: radius.pill, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md },
+  pill: { paddingHorizontal: space.xl },
   inner: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2 },
   label: { fontFamily: fontFamilies.bodySemiBold },
 });

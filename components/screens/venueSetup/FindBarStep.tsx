@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, DsText, Field, Headline, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, DrinkImage, DsText, Field, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { AddBarForm } from '@/components/screens/home/AddBar';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
+import { Monogram, SetupHead } from '@/components/screens/onboarding/SetupParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useBarPageCount, useClaimableBars, type ClaimableBar } from '@/hooks/useVenueSetup';
 
-const THUMB = 44;
+const THUMB = 52;
+const MARK = 48;
 
 /** "Cocktail bar · 42 Gertrude St, Fitzroy". */
 function placeLine(b: ClaimableBar): string {
@@ -35,18 +37,18 @@ function BarCard({ bar, selected, onPick }: { bar: ClaimableBar; selected: boole
       disabled={bar.claimed}
       accessibilityLabel={`${bar.display_name}, ${placeLine(bar)}${bar.claimed ? ', claimed' : ''}`}
       onPress={onPick}
-      style={[styles.card, { backgroundColor: ds.c.raised, borderColor: selected ? ds.accentText : ds.c.line, borderWidth: selected ? 2 : 1 }, bar.claimed && styles.dim]}
+      style={[styles.card, { backgroundColor: bar.claimed ? 'transparent' : ds.c.raised, borderColor: selected ? ds.accentText : ds.c.line }]}
     >
       <View style={styles.top}>
-        <UserAvatar uri={bar.avatar_url} name={bar.display_name} size={44} />
+        {/* A bar without a logo: its initials in an outlined circle (canvas make-venue-find). */}
+        {bar.avatar_url ? <UserAvatar uri={bar.avatar_url} name={bar.display_name} size={MARK} /> : <Monogram name={bar.display_name} size={MARK} quiet={bar.claimed} />}
         <View style={styles.flex}>
-          <DsText variant="headline" numberOfLines={1}>{bar.display_name}</DsText>
+          <DsText variant="body" style={styles.strong} numberOfLines={1}>{bar.display_name}</DsText>
           <Caption tone="muted" numberOfLines={1}>{placeLine(bar)}</Caption>
+          {bar.claimed ? <Caption tone="muted">Claimed. Work there? Ask its Admin to add you.</Caption> : null}
         </View>
       </View>
-      <Caption tone="muted" style={styles.strong}>
-        {bar.claimed ? 'Claimed. Work there? Ask its Admin to add you.' : bar.is_closed ? 'Already on Cocktail · closed · not claimed' : 'Already on Cocktail · not claimed'}
-      </Caption>
+      {bar.claimed ? null : <Tag label={bar.is_closed ? 'Already on Cocktail · closed · not claimed' : 'Already on Cocktail · not claimed'} />}
       {!bar.claimed && bar.sample.length ? (
         <View style={styles.thumbs}>
           {bar.sample.map((d) => (
@@ -86,7 +88,7 @@ export function FindBarStep({ onPicked, onSkip }: { onPicked: (bar: { id: string
 
   return (
     <SetupPage footer={<SetupFooter label={picked ? `Claim ${picked.display_name}` : 'Claim your bar'} disabled={!picked} onPress={() => picked && onPicked({ id: picked.id, name: picked.display_name })} onSkip={onSkip} />}>
-      <Field label="Search bars on Cocktail" value={search} onChangeText={(t) => { setSearch(t); setPicked(null); }} placeholder="Little Rye, Fitzroy" autoCorrect={false} />
+      <Field label="Search bars on Cocktail" icon="magnifyingglass" value={search} onChangeText={(t) => { setSearch(t); setPicked(null); }} placeholder="Little Rye, Fitzroy" autoCorrect={false} />
       {list.length ? (
         <View role="radiogroup" accessibilityLabel="Bars that match" style={styles.list}>
           {list.map((b) => (
@@ -98,11 +100,11 @@ export function FindBarStep({ onPicked, onSkip }: { onPicked: (bar: { id: string
       {list.length && total ? (
         <Caption tone="muted">{`${list.length} of ${total.toLocaleString('en')} bar pages. Claiming one sends it to a person to check; you keep setting up meanwhile.`}</Caption>
       ) : null}
-      <Headline role="heading">Not here?</Headline>
-      <PressableScale role="button" accessibilityLabel="Add a new bar" onPress={() => setAdding(true)} style={[styles.add, { borderColor: ds.c.line }]}>
+      <SetupHead>Not here?</SetupHead>
+      <PressableScale role="button" accessibilityLabel="Add a new bar" onPress={() => setAdding(true)} style={[styles.add, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}>
         <IconSymbol name="plus" size={20} color={ds.accentText} />
         <View style={styles.flex}>
-          <DsText variant="headline">Add a new bar</DsText>
+          <DsText variant="body" style={styles.medium}>Add a new bar</DsText>
           <Caption tone="muted">Type its name and address; add hours, phone and website next</Caption>
         </View>
         <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
@@ -113,13 +115,13 @@ export function FindBarStep({ onPicked, onSkip }: { onPicked: (bar: { id: string
 
 const styles = StyleSheet.create({
   list: { gap: space.sm },
-  card: { gap: space.sm, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
-  dim: { opacity: 0.55 },
+  card: { gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   top: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
+  medium: { fontFamily: fontFamilies.bodyMedium },
   thumbs: { flexDirection: 'row', gap: space.sm },
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, overflow: 'hidden' },
   fill: { width: THUMB, height: THUMB },
-  add: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.card, borderWidth: 1 },
+  add: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 72, paddingHorizontal: space.lg, borderRadius: radius.card, borderWidth: 1 },
 });
