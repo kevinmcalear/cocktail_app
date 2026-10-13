@@ -33,7 +33,7 @@ import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
 import { StartFromClassic } from './StartFromClassic';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
-import { WizardFooter, WizardNotice } from './WizardChrome';
+import { WizardFooter } from './WizardChrome';
 import { WizardFrame } from './WizardFrame';
 
 export interface AddDrinkWizardProps {
@@ -88,12 +88,9 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
 
   const set = (change: Partial<WizardDraft>) => patch(place, change);
   const at = WIZARD_STEPS.indexOf(step);
-  /** "Shrub saved to your preps when you save the drink", over the footer for a moment. */
-  const [notice, setNotice] = useState<string | null>(null);
   const go = (to: WizardStep) => {
     setDirection(WIZARD_STEPS.indexOf(to) >= at ? 1 : -1);
     setStoredStep(place, to);
-    setNotice(null);
   };
   const back = () => (at > 0 ? go(WIZARD_STEPS[at - 1]) : onClose());
 
@@ -174,7 +171,6 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
             aliases={dropdowns?.ingredientAliases}
             coreIds={coreIds}
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
-            onNotice={setNotice}
           />
         );
       case 'method':
@@ -237,7 +233,6 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
         back();
         return true;
       }}
-      notice={notice ? <WizardNotice>{notice}</WizardNotice> : null}
       footer={
         <WizardFooter
           nextLabel={step === 'review' ? (create.isPending ? 'Saving…' : 'Save drink') : `Next: ${STEP_COPY[following].short.toLowerCase()}`}

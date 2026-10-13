@@ -178,13 +178,12 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases }: PrepR
 
 /** Each line's share of the recipe as one segmented bar, in the colours it's drawn in. */
 function Shares({ draft }: { draft: PrepDraft }) {
-  const ds = useDs();
   const shares = prepShares(draft);
   if (shares.length < 2) return null;
   return (
     <View aria-label={`In it: ${shares.map((s) => `${s.name} ${Math.round(s.share * 100)}%`).join(', ')}`} style={styles.shares}>
       {shares.map((s) => (
-        <View key={s.key} style={[styles.share, { flexGrow: s.share, backgroundColor: s.hex ?? ds.c.muted }]} />
+        <View key={s.key} style={[styles.share, { flexGrow: s.share, backgroundColor: s.hex }]} />
       ))}
     </View>
   );
@@ -218,8 +217,8 @@ function NumberField({ label, value, onChange, suffix, placeholder }: { label: s
 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
-  shares: { flexDirection: 'row', gap: 2, height: 6 },
-  share: { flexBasis: 0, borderRadius: radius.pill },
+  shares: { flexDirection: 'row', gap: 2, height: space.sm, borderRadius: radius.mark, overflow: 'hidden' },
+  share: { flexBasis: 0 },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
   swap: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   name: { flex: 1, justifyContent: 'center', paddingVertical: space.xs },

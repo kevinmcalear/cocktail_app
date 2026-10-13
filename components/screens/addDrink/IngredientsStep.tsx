@@ -20,7 +20,7 @@ import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { StartFromClassic } from './StartFromClassic';
-import { WizardChip } from './WizardChrome';
+import { WizardChip, WizardNotice } from './WizardChrome';
 
 /** How many quick adds show under the field. */
 const QUICK = 8;
@@ -36,8 +36,6 @@ interface IngredientsStepProps extends StepProps {
   forDrink?: boolean;
   /** At home: the bottles on your shelf, so search says "On your shelf". */
   shelf?: ReadonlySet<string>;
-  /** A prep just made in the builder: what to say over the footer for a moment (null clears it). */
-  onNotice?: (text: string | null) => void;
 }
 
 /**
@@ -46,7 +44,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, onNotice }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -92,13 +90,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   }, [removed]);
   useEffect(() => {
     if (!madePrep) return;
-    onNotice?.(madePrep);
-    const t = setTimeout(() => {
-      setMadePrep(null);
-      onNotice?.(null);
-    }, UNDO_MS);
+    const t = setTimeout(() => setMadePrep(null), UNDO_MS);
     return () => clearTimeout(t);
-  }, [madePrep, onNotice]);
+  }, [madePrep]);
 
   const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean) => {
     const unit = guessUnit(pick.name, getPreferredUnit());
@@ -209,6 +203,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         captions={forDrink}
         shelf={shelf}
       />
+      {/* In the flow under the field, so it never covers the balance or Goes with (canvas make-create-prep-back). */}
+      {madePrep ? <WizardNotice>{madePrep}</WizardNotice> : null}
       <PrepBuilder
         name={makingName}
         drinkName={draft.name.trim()}

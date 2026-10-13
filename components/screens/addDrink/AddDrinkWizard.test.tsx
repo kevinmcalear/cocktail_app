@@ -10,6 +10,8 @@ const mockCreate = jest.fn();
 const mockSaved = jest.fn();
 let mockBarGlasses: unknown[] = [];
 
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' }, loading: false }), useUserId: () => 'me' }));
 let mockClosest: { id: string; name: string } | null = null;
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: mockClosest }) }));

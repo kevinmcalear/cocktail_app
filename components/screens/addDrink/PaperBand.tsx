@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSeque
 
 import { Caption, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { ViewAsPill } from '@/components/ViewAsBanner';
 import { backbar, fontFamilies, layout, radius, space, springs } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
@@ -115,6 +116,7 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
               {note}
             </Caption>
           </View>
+          <ViewAsPill ink={ink} />
         </>
       )}
     </View>

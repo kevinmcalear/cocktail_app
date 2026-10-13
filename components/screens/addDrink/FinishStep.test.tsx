@@ -5,6 +5,8 @@ import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { FinishStep } from './FinishStep';
 
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 
 // The prep builder draws after its first layout, as the wizard does on iOS.

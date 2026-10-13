@@ -36,8 +36,6 @@ export interface WizardFrameProps {
   intro?: string;
   /** Right of the title: a small control for the whole step (Parts or Amounts). */
   aside?: ReactNode;
-  /** Just above the footer: a moment's confirmation (WizardNotice). */
-  notice?: ReactNode;
   footer: ReactNode;
   /** Android's back button: true when it stepped back, false to leave. */
   onHardwareBack: () => boolean;
@@ -52,7 +50,7 @@ export interface WizardFrameProps {
  * that scrolls as a page: the band as a rounded card, the step, then Skip
  * and Next at its end.
  */
-export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKey, direction, eyebrow, title, intro, aside, notice, footer, onHardwareBack, children }: WizardFrameProps) {
+export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKey, direction, eyebrow, title, intro, aside, footer, onHardwareBack, children }: WizardFrameProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
@@ -110,7 +108,6 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
               <SlideIn key={stepKey} direction={direction}>
                 <Heading eyebrow={eyebrow} title={title} intro={intro} aside={aside} />
                 {children}
-                {notice}
                 <FooterInline.Provider value>{footer}</FooterInline.Provider>
               </SlideIn>
             </ScrollView>
@@ -123,10 +120,7 @@ export function WizardFrame({ testID, pageTitle, embedded, overNav, band, stepKe
                   {children}
                 </SlideIn>
               </ScrollView>
-              <View style={[styles.foot, { paddingHorizontal: side }]}>
-                {notice}
-                {footer}
-              </View>
+              <View style={{ paddingHorizontal: side }}>{footer}</View>
             </>
           )}
         </View>
@@ -179,5 +173,4 @@ const styles = StyleSheet.create({
   // The canvas spaces the kicker, title and intro like the step's own rows.
   heading: { gap: space.lg },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  foot: { gap: space.md },
 });

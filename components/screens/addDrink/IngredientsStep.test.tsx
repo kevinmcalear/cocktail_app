@@ -7,6 +7,8 @@ import { startPrep } from '@/lib/prepKinds';
 import { IngredientsStep } from './IngredientsStep';
 
 // Pairings come from the database; these tests are about the field.
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }) }));
 jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: (id: string | null) => ({ data: id === 'campari' ? 14 : 0 }) }));
@@ -62,8 +64,7 @@ describe('IngredientsStep', () => {
 
   test('a shrub starts from its name: the fruit as the base, equal parts, a cold method', async () => {
     const set = jest.fn();
-    const onNotice = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, name: 'Pineapple Heat' }} set={set} ingredients={[CAMPARI]} onNotice={onNotice} />);
+    await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, name: 'Pineapple Heat' }} set={set} ingredients={[CAMPARI]} />);
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Pineapple chili shrub');
     await fireEvent.press(screen.getByRole('button', { name: 'Make “Pineapple chili shrub” in house' }));
     await laidOut();
@@ -79,8 +80,8 @@ describe('IngredientsStep', () => {
     expect(prep.kind).toBe('shrub');
     expect(prep.lines.map((l: { name: string }) => l.name)).toEqual(['Pineapple', 'Sugar', 'Apple cider vinegar', 'Chili']);
     expect(prep.leadMinutes).toBe(3 * 24 * 60);
-    // Back in the drink: over the footer, it says the prep is saved with the drink.
-    expect(onNotice).toHaveBeenCalledWith('Shrub saved to your preps when you save the drink. Its page is ready then.');
+    // Back in the drink: under the field, it says the prep is saved with the drink.
+    expect(screen.getByText('Shrub saved to your preps when you save the drink. Its page is ready then.')).toBeTruthy();
   });
 
   test('a prep can be left for later: the name now, its recipe to write, and the line offers it', async () => {
