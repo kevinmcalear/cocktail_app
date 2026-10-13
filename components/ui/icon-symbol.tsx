@@ -81,6 +81,7 @@ const MAPPING = {
   'arrow.up': 'arrow-up',
   'arrow.right': 'arrow-right',
   'arrow.up.and.down': 'svg:updown',
+  '8.circle': 'svg:eightball',
   'list.bullet': 'list',
   'percent': 'percent',
   'drop.fill': 'droplet',

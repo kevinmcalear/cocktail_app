@@ -21,6 +21,8 @@ const GLYPHS = {
     'M9 12l2 2 4-4',
   ],
   updown: ['M8 4v16M4.5 7.5L8 4l3.5 3.5', 'M16 20V4M12.5 16.5L16 20l3.5-3.5'],
+  // The eight ball (Pick for me): the ball, its window and the 8, as the palette board draws it.
+  eightball: ['M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0', 'M7.8 11a4.2 4.2 0 1 0 8.4 0a4.2 4.2 0 1 0-8.4 0', 'M10.8 9.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0', 'M10.5 12.4a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0'],
 } as const;
 
 export type LineGlyphName = keyof typeof GLYPHS | 'dot';
