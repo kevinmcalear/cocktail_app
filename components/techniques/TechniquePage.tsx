@@ -4,7 +4,7 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
-import { layout, space } from '@/constants/tokens';
+import { fontFamilies, layout, space } from '@/constants/tokens';
 
 interface Props {
   eyebrow?: string;
@@ -12,7 +12,7 @@ interface Props {
   /** Said under the title. */
   intro?: ReactNode;
   children: ReactNode;
-  /** Pinned under the scroll (the library's My kit bar). */
+  /** Floating over the foot of the page (the library's My kit pill). */
   footer?: ReactNode;
 }
 
@@ -34,7 +34,7 @@ function Frame({ eyebrow, title, intro, children, footer }: Props) {
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[styles.page, { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: (footer ? space.xl : insets.bottom) + space.xxxl, paddingHorizontal: gutter }]}
+        contentContainerStyle={[styles.page, { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl + (footer ? layout.minTapTarget + space.xl : 0), paddingHorizontal: gutter }]}
       >
         <View style={styles.header}>
           {eyebrow ? (
@@ -47,7 +47,11 @@ function Frame({ eyebrow, title, intro, children, footer }: Props) {
         </View>
         {children}
       </ScrollView>
-      {footer ? <View style={[styles.footer, { paddingBottom: insets.bottom + space.sm, paddingHorizontal: gutter, borderTopColor: ds.c.line, backgroundColor: ds.c.ground }]}>{footer}</View> : null}
+      {footer ? (
+        <View pointerEvents="box-none" style={[styles.footer, { bottom: insets.bottom + space.md, paddingHorizontal: gutter }]}>
+          {footer}
+        </View>
+      ) : null}
       <View style={[styles.back, { top: insets.top + space.sm, left: gutter }]}>
         <GlassButton
           accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
@@ -63,7 +67,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { width: '100%', maxWidth: 760, alignSelf: 'center', gap: space.xl },
   header: { gap: space.sm },
-  eyebrow: { letterSpacing: 1 },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
   back: { position: 'absolute' },
-  footer: { paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
+  footer: { position: 'absolute', left: 0, right: 0 },
 });

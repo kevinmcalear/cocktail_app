@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, PressableScale, Spec, Surface, Tag, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { doseLine } from '@/lib/doseLine';
 import { technicalIngredientFor, techniqueById } from '@/lib/techniques';
 
@@ -36,14 +36,17 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
       <Headline>How much, by job</Headline>
       <View role="list">
         {t.jobs.map((j) => (
+          // The dose and its grade inline at the right; the job wraps (prep-ing-xanthan).
           <View key={j.job} role="listitem" style={[styles.job, { borderBottomColor: ds.c.line }]}>
             <Body style={styles.flex}>{j.job}</Body>
-            <Spec>{j.dose}</Spec>
-            <GradeTag grade={j.grade} />
+            <View style={styles.dose}>
+              <Spec>{j.dose}</Spec>
+              <GradeTag grade={j.grade} />
+            </View>
           </View>
         ))}
       </View>
-      {perLitre || t.perTsp ? <Body tone="muted">{[perLitre, t.perTsp ? `No fine scale? A level 5 ml teaspoon is roughly ${t.perTsp} g.` : null].filter(Boolean).join(' ')}</Body> : null}
+      {perLitre || t.perTsp ? <Caption tone="muted">{[perLitre, t.perTsp ? `No fine scale? A level 5 ml teaspoon is roughly ${t.perTsp} g.` : null].filter(Boolean).join(' ')}</Caption> : null}
       <View style={styles.block}>
         <Headline>Mix it in</Headline>
         <Body>{t.mix}</Body>
@@ -58,7 +61,7 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
           const tech = techniqueById(id);
           return tech ? (
             <PressableScale key={id} role="link" accessibilityLabel={`How to: ${tech.name}`} onPress={() => router.push(`/techniques/${id}` as never)} style={[styles.link, { backgroundColor: ds.c.raised }]}>
-              <Body>{tech.name}</Body>
+              <Body numberOfLines={1} style={styles.chip}>{tech.name}</Body>
             </PressableScale>
           ) : null;
         })}
@@ -81,10 +84,12 @@ export function WhereToBuy({ name }: { name: string }) {
 
 const styles = StyleSheet.create({
   card: { gap: space.md },
-  eyebrow: { letterSpacing: 1 },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  job: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  job: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  dose: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: space.xs, maxWidth: '62%' },
+  chip: { fontFamily: fontFamilies.bodyMedium },
   block: { gap: space.xs },
-  link: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill },
-  flex: { flex: 1, minWidth: 160 },
+  link: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.control, maxWidth: '100%' },
+  flex: { flex: 1, minWidth: 0 },
 });
