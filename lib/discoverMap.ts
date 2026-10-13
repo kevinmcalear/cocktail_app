@@ -226,7 +226,8 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
   const height = label ? 30 : pin.image ? logoSize + 4 : 18;
   return {
     label,
-    logo: pin.image ?? null,
+    // A searched pin (it names a drink) keeps its bar's logo when the drink has no picture; score pins have none, as drawn.
+    logo: pin.image ?? (pin.top ? pin.logo : null) ?? null,
     logoSize,
     minWidth: label ? 44 : height,
     height,
