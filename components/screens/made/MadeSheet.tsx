@@ -118,7 +118,7 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
       visible
       onClose={onClose}
       title={item.name}
-      subtitle={(barName ?? barEntry?.venue?.display_name) ? `Your version of ${barName ?? barEntry?.venue?.display_name}'s` : 'Your version'}
+      subtitle={barName ? `Your version of ${barName}'s` : 'Your version'}
       footer={<Button label={saving ? 'Saving…' : 'Save'} size="lg" onPress={submit} disabled={saving} />}
     >
       {barEntry ? (

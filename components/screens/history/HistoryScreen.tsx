@@ -73,7 +73,7 @@ function HistoryPage() {
       <View style={[styles.frame, { maxWidth: wide ? 1440 : undefined }]}>
         <HistoryTopBar view={view} onView={setView} wide={wide} eyebrow={historyEyebrow(nodes)} nodes={nodes} onJump={jumpTo} onBack={back} />
         {view === 'timeline' ? (
-          <TimelineView nodes={nodes} header={<>{wide ? search : null}{status}</>} focusKey={focusKey} onSelect={(k) => setPicked(k)} arriveAt={params.focus ?? null} threadFromFocus={params.view === 'timeline' && !!params.focus} reveal={jump} />
+          <TimelineView nodes={nodes} header={status} search={wide ? search : null} focusKey={focusKey} onSelect={(k) => setPicked(k)} arriveAt={params.focus ?? null} threadFromFocus={params.view === 'timeline' && !!params.focus} reveal={jump} />
         ) : (
           <View style={styles.cols}>
             <View style={styles.flex}>

@@ -18,14 +18,21 @@ import { SWAP_LIMIT, SWAP_NAME_LIMIT, type Swap } from '@/lib/madeIt';
 export function SwapChips({ names, swaps, onChange }: { names: string[]; swaps: Swap[]; onChange: (swaps: Swap[]) => void }) {
   const ds = useDs();
   const [adding, setAdding] = useState(false);
-  const open = swaps.find((s) => !s.to.trim()) ?? null;
+  // The swap being typed stays open by name until you're done with it, not
+  // just while its replacement is empty (that unmounted the field after one key).
+  const [editing, setEditing] = useState<string | null>(null);
+  const open = swaps.find((s) => s.from === editing) ?? swaps.find((s) => !s.to.trim()) ?? null;
+  const done = () => setEditing(null);
   const left = names.filter((n) => !swaps.some((s) => s.from === n));
   const setTo = (from: string, to: string) => onChange(swaps.map((x) => (x.from === from ? { ...x, to: to.slice(0, SWAP_NAME_LIMIT) } : x)));
   return (
     <View style={styles.block}>
       <View role="group" accessibilityLabel="What you changed" style={styles.wrap}>
         {swaps.map((s) => (
-          <PressableScale key={s.from} role="button" accessibilityLabel={`${s.from} to ${s.to || 'something else'}. Remove this change`} onPress={() => onChange(swaps.filter((x) => x.from !== s.from))} style={[styles.swap, { backgroundColor: withAlpha(ds.accentText, 0.16) }]}>
+          <PressableScale key={s.from} role="button" accessibilityLabel={`${s.from} to ${s.to || 'something else'}. Remove this change`} onPress={() => {
+              if (editing === s.from) done();
+              onChange(swaps.filter((x) => x.from !== s.from));
+            }} style={[styles.swap, { backgroundColor: withAlpha(ds.accentText, 0.16) }]}>
             <DsText color={ds.accentText}>{s.from}</DsText>
             <IconSymbol name="arrow.right" size={14} color={ds.accentText} />
             <DsText color={ds.accentText} style={styles.medium}>
@@ -33,7 +40,7 @@ export function SwapChips({ names, swaps, onChange }: { names: string[]; swaps: 
             </DsText>
           </PressableScale>
         ))}
-        {swaps.length < SWAP_LIMIT && left.length && !adding && !open ? (
+        {swaps.length < SWAP_LIMIT && left.length > 0 && !adding && !open ? (
           <PressableScale role="button" accessibilityLabel="Add a change" onPress={() => setAdding(true)} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
             <IconSymbol name="plus" size={14} color={ds.c.ink} />
             <DsText style={styles.medium}>Add a change</DsText>
@@ -49,13 +56,25 @@ export function SwapChips({ names, swaps, onChange }: { names: string[]; swaps: 
               selected={false}
               onPress={() => {
                 onChange([...swaps, { from: n, to: '' }]);
+                setEditing(n);
                 setAdding(false);
               }}
             />
           ))}
         </View>
       ) : null}
-      {open ? <Field label={`Instead of ${open.from}`} value={open.to} onChangeText={(t) => setTo(open.from, t)} placeholder="What you used" autoFocus /> : null}
+      {open ? (
+        <Field
+          label={`Instead of ${open.from}`}
+          value={open.to}
+          onChangeText={(t) => setTo(open.from, t)}
+          onSubmitEditing={done}
+          onBlur={() => (open.to.trim() ? done() : undefined)}
+          returnKeyType="done"
+          placeholder="What you used"
+          autoFocus
+        />
+      ) : null}
     </View>
   );
 }

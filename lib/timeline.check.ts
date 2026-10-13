@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import type { TreeNode } from './drinkTree';
-import { DECADES, decadeCounts, eraBands, eraOf, eraX, fromLine, locate, locateKey, placeOptions, thread, threadBack, timelineSections, undatedCount, yearAt } from './timeline';
+import { DECADES, decadeCounts, eraBands, eraOf, eraX, foldThread, fromLine, locate, locateKey, placeOptions, thread, threadBack, timelineSections, undatedCount, yearAt } from './timeline';
 
 const node = (key: string, family: string, parentKey: string | null, year: number | null, extra: Partial<TreeNode> = {}): TreeNode => ({
   key,
@@ -95,6 +95,18 @@ const penicillin = thread(nodes, 'd:Penicillin').map((n) => (n.name === 'Gold Ru
 assert.equal(threadBack(penicillin), '143 years back to Whiskey Sour, 1862');
 assert.equal(threadBack(thread(nodes, 'd:Whiskey Sour')), '230 years back to Punch, 1632');
 assert.equal(threadBack(thread(nodes, 's:Punch')), null);
+
+// Following a thread: runs of three or more drinks off it, between its first and last steps, fold to one row; shorter runs stay.
+const craft = [2001, 2001, 2002, 2003].map((y, i) => node(`d:Off${i}`, 'sour', null, y));
+const busy = [...nodes, ...craft, node('d:Hugo', 'sour', null, 2006)];
+const lit = new Set(thread(busy, 'd:Penicillin').map((n) => n.key));
+const folded = foldThread(timelineSections(busy, { family: 'sour', styles: true }), lit);
+const modern = folded.at(-1)!.data;
+assert.deepEqual(modern.map((r) => [r.node.name, r.folded ?? 0]), [['Gold Rush', 0], ['Off0', 4], ['Penicillin', 0], ['Hugo', 0]], 'past the last step nothing folds');
+assert.equal(modern[2].newYear, true, 'the row after a fold prints its year');
+const short = foldThread(timelineSections([...nodes, craft[0]], { family: 'sour', styles: true }), lit).at(-1)!.data;
+assert.deepEqual(short.map((r) => r.node.name), ['Gold Rush', 'Off0', 'Penicillin']);
+assert.equal(foldThread(all, new Set(['d:Gold Rush'])).length, all.length, 'one step: nothing to fold');
 
 assert.equal(fromLine({ from: nodes[5] }), 'Riff of Manhattan, 1882');
 assert.equal(fromLine({ from: nodes[1] }), 'Riff of Sour, 1856');

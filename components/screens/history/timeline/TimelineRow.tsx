@@ -33,6 +33,7 @@ export function TimelineRowView({
   inThread,
   dimmed,
   wide,
+  compact,
   onPress,
   threadSpine = null,
 }: {
@@ -41,6 +42,8 @@ export function TimelineRowView({
   inThread: boolean;
   dimmed: boolean;
   wide: boolean;
+  /** Following a thread on a phone: the name and who made it, nothing more (board prep-hist-timeline-thread). */
+  compact?: boolean;
   onPress: () => void;
   /** Where the thread's accent line runs through this row's spine: from its dot down, up to it, or right through. */
   threadSpine?: 'down' | 'up' | 'through' | null;
@@ -97,12 +100,12 @@ export function TimelineRowView({
             {maker}
           </Caption>
         ) : null}
-        {style && n.note ? (
+        {style && n.note && !compact ? (
           <Caption tone="muted" numberOfLines={2}>
             {n.note}
           </Caption>
         ) : null}
-        {from ? (
+        {from && !compact ? (
           <View style={styles.from}>
             <IconSymbol name="arrow.uturn.backward" size={13} color={ds.c.muted} />
             <Caption tone="muted" numberOfLines={1} style={styles.flex}>
@@ -117,7 +120,7 @@ export function TimelineRowView({
         </Caption>
       ) : null}
       {/* Rows carry year, maker and a sketch tile; styles are words only (board prep-hist-timeline-phone). */}
-      {style ? null : (
+      {style || compact ? null : (
         <View style={[styles.tile, { width: wide ? TILE_WIDE : TILE, height: wide ? TILE_WIDE : TILE }]} aria-hidden>
           <DrinkImage thumb sketchDetail="thumb" itemId={n.id} glass={null} accessibilityLabel={n.name} radius="control" />
         </View>
@@ -126,8 +129,25 @@ export function TimelineRowView({
   );
 }
 
-/** "1860 to 1919 · 123 drinks", the era's name and one line about it. Sticky above its rows. */
-export function EraHeader({ section, wide }: { section: TimelineSection; wide?: boolean }) {
+/**
+ * A stretch of drinks off a followed thread, folded: the thread's accent line
+ * runs dashed through it. Tap to show them.
+ */
+export function FoldRow({ count, onPress }: { count: number; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel={`Show the ${count} drinks in between`} onPress={onPress} style={styles.fold}>
+      <View style={styles.year} />
+      <View style={styles.spine}>
+        <View style={[styles.dashed, { borderColor: ds.accentText }]} />
+      </View>
+      <Caption tone="muted" style={styles.foldText}>{`${count} more`}</Caption>
+    </PressableScale>
+  );
+}
+
+/** "1860 to 1919 · 123 drinks", the era's name and one line about it (not while following a thread). Sticky above its rows. */
+export function EraHeader({ section, wide, compact }: { section: TimelineSection; wide?: boolean; compact?: boolean }) {
   const ds = useDs();
   const i = ERAS.findIndex((e) => e.key === section.era.key);
   const next = ERAS[i + 1];
@@ -148,7 +168,7 @@ export function EraHeader({ section, wide }: { section: TimelineSection; wide?: 
     <View style={[styles.era, { backgroundColor: ds.c.ground, borderBottomColor: ds.c.line }]}>
       <Caption tone="muted" style={styles.eyebrow}>{count}</Caption>
       <Title>{section.era.name}</Title>
-      <Caption tone="muted">{section.era.blurb}</Caption>
+      {compact ? null : <Caption tone="muted">{section.era.blurb}</Caption>}
     </View>
   );
 }
@@ -170,6 +190,9 @@ const styles = StyleSheet.create({
   nameLine: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
   name: { fontFamily: fontFamilies.instrument },
   styleTag: { fontFamily: fontFamilies.mono, letterSpacing: 1, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.mark, paddingHorizontal: space.xs + 2 },
+  fold: { flexDirection: 'row', minHeight: layout.minTapTarget, columnGap: space.sm },
+  dashed: { position: 'absolute', top: 0, bottom: 0, borderLeftWidth: 2, borderStyle: 'dashed' },
+  foldText: { alignSelf: 'center' },
   note: { flex: 1.1, minWidth: 0, paddingTop: space.md + 2, paddingRight: space.sm },
   era: { paddingTop: space.lg, paddingBottom: space.md, gap: 2, borderBottomWidth: StyleSheet.hairlineWidth },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
