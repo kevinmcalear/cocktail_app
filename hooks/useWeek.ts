@@ -66,6 +66,72 @@ export function useWeekEvent(id: string | null | undefined) {
   });
 }
 
+/** A drink on an event's menu, as its page lists it. Plain JSON. */
+export interface EventDrink {
+  id: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  glassKey: string | null;
+}
+
+/**
+ * The drinks on an event's menu (week_event_drinks): every one for the bar's
+ * team, the published ones for guests, nothing for an event they can't open.
+ */
+export function useWeekEventDrinks(id: string | null | undefined, enabled = true) {
+  const viewer = viewerScoped(useUserId());
+  return useQuery({
+    queryKey: ['week', 'event-drinks', id, viewer.key],
+    meta: viewer.meta,
+    enabled: !!id && enabled,
+    queryFn: async (): Promise<EventDrink[]> => {
+      const { data, error } = await supabase.rpc('week_event_drinks', { p_event_id: id });
+      if (error) throw error;
+      return ((data ?? []) as { id: string; name: string; description: string | null; image_url: string | null; glass_key: string | null }[]).map((d) => ({
+        id: d.id,
+        name: d.name,
+        description: d.description,
+        imageUrl: d.image_url,
+        glassKey: d.glass_key,
+      }));
+    },
+  });
+}
+
+/** A bar's look on an event page: accent, display face (as stored) and ground tint. Plain JSON. */
+export interface EventBrandSide {
+  accent: string | null;
+  face: string | null;
+  tint: string | null;
+}
+
+/**
+ * The host bar's look, and the guest bar's on a takeover (week_event_brand),
+ * for the event page to wear. Null before 20261015500000 is in.
+ */
+export function useWeekEventBrand(id: string | null | undefined) {
+  const viewer = viewerScoped(useUserId());
+  return useQuery({
+    queryKey: ['week', 'event-brand', id, viewer.key],
+    meta: viewer.meta,
+    enabled: !!id,
+    queryFn: async (): Promise<{ host: EventBrandSide; guest: EventBrandSide | null } | null> => {
+      const { data, error } = await supabase.rpc('week_event_brand', { p_event_id: id });
+      // ponytail: a database without week_event_brand; the page keeps the bar's accent alone. Drop once it's in production.
+      if (error?.code === 'PGRST202') return null;
+      if (error) throw error;
+      type Row = { host_accent: string | null; host_face: string | null; host_tint: string | null; guest_accent: string | null; guest_face: string | null; guest_tint: string | null };
+      const r = ((data ?? []) as Row[])[0];
+      if (!r) return null;
+      return {
+        host: { accent: r.host_accent, face: r.host_face, tint: r.host_tint },
+        guest: r.guest_accent || r.guest_face ? { accent: r.guest_accent, face: r.guest_face, tint: r.guest_tint } : null,
+      };
+    },
+  });
+}
+
 /** Where a bar is, from its public page (readable signed out), for Directions. */
 export function useBarPlace(profileId: string | null | undefined) {
   return useQuery({

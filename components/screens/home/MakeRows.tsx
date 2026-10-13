@@ -6,6 +6,7 @@ import { Body, Button, Caption, DrinkImage, IngredientThumb, MatchText, Pressabl
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
+import { isHexColor, readableAccent } from '@/lib/color';
 import { itemHref } from '@/lib/itemRoutes';
 import { groupLine, needsLine, pairName, sourceCaption, usesLine } from '@/lib/myBarText';
 import { servedCaption } from '@/lib/servedAt';
@@ -48,9 +49,12 @@ export const MakeDrink = memo(function MakeDrink({ drink, text, ready, needs }: 
   // "Classic · served at Harry's Bar, The Gold Room +5", "The Long Island Bar · uses Rye Whiskey, not Bourbon · Make the Simple syrup first".
   const served = drink.served ? servedCaption(drink.served.count, drink.served.bars) : null;
   const caption = needs ? undefined : [sourceCaption(drink.from?.name, served), drink.variation, text.noteFor(drink.id)].filter(Boolean).join(' · ');
-  const bar = needs ? undefined : (drink.served?.bars[0] ?? drink.from);
+  const ds = useDs();
+  const served0 = needs ? undefined : drink.served?.bars[0];
+  const bar = needs ? undefined : (served0 ?? drink.from);
   // The bar's monogram, one serif letter outlined in its colour, as the canvas draws it (its logo when it has one).
-  const mark = bar ? <BarMark name={bar.name} logoUrl={bar.logo} size={20} letter /> : undefined;
+  const accent = isHexColor(served0?.accent) ? readableAccent(served0.accent, ds.c.ground) : null;
+  const mark = bar ? <BarMark name={bar.name} logoUrl={bar.logo} size={20} letter brand={accent ? { accent, ground: ds.c.raised, face: ds.displayFace } : null} /> : undefined;
   const uses = text.usesFor(drink);
   const note = needs ? needsLine(needs.map((n) => n.name)) : ready ? undefined : usesLine(uses);
   const score = text.scoreFor(drink.id);

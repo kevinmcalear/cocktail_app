@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Headline, PressableScale, Title, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, DsText, Headline, PressableScale, TextLink, Title, useBreakpoint, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
@@ -23,6 +23,7 @@ import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 import { byDay, filterWeek, itemDay, newDrinks, shortDay, thingsOn, upcoming, weekMonday, weekRange, type WeekFilter, type WeekItem } from '@/lib/week';
 
+import { EachBarAlertsSheet } from '../kept/LoveAlertsSheet';
 import { EventSheet } from './EventSheet';
 import { HomeWeekDesk } from './HomeWeekDesk';
 import { ReviewBanner } from './ReviewImports';
@@ -61,6 +62,7 @@ export function WeekScreen() {
   const [filter, setFilter] = useState<WeekFilter>('all');
   const [addingOn, setAddingOn] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
+  const [choosing, setChoosing] = useState(false);
   const { data: imported } = useCalendarEventIds(canAdd ? barId : null);
   // Dates come from the device's clock, which the static web build doesn't have.
   const hydrated = useIsHydrated();
@@ -105,7 +107,7 @@ export function WeekScreen() {
           </View>
         ) : null}
         {!hydrated ? null : homeDesk ? (
-          <HomeWeekDesk days={byDay(items.filter((i) => i.kind !== 'drink'), from)} from={from} fresh={fresh} />
+          <HomeWeekDesk days={byDay(items.filter((i) => i.kind !== 'drink'), from)} from={from} fresh={fresh} aside={<TextLink label="Choose what each bar tells you" onPress={() => setChoosing(true)} />} />
         ) : wide ? (
           <WeekColumns days={days} from={from} member={venue} bar={!venue} imported={imported} onAdd={canAdd ? setAddingOn : undefined} />
         ) : (
@@ -128,6 +130,7 @@ export function WeekScreen() {
         </View>
       </ScrollView>
       {addingOn && barId ? <EventSheet visible barId={barId} menus={eventMenus} day={addingOn} onClose={() => setAddingOn(null)} /> : null}
+      {choosing ? <EachBarAlertsSheet visible onClose={() => setChoosing(false)} /> : null}
       {linking && barId ? <EventSheet visible barId={barId} menus={eventMenus} tab="link" onClose={() => setLinking(false)} /> : null}
     </View>
   );
