@@ -66,6 +66,7 @@ function BookPage() {
                 <Caption tone="muted">{[source.author, source.rights === 'public_domain' ? 'public domain' : 'still in copyright'].filter(Boolean).join(' · ')}</Caption>
               </View>
             </View>
+            {source.summary ? <Body tone="muted">{source.summary}</Body> : null}
             <View style={styles.actions}>
               {source.euvs_url ? <Button label="Read it on EUVS" variant="secondary" onPress={() => void Linking.openURL(source.euvs_url!)} style={[styles.action, { backgroundColor: ds.c.raised }]} /> : null}
               {source.archive_url ? (

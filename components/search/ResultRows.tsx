@@ -3,11 +3,12 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
+import { BarMark, type BarBrand } from '@/components/screens/home/BarMark';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
-import { closedLabel, drinkCount, type DiscoverBar } from '@/lib/discoverDrinks';
+import { barDrinksLine, closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
 import { groupLabel, moreCount, moreLabel, PER_GROUP } from '@/lib/searchScope';
 
 import { useSearchNavRow } from './searchNav';
@@ -17,11 +18,11 @@ const THUMB = 56;
 interface ResultRowProps {
   title: string;
   caption?: string;
-  /** An icon tile (ingredients, menus, recents), or a round avatar for bars and people. */
+  /** An icon tile (ingredients, menus, recents), or a round avatar for people; `bar` makes it the bar's mark, in its own colours. */
   icon?: IconName;
   /** The icon in the accent, not muted: the flavor map's target (prep-flavor-entry). */
   accentIcon?: boolean;
-  avatar?: { uri: string | null };
+  avatar?: { uri: string | null; bar?: { profileId: string; brand?: BarBrand | null } };
   /** An ingredient's drawing in place of the icon. A null id draws from the title (drafts). */
   ingredient?: { id: string | null };
   /** A short label after the caption ("Closed 2019"); the avatar fades with it. */
@@ -52,6 +53,8 @@ export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient
       <View style={[styles.thumb, !avatar && !ingredient && { backgroundColor: ds.c.surface }, tag ? styles.faded : null]}>
         {ingredient ? (
           <IngredientThumb id={ingredient.id} name={title} size={THUMB} />
+        ) : avatar?.bar ? (
+          <BarMark name={title} logoUrl={avatar.uri} profileId={avatar.bar.profileId} brand={avatar.bar.brand} size={THUMB - space.sm} filled />
         ) : avatar ? (
           <UserAvatar uri={avatar.uri} name={title} size={THUMB - space.sm} />
         ) : (
@@ -86,13 +89,14 @@ const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', '
  */
 export function BarResultRow({ bar, score, away, query, matchLook }: { bar: DiscoverBar; score?: number; away?: string | null; query?: string; matchLook?: MatchTextProps['look'] }) {
   const router = useRouter();
-  const caption = [bar.locality || bar.city, away, bar.drinks ? drinkCount(bar.drinks) : null].filter(Boolean).join(' · ') || place(bar) || undefined;
+  // "Fitzroy · 14 drinks on now" (nav-search-home).
+  const caption = [bar.locality || bar.city, away, barDrinksLine(bar)].filter(Boolean).join(' · ') || place(bar) || undefined;
   const said = scoreWords(score, score !== undefined ? 'bar score' : null);
   return (
     <ResultRow
       title={bar.name}
       caption={caption}
-      avatar={{ uri: bar.logo }}
+      avatar={{ uri: bar.logo, bar: { profileId: bar.id, brand: bar.brand } }}
       tag={bar.closed ? closedLabel(bar.closedYear) : undefined}
       trailing={bar.closed ? null : <RowScore score={score} detail={score !== undefined ? 'bar' : null} />}
       query={query}

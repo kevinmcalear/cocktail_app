@@ -9,6 +9,8 @@ import { displayFaces, fontFamilies, layout, radius, space, type DisplayFace } f
 import { BRAND_SAMPLE as SAMPLE } from '@/lib/brandSample';
 import { withAlpha } from '@/lib/color';
 
+import { IconTile, type IconBackground } from './BrandIcon';
+
 export interface BrandLook {
   id: string;
   name: string;
@@ -21,6 +23,8 @@ export interface BrandLook {
   groundTint: string | null;
   /** Text on accent buttons, or null for the automatic pick. */
   accentText?: 'cream' | 'ink' | null;
+  /** The home-screen icon's background, or null for the logo's own. */
+  iconBackground?: IconBackground | null;
 }
 
 const SCHEMES = [
@@ -104,7 +108,9 @@ function HomeIcon({ look }: { look: BrandLook }) {
   return (
     <View style={[styles.iconCard, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
       <View style={styles.icon}>
-        {src ? (
+        {look.iconBackground && !look.iconUrl ? (
+          <IconTile bg={look.iconBackground} look={look} size={44} />
+        ) : src ? (
           <Image source={{ uri: src }} style={styles.iconTile} contentFit="cover" accessibilityIgnoresInvertColors />
         ) : (
           <VenueMark venue={{ ...look, roleLevel: 40 }} size={44} />
