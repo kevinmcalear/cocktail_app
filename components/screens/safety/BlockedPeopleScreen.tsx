@@ -1,8 +1,8 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, useDs } from '@/components/ds';
+import { Body, Button, Caption, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { space } from '@/constants/tokens';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useMyBlocks, useSetBlocked, type BlockedPerson } from '@/hooks/useSafety';
 import { confirmAsync } from '@/lib/dialogs';
 
@@ -32,7 +32,7 @@ export function BlockedPeopleScreen() {
   );
 }
 
-const DAY = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+const DAY = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
 
 function BlockedRow({ person }: { person: BlockedPerson }) {
   const ds = useDs();
@@ -48,9 +48,11 @@ function BlockedRow({ person }: { person: BlockedPerson }) {
   };
   return (
     <View role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <UserAvatar uri={person.avatar_url} name={name} size={40} />
+      <UserAvatar uri={person.avatar_url} name={person.display_name ? name : '?'} neutral={!person.display_name} size={44} />
       <View style={styles.flex}>
-        <Headline numberOfLines={1}>{name}</Headline>
+        <Body numberOfLines={2} style={styles.name}>
+          {name}
+        </Body>
         <Caption tone="muted">
           {[person.handle ? `@${person.handle}` : null, `Blocked ${DAY.format(new Date(person.blocked_at))}`].filter(Boolean).join(' · ')}
         </Caption>
@@ -60,7 +62,7 @@ function BlockedRow({ person }: { person: BlockedPerson }) {
           </Caption>
         ) : null}
       </View>
-      <Button label={setBlocked.isPending ? 'Unblocking…' : 'Unblock'} variant="secondary" disabled={setBlocked.isPending} onPress={() => void unblock()} />
+      <Button label={setBlocked.isPending ? 'Unblocking…' : 'Unblock'} variant="secondary" disabled={setBlocked.isPending} onPress={() => void unblock()} style={styles.unblock} />
     </View>
   );
 }
@@ -68,4 +70,6 @@ function BlockedRow({ person }: { person: BlockedPerson }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },
+  name: { fontFamily: fontFamilies.bodySemiBold },
+  unblock: { paddingHorizontal: space.lg },
 });

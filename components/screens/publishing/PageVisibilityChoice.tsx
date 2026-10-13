@@ -31,7 +31,7 @@ export function PageVisibilityChoice({ venueName, value, onChange, disabled, err
       {heading ? <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption> : null}
       <View role="radiogroup" accessibilityLabel="Who sees your page" style={styles.rows}>
         {PAGE_VISIBILITIES.map((v) => (
-          <Choice key={v} label={PAGE_COPY[v].label} detail={PAGE_COPY[v].detail} selected={value === v} disabled={disabled} onPress={() => onChange(v)} />
+          <Choice key={v} dotFirst label={PAGE_COPY[v].label} detail={PAGE_COPY[v].detail} selected={value === v} disabled={disabled} onPress={() => onChange(v)} />
         ))}
       </View>
       {error ? (

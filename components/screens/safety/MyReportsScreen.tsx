@@ -7,7 +7,8 @@ import { reasonLabel, REPORT_KIND_LABEL, reportOutcome, reportSubject } from '@/
 
 import { SafetyPage } from './SafetyPage';
 
-const DAY = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+// "9 Oct 2026" (tools-settings-myreports-phone).
+const DAY = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
 
 /** Settings › Your reports: what you've reported and what happened to each. */
 export function MyReportsScreen() {
@@ -38,8 +39,8 @@ function ReportRow({ report: r }: { report: MyReport }) {
   return (
     <View role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
       <View style={styles.tags}>
-        <Tag label={outcome.label} tone={r.status === 'actioned' ? 'success' : 'default'} />
-        <Tag label={REPORT_KIND_LABEL[r.target_kind]} />
+        <Tag label={outcome.label} tone={r.status === 'actioned' ? 'success' : 'outline'} />
+        <Tag label={REPORT_KIND_LABEL[r.target_kind]} tone="outline" />
       </View>
       <Headline>{subject ?? (r.status === 'actioned' ? 'Taken down' : 'No longer visible to you')}</Headline>
       <Caption tone="muted">{`${reasonLabel(r.reason)} · sent ${DAY.format(new Date(r.created_at))}`}</Caption>
