@@ -1,10 +1,12 @@
 import { getLocales } from 'expo-localization';
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 // A bar's ringed monogram, or its logo (disc-list).
 import { BarMark } from '@/components/screens/home/BarMark';
+import { LoveBarButton } from '@/components/screens/kept/LoveBarButton';
 import { space } from '@/constants/tokens';
 import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
 import { useBarVersions } from '@/hooks/useSpecMatches';
@@ -29,10 +31,12 @@ interface RowProps {
   drinkId?: string;
   /** Makes the row a link, e.g. to the bar's profile. */
   onPress?: () => void;
+  /** Beside the row, outside its link: the bar's heart. */
+  end?: ReactNode;
 }
 
 /** A numbered row with a score at the end: a bar in an area list, a drink in your own. */
-export function RankRow({ position, title, detail, score, scoreDetail, logo, barId, drinkId, onPress }: RowProps) {
+export function RankRow({ position, title, detail, score, scoreDetail, logo, barId, drinkId, onPress, end }: RowProps) {
   const ds = useDs();
   const label = `Number ${position}: ${title}, ${detail}. Score ${formatScore(score)}${scoreDetail ? `, ${scoreDetail}` : ''}`;
   const body = (
@@ -53,14 +57,19 @@ export function RankRow({ position, title, detail, score, scoreDetail, logo, bar
       </View>
     </>
   );
-  const style = [styles.row, { borderBottomColor: ds.c.line }];
-  return onPress ? (
-    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={style}>
+  const row = onPress ? (
+    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={styles.link}>
       {body}
     </PressableScale>
   ) : (
-    <View accessible accessibilityLabel={label} style={style}>
+    <View accessible accessibilityLabel={label} style={styles.link}>
       {body}
+    </View>
+  );
+  return (
+    <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
+      {row}
+      {end}
     </View>
   );
 }
@@ -104,8 +113,9 @@ type AreaRow = AreaRanking & { distance_km?: number | null; avatar_url?: string 
  * list (`classicId`), each row is one drink at one bar (disc-rankings): it
  * leads with that drink's picture and says what the bar pours of it, "the
  * classic spec" or what its variation changes; other lists lead with the logo.
+ * `love`: each bar's heart at the end of its row (signed in).
  */
-export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked` }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string }) {
+export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked`, love = false }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string; love?: boolean }) {
   const router = useRouter();
   const pours = useBarVersions(classicId, rows.map((r) => r.venue_profile_id));
   return (
@@ -124,6 +134,7 @@ export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.ranker
             barId={r.venue_profile_id}
             drinkId={classicId ? (pour?.itemId ?? classicId) : undefined}
             onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
+            end={love ? <LoveBarButton profileId={r.venue_profile_id} name={r.display_name} /> : undefined}
           />
         );
       })}
@@ -134,30 +145,32 @@ export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.ranker
 /**
  * Early: bars people have started ranking, below the minimum. No position
  * and no score, only how many people, so nothing reads as a verdict (or
- * gives away a few people's private rankings).
+ * gives away a few people's private rankings). `love`: each bar's heart.
  */
-export function EarlyList({ rows }: { rows: DiscoverRow[] }) {
+export function EarlyList({ rows, love = false }: { rows: DiscoverRow[]; love?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   return (
     <View>
       {rows.map((r) => (
-        <PressableScale
-          key={r.venue_profile_id}
-          role="link"
-          accessibilityLabel={`${r.display_name}, ${placeOf(r)}. ${rankedCount(r.rankers)}`}
-          onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
-          style={[styles.row, { borderBottomColor: ds.c.line }]}
-        >
-          <BarMark logoUrl={r.avatar_url} name={r.display_name} profileId={r.venue_profile_id} size={LOGO} />
-          <View style={styles.flex}>
-            <Headline numberOfLines={1}>{r.display_name}</Headline>
-            <Caption tone="muted" numberOfLines={1}>
-              {placeOf(r)}
-            </Caption>
-          </View>
-          <Caption tone="muted">{rankedCount(r.rankers)}</Caption>
-        </PressableScale>
+        <View key={r.venue_profile_id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+          <PressableScale
+            role="link"
+            accessibilityLabel={`${r.display_name}, ${placeOf(r)}. ${rankedCount(r.rankers)}`}
+            onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
+            style={styles.link}
+          >
+            <BarMark logoUrl={r.avatar_url} name={r.display_name} profileId={r.venue_profile_id} size={LOGO} />
+            <View style={styles.flex}>
+              <Headline numberOfLines={1}>{r.display_name}</Headline>
+              <Caption tone="muted" numberOfLines={1}>
+                {placeOf(r)}
+              </Caption>
+            </View>
+            <Caption tone="muted">{rankedCount(r.rankers)}</Caption>
+          </PressableScale>
+          {love ? <LoveBarButton profileId={r.venue_profile_id} name={r.display_name} /> : null}
+        </View>
       ))}
     </View>
   );
@@ -174,6 +187,8 @@ export function ListNote({ children }: { children: string }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  // The row's link (or label), beside anything at its end.
+  link: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md },
   drink: { width: LOGO + space.sm, height: LOGO + space.sm },
   position: { minWidth: space.xl, textAlign: 'center' },
   flex: { flex: 1, minWidth: 0 },

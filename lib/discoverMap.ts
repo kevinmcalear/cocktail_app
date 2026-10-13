@@ -44,6 +44,8 @@ export interface MapPin {
   matches?: number;
   /** A closed bar: "Closed 2019". */
   closed?: string;
+  /** Where an unscored bar sits on Top bars here (the viewer's loved bars, then the most relevant; discover_top_bars), 0 first. */
+  order?: number;
   /** While searching: its best matching drink, written on the pin in place of the count (lib/discoverMatch.ts namePins). */
   top?: string;
   /** While searching: an unnamed pin says how many of its drinks match (disc-search-pin), unless it has a score. */
@@ -59,7 +61,7 @@ export function pinsFrom(rows: { ranked: DiscoverRow[]; early: DiscoverRow[] } |
   if (!rows) return [];
   return [...rows.ranked, ...rows.early]
     .filter((r) => r.latitude !== null && r.longitude !== null)
-    .map((r) => ({
+    .map((r, i) => ({
       id: r.venue_profile_id,
       handle: r.handle,
       name: r.display_name,
@@ -70,6 +72,7 @@ export function pinsFrom(rows: { ranked: DiscoverRow[]; early: DiscoverRow[] } |
       score: r.is_early ? null : r.score,
       position: r.is_early ? null : r.position,
       rankers: r.rankers,
+      order: r.is_early ? i : undefined,
     }));
 }
 
@@ -142,10 +145,11 @@ export function pinsToDraw(pins: readonly MapPin[], view: MapView | null, select
   const open = pins.filter((p) => !p.closed && (!view || inView(view.bounds, p)));
   const best = open.filter((p) => p.score !== null).sort((a, b) => b.score! - a.score!).slice(0, BEST_PINS);
   // A score needs MIN_RANKERS people, and most bars have none yet (prod, 13 Oct: none at all), which left
-  // the map all dots. Until then the busiest bars in view with a logo fill the rest, the logo in the score's place.
+  // the map all dots. Until then the bars in view with a logo fill the rest, the logo in the score's place:
+  // in Top bars' order (loved, then most relevant), then the busiest.
   const known = open
     .filter((p) => p.score === null && p.logo)
-    .sort((a, b) => (b.drinks ?? b.matches ?? 0) - (a.drinks ?? a.matches ?? 0))
+    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || (b.drinks ?? b.matches ?? 0) - (a.drinks ?? a.matches ?? 0))
     .slice(0, BEST_PINS - best.length);
   return [...always, ...[...best, ...known].filter((p) => !always.includes(p))];
 }

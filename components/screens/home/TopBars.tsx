@@ -13,7 +13,8 @@ const TOP = 5;
  * "Top bars near you", by bar score: the average of a bar's drink scores,
  * weighted by how many people ranked each (see the discover migration).
  * Early bars (fewer than MIN_RANKERS people, or nobody yet) are listed
- * without a score when no bar has one yet.
+ * without a score when no bar has one yet: the viewer's loved bars first,
+ * then the most relevant (discover_top_bars). Each row has its heart.
  */
 export function TopBars({ area }: { area: Area }) {
   const where = areaLabel(area);
@@ -26,12 +27,12 @@ export function TopBars({ area }: { area: Area }) {
   if (error) body = <ListNote>{`Couldn't load the bars: ${error.message}`}</ListNote>;
   else if (isLoading) body = <ListNote>Loading…</ListNote>;
   else if (ranked.length) {
-    body = <AreaRankList rows={ranked} scoreDetail={(r) => `${r.rankers} ranked`} />;
+    body = <AreaRankList rows={ranked} scoreDetail={(r) => `${r.rankers} ranked`} love />;
   } else if (early.length) {
     body = (
       <>
         <ListNote>{earlyNote(early, MIN_RANKERS)}</ListNote>
-        <EarlyList rows={early} />
+        <EarlyList rows={early} love />
       </>
     );
   } else body = <ListNote>{`No bars ${where} on Cocktail yet.`}</ListNote>;

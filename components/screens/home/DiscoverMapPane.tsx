@@ -10,7 +10,7 @@ import { useBestDrink, useRowScores } from '@/hooks/useBestDrink';
 import { useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
 import { useMapMoves } from '@/hooks/useMapMoves';
-import { barPins, byScore, closedPins, scorePins, venueScores, withBarScores, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { barPins, byScore, closedPins, scorePins, venueScores, withBarOrder, withBarScores, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { namePins, searchTitle } from '@/lib/discoverMatch';
 import { areaLabel, areaParams, earlyNote, type Area } from '@/lib/nearMe';
@@ -118,8 +118,8 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
       : barRows;
   const drinks = scores ? byScore(picked, scores.drinks) : nearest ? near.drinks : results.drinks;
   const pins = [
-    // The drinks layer's pins carry their bar's score too (b02).
-    ...(byDrinks ? withBarScores(barPins([...(areaBars.data ?? []), ...tileBars.bars]), venueScores(barRows.data?.ranked ?? [])) : scores ? scorePins(drinks, results.barsById, scores.bars) : pinsFrom(rows.data)),
+    // The drinks layer's pins carry their bar's score too (b02), and its place on Top bars (which pins to draw).
+    ...(byDrinks ? withBarOrder(withBarScores(barPins([...(areaBars.data ?? []), ...tileBars.bars]), venueScores(barRows.data?.ranked ?? [])), barRows.data?.early ?? []) : scores ? scorePins(drinks, results.barsById, scores.bars) : pinsFrom(rows.data)),
     ...closedPins(results.closed ?? []),
   ];
   const [ownId, setOwnId] = useState<string | null>(null);
@@ -166,11 +166,11 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
       <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map${follow ? '' : ' and search this area'}, or pick another style.`}</ListNote>
     )
   ) : ranked.length ? (
-    <AreaRankList rows={ranked} scoreDetail={(r) => `${r.rankers} ranked`} />
+    <AreaRankList rows={ranked} scoreDetail={(r) => `${r.rankers} ranked`} love />
   ) : early.length ? (
     <>
       <ListNote>{earlyNote(early, MIN_RANKERS)}</ListNote>
-      <EarlyList rows={early} />
+      <EarlyList rows={early} love />
     </>
   ) : (
     <ListNote>{`Nobody has ranked a drink at a bar ${areaLabel(area)} yet. Move the map${follow ? '' : ' and search this area'}.`}</ListNote>

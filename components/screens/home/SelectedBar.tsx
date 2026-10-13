@@ -87,15 +87,18 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
         </View>
         <DrinkHero key={hero.id} drink={hero} query={query} area={area} />
         {next ? <NextMatch drink={next} score={scores?.drinks[next.id]} count={matches.length} page={page} onNext={() => setPage((page + 1) % matches.length)} /> : null}
-        <PressableScale role="link" accessibilityLabel={`At ${pin.name}, ${[pin.place, away].filter(Boolean).join(', ')}. Open the bar`} onPress={openBar} style={[styles.atBar, { borderColor: ds.c.line }]}>
-          <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={32} />
-          <View style={styles.flex}>
-            <Caption tone="muted">At</Caption>
-            <Caption numberOfLines={1}>{[pin.name, pin.place, away].filter(Boolean).join(' · ')}</Caption>
-          </View>
-          <Caption>Bar</Caption>
-          <IconSymbol name="chevron.right" size={14} color={ds.c.muted} />
-        </PressableScale>
+        <View style={[styles.atBar, { borderColor: ds.c.line }]}>
+          <PressableScale role="link" accessibilityLabel={`At ${pin.name}, ${[pin.place, away].filter(Boolean).join(', ')}. Open the bar`} onPress={openBar} style={styles.atLink}>
+            <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={32} />
+            <View style={styles.flex}>
+              <Caption tone="muted">At</Caption>
+              <Caption numberOfLines={1}>{[pin.name, pin.place, away].filter(Boolean).join(' · ')}</Caption>
+            </View>
+            <Caption>Bar</Caption>
+            <IconSymbol name="chevron.right" size={14} color={ds.c.muted} />
+          </PressableScale>
+          <LoveBarButton profileId={pin.id} name={pin.name} />
+        </View>
         <BarTopDrinks barId={pin.id} title="Also good here" />
       </View>
     );
@@ -197,4 +200,5 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   right: { flexDirection: 'row', gap: space.sm },
   atBar: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderRadius: radius.mark, paddingVertical: space.sm },
+  atLink: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md },
 });
