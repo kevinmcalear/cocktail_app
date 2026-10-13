@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, SpecRow, Surface, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, SpecRow, Surface, useBreakpoint, useDs } from '@/components/ds';
 import { DrinkFacts, type Fact } from '@/components/screens/drink/DrinkFacts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
@@ -50,14 +50,17 @@ export function PublicSpec({
     const note = !bar
       ? 'Its spec isn’t shared.'
       : barClaimed
-        ? `${who} shares this drink’s menu description, not its spec.`
+        ? `You can rank and save this drink. ${who} shares this drink’s menu description, not its spec.`
         : `You can rank and save this drink. Its spec shows once ${who} claims its page and chooses to share it.`;
+    // The names without amounts, where the listing gives them (ppl-pub-drink-phone).
+    const names = [...new Set(lines.flatMap((l) => (l.ingredient ? [l.ingredient] : [])))];
     return (
-      <View style={styles.section}>
+      <Surface style={styles.locked}>
         <LockedHeading />
         <Body tone="muted">{note}</Body>
+        {names.length ? <Body>{names.map((n, i) => (i ? n.toLowerCase() : n)).join(', ')}</Body> : null}
         {signedIn ? <Facts page={page} columns={2} /> : null}
-      </View>
+      </Surface>
     );
   }
 
@@ -106,13 +109,18 @@ function LockedHeading() {
   );
 }
 
-/** Signed out: names, blanks where the amounts go, and the way in. */
+/**
+ * Signed out: names, blanks where the amounts go, and the way in. "The spec"
+ * is a heading on a phone and the small capitals kicker beside the page on
+ * wide screens (ppl-pub-drink-phone-teaser, -desktop).
+ */
 function Teaser({ names }: { names: string[] }) {
   const ds = useDs();
   const router = useRouter();
+  const wide = useBreakpoint() !== 'phone';
   return (
     <View style={styles.section}>
-      <Kicker>The spec</Kicker>
+      {wide ? <Kicker>The spec</Kicker> : <Headline role="heading">The spec</Headline>}
       {names.length ? (
         <View role="list" aria-label="Ingredients. Amounts show when you sign in.">
           {names.map((name, i) => (
@@ -127,7 +135,7 @@ function Teaser({ names }: { names: string[] }) {
         <View style={styles.lockText}>
           <IconSymbol name="lock.fill" size={18} color={ds.c.muted} />
           <Body tone="muted" style={styles.flex}>
-            Amounts, method, glass and ice show when you sign in. It’s free, and it saves the drink and your ranks too.
+            The spec shows when you sign in. It’s free, and it saves the drink and your ranks too.
           </Body>
         </View>
         <Button label="Sign in to see the full spec" size="lg" onPress={() => router.push('/auth/login')} />
@@ -150,5 +158,6 @@ const styles = StyleSheet.create({
   },
   blank: { width: 64, height: 14, borderRadius: radius.mark },
   lock: { gap: space.md, padding: space.lg, marginTop: space.sm },
+  locked: { gap: space.sm, padding: space.lg },
   lockText: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
 });

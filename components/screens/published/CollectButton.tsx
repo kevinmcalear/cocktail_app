@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Button, Caption } from '@/components/ds';
 import { space } from '@/constants/tokens';
@@ -11,6 +11,7 @@ export function CollectButton({
   name,
   quiet = false,
   labels = ['Collect', 'Collected'],
+  style,
 }: {
   target: CollectTarget;
   name: string;
@@ -18,6 +19,7 @@ export function CollectButton({
   quiet?: boolean;
   /** Its words before and after: the public drink page says "To make" (ppl-pub-drink-desktop). */
   labels?: [string, string];
+  style?: StyleProp<ViewStyle>;
 }) {
   const { saved, toggle, error, pending, sheet } = useCollectToggle(target, name);
   return (
@@ -29,6 +31,7 @@ export function CollectButton({
         disabled={pending}
         accessibilityHint={saved ? `Removes ${name} from your collection` : `Keeps ${name} in your collection`}
         onPress={toggle}
+        style={style}
       />
       {error ? <Caption tone="accent">{error}</Caption> : null}
       {sheet}

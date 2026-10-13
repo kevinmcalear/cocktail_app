@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, Chip, IngredientThumb, PressableScale, Segmented, Spec, Surface, Title, useDs } from '@/components/ds';
+import { Body, Caption, Chip, IngredientThumb, PressableScale, Spec, Surface, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { ScaledLine } from '@/lib/scale';
@@ -52,6 +52,25 @@ function Tile({ selected, onPress, label, children, wide }: { selected: boolean;
   );
 }
 
+/** Batches / Fill a bottle / What I have: a pill switch on a cream track, the pick on white (prep-make-howmuch). */
+function ModeSwitch({ options, value, onChange }: { options: { value: MakeMode; label: string }[]; value: MakeMode; onChange: (m: MakeMode) => void }) {
+  const ds = useDs();
+  return (
+    <View role="tablist" accessibilityLabel="Scale by" style={[styles.switch, { backgroundColor: ds.c.raised }]}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <PressableScale key={o.value} role="tab" aria-selected={on} accessibilityLabel={o.label} onPress={() => onChange(o.value)} style={[styles.side, on && { backgroundColor: ds.c.surface }]}>
+            <Body tone={on ? 'ink' : 'muted'} numberOfLines={1} style={on ? styles.strong : null}>
+              {o.label}
+            </Body>
+          </PressableScale>
+        );
+      })}
+    </View>
+  );
+}
+
 /** Make, first screen: how much, by batches, a container to fill, or what you have of one line. */
 export function MakeHowMuch(p: MakeHowMuchProps) {
   const ds = useDs();
@@ -65,9 +84,8 @@ export function MakeHowMuch(p: MakeHowMuchProps) {
   const step = (dir: 1 | -1) => p.onHave(String(stepHave(haveNumber > 0 ? haveNumber : 0, p.haveUnit, dir)));
   return (
     <View style={styles.stack}>
-      <Caption tone="muted" style={styles.eyebrow}>{`MAKE · ${p.name.toUpperCase()}`}</Caption>
       <Title>How much?</Title>
-      <Segmented options={modes} value={p.mode} onChange={p.onMode} accessibilityLabel="Scale by" />
+      <ModeSwitch options={modes} value={p.mode} onChange={p.onMode} />
       {p.mode === 'batches' ? (
         <View role="radiogroup" accessibilityLabel="Batches" style={styles.tiles}>
           {p.batchOptions.map((b) => (
@@ -139,7 +157,9 @@ export function MakeHowMuch(p: MakeHowMuchProps) {
 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
-  eyebrow: { letterSpacing: 0.6 },
+  switch: { flexDirection: 'row', padding: space.xs, borderRadius: radius.pill },
+  side: { flex: 1, minHeight: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.sm },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tile: { minHeight: 64, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 2, justifyContent: 'center' },
   quarter: { flexGrow: 1, flexBasis: '20%', alignItems: 'center' },

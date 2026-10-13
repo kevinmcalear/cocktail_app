@@ -1,7 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, DsText, Headline, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, space } from '@/constants/tokens';
@@ -23,7 +23,16 @@ export const isShownPosition = (p: Pick<Position, 'is_current' | 'is_shown'> & {
  * bar, so nobody reads a past job as a current one. Each row opens the other
  * profile. With emptyText it fills a tab, with a line when nobody is listed.
  */
-export function Positions({ profile, emptyText }: { profile: Pick<Profile, 'id' | 'kind'>; emptyText?: string }) {
+export function Positions({
+  profile,
+  emptyText,
+  currentUntitled = false,
+}: {
+  profile: Pick<Profile, 'id' | 'kind'>;
+  emptyText?: string;
+  /** The current team without its own heading, under a section that already says People (ppl-pub-bar-desktop). */
+  currentUntitled?: boolean;
+}) {
   const onPerson = profile.kind === 'person';
   // Filtered here, not in the query, so a persisted cache from before can't show them either.
   // A job someone added shows on their own page, marked, before the bar confirms it; never on the bar's.
@@ -31,21 +40,25 @@ export function Positions({ profile, emptyText }: { profile: Pick<Profile, 'id' 
   if (!positions.length) return emptyText ? <Body tone="muted">{emptyText}</Body> : null;
   return (
     <View style={styles.sections}>
-      <PositionList heading={onPerson ? 'Works at' : 'Current team'} positions={positions.filter((p) => p.is_current)} onPerson={onPerson} />
+      <PositionList heading={onPerson ? 'Works at' : currentUntitled ? null : 'Current team'} positions={positions.filter((p) => p.is_current)} onPerson={onPerson} />
       <PositionList heading={onPerson ? 'Previously' : 'Previous'} positions={positions.filter((p) => !p.is_current)} onPerson={onPerson} />
     </View>
   );
 }
 
-function PositionList({ heading, positions, onPerson }: { heading: string; positions: Position[]; onPerson: boolean }) {
+function PositionList({ heading, positions, onPerson }: { heading: string | null; positions: Position[]; onPerson: boolean }) {
   const ds = useDs();
   const router = useRouter();
   if (!positions.length) return null;
   return (
     <View style={styles.section}>
-      <Caption tone="muted" role="heading" style={styles.cap}>
-        {heading}
-      </Caption>
+      {heading == null ? null : onPerson ? (
+        <Headline role="heading">{heading}</Headline>
+      ) : (
+        <Caption tone="muted" role="heading" style={styles.cap}>
+          {heading}
+        </Caption>
+      )}
       <View role="list">
         {positions.map((p) => {
           const other = onPerson ? p.bar : p.person;

@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, DsText, GlassButton, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, DsText, useDs, useGutter } from '@/components/ds';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMenu } from '@/hooks/useMenus';
@@ -31,14 +31,15 @@ export function MenuCardScreen({ menuId }: { menuId: string }) {
   );
 }
 
+/** The venue's logo, or its initial in the display italic on its accent, small at the card's foot. */
 function VenueMark({ venue }: { venue: Venue }) {
   const ds = useDs();
   if (venue.logoUrl) {
     return <Image source={{ uri: venue.logoUrl }} style={styles.mark} contentFit="cover" accessible={false} />;
   }
   return (
-    <View style={[styles.mark, { backgroundColor: ds.accentFill.fill }]}>
-      <DsText variant="headline" color={ds.accentFill.text}>
+    <View style={[styles.mark, { backgroundColor: ds.accentFill.fill }]} aria-hidden>
+      <DsText variant="body" color={ds.accentFill.text} style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
         {venue.name.slice(0, 1)}
       </DsText>
     </View>
@@ -58,9 +59,10 @@ interface GuestCardContentProps {
 
 /**
  * The card itself: when (an eyebrow), the menu's name in the display face, "at
- * Little Rye" in italic, a rule, its sections, and the venue's mark at the
- * foot. The editor's preview (`compact`) is just when, name and sections.
- * Inside the light theme, on paper.
+ * Little Rye" in italic, a rule, its sections with a QR code under each drink
+ * that opens its page, and a foot: the drawings note, "Scan a code to open the
+ * drink" and the venue's mark. The editor's preview (`compact`) is just when,
+ * name and sections. Inside the light theme, on paper.
  */
 export function GuestCardContent({ name, when, venue, sections, pictures, compact = false }: GuestCardContentProps) {
   const ds = useDs();
@@ -80,20 +82,24 @@ export function GuestCardContent({ name, when, venue, sections, pictures, compac
         </DsText>
       ) : null}
       <View style={[styles.rule, compact && styles.ruleCompact, { backgroundColor: ds.c.lineStrong }]} />
-      {/* A one-section menu named Drinks already says it. */}
-      {compact || sections.some((sec) => /^drinks$/i.test(sec.name.trim())) ? null : (
-        <Caption tone="muted" style={styles.eyebrow}>
-          DRINKS
-        </Caption>
-      )}
+      {/* Each section's own name heads it (a one-section menu's "Drinks" included): no extra heading. */}
       <View style={styles.sections}>
-        <MenuSections sections={sections} variant="card" pictures={pictures} compact={compact} />
+        <MenuSections
+          sections={sections}
+          variant="card"
+          pictures={pictures}
+          compact={compact}
+          codes={!compact}
+          foot={
+            compact ? undefined : (
+              <View style={styles.scan}>
+                <Caption tone="muted">Scan a code to open the drink</Caption>
+                {venue ? <VenueMark venue={venue} /> : null}
+              </View>
+            )
+          }
+        />
       </View>
-      {venue && !compact ? (
-        <View style={styles.foot}>
-          <VenueMark venue={venue} />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -113,8 +119,7 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
   const share = () => {
     if (!menu) return;
     if (web) window.print();
-    // ponytail: shares the menu as text. A share image with a QR code waits
-    // on public menus (the publishing step): today a guest couldn't open the link.
+    // ponytail: on a phone it shares the menu as text; the printed card (web) carries the QR codes.
     else void Share.share({ message: menuAsText(menu, venue?.name) });
   };
   return (
@@ -122,8 +127,9 @@ function CardBody({ menuId, venue }: { menuId: string; venue: Venue | null }) {
     <View style={[styles.screen, { backgroundColor: ds.c.paper }]}>
       {web ? <style>{'@media print { #menu-card-controls { display: none !important; } }'}</style> : null}
       <View nativeID="menu-card-controls" style={[styles.controls, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
-        <GlassButton icon="chevron.left" accessibilityLabel="Back to the menu" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/menus/${menuId}`))} />
-        <Button label={web ? 'Print or save as PDF' : 'Share'} icon={web ? 'printer' : 'square.and.arrow.up'} variant="secondary" onPress={share} disabled={!menu} />
+        {/* A bare printable page: text Back and Print, no app chrome (the sidebar hides here too). */}
+        <Button label="Back" variant="ghost" accessibilityLabel="Back to the menu" onPress={() => (router.canGoBack() ? router.back() : router.replace(`/menus/${menuId}`))} />
+        <Button label={web ? 'Print' : 'Share'} accessibilityHint={web ? 'Print it or save it as a PDF' : undefined} variant="secondary" onPress={share} disabled={!menu} />
       </View>
       <ScrollView contentContainerStyle={[styles.page, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl }]}>
         {!menu ? (
@@ -140,11 +146,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   controls: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.md },
   page: { alignItems: 'center', paddingTop: space.xl },
-  card: { width: '100%', maxWidth: 640, alignItems: 'center', gap: space.sm },
-  mark: { width: 48, height: 48, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  card: { width: '100%', maxWidth: 656, alignItems: 'center', gap: space.sm },
+  mark: { width: 28, height: 28, borderRadius: radius.mark * 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  scan: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 0 },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.5, textAlign: 'center' },
   at: { marginTop: -space.xs },
-  foot: { paddingTop: space.xl, alignItems: 'center' },
   rule: { width: 48, height: 1, marginVertical: space.lg },
   ruleCompact: { marginVertical: space.sm },
   sections: { width: '100%' },

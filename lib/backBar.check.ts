@@ -61,6 +61,8 @@ assert.equal(locationLine('Garnish', null), 'Garnish');
 assert.equal(locationLine('Garnish', '  '), 'Garnish');
 assert.equal(formatPar(2, 'L'), '2 L');
 assert.equal(formatPar('0.750', 'L'), '0.75 L');
+assert.equal(formatPar(1, 'bottles'), '1 bottle');
+assert.equal(formatPar(2, 'bottles'), '2 bottles');
 assert.equal(formatPar(null, 'L'), null);
 assert.equal(formatPar(2, null), null);
 assert.equal(summaryLine(12, [{ item_id: 'a' }, { item_id: 'a' }, { item_id: 'b' }], 3), '12 zones · 2 items placed · 3 waiting for a spot');

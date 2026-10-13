@@ -49,15 +49,15 @@ test('rows have no up and down buttons: drag, keys and the screen reader actions
   expect(screen.getByRole('button', { name: 'Pellican options' })).toBeTruthy();
 });
 
-test('a row’s ... menu moves a drink to another section, or to the top', async () => {
+test('a row’s ... menu, a popover, moves a drink to another section, or to the top', async () => {
   const onMove = await renderSection();
   await fireEvent.press(screen.getByRole('button', { name: 'Pellican options' }));
-  expect(screen.getByRole('button', { name: 'Open the drink' })).toBeTruthy();
-  await fireEvent.press(screen.getByRole('button', { name: 'Move to top' }));
+  expect(screen.getByRole('menuitem', { name: 'Open the drink' })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('menuitem', { name: 'Move to top' }));
   expect(onMove).toHaveBeenLastCalledWith(1, 0);
   await fireEvent.press(screen.getByRole('button', { name: 'Pellican options' }));
-  await fireEvent.press(screen.getByRole('button', { name: 'Move to another section' }));
-  await fireEvent.press(screen.getByRole('button', { name: 'Sours' }));
+  await fireEvent.press(screen.getByRole('menuitem', { name: 'Move to another section' }));
+  await fireEvent.press(screen.getByRole('menuitem', { name: 'Sours' }));
   expect(onMoveTo).toHaveBeenLastCalledWith('b', 's2');
 });
 

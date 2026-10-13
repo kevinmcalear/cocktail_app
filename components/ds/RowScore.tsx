@@ -55,7 +55,8 @@ export interface MatchTextProps {
   query?: string;
   /**
    * accent: the word in the accent, a little bolder (the search page).
-   * tint: ink on a soft accent wash (Discover's search and the bar page it opens).
+   * tint: ink on a soft accent wash (Discover's search and the bar page it
+   * opens), in the title's own face, so a serif name stays serif.
    */
   look?: 'accent' | 'tint';
 }
@@ -69,7 +70,7 @@ export function MatchText({ text, query, look = 'accent' }: MatchTextProps) {
   const ds = useDs();
   const parts = query ? matchParts(text, query) : null;
   if (!parts?.some((p) => p.hit)) return text;
-  const lit = look === 'tint' ? { backgroundColor: withAlpha(ds.accentText, 0.2), color: ds.c.ink, fontFamily: fontFamilies.bodySemiBold } : { color: ds.accentText, fontFamily: fontFamilies.bodySemiBold };
+  const lit = look === 'tint' ? { backgroundColor: withAlpha(ds.accentText, 0.2), color: ds.c.ink } : { color: ds.accentText, fontFamily: fontFamilies.bodySemiBold };
   return parts.map((p, i) =>
     p.hit ? (
       <Text key={i} style={lit}>

@@ -1,43 +1,59 @@
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 
-import { Button, Caption, Segmented, Tag } from '@/components/ds';
-import { BarWeek } from '@/components/screens/week/BarWeek';
-import { WebHead } from '@/components/WebHead';
-import { space } from '@/constants/tokens';
-import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useBarFacts } from '@/hooks/useBarFacts';
-import { isUnclaimed, useMenuCredits, useMenuEditions, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
-import { hoursSource } from '@/lib/barHours';
-import { drinkRunTags } from '@/lib/menuEditions';
-import { plural } from '@/lib/menus';
-import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
+import { Button, Caption, Segmented, Tag } from "@/components/ds";
+import { BarWeek } from "@/components/screens/week/BarWeek";
+import { WebHead } from "@/components/WebHead";
+import { space } from "@/constants/tokens";
+import { useActiveVenue } from "@/hooks/useActiveVenue";
+import { useBarFacts } from "@/hooks/useBarFacts";
+import {
+  isUnclaimed,
+  useMenuCredits,
+  useMenuEditions,
+  useProfileOriginals,
+  type Profile,
+} from "@/hooks/useProfiles";
+import { hoursSource } from "@/lib/barHours";
+import { drinkRunTags } from "@/lib/menuEditions";
+import { plural } from "@/lib/menus";
+import {
+  pageLocksSpecs,
+  pageShowsDescriptions,
+  specLockNote,
+} from "@/lib/pageVisibility";
 
-import { barPlace } from '../bar/BarFactLines';
-import { BarFactsBlock } from '../bar/BarFactsBlock';
-import { OnTheMenu } from '../bar/OnTheMenu';
-import { SpecLockPanel } from '../drink/SpecLockPanel';
-import { BarClassics } from './BarClassics';
-import { usePouredSplit } from './ClassicsTheyPour';
-import { BarMatches } from './BarMatches';
-import { BarRankings } from './BarRankings';
-import { BarFactsList, BarYours, useYouHere } from './BarYours';
-import { Awards, MenuHistory } from './BarRecord';
-import { ClaimProfile } from './ClaimProfile';
-import { LockedOriginals } from './LockedOriginals';
-import { Positions } from './Positions';
-import { BarHeader, BarStats, MenuCredits, OriginalsGrid } from './ProfileSections';
+import { barPlace } from "../bar/BarFactLines";
+import { BarFactsBlock } from "../bar/BarFactsBlock";
+import { OnTheMenu } from "../bar/OnTheMenu";
+import { SpecLockPanel } from "../drink/SpecLockPanel";
+import { BarClassics } from "./BarClassics";
+import { usePouredSplit } from "./ClassicsTheyPour";
+import { BarMatches } from "./BarMatches";
+import { BarRankings } from "./BarRankings";
+import { BarFactsList, BarYours, useYouHere } from "./BarYours";
+import { Awards, MenuHistory } from "./BarRecord";
+import { ClaimProfile } from "./ClaimProfile";
+import { LockedOriginals } from "./LockedOriginals";
+import { Positions } from "./Positions";
+import {
+  BarHeader,
+  BarStats,
+  MenuCredits,
+  OriginalsGrid,
+} from "./ProfileSections";
 
-type Tab = 'menus' | 'originals' | 'rankings' | 'people';
+type Tab = "menus" | "originals" | "rankings" | "people";
 /** A bar's page leads with its menus. */
 /** Originals shown before "All 12 originals". */
 const FIRST_ORIGINALS = 4;
 
 const TABS = [
-  { value: 'menus', label: 'Menus' },
-  { value: 'originals', label: 'Originals' },
-  { value: 'rankings', label: 'Top drinks' },
-  { value: 'people', label: 'People' },
+  { value: "menus", label: "Menus" },
+  { value: "originals", label: "Originals" },
+  { value: "rankings", label: "Top drinks" },
+  { value: "people", label: "People" },
 ] as const;
 
 /**
@@ -45,14 +61,22 @@ const TABS = [
  * classics and awards, then Menus, Originals, Top drinks and People. A page
  * that keeps its specs back (unclaimed, or not open) shows names, a lock, and why.
  */
-export function BarProfile({ profile, columns }: { profile: Profile; columns: number }) {
-  const [tab, setTab] = useState<Tab>('menus');
+export function BarProfile({
+  profile,
+  columns,
+}: {
+  profile: Profile;
+  columns: number;
+}) {
+  const [tab, setTab] = useState<Tab>("menus");
   const [awardsOpen, setAwardsOpen] = useState(false);
   const [allOriginals, setAllOriginals] = useState(false);
   const facts = useBarFacts(profile.id).data;
   const here = useYouHere(profile.id);
   const runs = drinkRunTags(useMenuEditions(profile.id).data ?? []);
-  const { data: originals = [], isLoading } = useProfileOriginals(profile.id, { locked: profile.page_visibility === 'locked' });
+  const { data: originals = [], isLoading } = useProfileOriginals(profile.id, {
+    locked: profile.page_visibility === "locked",
+  });
   const { data: credits = [] } = useMenuCredits(originals.map((d) => d.id));
   // Copies poured as a classic aren't originals: the stat and "All N originals" count the bar's own.
   const { poured, own } = usePouredSplit(profile.id, originals);
@@ -62,6 +86,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
   const specsLocked = pageLocksSpecs(profile.page_visibility, onTeam);
   // The neighbourhood, else the city: "Cocktail bar · Fitzroy" (ppl-bar-top).
   const place = profile.locality || profile.city;
+  const searched = !!useLocalSearchParams<{ q?: string }>().q;
 
   return (
     <View style={styles.body}>
@@ -71,49 +96,101 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       <View style={styles.head}>
         <BarHeader
           profile={profile}
-          detail={[barPlace(facts?.bar_type, place) || 'Bar', here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ')}
+          detail={[
+            barPlace(facts?.bar_type, place) || "Bar",
+            here.count
+              ? `you’ve had ${plural(here.count, "drink")} here`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+          // Opened from a search: the facts and actions, then straight into what matched (disc-search-bar).
           tag={
-            <View style={styles.chips}>
-              <Tag label={unclaimed ? 'Not claimed yet' : 'Claimed'} tone={unclaimed ? 'default' : 'outline'} />
-              {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} tone="outline" /> : null}
-              {profile.is_public ? null : <Tag label="Private" tone="outline" />}
-            </View>
+            searched ? null : (
+              <View style={styles.chips}>
+                <Tag
+                  label={unclaimed ? "Not claimed yet" : "Claimed"}
+                  tone={unclaimed ? "default" : "outline"}
+                />
+                {profile.is_closed ? (
+                  <Tag
+                    label={
+                      profile.closed_year
+                        ? `Closed ${profile.closed_year}`
+                        : "Closed"
+                    }
+                    tone="outline"
+                  />
+                ) : null}
+                {profile.is_public ? null : (
+                  <Tag label="Private" tone="outline" />
+                )}
+              </View>
+            )
           }
         />
         {/* No bio or link icons on a bar's page (ppl-bar-top, ppl-bar-unclaimed): Website sits with Directions and Call, Instagram under Online. */}
         <BarFactsBlock profileId={profile.id} />
-        {unclaimed && facts?.hours ? <Caption tone="muted">{hoursSource(false, facts.hours_updated_at)}</Caption> : null}
+        {unclaimed && facts?.hours ? (
+          <Caption tone="muted">
+            {hoursSource(false, facts.hours_updated_at)}
+          </Caption>
+        ) : null}
       </View>
 
-      <BarStats profile={profile} originals={own.length} onAwards={() => setAwardsOpen((v) => !v)} />
+      {/* A search's matches (nothing without one) come right under the header. */}
+      <BarMatches barProfileId={profile.id} />
+
+      <BarStats
+        profile={profile}
+        originals={own.length}
+        onAwards={() => setAwardsOpen((v) => !v)}
+      />
 
       {awardsOpen ? <Awards profileId={profile.id} /> : null}
 
       {unclaimed ? <BarFactsList profile={profile} /> : null}
 
-      <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />
+      <BarWeek
+        barId={profile.bar_id}
+        profileId={profile.id}
+        barName={profile.display_name}
+      />
 
-      <BarMatches barProfileId={profile.id} />
-
-      {/* The matches, then the menu it's pouring (b12, as Discover's bar view); the rest follows. */}
+      {/* The menu it's pouring (b12, as Discover's bar view); the rest follows. */}
       <OnTheMenu profileId={profile.id} />
 
       {unclaimed && !specsLocked ? <ClaimProfile profile={profile} /> : null}
 
       <MenuCredits credits={credits} names={names} />
 
-      <Segmented accessibilityLabel="Profile sections" options={TABS} value={tab} onChange={setTab} />
-      {tab === 'menus' ? (
+      <Segmented
+        accessibilityLabel="Profile sections"
+        options={TABS}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "menus" ? (
         <MenuHistory profileId={profile.id} name={profile.display_name} />
-      ) : tab === 'originals' ? (
+      ) : tab === "originals" ? (
         isLoading ? (
           <Caption tone="muted">Loading drinks…</Caption>
         ) : specsLocked ? (
-          <LockedOriginals originals={originals} selfId={profile.id} details={pageShowsDescriptions(profile.page_visibility)} runs={runs} emptyText="No drinks credited to this bar yet." />
+          <LockedOriginals
+            originals={originals}
+            selfId={profile.id}
+            details={pageShowsDescriptions(profile.page_visibility)}
+            runs={runs}
+            emptyText="No drinks credited to this bar yet."
+          />
         ) : (
           <View style={styles.tab}>
             <OriginalsGrid
-              originals={allOriginals ? originals : [...poured, ...own.slice(0, FIRST_ORIGINALS)]}
+              originals={
+                allOriginals
+                  ? originals
+                  : [...poured, ...own.slice(0, FIRST_ORIGINALS)]
+              }
               selfId={profile.id}
               columns={columns}
               layout="rows"
@@ -122,24 +199,42 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
               emptyText="No drinks credited to this bar yet."
             />
             {own.length > FIRST_ORIGINALS && !allOriginals ? (
-              <Button label={`All ${own.length} originals`} variant="secondary" onPress={() => setAllOriginals(true)} style={styles.start} />
+              <Button
+                label={`All ${own.length} originals`}
+                variant="secondary"
+                onPress={() => setAllOriginals(true)}
+                style={styles.start}
+              />
             ) : null}
             {/* Classics they pour sit with the originals now, not above the tabs (ppl-bar-originals). */}
             <BarClassics barId={profile.bar_id} />
           </View>
         )
-      ) : tab === 'rankings' ? (
+      ) : tab === "rankings" ? (
         <View style={styles.tab}>
-          <BarYours profileId={profile.id} drinkIds={originals.map((d) => d.id)} />
+          <BarYours
+            profileId={profile.id}
+            drinkIds={originals.map((d) => d.id)}
+          />
           <BarRankings bar={profile} />
         </View>
       ) : (
-        <Positions profile={profile} emptyText={`Nobody is listed at ${profile.display_name} yet.`} />
+        <Positions
+          profile={profile}
+          emptyText={`Nobody is listed at ${profile.display_name} yet.`}
+        />
       )}
       {specsLocked ? (
         <SpecLockPanel
           note={specLockNote(profile.display_name, unclaimed, false)}
-          action={unclaimed ? <ClaimProfile profile={profile} label="Work here? Claim this page" /> : null}
+          action={
+            unclaimed ? (
+              <ClaimProfile
+                profile={profile}
+                label="Work here? Claim this page"
+              />
+            ) : null
+          }
         />
       ) : null}
     </View>
@@ -149,7 +244,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
 const styles = StyleSheet.create({
   body: { gap: space.xl },
   head: { gap: space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
   tab: { gap: space.lg },
-  start: { alignSelf: 'flex-start' },
+  start: { alignSelf: "flex-start" },
 });

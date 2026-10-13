@@ -15,8 +15,12 @@ export type IconName = ComponentProps<typeof IconSymbol>['name'];
 export interface ButtonProps {
   label: string;
   onPress?: () => void;
-  /** primary: the one main action on a screen, in the venue's accent. danger: removing or deleting, in status red. */
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  /**
+   * primary: the one main action on a screen, in the venue's accent. ink: the
+   * main action on light working screens (Make), where the accent is kept for
+   * the timer. danger: removing or deleting, in status red.
+   */
+  variant?: 'primary' | 'ink' | 'secondary' | 'ghost' | 'danger';
   /** sm: the canvas's compact row action ("Unblock"), 36 tall with its tap area grown to 44. */
   size?: 'sm' | 'md' | 'lg';
   icon?: IconName;
@@ -29,9 +33,9 @@ export interface ButtonProps {
 
 export function Button({ label, onPress, variant = 'primary', size = 'md', icon, disabled, accessibilityLabel, accessibilityHint, style }: ButtonProps) {
   const ds = useDs();
-  const fill = variant === 'primary' ? ds.accentFill.fill : 'transparent';
+  const fill = variant === 'primary' ? ds.accentFill.fill : variant === 'ink' ? ds.c.ink : 'transparent';
   const danger = readableAccent(STATUS.danger, ds.c.ground);
-  const text = variant === 'primary' ? ds.accentFill.text : variant === 'danger' ? danger : ds.c.ink;
+  const text = variant === 'primary' ? ds.accentFill.text : variant === 'ink' ? ds.c.ground : variant === 'danger' ? danger : ds.c.ink;
   const border = variant === 'secondary' ? ds.c.lineStrong : variant === 'danger' ? withAlpha(danger, 0.45) : 'transparent';
   return (
     <PressableScale
