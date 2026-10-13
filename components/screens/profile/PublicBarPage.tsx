@@ -78,7 +78,7 @@ export function PublicBarPage({ profile }: { profile: Profile }) {
   const facts_ = <PublicBarFacts profileId={profile.id} />;
   const week = <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />;
   const menus = section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide);
-  const people = section('People', <Positions profile={profile} emptyText={`Nobody is listed at ${profile.display_name} yet.`} />, true);
+  const people = section('People', <Positions profile={profile} currentUntitled emptyText={`Nobody is listed at ${profile.display_name} yet.`} />, true);
   const awards = <PublicAwards profileId={profile.id} />;
 
   return (

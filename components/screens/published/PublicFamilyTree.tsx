@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useRef, useState, type ComponentRef } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Caption, DsText, Headline, PressableScale, TextLink, useDs } from '@/components/ds';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
@@ -58,6 +58,7 @@ export function PublicFamilyTree({ drink, more }: { drink: { id: string; name: s
   const ds = useDs();
   const router = useRouter();
   const [all, setAll] = useState(false);
+  const row = useRef<ComponentRef<typeof ScrollView>>(null);
   const { ancestors, riffs, profiles } = more;
   if (!ancestors.length && !riffs.length) return null;
   const maker = (d: TreeDrink) => makerLabel(d.makerId ? (profiles[d.makerId] ?? null) : null);
@@ -67,7 +68,14 @@ export function PublicFamilyTree({ drink, more }: { drink: { id: string; name: s
   return (
     <View style={styles.section}>
       <Headline role="heading">Family tree</Headline>
-      <View style={styles.tree}>
+      {/* One row, never wrapped (a wrapped joint led nowhere): on a phone it scrolls, opened at the lit drink. */}
+      <ScrollView
+        ref={row}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        onContentSizeChange={() => row.current?.scrollToEnd({ animated: false })}
+        contentContainerStyle={styles.tree}
+      >
         {ancestors.map((a) => (
           <View key={a.id} style={styles.step}>
             <Node name={a.name} caption={ancestorCaption(a, maker(a))} onPress={() => open(a.id)} />
@@ -75,7 +83,7 @@ export function PublicFamilyTree({ drink, more }: { drink: { id: string; name: s
           </View>
         ))}
         <Node name={drink.name} caption={drink.originYear ? String(drink.originYear) : null} current />
-      </View>
+      </ScrollView>
       {shown.length ? (
         <View style={[styles.riffs, { borderLeftColor: ds.c.lineStrong }]}>
           {shown.map((r) => (
@@ -90,12 +98,7 @@ export function PublicFamilyTree({ drink, more }: { drink: { id: string; name: s
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
-  tree: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    rowGap: space.sm,
-  },
+  tree: { flexDirection: 'row', alignItems: 'center' },
   step: { flexDirection: 'row', alignItems: 'center' },
   node: {
     gap: 2,
