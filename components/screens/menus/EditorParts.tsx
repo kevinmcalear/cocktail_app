@@ -12,7 +12,7 @@ import type { MenuDrag } from './useMenuDrag';
 /** Where the menu stands, for the editor's header. */
 export const EDITOR_STATUS = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' } as const;
 
-/** The name, in the venue's display face, edited in place. */
+/** The name, in the venue's display face, edited in place: a plain title, no field line. */
 export function MenuNameInput({ editor }: { editor: LayoutEditor }) {
   const ds = useDs();
   return (
@@ -22,7 +22,7 @@ export function MenuNameInput({ editor }: { editor: LayoutEditor }) {
       aria-label="Menu name"
       placeholder="Menu name"
       placeholderTextColor={ds.c.faint}
-      style={[type.title, styles.name, { fontFamily: displayFaces[ds.displayFace].regular, color: ds.c.ink, borderBottomColor: ds.c.lineStrong }]}
+      style={[type.title, styles.name, { fontFamily: displayFaces[ds.displayFace].regular, color: ds.c.ink }]}
     />
   );
 }
@@ -139,7 +139,7 @@ export function EditorSections({ editor, targetable, drag }: { editor: LayoutEdi
 const styles = StyleSheet.create({
   cover: { borderRadius: radius.card, overflow: 'hidden', borderCurve: 'continuous', justifyContent: 'flex-end' },
   coverButtons: { position: 'absolute', right: space.sm, bottom: space.sm, flexDirection: 'row', gap: space.sm },
-  name: { borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: space.xs },
+  name: { paddingVertical: space.xs },
   sections: { gap: space.lg },
   addSection: { alignSelf: 'flex-start' },
   addDrink: { minHeight: 48, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },

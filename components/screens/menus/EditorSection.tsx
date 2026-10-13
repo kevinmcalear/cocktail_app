@@ -1,11 +1,11 @@
 import { StyleSheet, View } from 'react-native';
 import DraggableFlatList, { NestableDraggableFlatList, type RenderItemParams } from 'react-native-draggable-flatlist';
 
-import { Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
+import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { STATUS } from '@/constants/palette';
 import { gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import type { EditSection } from '@/lib/menuLayout';
 import { readableAccent } from '@/lib/color';
 import { sectionLine } from '@/lib/menus';
@@ -82,7 +82,14 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
             {line.text}
           </Caption>
         </PressableScale>
-        {targeted ? <Tag label="Adding here" tone="accent" /> : null}
+        {targeted ? (
+          // An outlined mono tag in the accent, as drawn: the one place the library adds to.
+          <View style={[styles.adding, { borderColor: ds.accentText }]}>
+            <Caption color={ds.accentText} style={styles.mono}>
+              ADDING HERE
+            </Caption>
+          </View>
+        ) : null}
         <PressableScale accessibilityLabel={`${section.name} section options: rename, rules, paste a list`} onPress={onSettings} style={styles.icon}>
           <IconSymbol name="ellipsis" size={18} color={ds.c.muted} />
         </PressableScale>
@@ -114,5 +121,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, gap: 2 },
   icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  adding: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 2 },
+  mono: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
   add: { marginTop: space.sm, minHeight: 48, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
 });

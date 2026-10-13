@@ -87,8 +87,8 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
         />
       </View>
       <View role="radiogroup" accessibilityLabel="Show" style={styles.wrap}>
-        <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
-        <Choice label="Not on a menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />
+        <Choice label="All" pill="accent" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
+        <Choice label="Not on a menu" pill="accent" selected={freeOnly} onPress={() => setFreeOnly(true)} />
       </View>
       <ScrollView style={styles.flex}>
         {target && drinks.length === 0 ? <Body tone="muted">No drinks that fit {target.name}.</Body> : null}

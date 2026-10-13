@@ -23,13 +23,18 @@ const GLYPHS = {
   updown: ['M8 4v16M4.5 7.5L8 4l3.5 3.5', 'M16 20V4M12.5 16.5L16 20l3.5-3.5'],
 } as const;
 
-export type LineGlyphName = keyof typeof GLYPHS | 'dot';
+export type LineGlyphName = keyof typeof GLYPHS | 'dot' | 'grip';
+
+/** The grip's six dots, two across, three down (the menu builder's rows). */
+const GRIP_DOTS = [6, 12, 18].flatMap((y) => [9, 15].map((x) => ({ x, y })));
 
 export function LineGlyph({ name, size, color }: { name: LineGlyphName; size: number; color: ColorValue }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
       {name === 'dot' ? (
         <Circle cx={12} cy={12} r={6} fill={color} stroke="none" />
+      ) : name === 'grip' ? (
+        GRIP_DOTS.map((p) => <Circle key={`${p.x} ${p.y}`} cx={p.x} cy={p.y} r={1.6} fill={color} stroke="none" />)
       ) : (
         <>
           {GLYPHS[name].map((d) => (

@@ -1,11 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, Field, PressableScale, useDs } from '@/components/ds';
-import { ChoiceChips } from '@/components/screens/settings/SettingsParts';
+import { Body, Caption, DsText, Field, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { STATUS } from '@/constants/palette';
-import { radius, space } from '@/constants/tokens';
-import type { AccentInk, ContrastLine } from '@/lib/brandColours';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { ACCENT_INK, type AccentInk, type ContrastLine } from '@/lib/brandColours';
 
 export interface AccentOption {
   name: string;
@@ -14,7 +12,7 @@ export interface AccentOption {
   source: string;
 }
 
-const SWATCH = 40;
+const SWATCH = 44;
 const INKS = [
   { id: 'cream', label: 'Cream' },
   { id: 'ink', label: 'Ink' },
@@ -28,7 +26,8 @@ function Card({ selected, label, onPress, children }: { selected: boolean; label
       aria-checked={selected}
       accessibilityLabel={label}
       onPress={onPress}
-      style={[styles.card, { borderColor: selected ? ds.accentText : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }]}
+      // Picked: ringed in ink, so the ring never fights the colours it frames.
+      style={[styles.card, { borderColor: selected ? ds.c.ink : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.raised }]}
     >
       {children}
     </PressableScale>
@@ -57,8 +56,8 @@ export function AccentCards({ options, value, custom, hexDraft, hexError, onPick
         {options.map((o) => (
           <Card key={o.hex} selected={!custom && o.hex === value} label={`${o.name}, ${o.hex}, ${o.source}`} onPress={() => onPick(o.hex)}>
             <View style={[styles.swatch, { backgroundColor: o.hex, borderColor: ds.c.line }]} />
-            <Body numberOfLines={1}>{o.name}</Body>
-            <DsText variant="caption" tone="muted" numberOfLines={1}>{o.hex}</DsText>
+            <Body numberOfLines={1} style={styles.name}>{o.name}</Body>
+            <DsText variant="caption" tone="muted" numberOfLines={1} style={styles.mono}>{o.hex}</DsText>
             <Caption tone="muted" numberOfLines={1}>{o.source}</Caption>
           </Card>
         ))}
@@ -66,8 +65,8 @@ export function AccentCards({ options, value, custom, hexDraft, hexError, onPick
           <View style={[styles.swatch, styles.customSwatch, { borderColor: ds.c.lineStrong }]}>
             <IconSymbol name="plus" size={16} color={ds.c.muted} />
           </View>
-          <Body numberOfLines={1}>Custom</Body>
-          <Caption tone="muted" numberOfLines={1}>Pick a colour</Caption>
+          <Body numberOfLines={1} style={styles.name}>Custom</Body>
+          <Caption tone="muted" numberOfLines={1} style={styles.mono}>Pick a colour</Caption>
           <Caption tone="muted" numberOfLines={1}>Any hex</Caption>
         </Card>
       </View>
@@ -78,20 +77,39 @@ export function AccentCards({ options, value, custom, hexDraft, hexError, onPick
   );
 }
 
-/** Text on accent: Cream or Ink for button labels and the active tab. `value` is the pick, or what the app picks on its own. */
-export function AccentInkChoice({ value, onChange }: { value: AccentInk; onChange: (ink: AccentInk) => void }) {
+/** Text on accent: Cream or Ink, each shown as a button on the accent; the pick is ringed in ink. `value` is the pick, or what the app picks on its own. */
+export function AccentInkChoice({ value, accent, onChange }: { value: AccentInk; accent: string | null; onChange: (ink: AccentInk) => void }) {
+  const ds = useDs();
   return (
-    <View style={styles.ink}>
+    <View style={[styles.ink, { borderTopColor: ds.c.line }]}>
       <View style={styles.flex}>
         <Body>Text on accent</Body>
         <Caption tone="muted">Button labels and the active tab</Caption>
       </View>
-      <ChoiceChips label="Text on accent" options={INKS} value={value} onChange={onChange} />
+      <View role="radiogroup" aria-label="Text on accent" style={styles.inkChoices}>
+        {INKS.map((o) => {
+          const selected = value === o.id;
+          return (
+            <PressableScale
+              key={o.id}
+              role="radio"
+              aria-checked={selected}
+              accessibilityLabel={o.label}
+              onPress={() => onChange(o.id)}
+              style={[styles.inkPill, { backgroundColor: accent ?? ds.accentFill.fill, borderColor: selected ? ds.c.ink : 'transparent' }]}
+            >
+              <Caption color={ACCENT_INK[o.id]} style={styles.name}>
+                {o.label}
+              </Caption>
+            </PressableScale>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
-/** The contrast check under Ground tint: one line per pairing, each with Passes or what the app does instead. */
+/** The contrast check under Ground tint: one line per pairing, its ratio in a green or amber pill, then Passes or what the app does instead. */
 export function ContrastCheck({ lines }: { lines: ContrastLine[] }) {
   const ds = useDs();
   return (
@@ -100,11 +118,9 @@ export function ContrastCheck({ lines }: { lines: ContrastLine[] }) {
       <View role="list" aria-label="Contrast check">
         {lines.map((l) => (
           <View key={l.label} role="listitem" style={[styles.line, { borderBottomColor: ds.c.line }]}>
-            <DsText variant="spec" style={styles.ratio}>{l.ratio}</DsText>
-            <View style={styles.flex}>
-              <Body>{l.label}</Body>
-              <Caption color={l.passes ? ds.c.muted : STATUS.warning}>{l.verdict}</Caption>
-            </View>
+            <Tag label={l.ratio} tone={l.passes ? 'success' : 'warning'} />
+            <Body style={styles.lineLabel}>{l.label}</Body>
+            <Caption tone="muted">{l.verdict}</Caption>
           </View>
         ))}
       </View>
@@ -115,12 +131,17 @@ export function ContrastCheck({ lines }: { lines: ContrastLine[] }) {
 const styles = StyleSheet.create({
   wrap: { gap: space.md, paddingVertical: space.sm },
   cards: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  card: { flexBasis: 140, flexGrow: 1, maxWidth: 200, gap: 2, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
-  swatch: { width: SWATCH, height: SWATCH, borderRadius: radius.control, borderWidth: 1, marginBottom: space.sm },
+  card: { flexBasis: 120, flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 0, padding: space.sm + 2, borderRadius: radius.control + 4, borderCurve: 'continuous' },
+  // A wide bar of the colour across the card.
+  swatch: { alignSelf: 'stretch', height: SWATCH, borderRadius: radius.control - 2, borderWidth: 1, marginBottom: space.sm },
+  name: { fontFamily: fontFamilies.bodySemiBold },
+  mono: { fontFamily: fontFamilies.mono },
+  inkChoices: { flexDirection: 'row', gap: space.sm },
+  inkPill: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 2 },
+  lineLabel: { flexGrow: 1, flexShrink: 1, flexBasis: 200 },
   customSwatch: { borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
-  ink: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
+  ink: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderTopWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 160, gap: 2 },
   kicker: { letterSpacing: 0.8 },
-  line: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  ratio: { width: 72 },
+  line: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
 });
