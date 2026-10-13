@@ -71,6 +71,7 @@ const MAPPING = {
   'flask': 'svg:flask',
   'line.3.horizontal': 'menu',
   'line.3.horizontal.decrease': 'filter',
+  'text.alignleft': 'align-left',
   'camera.fill': 'camera',
   'photo': 'image',
   'circle.lefthalf.filled': 'moon',
