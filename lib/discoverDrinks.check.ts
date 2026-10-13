@@ -18,7 +18,9 @@ import {
   kindsTitle,
   pickFilter,
   scorePins,
+  toDiscoverBar,
   toDiscoverDrink,
+  type BarRow,
   type DiscoverBar,
   type DrinkRow,
 } from './discoverDrinks';
@@ -140,5 +142,12 @@ assert.equal(barDrinksLine({ drinks: 20, onNow: 14 }), '14 drinks on now');
 assert.equal(barDrinksLine({ drinks: 3, onNow: 0 }), '3 drinks');
 assert.equal(barDrinksLine({ drinks: 1 }), '1 drink');
 assert.equal(barDrinksLine({ drinks: 0, onNow: null }), null);
+
+// A bar's venue brand from discover_bars: its accent and face for the monogram; none when it has no venue; not said by an older server.
+const barRow = (extra: Partial<BarRow>): BarRow => ({ id: 'lr', handle: 'lr', display_name: 'Little Rye', avatar_url: null, locality: null, city: null, country_code: null, latitude: null, longitude: null, is_closed: false, closed_year: null, drinks: 0, ...extra });
+assert.deepEqual(toDiscoverBar(barRow({ brand_accent: '#D0643B', brand_face: 'fraunces' })).brand, { accent: '#D0643B', face: 'fraunces' });
+assert.equal(toDiscoverBar(barRow({ brand_accent: null, brand_face: null })).brand, null);
+assert.equal(toDiscoverBar(barRow({})).brand, undefined);
+assert.equal(barPins([{ ...toDiscoverBar(barRow({ brand_accent: '#D0643B', brand_face: null })), latitude: 1, longitude: 1, drinks: 2 }])[0]?.brand?.accent, '#D0643B', 'its pin carries it');
 
 console.log('discoverDrinks: ok');

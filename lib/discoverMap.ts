@@ -4,7 +4,7 @@
  * by lib/discoverMap.check.ts. The map views are components/screens/home/DiscoverMap
  * (MapLibre on every platform: GL JS on web, MapLibre Native on iOS and Android).
  */
-import { backbar, space } from '../constants/tokens';
+import { backbar, space, type DisplayFace } from '../constants/tokens';
 import { pinName } from './discoverMatch';
 import { formatScore } from './ranking';
 import { roundCoord, type Area, type DiscoverRow } from './nearMe';
@@ -26,6 +26,8 @@ export interface MapPin {
   name: string;
   /** The bar's logo, when it has one. */
   logo: string | null;
+  /** Its venue's public accent and face, for its monogram; undefined when not known (BarMark looks it up). */
+  brand?: { accent: string; face: DisplayFace } | null;
   place: string;
   latitude: number;
   longitude: number;

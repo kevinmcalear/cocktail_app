@@ -2,12 +2,11 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, DsText, Title, useBreakpoint, useDs } from '@/components/ds';
-import { initialsFor, UserAvatar } from '@/components/ui/UserAvatar';
-import { radius, space, type } from '@/constants/tokens';
+import { Body, Button, Caption, Display, DsText, Title, useBreakpoint } from '@/components/ds';
+import { BarMark } from '@/components/screens/home/BarMark';
+import { space, type } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import type { Profile } from '@/hooks/useProfiles';
-import { withAlpha } from '@/lib/color';
 import { rankedCount } from '@/lib/nearMe';
 import { instagramUrl } from '@/lib/profiles';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
@@ -16,12 +15,11 @@ import { siteOrigin } from '@/lib/venueLink';
 
 /**
  * A bar's name on its public page (ppl-pub-bar-desktop, -phone): the logo, or
- * its initials in the display face on a ring; the name large; what and where
+ * its initials in its venue's display face and accent on a ring (BarMark); the name large; what and where
  * it is, then claimed and how many have ranked; its score at the right (under
  * the name on a phone). The score shows once MIN_RANKERS people have ranked.
  */
 export function PublicBarHeader({ profile, place, claimed }: { profile: Profile; place: string; claimed: string }) {
-  const ds = useDs();
   const wide = useBreakpoint() !== 'phone';
   const { data } = useVenueScore(profile.id);
   const score = data?.score ?? null;
@@ -40,15 +38,8 @@ export function PublicBarHeader({ profile, place, claimed }: { profile: Profile;
   return (
     <View style={styles.block}>
       <View accessible accessibilityLabel={[profile.display_name, place, claimed, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.header}>
-        {profile.avatar_url ? (
-          <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={size} />
-        ) : (
-          <View style={[styles.ring, { width: size, height: size, backgroundColor: ds.c.surface, borderColor: withAlpha(ds.accentText, 0.5) }]}>
-            <DsText variant="title" tone="accent">
-              {initialsFor(profile.display_name)}
-            </DsText>
-          </View>
-        )}
+        {/* Its logo, else its venue's public Brand logo, else its initials in the venue's accent and face. */}
+        <BarMark name={profile.display_name} logoUrl={profile.avatar_url} profileId={profile.id} size={size} />
         <View style={styles.name}>
           {wide ? <Display>{profile.display_name}</Display> : <Title>{profile.display_name}</Title>}
           {place ? <Body tone="muted">{place}</Body> : null}
@@ -106,7 +97,6 @@ export function PublicBarActions({ profile }: { profile: Profile }) {
 const styles = StyleSheet.create({
   block: { gap: space.md },
   header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.lg + space.xs, rowGap: space.lg },
-  ring: { borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   name: { flex: 1, minWidth: 200, gap: space.xs },
   scoreWide: { alignItems: 'flex-end' },
   scorePhone: { alignItems: 'flex-start' },

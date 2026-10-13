@@ -96,7 +96,7 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
 
 async function readBars(params: Record<string, unknown>, signal: AbortSignal): Promise<DiscoverBar[]> {
   let { data, error } = await supabase.rpc('discover_bars', params).abortSignal(signal);
-  // ponytail: a database without 20261015100000 doesn't know p_on_now; ask without it (no "on now" then). Drop once it's in production.
+  // ponytail: a database without 20261016200000 doesn't know p_on_now; ask without it (no "on now" then). Drop once it's in production.
   if (error?.code === 'PGRST202' && 'p_on_now' in params) {
     const { p_on_now: _, ...rest } = params;
     ({ data, error } = await supabase.rpc('discover_bars', rest).abortSignal(signal));

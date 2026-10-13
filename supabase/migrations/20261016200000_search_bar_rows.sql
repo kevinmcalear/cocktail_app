@@ -1,11 +1,47 @@
--- Search's bar rows, as the search boards draw them (nav-search-home): the
--- bar's logo and how many of its matching drinks are on now ("Fitzroy · 14
--- drinks on now"). discover_bars gains `on_now`, counted only when asked
--- (p_on_now: search asks, the map's tiles don't, so they cost what they
--- did), and a bar whose page has no picture falls back to its venue's Brand
--- logo for the people on that venue (bars_select still decides who can read
--- it; nothing new is public). The arguments and the return type change, so
--- the function is dropped and made again with its grants.
+-- A bar's public brand, and search's bar rows as the search boards draw them
+-- (nav-search-home): the bar's logo and how many of its matching drinks are
+-- on now ("Fitzroy · 14 drinks on now").
+--
+-- Kevin, 12 Oct: a venue's logo and colours show to everyone, because they
+-- are its public branding (get_venue_branding already gives them to
+-- signed-out visitors by slug). bars stays members only under bars_select;
+-- bar_brands reads just the public fields, for a public bar page's venue:
+-- the logo, the accent (primary_color, and its readable shade on the light
+-- ground, accent_light_color), the display face and the short name. Nothing
+-- else about a venue (its other colours, icon, prices, settings) is exposed.
+--
+-- discover_bars gains `on_now`, counted only when asked (p_on_now: search
+-- asks, the map's tiles don't, so they cost what they did), and a bar whose
+-- page has no picture falls back to its venue's Brand logo, for everyone.
+-- It also says the venue's accent and face (`brand_accent`, `brand_face`),
+-- so a bar with no logo draws its monogram in its own colours. The
+-- arguments and the return type change, so the function is dropped and made
+-- again with its grants.
+
+-- The public brand of each public bar page in p_profile_ids whose venue is
+-- on the app; pages with no venue (or not public, or moderated) are left
+-- out. Read only. SECURITY DEFINER because bars_select is members only.
+CREATE FUNCTION "public"."bar_brands"("p_profile_ids" "uuid"[])
+RETURNS TABLE(
+    "profile_id" "uuid",
+    "logo_url" "text",
+    "primary_color" "text",
+    "accent_light_color" "text",
+    "display_face" "public"."venue_display_face",
+    "short_name" "text"
+)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT p.id, b.logo_url, b.primary_color, b.accent_light_color, b.display_face, b.short_name
+  FROM public.profiles p
+  JOIN public.bars b ON b.id = p.bar_id
+  WHERE p.id = ANY (p_profile_ids)
+    AND p.kind = 'bar' AND p.is_public AND p.moderated_at IS NULL;
+$$;
+
+REVOKE ALL ON FUNCTION "public"."bar_brands"("uuid"[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION "public"."bar_brands"("uuid"[]) TO "anon", "authenticated", "service_role";
 
 DROP FUNCTION "public"."discover_bars"(double precision, double precision, double precision, "text", "text", double precision, double precision, double precision, double precision, "text"[], "text"[], "text"[], "text");
 
@@ -16,7 +52,9 @@ DROP FUNCTION "public"."discover_bars"(double precision, double precision, doubl
 -- p_styles, p_spirits and p_notes each any-of (lib/discoverDrinks.ts
 -- matchesKinds), and every word of p_query in the drink's haystack or the
 -- bar's name. `on_now`, with p_on_now: of those, how many are on one of
--- the bar's menus now (else NULL).
+-- the bar's menus now (else NULL). `avatar_url`: the page's own picture,
+-- else its venue's Brand logo; `brand_accent` and `brand_face`: the venue's
+-- (bar_brands), else NULL.
 CREATE FUNCTION "public"."discover_bars"(
     "p_latitude" double precision DEFAULT NULL,
     "p_longitude" double precision DEFAULT NULL,
@@ -45,7 +83,9 @@ CREATE FUNCTION "public"."discover_bars"(
     "is_closed" boolean,
     "closed_year" integer,
     "drinks" integer,
-    "on_now" integer
+    "on_now" integer,
+    "brand_accent" "text",
+    "brand_face" "text"
 )
     LANGUAGE "plpgsql" STABLE SECURITY INVOKER
     SET "search_path" TO ''
@@ -77,11 +117,9 @@ BEGIN
 
     RETURN QUERY
     WITH area AS (
-        -- The bar's logo: its page's own picture, else (for a venue you're on, as bars_select allows) the logo its Brand page set.
-        SELECT p.id, p.handle, p.display_name, coalesce(p.avatar_url, vb.logo_url) AS avatar_url, p.locality, p.city, p.country_code, p.latitude, p.longitude, p.is_closed, p.closed_year,
+        SELECT p.id, p.handle, p.display_name, p.avatar_url, p.bar_id, p.locality, p.city, p.country_code, p.latitude, p.longitude, p.is_closed, p.closed_year,
                CASE WHEN v_words IS NOT NULL THEN private.discover_fold_ws(p.display_name) END AS folded
         FROM public.profiles p
-        LEFT JOIN public.bars vb ON vb.id = p.bar_id AND p.avatar_url IS NULL
         WHERE p.kind = 'bar' AND p.is_public
           AND (NOT v_box OR (
               p.latitude BETWEEN p_south AND p_north
@@ -103,11 +141,18 @@ BEGIN
                   + cos(radians(p_latitude)) * cos(radians(p.latitude)) * power(sin(radians(p.longitude - p_longitude) / 2), 2)
               ))) <= v_radius
           ))
+    ),
+    -- The public brand of the bars with a venue (a few): one read for them all.
+    brand AS (
+        SELECT * FROM public.bar_brands(ARRAY(SELECT area.id FROM area WHERE area.bar_id IS NOT NULL))
     )
-    SELECT a.id, a.handle, a.display_name, a.avatar_url, a.locality, a.city, a.country_code, a.latitude, a.longitude, a.is_closed, a.closed_year::integer,
+    -- The bar's logo: its page's own picture, else the logo its venue's Brand page set.
+    SELECT a.id, a.handle, a.display_name, coalesce(a.avatar_url, vb.logo_url), a.locality, a.city, a.country_code, a.latitude, a.longitude, a.is_closed, a.closed_year::integer,
            CASE WHEN a.is_closed THEN 0 ELSE coalesce(c.n, 0) END::integer,
-           CASE WHEN NOT p_on_now THEN NULL WHEN a.is_closed THEN 0 ELSE coalesce(c.on_now, 0) END::integer
+           CASE WHEN NOT p_on_now THEN NULL WHEN a.is_closed THEN 0 ELSE coalesce(c.on_now, 0) END::integer,
+           vb.primary_color, vb.display_face::text
     FROM area a
+    LEFT JOIN brand vb ON vb.profile_id = a.id
     LEFT JOIN LATERAL (
         SELECT count(*) AS n,
                -- When asked (search; the map's tiles don't need it): how many of those are on one of the bar's menus now.

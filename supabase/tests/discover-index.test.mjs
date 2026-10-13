@@ -61,7 +61,7 @@ before(async () => {
   await db.connect();
   for (const label of ['viewer', 'creator']) users[label] = await makeUser(label);
 
-  ids.bar = (await serviceInsert('bars', { name: `Index Bar ${run}`, page_visibility: 'open', logo_url: `https://example.test/ix-logo-${run}.png` })).id;
+  ids.bar = (await serviceInsert('bars', { name: `Index Bar ${run}`, page_visibility: 'open', logo_url: `https://example.test/ix-logo-${run}.png`, primary_color: '#2E6BD6', display_face: 'fraunces' })).id;
   const bar = (row) => serviceInsert('profiles', { kind: 'bar', is_public: true, ...row, handle: `${row.handle}${run}`, display_name: `${row.display_name} ${run}` });
   ids.open = (await bar({ handle: 'ixopen', display_name: 'Open Shed', bar_id: ids.bar, latitude: HERE.lat, longitude: HERE.lng, city: 'Lau', country_code: 'FJ' })).id;
   // Across the antimeridian from the open bar, under 2 km away.
@@ -279,7 +279,7 @@ describe('discover_bars', () => {
     assert.equal(byId[ids.closed].drinks, 0);
   });
 
-  test('asked (p_on_now), how many of the matching drinks are on now; not asked, none said (20261015100000)', async () => {
+  test('asked (p_on_now), how many of the matching drinks are on now; not asked, none said (20261016200000)', async () => {
     const where = { p_latitude: HERE.lat, p_longitude: HERE.lng, p_radius_km: 5 };
     const searched = (await users.viewer.client.rpc('discover_bars', { ...where, p_query: `Open Shed ${run}`, p_on_now: true })).data;
     const open = searched.find((b) => b.id === ids.open);
@@ -289,9 +289,14 @@ describe('discover_bars', () => {
     assert.equal(plain.find((b) => b.id === ids.open).on_now, null);
   });
 
-  test("a venue's Brand logo stands in for its page's picture only for the people on that venue", async () => {
+  test("a venue's Brand logo, accent and face stand in for its page's picture, for everyone", async () => {
     const { data } = await users.viewer.client.rpc('discover_bars', { p_latitude: HERE.lat, p_longitude: HERE.lng, p_radius_km: 5 });
-    assert.equal(data.find((b) => b.id === ids.open).avatar_url, null, 'the viewer is not on Index Bar, so bars_select hides its logo');
+    const open = data.find((b) => b.id === ids.open);
+    assert.equal(open.avatar_url, `https://example.test/ix-logo-${run}.png`, 'the viewer is not on Index Bar and still sees its public logo');
+    assert.equal(open.brand_accent, '#2E6BD6');
+    assert.equal(open.brand_face, 'fraunces');
+    const east = data.find((b) => b.id === ids.east);
+    assert.deepEqual([east.avatar_url, east.brand_accent, east.brand_face], [null, null, null], 'a page with no venue has no brand');
   });
 
   test('a box, including one across the antimeridian', async () => {

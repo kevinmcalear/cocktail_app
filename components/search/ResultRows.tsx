@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
+import { BarMark, type BarBrand } from '@/components/screens/home/BarMark';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
@@ -17,9 +18,9 @@ const THUMB = 56;
 interface ResultRowProps {
   title: string;
   caption?: string;
-  /** An icon tile (ingredients, menus, recents), or a round avatar for bars and people. */
+  /** An icon tile (ingredients, menus, recents), or a round avatar for people; `bar` makes it the bar's mark, in its own colours. */
   icon?: IconName;
-  avatar?: { uri: string | null };
+  avatar?: { uri: string | null; bar?: { profileId: string; brand?: BarBrand | null } };
   /** An ingredient's drawing in place of the icon. A null id draws from the title (drafts). */
   ingredient?: { id: string | null };
   /** A short label after the caption ("Closed 2019"); the avatar fades with it. */
@@ -50,6 +51,8 @@ export function ResultRow({ title, caption, icon, avatar, ingredient, tag, trail
       <View style={[styles.thumb, !avatar && !ingredient && { backgroundColor: ds.c.surface }, tag ? styles.faded : null]}>
         {ingredient ? (
           <IngredientThumb id={ingredient.id} name={title} size={THUMB} />
+        ) : avatar?.bar ? (
+          <BarMark name={title} logoUrl={avatar.uri} profileId={avatar.bar.profileId} brand={avatar.bar.brand} size={THUMB - space.sm} filled />
         ) : avatar ? (
           <UserAvatar uri={avatar.uri} name={title} size={THUMB - space.sm} />
         ) : (
@@ -91,7 +94,7 @@ export function BarResultRow({ bar, score, away, query, matchLook }: { bar: Disc
     <ResultRow
       title={bar.name}
       caption={caption}
-      avatar={{ uri: bar.logo }}
+      avatar={{ uri: bar.logo, bar: { profileId: bar.id, brand: bar.brand } }}
       tag={bar.closed ? closedLabel(bar.closedYear) : undefined}
       trailing={bar.closed ? null : <RowScore score={score} detail={score !== undefined ? 'bar' : null} />}
       query={query}
