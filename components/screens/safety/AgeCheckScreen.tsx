@@ -32,7 +32,8 @@ export function AgeCheckScreen() {
       {status === 'under_age' ? (
         <>
           <UnderAgeNote />
-          <Caption tone="muted">Everything else, like your venue’s menus, works as usual.</Caption>
+          <Caption tone="muted">We kept only that answer, not your birth date. If it was a mistake, contact us at the address in our privacy policy.</Caption>
+          <Caption tone="muted">Everything else in the app, like your venue’s menus and prep, works as usual.</Caption>
           <Button label="Continue" onPress={onward} />
         </>
       ) : status === 'unknown' ? (
