@@ -18,6 +18,7 @@ export { SpecRow, type SpecRowProps } from './SpecRow';
 export { Surface, useBreakpoint, useGutter, type Breakpoint } from './Surface';
 export { Switch } from './Switch';
 export { Tag, type TagTone } from './Tag';
+export { ToastHost, useToast } from './Toast';
 export { TimeField } from './TimeField';
 export { Body, Caption, Display, DsText, Headline, Spec, Title, type DsTextProps } from './Text';
 export { BackbarTheme, BrandProvider, useDs, type Ds } from './theme';
