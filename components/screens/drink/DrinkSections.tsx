@@ -32,7 +32,7 @@ import { JourneyStrip } from './JourneyStrip';
 import { MakeLine } from './MakeLine';
 import { MenuCard, MenuRuns } from './MenuRuns';
 import { PeoplePhotos } from './PeoplePhotos';
-import { ScoreCaption } from './ScoreCaption';
+import { ScoreCaption, ScoreMark } from './ScoreCaption';
 import { ServedAt } from './ServedAt';
 import { ServiceSection } from './ServiceSection';
 import { SpecLockPanel } from './SpecLockPanel';
@@ -115,11 +115,18 @@ export function useDrinkSections(p: DrinkBodyProps) {
     </SpecSection>
   );
 
-  // Just the name and who made it over the spec; the tags and the score wait under More.
+  // Just the name, who made it and its score over the spec; the tags and the rank caption wait under More.
   const header = (
     <View style={styles.header}>
       <Display>{item.name}</Display>
-      {live ? <DrinkCredit itemId={item.id} /> : null}
+      {live ? (
+        <View style={styles.credit}>
+          <View style={styles.flex}>
+            <DrinkCredit itemId={item.id} />
+          </View>
+          <ScoreMark itemId={item.id} name={item.name} />
+        </View>
+      ) : null}
       {live && p.photoCredit ? (
         <Caption tone="muted" role={p.photoCredit.url ? 'link' : undefined} onPress={p.photoCredit.url ? () => void Linking.openURL(p.photoCredit!.url!) : undefined}>
           {p.photoCredit.text}
@@ -200,6 +207,8 @@ function MoreHeading() {
 const styles = StyleSheet.create({
   header: { gap: space.sm },
   make: { gap: space.md },
+  credit: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  flex: { flex: 1, minWidth: 0 },
   standing: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   more: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.xl },
   moreLabel: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
