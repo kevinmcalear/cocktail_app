@@ -51,11 +51,11 @@ async function bottlesOf(style) {
 describe('bottle catalog', () => {
   test('the styles bartenders ask about list real bottles', async () => {
     const expected = {
-      'Sweet Vermouth': ['Carpano Antica Formula'],
+      'Sweet vermouth': ['Carpano Antica Formula'],
       // Its label name since 20261011153000 (the old name is an alias).
-      'Dry Vermouth': ['Dolin Vermouth Dry'],
+      'Dry vermouth': ['Dolin Vermouth Dry'],
       'Bourbon': ['Buffalo Trace'],
-      'Rhum Agricole': [],
+      'Rhum agricole': [],
     };
     for (const [style, some] of Object.entries(expected)) {
       const bottles = await bottlesOf(style);

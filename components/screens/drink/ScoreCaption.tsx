@@ -44,6 +44,30 @@ export function ScoreCaption({ itemId, name }: { itemId: string; name: string })
   );
 }
 
+/**
+ * The score alone, small in mono, at the end of the credit line on the first
+ * screen (Kevin, 13 Oct): it opens the rankings like the caption does. Nothing
+ * until someone has scored the drink; the full caption stays under More.
+ */
+export function ScoreMark({ itemId, name }: { itemId: string; name: string }) {
+  const router = useRouter();
+  const score = useDrinkScore(itemId);
+  if (!score) return null;
+  return (
+    <PressableScale
+      role="link"
+      accessibilityLabel={`Score ${formatScore(score.score)}, ${score.rankers} ranked. Open the rankings for ${name}`}
+      onPress={() => router.push(`/rankings/${itemId}`)}
+      hitSlop={MARK_SLOP}
+    >
+      <Spec>{formatScore(score.score)}</Spec>
+    </PressableScale>
+  );
+}
+
+// A 44 point target around the small mark, without making the credit line taller.
+const MARK_SLOP = { top: 10, bottom: 10, left: 12, right: 12 };
+
 const styles = StyleSheet.create({
   strong: { fontFamily: fontFamilies.bodySemiBold },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
