@@ -188,7 +188,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
           </>
         );
       case 'glass':
-        return <GlassStep draft={draft} set={set} options={glasses} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
+        return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
         return (
           <PickStep

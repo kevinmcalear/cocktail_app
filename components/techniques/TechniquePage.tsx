@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Caption, dragDismissesKeyboard, GlassButton, Title, useDs, useGutter } from '@/components/ds';
 import { fontFamilies, layout, space } from '@/constants/tokens';
 
 interface Props {
@@ -33,7 +33,7 @@ function Frame({ eyebrow, title, intro, children, footer }: Props) {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView
-        keyboardShouldPersistTaps="handled"
+        {...dragDismissesKeyboard}
         contentContainerStyle={[styles.page, { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl + (footer ? layout.minTapTarget + space.xl : 0), paddingHorizontal: gutter }]}
       >
         <View style={styles.header}>

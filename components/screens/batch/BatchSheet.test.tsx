@@ -77,3 +77,10 @@ test('making it turns the bottle into a checklist', async () => {
   await fireEvent.press(scotch);
   expect(screen.getByRole('checkbox', { name: '720 ml, Blended Scotch', checked: true })).toBeTruthy();
 });
+
+test('types up to the 6,969 cap', async () => {
+  await open(martini, ['Stir']);
+  await fireEvent.changeText(screen.getByDisplayValue('12'), '7000');
+  expect(screen.getByLabelText('Number of serves').props['aria-valuenow']).toBe(6969);
+  expect(screen.getByLabelText('523 L, London Dry Gin')).toBeTruthy();
+});
