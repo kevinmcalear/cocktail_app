@@ -13,6 +13,9 @@ export const CODE_LENGTH = 6;
 /** Seconds before another code can be sent (Auth's own limit per address is 60). */
 export const RESEND_AFTER = 60;
 
+/** Seconds to wait after Auth says too many tries from here (canvas make-onboarding-signin-code-wrong). */
+export const LIMIT_WAIT = 300;
+
 /** Seconds as m:ss for the resend countdown: 42 -> "0:42". */
 export function formatWait(seconds: number): string {
   const s = Math.max(0, Math.ceil(seconds));
@@ -38,7 +41,7 @@ export function sendProblem(problem: AuthProblem): string {
     case 'over_email_send_rate_limit':
       return 'We just sent you a code. Wait a minute, then ask for a new one.';
     case 'over_request_rate_limit':
-      return 'Too many tries from here. Wait a few minutes and try again.';
+      return 'Too many tries from here. Wait 5 minutes, then send a new code.';
     case 'email_address_invalid':
     case 'validation_failed':
       return 'That email doesn’t look right. Check it and try again.';
@@ -56,7 +59,7 @@ export function verifyProblem(problem: AuthProblem): string {
     case 'otp_disabled':
       return 'That code doesn’t match. If you asked for more than one, only the newest email works.';
     case 'over_request_rate_limit':
-      return 'Too many tries from here. Wait a few minutes and try again.';
+      return 'Too many tries from here. Wait 5 minutes, then send a new code.';
     default:
       return /expired|invalid/i.test(problem.message)
         ? 'That code doesn’t match. If you asked for more than one, only the newest email works.'

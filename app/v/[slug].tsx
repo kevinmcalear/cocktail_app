@@ -14,6 +14,7 @@ import { useMyInvites } from '@/hooks/useBarInvites';
 import { useBars } from '@/hooks/useBars';
 import { useVenueBranding, type VenueBranding } from '@/hooks/useVenueBranding';
 import { useVenueWebHead } from '@/hooks/useVenueWebHead';
+import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { installMode, promptInstall, subscribeInstall, type InstallMode } from '@/lib/webInstall';
 import { useAppMode } from '@/store/useAppMode';
 
@@ -77,7 +78,11 @@ export default function VenueStaffLink() {
   const brand: AuthBrand = { name: venue.name, logoUrl: venue.logo_url };
 
   return (
-    <BrandProvider accent={venue.primary_color ?? undefined}>
+    <BrandProvider
+      accent={venue.primary_color ?? undefined}
+      displayFace={faceFromDb(venue.display_face)}
+      groundTint={usableGroundTint(venue.ground_tint) ?? undefined}
+    >
       {head}
       {session ? (
         <MemberGate venue={venue} brand={brand} />

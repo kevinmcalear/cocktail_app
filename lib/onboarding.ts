@@ -124,6 +124,13 @@ export function jobYears(job: { start_year?: number | null; end_year?: number | 
  * one. Guest, Employee and Admin are access levels, not jobs. They can change
  * it on their profile.
  */
+/** The unit a venue mostly writes its specs in, oz or ml, from its recipe lines' units; null with none (or a tie). */
+export function majorityUnit(units: (string | null)[]): 'oz' | 'ml' | null {
+  const oz = units.filter((u) => u === 'oz').length;
+  const ml = units.filter((u) => u === 'ml').length;
+  return oz === ml ? null : oz > ml ? 'oz' : 'ml';
+}
+
 export function inviteJobTitle(roleLevel: number): string {
   if (roleLevel === 30) return 'Bartender';
   if (roleLevel === 35) return 'Drink Creator';

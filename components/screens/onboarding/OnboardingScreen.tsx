@@ -157,7 +157,8 @@ export function OnboardingScreen() {
     <SetupChromeProvider
       value={{
         title: copy.title,
-        intro: copy.intro,
+        // Invited: the venue's unit is the starting point, so no "change this in Settings".
+        intro: step === 'units' && joined ? 'New specs, and the amounts you read.' : copy.intro,
         eyebrow: step === 'bring' && !home ? 'Last step' : joined ? joined.bar_name : null,
         // The invited path wears the venue's brand, its name in the accent; "Last step" is quiet.
         eyebrowTone: joined && step !== 'bring' ? 'accent' : 'muted',
@@ -173,6 +174,7 @@ export function OnboardingScreen() {
           initialName={draft?.name || profile.data?.displayName || joined?.name || ''}
           forceHandle={handleTaken}
           invited={!!joined}
+          job={joined?.bar_profile_id ? { bar: joined.bar_name, title: inviteJobTitle(joined.role_level) } : null}
           pendingFinish={finish.isPending || saveProfile.isPending}
           onSaved={saveName}
           onSkip={() => finish.mutate()}
@@ -222,7 +224,7 @@ export function OnboardingScreen() {
       {step === 'menus' ? <MenuStep personId={personId} onDone={() => go('menus')} /> : null}
       {step === 'drinks' ? <DrinkStep personId={personId} onDone={() => go('drinks')} /> : null}
       {step === 'taste' ? <TasteStep onDone={() => go('taste')} /> : null}
-      {step === 'units' ? <UnitsStep joined={!!joined} onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
+      {step === 'units' ? <UnitsStep joined={joined ? { barId: joined.bar_id, name: joined.bar_name } : null} onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
       {step === 'bring' ? (
         <BringStep
           barId={null}
