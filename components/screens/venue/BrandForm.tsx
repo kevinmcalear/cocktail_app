@@ -98,7 +98,7 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
           onCustom={() => set('custom')(true)}
           onHex={set('accent')}
         />
-        <AccentInkChoice value={draft.ink ?? effectiveInk} onChange={set('ink')} />
+        <AccentInkChoice value={draft.ink ?? effectiveInk} accent={accent} onChange={set('ink')} />
       </SettingsSection>
 
       <SettingsSection title="Ground tint" note="A tint behind everything in dark mode. Tints too light for text are refused.">
