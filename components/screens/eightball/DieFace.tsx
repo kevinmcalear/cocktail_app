@@ -30,7 +30,7 @@ export function DieFace({ text, up }: { text: string; up: boolean }) {
           </RadialGradient>
         </Defs>
         {NEIGHBOURS.map((d) => (
-          <Path key={d} d={d} fill={eightBall.neighbour} opacity={0.3} />
+          <Path key={d} d={d} fill={eightBall.neighbour} opacity={0.2} />
         ))}
         <Path d={GLOW[1]} fill={eightBall.glow} opacity={0.05} />
         <Path d={GLOW[0]} fill={eightBall.glow} opacity={0.13} />
