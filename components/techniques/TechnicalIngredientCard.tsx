@@ -89,8 +89,8 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   job: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  // One line: the grade stays beside the dose and a long dose wraps in its own box. 75%: a short dose (0.05 to 0.1%) stays one line at 15 pt.
-  dose: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space.sm, flexShrink: 1, maxWidth: '75%' },
+  // The grade sits beside the dose, or drops under it when both won't fit, so the dose itself keeps to one line where it can.
+  dose: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: space.xs, columnGap: space.sm, flexShrink: 1, maxWidth: '66%' },
   doseText: { flexShrink: 1, textAlign: 'right', fontFamily: fontFamilies.monoMedium },
   block: { gap: space.xs },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.control, maxWidth: '100%' },
