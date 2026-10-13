@@ -2,6 +2,7 @@ import { fireEvent, screen, within } from '@testing-library/react-native';
 
 import { TeamScreen } from '@/components/screens/team/TeamScreen';
 import { renderWithTamagui } from '@/jest.setup';
+import { useTeamSort } from '@/store/useTeamSort';
 
 const mockMutate = jest.fn();
 const mockRemove = jest.fn();
@@ -52,6 +53,7 @@ jest.mock('@/hooks/useBarInvites', () => ({
 }));
 
 beforeEach(() => {
+  useTeamSort.setState({ sort: 'role' });
   mockRole = 40;
   mockMutate.mockClear();
   mockChoose.mockClear();
@@ -125,7 +127,6 @@ test('an employee sees the team and cannot manage it', async () => {
   await renderWithTamagui(<TeamScreen />);
   expect(screen.getByText('Ada (you)')).toBeTruthy();
   expect(screen.getByText('Jo')).toBeTruthy();
-  expect(screen.getByText('Employee')).toBeTruthy();
   expect(screen.getByText('Only Admins can invite people or change roles.')).toBeTruthy();
   expect(screen.queryByRole('button', { name: /Manage$/ })).toBeNull();
   expect(screen.queryByLabelText('Search the team')).toBeNull();
@@ -133,4 +134,19 @@ test('an employee sees the team and cannot manage it', async () => {
   expect(screen.queryByText('Invite someone')).toBeNull();
   expect(screen.queryByText('jo@example.test')).toBeNull();
   expect(screen.queryByText(/Invited as Bartender/)).toBeNull();
+});
+
+test('the team is grouped by role, Admin first, or listed A to Z with role tags', async () => {
+  mockRole = 20;
+  await renderWithTamagui(<TeamScreen />);
+  expect(screen.getByRole('radio', { name: 'Role', checked: true })).toBeTruthy();
+  const headings = screen.getAllByRole('heading').map((h) => h.props.children);
+  expect(headings.indexOf('Admin · 1')).toBeGreaterThan(-1);
+  expect(headings.indexOf('Admin · 1')).toBeLessThan(headings.indexOf('Employee · 1'));
+  expect(screen.queryByText('Employee')).toBeNull();
+
+  await fireEvent.press(screen.getByRole('radio', { name: 'A to Z' }));
+  expect(screen.queryByText('Admin · 1')).toBeNull();
+  expect(screen.getByText('Employee')).toBeTruthy();
+  expect(screen.getByText('Admin')).toBeTruthy();
 });
