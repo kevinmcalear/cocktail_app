@@ -9,6 +9,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { recentMatchesContext } from '@/hooks/useTrackRecent';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { belongsHere, inSelectedContext } from '@/lib/barContextFilter';
 import { fallbackGlass } from '@/lib/itemRoutes';
@@ -129,11 +130,11 @@ const JUMPS = [
   { label: 'Ingredients', href: '/library?show=ingredients' },
 ] as const;
 
-/** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry). */
+/** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry), each when it's switched on. */
 const ENTRIES = [
-  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map' },
-  { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history' },
-  { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques' },
+  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map', feature: 'flavorMap' },
+  { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history', feature: 'history' },
+  { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques', feature: 'techniques' },
 ] as const;
 
 function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: SearchMine; onJump?: () => void; commands?: ReactNode }) {
@@ -143,6 +144,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
   const venue = scope === 'mine' && !!mine.venueId;
   const facts = useMineFacts(venue ? mine.venueId : null, NO_ITEMS);
   const { drafts } = useDrafts();
+  const { has } = useVenueFeatures();
   const [now] = useState(() => Date.now());
   const recent = all.filter((r) => (scope === 'mine' ? recentMatchesContext(r, mine.contextIds) : belongsHere(r.barId, myVenueIds, mine.venueId)));
   const open = (r: RecentActivity) => router.push((r.kind === 'menu' && !r.isDraft ? `/menus/${encodeURIComponent(r.id)}` : r.href) as never);
@@ -194,7 +196,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
       ) : null}
       {commands}
       <View>
-        {ENTRIES.map((e) => (
+        {ENTRIES.filter((e) => has(e.feature)).map((e) => (
           <ResultRow key={e.href} title={e.title} caption={e.caption} icon={e.icon} accentIcon={e.href === '/flavor-map'} onPress={() => go(e.href)} />
         ))}
       </View>

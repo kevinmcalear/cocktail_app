@@ -85,7 +85,7 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 
 **Toasts** confirm a change and can carry one action, like Undo: `useToast().show({ title, detail, action })` (`components/ds/Toast.tsx`, mounted once at the root). A glass pill floats above the bottom edge (bottom centre on the web, `lift` clears a screen's own bottom bar), is announced as a status, and goes after five seconds, a swipe or a tap; Reduce Motion fades it. A plain "Saved" with no action can stay on `toastDone` (`lib/toast.ts`).
 
-Venue mode tabs: Tonight, Library, Discover. Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Prep, Study and Service mode are built but switched off for launch in `constants/features.ts` (their routes redirect home). The venue chip in the corner switches between venues and modes.
+Venue mode tabs: Library, Menus, Discover, plus Tonight, Prep and Study when the venue's Admin switches them on (Venue settings, Features; `lib/venueFeatures.ts`, stored in `bars.enabled_features`). Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Phone bars hold four items and Search; with Settings › Try it's New in the bar, New takes one of the four (`phoneTabs`: You at home, the next venue tab to drop at a venue). A switched-off feature's links are hidden and its routes redirect to the first tab. The venue chip in the corner switches between venues and modes.
 
 ## Permissions in the UI
 

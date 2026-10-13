@@ -53,7 +53,7 @@ function SideNav() {
   const setSearching = useSearchPalette((s) => s.setOpen);
 
   // A page that isn't a row (a drink, the add wizard) keeps the row it came from lit.
-  const rows = [...places.tabs, places.history, ...places.work, ...places.venuePlaces, places.week];
+  const rows = [...places.tabs, places.history, ...places.work, ...places.venuePlaces, places.week].filter((p): p is Place => !!p);
   const [last, setLast] = useState<string | null>(null);
   const current = navCurrent(pathname, rows, last);
   if (current !== last) setLast(current);
@@ -98,16 +98,17 @@ function SideNav() {
 
 /**
  * The desktop sidebar, as the canvas draws it: the marks, Search (⌘K), the
- * mode's tabs and History, the venue's Menus and Back bar, New (N), This
- * week, the Venue section, and you at the foot. Pages need no header row of
+ * mode's tabs and History, the venue's Back bar, New (N), This week, the
+ * Venue section, and you at the foot. A venue's switches decide which of
+ * Tonight, Prep, Study, History, Back bar and This week are here. Pages need no header row of
  * their own.
  */
 function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
   const ds = useDs();
-  const { venue, tabs, work, venuePlaces, history } = useNavPlaces();
+  const { venue, tabs, work, venuePlaces, history, week } = useNavPlaces();
   const row = (p: Place) => <NavRow key={p.key} label={p.label} icon={p.icon} current={current === p.key} onPress={() => go(p)} />;
   // History sits right under Discover.
-  const nav = tabs.flatMap((t) => (t.key === 'discover' ? [t, history] : [t]));
+  const nav = tabs.flatMap((t) => (t.key === 'discover' && history ? [t, history] : [t]));
   return (
     <View role="navigation" accessibilityLabel="Main" style={[styles.nav, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line }]}>
       <MarksRow />
@@ -115,7 +116,7 @@ function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
       {nav.map(row)}
       {work.map(row)}
       <NavRow label="New" icon="plus" role="button" look="outlined" hint="N" current={false} onPress={onNew} />
-      <WeekNav />
+      {week ? <WeekNav /> : null}
       {venuePlaces.length ? (
         <>
           <NavHeading>Venue</NavHeading>

@@ -8,13 +8,13 @@ import { Crumbs } from '@/components/nav/PageFrame';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { DrinkHero } from '@/components/screens/drink/DrinkHero';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { FEATURES } from '@/constants/features';
 import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { cardWhen, groupMenus, homeMenuLine, isOneNightMenu, menuDateLine, menuStatus, newDrinkIds, plural } from '@/lib/menus';
 import type { MenuStatus } from '@/types/menus';
 
@@ -61,6 +61,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const wide = useBreakpoint() !== 'phone';
   // Wide web: the sidebar is the way around, so crumbs instead of Back, and the page sits left.
   const sidebar = useIsWideWeb();
+  const { has } = useVenueFeatures();
   const { venues } = useActiveVenue();
   const { data: menu, isLoading, error } = useMenu(menuId);
   const [now] = useState(() => Date.now());
@@ -143,8 +144,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
                 {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
                 {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
                 <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (shareable ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
-                {FEATURES.study && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
-                {FEATURES.prep && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
+                {has('study') && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
+                {has('prep') && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
                 {menu.barId && Array.isArray(caps.data) && caps.data.includes('costs') ? <MenuAction label="Costing" icon="dollarsign.circle.fill" onPress={() => go(`/menus/${menu.id}/costing`)} /> : null}
               </View>
               {drinkCount === 0 ? <Body tone="muted">No drinks on this menu yet.</Body> : null}

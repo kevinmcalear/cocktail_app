@@ -66,4 +66,5 @@ The Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is the ta
 7. **Home mode, then the public layer:** my bar, collections, profiles, credit and lineage, comparison rankings, moderation.
 8. **The gaps from steps 2 and 3:** venue brand settings with a live preview; the drink page's Service section.
 9. **Done.** The old screens and the redesign flag are gone. New screens build from `components/ds`. Cocktail edit, and beer and wine detail, still use the Tamagui layout until they are ported. Do not go looking for a redesign flag.
-10. **Launch cut (7 Oct 2026):** Study, Prep and Service mode stay built but are switched off in `constants/features.ts`, and Discover is its own tab in both modes.
+10. **Launch cut (7 Oct 2026):** Study, Prep and Service mode stay built but are switched off, and Discover is its own tab in both modes.
+11. **Venue feature switches (13 Oct 2026):** a venue starts with Discover, Library and Menus. Its Admin switches on Tonight, Prep, Study, Back bar, History, Flavor map and Techniques in Venue settings (`lib/venueFeatures.ts`, `bars.enabled_features`).
