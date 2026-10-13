@@ -31,7 +31,8 @@ export function useHistoryStory(itemId: string | null) {
           .eq('riff_of_id', itemId!)
           .order('credit_status', { ascending: false, nullsFirst: false })
           .order('name')
-          .limit(3),
+          // ponytail: the first 60 bar versions, so the story can lead with the best scored; a classic with more pages through its own drink page.
+          .limit(60),
         supabase.from('source_recipes').select('source:sources(key, title, year, author)').eq('item_id', itemId!),
       ]);
       if (aliases.error) throw aliases.error;

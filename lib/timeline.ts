@@ -205,10 +205,10 @@ export function shortYear(n: Pick<TreeNode, 'year' | 'approx'>): string {
   return n.year == null ? '' : `${n.approx ? 'c.' : ''}${n.year}`;
 }
 
-/** "Riff of Manhattan, 1882", or "From Sour" for a style. */
+/** "Riff of Manhattan, 1882", a style's riffs too ("Riff of Swizzle, 1840", board prep-hist-timeline-phone). */
 export function fromLine(row: Pick<TimelineRow, 'from'>): string | null {
   const f = row.from;
   if (!f) return null;
   const year = yearLabel(f.year, f.approx);
-  return `${f.kind === 'style' ? 'From' : 'Riff of'} ${f.name}${year ? `, ${year}` : ''}`;
+  return `Riff of ${f.name}${year ? `, ${year}` : ''}`;
 }

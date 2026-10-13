@@ -97,7 +97,7 @@ assert.equal(threadBack(thread(nodes, 'd:Whiskey Sour')), '230 years back to Pun
 assert.equal(threadBack(thread(nodes, 's:Punch')), null);
 
 assert.equal(fromLine({ from: nodes[5] }), 'Riff of Manhattan, 1882');
-assert.equal(fromLine({ from: nodes[1] }), 'From Sour, 1856');
+assert.equal(fromLine({ from: nodes[1] }), 'Riff of Sour, 1856');
 assert.equal(fromLine({ from: null }), null);
 
 // Spirit and Bar or city filters (drinks only; styles follow the Styles switch).
