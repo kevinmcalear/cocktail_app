@@ -7,6 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import type { PublishedDrinkPage } from '@/hooks/usePublished';
+import { ingredientsLine } from '@/lib/publicDrink';
 import { specLines } from '@/lib/spec';
 
 import { Kicker } from './PublicChrome';
@@ -35,8 +36,7 @@ export function PublicSpec({
   const who = bar?.name ?? 'The bar';
 
   if (!shared && classic) {
-    // ponytail: classics are listed without their spec rows, so signed out there are no names to show yet (needs a listing change, see the PR).
-    if (!signedIn) return <Teaser names={[]} />;
+    if (!signedIn) return <Teaser names={[...new Set(page.names)]} />;
     return (
       <View style={styles.section}>
         <Kicker>The spec</Kicker>
@@ -52,13 +52,13 @@ export function PublicSpec({
       : barClaimed
         ? `You can rank and save this drink. ${who} shares this drink’s menu description, not its spec.`
         : `You can rank and save this drink. Its spec shows once ${who} claims its page and chooses to share it.`;
-    // The names without amounts, where the listing gives them (ppl-pub-drink-phone).
-    const names = [...new Set(lines.flatMap((l) => (l.ingredient ? [l.ingredient] : [])))];
+    // The names without amounts (ppl-pub-drink-phone).
+    const names = ingredientsLine(page.names);
     return (
       <Surface style={styles.locked}>
         <LockedHeading />
         <Body tone="muted">{note}</Body>
-        {names.length ? <Body>{names.map((n, i) => (i ? n.toLowerCase() : n)).join(', ')}</Body> : null}
+        {names ? <Body>{names}</Body> : null}
         {signedIn ? <Facts page={page} columns={2} /> : null}
       </Surface>
     );

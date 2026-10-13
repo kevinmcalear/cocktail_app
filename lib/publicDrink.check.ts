@@ -1,7 +1,10 @@
 // Checks for lib/publicDrink.ts (the signed-out drink page's words). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { ancestorCaption, createdByLine, drinkKicker, makerLabel, whereCaption } from './publicDrink';
+import { ancestorCaption, createdByLine, drinkKicker, ingredientsLine, makerLabel, whereCaption } from './publicDrink';
+
+assert.equal(ingredientsLine(['Scotch', 'Lemon', 'Honey Syrup', 'Scotch', 'Ginger']), 'Scotch, lemon, honey syrup, ginger', 'each name once, in order');
+assert.equal(ingredientsLine([]), null);
 
 assert.equal(drinkKicker({ origin: 'Modern Classic', originYear: 2005, riffOfId: 'x' }, null), 'Modern classic · 2005');
 assert.equal(drinkKicker({ origin: 'Classic', originYear: null, riffOfId: null }, 'Little Rye'), 'Classic', 'a classic is a classic wherever it is poured');

@@ -45,6 +45,7 @@ beforeEach(() => {
     coverUrl: null,
     owner: { profileId: 'p1', name: 'Sam', handle: 'sam' },
     sections: [{ id: 's1', name: 'Aperitivo', drinks: [null, drink('d1', 'Porch Sour')] }],
+    ingredients: {},
   };
 });
 
@@ -71,6 +72,13 @@ describe('SharedMenuScreen', () => {
     expect(screen.getByText('Saturday 31 October · 2 drinks')).toBeTruthy();
     await fireEvent.press(screen.getByRole('link', { name: 'Report this menu' }));
     expect(mockPush).toHaveBeenCalledWith('/auth/login');
+  });
+
+  test("a drink's line is its ingredients when there are names, else its description", async () => {
+    mockMenu = { ...mockMenu!, ingredients: { d1: ['Rye', 'Lemon', 'Rye'] } };
+    await renderWithTamagui(<SharedMenuScreen id="m1" />);
+    expect(screen.getByText('Rye, lemon')).toBeTruthy();
+    expect(screen.queryByText('Porch Sour notes')).toBeNull();
   });
 
   test('credits the owner, opening their profile', async () => {

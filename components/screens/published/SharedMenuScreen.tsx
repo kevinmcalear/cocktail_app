@@ -10,6 +10,7 @@ import { publishedMenuDrink } from '@/hooks/useMenus';
 import { useSharedMenu } from '@/hooks/useSharedMenu';
 import { withAlpha } from '@/lib/color';
 import { plural } from '@/lib/menus';
+import { ingredientsLine } from '@/lib/publicDrink';
 import type { MenuDrink } from '@/types/menus';
 
 import { ReportSheet } from '../safety/ReportSheet';
@@ -61,7 +62,12 @@ export function SharedMenuScreen({ id }: { id: string }) {
   const sections = data.sections.map((s) => ({
     id: s.id,
     name: s.name,
-    drinks: s.drinks.map((d, i) => (d && publishedMenuDrink(d)) ?? privateDrink(s.id, i)),
+    // Each drink's line is its ingredients ("Campari, sweet vermouth, soda, orange"), else its description.
+    drinks: s.drinks.map((d, i) => {
+      const drink = d && publishedMenuDrink(d);
+      if (!drink) return privateDrink(s.id, i);
+      return { ...drink, line: ingredientsLine(data.ingredients[drink.id] ?? []) ?? drink.line };
+    }),
   }));
   const strip = sections.flatMap((s) => s.drinks).slice(0, STRIP);
   // Signed out, Report asks you to sign in first: a report needs an account.

@@ -53,6 +53,15 @@ export function makerLabel(p: Pick<PublicProfile, 'kind' | 'handle' | 'display_n
   return p.kind === 'person' ? `@${p.handle}` : p.display_name;
 }
 
+/**
+ * "Scotch, lemon, honey syrup, ginger": a drink's ingredient names as one
+ * line, each once, in spec order (public_drink_ingredients). Null with none.
+ */
+export function ingredientsLine(names: readonly string[]): string | null {
+  const once = names.filter((n, i) => n && names.indexOf(n) === i);
+  return once.length ? once.map((n, i) => (i ? n.toLowerCase() : n)).join(', ') : null;
+}
+
 /** An ancestor's line under its name in the tree: "Classic", or "Milk & Honey, 2000s"-style maker and year. */
 export function ancestorCaption(d: { origin: string | null; originYear: number | null }, maker: string | null): string | null {
   const label = d.origin?.trim().toLowerCase();

@@ -13,6 +13,8 @@ export interface SharedMenuPage {
   owner: { profileId: string; name: string; handle: string };
   /** Each entry is a public drink, or null for one that isn't public (its name stays private). */
   sections: { id: string; name: string; drinks: (PublishedDrink | null)[] }[];
+  /** Each public drink's ingredient names, never amounts, by drink id. */
+  ingredients: Record<string, string[]>;
 }
 
 interface SharedMenuRow {
@@ -42,7 +44,11 @@ export function useSharedMenu(id: string | null | undefined) {
       if (error) throw error;
       if (!data) return null;
       const row = data as SharedMenuRow;
-      const drinks = await fetchPublished(row.sections.flatMap((s) => s.item_ids).filter((x): x is string => !!x));
+      const ids = row.sections.flatMap((s) => s.item_ids).filter((x): x is string => !!x);
+      const [drinks, names] = await Promise.all([fetchPublished(ids), ids.length ? supabase.rpc('public_drink_ingredients', { p_item_ids: ids }) : Promise.resolve({ data: [], error: null })]);
+      if (names.error) throw names.error;
+      const ingredients: Record<string, string[]> = {};
+      for (const n of (names.data ?? []) as { item_id: string; name: string }[]) (ingredients[n.item_id] ??= []).push(n.name);
       return {
         id: row.id,
         name: row.name,
@@ -54,6 +60,7 @@ export function useSharedMenu(id: string | null | undefined) {
           name: s.name,
           drinks: s.item_ids.map((itemId) => drinks.find((d) => d.id === itemId) ?? null),
         })),
+        ingredients,
       };
     },
   });
