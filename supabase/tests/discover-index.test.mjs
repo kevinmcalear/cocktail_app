@@ -61,7 +61,7 @@ before(async () => {
   await db.connect();
   for (const label of ['viewer', 'creator']) users[label] = await makeUser(label);
 
-  ids.bar = (await serviceInsert('bars', { name: `Index Bar ${run}`, page_visibility: 'open' })).id;
+  ids.bar = (await serviceInsert('bars', { name: `Index Bar ${run}`, page_visibility: 'open', logo_url: `https://example.test/ix-logo-${run}.png` })).id;
   const bar = (row) => serviceInsert('profiles', { kind: 'bar', is_public: true, ...row, handle: `${row.handle}${run}`, display_name: `${row.display_name} ${run}` });
   ids.open = (await bar({ handle: 'ixopen', display_name: 'Open Shed', bar_id: ids.bar, latitude: HERE.lat, longitude: HERE.lng, city: 'Lau', country_code: 'FJ' })).id;
   // Across the antimeridian from the open bar, under 2 km away.
@@ -277,6 +277,21 @@ describe('discover_bars', () => {
     assert.equal(byId[ids.east].drinks, 1);
     assert.equal(byId[ids.closed].is_closed, true);
     assert.equal(byId[ids.closed].drinks, 0);
+  });
+
+  test('asked (p_on_now), how many of the matching drinks are on now; not asked, none said (20261015100000)', async () => {
+    const where = { p_latitude: HERE.lat, p_longitude: HERE.lng, p_radius_km: 5 };
+    const searched = (await users.viewer.client.rpc('discover_bars', { ...where, p_query: `Open Shed ${run}`, p_on_now: true })).data;
+    const open = searched.find((b) => b.id === ids.open);
+    assert.ok(open.drinks >= 2, 'the name matches, so all its drinks count');
+    assert.equal(open.on_now, 1, 'only the House Martini is on a current menu');
+    const plain = (await users.viewer.client.rpc('discover_bars', where)).data;
+    assert.equal(plain.find((b) => b.id === ids.open).on_now, null);
+  });
+
+  test("a venue's Brand logo stands in for its page's picture only for the people on that venue", async () => {
+    const { data } = await users.viewer.client.rpc('discover_bars', { p_latitude: HERE.lat, p_longitude: HERE.lng, p_radius_km: 5 });
+    assert.equal(data.find((b) => b.id === ids.open).avatar_url, null, 'the viewer is not on Index Bar, so bars_select hides its logo');
   });
 
   test('a box, including one across the antimeridian', async () => {

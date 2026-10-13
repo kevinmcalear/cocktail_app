@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
-import { closedLabel, drinkCount, type DiscoverBar } from '@/lib/discoverDrinks';
+import { barDrinksLine, closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
 import { groupLabel, moreCount, moreLabel, PER_GROUP } from '@/lib/searchScope';
 
 import { useSearchNavRow } from './searchNav';
@@ -84,7 +84,8 @@ const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', '
  */
 export function BarResultRow({ bar, score, away, query, matchLook }: { bar: DiscoverBar; score?: number; away?: string | null; query?: string; matchLook?: MatchTextProps['look'] }) {
   const router = useRouter();
-  const caption = [bar.locality || bar.city, away, bar.drinks ? drinkCount(bar.drinks) : null].filter(Boolean).join(' · ') || place(bar) || undefined;
+  // "Fitzroy · 14 drinks on now" (nav-search-home).
+  const caption = [bar.locality || bar.city, away, barDrinksLine(bar)].filter(Boolean).join(' · ') || place(bar) || undefined;
   const said = scoreWords(score, score !== undefined ? 'bar score' : null);
   return (
     <ResultRow

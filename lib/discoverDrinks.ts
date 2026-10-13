@@ -28,6 +28,8 @@ export interface DiscoverBar {
   closedYear: number | null;
   /** How many of its drinks match Discover's filters (0 when closed). */
   drinks: number;
+  /** With a search: how many of those are on one of its menus now (a server without 20261015100000 doesn't say). */
+  onNow?: number | null;
 }
 
 /** A discover_bars row. */
@@ -44,6 +46,7 @@ export interface BarRow {
   is_closed: boolean;
   closed_year: number | null;
   drinks: number;
+  on_now?: number | null;
 }
 
 export function toDiscoverBar(r: BarRow): DiscoverBar {
@@ -60,6 +63,7 @@ export function toDiscoverBar(r: BarRow): DiscoverBar {
     closed: r.is_closed,
     closedYear: r.closed_year,
     drinks: r.drinks,
+    onNow: r.on_now ?? null,
   };
 }
 
@@ -331,4 +335,10 @@ export function closedPins(bars: readonly DiscoverBar[]): MapPin[] {
 /** "3 drinks", "1 drink". */
 export function drinkCount(n: number): string {
   return `${n} ${n === 1 ? 'drink' : 'drinks'}`;
+}
+
+/** A bar row's drinks in search: "14 drinks on now" when some are on, else how many match ("3 drinks"), else nothing. */
+export function barDrinksLine(bar: Pick<DiscoverBar, 'drinks' | 'onNow'>): string | null {
+  if (bar.onNow) return `${drinkCount(bar.onNow)} on now`;
+  return bar.drinks ? drinkCount(bar.drinks) : null;
 }

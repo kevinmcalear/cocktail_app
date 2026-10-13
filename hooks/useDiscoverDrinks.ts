@@ -95,7 +95,12 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
 }
 
 async function readBars(params: Record<string, unknown>, signal: AbortSignal): Promise<DiscoverBar[]> {
-  const { data, error } = await supabase.rpc('discover_bars', params).abortSignal(signal);
+  let { data, error } = await supabase.rpc('discover_bars', params).abortSignal(signal);
+  // ponytail: a database without 20261015100000 doesn't know p_on_now; ask without it (no "on now" then). Drop once it's in production.
+  if (error?.code === 'PGRST202' && 'p_on_now' in params) {
+    const { p_on_now: _, ...rest } = params;
+    ({ data, error } = await supabase.rpc('discover_bars', rest).abortSignal(signal));
+  }
   if (error) throw error;
   return ((data ?? []) as BarRow[]).map(toDiscoverBar);
 }
@@ -104,20 +109,21 @@ async function readBars(params: Record<string, unknown>, signal: AbortSignal): P
  * The public bars in an area, closed ones too, each with how many of its
  * drinks match the filters (none given: all its drinks): search finds bars
  * here, Filters lists the closed ones, and the area's pins come first.
+ * `onNow`: also how many of those are on now ("14 drinks on now"), for search.
  */
-export function useDiscoverBars(area: Area, filter: { kinds?: readonly string[]; search?: string } = {}, enabled = true) {
+export function useDiscoverBars(area: Area, filter: { kinds?: readonly string[]; search?: string; onNow?: boolean } = {}, enabled = true) {
   const signedIn = !!useAuth().user;
   const where = areaParams(area);
   const kinds = kindParams(filter.kinds ?? []);
   const search = searchKey(useDebounced(filter.search ?? '', 250));
   return useQuery({
-    queryKey: ['discover-bars', where, kinds, search],
+    queryKey: ['discover-bars', where, kinds, search, ...(filter.onNow ? ['on-now'] : [])],
     // A searched patch of map isn't worth saving between launches; near me, a city and anywhere are.
     meta: { persist: !(area.kind === 'point' && area.source === 'map') },
     enabled: signedIn && enabled,
     staleTime: 60 * 60 * 1000,
     placeholderData: keepPreviousData,
-    queryFn: ({ signal }) => readBars({ ...where, ...kinds, p_query: search || null }, signal),
+    queryFn: ({ signal }) => readBars({ ...where, ...kinds, p_query: search || null, ...(filter.onNow ? { p_on_now: true } : {}) }, signal),
   });
 }
 

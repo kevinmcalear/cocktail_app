@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 
 import {
+  barDrinksLine,
   barInArea,
   barPins,
   barScoresFor,
@@ -133,5 +134,11 @@ assert.equal(pinLabel(best[0]), '8.1');
 assert.equal(pinLabel(best[1]), '', 'an unscored bar is unmarked, not a count');
 assert.equal(pinDescription(best[1]), 'Dante, 1 drink');
 assert.equal(pinDescription(best[0]), 'Attaboy, score 8.1');
+
+// A bar row's drinks in search: on now first, else how many match, else nothing (an older server sends no on_now).
+assert.equal(barDrinksLine({ drinks: 20, onNow: 14 }), '14 drinks on now');
+assert.equal(barDrinksLine({ drinks: 3, onNow: 0 }), '3 drinks');
+assert.equal(barDrinksLine({ drinks: 1 }), '1 drink');
+assert.equal(barDrinksLine({ drinks: 0, onNow: null }), null);
 
 console.log('discoverDrinks: ok');
