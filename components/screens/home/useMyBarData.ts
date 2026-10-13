@@ -44,7 +44,7 @@ export function useMyBarData({ query, projectsOpen }: { query: string; projectsO
   const ticks = (ids: readonly string[]) =>
     tickNames(ids.flatMap((id) => {
       const s = shelfById.get(id);
-      return s && s.name !== PANTRY_WATER ? [{ name: s.name, generic: s.role === 'generic', kind: s.kind }] : [];
+      return s && s.name !== PANTRY_WATER ? [{ name: s.name, generic: s.role === 'generic', kind: s.kind, maker: s.maker }] : [];
     }));
 
   // Make first: preps the shelf covers but you haven't made, kept to the ready drinks that need them.

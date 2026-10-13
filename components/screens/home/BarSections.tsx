@@ -194,7 +194,7 @@ export function KitSection({ owned, opens, cols, editing, onEdit, onToggle, onAd
           />
         ))}
         {ideas.map((e) => (
-          <BarTile key={e.id} name={e.name} meta="Tap if you keep it" picture={<EquipmentDrawing id={e.id} lazy />} role="button" accessibilityLabel={`I have ${e.name}`} ghost badge="plus" onPress={() => onToggle(e.id)} />
+          <BarTile key={e.id} name={e.name} meta="Tap if you keep it" picture={<EquipmentDrawing id={e.id} lazy bare />} role="button" accessibilityLabel={`I have ${e.name}`} ghost badge="plus" onPress={() => onToggle(e.id)} />
         ))}
       </TileGrid>
       <PressableScale role="link" onPress={() => router.push('/equipment' as never)} style={styles.link}>

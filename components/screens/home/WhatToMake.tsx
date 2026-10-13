@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
 
 import { Body, Button, Caption, Field, FieldButton, Headline, Segmented, useBreakpoint } from '@/components/ds';
 import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
-import { space } from '@/constants/tokens';
+import { layout, space } from '@/constants/tokens';
 import { MAKE_PAGE, searchCaption, type Found, type MakeSearchRowData, type MakeTab } from '@/lib/myBarRows';
 import { footLine, tabIntro } from '@/lib/myBarText';
 
@@ -86,7 +86,8 @@ export function MakeHead({
       ) : (
         <>
           {phone ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            // The tabs run off the right edge of a phone, as drawn, so the next one shows there is more.
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed}>
               <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
             </ScrollView>
           ) : (
@@ -167,4 +168,5 @@ const styles = StyleSheet.create({
   heading: { paddingTop: space.lg, paddingBottom: space.xs },
   foot: { gap: space.md, paddingTop: space.md },
   more: { gap: space.sm, alignItems: 'flex-start', paddingTop: space.md },
+  bleed: { marginRight: -layout.gutter.phone },
 });

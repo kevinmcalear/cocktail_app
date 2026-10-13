@@ -33,10 +33,16 @@ export function BarMark({ name, logoUrl, size, brand, filled, letter }: { name: 
   return (
     <View aria-hidden style={[styles.mark, round, { backgroundColor: look.backgroundColor, borderColor: look.borderColor }]}>
       <Text style={{ fontFamily: face, color: look.color, fontSize: Math.round(size * 0.42), lineHeight: Math.round(size * 0.56) }} allowFontScaling={false}>
-        {letter ? initials(name).slice(0, 1) : initials(name)}
+        {letter ? monogram(name) : initials(name)}
       </Text>
     </View>
   );
+}
+
+/** One letter for a bar: its first word's, past a number ("C" for 69 Colebrooke Row). */
+function monogram(name: string): string {
+  const all = initials(name);
+  return all.match(/\p{L}/u)?.[0] ?? all.slice(0, 1);
 }
 
 const styles = StyleSheet.create({

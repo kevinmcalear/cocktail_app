@@ -32,7 +32,7 @@ export function Tag({ label, tone = 'default', icon, style }: { label: string; t
   return (
     <View style={[styles.tag, { backgroundColor: look.bg, borderColor: look.border }, style]}>
       {icon ? <IconSymbol name={icon} size={12} color={look.fg} /> : null}
-      <DsText variant="caption" color={look.fg} numberOfLines={1}>
+      <DsText variant="caption" color={look.fg} numberOfLines={1} style={styles.label}>
         {label}
       </DsText>
     </View>
@@ -49,5 +49,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: space.sm + 2,
     paddingVertical: 2,
+    // A long label ("Need Bittersweet Orange Aperitivo") ends in an ellipsis inside its row, never past it.
+    maxWidth: '100%',
   },
+  label: { flexShrink: 1 },
 });

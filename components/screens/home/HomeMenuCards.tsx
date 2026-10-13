@@ -70,6 +70,11 @@ export function PaperMenuCard({ menu, ready, now, compact }: { menu: MenuSummary
               ) : null}
             </View>
           ))}
+          {count ? null : (
+            <DsText variant="body" color={paper.soft} align="center" style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
+              No drinks on it yet. Open it to pick some.
+            </DsText>
+          )}
           {more > 0 ? (
             <DsText variant="caption" color={paper.soft}>
               {`and ${more} more`}
@@ -96,17 +101,16 @@ export function PaperMenuCard({ menu, ready, now, compact }: { menu: MenuSummary
           {guests ? <Caption tone="muted">{guests}</Caption> : null}
         </View>
       </View>
-      {ready.total ? (
-        <View style={styles.ready}>
-          <View style={[styles.track, { backgroundColor: ds.c.raised }]}>
-            <View style={[styles.fill, { width: `${Math.round(pct * 100)}%`, backgroundColor: ds.accentText }]} />
-          </View>
-          <View style={styles.readyRow}>
-            <Caption>{`${ready.ready} of ${ready.total} ready`}</Caption>
-            {ready.shop ? <Caption tone="muted">{ready.shop}</Caption> : null}
-          </View>
+      {/* Always there, empty for a menu with no drinks yet, so cards side by side keep their paper the same height. */}
+      <View style={styles.ready}>
+        <View style={[styles.track, { backgroundColor: ds.c.raised }]}>
+          <View style={[styles.fill, { width: `${Math.round(pct * 100)}%`, backgroundColor: ds.accentText }]} />
         </View>
-      ) : null}
+        <View style={styles.readyRow}>
+          <Caption tone={ready.total ? 'ink' : 'muted'}>{ready.total ? `${ready.ready} of ${ready.total} ready` : 'Nothing to make yet'}</Caption>
+          {ready.shop ? <Caption tone="muted">{ready.shop}</Caption> : null}
+        </View>
+      </View>
     </PressableScale>
   );
 }
@@ -187,9 +191,10 @@ export function NewMenuTile({ onPress }: { onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  card: { gap: space.sm + 2 },
-  paper: { borderRadius: radius.mark, padding: space.sm + 2 },
-  frame: { borderWidth: 1, borderRadius: radius.mark, paddingTop: space.xl, paddingBottom: space.lg, paddingHorizontal: space.lg, alignItems: 'center', gap: space.md, minHeight: 380 },
+  // Cards side by side in a rail stand as tall as the tallest, so an empty menu's paper still matches.
+  card: { flex: 1, gap: space.sm + 2 },
+  paper: { flex: 1, borderRadius: radius.mark, padding: space.sm + 2 },
+  frame: { flex: 1, borderWidth: 1, borderRadius: radius.mark, paddingTop: space.xl, paddingBottom: space.lg, paddingHorizontal: space.lg, alignItems: 'center', gap: space.md, minHeight: 380 },
   frameCompact: { minHeight: 320, paddingTop: space.lg + 4 },
   when: { letterSpacing: 2 },
   ornament: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

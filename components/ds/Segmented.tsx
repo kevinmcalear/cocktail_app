@@ -44,7 +44,7 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
             style={[styles.tab, fill ? styles.fillTab : null, quiet ? styles.quietTab : null, selected ? { backgroundColor: quiet ? ds.c.lineStrong : ds.c.ink } : null]}
           >
             <DsText
-              variant={quiet ? 'caption' : 'body'}
+              variant={quiet ? 'caption' : 'label'}
               numberOfLines={1}
               color={quiet ? (selected ? ds.c.ink : ds.c.muted) : selected ? ds.c.ground : fill ? ds.c.ink : ds.c.muted}
               style={{ fontFamily: selected ? fontFamilies.bodySemiBold : fontFamilies.bodyMedium }}

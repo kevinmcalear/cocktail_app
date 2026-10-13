@@ -1,7 +1,7 @@
 // Checks for lib/myBarText.ts (My Bar's tile, row and card lines). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barSubtitle, footLine, foundLine, groupLine, keepsFor, lastedLine, needsLine, pairName, prepMeta, shelfCountsLine, sourceCaption, prepUseBy, tickNames, usesLine } from './myBarText';
+import { barSubtitle, footLine, foundLine, groupLine, keepsFor, lastedLine, needsLine, pairName, prepMeta, shelfCountsLine, sourceCaption, prepUseBy, shortBottle, tickNames, usesLine } from './myBarText';
 
 assert.equal(barSubtitle(7, 2), '7 drinks ready · 2 preps you can make now');
 assert.equal(barSubtitle(1, 0), '1 drink ready');
@@ -71,3 +71,18 @@ assert.deepEqual(
   ['Campari', 'Cocchi Storico Vermouth di Torino', 'lemon'],
 );
 assert.deepEqual(tickNames([{ name: 'Gin', generic: true }]), ['gin']);
+// Bottles go by their short name, as the board ticks them ("Woodford, lemon").
+assert.deepEqual(
+  tickNames([
+    { name: 'Woodford Reserve Double Oaked', generic: false, kind: 'Bourbon', maker: 'Woodford Reserve' },
+    { name: 'Bourbon', generic: true },
+    { name: 'Cocchi Storico Vermouth di Torino', generic: false, maker: 'Cocchi' },
+    { name: 'Lemon Juice', generic: true },
+  ]),
+  ['Woodford', 'Cocchi', 'lemon juice'],
+);
+assert.equal(shortBottle('Mr Black Cold Brew Coffee Liqueur', 'Mr Black'), 'Mr Black');
+assert.equal(shortBottle('Ketel One Vodka', 'Ketel One'), 'Ketel One');
+assert.equal(shortBottle('Amaro Nonino Quintessentia', 'Nonino'), 'Nonino');
+assert.equal(shortBottle('Fernet-Branca', 'Fratelli Branca'), 'Fernet-Branca');
+assert.equal(shortBottle('Campari', null), 'Campari');

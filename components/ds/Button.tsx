@@ -21,7 +21,8 @@ export interface ButtonProps {
    * for (a project's Method). danger: removing or deleting, in status red.
    */
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'ink';
-  size?: 'md' | 'lg';
+  /** sm: a compact pill beside a row's text, 15 pt label (My Bar's Add both). */
+  size?: 'sm' | 'md' | 'lg';
   icon?: IconName;
   disabled?: boolean;
   /** When the label alone is ambiguous ("Cancel" in a list of invites). Defaults to the label. */
@@ -51,12 +52,13 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon,
           borderColor: border,
           opacity: disabled ? 0.45 : 1,
         },
+        size === 'sm' ? styles.small : null,
         style,
       ]}
     >
       <View style={styles.row}>
         {icon ? <IconSymbol name={icon} size={18} color={text} /> : null}
-        <DsText variant="body" color={text} style={styles.label} numberOfLines={1}>
+        <DsText variant={size === 'sm' ? 'label' : 'body'} color={text} style={size === 'sm' ? null : styles.label} numberOfLines={1}>
           {label}
         </DsText>
       </View>
@@ -73,6 +75,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderCurve: 'continuous',
   },
+  small: { paddingHorizontal: space.md + 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   label: { fontFamily: fontFamilies.bodySemiBold },
 });

@@ -27,7 +27,7 @@ interface BarTileProps {
   checked?: boolean;
   accessibilityLabel: string;
   accessibilityHint?: string;
-  /** Not on your bar yet: faded paper, waiting to be added. */
+  /** Not on your bar yet: a dim drawing (pass it `bare`) in a dashed square, waiting to be added. */
   ghost?: boolean;
   /** The corner mark: picked, can be added, or taken off on a tap. */
   badge?: Badge | null;
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   square: { aspectRatio: 1, borderRadius: radius.control, borderCurve: 'continuous', borderWidth: 2, borderColor: 'transparent', overflow: 'hidden' },
   ghost: { borderStyle: 'dashed', borderWidth: 1.5 },
   picture: { flex: 1, borderRadius: radius.control - 2, overflow: 'hidden' },
-  faded: { opacity: 0.3 },
+  faded: { opacity: 0.4 },
   badge: { position: 'absolute', top: 7, right: 7, width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   text: { gap: 1 },
   name: { fontFamily: fontFamilies.bodyMedium },

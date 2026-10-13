@@ -154,7 +154,7 @@ export function EventSheet({ visible, onClose, barId, menus, event, day, tab: fi
           ))}
         </View>
         {/* One grouped card for who, what and when, as the New event board draws it. */}
-        <View style={[styles.card, { backgroundColor: ds.c.surface }]}>
+        <View style={[styles.card, { backgroundColor: ds.c.raised }]}>
           {hasGuest ? (
             <View style={[styles.cell, { borderBottomColor: ds.c.line }]}>
               <EventGuest bare value={guest} onChange={setGuest} placeholder={kind === 'takeover' ? 'Pale Moth' : 'Mara Q. from The Lantern Room'} />
@@ -176,7 +176,7 @@ export function EventSheet({ visible, onClose, barId, menus, event, day, tab: fi
             <SwitchRow label="Runs late" detail="No set end time" value={!end} onValueChange={(late) => setEnd(late ? '' : '23:00')} />
           </View>
         </View>
-        <View style={[styles.card, { backgroundColor: ds.c.surface }]}>
+        <View style={[styles.card, { backgroundColor: ds.c.raised }]}>
           <PressableScale
             role="checkbox"
             aria-checked={addDrinks && !menuId}

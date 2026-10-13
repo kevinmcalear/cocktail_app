@@ -2,13 +2,14 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, GlassButton, PressableScale, TextLink, useDs } from '@/components/ds';
+import { Body, BrandProvider, Button, Caption, DsText, GlassButton, PressableScale, TextLink, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useBarPlace, useDeleteEvent, useEventDraft, useWeekEvent } from '@/hooks/useWeek';
 import { menuStatus } from '@/lib/menus';
+import { isHexColor } from '@/lib/color';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
@@ -20,9 +21,20 @@ import { useDotColor } from './WeekParts';
 /**
  * One event, as guests see it: the bars, when, whether the house menu is still
  * on, a booking link, Share, and Directions to the bar. Its team also gets Edit and
- * Delete, and sees team-only events here too.
+ * Delete, and sees team-only events here too. The page wears the bar's accent
+ * (the guest bar's on a takeover, when we know it), as week-event-guest draws it.
  */
 export function EventScreen({ id }: { id: string }) {
+  const { data: event } = useWeekEvent(id);
+  const accent = [event?.eventKind === 'takeover' ? event.guestColor : null, event?.barColor].find((c): c is string => isHexColor(c));
+  return (
+    <BrandProvider accent={accent}>
+      <EventPage id={id} />
+    </BrandProvider>
+  );
+}
+
+function EventPage({ id }: { id: string }) {
   const ds = useDs();
   const router = useRouter();
   const column = usePageColumn();

@@ -15,6 +15,8 @@ import { CheckList } from './CheckList';
 
 /** Drinks under each bottle before "and N more". */
 const PER_BOTTLE = 3;
+/** Each of a pair's two bottle thumbs. */
+const PAIR_THUMB = 44;
 
 /** Drinks one or two bottles away, under what to buy. */
 export interface AwayGroup {
@@ -121,13 +123,13 @@ export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, 
   const rest = drinks.length - PER_BOTTLE;
   const ds = useDs();
   return (
-    <Surface style={[styles.group, style]}>
+    <Surface style={[styles.group, { borderColor: ds.c.line }, style]}>
       <View style={[styles.groupHead, { borderBottomColor: ds.c.line }]}>
-        {/* A pair's two bottles overlap, so the name keeps the room (home-mybar-make-two). */}
-        <View style={styles.thumbs}>
+        {/* A pair's two bottles overlap, the second a little lower, so the name keeps the room (home-mybar-make-two). */}
+        <View style={bottles.length > 1 ? styles.pair : null}>
           {bottles.map((b, i) => (
-            <View key={b.id} style={i ? [styles.overlap, { borderColor: ds.c.surface }] : null}>
-              <IngredientThumb id={b.id} name={b.name} size={bottles.length > 1 ? 40 : 48} />
+            <View key={b.id} style={i ? [styles.second, { borderColor: ds.c.surface }] : null}>
+              <IngredientThumb id={b.id} name={b.name} size={bottles.length > 1 ? PAIR_THUMB : 48} />
             </View>
           ))}
         </View>
@@ -137,7 +139,7 @@ export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, 
           </Body>
           <Caption tone="muted">{groupLine(drinks.length, mine)}</Caption>
         </View>
-        <Button label={bottles.length > 1 ? 'Add both' : 'Add'} variant="secondary" accessibilityLabel={`Add ${name} to your shelf`} onPress={() => onAdd(bottles.map((b) => b.id))} style={styles.add} />
+        <Button label={bottles.length > 1 ? 'Add both' : 'Add'} variant="secondary" size="sm" accessibilityLabel={`Add ${name} to your shelf`} onPress={() => onAdd(bottles.map((b) => b.id))} />
       </View>
       {(open ? drinks : drinks.slice(0, PER_BOTTLE)).map((d) => (
         <MakeDrink key={d.id} drink={d} text={text} />
@@ -148,12 +150,12 @@ export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, 
 });
 
 const styles = StyleSheet.create({
-  group: { gap: 0 },
-  groupHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  thumbs: { flexDirection: 'row' },
-  overlap: { marginLeft: -space.lg, marginTop: space.sm, borderWidth: 2, borderRadius: radius.control + 2 },
-  groupText: { flex: 1, minWidth: 0, gap: 2 },
-  add: { paddingHorizontal: space.md + 2 },
+  group: { gap: 0, paddingHorizontal: space.md + 2, paddingTop: space.md + 2, paddingBottom: space.xs, borderWidth: 1 },
+  groupHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.sm + 2, borderBottomWidth: StyleSheet.hairlineWidth },
+  // Two 44 pt thumbs in a 64 by 48 box: the second 20 pt in and 4 down, ringed in the card's colour.
+  pair: { width: 64, height: 48 },
+  second: { position: 'absolute', left: 18, top: 2, borderWidth: 2, borderRadius: radius.control + 2 },
+  groupText: { flex: 1, minWidth: 0, gap: 1 },
   card: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, paddingLeft: space.sm + 2, paddingRight: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
   cardThumb: { width: 56 },
   cardName: { fontFamily: fontFamilies.bodySemiBold },
