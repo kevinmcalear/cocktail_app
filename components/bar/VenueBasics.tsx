@@ -1,8 +1,7 @@
-import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Field } from '@/components/ds';
+import { Field, LogoImage } from '@/components/ds';
 import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -34,7 +33,7 @@ export function VenueBasics({ editor, barId }: { editor: Editor; barId: string }
         label="Brand and look"
         detail="Logo, accent colour, display face and home-screen icon"
         icon="paintpalette.fill"
-        leading={editor.logoUrl ? <Image source={{ uri: editor.logoUrl }} style={styles.logo} contentFit="cover" /> : undefined}
+        leading={editor.logoUrl ? <LogoImage uri={editor.logoUrl} size={LOGO} radius={radius.mark} /> : undefined}
         onPress={() => router.push(`/settings/bar/${barId}/brand` as Href)}
       />
       <RowDivider />
@@ -45,5 +44,4 @@ export function VenueBasics({ editor, barId }: { editor: Editor; barId: string }
 
 const styles = StyleSheet.create({
   name: { paddingVertical: space.md },
-  logo: { width: LOGO, height: LOGO, borderRadius: radius.mark },
 });

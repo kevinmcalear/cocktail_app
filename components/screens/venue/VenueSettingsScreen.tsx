@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -6,7 +5,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { BarInlineEditor } from '@/components/bar/BarInlineEditor';
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { BackbarTheme, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, LogoImage, useDs, useGutter } from '@/components/ds';
+import { logoFill } from '@/components/nav/VenueMarks';
 import { UnsavedBar } from '@/components/screens/settings/SettingsParts';
 import { WebHead } from '@/components/WebHead';
 import { radius, space } from '@/constants/tokens';
@@ -60,7 +60,7 @@ function VenuePage({ barId }: { barId: string }) {
             title={name}
             subtitle={venue ? `Venue settings · You’re ${roleLabel(venue.roleLevel)}` : undefined}
             onBack={() => void back()}
-            leading={venue?.logoUrl ? <Image source={{ uri: venue.logoUrl }} style={[styles.logo, { borderColor: ds.c.line }]} contentFit="cover" /> : null}
+            leading={venue?.logoUrl ? <LogoImage uri={venue.logoUrl} size={LOGO} radius={radius.mark} fill={logoFill(venue)} style={[styles.logo, { borderColor: ds.c.line }]} /> : null}
           />
           <BarInlineEditor barId={barId} embedded onChromeState={setChrome} />
         </View>

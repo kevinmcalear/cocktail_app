@@ -2,6 +2,7 @@
 // pins and the area labels. Plain DOM, since MapLibre GL markers take elements.
 import { backbar, fontFamilies, radius, space, type } from '@/constants/tokens';
 import { areaLook, pinDescription, pinLook, type MapArea, type MapPin } from '@/lib/discoverMap';
+import { knownLogoEdge, lookAtLogoEdge, type KnownEdge } from '@/lib/logoEdge';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
@@ -25,6 +26,21 @@ export function loadMapStyles(): Promise<void> {
   });
 }
 
+/**
+ * A pin's logo as LogoImage draws it: on a flat logo's own colour, fitted
+ * inside it so its edge blends; a transparent one or one that can't be read on
+ * the white disc pins have always had.
+ */
+function paintLogo(img: HTMLImageElement, edge: KnownEdge, size: number) {
+  const solid = edge?.kind === 'solid';
+  Object.assign(img.style, {
+    visibility: edge === undefined ? 'hidden' : 'visible',
+    objectFit: solid || edge?.kind === 'clear' ? 'contain' : 'cover',
+    padding: solid ? `${Math.round(size * 0.1)}px` : '0',
+    background: solid ? edge.color : edge?.kind === 'busy' ? 'transparent' : backbar.light.surface,
+  });
+}
+
 /** Paints a pin's HTML element with the look both maps share (lib/discoverMap pinLook). */
 export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: DiscoverMapProps['accent']) {
   const look = pinLook(pin, selected, accent);
@@ -35,15 +51,18 @@ export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent
     const parts: (HTMLElement | string)[] = [];
     if (look.logo) {
       const img = document.createElement('img');
-      img.src = look.logo;
+      const logo = look.logo;
+      img.src = logo;
       img.alt = '';
       Object.assign(img.style, {
         width: `${look.logoSize}px`,
         height: `${look.logoSize}px`,
         borderRadius: `${radius.pill}px`,
-        objectFit: 'cover',
-        background: backbar.light.surface,
+        boxSizing: 'border-box',
       });
+      paintLogo(img, knownLogoEdge(logo), look.logoSize);
+      // An older logo's edge is read once (lib/logoEdge); until then it's hidden, so it never jumps.
+      if (knownLogoEdge(logo) === undefined) void lookAtLogoEdge(logo).then((edge) => el.dataset.key === key && paintLogo(img, edge, look.logoSize));
       parts.push(img);
     }
     if (look.label) parts.push(look.label);

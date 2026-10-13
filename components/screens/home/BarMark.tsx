@@ -1,7 +1,6 @@
-import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { useDs } from '@/components/ds';
+import { LogoImage, useDs } from '@/components/ds';
 import { backbar, displayFaces, type DisplayFace } from '@/constants/tokens';
 import { useBarBrand } from '@/hooks/useBarBrands';
 import { markBrand } from '@/lib/brand';
@@ -33,7 +32,7 @@ export function BarMark({ name, logoUrl, size, brand, filled, neutral, letter, p
   const logo = logoUrl || looked?.logo;
   const own: BarBrand | null = brand ?? markBrand(looked);
   const round = { width: size, height: size, borderRadius: size / 2 };
-  if (logo) return <Image source={{ uri: logo }} style={round} cachePolicy="memory-disk" recyclingKey={logo} accessibilityIgnoresInvertColors />;
+  if (logo) return <LogoImage uri={logo} size={size} radius={size / 2} />;
   // The bar's accent made readable on this ground, and its fill with the ink that reads on it.
   const accent = own ? readableAccent(own.accent, ds.c.ground) : ds.accentText;
   const fill = own ? accentFill(own.accent, backbar.dark.ground, backbar.light.surface) : ds.accentFill;

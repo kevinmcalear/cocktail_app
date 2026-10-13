@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { extractColors, uploadLogo } from '@/hooks/useBarEditor';
 import type { DbDisplayFace } from '@/lib/brand';
 import { uriToBase64 } from '@/lib/imageBase64';
+import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
 
 export interface VenueBrandRow {
@@ -92,16 +93,23 @@ export async function pickBrandImage(barId: string, withColors: boolean): Promis
   return { url: upload.imageUrl, colors };
 }
 
+/** What Remove background gives: the new logo and its original, or that the server can't do it yet. */
+export type RemovedBackground = { url: string; original: string } | 'unavailable';
+
 /**
- * Removes the logo's background and returns the new image's URL, or null when
- * background removal isn't available.
- *
- * ponytail: always null for now. Removing a background well needs an image
- * service (a paid API and a new key, gated: Kevin decides). When one is
- * chosen, an edge function like upload-bar-logo takes the logo, calls it,
- * stores the result and returns its URL here; the brand screen already
- * handles both answers.
+ * Takes the logo's flat background out (upload-bar-logo's remove_background:
+ * a flood fill from the edge, no paid service) and returns the new image's URL
+ * and the original's; the original stays stored, for Use original.
+ * 'unavailable' while the deployed function is older than this (it asks for an
+ * image instead). Otherwise throws with the server's words, such as "This logo
+ * has no plain background to remove".
  */
-export async function removeLogoBackground(_barId: string, _logoUrl: string): Promise<string | null> {
-  return null;
+export async function removeLogoBackground(barId: string, logoUrl: string): Promise<RemovedBackground> {
+  try {
+    const done = await invokeFunction<{ imageUrl?: string; originalUrl?: string } | null>('upload-bar-logo', { action: 'remove_background', bar_id: barId, logo_url: logoUrl });
+    return done?.imageUrl ? { url: done.imageUrl, original: done.originalUrl ?? logoUrl } : 'unavailable';
+  } catch (e) {
+    if (e instanceof Error && /image_base64/.test(e.message)) return 'unavailable';
+    throw e;
+  }
 }

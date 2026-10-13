@@ -1,8 +1,8 @@
 import { Camera, GeoJSONSource, Layer, Map, Marker, NativeUserLocation, type CameraRef, type GeoJSONSourceRef, type MapRef, type PressEventWithFeatures, type ViewState } from '@maplibre/maplibre-react-native';
-import { Image } from 'expo-image';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
+import { LogoImage } from '@/components/ds';
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
 import { useLocationAccess } from '@/hooks/useLocationAccess';
 import { AREA_CLUSTER, areaLook, areasFrom, DOT_PAINT, dotsFilter, dotsOf, MAP_STYLE, pinDescription, pinLook, pinsToDraw, viewportFrom, type MapArea, type MapView } from '@/lib/discoverMap';
@@ -171,7 +171,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
                 ]}
               >
                 {look.logo ? (
-                  <Image source={look.logo} style={[styles.logo, { width: look.logoSize, height: look.logoSize }]} contentFit="cover" />
+                  <LogoImage uri={look.logo} size={look.logoSize} radius={look.logoSize / 2} clearBackground={backbar.light.surface} />
                 ) : null}
                 {look.label ? <Text style={[styles.label, { color: look.color, fontSize: look.fontSize, fontFamily: fontFamilies[look.font] }]}>{look.label}</Text> : null}
               </View>
@@ -188,7 +188,6 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   pin: { flexDirection: 'row', borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  logo: { borderRadius: radius.pill, backgroundColor: backbar.light.surface },
   label: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize },
   area: { height: areaLook.height, paddingHorizontal: areaLook.paddingHorizontal, borderRadius: radius.pill, borderWidth: 1, borderColor: areaLook.borderColor, backgroundColor: areaLook.backgroundColor, justifyContent: 'center' },
   areaLabel: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize, color: areaLook.color },

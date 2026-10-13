@@ -1,8 +1,8 @@
-import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Body, useDs } from '@/components/ds';
+import { Body, LogoImage, useDs } from '@/components/ds';
+import { logoFill } from '@/components/nav/VenueMarks';
 import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
 import { backbar, displayFaces, radius, space, type, type DisplayFace } from '@/constants/tokens';
@@ -27,7 +27,7 @@ export function VenuesSection() {
           <SettingsRow
             label={v.name}
             detail={roleLabel(v.roleLevel)}
-            leading={v.logoUrl ? <Image source={{ uri: v.logoUrl }} style={styles.logo} /> : <VenueTile name={v.name} accent={v.accent} face={v.displayFace} />}
+            leading={v.logoUrl ? <LogoImage uri={v.logoUrl} size={LOGO} radius={styles.logo.borderRadius} fill={logoFill(v)} /> : <VenueTile name={v.name} accent={v.accent} face={v.displayFace} />}
             onPress={() => router.push(`/settings/bar/${v.id}` as Href)}
           />
         </View>

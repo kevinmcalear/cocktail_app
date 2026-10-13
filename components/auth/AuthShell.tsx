@@ -1,15 +1,16 @@
-import { Image } from 'expo-image';
 import { Link, type Href } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Caption, Display, DsText, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Caption, Display, DsText, GlassButton, LogoImage, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { BRAND } from '@/constants/brand';
 import { STATUS } from '@/constants/palette';
 import { readableAccent, withAlpha } from '@/lib/color';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+
+const LOGO = 88;
 
 /** A venue's own name and logo, shown in place of the product name on its staff link. */
 export interface AuthBrand {
@@ -66,12 +67,7 @@ function Frame({ title, subtitle, children, footer, brand, titleSize = 'display'
             ) : null}
             <View style={styles.head}>
               {brand?.logoUrl ? (
-                <Image
-                  source={{ uri: brand.logoUrl }}
-                  style={styles.logo}
-                  contentFit="contain"
-                  accessibilityLabel={`${brand.name} logo`}
-                />
+                <LogoImage uri={brand.logoUrl} size={LOGO} radius={radius.card} style={styles.logo} label={`${brand.name} logo`} />
               ) : brand ? (
                 <View style={[styles.logo, styles.mark, { borderColor: ds.accentText }]} role="img" aria-label={`${brand.name} logo`}>
                   <DsText variant="title" italic color={ds.accentText}>
@@ -152,7 +148,7 @@ const styles = StyleSheet.create({
   column: { width: '100%', maxWidth: 420, alignSelf: 'center' },
   back: { alignSelf: 'flex-start' },
   head: { gap: space.sm },
-  logo: { width: 88, height: 88, borderRadius: radius.card, marginBottom: space.md },
+  logo: { width: LOGO, height: LOGO, borderRadius: radius.card, marginBottom: space.md },
   mark: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: radius.pill, width: 64, height: 64 },
   eyebrow: { textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: fontFamilies.bodyMedium },
   body: { gap: space.lg },

@@ -1,9 +1,9 @@
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, DsText, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, DsText, LogoImage, useDs, useGutter } from '@/components/ds';
+import { logoFill } from '@/components/nav/VenueMarks';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMenu } from '@/hooks/useMenus';
@@ -35,7 +35,7 @@ export function MenuCardScreen({ menuId }: { menuId: string }) {
 function VenueMark({ venue }: { venue: Venue }) {
   const ds = useDs();
   if (venue.logoUrl) {
-    return <Image source={{ uri: venue.logoUrl }} style={styles.mark} contentFit="cover" accessible={false} />;
+    return <LogoImage uri={venue.logoUrl} size={styles.mark.width} radius={styles.mark.borderRadius} fill={logoFill(venue)} />;
   }
   return (
     <View style={[styles.mark, { backgroundColor: ds.accentFill.fill }]} aria-hidden>

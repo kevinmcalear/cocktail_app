@@ -4,6 +4,7 @@ import { useBars } from '@/hooks/useBars';
 import { useAuthIdentity } from '@/ctx/AuthContext';
 import type { DisplayFace } from '@/constants/tokens';
 import { faceFromDb, usableGroundTint } from '@/lib/brand';
+import type { IconBackground } from '@/lib/brandColours';
 import { isHexColor } from '@/lib/color';
 import { useAppMode, useAppModeHydrated } from '@/store/useAppMode';
 
@@ -18,6 +19,8 @@ export interface Venue {
   groundTint: string | null;
   /** The venue's pick for text on accent buttons, or null for automatic. */
   accentText?: 'cream' | 'ink' | null;
+  /** The home-screen icon's background (Brand), which an opaque logo's mark sits on too; null for the logo's own colour. */
+  iconBackground?: IconBackground | null;
   roleLevel: number;
 }
 
@@ -54,6 +57,7 @@ export function useActiveVenue() {
         displayFace: faceFromDb(bar.display_face),
         groundTint: usableGroundTint(bar.ground_tint),
         accentText: bar.accent_text === 'cream' || bar.accent_text === 'ink' ? bar.accent_text : null,
+        iconBackground: bar.icon_background === 'accent' || bar.icon_background === 'ground' || bar.icon_background === 'cream' ? bar.icon_background : null,
         roleLevel: row.role_level ?? 0,
       });
     }
