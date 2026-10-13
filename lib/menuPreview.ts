@@ -31,6 +31,15 @@ export interface PreviewMeta {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (s: string | null | undefined): s is string => !!s && UUID.test(s);
 
+// A readable link's name (/d/penicillin, /m/halloween-party): words joined by
+// hyphens, as share_slug_base() makes them (20261016300000_share_slugs.sql).
+// A uuid is always read as the id.
+const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/i;
+export const isShareSlug = (s: string | null | undefined): s is string => !!s && s.length <= 100 && SLUG.test(s) && !UUID.test(s);
+
+/** /d/<id> is a drink's link, /m/<id> a shared menu's. */
+export type ShareKind = 'd' | 'm';
+
 // Chat apps and social sites fetch a link to build its preview; none of them run the app.
 // iMessage sends "facebookexternalhit … Twitterbot", Signal sends "WhatsApp".
 const PREVIEW_BOTS = /facebookexternalhit|facebot|twitterbot|whatsapp|slackbot|discordbot|telegrambot|linkedinbot|skypeuripreview|applebot|googlebot|bingbot|pinterest|redditbot|embedly|iframely|mastodon|vkshare|viber|line-poker|snapchat|bluesky|cardyb/i;
@@ -62,7 +71,8 @@ export function menuVersion(menu: SharedMenuRow): string {
   return h.toString(36);
 }
 
-export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin: string): PreviewMeta {
+/** `link` is what the shared link named the menu by: its slug, or its id. */
+export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin: string, link: string = menu.id): PreviewMeta {
   const night = nightLabel(menu.menu_date);
   const count = menu.sections.reduce((n, s) => n + s.item_ids.length, 0);
   const howMany = `${count} ${count === 1 ? 'drink' : 'drinks'}`;
@@ -71,7 +81,7 @@ export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin:
     title: menu.name,
     description: `${night ? `${howMany} for ${night}` : howMany}. A menu on Cocktail.`,
     image: `${origin}/api/menu-og?id=${menu.id}&v=${menuVersion(menu)}`,
-    url: `${origin}/m/${menu.id}`,
+    url: `${origin}/m/${link}`,
   };
 }
 
@@ -105,6 +115,24 @@ export function previewHtml(meta: PreviewMeta): string {
 interface Supabase {
   url: string;
   anonKey: string;
+}
+
+/**
+ * The id behind a link's last part, signed out: a uuid is itself, a slug is
+ * asked of share_target(), which answers only while the drink is published or
+ * the menu is shared. Null for anything else.
+ */
+export async function resolveShareId(db: Supabase, kind: ShareKind, key: string | null | undefined): Promise<string | null> {
+  if (isUuid(key)) return key;
+  if (!isShareSlug(key)) return null;
+  const res = await fetch(`${db.url}/rest/v1/rpc/share_target`, {
+    method: 'POST',
+    headers: { apikey: db.anonKey, Authorization: `Bearer ${db.anonKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_kind: kind, p_slug: key }),
+  });
+  if (!res.ok) throw new Error(`share_target ${res.status}`);
+  const id = (await res.json()) as string | null;
+  return isUuid(id) ? id : null;
 }
 
 /** Signed out, as anyone reads it: the shared menu, or null if it isn't shared (or its owner isn't public). */

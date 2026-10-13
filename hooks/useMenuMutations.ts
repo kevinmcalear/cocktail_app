@@ -6,6 +6,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { dropdownKeys } from '@/hooks/useDropdowns';
 import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { fetchPublished } from '@/hooks/usePublished';
+import { fetchShareSlug, shareSlugKey } from '@/hooks/useShareSlug';
 import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout';
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { uriToBase64 } from '@/lib/imageBase64';
@@ -158,17 +159,23 @@ export function useSetMenuKind() {
 }
 
 /**
- * Shares a home menu with a link (/m/<id>), or stops sharing it. The server
- * sets the time, and refuses without a public profile. No drink's visibility
- * changes: the link shows only drinks that are already public.
+ * Shares a home menu with a link (/m/<slug>, or /m/<id>), or stops sharing
+ * it. The server sets the time, and refuses without a public profile. No
+ * drink's visibility changes: the link shows only drinks that are already
+ * public. Resolves to the menu's slug once shared (null if it couldn't be
+ * made: the id link works too).
  */
 export function useShareMenu() {
   const invalidate = useInvalidateMenus();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ menuId, shared }: { menuId: string; shared: boolean }) => {
+    mutationFn: async ({ menuId, shared }: { menuId: string; shared: boolean }): Promise<string | null> => {
       const { error } = await supabase.from('menus').update({ shared_at: shared ? new Date().toISOString() : null }).eq('id', menuId);
       if (error) throw readable(error);
+      if (!shared) return null;
+      const slug = await fetchShareSlug('m', menuId).catch(() => null);
+      queryClient.setQueryData(shareSlugKey('m', menuId), slug);
+      return slug;
     },
     onSuccess: () => Promise.all([invalidate(), queryClient.invalidateQueries({ queryKey: ['published', 'menu'] })]),
     onError: () => {},
