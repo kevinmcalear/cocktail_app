@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, GlassButton, Headline, PressableScale, Surface, useBreakpoint, useDs } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { displayFaces, fontFamilies, space } from '@/constants/tokens';
 
 // The public web's own chrome, around every signed-out page (/d, /p, /m, /r):
 // the site nav, the footer, the sign-in band and the small capitals kicker.
@@ -21,12 +21,13 @@ const LINKS: { label: string; href: Href }[] = [
 // ponytail: Get the app opens Support until the store listings are live; then the App Store and Google Play links.
 const GET_THE_APP: Href = '/support';
 
-/** "Cocktail" in the italic display face: the site's name, home. */
+/** "Cocktail" in the italic display face: the site's name, home. Smaller in the footer. */
 function Wordmark({ size = 'nav' }: { size?: 'nav' | 'footer' }) {
+  const ds = useDs();
   const router = useRouter();
   return (
     <PressableScale role="link" accessibilityLabel="Cocktail, home" onPress={() => router.push('/')} style={styles.tap}>
-      <DsText variant={size === 'nav' ? 'title' : 'headline'} italic style={size === 'nav' ? styles.wordmark : undefined}>
+      <DsText variant={size === 'nav' ? 'title' : 'headline'} italic style={size === 'nav' ? styles.wordmark : { fontFamily: displayFaces[ds.displayFace].italic }}>
         Cocktail
       </DsText>
     </PressableScale>
@@ -45,9 +46,11 @@ function NavLink({ label, href }: { label: string; href: Href }) {
 /**
  * The site nav. Wide: Cocktail, Discover, Bars, People, Near me, and Get the
  * app. Phone: Cocktail, Get the app and a menu button that opens the links
- * under the bar (no sheet: it's a page's nav).
+ * under the bar (no sheet: it's a page's nav). Get the app is filled unless
+ * the page has its own gold button to sign in (a drink's locked spec), where
+ * it steps back to an outline (ppl-pub-drink-desktop, -phone-teaser).
  */
-export function PublicNav() {
+export function PublicNav({ quietCta = false }: { quietCta?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const wide = useBreakpoint() !== 'phone';
@@ -58,7 +61,7 @@ export function PublicNav() {
         <Wordmark />
         {wide ? LINKS.map((l) => <NavLink key={l.label} {...l} />) : null}
         <View style={styles.flex} />
-        <Button label="Get the app" variant={wide ? 'secondary' : 'primary'} onPress={() => router.push(GET_THE_APP)} />
+        <Button label="Get the app" variant={quietCta ? 'secondary' : 'primary'} onPress={() => router.push(GET_THE_APP)} />
         {wide ? null : (
           <GlassButton accessibilityLabel={open ? 'Close the menu' : 'Menu: Discover, Bars, People, Near me'} icon={open ? 'xmark' : 'line.horizontal.3'} onPress={() => setOpen((o) => !o)} />
         )}
@@ -118,7 +121,7 @@ export function SignInBand({ text, title = 'Rank it, save it, find where it’s 
         <Headline role="heading">{title}</Headline>
         <Body tone="muted">{text}</Body>
       </View>
-      <Button label="Sign in" onPress={() => router.push('/auth/login')} />
+      <Button label="Sign in" variant="secondary" onPress={() => router.push('/auth/login')} />
     </Surface>
   );
 }

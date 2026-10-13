@@ -1,17 +1,18 @@
 import { StyleSheet, View } from 'react-native';
 import DraggableFlatList, { NestableDraggableFlatList, type RenderItemParams } from 'react-native-draggable-flatlist';
 
-import { Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
+import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { STATUS } from '@/constants/palette';
 import { gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import type { EditSection } from '@/lib/menuLayout';
 import { readableAccent } from '@/lib/color';
 import { sectionLine } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
-import { EditorRow, GRIP } from './EditorRow';
+import { DropSlot, EditorRow, GRIP } from './EditorRow';
+import { dropSection } from './useMenuDrag';
 
 interface EditorSectionProps {
   section: EditSection;
@@ -29,7 +30,11 @@ interface EditorSectionProps {
   onRemove: (drinkId: string) => void;
   onReorder: (drinks: MenuDrink[]) => void;
   onMove: (from: number, to: number) => void;
+  /** Desktop web: the browser's drag and drop (useMenuDrag) instead of the grip drag. */
+  drag?: { at: number | null; dragging: string | null };
 }
+
+const noDrag = () => {};
 
 const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : DraggableFlatList;
 
@@ -38,7 +43,7 @@ const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : Draggab
  * reorder), and adding more. No box of its own: on desktop the section the
  * library adds to sits on a raised ground, tagged "Adding here".
  */
-export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, onRemove, onReorder, onMove, onMoveTo }: EditorSectionProps) {
+export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, onRemove, onReorder, onMove, onMoveTo, drag: web }: EditorSectionProps) {
   const ds = useDs();
   const count = section.drinks.length;
   const line = sectionLine(section);
@@ -51,7 +56,8 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
       count={count}
       home={home}
       active={isActive}
-      drag={drag}
+      drag={web ? noDrag : drag}
+      web={web ? { from: section.key, slot: web.at === getIndex() ? 'before' : web.at === count && getIndex() === count - 1 ? 'after' : null, dragging: web.dragging === item.id } : undefined}
       onRemove={() => onRemove(item.id)}
       onMove={onMove}
       others={others}
@@ -60,7 +66,7 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
   );
 
   return (
-    <View style={[styles.section, targeted && { backgroundColor: ds.c.surface }]}>
+    <View {...(web ? dropSection(section.key) : {})} style={[styles.section, targeted && { backgroundColor: ds.c.surface }]}>
       <View style={styles.head}>
         <PressableScale
           accessibilityLabel={onTarget ? `${section.name}: add drinks here` : section.name}
@@ -76,7 +82,14 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
             {line.text}
           </Caption>
         </PressableScale>
-        {targeted ? <Tag label="Adding here" tone="accent" /> : null}
+        {targeted ? (
+          // An outlined mono tag in the accent, as drawn: the one place the library adds to.
+          <View style={[styles.adding, { borderColor: ds.accentText }]}>
+            <Caption color={ds.accentText} style={styles.mono}>
+              ADDING HERE
+            </Caption>
+          </View>
+        ) : null}
         <PressableScale accessibilityLabel={`${section.name} section options: rename, rules, paste a list`} onPress={onSettings} style={styles.icon}>
           <IconSymbol name="ellipsis" size={18} color={ds.c.muted} />
         </PressableScale>
@@ -92,6 +105,7 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
           dragHitSlop={gripOnly(GRIP, 'right')}
         />
       ) : null}
+      {web && !count && web.at === 0 ? <DropSlot /> : null}
       {onAdd ? (
         <PressableScale accessibilityLabel={`Add a drink to ${section.name}`} onPress={onAdd} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
           <IconSymbol name="plus" size={16} color={ds.c.ink} />
@@ -107,5 +121,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, gap: 2 },
   icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  adding: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: 2 },
+  mono: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
   add: { marginTop: space.sm, minHeight: 48, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
 });

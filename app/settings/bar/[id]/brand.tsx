@@ -1,15 +1,15 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
-import { BackbarTheme } from '@/components/ds';
+import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { BrandScreen } from '@/components/screens/venue/BrandScreen';
 
 /** A venue's brand: logo, accent, display face, dark ground, home-screen icon. */
 export default function VenueBrand() {
   const { id } = useLocalSearchParams<{ id: string }>();
   return (
-    <BackbarTheme>
+    <VenueBrandProvider barId={id}>
       <Stack.Screen options={{ headerShown: false, title: 'Brand' }} />
       {id ? <BrandScreen barId={id} /> : null}
-    </BackbarTheme>
+    </VenueBrandProvider>
   );
 }

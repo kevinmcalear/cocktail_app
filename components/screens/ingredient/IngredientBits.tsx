@@ -74,7 +74,8 @@ export function prepFacts(prep: ItemPrep | null | undefined): Fact[] {
   return [
     y && { label: 'Makes', value: formatQuantity(y) },
     shelfLifeLabel(prep.shelf_life_hours) && { label: 'Keeps', value: shelfLifeLabel(prep.shelf_life_hours)! },
-    prep.storage && { label: 'Store', value: prep.storage },
+    // The tile says where ("Fridge"); the label and Where it lives carry the rest ("sealed bottle").
+    prep.storage && { label: 'Store', value: prep.storage.split(/[,;(]/)[0].trim() || prep.storage },
     leadTimeLabel(prep.lead_time_minutes, prep.lead_time_note) && { label: 'Takes', value: leadTimeLabel(prep.lead_time_minutes, prep.lead_time_note)! },
   ].filter((f): f is Fact => !!f);
 }

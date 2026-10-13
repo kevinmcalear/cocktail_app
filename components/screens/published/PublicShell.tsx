@@ -14,18 +14,18 @@ import { PublicFooter, PublicNav } from './PublicChrome';
  * A public page's frame (ppl-pub-* boards): the site nav on top, the page in
  * a centred column up to 1240 wide, the footer at the end. Opens signed out.
  */
-export function PublicPage({ title, children }: { title: string; children: ReactNode }) {
+export function PublicPage({ title, quietCta, children }: { title: string; /** Get the app as an outline: the page has its own gold sign-in. */ quietCta?: boolean; children: ReactNode }) {
   return (
     <BackbarTheme>
       <WebHead>
         <title>{title}</title>
       </WebHead>
-      <PageFrame>{children}</PageFrame>
+      <PageFrame quietCta={quietCta}>{children}</PageFrame>
     </BackbarTheme>
   );
 }
 
-function PageFrame({ children }: { children: ReactNode }) {
+function PageFrame({ quietCta, children }: { quietCta?: boolean; children: ReactNode }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
@@ -39,7 +39,7 @@ function PageFrame({ children }: { children: ReactNode }) {
       }}
     >
       <View style={styles.column}>
-        <PublicNav />
+        <PublicNav quietCta={quietCta} />
         <View style={styles.content}>{children}</View>
         <PublicFooter />
       </View>

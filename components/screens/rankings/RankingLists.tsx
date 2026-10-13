@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
-import { UserAvatar } from '@/components/ui/UserAvatar';
+// A bar's ringed monogram, or its logo (disc-list).
+import { BarMark } from '@/components/screens/home/BarMark';
 import { space } from '@/constants/tokens';
 import type { AreaRanking, RankEntry } from '@/hooks/useRankings';
 import { useBarVersions } from '@/hooks/useSpecMatches';
@@ -37,7 +38,7 @@ export function RankRow({ position, title, detail, score, scoreDetail, logo, dri
       <DsText variant="title" tone="accent" style={styles.position}>
         {position}
       </DsText>
-      {drinkId ? <DrinkImage itemId={drinkId} glass={null} accessibilityLabel="" radius="control" style={styles.drink} thumb /> : logo !== undefined ? <UserAvatar uri={logo} name={title} size={LOGO} /> : null}
+      {drinkId ? <DrinkImage itemId={drinkId} glass={null} accessibilityLabel="" radius="control" style={styles.drink} thumb /> : logo !== undefined ? <BarMark logoUrl={logo} name={title} size={LOGO} /> : null}
       <View style={styles.flex}>
         <Headline numberOfLines={1}>{title}</Headline>
         <Caption tone="muted" numberOfLines={1}>
@@ -145,7 +146,7 @@ export function EarlyList({ rows }: { rows: DiscoverRow[] }) {
           onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
           style={[styles.row, { borderBottomColor: ds.c.line }]}
         >
-          <UserAvatar uri={r.avatar_url} name={r.display_name} size={LOGO} />
+          <BarMark logoUrl={r.avatar_url} name={r.display_name} size={LOGO} />
           <View style={styles.flex}>
             <Headline numberOfLines={1}>{r.display_name}</Headline>
             <Caption tone="muted" numberOfLines={1}>

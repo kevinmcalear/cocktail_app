@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Caption, GlassButton, Sheet, SheetScrollView, Title, useSheetClose } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { fontFamilies, space } from '@/constants/tokens';
 
 interface Props {
   visible: boolean;
@@ -29,7 +29,7 @@ function Body({ eyebrow, title, children }: Props) {
     <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
       <View style={styles.head}>
         <View style={styles.flex}>
-          <Caption tone="muted">{eyebrow.toUpperCase()}</Caption>
+          <Caption tone="muted" style={styles.eyebrow}>{eyebrow.toUpperCase()}</Caption>
           <Title role="heading">{title}</Title>
         </View>
         <GlassButton accessibilityLabel="Close" icon="xmark" onPress={close} />
@@ -43,4 +43,5 @@ const styles = StyleSheet.create({
   body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.lg },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
 });

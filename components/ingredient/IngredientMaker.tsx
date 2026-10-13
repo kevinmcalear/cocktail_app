@@ -10,9 +10,10 @@ import { useCanEditItem } from '@/hooks/useViewAs';
 
 /**
  * "Made by" on a bottle's page: its maker's page, and for whoever can edit the
- * bottle, a way to set or change it.
+ * bottle, a way to set or change it. `editOnly`: the page shows the maker
+ * already (its Maker tile), so only the editor's buttons.
  */
-export function IngredientMaker({ item }: { item: { id: string; bar_id: string | null } }) {
+export function IngredientMaker({ item, editOnly }: { item: { id: string; bar_id: string | null }; editOnly?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const { data: maker } = useItemMaker(item.id);
@@ -20,10 +21,10 @@ export function IngredientMaker({ item }: { item: { id: string; bar_id: string |
   const save = useSetItemMaker(item.id);
   const [picking, setPicking] = useState(false);
 
-  if (!maker && !canEdit) return null;
+  if (!canEdit && (!maker || editOnly)) return null;
   return (
     <View style={styles.stack}>
-      {maker ? (
+      {maker && !editOnly ? (
         <PressableScale
           role="link"
           accessibilityLabel={`Made by ${maker.display_name}, open`}

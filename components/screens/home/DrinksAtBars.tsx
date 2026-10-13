@@ -60,7 +60,7 @@ export const BarAway = createContext<(barId: string) => string | null>(() => nul
  * the caption and puts why it matched ("Riff on a Negroni") on its own line,
  * the word lit (nav-search-everywhere).
  */
-export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false, everywhere = false }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean; everywhere?: boolean }) {
+export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false, everywhere = false, onPress }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean; everywhere?: boolean; onPress?: () => void }) {
   const bar = d.bar;
   const version = useVersionLabel(d.id);
   const near = useContext(BarAway)(d.barId);
@@ -75,6 +75,7 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atB
     <DrinkRow
       name={d.name}
       href={itemHref('Cocktail', d.id)}
+      onPress={onPress}
       itemId={d.id}
       imageUrl={d.imageUrl}
       glass={null}
@@ -107,7 +108,7 @@ export function AlsoMentions({ drinks, index, search }: { drinks: readonly Disco
  * the server's next page (`more`). Phones' Discover sheet virtualizes its
  * rows instead (DiscoverMapPane, with DrinkAtBarRow).
  */
-export function DrinkAtBarList({ drinks, limit = 8, scores, more }: { drinks: DiscoverDrink[]; limit?: number; scores?: DrinkScores; more?: MoreDrinks }) {
+export function DrinkAtBarList({ drinks, limit = 8, scores, more, query, onOpen }: { drinks: DiscoverDrink[]; limit?: number; scores?: DrinkScores; more?: MoreDrinks; /** The searched words, lit in each row. */ query?: string; /** A row opens here instead of its page (wide Discover's search). */ onOpen?: (d: DiscoverDrink) => void }) {
   const [count, setCount] = useState(limit);
   const shown = drinks.slice(0, count);
   const total = Math.max(more?.total ?? drinks.length, drinks.length);
@@ -120,7 +121,7 @@ export function DrinkAtBarList({ drinks, limit = 8, scores, more }: { drinks: Di
   return (
     <View role="list">
       {shown.map((d) => (
-        <DrinkAtBarRow key={d.id} drink={d} scores={scores} />
+        <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={query} onPress={onOpen ? () => onOpen(d) : undefined} />
       ))}
       {next > 0 ? (
         <View style={styles.more}>

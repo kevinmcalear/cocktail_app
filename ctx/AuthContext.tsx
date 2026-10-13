@@ -1,4 +1,5 @@
 import { track } from '@/lib/analytics';
+import { isFirstSignIn, type AuthProblem } from '@/lib/authCode';
 import { getAuthRedirectTo } from '@/lib/authRedirect';
 import { forgetStoredSession, readStoredUser, supabase } from '@/lib/supabase';
 import { isAuthRetryableFetchError, Session, User } from '@supabase/supabase-js';
@@ -24,20 +25,20 @@ type AuthContextType = {
    * offline banner instead of signing out and forgetting them.
    */
   loading: boolean;
-  passwordRecovery: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string) => Promise<{ session: Session | null; error: Error | null }>;
+  /**
+   * Emails a sign-in code (and a link that works on that device). The same
+   * call signs a new person up: there's no separate sign-up and no password.
+   */
+  sendCode: (email: string) => Promise<{ error: AuthProblem | null }>;
+  /** Signs in with the code from that email. */
+  verifyCode: (email: string, code: string) => Promise<{ error: AuthProblem | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: Error | null }>;
-  resendConfirmation: (email: string) => Promise<{ error: Error | null }>;
-  updatePassword: (password: string) => Promise<{ error: Error | null }>;
   updateProfile: (data: {
     firstName?: string;
     lastName?: string;
     fullName?: string;
     /** False on a new account until setup finishes. Existing accounts leave it unset. */
     onboarded?: boolean;
-    password?: string;
     avatarUrl?: string;
   }) => Promise<{ error: Error | null }>;
 };
@@ -46,13 +47,9 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   loading: true,
-  passwordRecovery: false,
-  signIn: async () => ({ error: null }),
-  signUp: async () => ({ session: null, error: null }),
+  sendCode: async () => ({ error: null }),
+  verifyCode: async () => ({ error: null }),
   signOut: async () => {},
-  resetPassword: async () => ({ error: null }),
-  resendConfirmation: async () => ({ error: null }),
-  updatePassword: async () => ({ error: null }),
   updateProfile: async () => ({ error: null }),
 });
 
@@ -80,11 +77,14 @@ function asError(error: { message: string } | null): Error | null {
   return error ? new Error(error.message) : null;
 }
 
+function asProblem(error: { message: string; code?: string } | null): AuthProblem | null {
+  return error ? { message: error.message, code: error.code } : null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [passwordRecovery, setPasswordRecovery] = useState(false);
   /** Signed out on this device only (offline), until someone signs in. */
   const forgotLocally = useRef(false);
 
@@ -151,8 +151,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (event === 'SIGNED_IN') forgotLocally.current = false;
-      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true);
-      if (event === 'SIGNED_OUT') setPasswordRecovery(false);
       settle(next);
     });
 
@@ -162,23 +160,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: asError(error) };
+  const sendCode = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: getAuthRedirectTo('/auth/callback'),
+        // Only kept when this makes a new account: setup runs once, after the age check.
+        data: { onboarded: false },
+      },
+    });
+    return { error: asProblem(error) };
   };
 
-  const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: getAuthRedirectTo('/auth/callback'), data: { onboarded: false } },
-    });
-    if (!error) track('sign_up');
-    return { session: data.session, error: asError(error) };
+  const verifyCode = async (email: string, code: string) => {
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    if (!error && data.user && isFirstSignIn(data.user)) track('sign_up');
+    return { error: asProblem(error) };
   };
 
   const signOut = async () => {
-    setPasswordRecovery(false);
     // Offline, auth-js can't sign out (it calls the server first, after
     // refreshing an expired token) and keeps the saved session. Bar iPads are
     // shared, so forget it here and sign out now. ponytail: that refresh token
@@ -195,52 +196,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   };
 
-  const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: getAuthRedirectTo('/auth/reset-password'),
-    });
-    return { error: asError(error) };
-  };
-
-  const resendConfirmation = async (email: string) => {
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-      options: { emailRedirectTo: getAuthRedirectTo('/auth/callback') },
-    });
-    return { error: asError(error) };
-  };
-
-  const updatePassword = async (password: string) => {
-    const { error } = await supabase.auth.updateUser({ password });
-    if (!error) setPasswordRecovery(false);
-    return { error: asError(error) };
-  };
-
   const updateProfile = async ({
     firstName,
     lastName,
     fullName,
     onboarded,
-    password,
     avatarUrl,
   }: {
     firstName?: string;
     lastName?: string;
     fullName?: string;
     onboarded?: boolean;
-    password?: string;
     avatarUrl?: string;
   }) => {
-    const updates: { data: Record<string, string | boolean>; password?: string } = { data: {} };
+    const updates: { data: Record<string, string | boolean> } = { data: {} };
     if (firstName) updates.data.first_name = firstName;
     if (lastName !== undefined) updates.data.last_name = lastName;
     if (fullName) updates.data.full_name = fullName;
     if (onboarded !== undefined) updates.data.onboarded = onboarded;
     if (avatarUrl) updates.data.avatar_url = avatarUrl;
-    if (password) updates.password = password;
 
-    if (Object.keys(updates.data).length === 0 && !updates.password) {
+    if (Object.keys(updates.data).length === 0) {
       return { error: null };
     }
 
@@ -266,13 +242,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         session,
         user,
         loading,
-        passwordRecovery,
-        signIn,
-        signUp,
+        sendCode,
+        verifyCode,
         signOut,
-        resetPassword,
-        resendConfirmation,
-        updatePassword,
         updateProfile,
       }}
     >

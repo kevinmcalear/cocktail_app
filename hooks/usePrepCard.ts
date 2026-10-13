@@ -82,6 +82,9 @@ export function useSaveItemPrep(itemId: string) {
 export interface UsedInPrep {
   id: string;
   name: string;
+  /** How much of this one a batch of it takes (null when masked or to taste). */
+  amount: number | string | null;
+  unit: string | null;
 }
 
 export interface PrepUsedIn {
@@ -108,7 +111,7 @@ export function usePrepUsedIn(itemId: string | null | undefined) {
       let garnish = false;
       const pours: PrepUsedIn['pours'] = {};
       for (const row of (data ?? []) as unknown as { amount: number | string | null; unit: string | null; parent: { id: string; name: string; item_type: string } | null }[]) {
-        if (row.parent?.item_type === 'ingredient') seen.set(row.parent.id, { id: row.parent.id, name: row.parent.name });
+        if (row.parent?.item_type === 'ingredient') seen.set(row.parent.id, { id: row.parent.id, name: row.parent.name, amount: row.amount, unit: row.unit });
         else if (row.parent) pours[row.parent.id] = { amount: row.amount, unit: row.unit };
         if (isGarnishUnit(row.unit)) garnish = true;
       }
@@ -274,7 +277,8 @@ export function usePrepRatio(itemId: string | null | undefined) {
     queryKey: ['prep-ratio', itemId],
     enabled: !!itemId,
     queryFn: async (): Promise<string | null> => {
-      const { data, error } = await supabase.from('recipes').select('id, amount, unit').eq('recipe_item_id', itemId!).order('sort_order');
+      // The presentation view: the raw recipes table is for the prep's editors only (RLS), so a riff's page showed no ratio.
+      const { data, error } = await supabase.from('app_recipe_presentation').select('id, amount, unit').eq('recipe_item_id', itemId!).order('sort_order');
       if (error) throw error;
       const lines = ((data ?? []) as { id: string; amount: number | null; unit: string | null }[]).map((r) => ({ ...r, name: '' }));
       return partsRatio(prepParts(lines));

@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Display, Headline, PressableScale, Surface, Tag, Title, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Button, Display, Headline, PressableScale, Surface, Tag, useBreakpoint, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
@@ -58,11 +58,12 @@ function PublicActions({ id, name, barId, picture, releaseId }: { id: string; na
   const [ranking, setRanking] = useState(false);
   return (
     <View style={styles.actions}>
-      <CollectButton target={{ kind: 'drink', itemId: id, releaseId }} name={name} quiet labels={['To make', 'To make']} />
+      <CollectButton target={{ kind: 'drink', itemId: id, releaseId }} name={name} quiet labels={['To make', 'To make']} style={styles.action} />
       <Button
         label="Had it? Rank it"
         icon="star"
         variant="secondary"
+        style={styles.action}
         accessibilityHint={`Ranks ${name} against others you've had`}
         onPress={() => (signedIn ? ageGate.gate(() => setRanking(true)) : router.push('/auth/login'))}
       />
@@ -105,6 +106,8 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
   const credit = createdByLine(more?.creator ?? null, barName ? { name: barName, place: venue?.locality ?? venue?.city } : null, drink.creditStatus);
   const shared = drink.publishMode === 'spec' && data.recipes.length > 0;
   const classic = !drink.barId && /^(modern )?classic$/i.test(drink.origin?.trim() ?? '');
+  // Signed out with a spec behind Sign in, the spec card holds the page's one gold button.
+  const specTeaser = !signedIn && (shared || classic);
 
   const pictureColumn = (
     <View style={[styles.pictureColumn, wide && styles.pictureWide]}>
@@ -124,7 +127,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
           barName,
         )}
       </Kicker>
-      {wide ? <Display>{drink.name}</Display> : <Title>{drink.name}</Title>}
+      <Display>{drink.name}</Display>
       {credit ? <CreditCard line={credit} who={more?.creator ?? venue} /> : null}
       {drink.description ? (
         <Body tone="muted" style={styles.description}>
@@ -144,7 +147,7 @@ export function PublishedDrinkScreen({ id, releaseId }: { id: string; releaseId?
   );
 
   return (
-    <PublicPage title={drink.name}>
+    <PublicPage title={drink.name} quietCta={specTeaser}>
       <View style={wide ? styles.columns : styles.stack}>
         {pictureColumn}
         {main}
@@ -199,6 +202,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: space.sm,
   },
+  // Both fit side by side under the 320 picture (ppl-pub-drink-desktop).
+  action: { paddingHorizontal: space.lg },
   columns: {
     flexDirection: 'row',
     flexWrap: 'wrap',

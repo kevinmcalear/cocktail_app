@@ -25,13 +25,18 @@ const GLYPHS = {
   eightball: ['M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0', 'M7.8 11a4.2 4.2 0 1 0 8.4 0a4.2 4.2 0 1 0-8.4 0', 'M10.8 9.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0', 'M10.5 12.4a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0'],
 } as const;
 
-export type LineGlyphName = keyof typeof GLYPHS | 'dot';
+export type LineGlyphName = keyof typeof GLYPHS | 'dot' | 'grip';
+
+/** The grip's six dots, two across, three down (the menu builder's rows). */
+const GRIP_DOTS = [6, 12, 18].flatMap((y) => [9, 15].map((x) => ({ x, y })));
 
 export function LineGlyph({ name, size, color }: { name: LineGlyphName; size: number; color: ColorValue }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
       {name === 'dot' ? (
         <Circle cx={12} cy={12} r={6} fill={color} stroke="none" />
+      ) : name === 'grip' ? (
+        GRIP_DOTS.map((p) => <Circle key={`${p.x} ${p.y}`} cx={p.x} cy={p.y} r={1.6} fill={color} stroke="none" />)
       ) : (
         <>
           {GLYPHS[name].map((d) => (

@@ -7,26 +7,29 @@ import type { PlanDraft } from '@/lib/menus';
 
 import { Choice } from './MenuSheet';
 
+/** The pencil lines standing in for drinks on the draft sheet, as wide as drawn (of 122). */
+const LINES = [90, 70, 84, 60, 78];
+
 /**
- * The menu being made, as a small tilted paper menu: its name in the display
- * face, a short rule, lines standing in for drinks, and under it what it
- * starts from (and when) on the right.
+ * The menu being made, as a tilted portrait sheet of paper in a cream panel:
+ * its name in the display face, a short rule, pencil lines standing in for
+ * drinks, and in the panel's corner what it starts from (and when) in mono.
  */
 export function DraftCard({ name, lines }: { name: string; lines: (string | null)[] }) {
   const ds = useDs();
   const shown = lines.filter((l): l is string => !!l);
   return (
-    <View style={styles.wrap}>
-      <View style={[styles.card, { backgroundColor: ds.c.paper, borderColor: ds.c.line }]}>
-        <DsText variant="headline" align="center" numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+    <View style={[styles.panel, { backgroundColor: ds.c.paper }]}>
+      <View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.sketchInk }]}>
+        <DsText variant="headline" align="center" numberOfLines={2} color={ds.c.ink} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
           {name}
         </DsText>
-        <View style={[styles.rule, { backgroundColor: ds.c.lineStrong }]} />
-        {[0.8, 0.6, 0.7].map((w, i) => (
-          <View key={i} style={[styles.line, { width: `${w * 100}%`, backgroundColor: withAlpha(ds.c.ink, 0.12) }]} />
+        <View style={[styles.rule, { backgroundColor: ds.c.sketchInk }]} />
+        {LINES.map((w, i) => (
+          <View key={i} style={[styles.line, { width: w, backgroundColor: withAlpha(ds.c.sketchInk, 0.35) }]} />
         ))}
       </View>
-      <Caption tone="muted" align="right">
+      <Caption color={ds.c.sketchInk} style={[styles.mono, styles.panelCaption]}>
         {shown.length ? shown.join(' · ') : 'Fills in as you go'}
       </Caption>
     </View>
@@ -71,10 +74,11 @@ export function VenueDatesFields({ value, onChange, min }: { value: PlanDraft; o
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.xs, alignSelf: 'center', width: 220 },
-  card: { borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth, paddingVertical: space.lg, paddingHorizontal: space.lg, alignItems: 'center', gap: space.xs, transform: [{ rotate: '-2deg' }] },
-  rule: { width: 32, height: 1, marginVertical: space.xs },
-  line: { height: 6, borderRadius: radius.pill },
+  panel: { alignSelf: 'stretch', alignItems: 'center', gap: space.sm, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
+  card: { width: 150, height: 170, borderRadius: radius.mark, borderWidth: 2, paddingVertical: space.lg, paddingHorizontal: space.md + 2, alignItems: 'center', gap: space.sm, marginTop: space.xs, transform: [{ rotate: '-2deg' }] },
+  panelCaption: { alignSelf: 'stretch' },
+  rule: { width: 28, height: 1 },
+  line: { height: 2 },
   list: { gap: space.sm },
   track: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   bar: { flex: 1, height: 4, borderRadius: radius.pill, overflow: 'hidden' },
