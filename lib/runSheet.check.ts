@@ -3,8 +3,9 @@
 // serves; gin 13.2 L = 19 × 700 ml. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
+import { MAX_SERVES } from './batch';
 import type { HouseMade, SpecLine } from './prep';
-import { buildRunSheet, clampServes, pourSuggestions, RUN_SHEET_MAX_SERVES, type ItemFacts, type RunDrink, type RunSheetInput, type RunSwap } from './runSheet';
+import { buildRunSheet, clampServes, pourSuggestions, type ItemFacts, type RunDrink, type RunSheetInput, type RunSwap } from './runSheet';
 
 const line = (ingredientId: string, name: string, amount: number, unit = 'ml'): SpecLine => ({ ingredientId, name, amount, unit });
 const rocks = { id: 'rocks', name: 'Rocks glass' };
@@ -134,7 +135,7 @@ assert.deepEqual(quiet.groups.map((g) => [g.title, g.needs.map((n) => [n.name, n
 
 // Serves: whole numbers from 1 to 6,969.
 assert.equal(clampServes('120'), 120);
-assert.equal(clampServes('7,000'), RUN_SHEET_MAX_SERVES);
+assert.equal(clampServes('7,000'), MAX_SERVES);
 assert.equal(clampServes(0), null);
 assert.equal(clampServes(''), null);
 assert.equal(clampServes(2.7), 2);

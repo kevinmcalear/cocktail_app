@@ -8,21 +8,18 @@
  */
 
 import { barSection, isMixer } from './barSections';
-import { isGarnishUnit } from './batch';
+import { isGarnishUnit, MAX_SERVES } from './batch';
 import { keepsFor } from './batchPrep';
 import { formatIce, iceForEvent } from './glass';
 import { buildPrepList, type HouseMade, type Purchasing, type SpecLine } from './prep';
 import { formatQuantity, scale, toQuantity, type Quantity } from './quantity';
 import { lineHits } from './swapBottle';
 
-// ponytail: the same number as lib/batch.ts MAX_SERVES once #583 lands; use that then.
-export const RUN_SHEET_MAX_SERVES = 6969;
-
-/** A typed serves count, as stored: a whole number from 1 to 6,969, or null for none. */
+/** A typed serves count, as stored: a whole number from 1 to MAX_SERVES (lib/batch.ts, 6,969), or null for none. */
 export function clampServes(value: number | string | null | undefined): number | null {
   const n = typeof value === 'string' ? Number(value.replace(/[^\d.]/g, '')) : value;
   if (n == null || !Number.isFinite(n) || n < 1) return null;
-  return Math.min(RUN_SHEET_MAX_SERVES, Math.floor(n));
+  return Math.min(MAX_SERVES, Math.floor(n));
 }
 
 export type GroupKey = 'spirits' | 'fresh' | 'preps' | 'mixers' | 'garnish' | 'beerWine' | 'glassware' | 'ice';

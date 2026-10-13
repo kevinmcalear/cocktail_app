@@ -6,7 +6,7 @@ import { UnitPicker } from '@/components/recipe/UnitPicker';
 import { useDragMergeDwell } from '@/hooks/useDragMergeDwell';
 import { calculateDraftProgress } from '@/lib/draftProgress';
 import { isDefaultBatchName } from '@/lib/mergeRecipeItems';
-import { capitalize } from '@/lib/stringUtils';
+import { capitalizeFirst } from '@/lib/stringUtils';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import React, { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
@@ -182,7 +182,7 @@ function EditableRecipeName({
 
     const commitName = () => {
         setEditing(false);
-        const next = capitalize(item.name.trim());
+        const next = capitalizeFirst(item.name);
         if (!next) {
             onUpdateItem(index, { name: committedNameRef.current });
             return;
@@ -224,7 +224,7 @@ function EditableRecipeName({
         <XStack gap="$2" alignItems="center" flex={1}>
             <TouchableOpacity onPress={() => setEditing(true)} activeOpacity={0.7} style={{ flexShrink: 1, minWidth: 0 }}>
                 <Text numberOfLines={1} ellipsizeMode="tail" style={nameStyle}>
-                    {capitalize(item.name)}
+                    {item.name}
                 </Text>
             </TouchableOpacity>
             {draftBadge}

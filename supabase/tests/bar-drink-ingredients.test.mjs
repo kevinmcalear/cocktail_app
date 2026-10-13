@@ -68,9 +68,9 @@ describe('bar drink ingredients', () => {
     const { rows } = await db.query(DRINK);
     assert.equal(rows.length, 1, 'Café La Trova has one Toasted Coconut Negroni');
     assert.deepEqual(await specOf(rows[0].id), [
-      { name: 'Toasted Coconut Rum', generic: 'Rum', amount: null, prep: null },
+      { name: 'Toasted coconut rum', generic: 'Rum', amount: null, prep: null },
       { name: 'Campari', generic: null, amount: null, prep: null },
-      { name: 'Sweet Vermouth', generic: null, amount: null, prep: null },
+      { name: 'Sweet vermouth', generic: null, amount: null, prep: null },
     ]);
   });
 
