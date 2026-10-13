@@ -2,9 +2,9 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, BrandProvider, Button, Caption, DsText, GlassButton, PressableScale, TextLink, useDs } from '@/components/ds';
+import { Body, BrandProvider, Button, Caption, DsText, GlassButton, PressableScale, TextLink, useDisplayFaces, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useBarPlace, useDeleteEvent, useEventDraft, useWeekEvent, useWeekEventBrand } from '@/hooks/useWeek';
@@ -160,12 +160,13 @@ function EventMarks({ event }: { event: WeekItem }) {
     event.eventKind === 'takeover' && event.guestName ? { name: event.guestName, color: event.guestColor ?? brand?.guest?.accent, face: brand?.guest?.face } : null,
     { name: event.barName ?? event.name, color: event.barColor ?? brand?.host.accent, face: brand?.host.face },
   ].filter((m): m is Mark => !!m);
+  const family = useDisplayFaces(marks.map((m) => (m.face ? faceFromDb(m.face) : null)));
   return (
     <View aria-hidden style={styles.marks}>
       {marks.map((m, i) => {
         const color = isHexColor(m.color) ? m.color : null;
         // Each bar's letter in its own display face, as the board draws P and L.
-        const face = displayFaces[m.face ? faceFromDb(m.face) : ds.displayFace].italic;
+        const face = family(m.face ? faceFromDb(m.face) : ds.displayFace, 'italic');
         return (
           <View key={m.name} style={[styles.mark, { backgroundColor: color ?? ds.c.raised }, i ? [styles.over, { borderColor: ds.c.ground }] : null]}>
             <DsText variant="title" color={color ? ds.c.ground : ds.c.ink} style={{ fontFamily: face }}>

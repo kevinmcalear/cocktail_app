@@ -16,8 +16,12 @@ import {
   Inter_700Bold,
   InstrumentSerif_400Regular,
   InstrumentSerif_400Regular_Italic,
+  JosefinSans_600SemiBold,
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_400Regular_Italic,
+  TenorSans_400Regular,
 } from './fontFiles';
-import { fontFamilies } from '@/constants/tokens';
+import { fontFamilies, type DisplayFace } from '@/constants/tokens';
 
 // On web, show fallback text at once and swap the face in when it arrives,
 // rather than hiding text until it does.
@@ -54,3 +58,14 @@ export const LATER_FONTS = {
 };
 
 export const APP_FONTS = { ...FIRST_PAINT_FONTS, ...LATER_FONTS };
+
+/**
+ * Display faces fetched only when a venue on screen uses one (or the brand
+ * picker shows them), so nobody else downloads them. components/ds/faces.ts
+ * loads them.
+ */
+export const LAZY_FACE_FONTS: Partial<Record<DisplayFace, Record<string, FontSource>>> = {
+  playfair: { [fontFamilies.playfair]: swap(PlayfairDisplay_400Regular), [fontFamilies.playfairItalic]: swap(PlayfairDisplay_400Regular_Italic) },
+  josefin: { [fontFamilies.josefin]: swap(JosefinSans_600SemiBold) },
+  tenor: { [fontFamilies.tenor]: swap(TenorSans_400Regular) },
+};

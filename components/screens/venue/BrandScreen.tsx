@@ -3,16 +3,16 @@ import { useState, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, useBreakpoint, useDs, useGutter, useLoadedFace } from '@/components/ds';
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { SectionHeading, UnsavedBar } from '@/components/screens/settings/SettingsParts';
 import { WebHead } from '@/components/WebHead';
-import { DEFAULT_ACCENT, space, type DisplayFace } from '@/constants/tokens';
+import { DEFAULT_ACCENT, displayFaces, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useViewAs } from '@/hooks/useViewAs';
 import { pickBrandImage, removeLogoBackground, useSaveVenueBrand, useVenueBrand, type VenueBrandRow } from '@/hooks/useVenueBrand';
-import { brandProblems, faceFromDb, faceToDb, normalizeHex, usableGroundTint } from '@/lib/brand';
+import { brandProblems, faceFromDb, faceToSave, normalizeHex, usableGroundTint } from '@/lib/brand';
 import { ACCENT_INK, type AccentInk } from '@/lib/brandColours';
 import { accentFill } from '@/lib/color';
 import { confirmDiscardChanges } from '@/lib/dialogs';
@@ -35,7 +35,7 @@ function draftFrom(row: VenueBrandRow): BrandDraftState {
     accent: row.primary_color ?? '',
     custom: false,
     ink: row.accent_text,
-    face: faceFromDb(row.display_face) as DisplayFace,
+    face: faceFromDb(row.display_face),
     tint: row.ground_tint ?? '',
     shortName: row.short_name ?? '',
     iconBackground: row.icon_background,
@@ -67,7 +67,7 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     logo_url: draft.logoUrl,
     icon_url: draft.iconUrl,
     primary_color: normalizeHex(draft.accent),
-    display_face: faceToDb(draft.face),
+    display_face: faceToSave(draft.face, row.display_face),
     ground_tint: normalizeHex(draft.tint),
     short_name: draft.shortName.trim() || null,
     accent_text: draft.ink,
@@ -105,6 +105,20 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     }
   };
 
+  const shownFace = useLoadedFace(draft.face);
+  // Saved, except a face the database doesn't have yet: the venue keeps its own,
+  // the picker goes back to it, and setup stays on this step so the note is read.
+  const saved = (done: string, then?: () => void) => (r: { faceKept: boolean }) => {
+    if (!r.faceKept) {
+      if (done) setMessage(done);
+      then?.();
+      return;
+    }
+    const kept = faceFromDb(row.display_face);
+    set('face')(kept);
+    setMessage(`${displayFaces[draft.face].label} isn’t available for venues yet, so ${row.name} keeps ${displayFaces[kept].label}. Everything else is saved.`);
+  };
+
   const accent = normalizeHex(draft.accent);
   const look = {
     id: row.id,
@@ -114,7 +128,8 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     shortName: draft.shortName,
     accent,
     accentText: draft.ink,
-    displayFace: draft.face,
+    // A face that loads on demand previews in Instrument Serif until its file is in.
+    displayFace: shownFace,
     groundTint: usableGroundTint(normalizeHex(draft.tint)),
     iconBackground: draft.iconBackground,
   };
@@ -154,7 +169,7 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
 
   if (setup) {
     const ok = Object.keys(problems).length === 0 && !busy;
-    const saveThen = (then: () => void) => (changed ? save.mutate(patch, { onSuccess: then, onError: (e) => setMessage(e.message) }) : then());
+    const saveThen = (then: () => void) => (changed ? save.mutate(patch, { onSuccess: saved('', then), onError: (e) => setMessage(e.message) }) : then());
     return (
       <SetupPage footer={setup.footer({ save: saveThen, saving: save.isPending, ok })}>
         {wide ? (
@@ -199,7 +214,7 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
             setSuggested([]);
             setMessage(null);
           }}
-          onSave={() => save.mutate(patch, { onSuccess: () => setMessage('Saved. Everyone at the venue sees it next time the app loads.'), onError: (e) => setMessage(e.message) })}
+          onSave={() => save.mutate(patch, { onSuccess: saved('Saved. Everyone at the venue sees it next time the app loads.'), onError: (e) => setMessage(e.message) })}
         />
       ) : null}
     </View>

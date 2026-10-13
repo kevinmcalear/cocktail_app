@@ -21,6 +21,7 @@ export { Tag, type TagTone } from './Tag';
 export { TimeField } from './TimeField';
 export { Body, Caption, Display, DsText, Headline, Spec, Title, type DsTextProps } from './Text';
 export { BackbarTheme, BrandProvider, useDs, type Ds } from './theme';
+export { useDisplayFaces, useLoadedFace } from './faces';
 export { IngredientDrawing } from './IngredientDrawing';
 export { EquipmentDrawing } from './EquipmentDrawing';
 export { sheetFrame, sheetIsDialog } from './sheetFrame';

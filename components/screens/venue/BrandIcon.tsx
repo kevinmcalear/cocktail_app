@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
-import { backbar, DEFAULT_ACCENT, displayFaces, GROUND_TINTS, radius, space, type DisplayFace } from '@/constants/tokens';
+import { Caption, DsText, PressableScale, useDisplayFaces, useDs } from '@/components/ds';
+import { backbar, DEFAULT_ACCENT, GROUND_TINTS, radius, space, type DisplayFace } from '@/constants/tokens';
 import { ACCENT_INK, colourName } from '@/lib/brandColours';
 
 export type IconBackground = 'accent' | 'ground' | 'cream';
@@ -37,12 +37,13 @@ export function IconTile({ bg, look, size = TILE }: { bg: IconBackground; look: 
   const fill = fillFor(bg, look);
   // The initial in the accent, except on the accent itself, where it's cream.
   const ink = bg === 'accent' ? ACCENT_INK.cream : (look.accent ?? DEFAULT_ACCENT);
+  const family = useDisplayFaces([look.logoUrl ? null : look.displayFace]);
   return (
     <View style={[styles.tile, { width: size, height: size, borderRadius: size / 4, backgroundColor: fill }]} aria-hidden>
       {look.logoUrl ? (
         <Image source={{ uri: look.logoUrl }} style={styles.logo} contentFit="contain" accessibilityIgnoresInvertColors />
       ) : (
-        <DsText variant="headline" color={ink} style={{ fontFamily: displayFaces[look.displayFace].italic, fontSize: size * 0.6, lineHeight: size * 0.75 }}>
+        <DsText variant="headline" color={ink} style={{ fontFamily: family(look.displayFace, 'italic'), fontSize: size * 0.6, lineHeight: size * 0.75 }}>
           {look.name.charAt(0).toUpperCase()}
         </DsText>
       )}
