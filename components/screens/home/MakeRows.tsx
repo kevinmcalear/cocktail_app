@@ -1,14 +1,16 @@
+import { useRouter } from 'expo-router';
 import { memo } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Button, Caption, Headline, IngredientThumb, MatchText, RowScore, scoreWords, Surface } from '@/components/ds';
+import { Body, Button, Caption, DrinkImage, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Surface, TextLink, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
-import { space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
 import { groupLine, needsLine, pairName, sourceCaption, usesLine } from '@/lib/myBarText';
 import { servedCaption } from '@/lib/servedAt';
 
+import { BarMark } from './BarMark';
 import { CheckList } from './CheckList';
 
 /** Drinks under each bottle before "and N more". */
@@ -45,7 +47,8 @@ export const MakeDrink = memo(function MakeDrink({ drink, text, ready, needs }: 
   const served = drink.served ? servedCaption(drink.served.count, drink.served.bars) : null;
   const caption = needs ? undefined : [sourceCaption(drink.from?.name, served), drink.variation, text.noteFor(drink.id)].filter(Boolean).join(' · ');
   const bar = needs ? undefined : (drink.served?.bars[0] ?? drink.from);
-  const logo = bar ? { uri: bar.logo, name: bar.name } : undefined;
+  // The bar's monogram, one serif letter outlined in its colour, as the canvas draws it (its logo when it has one).
+  const mark = bar ? <BarMark name={bar.name} logoUrl={bar.logo} size={20} letter /> : undefined;
   const uses = text.usesFor(drink);
   const note = needs ? needsLine(needs.map((n) => n.name)) : ready ? undefined : usesLine(uses);
   const score = text.scoreFor(drink.id);
@@ -58,7 +61,8 @@ export const MakeDrink = memo(function MakeDrink({ drink, text, ready, needs }: 
       imageUrl={drink.imageUrl}
       glass={drink.glass}
       caption={caption}
-      logo={logo}
+      mark={mark}
+      compact
       note={note}
       below={ready ? <CheckList names={uses} /> : null}
       query={text.query}
@@ -69,39 +73,88 @@ export const MakeDrink = memo(function MakeDrink({ drink, text, ready, needs }: 
   );
 });
 
+/**
+ * A drink as a card, two to a row in a desktop's What to make
+ * (home-mybar-desktop): the drawing, the name, where it's served, what of
+ * yours it uses on one line, and the score with % match.
+ */
+export const MakeCard = memo(function MakeCard({ drink, text, needs }: { drink: BarItem; text: MakeRowText; needs?: { name: string }[] }) {
+  const ds = useDs();
+  const router = useRouter();
+  const served = drink.served ? servedCaption(drink.served.count, drink.served.bars) : null;
+  const caption = needs ? needsLine(needs.map((n) => n.name)) : [sourceCaption(drink.from?.name, served), drink.variation, text.noteFor(drink.id)].filter(Boolean).join(' · ');
+  const uses = text.usesFor(drink);
+  const score = text.scoreFor(drink.id);
+  const match = text.matchFor(drink.id);
+  const has = uses.length ? `You have ${uses.join(', ')}` : null;
+  return (
+    <PressableScale
+      role="link"
+      accessibilityLabel={[drink.name, caption, has, scoreWords(score, match)].filter(Boolean).join('. ')}
+      onPress={() => router.push(itemHref('Cocktail', drink.id) as never)}
+      style={[styles.card, { backgroundColor: ds.c.surface }]}
+    >
+      <View style={styles.cardThumb}>
+        <DrinkImage thumb sketchDetail="thumb" source={drink.imageUrl} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" />
+      </View>
+      <View style={styles.groupText}>
+        <Body numberOfLines={2} style={styles.cardName}>
+          <MatchText text={drink.name} query={text.query} look="tint" />
+        </Body>
+        {caption ? (
+          <Caption tone="muted" numberOfLines={3}>
+            {caption}
+          </Caption>
+        ) : null}
+        {has ? <Caption numberOfLines={1}>{has}</Caption> : null}
+      </View>
+      <RowScore score={score} detail={match} />
+    </PressableScale>
+  );
+});
+
 /** The bottles to buy, what they open (three, then all on a tap), and Add. Memoized, as a list row. */
 export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, text, onAdd, style }: { id: string; group: AwayGroup; open: boolean; onOpen: (id: string) => void; text: MakeRowText; onAdd: (ingredientIds: string[]) => void; style?: StyleProp<ViewStyle> }) {
   const { bottles, drinks } = group;
   const name = pairName(bottles.map((b) => b.name));
   const mine = [...new Set(drinks.flatMap(text.bottlesFor))];
   const rest = drinks.length - PER_BOTTLE;
+  const ds = useDs();
   return (
     <Surface style={[styles.group, style]}>
-      <View style={styles.groupHead}>
+      <View style={[styles.groupHead, { borderBottomColor: ds.c.line }]}>
+        {/* A pair's two bottles overlap, so the name keeps the room (home-mybar-make-two). */}
         <View style={styles.thumbs}>
-          {bottles.map((b) => (
-            <IngredientThumb key={b.id} id={b.id} name={b.name} size={bottles.length > 1 ? 36 : 44} />
+          {bottles.map((b, i) => (
+            <View key={b.id} style={i ? [styles.overlap, { borderColor: ds.c.surface }] : null}>
+              <IngredientThumb id={b.id} name={b.name} size={bottles.length > 1 ? 40 : 48} />
+            </View>
           ))}
         </View>
         <View style={styles.groupText}>
-          <Headline>
+          <Body numberOfLines={3} style={styles.cardName}>
             <MatchText text={name} query={text.query} look="tint" />
-          </Headline>
+          </Body>
           <Caption tone="muted">{groupLine(drinks.length, mine)}</Caption>
         </View>
-        <Button label={bottles.length > 1 ? 'Add both' : 'Add'} variant="secondary" accessibilityLabel={`Add ${name} to your shelf`} onPress={() => onAdd(bottles.map((b) => b.id))} />
+        <Button label={bottles.length > 1 ? 'Add both' : 'Add'} variant="secondary" accessibilityLabel={`Add ${name} to your shelf`} onPress={() => onAdd(bottles.map((b) => b.id))} style={styles.add} />
       </View>
       {(open ? drinks : drinks.slice(0, PER_BOTTLE)).map((d) => (
         <MakeDrink key={d.id} drink={d} text={text} />
       ))}
-      {rest > 0 && !open ? <Button label={`and ${rest} more`} variant="ghost" onPress={() => onOpen(id)} /> : null}
+      {rest > 0 && !open ? <TextLink label={`and ${rest} more`} onPress={() => onOpen(id)} /> : null}
     </Surface>
   );
 });
 
 const styles = StyleSheet.create({
-  group: { gap: space.xs },
-  groupHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  thumbs: { flexDirection: 'row', gap: space.xs },
-  groupText: { flex: 1, gap: 2 },
+  group: { gap: 0 },
+  groupHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  thumbs: { flexDirection: 'row' },
+  overlap: { marginLeft: -space.lg, marginTop: space.sm, borderWidth: 2, borderRadius: radius.control + 2 },
+  groupText: { flex: 1, minWidth: 0, gap: 2 },
+  add: { paddingHorizontal: space.md + 2 },
+  card: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, paddingLeft: space.sm + 2, paddingRight: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
+  cardThumb: { width: 56 },
+  cardName: { fontFamily: fontFamilies.bodySemiBold },
 });

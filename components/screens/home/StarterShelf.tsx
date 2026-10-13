@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Display, FieldButton, Headline, IngredientDrawing, PressableScale, Surface, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Chip, Title, FieldButton, Headline, IngredientDrawing, PressableScale, Surface, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
@@ -62,7 +62,7 @@ export function StarterShelf({ pantry, onShelf, oneAway, ready, bottles, bottom,
       <ScrollView contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom + 96, maxWidth: 760, width: '100%' }} keyboardShouldPersistTaps="handled">
         <ScreenHeaderSpacer />
         <View style={styles.section}>
-          <Display>My Bar</Display>
+          <Title>My Bar</Title>
           <Body tone="muted">Tap what’s on your shelf. We’ll show only drinks you can actually make.</Body>
           <View style={[styles.find, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
             <PressableScale role="button" accessibilityLabel="Find a bottle" onPress={onSearch} style={styles.findMain}>

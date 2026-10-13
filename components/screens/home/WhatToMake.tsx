@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { Body, Button, Caption, Field, FieldButton, Headline, Segmented } from '@/components/ds';
+import { Body, Button, Caption, Field, FieldButton, Headline, Segmented, useBreakpoint } from '@/components/ds';
+import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
 import { space } from '@/constants/tokens';
 import { MAKE_PAGE, searchCaption, type Found, type MakeSearchRowData, type MakeTab } from '@/lib/myBarRows';
 import { footLine, tabIntro } from '@/lib/myBarText';
@@ -49,6 +50,8 @@ export function MakeHead({
   /** Under the tabs: the desktop's Make first strip on Ready. */
   children?: ReactNode;
 }) {
+  // A phone scrolls the tabs sideways; wider screens wrap them, as the desktop board draws.
+  const phone = useBreakpoint() === 'phone';
   const options: { value: MakeTab; label: string }[] = [{ value: 'ready', label: `Ready · ${counts.ready}` }];
   if (counts.first) options.push({ value: 'first', label: `Make first · ${counts.first}` });
   options.push(
@@ -69,6 +72,7 @@ export function MakeHead({
         value={search.query}
         onChangeText={search.onQuery}
         placeholder="A drink, or a bottle you want to use"
+        icon="magnifyingglass"
         inputMode="search"
         returnKeyType="search"
         autoCorrect={false}
@@ -81,9 +85,13 @@ export function MakeHead({
         </Caption>
       ) : (
         <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {phone ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
+            </ScrollView>
+          ) : (
             <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
-          </ScrollView>
+          )}
           {tabIntro(tab) ? <Caption tone="muted">{tabIntro(tab)}</Caption> : null}
           {children}
         </>
@@ -115,9 +123,9 @@ const SECTION: Record<Found, string> = { ready: 'Ready', one: 'One bottle away',
 export function MakeSearchRow({ row, onMore }: { row: MakeSearchRowData; onMore: (section: Found) => void }) {
   if (row.kind === 'make-heading') {
     return (
-      <Caption tone="muted" role="heading" style={styles.heading}>
-        {SECTION[row.section]}
-      </Caption>
+      <View role="heading" style={styles.heading}>
+        <Eyebrow>{SECTION[row.section]}</Eyebrow>
+      </View>
     );
   }
   if (row.kind === 'make-more') {

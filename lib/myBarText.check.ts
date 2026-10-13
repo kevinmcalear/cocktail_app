@@ -1,7 +1,7 @@
 // Checks for lib/myBarText.ts (My Bar's tile, row and card lines). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { barSubtitle, footLine, foundLine, groupLine, keepsFor, lastedLine, needsLine, pairName, prepMeta, shelfCountsLine, sourceCaption, prepUseBy, usesLine } from './myBarText';
+import { barSubtitle, footLine, foundLine, groupLine, keepsFor, lastedLine, needsLine, pairName, prepMeta, shelfCountsLine, sourceCaption, prepUseBy, tickNames, usesLine } from './myBarText';
 
 assert.equal(barSubtitle(7, 2), '7 drinks ready · 2 preps you can make now');
 assert.equal(barSubtitle(1, 0), '1 drink ready');
@@ -58,3 +58,16 @@ assert.equal(foundLine({ section: 'fridge', kind: null, origin: null }), 'Fridge
 assert.equal(foundLine({ section: 'preps', kind: 'Syrup', origin: null }), 'House-made');
 
 console.log('myBarText checks passed');
+
+// One name per thing: the bottle, not also its kind; lemon, not also lemon juice.
+assert.deepEqual(
+  tickNames([
+    { name: 'Campari', generic: false, kind: 'Bitter Liqueur' },
+    { name: 'Cocchi Storico Vermouth di Torino', generic: false, kind: 'Sweet Vermouth' },
+    { name: 'Sweet Vermouth', generic: true },
+    { name: 'Lemon', generic: true },
+    { name: 'Lemon Juice', generic: true },
+  ]),
+  ['Campari', 'Cocchi Storico Vermouth di Torino', 'lemon'],
+);
+assert.deepEqual(tickNames([{ name: 'Gin', generic: true }]), ['gin']);

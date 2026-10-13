@@ -63,6 +63,18 @@ export function inSentence(name: string, generic: boolean): string {
   return generic ? name.toLowerCase() : name;
 }
 
+/**
+ * What of yours a drink uses, one short name per thing, as the canvas ticks
+ * them ("Woodford, lemon, sugar"): a bottle stands in for the kind it is (your
+ * Cocchi, not also "sweet vermouth"), and "lemon" for "lemon juice".
+ */
+export function tickNames(items: readonly { name: string; generic: boolean; kind?: string | null }[]): string[] {
+  const kinds = new Set(items.filter((i) => !i.generic && i.kind).map((i) => i.kind!.toLowerCase()));
+  const kept = items.filter((i) => !(i.generic && kinds.has(i.name.toLowerCase())));
+  const lower = kept.map((i) => i.name.toLowerCase());
+  return kept.filter((_, n) => !lower.some((o, m) => m !== n && lower[n].startsWith(`${o} `))).map((i) => inSentence(i.name, i.generic));
+}
+
 /** Under a drink one or two bottles away: "Uses your Woodford, Campari", or "Nothing else needed". */
 export function usesLine(names: readonly string[]): string {
   return names.length ? `Uses your ${names.join(', ')}` : 'Nothing else needed';

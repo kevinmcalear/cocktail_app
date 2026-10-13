@@ -15,12 +15,13 @@ export interface BarBrand {
 /**
  * A bar's round mark on Collection (home-collection-bars): its logo, or its
  * initials in its display face and accent on its ground. `filled` is the
- * accent disc with dark initials (Bar menus for you).
+ * accent disc with dark initials (Bar menus for you). `letter`: one letter,
+ * for the small mark before a What to make caption.
  * ponytail: guests can't read a bar's brand yet (bars is members only under
  * RLS), so `brand` falls back to the app's accent and face. Pass it once a
  * public read of a bar profile's brand exists.
  */
-export function BarMark({ name, logoUrl, size, brand, filled }: { name: string; logoUrl?: string | null; size: number; brand?: BarBrand | null; filled?: boolean }) {
+export function BarMark({ name, logoUrl, size, brand, filled, letter }: { name: string; logoUrl?: string | null; size: number; brand?: BarBrand | null; filled?: boolean; /** One letter, for a mark a caption line tall (What to make). */ letter?: boolean }) {
   const ds = useDs();
   const round = { width: size, height: size, borderRadius: size / 2 };
   if (logoUrl) return <Image source={{ uri: logoUrl }} style={round} cachePolicy="memory-disk" recyclingKey={logoUrl} accessibilityIgnoresInvertColors />;
@@ -32,7 +33,7 @@ export function BarMark({ name, logoUrl, size, brand, filled }: { name: string; 
   return (
     <View aria-hidden style={[styles.mark, round, { backgroundColor: look.backgroundColor, borderColor: look.borderColor }]}>
       <Text style={{ fontFamily: face, color: look.color, fontSize: Math.round(size * 0.42), lineHeight: Math.round(size * 0.56) }} allowFontScaling={false}>
-        {initials(name)}
+        {letter ? initials(name).slice(0, 1) : initials(name)}
       </Text>
     </View>
   );
