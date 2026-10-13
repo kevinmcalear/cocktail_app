@@ -19,13 +19,15 @@ export interface VenueBrandRow {
   icon_url: string | null;
   /** Text on accent buttons and the active tab: 'cream', 'ink', or null for the automatic pick. */
   accent_text: AccentTextChoice | null;
+  /** The home-screen icon's background: 'accent', 'ground' or 'cream', or null for the logo's own colour. */
+  icon_background: 'accent' | 'ground' | 'cream' | null;
 }
 
 export type AccentTextChoice = 'cream' | 'ink';
 
 export type VenueBrandPatch = Partial<Omit<VenueBrandRow, 'id' | 'name' | 'slug'>>;
 
-const COLUMNS = 'id, name, slug, logo_url, primary_color, secondary_color, display_face, ground_tint, short_name, icon_url, accent_text';
+const COLUMNS = 'id, name, slug, logo_url, primary_color, secondary_color, display_face, ground_tint, short_name, icon_url, accent_text, icon_background';
 
 /** A venue's brand: logo, accent, display face, dark ground tint, home-screen icon and short name. */
 export function useVenueBrand(barId: string | null | undefined) {
