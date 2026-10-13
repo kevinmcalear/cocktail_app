@@ -3,7 +3,7 @@
 // supabase/tests/drink-math.test.mjs expects the server to store.
 import assert from 'node:assert/strict';
 
-import { convertLine, density, dilutionFor, drinkStrength, formatAbv, formatAmount, isWaterLine, lineAmount, lineDetail, toMl } from './drinkMath';
+import { barMl, convertLine, density, dilutionFor, drinkStrength, formatAbv, formatAmount, isWaterLine, lineAmount, lineDetail, toMl } from './drinkMath';
 import { specLines } from './spec';
 
 const near = (a: number | null | undefined, b: number, msg?: string) => assert.ok(a != null && Math.abs(a - b) < 0.06, `${msg ?? ''} expected ${b}, got ${a}`);
@@ -89,12 +89,18 @@ assert.equal(formatAmount(45, 'oz'), '1.5 oz');
 const rumG = specLines([row('r', 'White rum', 50, 'g', 40)])[0];
 assert.equal(convertLine(rumG, 'g', density('White rum', 40)), null, 'already in grams');
 assert.equal(convertLine(rumG, 'ml', density('White rum', 40)), '52.7 ml');
+// Ounces read in bar measures in ml: 2 oz is 60 ml, 3/4 oz is 22.5 ml (boards drink-phone-classic, prep-hist-first-print).
+assert.equal(barMl(2 * 29.57), 60);
+assert.equal(barMl(0.75 * 29.57), 22.5);
+assert.equal(barMl(0.25 * 29.57), 7.5);
+assert.equal(barMl(22.5), 22.5, 'a spec in ml stays as written');
+assert.equal(barMl(20), 20);
 assert.equal(convertLine(rumG, 'oz', density('White rum', 40)), '1.8 oz');
 
 // The switch changes the main amount; dashes and counts stay as written.
 const ginOz = specLines([row('g', 'London Dry Gin', 1, 'oz', 42)])[0];
 assert.equal(lineAmount(ginOz, 'oz'), '1 oz');
-assert.equal(lineAmount(ginOz, 'ml'), '29.6 ml');
+assert.equal(lineAmount(ginOz, 'ml'), '30 ml', 'an oz spec reads in bar measures');
 assert.equal(lineAmount(ginOz, 'g'), '27.9 g');
 const lime = specLines([row('l', 'Lime juice', 22.5, 'ml')])[0];
 assert.equal(lineAmount(lime, 'ml'), '22.5 ml');

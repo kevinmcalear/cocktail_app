@@ -1,11 +1,11 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, BrandProvider, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useLearnYield, type PrepCardData } from '@/hooks/usePrepCard';
@@ -153,36 +153,60 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
     const { main, hint } = splitHint(s.body);
     screen = <MakeStep index={at} total={n} name={name} size={makes} parts={stepParts(main, named)} hint={hint} timer={timer} next={at + 1 < n ? steps[at + 1].body : null} />;
   } else {
-    screen = <MakeDone label={label} goesIn={spot ?? prep?.storage ?? null} made={yieldQ ? madeValue : null} onMade={setMade} madeUnit={yieldQ?.unit ?? null} />;
+    screen = <MakeDone label={label} goesIn={spot ?? prep?.storage ?? null} made={yieldQ ? madeValue : null} onMade={setMade} madeUnit={yieldQ?.unit ?? null} onClose={close} />;
   }
 
-  // Gather, each step, then done: the bar along the top (nothing lit on "How much?").
-  const total = n + 2;
-  const progress = at + 1;
-  // Right of the bars: the size while getting it out, "2 of 3" on a step.
-  const corner = at === -1 ? makes : at >= 0 && at < n ? `${at + 1} of ${n}` : null;
+  // Gather and each step: the bar along the top (none on "How much?" or the label, as drawn).
+  const total = n + 1;
+  const lit = at + 1;
+  const mono = [styles.mono, { color: ds.c.muted }];
+  let top;
+  if (at === -2) {
+    top = (
+      <>
+        <Caption style={[mono, styles.grow]} numberOfLines={1}>{`MAKE · ${name.toUpperCase()}`}</Caption>
+        <GlassButton accessibilityLabel="Stop making" icon="xmark" onPress={close} />
+      </>
+    );
+  } else if (at < n) {
+    top = (
+      <>
+        {at === -1 ? <GlassButton accessibilityLabel="Back to how much" icon="chevron.left" onPress={back} /> : <GlassButton accessibilityLabel="Stop making" icon="xmark" onPress={close} />}
+        <View style={styles.bars} aria-label={`Part ${lit + 1} of ${total}`}>
+          {Array.from({ length: total }, (_, i) => (
+            <View key={i} style={[styles.bar, { backgroundColor: i <= lit ? ds.c.ink : ds.c.lineStrong }]} />
+          ))}
+        </View>
+        {/* The size while getting it out, as a pill; "2 of 3" on a step. */}
+        {at === -1 ? (makes ? <Caption style={[styles.mono, styles.pill, { backgroundColor: ds.c.raised }]}>{makes}</Caption> : null) : <Caption style={mono}>{`${at + 1} of ${n}`}</Caption>}
+      </>
+    );
+  }
+  const onStep = at >= 0 && at < n;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm }]}>
-      <View style={[styles.top, { paddingHorizontal: gutter }]}>
-        <GlassButton accessibilityLabel={at === n ? 'Close' : 'Stop making'} icon="xmark" onPress={close} />
-        <View style={styles.bars} aria-label={progress < 0 ? `${total} parts to go` : `Part ${progress + 1} of ${total}`}>
-          {Array.from({ length: total }, (_, i) => (
-            <View key={i} style={[styles.bar, { backgroundColor: i <= progress ? ds.c.ink : ds.c.lineStrong }]} />
-          ))}
-        </View>
-        {corner ? <Caption tone="muted">{corner}</Caption> : null}
-      </View>
+      {top ? <View style={[styles.top, { paddingHorizontal: gutter }, wide && styles.wide]}>{top}</View> : null}
       <ScrollView contentContainerStyle={[styles.body, { paddingHorizontal: gutter }, wide && styles.wide]} keyboardShouldPersistTaps="handled">
-        {screen}
-      </ScrollView>
-      <View style={[styles.footer, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.md }, wide && styles.wide]}>
-        {at > -2 && at < n ? <Button label="Back" variant="secondary" size="lg" onPress={back} /> : null}
-        {forward ? (
-          <Button label={forward.label} size="lg" disabled={forward.disabled} onPress={next} style={styles.grow} />
+        {/* A step goes on with a tap anywhere, for a wet hand. */}
+        {onStep ? (
+          <Pressable accessible={false} onPress={next}>
+            {screen}
+          </Pressable>
         ) : (
-          <View style={styles.done}>
-            <Button label="Print or share label" size="lg" onPress={() => void shareLabel(label)} />
+          screen
+        )}
+      </ScrollView>
+      <View style={[styles.foot, { paddingHorizontal: gutter, paddingBottom: insets.bottom + space.md }, wide && styles.wide]}>
+        {at === -1 ? <Caption tone="muted" style={styles.center}>{`${got.length} of ${recipe.length} out`}</Caption> : null}
+        {forward ? (
+          <View style={styles.footerRow}>
+            {onStep ? <Button label="Back" variant="secondary" size="lg" onPress={back} /> : null}
+            <Button label={forward.label} variant="ink" size="lg" disabled={forward.disabled} onPress={next} style={styles.grow} />
+          </View>
+        ) : (
+          <>
+            <Button label="Print or share label" variant="ink" size="lg" onPress={() => void shareLabel(label)} />
             <View style={styles.footerRow}>
               <Button
                 label={copied ? 'Copied' : 'Copy for tape'}
@@ -193,8 +217,9 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
               />
               <Button label="Done" variant="secondary" size="lg" onPress={close} style={styles.grow} />
             </View>
-          </View>
+          </>
         )}
+        {onStep ? <Caption tone="muted" style={styles.center}>Tap anywhere with a wet hand for the next step</Caption> : null}
       </View>
     </View>
   );
@@ -212,8 +237,10 @@ const styles = StyleSheet.create({
   bar: { flex: 1, height: 4, borderRadius: radius.mark },
   body: { paddingTop: space.xl, paddingBottom: space.xxxl },
   wide: { maxWidth: 640, width: '100%', alignSelf: 'flex-start' },
-  footer: { flexDirection: 'row', gap: space.sm, paddingTop: space.md },
+  foot: { gap: space.sm, paddingTop: space.md },
   grow: { flex: 1 },
-  done: { flex: 1, gap: space.sm },
   footerRow: { flexDirection: 'row', gap: space.sm },
+  center: { textAlign: 'center' },
+  mono: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  pill: { paddingHorizontal: space.md, paddingVertical: space.xs, borderRadius: radius.pill, overflow: 'hidden', letterSpacing: 0 },
 });

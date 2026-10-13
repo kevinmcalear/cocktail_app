@@ -86,10 +86,9 @@ export function RolesScreen({ barId }: { barId: string }) {
             title="Roles and access"
             crumbs={[{ label: 'Venue settings', href: `/settings/bar/${barId}` as Href }]}
             onBack={() => (router.canGoBack() ? router.back() : router.replace(`/settings/bar/${barId}` as Href))}
-            trailing={manage && frame.wide ? <Button label="New role" icon="plus" onPress={() => setEditing({ role: null })} /> : null}
+            subtitle={<Body tone="muted">Every role starts from one of five base levels. Change what it can do, and the drink page and the back bar follow.</Body>}
+            trailing={manage ? <Button label="New role" icon="plus" onPress={() => setEditing({ role: null })} /> : null}
           />
-          <Body tone="muted">Every role starts from one of five base levels. Change what it can do, and the drink page and the back bar follow.</Body>
-          {manage && !frame.wide ? <Button label="New role" icon="plus" onPress={() => setEditing({ role: null })} style={styles.start} /> : null}
 
           {matrix.isLoading ? <Caption tone="muted">Loading the roles…</Caption> : null}
           {matrix.error ? <Body tone="muted">Couldn’t load the roles. Check your connection and try again.</Body> : null}
@@ -147,7 +146,6 @@ export function RolesScreen({ barId }: { barId: string }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { gap: space.xl },
-  start: { alignSelf: 'flex-start' },
   section: { gap: space.sm, maxWidth: layout.page.text },
   sectionHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   card: { paddingVertical: space.xs },

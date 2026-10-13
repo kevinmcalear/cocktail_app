@@ -107,7 +107,7 @@ export function ReviewImports() {
                   {looksLike(e.kind) ? <Caption tone="muted">{looksLike(e.kind)}</Caption> : null}
                 </View>
                 <DsText variant="headline">{e.name}</DsText>
-                <Segmented accessibilityLabel={`Who sees ${e.name}`} options={WHO} value={choice(e)} onChange={(v) => setPicked((p) => ({ ...p, [e.id]: v }))} />
+                <Segmented variant="ink" accessibilityLabel={`Who sees ${e.name}`} options={WHO} value={choice(e)} onChange={(v) => setPicked((p) => ({ ...p, [e.id]: v }))} />
               </View>
             )
           )}

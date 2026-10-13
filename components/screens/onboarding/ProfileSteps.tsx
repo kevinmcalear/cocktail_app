@@ -6,49 +6,45 @@ import { TasteAnswers } from '@/components/screens/taste/TasteAnswers';
 import { fontFamilies, space } from '@/constants/tokens';
 import { useSaveTasteAnswers } from '@/hooks/useFlavor';
 import { QUICK_QUESTIONS, tasteHeadline, type Taste } from '@/lib/flavor';
-import { MEASURE_UNITS, handleError, nameError, passwordError, type MeasureUnit } from '@/lib/onboarding';
+import { MEASURE_UNITS, handleError, nameError, type MeasureUnit } from '@/lib/onboarding';
 import { convertPour } from '@/lib/drinkWizard';
 import { handleFromName } from '@/lib/profiles';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { SetupFooter, SetupPage } from './SetupPage';
 
-/** Their name (and handle, if theirs was taken). An account made from an invite also picks a password. */
+/** Their name (and handle, if theirs was taken). */
 export function NameStep({
   initialName,
   forceHandle,
-  askPassword = false,
-  passwordProblem,
   pendingFinish,
+  invited,
   onSaved,
   onSkip,
 }: {
   initialName: string;
   forceHandle: boolean;
-  /** An account made from an invite email picks its password here. */
-  askPassword?: boolean;
-  passwordProblem?: string | null;
   pendingFinish: boolean;
-  onSaved: (name: string, handle: string, password: string) => void;
+  /** Joined through a venue's invite: other devices sign in by code, and setup can't be skipped. */
+  invited?: boolean;
+  onSaved: (name: string, handle: string) => void;
   onSkip: () => void;
 }) {
   const [name, setName] = useState(initialName);
-  const [password, setPassword] = useState('');
   const [handle, setHandle] = useState<string | null>(forceHandle ? handleFromName(initialName) : null);
   const [tried, setTried] = useState(false);
   const chosen = handle ?? handleFromName(name);
   const problem = tried ? nameError(name) : null;
   const handleProblem = tried && handle !== null ? handleError(handle) : undefined;
 
-  const passwordWrong = askPassword ? passwordError(password) : null;
   const submit = () => {
     setTried(true);
-    if (nameError(name) || (handle !== null && handleError(handle)) || passwordWrong) return;
-    onSaved(name.trim(), chosen, password);
+    if (nameError(name) || (handle !== null && handleError(handle))) return;
+    onSaved(name.trim(), chosen);
   };
 
   return (
-    <SetupPage footer={<SetupFooter onPress={submit} disabled={pendingFinish} onSkip={onSkip} />}>
+    <SetupPage footer={<SetupFooter onPress={submit} disabled={pendingFinish} onSkip={invited ? undefined : onSkip} />}>
       <Field label="Name" value={name} onChangeText={setName} error={problem ?? undefined} autoComplete="name" maxLength={80} />
       {handle === null && name.trim() ? <Caption tone="muted" style={styles.strong}>{`Your handle is @${chosen}. You can change it on You.`}</Caption> : null}
       {handle !== null ? (
@@ -63,19 +59,7 @@ export function NameStep({
           maxLength={31}
         />
       ) : null}
-      {askPassword ? (
-        <Field
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          error={(tried ? passwordWrong : null) ?? passwordProblem ?? undefined}
-          hint="To sign in on your other devices."
-          secureTextEntry
-          autoComplete="new-password"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-      ) : null}
+      {invited ? <Caption tone="muted">On your other devices, sign in with this email and we’ll send a code. No password to remember.</Caption> : null}
     </SetupPage>
   );
 }

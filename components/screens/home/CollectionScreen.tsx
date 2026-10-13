@@ -56,7 +56,7 @@ export function CollectionScreen() {
           />
           {/* Full width on a phone; on a desktop the switch keeps to its own width, as drawn. */}
           <View style={desk ? styles.tabs : null}>
-            <Segmented fill options={TABS} value={tab} onChange={setTab} accessibilityLabel="Collection" />
+            <Segmented variant="ink" stretch options={TABS} value={tab} onChange={setTab} accessibilityLabel="Collection" />
           </View>
           {tab === 'drinks' ? (
             <View onLayout={(e) => (top.current = e.nativeEvent.layout.y)}>

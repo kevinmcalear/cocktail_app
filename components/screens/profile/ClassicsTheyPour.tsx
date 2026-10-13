@@ -34,25 +34,31 @@ export function usePouredSplit<T extends { id: string }>(
 const FIRST = 4;
 
 /**
- * "Classics they pour": a line of pills, best scored first, each with its
- * score (b02) and opening that bar's copy; past the first few, "+5" and All.
+ * "Classics they pour": a card of names, best scored first, each with its
+ * score (b02) and opening that bar's copy where it has a page; past the first
+ * few, "+5" and All (ppl-pub-bar-desktop, ppl-bar-originals). `note` says
+ * where the list comes from, under the card.
  */
 export function ClassicsTheyPour({
   drinks,
   scores,
   barName,
+  note,
 }: {
-  drinks: { id: string; name: string }[];
+  /** A drink with no page of its own (a staff list name) has no id, and doesn't open. */
+  drinks: { id: string | null; name: string }[];
   /** Scores by drink id, where people have ranked them. */
   scores?: Readonly<Record<string, number>>;
   /** Whose pours these are, for the line under them. */
   barName?: string;
+  note?: string;
 }) {
   const ds = useDs();
   const router = useRouter();
   const [all, setAll] = useState(false);
   if (!drinks.length) return null;
-  const sorted = [...drinks].sort((a, b) => (scores?.[b.id] ?? -1) - (scores?.[a.id] ?? -1));
+  const scoreOf = (d: { id: string | null }) => (d.id ? scores?.[d.id] : undefined);
+  const sorted = [...drinks].sort((a, b) => (scoreOf(b) ?? -1) - (scoreOf(a) ?? -1));
   const shown = all ? sorted : sorted.slice(0, FIRST);
   const more = sorted.length - shown.length;
   return (
@@ -60,47 +66,50 @@ export function ClassicsTheyPour({
       <Caption tone="muted" role="heading" style={styles.cap}>
         Classics they pour
       </Caption>
-      <View role="list" style={styles.poured}>
-        {shown.map((d) => {
-          const score = scores?.[d.id];
-          return (
-            <PressableScale
-              key={d.id}
-              role="link"
-              accessibilityLabel={[d.name, scoreWords(score)].filter(Boolean).join(", ")}
-              onPress={() => router.push(`/cocktail/${d.id}` as Href)}
-              style={[styles.pill, { borderColor: ds.c.line }]}
-            >
-              <Body>{d.name}</Body>
-              {score !== undefined ? <Spec>{formatScore(score)}</Spec> : null}
-            </PressableScale>
-          );
-        })}
-        {more > 0 ? (
-          <>
-            <View style={[styles.pill, { backgroundColor: ds.c.raised, borderColor: ds.c.raised }]}>
-              <Caption tone="muted">{`+${more}`}</Caption>
+      <View style={[styles.card, { backgroundColor: ds.c.surface }]}>
+        <View role="list" style={styles.poured}>
+          {shown.map((d, i) => {
+            const score = scoreOf(d);
+            const words = (
+              <>
+                <Body>{d.name}</Body>
+                {score !== undefined ? <Spec tone="muted">{formatScore(score)}</Spec> : null}
+              </>
+            );
+            return d.id ? (
+              <PressableScale
+                key={d.id}
+                role="link"
+                accessibilityLabel={[d.name, scoreWords(score)].filter(Boolean).join(", ")}
+                onPress={() => router.push(`/cocktail/${d.id}` as Href)}
+                style={styles.name}
+              >
+                {words}
+              </PressableScale>
+            ) : (
+              <View key={`${d.name}-${i}`} role="listitem" style={styles.name}>
+                {words}
+              </View>
+            );
+          })}
+          {more > 0 ? (
+            <View style={styles.name}>
+              <Body tone="muted">{`+${more}`}</Body>
             </View>
-            <Button label="All" variant="ghost" accessibilityLabel={`All ${sorted.length} classics they pour`} onPress={() => setAll(true)} />
-          </>
-        ) : null}
+          ) : null}
+        </View>
+        {more > 0 ? <Button label="All" variant="secondary" accessibilityLabel={`All ${sorted.length} classics they pour`} onPress={() => setAll(true)} style={styles.all} /> : null}
       </View>
-      <Caption tone="muted">{`The classic spec, with their bottles. Each opens ${barName ? `${barName}’s` : "their"} pour of it.`}</Caption>
+      <Caption tone="muted">{note ?? `The classic spec, with their bottles. Each opens ${barName ? `${barName}’s` : "their"} pour of it.`}</Caption>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { gap: space.xs },
+  section: { gap: space.sm },
   cap: { letterSpacing: 1.2, textTransform: "uppercase" },
-  poured: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  pill: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: radius.pill,
-    paddingHorizontal: space.md,
-    minHeight: 36,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: space.sm,
-  },
+  card: { flexDirection: "row", alignItems: "center", gap: space.md, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: "continuous" },
+  poured: { flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", columnGap: space.md + 2, rowGap: space.xs + 2 },
+  name: { flexDirection: "row", alignItems: "baseline", gap: space.xs + 2, minHeight: 32 },
+  all: { paddingHorizontal: space.lg },
 });

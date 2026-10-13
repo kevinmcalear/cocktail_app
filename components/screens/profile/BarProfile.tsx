@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -60,6 +61,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
   const onTeam = useActiveVenue().venues.some((v) => v.id === profile.bar_id);
   const specsLocked = pageLocksSpecs(profile.page_visibility, onTeam);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
+  const searched = !!useLocalSearchParams<{ q?: string }>().q;
 
   return (
     <View style={styles.body}>
@@ -72,16 +74,22 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
           detail={[barPlace(facts?.bar_type, place) || 'Bar', here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ')}
           love={<LoveBarButton profileId={profile.id} name={profile.display_name} labelled />}
         />
-        <View style={styles.chips}>
-          <Tag label={unclaimed ? 'Not claimed yet' : 'Claimed'} />
-          {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} /> : null}
-          {profile.is_public ? null : <Tag label="Private" />}
-        </View>
-        {profile.bio ? <Body>{profile.bio}</Body> : null}
-        <ProfileLinks profile={profile} align="start" />
+        {/* Opened from a search: the facts and actions, then straight into what matched (disc-search-bar). */}
+        {searched ? null : (
+          <View style={styles.chips}>
+            <Tag label={unclaimed ? 'Not claimed yet' : 'Claimed'} />
+            {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} /> : null}
+            {profile.is_public ? null : <Tag label="Private" />}
+          </View>
+        )}
+        {profile.bio && !searched ? <Body>{profile.bio}</Body> : null}
+        {searched ? null : <ProfileLinks profile={profile} align="start" />}
         <BarFactsBlock profileId={profile.id} />
         {unclaimed && facts?.hours ? <Caption tone="muted">{hoursSource(false, facts.hours_updated_at)}</Caption> : null}
       </View>
+
+      {/* A search's matches (nothing without one) come right under the header. */}
+      <BarMatches barProfileId={profile.id} />
 
       <BarStats profile={profile} originals={originals.length} onAwards={() => setAwardsOpen((v) => !v)} />
 
@@ -91,9 +99,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
 
       <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />
 
-      <BarMatches barProfileId={profile.id} />
-
-      {/* The matches, then the menu it's pouring (b12, as Discover's bar view); the rest follows. */}
+      {/* The menu it's pouring (b12, as Discover's bar view); the rest follows. */}
       <OnTheMenu profileId={profile.id} />
 
       {unclaimed && !specsLocked ? <ClaimProfile profile={profile} /> : null}

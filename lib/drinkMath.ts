@@ -154,6 +154,17 @@ export function formatAmount(value: number, unit: MassUnit): string {
   return `${trim(value, value < 10 ? 1 : value < 100 ? 1 : 0)} ${unit}`;
 }
 
+/**
+ * An ml amount as a bar pours it. Whole and half ml stay as they are (a spec
+ * written in ml); anything else came from ounces, so it reads in bar measures,
+ * 1 oz to 30 ml, to the half ml: 2 oz is 60 ml, 3/4 oz is 22.5 ml, not 59.1
+ * and 22.2 (boards drink-phone-classic, prep-hist-first-print).
+ */
+export function barMl(ml: number): number {
+  if (Math.abs(ml * 2 - Math.round(ml * 2)) < 0.01) return Math.round(ml * 2) / 2;
+  return Math.round((ml / ML_PER_OZ) * 30 * 2) / 2;
+}
+
 /** Units a spec line converts between; dashes, spoons and counts stay as written. */
 const MEASURES = new Set(['ml', 'cl', 'dl', 'l', 'oz', 'fl oz', 'g', 'kg']);
 
@@ -168,7 +179,7 @@ export function convertLine(line: Pick<SpecLine, 'value' | 'unit' | 'ml' | 'ingr
   if (!MEASURES.has(u)) return null;
   if ((to === 'g' && u === 'g') || (to === 'ml' && u === 'ml') || (to === 'oz' && (u === 'oz' || u === 'fl oz'))) return null;
   if (to === 'g') return formatAmount(line.ml * gPerMl, 'g');
-  return formatAmount(line.ml, to);
+  return formatAmount(to === 'ml' && (u === 'oz' || u === 'fl oz') ? barMl(line.ml) : line.ml, to);
 }
 
 /** A spec line's amount in the person's unit, or as written when it doesn't convert. */

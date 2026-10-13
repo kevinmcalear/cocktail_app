@@ -88,10 +88,10 @@ export function MakeHead({
           {phone ? (
             // The tabs run off the right edge of a phone, as drawn, so the next one shows there is more.
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed}>
-              <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
+              <Segmented variant="ink" accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
             </ScrollView>
           ) : (
-            <Segmented accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
+            <Segmented variant="ink" accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
           )}
           {tabIntro(tab) ? <Caption tone="muted">{tabIntro(tab)}</Caption> : null}
           {children}

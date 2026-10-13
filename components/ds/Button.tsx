@@ -16,12 +16,13 @@ export interface ButtonProps {
   label: string;
   onPress?: () => void;
   /**
-   * primary: the one main action on a screen, in the venue's accent. ink: a
-   * card's own main action, cream on dark, where the screen's accent is spoken
-   * for (a project's Method). danger: removing or deleting, in status red.
+   * primary: the one main action on a screen, in the venue's accent. ink: the
+   * main action on light working screens (Make) or a card's own main action
+   * (a project's Method), where the accent is spoken for. danger: removing or
+   * deleting, in status red.
    */
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'ink';
-  /** sm: a compact pill beside a row's text, 15 pt label (My Bar's Add both). */
+  variant?: 'primary' | 'ink' | 'secondary' | 'ghost' | 'danger';
+  /** sm: a compact pill beside a row's text (My Bar's Add both). */
   size?: 'sm' | 'md' | 'lg';
   icon?: IconName;
   disabled?: boolean;

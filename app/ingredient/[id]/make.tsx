@@ -5,6 +5,7 @@ import { BackbarTheme, Body, useDs } from "@/components/ds";
 import { MakeScreen } from "@/components/screens/make/MakeScreen";
 import { space } from "@/constants/tokens";
 import { useActiveVenue } from "@/hooks/useActiveVenue";
+import { useMode } from "@/hooks/useMode";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useItemPrep } from "@/hooks/usePrepCard";
@@ -19,7 +20,10 @@ export default function MakeRoute() {
     const ingredient = data?.ingredient ?? null;
     const canEdit = useCanEditItem(ingredient);
     const { data: capabilities } = useCapabilities(ingredient?.bar_id ?? null);
-    const accent = useActiveVenue().venues.find((v) => v.id === ingredient?.bar_id)?.accent ?? undefined;
+    // The prep's own venue, else the venue you're working at (a shared prep at work wears its colours).
+    const { venues, active } = useActiveVenue();
+    const home = useMode().mode === "home";
+    const accent = (venues.find((v) => v.id === ingredient?.bar_id) ?? (home ? null : active))?.accent ?? undefined;
 
     if (!ingredient || !card) return <Waiting />;
     const recipe: (RecipeLine & { ingredientId: string | null })[] = ((data?.recipe ?? []) as unknown as { id: string; ingredient: { id: string; name: string } | null; amount: string | null; unit: string | null }[]).map((r) => ({

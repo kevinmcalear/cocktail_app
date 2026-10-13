@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, fontFamilies, palateHues, radius, space } from '@/constants/tokens';
 import { menuReadiness, plural } from '@/lib/menus';
 import type { MenuDrink, MenuSectionDetail } from '@/types/menus';
 
@@ -76,7 +76,10 @@ export function Check({ label, note, done = false, action, onPress }: { label: s
   const ds = useDs();
   const body = (
     <>
-      <IconSymbol name={done ? 'checkmark.circle.fill' : 'exclamationmark.circle'} size={18} color={done ? ds.c.ink : ds.c.muted} />
+      {/* A tick when done, an empty ring still to do, as the checklist boards draw them. */}
+      <View style={styles.mark} aria-hidden>
+        {done ? <IconSymbol name="checkmark" size={16} color={palateHues[ds.scheme].green} /> : <View style={[styles.ring, { borderColor: ds.c.muted }]} />}
+      </View>
       <View style={styles.checkText}>
         <Body accessibilityLabel={onPress ? undefined : `${label}${done ? ', done' : ', to do'}`}>{label}</Body>
         {note ? <Caption tone="muted">{note}</Caption> : null}
@@ -157,4 +160,6 @@ const styles = StyleSheet.create({
   checkRow: { alignItems: 'center' },
   check: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   checkText: { flex: 1, gap: space.xs },
+  mark: { width: 18, height: 24, alignItems: 'center', justifyContent: 'center' },
+  ring: { width: 14, height: 14, borderRadius: radius.pill, borderWidth: 1.5 },
 });

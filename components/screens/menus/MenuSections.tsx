@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
@@ -7,6 +8,9 @@ import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { formatPrice } from '@/lib/menus';
 import type { MenuDrink, MenuSectionDetail } from '@/types/menus';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
+import { siteOrigin } from '@/lib/venueLink';
+
+import { DrinkCode } from './DrinkCode';
 
 const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
 
@@ -14,7 +18,7 @@ const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail'
 export type CardPictures = 'above' | 'beside' | 'none';
 
 /** A drink with no photo of its own, or only a generated one: it shows a drawing. */
-const isDrawn = (d: MenuDrink) => !d.imageUrl || d.isSketch;
+export const isDrawn = (d: MenuDrink) => !d.imageUrl || d.isSketch;
 
 /**
  * The drink's picture beside its line on the page. Decorative: the line says
@@ -52,9 +56,10 @@ function NewMark() {
  * The name, its price and its line, the name in the venue's display face. On
  * a page row the price sits at the row's end instead (the row draws it).
  */
-function DrinkLine({ drink, centered, card = false, isNew = false }: { drink: MenuDrink; centered: boolean; card?: boolean | 'compact'; isNew?: boolean }) {
+function DrinkLine({ drink, centered, card = false, isNew = false, code = false }: { drink: MenuDrink; centered: boolean; card?: boolean | 'compact'; isNew?: boolean; code?: boolean }) {
   const ds = useDs();
   const price = card ? formatPrice(drink.price) : null;
+  const url = code ? `${siteOrigin()}${menuDrinkHref(drink)}` : null;
   return (
     <View style={centered ? styles.centered : styles.flex}>
       <View style={[styles.nameRow, centered && styles.nameRowCentered]}>
@@ -78,8 +83,15 @@ function DrinkLine({ drink, centered, card = false, isNew = false }: { drink: Me
           {drink.line}
         </Caption>
       ) : null}
-      {/* The guest card's price sits under the line. */}
-      {price ? <Spec align={centered ? 'center' : undefined}>{price}</Spec> : null}
+      {/* The guest card's price sits under the line, beside the code that opens the drink. */}
+      {url ? (
+        <View style={styles.codeRow}>
+          {price ? <Spec color={ds.c.sketchInk}>{price}</Spec> : null}
+          <DrinkCode url={url} label={`QR code: opens ${drink.name}`} />
+        </View>
+      ) : price ? (
+        <Spec align={centered ? 'center' : undefined}>{price}</Spec>
+      ) : null}
     </View>
   );
 }
@@ -95,6 +107,10 @@ interface MenuSectionsProps {
   compact?: boolean;
   /** Page rows: drinks new on this menu, marked NEW. */
   newIds?: ReadonlySet<string>;
+  /** The printed card: a QR code under each drink that opens its page. */
+  codes?: boolean;
+  /** The printed card's foot: beside the drawings note, at the right ("Scan a code ..."). */
+  foot?: ReactNode;
 }
 
 /** A page row's price, in mono at the row's end. */
@@ -185,7 +201,7 @@ export function MenuPageRowView({ row, newIds, firstGap = 0 }: { row: MenuPageRo
  * with each drink's photo or sketch unless `pictures` is 'none'. The card is
  * your own menu, so every drink on it has a real id to draw from.
  */
-export function MenuSections({ sections, variant, hrefFor, pictures = 'above', compact = false, newIds }: MenuSectionsProps) {
+export function MenuSections({ sections, variant, hrefFor, pictures = 'above', compact = false, newIds, codes = false, foot }: MenuSectionsProps) {
   const card = variant === 'card';
   const href = (d: MenuDrink) => (card ? null : hrefFor ? hrefFor(d) : menuDrinkHref(d));
   const grid = card && pictures === 'above';
@@ -202,7 +218,7 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
                 {s.drinks.map((d) => (
                   <View key={d.id} style={styles.cardTile}>
                     <DrinkThumb drink={d} drawable size={compact ? 96 : 144} />
-                    <DrinkLine drink={d} centered card={compact ? 'compact' : true} />
+                    <DrinkLine drink={d} centered card={compact ? 'compact' : true} code={codes} />
                   </View>
                 ))}
               </View>
@@ -212,14 +228,14 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
                 return (
                   <View key={d.id} style={[styles.row, styles.cardBeside]}>
                     <DrinkThumb drink={d} drawable size={compact ? 56 : 88} />
-                    <DrinkLine drink={d} centered={false} card={compact ? 'compact' : true} />
+                    <DrinkLine drink={d} centered={false} card={compact ? 'compact' : true} code={codes} />
                   </View>
                 );
               }
               if (card) {
                 return (
                   <View key={d.id} style={styles.cardRow}>
-                    <DrinkLine drink={d} centered card />
+                    <DrinkLine drink={d} centered card code={codes} />
                   </View>
                 );
               }
@@ -227,11 +243,22 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
             })}
           </View>
         ))}
-      {drawn ? (
-        // One note for the whole card, and no tag: drawings are obviously drawings.
+      {/* One note for the whole card, and no tag: drawings are obviously drawings. */}
+      {foot ? (
+        <View style={styles.foot}>
+          {drawn ? (
+            <Caption tone="muted" style={[styles.mono, styles.shrink]}>
+              Drawings from each drink’s spec, until there’s a photo
+            </Caption>
+          ) : (
+            <View />
+          )}
+          {foot}
+        </View>
+      ) : drawn ? (
         <View style={styles.drawnNote}>
-          <Caption tone="muted" style={styles.mono}>
-            Drawn from each drink’s spec until it has a photo
+          <Caption tone="muted" align="center" style={styles.mono}>
+            Drawn from each spec until there’s a photo
           </Caption>
         </View>
       ) : null}
@@ -253,8 +280,10 @@ const styles = StyleSheet.create({
   cardTile: { flexBasis: '50%', minWidth: 120, flexGrow: 0, alignItems: 'center', gap: space.sm, paddingHorizontal: space.sm },
   cardBeside: { borderBottomWidth: 0, paddingVertical: space.sm },
   drawnNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: space.sm },
+  foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.lg, paddingTop: space.xl },
+  codeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.sm },
   flex: { flex: 1, gap: 2 },
-  shrink: { flexShrink: 1 },
+  shrink: { flexShrink: 1, minWidth: 0 },
   mono: { fontFamily: fontFamilies.mono },
   centered: { alignItems: 'center', gap: 2 },
   nameRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },

@@ -7,6 +7,8 @@ import { useTopBars } from '@/hooks/useDiscover';
 import { areaLabel, earlyNote, type Area } from '@/lib/nearMe';
 import { MIN_RANKERS } from '@/lib/ranking';
 
+const TOP = 5;
+
 /**
  * "Top bars near you", by bar score: the average of a bar's drink scores,
  * weighted by how many people ranked each (see the discover migration).
@@ -16,8 +18,9 @@ import { MIN_RANKERS } from '@/lib/ranking';
 export function TopBars({ area }: { area: Area }) {
   const where = areaLabel(area);
   const { data, isLoading, error } = useTopBars(area);
-  const ranked = data?.ranked ?? [];
-  const early = data?.early ?? [];
+  // The top five, as drawn (disc-list); the full list is the rankings page.
+  const ranked = (data?.ranked ?? []).slice(0, TOP);
+  const early = (data?.early ?? []).slice(0, TOP);
 
   let body;
   if (error) body = <ListNote>{`Couldn't load the bars: ${error.message}`}</ListNote>;

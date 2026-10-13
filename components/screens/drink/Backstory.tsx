@@ -73,6 +73,8 @@ interface BackstoryProps {
   classicName?: string | null;
   /** Start a new drink from this one; null hides Riff on this. */
   onRiff?: (() => void) | null;
+  /** A catalog classic's written history (its notes), folded to one line until opened. */
+  story?: string | null;
 }
 
 /**
@@ -82,7 +84,7 @@ interface BackstoryProps {
  * One fact per row, each a tap from the whole story. Hidden when there's
  * nothing to tell.
  */
-export function Backstory({ itemId, lines = [], classicName, onRiff = null }: BackstoryProps) {
+export function Backstory({ itemId, lines = [], classicName, onRiff = null, story = null }: BackstoryProps) {
   const ds = useDs();
   const router = useRouter();
   const { data } = useLineage(itemId);
@@ -107,7 +109,7 @@ export function Backstory({ itemId, lines = [], classicName, onRiff = null }: Ba
   const ranked = drink?.is_catalog ? versions.riffs : riffs;
   // The hook reads the best 100, so a count at the cap says so.
   const capped = riffs.length >= 100;
-  if (!steps.length && !drink?.lineage_note && !found && !classics.length && !ranked.length) return null;
+  if (!steps.length && !drink?.lineage_note && !found && !classics.length && !ranked.length && !story) return null;
   const focus = drink?.is_catalog ? drink.id : ancestors.findLast((a) => a.is_catalog)?.id;
   const inTree = !!drink && (!!focus || lineStyles.length > 0);
   const borrowed = found && found.itemId !== family[0].id ? (family.find((f) => f.id === found.itemId)?.name ?? null) : null;
@@ -135,6 +137,8 @@ export function Backstory({ itemId, lines = [], classicName, onRiff = null }: Ba
             </Body>
           </FactRow>
         ) : null}
+
+        {story ? <StoryRow story={story} /> : null}
 
         {drink?.lineage_note ? (
           <FactRow label="What changed" accessibilityLabel={`What changed: ${drink.lineage_note}`}>
@@ -180,6 +184,16 @@ export function Backstory({ itemId, lines = [], classicName, onRiff = null }: Ba
         ) : null}
       </View>
     </View>
+  );
+}
+
+/** A classic's written history: its first sentence, the rest in place. */
+function StoryRow({ story }: { story: string }) {
+  const [first, ...rest] = story.split(/(?<=[.!?])\s+/);
+  return (
+    <FactRow label="Its story" accessibilityLabel={`Its story: ${story}`} more={rest.length ? <Body>{rest.join(' ')}</Body> : undefined}>
+      <Body>{first}</Body>
+    </FactRow>
   );
 }
 

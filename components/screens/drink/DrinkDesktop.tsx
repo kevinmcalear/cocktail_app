@@ -44,7 +44,7 @@ export function DrinkDesktop({ sections: s, hero, heroActions, actions, inspecto
   const shown = tabs.some((t) => t.value === tab) ? tab : 'spec';
 
   return (
-    <ScrollView style={styles.flex} contentContainerStyle={{ paddingTop: top + layout.minTapTarget + space.lg, paddingBottom: space.xxxl, paddingHorizontal: gutter }}>
+    <ScrollView style={styles.flex} contentContainerStyle={{ paddingTop: top + (desktop ? space.xl : layout.minTapTarget + space.lg), paddingBottom: space.xxxl, paddingHorizontal: gutter }}>
       <View style={styles.page}>
         <View style={[styles.hero, { backgroundColor: ds.c.paper }]}>
           {hero(HERO_H)}
@@ -56,16 +56,23 @@ export function DrinkDesktop({ sections: s, hero, heroActions, actions, inspecto
           {s.journey}
           {s.menus}
           {s.description}
-          <Segmented options={tabs} value={shown} onChange={setTab} accessibilityLabel="Drink" />
+          <Segmented options={tabs} value={shown} onChange={setTab} accessibilityLabel="Drink" variant="ink" />
           {shown === 'spec' ? (
             <View style={styles.tab}>
               {s.floor}
-              {s.spec}
-              {s.method}
-              {actions}
+              {/* The spec, method and actions beside the fact tiles; the staff rows under both (board drink-desktop). */}
+              <View style={styles.split}>
+                <View style={styles.specCol}>
+                  {s.spec}
+                  {s.method}
+                  {actions}
+                </View>
+                <View style={styles.factCol}>
+                  {s.facts}
+                  {s.flavor}
+                </View>
+              </View>
               {s.servedAt}
-              {s.facts}
-              {s.flavor}
               {s.allergens}
               {s.history}
               {s.cost}
@@ -94,4 +101,7 @@ const styles = StyleSheet.create({
   heroActions: { position: 'absolute', top: space.md, right: space.md, flexDirection: 'row', gap: space.sm },
   body: { flex: 1, minWidth: 0, gap: space.lg },
   tab: { gap: space.xl, paddingTop: space.sm },
+  split: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: space.lg },
+  specCol: { flexGrow: 1, flexBasis: 200, minWidth: 0, gap: space.lg },
+  factCol: { flexGrow: 1, flexBasis: 180, minWidth: 0, gap: space.sm },
 });

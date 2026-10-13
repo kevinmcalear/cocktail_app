@@ -53,7 +53,7 @@ const TYPE_SAMPLES: Record<TypeStyle, string> = {
   headline: 'Bartender notes',
   body: 'Shake hard with ice and strain over a large cube.',
   spec: '22.5 ml',
-  label: 'Ready · 7',
+  label: 'Add both',
   caption: 'Shaken · Rocks · Large cube',
 };
 
