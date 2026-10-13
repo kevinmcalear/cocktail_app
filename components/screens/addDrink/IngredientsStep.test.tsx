@@ -78,7 +78,7 @@ describe('IngredientsStep', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Pineapple Heat' }));
     const prep = set.mock.calls[0][0].lines[0].prep;
     expect(prep.kind).toBe('shrub');
-    expect(prep.lines.map((l: { name: string }) => l.name)).toEqual(['Pineapple', 'Sugar', 'Apple cider vinegar', 'Chili']);
+    expect(prep.lines.map((l: { name: string }) => l.name)).toEqual(['Pineapple', 'White sugar', 'Apple cider vinegar', 'Fresno chili']);
     expect(prep.leadMinutes).toBe(3 * 24 * 60);
     // Back in the drink: under the field, it says the prep is saved with the drink.
     expect(screen.getByText('Shrub saved to your preps when you save the drink. Its page is ready then.')).toBeTruthy();

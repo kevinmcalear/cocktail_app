@@ -20,6 +20,8 @@ interface ResultRowProps {
   caption?: string;
   /** An icon tile (ingredients, menus, recents), or a round avatar for people; `bar` makes it the bar's mark, in its own colours. */
   icon?: IconName;
+  /** The icon in the accent, not muted: the flavor map's target (prep-flavor-entry). */
+  accentIcon?: boolean;
   avatar?: { uri: string | null; bar?: { profileId: string; brand?: BarBrand | null } };
   /** An ingredient's drawing in place of the icon. A null id draws from the title (drafts). */
   ingredient?: { id: string | null };
@@ -36,7 +38,7 @@ interface ResultRowProps {
 }
 
 /** A search result that isn't a drink: the same row as DrinkRow, with an icon or avatar. */
-export function ResultRow({ title, caption, icon, avatar, ingredient, tag, trailing, query, matchLook, label, onPress }: ResultRowProps) {
+export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient, tag, trailing, query, matchLook, label, onPress }: ResultRowProps) {
   const ds = useDs();
   // In the ⌘K palette: the row the arrow keys are on, which Return opens.
   const nav = useSearchNavRow();
@@ -56,7 +58,7 @@ export function ResultRow({ title, caption, icon, avatar, ingredient, tag, trail
         ) : avatar ? (
           <UserAvatar uri={avatar.uri} name={title} size={THUMB - space.sm} />
         ) : (
-          <IconSymbol name={icon ?? 'magnifyingglass'} size={22} color={ds.c.muted} />
+          <IconSymbol name={icon ?? 'magnifyingglass'} size={22} color={accentIcon ? ds.accentText : ds.c.muted} />
         )}
       </View>
       <View style={styles.text}>

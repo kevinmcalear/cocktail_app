@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native';
 import { layout, radius, space } from '@/constants/tokens';
 
 import { PressableScale } from './PressableScale';
-import { Caption } from './Text';
+import { DsText } from './Text';
 import { useDs } from './theme';
 
 /**
@@ -37,11 +37,13 @@ export function Chip({ label, selected, onPress, quiet, multi, disabled, accessi
       ]}
     >
       {leading}
-      <Caption color={selected ? ds.c.ground : ds.c.ink}>{label}</Caption>
+      <DsText variant="label" color={selected ? ds.c.ground : ds.c.ink}>
+        {label}
+      </DsText>
       {count ? (
-        <Caption color={selected ? ds.c.ground : ds.c.muted} style={selected ? styles.quietCount : null}>
+        <DsText variant="label" color={selected ? ds.c.ground : ds.c.muted} style={selected ? styles.quietCount : null}>
           {count}
-        </Caption>
+        </DsText>
       ) : null}
     </PressableScale>
   );

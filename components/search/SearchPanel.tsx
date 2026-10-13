@@ -49,17 +49,19 @@ interface HeadProps {
   onSubmit?: () => void;
   /** The ⌘K palette: the esc key cap and "Press tab to switch" (nav-search-desk-palette). */
   keys?: boolean;
+  /** The search tab: Cancel beside the field while it's in use. */
+  cancel?: boolean;
 }
 
 /** The search field and where it looks. The same at every door: the tab, ⌘K, Library and Discover. */
-export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys }: HeadProps) {
+export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys, cancel }: HeadProps) {
   const ds = useDs();
   const gutter = useGutter();
   const options = scopeOptions(mine.label, area?.label ?? null);
   const placeholder = scope === 'everywhere' ? 'Search bars, drinks and people' : scope === 'area' ? `Search ${area?.label === 'This area' ? 'this area' : (area?.label ?? 'here')}` : `Search ${mine.venueId ? mine.label : 'your drinks'}`;
   return (
     <View style={styles.head}>
-      <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys={keys} />
+      <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys={keys} cancel={cancel} />
       {keys ? <View style={[styles.rule, { marginHorizontal: -gutter, backgroundColor: ds.c.line }]} /> : null}
       {keys ? (
         <View style={styles.scopeRow}>
@@ -123,7 +125,7 @@ const JUMPS = [
 
 /** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry). */
 const ENTRIES = [
-  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'sparkles', href: '/flavor-map' },
+  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map' },
   { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history' },
   { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques' },
 ] as const;
@@ -162,7 +164,8 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
               key={`${r.kind}-${r.id}`}
               title={capitalize(r.title)}
               caption={caption(r)}
-              icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'sparkles' : 'drop.fill'}
+              icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'target' : 'drop.fill'}
+              accentIcon={r.kind === 'flavor'}
               avatar={r.kind === 'bar' ? { uri: r.imageUrl ?? null } : undefined}
               ingredient={r.kind === 'ingredient' ? { id: r.isDraft ? null : r.id } : undefined}
               onPress={() => open(r)}
@@ -186,7 +189,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
       {commands}
       <View>
         {ENTRIES.map((e) => (
-          <ResultRow key={e.href} title={e.title} caption={e.caption} icon={e.icon} onPress={() => go(e.href)} />
+          <ResultRow key={e.href} title={e.title} caption={e.caption} icon={e.icon} accentIcon={e.href === '/flavor-map'} onPress={() => go(e.href)} />
         ))}
       </View>
       <Body tone="muted">

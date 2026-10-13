@@ -33,9 +33,11 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 | Headline | 20 | Geist 600 |
 | Body | 17 | Geist 400 |
 | Spec (measurements) | 17 | Geist Mono 500, tabular numbers |
+| Label (chips, scope and tab labels, doses, compact `sm` buttons) | 15 | Geist 500 |
 | Caption | 13 | Geist 500 |
 
 - Nothing below 13 pt. Uppercase labels get letter spacing and still stay at 13 or more.
+- Where the canvas draws 15 px (a chip, a scope or tab label, a dose, a compact button), use `variant="label"` (15/20), not 13 or 17. A dose keeps its mono face on top of it.
 - Venue display faces: Instrument Serif, Fraunces, or Bricolage Grotesque. Body and spec faces are fixed.
 - Respect Dynamic Type: sizes scale, layouts wrap rather than clip.
 
