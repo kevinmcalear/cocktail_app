@@ -1,19 +1,21 @@
-// Fallback for using MaterialIcons on Android and web.
+// Line icons on Android and web (iOS draws SF Symbols, icon-symbol.ios.tsx).
 
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Feather from '@expo/vector-icons/Feather';
 import type { SFSymbol, SymbolWeight } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { type ColorValue, type StyleProp, type TextStyle, Platform, Text } from 'react-native';
 
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 
-type IconMapping = Partial<Record<SFSymbol, ComponentProps<typeof MaterialIcons>['name']>>;
+import { LineGlyph, type LineGlyphName } from './lineGlyphs';
+
+type IconMapping = Partial<Record<SFSymbol, ComponentProps<typeof Feather>['name'] | `svg:${LineGlyphName}`>>;
 type IconSymbolName = keyof typeof MAPPING;
 
 /**
- * Add your SF Symbols to Material Icons mappings here.
- * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
- * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
+ * SF Symbol names to line icons, the canvas's icon style: Feather (see
+ * https://icons.expo.fyi), or `svg:` for the few Feather lacks (lineGlyphs).
+ * Filled SF names map to the same line icon: the canvas draws no filled ones.
  */
 const MAPPING = {
   'house.fill': 'home',
@@ -21,123 +23,122 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'chevron.left': 'chevron-left',
-  'chevron.up': 'expand-less',
-  'chevron.down': 'expand-more',
-  'xmark.circle.fill': 'cancel',
-  'plus': 'add',
-  'minus': 'remove',
-  'plus.circle.fill': 'add-circle',
-  'trash': 'delete',
-  'xmark': 'close',
-  'arrow.clockwise': 'refresh',
-  'clock.arrow.circlepath': 'history',
-  'pencil': 'edit',
-  'heart': 'favorite-border',
-  'heart.fill': 'favorite',
-  'book': 'menu-book',
-  'book.fill': 'menu-book',
-  'hammer.fill': 'build',
-  'wineglass': 'wine-bar',
-  'wineglass.fill': 'wine-bar',
-  'mug.fill': 'sports-bar',
-  'snowflake': 'ac-unit',
-  'leaf.fill': 'eco',
-  'person.2.fill': 'group',
-  'person.badge.plus': 'person-add',
-  'person.badge.minus': 'person-remove',
-  'envelope': 'mail-outline',
-  'key.fill': 'vpn-key',
-  'person': 'person',
-  'globe': 'public',
-  'note.text': 'notes',
+  'chevron.up': 'chevron-up',
+  'chevron.down': 'chevron-down',
+  'xmark.circle.fill': 'x-circle',
+  'plus': 'plus',
+  'minus': 'minus',
+  'plus.circle.fill': 'plus-circle',
+  'trash': 'trash-2',
+  'xmark': 'x',
+  'arrow.clockwise': 'refresh-cw',
+  'clock.arrow.circlepath': 'rotate-ccw',
+  'pencil': 'edit-2',
+  'heart': 'heart',
+  'heart.fill': 'heart',
+  'book': 'book-open',
+  'book.fill': 'book-open',
+  'hammer.fill': 'tool',
+  'wineglass': 'svg:wineglass',
+  'wineglass.fill': 'svg:wineglass',
+  'mug.fill': 'svg:beer',
+  'snowflake': 'svg:snowflake',
+  'leaf.fill': 'svg:leaf',
+  'person.2.fill': 'users',
+  'person.badge.plus': 'user-plus',
+  'person.badge.minus': 'user-minus',
+  'envelope': 'mail',
+  'key.fill': 'key',
+  'person': 'user',
+  'globe': 'globe',
+  'note.text': 'file-text',
   'checkmark': 'check',
-  'questionmark': 'question-mark',
+  'questionmark': 'help-circle',
   'checkmark.circle.fill': 'check-circle',
   'house': 'home',
-  'safari': 'explore',
-  'bookmark': 'bookmark-border',
+  'safari': 'compass',
+  'bookmark': 'bookmark',
   'bookmark.fill': 'bookmark',
-  'calendar': 'event',
-  'person.crop.circle': 'account-circle',
+  'calendar': 'calendar',
+  'person.crop.circle': 'user',
   'folder.fill': 'folder',
-  'tag.fill': 'local-offer',
-  'person.circle.fill': 'account-circle',
-  'building.2.fill': 'business',
-  'building.2': 'business',
-  'plus.circle': 'add-circle-outline',
-  'play.fill': 'play-arrow',
-  'flask': 'science',
-  'line.3.horizontal': 'drag-handle',
-  'line.3.horizontal.decrease': 'sort',
-  'camera.fill': 'photo-camera',
-  'photo': 'photo',
-  'circle.lefthalf.filled': 'brightness-6',
-  'rectangle.portrait.and.arrow.right': 'logout',
+  'tag.fill': 'tag',
+  'person.circle.fill': 'user',
+  'building.2.fill': 'svg:building',
+  'building.2': 'svg:building',
+  'plus.circle': 'plus-circle',
+  'play.fill': 'play',
+  'flask': 'svg:flask',
+  'line.3.horizontal': 'menu',
+  'line.3.horizontal.decrease': 'filter',
+  'camera.fill': 'camera',
+  'photo': 'image',
+  'circle.lefthalf.filled': 'moon',
+  'rectangle.portrait.and.arrow.right': 'log-out',
   'magnifyingglass': 'search',
   'plus.magnifyingglass': 'zoom-in',
   'minus.magnifyingglass': 'zoom-out',
-  'arrow.up': 'arrow-upward',
-  'arrow.right': 'arrow-forward',
-  'arrow.up.and.down': 'swap-vert',
-  'list.bullet': 'format-list-bulleted',
+  'arrow.up': 'arrow-up',
+  'arrow.right': 'arrow-right',
+  'arrow.up.and.down': 'svg:updown',
+  'list.bullet': 'list',
   'percent': 'percent',
-  'drop.fill': 'water-drop',
-  'sparkles': 'auto-awesome',
-  'ellipsis': 'more-horiz',
-  'dollarsign.circle.fill': 'monetization-on',
-  'mappin.and.ellipse': 'place',
-  'square.and.arrow.up': 'ios-share',
-  'plus.square': 'add-box',
+  'drop.fill': 'droplet',
+  'sparkles': 'svg:sparkles',
+  'ellipsis': 'more-horizontal',
+  'dollarsign.circle.fill': 'dollar-sign',
+  'mappin.and.ellipse': 'map-pin',
+  'square.and.arrow.up': 'share',
+  'plus.square': 'plus-square',
   'link': 'link',
-  'doc.on.doc': 'content-copy',
-  'paintpalette.fill': 'palette',
+  'doc.on.doc': 'copy',
+  'paintpalette.fill': 'svg:palette',
   'map.fill': 'map',
-  'clock': 'schedule',
+  'clock': 'clock',
   'phone': 'phone',
-  'arrow.triangle.turn.up.right.diamond': 'directions',
-  'lock.shield.fill': 'security',
+  'arrow.triangle.turn.up.right.diamond': 'navigation-2',
+  'lock.shield.fill': 'shield',
   'lock.fill': 'lock',
-  'lock.open.fill': 'lock-open',
-  'star': 'star-border',
-  'info.circle': 'info-outline',
-  'exclamationmark.circle': 'error-outline',
-  'eye': 'visibility',
-  'eye.slash': 'visibility-off',
-  'hand.tap': 'touch-app',
-  'exclamationmark.triangle': 'warning-amber',
-  'doc.text': 'description',
-  'doc.plaintext': 'article',
-  'circle.fill': 'circle',
-  'sun.max.fill': 'wb-sunny',
-  'list.number': 'format-list-numbered',
-  'trophy': 'emoji-events',
+  'lock.open.fill': 'unlock',
+  'star': 'star',
+  'info.circle': 'info',
+  'exclamationmark.circle': 'alert-circle',
+  'eye': 'eye',
+  'eye.slash': 'eye-off',
+  'hand.tap': 'mouse-pointer',
+  'exclamationmark.triangle': 'alert-triangle',
+  'doc.text': 'file-text',
+  'doc.plaintext': 'file',
+  'circle.fill': 'svg:dot',
+  'sun.max.fill': 'sun',
+  'list.number': 'list',
+  'trophy': 'award',
   'line.horizontal.3': 'menu',
-  'location': 'place',
-  'flag': 'outlined-flag',
+  'location': 'map-pin',
+  'flag': 'flag',
   'gearshape': 'settings',
+  'slider.horizontal.3': 'sliders',
   // Menus: the R&D tile, printing, and a builder row's ... menu.
-  'square.grid.2x2': 'grid-view',
-  'printer': 'print',
-  'arrow.up.to.line': 'vertical-align-top',
-  'arrow.up.right.square': 'open-in-new',
-  'arrow.turn.down.right': 'subdirectory-arrow-right',
-  'square.on.square': 'library-add',
-  'pin': 'push-pin',
-  'pin.fill': 'push-pin',
-  'arrow.up.right': 'north-east',
-  'checkmark.seal.fill': 'verified',
-  // Tab icons: the same Material glyphs NativeTabs uses on Android.
-  'rectangle.stack': 'style',
-  'camera': 'photo-camera',
-  'doc.on.clipboard': 'content-paste',
-  'arrow.uturn.backward': 'undo',
-  'square.and.arrow.down': 'file-download',
+  'square.grid.2x2': 'grid',
+  'printer': 'printer',
+  'arrow.up.to.line': 'chevrons-up',
+  'arrow.up.right.square': 'external-link',
+  'arrow.turn.down.right': 'corner-down-right',
+  'square.on.square': 'layers',
+  'pin': 'svg:pin',
+  'pin.fill': 'svg:pin',
+  'arrow.up.right': 'arrow-up-right',
+  'checkmark.seal.fill': 'svg:seal',
+  'rectangle.stack': 'layers',
+  'camera': 'camera',
+  'doc.on.clipboard': 'clipboard',
+  'arrow.uturn.backward': 'corner-up-left',
+  'square.and.arrow.down': 'download',
 } satisfies IconMapping;
 
 /**
- * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
- * This ensures a consistent look across platforms, and optimal resource usage.
- * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
+ * An icon: native SF Symbols on iOS, line icons on Android and web.
+ * Icon `name`s are SF Symbols and need a line icon in MAPPING.
  */
 export function IconSymbol({
   name,
@@ -153,12 +154,13 @@ export function IconSymbol({
 }) {
   // Android's back affordance is an arrow, not the iOS chevron (every
   // chevron.left in the app is a back button).
-  const glyph = name === 'chevron.left' && Platform.OS === 'android' ? 'arrow-back' : MAPPING[name];
+  const glyph = name === 'chevron.left' && Platform.OS === 'android' ? 'arrow-left' : MAPPING[name];
   // Web static render: the icon font is never loaded on the server, so
-  // MaterialIcons renders an empty <Text />. On the client it may already be
+  // Feather renders an empty <Text />. On the client it may already be
   // loaded and draw the glyph, which breaks hydration. Render the same empty
   // Text until hydration is done.
   const isHydrated = useIsHydrated();
   if (!isHydrated) return <Text />;
-  return <MaterialIcons color={color as ComponentProps<typeof MaterialIcons>['color']} size={size} name={glyph} style={style} />;
+  if (glyph.startsWith('svg:')) return <LineGlyph name={glyph.slice(4) as LineGlyphName} size={size} color={color} />;
+  return <Feather color={color as ComponentProps<typeof Feather>['color']} size={size} name={glyph as ComponentProps<typeof Feather>['name']} style={style} />;
 }

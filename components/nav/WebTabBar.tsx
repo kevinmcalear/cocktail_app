@@ -36,7 +36,8 @@ export function TabIcon({ name, size, color }: { name: IconName; size: number; c
   return name === 'calendar' ? <CalendarDayIcon size={size} color={color} /> : <IconSymbol name={name} size={size} color={color} />;
 }
 
-const BAR_HEIGHT = 56;
+// The board's pill and search circle are both 64 tall.
+const BAR_HEIGHT = 64;
 
 /**
  * Space to leave under scrolling content so the tab bar doesn't cover the last
@@ -93,7 +94,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
         </View>
       </GlassSurface>
       {/* While search is open, its circle is the current item: its icon takes the accent. */}
-      <GlassButton accessibilityLabel={current === 'search' ? 'Search, open' : 'Search'} icon="magnifyingglass" color={current === 'search' ? ds.accentText : undefined} onPress={() => go('search')} />
+      <GlassButton accessibilityLabel={current === 'search' ? 'Search, open' : 'Search'} icon="magnifyingglass" size={BAR_HEIGHT} color={current === 'search' ? ds.accentText : undefined} onPress={() => go('search')} />
     </View>
   );
 }
