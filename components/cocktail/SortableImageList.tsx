@@ -1,3 +1,4 @@
+import { CutoutOfferHost } from '@/components/drink/CutoutOfferHost';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useWebImageDrop } from '@/hooks/useWebImageDrop';
@@ -107,6 +108,8 @@ export function SortableImageList({ images, onReorder, onRemove, onAdd, onAddUri
                     }
                 />
             </View>
+            {/* The cocktail editors pick with a cut-out offer; it shows from this sheet. */}
+            <CutoutOfferHost />
         </View>
     );
 }

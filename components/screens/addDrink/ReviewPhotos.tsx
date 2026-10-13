@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, PressableScale, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
+import { CutoutOfferHost } from '@/components/drink/CutoutOfferHost';
 import { pickDrinkPhotos } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
@@ -26,7 +27,7 @@ export function ReviewPhotos({ photos, onChange, sketch, seed }: { photos: Photo
   const ds = useDs();
   const choose = async (angle: ImageAngle) => {
     try {
-      const [uri] = await pickDrinkPhotos();
+      const [uri] = await pickDrinkPhotos({ cutout: true });
       if (uri) onChange({ ...photos, [angle]: uri });
     } catch {
       showMessage('Couldn’t open your photos', 'Try again, or add photos on the drink’s page.');
@@ -80,6 +81,7 @@ export function ReviewPhotos({ photos, onChange, sketch, seed }: { photos: Photo
         })}
       </View>
       <Caption tone="muted">Empty slots show sketches until you add photos.</Caption>
+      <CutoutOfferHost />
     </View>
   );
 }

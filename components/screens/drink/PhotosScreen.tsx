@@ -5,6 +5,7 @@ import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, BrandProvider, Button, Caption, DrinkImage, GlassButton, PressableScale, Tag, Title, useDs, useGutter } from '@/components/ds';
+import { CutoutOfferHost } from '@/components/drink/CutoutOfferHost';
 import { pickDrinkPhotos, takeDrinkPhoto } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
@@ -14,7 +15,7 @@ import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useAddServicePhoto } from '@/hooks/useServicePhotos';
 import { readableAccent } from '@/lib/color';
 import { showMessage } from '@/lib/dialogs';
-import type { ImageAngle, ItemImageLink } from '@/lib/itemImages';
+import { glassOver, type ImageAngle, type ItemImageLink } from '@/lib/itemImages';
 import { roleLabel } from '@/lib/roles';
 import { photoShots, photosTaken, type PhotoShot } from '@/lib/servicePhotos';
 import type { DatabaseItem } from '@/types/types';
@@ -60,10 +61,10 @@ function Photos({ item, start }: { item: DatabaseItem; start?: string }) {
   const camera = Platform.OS === 'web' || Device.isDevice;
   const previewHeight = Math.min(width, height * 0.42);
   const note = slotNote(shot);
-  const glass = shot.picture && !shot.picture.isSketch ? 'dark' : 'light';
+  const glass = glassOver(shot.picture);
   const choose = async (shoot: boolean) => {
     try {
-      const uri = shoot ? await takeDrinkPhoto() : (await pickDrinkPhotos())[0];
+      const uri = shoot ? await takeDrinkPhoto({ cutout: true }) : (await pickDrinkPhotos({ cutout: true }))[0];
       if (uri) add.mutate({ angle: shot.angle as 'hero', uri, replaces: shot.photoLinkIds });
     } catch {
       showMessage(shoot ? "Couldn't open the camera" : "Couldn't open your photos", 'Try again, or choose a photo from your library.');
@@ -127,6 +128,7 @@ function Photos({ item, start }: { item: DatabaseItem; start?: string }) {
         <GlassButton accessibilityLabel="Back" icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'} scheme={glass} onPress={() => (router.canGoBack() ? router.back() : router.replace(`/cocktail/${item.id}` as Href))} />
         {canAdd ? <GlassButton accessibilityLabel={`Add a ${shot.label.toLowerCase()} photo`} label="Add a photo" scheme={glass} onPress={() => void choose(false)} /> : null}
       </View>
+      <CutoutOfferHost />
     </View>
   );
 }

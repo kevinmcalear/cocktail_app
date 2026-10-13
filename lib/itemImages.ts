@@ -28,6 +28,21 @@ export interface ItemPicture {
   palette?: string[] | null;
 }
 
+/**
+ * Whether a picture is a PNG: a cut-out (the drink lifted off its background,
+ * store/useCutoutOffer) or a sketch. Either sits on the drawing paper, never on
+ * its own colour. Phone photos arrive as JPEG, so an opaque PNG is rare, and
+ * the paper under one doesn't show.
+ */
+export function isPng(url: string | number | null | undefined): boolean {
+  return typeof url === 'string' && /\.png(\?|$)/i.test(url);
+}
+
+/** Glass over a picture: dark on a photo, light on paper (a drawing or a cut-out), and light on no picture at all. */
+export function glassOver(picture: { url: string | number; isSketch: boolean } | null | undefined): 'dark' | 'light' {
+  return picture && !picture.isSketch && !isPng(picture.url) ? 'dark' : 'light';
+}
+
 /** Whether a link is one of the item's hero pictures (not a service angle). */
 export function isHeroLink(link: ItemImageLink): boolean {
   return (link.angle ?? 'hero') === 'hero';

@@ -20,7 +20,7 @@ import { useTeamRole } from '@/hooks/useTeamRole';
 import { useItemVersions } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { heroPictures } from '@/lib/drinkPhotos';
-import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { glassOver, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
@@ -169,7 +169,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const sections = useDrinkSections(bodyProps);
   const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} />;
   const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />;
-  const heroScheme = pictures[0] && !pictures[0].isSketch ? 'dark' : 'light';
+  const heroScheme = glassOver(pictures[0]);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

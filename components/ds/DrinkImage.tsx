@@ -4,6 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { radius as radii } from '@/constants/tokens';
+import { isPng } from '@/lib/itemImages';
 import type { SketchInputs } from '@/lib/sketch/types';
 import { markNoThumb, thumbToTry } from '@/lib/thumbnails';
 
@@ -60,6 +61,8 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
   const [noThumb, setNoThumb] = useState<string | null>(null);
   const small = thumb && typeof uri === 'string' && noThumb !== uri ? thumbToTry(uri) : null;
   const shown = small ?? uri;
+  // A cut-out sits on the drawn paper, as a sketch does, not on its own colour, which it would vanish into.
+  const cutout = isPng(uri);
   const glassIcon = (
     <View style={styles.empty}>
       <CustomIcon name={glass || 'Coupe'} size={64} color={ds.c.sketchInk} />
@@ -70,7 +73,7 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
       accessible
       role="img"
       accessibilityLabel={ingredient ? `${accessibilityLabel}, drawing` : uri ? (generated ? `${accessibilityLabel}, sketch` : accessibilityLabel) : `${accessibilityLabel}, no photo yet`}
-      style={[styles.frame, { aspectRatio: aspectRatio || undefined, borderRadius, backgroundColor: (uri && placeholderColor) || ds.c.paper }, style]}
+      style={[styles.frame, { aspectRatio: aspectRatio || undefined, borderRadius, backgroundColor: (uri && !cutout && placeholderColor) || ds.c.paper }, style]}
     >
       {ingredient ? (
         <IngredientDrawing id={ingredient.id} name={ingredient.name} lazy={thumb} />

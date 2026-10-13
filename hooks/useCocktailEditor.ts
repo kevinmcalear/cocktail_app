@@ -1,5 +1,4 @@
 import { decode } from "base64-arraybuffer";
-import * as FilePicker from "expo-image-picker";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
@@ -17,7 +16,7 @@ import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { supabase, UPLOAD_CACHE_SECONDS } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
-import { setItemImages } from "@/components/drink/drinkImages";
+import { pickDrinkPhotos, setItemImages } from "@/components/drink/drinkImages";
 
 export type SpecCategory = "method" | "glassware" | "family" | "ice";
 
@@ -161,22 +160,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         setLocalImagesDirty((prev) => [...prev, ...uris.map((url) => ({ url, isNew: true }))]);
     }, []);
 
-    const pickImage = async () => {
-        const { status } = await FilePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== "granted") {
-            Alert.alert("Permission needed", "We need access to your photos.");
-            return;
-        }
-        const result = await FilePicker.launchImageLibraryAsync({
-            mediaTypes: FilePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 5],
-            quality: 0.8,
-        });
-        if (!result.canceled) {
-            addImages(result.assets.map((asset) => asset.uri));
-        }
-    };
+    const pickImage = async () => addImages(await pickDrinkPhotos({ cutout: true }));
 
     const uploadAndLinkImage = async (uri: string): Promise<string | null> => {
         try {
