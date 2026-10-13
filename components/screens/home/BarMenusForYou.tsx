@@ -2,7 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, Headline, PressableScale, Spec, TextLink, Title, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, DsText, Headline, PressableScale, Spec, Tag, TextLink, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { FIFTY_BEST_READ, useBarMenusForYou, useFiftyBest, type BarMenuForYou } from '@/hooks/useBarMenusForYou';
@@ -47,7 +47,7 @@ function coldPicks(list: { edition: BarMenuForYou; reason: string }[]) {
 }
 
 /** A bar's menu on now, in full: the bar, the menu and its theme, its first drinks with your scores, why it's here, Make it at home and Save. */
-function ForYouCard({ edition, ranked, reason }: { edition: BarMenuForYou; ranked: ForYouHad[]; reason: string }) {
+function ForYouCard({ edition, ranked, reason, compact }: { edition: BarMenuForYou; ranked: ForYouHad[]; reason: string; /** A desktop grid card: the drinks as one accent line, an On now tag (home-collection-desktop-menus). */ compact?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const more = edition.drinkIds.length - 3;
@@ -61,30 +61,49 @@ function ForYouCard({ edition, ranked, reason }: { edition: BarMenuForYou; ranke
             <DsText variant="body" style={styles.semi}>
               {edition.barName}
             </DsText>
-            <Caption tone="muted">{[edition.barPlace, since].filter(Boolean).join(' · ')}</Caption>
+            <Caption tone="muted">{compact ? edition.barPlace : [edition.barPlace, since].filter(Boolean).join(' · ')}</Caption>
           </View>
+          {compact && edition.dates.isCurrent ? <Tag label="On now" tone="outline" /> : null}
         </View>
         <Title italic>{edition.name}</Title>
-        {edition.theme ? <Body tone="muted">{edition.theme}</Body> : null}
+        {edition.theme ? (
+          compact ? (
+            <Caption tone="muted" numberOfLines={3}>
+              {edition.theme}
+            </Caption>
+          ) : (
+            <Body tone="muted">{edition.theme}</Body>
+          )
+        ) : null}
+        {compact ? (
+          <Caption color={ds.accentText} style={styles.drinkName}>
+            {edition.drinks
+              .slice(0, 3)
+              .map((d) => d.name.toUpperCase())
+              .join(' · ')}
+          </Caption>
+        ) : null}
       </View>
-      <View role="list" style={styles.drinks}>
-        {edition.drinks.slice(0, 3).map((d, i) => {
-          const mine = ranked.find((h) => h.itemId === d.id);
-          return (
-            <View role="listitem" key={d.id} style={[styles.drink, { borderTopColor: ds.c.line }]}>
-              <View style={styles.drinkHead}>
-                <Caption style={styles.drinkName}>{d.name.toUpperCase()}</Caption>
-                {mine ? <Spec accessibilityLabel={`your score ${formatScore(mine.score)}`}>{formatScore(mine.score)}</Spec> : i === 2 && more > 0 ? <Caption tone="muted">{`and ${more} more`}</Caption> : null}
+      {compact ? null : (
+        <View role="list" style={styles.drinks}>
+          {edition.drinks.slice(0, 3).map((d, i) => {
+            const mine = ranked.find((h) => h.itemId === d.id);
+            return (
+              <View role="listitem" key={d.id} style={[styles.drink, { borderTopColor: ds.c.line }]}>
+                <View style={styles.drinkHead}>
+                  <Caption style={styles.drinkName}>{d.name.toUpperCase()}</Caption>
+                  {mine ? <Spec accessibilityLabel={`your score ${formatScore(mine.score)}`}>{formatScore(mine.score)}</Spec> : i === 2 && more > 0 ? <Caption tone="muted">{`and ${more} more`}</Caption> : null}
+                </View>
+                {d.line ? (
+                  <Caption tone="muted" numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
+                    {d.line}
+                  </Caption>
+                ) : null}
               </View>
-              {d.line ? (
-                <Caption tone="muted" numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
-                  {d.line}
-                </Caption>
-              ) : null}
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      )}
       <View style={styles.cardFoot}>
         <View style={styles.reason}>
           <IconSymbol name="star" size={14} color={ds.c.muted} />
@@ -172,7 +191,7 @@ export function BarMenusForYou({ wide }: { wide: boolean }) {
       {wide ? (
         <CardGrid min={300} gap={space.lg}>
           {all.map((p) => (
-            <ForYouCard key={p.edition.id} edition={p.edition} ranked={featured.edition === p.edition ? featured.ranked : atBars.filter((h) => h.barId === p.edition.barId)} reason={p.reason} />
+            <ForYouCard compact key={p.edition.id} edition={p.edition} ranked={featured.edition === p.edition ? featured.ranked : atBars.filter((h) => h.barId === p.edition.barId)} reason={p.reason} />
           ))}
         </CardGrid>
       ) : (

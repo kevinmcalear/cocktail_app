@@ -84,5 +84,5 @@ const styles = StyleSheet.create({
   tab: { height: 38, paddingHorizontal: 14, borderRadius: radius.control - 3, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
   fillTab: { flex: 1, height: 44, borderRadius: radius.pill },
   quiet: { padding: 2, gap: 2, borderWidth: 0, borderRadius: radius.control },
-  quietTab: { height: 36, borderRadius: radius.control - 2 },
+  quietTab: { height: 36, paddingHorizontal: space.sm, borderRadius: radius.control - 2 },
 });
