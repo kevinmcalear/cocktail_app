@@ -9,6 +9,7 @@
  */
 
 import { formatVolume, isGarnishUnit, leaveOutFor } from '@/lib/batch';
+import { barMl, lineAmount } from '@/lib/drinkMath';
 import { toQuantity } from '@/lib/quantity';
 import type { SpecLine } from '@/lib/spec';
 
@@ -64,7 +65,8 @@ function toServiceLine(line: SpecLine): ServiceLine {
   return {
     key: line.key,
     ingredient: line.ingredient ?? 'Hidden ingredient',
-    amount: line.amount ?? '',
+    // In ml like the spec above it (board drink-phone-venue): 2 oz reads 60 ml; dashes and counts as written.
+    amount: line.amount === null ? '' : (lineAmount(line, 'ml') ?? line.amount),
     guessed: line.atService === null,
     garnish: isGarnishUnit(line.unit),
   };
@@ -79,7 +81,8 @@ export function serviceSpec(lines: SpecLine[]): ServiceSpec {
   let pourG: number | null = null;
   for (const l of batch) {
     const q = toQuantity(l.value, l.unit);
-    if (q?.kind === 'ml') pourMl = (pourMl ?? 0) + q.value;
+    // Ounces count in bar measures, so the pour adds up the lines as they read.
+    if (q?.kind === 'ml') pourMl = (pourMl ?? 0) + (/oz/i.test(l.unit ?? '') ? barMl(q.value) : q.value);
     if (q?.kind === 'g') pourG = (pourG ?? 0) + q.value;
   }
   const parts = [pourMl !== null ? formatVolume(pourMl, 'ml') : null, pourG !== null ? `${round(pourG)} g` : null].filter(Boolean);
@@ -94,9 +97,8 @@ export function serviceSpec(lines: SpecLine[]): ServiceSpec {
   };
 }
 
-/** "A 750 ml bottle is 11 serves", or null when there's no pour. */
+/** "A 1 L bottle holds 12" (board drink-phone-venue), or null when there's no pour. */
 export function bottleLine(spec: ServiceSpec): string | null {
   if (!spec.servesPerBottle || !spec.pourMl) return null;
-  const n = spec.servesPerBottle.ml750;
-  return `A 750 ml bottle is ${n} ${n === 1 ? 'serve' : 'serves'}`;
+  return `A 1 L bottle holds ${spec.servesPerBottle.l1}`;
 }

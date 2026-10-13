@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { layout, radius, space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useLineage } from '@/hooks/useLineage';
 import { useSpecMatches } from '@/hooks/useSpecMatches';
@@ -76,19 +76,21 @@ export function ServedAt({ itemId }: { itemId: string }) {
                 role="link"
                 accessibilityLabel={[v.origin_bar?.display_name ?? v.name, v.origin_bar?.locality, scores[v.id] != null ? String(scores[v.id]) : 'no score'].filter(Boolean).join(', ')}
                 onPress={() => router.push(drinkHref(v.id))}
-                style={[styles.tile, { backgroundColor: ds.c.surface }]}
+                style={styles.tile}
               >
-                <UserAvatar uri={v.origin_bar?.avatar_url ?? null} name={v.origin_bar?.display_name ?? v.name} size={44} />
-                <DsText variant="caption" numberOfLines={1} style={styles.tileName}>
+                <UserAvatar uri={v.origin_bar?.avatar_url ?? null} name={v.origin_bar?.display_name ?? v.name} size={48} />
+                <DsText variant="caption" numberOfLines={2} style={styles.tileName}>
                   {v.origin_bar?.display_name ?? v.name}
                 </DsText>
-                <Score score={scores[v.id]} />
+                <Score score={scores[v.id]} hideEmpty />
               </PressableScale>
             ))}
             {rest > 0 ? (
-              <PressableScale role="button" accessibilityLabel={`${rest} more bars`} onPress={() => setAll(true)} style={[styles.tile, styles.more, { borderColor: ds.c.lineStrong }]}>
-                <DsText variant="headline">{`+${rest}`}</DsText>
-                <Caption tone="muted">{`${rest} more`}</Caption>
+              <PressableScale role="button" accessibilityLabel={`${rest} more bars`} onPress={() => setAll(true)} style={styles.tile}>
+                <View style={[styles.more, { borderColor: ds.c.lineStrong }]}>
+                  <DsText variant="headline">+</DsText>
+                </View>
+                <DsText variant="caption" style={styles.tileName}>{`${rest} more`}</DsText>
               </PressableScale>
             ) : null}
           </ScrollView>
@@ -130,9 +132,10 @@ const styles = StyleSheet.create({
   cap: { letterSpacing: 1.2 },
   strip: { gap: space.sm, paddingVertical: space.xs },
   wrap: { flexWrap: 'wrap' },
-  tile: { width: 92, alignItems: 'center', gap: space.xs, paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.control, borderCurve: 'continuous' },
+  // The board's strip: round bar logos, the name and its score under each, no box.
+  tile: { width: 76, alignItems: 'center', gap: space.xs },
   tileName: { textAlign: 'center' },
-  more: { justifyContent: 'center', borderWidth: 1, minHeight: layout.minTapTarget },
+  more: { width: 48, height: 48, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
 });

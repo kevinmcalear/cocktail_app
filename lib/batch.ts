@@ -68,6 +68,8 @@ export const MAX_SERVES = 60;
 /** Up to this many dashes in the batch, count them; past it, measure. */
 const DASH_LIMIT = 12;
 const ML_PER_OZ = 29.5735;
+/** Ounces batched in ml read in bar measures, 1 oz to 30 ml, like the spec and the service pour (lib/drinkMath barMl). */
+const BAR_ML_PER_OZ = 30;
 
 const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
@@ -158,7 +160,7 @@ function scaleLine(line: SpecLine, serves: number, unit: VolumeUnit): BatchLine 
   const n = line.value * serves;
   const perG = GRAMS[u];
   if (perG !== undefined) return { ...base, amount: formatWeight(n * perG), sub: null, ml: line.ml === null ? null : line.ml * serves };
-  const perMl = VOLUME_ML[u];
+  const perMl = unit === 'ml' && (u === 'oz' || u === 'fl oz') ? BAR_ML_PER_OZ : VOLUME_ML[u];
   if (perMl === undefined) return { ...base, amount: formatCount(n, u || 'each'), sub: null, ml: null };
   const ml = n * perMl;
   if (DASH_UNITS.has(u)) {

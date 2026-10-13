@@ -87,6 +87,11 @@ assert.deepEqual(s.lines.map((l) => l.leaveOut), [null, null, 'garnish', 'dairy'
 assert.deepEqual(s.lines.map((l) => l.amount), ['12 oz', '4 oz', '6 each', '4 oz', '6 twists', '']);
 assert.equal(Math.round(s.totalMl), Math.round(12 * 29.57 + 120), 'only bottled volume counts');
 
+// Ounces batched in ml read in bar measures (1 oz to 30 ml), like the spec and the service pour: 2 oz for 8 is 480 ml, not 473.
+const barDaiquiri = buildBatch(specLines([row('r', 'White rum', 2, 'oz'), row('l', 'Lime', 0.75, 'oz'), row('s', 'Simple syrup', 0.75, 'oz')]), ['Shake'], 8);
+assert.deepEqual(barDaiquiri.lines.map((l) => [l.amount, l.perServe]), [['480 ml', '60 ml'], ['180 ml', '22.5 ml'], ['180 ml', '22.5 ml']]);
+assert.equal(barDaiquiri.pour, '82.5 ml', 'rum and syrup per serve, the lime added at the station');
+
 // A finish stays out of the bottle: drops of oil, a mist, a rinse and a float go on each serve; saline drops go in.
 const finished = buildBatch(
   specLines([row('rum', 'White rum', 60, 'ml'), row('sal', 'Saline', 2, 'drop'), row('oil', 'Mint oil', 3, 'drop'), row('ab', 'Absinthe', 1, 'rinse'), row('m', 'Mezcal', 2, 'spray'), row('f', 'Red wine', 1, 'float')]),
