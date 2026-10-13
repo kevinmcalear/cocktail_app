@@ -9,6 +9,8 @@ import { AddIngredientWizard } from './AddIngredientWizard';
 const mockCreate = jest.fn();
 const mockSaved = jest.fn();
 
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useDropdowns', () => ({
   useDropdowns: () => ({
     data: {

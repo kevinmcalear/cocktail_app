@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, LockedSection, Tag, TextLink, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, LockedSection, PressableScale, Tag, TextLink, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useItemComments, useItemVersions, useRestoreVersion, type ItemVersion } from '@/hooks/useVersions';
@@ -14,6 +14,8 @@ interface HistorySectionProps {
   itemId: string;
   barId: string | null;
   canEdit: boolean;
+  /** Desktop: folded to one row, "Version 3 · 2 Oct · Kevin M. ›", until opened (board drink-desktop). */
+  compact?: boolean;
 }
 
 /**
@@ -25,7 +27,7 @@ interface HistorySectionProps {
  * someone opens the rest. Guests see what changed on the public drink page,
  * when the bar shows it (PublicSpecChanges).
  */
-export function HistorySection({ itemId, barId, canEdit }: HistorySectionProps) {
+export function HistorySection({ itemId, barId, canEdit, compact = false }: HistorySectionProps) {
   const ds = useDs();
   const { data: capabilities } = useCapabilities(barId);
   const { data: opensAtLevel } = useCapabilityOpensAt(barId, 'specs');
@@ -36,10 +38,21 @@ export function HistorySection({ itemId, barId, canEdit }: HistorySectionProps) 
   if (!barId && !canEdit) return null;
   const latest = versions?.[0];
   const note = notes[notes.length - 1];
-  const earlier = (versions?.length ?? 1) - 1;
+  // Versions before the current one; none (not -1) when nothing is saved yet.
+  const earlier = Math.max(0, (versions?.length ?? 0) - 1);
+  const changes = latest ? specDiff(versions?.[1]?.snapshot ?? null, latest.snapshot) : [];
   const more = [earlier ? `${earlier} earlier version${earlier === 1 ? '' : 's'}` : null, notes.length > 1 ? `${notes.length - 1} more note${notes.length === 2 ? '' : 's'}` : null]
     .filter(Boolean)
     .join(' and ');
+  if (compact && unlocked && latest && !open) {
+    const summary = `Version ${latest.version} · ${versionLine(latest.created_at, latest.created_by_name)} ›`;
+    return (
+      <PressableScale role="button" aria-expanded={false} accessibilityLabel={`Spec changes. ${summary.replace(' ›', '')}. Open`} onPress={() => setOpen(true)} style={[styles.row, { borderTopColor: ds.c.line }]}>
+        <Headline role="heading">Spec changes</Headline>
+        <Caption tone="muted">{summary}</Caption>
+      </PressableScale>
+    );
+  }
   return (
     <LockedSection title="Spec changes" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Bartender'}>
       {isPending ? <Caption tone="muted">Loading…</Caption> : null}
@@ -53,7 +66,18 @@ export function HistorySection({ itemId, barId, canEdit }: HistorySectionProps) 
             <Tag label="Current" tone="accent" />
           </View>
           <Caption tone="muted">{versionLine(latest.created_at, latest.created_by_name)}</Caption>
-          <Body>{specDiff(versions?.[1]?.snapshot ?? null, latest.snapshot).join(' · ') || latest.note || 'No changes recorded'}</Body>
+          {/* What changed, as small chips (board drink-phone-venue); the first version has nothing before it. */}
+          {versions?.[1] && changes.length ? (
+            <View style={styles.changes}>
+              {changes.map((c) => (
+                <Caption key={c} style={[styles.change, { backgroundColor: ds.c.raised }]}>
+                  {c}
+                </Caption>
+              ))}
+            </View>
+          ) : (
+            <Caption tone="muted">{latest.note || (versions?.[1] ? 'No changes recorded' : 'The first saved spec.')}</Caption>
+          )}
         </View>
       ) : null}
       {!open && note ? (
@@ -119,6 +143,7 @@ export function Versions({ itemId, versions, canEdit }: { itemId: string; versio
 
 const styles = StyleSheet.create({
   list: { gap: space.md },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, paddingVertical: space.lg, borderTopWidth: StyleSheet.hairlineWidth },
   version: { borderLeftWidth: 2, paddingLeft: space.md, gap: space.xs },
   note: { gap: space.xs },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

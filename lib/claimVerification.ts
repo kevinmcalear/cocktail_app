@@ -5,7 +5,8 @@
 
 export type ClaimMethod = 'note' | 'email' | 'instagram' | 'phone';
 export type BarClaimMethod = Exclude<ClaimMethod, 'note'>;
-export const BAR_CLAIM_METHODS: BarClaimMethod[] = ['email', 'instagram', 'phone'];
+/** In the order they're offered: a message from the bar's Instagram first (b19), then a work email, then a call. */
+export const BAR_CLAIM_METHODS: BarClaimMethod[] = ['instagram', 'email', 'phone'];
 
 /** What a claim recorded about the page and the claimant when it was made. */
 export interface ClaimEvidence {

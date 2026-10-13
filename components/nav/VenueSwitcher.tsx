@@ -37,12 +37,12 @@ export function VenueSwitcher({ size = 32 }: { size?: number }) {
   );
 }
 
-/** The venue's name in its own display face, beside the logo: Tonight and the sidebar only (the brief). */
+/** The venue's name in its own display face, italic as the boards draw it, beside the logo: Tonight and the sidebar only (the brief). */
 export function VenueWordmark({ venue }: { venue: Venue | null }) {
   const ds = useDs();
   if (!venue) return null;
   return (
-    <DsText variant="headline" numberOfLines={1} style={[styles.wordmark, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+    <DsText variant="headline" numberOfLines={1} style={[styles.wordmark, { fontFamily: displayFaces[ds.displayFace].italic }]}>
       {venue.name}
     </DsText>
   );

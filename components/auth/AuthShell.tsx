@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Caption, Display, DsText, GlassButton, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { BRAND } from '@/constants/brand';
+import { STATUS } from '@/constants/palette';
+import { readableAccent, withAlpha } from '@/lib/color';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
 /** A venue's own name and logo, shown in place of the product name on its staff link. */
@@ -17,7 +19,8 @@ export interface AuthBrand {
 
 interface AuthShellProps {
   title: string;
-  subtitle?: string;
+  /** A line, or a line with a highlighted part ("We sent a code to <email>"). */
+  subtitle?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
   brand?: AuthBrand;
@@ -50,11 +53,12 @@ function Frame({ title, subtitle, children, footer, brand, titleSize = 'display'
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { paddingHorizontal: gutter, paddingTop: insets.top + space.xxl, paddingBottom: insets.bottom + space.xxl },
+            // Top-aligned (canvas make-onboarding-signin*): a screen without Back starts its title where Back would end.
+            { paddingHorizontal: gutter, paddingTop: insets.top + space.xxxl + space.sm + (onBack ? 0 : space.xxxl), paddingBottom: insets.bottom + space.xxl },
           ]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.column}>
+          <View style={[styles.column, { gap: titleSize === 'title' ? space.xl : space.xxl }]}>
             {onBack ? (
               <View style={styles.back}>
                 <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={onBack} />
@@ -75,9 +79,12 @@ function Frame({ title, subtitle, children, footer, brand, titleSize = 'display'
                   </DsText>
                 </View>
               ) : null}
-              <Caption tone="accent" style={styles.eyebrow}>
-                {brand?.name ?? BRAND.productName}
-              </Caption>
+              {/* The product (or venue) name heads the first screen; the steps after it go straight to their title. */}
+              {titleSize === 'display' ? (
+                <Caption tone="accent" style={styles.eyebrow}>
+                  {brand?.name ?? BRAND.productName}
+                </Caption>
+              ) : null}
               {titleSize === 'title' ? <Title>{title}</Title> : <Display>{title}</Display>}
               {subtitle ? <Body tone="muted">{subtitle}</Body> : null}
             </View>
@@ -99,11 +106,13 @@ export function initials(name: string): string {
 /** A form-level message under the fields. Errors say what went wrong and how to fix it. */
 export function AuthMessage({ tone, children }: { tone: 'error' | 'info'; children: string }) {
   const ds = useDs();
-  const color = tone === 'error' ? ds.accentText : ds.c.muted;
+  // An error sits in a box tinted the status red (canvas make-onboarding-signin-code-wrong).
+  const red = readableAccent(STATUS.danger, ds.c.ground);
+  const color = tone === 'error' ? red : ds.c.muted;
   return (
-    <View style={styles.message} role={tone === 'error' ? 'alert' : 'status'}>
+    <View style={[styles.message, tone === 'error' && [styles.errorBox, { backgroundColor: withAlpha(red, 0.12) }]]} role={tone === 'error' ? 'alert' : 'status'}>
       <IconSymbol name={tone === 'error' ? 'exclamationmark.circle' : 'info.circle'} size={18} color={color} />
-      <Caption color={color} style={styles.messageText}>
+      <Caption color={tone === 'error' ? ds.c.ink : color} style={styles.messageText}>
         {children}
       </Caption>
     </View>
@@ -139,17 +148,18 @@ export function AuthSpinner({ label }: { label?: string }) {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: 'center' },
-  column: { width: '100%', maxWidth: 420, alignSelf: 'center', gap: space.xxl },
+  scroll: { flexGrow: 1 },
+  column: { width: '100%', maxWidth: 420, alignSelf: 'center' },
   back: { alignSelf: 'flex-start' },
   head: { gap: space.sm },
   logo: { width: 88, height: 88, borderRadius: radius.card, marginBottom: space.md },
   mark: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: radius.pill, width: 64, height: 64 },
-  eyebrow: { textTransform: 'uppercase', letterSpacing: 1.2 },
+  eyebrow: { textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: fontFamilies.bodyMedium },
   body: { gap: space.lg },
-  footer: { alignItems: 'center', gap: space.sm },
+  footer: { alignItems: 'center', gap: space.xs },
   message: { flexDirection: 'row', gap: space.sm, alignItems: 'flex-start' },
   messageText: { flex: 1, paddingTop: 1 },
+  errorBox: { paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.control },
   linkRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', columnGap: space.xs },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   linkText: { fontFamily: fontFamilies.bodyMedium },

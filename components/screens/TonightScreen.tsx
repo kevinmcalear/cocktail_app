@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, GlassButton, Headline, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, GlassButton, Headline, useBreakpoint, useDs } from '@/components/ds';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { MenuOnRow } from '@/components/screens/menus/MenuRows';
@@ -34,6 +34,8 @@ export function TonightScreen() {
   // hydration (the build's date isn't the device's); a blank line keeps the header's height.
   const date = useServiceDate();
   const openMenus = () => router.push('/menus/all');
+  const phone = useBreakpoint() === 'phone';
+  const menusButton = <GlassButton icon="doc.text" label="Menus" accessibilityLabel="All menus" onPress={openMenus} />;
   // Each menu's name, then its sections' heads and drinks, flat for the list.
   const shown = blocks.filter((b) => b.sections.length);
   const rows: (MenuPageRow | { key: string; menu: (typeof shown)[number]['menu']; count: number; first: boolean })[] = shown.flatMap((block, i) => [
@@ -68,10 +70,13 @@ export function TonightScreen() {
           <View style={styles.header}>
             <PageHeader
               title="Tonight"
+              display
               wordmark
               subtitle={date ? tonightLine(date, menus, drinks.length) : '\u00a0'}
-              action={active ? <GlassButton icon="list.bullet" label="Menus" accessibilityLabel="All menus" onPress={openMenus} /> : null}
+              action={active && !phone ? menusButton : null}
             />
+            {/* On a phone Menus is a glass button under the date (venue-tonight-phone); wider, beside the title. */}
+            {active && phone ? <View style={styles.menus}>{menusButton}</View> : null}
             {active ? <TonightSetupBanner barId={active.id} /> : null}
             {/* The This week strip (and a takeover card when one is on), then the menus that are on. */}
             {active ? <TonightWeek barId={active.id} /> : null}
@@ -103,5 +108,6 @@ const styles = StyleSheet.create({
   header: { gap: space.sm, paddingBottom: space.lg },
   nextBlock: { paddingTop: space.xxl },
   emptyButton: { alignSelf: 'flex-start', marginTop: space.sm },
+  menus: { alignSelf: 'flex-start' },
   empty: { gap: space.sm, paddingVertical: space.xl },
 });

@@ -68,6 +68,7 @@ export function MenusScreen() {
       <ScrollView contentContainerStyle={[column, styles.content, { paddingBottom: insets.bottom + space.xxxl }]}>
         <PageHeader
           title="Menus"
+          display={!!barId}
           subtitle={summary}
           onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
           backLabel={barId ? 'Back to Tonight' : 'Back'}

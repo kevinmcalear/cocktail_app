@@ -70,10 +70,11 @@ export function LogoRow({ venue, logoUrl, busy, onPick, onRemoveBackground, onRe
 const FACE_SAMPLE: Record<DisplayFace, { italic?: boolean; scale?: number }> = { instrument: {}, fraunces: { italic: true }, bricolage: { scale: 28 / 32 } };
 
 /** The display faces side by side, each a card with the venue's name set large in it; the picked one is ringed in ink with a tick. */
-export function FaceChoices({ name, value, onChange }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void }) {
+/** `setup`: venue setup's Look step (canvas make-venue-look), which draws the same cards. */
+export function FaceChoices({ name, value, onChange, setup }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void; setup?: boolean }) {
   const ds = useDs();
   return (
-    <View role="radiogroup" accessibilityLabel="Display face" style={styles.faces}>
+    <View role="radiogroup" accessibilityLabel="Display face" style={[styles.faces, setup && styles.bare]}>
       {FACES.map((face) => {
         const selected = face === value;
         const look = FACE_SAMPLE[face];
@@ -116,4 +117,5 @@ const styles = StyleSheet.create({
   face: { flexGrow: 1, flexShrink: 1, flexBasis: 160, minWidth: 0, gap: space.sm, padding: space.lg, borderRadius: radius.control + 4, borderCurve: 'continuous' },
   tick: { position: 'absolute', top: space.md, right: space.md },
   sample: { fontSize: type.headline.fontSize * 1.6, lineHeight: 36, paddingRight: space.lg },
+  bare: { paddingVertical: 0 },
 });

@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { fontFamilies, palateHues, radius, space } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { itemHref } from '@/lib/itemRoutes';
 import { detailLine, dotShape, dotTone, itemDay, kindLabel, shortDay, type WeekItem } from '@/lib/week';
 
@@ -46,7 +47,7 @@ export function weekHref(item: WeekItem, member: boolean): Href {
  * single day), the name, and its kind with the detail under it. `bar` adds the
  * bar's name, for the week at home.
  */
-export function WeekLine({ item, from, member, bar, lead }: { item: WeekItem; from: Date; member: boolean; bar?: boolean; lead?: 'day' | 'none' }) {
+export function WeekLine({ item, from, member, bar, lead, dot = true }: { item: WeekItem; from: Date; member: boolean; bar?: boolean; lead?: 'day' | 'none'; /** Tonight's strip lists without the dot, as its board draws. */ dot?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const day = shortDay(itemDay(item), from);
@@ -59,11 +60,11 @@ export function WeekLine({ item, from, member, bar, lead }: { item: WeekItem; fr
       style={[styles.line, { borderBottomColor: ds.c.line }]}
     >
       {lead === 'none' ? null : (
-        <DsText variant="caption" tone="muted" style={styles.day}>
+        <DsText variant="caption" tone="muted" style={[styles.day, dot ? null : styles.dayShort]}>
           {day}
         </DsText>
       )}
-      <WeekDot item={item} />
+      {dot ? <WeekDot item={item} /> : null}
       <View style={styles.flex}>
         <DsText numberOfLines={2}>{item.name}</DsText>
         <Caption tone="muted" numberOfLines={2}>
@@ -93,7 +94,8 @@ export function WeekRibbon({ days, today, onPick, picked }: { days: { day: strin
             accessibilityLabel={label}
             disabled={!onPick}
             onPress={() => onPick?.(day)}
-            style={[styles.cell, (picked ?? today) === day && { backgroundColor: ds.c.raised }]}
+            // Today is tinted with the accent; a picked day that isn't today is raised.
+            style={[styles.cell, isToday ? { backgroundColor: withAlpha(ds.accentFill.fill, 0.18) } : picked === day && { backgroundColor: ds.c.raised }]}
           >
             <Caption color={isToday ? ds.accentText : ds.c.muted}>{date.toLocaleDateString(undefined, { weekday: 'narrow' })}</Caption>
             <DsText variant="spec" style={isToday ? { fontFamily: fontFamilies.monoMedium } : null}>
@@ -114,6 +116,7 @@ export function WeekRibbon({ days, today, onPick, picked }: { days: { day: strin
 const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   day: { width: 64, fontFamily: fontFamilies.mono },
+  dayShort: { width: 40 },
   flex: { flex: 1, minWidth: 0 },
   ribbon: { flexDirection: 'row', gap: space.xs },
   cell: { flex: 1, alignItems: 'center', gap: space.xs, paddingVertical: space.sm, borderRadius: radius.control, minHeight: 64 },

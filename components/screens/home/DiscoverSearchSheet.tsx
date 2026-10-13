@@ -7,6 +7,7 @@ import type { SearchMine } from '@/hooks/useSearchMine';
 import { kindsTitle } from '@/lib/discoverDrinks';
 import type { SearchScope } from '@/lib/searchScope';
 
+import { FiltersChip } from './DiscoverControls';
 import { DiscoverOverlay } from './DiscoverSheet';
 
 interface DiscoverSearchProps {
@@ -32,7 +33,7 @@ export function DiscoverSearchHead({ query, onQuery, scope, onScope, mine, area,
       <SearchHead query={query} onQuery={onQuery} scope={scope} onScope={onScope} mine={mine} area={area} autoFocus onDone={onClose} />
       {kinds.length || onFilters ? (
         <View style={styles.row}>
-          {onFilters ? <Button label={filters ? `Filters · ${filters}` : 'Filters'} icon="line.3.horizontal.decrease" variant="secondary" accessibilityLabel={filters ? `Filters, ${filters} on` : 'Filters'} onPress={onFilters} /> : null}
+          {onFilters ? <FiltersChip filters={filters} onPress={onFilters} /> : null}
           <Caption tone="muted" style={styles.flex}>{kinds.length ? `With your filters: ${kindsTitle(kinds)}` : ''}</Caption>
           {kinds.length ? <Button label="Clear filters" variant="ghost" onPress={onClearKinds} /> : null}
         </View>

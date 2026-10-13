@@ -84,6 +84,13 @@ export const palateHues = {
   light: { bright: '#A86E12', green: '#4E7A3E', fire: '#B4472E', body: '#7E5F96' },
 } as const;
 
+/**
+ * A house prep's proportion bar (canvas make-create-prep-recipe): each line's
+ * share in one of these, by the colour its drawing uses (lib/prepShares.ts).
+ * Clear and white things are paper; vinegars, oils and fats are tan.
+ */
+export const prepTones = { yellow: '#E8C25A', paper: '#EFE9DD', tan: '#C9A06A', red: '#E0614A' } as const;
+
 /** The map's "You are here" dot, with a halo of itself at 22% (disc-map). Not a status colour. */
 export const MAP_ME = '#8FB7E8';
 
@@ -134,8 +141,14 @@ export const displayFaces = {
 
 export type DisplayFace = keyof typeof displayFaces;
 
+/** Names set in the display face on rows (22/26) and on a menu's card (24/28), as the canvas draws them. */
+export const displayName = {
+  row: { fontSize: 22, lineHeight: 26 },
+  card: { fontSize: 24, lineHeight: 28 },
+} as const;
+
 /**
- * Six text styles. Nothing below 13. Display and title leave room above the
+ * Seven text styles. Nothing below 13. Display and title leave room above the
  * ascenders: iOS bottom-aligns a line set tighter than its font, so a
  * lineHeight of 1 cuts the tops off. Checked by components/ds/displayClip.check.ts.
  */
@@ -145,6 +158,8 @@ export const type = {
   headline: { fontSize: 20, lineHeight: 26, letterSpacing: -0.2 },
   body: { fontSize: 17, lineHeight: 24, letterSpacing: 0 },
   spec: { fontSize: 17, lineHeight: 24, letterSpacing: 0 },
+  /** Tabs and compact buttons, where the canvas sets them at 15 (What to make's tabs, Add both). */
+  label: { fontSize: 15, lineHeight: 20, letterSpacing: 0 },
   caption: { fontSize: 13, lineHeight: 18, letterSpacing: 0.1 },
 } as const;
 

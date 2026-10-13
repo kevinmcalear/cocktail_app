@@ -9,6 +9,7 @@ import { useProfile, type Profile } from '@/hooks/useProfiles';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { siteOrigin } from '@/lib/venueLink';
 
+import { LoveBarButton } from '../kept/LoveBarButton';
 import { SignInCard } from '../published/SignInCard';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarProfile } from './BarProfile';
@@ -47,6 +48,8 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   // A bar you open shows in Search's Recent.
   useTrackRecent(profile?.kind === 'bar', profile ? recentEntry('bar', profile.id, profile.display_name, { href: `/p/${profile.handle || profile.id}`, imageUrl: profile.avatar_url, barId: null }) : null);
   if (profile?.kind === 'bar' && !signedIn) return <PublicBarPage profile={profile} />; // signed out: the public web's one bar page (ppl-pub-bar-*)
+  // Signed in on a tablet or desktop, a bar's page is the drawn desktop one (ppl-pub-bar-desktop): its actions sit under the name.
+  const wideBar = profile?.kind === 'bar' && breakpoint !== 'phone';
 
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
@@ -56,9 +59,11 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
         icon={Platform.OS === 'web' || searched ? 'chevron.left' : 'xmark'}
         onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       />
-      {profile && !gated ? (
+      {profile && !gated && !wideBar ? (
         <View style={styles.right}>
           <ShareProfile profile={profile} />
+          {/* A bar's Love sits beside Share (ppl-bar-top). */}
+          {profile.kind === 'bar' ? <LoveBarButton profileId={profile.id} name={profile.display_name} labelled /> : null}
           <ProfileSafety profile={profile} />
         </View>
       ) : null}
@@ -74,6 +79,8 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
         <MakerProfile profile={profile} columns={columns} />
       ) : profile.kind === 'person' ? (
         <PersonProfile profile={profile} columns={columns} />
+      ) : wideBar ? (
+        <PublicBarPage profile={profile} signedIn />
       ) : (
         <BarProfile profile={profile} columns={columns} />
       );
@@ -89,7 +96,7 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
-        <View style={styles.readable}>{body}</View>
+        <View style={[styles.readable, wideBar ? styles.wide : null]}>{body}</View>
       </ScrollView>
       {controls}
     </View>
@@ -105,6 +112,8 @@ function ShareProfile({ profile }: { profile: Profile }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   readable: { width: '100%', maxWidth: 960, alignSelf: 'center' },
+  // A bar's desktop page runs to the board's 1240 less its 32 gutters.
+  wide: { maxWidth: 1176 },
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   right: { flexDirection: 'row', gap: space.sm },
 });

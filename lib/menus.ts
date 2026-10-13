@@ -80,6 +80,17 @@ export function menuDateLine(menu: Dated, now: number, locale?: string, short = 
  * spec that lists an ingredient twice (cream for the drink and for the float)
  * would otherwise read "Heavy Cream, Heavy Cream".
  */
+/** An ingredient as the line reads it: plain ones (generic, a prep) in lower case, bottles as named ("gin", "Campari"). */
+export function readingName(ing: { name: string; ingredient_role?: string | null } | null | undefined): string | null {
+  if (!ing) return null;
+  return ing.ingredient_role === 'generic' || ing.ingredient_role === 'prep' ? ing.name.toLowerCase() : ing.name;
+}
+
+/** A menu's drink line in sentence case, as the boards draw it: "Gin, dry vermouth, orange bitters". */
+export function sentenceLine(line: string): string {
+  return line.charAt(0).toUpperCase() + line.slice(1);
+}
+
 export function ingredientLine(names: (string | null | undefined)[]): string {
   const seen = new Set<string>();
   const kept: string[] = [];
@@ -181,7 +192,7 @@ export function tonightLine(date: Date, menus: { name: string }[], drinks: numbe
 
 /** "Gin · dry vermouth · orange bitters": a menu line as Tonight's rows read it. */
 export function dotLine(line: string): string {
-  return line.split(/,\s*/).filter(Boolean).join(' · ');
+  return line.replace(/\.\s*$/, '').split(/,\s*/).filter(Boolean).join(' · ');
 }
 
 /** "Cocktails · 3 to 5", "Beer · up to 3", "Any drink". */

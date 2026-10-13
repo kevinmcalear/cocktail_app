@@ -2,13 +2,13 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, Headline, PressableScale, Spec, TextLink, Title, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, DsText, Headline, PressableScale, Spec, Tag, TextLink, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
-import { useBarMenusForYou, type BarMenuForYou } from '@/hooks/useBarMenusForYou';
+import { FIFTY_BEST_READ, useBarMenusForYou, useFiftyBest, type BarMenuForYou } from '@/hooks/useBarMenusForYou';
 import { useSaveBarMenu, useSavedMenus } from '@/hooks/useKept';
 import { useMyHadDrinks } from '@/hooks/useRankings';
-import { barMenuPicks, type ForYouHad } from '@/lib/collectionMenus';
+import { barMenuPicks, listMenuPicks, type ForYouHad } from '@/lib/collectionMenus';
 import { menuRange } from '@/lib/menuEditions';
 import { formatScore } from '@/lib/ranking';
 
@@ -40,8 +40,14 @@ function SaveIcon({ edition }: { edition: BarMenuForYou }) {
   );
 }
 
+/** The 50 Best picks in Bar menus for you's shape: the best placed in full, the rest in the rail, no news. */
+function coldPicks(list: { edition: BarMenuForYou; reason: string }[]) {
+  const [first, ...rest] = list;
+  return { featured: first ? { edition: first.edition, ranked: [] as ForYouHad[] } : null, rail: rest.slice(0, 6), news: [] as { edition: BarMenuForYou; title: string; sub: string }[] };
+}
+
 /** A bar's menu on now, in full: the bar, the menu and its theme, its first drinks with your scores, why it's here, Make it at home and Save. */
-function ForYouCard({ edition, ranked, reason }: { edition: BarMenuForYou; ranked: ForYouHad[]; reason: string }) {
+function ForYouCard({ edition, ranked, reason, compact }: { edition: BarMenuForYou; ranked: ForYouHad[]; reason: string; /** A desktop grid card: the drinks as one accent line, an On now tag (home-collection-desktop-menus). */ compact?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const more = edition.drinkIds.length - 3;
@@ -55,30 +61,49 @@ function ForYouCard({ edition, ranked, reason }: { edition: BarMenuForYou; ranke
             <DsText variant="body" style={styles.semi}>
               {edition.barName}
             </DsText>
-            <Caption tone="muted">{[edition.barPlace, since].filter(Boolean).join(' · ')}</Caption>
+            <Caption tone="muted">{compact ? edition.barPlace : [edition.barPlace, since].filter(Boolean).join(' · ')}</Caption>
           </View>
+          {compact && edition.dates.isCurrent ? <Tag label="On now" tone="outline" /> : null}
         </View>
         <Title italic>{edition.name}</Title>
-        {edition.theme ? <Body tone="muted">{edition.theme}</Body> : null}
+        {edition.theme ? (
+          compact ? (
+            <Caption tone="muted" numberOfLines={3}>
+              {edition.theme}
+            </Caption>
+          ) : (
+            <Body tone="muted">{edition.theme}</Body>
+          )
+        ) : null}
+        {compact ? (
+          <Caption color={ds.accentText} style={styles.drinkName}>
+            {edition.drinks
+              .slice(0, 3)
+              .map((d) => d.name.toUpperCase())
+              .join(' · ')}
+          </Caption>
+        ) : null}
       </View>
-      <View role="list" style={styles.drinks}>
-        {edition.drinks.slice(0, 3).map((d, i) => {
-          const mine = ranked.find((h) => h.itemId === d.id);
-          return (
-            <View role="listitem" key={d.id} style={[styles.drink, { borderTopColor: ds.c.line }]}>
-              <View style={styles.drinkHead}>
-                <Caption style={styles.drinkName}>{d.name.toUpperCase()}</Caption>
-                {mine ? <Spec accessibilityLabel={`your score ${formatScore(mine.score)}`}>{formatScore(mine.score)}</Spec> : i === 2 && more > 0 ? <Caption tone="muted">{`and ${more} more`}</Caption> : null}
+      {compact ? null : (
+        <View role="list" style={styles.drinks}>
+          {edition.drinks.slice(0, 3).map((d, i) => {
+            const mine = ranked.find((h) => h.itemId === d.id);
+            return (
+              <View role="listitem" key={d.id} style={[styles.drink, { borderTopColor: ds.c.line }]}>
+                <View style={styles.drinkHead}>
+                  <Caption style={styles.drinkName}>{d.name.toUpperCase()}</Caption>
+                  {mine ? <Spec accessibilityLabel={`your score ${formatScore(mine.score)}`}>{formatScore(mine.score)}</Spec> : i === 2 && more > 0 ? <Caption tone="muted">{`and ${more} more`}</Caption> : null}
+                </View>
+                {d.line ? (
+                  <Caption tone="muted" numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
+                    {d.line}
+                  </Caption>
+                ) : null}
               </View>
-              {d.line ? (
-                <Caption tone="muted" numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
-                  {d.line}
-                </Caption>
-              ) : null}
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      )}
       <View style={styles.cardFoot}>
         <View style={styles.reason}>
           <IconSymbol name="star" size={14} color={ds.c.muted} />
@@ -87,7 +112,7 @@ function ForYouCard({ edition, ranked, reason }: { edition: BarMenuForYou; ranke
           </Caption>
         </View>
         <View style={styles.actions}>
-          <Button label="Make it at home" variant="secondary" onPress={() => router.push(menuHref(edition))} style={styles.flex} />
+          <Button label="Make it at home" variant="ink" onPress={() => router.push(menuHref(edition))} style={styles.flex} />
           <SaveIcon edition={edition} />
         </View>
       </View>
@@ -124,7 +149,8 @@ function RailCard({ edition, reason }: { edition: BarMenuForYou; reason: string 
  * Bar menus for you (b08, option E): from the bars you had drinks at, the
  * menu on now you know best in full, a rail of the others "because of drinks
  * you had", and what's new at bars you ranked. Menus you saved are left out.
- * Nothing at all until you've ranked a drink at a bar. A desktop (`wide`)
+ * Before you've ranked a drink at a bar, the World's 50 Best Bars' menus on
+ * now, best placed first. A desktop (`wide`)
  * shows every pick as a full card in a grid.
  */
 export function BarMenusForYou({ wide }: { wide: boolean }) {
@@ -135,11 +161,18 @@ export function BarMenusForYou({ wide }: { wide: boolean }) {
   const saved = useSavedMenus().data ?? [];
   const [now] = useState(() => Date.now());
   const atBars: ForYouHad[] = had.flatMap((h) => (h.venue ? [{ itemId: h.itemId, name: h.name, score: h.score, barId: h.venue.id }] : []));
+  const savedIds = new Set(saved.map((m) => m.editionId));
   const editions = useBarMenusForYou(atBars.map((h) => h.barId)).data ?? [];
-  const picks = barMenuPicks(atBars, editions, new Set(saved.map((m) => m.editionId)), now);
+  const ranked = barMenuPicks(atBars, editions, savedIds, now);
+  // Nothing on now at a bar you ranked a drink at: the menus on now at the World's 50 Best Bars (canvas E, decided 10 Oct).
+  const cold = !ranked.featured;
+  const places = useFiftyBest(cold).data ?? [];
+  const listEditions = useBarMenusForYou(cold ? places.slice(0, FIFTY_BEST_READ).map((p) => p.barId) : [], { currentOnly: true }).data ?? [];
+  const listed = cold ? listMenuPicks(places, listEditions, savedIds) : [];
+  const picks = cold ? coldPicks(listed) : ranked;
   if (!picks.featured) return null;
   const { featured } = picks;
-  const rankedWhy = `You ranked ${andNames(featured.ranked.slice(0, 2).map((h) => h.name))} here`;
+  const rankedWhy = cold ? (listed[0]?.reason ?? '') : `You ranked ${andNames(featured.ranked.slice(0, 2).map((h) => h.name))} here`;
   const all = [{ edition: featured.edition, reason: rankedWhy }, ...picks.rail];
 
   return (
@@ -149,12 +182,16 @@ export function BarMenusForYou({ wide }: { wide: boolean }) {
         <TextLink label={wide ? 'Browse bar menus' : 'Browse'} onPress={() => router.push('/discover')} />
       </View>
       <Caption tone="muted">
-        {wide ? 'From bars you ranked and drinks you had. Make one at home, credited to the bar.' : 'Picked from the bars you ranked and the drinks you had there. Make one at home, credited to the bar.'}
+        {cold
+          ? 'On now at The World’s 50 Best Bars. Rank a drink you had at a bar and these become picks for you. Make one at home, credited to the bar.'
+          : wide
+            ? 'From bars you ranked and drinks you had. Make one at home, credited to the bar.'
+            : 'Picked from the bars you ranked and the drinks you had there. Make one at home, credited to the bar.'}
       </Caption>
       {wide ? (
         <CardGrid min={300} gap={space.lg}>
           {all.map((p) => (
-            <ForYouCard key={p.edition.id} edition={p.edition} ranked={featured.edition === p.edition ? featured.ranked : atBars.filter((h) => h.barId === p.edition.barId)} reason={p.reason} />
+            <ForYouCard compact key={p.edition.id} edition={p.edition} ranked={featured.edition === p.edition ? featured.ranked : atBars.filter((h) => h.barId === p.edition.barId)} reason={p.reason} />
           ))}
         </CardGrid>
       ) : (
@@ -162,7 +199,7 @@ export function BarMenusForYou({ wide }: { wide: boolean }) {
           <ForYouCard edition={featured.edition} ranked={featured.ranked} reason={rankedWhy} />
           {picks.rail.length ? (
             <View style={styles.group}>
-              <Headline role="heading">Because of drinks you had</Headline>
+              <Headline role="heading">{cold ? 'More 50 Best menus on now' : 'Because of drinks you had'}</Headline>
               <CardRail width={220} gutter={gutter}>
                 {picks.rail.map((r) => (
                   <RailCard key={r.edition.id} edition={r.edition} reason={r.reason} />

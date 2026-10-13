@@ -4,7 +4,10 @@
  * by lib/discoverMap.check.ts. The map views are components/screens/home/DiscoverMap
  * (MapLibre on every platform: GL JS on web, MapLibre Native on iOS and Android).
  */
-import { backbar, space } from '../constants/tokens';
+import type { CircleLayerSpecification, FilterSpecification, GeoJSONSourceSpecification } from 'maplibre-gl';
+
+import { backbar, fontFamilies, space, type, type DisplayFace } from '../constants/tokens';
+import { withAlpha } from './color';
 import { pinName } from './discoverMatch';
 import { formatScore } from './ranking';
 import { roundCoord, type Area, type DiscoverRow } from './nearMe';
@@ -26,6 +29,8 @@ export interface MapPin {
   name: string;
   /** The bar's logo, when it has one. */
   logo: string | null;
+  /** Its venue's public accent and face, for its monogram; undefined when not known (BarMark looks it up). */
+  brand?: { accent: string; face: DisplayFace } | null;
   place: string;
   latitude: number;
   longitude: number;
@@ -79,15 +84,129 @@ export function pinLabel(pin: MapPin): string {
 }
 
 /**
- * Pins past the ones a map draws as views, as GeoJSON for its own dots
- * layer: each with its label (drink count or score; none on a closed bar).
+ * Every bar as GeoJSON for the map's own layers: a plain dot each (Kevin's
+ * option C, 13 Oct), gathered into areas when zoomed out (option D). The
+ * score (-1 for none) feeds an area's best; closed bars are faded dots.
  */
-export function dotsOf(pins: readonly MapPin[]): GeoJSON.FeatureCollection<GeoJSON.Point, { id: string; label: string }> {
+export function dotsOf(pins: readonly MapPin[]): GeoJSON.FeatureCollection<GeoJSON.Point, { id: string; score: number; closed: boolean }> {
   return {
     type: 'FeatureCollection',
-    features: pins.map((p) => ({ type: 'Feature', properties: { id: p.id, label: p.closed ? '' : pinLabel(p) }, geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] } })),
+    features: pins.map((p) => ({
+      type: 'Feature',
+      properties: { id: p.id, score: p.closed || p.score === null ? -1 : p.score, closed: !!p.closed },
+      geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] },
+    })),
   };
 }
+
+/**
+ * Below this zoom (a city or wider) the map shows areas, one label each
+ * with its best score and bar count; from it in, the best bars in view are
+ * score pins and the rest dots. MapLibre clusters up to AREA_ZOOM - 1.
+ */
+export const AREA_ZOOM = 12;
+/** Score pins on screen up close: about 8 to 12 of the best in view, so more come in as you zoom. */
+export const BEST_PINS = 10;
+/** Area labels drawn as views at most; clusters keep the count low, this is the guard. */
+export const MAX_AREAS = 40;
+/** How the map's clusters are made, the same on web and native. */
+export const AREA_CLUSTER = {
+  cluster: true,
+  clusterMaxZoom: AREA_ZOOM - 1,
+  clusterRadius: 80,
+  clusterProperties: { best: ['max', ['get', 'score']] },
+} satisfies Pick<GeoJSONSourceSpecification, 'cluster' | 'clusterMaxZoom' | 'clusterRadius' | 'clusterProperties'>;
+
+/** What part of the map is on screen: [west, south, east, north] and the zoom. */
+export interface MapView {
+  bounds: readonly [number, number, number, number];
+  zoom: number;
+}
+
+function inView([west, south, east, north]: MapView['bounds'], p: Pick<MapPin, 'latitude' | 'longitude'>): boolean {
+  if (p.latitude < south || p.latitude > north) return false;
+  // Across the antimeridian west is greater than east.
+  return west <= east ? p.longitude >= west && p.longitude <= east : p.longitude >= west || p.longitude <= east;
+}
+
+/**
+ * Which bars the map draws as pins (views), best first; every other bar is
+ * a dot in the map's own layer. Up close, the BEST_PINS best scored bars in
+ * view; zoomed out (areas), none. Always the selected bar and, while
+ * searching, the bars whose pins name a drink (namePins). Before the map
+ * reports what it shows, the best scored bars anywhere.
+ */
+export function pinsToDraw(pins: readonly MapPin[], view: MapView | null, selectedId: string | null): MapPin[] {
+  const always = pins.filter((p) => p.id === selectedId || p.top);
+  if (view && view.zoom < AREA_ZOOM) return always;
+  const open = pins.filter((p) => !p.closed && (!view || inView(view.bounds, p)));
+  const best = open.filter((p) => p.score !== null).sort((a, b) => b.score! - a.score!).slice(0, BEST_PINS);
+  // A score needs MIN_RANKERS people, and most bars have none yet (prod, 13 Oct: none at all), which left
+  // the map all dots. Until then the busiest bars in view with a logo fill the rest, the logo in the score's place.
+  const known = open
+    .filter((p) => p.score === null && p.logo)
+    .sort((a, b) => (b.drinks ?? b.matches ?? 0) - (a.drinks ?? a.matches ?? 0))
+    .slice(0, BEST_PINS - best.length);
+  return [...always, ...[...best, ...known].filter((p) => !always.includes(p))];
+}
+
+/** An area's label: "9.1 · 24 bars", or just the count when none has a score yet. */
+export function areaLabel(best: number | null, count: number): string {
+  const bars = `${count} ${count === 1 ? 'bar' : 'bars'}`;
+  return best !== null && best >= 0 ? `${formatScore(best)} · ${bars}` : bars;
+}
+
+/** A map area: one of MapLibre's clusters, as both maps read them back. */
+export interface MapArea {
+  id: number;
+  latitude: number;
+  longitude: number;
+  label: string;
+}
+
+/**
+ * Areas from the cluster features in a map's loaded tiles (querySourceFeatures
+ * on web, GeoJSONSource getData on native): the ones in view, each once (a
+ * tile edge can repeat one), none up close, capped at MAX_AREAS.
+ */
+export function areasFrom(features: readonly GeoJSON.Feature[], view: MapView | null): MapArea[] {
+  const seen = new Map<number, MapArea>();
+  if (view && view.zoom >= AREA_ZOOM) return [];
+  for (const f of features) {
+    const props = f.properties ?? {};
+    if (f.geometry.type !== 'Point' || typeof props.cluster_id !== 'number' || seen.has(props.cluster_id)) continue;
+    const [longitude, latitude] = f.geometry.coordinates;
+    if (view && !inView(view.bounds, { latitude, longitude })) continue;
+    seen.set(props.cluster_id, { id: props.cluster_id, latitude, longitude, label: areaLabel(typeof props.best === 'number' ? props.best : null, Number(props.point_count) || 0) });
+    if (seen.size >= MAX_AREAS) break;
+  }
+  return [...seen.values()];
+}
+
+/** The dots layer's filter: single bars (not areas), less the ones `drawn` as pins. */
+export function dotsFilter(drawn: readonly string[]): FilterSpecification {
+  return ['all', ['!', ['has', 'point_count']], ['!', ['in', ['get', 'id'], ['literal', [...drawn]]]]];
+}
+
+/** The dots' paint on either map (disc-map-opt-c): a small dark dot with a soft ring, closed bars faded. */
+export const DOT_PAINT: CircleLayerSpecification['paint'] = {
+  'circle-color': backbar.dark.raised,
+  'circle-radius': 5,
+  'circle-stroke-width': 2,
+  'circle-stroke-color': withAlpha(backbar.dark.ink, 0.5),
+  'circle-opacity': ['case', ['get', 'closed'], 0.5, 1],
+  'circle-stroke-opacity': ['case', ['get', 'closed'], 0.5, 1],
+};
+
+/** How an area label looks on either map (disc-map-opt-d): the score pin's dark pill, a little taller. */
+export const areaLook = {
+  height: 36,
+  paddingHorizontal: space.md,
+  backgroundColor: backbar.dark.raised,
+  borderColor: withAlpha(backbar.dark.ink, 0.25),
+  color: backbar.dark.ink,
+  boxShadow: `0 4px 12px ${withAlpha(backbar.dark.ground, 0.45)}`,
+} as const;
 
 /** What a screen reader says for a pin. */
 export function pinDescription(pin: MapPin): string {
@@ -99,26 +218,39 @@ export function pinDescription(pin: MapPin): string {
 }
 
 /**
- * How a pin looks on either map: the bar's logo (when it has one) and its
- * score in a pill, or a dot while early. Ink by default, the accent when
- * selected. A closed bar is muted and faded, so it reads as history, not a plan.
+ * How a pin looks on either map (disc-map, disc-map-opt-c): the score in mono
+ * on a dark pill with a soft ring and shadow, or a dot while early; while
+ * searching, its best match's picture too. The accent when selected. A closed
+ * bar is muted and faded, so it reads as history, not a plan.
  */
 export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }) {
   const label = pin.top ? pinName(pin.top, pin.drinks ?? 1) : pinLabel(pin);
-  const logoSize = 26;
-  // A lone logo needs room for its 2px ring.
-  const height = label ? 30 : pin.logo ? logoSize + 4 : 18;
+  // Picked, a pin is a size up: a score 36 tall at 15 (disc-desk-browse), a named one 40 (disc-desk-search).
+  const big = selected && !!label;
+  // A searched pin (it names a drink) keeps its bar's logo when the drink has no picture; a bar with no score yet shows
+  // its logo alone (pinsToDraw); score pins have none, as drawn.
+  const logo = pin.image ?? (pin.top || !label ? pin.logo : null) ?? null;
+  // A named pin's picture sits 5 in from its edge (7 picked); a lone logo needs room for its 2px ring.
+  const logoSize = pin.top && !big ? 22 : 26;
+  const edge = pin.top ? (big ? space.md + 2 : space.md) : big ? space.md : space.sm + 2;
+  const height = pin.top ? (big ? 40 : 32) : big ? 36 : label ? 30 : logo ? logoSize + 4 : 18;
+  // Scores in mono, drink names in Geist (disc-desk-search).
+  const font: keyof typeof fontFamilies = pin.top ? (big ? 'bodySemiBold' : 'bodyMedium') : 'monoMedium';
   return {
     label,
-    logo: pin.image ?? pin.logo,
+    logo,
     logoSize,
-    minWidth: label ? 44 : height,
+    font,
+    fontSize: big ? type.label.fontSize : type.caption.fontSize,
+    minWidth: big && !pin.top ? 56 : label ? 44 : height,
     height,
-    paddingLeft: label ? (pin.logo ? 2 : space.sm) : 0,
-    paddingRight: label ? space.sm : 0,
-    gap: space.xs,
-    borderColor: selected ? accent.fill : backbar.dark.ink,
-    backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks && !pin.matches ? backbar.light.muted : backbar.light.ink,
+    paddingLeft: label ? (logo ? (big ? space.xs + 3 : space.xs + 1) : edge) : 0,
+    paddingRight: label ? edge : 0,
+    gap: label && pin.top ? space.xs + 2 : space.xs,
+    borderWidth: selected && !label ? 2 : 1,
+    borderColor: selected ? accent.fill : withAlpha(backbar.dark.ink, 0.2),
+    backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks && !pin.matches && !logo ? backbar.light.muted : backbar.dark.raised,
+    boxShadow: `0 ${big ? 6 : 4}px ${big ? 18 : 12}px ${withAlpha(backbar.dark.ground, big ? 0.5 : 0.45)}`,
     color: selected ? accent.text : backbar.dark.ink,
     opacity: (pin.closed || pin.weak) && !selected ? (pin.weak ? 0.55 : 0.6) : 1,
     // Where pins overlap: the selected one, then scored bars (higher over lower), over plain and closed ones.

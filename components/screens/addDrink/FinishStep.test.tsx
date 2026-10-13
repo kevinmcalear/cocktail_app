@@ -5,6 +5,8 @@ import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 
 import { FinishStep } from './FinishStep';
 
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 
 // The prep builder draws after its first layout, as the wizard does on iOS.
@@ -34,9 +36,9 @@ describe('FinishStep', () => {
     await fireEvent.changeText(screen.getByLabelText('Add to the finish'), 'mint oil');
     // Made first, before the bottle that only shares the words.
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
-    expect(rows.indexOf('Make “mint oil” in house')).toBeLessThan(rows.indexOf('Agrumato Mint Oil'));
+    expect(rows.indexOf('Make “Mint oil” in house')).toBeLessThan(rows.indexOf('Agrumato Mint Oil'));
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Make “mint oil” in house' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Make “Mint oil” in house' }));
     await laidOut();
     expect(screen.getByRole('radio', { name: /^Herb, chile and garlic oils/, checked: true })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Next: recipe' }));

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { cocktailQuery } from '@/hooks/useCocktails';
 import { useViewAs } from '@/hooks/useViewAs';
@@ -19,5 +19,20 @@ export function useStartFromClassic() {
       if (!item) throw new Error('Couldn’t load that spec.');
       return draftFromSpec(item as unknown as SourceSpec, getPreferredUnit());
     },
+  });
+}
+
+/**
+ * The classic a new drink's name is ("House Negroni" is a Negroni), as the
+ * start of a draft, for drawing it before its spec is used. The drink page's
+ * query, so "Start from the Negroni" then loads instantly.
+ */
+export function useClassicPreview(classicId: string | null) {
+  const { viewAsRoleLevel } = useViewAs();
+  return useQuery({
+    ...cocktailQuery(classicId ?? undefined, viewAsRoleLevel),
+    enabled: !!classicId,
+    staleTime: 60 * 1000,
+    select: (item) => (item ? draftFromSpec(item as unknown as SourceSpec, getPreferredUnit()) : null),
   });
 }

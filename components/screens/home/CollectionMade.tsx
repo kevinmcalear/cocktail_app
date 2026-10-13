@@ -87,6 +87,7 @@ export function MadeAtHome({ tallies, had, classics, onLayout }: { tallies: Made
           return (
             <View role="listitem" key={t.itemId}>
               <DrinkRow
+                compact
                 name={t.name}
                 itemId={t.itemId}
                 href={itemHref('Cocktail', t.itemId)}

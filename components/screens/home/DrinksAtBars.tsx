@@ -56,14 +56,17 @@ export const BarAway = createContext<(barId: string) => string | null>(() => nul
  * spec", or what its variation changes) and "on now"; the scores (when
  * given) at the end, and the searched word lit (tint on Discover). `atBar`:
  * a tapped bar's own drinks (disc-map-bar), so the bar isn't repeated.
+ * `everywhere`: search's Everywhere, which adds the bar's small logo before
+ * the caption and puts why it matched ("Riff on a Negroni") on its own line,
+ * the word lit (nav-search-everywhere).
  */
-export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false, onPress }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean; onPress?: () => void }) {
+export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false, everywhere = false, onPress }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean; everywhere?: boolean; onPress?: () => void }) {
   const bar = d.bar;
   const version = useVersionLabel(d.id);
   const near = useContext(BarAway)(d.barId);
   const away = d.distance === null || d.distance === undefined ? near : formatDistance(d.distance / 1000, usesMiles(getLocales()[0]));
   // A tapped bar's rows say what the drink is instead (ponytail: its description; the ingredient line needs discover_list to return the spec's lines).
-  const what = atBar ? (d.why ?? version ?? d.description) : (d.why ?? version);
+  const what = atBar ? (d.why ?? version ?? d.description) : everywhere ? version : (d.why ?? version);
   const caption = (atBar ? [what, d.menu.onNow ? 'on now' : null] : [bar.name, away ?? place(bar), what, d.menu.onNow ? 'on now' : null]).filter(Boolean).join(' · ');
   const drinkScore = scores?.drinks[d.id];
   const barScore = atBar ? undefined : scores?.bars[d.barId]?.score;
@@ -76,12 +79,15 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atB
       itemId={d.id}
       imageUrl={d.imageUrl}
       glass={null}
+      dense
       caption={caption}
+      logo={everywhere ? { uri: bar.logo, name: bar.name, profileId: d.barId } : undefined}
+      note={everywhere ? (d.why ?? undefined) : undefined}
       tag={d.menu.past ?? undefined}
       trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
       query={query}
       matchLook={matchLook}
-      label={said ? [d.name, caption, d.menu.past, said].filter(Boolean).join('. ') : undefined}
+      label={said ? [d.name, caption, everywhere ? d.why : null, d.menu.past, said].filter(Boolean).join('. ') : undefined}
     />
   );
 }

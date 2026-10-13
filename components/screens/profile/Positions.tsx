@@ -4,10 +4,11 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DsText, Headline, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { space } from '@/constants/tokens';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useProfilePositions, type Position, type Profile } from '@/hooks/useProfiles';
 import { jobYears } from '@/lib/profiles';
 
+import { BarMark } from '../home/BarMark';
 import { pendingNote } from './JobRequests';
 
 /**
@@ -74,18 +75,16 @@ function PositionList({ heading, positions, onPerson }: { heading: string | null
               onPress={() => router.push(`/p/${other.handle}` as Href)}
               style={[styles.row, { borderBottomColor: ds.c.line }]}
             >
-              <UserAvatar uri={other.avatar_url} name={other.display_name} size={40} />
+              {onPerson ? <BarMark name={other.display_name} logoUrl={other.avatar_url} size={44} /> : <UserAvatar uri={other.avatar_url} name={other.display_name} size={40} />}
               {onPerson ? (
                 <View style={styles.flex}>
-                  <DsText variant="headline" numberOfLines={1}>
+                  <Body numberOfLines={1} style={styles.title}>
                     {p.title}
-                  </DsText>
-                  <Caption tone="muted" numberOfLines={1}>
-                    {where}
-                  </Caption>
+                  </Body>
+                  <Caption numberOfLines={1}>{where}</Caption>
                   <View style={styles.mark}>
                     {p.bar_accepted ? <IconSymbol name="checkmark.seal.fill" size={14} color={ds.accentText} /> : null}
-                    <Caption tone={p.bar_accepted ? 'ink' : 'muted'}>{mark}</Caption>
+                    <Caption tone="muted">{mark}</Caption>
                   </View>
                 </View>
               ) : (
@@ -107,9 +106,10 @@ function PositionList({ heading, positions, onPerson }: { heading: string | null
 }
 
 const styles = StyleSheet.create({
-  sections: { gap: space.lg },
+  sections: { gap: space.xl },
   section: { gap: space.xs },
-  cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
+  cap: { letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: fontFamilies.bodyMedium },
+  title: { fontFamily: fontFamilies.bodySemiBold },
   flex: { flex: 1, minWidth: 0 },
   mark: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },

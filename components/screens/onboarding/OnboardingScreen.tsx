@@ -11,8 +11,6 @@ import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
 import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { inviteJobTitle, needsOnboarding, nextStep, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
-import { stageBringInFiles } from '@/lib/bringInHandoff';
-import type { ReadFile } from '@/lib/readAnything';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
@@ -49,7 +47,8 @@ export function OnboardingScreen() {
   const [home, setHome] = useState(false);
   // The bar from "Where do you work?", for "Bring Little Rye in".
   const [barName, setBarName] = useState<string | null>(null);
-  const [waiting, setWaiting] = useState<ReadFile[]>([]);
+  // Handed something to read on the last step: setup ends in Bring in, where it's being read.
+  const [handed, setHanded] = useState(false);
   // Where setup ends: the app, or Bring in with what they handed over.
   const [landing, setLanding] = useState<'/(tabs)' | '/bring-in'>('/(tabs)');
   const personId = createdId ?? profile.data?.id ?? null;
@@ -114,10 +113,9 @@ export function OnboardingScreen() {
     }, { name, handle });
   };
 
-  // Finish setup: Bring in reads what they handed over; Paste opens it empty.
-  const bring = (files: ReadFile[], paste = false) => {
-    if (files.length) stageBringInFiles(files);
-    if (files.length || paste) setLanding('/bring-in');
+  // Finish setup: Bring in shows what it's reading; Paste opens it empty.
+  const bring = (paste = false) => {
+    if (handed || paste) setLanding('/bring-in');
     finish.mutate();
   };
 
@@ -159,8 +157,11 @@ export function OnboardingScreen() {
     <SetupChromeProvider
       value={{
         title: copy.title,
-        intro: copy.intro,
+        // Invited: the venue's unit is the starting point, so no "change this in Settings".
+        intro: step === 'units' && joined ? 'New specs, and the amounts you read.' : copy.intro,
         eyebrow: step === 'bring' && !home ? 'Last step' : joined ? joined.bar_name : null,
+        // The invited path wears the venue's brand, its name in the accent; "Last step" is quiet.
+        eyebrowTone: joined && step !== 'bring' ? 'accent' : 'muted',
         progress: stepProgress(step, !!joined),
         onBack: first ? undefined : back,
       }}
@@ -173,6 +174,7 @@ export function OnboardingScreen() {
           initialName={draft?.name || profile.data?.displayName || joined?.name || ''}
           forceHandle={handleTaken}
           invited={!!joined}
+          job={joined?.bar_profile_id ? { bar: joined.bar_name, title: inviteJobTitle(joined.role_level) } : null}
           pendingFinish={finish.isPending || saveProfile.isPending}
           onSaved={saveName}
           onSkip={() => finish.mutate()}
@@ -222,15 +224,15 @@ export function OnboardingScreen() {
       {step === 'menus' ? <MenuStep personId={personId} onDone={() => go('menus')} /> : null}
       {step === 'drinks' ? <DrinkStep personId={personId} onDone={() => go('drinks')} /> : null}
       {step === 'taste' ? <TasteStep onDone={() => go('taste')} /> : null}
-      {step === 'units' ? <UnitsStep joined={!!joined} onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
+      {step === 'units' ? <UnitsStep joined={joined ? { barId: joined.bar_id, name: joined.bar_name } : null} onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
       {step === 'bring' ? (
         <BringStep
-          onFiles={(files) => setWaiting((w) => [...w, ...files])}
-          onPaste={() => bring(waiting, true)}
-          waiting={waiting.length ? waitingLabel(waiting) : null}
+          barId={null}
+          onFiles={() => setHanded(true)}
+          onPaste={() => bring(true)}
           onLater={() => finish.mutate()}
           error={finish.error?.message}
-          footer={<SetupFooter label="Finish setup" pending={finish.isPending} onPress={() => bring(waiting)} />}
+          footer={<SetupFooter label="Finish setup" compact pending={finish.isPending} onPress={() => bring()} />}
         />
       ) : null}
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
@@ -238,11 +240,6 @@ export function OnboardingScreen() {
   );
   // Joined: the short setup stays in the venue's colours.
   return joined ? <InviteBrand invite={joined}>{page}</InviteBrand> : page;
-}
-
-/** "3 photos", "a PDF and 2 photos": what's waiting to be read. */
-function waitingLabel(files: ReadFile[]): string {
-  return files.length === 1 ? 'One file' : `${files.length} files`;
 }
 
 /** One answer to a question step: a bold line, a muted one, and a chevron. */

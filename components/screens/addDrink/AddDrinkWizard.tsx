@@ -32,7 +32,7 @@ import { NameStep, NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
 import { StartFromClassic } from './StartFromClassic';
-import { useStartFromClassic } from '@/hooks/useStartFromClassic';
+import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
 import { WizardFrame } from './WizardFrame';
 
@@ -68,7 +68,15 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
   // Filled out with today's fields: a draft kept by an older version of the app may lack some.
   const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
   const step: WizardStep = kept?.step ?? 'name';
-  const [resumed, setResumed] = useState(() => hasContent(draft));
+  // On the web the page can draw before the kept draft has loaded (AsyncStorage is async there):
+  // once it has, say it was picked up. Set while rendering, like any value derived from a change.
+  const loaded = useSyncExternalStore(hydrated, isHydrated, () => false);
+  const [seenLoad, setSeenLoad] = useState(loaded);
+  const [resumed, setResumed] = useState(() => loaded && hasContent(draft));
+  if (loaded && !seenLoad) {
+    setSeenLoad(true);
+    setResumed(hasContent(draft));
+  }
   const [direction, setDirection] = useState<1 | -1>(1);
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const me = useMyProfile().data ?? null;
@@ -141,6 +149,9 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
   // A name that is a classic ("House Negroni") offers its spec, until there's one.
   const classics = useDrinkLists().data ?? [];
   const classic = step === 'name' && !draft.lines.length ? suggestClassic(draft.name, classics) : null;
+  // Until its spec is used, the sketch already draws that classic (a Negroni's red).
+  const preview = useClassicPreview(classic?.classic.id ?? null).data;
+  const drawn = preview ? { ...draft, ...preview, name: draft.name } : draft;
   const body = (() => {
     switch (step) {
       case 'name':
@@ -209,10 +220,11 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
       testID="add-drink"
       pageTitle="Add a drink"
       embedded={embedded}
-      band={(place) => <SketchHeader draft={draft} step={step} onBack={back} barVariants={barVariants} {...place} />}
+      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} {...place} />}
       stepKey={step}
       direction={direction}
-      eyebrow={draft.name.trim() || 'New drink'}
+      // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.
+      eyebrow={(step !== 'name' || resumed ? draft.name.trim() : '') || 'New drink'}
       title={copy.title}
       intro={copy.intro}
       // Android's back button steps back through the wizard before leaving it.

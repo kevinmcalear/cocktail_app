@@ -14,11 +14,13 @@ import { WizardFooter } from '../WizardChrome';
 import { WizardFrame } from '../WizardFrame';
 import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
-import { PrepRecipeStep } from './PrepRecipeStep';
+import { PrepRecipeStep, RecipeView, type RecipeViewKind } from './PrepRecipeStep';
 
 const STEPS = ['kind', 'recipe', 'method'] as const;
 type Step = (typeof STEPS)[number];
 const TITLES: Record<Step, string> = { kind: 'What are you making?', recipe: 'The recipe', method: 'How it’s made' };
+/** A drink name longer than this leaves the band's label, so the progress bar keeps its room. */
+const SHORT_NAME = 16;
 
 export interface PrepBuilderProps {
   /** The prep's name ("Pineapple chili shrub"); null when closed. */
@@ -68,6 +70,7 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
   const [step, setStep] = useState<Step>(initial || technique ? 'recipe' : 'kind');
   const [direction, setDirection] = useState<1 | -1>(1);
   const [draft, setDraft] = useState<PrepDraft>(() => initial ?? firstDraft(name, picked, technique));
+  const [view, setView] = useState<RecipeViewKind>('parts');
   const at = STEPS.indexOf(step);
   const go = (to: Step) => {
     setDirection(STEPS.indexOf(to) >= at ? 1 : -1);
@@ -87,6 +90,8 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
   const drink = drinkName || 'your drink';
   const phrase = prepPhrase(draft);
   const timers = 'Drag a step by its grip to move it; times you write become timers.';
+  const filled = phrase ? `${phrase[0].toUpperCase()}${phrase.slice(1)}, filled in from the recipe.` : draft.technique ? 'Filled in from Techniques.' : 'Filled in from the recipe.';
+  const where = drinkName && drinkName.length <= SHORT_NAME ? `${drinkName} › New prep` : 'New prep';
   return (
     <WizardFrame
       testID="add-prep"
@@ -94,7 +99,7 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
       pageTitle={`New prep: ${name}`}
       band={(place) => (
         <PaperBand
-          progress={{ now: at + 1, of: STEPS.length, label: at === 0 ? `New prep · 1 of ${STEPS.length}` : `${drink} › New prep · ${at + 1} of ${STEPS.length}` }}
+          progress={{ now: at + 1, of: STEPS.length, label: at === 0 ? `New prep · 1 of ${STEPS.length}` : `${where} · ${at + 1} of ${STEPS.length}` }}
           first={at === 0}
           backTo={drink}
           onBack={back}
@@ -110,7 +115,8 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
       direction={direction}
       eyebrow={(step === 'recipe' && recipeEyebrow(draft)) || name}
       title={TITLES[step]}
-      intro={step === 'method' ? `${phrase ? `${phrase[0].toUpperCase()}${phrase.slice(1)}, filled in from the recipe.` : 'Filled in from the recipe.'} ${timers}` : undefined}
+      intro={step === 'method' ? `${filled} ${timers}` : undefined}
+      aside={step === 'recipe' ? <RecipeView value={view} onChange={setView} /> : null}
       onHardwareBack={() => {
         back();
         return true;
@@ -130,7 +136,7 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
       {step === 'kind' ? (
         <PrepKindStep name={name} draft={draft} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => go('recipe')} />
       ) : step === 'recipe' ? (
-        <PrepRecipeStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} />
+        <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} />
       ) : (
         <PrepMethodStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} />
       )}

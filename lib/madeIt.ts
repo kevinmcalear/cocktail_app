@@ -69,3 +69,34 @@ export function tallyMade(made: readonly { itemId: string; name: string; imageUr
   }
   return [...byItem.values()].sort((a, b) => (a.lastOn < b.lastOn ? 1 : a.lastOn > b.lastOn ? -1 : 0));
 }
+
+/** A drink someone made at home and shows on their profile (get_profile_made). */
+export interface ShownMade {
+  id: string;
+  itemId: string;
+  imageUrl: string | null;
+  isSketch: boolean;
+  note: string | null;
+}
+
+/**
+ * Their shown made drinks, in the Had list of their profile (ppl-you draws
+ * them there, "Made at home"): a drink they also ranked at home takes the
+ * photo (and carries the note) of their latest shown make; each other one is a row of its
+ * own, after the ranked ones. `made` comes latest first; one row per drink.
+ */
+export function withMade<T extends { itemId: string; venue: unknown; atBar?: boolean; imageUrl: string | null; isSketch: boolean }, M extends ShownMade>(
+  drinks: readonly T[],
+  made: readonly M[]
+): { drinks: (T & { made?: M })[]; extra: M[] } {
+  const latest = new Map<string, M>();
+  for (const m of made) if (!latest.has(m.itemId)) latest.set(m.itemId, m);
+  const used = new Set<string>();
+  const out = drinks.map((d) => {
+    const m = !d.venue && !d.atBar ? latest.get(d.itemId) : undefined;
+    if (!m) return d;
+    used.add(m.itemId);
+    return { ...d, imageUrl: m.imageUrl ?? d.imageUrl, isSketch: m.imageUrl ? m.isSketch : d.isSketch, made: m };
+  });
+  return { drinks: out, extra: [...latest.values()].filter((m) => !used.has(m.itemId)) };
+}

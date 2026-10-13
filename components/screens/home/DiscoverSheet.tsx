@@ -4,11 +4,12 @@ import { Button, Caption, Chip } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useBarCities } from '@/hooks/useDiscover';
 import type { NearMe } from '@/hooks/useNearMe';
+import type { LocationAccess } from '@/lib/deviceLocation';
 import { SPIRITS, STYLES } from '@/lib/drinkStyles';
 import { NOTE_KINDS, noteKind, noteWord } from '@/lib/flavor';
 import type { Area } from '@/lib/nearMe';
 
-import { areaStatus } from './DiscoverArea';
+import { AllowLocation, areaStatus } from './DiscoverArea';
 import { DiscoverOverlay } from './DiscoverOverlay';
 
 export { DiscoverOverlay } from './DiscoverOverlay';
@@ -67,6 +68,8 @@ const cityKey = (c: { city: string; country_code: string }) => `${c.city}|${c.co
 interface AreaSheetProps {
   area: Area;
   near: NearMe;
+  /** Whether location is allowed: "Allow location" asks, or opens Settings once the OS won't ask. */
+  access: LocationAccess | null;
   preferNear: boolean;
   onArea: (area: Area) => void;
   onNearMe: () => void;
@@ -82,7 +85,7 @@ function whereLine(area: Area, pinOn: boolean): string {
 }
 
 /** Where: near me, anywhere, the map's area (always offered), or a city with bars. */
-export function AreaSheet({ area, near, preferNear, onArea, onNearMe, onThisArea, onClose }: AreaSheetProps) {
+export function AreaSheet({ area, near, access, preferNear, onArea, onNearMe, onThisArea, onClose }: AreaSheetProps) {
   const { data: cities } = useBarCities();
   const pinOn = (area.kind === 'point' && area.source === 'me') || (preferNear && area.kind === 'anywhere');
   const note = areaStatus(near);
@@ -100,6 +103,7 @@ export function AreaSheet({ area, near, preferNear, onArea, onNearMe, onThisArea
       <Caption tone="muted" role="status">
         {note ?? whereLine(area, pinOn)}
       </Caption>
+      <AllowLocation near={near} access={access} onAsk={() => (onNearMe(), onClose())} />
       {cities?.length ? (
         <View style={styles.group}>
           <Caption tone="muted">Cities</Caption>

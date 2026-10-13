@@ -13,6 +13,7 @@ import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
 import { useDrinkMakerCredits } from '@/hooks/useMakers';
 import { useMode } from '@/hooks/useMode';
+import { useShareSlug } from '@/hooks/useShareSlug';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
 import { useTeamRole } from '@/hooks/useTeamRole';
@@ -80,7 +81,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const insets = useSafeAreaInsets();
   const top = pane ? 0 : sheet && Platform.OS === 'ios' ? space.sm : insets.top;
   const gutter = useGutter();
-  const wide = useBreakpoint() !== 'phone' && !pane;
+  const breakpoint = useBreakpoint();
+  const wide = breakpoint !== 'phone' && !pane;
   const { width, height } = useWindowDimensions();
   const home = useMode().mode === 'home';
   const signedIn = useSignedIn();
@@ -129,7 +131,9 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   });
   const glassKey = glass?.icon_key || glass?.name || null;
   const actions = useDrinkActions(item, heroPic, lines, venue?.name ?? null);
-  const share = () => void shareOrCopy(drinkUrl(item.id), item.name);
+  // A public drink shares its readable link (/d/penicillin); any other its id link, which asks the rest to sign in.
+  const slug = useShareSlug('d', preview ? null : item.id).data;
+  const share = () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name);
   const onRiff = signedIn && !preview ? () => router.push({ pathname: '/add-cocktail', params: { from: item.id, ...(item.bar_id ? { barId: item.bar_id } : {}) } } as unknown as Href) : null;
 
   // Pinned on phones (board drink-phone-venue): Batch, the accent in venue mode; at home the journey strip has I made it.
@@ -180,7 +184,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
             <>
               <GlassButton accessibilityLabel={toMake.saved ? 'Remove from To make' : 'Add to To make'} icon={toMake.saved ? 'bookmark.fill' : 'bookmark'} onMedia onPress={preview ? () => {} : toMake.toggle} />
               {preview || viewingAs ? null : <GlassButton accessibilityLabel="Share" icon="square.and.arrow.up" onMedia onPress={share} />}
-              {canEdit ? <GlassButton accessibilityLabel="Edit drink" label="Edit" icon="pencil" onMedia onPress={onEdit} /> : null}
+              {canEdit ? <GlassButton accessibilityLabel="Edit drink" label="Edit" onMedia onPress={onEdit} /> : null}
               {more}
             </>
           }
@@ -195,6 +199,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
         </Animated.ScrollView>
       )}
       {pinned ? <DrinkActionBar actions={barActions} pinned /> : null}
+      {/* Wide: the sidebar and the hero card's own buttons; no floating back (board drink-desktop). */}
+      {wide && breakpoint === 'desktop' ? null : (
       <DrinkControls
         media={heroScheme === 'dark' ? 'photo' : 'paper'}
         top={top}
@@ -209,6 +215,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
         more={more}
         backOnly={wide}
       />
+      )}
       {toMake.sheet}
       {actions.sheets}
       {glassOpen ? (

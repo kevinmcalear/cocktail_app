@@ -53,7 +53,7 @@ function Search() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.md }]}>
       <View style={{ paddingHorizontal: gutter, paddingBottom: space.md }}>
-        <SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus={focused} />
+        <SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus={focused} cancel />
       </View>
       <ScrollView
         keyboardShouldPersistTaps="handled"

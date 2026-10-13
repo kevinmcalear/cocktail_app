@@ -1,6 +1,20 @@
-import type { DeviceLocation } from './deviceLocation';
+import type { DeviceLocation, LocationAccess } from './deviceLocation';
 
-export type { DeviceLocation } from './deviceLocation';
+export type { DeviceLocation, LocationAccess } from './deviceLocation';
+
+/**
+ * Web: the site's geolocation permission as it stands, never prompting.
+ * "denied" is blocked: the browser won't ask again until the person changes
+ * it in the site's settings. Browsers without the Permissions API say "ask".
+ */
+export async function getLocationAccess(): Promise<LocationAccess> {
+  try {
+    const { state } = await navigator.permissions.query({ name: 'geolocation' });
+    return state === 'granted' ? 'granted' : state === 'denied' ? 'blocked' : 'ask';
+  } catch {
+    return 'ask';
+  }
+}
 
 /** Web: the browser's own geolocation prompt, then one position (coarse is fine, up to an hour old). */
 export function getDeviceLocation(): Promise<DeviceLocation> {

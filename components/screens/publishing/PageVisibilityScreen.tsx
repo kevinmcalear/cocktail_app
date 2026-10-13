@@ -2,7 +2,8 @@ import { useRouter, type Href } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Crumbs, usePageFrame } from '@/components/nav/PageFrame';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
@@ -14,9 +15,13 @@ import { PageVisibilityChoice } from './PageVisibilityChoice';
 
 /** Venue settings › Publishing › Who sees your page (ppl-bar-visibility). */
 export function PageVisibilityScreen({ barId }: { barId: string }) {
+  // In the venue's own accent and ground, as its other settings are drawn (ppl-bar-visibility).
+  const venue = useActiveVenue().venues.find((v) => v.id === barId);
   return (
     <BackbarTheme>
-      <Page barId={barId} />
+      <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace} groundTint={venue?.groundTint ?? undefined} accentText={venue?.accentText ?? undefined}>
+        <Page barId={barId} />
+      </BrandProvider>
     </BackbarTheme>
   );
 }
@@ -61,7 +66,10 @@ function Page({ barId }: { barId: string }) {
       </ScrollView>
       {frame.wide ? null : (
         <View style={[styles.back, { top: insets.top + space.sm, left: gutter }]}>
-          <GlassButton accessibilityLabel="Back to Publishing" label="Publishing" icon="chevron.left" onPress={() => (router.canGoBack() ? router.back() : router.replace(publishing))} />
+          <PressableScale role="link" accessibilityLabel="Back to Publishing" onPress={() => (router.canGoBack() ? router.back() : router.replace(publishing))} style={styles.backLink}>
+            <IconSymbol name="chevron.left" size={20} color={ds.accentText} />
+            <Body color={ds.accentText}>Publishing</Body>
+          </PressableScale>
         </View>
       )}
     </View>
@@ -72,4 +80,5 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   readable: { gap: space.md },
   back: { position: 'absolute' },
+  backLink: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, marginLeft: -space.sm, paddingHorizontal: space.sm },
 });

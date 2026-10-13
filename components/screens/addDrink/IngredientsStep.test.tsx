@@ -7,6 +7,8 @@ import { startPrep } from '@/lib/prepKinds';
 import { IngredientsStep } from './IngredientsStep';
 
 // Pairings come from the database; these tests are about the field.
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }) }));
 jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: (id: string | null) => ({ data: id === 'campari' ? 14 : 0 }) }));
@@ -76,10 +78,10 @@ describe('IngredientsStep', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Pineapple Heat' }));
     const prep = set.mock.calls[0][0].lines[0].prep;
     expect(prep.kind).toBe('shrub');
-    expect(prep.lines.map((l: { name: string }) => l.name)).toEqual(['Pineapple', 'Sugar', 'Apple cider vinegar', 'Chili']);
+    expect(prep.lines.map((l: { name: string }) => l.name)).toEqual(['Pineapple', 'White sugar', 'Apple cider vinegar', 'Fresno chili']);
     expect(prep.leadMinutes).toBe(3 * 24 * 60);
-    // Back in the drink: it says the prep is on, and saved with the drink.
-    expect(screen.getByText('Shrub added. It’s saved to your preps with the drink.')).toBeTruthy();
+    // Back in the drink: under the field, it says the prep is saved with the drink.
+    expect(screen.getByText('Shrub saved to your preps when you save the drink. Its page is ready then.')).toBeTruthy();
   });
 
   test('a prep can be left for later: the name now, its recipe to write, and the line offers it', async () => {
@@ -101,8 +103,8 @@ describe('IngredientsStep', () => {
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'pineapple chili shrub');
     expect(screen.getByText('Nothing called that yet. Closest:')).toBeTruthy();
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
-    expect(rows.indexOf('Pineapple Juice')).toBeLessThan(rows.indexOf('Make “pineapple chili shrub” in house'));
-    expect(rows.indexOf('Make “pineapple chili shrub” in house')).toBeLessThan(rows.indexOf('Just add the name “pineapple chili shrub”'));
+    expect(rows.indexOf('Pineapple Juice')).toBeLessThan(rows.indexOf('Make “Pineapple chili shrub” in house'));
+    expect(rows.indexOf('Make “Pineapple chili shrub” in house')).toBeLessThan(rows.indexOf('Just add the name “pineapple chili shrub”'));
   });
 
   test('an ordinary new name is added by name first, and can still be made in house', async () => {

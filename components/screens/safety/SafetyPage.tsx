@@ -3,7 +3,8 @@ import { useState, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Caption, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { usePageFrame } from '@/components/nav/PageFrame';
 import { useAuth } from '@/ctx/AuthContext';
 import { WebHead } from '@/components/WebHead';
@@ -24,8 +25,14 @@ export interface SafetyPageProps {
   intro?: string;
   /** A small line above the title, like "Step 2 of 4". */
   kicker?: string | null;
-  /** A small line above the title in the accent: the venue's name, "Last step". */
+  /** A small caps line above the title: the venue's name, "Last step". */
   eyebrow?: string | null;
+  /** The eyebrow in the venue's accent (a step wearing its brand); muted otherwise. */
+  eyebrowTone?: 'accent' | 'muted';
+  /** Beside Back on a setup page without a progress bar: "Venue setup". */
+  topLabel?: string;
+  /** Above the title: the venue's logo with a check on venue setup's summary. */
+  mark?: ReactNode;
   children: ReactNode;
   /** Hide the back button (the age check after sign-up has its own way on). */
   noBack?: boolean;
@@ -55,21 +62,35 @@ export function SafetyPage(props: SafetyPageProps) {
 }
 
 /** Setup's progress: a segment per step, filled in the accent up to where they are. */
-export function StepProgress({ at, of, label, name = 'Setup' }: StepProgressValue) {
+export function StepProgress({ at, of, label, name = 'Setup', wide }: StepProgressValue & { wide?: boolean }) {
   const ds = useDs();
   return (
     <View style={styles.progressRow}>
-      <View role="progressbar" aria-label={name} aria-valuemin={0} aria-valuemax={of} aria-valuenow={at} style={styles.segments}>
+      {/* Wide web (canvas make-venue-desktop): a short bar in the middle, the step at the far right. */}
+      {wide ? <View style={styles.flex} /> : null}
+      <View role="progressbar" aria-label={name} aria-valuemin={0} aria-valuemax={of} aria-valuenow={at} style={[styles.segments, wide && styles.segmentsWide]}>
         {Array.from({ length: of }, (_, i) => (
           <View key={i} style={[styles.segment, { backgroundColor: i < at ? ds.accentFill.fill : ds.c.raised }]} />
         ))}
       </View>
-      {label ? <Caption tone="muted" style={styles.strong}>{label}</Caption> : null}
+      {wide ? <View style={styles.flex} /> : null}
+      {label ? <Caption tone="muted" style={styles.medium}>{label}</Caption> : null}
     </View>
   );
 }
 
-function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/settings', action, onBack, progress, topRight, footer, aside }: SafetyPageProps) {
+/** A setup step's Back: a bare chevron (canvas make-onboarding-*), with "Back" beside it on wide web. */
+function SetupBack({ onPress, label }: { onPress: () => void; label?: string }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel="Back" onPress={onPress} hitSlop={4} style={[styles.bareBack, label ? styles.backWithLabel : null]}>
+      <IconSymbol name="chevron.left" size={20} color={ds.c.ink} />
+      {label ? <Body style={styles.medium}>{label}</Body> : null}
+    </PressableScale>
+  );
+}
+
+function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, mark, children, noBack, backTo = '/settings', action, onBack, progress, topRight, footer, aside }: SafetyPageProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -82,6 +103,9 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
   const [footerHeight, setFooterHeight] = useState(0);
   // A setup step: Back, the bar and "Later" share one row at the top.
   const setupBar = !!(onBack || progress || topRight);
+  // Venue setup on wide web: the rail on the left, and the step's buttons sit under it instead of pinned.
+  const desk = !!aside && frame.wide;
+  const pinned = footer && !desk;
   const back = onBack ?? (noBack || sidebar ? null : () => (router.canGoBack() ? router.back() : router.replace(backTo)));
   const page = (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -92,7 +116,7 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           paddingTop: sidebar && !setupBar ? frame.top : insets.top + layout.minTapTarget + space.xl + (setupBar ? space.sm : 0),
-          paddingBottom: (footer ? footerHeight : insets.bottom) + space.xxxl,
+          paddingBottom: (pinned ? footerHeight : insets.bottom) + space.xxxl,
           paddingHorizontal: gutter,
         }}
       >
@@ -100,22 +124,25 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
         <View style={[frame.column, styles.readable, frame.wide && !signedIn && styles.centred]}>
           {/* With the sidebar there's no Back row, so the action sits over the title. */}
           {action && sidebar ? <View style={styles.inline}>{action}</View> : null}
+          {mark}
           {kicker ? <Caption tone="muted">{kicker}</Caption> : null}
           {eyebrow ? (
-            <Caption style={[styles.strong, { color: ds.accentText }]} numberOfLines={1}>
-              {eyebrow}
+            <Caption style={[styles.eyebrow, { color: eyebrowTone === 'accent' ? ds.accentText : ds.c.muted }]} numberOfLines={1}>
+              {eyebrow.toUpperCase()}
             </Caption>
           ) : null}
           <Title role="heading">{title}</Title>
           {intro ? <Body tone="muted">{intro}</Body> : null}
           {children}
+          {footer && desk ? <View style={[styles.deskFooter, { borderTopColor: ds.c.line }]}>{footer}</View> : null}
         </View>
       </ScrollView>
       {setupBar ? (
         <View style={[styles.topBar, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter, backgroundColor: ds.c.ground }]}>
           <View style={[frame.column, styles.topRow]}>
-            {onBack ? <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={onBack} /> : null}
-            <View style={styles.flex}>{progress ? <StepProgress {...progress} /> : null}</View>
+            {onBack ? <SetupBack onPress={onBack} label={desk ? 'Back' : undefined} /> : null}
+            {topLabel && !progress ? <Caption tone="muted" style={styles.medium}>{topLabel}</Caption> : null}
+            <View style={styles.flex}>{progress ? <StepProgress {...progress} wide={desk} /> : null}</View>
             {topRight}
           </View>
         </View>
@@ -125,10 +152,10 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
         </View>
       ) : null}
       {action && !sidebar && !setupBar ? <View style={[styles.action, { top: insets.top + space.sm, right: gutter }]}>{action}</View> : null}
-      {footer ? (
+      {pinned ? (
         <View
           onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}
-          style={[styles.footer, { backgroundColor: ds.c.ground, borderTopColor: ds.c.line, paddingBottom: insets.bottom + space.lg, paddingHorizontal: gutter }]}
+          style={[styles.footer, { backgroundColor: ds.c.ground, paddingBottom: insets.bottom + space.lg, paddingHorizontal: gutter }]}
         >
           <View style={[frame.column, styles.footerColumn]}>{footer}</View>
         </View>
@@ -152,13 +179,20 @@ const styles = StyleSheet.create({
   back: { position: 'absolute' },
   flex: { flex: 1, minWidth: 0 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
+  medium: { fontFamily: fontFamilies.bodyMedium },
+  eyebrow: { fontFamily: fontFamilies.bodyMedium, letterSpacing: 0.6 },
+  bareBack: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minWidth: layout.minTapTarget, height: layout.minTapTarget, marginLeft: -space.sm - 2 },
+  backWithLabel: { gap: space.xs, paddingRight: space.sm },
+  segmentsWide: { flexGrow: 0, flexShrink: 0, flexBasis: 280, width: 280 },
+  deskFooter: { flexDirection: 'row', alignItems: 'center', gap: space.lg, marginTop: space.xl, paddingTop: space.xl, borderTopWidth: StyleSheet.hairlineWidth },
   // Opaque, so a long step scrolls under it rather than through it.
   topBar: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: space.sm },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   segments: { flex: 1, flexDirection: 'row', gap: space.xs },
   segment: { flex: 1, height: space.xs, borderRadius: radius.mark },
-  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.lg, borderTopWidth: StyleSheet.hairlineWidth },
+  // No rule above it (canvas make-onboarding-*): the ground behind the buttons is enough.
+  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: space.lg },
   footerColumn: { gap: space.xs },
   action: { position: 'absolute', flexDirection: 'row', alignItems: 'center', gap: space.sm },
   inline: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space.sm },

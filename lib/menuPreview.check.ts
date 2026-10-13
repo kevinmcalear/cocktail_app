@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { drinksLine, isPreviewBot, isUuid, menuVersion, nightLabel, previewHtml, previewMeta, type PreviewDrink, type SharedMenuRow } from './menuPreview';
+import { drinksLine, isPreviewBot, isShareSlug, isUuid, menuVersion, nightLabel, previewHtml, previewMeta, type PreviewDrink, type SharedMenuRow } from './menuPreview';
 import { createdBy, drinkKickerFor, drinkLine, drinkPreviewMeta, drinkVersion, madeBy, type PreviewDrinkCard } from './drinkPreview';
 import { paintSketch } from './sketch/paint';
 import { sceneToSvg } from './sketch/svg';
@@ -18,6 +18,12 @@ assert.ok(!isPreviewBot(null));
 assert.ok(isUuid('00000000-0000-4000-c000-00000000aa01'));
 assert.ok(!isUuid('[id]'));
 assert.ok(!isUuid("x' or 1=1"));
+
+// --- readable links (/d/penicillin, /m/halloween-party): share_slug_base()'s shape ---
+for (const slug of ['penicillin', 'halloween-party', 'penicillin-0c2b', 'negroni-1929', 'Penicillin']) assert.ok(isShareSlug(slug), slug);
+for (const bad of ['', '-penicillin', 'penicillin-', 'pen--icillin', 'pen icillin', 'pénicillin', "x' or 1=1", '../etc', '[id]', 'a'.repeat(101)]) assert.ok(!isShareSlug(bad), bad);
+// A uuid is always read as the id, never looked up as a slug.
+assert.ok(!isShareSlug('00000000-0000-4000-c000-00000000aa01'));
 
 // --- the words ---
 assert.equal(nightLabel('2026-10-31'), 'Saturday 31 October');
@@ -55,6 +61,8 @@ assert.equal(meta.description, '4 drinks for Saturday 31 October. A menu on Cock
 assert.equal(previewMeta({ ...menu, menu_date: null, sections: [{ name: 'Drinks', item_ids: ['a'] }] }, drinks, 'https://babyvom.it').description, '1 drink. A menu on Cocktail.');
 assert.equal(meta.url, 'https://babyvom.it/m/00000000-0000-4000-c000-00000000aa01');
 assert.ok(meta.image.startsWith('https://babyvom.it/api/menu-og?id=00000000-0000-4000-c000-00000000aa01&v='));
+// Shared by its slug, the preview names that link; the image still asks by id.
+assert.equal(previewMeta(menu, drinks, 'https://babyvom.it', 'halloween-party').url, 'https://babyvom.it/m/halloween-party');
 
 // A menu's name is someone's text: it can't break out of the tags.
 const html = previewHtml(meta);
@@ -98,11 +106,12 @@ const drinkMeta = drinkPreviewMeta(penicillin, 'https://babyvom.it');
 assert.equal(drinkMeta.title, 'Penicillin');
 assert.equal(drinkMeta.description, 'Scotch, lemon, honey-ginger, an Islay float. Sam Ross, 2005. On Cocktail.');
 assert.equal(drinkMeta.url, 'https://babyvom.it/d/0c2bead3-1ed9-4b1d-b79d-073f85eef5d2');
+assert.equal(drinkPreviewMeta(penicillin, 'https://babyvom.it', 'penicillin').url, 'https://babyvom.it/d/penicillin');
 assert.ok(drinkMeta.image.startsWith('https://babyvom.it/api/drink-og?id=0c2bead3-1ed9-4b1d-b79d-073f85eef5d2&v='));
 assert.equal(createdBy(penicillin), 'Created by Sam Ross · Milk & Honey');
 assert.equal(drinkKickerFor(penicillin), 'Modern classic · 2005');
 // A shared spec names its ingredients; a bar's own drink is "Little Rye original".
-const shared = { ...penicillin, ingredients: ['Scotch', 'Lemon', 'Honey Syrup'], bar_id: 'b', bar: 'Little Rye', creator: null, origin: 'Original', origin_year: null };
+const shared = { ...penicillin, ingredients: [{ name: 'Scotch', brand: false }, { name: 'Lemon', brand: false }, { name: 'Honey Syrup', brand: false }], bar_id: 'b', bar: 'Little Rye', creator: null, origin: 'Original', origin_year: null };
 assert.equal(drinkLine(shared), 'Scotch, lemon, honey syrup');
 assert.equal(madeBy(shared), 'Little Rye');
 assert.equal(drinkKickerFor(shared), 'Little Rye original');

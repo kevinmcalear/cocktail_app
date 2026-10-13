@@ -23,6 +23,8 @@ interface RowProps {
   scoreDetail?: string;
   /** The bar's logo (initials when null). Undefined leaves the logo out. */
   logo?: string | null;
+  /** The bar page, for its venue's colours when it has no logo. */
+  barId?: string;
   /** One drink at one bar: its picture leads instead of the logo. */
   drinkId?: string;
   /** Makes the row a link, e.g. to the bar's profile. */
@@ -30,7 +32,7 @@ interface RowProps {
 }
 
 /** A numbered row with a score at the end: a bar in an area list, a drink in your own. */
-export function RankRow({ position, title, detail, score, scoreDetail, logo, drinkId, onPress }: RowProps) {
+export function RankRow({ position, title, detail, score, scoreDetail, logo, barId, drinkId, onPress }: RowProps) {
   const ds = useDs();
   const label = `Number ${position}: ${title}, ${detail}. Score ${formatScore(score)}${scoreDetail ? `, ${scoreDetail}` : ''}`;
   const body = (
@@ -38,7 +40,7 @@ export function RankRow({ position, title, detail, score, scoreDetail, logo, dri
       <DsText variant="title" tone="accent" style={styles.position}>
         {position}
       </DsText>
-      {drinkId ? <DrinkImage itemId={drinkId} glass={null} accessibilityLabel="" radius="control" style={styles.drink} thumb /> : logo !== undefined ? <BarMark logoUrl={logo} name={title} size={LOGO} /> : null}
+      {drinkId ? <DrinkImage itemId={drinkId} glass={null} accessibilityLabel="" radius="control" style={styles.drink} thumb /> : logo !== undefined ? <BarMark logoUrl={logo} name={title} profileId={barId} size={LOGO} /> : null}
       <View style={styles.flex}>
         <Headline numberOfLines={1}>{title}</Headline>
         <Caption tone="muted" numberOfLines={1}>
@@ -119,6 +121,7 @@ export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.ranker
             score={r.score}
             scoreDetail={scoreDetail(r)}
             logo={classicId ? undefined : r.avatar_url}
+            barId={r.venue_profile_id}
             drinkId={classicId ? (pour?.itemId ?? classicId) : undefined}
             onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
           />
@@ -146,7 +149,7 @@ export function EarlyList({ rows }: { rows: DiscoverRow[] }) {
           onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
           style={[styles.row, { borderBottomColor: ds.c.line }]}
         >
-          <BarMark logoUrl={r.avatar_url} name={r.display_name} size={LOGO} />
+          <BarMark logoUrl={r.avatar_url} name={r.display_name} profileId={r.venue_profile_id} size={LOGO} />
           <View style={styles.flex}>
             <Headline numberOfLines={1}>{r.display_name}</Headline>
             <Caption tone="muted" numberOfLines={1}>

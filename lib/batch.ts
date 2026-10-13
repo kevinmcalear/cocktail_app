@@ -64,10 +64,13 @@ export interface Batch {
 /** The default when the caller gives no dilution: a stirred drink's 20%. */
 export const DILUTION = 0.2;
 export const MIN_SERVES = 1;
-export const MAX_SERVES = 60;
+/** 6,969 serves: Eddie and Kevin's call (13 Oct 2026), for Rob. There's no database limit. */
+export const MAX_SERVES = 6969;
 /** Up to this many dashes in the batch, count them; past it, measure. */
 const DASH_LIMIT = 12;
 const ML_PER_OZ = 29.5735;
+/** Ounces batched in ml read in bar measures, 1 oz to 30 ml, like the spec and the service pour (lib/drinkMath barMl). */
+const BAR_ML_PER_OZ = 30;
 
 const GRAMS: Record<string, number> = { g: 1, kg: 1000 };
 const DASH_UNITS = new Set(['dash', 'dashes', 'drop', 'drops']);
@@ -123,18 +126,18 @@ const trim = (n: number, digits: number) => String(Number(n.toFixed(digits)));
 export function formatVolume(ml: number, unit: VolumeUnit): string {
   if (unit === 'oz') {
     const oz = ml / ML_PER_OZ;
-    if (oz >= 10) return `${trim(oz, 1)} oz`;
+    if (oz >= 10) return `${trim(oz, oz >= 100 ? 0 : 1)} oz`;
     if (oz < 0.25) return `${trim(oz, 2)} oz`;
     return `${Math.round(oz * 4) / 4} oz`;
   }
-  if (ml >= 1000) return `${trim(ml / 1000, 2)} L`;
+  if (ml >= 1000) return `${trim(ml / 1000, ml >= 100000 ? 0 : ml >= 10000 ? 1 : 2)} L`;
   if (ml < 10) return `${trim(ml, 1)} ml`;
   return `${Math.round(ml * 2) / 2} ml`;
 }
 
 /** Weighed lines stay in weight, whatever the volume unit: "975 g", "1.95 kg". */
 export function formatWeight(g: number): string {
-  if (g >= 1000) return `${trim(g / 1000, 2)} kg`;
+  if (g >= 1000) return `${trim(g / 1000, g >= 100000 ? 0 : g >= 10000 ? 1 : 2)} kg`;
   if (g < 10) return `${trim(g, 1)} g`;
   return `${Math.round(g * 2) / 2} g`;
 }
@@ -158,7 +161,7 @@ function scaleLine(line: SpecLine, serves: number, unit: VolumeUnit): BatchLine 
   const n = line.value * serves;
   const perG = GRAMS[u];
   if (perG !== undefined) return { ...base, amount: formatWeight(n * perG), sub: null, ml: line.ml === null ? null : line.ml * serves };
-  const perMl = VOLUME_ML[u];
+  const perMl = unit === 'ml' && (u === 'oz' || u === 'fl oz') ? BAR_ML_PER_OZ : VOLUME_ML[u];
   if (perMl === undefined) return { ...base, amount: formatCount(n, u || 'each'), sub: null, ml: null };
   const ml = n * perMl;
   if (DASH_UNITS.has(u)) {
@@ -282,6 +285,37 @@ export function freezingPointC(abv: number): number {
 export function clampServes(value: number): number {
   if (!Number.isFinite(value)) return MIN_SERVES;
   return Math.min(MAX_SERVES, Math.max(MIN_SERVES, Math.round(value)));
+}
+
+// The ruler's stops: every serve up to 60, then coarser, so 6,969 is a few
+// flicks away instead of 97,000 px of dragging. Typing stays exact.
+const RULER_STEPS: readonly [upTo: number, step: number][] = [[60, 1], [200, 5], [1000, 25], [Infinity, 100]];
+
+/** The serve counts the ruler has a tick for, min to max, ending on max. */
+export function servesStops(min: number, max: number): number[] {
+  const stops: number[] = [];
+  for (let n = min; n < max; ) {
+    stops.push(n);
+    const step = RULER_STEPS.find(([upTo]) => n < upTo)![1];
+    n = n % step ? Math.ceil(n / step) * step : n + step;
+  }
+  stops.push(max);
+  return stops;
+}
+
+/** Where `value` sits along the stops, as a fractional index (137 between 135 and 140 is 26.4). */
+export function stopPosition(stops: readonly number[], value: number): number {
+  const i = stops.findIndex((s) => s >= value);
+  if (i < 0) return stops.length - 1;
+  if (i === 0) return 0;
+  return i - 1 + (value - stops[i - 1]) / (stops[i] - stops[i - 1]);
+}
+
+/** The stop `count` stops along from `value` (negative goes down), held to the ends. */
+export function stepStops(stops: readonly number[], value: number, count: number): number {
+  const at = stopPosition(stops, value);
+  const i = count > 0 ? Math.floor(at) + count : Math.ceil(at) + count;
+  return stops[Math.min(stops.length - 1, Math.max(0, i))];
 }
 
 export const LEAVE_OUT_LABEL: Record<LeaveOut, string> = {

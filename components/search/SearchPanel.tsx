@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Chip } from '@/components/ds';
+import { Body, Caption, Chip, useDs, useGutter } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -48,15 +48,20 @@ interface HeadProps {
   onSubmit?: () => void;
   /** The ⌘K palette: the esc key cap and "Press tab to switch" (nav-search-desk-palette). */
   keys?: boolean;
+  /** The search tab: Cancel beside the field while it's in use. */
+  cancel?: boolean;
 }
 
 /** The search field and where it looks. The same at every door: the tab, ⌘K, Library and Discover. */
-export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys }: HeadProps) {
+export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys, cancel }: HeadProps) {
+  const ds = useDs();
+  const gutter = useGutter();
   const options = scopeOptions(mine.label, area?.label ?? null);
   const placeholder = scope === 'everywhere' ? 'Search bars, drinks and people' : scope === 'area' ? `Search ${area?.label === 'This area' ? 'this area' : (area?.label ?? 'here')}` : `Search ${mine.venueId ? mine.label : 'your drinks'}`;
   return (
     <View style={styles.head}>
-      <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys={keys} />
+      <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys={keys} cancel={cancel} />
+      {keys ? <View style={[styles.rule, { marginHorizontal: -gutter, backgroundColor: ds.c.line }]} /> : null}
       {keys ? (
         <View style={styles.scopeRow}>
           <View style={styles.scope}>
@@ -83,23 +88,28 @@ interface BodyProps {
   area?: SearchArea | null;
   /** The palette closes itself when a jump stays on the same page (Library to a Library filter). */
   onJump?: () => void;
-  /** Rows of the door's own, shown with Techniques and History while nothing is typed (⌘K's Pick for me). */
+  /** Rows of the door's own (⌘K's Commands group, Pick for me): with Techniques and History while nothing is typed, after the results once something is. */
   commands?: ReactNode;
+  /** The ⌘K palette: "Search everywhere for …" is a slim row there, not a button (nav-search-desk-palette). */
+  palette?: boolean;
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query, scope, onScope, mine, area, onJump, commands }: BodyProps) {
+export function SearchBody({ query, scope, onScope, mine, area, onJump, commands, palette }: BodyProps) {
   if (!query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} />;
-  if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} />;
+  if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} commands={commands} palette={palette} />;
   return (
-    <PublicResults
-      query={query}
-      area={scope === 'area' && area ? area.area : null}
-      kinds={area?.kinds}
-      onKind={area?.onKind}
-      onEverywhere={() => onScope('everywhere')}
-      mine={mine}
-    />
+    <>
+      <PublicResults
+        query={query}
+        area={scope === 'area' && area ? area.area : null}
+        kinds={area?.kinds}
+        onKind={area?.onKind}
+        onEverywhere={() => onScope('everywhere')}
+        mine={mine}
+      />
+      {commands}
+    </>
   );
 }
 
@@ -114,7 +124,7 @@ const JUMPS = [
 
 /** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry). */
 const ENTRIES = [
-  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'sparkles', href: '/flavor-map' },
+  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map' },
   { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history' },
   { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques' },
 ] as const;
@@ -153,7 +163,8 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
               key={`${r.kind}-${r.id}`}
               title={r.title}
               caption={caption(r)}
-              icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'sparkles' : 'drop.fill'}
+              icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'target' : 'drop.fill'}
+              accentIcon={r.kind === 'flavor'}
               avatar={r.kind === 'bar' ? { uri: r.imageUrl ?? null } : undefined}
               ingredient={r.kind === 'ingredient' ? { id: r.isDraft ? null : r.id } : undefined}
               onPress={() => open(r)}
@@ -167,8 +178,9 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
             Jump to
           </Caption>
           <View style={styles.chips}>
-            {JUMPS.filter((j) => j.label !== 'Drafts' || draftCount > 0).map((j) => (
-              <Chip key={j.label} label={j.label === 'Drafts' ? `Drafts ${draftCount}` : j.label} selected={false} onPress={() => go(j.href)} />
+            {/* Drafts stays with its count, even at none (decided 10 Oct, b53); outlined chips, as drawn. */}
+            {JUMPS.map((j) => (
+              <Chip key={j.label} label={j.label} count={j.label === 'Drafts' ? draftCount : undefined} quiet selected={false} onPress={() => go(j.href)} />
             ))}
           </View>
         </View>
@@ -176,7 +188,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
       {commands}
       <View>
         {ENTRIES.map((e) => (
-          <ResultRow key={e.href} title={e.title} caption={e.caption} icon={e.icon} onPress={() => go(e.href)} />
+          <ResultRow key={e.href} title={e.title} caption={e.caption} icon={e.icon} accentIcon={e.href === '/flavor-map'} onPress={() => go(e.href)} />
         ))}
       </View>
       <Body tone="muted">
@@ -192,6 +204,8 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
 
 const styles = StyleSheet.create({
   head: { gap: space.md },
+  // The palette's line under its field, edge to edge across the card.
+  rule: { height: StyleSheet.hairlineWidth },
   scopeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   scope: { flexGrow: 0, flexShrink: 1, minWidth: 240 },
   hint: { flexDirection: 'row', alignItems: 'center', gap: space.xs, marginLeft: 'auto' },

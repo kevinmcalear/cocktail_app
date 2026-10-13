@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
 import { editionDates, type MenuEdition } from '@/lib/menuEditions';
-import type { ForYouEdition } from '@/lib/collectionMenus';
+import type { ForYouEdition, ListPlace } from '@/lib/collectionMenus';
 import { supabase } from '@/lib/supabase';
 
 /** A bar's menu for Collection's "Bar menus for you", with what the card shows. Plain JSON. */
@@ -27,20 +27,23 @@ interface EditionRow extends EditionCols {
  * newest first, for lib/collectionMenus barMenuPicks to choose from. Public
  * data: editions and published drinks.
  */
-export function useBarMenusForYou(barIds: readonly string[]) {
+export function useBarMenusForYou(barIds: readonly string[], { currentOnly = false }: { currentOnly?: boolean } = {}) {
   const userId = useUserId();
   const ids = [...new Set(barIds)].sort();
   return useQuery({
-    queryKey: ['bar-menus-for-you', userId, ids],
+    queryKey: ['bar-menus-for-you', userId, ids, currentOnly],
     enabled: !!userId && ids.length > 0,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<BarMenuForYou[]> => {
       // ponytail: every menu of every bar you ranked at, in one page. People
       // rank at a few dozen bars; cap by year if that ever grows past a page.
-      const { data, error } = await supabase
+      let query = supabase
         .from('profile_menu_editions')
         .select('id, name, year, month, end_year, end_month, is_current, theme, profile:profiles!profile_id(id, handle, display_name, avatar_url, locality, city), drinks:profile_menu_edition_drinks(item_id, sort_order)')
-        .in('profile_id', ids)
+        .in('profile_id', ids);
+      // The 50 Best fallback wants only what's on now, and its drinks' ids must fit in one request.
+      if (currentOnly) query = query.eq('is_current', true);
+      const { data, error } = await query
         .order('year', { ascending: false })
         .order('month', { ascending: false, nullsFirst: false });
       if (error) throw error;
@@ -67,6 +70,39 @@ export function useBarMenusForYou(barIds: readonly string[]) {
           }),
         };
       });
+    },
+  });
+}
+
+/** How many of the list's best placed bars the fallback reads: a featured card and a rail of six, with room for bars with no menu on. */
+export const FIFTY_BEST_READ = 12;
+
+/** The list Bar menus for you falls back on before you've ranked anything. */
+export const FIFTY_BEST = 'The World\'s 50 Best Bars';
+
+/**
+ * The bars on the latest World's 50 Best Bars list, best placed first, for
+ * Bar menus for you while you haven't ranked a drink at a bar (`enabled`).
+ * Public data. Plain JSON.
+ */
+export function useFiftyBest(enabled: boolean) {
+  return useQuery({
+    queryKey: ['fifty-best-places'],
+    enabled,
+    staleTime: 60 * 60_000,
+    queryFn: async (): Promise<ListPlace[]> => {
+      const { data, error } = await supabase
+        .from('profile_awards')
+        .select('profile_id, position, year')
+        .eq('award', FIFTY_BEST)
+        .eq('status', 'confirmed')
+        .not('position', 'is', null)
+        .order('year', { ascending: false })
+        .order('position', { ascending: true })
+        .limit(100);
+      if (error) throw error;
+      const latest = data?.[0]?.year;
+      return (data ?? []).filter((r) => r.year === latest).map((r) => ({ barId: r.profile_id, position: r.position ?? 0, award: FIFTY_BEST, year: r.year }));
     },
   });
 }

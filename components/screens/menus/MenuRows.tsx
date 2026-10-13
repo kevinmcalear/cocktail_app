@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
-import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { displayFaces, displayName, fontFamilies, radius, space } from '@/constants/tokens';
 import { readableAccent, withAlpha } from '@/lib/color';
 import { comingUpLine, draftLine, homeMenuLine, menuDateLine, menuStatus, plural, previousLine } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
@@ -60,7 +60,7 @@ export function MenuOnRow({ menu, now }: { menu: MenuSummary; now: number }) {
         <MenuVisual name={menu.name} coverUrl={menu.coverUrl} coverPosition={menu.coverPosition} pictures={menu.pictures} height={48} />
       </View>
       <View style={styles.flex}>
-        <Headline numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
+        <Headline numberOfLines={1} style={[displayName.card, { fontFamily: displayFaces[ds.displayFace].regular }]}>
           {menu.name}
         </Headline>
         <Caption tone="muted" numberOfLines={1}>

@@ -27,8 +27,8 @@ const snap = (lines: SnapshotLine[], extra: Partial<Snapshot> = {}): Snapshot =>
 // The study's Brown Butter Old Fashioned: demerara 7.5 → 6 g, plus a dash of saline.
 const v3 = snap([line('b', 'Butter-washed bourbon', 60, 'ml'), line('d', 'Demerara syrup', 7.5, 'g'), line('bt', 'Angostura', 2, 'dash')]);
 const v4 = snap([line('b', 'Butter-washed bourbon', 60, 'ml'), line('d', 'Demerara syrup', 6, 'g'), line('bt', 'Angostura', 2, 'dash'), line('s', 'Saline', 1, 'dash')]);
-assert.deepEqual(specDiff(v3, v4), ['Demerara syrup 7.5 g → 6 g', '+ 1 dash Saline']);
-assert.deepEqual(specDiff(v4, v3), ['Demerara syrup 6 g → 7.5 g', '− Saline']);
+assert.deepEqual(specDiff(v3, v4), ['Demerara syrup 7.5 g to 6 g', '+ 1 dash Saline']);
+assert.deepEqual(specDiff(v4, v3), ['Demerara syrup 6 g to 7.5 g', '− Saline']);
 assert.deepEqual(specDiff(v4, v4), [], 'nothing changed');
 
 // Notes, optional, method, glass, ice, bartender notes, dilution, service style.
@@ -52,8 +52,8 @@ assert.deepEqual(specDiff(v4, v5), [
 ]);
 
 // Amounts as strings (numeric comes back as text from the API), missing names, and the first version.
-assert.deepEqual(specDiff(snap([line('x', 'Gin', '60.000', 'ml')]), snap([line('x', 'Gin', 45, 'ml')])), ['Gin 60 ml → 45 ml']);
-assert.deepEqual(specDiff(snap([line('x', 'Gin', null, null)]), snap([line('x', 'Gin', 45, 'ml')])), ['Gin no amount → 45 ml']);
+assert.deepEqual(specDiff(snap([line('x', 'Gin', '60.000', 'ml')]), snap([line('x', 'Gin', 45, 'ml')])), ['Gin 60 ml to 45 ml']);
+assert.deepEqual(specDiff(snap([line('x', 'Gin', null, null)]), snap([line('x', 'Gin', 45, 'ml')])), ['Gin no amount to 45 ml']);
 assert.deepEqual(specDiff(null, snap([line('x', 'Gin', 45, 'ml'), line('y', null, 1, 'twist')])), ['+ 45 ml Gin', '+ 1 twist Hidden ingredient']);
 
 console.log('specDiff: ok');

@@ -4,13 +4,15 @@ import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, DrinkImage, GlassButton, Headline, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, DrinkImage, GlassButton, PressableScale, Tag, Title, useDs, useGutter } from '@/components/ds';
 import { pickDrinkPhotos, takeDrinkPhoto } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { STATUS } from '@/constants/palette';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useAddServicePhoto } from '@/hooks/useServicePhotos';
+import { readableAccent } from '@/lib/color';
 import { showMessage } from '@/lib/dialogs';
 import type { ImageAngle, ItemImageLink } from '@/lib/itemImages';
 import { roleLabel } from '@/lib/roles';
@@ -54,9 +56,11 @@ function Photos({ item, start }: { item: DatabaseItem; start?: string }) {
   const { data: opensAt } = useCapabilityOpensAt(item.bar_id, 'photos');
   const canAdd = !item.bar_id || !!caps?.includes('photos');
   const add = useAddServicePhoto(item.id);
-  const camera = Platform.OS !== 'web' && Device.isDevice;
+  // The native camera throws where there's none (simulators); the web's opens the camera or a file picker.
+  const camera = Platform.OS === 'web' || Device.isDevice;
   const previewHeight = Math.min(width, height * 0.42);
   const note = slotNote(shot);
+  const glass = shot.picture && !shot.picture.isSketch ? 'dark' : 'light';
   const choose = async (shoot: boolean) => {
     try {
       const uri = shoot ? await takeDrinkPhoto() : (await pickDrinkPhotos())[0];
@@ -95,29 +99,33 @@ function Photos({ item, start }: { item: DatabaseItem; start?: string }) {
           </Body>
           {canAdd ? (
             <View style={styles.actions}>
-              {camera ? <Button label="Take photo" icon="camera.fill" disabled={add.isPending} onPress={() => void choose(true)} /> : null}
-              <Button label={add.isPending ? 'Uploading…' : 'Choose from library'} icon="photo" variant={camera ? 'secondary' : 'primary'} disabled={add.isPending} onPress={() => void choose(false)} />
+              {camera ? <Button label="Take photo" disabled={add.isPending} onPress={() => void choose(true)} style={styles.action} /> : null}
+              <Button label={add.isPending ? 'Uploading…' : 'Choose from library'} variant={camera ? 'secondary' : 'primary'} disabled={add.isPending} onPress={() => void choose(false)} style={styles.action} />
             </View>
           ) : (
             <Caption tone="muted">{`Adding photos opens at ${opensAt ? roleLabel(opensAt) : 'Bartender'}.`}</Caption>
           )}
           <View style={styles.list}>
-            <Headline role="heading">Shot list</Headline>
-            {shots.map((s) => (
+            <Caption tone="muted" role="heading" style={styles.eyebrow}>
+              SHOT LIST
+            </Caption>
+            {/* The service angles first, the hero last (board drink-phone-shotlist). */}
+            {[...shots.filter((s) => s.angle !== 'hero'), ...shots.filter((s) => s.angle === 'hero')].map((s) => (
               <View key={s.angle} accessible accessibilityLabel={`${s.label}, ${s.brief}. ${s.status === 'photo' ? 'Done' : s.status === 'outdated' ? 'May be out of date' : 'To do'}`} style={[styles.row, { borderBottomColor: ds.c.line }]}>
                 <Mark status={s.status} />
-                <View style={styles.flex}>
-                  <Body>{`${s.label}, ${s.brief.toLowerCase()}`}</Body>
-                  {s.status === 'outdated' ? <Caption tone="muted">May be out of date</Caption> : null}
-                </View>
+                <Body tone={s.status === 'photo' ? 'muted' : 'ink'} style={[styles.flex, s.status === 'photo' ? styles.done : null]}>
+                  {s.angle === 'hero' ? s.label : `${s.label}, ${s.brief.toLowerCase()}`}
+                </Body>
+                {s.status === 'outdated' ? <Tag label="May be out of date" tone="accent" /> : null}
               </View>
             ))}
             {shots.some((s) => s.status === 'outdated') ? <Caption tone="muted">The spec changed after a photo was taken. An editor confirms it; photos are never swapped silently.</Caption> : null}
           </View>
         </View>
       </ScrollView>
-      <View style={[styles.controls, { top: (Platform.OS === 'ios' ? space.sm : insets.top) + space.sm, left: gutter }]}>
-        <GlassButton accessibilityLabel="Back" icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'} scheme={shot.picture && !shot.picture.isSketch ? 'dark' : 'light'} onPress={() => (router.canGoBack() ? router.back() : router.replace(`/cocktail/${item.id}` as Href))} />
+      <View style={[styles.controls, { top: (Platform.OS === 'ios' ? space.sm : insets.top) + space.sm, left: gutter, right: gutter }]}>
+        <GlassButton accessibilityLabel="Back" icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'} scheme={glass} onPress={() => (router.canGoBack() ? router.back() : router.replace(`/cocktail/${item.id}` as Href))} />
+        {canAdd ? <GlassButton accessibilityLabel={`Add a ${shot.label.toLowerCase()} photo`} label="Add a photo" scheme={glass} onPress={() => void choose(false)} /> : null}
       </View>
     </View>
   );
@@ -127,9 +135,10 @@ function Photos({ item, start }: { item: DatabaseItem; start?: string }) {
 function Mark({ status }: { status: PhotoShot['status'] }) {
   const ds = useDs();
   if (status === 'photo') {
+    const done = readableAccent(STATUS.success, ds.c.ground);
     return (
-      <View style={[styles.mark, { backgroundColor: ds.accentFill.fill, borderColor: ds.accentFill.fill }]} aria-hidden>
-        <IconSymbol name="checkmark" size={14} color={ds.accentFill.text} />
+      <View style={[styles.mark, { backgroundColor: done, borderColor: done }]} aria-hidden>
+        <IconSymbol name="checkmark" size={14} color={ds.c.ground} />
       </View>
     );
   }
@@ -146,6 +155,10 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   list: { gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  mark: { width: 22, height: 22, borderRadius: radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  controls: { position: 'absolute' },
+  // Square boxes, ticked when done (board drink-phone-shotlist).
+  mark: { width: 22, height: 22, borderRadius: radius.mark, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
+  done: { textDecorationLine: 'line-through' },
+  action: { flexGrow: 1, flexBasis: 140 },
 });

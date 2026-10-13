@@ -28,7 +28,8 @@ export function TonightWeek({ barId }: { barId: string }) {
   const tonight = days[0].items.filter((i) => i.kind === 'event');
   const later = upcoming(items, from).filter((i) => !tonight.includes(i)).slice(0, NEXT);
   // The days come from the device's clock, which the static web build doesn't have.
-  if (!hydrated) return null;
+  // A week with nothing on draws no strip (venue-tonight-phone, venue-tonight-empty).
+  if (!hydrated || days.every((d) => !d.items.length)) return null;
   return (
     <View style={styles.wrap}>
       {tonight.map((event) => (
@@ -44,12 +45,10 @@ export function TonightWeek({ barId }: { barId: string }) {
       {later.length ? (
         <View>
           {later.map((item) => (
-            <WeekLine key={`${item.kind}-${item.id}`} item={item} from={from} member />
+            <WeekLine key={`${item.kind}-${item.id}`} item={item} from={from} member dot={false} />
           ))}
         </View>
-      ) : (
-        <Caption tone="muted">Nothing else on this week. Add a takeover, a tasting or a guest shift from the week page.</Caption>
-      )}
+      ) : null}
       <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
     </View>
   );

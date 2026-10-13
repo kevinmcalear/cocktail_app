@@ -1,7 +1,7 @@
-import { useEffect, useRef, type ComponentRef } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Button, Caption, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 
@@ -16,6 +16,8 @@ interface SearchFieldProps {
   onDone?: () => void;
   /** The ⌘K palette: an esc key cap at the field's end in place of Done. */
   keys?: boolean;
+  /** The search tab: Cancel beside the field while it's in use, which empties it and puts the keyboard away (prep-flavor-entry). */
+  cancel?: boolean;
 }
 
 /** A keyboard key, as the palette's hints draw it: "esc", "tab", "↵". */
@@ -28,10 +30,15 @@ export function KeyCap({ label }: { label: string }) {
   );
 }
 
-/** The search pill: an accent ring while it's in use, a clear button once something's typed. */
-export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys }: SearchFieldProps) {
+/**
+ * The search pill: an accent ring while it's in use, a clear button once
+ * something's typed. With `keys` (the ⌘K palette) it's the card's borderless
+ * header instead, with the esc key at its end (nav-search-desk-palette).
+ */
+export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel }: SearchFieldProps) {
   const ds = useDs();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
+  const [focused, setFocused] = useState(false);
   // autoFocus alone loses to the button that opened the sheet, which keeps focus on web; focus once it has settled.
   useEffect(() => {
     if (!autoFocus) return;
@@ -40,7 +47,7 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
   }, [autoFocus]);
   return (
     <View style={styles.row}>
-      <View style={[styles.field, { backgroundColor: ds.c.raised, borderColor: ds.accentText }]}>
+      <View style={[styles.field, keys ? styles.bare : { backgroundColor: ds.c.raised, borderColor: ds.accentText }]}>
         <IconSymbol name="magnifyingglass" size={18} color={ds.c.muted} />
         <TextInput
           ref={input}
@@ -52,10 +59,12 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
           autoCapitalize="none"
           returnKeyType="search"
           onSubmitEditing={onSubmit}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           accessibilityLabel={placeholder}
           style={[styles.input, NO_OUTLINE, { color: ds.c.ink }]}
         />
-        {query ? (
+        {query && !keys ? (
           <PressableScale
             accessibilityLabel="Clear the search"
             onPress={() => {
@@ -74,6 +83,20 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
         ) : null}
       </View>
       {onDone && !keys ? <Button label="Done" variant="ghost" onPress={onDone} /> : null}
+      {/* On the web the field blurs before the press lands: with nothing typed that's all Cancel would do anyway. */}
+      {cancel && (focused || query) ? (
+        <PressableScale
+          role="button"
+          accessibilityLabel="Cancel the search"
+          onPress={() => {
+            onQuery('');
+            input.current?.blur();
+          }}
+          style={styles.cancel}
+        >
+          <Body style={styles.cancelText}>Cancel</Body>
+        </PressableScale>
+      ) : null}
     </View>
   );
 }
@@ -93,9 +116,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radius.pill,
   },
+  bare: { borderWidth: 0, paddingLeft: 0 },
   input: { ...type.body, fontFamily: fontFamilies.body, flex: 1, minWidth: 0, paddingVertical: space.md },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   esc: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingRight: space.md },
+  cancel: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.xs },
+  cancelText: { fontFamily: fontFamilies.bodyMedium },
   cap: { borderWidth: 1, borderRadius: radius.mark, paddingHorizontal: space.sm - 2, minWidth: space.xl, alignItems: 'center' },
   capText: { fontFamily: fontFamilies.monoMedium },
 });

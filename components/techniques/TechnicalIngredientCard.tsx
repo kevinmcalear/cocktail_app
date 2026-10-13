@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, PressableScale, Surface, Tag, useDs } from '@/components/ds';
+import { Body, Caption, DsText, Headline, PressableScale, Surface, Tag, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { doseLine } from '@/lib/doseLine';
 import { technicalIngredientFor, techniqueById } from '@/lib/techniques';
@@ -40,7 +40,9 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
           <View key={j.job} role="listitem" style={[styles.job, { borderBottomColor: ds.c.line }]}>
             <Body style={styles.flex}>{j.job}</Body>
             <View style={styles.dose}>
-              <Caption style={styles.doseText}>{j.dose}</Caption>
+              <DsText variant="label" style={styles.doseText}>
+                {j.dose}
+              </DsText>
               <GradeTag grade={j.grade} />
             </View>
           </View>
@@ -87,10 +89,11 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   job: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  // One line: the grade stays beside the dose and a long dose wraps in its own box.
-  dose: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space.sm, flexShrink: 1, maxWidth: '66%' },
+  // The grade sits beside the dose, or drops under it when both won't fit, so the dose itself keeps to one line where it can.
+  dose: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: space.xs, columnGap: space.sm, flexShrink: 1, maxWidth: '66%' },
   doseText: { flexShrink: 1, textAlign: 'right', fontFamily: fontFamilies.monoMedium },
   block: { gap: space.xs },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.control, maxWidth: '100%' },
-  flex: { flex: 1, minWidth: 0 },
+  // Room for a whole word (Suspension) beside the dose: a long dose wraps instead.
+  flex: { flex: 1, minWidth: space.xxxl * 2 },
 });

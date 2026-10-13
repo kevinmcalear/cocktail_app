@@ -5,6 +5,8 @@
 export interface ServedBar {
   name: string;
   logo: string | null;
+  /** The bar's accent, when its page belongs to a venue with one (20261015500000; older servers leave it out). */
+  accent?: string | null;
 }
 
 /** What a bar's version changes, named as the caller sees the spec (public.spec_matches). */

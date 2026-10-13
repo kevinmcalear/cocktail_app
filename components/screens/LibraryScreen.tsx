@@ -136,7 +136,7 @@ export function LibraryScreen() {
   const content = { paddingHorizontal: gutter, paddingBottom: bottom, gap: space.lg };
   const header = (
     <View style={styles.header}>
-      <PageHeader title="Library" width="full" />
+      <PageHeader title="Library" width="full" display />
       <SearchPill query="" placeholder={`Search ${active?.name ?? 'your drinks'}`} onOpen={() => setSearching(true)} onClear={() => setQuery('')} />
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
       <FilterRow
@@ -196,7 +196,7 @@ export function LibraryScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <LibraryPanes items={shown} lineOf={lineOf} header={header} empty={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>} />
+        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />}>

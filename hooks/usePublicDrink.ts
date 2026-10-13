@@ -76,6 +76,17 @@ async function fetchTreeRow(id: string): Promise<TreeRow | null> {
   return (data as TreeRow | null) ?? null;
 }
 
+/**
+ * A catalog classic's parent classic (Penicillin to Gold Rush), which
+ * published_items doesn't carry; null for a riff (riff_of_id says) or a root.
+ */
+async function lineageParent(id: string, riffOfId: string | null): Promise<string | null> {
+  if (riffOfId) return null;
+  const { data, error } = await supabase.rpc('public_lineage_parent', { p_item_id: id });
+  if (error) throw error;
+  return (data as string | null) ?? null;
+}
+
 /** Credit, family tree and ranked list for a published drink. */
 export function usePublicDrinkMore(drink: PublishedDrink | null | undefined) {
   return useQuery({
@@ -86,10 +97,10 @@ export function usePublicDrinkMore(drink: PublishedDrink | null | undefined) {
     queryFn: async (): Promise<PublicDrinkMore> => {
       const d = drink!;
       const parents: TreeRow[] = [];
-      await walkAncestors({ id: d.id, riff_of_id: d.riffOfId }, async (id) => {
+      await walkAncestors({ id: d.id, riff_of_id: d.riffOfId, lineage_parent_id: await lineageParent(d.id, d.riffOfId) }, async (id) => {
         const row = await fetchTreeRow(id);
         if (row) parents.push(row);
-        return row ? { ...row, creator: null, origin_bar: null } : null;
+        return row ? { ...row, creator: null, origin_bar: null, lineage_parent_id: await lineageParent(row.id, row.riff_of_id) } : null;
       });
       parents.reverse();
       // ponytail: the first 200 riffs; the tree shows three and the rest on request.

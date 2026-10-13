@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, Switch, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Chip, PressableScale, Surface, useDs, useGutter, type IconName } from '@/components/ds';
+import { Body, Button, Caption, PressableScale, Surface, useDs, useGutter, type IconName, Switch } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
-import { backbar, layout, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 /**
@@ -92,13 +93,30 @@ export function SettingsRow({ label, detail, onPress, leading, icon, tone = 'ink
   );
 }
 
-/** A short row of choices (System, Light, Dark), usually inside a ControlRow. */
+/**
+ * A short row of choices (System, Light, Dark), usually inside a ControlRow.
+ * Outlined; the chosen one is outlined and tinted in the accent, and bold, so
+ * it never rests on the colour alone (tools-settings-phone).
+ */
 export function ChoiceChips<T extends string>({ label, options, value, onChange }: { label: string; options: readonly { id: T; label: string }[]; value: T; onChange: (id: T) => void }) {
+  const ds = useDs();
   return (
     <View role="radiogroup" aria-label={label} style={styles.chips}>
-      {options.map((o) => (
-        <Chip key={o.id} label={o.label} selected={value === o.id} onPress={() => onChange(o.id)} />
-      ))}
+      {options.map((o) => {
+        const on = value === o.id;
+        return (
+          <PressableScale
+            key={o.id}
+            role="radio"
+            aria-checked={on}
+            accessibilityLabel={o.label}
+            onPress={() => onChange(o.id)}
+            style={[styles.choice, { borderColor: on ? ds.accentText : ds.c.lineStrong, backgroundColor: on ? withAlpha(ds.accentText, 0.16) : 'transparent' }]}
+          >
+            <Body style={{ fontFamily: on ? fontFamilies.bodySemiBold : fontFamilies.body }}>{o.label}</Body>
+          </PressableScale>
+        );
+      })}
     </View>
   );
 }
@@ -179,7 +197,6 @@ export function SelectRow<T extends string>({ label, detail, options, value, onC
 
 /** An on/off setting that saves as soon as it's flipped. */
 export function SwitchRow({ label, detail, value, onValueChange, disabled }: { label: string; detail?: string; value: boolean; onValueChange: (on: boolean) => void; disabled?: boolean }) {
-  const ds = useDs();
   return (
     <View style={styles.row}>
       <View style={styles.rowText}>
@@ -190,14 +207,7 @@ export function SwitchRow({ label, detail, value, onValueChange, disabled }: { l
         value={value}
         onValueChange={onValueChange}
         disabled={disabled}
-        aria-label={label}
-        // Android's Switch ignores aria-label; this one reaches TalkBack.
-        accessibilityLabel={label}
-        trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
-        // A white thumb on every platform; react-native-web colours the on
-        // thumb from its own activeThumbColor (teal by default).
-        thumbColor={backbar.light.surface}
-        {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
+        label={label}
       />
     </View>
   );
@@ -238,6 +248,7 @@ export function UnsavedBar({ saving, onDiscard, onSave, canSave = true, maxWidth
 }
 
 const styles = StyleSheet.create({
+  choice: { minHeight: 40, minWidth: 48, paddingHorizontal: space.md + 2, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   saveBar: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.md },
   saveRow: { width: '100%', flexDirection: 'row', alignItems: 'center', gap: space.sm },
   section: { gap: space.sm },

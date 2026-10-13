@@ -2,6 +2,7 @@ import { usePathname } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { areaStatus } from '@/components/screens/home/DiscoverArea';
+import { useLocationAccess } from '@/hooks/useLocationAccess';
 import { useNearMe, type NearMe } from '@/hooks/useNearMe';
 import { distanceKm } from '@/lib/discoverDrinks';
 import { nearMeArea, type Area } from '@/lib/nearMe';
@@ -82,10 +83,21 @@ export function useDiscoverArea() {
     });
   }, [onScreen, locate, place]);
 
+  // Whether location is allowed, checked again after each answer and when the app comes back
+  // to the front. Turned on in Settings after a no: find the person now, no restart.
+  // Only on the change to allowed, so a browser that says "allowed" but still refuses can't loop.
+  const access = useLocationAccess(near.status);
+  const wasAccess = useRef(access);
+  useEffect(() => {
+    const was = wasAccess.current;
+    wasAccess.current = access;
+    if (access === 'granted' && was !== null && was !== 'granted' && near.status === 'denied') void locate().then(place);
+  }, [access, near.status, locate, place]);
+
   // Location gives up after 8 s (lib/deviceLocation.ts), so this wait has an end.
   const locating = area.kind === 'anywhere' && preferNear && (near.status === 'idle' || near.status === 'locating');
   // "Finding where you are" only while there's nothing to show yet; a refresh near the last place is quiet.
   const usingLast = near.status === 'unavailable' && area.kind === 'point' && area.source === 'me';
   const note = near.status === 'locating' && !locating ? null : areaStatus(near, usingLast);
-  return { area, onArea, preferNear, near, onNearMe, nearIfAnywhere, locating, note };
+  return { area, onArea, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note };
 }

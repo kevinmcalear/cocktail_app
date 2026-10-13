@@ -4,9 +4,12 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, Display, Headline } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useClassicCopy } from '@/hooks/useClassicCopy';
 import { useDrinkOnMenu } from '@/hooks/useDrinkOnMenu';
+import { useLineage } from '@/hooks/useLineage';
 import { useDrinkMenuRuns } from '@/hooks/useProfiles';
+import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { ItemImageLink } from '@/lib/itemImages';
 import { withPastMenuTag } from '@/lib/menuEditions';
 import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
@@ -71,6 +74,9 @@ export function useDrinkSections(p: DrinkBodyProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const live = !preview;
+  const barName = useActiveVenue().venues.find((v) => v.id === item.bar_id)?.name ?? null;
+  const effective = useEffectiveRole(item.bar_id);
+  const role = preview ? preview.role : effective;
   const { data: menuRuns = [] } = useDrinkMenuRuns(live ? item.id : null);
   const { data: onMenu } = useDrinkOnMenu(live ? item.id : null, item.bar_id);
   // A bar's exact copy of a classic: its bottles in the spec, the classic's backstory.
@@ -79,7 +85,9 @@ export function useDrinkSections(p: DrinkBodyProps) {
   const recipes = item.recipes as PresentationRecipe[] | undefined;
   const names = lines.map((l) => l.ingredient);
   const description = item.description && pageShowsDescriptions(lock?.bar.visibility) ? <Body tone="muted">{item.description}</Body> : null;
-  const method = item.notes && !lock ? item.notes : null;
+  // A catalog classic's notes are its story, not a method (board drink-phone-classic draws a short method line): Backstory keeps them.
+  const catalog = !!useLineage(live ? item.id : null).data?.drink?.is_catalog;
+  const method = item.notes && !lock && !catalog ? item.notes : null;
 
   const spec = lock ? (
     <SpecLockPanel
@@ -121,10 +129,11 @@ export function useDrinkSections(p: DrinkBodyProps) {
         <MenuRuns runs={menuRuns} />
       </>
     ),
-    banner: live ? <VersionBanner itemId={item.id} /> : null,
+    banner: live ? <VersionBanner itemId={item.id} inline={p.wide} venueName={barName} /> : null,
     description,
-    floor: staff && item.bar_id && live ? <ForTheFloor itemId={item.id} barId={item.bar_id} name={item.name} ingredients={names} canEdit={p.canEdit} /> : null,
-    facts: <DrinkFacts facts={p.facts} columns={p.wide ? 3 : 2} />,
+    // The floor's talking points: for floor roles below Bartender, and editors who write them. A Bartender has the spec (board drink-phone-venue).
+    floor: staff && item.bar_id && live && (role < 30 || p.canEdit) ? <ForTheFloor itemId={item.id} barId={item.bar_id} name={item.name} ingredients={names} canEdit={p.canEdit} /> : null,
+    facts: <DrinkFacts facts={p.facts} columns={2} />,
     allergens: <AllergensSection itemId={item.id} barId={item.bar_id} preview={!!preview} />,
     flavor: live ? <FlavorSection itemId={item.id} name={item.name} /> : null,
     spec,
@@ -152,9 +161,9 @@ export function useDrinkSections(p: DrinkBodyProps) {
         preview={preview}
       />
     ) : null,
-    history: staff && live ? <HistorySection itemId={item.id} barId={item.bar_id} canEdit={p.canEdit} /> : null,
+    history: staff && live ? <HistorySection itemId={item.id} barId={item.bar_id} canEdit={p.canEdit} compact={p.wide} /> : null,
     cost: staff && live ? <CostSection itemId={item.id} barId={item.bar_id} priceMinor={item.price_minor} canEdit={p.canEdit} /> : null,
-    backstory: live ? <Backstory itemId={copy?.classicId ?? item.id} lines={lines} classicName={copy?.classicName} onRiff={p.onRiff} /> : null,
+    backstory: live ? <Backstory itemId={copy?.classicId ?? item.id} lines={lines} classicName={copy?.classicName} onRiff={p.onRiff} story={catalog && !lock ? item.notes : null} /> : null,
     classicLink: live && p.canEdit ? <ClassicLink item={item} /> : null,
     publish: live && (staff || !item.bar_id) ? <PublishSection itemId={item.id} barId={item.bar_id} showLocked={staff} /> : null,
   };
