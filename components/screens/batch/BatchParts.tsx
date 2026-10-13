@@ -104,12 +104,15 @@ export function ServesField({ value, onChange, detail, trailing }: { value: numb
   const ds = useDs();
   const [draft, setDraft] = useState<string | null>(null);
   const face = displayFaces[ds.displayFace].regular;
+  const shown = draft ?? String(value);
+  // Two digits at full size; three and four shrink to the display size so the row keeps its room.
+  const size = BIG * Math.min(1, 2.5 / Math.max(2, shown.length));
   return (
     <View style={styles.big}>
       <TextInput
-        value={draft ?? String(value)}
+        value={shown}
         onChangeText={(t) => {
-          const digits = t.replace(/\D/g, '').slice(0, 2);
+          const digits = t.replace(/\D/g, '').slice(0, 4);
           setDraft(digits);
           if (digits) onChange(clampServes(Number(digits)));
         }}
@@ -119,10 +122,10 @@ export function ServesField({ value, onChange, detail, trailing }: { value: numb
         keyboardType="number-pad"
         returnKeyType="done"
         selectTextOnFocus
-        maxLength={2}
+        maxLength={4}
         accessibilityLabel="Serves"
         accessibilityHint="Type a number of serves"
-        style={[styles.bigInput, { fontFamily: face, color: ds.c.ink }]}
+        style={[styles.bigInput, { fontFamily: face, color: ds.c.ink, fontSize: size, lineHeight: size * 1.15, width: (size * Math.max(2, shown.length)) / 2 }]}
       />
       {/* "serves · fills 1 × 1 L" beside the count, the units at the end of the row (board drink-sheet-batch-venue). */}
       <Body tone="muted" style={[styles.unit, styles.detail]}>
@@ -202,7 +205,7 @@ const styles = StyleSheet.create({
   // flex-end, not baseline: iOS doesn't baseline-align a TextInput.
   big: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
   // Room above the glyphs: a serif this size overshoots a lineHeight of 1.
-  bigInput: { fontSize: BIG, lineHeight: BIG * 1.15, letterSpacing: -2, width: BIG, padding: 0 },
+  bigInput: { letterSpacing: -2, padding: 0 },
   unit: { flex: 1, paddingBottom: space.xl },
   trailing: { paddingBottom: space.lg },
   detail: { fontSize: type.body.fontSize - 2, lineHeight: type.body.lineHeight - 2 },

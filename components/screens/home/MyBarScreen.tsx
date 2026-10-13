@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Caption, dragDismissesKeyboard, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
@@ -105,9 +105,8 @@ export function MyBarScreen() {
       case 'top':
         return split ? null : (
           <View>
-            <ScreenHeaderSpacer />
+            <ScreenHeaderSpacer title="My Bar" />
             <View style={styles.top}>
-              <Title>My Bar</Title>
               <Caption tone="muted">{bar.isLoading ? 'Checking your shelf…' : barSubtitle(bar.canMake.length, toMake.length)}</Caption>
               {bar.error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
             </View>
@@ -173,7 +172,7 @@ export function MyBarScreen() {
       renderItem={({ item, index }) => renderRow({ item, prev: data[index - 1] })}
       // Two screens either side: a sort or tab change re-renders every mounted row.
       windowSize={5}
-      keyboardShouldPersistTaps="handled"
+      {...dragDismissesKeyboard}
       style={style}
       contentContainerStyle={padding}
     />

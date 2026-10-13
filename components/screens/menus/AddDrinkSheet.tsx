@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DrinkImage, Field, Headline, PressableScale, SheetScrollView, useDs } from '@/components/ds';
+import { Body, Button, Caption, dragDismissesKeyboard, DrinkImage, Field, Headline, PressableScale, SheetScrollView, useDs } from '@/components/ds';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
@@ -92,7 +92,7 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
         keyExtractor={(d) => d.id}
         extraData={section}
         renderScrollComponent={(p) => <SheetScrollView {...p} />}
-        keyboardShouldPersistTaps="handled"
+        {...dragDismissesKeyboard}
         contentContainerStyle={menuSheetBody}
         initialNumToRender={12}
         windowSize={DRAWN_LIST_WINDOW}
