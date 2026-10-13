@@ -15,6 +15,7 @@ import { siteOrigin } from '@/lib/venueLink';
 import { directionsUrl, kindLabel, timeLine } from '@/lib/week';
 
 import { EventSheet } from './EventSheet';
+import { EventStaff } from './EventStaff';
 import { useDotColor } from './WeekParts';
 
 /**
@@ -107,6 +108,7 @@ export function EventScreen({ id }: { id: string }) {
           ) : null}
           {canEdit && event.menuId ? <Button label="Open the menu" variant="secondary" onPress={() => router.push(`/menus/${event.menuId}` as Href)} /> : null}
         </View>
+        <EventStaff event={event} canEdit={canEdit} />
         {shared === 'failed' ? <Caption tone="muted">{link}</Caption> : null}
         {canEdit ? <Button label="Delete event" variant="danger" onPress={confirmDelete} disabled={remove.isPending} style={styles.delete} /> : null}
       </ScrollView>
