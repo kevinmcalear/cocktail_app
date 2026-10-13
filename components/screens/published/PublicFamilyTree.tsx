@@ -50,9 +50,9 @@ function Joint() {
 }
 
 /**
- * The family tree, left to right: where the drink comes from, the drink
- * (lit), and its best scored riffs with who made them (ppl-pub-drink-desktop).
- * Nothing when it has neither parents nor riffs.
+ * The family tree, left to right: where the drink comes from and the drink
+ * (lit); its best scored riffs with who made them hang below, on a rule
+ * (ppl-pub-drink-desktop). Nothing when it has neither parents nor riffs.
  */
 export function PublicFamilyTree({ drink, more }: { drink: { id: string; name: string; originYear: number | null }; more: PublicDrinkMore }) {
   const ds = useDs();
@@ -75,17 +75,14 @@ export function PublicFamilyTree({ drink, more }: { drink: { id: string; name: s
           </View>
         ))}
         <Node name={drink.name} caption={drink.originYear ? String(drink.originYear) : null} current />
-        {shown.length ? (
-          <View style={styles.step}>
-            <Joint />
-            <View style={[styles.riffs, { borderLeftColor: ds.c.lineStrong }]}>
-              {shown.map((r) => (
-                <Node key={r.id} name={r.name} caption={maker(r)} score={r.score} onPress={() => open(r.id)} />
-              ))}
-            </View>
-          </View>
-        ) : null}
       </View>
+      {shown.length ? (
+        <View style={[styles.riffs, { borderLeftColor: ds.c.lineStrong }]}>
+          {shown.map((r) => (
+            <Node key={r.id} name={r.name} caption={maker(r)} score={r.score} onPress={() => open(r.id)} />
+          ))}
+        </View>
+      ) : null}
       {riffs.length > SHOWN_RIFFS ? <TextLink label={all ? 'Show the top three' : `All ${riffs.length} riffs, ranked`} onPress={() => setAll((a) => !a)} /> : null}
     </View>
   );
@@ -109,6 +106,6 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
   joint: { width: 18, height: 1.5 },
-  riffs: { gap: space.xs + 2, paddingLeft: space.md, borderLeftWidth: 1.5 },
+  riffs: { alignSelf: 'flex-start', gap: space.xs + 2, paddingLeft: space.md, borderLeftWidth: 1.5, marginTop: -space.xs },
   score: { fontFamily: fontFamilies.mono },
 });
