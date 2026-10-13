@@ -1,8 +1,8 @@
-import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, Field, IngredientThumb, PressableScale, TextLink, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, IngredientThumb, PressableScale, TextLink, useBreakpoint, useDs } from '@/components/ds';
+import { useToast } from '@/components/ds/Toast';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
@@ -13,8 +13,10 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { plainDbMessage } from '@/lib/dbError';
 import { closestIngredients, searchIngredients } from '@/lib/ingredientNames';
 import type { SpecLine } from '@/lib/spec';
-import { tidyAmount } from '@/lib/specDefaults';
-import { bottlesFor } from '@/lib/swapBottle';
+import { amountBox, amountEdit, bottlesFor } from '@/lib/swapBottle';
+import { useSettingsStore } from '@/store/useSettingsStore';
+
+import { ACTION_BAR_HEIGHT } from './DrinkActionBar';
 
 export interface LineSwapped {
   itemId: string;
@@ -56,7 +58,10 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
   const save = useSwapSpecLine();
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<{ id: string; name: string } | null>(null);
-  const [amount, setAmount] = useState(line.value === null ? '' : String(line.value));
+  // The amount reads in the unit the page reads in (2 oz shows as 60 ml when the spec reads in ml).
+  const specUnit = useSettingsStore((s) => s.specUnit);
+  const [box] = useState(() => amountBox(line, specUnit));
+  const [amount, setAmount] = useState(box.text);
   const [error, setError] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
   const name = line.ingredient ?? 'this ingredient';
@@ -86,12 +91,13 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
   const ours = barId ? options.filter((o) => backBar.has(o.id)) : options;
   const rest = barId ? options.filter((o) => !backBar.has(o.id)) : [];
 
-  const typed = tidyAmount(amount);
-  const nextAmount = typed === '' ? null : Number(typed);
-  const badAmount = nextAmount !== null && !Number.isFinite(nextAmount);
-  const amountChanged = amounts && !badAmount && nextAmount !== line.value;
-  const unit = line.unit ?? '';
-  const howMuch = `${nextAmount ?? 'no amount'}${nextAmount !== null && unit ? ` ${unit}` : ''}`;
+  // Only an edited amount is saved, in the unit the box reads in; a bottle-only swap leaves the stored amount alone.
+  const edit = amountEdit(box, amount);
+  const badAmount = edit === 'invalid';
+  const change = amounts && edit && edit !== 'invalid' ? edit : undefined;
+  const amountChanged = !!change;
+  const unit = box.unit ?? '';
+  const howMuch = change ? `${change.value ?? 'no amount'}${change.value !== null && unit ? ` ${unit}` : ''}` : '';
 
   const run = () => {
     if (!line.ingredientId || (!picked && !amountChanged) || badAmount) return;
@@ -101,7 +107,7 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
         itemId,
         lineId: line.key,
         ingredientId: picked?.id ?? line.ingredientId,
-        amount: amountChanged ? nextAmount : undefined,
+        amount: change,
         note: picked ? `Swapped ${name} for ${picked.name}` : `${name} to ${howMuch}`,
       },
       {
@@ -119,14 +125,14 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
         key={o.id}
         role="radio"
         aria-checked={on}
-        accessibilityLabel={away ? `${o.name}, not on your back bar yet` : (o.name ?? '')}
+        accessibilityLabel={away ? `${o.name}, not on your back bar` : (o.name ?? '')}
         onPress={() => setPicked(on ? null : { id: o.id, name: o.name ?? '' })}
         style={[styles.option, { borderBottomColor: ds.c.line }]}
       >
         <IngredientThumb id={o.id} name={o.name ?? ''} size={40} />
         <View style={styles.flex}>
           <Body numberOfLines={1}>{o.name}</Body>
-          {away ? <Caption tone="muted">Not on your back bar yet · adds it</Caption> : null}
+          {away ? <Caption tone="muted">Not on your back bar</Caption> : null}
         </View>
         {on ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
       </PressableScale>
@@ -187,46 +193,31 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
   );
 }
 
-/** After a fix (board KittyDone): what changed, that the old spec is kept, and Undo. */
-export function SwapDone({ done, onUndone }: { done: LineSwapped; onUndone: () => void }) {
-  const ds = useDs();
+/**
+ * After a fix (board KittyDone): a toast saying what changed, that the old
+ * spec is kept, and Undo. On a phone it floats above the drink's pinned
+ * action bar.
+ */
+export function useSwapToast() {
+  const toast = useToast();
   const undo = useUndoSwap();
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    if (Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }, []);
-  return (
-    <View role="status" style={[styles.done, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
-      <IconSymbol name="checkmark" size={16} color={ds.accentText} />
-      <View style={styles.flex}>
-        <DsText variant="label" style={{ fontFamily: fontFamilies.bodySemiBold }}>
-          {done.title}
-        </DsText>
-        <Caption tone="muted">{error ?? 'The old spec is in its history.'}</Caption>
-      </View>
-      <PressableScale
-        role="button"
-        accessibilityLabel={`Undo: ${done.title}`}
-        disabled={undo.isPending}
-        onPress={() =>
+  const phone = useBreakpoint() === 'phone';
+  return (done: LineSwapped) =>
+    toast.show({
+      title: done.title,
+      detail: 'The old spec is in its history.',
+      lift: phone ? ACTION_BAR_HEIGHT - space.lg : 0,
+      action: {
+        label: 'Undo',
+        onPress: () =>
           undo.mutate([{ itemId: done.itemId, version: done.version }], {
-            onSuccess: onUndone,
-            onError: (e) => setError(plainDbMessage(e) ?? 'Couldn’t undo. The old spec is still in History.'),
-          })
-        }
-        style={styles.undo}
-      >
-        <DsText variant="label" color={ds.accentText} style={{ fontFamily: fontFamilies.bodySemiBold }}>
-          {undo.isPending ? 'Undoing…' : 'Undo'}
-        </DsText>
-      </PressableScale>
-    </View>
-  );
+            onError: (e) => toast.show({ title: 'Couldn’t undo', detail: plainDbMessage(e) ?? 'The old spec is still in History.' }),
+          }),
+      },
+    });
 }
 
 const styles = StyleSheet.create({
-  done: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, borderWidth: 1, paddingLeft: space.lg, paddingVertical: space.sm, marginTop: space.md },
-  undo: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center' },
   inputs: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   amount: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, borderRadius: radius.control, borderWidth: 1, paddingHorizontal: space.md },
   amountInput: { width: 56, minHeight: layout.minTapTarget, padding: 0 },

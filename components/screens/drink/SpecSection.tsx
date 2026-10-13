@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { HouseMadeSheet } from './HouseMadeSheet';
-import { SwapDone, SwapLineSheet, type LineSwapped } from './SwapLineSheet';
+import { SwapLineSheet, useSwapToast } from './SwapLineSheet';
 import { ToolsSheet, type ToolsSheetProps } from '@/components/tools/ToolsSheet';
 import { useMode } from '@/hooks/useMode';
 import { useSpecLevels } from '@/hooks/useSpecLevels';
@@ -76,7 +76,8 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
   const homeVenueDrink = useMode().mode === 'home' && !!barId;
   const canEdit = useCanEditItem(!preview && !homeVenueDrink ? { id: itemId, bar_id: barId } : null);
   const [swapLine, setSwapLine] = useState<(typeof lines)[number] | null>(null);
-  const [swapped, setSwapped] = useState<LineSwapped | null>(null);
+  // After a fix: a toast with Undo (board KittyDone).
+  const swapped = useSwapToast();
   // The changed line is raised for a moment, so the eye finds it (board KittyDone).
   const [lit, setLit] = useState<string | null>(null);
   useEffect(() => {
@@ -142,9 +143,7 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
             onPress={l.ingredientId && !preview ? () => (canEdit ? setSwapLine(l) : open(l)) : undefined}
           />
         ))}
-        {swapped ? (
-          <SwapDone done={swapped} onUndone={() => setSwapped(null)} />
-        ) : canEdit && lines.some((l) => l.ingredientId) ? (
+        {canEdit && lines.some((l) => l.ingredientId) ? (
           <Caption tone="muted" style={styles.fixHint}>
             Something wrong? Tap a line to fix it.
           </Caption>
@@ -161,7 +160,7 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
           onClose={() => setSwapLine(null)}
           onSaved={(done) => {
             setSwapLine(null);
-            setSwapped(done);
+            swapped(done);
             setLit(done.lineKey);
           }}
           onOpen={() => {

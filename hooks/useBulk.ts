@@ -8,7 +8,7 @@ import { orderedMethodIds } from '@/lib/drinkMethods';
 import type { CatalogItem } from '@/lib/match';
 import type { NamedItem } from '@/lib/paste';
 import { fetchEditableRecipes } from '@/lib/editableRecipes';
-import { oneLineSwapped, swappedLines, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
+import { oneLineSwapped, swappedLines, type LineAmount, type SwapDrink, type SwapLine, type SwapMode } from '@/lib/swapBottle';
 import { readAnything } from '@/lib/readAnything';
 import { supabase } from '@/lib/supabase';
 
@@ -169,7 +169,7 @@ export interface LineSwap {
   lineId: string;
   ingredientId: string;
   /** Left out: the amount stays as it is. */
-  amount?: number | null;
+  amount?: LineAmount;
   note: string;
 }
 

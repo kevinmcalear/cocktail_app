@@ -1,4 +1,7 @@
 import type { SpecLineInput } from '@/hooks/useVersions';
+import { lineAmount, type MassUnit } from '@/lib/drinkMath';
+import type { SpecLine } from '@/lib/spec';
+import { tidyAmount } from '@/lib/specDefaults';
 
 export type SwapMode = 'kind' | 'bottle';
 
@@ -102,12 +105,19 @@ export interface RawSpecLine {
   is_optional: boolean | null;
 }
 
+/** A new amount for a line, in the unit it was typed in. */
+export interface LineAmount {
+  value: number | null;
+  unit: string | null;
+}
+
 /**
  * Every line of the drink as it is, with one line pointed at another bottle
- * (and given a new amount, when one is passed). Null when the line is gone or
- * a line has no ingredient: saving would then rewrite the spec blind.
+ * (and given a new amount and unit, when one is passed; left out, the stored
+ * amount and unit stay exactly as they were). Null when the line is gone or a
+ * line has no ingredient: saving would then rewrite the spec blind.
  */
-export function oneLineSwapped(rows: RawSpecLine[], lineId: string, ingredientId: string, amount?: number | null): SpecLineInput[] | null {
+export function oneLineSwapped(rows: RawSpecLine[], lineId: string, ingredientId: string, amount?: LineAmount): SpecLineInput[] | null {
   if (!rows.some((row) => row.id === lineId) || rows.some((row) => !row.ingredient_item_id)) return null;
   return rows.map((row) => {
     const hit = row.id === lineId;
@@ -115,12 +125,37 @@ export function oneLineSwapped(rows: RawSpecLine[], lineId: string, ingredientId
     return {
       id: row.id,
       ingredient_item_id: hit ? ingredientId : (row.ingredient_item_id as string),
-      amount: hit && amount !== undefined ? amount : was,
-      unit: row.unit,
+      amount: hit && amount ? amount.value : was,
+      unit: hit && amount ? amount.unit : row.unit,
       preparation_notes: row.preparation_notes,
       is_optional: !!row.is_optional,
     };
   });
+}
+
+/**
+ * The amount box: the line as the page reads it, in the person's unit (the
+ * same rule as the spec lines, so 2 oz reads 60 ml). Lines that don't convert
+ * (dashes, spoons, counts) show as written.
+ */
+export function amountBox(line: SpecLine, to: MassUnit): { text: string; unit: string | null } {
+  const shown = /^(\d+(?:\.\d+)?)\s+(g|ml|oz)$/.exec(lineAmount(line, to) ?? '');
+  if (shown) return { text: shown[1], unit: shown[2] };
+  return { text: line.value === null ? '' : String(line.value), unit: line.unit };
+}
+
+/**
+ * What to save from the amount box: nothing when it still says what it
+ * showed (a bottle-only swap keeps the stored amount and unit, so nothing
+ * drifts); otherwise the typed number, tidied as the wizard does, in the unit
+ * the box reads in. `invalid` when it isn't a number.
+ */
+export function amountEdit(box: { text: string; unit: string | null }, typed: string): LineAmount | undefined | 'invalid' {
+  const next = tidyAmount(typed);
+  if (next === tidyAmount(box.text)) return undefined;
+  if (next === '') return { value: null, unit: box.unit };
+  const value = Number(next);
+  return Number.isFinite(value) ? { value, unit: box.unit } : 'invalid';
 }
 
 export interface BottleOption {

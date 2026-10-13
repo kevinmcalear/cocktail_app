@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { bottlesFor, lineHits, oneLineSwapped, planSwap, swappedLines, type SwapDrink } from './swapBottle';
+import { specLines } from './spec';
+import { amountBox, amountEdit, bottlesFor, lineHits, oneLineSwapped, planSwap, swappedLines, type SwapDrink } from './swapBottle';
 
 const drink = (id: string, itemType: SwapDrink['itemType'], lines: SwapDrink['lines']): SwapDrink => ({
   id,
@@ -62,8 +63,28 @@ assert.equal(one[0].ingredient_item_id, 'ballantines');
 assert.equal(one[0].amount, 2);
 assert.equal(one[0].id, 'r1');
 assert.deepEqual(one[1], { id: 'r2', ingredient_item_id: 'lemon', amount: 0.75, unit: 'oz', preparation_notes: 'fresh', is_optional: false });
-assert.equal(oneLineSwapped(raw, 'r1', 'ballantines', 1.5)?.[0].amount, 1.5);
-assert.equal(oneLineSwapped(raw, 'r1', 'ballantines', null)?.[0].amount, null);
+// A bottle-only swap keeps the stored 2 oz exactly.
+assert.equal(one[0].unit, 'oz');
+const edited = oneLineSwapped(raw, 'r1', 'ballantines', { value: 45, unit: 'ml' });
+assert.deepEqual([edited?.[0].amount, edited?.[0].unit], [45, 'ml']);
+assert.equal(oneLineSwapped(raw, 'r1', 'ballantines', { value: null, unit: 'oz' })?.[0].amount, null);
+
+// The amount box reads in the page's unit: 2 oz is 60 ml, as the spec line shows it.
+const [twoOz, dash] = specLines([
+  { id: 'r1', amount: 2, unit: 'oz', sort_order: 0, display_ingredient: { id: 'blended', name: 'Blended Scotch', abv: 40 } },
+  { id: 'r2', amount: 2, unit: 'dash', sort_order: 1, display_ingredient: { id: 'ang', name: 'Angostura' } },
+]);
+const box = amountBox(twoOz, 'ml');
+assert.deepEqual(box, { text: '60', unit: 'ml' });
+assert.deepEqual(amountBox(twoOz, 'oz'), { text: '2', unit: 'oz' });
+assert.deepEqual(amountBox(dash, 'ml'), { text: '2', unit: 'dash' });
+// Untouched: nothing to save, so the stored 2 oz stays. Edited: saved in ml.
+assert.equal(amountEdit(box, '60'), undefined);
+assert.equal(amountEdit(box, ' 60.0 '), undefined);
+assert.deepEqual(amountEdit(box, '45'), { value: 45, unit: 'ml' });
+assert.deepEqual(amountEdit(amountBox(twoOz, 'oz'), '1 3/4'), { value: 1.75, unit: 'oz' });
+assert.deepEqual(amountEdit(box, ''), { value: null, unit: 'ml' });
+assert.equal(amountEdit(box, 'lots'), 'invalid');
 assert.equal(oneLineSwapped(raw, 'gone', 'ballantines'), null);
 assert.equal(oneLineSwapped([...raw, { ...raw[0], id: 'r3', ingredient_item_id: null }], 'r1', 'x'), null);
 
