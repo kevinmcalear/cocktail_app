@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Caption, dragDismissesKeyboard, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
@@ -173,7 +173,7 @@ export function MyBarScreen() {
       renderItem={({ item, index }) => renderRow({ item, prev: data[index - 1] })}
       // Two screens either side: a sort or tab change re-renders every mounted row.
       windowSize={5}
-      keyboardShouldPersistTaps="handled"
+      {...dragDismissesKeyboard}
       style={style}
       contentContainerStyle={padding}
     />
