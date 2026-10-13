@@ -29,12 +29,14 @@ function monthOf(iso: string | null): { year: number; month: number } | null {
   return Number.isNaN(d.getTime()) ? null : { year: d.getFullYear(), month: d.getMonth() + 1 };
 }
 
-/** A drink's caption and pill: the menus it's on now and its staff list place, else its kind; "Past · …" when it only was. */
+/** A drink's caption and pill: the menu it's on now and its staff list place ("off menu" when on none), else its kind; "Past · …" when it only was. */
 export function drinkFacts(id: string, kind: string, facts: MineFacts): { caption: string; tag?: string } {
   const groups = groupMenus(facts.menus, facts.now);
   const on = groups.on.filter((m) => m.itemIds.includes(id)).map((m) => `On the ${menuName(m.name)}`);
   const at = facts.staff.indexOf(id);
-  const caption = [...on.slice(0, 1), at >= 0 ? `Staff list ${at + 1}` : null].filter(Boolean).join(' · ') || kind;
+  // A staff list drink that isn't on a menu says so: "Staff list 2 · off menu" (nav-tablet, the palette).
+  const staff = at >= 0 ? `Staff list ${at + 1}${on.length ? '' : ' · off menu'}` : null;
+  const caption = [...on.slice(0, 1), staff].filter(Boolean).join(' · ') || kind;
   if (on.length) return { caption };
   const before = groups.previous.filter((m) => m.itemIds.includes(id));
   if (!before.length) return { caption };
