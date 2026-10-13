@@ -22,8 +22,8 @@ interface MethodStepProps {
 
 /**
  * How it's made: the picks first, as numbered steps in the order tapped
- * ("1 Dry shake, 15 s, no ice"), then every method in three groups (Mix,
- * Air and texture, Finish), and a field for your own.
+ * ("1 Dry shake ... 15 s, no ice"), then every method in two groups (Mix,
+ * Air and texture), and a field for your own.
  */
 export function MethodStep({ options, selected, onChange, suggested, why, hint }: MethodStepProps) {
   const ds = useDs();
@@ -52,10 +52,8 @@ export function MethodStep({ options, selected, onChange, suggested, why, hint }
                     {String(i + 1)}
                   </DsText>
                 </View>
-                <View style={styles.flex}>
-                  <Body>{m.name}</Body>
-                  {detail ? <Caption tone="muted">{detail}</Caption> : null}
-                </View>
+                <Body style={styles.flex}>{m.name}</Body>
+                {detail ? <Caption tone="muted">{detail}</Caption> : null}
               </View>
             );
           })}
@@ -94,9 +92,9 @@ export function MethodStep({ options, selected, onChange, suggested, why, hint }
 
 const styles = StyleSheet.create({
   stack: { gap: space.lg },
-  steps: { gap: space.sm },
-  step: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
-  number: { width: 28, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  steps: { gap: space.xs + 2 },
+  step: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 52, paddingHorizontal: space.md + 2, borderRadius: radius.control, borderCurve: 'continuous' },
+  number: { width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   group: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

@@ -1,11 +1,12 @@
 import { StyleSheet } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
 /**
  * An ingredient that pairs, with the drinks behind it: "Agave Syrup 15".
- * `add` reads "+ Agave Syrup" (it adds to a drink); `selected` fills it.
+ * `add` leads with a small + in the accent (it adds to a drink); `selected` fills it.
  */
 export function PairChip({
   label,
@@ -30,9 +31,10 @@ export function PairChip({
       aria-pressed={selected}
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={[styles.chip, { backgroundColor: selected ? ds.c.ink : ds.c.raised, borderColor: ds.c.line }]}
+      style={[styles.chip, add && styles.add, { backgroundColor: selected ? ds.c.ink : ds.c.raised, borderColor: ds.c.line }]}
     >
-      <Body color={ink}>{add ? `+ ${label}` : label}</Body>
+      {add ? <IconSymbol name="plus" size={14} color={ds.accentText} /> : null}
+      <Body color={ink}>{label}</Body>
       {count != null && count !== '' ? (
         <Caption color={selected ? ds.c.ground : ds.c.muted} style={styles.count}>
           {String(count)}
@@ -53,5 +55,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
+  add: { alignItems: 'center', gap: space.xs + 2, paddingHorizontal: space.md + 2 },
   count: { fontFamily: fontFamilies.monoMedium, fontVariant: ['tabular-nums'] },
 });
