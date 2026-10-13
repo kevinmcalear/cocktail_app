@@ -1,4 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+import { withEntitlementsPlist, type ConfigPlugin } from 'expo/config-plugins';
 
 import brand from './constants/brand.json';
 
@@ -15,6 +16,19 @@ const APP = {
   bundleId: 'com.kevinmcalear.cocktail',
   scheme: 'cocktailapp',
 };
+
+/**
+ * expo-notifications adds the Push Notifications entitlement, but the app only
+ * schedules local notifications (lib/readyNudge.ts), and the App Store profile
+ * has no Push capability, so signing failed (builds 23 and 26).
+ * ponytail: when remote push is wanted, drop this, add Push to the App ID and
+ * let EAS regenerate the profile (needs an Apple sign-in).
+ */
+const withoutPushEntitlement: ConfigPlugin = (config) =>
+  withEntitlementsPlist(config, (c) => {
+    delete c.modResults['aps-environment'];
+    return c;
+  });
 
 type Variant = 'development' | 'preview' | 'production';
 
@@ -69,7 +83,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     // environment). Build-time only: the native SDK is already linked, so
     // crash capture itself doesn't depend on this. Not in dev or preview
     // builds, which have nothing to upload to.
-    plugins: [...(config.plugins ?? []), ...(variant === 'production' ? ['@sentry/react-native'] : [])],
+    plugins: [...(config.plugins ?? []), ...(variant === 'production' ? ['@sentry/react-native'] : []), withoutPushEntitlement],
     updates: { url: `https://u.expo.dev/${config.extra?.eas?.projectId}` },
     extra: {
       ...config.extra,
