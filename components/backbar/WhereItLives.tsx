@@ -10,6 +10,7 @@ import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
 import { useStockOnHand } from '@/hooks/useStockCounts';
 import { formatPar, locationLine } from '@/lib/backBar';
+import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 
 import { BackBarPlan } from './BackBarPlan';
@@ -94,10 +95,12 @@ function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProp
           {here.map((l, i) => {
             // Par, and what the last count found there. Made and Use by stay off until there's a batch log (b33).
             const counted = onHand.find((r) => r.item_id === itemId && r.location_id === l.id);
+            // Under par shows in the accent (prep-ing-where).
+            const low = !!counted && l.par_amount != null && counted.unit === l.par_unit && Number(counted.amount) < Number(l.par_amount);
             const stats = [
-              { label: 'Par', value: formatPar(l.par_amount, l.par_unit) },
-              { label: 'On hand', value: counted ? formatPar(counted.amount, counted.unit) : null },
-            ].filter((t): t is { label: string; value: string } => !!t.value);
+              { label: 'Par', value: formatPar(l.par_amount, l.par_unit), low: false },
+              { label: 'On hand', value: counted ? formatPar(counted.amount, counted.unit) : null, low },
+            ].filter((t): t is { label: string; value: string; low: boolean } => !!t.value);
             return (
               <View key={l.id} style={styles.place}>
                 <Spec color={ds.accentText}>{lines[i]}</Spec>
@@ -105,9 +108,9 @@ function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProp
                 {stats.length ? (
                   <View style={styles.stats}>
                     {stats.map((t) => (
-                      <View key={t.label} style={[styles.stat, { backgroundColor: ds.c.raised }]}>
+                      <View key={t.label} style={[styles.stat, { backgroundColor: t.low ? withAlpha(ds.accentText, 0.18) : ds.c.raised }]}>
                         <Caption tone="muted">{t.label}</Caption>
-                        <Spec>{t.value}</Spec>
+                        <Spec color={t.low ? ds.accentText : undefined}>{t.value}</Spec>
                       </View>
                     ))}
                   </View>

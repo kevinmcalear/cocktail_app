@@ -2,9 +2,9 @@ import { useRouter } from 'expo-router';
 import { useContext, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DrinkImage, Headline, MatchText, RowScore, Surface, useDs } from '@/components/ds';
+import { Button, Caption, DrinkImage, DsText, MatchText, RowScore, Surface } from '@/components/ds';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
-import { displayFaces, radius, space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useBestDrink, useDrinkRank, useRowScores } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
 import { byScore, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
@@ -89,7 +89,6 @@ function barOf(d: DiscoverDrink): PickedBar {
 }
 
 function PickedRow({ drink, also, pin, filter, score }: { drink: DiscoverDrink; also: DiscoverDrink[]; pin: PickedBar; filter: DrinkFilter; score?: number }) {
-  const ds = useDs();
   const router = useRouter();
   const rank = useDrinkRank(drink, filter.search, filter.area);
   const away = useContext(BarAway)(pin.id);
@@ -101,9 +100,10 @@ function PickedRow({ drink, also, pin, filter, score }: { drink: DiscoverDrink; 
         <DrinkImage source={drink.imageUrl} itemId={drink.id} glass={null} accessibilityLabel={drink.name} radius="control" style={styles.thumb} thumb />
         <View style={styles.flex}>
           <View style={styles.titleRow}>
-            <Headline numberOfLines={2} style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+            {/* The big serif title, as the board draws the opened card. */}
+            <DsText variant="title" numberOfLines={2} style={styles.flex}>
               <MatchText text={drink.name} query={filter.search} look="tint" />
-            </Headline>
+            </DsText>
             <RowScore score={rank.score ?? score} />
           </View>
           {rank.caption ? <Caption tone="muted">{rank.caption}</Caption> : null}
@@ -112,11 +112,13 @@ function PickedRow({ drink, also, pin, filter, score }: { drink: DiscoverDrink; 
               {[menu, drink.why ?? drink.description].filter(Boolean).join(' · ')}
             </Caption>
           ) : null}
-          <Caption numberOfLines={1}>{at}</Caption>
+          <Caption tone="muted" numberOfLines={2}>
+            {at}
+          </Caption>
         </View>
       </View>
       <View style={styles.actions}>
-        <Button label="Open drink" onPress={() => router.push(itemHref('Cocktail', drink.id) as never)} />
+        <Button label="Open drink" style={styles.flex} onPress={() => router.push(itemHref('Cocktail', drink.id) as never)} />
         <Button label={pin.name} variant="secondary" onPress={() => router.push(barSearchHref(pin.handle || pin.id, filter.search) as never)} />
       </View>
     </Surface>
@@ -125,10 +127,10 @@ function PickedRow({ drink, also, pin, filter, score }: { drink: DiscoverDrink; 
 
 const styles = StyleSheet.create({
   pane: { gap: space.lg },
-  picked: { gap: space.md, padding: space.lg, borderRadius: radius.card },
+  picked: { gap: space.md, padding: space.md, borderRadius: radius.card },
   row: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
-  thumb: { width: 92, height: 92 },
+  thumb: { width: 120, height: 120 },
   flex: { flex: 1, minWidth: 0 },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
+  actions: { flexDirection: 'row', gap: space.sm },
 });

@@ -84,7 +84,8 @@ function PairDrinks({ a, b, title, total }: { a: string; b: string; title: strin
       {drinks.map((d) => {
         const src = sources?.[d.id];
         const kind = d.isCatalog || src?.classic ? 'Classic' : src?.riff ? 'Riff' : 'Original';
-        const by = src && !src.classic ? [src.by, src.city].filter(Boolean).join(', ') : null;
+        // Who made it and where, classics too: "Fosco Scarselli, Florence" (prep-ing-campari).
+        const by = src ? [src.maker, src.city].filter(Boolean).join(', ') || null : null;
         const score = scores?.[d.id];
         return (
           <PressableScale

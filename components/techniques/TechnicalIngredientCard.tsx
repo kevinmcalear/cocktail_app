@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, PressableScale, Spec, Surface, Tag, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { Body, Caption, Headline, PressableScale, Surface, Tag, useDs } from '@/components/ds';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { doseLine } from '@/lib/doseLine';
 import { technicalIngredientFor, techniqueById } from '@/lib/techniques';
 
@@ -40,7 +40,7 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
           <View key={j.job} role="listitem" style={[styles.job, { borderBottomColor: ds.c.line }]}>
             <Body style={styles.flex}>{j.job}</Body>
             <View style={styles.dose}>
-              <Spec>{j.dose}</Spec>
+              <Caption style={styles.doseText}>{j.dose}</Caption>
               <GradeTag grade={j.grade} />
             </View>
           </View>
@@ -61,7 +61,7 @@ export function TechnicalIngredientCard({ name }: { name: string }) {
           const tech = techniqueById(id);
           return tech ? (
             <PressableScale key={id} role="link" accessibilityLabel={`How to: ${tech.name}`} onPress={() => router.push(`/techniques/${id}` as never)} style={[styles.link, { backgroundColor: ds.c.raised }]}>
-              <Body numberOfLines={1} style={styles.chip}>{tech.name}</Body>
+              <Caption numberOfLines={1}>{tech.name}</Caption>
             </PressableScale>
           ) : null;
         })}
@@ -87,9 +87,10 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   job: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  dose: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: space.xs, maxWidth: '62%' },
-  chip: { fontFamily: fontFamilies.bodyMedium },
+  // One line: the grade stays beside the dose and a long dose wraps in its own box.
+  dose: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: space.sm, flexShrink: 1, maxWidth: '66%' },
+  doseText: { flexShrink: 1, textAlign: 'right', fontFamily: fontFamilies.monoMedium },
   block: { gap: space.xs },
-  link: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.control, maxWidth: '100%' },
+  link: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.control, maxWidth: '100%' },
   flex: { flex: 1, minWidth: 0 },
 });

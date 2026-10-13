@@ -69,7 +69,7 @@ export function ForTheBar({ item, houseMade, canEditItem, whereRow }: ForTheBarP
         ))}
       </View>
       {shown ? (
-        <MenuSheet visible onClose={close} title={shown.key === 'where' ? item.name : shown.label} subtitle={shown.key === 'where' ? `Where it lives${where.active ? ` · ${where.active.name}` : ''}` : item.name}>
+        <MenuSheet visible onClose={close} title={shown.key === 'where' ? item.name : shown.label} eyebrow={shown.key === 'where' ? `Where it lives${where.active ? ` · ${where.active.name}` : ''}` : undefined} subtitle={shown.key === 'where' ? undefined : item.name}>
           {shown.body}
         </MenuSheet>
       ) : null}

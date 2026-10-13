@@ -12,6 +12,7 @@ import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { SortableRecipeList, type SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
 import { PrepCalcButton } from "@/components/tools/ToolsSheet";
 import { useAskAtSave } from "@/components/screens/ingredient/AskAtSave";
+import { PrepEditor } from "@/components/screens/ingredient/PrepEditor";
 import { useDrafts } from "@/hooks/useDrafts";
 import { refreshIngredients, useDropdowns } from "@/hooks/useDropdowns";
 import { useIngredient } from "@/hooks/useIngredients";
@@ -60,6 +61,7 @@ export default function EditIngredientScreen({
 
     const [saving, setSaving] = useState(false);
     const [showIngredientPicker, setShowIngredientPicker] = useState(false);
+    const [allFields, setAllFields] = useState(false);
 
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -341,6 +343,10 @@ export default function EditIngredientScreen({
             {!isInline && <Stack.Screen options={{ headerShown: false, presentation: "modal" }} />}
             {askAtSave.sheet}
 
+            {/* A house prep edits as its lines (prep-prep-edit-shared); All fields opens the full form. */}
+            {!isInline && !allFields && (recipeItems.length > 0 || data?.ingredient?.ingredient_role === "prep") ? (
+                <PrepEditor name={name} onName={(val) => handleCapitalizedChange(val, name, setName)} lines={recipeItems} onAmount={(i, amount) => setRecipeItems(recipeItems.map((r, j) => (j === i ? { ...r, amount } : r)))} onAdd={() => setShowIngredientPicker(true)} description={description} onDescription={setDescription} onBack={handleClose} onSave={() => (askAtSave.ask() ? undefined : void handleSave())} saving={saving} onAllFields={() => setAllFields(true)} />
+            ) : (
             <ItemDetailLayout
                 id={id as string}
                 title={name}
@@ -515,6 +521,7 @@ export default function EditIngredientScreen({
                     </YStack>
                 </YStack>
             </ItemDetailLayout>
+            )}
 
             <IngredientPickerSheet
                 visible={showIngredientPicker}

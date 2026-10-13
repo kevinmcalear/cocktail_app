@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { Body, Caption, PressableScale, useDs } from '@/components/ds';
+import { Caption, PressableScale, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
 /**
@@ -36,7 +36,7 @@ export function PairChip({
       onPress={onPress}
       style={[styles.chip, { backgroundColor: selected ? fill : ds.c.raised, borderColor: ds.c.line }]}
     >
-      <Body color={ink}>{add ? `+ ${label}` : label}</Body>
+      <Caption color={ink}>{add ? `+ ${label}` : label}</Caption>
       {count != null && count !== '' ? (
         <Caption color={selected ? ink : ds.c.muted} style={styles.count}>
           {String(count)}
@@ -49,11 +49,11 @@ export function PairChip({
 const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     gap: space.sm,
     minHeight: layout.minTapTarget,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
     borderRadius: radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
