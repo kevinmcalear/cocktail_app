@@ -29,6 +29,7 @@ assert.equal(menuStatus({ startsAt: null, endsAt: null, menuDate: '2026-09-20' }
 // The venue calendar still wins when a menu has one.
 assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: null, menuDate: '2026-10-04' }, now), 'on');
 assert.equal(menuDateLine({ startsAt: null, endsAt: null, menuDate: '2026-10-04' }, now, 'en-GB'), null, 'its night is homeMenuLine');
+assert.equal(menuDateLine({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: null, menuDate: '2026-10-04' }, now, 'en-GB'), null, 'shared early, still its night');
 
 // --- grouping and order ---
 const menu = (id: string, startsAt: string | null, endsAt: string | null, createdAt = '2026-01-01T00:00:00Z'): MenuSummary => ({
@@ -176,6 +177,8 @@ assert.equal(ingredientLine([]), '');
   assert.equal(cardWhen({ ...base, menuDate: '2026-10-31' }, 'en-GB'), 'Saturday 31 October');
   assert.equal(cardWhen({ ...base, plannedStartsAt: new Date(2026, 9, 31, 18).toISOString(), plannedEndsAt: new Date(2026, 10, 1, 2).toISOString() }, 'en-GB'), 'Saturday 31 October');
   assert.equal(cardWhen({ ...base, startsAt: new Date(2026, 11, 1, 6).toISOString() }, 'en-GB'), 'From Tue 1 December');
+  // Shared on the 9th, for the night of the 31st: the eyebrow names the night.
+  assert.equal(cardWhen({ ...base, menuDate: '2026-10-31', startsAt: new Date(2026, 9, 9, 11).toISOString() }, 'en-GB'), 'Saturday 31 October');
 }
 
 {
