@@ -10,7 +10,8 @@ const PAGES = ['index', 'library', 'discover', 'bar', 'menus', 'search', 'cockta
 
 const routes = {};
 for (const page of PAGES) {
-  const file = [`dist/${page}.html`, `dist/(tabs)/${page}.html`].find(existsSync);
+  // A route with its own layout (the search tab's stack) exports as a folder's index.html.
+  const file = [`dist/${page}.html`, `dist/(tabs)/${page}.html`, `dist/${page}/index.html`].find(existsSync);
   if (!file) throw new Error(`write-route-chunks: no page for ${page}; update PAGES`);
   routes[page] = [...new Set(readFileSync(file, 'utf8').match(/\/_expo\/static\/js\/web\/[^"]+\.js/g) ?? [])];
 }

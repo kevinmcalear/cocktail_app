@@ -18,6 +18,8 @@ interface SearchFieldProps {
   keys?: boolean;
   /** The search tab: Cancel beside the field while it's in use, which empties it and puts the keyboard away (prep-flavor-entry). */
   cancel?: boolean;
+  /** Hears the field gain and lose focus (Try it's bottom search moves with it). */
+  onFocusChange?: (focused: boolean) => void;
 }
 
 /** A keyboard key, as the palette's hints draw it: "esc", "tab", "↵". */
@@ -35,7 +37,7 @@ export function KeyCap({ label }: { label: string }) {
  * something's typed. With `keys` (the ⌘K palette) it's the card's borderless
  * header instead, with the esc key at its end (nav-search-desk-palette).
  */
-export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel }: SearchFieldProps) {
+export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel, onFocusChange }: SearchFieldProps) {
   const ds = useDs();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [focused, setFocused] = useState(false);
@@ -59,8 +61,14 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
           autoCapitalize="none"
           returnKeyType="search"
           onSubmitEditing={onSubmit}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onFocus={() => {
+            setFocused(true);
+            onFocusChange?.(true);
+          }}
+          onBlur={() => {
+            setFocused(false);
+            onFocusChange?.(false);
+          }}
           accessibilityLabel={placeholder}
           style={[styles.input, NO_OUTLINE, { color: ds.c.ink }]}
         />

@@ -1,0 +1,26 @@
+import { Platform } from 'react-native';
+import { create } from 'zustand';
+
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useSettingsStore } from '@/store/useSettingsStore';
+
+/**
+ * Settings › Try it, "Search and New at the bottom": on phones, search opens
+ * at the bottom over the keyboard and New sits in the tab bar instead of the
+ * header. Wide web keeps its sidebar (New) and ⌘K either way.
+ */
+export function useBottomBar(): boolean {
+  const on = useSettingsStore((s) => s.bottomBar);
+  const wide = useIsWideWeb();
+  return on && !wide;
+}
+
+/**
+ * iOS 26 turns the tab bar itself into the search field when the search tab's
+ * screen has a native search bar, so there the variant uses the system's.
+ * Everywhere else (Android, phone web, older iOS) draws its own bottom field.
+ */
+export const SYSTEM_BOTTOM_SEARCH = Platform.OS === 'ios' && Number.parseInt(String(Platform.Version), 10) >= 26;
+
+/** Phone web: the bottom search field has focus, so it takes the tab bar's place (WebTabBar steps aside). */
+export const useBottomSearchFocus = create<{ focused: boolean }>(() => ({ focused: false }));
