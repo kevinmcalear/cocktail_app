@@ -4,7 +4,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, Headline, PressableScale, RowScore, scoreWords, Spec, Title, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
-import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import { useItemScores } from '@/hooks/useFlavor';
@@ -15,6 +14,7 @@ import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { versionLabel } from '@/lib/servedAt';
 
 import { CreditTag } from '../drink/DrinkCredit';
+import { BarMark } from '../home/BarMark';
 import { ClassicsTheyPour, usePouredSplit } from './ClassicsTheyPour';
 import { isShownPosition } from './Positions';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
@@ -189,7 +189,7 @@ export function BarHeader({ profile, detail, love }: { profile: { id: string; di
   return (
     <View style={styles.barHeader}>
       <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={[styles.barHeader, styles.flex]}>
-        <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
+        <BarMark name={profile.display_name} logoUrl={profile.avatar_url} profileId={profile.id} size={52} />
         <View style={styles.flex}>
           <Title>{profile.display_name}</Title>
           <Caption tone="muted">{score !== null ? detail : [detail, ranked].filter(Boolean).join(' · ')}</Caption>
