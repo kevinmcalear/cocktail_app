@@ -2,20 +2,20 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useRef, useState } from 'react';
 
 import { BringStep } from '@/components/screens/onboarding/BringStep';
-import { Body, Caption } from '@/components/ds';
+import { Body, BrandProvider, Caption } from '@/components/ds';
 import { SetupChromeProvider, SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { BrandSetup } from '@/components/screens/venue/BrandScreen';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useProfile } from '@/hooks/useProfiles';
 import { useVenueBrand } from '@/hooks/useVenueBrand';
 import { useCreateSetupVenue, useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
-import { stageBringInFiles } from '@/lib/bringInHandoff';
+import { faceFromDb, normalizeHex, usableGroundTint } from '@/lib/brand';
 import { nextScreen, previousScreen, resumeScreen, venueProgress, type ClaimState, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
 import type { ReadFile } from '@/lib/readAnything';
 import { useAppMode } from '@/store/useAppMode';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
-import { DoneStep } from './DoneStep';
+import { DoneMark, DoneStep } from './DoneStep';
 import { FindBarStep } from './FindBarStep';
 import { RoleStep } from './RoleStep';
 import { SetupClaimStep } from './SetupClaimStep';
@@ -26,6 +26,7 @@ import { TeamStep } from './TeamStep';
 import { VisibilityStep } from './VisibilityStep';
 import { WhereWhenStep } from './WhereWhenStep';
 
+const BRANDED: VenueScreen[] = ['look', 'visibility', 'bring', 'team', 'done'];
 const VENUE_BRING = ['Spec book PDF', 'Printed menu', 'Google Doc', 'Airtable link', 'Back bar photo'];
 
 /**
@@ -50,7 +51,8 @@ export function VenueSetupScreen() {
   const profile = useProfile(profileId).data;
   const claim = useVenueClaim(barId).data ?? null;
   const page = useVenuePage(barId).data ?? null;
-  const logo = useVenueBrand(barId ?? '').data?.logo_url ?? null;
+  const brand = useVenueBrand(barId ?? '').data ?? null;
+  const logo = brand?.logo_url ?? null;
   const createVenue = useCreateSetupVenue();
   const enterVenue = useAppMode((s) => s.enterVenue);
   const [waitingFiles, setWaitingFiles] = useState(0);
@@ -81,12 +83,19 @@ export function VenueSetupScreen() {
     role: 'Admin',
     place: 'Typed by you',
   };
+  // From the Look step on, setup wears the venue's own brand (canvas make-venue-look to make-venue-done).
+  const branded = !!brand && BRANDED.includes(screen);
   const chrome = {
     title: copy.title,
     intro: copy.intro,
     eyebrow: screen === 'intro' ? 'For bars and venues' : screen === 'find' || screen === 'done' ? null : name || null,
+    eyebrowTone: branded ? ('accent' as const) : ('muted' as const),
+    topLabel: screen === 'intro' ? 'Venue setup' : undefined,
+    // The summary has no Back: its logo with a check sits over the title instead (canvas make-venue-done).
+    noBack: screen === 'done',
+    mark: screen === 'done' ? <DoneMark venue={{ id: barId ?? key, name, logoUrl: logo, accent: brand?.primary_color ?? null, displayFace: faceFromDb(brand?.display_face), groundTint: null, roleLevel: 40 }} /> : undefined,
     progress: venueProgress(screen),
-    onBack: screen === 'intro' ? leave : () => setScreen(previousScreen(screen)),
+    onBack: screen === 'intro' ? leave : screen === 'done' ? undefined : () => setScreen(previousScreen(screen)),
     aside:
       wide && screen !== 'intro' ? (
         <SetupRail name={name} logoUrl={logo} at={screen} done={run?.done ?? []} status={status} onPick={setScreen} onLeave={leave} />
@@ -94,7 +103,7 @@ export function VenueSetupScreen() {
   };
   const needVenue = (then: () => void) => () => void ensureVenue().then(then, () => {});
 
-  return (
+  const steps = (
     <SetupChromeProvider value={chrome}>
       {screen === 'intro' ? <SetupIntro onStart={() => setScreen('find')} onLeave={leave} /> : null}
       {screen === 'find' ? (
@@ -127,12 +136,10 @@ export function VenueSetupScreen() {
         <BringStep
           examples={VENUE_BRING}
           note="Photos and PDFs are read by AI. Clean text is read on your phone. You check every drink before it’s saved, and anything from here starts private to your team."
-          onFiles={(files: ReadFile[]) => {
-            stageBringInFiles(files);
-            setWaitingFiles((n) => n + files.length);
-          }}
+          barId={barId}
+          onFiles={(files: ReadFile[]) => setWaitingFiles((n) => n + files.length)}
           onPaste={() => router.push('/bring-in' as Href)}
-          waiting={waitingFiles ? (waitingFiles === 1 ? 'One file' : `${waitingFiles} files`) : null}
+          later="Bring more in later from the + button."
           footer={<SetupFooter onPress={() => finish('bring')} onSkip={() => setScreen('team')} />}
         />
       ) : null}
@@ -160,5 +167,16 @@ export function VenueSetupScreen() {
         </SetupPage>
       ) : null}
     </SetupChromeProvider>
+  );
+  if (!branded || !brand) return steps;
+  return (
+    <BrandProvider
+      accent={normalizeHex(brand.primary_color ?? '') ?? undefined}
+      displayFace={faceFromDb(brand.display_face)}
+      groundTint={usableGroundTint(normalizeHex(brand.ground_tint ?? '')) ?? undefined}
+      accentText={brand.accent_text ?? undefined}
+    >
+      {steps}
+    </BrandProvider>
   );
 }
