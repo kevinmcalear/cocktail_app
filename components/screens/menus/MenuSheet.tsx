@@ -12,6 +12,8 @@ interface MenuSheetProps {
   onClose: () => void;
   title: string;
   subtitle?: string;
+  /** Small mono caps over the title ("WHERE IT LIVES · LITTLE RYE"), in place of a subtitle under it. */
+  eyebrow?: string;
   children: ReactNode;
   /** Pinned under the scrolling body: the sheet's main action. */
   footer?: ReactNode;
@@ -27,7 +29,7 @@ interface MenuSheetProps {
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, children, footer, onShow, save, plain }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children, footer, onShow, save, plain }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -46,6 +48,11 @@ export function MenuSheet({ visible, onClose, title, subtitle, children, footer,
         ) : (
           <View style={styles.header}>
             <View style={styles.flex}>
+              {eyebrow ? (
+                <Caption tone="muted" style={styles.eyebrow}>
+                  {eyebrow.toUpperCase()}
+                </Caption>
+              ) : null}
               {plain ? <Headline role="heading">{title}</Headline> : <Title>{title}</Title>}
               {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
             </View>
@@ -178,6 +185,7 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.xl, gap: space.md },
   footer: { paddingHorizontal: space.xl, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, gap: space.sm },
   flex: { flex: 1, gap: 2 },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
   label: { gap: 2 },
   pill: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, justifyContent: 'center', flexDirection: 'row', alignItems: 'center' },
   pillSmall: { minHeight: 36, paddingHorizontal: space.md, gap: space.xs + 2 },

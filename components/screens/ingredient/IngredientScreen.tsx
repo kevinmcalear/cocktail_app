@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useRef, useState, type ReactNode } from 'react';
+import { Fragment, useRef, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedRef, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,7 +35,6 @@ import { NoteBar, NoteRecipe, useNoteChoice } from './NoteRecipe';
 import { PrepMethod } from './PrepMethod';
 import { PrepRecipe, type PrepLine } from './PrepRecipe';
 import { PrepUsedIn } from './PrepUsedIn';
-import { PrepVersionSheet } from './PrepVersionSheet';
 import { printPrepCard } from './printPrepCard';
 
 type Link = { id: string; name: string };
@@ -61,11 +60,17 @@ export interface IngredientScreenProps {
  * Print card, Save) beside the sections in pairs.
  */
 export function IngredientScreen(props: IngredientScreenProps) {
-  const venue = useActiveVenue().venues.find((v) => v.id === props.ingredient.bar_id);
+  const { venues, active } = useActiveVenue();
+  const home = useMode().mode === 'home';
+  const own = venues.find((v) => v.id === props.ingredient.bar_id);
+  // A venue's own prep wears its colours; at work, a shared one wears the venue you're at (decided on the canvas).
+  const brand = own ?? (home ? null : active);
+  // A technical ingredient reads like the technique library: light (prep-ing-xanthan).
+  const light = !props.lines.length && props.ingredient.ingredient_role !== 'prep' && !!technicalIngredientFor(props.ingredient.name);
   return (
-    <BackbarTheme>
-      <BrandProvider accent={venue?.accent ?? undefined}>
-        <IngredientPage {...props} venueName={venue?.name ?? null} />
+    <BackbarTheme scheme={light ? 'light' : undefined}>
+      <BrandProvider accent={brand?.accent ?? undefined}>
+        <IngredientPage {...props} venueName={own?.name ?? null} />
       </BrandProvider>
     </BackbarTheme>
   );
@@ -92,9 +97,6 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
   const factor = size?.factor ?? 1;
   const make = (mode?: 'have') => router.push(`/ingredient/${ingredient.id}/make?factor=${factor}${mode ? `&mode=${mode}` : ''}` as never);
   const [editingPrep, setEditingPrep] = useState(false);
-  // Before changing a prep other drinks use, or to make your own: 'edit' or 'copy'.
-  const [version, setVersion] = useState<'edit' | 'copy' | null>(null);
-  const { active } = useActiveVenue();
   const home = useMode().mode === 'home';
   const [sheet, setSheet] = useState<'proof' | 'more' | null>(null);
   const { data: shelf } = useShelf();
@@ -115,12 +117,13 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
   const facts = isPrep ? (canViewDetails ? prepFacts(prep) : []) : bottleTiles;
   const yieldQ = toQuantity(prep?.yield_amount, prep?.yield_unit);
   const makes = size ? size.makes : scaledYield(prep?.yield_amount ?? null, prep?.yield_unit ?? null, 1);
-  const edit = isPrep && drinks.length > 1 ? () => setVersion('edit') : onEdit;
+  // Anyone who can read a prep's recipe can edit it: when other drinks use it, or it isn't
+  // theirs to change, the editor asks at Save (prep-prep-edit-shared, AskAtSave).
+  const offerEdit = canEdit || (showRecipe && !!userId);
   const print = () => void printPrepCard({ name: ingredient.name, facts, lines: lines.map((l) => ({ amount: [l.amount, l.unit].filter(Boolean).join(' '), name: l.name })), steps: steps.map((s) => s.body) });
   const more = [
-    canEdit ? { label: 'Edit', onPress: edit } : null,
+    offerEdit ? { label: 'Edit', onPress: onEdit } : null,
     isPrep && canViewDetails ? { label: 'Proof: work out the strength', onPress: () => setSheet('proof') } : null,
-    showRecipe && userId && !canEdit ? { label: 'Make your own version', onPress: () => setVersion('copy') } : null,
     !wide && isPrep && canViewDetails ? { label: 'Print card', onPress: print } : null,
   ].filter((a): a is { label: string; onPress: () => void } => !!a);
 
@@ -141,7 +144,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
       <Display>{ingredient.name}</Display>
       {noteShown ? <NoteRecipe note={ingredient.description!} read={noteRead!} choice={noteChoice} /> : ingredient.description ? <Body tone="muted">{ingredient.description}</Body> : null}
       {noteShown && wide ? <NoteBar itemId={ingredient.id} barId={ingredient.bar_id} read={noteRead!} lines={noteChoice.lines} card={card} bottom={0} inline /> : null}
-      {wide ? null : <DrinkFacts facts={facts} columns={isPrep ? 4 : 3} />}
+      {wide ? null : <DrinkFacts facts={facts} columns={isPrep ? 4 : 3} compact />}
       {technical ? <TechnicalIngredientCard name={ingredient.name} /> : null}
       {technical ? <WhereToBuy name={ingredient.name} /> : null}
     </View>
@@ -152,16 +155,18 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
   const pairs = <PairsWith itemId={ingredient.id} name={ingredient.name} />;
   const inDrinks = (
     <View onLayout={(e) => (drinksY.current = e.nativeEvent.layout.y)}>
-      <PrepUsedIn name={ingredient.name} drinks={drinks} used={used} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} />
+      <PrepUsedIn name={ingredient.name} drinks={drinks} used={used} isPrep={isPrep} wide={wide} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} />
     </View>
   );
-  const forBar = (
+  // A technical ingredient's page ends with Where to buy and its drinks (prep-ing-xanthan).
+  const forBar = technical ? null : (
     <View style={styles.stack}>
       {isPrep ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />}
       <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} />
     </View>
   );
-  // In the canvas's order; wide screens set them side by side in these pairs.
+  // In the canvas's order; wide screens set them in two columns that each run on, so a
+  // long Pairs with never leaves a gap beside Around it (prep-prep-desktop).
   const sections: [ReactNode, ReactNode][] = [
     [recipe, method],
     [around, pairs],
@@ -171,18 +176,16 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
   const body = (
     <View style={styles.body}>
       {wide ? null : head}
-      {sections.map(([a, b], i) =>
-        wide ? (
-          <View key={i} style={styles.pair}>
-            <View style={styles.flex}>{a}</View>
-            <View style={styles.flex}>{b}</View>
-          </View>
-        ) : (
-          <View key={i} style={styles.body}>
-            {a}
-            {b}
-          </View>
-        ),
+      {wide ? (
+        <View style={styles.pair}>
+          {[0, 1].map((col) => (
+            <View key={col} style={[styles.flex, styles.body]}>
+              {sections.map((s, i) => <Fragment key={i}>{s[col]}</Fragment>)}
+            </View>
+          ))}
+        </View>
+      ) : (
+        sections.flat().map((n, i) => <Fragment key={i}>{n}</Fragment>)
       )}
     </View>
   );
@@ -199,13 +202,13 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
           <View style={styles.wideRow}>
             <View style={styles.aside}>
               <View style={styles.drawing}>{hero}</View>
-              <DrinkFacts facts={facts} columns={2} />
+              <DrinkFacts facts={facts} columns={2} compact />
               {showRecipe ? <Button label={makes ? `Make ${makes}` : 'Make'} icon="play.fill" size="lg" onPress={() => make()} /> : null}
               <View style={styles.actions}>
-                {canEdit ? <Button label="Edit" variant="secondary" onPress={edit} /> : null}
+                {offerEdit ? <Button label="Edit" variant="secondary" onPress={onEdit} /> : null}
                 {isPrep && canViewDetails ? <Button label="Print card" variant="secondary" onPress={print} /> : null}
                 <GlassButton accessibilityLabel={onShelf ? 'Take off your bar' : 'Save to your bar'} icon={onShelf ? 'bookmark.fill' : 'bookmark'} onPress={toggleShelf} />
-                {more.length > (canEdit ? 1 : 0) ? <GlassButton accessibilityLabel="More: proof, make your own" icon="ellipsis" onPress={() => setSheet('more')} /> : null}
+                {more.length > (offerEdit ? 1 : 0) ? <GlassButton accessibilityLabel="More: proof, make your own" icon="ellipsis" onPress={() => setSheet('more')} /> : null}
               </View>
             </View>
             <View style={styles.main}>
@@ -236,16 +239,6 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
       {pinned && noteShown ? <NoteBar itemId={ingredient.id} barId={ingredient.bar_id} read={noteRead!} lines={noteChoice.lines} card={card} bottom={insets.bottom} /> : null}
       {sheet === 'more' ? <MoreSheet name={ingredient.name} actions={wide ? more.filter((a) => a.label !== 'Edit') : more} onClose={() => setSheet(null)} /> : null}
       {editingPrep && card ? <PrepEditSheet visible onClose={() => setEditingPrep(false)} itemId={ingredient.id} itemName={ingredient.name} current={card} /> : null}
-      {version ? (
-        <PrepVersionSheet
-          visible
-          onClose={() => setVersion(null)}
-          source={{ id: ingredient.id, name: ingredient.name, description: ingredient.description, abv: ingredient.abv, lines, card }}
-          drinks={drinks.length}
-          venue={!home && active ? { id: active.id, name: active.name } : null}
-          onEditAll={version === 'edit' ? onEdit : undefined}
-        />
-      ) : null}
       {sheet === 'proof' ? <ToolsSheet visible onClose={() => setSheet(null)} tool="proof" volumeMl={yieldQ?.kind === 'ml' ? yieldQ.value : null} /> : null}
     </View>
   );

@@ -149,8 +149,8 @@ export function DiscoverScreen() {
     router.push(`/p/${ref}`);
   };
 
-  // Wide screens search in the list pane itself, so the map beside it stays live.
-  const controls = split && sheet === 'search' ? (
+  // Wide screens search in the list pane itself, so the map beside it stays live; the scopes stay while searching (disc-desk-search).
+  const controls = split && (sheet === 'search' || searching) ? (
     <DiscoverSearchHead {...searchProps} filters={kinds.length + (showClosed ? 1 : 0)} onFilters={() => setSheet('filters')} />
   ) : (
     <View style={styles.controls}>
