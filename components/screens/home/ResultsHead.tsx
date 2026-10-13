@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
-import { Body, Caption, Title } from '@/components/ds';
+import { Caption, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSpecMatches } from '@/hooks/useSpecMatches';
 import { drinkCount, type DiscoverDrink } from '@/lib/discoverDrinks';
@@ -12,7 +12,7 @@ export function ClassicLine({ drinks, search, where }: { drinks: readonly Discov
   const ids = drinks.slice(0, 500).map((d) => d.id);
   const verdicts = useSpecMatches(search.trim() ? `discover:${search.trim()}` : undefined, ids).data;
   const line = verdicts ? classicSummary(drinks, verdicts, where) : null;
-  return line ? <Body tone="muted">{line}</Body> : null;
+  return line ? <Caption>{line}</Caption> : null;
 }
 
 /** "14 drinks at 9 bars near you" while searching, else how many bars the map shows. */

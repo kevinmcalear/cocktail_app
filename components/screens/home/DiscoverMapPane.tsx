@@ -73,11 +73,13 @@ const HANDLE = layout.minTapTarget - space.lg;
  * asks. The camera fits the results whenever the area, drink or layer
  * changes, but never after a search of the map, so the person's view stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewport, mode, top, bottomInset = 0, topInset = 0, from = null, me = null, pick }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink: given, filter, results, onViewport, mode, top, bottomInset = 0, topInset = 0, from = null, me = null, pick }: DiscoverMapPaneProps) {
   const ds = useDs();
   const sheetRef = useRef<BottomSheet>(null);
   // Searching, the layers read as a sort of what was found, pins name the best drinks, and a tapped bar leads with its best match (as filtering does).
   const searching = !!filter.search.trim();
+  // Wide browsing shows Drinks | Top bars (disc-desk-browse); a drink's best once a style is picked.
+  const drink = mode === 'side' && !searching && !filter.kinds.length ? null : given;
   const [own, setOwn] = useState<MapLayer>('drinks');
   const chosen = pick?.layer ?? own;
   const setLayer = (next: MapLayer) => {
@@ -86,7 +88,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
   };
   const canNear = searching && !!from;
   const [peek, setPeek] = useState(SHEET_PEEK);
-  const layer = chosen === 'nearest' && !canNear ? 'drinks' : chosen;
+  const layer = (chosen === 'nearest' && !canNear) || (chosen === 'best' && !drink) ? 'drinks' : chosen;
   const nearest = layer === 'nearest';
   const byDrinks = layer === 'drinks' || nearest;
   const byDrink = layer === 'best' && !!drink;
@@ -139,8 +141,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
 
   const title = byDrinks ? (searching ? searchTitle(filter.search) : results.title) : `${byDrink ? `Best ${drink.name}` : 'Top bars'} ${areaLabel(area)}`;
   const layers = <MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} />;
-  const offer = moves.offer;
-  const searchHere = offer ? <SearchHere onPress={() => moves.search(offer)} /> : null;
+  const searchHere = moves.offer ? <SearchHere onPress={() => moves.offer && moves.search(moves.offer)} /> : null;
 
   const ranked = rows.data?.ranked ?? [];
   const early = rows.data?.early ?? [];
@@ -198,7 +199,7 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
       <View style={styles.fill}>
         {map}
         <View pointerEvents="box-none" style={[styles.overlay, styles.overlayTop]}>
-          {searching && pick ? null : <GlassSurface style={styles.glassRow}>{layers}</GlassSurface>}
+          {searching && pick ? null : <GlassSurface style={styles.glassRow}><MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} onGlass /></GlassSurface>}
           {searchHere}
         </View>
         {selected && !pick ? (
@@ -284,12 +285,11 @@ export function DiscoverMapPane({ area, onArea, drink, filter, results, onViewpo
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  flex: { flex: 1, minWidth: 0 },
   overlay: { position: 'absolute', left: space.lg, right: space.lg, gap: space.sm },
   overlayTop: { top: space.lg },
   // Clear of the map's attribution line.
   overlayBottom: { bottom: space.xxxl, maxWidth: 420 },
-  glassRow: { alignSelf: 'flex-start', padding: space.xs },
+  glassRow: { alignSelf: 'flex-start', padding: space.xs, borderRadius: radius.pill },
   sheet: { paddingHorizontal: space.lg, paddingBottom: space.xl },
   sheetHead: { gap: space.md, paddingBottom: space.md },
   sheetEmpty: { gap: space.md },

@@ -27,7 +27,9 @@ assert.equal(pinLook(pins[0], false, accent).label, '9.1');
 assert.equal(pinLook(pins[0], false, accent).minWidth, 44);
 assert.equal(pinLook(pins[0], false, accent).logo, null, 'the score alone on the pill (disc-map-opt-c), no bar logo');
 assert.equal(pinLook({ ...pins[0], image: 'https://x/d.png' }, false, accent).logo, 'https://x/d.png', 'searching: the best match');
-assert.equal(pinLook({ ...pins[0], image: 'https://x/d.png' }, false, accent).paddingLeft, 2, 'the picture sits close to the pill edge');
+assert.equal(pinLook({ ...pins[0], image: 'https://x/d.png' }, false, accent).paddingLeft, 5, 'the picture sits 5 in from the pill edge (disc-desk-search)');
+assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, false, accent).font, 'bodyMedium', 'a drink name in Geist, not mono');
+assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, true, accent).height, 40);
 assert.equal(pinLook(pins[1], false, accent).height, 18);
 assert.equal(pinLook({ ...pins[1], image: 'https://x/b.png' }, false, accent).height, 30, 'a lone picture leaves room for its ring');
 assert.ok(pinLook(pins[0], false, accent).zIndex > pinLook(pins[1], false, accent).zIndex, 'a scored pin sits over an early one');
@@ -110,6 +112,22 @@ assert.ok(close.every((p) => p.latitude <= -0.03 && p.longitude <= -0.03), 'only
 assert.ok(close.some((p) => !drawn.includes(p)), 'zooming in promotes dots to pins');
 // Fewer scored bars in view than BEST_PINS: all of them, no padding.
 assert.equal(pinsToDraw(grid, { bounds: [-0.1, -0.1, -0.085, -0.085], zoom: 16 }, null).length, 2);
+// No scores yet (prod, 13 Oct): the busiest bars in view with a logo fill the pins, logo alone; logo-less ones stay dots.
+const early = grid.map((p, i) => ({ ...p, score: null, drinks: i, logo: i % 2 ? `https://x/${i}.png` : null }));
+const known = pinsToDraw(early, wide, null);
+assert.equal(known.length, BEST_PINS);
+assert.ok(known.every((p) => p.logo), 'only bars with a logo');
+assert.deepEqual(known.map((p) => p.drinks), [399, 397, 395, 393, 391, 389, 387, 385, 383, 381], 'busiest first');
+assert.equal(pinLook(known[0], false, accent).logo, known[0].logo);
+assert.equal(pinLook(known[0], false, accent).height, 30);
+assert.equal(pinLook(known[0], false, accent).label, '');
+// Scored bars come first; logos only fill what's left.
+const mixed = pinsToDraw(early.map((p, i) => (i < 3 ? { ...p, score: 8 } : p)), wide, null);
+assert.deepEqual(mixed.slice(0, 3).map((p) => p.score), [8, 8, 8]);
+assert.equal(mixed.length, BEST_PINS);
+// A picked score pin is a size up (disc-desk-browse).
+assert.equal(pinLook(pins[0], true, accent).height, 36);
+assert.equal(pinLook(pins[0], true, accent).minWidth, 56);
 // Zoomed out: areas instead, so no score pins; the selected and named search pins stay.
 assert.deepEqual(pinsToDraw(grid, { ...wide, zoom: AREA_ZOOM - 0.1 }, null), []);
 const named = grid.map((p) => (p.id === 'g7' ? { ...p, top: 'Martini' } : p));
