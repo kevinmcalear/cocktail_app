@@ -12,7 +12,7 @@ import { useSpecLevels } from '@/hooks/useSpecLevels';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
-import { lineAmount, lineDetail } from '@/lib/drinkMath';
+import { lineAmount } from '@/lib/drinkMath';
 import { ratio, specAccess, specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore, type SpecUnit } from '@/store/useSettingsStore';
 
@@ -34,7 +34,9 @@ interface SpecSectionProps {
   caption?: string | null;
   /** Spec line keys your shelf doesn't have: marked "Not on your shelf". */
   missing?: readonly string[];
-  /** Under the lines, inside the section: the method at home, what to do about a missing bottle. */
+  /** Right under the lines: method, glass, ice and garnish (MakeLine). Shown even when the lines are locked. */
+  make?: ReactNode;
+  /** Under that, inside the section: the method's steps, what to do about a missing bottle. */
   children?: ReactNode;
 }
 
@@ -51,10 +53,12 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
 }
 
 /**
- * The spec, showing exactly what this role can see. Anything the server
+ * The spec, showing exactly what this role can see. Dense rows and no ABV
+ * under each name, so a whole spec fits on a phone's first screen; each
+ * line's strength is in the strength sheet (ABV, under More). Anything the server
  * withheld stays on the page as a locked section that says who can open it.
  */
-export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], children }: SpecSectionProps) {
+export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], make, children }: SpecSectionProps) {
   const ds = useDs();
   const router = useRouter();
   const realRole = useEffectiveRole(barId);
@@ -77,15 +81,19 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
       <View style={styles.section}>
         <Headline role="heading">{heading}</Headline>
         <Body tone="muted">No spec yet.</Body>
+        {make}
       </View>
     );
   }
 
   if (!access.names) {
     return (
-      <LockedSection title="Spec" unlocked={false} opensAt={opensAt(levels ? Math.min(levels.generic, levels.brand) : undefined)} note="Method and prep notes open with it.">
-        {null}
-      </LockedSection>
+      <View style={styles.section}>
+        <LockedSection title="Spec" unlocked={false} opensAt={opensAt(levels ? Math.min(levels.generic, levels.brand) : undefined)} note="Method and prep notes open with it.">
+          {null}
+        </LockedSection>
+        {make}
+      </View>
     );
   }
 
@@ -113,18 +121,19 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
             key={l.key}
             amount={access.amounts ? (lineAmount(l, unit) ?? '') : ''}
             alignAmount={measured}
+            dense
             ingredient={l.ingredient ?? 'Hidden ingredient'}
             ingredientId={l.ingredient ? l.ingredientId : undefined}
             optional={l.optional}
             houseMade={l.houseMade}
             note={l.note ?? undefined}
             flag={missing.includes(l.key) ? 'Not on your shelf' : undefined}
-            detail={access.amounts ? (lineDetail(l) ?? undefined) : undefined}
             onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
             onPress={l.ingredientId && !preview ? () => (l.houseMade ? setHouseLine(l) : router.push(`/ingredient/${l.ingredientId}` as never)) : undefined}
           />
         ))}
       </View>
+      {make}
       {children}
       {houseLine ? <HouseMadeSheet line={houseLine} onClose={() => setHouseLine(null)} /> : null}
       {convert ? <ToolsSheet visible onClose={() => setConvert(null)} tool="convert" amount={convert} scheme="dark" /> : null}

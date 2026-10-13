@@ -1,16 +1,19 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import { useState } from 'react';
 import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
+import { useBottomBar, useBottomSearchFocus } from '@/hooks/useBottomBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
-import { PHONE_TAB_LIMIT, venueTabs, type VenueTab } from '@/lib/venueFeatures';
+import { phoneTabs, venueTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
 
 import { CalendarDayIcon } from './CalendarDayIcon';
+import { CreateSheet } from './CreateSheet';
 
 export type WebTab = { name: string; label: string; icon: IconName };
 
@@ -25,22 +28,23 @@ const VENUE_TABS: Record<VenueTab, WebTab> = {
   discover: DISCOVER,
 };
 
-export const HOME_TABS: WebTab[] = [
-  DISCOVER,
-  { name: 'bar', label: 'My Bar', icon: 'wineglass' },
-  { name: 'collection', label: 'Collection', icon: 'bookmark' },
-  { name: 'profile', label: 'You', icon: 'person.crop.circle' },
-];
+const HOME_TABS = {
+  bar: { name: 'bar', label: 'My Bar', icon: 'wineglass' },
+  collection: { name: 'collection', label: 'Collection', icon: 'bookmark' },
+  profile: { name: 'profile', label: 'You', icon: 'person.crop.circle' },
+} satisfies Record<string, WebTab>;
+
+const TABS: Record<Exclude<PhoneTab, 'new'>, WebTab> = { ...VENUE_TABS, ...HOME_TABS };
 
 /**
- * The tabs for the mode you're in. At a venue: Library, Menus and Discover,
- * plus Tonight, Prep and Study when the venue switched them on
- * (lib/venueFeatures.ts). Phone bars pass PHONE_TAB_LIMIT; the sidebar lists all.
+ * The tabs for the mode you're in, for the sidebar. At a venue: Library,
+ * Menus and Discover, plus Tonight, Prep and Study when the venue switched
+ * them on (lib/venueFeatures.ts). Phone bars use phoneTabs, which caps them.
  */
-export function useModeTabs(limit?: number): WebTab[] {
+export function useModeTabs(): WebTab[] {
   const { mode } = useMode();
   const { has } = useVenueFeatures();
-  return mode === 'home' ? HOME_TABS : venueTabs(has, limit).map((name) => VENUE_TABS[name]);
+  return mode === 'home' ? [DISCOVER, ...Object.values(HOME_TABS)] : venueTabs(has).map((name) => VENUE_TABS[name]);
 }
 
 /** A tab's icon. 'calendar' is Tonight's page with the date on it; the rest are symbols. */
@@ -49,7 +53,7 @@ export function TabIcon({ name, size, color }: { name: IconName; size: number; c
 }
 
 // The board's pill and search circle are both 64 tall.
-const BAR_HEIGHT = 64;
+export const WEB_TAB_BAR_HEIGHT = 64;
 
 /**
  * Space to leave under scrolling content so the tab bar doesn't cover the last
@@ -61,9 +65,30 @@ const BAR_HEIGHT = 64;
 export function useTabBarInset() {
   const bottom = useSafeAreaInsets().bottom;
   const wide = useIsWideWeb();
-  if (Platform.OS === 'web') return wide ? space.xl : bottom + BAR_HEIGHT + space.xl;
+  if (Platform.OS === 'web') return wide ? space.xl : bottom + WEB_TAB_BAR_HEIGHT + space.xl;
   return (Platform.OS === 'ios' ? bottom : 0) + space.lg;
 }
+
+/**
+ * How far the top of the floating tab bar is from the bottom of a tab screen,
+ * for things that sit right on it (Discover's map sheet). The web draws its
+ * own bar; on iOS the system bar is inside the bottom safe area; Android's is
+ * docked below the screen.
+ */
+export function useTabBarTop() {
+  const bottom = useSafeAreaInsets().bottom;
+  const wide = useIsWideWeb();
+  if (Platform.OS === 'web') return wide ? 0 : bottom + space.md + WEB_TAB_BAR_HEIGHT;
+  return Platform.OS === 'ios' ? bottom : 0;
+}
+
+/**
+ * The pill's sides and corners, for things that match it: the board's (12 in
+ * from the screen's sides, 64 tall) on the web, and the iOS 26 system bar's
+ * (21 in, about 62 tall, measured on an iPhone 17 Pro).
+ * ponytail: iOS doesn't report its bar's frame; measured, not read. Read it if NativeTabs ever exposes it.
+ */
+export const TAB_PILL = Platform.OS === 'ios' ? { inset: 21, radius: 31 } : { inset: space.md, radius: WEB_TAB_BAR_HEIGHT / 2 };
 
 /**
  * The redesigned tab bar for phone-width web: labelled tabs in a glass pill,
@@ -72,14 +97,22 @@ export function useTabBarInset() {
 export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
-  const tabs = useModeTabs(PHONE_TAB_LIMIT);
+  const { mode } = useMode();
+  const { has } = useVenueFeatures();
   const current = state.routes[state.index]?.name;
+  // Settings › Try it: New joins the tabs and takes a tab's room (phoneTabs),
+  // and while the bottom search field has focus it takes the bar's place.
+  const bottomBar = useBottomBar();
+  const searching = useBottomSearchFocus((s) => s.focused);
+  const [creating, setCreating] = useState(false);
+  const tabs = phoneTabs(mode === 'home', has, bottomBar).flatMap((name) => (name === 'new' ? [] : [TABS[name]]));
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;
     const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
     if (current !== name && !event.defaultPrevented) navigateToTab(route.key);
   };
+  if (bottomBar && searching) return null;
   return (
     <View style={[styles.wrap, { bottom: insets.bottom + space.md }]}>
       <GlassSurface style={styles.tabs}>
@@ -103,17 +136,26 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
               </PressableScale>
             );
           })}
+          {bottomBar ? (
+            <PressableScale role="button" accessibilityLabel="New: drink, ingredient, beer, wine, menu, bring something in, or a draft" onPress={() => setCreating(true)} style={styles.tab}>
+              <IconSymbol name="plus" size={20} color={ds.c.muted} />
+              <DsText variant="caption" color={ds.c.muted} numberOfLines={1}>
+                New
+              </DsText>
+            </PressableScale>
+          ) : null}
         </View>
       </GlassSurface>
       {/* While search is open, its circle is the current item: its icon takes the accent. */}
-      <GlassButton accessibilityLabel={current === 'search' ? 'Search, open' : 'Search'} icon="magnifyingglass" size={BAR_HEIGHT} color={current === 'search' ? ds.accentText : undefined} onPress={() => go('search')} />
+      <GlassButton accessibilityLabel={current === 'search' ? 'Search, open' : 'Search'} icon="magnifyingglass" size={WEB_TAB_BAR_HEIGHT} color={current === 'search' ? ds.accentText : undefined} onPress={() => go('search')} />
+      {creating ? <CreateSheet visible onClose={() => setCreating(false)} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: space.md, right: space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  tabs: { flex: 1, height: BAR_HEIGHT },
+  wrap: { position: 'absolute', left: TAB_PILL.inset, right: TAB_PILL.inset, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  tabs: { flex: 1, height: WEB_TAB_BAR_HEIGHT },
   row: { flex: 1, flexDirection: 'row', padding: space.xs },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: BAR_HEIGHT / 2, gap: 2 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: WEB_TAB_BAR_HEIGHT / 2, gap: 2 },
 });

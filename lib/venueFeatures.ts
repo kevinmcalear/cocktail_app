@@ -70,11 +70,17 @@ export function featureAtHome(key: VenueFeatureKey): boolean {
 export type VenueTab = 'index' | 'library' | 'menus' | 'prep' | 'test' | 'discover';
 
 /**
- * The phone tab bars hold four tabs and Search: Android's bar takes five at
+ * The phone tab bars hold four items and Search: Android's bar takes five at
  * most (react-native-screens throws past that), and five labels is as many
  * as a 390-wide pill reads.
  */
 export const PHONE_TAB_LIMIT = 4;
+
+/** Home mode's tabs, by route name. */
+export const HOME_TAB_NAMES = ['discover', 'bar', 'collection', 'profile'] as const;
+
+/** An item in a phone tab bar, by route name. `new` is the New button (Settings › Try it). */
+export type PhoneTab = VenueTab | (typeof HOME_TAB_NAMES)[number] | 'new';
 
 /**
  * Venue mode's tabs: Library, Menus and Discover, with Tonight, Prep and
@@ -93,4 +99,16 @@ export function venueTabs(has: (key: VenueFeatureKey) => boolean, limit = Infini
   const drop: VenueTab[] = tabs.includes('index') ? ['menus', 'test', 'prep'] : ['test', 'prep'];
   for (const name of drop) if (tabs.length > limit && tabs.includes(name)) tabs.splice(tabs.indexOf(name), 1);
   return tabs;
+}
+
+/**
+ * A phone tab bar's items, in order, before Search (which is always there).
+ * Settings › Try it puts New in the bar (`withNew`), and it takes a tab's
+ * room so the bar never passes five: at home You steps out (the avatar opens
+ * it), at a venue venueTabs drops one more in its usual order.
+ */
+export function phoneTabs(home: boolean, has: (key: VenueFeatureKey) => boolean, withNew: boolean): PhoneTab[] {
+  const limit = PHONE_TAB_LIMIT - (withNew ? 1 : 0);
+  const tabs: PhoneTab[] = home ? HOME_TAB_NAMES.slice(0, limit) : venueTabs(has, limit);
+  return withNew ? [...tabs, 'new'] : tabs;
 }

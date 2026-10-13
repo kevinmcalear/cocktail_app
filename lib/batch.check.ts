@@ -1,7 +1,7 @@
 // Checks for lib/batch.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { buildBatch, clampServes, classifyMethod, formatVolume, formatWeight, freezingPointC, isGarnishUnit, leaveOutFor, servesFromStock, servesToFill, stockLines, stockUnit } from './batch';
+import { buildBatch, clampServes, classifyMethod, formatVolume, formatWeight, freezingPointC, isGarnishUnit, leaveOutFor, MAX_SERVES, servesFromStock, servesStops, servesToFill, stepStops, stockLines, stockUnit, stopPosition } from './batch';
 import { specLines } from './spec';
 
 const row = (id: string, name: string, amount: number | null, unit: string | null) => ({
@@ -141,7 +141,35 @@ assert.equal(formatVolume(60, 'oz'), '2 oz');
 assert.equal(formatVolume(22.5, 'oz'), '0.75 oz');
 assert.equal(formatVolume(2183, 'oz'), '73.8 oz');
 assert.equal(clampServes(0), 1);
-assert.equal(clampServes(999), 60);
+assert.equal(clampServes(999), 999);
+assert.equal(clampServes(6969), 6969, 'the cap, for Rob');
+assert.equal(clampServes(7000), 6969);
+assert.equal(buildBatch(martini, ['Stir'], 7000).serves, 6969);
+assert.equal(formatVolume(752616, 'ml'), '753 L', 'big batches read in whole litres');
+assert.equal(formatVolume(25000, 'ml'), '25 L');
+assert.equal(formatVolume(12345, 'ml'), '12.3 L');
+assert.equal(formatVolume(752616, 'oz'), '25449 oz');
+assert.equal(formatWeight(397233), '397 kg');
+
+// The ruler: a tick per serve to 60, then coarser steps, ending on the cap.
+const stops = servesStops(1, MAX_SERVES);
+assert.deepEqual(stops.slice(0, 3), [1, 2, 3]);
+assert.deepEqual(stops.slice(58, 62), [59, 60, 65, 70]);
+assert.ok(stops.includes(200) && stops.includes(225) && stops.includes(1000) && stops.includes(1100) && stops.includes(6900));
+assert.equal(stops[stops.length - 1], 6969);
+assert.ok(stops.length < 200, `few enough ticks to draw (${stops.length})`);
+assert.ok(stops.every((s, i) => i === 0 || s > stops[i - 1]), 'always increasing');
+assert.deepEqual(servesStops(1, 60), Array.from({ length: 60 }, (_, i) => i + 1), 'small counts keep a tick per serve');
+assert.equal(stopPosition(stops, 1), 0);
+assert.equal(stopPosition(stops, 60), 59);
+assert.equal(stopPosition(stops, 6969), stops.length - 1);
+assert.ok(Math.abs(stopPosition(stops, 137) - (stops.indexOf(135) + 0.4)) < 1e-9, 'a typed count sits between its stops');
+assert.equal(stepStops(stops, 8, 1), 9);
+assert.equal(stepStops(stops, 137, 1), 140);
+assert.equal(stepStops(stops, 137, -1), 135);
+assert.equal(stepStops(stops, 60, 5), 85);
+assert.equal(stepStops(stops, 6969, 1), 6969);
+assert.equal(stepStops(stops, 1, -5), 1);
 assert.equal(clampServes(Number.NaN), 1);
 assert.equal(clampServes(7.6), 8);
 
