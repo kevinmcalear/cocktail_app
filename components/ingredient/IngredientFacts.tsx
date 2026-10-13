@@ -1,12 +1,12 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, PressableScale, Spec, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, PressableScale, useDs } from '@/components/ds';
 import type { Fact } from '@/components/screens/drink/DrinkFacts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, space } from '@/constants/tokens';
-import type { IngredientBottle } from '@/hooks/useIngredients';
+import { fontFamilies, layout, space } from '@/constants/tokens';
+import { useSwapFor, type IngredientBottle } from '@/hooks/useIngredients';
 import { useItemMaker } from '@/hooks/useMakers';
 import { usePrepRatio } from '@/hooks/usePrepCard';
 
@@ -39,12 +39,16 @@ export function bottleFacts(b: { brand_maker?: string | null; abv?: number | nul
 
 /** Strength, From, Maker: a bottle's fact tiles under its description (prep-ing-campari). */
 export function useBottleTiles(b: { id: string; ingredient_role?: string | null; brand_maker?: string | null; abv?: number | null; origin?: string | null }): Fact[] {
+  const router = useRouter();
   const { data: maker } = useItemMaker(b.ingredient_role === 'product' ? b.id : null);
   if (b.ingredient_role !== 'product') return [];
   return [
     b.abv != null ? { label: 'Strength', value: `${Number(b.abv)}% ABV` } : null,
     b.origin?.trim() ? { label: 'From', value: b.origin.trim() } : null,
-    maker?.display_name || b.brand_maker?.trim() ? { label: 'Maker', value: maker?.display_name || b.brand_maker!.trim() } : null,
+    // The maker's tile opens its page, so Around it needn't repeat it (prep-ing-campari).
+    maker?.display_name || b.brand_maker?.trim()
+      ? { label: 'Maker', value: maker?.display_name || b.brand_maker!.trim(), onPress: maker ? () => router.push(`/p/${maker.handle}` as Href) : undefined, accessibilityHint: maker ? 'Opens the maker' : undefined }
+      : null,
   ].filter((f): f is Fact => !!f);
 }
 
@@ -54,10 +58,13 @@ export function useBottleTiles(b: { id: string; ingredient_role?: string | null;
  * it for, and the bottles you can buy that are a kind of it. Nothing shows
  * when there's nothing to say.
  */
-export function AroundIt({ ingredient, bottles, isPrep, extra }: Props) {
+export function AroundIt({ ingredient, bottles: allBottles, isPrep, extra }: Props) {
   const [all, setAll] = useState(false);
   const { data: ratio } = usePrepRatio(isPrep ? ingredient.generic?.id : null);
   const bottle = ingredient.ingredient_role === 'product' && !!ingredient.id;
+  const { data: swaps = [] } = useSwapFor(bottle ? ingredient.id! : null, ingredient.generic?.id);
+  // A prep's Around it is what it's a kind of, and nothing else (prep-prep-phone).
+  const bottles = isPrep ? [] : allBottles;
   if (!bottle && !ingredient.generic && !ingredient.madeFrom && !bottles.length && !extra) return null;
   const shown = all ? bottles : bottles.slice(0, FIRST);
 
@@ -67,8 +74,9 @@ export function AroundIt({ ingredient, bottles, isPrep, extra }: Props) {
       <View>
         {ingredient.generic ? <LinkRow lead="Kind of" item={ingredient.generic} value={ratio ?? undefined} /> : null}
         {ingredient.madeFrom ? <LinkRow lead="Made from" item={ingredient.madeFrom} /> : null}
+        {swaps.length && ingredient.generic ? <LinkRow lead="Swap for" item={{ id: ingredient.generic.id, name: swaps.map((x) => x.name).join(', ') }} /> : null}
         {extra}
-        {bottle ? <IngredientMaker item={{ id: ingredient.id!, bar_id: ingredient.bar_id ?? null }} /> : null}
+        {bottle ? <IngredientMaker item={{ id: ingredient.id!, bar_id: ingredient.bar_id ?? null }} editOnly /> : null}
       </View>
       {bottles.length ? (
         <View role="group" aria-label={`Bottles of ${ingredient.name}`} style={styles.list}>
@@ -100,10 +108,14 @@ export function LinkRow({ lead, item, detail, value, onPress }: { lead?: string;
         </Caption>
       ) : null}
       <View style={styles.rowName}>
-        <Body numberOfLines={1}>{item.name}</Body>
+        <Body numberOfLines={2}>{item.name}</Body>
         {detail ? <Caption tone="muted">{detail}</Caption> : null}
       </View>
-      {value ? <Spec>{value}</Spec> : null}
+      {value ? (
+        <Caption tone="muted" style={styles.value}>
+          {value}
+        </Caption>
+      ) : null}
       <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
     </PressableScale>
   );
@@ -113,6 +125,7 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   list: { gap: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  lead: { minWidth: 72 },
+  lead: { width: 72 },
   rowName: { flex: 1 },
+  value: { fontFamily: fontFamilies.mono },
 });

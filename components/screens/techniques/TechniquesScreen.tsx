@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Headline, PressableScale, Spec, Surface, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, PressableScale, Spec, Surface, useDs } from '@/components/ds';
 import { FoamPicker } from '@/components/techniques/FoamPicker';
 import { LinkRow, Section, TechniqueRow } from '@/components/techniques/bits';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
@@ -95,8 +95,8 @@ export function TechniquesScreen({ group, foam = false }: { group?: string; foam
                   <IconSymbol name={g.icon} size={18} color={ds.c.ink} />
                 </View>
                 <View style={styles.flex}>
-                  <Headline>{g.name}</Headline>
-                  <Caption tone="muted" numberOfLines={1}>
+                  <Body>{g.name}</Body>
+                  <Caption tone="muted" numberOfLines={2}>
                     {membersLine(list.map((t) => t.name))}
                   </Caption>
                 </View>
@@ -122,10 +122,11 @@ function KitBar({ tools }: { tools: number }) {
   const ds = useDs();
   const router = useRouter();
   return (
-    <PressableScale role="link" accessibilityLabel={`My kit, ${tools} ${tools === 1 ? 'tool' : 'tools'}. Edit`} onPress={() => router.push('/equipment' as never)} style={[styles.kit, { backgroundColor: ds.c.surface }]}>
-      <IconSymbol name="hammer.fill" size={18} color={ds.c.ink} />
-      <Body style={styles.flex}>{tools ? `My kit · ${tools} ${tools === 1 ? 'tool' : 'tools'}` : 'My kit · tell us what you have'}</Body>
-      <Caption tone="accent">Edit</Caption>
+    // A floating ink pill, cream words (prep-tech-index).
+    <PressableScale role="link" accessibilityLabel={`My kit, ${tools} ${tools === 1 ? 'tool' : 'tools'}. Edit`} onPress={() => router.push('/equipment' as never)} style={[styles.kit, { backgroundColor: ds.c.ink }]}>
+      <IconSymbol name="hammer.fill" size={18} color={ds.c.ground} />
+      <Body color={ds.c.ground} style={[styles.flex, styles.strong]}>{tools ? `My kit · ${tools} ${tools === 1 ? 'tool' : 'tools'}` : 'My kit · tell us what you have'}</Body>
+      <Body color={ds.c.ground}>Edit</Body>
     </PressableScale>
   );
 }
@@ -139,5 +140,6 @@ const styles = StyleSheet.create({
   group: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.lg, paddingVertical: space.sm },
   icon: { width: 36, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  kit: { flexDirection: 'row', alignItems: 'center', gap: space.md, width: '100%', maxWidth: 760, alignSelf: 'center', minHeight: layout.minTapTarget + space.sm, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
+  kit: { flexDirection: 'row', alignItems: 'center', gap: space.md, width: '100%', maxWidth: 760, alignSelf: 'center', minHeight: layout.minTapTarget + space.md, paddingHorizontal: space.xl, borderRadius: radius.pill, borderCurve: 'continuous' },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
 });

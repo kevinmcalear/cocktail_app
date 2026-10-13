@@ -8,7 +8,6 @@ import { AddressLine, barPlace, directionsTarget, HoursLine } from '@/components
 import { DirectionsButton } from '@/components/screens/bar/Directions';
 import { type DrinkScores } from '@/components/screens/home/DrinksAtBars';
 import { LoveBarButton } from '@/components/screens/kept/LoveBarButton';
-import { UserAvatar } from '@/components/ui/UserAvatar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
@@ -21,6 +20,7 @@ import { awayFrom } from '@/lib/directions';
 import { peopleCount, usesMiles, type Area } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
 
+import { BarMark } from './BarMark';
 import { BarTopDrinks } from './BarTopDrinks';
 import { DrinkHero } from './DrinkHero';
 import { NextMatch } from './NextMatch';
@@ -88,7 +88,7 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
         <DrinkHero key={hero.id} drink={hero} query={query} area={area} />
         {next ? <NextMatch drink={next} score={scores?.drinks[next.id]} count={matches.length} page={page} onNext={() => setPage((page + 1) % matches.length)} /> : null}
         <PressableScale role="link" accessibilityLabel={`At ${pin.name}, ${[pin.place, away].filter(Boolean).join(', ')}. Open the bar`} onPress={openBar} style={[styles.atBar, { borderColor: ds.c.line }]}>
-          <UserAvatar uri={pin.logo} name={pin.name} size={32} />
+          <BarMark logoUrl={pin.logo} name={pin.name} size={32} />
           <View style={styles.flex}>
             <Caption tone="muted">At</Caption>
             <Caption numberOfLines={1}>{[pin.name, pin.place, away].filter(Boolean).join(' · ')}</Caption>
@@ -104,7 +104,7 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   const bar = (
     <View style={styles.cardRow}>
       <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${place || 'Bar'}. ${said}`}>
-        <UserAvatar uri={pin.logo} name={pin.name} size={48} />
+        <BarMark logoUrl={pin.logo} name={pin.name} size={48} />
         <View style={styles.flex}>
           <Headline numberOfLines={1}>{pin.name}</Headline>
           <Caption tone="muted" numberOfLines={1}>

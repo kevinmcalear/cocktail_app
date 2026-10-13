@@ -102,7 +102,7 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
       <View role="list">
         <AnswerRow label="Name" value={menu.name} onPress={edit} />
         {drinks.length ? <AnswerRow label="Drinks" value={drinks.map((d) => d.name).join(', ')} onPress={edit} /> : null}
-        {night ? <AnswerRow label="Night" value={night} onPress={menu.barId ? edit : undefined} /> : null}
+        {night ? <AnswerRow label="Night" value={night} onPress={edit} /> : null}
         <AnswerRow label="On the card" value={`${PICTURES.find((p) => p.value === pictures)?.line}${menu.barId ? ', with prices' : ''}`} onPress={() => setChoosing(!choosing)} hint="Shows the choices" />
         {choosing ? (
           <View role="radiogroup" accessibilityLabel="Pictures on the card" style={styles.choices}>
@@ -111,7 +111,13 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
             ))}
           </View>
         ) : null}
-        <AnswerRow label="Who sees what" value={`Anyone with the link. Drinks ${venue?.name ?? 'you'} ha${venue ? 's' : 've'}n’t made public show as House drink.`} />
+        <AnswerRow
+          label="Who sees what"
+          value={`Anyone with the link. Drinks ${venue?.name ?? 'you'} ha${venue ? 's' : 've'}n’t made public show as House drink.`}
+          // What's public is the venue's Publishing, or your own sharing at home.
+          onPress={() => go(menu.barId ? `/settings/bar/${menu.barId}/publishing` : '/settings/profile-sharing')}
+          hint="Opens who can see your drinks"
+        />
         {menu.sharedAt ? <AnswerRow label="Link" value={url} /> : null}
       </View>
       {menu.sharedAt ? <Button label="Stop sharing" icon="xmark" variant="ghost" onPress={() => void setShared(false)} disabled={share.isPending} /> : null}

@@ -135,7 +135,7 @@ export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSh
             ))}
           </View>
         ) : null}
-        <AnswerRow label="Drinks" value={`${plural(itemIds.length, 'drink')} in ${plural(menu.sections.length, 'section')}`} onPress={onClose} hint="Back to the menu to change them" opens />
+        <AnswerRow label="Drinks" value={`${plural(itemIds.length, 'drink')} in ${plural(menu.sections.length, 'section')}`} onPress={onClose} hint="Back to the menu to change them" />
       </View>
 
       <View>

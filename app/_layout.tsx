@@ -48,7 +48,7 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { session, user, loading, passwordRecovery } = useAuth();
+  const { session, user, loading } = useAuth();
   const segments = useSegments();
   const pathname = usePathname();
   const router = useRouter();
@@ -68,31 +68,28 @@ function RootLayoutNav() {
     const drink = !session && /^\/cocktail\/([^/]+)$/.exec(pathname);
     if (drink) return router.replace(`/d/${drink[1]}`);
     const authScreen = segments.at(1);
-    // stay on recovery / email-link routes while session is established
-    const stayInAuth =
-      authScreen === 'reset-password' ||
-      authScreen === 'callback' ||
-      passwordRecovery;
+    // stay on the email-link route while the session is established
+    const stayInAuth = authScreen === 'callback';
 
     const to = authRedirect({
       hasSession: !!session,
       inAuthGroup,
       authScreen,
       stayInAuth,
-      passwordRecovery,
       segment: segments[0],
       needsOnboarding: needsOnboarding(session?.user.user_metadata),
     });
     if (to) router.replace(to);
-  }, [session, loading, segments, pathname, passwordRecovery]);
+  }, [session, loading, segments, pathname]);
 
   // ponytail: persistent web chrome — sidebar outside the stack so it never unmounts.
   // Phone-width web gets the phone tab bar instead (see the tabs layout).
   const isWideWeb = useIsWideWeb();
   // `user`, not `session`: at launch it can be the saved session's user, whose
   // cached venues paint before auth-js finishes refreshing their token.
-  // The menu builder fills the whole width (its library, the menu and the guest card), as drawn.
-  const building = segments[0] === 'menus' && (segments as string[])[2] === 'edit';
+  // The menu builder fills the whole width (its library, the menu and the guest card), as
+  // drawn, and the printable guest card is a bare page.
+  const building = segments[0] === 'menus' && ['edit', 'card'].includes((segments as string[])[2]);
   const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding' && segments[0] !== 'venue-setup' && !building;
 
   return (

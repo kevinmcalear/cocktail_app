@@ -91,7 +91,9 @@ export function formatPar(amount: number | string | null | undefined, unit: stri
   if (amount == null || !unit) return null;
   const n = Number(amount);
   if (!Number.isFinite(n)) return null;
-  return `${Number(n.toFixed(2))} ${unit}`;
+  const v = Number(n.toFixed(2));
+  // A count reads singular at one: "1 bottle", not "1 bottles". Short units (L, ml, kg) stay.
+  return `${v} ${v === 1 && unit.length > 3 && unit.endsWith('s') ? unit.slice(0, -1) : unit}`;
 }
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;

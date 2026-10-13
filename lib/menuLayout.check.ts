@@ -5,6 +5,7 @@ import type { MenuDrink } from '@/types/menus';
 import {
   moveToSection,
   addDrink,
+  dropDrink,
   addSection,
   cannotAdd,
   copySections,
@@ -115,4 +116,13 @@ console.log('menuLayout: ok');
   assert.deepEqual(moved.sections.map((s) => s.drinks.map((x) => x.id)), [['y'], ['z', 'x'], []]);
   assert.equal(moveToSection(l, 'a', 'x', 'beer'), l, 'a cocktail does not move into a beer-only section');
   assert.equal(moveToSection(l, 'a', 'x', 'a'), l);
+
+  // Drag and drop on desktop: the index counts the dragged row where it still sits.
+  const ids = (m: MenuLayout) => m.sections.map((s) => s.drinks.map((x) => x.id));
+  assert.deepEqual(ids(dropDrink(l, d('x'), 'a', 'b', 0)), [['y'], ['x', 'z'], []], 'into another section, at the drop line');
+  assert.deepEqual(ids(dropDrink(l, d('x'), 'a', 'a', 2)), [['y', 'x'], ['z'], []], 'down within its own section');
+  assert.equal(dropDrink(l, d('x'), 'a', 'a', 1), l, 'dropped where it was');
+  assert.deepEqual(ids(dropDrink(l, d('n'), null, 'a', 1)), [['x', 'n', 'y'], ['z'], []], 'from the library');
+  assert.equal(dropDrink(l, d('z'), null, 'b', 0), l, 'already in that section');
+  assert.equal(dropDrink(l, d('x'), 'a', 'beer', 0), l, 'a section that does not take it');
 }
