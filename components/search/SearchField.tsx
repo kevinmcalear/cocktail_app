@@ -28,7 +28,11 @@ export function KeyCap({ label }: { label: string }) {
   );
 }
 
-/** The search pill: an accent ring while it's in use, a clear button once something's typed. */
+/**
+ * The search pill: an accent ring while it's in use, a clear button once
+ * something's typed. With `keys` (the ⌘K palette) it's the card's borderless
+ * header instead, with the esc key at its end (nav-search-desk-palette).
+ */
 export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys }: SearchFieldProps) {
   const ds = useDs();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
@@ -40,7 +44,7 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
   }, [autoFocus]);
   return (
     <View style={styles.row}>
-      <View style={[styles.field, { backgroundColor: ds.c.raised, borderColor: ds.accentText }]}>
+      <View style={[styles.field, keys ? styles.bare : { backgroundColor: ds.c.raised, borderColor: ds.accentText }]}>
         <IconSymbol name="magnifyingglass" size={18} color={ds.c.muted} />
         <TextInput
           ref={input}
@@ -55,7 +59,7 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
           accessibilityLabel={placeholder}
           style={[styles.input, NO_OUTLINE, { color: ds.c.ink }]}
         />
-        {query ? (
+        {query && !keys ? (
           <PressableScale
             accessibilityLabel="Clear the search"
             onPress={() => {
@@ -93,6 +97,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radius.pill,
   },
+  bare: { borderWidth: 0, paddingLeft: 0 },
   input: { ...type.body, fontFamily: fontFamilies.body, flex: 1, minWidth: 0, paddingVertical: space.md },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   esc: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingRight: space.md },

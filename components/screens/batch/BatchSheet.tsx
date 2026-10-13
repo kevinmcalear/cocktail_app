@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Caption, LockedSection, PressableScale, Segmented, Sheet, SheetScrollView, Spec, Title, useDs, useSheetClose } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, LockedSection, PressableScale, Segmented, Sheet, SheetScrollView, Title, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
-import { layout, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useShelfLives } from '@/hooks/useBatchPrep';
 import { batchPrepLines, keepsFor, bottleExpiry, expiryLine } from '@/lib/batchPrep';
 import {
@@ -25,7 +25,7 @@ import type { SpecLine } from '@/lib/spec';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { BatchActions } from './BatchActions';
-import { BatchRow, Choice, FreezerCheck, ServesField, StockField } from './BatchParts';
+import { BatchRow, BottleTiles, Choice, FreezerCheck, ServesField, StockField } from './BatchParts';
 import { ServesRuler } from './ServesRuler';
 
 export interface BatchSheetProps {
@@ -65,6 +65,14 @@ const UNITS = [
   { value: 'ml', label: 'ml' },
   { value: 'oz', label: 'oz' },
 ] as const;
+/** What each station line is, beside its name ("citrus stays out"). */
+const STATION_NOTE: Record<keyof typeof LEAVE_OUT_LABEL, string> = {
+  citrus: 'citrus stays out',
+  dairy: 'to order',
+  bubbles: 'bubbles to order',
+  garnish: 'per serve',
+  station: 'at the station',
+};
 const bottleLabel = (size: BottleSize) => (size === 1000 ? '1 L' : `${size} ml`);
 const BOTTLES = BOTTLE_SIZES.map((v) => ({ value: v, label: bottleLabel(v) }));
 
@@ -157,20 +165,23 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
     <Body tone="muted">This drink has no measured spec to batch yet.</Body>
   ) : (
     <>
-      <Segmented options={MODES} value={mode} onChange={setMode} accessibilityLabel="Scale by" />
-      {mode === 'bottle' ? <Choice label="Bottle size" options={BOTTLES} value={bottleSize} onChange={setBottleSize} /> : null}
+      <Segmented options={MODES} value={mode} onChange={setMode} accessibilityLabel="Scale by" variant="pill" stretch />
+      {mode === 'bottle' ? <BottleTiles options={BOTTLES} value={bottleSize} onChange={setBottleSize} /> : null}
       {mode === 'stock' && stockLine ? (
         <StockField lines={stock} line={stockLine} onLine={setStockKey} have={have} onHave={setHave} unit={haveUnit} />
       ) : null}
-      <ServesField value={n} onChange={pickServes} />
-      {mode === 'bottle' ? <Caption tone="muted">{`${batch.total} · pour ${batch.pour} each`}</Caption> : null}
+      <ServesField
+        value={n}
+        onChange={pickServes}
+        detail={mode === 'bottle' ? `${batch.total} · pour ${batch.pour} each` : `fills ${batch.bottles} × ${bottleLabel(bottleSize)}`}
+        trailing={<Choice label="Units" options={UNITS} value={unit} onChange={setUnit} />}
+      />
       {mode === 'serves' ? (
         <>
           <ServesRuler value={serves} min={MIN_SERVES} max={MAX_SERVES} onChange={setServes} />
           <Caption tone="muted">{Platform.OS === 'web' ? 'Drag the ruler, use the arrow keys, or type a number.' : 'Drag to scale. Each serve is one tick.'}</Caption>
         </>
       ) : null}
-      <Choice label="Units" options={UNITS} value={unit} onChange={setUnit} />
 
       <View>
         <Caption tone="muted" style={styles.eyebrow}>
@@ -184,6 +195,7 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
               key={l.key}
               ingredient={l.ingredient}
               amount={l.amount}
+              note={[l.sub, house ? ['house', keeps].filter(Boolean).join(' · ') : null].filter(Boolean).join(' · ') || null}
               sub={[l.sub, house ? ['house', keeps].filter(Boolean).join(' · ') : null].filter(Boolean).join(' · ') || null}
               checked={ticked?.includes(l.key)}
               onToggle={ticked ? () => tick(l.key) : undefined}
@@ -194,19 +206,15 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
           <BatchRow
             ingredient="Filtered water"
             amount={batch.water.amount}
+            tone="accent"
+            note={batch.method === 'stirred' ? `${Number(batch.water.pct.toFixed(1))}%, stands in for stirring` : `${Number(batch.water.pct.toFixed(1))}% of the mix before water`}
             sub={batch.method === 'stirred' ? `${Number(batch.water.pct.toFixed(1))}%, stands in for stirring` : `${Number(batch.water.pct.toFixed(1))}% of the mix before water`}
             checked={ticked?.includes('water')}
             onToggle={ticked ? () => tick('water') : undefined}
           />
         ) : batch.method === 'shaken' ? (
-          <BatchRow ingredient="Water" amount={unit === 'oz' ? '0 oz' : '0 ml'} sub="the shake dilutes it" />
+          <BatchRow ingredient="Water" amount={unit === 'oz' ? '0 oz' : '0 ml'} tone="muted" note="the shake dilutes it" sub="the shake dilutes it" />
         ) : null}
-        <View accessible accessibilityLabel={[`In the bottle: ${batch.total}`, bottles, batch.abv !== null ? `${Math.round(batch.abv)}% ABV` : null, useBy].filter(Boolean).join(', ')} style={styles.total}>
-          <Spec>{batch.total}</Spec>
-          <Caption tone="muted" style={styles.flex}>
-            {[bottles, batch.abv !== null ? `bottle ${Math.round(batch.abv)}% ABV` : null, useBy].filter(Boolean).join(' · ')}
-          </Caption>
-        </View>
       </View>
 
       {batch.pourMl > 0 ? (
@@ -214,12 +222,21 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
           <Caption tone="muted" style={styles.eyebrow}>
             AT THE STATION, EACH SERVE
           </Caption>
-          <BatchRow ingredient={`${name}, from the bottle`} amount={batch.pour} />
+          <BatchRow ingredient={`${name}, from the bottle`} amount={batch.pour} tone="accent" />
           {station.map((l) => (
-            <BatchRow key={l.key} ingredient={l.ingredient} amount={l.perServe} sub={l.amount && l.perServe !== l.amount ? `${l.amount} for ${n}` : null} tag={LEAVE_OUT_LABEL[l.leaveOut!]} />
+            <BatchRow key={l.key} ingredient={l.ingredient} amount={l.perServe} sub={l.amount && l.perServe !== l.amount ? `${l.amount} for ${n}` : null} tag={LEAVE_OUT_LABEL[l.leaveOut!]} note={STATION_NOTE[l.leaveOut!]} />
           ))}
         </View>
       ) : null}
+
+      {/* The bottle's total, strength and use-by as chips (board drink-sheet-batch-venue). */}
+      <View accessible accessibilityLabel={[`In the bottle: ${batch.total}`, bottles, batch.abv !== null ? `${Math.round(batch.abv)}% ABV` : null, useBy].filter(Boolean).join(', ')} style={styles.chips}>
+        {[batch.total, batch.abv !== null ? `bottle ${Math.round(batch.abv)}% ABV` : null, useBy].filter((c): c is string => !!c).map((c) => (
+          <Caption key={c} style={[styles.chip, { backgroundColor: ds.c.raised }]}>
+            {c}
+          </Caption>
+        ))}
+      </View>
 
       {batch.method === 'stirred' && batch.abv !== null ? <FreezerCheck abv={batch.abv} freezerC={freezerC} onFreezerC={setFreezerC} /> : null}
       <Body tone="muted">{batch.note}</Body>
@@ -258,10 +275,11 @@ function BatchBody({ name, lines, methodNames, lockedUntil, initialServes = 8, d
 }
 
 const styles = StyleSheet.create({
-  body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.lg },
+  body: { padding: space.lg, paddingTop: space.md, paddingBottom: space.xxl, gap: space.lg },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   eyebrow: { letterSpacing: 1.2 },
-  total: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: space.sm, paddingTop: space.md },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  chip: { fontFamily: fontFamilies.mono, paddingHorizontal: space.sm + 2, paddingVertical: space.xs, borderRadius: radius.pill, overflow: 'hidden' },
   close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
 });

@@ -20,6 +20,21 @@ function useKindOf(itemId: string | null) {
   });
 }
 
+/** Each spec line's kind (generic) id, so a bottle to buy that's a kind still marks its line. */
+function useKindsOf(ids: string[]) {
+  const sorted = [...new Set(ids)].sort();
+  return useQuery({
+    queryKey: ['kinds-of', sorted],
+    enabled: sorted.length > 0,
+    staleTime: 60 * 60 * 1000,
+    queryFn: async (): Promise<Record<string, string | null>> => {
+      const { data, error } = await supabase.from('items').select('id, generic_id').in('id', sorted);
+      if (error) throw error;
+      return Object.fromEntries((data ?? []).map((r) => [r.id, r.generic_id]));
+    },
+  });
+}
+
 /**
  * A drink's spec against your shelf (My Bar's own cached match), and the
  * bottle on your shelf closest to the first thing you're missing: the same
@@ -29,9 +44,15 @@ export function useShelfCheck(itemId: string, lines: SpecLine[]) {
   const bar = useMyBar();
   const group = bar.oneAway.find((g) => g.drinks.some((d) => d.id === itemId)) ?? bar.twoAway.find((g) => g.drinks.some((d) => d.id === itemId));
   const verdict: ShelfVerdict = bar.canMakeIds.has(itemId) ? { ready: true } : group ? { ready: false, buy: group.bottles.map((b) => ({ id: b.id, name: b.name })) } : null;
-  const check = bar.isLoading ? null : checkShelf(lines, verdict);
+  const { data: kinds } = useKindsOf(verdict && !verdict.ready ? lines.flatMap((l) => (l.ingredientId ? [l.ingredientId] : [])) : []);
+  const check = bar.isLoading ? null : checkShelf(lines, verdict, kinds);
   const first = verdict && !verdict.ready ? verdict.buy[0] : null;
-  const { data: kind } = useKindOf(first?.id ?? null);
-  const closest = first && kind ? bar.shelf.find((b) => b.kind?.toLowerCase() === kind.toLowerCase() && b.id !== first.id) : undefined;
-  return { check, missingName: first?.name ?? null, closest: closest?.name ?? null };
+  // The spec line it marks: "Green Chartreuse", not the kind the server asked for ("Herbal Liqueur").
+  const line = check?.missing.length ? lines.find((l) => l.key === check.missing[0]) : undefined;
+  const askedForKind = !!line?.ingredientId && kinds?.[line.ingredientId] === first?.id;
+  const { data: kindOfFirst } = useKindOf(first && !askedForKind ? first.id : null);
+  const kind = askedForKind ? first?.name : kindOfFirst;
+  const inSpec = new Set(lines.map((l) => l.ingredientId));
+  const closest = first && kind ? bar.shelf.find((b) => b.kind?.toLowerCase() === kind.toLowerCase() && b.id !== first.id && !inSpec.has(b.id)) : undefined;
+  return { check, missingName: line?.ingredient ?? first?.name ?? null, closest: closest?.name ?? null };
 }

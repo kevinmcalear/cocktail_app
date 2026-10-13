@@ -53,9 +53,10 @@ export function BatchActions({ name, barId, canPrep, making, onMake, onDilution,
             />
           ) : null
         ) : (
-          <Button label="Share" icon="square.and.arrow.up" variant="secondary" onPress={() => void shareText(text, `${name} batch`)} style={styles.flex} />
+          <Button label="Share" variant="secondary" onPress={() => void shareText(text, `${name} batch`)} style={styles.share} />
         )}
-        <Button label={make} variant={making ? 'secondary' : 'primary'} onPress={onMake} style={styles.flex} />
+        {/* At home, Make it takes the room Share leaves, so its label never clips in a dialog (board drink-sheet-batch-home). */}
+        <Button label={make} variant={making ? 'secondary' : 'primary'} onPress={onMake} style={[styles.flex, styles.tight]} />
       </View>
     </View>
   );
@@ -65,4 +66,6 @@ const styles = StyleSheet.create({
   block: { gap: space.md },
   row: { flexDirection: 'row', gap: space.sm },
   flex: { flex: 1 },
+  share: { flexShrink: 0, paddingHorizontal: space.lg },
+  tight: { paddingHorizontal: space.md },
 });

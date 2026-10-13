@@ -82,6 +82,7 @@ const MAPPING = {
   'arrow.up': 'arrow-up',
   'arrow.right': 'arrow-right',
   'arrow.up.and.down': 'svg:updown',
+  '8.circle': 'svg:eightball',
   'list.bullet': 'list',
   'percent': 'percent',
   'drop.fill': 'droplet',
@@ -109,7 +110,8 @@ const MAPPING = {
   'nosign': 'slash',
   'hand.tap': 'mouse-pointer',
   'exclamationmark.triangle': 'alert-triangle',
-  'doc.text': 'file-text',
+  'doc.text': 'svg:draft',
+  'doc': 'svg:sheet',
   'doc.plaintext': 'file',
   'circle.fill': 'svg:dot',
   'sun.max.fill': 'sun',
@@ -135,7 +137,9 @@ const MAPPING = {
   'camera': 'camera',
   'doc.on.clipboard': 'clipboard',
   'arrow.uturn.backward': 'corner-up-left',
-  'square.and.arrow.down': 'download',
+  'square.and.arrow.down': 'svg:tray',
+  'text.alignleft': 'svg:lines',
+  'sun.min': 'svg:sun',
 } satisfies IconMapping;
 
 /**

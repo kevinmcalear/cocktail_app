@@ -118,7 +118,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const away = (b: DiscoverBar) => (area?.kind === 'point' && b.latitude !== null && b.longitude !== null ? formatDistance(distanceKm(area, { latitude: b.latitude, longitude: b.longitude }), miles) : null);
 
   const drinkGroup = (label: string, list: typeof drinks) => (
-    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} />} />
+    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} />} />
   );
   const barGroup = (
     <ResultGroup

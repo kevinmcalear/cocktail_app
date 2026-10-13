@@ -21,6 +21,8 @@ import { BrandForm, type BrandDraftState } from './BrandForm';
 import { BrandPreview } from './BrandPreview';
 
 const PREVIEW_WIDTH = 300;
+/** Venue setup's preview column on wide web: one phone (canvas make-venue-desktop). */
+const SETUP_PREVIEW_WIDTH = 260;
 /** Preview as staff shows the app as a Bartender sees it. */
 const STAFF_PREVIEW = 30;
 // The preview column stays in view while the settings beside it scroll (web).
@@ -47,9 +49,11 @@ export interface BrandSetupMode {
 function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canEdit: boolean; header: (dirty: boolean) => ReactNode; setup?: BrandSetupMode }) {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  // In setup the preview sits above the settings at every width.
-  const wide = useBreakpoint() !== 'phone' && !setup;
-  const frame = usePageFrame(wide ? 'wide' : 'text');
+  // In setup the preview sits above the settings on phones, and beside them on wide web (canvas make-venue-desktop).
+  const frameText = usePageFrame('text');
+  const notPhone = useBreakpoint() !== 'phone';
+  const wide = setup ? frameText.wide : notPhone;
+  const frame = usePageFrame(wide && !setup ? 'wide' : 'text');
   const [draft, setDraft] = useState(() => draftFrom(row));
   const set = <K extends keyof BrandDraftState>(key: K) => (value: BrandDraftState[K]) => setDraft((d) => ({ ...d, [key]: value }));
   const [suggested, setSuggested] = useState<string[]>([]);
@@ -126,13 +130,18 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
         effectiveInk={autoInk}
         onUpload={(kind) => void upload(kind)}
         onRemoveBackground={() => void removeBackground()}
-        hideIcon={!!setup}
+        setup={!!setup}
       />
       {message ? <Caption role="status">{message}</Caption> : null}
     </View>
   );
 
-  const preview = (
+  const preview = setup ? (
+    <View style={[styles.preview, wide && styles.setupSide, wide && sticky]}>
+      {wide ? <SectionHeading>Live preview</SectionHeading> : null}
+      <BrandPreview look={look} setup />
+    </View>
+  ) : (
     <View style={[styles.preview, wide && styles.previewSide, wide && sticky]}>
       {/* A phone's Dark | Light switch says what it is. */}
       {wide ? <SectionHeading>Live preview</SectionHeading> : null}
@@ -145,8 +154,17 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     const saveThen = (then: () => void) => (changed ? save.mutate(patch, { onSuccess: then, onError: (e) => setMessage(e.message) }) : then());
     return (
       <SetupPage footer={setup.footer({ save: saveThen, saving: save.isPending, ok })}>
-        {preview}
-        {settings}
+        {wide ? (
+          <View style={[styles.columns, styles.columnsWide]}>
+            {settings}
+            {preview}
+          </View>
+        ) : (
+          <>
+            {preview}
+            {settings}
+          </>
+        )}
       </SetupPage>
     );
   }
@@ -248,4 +266,5 @@ const styles = StyleSheet.create({
   form: { flex: 1, gap: space.xl, minWidth: 0 },
   preview: { gap: space.sm },
   previewSide: { width: PREVIEW_WIDTH },
+  setupSide: { width: SETUP_PREVIEW_WIDTH },
 });

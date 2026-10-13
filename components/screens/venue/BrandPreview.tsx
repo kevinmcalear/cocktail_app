@@ -7,6 +7,7 @@ import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, fontFamilies, layout, radius, space, type DisplayFace } from '@/constants/tokens';
 import { BRAND_SAMPLE as SAMPLE } from '@/lib/brandSample';
+import { withAlpha } from '@/lib/color';
 
 export interface BrandLook {
   id: string;
@@ -124,15 +125,17 @@ function HomeIcon({ look }: { look: BrandLook }) {
  * (one at a time on phones), plus the home-screen icon. `stacked` puts the
  * two schemes one above the other, for a narrow side column.
  */
-export function BrandPreview({ look, stacked = false }: { look: BrandLook; stacked?: boolean }) {
-  const wide = useBreakpoint() !== 'phone';
+export function BrandPreview({ look, stacked = false, setup = false }: { look: BrandLook; stacked?: boolean; setup?: boolean }) {
+  const notPhone = useBreakpoint() !== 'phone';
+  // Venue setup's Look step: one phone at a time, Dark and Light as chips under it, no home-screen icon (canvas make-venue-look).
+  const wide = notPhone && !setup;
   // Phones show one scheme at a time, so the controls stay close to the preview.
   const [only, setOnly] = useState<'light' | 'dark'>('dark');
   const brand = { accent: look.accent ?? undefined, displayFace: look.displayFace, groundTint: look.groundTint ?? undefined, accentText: look.accentText ?? undefined };
   const schemes = wide ? (['dark', 'light'] as const) : [only];
   return (
     <View aria-label="Live preview" style={styles.wrap}>
-      {wide ? null : <SchemeSwitch value={only} onChange={setOnly} />}
+      {wide || setup ? null : <SchemeSwitch value={only} onChange={setOnly} />}
       <View style={[styles.schemes, wide && !stacked && styles.schemesWide]}>
         {schemes.map((scheme) => (
           <BackbarTheme key={scheme} scheme={scheme}>
@@ -147,7 +150,18 @@ export function BrandPreview({ look, stacked = false }: { look: BrandLook; stack
           </BackbarTheme>
         ))}
       </View>
-      <HomeIcon look={look} />
+      {setup ? (
+        <>
+          <View role="radiogroup" accessibilityLabel="Preview scheme" style={styles.chips}>
+            {SCHEMES.map((o) => (
+              <SchemeChip key={o.value} label={o.label} selected={only === o.value} onPress={() => setOnly(o.value)} />
+            ))}
+          </View>
+          <Caption tone="muted">Tonight, as your staff will see it. Changes as you pick.</Caption>
+        </>
+      ) : (
+        <HomeIcon look={look} />
+      )}
     </View>
   );
 }
@@ -176,6 +190,25 @@ function SchemeSwitch({ value, onChange }: { value: 'dark' | 'light'; onChange: 
 }
 
 /** A row of colour choices, each named, with the chosen one heavily ringed. */
+/** Dark or Light under the setup preview: the picked one ringed in the accent over a faint accent wash (canvas make-venue-look). */
+function SchemeChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale
+      role="radio"
+      aria-checked={selected}
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[
+        styles.scheme,
+        { borderColor: selected ? ds.accentText : ds.c.lineStrong, backgroundColor: selected ? withAlpha(ds.accentText, 0.16) : 'transparent' },
+      ]}
+    >
+      <Caption style={selected ? styles.picked : null}>{label}</Caption>
+    </PressableScale>
+  );
+}
+
 export function Swatches({
   label,
   options,
@@ -217,6 +250,9 @@ export function Swatches({
 
 const styles = StyleSheet.create({
   wrap: { gap: space.lg },
+  chips: { flexDirection: 'row', gap: space.sm },
+  scheme: { minHeight: 40, minWidth: 64, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  picked: { fontFamily: fontFamilies.bodySemiBold },
   schemes: { gap: space.md },
   schemesWide: { flexDirection: 'row' },
   flex: { flex: 1, gap: space.xs },
@@ -241,5 +277,5 @@ const styles = StyleSheet.create({
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   swatch: { alignItems: 'center', gap: space.xs, minWidth: 56 },
   ring: { padding: 3, borderRadius: radius.pill, borderWidth: 2 },
-  dot: { width: 36, height: 36, borderRadius: radius.pill, borderWidth: 1 },
+  dot: { width: 40, height: 40, borderRadius: radius.pill, borderWidth: 1 },
 });

@@ -41,7 +41,7 @@ export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: P
   const score = useItemScores(ids).data?.[node.id];
   const bar = node.bar ? [`${node.bar}${node.barClosed ? ' (closed)' : ''}`, city].filter(Boolean).join(', ') : null;
   const where = [yearLabel(node.year, node.approx), bar].filter(Boolean).join(' · ');
-  const lineage = [fromLine({ from }), kids ? `${kids} came from it` : null].filter(Boolean).join(' · ');
+  const lineage = [fromLine({ from }), kids ? `${kids} riff${kids === 1 ? '' : 's'} on it` : null].filter(Boolean).join(' · ');
   return (
     <View style={styles.detail}>
       {/* A drink leads with its drawing and ends with its score (b02); a style is words only. */}
@@ -63,9 +63,9 @@ export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: P
         <Caption tone="muted" style={styles.flex}>
           {lineage || 'The first of its line'}
         </Caption>
-        {onThread ? <Button label={threadOn ? 'Hide its thread' : 'Show its thread'} variant="secondary" onPress={onThread} /> : null}
+        {onThread ? <Button label={threadOn ? 'Hide its thread' : 'Show its thread'} icon="arrow.uturn.backward" variant="secondary" onPress={onThread} /> : null}
       </View>
-      {style ? null : <Button label={`Open ${node.name}`} onPress={() => router.push(drinkHref(node.id))} />}
+      {style ? null : <Button label={`Open ${node.name}`} size="lg" onPress={() => router.push(drinkHref(node.id))} />}
       {node.creatorId || node.barId ? (
         <View style={styles.dests}>
           {node.creatorId && node.creator ? (
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   detail: { gap: space.md },
   head: { gap: 2 },
   headRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  thumb: { width: 56 },
+  thumb: { width: 72 },
   flex: { flex: 1, minWidth: 0 },
   threadRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   dests: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

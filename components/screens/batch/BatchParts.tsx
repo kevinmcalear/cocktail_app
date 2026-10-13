@@ -1,20 +1,23 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, Chip, Field, PressableScale, Spec, Surface, Tag, useDs } from '@/components/ds';
+import { Body, Caption, Chip, Field, PressableScale, Spec, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, layout, radius, space, type } from '@/constants/tokens';
+import { displayFaces, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { clampServes, freezingPointC } from '@/lib/batch';
 import type { SpecLine } from '@/lib/spec';
 
 /**
- * One line of the batch: the ingredient (and why it's left out) with the
- * amount on the right. With `onToggle` it's a checklist row, for making it
- * and ticking each line off as it goes in.
+ * One line of the batch, as drawn: the amount first in mono, then the
+ * ingredient with a short note beside it ("citrus stays out"). With
+ * `onToggle` it's a checklist row, for making it and ticking each line off as
+ * it goes in. `sub` and `tag` are said to screen readers.
  */
-export function BatchRow({ ingredient, amount, sub, tag, checked, onToggle }: { ingredient: string; amount: string; sub?: string | null; tag?: string | null; checked?: boolean; onToggle?: () => void }) {
+export function BatchRow({ ingredient, amount, sub, tag, note, tone = 'ink', checked, onToggle }: { ingredient: string; amount: string; sub?: string | null; tag?: string | null; note?: string | null; tone?: 'ink' | 'accent' | 'muted'; checked?: boolean; onToggle?: () => void }) {
   const ds = useDs();
   const spoken = [amount, ingredient, sub, tag && `${tag}, not in the bottle`].filter(Boolean).join(', ');
+  const quiet = tone === 'muted' || checked;
   const content = (
     <>
       {onToggle ? (
@@ -22,16 +25,13 @@ export function BatchRow({ ingredient, amount, sub, tag, checked, onToggle }: { 
           {checked ? <IconSymbol name="checkmark" size={14} color={ds.accentFill.text} /> : null}
         </View>
       ) : null}
-      <View style={styles.name}>
-        <Body tone={tag || checked ? 'muted' : 'ink'} style={checked ? styles.done : undefined}>
-          {ingredient}
-        </Body>
-        {sub ? <Caption tone="muted">{sub}</Caption> : null}
-        {tag ? <Tag label={tag} tone="accent" /> : null}
-      </View>
-      <Spec tone={tag || checked ? 'muted' : 'ink'} align="right">
+      <Spec tone={quiet ? 'muted' : tone === 'accent' ? 'accent' : 'ink'} align="right" style={styles.amount}>
         {amount}
       </Spec>
+      <Body tone={quiet ? 'muted' : 'ink'} style={[styles.name, checked ? styles.done : undefined]}>
+        {ingredient}
+        {note ? <Caption tone="muted">{` ${note}`}</Caption> : null}
+      </Body>
     </>
   );
   if (onToggle) {
@@ -44,6 +44,30 @@ export function BatchRow({ ingredient, amount, sub, tag, checked, onToggle }: { 
   return (
     <View accessible accessibilityLabel={spoken} style={[styles.row, { borderBottomColor: ds.c.line }]}>
       {content}
+    </View>
+  );
+}
+
+/** Bottle sizes as three equal tiles, the picked one outlined in the accent (board drink-sheet-batch-home). */
+export function BottleTiles<T extends number>({ options, value, onChange }: { options: readonly { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  const ds = useDs();
+  return (
+    <View role="radiogroup" accessibilityLabel="Bottle size" style={styles.tiles}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <PressableScale
+            key={o.value}
+            role="radio"
+            aria-checked={on}
+            accessibilityLabel={o.label}
+            onPress={() => onChange(o.value)}
+            style={[styles.tile, { borderColor: on ? ds.accentText : ds.c.lineStrong, backgroundColor: on ? withAlpha(ds.accentText, 0.12) : 'transparent' }]}
+          >
+            <Spec>{o.label}</Spec>
+          </PressableScale>
+        );
+      })}
     </View>
   );
 }
@@ -76,7 +100,7 @@ export function Choice<T extends string | number>({ label, options, value, onCha
  * The big serve count, which is also a text field: tap it and type, as the
  * fallback to dragging. Commits whole serves as you type, clamped on blur.
  */
-export function ServesField({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+export function ServesField({ value, onChange, detail, trailing }: { value: number; onChange: (v: number) => void; detail?: string | null; trailing?: ReactNode }) {
   const ds = useDs();
   const [draft, setDraft] = useState<string | null>(null);
   const face = displayFaces[ds.displayFace].regular;
@@ -100,9 +124,11 @@ export function ServesField({ value, onChange }: { value: number; onChange: (v: 
         accessibilityHint="Type a number of serves"
         style={[styles.bigInput, { fontFamily: face, color: ds.c.ink }]}
       />
-      <Caption tone="muted" style={styles.unit}>
-        {value === 1 ? 'serve' : 'serves'}
-      </Caption>
+      {/* "serves · fills 1 × 1 L" beside the count, the units at the end of the row (board drink-sheet-batch-venue). */}
+      <Body tone="muted" style={[styles.unit, styles.detail]}>
+        {[value === 1 ? 'serve' : 'serves', detail].filter(Boolean).join(' · ')}
+      </Body>
+      {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
     </View>
   );
 }
@@ -117,17 +143,26 @@ const FREEZERS = [-12, -15, -18, -20].map((t) => ({ value: t, label: celsius(t) 
  * (from its ABV, water included) with this device's freezer.
  */
 export function FreezerCheck({ abv, freezerC, onFreezerC }: { abv: number; freezerC: number; onFreezerC: (c: number) => void }) {
+  const ds = useDs();
+  const [changing, setChanging] = useState(false);
   const at = freezingPointC(abv);
   const ok = at < freezerC - 1;
   const strength = `At ${Math.round(abv)}% ABV it starts to freeze near ${celsius(at)}.`;
+  const tint = ok ? ds.c.lineStrong : withAlpha(ds.accentText, 0.4);
   return (
-    <Surface>
-      <View role="status" style={styles.freezer}>
-        <Tag label={ok ? 'Stays liquid' : 'Will slush'} tone={ok ? 'success' : 'warning'} />
-        <Body>{ok ? `${strength} Fine in a ${celsius(freezerC)} freezer.` : `${strength} Set the freezer to about ${celsius(-12)}, or use a stronger spirit or less water.`}</Body>
-        <Choice label="Your freezer" options={FREEZERS} value={freezerC} onChange={onFreezerC} />
+    <View role="status" style={[styles.freezer, { borderColor: tint, backgroundColor: ok ? ds.c.surface : withAlpha(ds.accentText, 0.1) }]}>
+      <View style={styles.freezerHead}>
+        <IconSymbol name="snowflake" size={16} color={ok ? ds.c.ink : ds.accentText} />
+        <Body color={ok ? ds.c.ink : ds.accentText} style={styles.strong}>
+          {ok ? `Stays liquid in a ${celsius(freezerC)} freezer` : `Will slush in a ${celsius(freezerC)} freezer`}
+        </Body>
       </View>
-    </Surface>
+      <Body>{ok ? strength : `${strength} Set the freezer to about ${celsius(-12)}, or use a stronger spirit or less water.`}</Body>
+      <PressableScale role="button" aria-expanded={changing} accessibilityLabel={`Your freezer: ${celsius(freezerC)}. Change`} onPress={() => setChanging((c) => !c)} style={styles.change}>
+        <Caption tone="muted" style={styles.underline}>{`Your freezer: ${celsius(freezerC)} · change`}</Caption>
+      </PressableScale>
+      {changing ? <Choice label="Your freezer" options={FREEZERS} value={freezerC} onChange={onFreezerC} /> : null}
+    </View>
   );
 }
 
@@ -146,27 +181,36 @@ export function StockField({ lines, line, onLine, have, onHave, unit }: { lines:
 }
 
 const BIG = type.display.fontSize * 1.6;
+const AMOUNT_W = 88;
 
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
     gap: space.md,
     paddingVertical: space.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  name: { flex: 1, gap: space.xs },
+  amount: { width: AMOUNT_W },
+  name: { flex: 1, minWidth: 0 },
   tick: { width: 22, height: 22, borderRadius: radius.mark, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   done: { textDecorationLine: 'line-through' },
   choice: { flexDirection: 'row', alignSelf: 'flex-start', borderWidth: 1, borderRadius: radius.pill, padding: 2 },
   option: { minHeight: layout.minTapTarget, minWidth: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  tiles: { flexDirection: 'row', gap: space.sm },
+  tile: { flex: 1, minHeight: layout.minTapTarget + space.xs, alignItems: 'center', justifyContent: 'center', borderRadius: radius.control, borderWidth: 1 },
   // flex-end, not baseline: iOS doesn't baseline-align a TextInput.
   big: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
   // Room above the glyphs: a serif this size overshoots a lineHeight of 1.
   bigInput: { fontSize: BIG, lineHeight: BIG * 1.15, letterSpacing: -2, width: BIG, padding: 0 },
-  unit: { paddingBottom: space.xl },
-  freezer: { gap: space.sm, alignItems: 'flex-start' },
+  unit: { flex: 1, paddingBottom: space.xl },
+  trailing: { paddingBottom: space.lg },
+  detail: { fontSize: type.body.fontSize - 2, lineHeight: type.body.lineHeight - 2 },
+  freezer: { gap: space.sm, alignItems: 'flex-start', padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
+  freezerHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
+  change: { minHeight: space.xl, justifyContent: 'center' },
+  underline: { textDecorationLine: 'underline' },
   stock: { gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

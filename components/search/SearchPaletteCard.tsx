@@ -2,11 +2,10 @@ import { usePathname } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption } from '@/components/ds';
+import { Caption, useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
 import { useSearchMine } from '@/hooks/useSearchMine';
-import { isDesktopShell } from '@/lib/desktopShell';
 import { eightBallLabel } from '@/lib/eightBallKey';
 import { isApplePlatform } from '@/lib/platformKeys';
 import { space } from '@/constants/tokens';
@@ -14,20 +13,13 @@ import { scopeOptions, type SearchScope } from '@/lib/searchScope';
 import { useEightBallStore } from '@/store/useEightBallStore';
 import { useSearchPalette } from '@/store/useSearchPalette';
 
-import { ResultRow } from './ResultRows';
+import { ResultGroup, ResultRow } from './ResultRows';
 import { KeyCap } from './SearchField';
 import { SearchNavProvider, useSearchNav } from './searchNav';
 import { SearchBody, SearchHead } from './SearchPanel';
 
 /** The view holding the palette's results, which the arrow keys walk. */
 const RESULTS = 'search-palette-results';
-
-/** What finds Pick for me when typed: the start of any of these. */
-const PICK_WORDS = ['pick for me', 'eight ball', '8 ball', 'magic eight ball', 'random drink', 'surprise me'];
-const findsPick = (query: string) => {
-  const q = query.trim().toLowerCase();
-  return q.length > 1 && PICK_WORDS.some((w) => w.startsWith(q));
-};
 
 /** The open ⌘K search card; SearchPalette loads it on first open. */
 export default function SearchPaletteCard() {
@@ -45,16 +37,25 @@ function Palette() {
   const [picked, setScope] = useState<SearchScope | null>(null);
   const scope = picked ?? mine.defaultScope;
   const close = () => setOpen(false);
-  // The eight ball, the Easter egg phones open with a shake. Here it's a command, plus its key anywhere (WebSideNav).
+  // The eight ball, the Easter egg phones open with a shake. Here it's a command, always in the list (as the
+  // palette board draws it, typed or not), plus its key anywhere (WebSideNav).
   const pick = (
-    <ResultRow
-      title="Pick for me"
-      caption={`The magic eight ball picks a drink · ${eightBallLabel({ shift: !isDesktopShell(), apple: isApplePlatform() })}`}
-      icon="sparkles"
-      onPress={() => {
-        close();
-        useEightBallStore.getState().setOpen(true);
-      }}
+    <ResultGroup
+      label="Commands"
+      items={[0]}
+      render={() => (
+        <ResultRow
+          key="pick"
+          title="Pick for me"
+          caption="A drink to make, at random"
+          icon="8.circle"
+          trailing={<PickKeys />}
+          onPress={() => {
+            close();
+            useEightBallStore.getState().setOpen(true);
+          }}
+        />
+      )}
     />
   );
 
@@ -78,16 +79,30 @@ function Palette() {
     >
       <SearchNavProvider active={nav.active}>
         <View nativeID={RESULTS} style={styles.results}>
-          {findsPick(query) ? pick : null}
-          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} onJump={close} commands={pick} />
+          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} onJump={close} commands={pick} palette />
         </View>
       </SearchNavProvider>
     </DiscoverOverlay>
   );
 }
 
+/** "⇧⌘8 on the web, ⌘8 in the desktop app": Pick for me's keys, at the end of its row. */
+function PickKeys() {
+  const apple = isApplePlatform();
+  return (
+    <View style={styles.hint}>
+      <KeyCap label={eightBallLabel({ shift: true, apple })} />
+      <Caption tone="muted">on the web,</Caption>
+      <KeyCap label={eightBallLabel({ shift: false, apple })} />
+      <Caption tone="muted">in the desktop app</Caption>
+    </View>
+  );
+}
+
 /** "↑↓ Select · ↵ Open · tab Switch scope · esc Back": the palette's keys, along its foot. */
 function KeyHints({ back }: { back: string }) {
+  const ds = useDs();
+  const gutter = useGutter();
   const hint = (key: string, words: string) => (
     <View key={key} style={styles.hint}>
       <KeyCap label={key} />
@@ -95,7 +110,11 @@ function KeyHints({ back }: { back: string }) {
     </View>
   );
   return (
-    <View role="note" accessibilityLabel="Up and down arrows select, Return opens, Tab switches scope, Escape closes" style={styles.hints}>
+    <View
+      role="note"
+      accessibilityLabel="Up and down arrows select, Return opens, Tab switches scope, Escape closes"
+      style={[styles.hints, { marginHorizontal: -gutter, paddingHorizontal: gutter, borderTopColor: ds.c.line }]}
+    >
       {hint('↑↓', 'Select')}
       {hint('↵', 'Open')}
       {hint('tab', 'Switch scope')}
@@ -107,7 +126,8 @@ function KeyHints({ back }: { back: string }) {
 
 const styles = StyleSheet.create({
   results: { gap: space.lg },
-  hints: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.lg },
+  // A line across the card above the keys, as drawn.
+  hints: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.lg, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
   hint: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   push: { flex: 1 },
 });

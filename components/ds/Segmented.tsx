@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 
 import { PressableScale } from './PressableScale';
 import { DsText } from './Text';
@@ -12,47 +13,43 @@ interface SegmentedProps<T extends string> {
   onChange: (value: T) => void;
   accessibilityLabel: string;
   /**
-   * underline: tabs whose selected label is underlined (the default).
-   * track: a full-width rounded track with the selected part filled in ink
-   * (ppl-you, ppl-person). As tabs it's a pill; as a choice (`choice`) it's
-   * a rounded box with muted unselected labels (ppl-settings, ppl-what-people-see).
+   * underline: page tabs (History's Tree | Timeline). pill: a segmented control
+   * in a rounded track, the picked one softly filled (the batch sheet). ink:
+   * the same track with the picked one filled in ink (the drink page's Spec |
+   * Service | Backstory on desktop).
    */
-  look?: 'underline' | 'track';
-  /** A choice between values (radio buttons) instead of tabs that switch what shows. */
-  choice?: boolean;
-  /** The track sits on a surface (a sheet or card), so it takes the ground colour. */
-  onSurface?: boolean;
+  variant?: 'underline' | 'pill' | 'ink';
+  /** Pill and ink: segments share the full width instead of hugging their labels. */
+  stretch?: boolean;
 }
 
-/** Tabs within a screen (Spec · Service · Family), or a one-of choice drawn as a track. */
-export function Segmented<T extends string>({ options, value, onChange, accessibilityLabel, look = 'underline', choice, onSurface }: SegmentedProps<T>) {
+/** Tabs within a screen (Spec · Service · Family), underlined or as a pill control. */
+export function Segmented<T extends string>({ options, value, onChange, accessibilityLabel, variant = 'underline', stretch }: SegmentedProps<T>) {
   const ds = useDs();
-  const track = look === 'track';
-  const trackStyle = track
-    ? [styles.track, choice ? styles.box : [styles.pill, { borderColor: ds.c.line }], { backgroundColor: onSurface ? ds.c.ground : ds.c.surface }]
-    : [styles.bar, { borderBottomColor: ds.c.line }];
+  const pill = variant !== 'underline';
   return (
-    <View role={choice ? 'radiogroup' : 'tablist'} accessibilityLabel={accessibilityLabel} style={trackStyle}>
+    <View
+      role="tablist"
+      accessibilityLabel={accessibilityLabel}
+      style={pill ? [styles.track, { backgroundColor: ds.c.surface, borderColor: ds.c.line }, stretch ? null : styles.hug] : [styles.bar, { borderBottomColor: ds.c.line }]}
+    >
       {options.map((o) => {
         const selected = o.value === value;
-        const a11y = choice ? { role: 'radio' as const, 'aria-checked': selected } : { role: 'tab' as const, 'aria-selected': selected };
+        const fill = !selected ? 'transparent' : variant === 'ink' ? ds.c.ink : withAlpha(ds.c.ink, 0.16);
         return (
           <PressableScale
             key={o.value}
             {...a11y}
             accessibilityLabel={o.label}
             onPress={() => onChange(o.value)}
-            style={
-              track
-                ? [styles.part, choice ? styles.boxPart : styles.pillPart, { backgroundColor: selected ? ds.c.ink : 'transparent' }]
-                : [styles.tab, { borderBottomColor: selected ? ds.c.ink : 'transparent' }]
-            }
+            style={pill ? [styles.segment, stretch ? styles.flex : null, { backgroundColor: fill }] : [styles.tab, { borderBottomColor: selected ? ds.c.ink : 'transparent' }]}
           >
             <DsText
               variant="body"
-              color={track && selected ? ds.c.ground : selected || (track && !choice) ? ds.c.ink : ds.c.muted}
               numberOfLines={1}
-              style={{ fontFamily: selected ? fontFamilies.bodySemiBold : track ? fontFamilies.bodyMedium : fontFamilies.body }}
+              color={pill && selected && variant === 'ink' ? ds.c.ground : undefined}
+              tone={selected || variant === 'ink' ? 'ink' : 'muted'}
+              style={[{ fontFamily: selected || variant === 'ink' ? fontFamilies.bodySemiBold : pill ? fontFamilies.bodyMedium : fontFamilies.body }, pill ? styles.small : null]}
             >
               {o.label}
             </DsText>
@@ -66,10 +63,10 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
 const styles = StyleSheet.create({
   bar: { flexDirection: 'row', gap: space.xl, borderBottomWidth: StyleSheet.hairlineWidth },
   tab: { minHeight: layout.minTapTarget, justifyContent: 'center', borderBottomWidth: 2, marginBottom: -1 },
-  track: { flexDirection: 'row', gap: space.xs, padding: space.xs },
-  pill: { borderRadius: radius.pill, borderWidth: 1 },
-  box: { borderRadius: radius.control },
-  part: { flex: 1, minWidth: 0, minHeight: 40, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.sm },
-  pillPart: { borderRadius: radius.pill },
-  boxPart: { borderRadius: radius.control - space.xs },
+  track: { flexDirection: 'row', gap: space.xs, padding: space.xs - 1, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth },
+  hug: { alignSelf: 'flex-start' },
+  segment: { minHeight: layout.minTapTarget - space.xs, paddingHorizontal: space.lg + space.xs, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  flex: { flex: 1, minWidth: 0, paddingHorizontal: space.xs },
+  // The control's labels a step under body, as drawn (15 on 24).
+  small: { fontSize: type.body.fontSize - 2, lineHeight: type.body.lineHeight - 2 },
 });

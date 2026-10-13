@@ -20,7 +20,9 @@ assert.deepEqual(guessed.station.map((l) => l.ingredient), ['Lime juice', 'Lime'
 assert.ok(guessed.allGuessed && guessed.batch.every((l) => l.guessed));
 assert.equal(guessed.pour, '75 ml');
 assert.deepEqual(guessed.servesPerBottle, { ml750: 10, l1: 13 });
-assert.equal(bottleLine(guessed), 'A 750 ml bottle is 10 serves');
+assert.equal(bottleLine(guessed), 'A 1 L bottle holds 13');
+// Ounces read in ml, like the spec: 2 oz is 60 ml.
+assert.equal(serviceSpec(specLines([row('rum', 'White rum', 2, 'oz')])).batch[0].amount, '60 ml');
 assert.equal(guessed.station[1].garnish, true);
 
 // The bar decided: the batch holds rum and syrup as before, but now the lime
