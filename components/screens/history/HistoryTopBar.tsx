@@ -41,7 +41,7 @@ export function HistoryTopBar({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const results = searchTree(nodes, query);
-  const tabs = <Segmented accessibilityLabel="History view" options={VIEWS} value={view} onChange={onView} />;
+  const tabs = <Segmented underline accessibilityLabel="History view" options={VIEWS} value={view} onChange={onView} />;
   const field = (
     <Field
       label="Find a drink, bartender or bar"

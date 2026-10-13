@@ -34,7 +34,7 @@ export function TreeControls({
   return (
     <View style={styles.wrap}>
       <View style={wide ? styles.show : null}>
-        <Segmented accessibilityLabel="Show" options={SHOW} value={modernOnly ? 'modern' : 'all'} onChange={(v) => onModernOnly(v === 'modern')} />
+        <Segmented underline accessibilityLabel="Show" options={SHOW} value={modernOnly ? 'modern' : 'all'} onChange={(v) => onModernOnly(v === 'modern')} />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         <View role="group" aria-label="Jump to a family" style={styles.chipRow}>

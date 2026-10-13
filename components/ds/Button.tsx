@@ -15,8 +15,12 @@ export type IconName = ComponentProps<typeof IconSymbol>['name'];
 export interface ButtonProps {
   label: string;
   onPress?: () => void;
-  /** primary: the one main action on a screen, in the venue's accent. danger: removing or deleting, in status red. */
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  /**
+   * primary: the one main action on a screen, in the venue's accent. ink: a
+   * card's own main action, cream on dark, where the screen's accent is spoken
+   * for (a project's Method). danger: removing or deleting, in status red.
+   */
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'ink';
   size?: 'md' | 'lg';
   icon?: IconName;
   disabled?: boolean;
@@ -28,10 +32,10 @@ export interface ButtonProps {
 
 export function Button({ label, onPress, variant = 'primary', size = 'md', icon, disabled, accessibilityLabel, accessibilityHint, style }: ButtonProps) {
   const ds = useDs();
-  const fill = variant === 'primary' ? ds.accentFill.fill : 'transparent';
+  const fill = variant === 'primary' ? ds.accentFill.fill : variant === 'ink' ? ds.c.ink : 'transparent';
   const danger = readableAccent(STATUS.danger, ds.c.ground);
-  const text = variant === 'primary' ? ds.accentFill.text : variant === 'danger' ? danger : ds.c.ink;
-  const border = variant === 'secondary' ? ds.c.lineStrong : variant === 'danger' ? withAlpha(danger, 0.45) : 'transparent';
+  const text = variant === 'primary' ? ds.accentFill.text : variant === 'ink' ? ds.c.ground : variant === 'danger' ? danger : ds.c.ink;
+  const border = variant === 'secondary' ? ds.c.lineStrong : variant === 'danger' ? withAlpha(danger, 0.45) : variant === 'ink' ? ds.c.ink : 'transparent';
   return (
     <PressableScale
       onPress={onPress}
