@@ -20,9 +20,9 @@ export interface Ring {
 }
 
 export const RINGS: readonly Ring[] = [
-  { label: 'Closest', r: 0.32, size: 4 },
-  { label: 'Strong', r: 0.54, size: 6 },
-  { label: 'Worth a try', r: 0.76, size: 8 },
+  { label: 'Close: most often together', r: 0.32, size: 4 },
+  { label: 'Often', r: 0.54, size: 6 },
+  { label: 'Sometimes', r: 0.76, size: 8 },
 ];
 
 export const MAP_SIZE = RINGS.reduce((n, r) => n + r.size, 0);

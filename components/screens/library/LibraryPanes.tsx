@@ -74,7 +74,7 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty }: { venueI
   const facts = useMineFacts(venueId, items);
   const { data: scores } = useItemScores(items.filter((i) => i.category === 'Cocktail').map((i) => i.id));
   // Drinks at a venue say why they're here; elsewhere (and other kinds) keep the tile's line.
-  const why = (i: SearchItem) => (venueId && i.category === 'Cocktail' ? drinkFacts(i.id, i.category, facts) : { caption: lineOf?.(i) ?? i.category ?? undefined, tag: undefined });
+  const why = (i: SearchItem) => (venueId && i.category === 'Cocktail' ? drinkFacts(i.id, i.category, facts, true) : { caption: lineOf?.(i) ?? i.category ?? undefined, tag: undefined });
   return (
     <View style={styles.row}>
       <FlatList

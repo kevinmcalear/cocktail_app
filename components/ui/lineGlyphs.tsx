@@ -21,6 +21,12 @@ const GLYPHS = {
     'M9 12l2 2 4-4',
   ],
   updown: ['M8 4v16M4.5 7.5L8 4l3.5 3.5', 'M16 20V4M12.5 16.5L16 20l3.5-3.5'],
+  // Menus, drafts, Bring in, a menu document and Settings, as the shell boards draw them (nav-new-venue, nav-switcher).
+  lines: ['M5 6h14M5 12h14M5 18h9'],
+  draft: ['M6 3h8l4 4v14H6z', 'M14 3v4h4M9 12h6M9 16h6'],
+  tray: ['M12 3v11M7.5 9.5L12 14l4.5-4.5', 'M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3'],
+  sheet: ['M6 3h12v18H6z', 'M9 8h6M9 12h6M9 16h4'],
+  sun: ['M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0', 'M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1'],
   // The eight ball (Pick for me): the ball, its window and the 8, as the palette board draws it.
   eightball: ['M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0', 'M7.8 11a4.2 4.2 0 1 0 8.4 0a4.2 4.2 0 1 0-8.4 0', 'M10.8 9.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0', 'M10.5 12.4a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0'],
 } as const;

@@ -39,10 +39,10 @@ function SwitchRow({ mark, name, detail, selected, onPress }: { mark: React.Reac
   );
 }
 
-function PlaceRow({ icon, label, detail, onPress }: { icon: IconName; label: string; detail: string; onPress: () => void }) {
+function PlaceRow({ icon, label, detail, last, onPress }: { icon: IconName; label: string; detail: string; last: boolean; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={`${label}. ${detail}`} onPress={onPress} style={[styles.placeRow, { borderBottomColor: ds.c.line }]}>
+    <PressableScale role="link" accessibilityLabel={`${label}. ${detail}`} onPress={onPress} style={[styles.placeRow, { borderBottomColor: ds.c.line }, last && styles.last]}>
       <View style={[styles.tile, { backgroundColor: ds.c.raised }]}>
         <IconSymbol name={icon} size={18} color={ds.c.ink} />
       </View>
@@ -55,7 +55,9 @@ function PlaceRow({ icon, label, detail, onPress }: { icon: IconName; label: str
   );
 }
 
-const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'gearshape', path: '/settings' };
+// The switcher draws Settings as a sun and Menus as a document (nav-switcher); the sidebar keeps its own.
+const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'sun.min', path: '/settings' };
+const SHEET_ICON: Record<string, IconName> = { menus: 'doc' };
 
 /** The venue's own lines under each place: live counts where the app already has them. */
 function useVenueLines(venue: Venue): Record<string, string> {
@@ -94,7 +96,7 @@ function useHomeLines(): Record<string, string> {
 }
 
 function Places({ places, lines, onGo }: { places: Place[]; lines: Record<string, string>; onGo: (p: Place) => void }) {
-  return places.map((p) => <PlaceRow key={p.key} icon={p.icon} label={p.label} detail={lines[p.key] ?? ''} onPress={() => onGo(p)} />);
+  return places.map((p, i) => <PlaceRow key={p.key} icon={SHEET_ICON[p.key] ?? p.icon} label={p.label} detail={lines[p.key] ?? ''} last={i === places.length - 1} onPress={() => onGo(p)} />);
 }
 
 function VenuePlaces({ venue, onGo }: { venue: Venue; onGo: (p: Place) => void }) {
@@ -152,6 +154,8 @@ const styles = StyleSheet.create({
   // Hairlines between rows and a chevron on each place, as the board draws them.
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, borderBottomWidth: StyleSheet.hairlineWidth },
   placeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth },
+  // The last place ends the sheet: no hairline under it.
+  last: { borderBottomWidth: 0 },
   tile: { width: 36, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   rowText: { flex: 1, gap: 2 },
   strong: { fontFamily: fontFamilies.bodySemiBold },

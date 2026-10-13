@@ -24,7 +24,7 @@ const CREATE: { label: string; hint: string; homeHint: string; icon: string; sym
   { label: 'Ingredient or prep', hint: 'A bottle, or something made in house', homeHint: 'A bottle for your shelf, or something you make', icon: 'TabIngredients', href: '/add-ingredient', atVenue: true },
   { label: 'Beer', hint: 'For the list or a menu', homeHint: 'For your shelf or a home menu', icon: 'Beer', href: '/add-beer', atVenue: true },
   { label: 'Wine', hint: 'For the list or a menu', homeHint: 'For your shelf or a home menu', icon: 'Wine', href: '/add-wine', atVenue: true },
-  { label: 'Menu', hint: 'Start fresh or copy one', homeHint: 'A night in: start fresh or from a saved menu', icon: 'TabMenus', symbol: 'line.3.horizontal', href: '/menus/all?new=1' },
+  { label: 'Menu', hint: 'Start fresh or copy one', homeHint: 'A night in: start fresh or from a saved menu', icon: 'TabMenus', symbol: 'text.alignleft', href: '/menus/all?new=1' },
 ];
 
 function Row({ icon, label, hint, trailing, onPress }: { icon: React.ReactNode; label: string; hint: string; trailing?: React.ReactNode; onPress: () => void }) {

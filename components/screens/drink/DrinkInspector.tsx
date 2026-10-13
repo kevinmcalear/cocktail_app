@@ -2,7 +2,8 @@ import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, PressableScale, TextLink, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { useBarZones, useItemLocations } from '@/hooks/useBackBar';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useViewAs } from '@/hooks/useViewAs';
@@ -11,8 +12,6 @@ import type { ItemImageLink } from '@/lib/itemImages';
 import { viewAsChoices } from '@/lib/roleLens';
 import { photoShots, photosTaken } from '@/lib/servicePhotos';
 import type { SpecLine } from '@/lib/spec';
-
-import { Choice } from '../menus/MenuSheet';
 
 interface DrinkInspectorProps {
   itemId: string;
@@ -81,28 +80,43 @@ export function DrinkInspector({ itemId, barId, name, links, lines, glass, teamR
           )}
         </View>
       ) : null}
-      {teamRole && teamRole > 10 ? <ViewAs realRole={teamRole} itemId={itemId} /> : null}
+      {teamRole && teamRole > 10 ? <ViewAs realRole={teamRole} /> : null}
     </View>
   );
 }
 
-function ViewAs({ realRole, itemId }: { realRole: number; itemId: string }) {
-  const router = useRouter();
+/** View as: the roles in a two-column panel, yours filled, and what the picked one adds (board drink-desktop). The More menu keeps "What each role opens". */
+function ViewAs({ realRole }: { realRole: number }) {
+  const ds = useDs();
   const { viewAsRoleLevel, setViewAsRoleLevel, isSaving } = useViewAs();
   const current = Math.min(viewAsRoleLevel ?? realRole, realRole);
   const choices = viewAsChoices(realRole);
   return (
-    <View style={styles.group} role="radiogroup" accessibilityLabel="View as">
+    <View style={styles.group}>
       <Caption tone="muted" style={styles.eyebrow}>
         VIEW AS
       </Caption>
-      <View style={styles.roles}>
-        {choices.map((c) => (
-          <Choice key={c.level} label={c.label} selected={c.level === current} disabled={isSaving} onPress={() => void setViewAsRoleLevel(c.level === realRole ? null : c.level)} />
-        ))}
+      <View role="radiogroup" accessibilityLabel="View as" style={[styles.roles, { backgroundColor: ds.c.surface }]}>
+        {choices.map((c) => {
+          const on = c.level === current;
+          return (
+            <PressableScale
+              key={c.level}
+              role="radio"
+              aria-checked={on}
+              accessibilityLabel={c.label}
+              disabled={isSaving}
+              onPress={() => void setViewAsRoleLevel(c.level === realRole ? null : c.level)}
+              style={[styles.role, { backgroundColor: on ? withAlpha(ds.c.ink, 0.16) : 'transparent' }]}
+            >
+              <Caption tone={on ? 'ink' : 'muted'} numberOfLines={1} style={on ? styles.strong : null}>
+                {c.label}
+              </Caption>
+            </PressableScale>
+          );
+        })}
       </View>
       <Caption tone="muted">{choices.find((c) => c.level === current)?.adds}</Caption>
-      <TextLink label="What each role opens ›" onPress={() => router.push({ pathname: '/cocktail/[id]/roles', params: { id: itemId } } as unknown as Href)} />
     </View>
   );
 }
@@ -116,5 +130,7 @@ const styles = StyleSheet.create({
   group: { gap: space.sm },
   place: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs + 2, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
-  roles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  roles: { flexDirection: 'row', flexWrap: 'wrap', padding: space.xs, borderRadius: radius.control, borderCurve: 'continuous' },
+  role: { width: '50%', minHeight: layout.minTapTarget - space.xs, alignItems: 'center', justifyContent: 'center', borderRadius: radius.control - space.xs },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
 });

@@ -1,8 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, IngredientThumb, Sheet, Spec, useDs, useSheetClose } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { Body, Button, Caption, DsText, Headline, IngredientThumb, Sheet, Spec, useDs, useSheetClose } from '@/components/ds';
+import { fontFamilies, radius, space, type } from '@/constants/tokens';
 import { useIngredient } from '@/hooks/useIngredients';
 import { useItemPrep } from '@/hooks/usePrepCard';
 import { keepsFor } from '@/lib/batchPrep';
@@ -61,8 +61,11 @@ function HouseMadeBody({ line }: { line: SpecLine }) {
         <View style={styles.facts}>
           {facts.map((f) => (
             <View key={f.label} accessible accessibilityLabel={`${f.label}: ${f.value}`} style={[styles.fact, { backgroundColor: ds.c.surface }]}>
-              <Caption tone="muted">{f.label}</Caption>
-              <Spec>{f.value}</Spec>
+              <Caption tone="muted" numberOfLines={1}>{f.label}</Caption>
+              {/* One line each, as drawn: the amount in mono, the rest in the body face. */}
+              <DsText variant={f.label === 'This drink' ? 'spec' : 'body'} numberOfLines={1} style={[styles.value, f.label === 'This drink' ? null : styles.medium]}>
+                {f.value}
+              </DsText>
             </View>
           ))}
         </View>
@@ -93,12 +96,14 @@ function HouseMadeBody({ line }: { line: SpecLine }) {
 }
 
 const styles = StyleSheet.create({
-  body: { padding: space.xl, paddingTop: space.md, paddingBottom: space.xxxl, gap: space.lg },
+  body: { padding: space.lg, paddingTop: space.md, paddingBottom: space.xl, gap: space.lg },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   thumb: { width: 64, height: 64, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
   facts: { flexDirection: 'row', gap: space.sm },
-  fact: { flex: 1, padding: space.md, borderRadius: radius.control, gap: 2 },
+  fact: { flex: 1, minWidth: 0, paddingVertical: space.sm + 2, paddingHorizontal: space.md, borderRadius: radius.control, gap: 2 },
+  value: { fontSize: type.caption.fontSize + 2, lineHeight: type.caption.lineHeight + 2 },
+  medium: { fontFamily: fontFamilies.bodyMedium },
   part: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   amount: { width: 88 },
   actions: { flexDirection: 'row', gap: space.sm },
