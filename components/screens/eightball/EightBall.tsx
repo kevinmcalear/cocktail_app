@@ -2,16 +2,19 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { AccessibilityInfo, Modal, Platform, StyleSheet, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs } from '@/components/ds';
+import { GestureRoot } from '@/components/ds/GestureRoot';
 import { space, springs } from '@/constants/tokens';
 import { useEightBallPool } from '@/hooks/useEightBall';
 import { FORTUNES, makeA, pickDrink, RECENT, type Candidate } from '@/lib/eightBall';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { BallArt } from './BallArt';
+import { useRollingBall } from './useRollingBall';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 /** How long the ball "thinks" before it answers. */
@@ -29,15 +32,19 @@ const randomFortune = () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)
  * The magic eight ball (issue #18), as the approved Shake design: the ball
  * wobbles, its window turns up a fortune, then the drink, with "Make a …",
  * why, and Another and Open recipe. Shaking again (routed in by
- * EightBallHost through `rollRef`) is Another. With Reduce Motion on,
- * nothing moves: the answer fades in.
+ * EightBallHost through `rollRef`) is Another. The ball rolls when the
+ * phone tilts and can be dragged and flung (useRollingBall). With Reduce
+ * Motion on, nothing moves: the answer fades in.
  */
 export function EightBall({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<(() => void) | null> }) {
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <BackbarTheme scheme="dark">
-        <Ball onClose={onClose} rollRef={rollRef} />
-      </BackbarTheme>
+      {/* Native gestures need their own root inside a Modal. */}
+      <GestureRoot style={styles.root}>
+        <BackbarTheme scheme="dark">
+          <Ball onClose={onClose} rollRef={rollRef} />
+        </BackbarTheme>
+      </GestureRoot>
     </Modal>
   );
 }
@@ -57,6 +64,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const wobble = useSharedValue(0);
   const rise = useSharedValue(0); // the triangle's words coming up
   const card = useSharedValue(0); // title, reason and buttons
+  const rolling = useRollingBall({ still: reduceMotion, insets });
 
   useEffect(() => {
     latest.current = { pool, isLoading };
@@ -90,6 +98,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     bringUp(rise);
     // A jolt, then the pour spring rings it out like a ball settling in the hand.
     if (!reduceMotion) wobble.set(withSequence(withTiming(1, { duration: 70 }), withSpring(0, springs.pour)));
+    rolling.kick();
     if (native) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     timer.current = setTimeout(() => reveal(), reduceMotion ? 300 : THINK_MS);
   }
@@ -126,15 +135,30 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.xxxl, paddingBottom: insets.bottom + space.xxl }]}>
+    <View
+      style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.xxxl, paddingBottom: insets.bottom + space.xxl }]}
+      onLayout={rolling.onScreenLayout}
+    >
       <View style={[styles.close, { top: insets.top + space.sm }]}>
         <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />
       </View>
-      <View style={styles.column}>
+      <View style={styles.column} onLayout={rolling.onColumnLayout}>
         <Caption tone="muted" style={styles.eyebrow}>
           {shown ? 'THE BAR HAS SPOKEN' : 'ASKING THE BAR'}
         </Caption>
-        <BallArt text={answer.state === 'thinking' ? answer.fortune : (drink?.name ?? 'Ask again later')} wobble={wobble} rise={rise} still={reduceMotion} />
+        <View onLayout={rolling.onSlotLayout}>
+          <GestureDetector gesture={rolling.pan}>
+            <Animated.View style={rolling.style}>
+              <BallArt
+                text={answer.state === 'thinking' ? answer.fortune : (drink?.name ?? 'Ask again later')}
+                wobble={wobble}
+                rise={rise}
+                roll={rolling.roll}
+                still={reduceMotion}
+              />
+            </Animated.View>
+          </GestureDetector>
+        </View>
         <Animated.View style={[styles.copy, cardStyle]} aria-live="polite">
           {shown ? (
             <>
@@ -169,6 +193,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: space.xl, alignItems: 'center' },
   close: { position: 'absolute', right: space.lg, zIndex: 1 },
   column: { flex: 1, width: '100%', maxWidth: 420, alignItems: 'center', gap: space.xl },
