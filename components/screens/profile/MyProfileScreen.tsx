@@ -2,10 +2,10 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Field, Headline, PressableScale, TextLink, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, Headline, PressableScale, Segmented, useDs } from '@/components/ds';
 import { CurrentUserAvatar } from '@/components/ui/UserAvatar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyHiddenCity, useMyProfile, useSaveMyProfile, useSaveSharing, type MyProfile } from '@/hooks/useMyProfile';
 import { useProfilePositions } from '@/hooks/useProfiles';
@@ -55,7 +55,13 @@ export function MyProfileScreen() {
   );
 }
 
+const WHO = [
+  { value: 'public', label: 'Public' },
+  { value: 'me', label: 'Only me' },
+] as const;
+
 function Hub({ profile }: { profile: MyProfile }) {
+  const ds = useDs();
   const router = useRouter();
   const save = useSaveSharing();
   const saveProfile = useSaveMyProfile();
@@ -91,24 +97,29 @@ function Hub({ profile }: { profile: MyProfile }) {
       <View style={styles.me}>
         <CurrentUserAvatar size={56} />
         <View style={styles.flex}>
-          <DsText variant="headline">{profile.displayName}</DsText>
-          <Caption tone="muted" numberOfLines={1}>
+          <Body style={styles.strong}>{profile.displayName}</Body>
+          <Caption tone="muted" numberOfLines={2}>
             {[`@${profile.handle}`, line].filter(Boolean).join(' · ')}
           </Caption>
         </View>
-        <TextLink label="Preview" accessibilityHint="Opens You, your profile as people see it" onPress={() => router.push('/you')} />
+        <Button label="Preview" variant="secondary" accessibilityHint="Opens You, your profile as people see it" onPress={() => router.push('/you')} />
       </View>
-      <View role="list">
+      {/* The three parts in one grouped card (ppl-settings). */}
+      <View role="list" style={[styles.card, { backgroundColor: ds.c.surface }]}>
         <HubRow title="About you" summary={about} onPress={() => router.push('/settings/profile-about' as Href)} />
         <HubRow title="What people see" summary={sees} onPress={() => router.push('/settings/profile-sharing' as Href)} />
-        <HubRow title="Work" summary={work} onPress={() => router.push('/settings/profile-work' as Href)} />
+        <HubRow title="Work" summary={work} last onPress={() => router.push('/settings/profile-work' as Href)} />
       </View>
       <View style={styles.group}>
         <Headline role="heading">Who can see it</Headline>
-        <View role="radiogroup" accessibilityLabel="Who can see your profile" style={styles.chips}>
-          <Chip label="Public" selected={isPublic} onPress={() => save.mutate({ id: profile.id, isPublic: true })} />
-          <Chip label="Only me" selected={!isPublic} onPress={() => save.mutate({ id: profile.id, isPublic: false })} />
-        </View>
+        <Segmented
+          look="track"
+          choice
+          accessibilityLabel="Who can see your profile"
+          options={WHO}
+          value={isPublic ? 'public' : 'me'}
+          onChange={(v) => save.mutate({ id: profile.id, isPublic: v === 'public' })}
+        />
         <Caption tone="muted">{isPublic ? PUBLIC_MEANS : PRIVATE_MEANS}</Caption>
         {save.error ? (
           <Caption tone="accent" role="alert">
@@ -118,8 +129,8 @@ function Hub({ profile }: { profile: MyProfile }) {
       </View>
       <Field
         label="Handle"
-        value={handle}
-        onChangeText={setHandle}
+        value={`@${handle.replace(/^@/, '')}`}
+        onChangeText={(v) => setHandle(v.replace(/^@/, ''))}
         onBlur={saveHandle}
         onSubmitEditing={saveHandle}
         error={handleError}
@@ -133,12 +144,12 @@ function Hub({ profile }: { profile: MyProfile }) {
   );
 }
 
-function HubRow({ title, summary, onPress }: { title: string; summary: string; onPress: () => void }) {
+function HubRow({ title, summary, onPress, last }: { title: string; summary: string; onPress: () => void; last?: boolean }) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={`${title}. ${summary}`} onPress={onPress} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+    <PressableScale role="link" accessibilityLabel={`${title}. ${summary}`} onPress={onPress} style={[styles.row, { borderBottomColor: last ? 'transparent' : ds.c.line }]}>
       <View style={styles.flex}>
-        <DsText variant="headline">{title}</DsText>
+        <Body style={styles.strong}>{title}</Body>
         <Caption tone="muted">{summary}</Caption>
       </View>
       <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
@@ -175,10 +186,7 @@ function MakeProfile() {
       />
       <View style={styles.group}>
         <Headline role="heading">Who can see it</Headline>
-        <View role="radiogroup" accessibilityLabel="Who can see your profile" style={styles.chips}>
-          <Chip label="Public" selected={draft.isPublic} onPress={() => edit({ isPublic: true })} />
-          <Chip label="Only me" selected={!draft.isPublic} onPress={() => edit({ isPublic: false })} />
-        </View>
+        <Segmented look="track" choice accessibilityLabel="Who can see your profile" options={WHO} value={draft.isPublic ? 'public' : 'me'} onChange={(v) => edit({ isPublic: v === 'public' })} />
         <Caption tone="muted">{draft.isPublic ? PUBLIC_MEANS : PRIVATE_MEANS}</Caption>
       </View>
       {save.error ? <Body tone="accent">{save.error.message}</Body> : null}
@@ -191,8 +199,9 @@ const styles = StyleSheet.create({
   page: { gap: space.lg, marginTop: space.lg },
   me: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 72, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  card: { borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.lg },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
   group: { gap: space.sm },
-  chips: { flexDirection: 'row', gap: space.sm },
   start: { alignSelf: 'flex-start' },
 });

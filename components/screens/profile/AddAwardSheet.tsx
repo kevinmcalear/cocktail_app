@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Field, GlassButton, Headline, Sheet } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Body, Button, Caption, Chip, Field, GlassButton, Segmented, Sheet, Title, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { radius, space } from '@/constants/tokens';
 import { useAddAward, useProfilePositions } from '@/hooks/useProfiles';
 import { awardDraftProblem } from '@/lib/awards';
 
@@ -16,6 +17,10 @@ const BODIES = [
   { label: 'North America’s 50 Best', award: "North America's 50 Best Bars" },
 ] as const;
 const OTHER = 'other';
+const RESULTS = [
+  { value: 'won', label: 'Won' },
+  { value: 'finalist', label: 'Finalist' },
+] as const;
 
 /**
  * Add an award (ppl-award-add): who gave it, the title as the award writes
@@ -25,6 +30,7 @@ const OTHER = 'other';
  * when someone needs an award from a bar they never listed.
  */
 export function AddAwardSheet({ visible, profileId, onClose }: { visible: boolean; profileId: string; onClose: () => void }) {
+  const ds = useDs();
   const add = useAddAward();
   const jobs = (useProfilePositions({ id: profileId, kind: 'person' }).data ?? []).filter((p) => p.person_accepted);
   const bars = [...new Map(jobs.map((j) => [j.bar.id, j.bar])).values()];
@@ -60,8 +66,8 @@ export function AddAwardSheet({ visible, profileId, onClose }: { visible: boolea
       header={
         <View style={styles.head}>
           <View style={styles.flex}>
-            <Headline role="heading">Add an award</Headline>
-            <Caption tone="muted">One you won, or were a finalist for.</Caption>
+            <Title role="heading">Add an award</Title>
+            <Body tone="muted">One you won, or were a finalist for.</Body>
           </View>
           <GlassButton accessibilityLabel="Close" icon="xmark" onPress={close} />
         </View>
@@ -69,12 +75,12 @@ export function AddAwardSheet({ visible, profileId, onClose }: { visible: boolea
     >
       <View style={styles.form}>
         <View style={styles.group}>
-          <DsText variant="headline">Who gave it</DsText>
+          <Caption tone="muted">Who gave it</Caption>
           <View role="radiogroup" accessibilityLabel="Who gave it" style={styles.wrap}>
             {BODIES.map((b) => (
-              <Chip key={b.award} label={b.label} selected={body === b.award} onPress={() => setBody(b.award)} />
+              <Chip key={b.award} quiet label={b.label} selected={body === b.award} onPress={() => setBody(b.award)} />
             ))}
-            <Chip label="Other" selected={body === OTHER} onPress={() => setBody(OTHER)} />
+            <Chip quiet label="Other" selected={body === OTHER} onPress={() => setBody(OTHER)} />
           </View>
           {body === OTHER ? <Field label="Name of the award" value={other} onChangeText={setOther} placeholder="For example, Australian Bar Awards" maxLength={80} /> : null}
         </View>
@@ -84,20 +90,17 @@ export function AddAwardSheet({ visible, profileId, onClose }: { visible: boolea
             <Field label="Year" value={year} onChangeText={(t) => setYear(t.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" maxLength={4} />
           </View>
           <View style={[styles.group, styles.flex]}>
-            <DsText variant="headline">Result</DsText>
-            <View role="radiogroup" accessibilityLabel="Result" style={styles.wrap}>
-              <Chip label="Won" selected={!finalist} onPress={() => setFinalist(false)} />
-              <Chip label="Finalist" selected={finalist} onPress={() => setFinalist(true)} />
-            </View>
+            <Caption tone="muted">Result</Caption>
+            <Segmented look="track" choice onSurface accessibilityLabel="Result" options={RESULTS} value={finalist ? 'finalist' : 'won'} onChange={(v) => setFinalist(v === 'finalist')} />
           </View>
         </View>
         {bars.length ? (
           <View style={styles.group}>
-            <DsText variant="headline">The bar you were at (optional)</DsText>
+            <Caption tone="muted">The bar you were at (optional)</Caption>
             <View role="radiogroup" accessibilityLabel="The bar you were at" style={styles.wrap}>
-              <Chip label="None" selected={!barId} onPress={() => setBarId(null)} />
+              <Chip quiet label="None" selected={!barId} onPress={() => setBarId(null)} />
               {bars.map((b) => (
-                <Chip key={b.id} label={b.display_name} selected={barId === b.id} onPress={() => setBarId(b.id)} />
+                <Chip key={b.id} quiet label={b.display_name} selected={barId === b.id} onPress={() => setBarId(b.id)} />
               ))}
             </View>
             <Caption tone="muted">{barId ? `Shows as “at ${bars.find((b) => b.id === barId)?.display_name}”.` : 'Picks from your jobs.'}</Caption>
@@ -114,7 +117,10 @@ export function AddAwardSheet({ visible, profileId, onClose }: { visible: boolea
           autoCorrect={false}
           error={tried ? (problem ?? undefined) : undefined}
         />
-        <Body tone="muted">We check it against the source before it shows on your page. Until then it says Not confirmed yet.</Body>
+        <View style={[styles.note, { backgroundColor: ds.c.raised }]}>
+          <IconSymbol name="clock" size={20} color={ds.c.muted} />
+          <Body style={styles.flex}>We check it against the source before it shows on your page. Until then it says Not confirmed yet.</Body>
+        </View>
         {add.error ? (
           <Caption tone="accent" role="alert">
             {add.error.message}
@@ -128,11 +134,12 @@ export function AddAwardSheet({ visible, profileId, onClose }: { visible: boolea
 
 const styles = StyleSheet.create({
   panel: { maxWidth: 520, padding: space.xl, paddingTop: space.sm },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingBottom: space.md },
   flex: { flex: 1, minWidth: 0 },
   form: { gap: space.lg, paddingBottom: space.lg },
   group: { gap: space.sm },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  pair: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
-  year: { width: 96 },
+  pair: { flexDirection: 'row', gap: space.md, alignItems: 'flex-end' },
+  year: { width: 104 },
+  note: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
 });

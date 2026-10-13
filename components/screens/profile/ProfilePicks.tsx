@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Platform, StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DrinkImage, DsText, Field, PressableScale, RowScore, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, DrinkImage, Field, PressableScale, RowScore, Switch, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useMyProfile, type MyProfile } from '@/hooks/useMyProfile';
 import { useMyMadeDrinks, useProfilePicks, useSetPick, useSetPicks } from '@/hooks/useProfiles';
 import { useMyHadDrinks, useMyHadPicks, usePinDrink, useSetAllHadPicks, useSetHadPick } from '@/hooks/useRankings';
@@ -98,14 +98,14 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
       title={TITLE[section]}
       intro={`Your ${NOUN[section]} are set to ${modeLabel}: ${mode === 'picked' ? 'only the ones you switch on show' : mode === 'all' ? 'every one shows unless you switch it off' : 'none show for now, and your choices are kept'}. The same screen picks bars and originals.`}
       backTo="/settings/profile"
-      action={rows ? <Caption tone="muted">{`${shownCount} of ${rows.length} shown`}</Caption> : null}
+      action={rows ? <Caption tone="muted" style={styles.mono}>{`${shownCount} of ${rows.length} shown`}</Caption> : null}
     >
       <View style={styles.box}>
         {section === 'had' ? (
           <View style={styles.group}>
-            <DsText variant="headline" role="heading">
+            <Caption tone="muted" role="heading" style={styles.eyebrow}>
               Top four · tap the pin on a drink
-            </DsText>
+            </Caption>
             <View style={styles.slots}>
               {[0, 1, 2, 3].map((i) => {
                 const d = pinned[i]?.drink;
@@ -130,10 +130,10 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
             </Caption>
           </View>
         ) : null}
-        <Field label={`Search your ${NOUN[section]}`} value={search} onChangeText={setSearch} placeholder={`Search your ${NOUN[section]}`} autoCorrect={false} />
+        <Field label={`Search your ${NOUN[section]}`} hideLabel value={search} onChangeText={setSearch} placeholder={`Search your ${NOUN[section]}`} autoCorrect={false} />
         <View role="radiogroup" accessibilityLabel="Filter" style={styles.chips}>
           {FILTERS.map((f) => (
-            <Chip key={f.value} label={f.label} selected={filter === f.value} onPress={() => setFilter(f.value)} />
+            <Chip key={f.value} quiet label={f.label} selected={filter === f.value} onPress={() => setFilter(f.value)} />
           ))}
         </View>
         {error ? (
@@ -152,9 +152,9 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
               return (
                 <View key={r.key} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
                   <View style={styles.flex}>
-                    <DsText variant="headline" numberOfLines={2}>
+                    <Body numberOfLines={2} style={styles.title}>
                       {r.title}
-                    </DsText>
+                    </Body>
                     <Caption tone="muted" numberOfLines={1}>
                       {r.detail}
                     </Caption>
@@ -176,10 +176,7 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
                     value={shown}
                     onValueChange={(on) => toggle(r, on)}
                     disabled={mode === 'none'}
-                    aria-label={`Show ${r.title} on your profile`}
-                    trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
-                    thumbColor={backbar.light.surface}
-                    {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
+                    label={`Show ${r.title} on your profile`}
                   />
                 </View>
               );
@@ -187,9 +184,9 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
           </View>
         )}
         {rows?.length && mode !== 'none' ? (
-          <View style={styles.chips}>
-            <Button label="Show all" variant="secondary" onPress={() => all(true)} disabled={setAllHad.isPending || setPicks.isPending} />
-            <Button label="Hide all" variant="ghost" onPress={() => all(false)} disabled={setAllHad.isPending || setPicks.isPending} />
+          <View style={styles.pair}>
+            <Button label="Show all" variant="secondary" onPress={() => all(true)} disabled={setAllHad.isPending || setPicks.isPending} style={styles.flex} />
+            <Button label="Hide all" variant="secondary" onPress={() => all(false)} disabled={setAllHad.isPending || setPicks.isPending} style={styles.flex} />
           </View>
         ) : null}
       </View>
@@ -205,6 +202,10 @@ const styles = StyleSheet.create({
   empty: { aspectRatio: 1, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  pair: { flexDirection: 'row', gap: space.sm, marginTop: space.sm },
+  mono: { fontFamily: fontFamilies.monoMedium },
+  eyebrow: { letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: fontFamilies.bodyMedium },
+  title: { fontFamily: fontFamilies.bodySemiBold },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 64, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   pin: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });
