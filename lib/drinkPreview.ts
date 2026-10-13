@@ -86,15 +86,18 @@ export function drinkVersion(d: PreviewDrinkCard): string {
   return h.toString(36);
 }
 
-/** Title "Penicillin"; description "Scotch, lemon, honey-ginger, an Islay float. Sam Ross, 2005. On Cocktail." */
-export function drinkPreviewMeta(d: PreviewDrinkCard, origin: string): PreviewMeta {
+/**
+ * Title "Penicillin"; description "Scotch, lemon, honey-ginger, an Islay float. Sam Ross, 2005. On Cocktail."
+ * `link` is what the shared link named the drink by: its slug, or its id.
+ */
+export function drinkPreviewMeta(d: PreviewDrinkCard, origin: string, link: string = d.id): PreviewMeta {
   const line = drinkLine(d);
   const by = madeBy(d);
   return {
     title: d.name,
     description: [line ? `${line}.` : null, by ? `${by}.` : null, 'On Cocktail.'].filter(Boolean).join(' '),
     image: `${origin}/api/drink-og?id=${d.id}&v=${drinkVersion(d)}`,
-    url: `${origin}/d/${d.id}`,
+    url: `${origin}/d/${link}`,
   };
 }
 

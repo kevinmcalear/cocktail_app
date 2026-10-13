@@ -1,4 +1,4 @@
-// The link preview image for a public drink: /api/drink-og?id=<drink id>
+// The link preview image for a public drink: /api/drink-og?id=<drink id or slug>
 // (ppl-og-drink). The drink on paper: what kind and when, its name, its
 // ingredients (or description), who made it, and its picture (its photo, or
 // its own sketch drawn from its drawing inputs). middleware.ts points chat apps here.
@@ -7,7 +7,7 @@ import { ImageResponse } from '@vercel/og';
 
 import { SKETCH } from '../constants/sketch';
 import { createdBy, drinkKickerFor, drinkLine, fetchPreviewDrinkCard, type PreviewDrinkCard } from '../lib/drinkPreview';
-import { fetchSketchInputs, isUuid, supabaseFromEnv } from '../lib/menuPreview';
+import { fetchSketchInputs, resolveShareId, supabaseFromEnv } from '../lib/menuPreview';
 import { GLASS, googleFont, h, img, photo, type El, type Picture } from '../lib/ogCard';
 import { paintSketch } from '../lib/sketch/paint';
 import { sceneToSvg } from '../lib/sketch/svg';
@@ -73,10 +73,11 @@ function card(d: PreviewDrinkCard, pic: Picture): El {
 }
 
 export default async function handler(request: Request): Promise<Response> {
-  const id = new URL(request.url).searchParams.get('id');
   const db = supabaseFromEnv(process.env);
-  if (!isUuid(id) || !db) return new Response('Not found', { status: 404 });
-  const d = await fetchPreviewDrinkCard(db, id);
+  if (!db) return new Response('Not found', { status: 404 });
+  // The drink's id, or its slug (penicillin).
+  const id = await resolveShareId(db, 'd', new URL(request.url).searchParams.get('id'));
+  const d = id ? await fetchPreviewDrinkCard(db, id) : null;
   if (!d) return new Response('Not found', { status: 404, headers: { 'cache-control': 'public, max-age=60' } });
   const who = d.creator ?? d.bar ?? '';
   const [pic, sans, serif, mono] = await Promise.all([

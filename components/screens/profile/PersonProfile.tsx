@@ -7,6 +7,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { fontFamilies, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
+import { useProfileMade, useSetMadeShown } from '@/hooks/useMade';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfileAwards, useProfileOriginals, useProfilePicks, useProfilePositions, useWorkedMenus, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
@@ -60,6 +61,8 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
   const showsMade = profile.made_mode !== 'none';
   const had = useProfileDrinks(profile.id, profile.had_mode !== 'none');
   const bars = useProfileBars(profile.id, profile.bars_mode !== 'none');
+  const made = useProfileMade(profile.id, profile.had_mode !== 'none').data;
+  const setMadeShown = useSetMadeShown();
   const madePicks = useProfilePicks(profile.id, 'originals').data ?? {};
   const { data: credited = [], isLoading } = useProfileOriginals(profile.id);
   const originals = credited.filter((d) => pickedShown(profile.made_mode, madePicks[d.id]));
@@ -132,6 +135,8 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
           drinks={had.data}
           bars={bars.data}
           failed={!!(tab === 'had' ? had.error : bars.error)}
+          made={made}
+          onHideMade={mine ? (id) => setMadeShown.mutate({ id, shown: false }) : undefined}
         />
       ) : tab === 'originals' && !showsMade ? (
         <View style={styles.section}>
