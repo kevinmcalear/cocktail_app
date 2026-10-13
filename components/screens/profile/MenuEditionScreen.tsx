@@ -2,9 +2,8 @@ import { useRouter } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Display, PressableScale, Tag } from '@/components/ds';
-import { useSignedIn } from '@/ctx/AuthContext';
 import { useMenuEditionDrinks, useMenuEditions, useProfile } from '@/hooks/useProfiles';
-import { editionDates, editionMenuDrinks, menuRange, menuState } from '@/lib/menuEditions';
+import { editionDates, editionMenuDrinks, editionSections, menuRange, menuState } from '@/lib/menuEditions';
 import { plural } from '@/lib/menus';
 
 import { SaveMenuButton } from '../kept/SaveMenuButton';
@@ -12,13 +11,13 @@ import { MenuSections } from '../menus/MenuSections';
 import { loadFailure, PublicMissing, PublicShell } from '../published/PublicShell';
 
 /**
- * One menu a bar put out, set like the printed menu. Signed-in readers open
- * each cocktail; signed out, the bar's own drinks aren't public, so the menu
- * shows their names.
+ * One menu a bar put out, set like the printed menu: a researched one, or the
+ * venue's own menu on now or ended, in its sections with its prices. A drink
+ * the reader can open links to it; signed out, or a bar's drink kept to its
+ * team, the menu shows its name (and price).
  */
 export function MenuEditionScreen({ profileRef, editionId }: { profileRef: string; editionId: string }) {
   const router = useRouter();
-  const signedIn = useSignedIn();
   const profile = useProfile(profileRef);
   const editions = useMenuEditions(profile.data?.id);
   const edition = editions.data?.find((e) => e.id === editionId);
@@ -26,6 +25,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
   if (!profile.data || !edition) return <PublicMissing loading={profile.isPending || (!!profile.data && editions.isPending)} what="menu" failed={loadFailure(profile, editions)} />;
 
   const bar = profile.data;
+  const readable = new Set((loaded.data ?? []).map((d) => d.id));
   const drinks = editionMenuDrinks(edition.drinks, loaded.data ?? []);
   const cover = drinks.find((d) => d.imageUrl && !d.isSketch)?.imageUrl ?? null;
   const source = edition.source_url;
@@ -40,9 +40,10 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
       <Display>{edition.name}</Display>
       <Caption tone="muted">{[menuRange(dates), drinks.length ? plural(drinks.length, 'drink') : null].filter(Boolean).join(' · ')}</Caption>
       {edition.theme ? <Body tone="muted">{edition.theme}</Body> : null}
-      <SaveMenuButton editionId={edition.id} drinkIds={edition.drinks.map((d) => d.id)} />
+      {/* ponytail: a venue's own menu can't be saved until saved_menu_editions takes a menu id. */}
+      {edition.from_venue ? null : <SaveMenuButton editionId={edition.id} drinkIds={edition.drinks.map((d) => d.id)} />}
       {drinks.length ? (
-        <MenuSections sections={[{ id: edition.id, name: 'Cocktails', drinks }]} variant="page" hrefFor={(d) => (signedIn ? `/cocktail/${d.id}` : null)} />
+        <MenuSections sections={editionSections(edition, drinks)} variant="page" hrefFor={(d) => (readable.has(d.id) ? `/cocktail/${d.id}` : null)} />
       ) : (
         <Body tone="muted">The drinks on this menu aren’t listed yet.</Body>
       )}

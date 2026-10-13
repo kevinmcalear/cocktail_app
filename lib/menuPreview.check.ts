@@ -102,7 +102,7 @@ assert.ok(drinkMeta.image.startsWith('https://babyvom.it/api/drink-og?id=0c2bead
 assert.equal(createdBy(penicillin), 'Created by Sam Ross · Milk & Honey');
 assert.equal(drinkKickerFor(penicillin), 'Modern classic · 2005');
 // A shared spec names its ingredients; a bar's own drink is "Little Rye original".
-const shared = { ...penicillin, ingredients: ['Scotch', 'Lemon', 'Honey Syrup'], bar_id: 'b', bar: 'Little Rye', creator: null, origin: 'Original', origin_year: null };
+const shared = { ...penicillin, ingredients: [{ name: 'Scotch', brand: false }, { name: 'Lemon', brand: false }, { name: 'Honey Syrup', brand: false }], bar_id: 'b', bar: 'Little Rye', creator: null, origin: 'Original', origin_year: null };
 assert.equal(drinkLine(shared), 'Scotch, lemon, honey syrup');
 assert.equal(madeBy(shared), 'Little Rye');
 assert.equal(drinkKickerFor(shared), 'Little Rye original');

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import type { CreditStatus } from '@/lib/lineage';
 import { isUuid } from '@/lib/menuPreview';
+import type { IngredientName } from '@/lib/publicDrink';
 import type { PresentationRecipe } from '@/lib/spec';
 import { supabase } from '@/lib/supabase';
 
@@ -211,6 +212,8 @@ export interface PublishedDrinkPage {
   family: string | null;
   /** Only for a drink published with its spec: generic ingredients, amounts, units. */
   recipes: PresentationRecipe[];
+  /** Its ingredient names, never amounts: what a drink without a shared spec shows signed out. */
+  names: IngredientName[];
 }
 
 /** One published drink's public page, or null when it isn't (or is no longer) published. */
@@ -225,7 +228,7 @@ export function usePublishedDrink(id: string | null | undefined) {
       const [drink] = await fetchPublished([id]);
       if (!drink) return null;
       const refIds = [drink.glasswareId, drink.iceId, drink.familyId].filter((x): x is string => !!x);
-      const [refs, bar, recipes] = await Promise.all([
+      const [refs, bar, recipes, names] = await Promise.all([
         refIds.length ? supabase.from('published_items').select('id, name, icon_key').in('id', refIds) : Promise.resolve({ data: [], error: null }),
         drink.barId ? fetchPublicBars([drink.barId]).then((b) => b[0] ?? null) : fetchCreditedBar(drink.originBarProfileId),
         drink.publishMode === 'spec'
@@ -234,9 +237,11 @@ export function usePublishedDrink(id: string | null | undefined) {
               .select('id, sort_order, created_at, amount, unit, is_optional, display_ingredient_id, display_ingredient:published_ingredient(id, name, abv, image_url)')
               .eq('recipe_item_id', drink.id)
           : Promise.resolve({ data: [], error: null }),
+        drink.publishMode === 'spec' ? Promise.resolve({ data: [], error: null }) : supabase.rpc('public_drink_ingredients', { p_item_ids: [drink.id] }),
       ]);
       if (refs.error) throw refs.error;
       if (recipes.error) throw recipes.error;
+      if (names.error) throw names.error;
       const ref = (refId: string | null) => (refs.data ?? []).find((r) => r.id === refId) as { name: string; icon_key: string | null } | undefined;
       const glass = ref(drink.glasswareId);
       return {
@@ -246,6 +251,7 @@ export function usePublishedDrink(id: string | null | undefined) {
         ice: ref(drink.iceId)?.name ?? null,
         family: ref(drink.familyId)?.name ?? null,
         // published_ingredient returns a set, so PostgREST embeds an array.
+        names: ((names.data ?? []) as IngredientName[]).map(({ name, brand }) => ({ name, brand })),
         recipes: (recipes.data ?? []).map((r) => {
           type Ing = { id: string; name: string; abv: number | null; image_url: string | null };
           const ing = r.display_ingredient as Ing[] | Ing | null;

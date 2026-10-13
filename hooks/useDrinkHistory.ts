@@ -49,7 +49,7 @@ export function useBook(key: string | null | undefined) {
     } | null> => {
       const { data, error } = await supabase
         .from('sources')
-        .select(`${SOURCE_COLUMNS}, recipes:source_recipes(id, printed_name, page_label, page_url, relation, item:items(id, name))`)
+        .select(`${SOURCE_COLUMNS}, summary, recipes:source_recipes(id, printed_name, page_label, page_url, relation, item:items(id, name))`)
         .eq('key', key!)
         .maybeSingle();
       if (error) throw error;

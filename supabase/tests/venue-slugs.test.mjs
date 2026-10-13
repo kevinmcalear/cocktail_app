@@ -91,6 +91,7 @@ describe('get_venue_branding', () => {
       'accent_light_color',
       'display_face',
       'ground_tint',
+      'icon_background',
       'icon_url',
       'id',
       'logo_url',
