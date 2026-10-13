@@ -34,7 +34,9 @@ interface SpecSectionProps {
   caption?: string | null;
   /** Spec line keys your shelf doesn't have: marked "Not on your shelf". */
   missing?: readonly string[];
-  /** Under the lines, inside the section: the method at home, what to do about a missing bottle. */
+  /** Right under the lines: method, glass, ice and garnish (MakeLine). Shown even when the lines are locked. */
+  make?: ReactNode;
+  /** Under that, inside the section: the method's steps, what to do about a missing bottle. */
   children?: ReactNode;
 }
 
@@ -54,7 +56,7 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
  * The spec, showing exactly what this role can see. Anything the server
  * withheld stays on the page as a locked section that says who can open it.
  */
-export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], children }: SpecSectionProps) {
+export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], make, children }: SpecSectionProps) {
   const ds = useDs();
   const router = useRouter();
   const realRole = useEffectiveRole(barId);
@@ -77,15 +79,19 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
       <View style={styles.section}>
         <Headline role="heading">{heading}</Headline>
         <Body tone="muted">No spec yet.</Body>
+        {make}
       </View>
     );
   }
 
   if (!access.names) {
     return (
-      <LockedSection title="Spec" unlocked={false} opensAt={opensAt(levels ? Math.min(levels.generic, levels.brand) : undefined)} note="Method and prep notes open with it.">
-        {null}
-      </LockedSection>
+      <View style={styles.section}>
+        <LockedSection title="Spec" unlocked={false} opensAt={opensAt(levels ? Math.min(levels.generic, levels.brand) : undefined)} note="Method and prep notes open with it.">
+          {null}
+        </LockedSection>
+        {make}
+      </View>
     );
   }
 
@@ -125,6 +131,7 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
           />
         ))}
       </View>
+      {make}
       {children}
       {houseLine ? <HouseMadeSheet line={houseLine} onClose={() => setHouseLine(null)} /> : null}
       {convert ? <ToolsSheet visible onClose={() => setConvert(null)} tool="convert" amount={convert} scheme="dark" /> : null}

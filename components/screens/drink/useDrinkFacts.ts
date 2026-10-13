@@ -2,12 +2,11 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { classifyMethod, isGarnishUnit, type BatchMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
-import { formatIce, glassFit } from '@/lib/glass';
 import type { SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
 import type { Fact } from './DrinkFacts';
-import { hasIce, type GlassSheetGlass } from './GlassSheet';
+import type { GlassSheetGlass } from './GlassSheet';
 
 interface Named {
   id: string;
@@ -37,8 +36,8 @@ interface Options {
 }
 
 /**
- * The facts you check before you reach for a glass (glass, ice, family,
- * strength, serve) and the tags above the name, from the drink and the
+ * The facts you need to make it (method, glass, ice, garnish), the ones for
+ * later (strength, serve, family) and the drink's origin tag, from the drink and the
  * dropdown items. Strength comes from the server's figures for every role;
  * the line-by-line sheet needs the amounts.
  */
@@ -57,14 +56,12 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const abv = specLocked ? null : formatAbv(item.abv);
   const strengthPress = strength ? openStrength : undefined;
   const strengthHint = strength ? 'Opens the ethanol in each line and the dilution' : undefined;
-  const fit = glass && measures ? glassFit(item.serve_ml, glass, hasIce(ice?.name)) : null;
   const glassHint = openGlass && measures ? 'Opens the glass size and the ice per serve' : undefined;
   const madeBy = (makes: string) => makers.find((c) => c.makes === makes && c.confirmed_at)?.maker?.display_name;
   const iceBy = madeBy('ice');
   const glassBy = madeBy('glassware');
-  const icePerServe = item.ice_per_serve_g && measures ? `${formatIce(item.ice_per_serve_g)} per serve` : undefined;
 
-  // The finish: the last count-unit line (a twist, a pick, a pinch), with how it goes on.
+  // The finish: the last count-unit line (a twist, a pick, a pinch).
   const garnish = [...lines].reverse().find((l) => l.ingredient && isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient));
   const serveAbv = item.serve_abv != null && !specLocked ? formatAbv(item.serve_abv) : null;
   const serve =
@@ -78,13 +75,19 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
         }
       : null;
 
-  // Boards drink-phone-venue/-home/-floor/-classic: method and garnish first; family only where the serve isn't shown.
+  // What you need to make it, beside the spec (13 Oct, the dive-bar test): how, what glass, what ice, what on top.
+  // How full the glass is and the ice per serve wait behind a tap (the glass sheet); the garnish's note is on its spec line.
+  const make = (
+    [
+      methods.length ? { label: 'Method', value: methods.join(', ') } : null,
+      glass && { label: 'Glass', value: glass.name, sub: glassBy ? `by ${glassBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
+      ice && { label: 'Ice', value: ice.name, sub: iceBy ? `cut by ${iceBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
+      garnish ? { label: 'Garnish', value: garnish.ingredient! } : null,
+    ] as (Fact | null | undefined)[]
+  ).filter((f): f is Fact => !!f);
+  // Under More: strength and serve; family only where the serve isn't shown.
   const facts = (
     [
-      methods.length ? { label: 'Method', value: methods[0], sub: methods.slice(1).join(', ') || undefined } : null,
-      glass && { label: 'Glass', value: glass.name, sub: [glassBy ? `by ${glassBy}` : null, fit?.label].filter(Boolean).join(' · ') || undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
-      ice && { label: 'Ice', value: ice.name, sub: [iceBy ? `cut by ${iceBy}` : null, icePerServe].filter(Boolean).join(' · ') || undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
-      garnish ? { label: 'Garnish', value: garnish.ingredient!, sub: garnish.note ?? undefined } : null,
       abv
         ? {
             label: 'ABV',
@@ -98,6 +101,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
       family && !serve ? { label: 'Family', value: family.name } : null,
     ] as (Fact | null | undefined)[]
   ).filter((f): f is Fact => !!f);
-  const tags = [item.origin ? (ORIGIN_LABEL[item.origin] ?? item.origin) : null, ...methods].filter((t): t is string => !!t);
-  return { facts, tags, glass, ice: ice ? { name: ice.name } : null, method, methods, strength };
+  // The method is in the make line now, so the tags are only where the drink comes from.
+  const tags = item.origin ? [ORIGIN_LABEL[item.origin] ?? item.origin] : [];
+  return { make, facts, tags, glass, ice: ice ? { name: ice.name } : null, method, methods, strength };
 }

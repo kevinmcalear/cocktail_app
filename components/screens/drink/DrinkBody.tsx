@@ -5,27 +5,30 @@ import { space } from '@/constants/tokens';
 import type { DrinkSections } from './DrinkSections';
 
 /**
- * The drink page's sections on a phone, in the order the boards draw them:
- * venue mode (drink-phone-venue, -floor) puts the floor's talking points and
- * the spec first and the staff rows last; home mode (drink-phone-home,
- * -classic) leads with you and this drink, checks the spec against your shelf
- * and ends with photos.
+ * The drink page's sections on a phone, in two parts (13 Oct, with Eddie at
+ * Caretaker's Cottage): first, just enough to make the drink (the name and
+ * credit, the spec with method, glass, ice and garnish, the steps), then
+ * "More about this drink" for everything else. At home the journey strip
+ * (I made it) follows the spec; on a venue's team the floor's talking points
+ * do, since below Bartender they stand in for the spec.
  */
 export function DrinkBody({ sections: s, home }: { sections: DrinkSections; home: boolean }) {
   return (
     <View style={styles.body}>
       {s.header}
+      {s.intro}
+      {s.spec}
       {s.journey}
-      {s.menus}
+      {s.floor}
+      {s.moreHeading}
+      {s.standing}
       {s.banner}
       {s.description}
-      {s.floor}
       {s.facts}
       {s.allergens}
       {s.flavor}
-      {s.spec}
       {s.servedAt}
-      {s.method}
+      {s.menus}
       {home ? null : s.photos}
       {s.service}
       {s.history}

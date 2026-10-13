@@ -1,8 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, Headline } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Body, Button, Caption, Display, useDs } from '@/components/ds';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useClassicCopy } from '@/hooks/useClassicCopy';
@@ -29,6 +29,7 @@ import { FlavorSection } from './FlavorSection';
 import { ForTheFloor } from './ForTheFloor';
 import { HistorySection } from './HistorySection';
 import { JourneyStrip } from './JourneyStrip';
+import { MakeLine } from './MakeLine';
 import { MenuCard, MenuRuns } from './MenuRuns';
 import { PeoplePhotos } from './PeoplePhotos';
 import { ScoreCaption } from './ScoreCaption';
@@ -52,6 +53,9 @@ export interface DrinkBodyProps {
   access: SpecAccess;
   amountsOpenAt: string;
   lines: SpecLine[];
+  /** Method, glass, ice, garnish: under the spec. */
+  make: Fact[];
+  /** Strength, serve, family: under More. */
   facts: Fact[];
   tags: string[];
   glass: string | null;
@@ -63,6 +67,9 @@ export interface DrinkBodyProps {
   /** The drink's venue, when you're on its team: "Autumn menu at Little Rye". */
   venueName: string | null;
 }
+
+/** A description this short reads with the spec; a longer one waits under More. */
+const SHORT_DESCRIPTION = 160;
 
 /**
  * Every section of the drink page, built once from the page's data, for the
@@ -85,29 +92,34 @@ export function useDrinkSections(p: DrinkBodyProps) {
   const recipes = item.recipes as PresentationRecipe[] | undefined;
   const names = lines.map((l) => l.ingredient);
   const description = item.description && pageShowsDescriptions(lock?.bar.visibility) ? <Body tone="muted">{item.description}</Body> : null;
+  const short = !!item.description && item.description.length <= SHORT_DESCRIPTION;
   // A catalog classic's notes are its story, not a method (board drink-phone-classic draws a short method line): Backstory keeps them.
   const catalog = !!useLineage(live ? item.id : null).data?.drink?.is_catalog;
   const method = item.notes && !lock && !catalog ? item.notes : null;
 
+  // The spec, then method, glass, ice and garnish, then the steps: one recipe, read top to bottom.
+  const make = <MakeLine facts={p.make} />;
   const spec = lock ? (
-    <SpecLockPanel
-      note={specLockNote(lock.bar.name, !lock.bar.isClaimed, true)}
-      action={<Button label={lock.bar.isClaimed ? `See ${lock.bar.name}` : 'Work here? Claim this page'} variant="secondary" onPress={() => router.push(`/p/${lock.bar.handle}` as Href)} />}
-    />
+    <View style={styles.make}>
+      <SpecLockPanel
+        note={specLockNote(lock.bar.name, !lock.bar.isClaimed, true)}
+        action={<Button label={lock.bar.isClaimed ? `See ${lock.bar.name}` : 'Work here? Claim this page'} variant="secondary" onPress={() => router.push(`/p/${lock.bar.handle}` as Href)} />}
+      />
+      {make}
+    </View>
   ) : home && signedIn && live ? (
-    <AtHomeSpec item={item} lines={lines} recipes={recipes} method={method} onSwap={p.actions.made} />
+    <AtHomeSpec item={item} lines={lines} recipes={recipes} method={method} make={make} onSwap={p.actions.made} />
   ) : (
-    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} preview={preview} caption={copy?.barName ? `With ${copy.barName}'s bottles` : null}>
-      {home && method ? <Body>{method}</Body> : null}
+    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} preview={preview} caption={copy?.barName ? `With ${copy.barName}'s bottles` : null} make={make}>
+      {method ? <Body>{method}</Body> : null}
     </SpecSection>
   );
 
+  // Just the name and who made it over the spec; the tags and the score wait under More.
   const header = (
     <View style={styles.header}>
-      <DrinkTags tags={tags} />
       <Display>{item.name}</Display>
       {live ? <DrinkCredit itemId={item.id} /> : null}
-      {live ? <ScoreCaption itemId={item.id} name={item.name} /> : null}
       {live && p.photoCredit ? (
         <Caption tone="muted" role={p.photoCredit.url ? 'link' : undefined} onPress={p.photoCredit.url ? () => void Linking.openURL(p.photoCredit!.url!) : undefined}>
           {p.photoCredit.text}
@@ -117,6 +129,16 @@ export function useDrinkSections(p: DrinkBodyProps) {
   );
   return {
     header,
+    intro: short ? description : null,
+    spec,
+    moreHeading: <MoreHeading />,
+    standing:
+      tags.length || live ? (
+        <View style={styles.standing}>
+          {live ? <ScoreCaption itemId={item.id} name={item.name} /> : null}
+          <DrinkTags tags={tags} />
+        </View>
+      ) : null,
     journey:
       home && signedIn && live ? (
         <JourneyStrip itemId={item.id} name={item.name} saved={p.toMake.saved} onToggleSaved={p.toMake.toggle} onRank={p.actions.rank} onMade={p.actions.made} madeTimes={p.actions.madeTimes} lines={lines} />
@@ -130,21 +152,13 @@ export function useDrinkSections(p: DrinkBodyProps) {
       </>
     ),
     banner: live ? <VersionBanner itemId={item.id} inline={p.wide} venueName={barName} /> : null,
-    description,
+    description: short ? null : description,
     // The floor's talking points: for floor roles below Bartender, and editors who write them. A Bartender has the spec (board drink-phone-venue).
     floor: staff && item.bar_id && live && (role < 30 || p.canEdit) ? <ForTheFloor itemId={item.id} barId={item.bar_id} name={item.name} ingredients={names} canEdit={p.canEdit} /> : null,
     facts: <DrinkFacts facts={p.facts} columns={2} />,
     allergens: <AllergensSection itemId={item.id} barId={item.bar_id} preview={!!preview} />,
     flavor: live ? <FlavorSection itemId={item.id} name={item.name} /> : null,
-    spec,
     servedAt: live ? <ServedAt itemId={item.id} /> : null,
-    method:
-      method && !home ? (
-        <View style={styles.method}>
-          <Headline role="heading">Method</Headline>
-          <Body>{method}</Body>
-        </View>
-      ) : null,
     photos: live ? <PeoplePhotos itemId={item.id} name={item.name} glass={p.glass} wide={p.wide} /> : null,
     service: staff ? (
       <ServiceSection
@@ -171,7 +185,22 @@ export function useDrinkSections(p: DrinkBodyProps) {
 
 export type DrinkSections = ReturnType<typeof useDrinkSections>;
 
+/** Where the make-it part ends: everything under it is for when you want to know more. */
+function MoreHeading() {
+  const ds = useDs();
+  return (
+    <View style={[styles.more, { borderTopColor: ds.c.line }]}>
+      <Caption tone="muted" role="heading" aria-level={2} style={styles.moreLabel}>
+        More about this drink
+      </Caption>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   header: { gap: space.md },
-  method: { gap: space.sm },
+  make: { gap: space.md },
+  standing: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
+  more: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.xl },
+  moreLabel: { fontFamily: fontFamilies.mono, letterSpacing: 1.2, textTransform: 'uppercase' },
 });
