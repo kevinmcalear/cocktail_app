@@ -159,6 +159,7 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
         openLocationId={openLocationId}
         onOpenLocation={setOpenLocationId}
         onMove={startMove}
+        canPhoto={canDraw}
       />
     ) : null;
     body = wide ? (
