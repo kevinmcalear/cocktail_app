@@ -1,4 +1,4 @@
--- Two pieces of the This week page of the whole-app canvas
+-- Three pieces of the This week page of the whole-app canvas
 -- (https://claude.ai/artifact/KRE17t8L8SC8f4M4KFLgZe):
 --
 --   loved_bars.alerts     Loving a bar asks what it may tell you about
@@ -12,6 +12,12 @@
 --                         for whoever may open the event. Guests read only
 --                         published drinks, through week_event's own rule, so
 --                         nothing here widens what a guest sees of a bar.
+--   week_event_brand()    The look an event page wears (board
+--                         week-event-guest): the host bar's accent, display
+--                         face and ground tint, and the guest bar's on a
+--                         takeover (from the guest's public bar page). Only
+--                         for an event week_event opens to the caller, and
+--                         only what a bar's public page already shows.
 
 -- --- What a loved bar may tell you about ---
 
@@ -67,3 +73,33 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION "public"."week_event_drinks"("uuid") FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION "public"."week_event_drinks"("uuid") TO "anon", "authenticated", "service_role";
+
+-- --- The look an event page wears ---
+
+-- The host's brand, and the guest bar's when the guest is a bar with a public
+-- page. bars is members only under RLS, so this reads it as the definer, for
+-- an event the caller may open (week_event) and nothing more.
+CREATE FUNCTION "public"."week_event_brand"("p_event_id" "uuid")
+    RETURNS TABLE (
+        "host_accent" "text",
+        "host_face" "text",
+        "host_tint" "text",
+        "guest_accent" "text",
+        "guest_face" "text",
+        "guest_tint" "text"
+    )
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT hb.primary_color, hb.display_face::text, hb.ground_tint,
+         gb.primary_color, gb.display_face::text, gb.ground_tint
+  FROM public.week_event(p_event_id) wk
+  JOIN public.events e ON e.id = wk.id
+  JOIN public.bars hb ON hb.id = e.bar_id
+  LEFT JOIN public.profiles gp ON gp.id = e.guest_profile_id AND gp.kind = 'bar' AND gp.is_public AND gp.moderated_at IS NULL
+  LEFT JOIN public.bars gb ON gb.id = gp.bar_id
+  LIMIT 1;
+$$;
+
+REVOKE EXECUTE ON FUNCTION "public"."week_event_brand"("uuid") FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION "public"."week_event_brand"("uuid") TO "anon", "authenticated", "service_role";

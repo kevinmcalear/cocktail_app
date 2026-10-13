@@ -7,7 +7,8 @@ import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
-import { useBarPlace, useDeleteEvent, useEventDraft, useWeekEvent } from '@/hooks/useWeek';
+import { useBarPlace, useDeleteEvent, useEventDraft, useWeekEvent, useWeekEventBrand } from '@/hooks/useWeek';
+import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { menuStatus } from '@/lib/menus';
 import { isHexColor } from '@/lib/color';
 import { isApplePlatform } from '@/lib/platformKeys';
@@ -27,9 +28,12 @@ import { useDotColor } from './WeekParts';
  */
 export function EventScreen({ id }: { id: string }) {
   const { data: event } = useWeekEvent(id);
-  const accent = [event?.eventKind === 'takeover' ? event.guestColor : null, event?.barColor].find((c): c is string => isHexColor(c));
+  const { data: brand } = useWeekEventBrand(id);
+  const takeover = event?.eventKind === 'takeover';
+  const side = (takeover && brand?.guest) || brand?.host;
+  const accent = [side?.accent, takeover ? event?.guestColor : null, event?.barColor].find((c): c is string => isHexColor(c));
   return (
-    <BrandProvider accent={accent}>
+    <BrandProvider accent={accent} displayFace={side?.face ? faceFromDb(side.face) : undefined} groundTint={usableGroundTint(side?.tint) ?? undefined}>
       <EventPage id={id} />
     </BrandProvider>
   );
@@ -148,18 +152,26 @@ function EventPage({ id }: { id: string }) {
 /** The bars' square marks, the guest's over the host's for a takeover (week-event-guest). */
 function EventMarks({ event }: { event: WeekItem }) {
   const ds = useDs();
-  const marks = [event.eventKind === 'takeover' && event.guestName ? { name: event.guestName, color: event.guestColor } : null, { name: event.barName ?? event.name, color: event.barColor }].filter(
-    (m): m is { name: string; color: string | null } => !!m,
-  );
+  const brand = useWeekEventBrand(event.id).data;
+  type Mark = { name: string; color: string | null | undefined; face: string | null | undefined };
+  const marks = [
+    event.eventKind === 'takeover' && event.guestName ? { name: event.guestName, color: event.guestColor ?? brand?.guest?.accent, face: brand?.guest?.face } : null,
+    { name: event.barName ?? event.name, color: event.barColor ?? brand?.host.accent, face: brand?.host.face },
+  ].filter((m): m is Mark => !!m);
   return (
     <View aria-hidden style={styles.marks}>
-      {marks.map((m, i) => (
-        <View key={m.name} style={[styles.mark, { backgroundColor: m.color ?? ds.c.raised }, i ? [styles.over, { borderColor: ds.c.ground }] : null]}>
-          <DsText variant="title" color={m.color ? ds.c.ground : ds.c.ink} style={{ fontFamily: displayFaces[ds.displayFace].italic }}>
-            {m.name.slice(0, 1).toUpperCase()}
-          </DsText>
-        </View>
-      ))}
+      {marks.map((m, i) => {
+        const color = isHexColor(m.color) ? m.color : null;
+        // Each bar's letter in its own display face, as the board draws P and L.
+        const face = displayFaces[m.face ? faceFromDb(m.face) : ds.displayFace].italic;
+        return (
+          <View key={m.name} style={[styles.mark, { backgroundColor: color ?? ds.c.raised }, i ? [styles.over, { borderColor: ds.c.ground }] : null]}>
+            <DsText variant="title" color={color ? ds.c.ground : ds.c.ink} style={{ fontFamily: face }}>
+              {m.name.slice(0, 1).toUpperCase()}
+            </DsText>
+          </View>
+        );
+      })}
     </View>
   );
 }

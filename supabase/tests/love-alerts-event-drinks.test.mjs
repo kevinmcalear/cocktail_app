@@ -2,7 +2,8 @@
 // someone who loves a bar picks what it may tell them about, on their own row
 // only and on that column only; an event page lists the drinks on the event's
 // menu, every one for the bar's team and only published ones for guests, and
-// nothing for an event a guest can't open.
+// nothing for an event a guest can't open; and the look the page wears, the
+// host's brand and a guest bar's, only for an event the viewer can open.
 //
 //   supabase start && supabase db reset
 //   npm run test:security
@@ -53,7 +54,9 @@ async function makeUser(label) {
 before(async () => {
   await db.connect();
   for (const label of ['maker', 'lover', 'other']) users[label] = await makeUser(label);
-  ids.bar = (await serviceInsert('bars', { name: `Lovebar ${run}` })).id;
+  ids.bar = (await serviceInsert('bars', { name: `Lovebar ${run}`, primary_color: '#D0643B' })).id;
+  ids.guestBar = (await serviceInsert('bars', { name: `Guestbar ${run}`, primary_color: '#B9A8F5', display_face: 'fraunces', ground_tint: '#181019' })).id;
+  ids.guestPage = (await serviceInsert('profiles', { kind: 'bar', handle: `guest.${run}`, display_name: `Guestbar ${run}`, is_public: true, bar_id: ids.guestBar })).id;
   ids.page = (await serviceInsert('profiles', { kind: 'bar', handle: `love.${run}`, display_name: `Lovebar ${run}`, is_public: true, bar_id: ids.bar })).id;
   ids.otherPage = (await serviceInsert('profiles', { kind: 'bar', handle: `love2.${run}`, display_name: `Lovebar two ${run}`, is_public: true })).id;
   await serviceInsert('user_bars', { user_id: users.maker.id, bar_id: ids.bar, role_level: 35 });
@@ -66,8 +69,8 @@ before(async () => {
   await serviceInsert('menu_drinks', { menu_id: ids.menu, item_id: ids.published, sort_order: 1 });
   await serviceInsert('menu_drinks', { menu_id: ids.menu, item_id: ids.private, sort_order: 2 });
   const event = (name, extra) => serviceInsert('events', { bar_id: ids.bar, name: `${name} ${run}`, starts_at: soon, menu_id: ids.menu, kind: 'takeover', ...extra });
-  ids.publicEvent = (await event('Takeover', { is_public: true })).id;
-  ids.teamEvent = (await event('Team takeover', { is_public: false })).id;
+  ids.publicEvent = (await event('Takeover', { is_public: true, guest_profile_id: ids.guestPage })).id;
+  ids.teamEvent = (await event('Team takeover', { is_public: false, guest_profile_id: ids.guestPage })).id;
 });
 
 after(async () => {
@@ -136,5 +139,27 @@ describe("an event's drinks", () => {
     assert.deepEqual(await names(anon, ids.teamEvent), []);
     assert.deepEqual(await names(users.lover.client, ids.teamEvent), []);
     assert.deepEqual(await names(users.maker.client, ids.teamEvent), [ids.published, ids.private]);
+  });
+});
+
+describe("an event page's look", () => {
+  const brand = async (client, eventId) => {
+    const { data, error } = await client.rpc('week_event_brand', { p_event_id: eventId });
+    assert.ifError(error);
+    return data;
+  };
+
+  test("anyone who can open a public event sees the host's and the guest bar's brand", async () => {
+    for (const client of [anon, users.lover.client, users.maker.client]) {
+      assert.deepEqual(await brand(client, ids.publicEvent), [
+        { host_accent: '#D0643B', host_face: 'instrument_serif', host_tint: null, guest_accent: '#B9A8F5', guest_face: 'fraunces', guest_tint: '#181019' },
+      ]);
+    }
+  });
+
+  test('a team-only event says nothing to anyone else', async () => {
+    assert.deepEqual(await brand(anon, ids.teamEvent), []);
+    assert.deepEqual(await brand(users.lover.client, ids.teamEvent), []);
+    assert.equal((await brand(users.maker.client, ids.teamEvent)).length, 1);
   });
 });
