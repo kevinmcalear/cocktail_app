@@ -144,6 +144,7 @@ assert.equal(sentenceLine(ingredientLine(['gin', 'dry vermouth', 'Campari'])), '
   assert.equal(tonightLine(thu, [{ name: 'A' }, { name: 'B' }], 12, 'en-GB').endsWith(' · 2 menus on · 12 drinks'), true);
   assert.equal(tonightLine(thu, [], 0, 'en-GB').includes('·'), false);
   assert.equal(dotLine('Gin, dry vermouth, orange bitters'), 'Gin · dry vermouth · orange bitters');
+  assert.equal(dotLine('Rye, amaro, orange.'), 'Rye · amaro · orange');
 }
 
 {

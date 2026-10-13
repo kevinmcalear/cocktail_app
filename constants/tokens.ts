@@ -141,6 +141,12 @@ export const displayFaces = {
 
 export type DisplayFace = keyof typeof displayFaces;
 
+/** Names set in the display face on rows (22/26) and on a menu's card (24/28), as the canvas draws them. */
+export const displayName = {
+  row: { fontSize: 22, lineHeight: 26 },
+  card: { fontSize: 24, lineHeight: 28 },
+} as const;
+
 /**
  * Seven text styles. Nothing below 13. Display and title leave room above the
  * ascenders: iOS bottom-aligns a line set tighter than its font, so a
