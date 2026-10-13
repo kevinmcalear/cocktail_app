@@ -149,7 +149,7 @@ describe('my_bar_drinks: one row per recipe', () => {
     assert.equal(classic.spec_match, null);
   });
 
-  test("each serving bar carries its venue's accent, when its page has one (20261015500000)", async () => {
+  test("each serving bar carries its venue's accent, when its page has one (20261016700000)", async () => {
     const { classic } = await whatToMake('home');
     const accent = Object.fromEntries(classic.served_at.map((b) => [b.name, b.accent]));
     assert.equal(accent[name('Gold Room')], '#D0643B');

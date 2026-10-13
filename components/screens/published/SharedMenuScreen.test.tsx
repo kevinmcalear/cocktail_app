@@ -65,6 +65,14 @@ describe('SharedMenuScreen', () => {
     expect(screen.getByText('Menu made with Cocktail')).toBeTruthy();
   });
 
+  test('names the night in full, and a guest signs in to report it', async () => {
+    mockMenu = { ...mockMenu!, menuDate: '2026-10-31' };
+    await renderWithTamagui(<SharedMenuScreen id="m1" />);
+    expect(screen.getByText('Saturday 31 October · 2 drinks')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('link', { name: 'Report this menu' }));
+    expect(mockPush).toHaveBeenCalledWith('/auth/login');
+  });
+
   test('credits the owner, opening their profile', async () => {
     await renderWithTamagui(<SharedMenuScreen id="m1" />);
     await fireEvent.press(screen.getByRole('link', { name: /Shared by Sam/ }));

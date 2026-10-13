@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
-import { GradeTag } from '@/components/techniques/bits';
-import { layout, radius, space } from '@/constants/tokens';
+import { Body, Caption, DsText, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useKit } from '@/hooks/useKit';
 import { guessKind, keepsText, KIND_WAYS, PREP_KINDS, prepAmounts, wayOf, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
@@ -107,17 +106,29 @@ function WayRow({ name, grade, sub, tip, label, on, onPress }: { name: string; g
     <PressableScale
       role="radio"
       aria-checked={on}
-      accessibilityLabel={label ?? [name, sub, tip].filter(Boolean).join('. ')}
+      accessibilityLabel={[label ?? [name, sub, tip].filter(Boolean).join('. '), grade ? `How sure the sources are: ${grade}` : null].filter(Boolean).join('. ')}
       onPress={onPress}
       style={[styles.way, { backgroundColor: ds.c.raised, borderColor: on ? ds.accentText : 'transparent' }]}
     >
       <View style={styles.wayHead}>
         <Body style={styles.flex}>{name}</Body>
-        {grade ? <GradeTag grade={grade} /> : null}
+        {grade ? <GradeBadge grade={grade} /> : null}
       </View>
       {sub ? <Caption tone="muted">{sub}</Caption> : null}
       {tip ? <Caption tone="accent">{tip}</Caption> : null}
     </PressableScale>
+  );
+}
+
+/** How sure the sources are, as the letter (canvas make-create-prep-kind); the row's label says it in words. */
+function GradeBadge({ grade }: { grade: 'A' | 'B' | 'C' }) {
+  const ds = useDs();
+  return (
+    <View aria-hidden style={[styles.grade, { borderColor: ds.c.lineStrong }]}>
+      <DsText variant="caption" style={styles.mono}>
+        {grade}
+      </DsText>
+    </View>
   );
 }
 
@@ -167,11 +178,13 @@ function Amounts({ draft, how, onChange }: { draft: PrepDraft; how: string | nul
 const styles = StyleSheet.create({
   stack: { gap: space.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, justifyContent: 'space-between' },
-  kind: { minHeight: layout.minTapTarget + space.lg, borderRadius: radius.control, borderWidth: 2, paddingHorizontal: space.md, paddingVertical: space.sm, justifyContent: 'center', gap: 2 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
+  kind: { minHeight: layout.minTapTarget + space.lg, borderRadius: radius.control, borderWidth: 2, paddingHorizontal: space.md - 2, paddingVertical: space.sm, justifyContent: 'center', gap: 2 },
+  row: { flexDirection: 'row', alignItems: 'baseline', columnGap: space.sm, flexWrap: 'wrap' },
   flex: { flex: 1 },
   way: { gap: space.xs, paddingHorizontal: space.md, paddingVertical: space.md, borderRadius: radius.control, borderWidth: 2 },
   wayHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  grade: { paddingHorizontal: space.xs + 2, borderRadius: radius.mark + 2, borderWidth: 1 },
+  mono: { fontFamily: fontFamilies.monoMedium },
   box: { gap: space.xs, padding: space.md, borderRadius: radius.card, borderWidth: 1, marginTop: space.sm },
   forRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   forAmount: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },

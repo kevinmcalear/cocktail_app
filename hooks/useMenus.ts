@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
-import { ingredientLine } from '@/lib/menus';
+import { ingredientLine, readingName, sentenceLine } from '@/lib/menus';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { normalizeAllowedTypes, type SectionDrinkType } from '@/lib/sectionAllowedTypes';
 import { supabase } from '@/lib/supabase';
@@ -130,8 +130,10 @@ export interface MenuItemRow {
   price: string | null;
   glass: { icon_key: string | null; name: string | null } | { icon_key: string | null; name: string | null }[] | null;
   item_images: ItemImageLink[] | ItemImageLink | null;
-  recipes: { sort_order: number | null; created_at?: string; display_ingredient: { name: string } | { name: string }[] | null }[] | null;
+  recipes: { sort_order: number | null; created_at?: string; display_ingredient: LineIngredient | LineIngredient[] | null }[] | null;
 }
+
+type LineIngredient = { name: string; ingredient_role?: string | null };
 
 const KINDS: SectionDrinkType[] = ['cocktail', 'beer', 'wine'];
 
@@ -143,7 +145,7 @@ export function toMenuDrink(item: MenuItemRow): MenuDrink | null {
   const glass = one(item.glass);
   const line =
     kind === 'cocktail'
-      ? ingredientLine(sortRecipesByOrder(item.recipes ?? []).map((r) => one(r.display_ingredient)?.name)) || (item.description ?? '')
+      ? sentenceLine(ingredientLine(sortRecipesByOrder(item.recipes ?? []).map((r) => readingName(one(r.display_ingredient))))) || (item.description ?? '')
       : [item.brand_maker, item.origin].filter(Boolean).join(' · ') || (item.description ?? '');
   return {
     id: item.id,
@@ -167,7 +169,7 @@ export function publishedMenuDrink(p: PublishedDrink): MenuDrink | null {
 /** The columns a menu needs from a drink (items), for toMenuDrink. */
 export const MENU_DRINK_COLUMNS = `id, name, item_type, description, brand_maker, origin, price, glass:glassware_id(icon_key, name),
   item_images(angle, sort_order, is_generated, images(url)),
-  recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name))`;
+  recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name, ingredient_role))`;
 export const MENU_DRINK_ITEM = `item:items!item_id(${MENU_DRINK_COLUMNS})`;
 
 /**

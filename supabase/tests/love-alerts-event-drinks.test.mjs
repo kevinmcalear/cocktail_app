@@ -1,4 +1,4 @@
-// Love alerts and an event's drinks (20261015500000_love_alerts_and_event_drinks):
+// Love alerts and an event's drinks (20261016700000_love_alerts_and_event_drinks):
 // someone who loves a bar picks what it may tell them about, on their own row
 // only and on that column only; an event page lists the drinks on the event's
 // menu, every one for the bar's team and only published ones for guests, and

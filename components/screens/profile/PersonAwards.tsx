@@ -3,9 +3,9 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DsText, Headline, PressableScale, Tag, TextLink, useDs } from '@/components/ds';
+import { Caption, DsText, Headline, PressableScale, Spec, Tag, TextLink, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useProfileAwards, useSetAwardPick } from '@/hooks/useProfiles';
 import { awardInitials, sortAwards, type Award } from '@/lib/awards';
 import { pickedShown, type ShareMode } from '@/lib/profiles';
@@ -33,14 +33,20 @@ export function PersonAwards({ profileId }: { profileId: string }) {
   const shown = all ? awards : awards.slice(0, FIRST);
   return (
     <View nativeID="awards" style={styles.section}>
-      <Headline role="heading">Awards</Headline>
+      <Caption tone="muted" role="heading" style={styles.eyebrow}>
+        Awards
+      </Caption>
       <View role="list">
         {shown.map((a) => (
           <AwardRow key={a.id} award={a} />
         ))}
       </View>
       <Caption tone="muted">Newest first. Each one is checked against the award’s published results.</Caption>
-      {awards.length > FIRST && !all ? <Button label={`All ${awards.length} awards`} variant="secondary" onPress={() => setAll(true)} style={styles.start} /> : null}
+      {awards.length > FIRST && !all ? (
+        <View style={styles.start}>
+          <TextLink label={`All ${awards.length} awards`} onPress={() => setAll(true)} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -101,20 +107,26 @@ function AwardRow({ award: a, hidden = false, onToggle }: { award: Award; hidden
             <DsText variant="headline" style={styles.shrink}>
               {headline(a)}
             </DsText>
-            {a.is_finalist ? <Tag label="Finalist" /> : place ? <Tag label={place} /> : null}
-            {hidden ? <Tag label="Only you" /> : null}
+            {a.is_finalist ? <Caption tone="muted" style={styles.place}>Finalist</Caption> : place ? <Spec style={styles.place}>{place}</Spec> : null}
           </View>
-          <Caption tone="muted">{body}</Caption>
+          <Caption>{body}</Caption>
           {pending ? (
             <View style={styles.titleRow}>
               <IconSymbol name="clock" size={14} color={ds.c.muted} />
               <Caption tone="muted">Not confirmed yet</Caption>
             </View>
           ) : null}
-          <View style={styles.titleRow}>
-            {a.bar ? <Caption>{`at ${a.bar.display_name}`}</Caption> : null}
-            {a.source_url ? <SourceLink url={a.source_url} label={`Source: ${headline(a)}, ${body}${a.is_finalist ? ', finalist' : ''}, opens in a new tab`} /> : null}
-          </View>
+          {a.bar || a.source_url ? (
+            <View style={styles.footRow}>
+              {a.bar ? <Caption tone="muted">{`at ${a.bar.display_name}`}</Caption> : null}
+              {a.source_url ? <SourceLink url={a.source_url} label={`Source: ${headline(a)}, ${body}${a.is_finalist ? ', finalist' : ''}, opens in a new tab`} /> : null}
+            </View>
+          ) : null}
+          {hidden ? (
+            <View style={styles.start}>
+              <Tag label="Only you" />
+            </View>
+          ) : null}
         </View>
       </View>
       {onToggle ? (
@@ -126,11 +138,13 @@ function AwardRow({ award: a, hidden = false, onToggle }: { award: Award; hidden
   );
 }
 
+/** A small accent "Source ↗" on the award's last line, its tap area grown to 44 points. */
 function SourceLink({ url, label }: { url: string; label: string }) {
+  const ds = useDs();
   return (
-    <View accessible={false}>
-      <TextLink label="Source ↗" accessibilityHint={label} onPress={() => void Linking.openURL(url)} />
-    </View>
+    <PressableScale role="link" accessibilityLabel={label} hitSlop={space.md} onPress={() => void Linking.openURL(url)}>
+      <Caption color={ds.accentText}>Source ↗</Caption>
+    </PressableScale>
   );
 }
 
@@ -150,17 +164,21 @@ function AddRow({ onPress }: { onPress: () => void }) {
   );
 }
 
-const LOGO = 40;
+const LOGO = 44;
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
   start: { alignSelf: 'flex-start' },
+  eyebrow: { letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: fontFamilies.bodyMedium },
+  footRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
   main: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingVertical: space.md },
   hidden: { opacity: 0.5 },
   text: { flex: 1, minWidth: 0, gap: 2 },
-  titleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
+  titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
   shrink: { flexShrink: 1 },
+  // "No. 64" and Finalist keep to one line beside a long title (ppl-person).
+  place: { flexShrink: 0 },
   logo: { width: LOGO, height: LOGO, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   logoImg: { width: LOGO - 8, height: LOGO - 8 },
   add: { borderStyle: 'dashed', borderWidth: 1 },

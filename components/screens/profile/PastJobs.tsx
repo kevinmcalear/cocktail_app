@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Platform, StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DsText, Field, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, PressableScale, Switch, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { UserAvatar } from '@/components/ui/UserAvatar';
-import { backbar, space } from '@/constants/tokens';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useEditPosition, useProfilePositions, useShowPosition, type Position } from '@/hooks/useProfiles';
 import { jobYears } from '@/lib/profiles';
 
+import { BarMark } from '../home/BarMark';
 import { isShownPosition } from './Positions';
 
 /** On a claim: the claimant can't see the hidden past jobs until it's theirs. */
@@ -48,15 +48,15 @@ export function PastJobs({ personId }: { personId: string }) {
                   onPress={() => setEditing(editing === p.id ? null : p.id)}
                   style={styles.main}
                 >
-                  <UserAvatar uri={p.bar.avatar_url} name={p.bar.display_name} size={40} />
+                  <BarMark name={p.bar.display_name} logoUrl={p.bar.avatar_url} size={44} neutral={!p.bar_accepted} />
                   <View style={styles.flex}>
-                    <DsText variant="headline" numberOfLines={2}>
+                    <Body numberOfLines={2} style={styles.title}>
                       {p.title}
-                    </DsText>
-                    <Caption tone="muted">{[p.bar.display_name, years].filter(Boolean).join(' · ')}</Caption>
+                    </Body>
+                    <Caption>{[p.bar.display_name, years].filter(Boolean).join(' · ')}</Caption>
                     <View style={styles.mark}>
                       {p.bar_accepted ? <IconSymbol name="checkmark.seal.fill" size={14} color={ds.accentText} /> : null}
-                      <Caption tone={p.bar_accepted ? 'ink' : 'muted'}>{confirmedLine(p)}</Caption>
+                      <Caption tone="muted">{confirmedLine(p)}</Caption>
                     </View>
                   </View>
                 </PressableScale>
@@ -64,12 +64,7 @@ export function PastJobs({ personId }: { personId: string }) {
                   <Switch
                     value={on}
                     onValueChange={(next) => show.mutate({ id: p.id, shown: next })}
-                    aria-label={`Show ${p.title} at ${p.bar.display_name} on your profile`}
-                    trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
-                    // A white thumb on every platform. react-native-web colours the
-                    // on thumb from its own activeThumbColor (teal by default).
-                    thumbColor={backbar.light.surface}
-                    {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
+                    label={`Show ${p.title} at ${p.bar.display_name} on your profile`}
                   />
                   <Caption tone="muted">{on ? 'Shown' : 'Hidden'}</Caption>
                 </View>
@@ -133,6 +128,7 @@ export function JobYears({ job, onDone }: { job: Position; onDone: () => void })
 }
 
 const styles = StyleSheet.create({
+  title: { fontFamily: fontFamilies.bodySemiBold },
   box: { gap: space.md },
   item: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

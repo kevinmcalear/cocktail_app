@@ -19,6 +19,9 @@ import type { DrinkToMake } from '@/hooks/useBringInSave';
 import { BoxField, CheckFooter, CheckTop, MonoLabel, PageLook } from './CheckParts';
 import { SourceCrop } from './PagePicture';
 
+/** "calvados" reads "Calvados", as the canvas sets a spec line; a bottle's own capitals stay. */
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 const amountShown = (line: RecipeReadLine, usual: string) => {
   if (line.unit === 'top') return 'Top';
   if (line.amount === null) return '';
@@ -32,7 +35,7 @@ function Chips({ words, onNotes }: { words: string[]; onNotes: () => void }) {
     <View style={styles.chips}>
       {words.map((w) => (
         <View key={w} style={[styles.chip, { backgroundColor: ds.c.surface, borderColor: ds.c.glassBorder }]}>
-          <Body>{w}</Body>
+          <Body>{sentence(w)}</Body>
         </View>
       ))}
       <Button label="+ Notes" variant="ghost" onPress={onNotes} style={[styles.notes, { borderColor: ds.c.lineStrong }]} />
@@ -104,13 +107,16 @@ export function RecipeCheck({ recipes, files, from, data, saving, error, onCance
             <TextInput accessibilityLabel="Drink name" value={choices.name} onChangeText={(name) => set({ name })} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
           </View>
         </View>
-        <View style={styles.row}>
-          <BoxField label="MADE BY">
-            <TextInput accessibilityLabel="Made by" placeholder="Who made it?" placeholderTextColor={ds.c.faint} value={choices.madeBy} onChangeText={(madeBy) => set({ madeBy })} style={[styles.input, { color: ds.c.ink }]} />
-          </BoxField>
-          <BoxField label="SOURCE">
-            <TextInput accessibilityLabel="Source" placeholder="Where it’s from" placeholderTextColor={ds.c.faint} value={choices.source} onChangeText={(source) => set({ source })} style={[styles.input, { color: ds.c.ink }]} />
-          </BoxField>
+        <View style={styles.made}>
+          <View style={styles.row}>
+            <BoxField label="MADE BY">
+              <TextInput accessibilityLabel="Made by" placeholder="Who made it?" placeholderTextColor={ds.c.faint} value={choices.madeBy} onChangeText={(madeBy) => set({ madeBy })} style={[styles.input, { color: ds.c.ink }]} />
+            </BoxField>
+            <BoxField label="SOURCE">
+              <TextInput accessibilityLabel="Source" placeholder="Where it’s from" placeholderTextColor={ds.c.faint} value={choices.source} onChangeText={(source) => set({ source })} style={[styles.input, { color: ds.c.ink }]} />
+            </BoxField>
+          </View>
+          <Caption tone="muted">Made by and source are saved as notes on the drink.</Caption>
         </View>
         <View>
           <View style={styles.specHead}>
@@ -128,16 +134,16 @@ export function RecipeCheck({ recipes, files, from, data, saving, error, onCance
               const crop = line.unsure && line.at ? <SourceCrop file={file(line)} box={line.at.box} words={line.ingredient} width={58} height={32} /> : null;
               if (state?.state === 'have') {
                 const named = state.item.name.toLowerCase() !== line.ingredient.toLowerCase() ? ` · ${state.item.name}` : '';
-                return <ReviewRow key={i} state="have" amount={amount} onAmount={onAmount} title={line.ingredient} detail={`In your bar${named}`} flag={flag} end={crop} onPress={() => setMatchOf(i)} pressHint="See or change the match" />;
+                return <ReviewRow key={i} state="have" amount={amount} onAmount={onAmount} title={sentence(line.ingredient)} detail={`In your bar${named}`} flag={flag} end={crop} onPress={() => setMatchOf(i)} pressHint="See or change the match" />;
               }
               if (state?.state === 'pick') {
                 const kind = plainKind(line.ingredient, state.items, data);
                 const options = [...state.items.map((it) => ({ id: it.id, label: it.name })), ...(kind ? [{ id: kind.id, label: `Any ${kind.name.toLowerCase()}` }] : [])];
-                return <ReviewRow key={i} state="pick" amount={amount} onAmount={onAmount} title={line.ingredient} detail="Which one?" flag={flag} end={crop} choices={options} onChoose={(id) => choose(i, { pick: id })} />;
+                return <ReviewRow key={i} state="pick" amount={amount} onAmount={onAmount} title={sentence(line.ingredient)} detail="Which one?" flag={flag} end={crop} choices={options} onChoose={(id) => choose(i, { pick: id })} />;
               }
               const ratio = prepRatio(line.ingredient);
               const detail = ratio ? `New prep · ${ratio}` : isPrepName(line.ingredient) ? 'New prep' : 'New ingredient';
-              return <ReviewRow key={i} state="new" amount={amount} onAmount={onAmount} title={line.ingredient} detail={detail} flag={flag} end={crop} action={fresh ? { label: 'Undo', hint: 'Use the match again', onPress: () => choose(i, null) } : undefined} />;
+              return <ReviewRow key={i} state="new" amount={amount} onAmount={onAmount} title={sentence(line.ingredient)} detail={detail} flag={flag} end={crop} action={fresh ? { label: 'Undo', hint: 'Use the match again', onPress: () => choose(i, null) } : undefined} />;
             })}
           </View>
         </View>
@@ -178,6 +184,7 @@ const styles = StyleSheet.create({
   eyebrow: { letterSpacing: 0.6, textTransform: 'uppercase' },
   name: { ...typeScale.title, paddingVertical: 0 },
   row: { flexDirection: 'row', gap: space.sm + 2 },
+  made: { gap: space.sm },
   input: { ...typeScale.body, paddingVertical: 2, fontFamily: fontFamilies.body },
   specHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: space.xs },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },

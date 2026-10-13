@@ -1,9 +1,9 @@
 import { useRouter, type Href } from 'expo-router';
-import { Platform, StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Chip, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, PressableScale, Segmented, Switch, TextLink, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { backbar, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useMyProfile, useSaveSharing, type MyProfile, type SharingChange } from '@/hooks/useMyProfile';
 import { useProfilePositions } from '@/hooks/useProfiles';
 import { modeSummary, SHARE_MODES, type ShareMode } from '@/lib/profiles';
@@ -28,7 +28,7 @@ export function WhatPeopleSeeScreen() {
       title="What people see"
       intro="One choice per section, and you can still show or hide any single one. These save as you change them."
       backTo="/settings/profile"
-      action={<TextLink label="Preview" accessibilityHint="Opens You, your profile as people see it" onPress={() => router.push('/you')} />}
+      action={<Button label="Preview" variant="secondary" accessibilityHint="Opens You, your profile as people see it" onPress={() => router.push('/you')} />}
     >
       {data ? <SharingChoices profile={data} /> : <Body tone="muted">{isPending ? 'Loading…' : 'Make your public profile first.'}</Body>}
     </SafetyPage>
@@ -61,7 +61,7 @@ export function SharingChoices({ profile }: { profile: MyProfile }) {
         const c = counts?.[section];
         const shown = !c ? null : mode === 'all' ? c.total : mode === 'none' ? 0 : c.shown;
         return (
-          <View key={section} style={[styles.section, { borderBottomColor: ds.c.line }]}>
+          <View key={section} style={styles.section}>
             <View style={styles.row}>
               <DsText variant="headline" role="heading" style={styles.flex}>
                 {title}
@@ -73,12 +73,8 @@ export function SharingChoices({ profile }: { profile: MyProfile }) {
                 />
               ) : null}
             </View>
-            <View role="radiogroup" accessibilityLabel={title} style={styles.chips}>
-              {SHARE_MODES.map((m) => (
-                <Chip key={m.value} label={m.label} selected={mode === m.value} onPress={() => choose(section, m.value)} />
-              ))}
-            </View>
-            {c ? <Caption>{`${shown} of ${c.total} show`}</Caption> : null}
+            <Segmented variant="ink" stretch choice accessibilityLabel={title} options={SHARE_MODES} value={mode} onChange={(m) => choose(section, m)} />
+            {c ? <Caption style={styles.count}>{`${shown} of ${c.total} show`}</Caption> : null}
             <Caption tone="muted">{modeSummary(section, mode)}</Caption>
             {section === 'had' && mode !== 'none' ? (
               <View style={styles.row}>
@@ -89,10 +85,7 @@ export function SharingChoices({ profile }: { profile: MyProfile }) {
                 <Switch
                   value={showsDates}
                   onValueChange={(on) => save.mutate({ id: profile.id, showsDates: on })}
-                  aria-label="Say when I had them"
-                  trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
-                  thumbColor={backbar.light.surface}
-                  {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
+                  label="Say when I had them"
                 />
               </View>
             ) : null}
@@ -104,18 +97,19 @@ export function SharingChoices({ profile }: { profile: MyProfile }) {
           {save.error.message}
         </Caption>
       ) : null}
-      <View role="list">
+      {/* Where your photo and jobs are set, in one grouped card. */}
+      <View role="list" style={[styles.card, { backgroundColor: ds.c.surface }]}>
         <LinkRow title="Photo" value={profile.showsPhoto ? 'People on Cocktail' : 'Only me'} onPress={() => router.push('/settings/profile-about' as Href)} />
-        <LinkRow title="Work" value={`${jobs.filter(isShownPosition).length} of ${jobs.length} jobs shown`} onPress={() => router.push('/settings/profile-work' as Href)} />
+        <LinkRow title="Work" value={`${jobs.filter(isShownPosition).length} of ${jobs.length} jobs shown`} last onPress={() => router.push('/settings/profile-work' as Href)} />
       </View>
     </View>
   );
 }
 
-function LinkRow({ title, value, onPress }: { title: string; value: string; onPress: () => void }) {
+function LinkRow({ title, value, onPress, last }: { title: string; value: string; onPress: () => void; last?: boolean }) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={`${title}: ${value}`} onPress={onPress} style={[styles.link, { borderBottomColor: ds.c.line }]}>
+    <PressableScale role="link" accessibilityLabel={`${title}: ${value}`} onPress={onPress} style={[styles.link, { borderBottomColor: last ? 'transparent' : ds.c.line }]}>
       <Body style={styles.flex}>{title}</Body>
       <Caption tone="muted">{value}</Caption>
       <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
@@ -124,10 +118,11 @@ function LinkRow({ title, value, onPress }: { title: string; value: string; onPr
 }
 
 const styles = StyleSheet.create({
-  box: { gap: space.lg, marginTop: space.md },
-  section: { gap: space.sm, paddingBottom: space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
+  box: { gap: space.xl, marginTop: space.md },
+  section: { gap: space.sm },
+  count: { fontFamily: fontFamilies.monoMedium },
+  card: { borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.lg },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
-  chips: { flexDirection: 'row', gap: space.sm },
   link: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth },
 });

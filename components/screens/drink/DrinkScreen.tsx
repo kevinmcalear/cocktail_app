@@ -80,7 +80,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const insets = useSafeAreaInsets();
   const top = pane ? 0 : sheet && Platform.OS === 'ios' ? space.sm : insets.top;
   const gutter = useGutter();
-  const wide = useBreakpoint() !== 'phone' && !pane;
+  const breakpoint = useBreakpoint();
+  const wide = breakpoint !== 'phone' && !pane;
   const { width, height } = useWindowDimensions();
   const home = useMode().mode === 'home';
   const signedIn = useSignedIn();
@@ -180,7 +181,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
             <>
               <GlassButton accessibilityLabel={toMake.saved ? 'Remove from To make' : 'Add to To make'} icon={toMake.saved ? 'bookmark.fill' : 'bookmark'} onMedia onPress={preview ? () => {} : toMake.toggle} />
               {preview || viewingAs ? null : <GlassButton accessibilityLabel="Share" icon="square.and.arrow.up" onMedia onPress={share} />}
-              {canEdit ? <GlassButton accessibilityLabel="Edit drink" label="Edit" icon="pencil" onMedia onPress={onEdit} /> : null}
+              {canEdit ? <GlassButton accessibilityLabel="Edit drink" label="Edit" onMedia onPress={onEdit} /> : null}
               {more}
             </>
           }
@@ -195,6 +196,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
         </Animated.ScrollView>
       )}
       {pinned ? <DrinkActionBar actions={barActions} pinned /> : null}
+      {/* Wide: the sidebar and the hero card's own buttons; no floating back (board drink-desktop). */}
+      {wide && breakpoint === 'desktop' ? null : (
       <DrinkControls
         media={heroScheme === 'dark' ? 'photo' : 'paper'}
         top={top}
@@ -209,6 +212,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
         more={more}
         backOnly={wide}
       />
+      )}
       {toMake.sheet}
       {actions.sheets}
       {glassOpen ? (

@@ -23,7 +23,7 @@ export const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
   units: { title: 'How do you measure?', intro: 'New specs, and the amounts you read. You can change this in Settings.' },
   bring: {
     title: 'Bring your bar in',
-    intro: 'Got a spec book, a menu or a back bar? Give it to us and we’ll set up your drinks, menus and bottles once you finish here.',
+    intro: 'Got a spec book, a menu or a back bar? Give it to us and we’ll set up your drinks, menus and bottles while you finish here.',
   },
 };
 

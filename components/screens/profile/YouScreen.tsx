@@ -88,7 +88,7 @@ function You({ inTabs }: { inTabs?: boolean }) {
             {line ? <Body align="center">{line}</Body> : null}
             <View style={styles.actions}>
               <Button label={profile ? 'Edit profile' : 'Make a public profile'} variant="secondary" onPress={() => router.push('/settings/profile')} />
-              {profile && shown ? <Button label="Share" variant="ghost" icon="square.and.arrow.up" onPress={() => void share()} /> : null}
+              {profile && shown ? <Button label="Share" variant="secondary" icon="square.and.arrow.up" onPress={() => void share()} /> : null}
             </View>
           </View>
 

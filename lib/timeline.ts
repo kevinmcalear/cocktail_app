@@ -83,6 +83,8 @@ export interface TimelineRow {
   from: TreeNode | null;
   /** Its year differs from the row above, so the year is printed. */
   newYear: boolean;
+  /** A fold in a followed thread: this many drinks off the thread, starting at `node`, drawn as one dashed stretch. */
+  folded?: number;
 }
 
 export interface TimelineSection {
@@ -177,6 +179,46 @@ export function locateKey(sections: readonly TimelineSection[], key: string): { 
   return null;
 }
 
+/** Off-thread runs this long or longer fold away while a thread is followed. */
+export const FOLD_MIN = 3;
+
+/**
+ * Following a thread (board prep-hist-timeline-thread): between the thread's
+ * first and last steps, each era's runs of FOLD_MIN or more drinks off the
+ * thread fold into one row, so the steps sit close enough to read as a line.
+ * Shorter runs stay, dimmed. The row after a fold prints its year.
+ */
+export function foldThread(sections: readonly TimelineSection[], lit: ReadonlySet<string>): TimelineSection[] {
+  const at = sections.flatMap((sec) => sec.data.map((r) => lit.has(r.node.key)));
+  const first = at.indexOf(true);
+  const last = at.lastIndexOf(true);
+  if (first < 0 || first === last) return [...sections];
+  let i = 0;
+  return sections.map((sec) => {
+    const data: TimelineRow[] = [];
+    let run: TimelineRow[] = [];
+    let afterFold = false;
+    const flush = () => {
+      if (run.length >= FOLD_MIN) data.push({ node: run[0].node, from: null, newYear: false, folded: run.length });
+      else data.push(...run);
+      afterFold = run.length >= FOLD_MIN;
+      run = [];
+    };
+    for (const r of sec.data) {
+      const n = i++;
+      if (n > first && n < last && !at[n]) {
+        run.push(r);
+        continue;
+      }
+      flush();
+      data.push(afterFold ? { ...r, newYear: true } : r);
+      afterFold = false;
+    }
+    flush();
+    return { ...sec, data };
+  });
+}
+
 /** A drink's line back to the punch bowl, oldest first. */
 export function thread(nodes: readonly TreeNode[], key: string): TreeNode[] {
   const byKey = new Map(nodes.map((n) => [n.key, n]));
@@ -205,10 +247,10 @@ export function shortYear(n: Pick<TreeNode, 'year' | 'approx'>): string {
   return n.year == null ? '' : `${n.approx ? 'c.' : ''}${n.year}`;
 }
 
-/** "Riff of Manhattan, 1882", or "From Sour" for a style. */
+/** "Riff of Manhattan, 1882", a style's riffs too ("Riff of Swizzle, 1840", board prep-hist-timeline-phone). */
 export function fromLine(row: Pick<TimelineRow, 'from'>): string | null {
   const f = row.from;
   if (!f) return null;
   const year = yearLabel(f.year, f.approx);
-  return `${f.kind === 'style' ? 'From' : 'Riff of'} ${f.name}${year ? `, ${year}` : ''}`;
+  return `Riff of ${f.name}${year ? `, ${year}` : ''}`;
 }

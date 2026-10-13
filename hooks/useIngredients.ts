@@ -263,3 +263,26 @@ export function usePublicIngredientSearch(search: string) {
         },
     });
 }
+
+/**
+ * "Swap for" on a bottle's page (prep-ing-campari): other bottles of the same
+ * kind (Campari: Select Aperitivo, Contratto Bitter). The first few by name.
+ */
+export function useSwapFor(itemId: string | null, genericId: string | null | undefined) {
+    return useQuery({
+        queryKey: ['swap-for', itemId, genericId],
+        enabled: !!itemId && !!genericId,
+        queryFn: async (): Promise<{ id: string; name: string }[]> => {
+            const { data, error } = await supabase
+                .from('app_item_presentation')
+                .select('id, name')
+                .eq('generic_id', genericId!)
+                .eq('ingredient_role', 'product')
+                .neq('id', itemId!)
+                .order('name')
+                .limit(3);
+            if (error) throw error;
+            return (data ?? []).filter((r): r is { id: string; name: string } => !!r.id && !!r.name);
+        },
+    });
+}

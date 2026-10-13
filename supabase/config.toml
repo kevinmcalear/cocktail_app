@@ -246,7 +246,7 @@ otp_expiry = 3600
 # Signup confirmation. Hosted projects do not read this file; paste it into
 # the dashboard Email Templates page. Path is from the repo root (CLI 2.112).
 [auth.email.template.confirmation]
-subject = "Confirm your email"
+subject = "Your Cocktail sign-in code"
 content_path = "./supabase/templates/confirmation.html"
 
 # Venue invites (supabase/functions/send-bar-invite): a new account gets the
@@ -257,7 +257,7 @@ subject = "You're invited to the team"
 content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.magic_link]
-subject = "Your sign-in link"
+subject = "Your Cocktail sign-in code"
 content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize notification email template

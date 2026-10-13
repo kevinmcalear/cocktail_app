@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, radius, space, type DisplayFace } from '@/constants/tokens';
+import { displayFaces, radius, space, type, type DisplayFace } from '@/constants/tokens';
 
 const LOGO = 56;
 const FACES = Object.keys(displayFaces) as DisplayFace[];
@@ -66,13 +66,18 @@ export function LogoRow({ venue, logoUrl, busy, onPick, onRemoveBackground, onRe
   );
 }
 
-/** The display faces, each showing the venue's name set in it. */
-export function FaceChoices({ name, value, onChange }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void }) {
+/** How each face sets the sample, as tools-brand-desktop draws them: Fraunces in its italic, Bricolage a step smaller. */
+const FACE_SAMPLE: Record<DisplayFace, { italic?: boolean; scale?: number }> = { instrument: {}, fraunces: { italic: true }, bricolage: { scale: 28 / 32 } };
+
+/** The display faces side by side, each a card with the venue's name set large in it; the picked one is ringed in ink with a tick. */
+/** `setup`: venue setup's Look step (canvas make-venue-look), which draws the same cards. */
+export function FaceChoices({ name, value, onChange, setup }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void; setup?: boolean }) {
   const ds = useDs();
   return (
-    <View role="radiogroup" accessibilityLabel="Display face" style={styles.faces}>
+    <View role="radiogroup" accessibilityLabel="Display face" style={[styles.faces, setup && styles.bare]}>
       {FACES.map((face) => {
         const selected = face === value;
+        const look = FACE_SAMPLE[face];
         return (
           <PressableScale
             key={face}
@@ -80,15 +85,21 @@ export function FaceChoices({ name, value, onChange }: { name: string; value: Di
             aria-checked={selected}
             accessibilityLabel={displayFaces[face].label}
             onPress={() => onChange(face)}
-            style={[styles.face, { borderColor: selected ? ds.accentText : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }]}
+            style={[styles.face, { borderColor: selected ? ds.c.ink : ds.c.line, borderWidth: selected ? 2 : 1, backgroundColor: ds.c.ground }]}
           >
-            <View style={styles.flex}>
-              <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[face].regular }}>
-                {name}
-              </DsText>
-              <Caption tone="muted">{displayFaces[face].label}</Caption>
-            </View>
-            {selected ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
+            {selected ? (
+              <View style={styles.tick}>
+                <IconSymbol name="checkmark" size={16} color={ds.c.ink} />
+              </View>
+            ) : null}
+            <DsText
+              variant="headline"
+              numberOfLines={1}
+              style={[styles.sample, look.scale ? { fontSize: styles.sample.fontSize * look.scale } : null, { fontFamily: look.italic ? displayFaces[face].italic : displayFaces[face].regular }]}
+            >
+              {name}
+            </DsText>
+            <Caption tone="muted">{displayFaces[face].label}</Caption>
           </PressableScale>
         );
       })}
@@ -102,6 +113,9 @@ const styles = StyleSheet.create({
   logoHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   logoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   logo: { width: LOGO, height: LOGO, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth },
-  faces: { gap: space.sm, paddingVertical: space.md },
-  face: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.control, borderCurve: 'continuous' },
+  faces: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingVertical: space.md },
+  face: { flexGrow: 1, flexShrink: 1, flexBasis: 160, minWidth: 0, gap: space.sm, padding: space.lg, borderRadius: radius.control + 4, borderCurve: 'continuous' },
+  tick: { position: 'absolute', top: space.md, right: space.md },
+  sample: { fontSize: type.headline.fontSize * 1.6, lineHeight: 36, paddingRight: space.lg },
+  bare: { paddingVertical: 0 },
 });

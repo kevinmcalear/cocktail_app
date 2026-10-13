@@ -63,7 +63,8 @@ function shortDay(iso: string, locale?: string): string {
  * draft or a home menu (its night is homeMenuLine). `short`: "since 1 Sep".
  */
 export function menuDateLine(menu: Dated, now: number, locale?: string, short = false): string | null {
-  if (!menu.startsAt && !menu.endsAt) return null;
+  // A home menu's night is its date, even once sharing gave it a start.
+  if (menu.menuDate || (!menu.startsAt && !menu.endsAt)) return null;
   const status = menuStatus(menu, now);
   if (status === 'on') return `since ${(short ? shortDay : day)(menu.startsAt!, locale)}`;
   if (status === 'upcoming') return `starts ${day(menu.startsAt!, locale)}`;
@@ -79,6 +80,17 @@ export function menuDateLine(menu: Dated, now: number, locale?: string, short = 
  * spec that lists an ingredient twice (cream for the drink and for the float)
  * would otherwise read "Heavy Cream, Heavy Cream".
  */
+/** An ingredient as the line reads it: plain ones (generic, a prep) in lower case, bottles as named ("gin", "Campari"). */
+export function readingName(ing: { name: string; ingredient_role?: string | null } | null | undefined): string | null {
+  if (!ing) return null;
+  return ing.ingredient_role === 'generic' || ing.ingredient_role === 'prep' ? ing.name.toLowerCase() : ing.name;
+}
+
+/** A menu's drink line in sentence case, as the boards draw it: "Gin, dry vermouth, orange bitters". */
+export function sentenceLine(line: string): string {
+  return line.charAt(0).toUpperCase() + line.slice(1);
+}
+
 export function ingredientLine(names: (string | null | undefined)[]): string {
   const seen = new Set<string>();
   const kept: string[] = [];
@@ -281,7 +293,8 @@ export function previousLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'it
 export function cardWhen(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'menuDate'> & Partial<Pick<MenuSummary, 'plannedStartsAt' | 'plannedEndsAt'>>, locale?: string): string | null {
   const starts = menu.startsAt ?? menu.plannedStartsAt ?? null;
   const ends = menu.startsAt ? menu.endsAt : (menu.plannedEndsAt ?? null);
-  const night = starts ? (isOneNightRun(starts, ends) ? starts : null) : menu.menuDate ? `${menu.menuDate}T00:00:00` : null;
+  // A home menu's date names its night, whenever it was shared (its start).
+  const night = menu.menuDate ? `${menu.menuDate}T00:00:00` : starts && isOneNightRun(starts, ends) ? starts : null;
   if (night) return new Date(night).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
   return starts ? `From ${new Date(starts).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'long' })}` : null;
 }

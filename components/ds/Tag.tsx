@@ -16,9 +16,10 @@ export type TagTone = 'default' | 'accent' | 'outline' | 'paper' | 'success' | '
  * "House prep"). Drawn pictures carry no tag: drawings are obviously drawings.
  * Status tones are never the only signal: the label says what it means.
  * `outline` is a hairline pill in muted ink ("Need Cynar", a lock and
- * "Names only"); `icon` sits before the label.
+ * "Names only"); `icon` sits before the label, or `dot`, a small dot in the
+ * label's colour (a menu's "On now since ...").
  */
-export function Tag({ label, tone = 'default', icon, style }: { label: string; tone?: TagTone; icon?: ComponentProps<typeof IconSymbol>['name']; style?: StyleProp<ViewStyle> }) {
+export function Tag({ label, tone = 'default', icon, dot, style }: { label: string; tone?: TagTone; icon?: ComponentProps<typeof IconSymbol>['name']; dot?: boolean; style?: StyleProp<ViewStyle> }) {
   const ds = useDs();
   const statusText = (hex: string) => readableAccent(hex, ds.c.ground);
   const look = {
@@ -32,6 +33,7 @@ export function Tag({ label, tone = 'default', icon, style }: { label: string; t
   return (
     <View style={[styles.tag, { backgroundColor: look.bg, borderColor: look.border }, style]}>
       {icon ? <IconSymbol name={icon} size={12} color={look.fg} /> : null}
+      {dot ? <View style={[styles.dot, { backgroundColor: look.fg }]} /> : null}
       <DsText variant="caption" color={look.fg} numberOfLines={1} style={styles.label}>
         {label}
       </DsText>
@@ -53,4 +55,5 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   label: { flexShrink: 1 },
+  dot: { width: 7, height: 7, borderRadius: radius.pill },
 });

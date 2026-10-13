@@ -47,6 +47,9 @@ assert.equal(backBarLine(0, 0), 'Where every bottle lives');
 assert.equal(teamLine(9, 2), '9 people · 2 invited');
 assert.equal(teamLine(1, 0), '1 person');
 assert.equal(shelfLine(4), '4 bottles');
+assert.equal(shelfLine(4, 7), '4 bottles · 7 drinks ready');
+assert.equal(shelfLine(1, 1), '1 bottle · 1 drink ready');
+assert.equal(shelfLine(0, 3), 'Add what’s on your shelf');
 assert.equal(collectionLine(12, 3), '12 to make · 3 menus');
 assert.equal(collectionLine(0, 0), 'Drinks to make and your menus');
 

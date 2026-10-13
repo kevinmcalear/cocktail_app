@@ -16,12 +16,13 @@ export interface ButtonProps {
   label: string;
   onPress?: () => void;
   /**
-   * primary: the one main action on a screen, in the venue's accent. ink: a
-   * card's own main action, cream on dark, where the screen's accent is spoken
-   * for (a project's Method). danger: removing or deleting, in status red.
+   * primary: the one main action on a screen, in the venue's accent. ink: the
+   * main action on light working screens (Make) or a card's own main action
+   * (a project's Method), where the accent is spoken for. danger: removing or
+   * deleting, in status red.
    */
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'ink';
-  /** sm: a compact pill beside a row's text, 15 pt label (My Bar's Add both). */
+  variant?: 'primary' | 'ink' | 'secondary' | 'ghost' | 'danger';
+  /** sm: a compact pill (My Bar's Add both, a row action like "Unblock"), 36 tall with its tap area grown to 44, 15 pt label. */
   size?: 'sm' | 'md' | 'lg';
   icon?: IconName;
   disabled?: boolean;
@@ -44,10 +45,12 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon,
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
       aria-disabled={disabled}
+      hitSlop={size === 'sm' ? (layout.minTapTarget - SMALL) / 2 : undefined}
       style={[
         styles.base,
+        size === 'sm' ? styles.small : null,
         {
-          height: size === 'lg' ? 52 : layout.minTapTarget,
+          height: size === 'lg' ? 52 : size === 'sm' ? SMALL : layout.minTapTarget,
           backgroundColor: fill,
           borderColor: border,
           opacity: disabled ? 0.45 : 1,
@@ -65,6 +68,8 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon,
     </PressableScale>
   );
 }
+
+const SMALL = 36;
 
 const styles = StyleSheet.create({
   base: {

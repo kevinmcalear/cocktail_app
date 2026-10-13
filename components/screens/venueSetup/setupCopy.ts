@@ -21,7 +21,7 @@ export function setupCopy(screen: VenueScreen, bar: string): { title: string; in
     case 'bring':
       return {
         title: 'Bring in your spec book and menu',
-        intro: 'Give us your spec book, tonight’s menu or a photo of the back bar. We read it once you finish here, and set up your drinks, menus and bottles.',
+        intro: 'Give us your spec book, tonight’s menu or a photo of the back bar. We read it while you finish, and set up your drinks, menus and bottles.',
       };
     case 'team':
       return { title: 'Invite your team', intro: `Each person gets an email from ${bar} and lands in the app with your menus and specs already there.` };
@@ -32,8 +32,8 @@ export function setupCopy(screen: VenueScreen, bar: string): { title: string; in
 
 /** The intro's four reasons (canvas make-venue-start). */
 export const VALUE_ROWS = [
-  { icon: 'doc.text', title: 'Specs your team can follow', line: 'Every drink with its spec, prep, glass and garnish, on every phone behind the bar.' },
+  { icon: 'doc.on.clipboard', title: 'Specs your team can follow', line: 'Every drink with its spec, prep, glass and garnish, on every phone behind the bar.' },
   { icon: 'list.bullet', title: 'Menus', line: 'Tonight’s menu and every past one, shared as a link that always shows what’s on.' },
-  { icon: 'trophy', title: 'Rankings people trust', line: 'Guests rank what they had against everything else they’ve had. Real people, not stars.' },
-  { icon: 'person.crop.circle', title: 'Credit for who made each drink', line: 'Each drink names the bartender who made it, and it follows them when they move.' },
+  { icon: 'star', title: 'Rankings people trust', line: 'Guests rank what they had against everything else they’ve had. Real people, not stars.' },
+  { icon: 'person', title: 'Credit for who made each drink', line: 'Each drink names the bartender who made it, and it follows them when they move.' },
 ] as const;

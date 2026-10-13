@@ -2,10 +2,10 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
+import { Body, Caption, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { closedLabel, drinkCount, type DiscoverBar } from '@/lib/discoverDrinks';
 import { groupLabel, moreCount, moreLabel, PER_GROUP } from '@/lib/searchScope';
@@ -62,7 +62,7 @@ export function ResultRow({ title, caption, icon, avatar, ingredient, tag, trail
         </Headline>
         <View style={styles.captionRow}>
           {caption ? (
-            <Caption tone="muted" numberOfLines={1} style={styles.shrink}>
+            <Caption tone="muted" numberOfLines={2} style={styles.shrink}>
               {caption}
             </Caption>
           ) : null}
@@ -103,12 +103,46 @@ export function BarResultRow({ bar, score, away, query, matchLook }: { bar: Disc
 
 interface ResultGroupProps<T> {
   label: string;
+  /** False when the label already says how many ("Everywhere has 1 classic"). */
+  counted?: boolean;
   items: readonly T[];
   render: (item: T) => ReactNode;
 }
 
+/** "Search everywhere for “negroni”" in the ⌘K palette: a slim outlined row with a globe, one the arrow keys reach. */
+export function EverywhereRow({ label, onPress }: { label: string; onPress: () => void }) {
+  const ds = useDs();
+  const nav = useSearchNavRow();
+  return (
+    <PressableScale
+      role="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      nativeID={nav.nativeID}
+      style={[styles.everywhere, { borderColor: ds.c.lineStrong }, nav.active && { backgroundColor: withAlpha(ds.accentText, 0.14) }]}
+    >
+      <IconSymbol name="globe" size={16} color={ds.c.muted} />
+      <Caption style={[styles.moreText, styles.shrink]} numberOfLines={1}>
+        {label}
+      </Caption>
+      {nav.active ? <Caption tone="muted">Open ↵</Caption> : null}
+    </PressableScale>
+  );
+}
+
+/** "All 18 ›": flush left, ink, with a chevron, as the search boards draw it. */
+function MoreLink({ label, onPress }: { label: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel={label} onPress={onPress} style={styles.more}>
+      <Body style={styles.moreText}>{label}</Body>
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+    </PressableScale>
+  );
+}
+
 /** "Drinks · 12": the first few, then the rest behind "All 12", a page at a time. Nothing when empty. */
-export function ResultGroup<T>({ label, items, render }: ResultGroupProps<T>) {
+export function ResultGroup<T>({ label, counted = true, items, render }: ResultGroupProps<T>) {
   const [count, setCount] = useState(PER_GROUP);
   if (!items.length) return null;
   const shown = items.slice(0, count);
@@ -116,10 +150,10 @@ export function ResultGroup<T>({ label, items, render }: ResultGroupProps<T>) {
   return (
     <View style={styles.group}>
       <Caption tone="muted" role="heading" style={styles.cap}>
-        {groupLabel(label, items.length)}
+        {counted ? groupLabel(label, items.length) : label}
       </Caption>
       <View role="list">{shown.map(render)}</View>
-      {more ? <Button label={more} variant="ghost" onPress={() => setCount(moreCount(items.length, shown.length))} style={styles.more} /> : null}
+      {more ? <MoreLink label={more} onPress={() => setCount(moreCount(items.length, shown.length))} /> : null}
     </View>
   );
 }
@@ -134,5 +168,7 @@ const styles = StyleSheet.create({
   active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
   group: { gap: space.xs },
   cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
-  more: { alignSelf: 'flex-start' },
+  more: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget },
+  moreText: { fontFamily: fontFamilies.bodyMedium },
+  everywhere: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderWidth: 1, borderRadius: radius.control },
 });

@@ -1,5 +1,5 @@
 import { getLocales } from 'expo-localization';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, Field, Headline, PressableScale, useDs } from '@/components/ds';
@@ -107,14 +107,15 @@ function CountryField({ value, onChange }: { value: string | null; onChange: (co
   );
 }
 
-/** What an under-age answer means. It's final on this account. */
-export function UnderAgeNote() {
+/** What an under-age answer means. It's final on this account. `children` sit in the same group. */
+export function UnderAgeNote({ children }: { children?: ReactNode }) {
   return (
     <View style={styles.form} role="status">
       <Headline role="heading">Thanks for being honest</Headline>
       <Body>
         You’re under the drinking age where you live, so collecting drinks, ranking them and publishing your own aren’t available on this account.
       </Body>
+      {children}
     </View>
   );
 }

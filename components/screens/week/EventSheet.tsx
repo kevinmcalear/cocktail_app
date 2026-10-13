@@ -145,7 +145,7 @@ export function EventSheet({ visible, onClose, barId, menus, event, day, tab: fi
       form
       footer={tab === 'one' && error ? <Caption tone="accent">{error}</Caption> : undefined}
     >
-      {event ? null : <Segmented fill quiet accessibilityLabel="How" options={TABS} value={tab} onChange={setTab} />}
+      {event ? null : <Segmented variant="quiet" stretch accessibilityLabel="How" options={TABS} value={tab} onChange={setTab} />}
       {tab === 'link' ? <CalendarImport barId={barId} onDone={onClose} /> : null}
       <View style={[styles.form, tab === 'link' && styles.hidden]}>
         <View role="radiogroup" accessibilityLabel="Kind" style={styles.wrap}>

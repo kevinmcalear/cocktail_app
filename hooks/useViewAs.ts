@@ -13,7 +13,15 @@ async function fetchViewAs(): Promise<number | null> {
   return data?.view_as_role_level ?? null;
 }
 
-export function useViewAs() {
+/**
+ * The role you're previewing as, if any. `fresh` treats the saved copy as
+ * stale, so it's checked again once signed in: the banner (mounted once per
+ * load) passes it, since the cache saves every 5 seconds and a reload right
+ * after turning View as on would otherwise restore the old value for its 15
+ * minutes. (refetchOnMount isn't enough: the query mounts disabled until the
+ * user id is known, and enabling it refetches only a stale query.)
+ */
+export function useViewAs({ fresh = false }: { fresh?: boolean } = {}) {
   const userId = useUserId();
   const queryClient = useQueryClient();
 
@@ -21,6 +29,8 @@ export function useViewAs() {
     queryKey: ['viewAs', userId],
     queryFn: fetchViewAs,
     enabled: !!userId,
+    // Spread, not `staleTime: undefined`, which would override the tier's 15 minutes.
+    ...(fresh ? { staleTime: 0 } : {}),
   });
 
   const mutation = useMutation({
@@ -35,7 +45,7 @@ export function useViewAs() {
     },
     onSuccess: async (level) => {
       queryClient.setQueryData(['viewAs', userId], level);
-      // Presentation views read view-as from user_prefs — drop cached lists/details.
+      // Presentation views read view-as from user_prefs: drop cached lists/details.
       await queryClient.invalidateQueries({
         predicate: (q) => q.queryKey[0] !== 'viewAs',
       });

@@ -1,14 +1,18 @@
 import { supabase } from '@/lib/supabase';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
+/** The client's own wording ("Edge Function returned a non-2xx status code") means nothing to a person. */
+const RAW = /edge function|non-2xx|relay error|failed to send|request failed/i;
+const plain = (message: string | undefined) => (!message || RAW.test(message) ? 'Couldn’t reach the server. Try again in a moment.' : message);
+
 async function readFunctionError(error: FunctionsHttpError): Promise<string> {
     try {
         const payload = await error.context.json();
         if (typeof payload?.error === 'string') return payload.error;
     } catch {
-        // ponytail: fall back to generic message
+        // ponytail: no JSON body (a proxy's page, a missing function): the plain message below
     }
-    return error.message || 'Request failed';
+    return plain(error.message);
 }
 
 export async function invokeFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
@@ -18,7 +22,7 @@ export async function invokeFunction<T>(name: string, body: Record<string, unkno
         if (error instanceof FunctionsHttpError) {
             throw new Error(await readFunctionError(error));
         }
-        throw new Error(error.message || 'Request failed');
+        throw new Error(plain(error.message));
     }
 
     if (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string') {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DsText, Field, GlassButton, PressableScale, useDs } from '@/components/ds';
+import { Button, Caption, DsText, Field, PressableScale, useDs } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -30,10 +30,10 @@ function RoleButton({ role, onPress }: { role: number; onPress: () => void }) {
   return (
     <PressableScale role="button" aria-haspopup="listbox" accessibilityLabel={`Role: ${roleLabel(role)}. ${line}. Change`} onPress={onPress} style={[styles.role, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
       <View style={styles.flex}>
-        <DsText variant="headline">{roleLabel(role)}</DsText>
+        <DsText variant="body">{roleLabel(role)}</DsText>
         <Caption tone="muted">{line}</Caption>
       </View>
-      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+      <IconSymbol name="chevron.down" size={16} color={ds.c.muted} />
     </PressableScale>
   );
 }
@@ -87,7 +87,15 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
         <View key={p.key} role="group" accessibilityLabel={`Person ${i + 1}`} style={[styles.person, { borderColor: ds.c.line }]}>
           <View style={styles.head}>
             <Caption tone="muted">{`Person ${i + 1}`}</Caption>
-            {people.length > 1 ? <GlassButton accessibilityLabel={`Remove ${p.name.trim() || `person ${i + 1}`}`} icon="xmark" onPress={() => setPeople((list) => list.filter((x) => x.key !== p.key))} /> : null}
+            {/* Remove: the last card left is cleared instead (canvas make-venue-team). */}
+            <PressableScale
+              role="button"
+              accessibilityLabel={`Remove ${p.name.trim() || `person ${i + 1}`}`}
+              onPress={() => setPeople((list) => (list.length > 1 ? list.filter((x) => x.key !== p.key) : [blank(p.key + 1)]))}
+              style={styles.remove}
+            >
+              <IconSymbol name="xmark" size={16} color={ds.c.muted} />
+            </PressableScale>
           </View>
           <Field label="Name" value={p.name} onChangeText={(t) => set(p.key, { name: t })} placeholder="Sam Okafor" autoComplete="off" maxLength={80} />
           <Field
@@ -104,7 +112,7 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
           <RoleButton role={p.role} onPress={() => setPicking(p.key)} />
         </View>
       ))}
-      <Button label="Add another" icon="plus" variant="secondary" onPress={() => setPeople((list) => [...list, blank(Math.max(...list.map((x) => x.key)) + 1)])} />
+      <Button label="Add another" icon="plus" variant="secondary" style={styles.add} onPress={() => setPeople((list) => [...list, blank(Math.max(...list.map((x) => x.key)) + 1)])} />
       {problem ? (
         <Caption tone="accent" role="alert">
           {problem}
@@ -136,6 +144,8 @@ export function TeamStep({ barId, name, pending, onDone }: { barId: string; name
 const styles = StyleSheet.create({
   person: { gap: space.sm, padding: space.lg, borderWidth: 1, borderRadius: radius.card, borderCurve: 'continuous' },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  remove: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -space.md },
+  add: { alignSelf: 'flex-start' },
   role: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderWidth: 1, borderRadius: radius.control },
   flex: { flex: 1, minWidth: 0 },
   choices: { gap: space.sm },

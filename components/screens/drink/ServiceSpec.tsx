@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, PressableScale, Spec, Tag, useDs } from '@/components/ds';
-import { layout, space } from '@/constants/tokens';
+import { fontFamilies, layout, space } from '@/constants/tokens';
 import { bottleLine, SERVICE_STYLES, serviceSpec, serviceStyleLabel, type ServiceLine, type ServiceStyle } from '@/lib/service';
 import type { SpecLine } from '@/lib/spec';
 
@@ -37,7 +37,7 @@ export function ServiceSpec({ lines, style, showLines, canEdit, onSetLine, onSet
           ))}
         </View>
       ) : styleLabel ? (
-        <Tag label={styleLabel} tone="accent" />
+        <Tag label={styleLabel} />
       ) : null}
       {showLines ? (
         <>
@@ -109,7 +109,8 @@ function Line({ line, atStation, editing, showAmount, onFlip }: { line: ServiceL
         </Spec>
       ) : null}
       <Body style={styles.name}>{line.ingredient}</Body>
-      {editing ? <Tag label={atStation ? 'Move to batch' : 'Move to station'} /> : line.guessed ? <Tag label="Guess" /> : null}
+      {/* A guess is said once, under the lines, not on each one (board drink-phone-venue). */}
+      {editing ? <Tag label={atStation ? 'Move to batch' : 'Move to station'} /> : null}
     </>
   );
   if (editing && onFlip) {
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
   block: { gap: space.md },
   styles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   group: { gap: space.xs },
-  eyebrow: { letterSpacing: 1.2 },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   amount: { width: 96 },
   name: { flex: 1 },
