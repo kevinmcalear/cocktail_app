@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["X992AGRP7X.com.kevinmcalear.cocktail", "X992AGRP7X.com.kevinmcalear.cocktail.preview"],
+        "components": [
+          { "/": "/auth/callback", "comment": "The sign-in email's link" },
+          { "/": "/v/*", "comment": "Venue staff links, and invites to existing accounts" }
+        ]
+      }
+    ]
+  }
+}
