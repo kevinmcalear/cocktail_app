@@ -2,11 +2,12 @@ import { useRouter, type Href } from 'expo-router';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, TextLink, Title, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { layout, radius, space } from '@/constants/tokens';
 import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
 import { toDay } from '@/lib/collection';
 import { siteOrigin } from '@/lib/venueLink';
-import { detailLine, itemDay, kindLabel, shortDay, upcoming, type WeekItem } from '@/lib/week';
+import { detailLine, itemDay, kindLabel, shortDay, timeLine, upcoming, type WeekItem } from '@/lib/week';
 
 import { useDotColor, WeekLine } from './WeekParts';
 
@@ -37,11 +38,19 @@ export function BarWeek({ barId, profileId, barName }: { barId: string | null; p
       {lines.length ? (
         <View style={[styles.list, { backgroundColor: ds.c.surface }]}>
           {lines.map((item) => (
-            <WeekLine key={`${item.kind}-${item.id}`} item={item} from={from} member={false} />
+            <View key={`${item.kind}-${item.id}`} style={styles.line}>
+              <View style={styles.flex}>
+                <WeekLine item={item} from={from} member={false} dot={false} />
+              </View>
+              {item.ticketUrl ? <TextLink label="Tickets" onPress={() => Linking.openURL(item.ticketUrl!)} /> : null}
+            </View>
           ))}
         </View>
       ) : null}
-      <TextLink label={`Put ${barName}'s week in your calendar`} onPress={() => Linking.openURL(feed)} />
+      <PressableScale role="link" accessibilityLabel={`Put ${barName}'s week in your calendar`} onPress={() => Linking.openURL(feed)} style={styles.feed}>
+        <IconSymbol name="calendar" size={16} color={ds.accentText} />
+        <DsText color={ds.accentText}>{`Put ${barName}'s week in your calendar`}</DsText>
+      </PressableScale>
     </View>
   );
 }
@@ -60,9 +69,15 @@ function TonightCard({ event }: { event: WeekItem }) {
       onPress={() => router.push(`/e/${event.id}` as Href)}
       style={[styles.card, { backgroundColor: ds.c.surface, borderColor: color }]}
     >
-      <Caption color={color}>{`${kindLabel(event)} · ${when === 'Tonight' ? 'tonight' : when}`}</Caption>
+      {/* When on the left in the accent, the kind on the right in its colour (week-bar-public). */}
+      <View style={styles.cardHead}>
+        <Caption color={ds.accentText} style={styles.flex}>
+          {[when, timeLine(event)].filter(Boolean).join(' · ')}
+        </Caption>
+        <Caption color={color}>{kindLabel(event)}</Caption>
+      </View>
       <Title>{event.name}</Title>
-      <Caption tone="muted">{[detail, event.description].filter(Boolean).join('. ')}</Caption>
+      <Caption tone="muted">{event.description || detail}</Caption>
       {event.ticketUrl ? <TextLink label="Book or get tickets" onPress={() => Linking.openURL(event.ticketUrl!)} /> : null}
     </PressableScale>
   );
@@ -73,4 +88,8 @@ const styles = StyleSheet.create({
   caps: { textTransform: 'uppercase', letterSpacing: 0.8 },
   card: { gap: space.xs, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
   list: { borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.lg },
+  line: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  flex: { flex: 1, minWidth: 0 },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  feed: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, alignSelf: 'flex-start' },
 });

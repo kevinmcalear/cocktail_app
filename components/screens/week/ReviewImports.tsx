@@ -83,6 +83,7 @@ export function ReviewImports() {
       <ScrollView contentContainerStyle={{ paddingTop: frame.top, paddingBottom: bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={[frame.column, styles.page]}>
           <SubPageHead
+            stacked
             title={found.length ? `${found.length} new from your calendars` : 'Nothing new from your calendars'}
             subtitle={found.length ? `From ${sources.join(' and ')}. Team only until you share them.` : undefined}
             crumbs={[{ label: 'This week', href: '/week' }]}

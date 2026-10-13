@@ -142,9 +142,10 @@ export function EventSheet({ visible, onClose, barId, menus, event, day, tab: fi
       onClose={onClose}
       title={event ? 'Edit event' : 'New event'}
       save={tab === 'one' ? { label: busy ? 'Saving…' : 'Save', onPress: submit, disabled: busy } : undefined}
+      form
       footer={tab === 'one' && error ? <Caption tone="accent">{error}</Caption> : undefined}
     >
-      {event ? null : <Segmented accessibilityLabel="How" options={TABS} value={tab} onChange={setTab} />}
+      {event ? null : <Segmented fill quiet accessibilityLabel="How" options={TABS} value={tab} onChange={setTab} />}
       {tab === 'link' ? <CalendarImport barId={barId} onDone={onClose} /> : null}
       <View style={[styles.form, tab === 'link' && styles.hidden]}>
         <View role="radiogroup" accessibilityLabel="Kind" style={styles.wrap}>
@@ -152,76 +153,94 @@ export function EventSheet({ visible, onClose, barId, menus, event, day, tab: fi
             <Chip key={k.kind} label={k.label} selected={kind === k.kind} onPress={() => setKind(k.kind)} />
           ))}
         </View>
-        {hasGuest ? <EventGuest value={guest} onChange={setGuest} placeholder={kind === 'takeover' ? 'Pale Moth' : 'Mara Q. from The Lantern Room'} /> : null}
-        <Field label="Name" value={name} onChangeText={setName} placeholder={kind === 'guest_shift' ? 'Guest shift: Mara Q.' : 'Pale Moth takeover'} />
-        <DateField label="Day" value={date} onChange={setDate} min={event ? undefined : today} />
-        <TimeField label="Starts" value={start} onChange={setStart} />
-        <SwitchRow label="Runs late" detail="No set end time" value={!end} onValueChange={(late) => setEnd(late ? '' : '23:00')} />
-        {end ? <TimeField label="Ends" value={end} onChange={setEnd} /> : null}
-        <PressableScale
-          role="checkbox"
-          aria-checked={addDrinks && !menuId}
-          accessibilityLabel="Add drinks: a new menu for the night, credited to the guest"
-          onPress={() => {
-            setAddDrinks(!addDrinks || !!menuId);
-            setMenuId(null);
-          }}
-          style={[styles.menuRow, { backgroundColor: ds.c.surface }]}
-        >
-          <View style={styles.flex}>
-            <DsText>Menu</DsText>
-            <Caption tone="muted">
-              {menuName
-                ? `On ${menuName}`
-                : addDrinks
-                  ? `A new menu opens after you save${guestName ? `, its drinks credited to ${guestName}` : ''}.`
-                  : 'Optional. Their drinks, credited to them.'}
-            </Caption>
+        {/* One grouped card for who, what and when, as the New event board draws it. */}
+        <View style={[styles.card, { backgroundColor: ds.c.surface }]}>
+          {hasGuest ? (
+            <View style={[styles.cell, { borderBottomColor: ds.c.line }]}>
+              <EventGuest bare value={guest} onChange={setGuest} placeholder={kind === 'takeover' ? 'Pale Moth' : 'Mara Q. from The Lantern Room'} />
+            </View>
+          ) : null}
+          <View style={[styles.cell, { borderBottomColor: ds.c.line }]}>
+            <Field bare label="Name" value={name} onChangeText={setName} placeholder={kind === 'guest_shift' ? 'Guest shift: Mara Q.' : 'Pale Moth takeover'} />
           </View>
-          <Caption tone={addDrinks && !menuId ? 'accent' : 'muted'}>{addDrinks && !menuId ? 'Adding drinks' : 'Add drinks'}</Caption>
-        </PressableScale>
-        {menus.length ? (
-          <View role="radiogroup" accessibilityLabel="Or a menu you have" style={styles.wrap}>
-            <Caption tone="muted" style={styles.full}>
-              Or a menu you have
-            </Caption>
-            {menus.map((m) => (
-              <Choice
-                key={m.id}
-                label={m.name}
-                selected={menuId === m.id}
-                onPress={() => {
-                  setMenuId(menuId === m.id ? null : m.id);
-                  setAddDrinks(false);
-                }}
-              />
-            ))}
+          <View style={[styles.pair, styles.cell, { borderBottomColor: ds.c.line }]}>
+            <View style={styles.flex}>
+              <DateField bare label="When" value={date} onChange={setDate} min={event ? undefined : today} />
+            </View>
+            <View style={styles.flex}>
+              <TimeField bare label="Time" value={start} onChange={setStart} />
+            </View>
           </View>
-        ) : null}
-        <SwitchRow label="House menu still on" detail="Guests ask when a takeover swaps the whole list." value={houseMenuOn} onValueChange={setHouseMenuOn} />
-        <Field
-          label="For guests (optional)"
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Five Pale Moth drinks next to our menu. Walk-ins only."
-          multiline
-        />
-        <Field
-          label="Booking or ticket link (optional)"
-          value={ticket}
-          onChangeText={setTicket}
-          placeholder="Resy, Eventbrite, Luma or any link"
-          autoCapitalize="none"
-          keyboardType="url"
-        />
+          <View style={[styles.cell, styles.last]}>
+            {end ? <TimeField bare label="Ends" value={end} onChange={setEnd} /> : null}
+            <SwitchRow label="Runs late" detail="No set end time" value={!end} onValueChange={(late) => setEnd(late ? '' : '23:00')} />
+          </View>
+        </View>
+        <View style={[styles.card, { backgroundColor: ds.c.surface }]}>
+          <PressableScale
+            role="checkbox"
+            aria-checked={addDrinks && !menuId}
+            accessibilityLabel="Add drinks: a new menu for the night, credited to the guest"
+            onPress={() => {
+              setAddDrinks(!addDrinks || !!menuId);
+              setMenuId(null);
+            }}
+            style={[styles.menuRow, styles.cell, { borderBottomColor: ds.c.line }]}
+          >
+            <View style={styles.flex}>
+              <DsText>Menu</DsText>
+              <Caption tone="muted">
+                {menuName
+                  ? `On ${menuName}`
+                  : addDrinks
+                    ? `A new menu opens after you save${guestName ? `, its drinks credited to ${guestName}` : ''}.`
+                    : 'Optional. Their drinks, credited to them.'}
+              </Caption>
+            </View>
+            <Caption tone={addDrinks && !menuId ? 'accent' : 'muted'}>{addDrinks && !menuId ? 'Adding drinks' : 'Add drinks'}</Caption>
+          </PressableScale>
+          {menus.length ? (
+            <View role="radiogroup" accessibilityLabel="Or a menu you have" style={[styles.wrap, styles.cell, { borderBottomColor: ds.c.line }]}>
+              <Caption tone="muted" style={styles.full}>
+                Or a menu you have
+              </Caption>
+              {menus.map((m) => (
+                <Choice
+                  key={m.id}
+                  label={m.name}
+                  selected={menuId === m.id}
+                  onPress={() => {
+                    setMenuId(menuId === m.id ? null : m.id);
+                    setAddDrinks(false);
+                  }}
+                />
+              ))}
+            </View>
+          ) : null}
+          <View style={[styles.cell, { borderBottomColor: ds.c.line }]}>
+            <SwitchRow label="House menu still on" value={houseMenuOn} onValueChange={setHouseMenuOn} />
+          </View>
+          <View style={[styles.cell, { borderBottomColor: ds.c.line }]}>
+            <Field bare label="Booking or ticket link" value={ticket} onChangeText={setTicket} placeholder="Resy, Eventbrite, Luma or any link" autoCapitalize="none" keyboardType="url" />
+          </View>
+          <View style={[styles.cell, styles.last]}>
+            <Field bare label="For guests (optional)" value={description} onChangeText={setDescription} placeholder="Five Pale Moth drinks next to our menu. Walk-ins only." multiline />
+          </View>
+        </View>
         {kind === 'private' ? (
           <Caption tone="muted">Private events stay with your team.</Caption>
         ) : (
           <View role="radiogroup" accessibilityLabel="Who sees it" style={styles.who}>
             <Caption tone="muted">Who sees it</Caption>
             {event?.source && !event.is_public ? <Caption tone="muted">From your calendar: only your team sees it until you save it for Everyone.</Caption> : null}
-            <Choice label="Everyone" detail="Your page, Discover, followers" selected={isPublic} onPress={() => setIsPublic(true)} />
-            <Choice label="Team only" detail="Tonight and the sidebar" selected={!isPublic} onPress={() => setIsPublic(false)} />
+            <View style={styles.pair}>
+              <View style={styles.flex}>
+                <Choice label="Everyone" detail="Your page, Discover, followers" selected={isPublic} onPress={() => setIsPublic(true)} />
+              </View>
+              <View style={styles.flex}>
+                <Choice label="Team only" detail="Tonight and the sidebar" selected={!isPublic} onPress={() => setIsPublic(false)} />
+              </View>
+            </View>
           </View>
         )}
       </View>
@@ -237,5 +256,9 @@ const styles = StyleSheet.create({
   form: { gap: space.md },
   hidden: { display: 'none' },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56 },
+  card: { borderRadius: radius.card - 6, borderCurve: 'continuous', paddingHorizontal: space.md + 2 },
+  cell: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth, gap: space.xs },
+  last: { borderBottomWidth: 0 },
+  pair: { flexDirection: 'row', gap: space.md },
 });
