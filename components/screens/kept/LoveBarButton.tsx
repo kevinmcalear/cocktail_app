@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, GlassButton, PressableScale, useDs } from '@/components/ds';
+import { Button, DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
 import { LineGlyph } from '@/components/ui/lineGlyphs';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
@@ -50,13 +50,18 @@ export function LoveBarButton({ profileId, name, labelled = false }: { profileId
         >
           <View style={styles.row}>
             <LineGlyph name="heartFill" size={18} color={ds.accentText} />
-            <Caption color={ds.accentText} style={styles.text}>
+            <DsText variant="label" color={ds.accentText} style={styles.text}>
               Loved
-            </Caption>
+            </DsText>
           </View>
         </PressableScale>
       ) : (
-        <GlassButton accessibilityLabel={label} icon={on ? 'heart.fill' : 'heart'} label={labelled ? 'Love' : undefined} onPress={toggle} />
+        labelled ? (
+          // The outlined Love pill (ppl-bar-unclaimed, ppl-pub-bar-desktop).
+          <Button label="Love" icon="heart" variant="secondary" dense accessibilityLabel={label} onPress={toggle} style={styles.love} />
+        ) : (
+          <GlassButton accessibilityLabel={label} icon={on ? 'heart.fill' : 'heart'} onPress={toggle} />
+        )
       )}
       {age.sheet}
       {asking ? <LoveAlertsSheet visible profileId={profileId} name={name} onClose={() => setAsking(false)} /> : null}
@@ -65,6 +70,7 @@ export function LoveBarButton({ profileId, name, labelled = false }: { profileId
 }
 
 const styles = StyleSheet.create({
+  love: { paddingHorizontal: space.lg },
   loved: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   text: { fontFamily: fontFamilies.bodySemiBold },

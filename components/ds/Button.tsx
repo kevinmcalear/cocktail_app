@@ -24,6 +24,8 @@ export interface ButtonProps {
   variant?: 'primary' | 'ink' | 'secondary' | 'ghost' | 'danger';
   /** sm: a compact pill (My Bar's Add both, a row action like "Unblock"), 36 tall with its tap area grown to 44, 15 pt label. */
   size?: 'sm' | 'md' | 'lg';
+  /** Full height with a 15 pt semibold label, for three across a phone (a bar page's Directions, Call and Website, ppl-bar-top). */
+  dense?: boolean;
   icon?: IconName;
   disabled?: boolean;
   /** When the label alone is ambiguous ("Cancel" in a list of invites). Defaults to the label. */
@@ -32,7 +34,7 @@ export interface ButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function Button({ label, onPress, variant = 'primary', size = 'md', icon, disabled, accessibilityLabel, accessibilityHint, style }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', size = 'md', dense, icon, disabled, accessibilityLabel, accessibilityHint, style }: ButtonProps) {
   const ds = useDs();
   const fill = variant === 'primary' ? ds.accentFill.fill : variant === 'ink' ? ds.c.ink : 'transparent';
   const danger = readableAccent(STATUS.danger, ds.c.ground);
@@ -61,7 +63,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon,
     >
       <View style={styles.row}>
         {icon ? <IconSymbol name={icon} size={18} color={text} /> : null}
-        <DsText variant={size === 'sm' ? 'label' : 'body'} color={text} style={size === 'sm' ? null : styles.label} numberOfLines={1}>
+        <DsText variant={size === 'sm' || dense ? 'label' : 'body'} color={text} style={size === 'sm' ? null : styles.label} numberOfLines={1}>
           {label}
         </DsText>
       </View>

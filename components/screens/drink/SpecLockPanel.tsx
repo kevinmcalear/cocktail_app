@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Headline, Surface, useDs } from '@/components/ds';
+import { Body, DsText, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space, type } from '@/constants/tokens';
 
 /**
  * "Recipes stay with the bar": where a spec would be, on a drink (or a bar's
@@ -17,10 +17,10 @@ export function SpecLockPanel({ note, action }: { note: string; action?: ReactNo
       <View style={[styles.ring, { borderColor: ds.c.ink }]} aria-hidden>
         <IconSymbol name="lock.fill" size={20} color={ds.c.ink} />
       </View>
-      <Headline role="heading" align="center">
+      <DsText variant="body" role="heading" align="center" style={styles.title}>
         Recipes stay with the bar
-      </Headline>
-      <Body tone="muted" align="center">
+      </DsText>
+      <Body tone="muted" align="center" style={styles.note}>
         {note}
       </Body>
       {action ? <View style={styles.action}>{action}</View> : null}
@@ -29,7 +29,10 @@ export function SpecLockPanel({ note, action }: { note: string; action?: ReactNo
 }
 
 const styles = StyleSheet.create({
-  panel: { alignItems: 'center', gap: space.sm, borderWidth: StyleSheet.hairlineWidth, padding: space.lg },
+  // As drawn (ppl-bar-unclaimed): 20 in, a 17 on 22 semibold title, the note at 15 on 22.
+  panel: { alignItems: 'center', gap: space.sm, borderWidth: StyleSheet.hairlineWidth, padding: space.lg + space.xs },
+  title: { fontFamily: fontFamilies.bodySemiBold, lineHeight: 22 },
+  note: { fontSize: type.label.fontSize, lineHeight: 22 },
   ring: { width: 52, height: 52, borderRadius: radius.pill, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   action: { marginTop: space.xs, alignSelf: 'stretch', alignItems: 'center' },
 });
