@@ -106,10 +106,10 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
     <View style={styles.top}>
       {header}
       <Body tone="muted">The drinks everyone here should know, most important first. Drink Creators and Admins can drag to reorder.</Body>
-      {picks.isLoading ? <Caption tone="muted">Loading the staff list…</Caption> : null}
-      {picks.error ? <Body tone="muted">Couldn’t load the staff list. Check your connection and try again.</Body> : null}
+      {picks.isLoading ? <Caption tone="muted">Loading the classics…</Caption> : null}
+      {picks.error ? <Body tone="muted">Couldn’t load the classics. Check your connection and try again.</Body> : null}
       {edit.error ? <Caption>{plainDbMessage(edit.error) ?? 'Couldn’t save that. Check your connection and try again.'}</Caption> : null}
-      {picks.data && !rows.length ? <Body tone="muted">Nothing on the staff list yet.</Body> : null}
+      {picks.data && !rows.length ? <Body tone="muted">No classics on the list yet.</Body> : null}
     </View>
   );
   const bottom = (

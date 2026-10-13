@@ -116,12 +116,13 @@ export function SearchBody({ query, scope, onScope, mine, area, onJump, commands
 }
 
 const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', bar: 'Bar', flavor: 'Flavor map' };
+// Ingredients is one of Library's extras: it shows with More library filters.
 const JUMPS = [
+  { label: 'Classics', href: '/library?show=staff' },
   { label: 'On menu now', href: '/library?show=on-menu' },
-  { label: 'Staff list', href: '/library?show=staff' },
-  { label: 'Past', href: '/library?show=past' },
+  { label: 'Old drinks', href: '/library?show=past' },
   { label: 'Drafts', href: '/drafts' },
-  { label: 'Ingredients', href: '/library?show=ingredients' },
+  { label: 'Ingredients', href: '/library?show=ingredients', extra: true },
 ] as const;
 
 /** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry), each when it's switched on. */
@@ -182,7 +183,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
           </Caption>
           <View style={styles.chips}>
             {/* Drafts stays with its count, even at none (decided 10 Oct, b53); outlined chips, as drawn. */}
-            {JUMPS.map((j) => (
+            {JUMPS.filter((j) => !('extra' in j) || has('libraryExtras')).map((j) => (
               <Chip key={j.label} label={j.label} count={j.label === 'Drafts' ? draftCount : undefined} quiet selected={false} onPress={() => go(j.href)} />
             ))}
           </View>

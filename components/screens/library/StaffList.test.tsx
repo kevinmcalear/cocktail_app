@@ -38,7 +38,7 @@ test('reads in order with where each drink stands, and a cut line after the top 
   expect(screen.queryByText('TOP 20')).toBeNull();
   expect(screen.getByLabelText('1. Drink 1 On menu, open')).toBeTruthy();
   expect(screen.getByLabelText('2. Drink 2 Off menu, open')).toBeTruthy();
-  expect(screen.getByLabelText('11. Paloma Past, open')).toBeTruthy();
+  expect(screen.getByLabelText('11. Paloma Old drink, open')).toBeTruthy();
   expect(screen.getByText('NOT RANKED')).toBeTruthy();
   expect(screen.queryByLabelText('Move Paloma')).toBeNull();
   expect(screen.queryByText('Add a drink')).toBeNull();

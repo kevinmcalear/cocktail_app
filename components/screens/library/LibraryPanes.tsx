@@ -62,7 +62,7 @@ function OtherPane({ item }: { item: SearchItem }) {
  * Library on a tablet (768 to 1199 wide, beside the rail): the list with its
  * filters on the left, the picked drink's page on the right, as the canvas's
  * tablet board draws it. Each drink row says why it's here ("On the Autumn
- * menu", "Staff list 2 · off menu", a Past pill) and ends with its score, as
+ * menu", "Classics 2 · off menu", a Past pill) and ends with its score, as
  * search's rows do. The pick lives in the URL (?pick=<id>), so a link opens
  * the same drink; with none, the first one shows.
  */
