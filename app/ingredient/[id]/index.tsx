@@ -4,10 +4,10 @@ import { View } from "react-native";
 import { BackbarTheme, Body, Button, useDs } from "@/components/ds";
 import { IngredientScreen } from "@/components/screens/ingredient/IngredientScreen";
 import type { PrepLine } from "@/components/screens/ingredient/PrepRecipe";
-import { FEATURES } from "@/constants/features";
 import { space } from "@/constants/tokens";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useStudyPile } from "@/hooks/useStudyPile";
+import { useVenueFeature } from "@/hooks/useVenueFeatures";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
 import { orderedPictures } from "@/lib/itemImages";
@@ -25,6 +25,7 @@ export default function IngredientDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
+    const study = useVenueFeature("study");
 
     // isPending, not isLoading: "no data yet" includes the static prerender and the
     // first paint, when nothing is fetching, and those must not read as not found.
@@ -69,7 +70,7 @@ export default function IngredientDetailScreen() {
             bottles={data?.bottles ?? []}
             pictures={orderedPictures(data?.heroImages)}
             inStudyPile={isInStudyPile(key)}
-            onToggleStudyPile={() => (FEATURES.study ? toggleStudyPile(key) : undefined)}
+            onToggleStudyPile={() => (study ? toggleStudyPile(key) : undefined)}
             canEdit={canEdit}
             onEdit={() => router.push(`/ingredient/${ingredient.id}/edit`)}
         />

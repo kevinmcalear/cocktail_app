@@ -22,7 +22,7 @@ import { backBarLine, collectionLine, menusLine, shelfLine, teamLine } from '@/l
 import { canManageTeam } from '@/lib/team';
 import { weekLine } from '@/lib/week';
 
-import { useNavPlaces, type Place } from './navPlaces';
+import { MENUS_PLACE, useNavPlaces, type Place } from './navPlaces';
 import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
 
 function SwitchRow({ mark, name, detail, selected, onPress }: { mark: React.ReactNode; name: string; detail: string; selected: boolean; onPress: () => void }) {
@@ -101,7 +101,7 @@ function Places({ places, lines, onGo }: { places: Place[]; lines: Record<string
 
 function VenuePlaces({ venue, onGo }: { venue: Venue; onGo: (p: Place) => void }) {
   const { work, venuePlaces, week } = useNavPlaces();
-  return <Places places={[...work, ...venuePlaces, week, SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
+  return <Places places={[MENUS_PLACE, ...work, ...venuePlaces, ...(week ? [week] : []), SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
 }
 
 function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {

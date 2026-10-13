@@ -1,9 +1,15 @@
-import { Redirect } from 'expo-router';
+import { MountOnFocus } from '@/components/nav/MountOnFocus';
+import { MenusScreen } from '@/components/screens/menus/MenusScreen';
+import { WebHead } from '@/components/WebHead';
 
-/**
- * A hidden tab kept so old links to /menus land somewhere: menus live at
- * /menus/all, opened from Tonight, Library and the side nav.
- */
-export default function MenusRoute() {
-  return <Redirect href="/menus/all" />;
+/** The Menus tab, in venue mode: every menu at the venue. /menus/all is the same list opened over another page. */
+export default function MenusTab() {
+  return (
+    <MountOnFocus>
+      <WebHead>
+        <title>Menus</title>
+      </WebHead>
+      <MenusScreen tab />
+    </MountOnFocus>
+  );
 }

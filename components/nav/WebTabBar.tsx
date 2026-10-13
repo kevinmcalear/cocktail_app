@@ -4,10 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { FEATURES } from '@/constants/features';
 import { space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
+import { PHONE_TAB_LIMIT, venueTabs, type VenueTab } from '@/lib/venueFeatures';
 
 import { CalendarDayIcon } from './CalendarDayIcon';
 
@@ -15,14 +16,14 @@ export type WebTab = { name: string; label: string; icon: IconName };
 
 const DISCOVER: WebTab = { name: 'discover', label: 'Discover', icon: 'safari' };
 
-/** Prep and Study only when they're switched on (constants/features.ts). */
-export const VENUE_TABS: WebTab[] = [
-  { name: 'index', label: 'Tonight', icon: 'calendar' },
-  { name: 'library', label: 'Library', icon: 'book' },
-  FEATURES.prep && { name: 'prep', label: 'Prep', icon: 'flask' },
-  FEATURES.study && { name: 'test', label: 'Study', icon: 'rectangle.stack' },
-  DISCOVER,
-].filter((t): t is WebTab => !!t);
+const VENUE_TABS: Record<VenueTab, WebTab> = {
+  index: { name: 'index', label: 'Tonight', icon: 'calendar' },
+  library: { name: 'library', label: 'Library', icon: 'book' },
+  menus: { name: 'menus', label: 'Menus', icon: 'text.alignleft' },
+  prep: { name: 'prep', label: 'Prep', icon: 'flask' },
+  test: { name: 'test', label: 'Study', icon: 'rectangle.stack' },
+  discover: DISCOVER,
+};
 
 export const HOME_TABS: WebTab[] = [
   DISCOVER,
@@ -30,6 +31,17 @@ export const HOME_TABS: WebTab[] = [
   { name: 'collection', label: 'Collection', icon: 'bookmark' },
   { name: 'profile', label: 'You', icon: 'person.crop.circle' },
 ];
+
+/**
+ * The tabs for the mode you're in. At a venue: Library, Menus and Discover,
+ * plus Tonight, Prep and Study when the venue switched them on
+ * (lib/venueFeatures.ts). Phone bars pass PHONE_TAB_LIMIT; the sidebar lists all.
+ */
+export function useModeTabs(limit?: number): WebTab[] {
+  const { mode } = useMode();
+  const { has } = useVenueFeatures();
+  return mode === 'home' ? HOME_TABS : venueTabs(has, limit).map((name) => VENUE_TABS[name]);
+}
 
 /** A tab's icon. 'calendar' is Tonight's page with the date on it; the rest are symbols. */
 export function TabIcon({ name, size, color }: { name: IconName; size: number; color: ColorValue }) {
@@ -60,7 +72,7 @@ export function useTabBarInset() {
 export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
-  const { mode } = useMode();
+  const tabs = useModeTabs(PHONE_TAB_LIMIT);
   const current = state.routes[state.index]?.name;
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
@@ -72,7 +84,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
     <View style={[styles.wrap, { bottom: insets.bottom + space.md }]}>
       <GlassSurface style={styles.tabs}>
         <View role="tablist" style={styles.row}>
-          {(mode === 'home' ? HOME_TABS : VENUE_TABS).map((t) => {
+          {tabs.map((t) => {
             const selected = current === t.name;
             const color = selected ? ds.accentText : ds.c.muted;
             return (

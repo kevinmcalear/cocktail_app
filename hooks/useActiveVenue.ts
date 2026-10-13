@@ -5,6 +5,7 @@ import { useAuthIdentity } from '@/ctx/AuthContext';
 import type { DisplayFace } from '@/constants/tokens';
 import { faceFromDb, usableGroundTint } from '@/lib/brand';
 import { isHexColor } from '@/lib/color';
+import { parseFeatures, type VenueFeatureKey } from '@/lib/venueFeatures';
 import { useAppMode, useAppModeHydrated } from '@/store/useAppMode';
 
 export interface Venue {
@@ -19,6 +20,8 @@ export interface Venue {
   /** The venue's pick for text on accent buttons, or null for automatic. */
   accentText?: 'cream' | 'ink' | null;
   roleLevel: number;
+  /** The extras the venue's Admin switched on (lib/venueFeatures.ts); empty is Discover, Library and Menus only. */
+  features: VenueFeatureKey[];
 }
 
 /**
@@ -55,6 +58,7 @@ export function useActiveVenue() {
         groundTint: usableGroundTint(bar.ground_tint),
         accentText: bar.accent_text === 'cream' || bar.accent_text === 'ink' ? bar.accent_text : null,
         roleLevel: row.role_level ?? 0,
+        features: parseFeatures(bar.enabled_features),
       });
     }
     return out.sort((a, b) => a.name.localeCompare(b.name));

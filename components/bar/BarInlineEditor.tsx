@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
 import { VenueBasics } from '@/components/bar/VenueBasics';
+import { VenueFeatures } from '@/components/bar/VenueFeatures';
 import { VenueHoursEditor } from '@/components/bar/VenueHoursEditor';
 import { VenueSettingsLinks, VenueTeamLinks } from '@/components/bar/VenueSettingsLinks';
 import { BackbarTheme, Body, Caption, Surface, useDs } from '@/components/ds';
@@ -107,6 +108,9 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
                     </View>
                 ))}
             </SettingsSection>
+
+            {/* Only Admins see the switches: everyone else just sees the tabs they give. */}
+            {editor.canEdit ? <VenueFeatures barId={barId} /> : null}
 
             <VenueTeamLinks barId={barId} barName={editor.name || 'This venue'} role={editor.roleLevel} />
             <VenueSettingsLinks barId={barId} />
