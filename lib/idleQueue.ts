@@ -12,10 +12,16 @@ const jobs: (() => void)[] = [];
 let pending = false;
 
 type Later = (run: () => void) => void;
+// The web's requestIdleCallback waits for a gap between frames. React Native's
+// doesn't: it ran slice after slice with no frame between, so a menu of 60
+// drawn drinks painted every one in a single 2.8 s block, the screen frozen.
+// There a slice waits for the next frame instead, one slice a frame.
 const later: Later =
-  typeof requestIdleCallback === 'function'
+  typeof document !== 'undefined' && typeof requestIdleCallback === 'function'
     ? (run) => requestIdleCallback(run, { timeout: 250 }) // a busy screen still gets its pictures within a quarter second
-    : (run) => setTimeout(run, 1);
+    : typeof requestAnimationFrame === 'function'
+      ? (run) => requestAnimationFrame(() => setTimeout(run, 0))
+      : (run) => setTimeout(run, 1);
 
 function run(schedule: Later, now: () => number) {
   const end = now() + SLICE_MS;
