@@ -89,7 +89,8 @@ function GlasswarePage({ barId }: { barId: string }) {
                     ))}
                   </View>
                 </Surface>
-              ) : (
+              ) : error ? null : (
+                // A failed load already says so: an empty list here would be wrong.
                 <Body tone="muted">No glasses listed yet.</Body>
               )}
               {canEdit && open ? (

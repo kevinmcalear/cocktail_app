@@ -9,7 +9,8 @@ import { WaitingForSpot } from '@/components/backbar/WaitingForSpot';
 import { ZoneKinds } from '@/components/backbar/ZoneKinds';
 import { ZoneInspector } from '@/components/backbar/ZoneInspector';
 import { Body, Button, Caption, LockedSection, Surface, useBreakpoint, useDs } from '@/components/ds';
-import { PageHeader, usePageColumn } from '@/components/nav/Page';
+import { usePageColumn } from '@/components/nav/Page';
+import { SubPageHead } from '@/components/nav/PageFrame';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarZones, useItemLocations, useLocationMutations, useWaitingForSpot, useZoneMutations } from '@/hooks/useBackBar';
@@ -175,21 +176,21 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[column, styles.body, { paddingBottom: insets.bottom + space.xxl }]}>
-        <PageHeader
+        {/* A venue tool's head (tools-backbar): the title at Title size, its line, the actions at the end. */}
+        <SubPageHead
           title="Back bar"
-          width="wide"
-          subtitle={canRead && zones.length ? summaryLine(zones.length, locations, waiting.length) : null}
+          subtitle={canRead && zones.length ? <Body tone="muted">{summaryLine(zones.length, locations, waiting.length)}</Body> : undefined}
           // Opened from the venue menu, Library or an ingredient page; a link opened cold goes to Tonight.
           onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-          action={
+          trailing={
             canRead && zones.length ? (
               <View style={styles.actions}>
-                <Button label="Print labels" icon="doc.text" variant="secondary" onPress={() => router.push('/back-bar-labels')} />
+                <Button label="Print labels" icon="printer" variant="secondary" onPress={() => router.push('/back-bar-labels')} />
                 {canDraw ? (
-                  <Button label={editing ? 'Done' : 'Edit the plan'} variant={editing ? 'secondary' : 'primary'} onPress={() => setEditing((e) => !e)} />
+                  <Button label={editing ? 'Done' : 'Edit the plan'} icon={editing ? undefined : 'pencil'} variant={editing ? 'secondary' : 'primary'} onPress={() => setEditing((e) => !e)} />
                 ) : null}
               </View>
-            ) : null
+            ) : undefined
           }
         />
         {body}
