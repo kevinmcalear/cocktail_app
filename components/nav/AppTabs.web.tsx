@@ -23,6 +23,7 @@ export function AppTabs() {
         <Tabs.Screen name="bar" options={{ title: 'My Bar' }} />
         <Tabs.Screen name="collection" options={{ title: 'Collection' }} />
         <Tabs.Screen name="search" options={{ title: 'Search' }} />
+        <Tabs.Screen name="new" options={{ href: null }} />
         <Tabs.Screen name="profile" options={{ title: 'You' }} />
       </Tabs>
     </VenueBrandProvider>

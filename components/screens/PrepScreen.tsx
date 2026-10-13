@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, LockedSection, Segmented, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, LockedSection, Segmented, useDs, useGutter } from '@/components/ds';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { BackBarLink } from '@/components/backbar/BackBarLink';
@@ -125,13 +125,12 @@ export function PrepScreen() {
     // handles the top safe area itself, the same as on Tonight and Library.
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: bottom }}>
-        <ScreenHeader />
+        <ScreenHeader title="Prep" display />
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
           <View style={styles.links}>
             <BackBarLink />
             <Button label="Tools" icon="percent" variant="secondary" onPress={() => setTools(true)} />
           </View>
-          <Display>Prep</Display>
           {canPrep ? <Segmented options={SEGMENTS} value={segment} onChange={setSegment} accessibilityLabel="Prep, Order or Count" /> : null}
           {canPrep && segment !== 'count' ? (
             <PrepSources events={events} source={source} onSource={pick} canCreate={!!capabilities?.includes('menus')} onNewEvent={() => setCreating(true)} />

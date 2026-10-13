@@ -35,7 +35,7 @@ jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole }));
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: unknown }) => children }));
 jest.mock('@/components/nav/VenueSwitcher', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
-  return { VenueSwitcher: () => <Text>venue switcher</Text>, VenueWordmark: () => null };
+  return { VenueSwitcher: () => <Text>venue switcher</Text> };
 });
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [{ id: 'd1' }, { id: 'd2' }] }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['edit_drinks'] }), useCapabilityOpensAt: () => ({ data: 35 }) }));
