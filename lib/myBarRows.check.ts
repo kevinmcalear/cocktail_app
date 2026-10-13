@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { MAKE_PAGE, makeTab, myBarRows, pickSection, searchCaption, searchMake } from './myBarRows';
+import { MAKE_PAGE, makeTab, myBarRows, pairDrinks, pickSection, searchCaption, searchMake } from './myBarRows';
 
 const bottle = (i: number, kind: string | null = null) => ({ id: `b${i}`, name: `Bottle ${i}`, kind, uses: i % 2 });
 const drink = (i: number) => ({ id: `d${i}`, name: `Drink ${i}` });
@@ -169,3 +169,10 @@ assert.equal(searchCaption('gin', { ready: 1, one: 0, two: 0 }), '1 ready.');
 assert.equal(searchCaption('zzz', { ready: 0, one: 0, two: 0 }), null);
 
 console.log('myBarRows checks passed');
+
+// The desktop grid: drinks two to a row, other rows untouched, an odd one alone.
+{
+  const r = (kind: string, key: string) => ({ kind, key });
+  const paired = pairDrinks([r('make-head', 'h'), r('drink', 'a'), r('drink', 'b'), r('drink', 'c'), r('make-foot', 'f')]);
+  assert.deepEqual(paired.map((p) => (p.kind === 'pair' ? (p as { rows: { key: string }[] }).rows.map((x) => x.key).join('+') : p.key)), ['h', 'a+b', 'c', 'f']);
+}

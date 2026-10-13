@@ -16,7 +16,7 @@ export interface GuestValue {
  * The guest at a takeover or guest shift: a bar picked from the public pages
  * as you type, or the typed name when there's no page to pick.
  */
-export function EventGuest({ value, onChange, placeholder }: { value: GuestValue; onChange: (v: GuestValue) => void; placeholder: string }) {
+export function EventGuest({ value, onChange, placeholder, bare }: { value: GuestValue; onChange: (v: GuestValue) => void; placeholder: string; /** A row of the sheet's grouped card. */ bare?: boolean }) {
   const ds = useDs();
   const [search, setSearch] = useState(value.name);
   const picked = useBarProfile(null, value.profileId).data;
@@ -27,13 +27,13 @@ export function EventGuest({ value, onChange, placeholder }: { value: GuestValue
     return (
       <View style={styles.wrap}>
         <Caption tone="muted">Guest</Caption>
-        <View style={[styles.picked, { backgroundColor: ds.c.raised }]}>
+        <View style={[styles.picked, bare ? styles.pickedBare : { backgroundColor: ds.c.raised }]}>
           <View aria-hidden style={[styles.mark, { backgroundColor: ds.c.lineStrong }]}>
             <DsText variant="caption">{name[0]?.toUpperCase()}</DsText>
           </View>
           <View style={styles.flex}>
-            <DsText numberOfLines={1}>{name}</DsText>
-            {picked?.locality || picked?.city ? <Caption tone="muted">{picked.locality ?? picked.city}</Caption> : null}
+            <DsText numberOfLines={1}>{bare && (picked?.locality || picked?.city) ? `${name} · ${picked?.locality ?? picked?.city}` : name}</DsText>
+            {!bare && (picked?.locality || picked?.city) ? <Caption tone="muted">{picked?.locality ?? picked?.city}</Caption> : null}
           </View>
           <PressableScale role="button" accessibilityLabel={`Change the guest from ${name}`} onPress={() => onChange({ profileId: null, name: '' })} style={styles.change}>
             <Caption tone="accent">Change</Caption>
@@ -54,6 +54,7 @@ export function EventGuest({ value, onChange, placeholder }: { value: GuestValue
         }}
         placeholder={placeholder}
         autoCorrect={false}
+        bare={bare}
       />
       {found.length ? (
         <View role="list" accessibilityLabel="Bars with a page here" style={styles.chips}>
@@ -71,6 +72,7 @@ const styles = StyleSheet.create({
   wrap: { gap: space.xs },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   picked: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingLeft: space.md, borderRadius: radius.control },
+  pickedBare: { minHeight: 28, paddingLeft: 0 },
   mark: { width: 28, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
   change: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.md },

@@ -91,7 +91,7 @@ export function AddAwardSheet({ visible, profileId, onClose }: { visible: boolea
           </View>
           <View style={[styles.group, styles.flex]}>
             <Caption tone="muted">Result</Caption>
-            <Segmented look="track" choice onSurface accessibilityLabel="Result" options={RESULTS} value={finalist ? 'finalist' : 'won'} onChange={(v) => setFinalist(v === 'finalist')} />
+            <Segmented variant="ink" stretch choice onSurface accessibilityLabel="Result" options={RESULTS} value={finalist ? 'finalist' : 'won'} onChange={(v) => setFinalist(v === 'finalist')} />
           </View>
         </View>
         {bars.length ? (

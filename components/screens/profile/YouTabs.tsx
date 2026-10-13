@@ -143,7 +143,7 @@ export function YouTabs({ profile, drinks, made, loading, failed }: { profile: M
 
   return (
     <View style={styles.section}>
-      <Segmented accessibilityLabel="Your drinks" look="track" options={TABS} value={tab} onChange={setTab} />
+      <Segmented accessibilityLabel="Your drinks" variant="ink" stretch options={TABS} value={tab} onChange={setTab} />
       {profile && rows.length ? <ModeLine mode={mode} shown={shownCount} total={rows.length} onChange={() => router.push('/settings/profile-sharing' as Href)} /> : null}
       {tab === 'had' && hasDates(drinks) ? (
         <View role="radiogroup" accessibilityLabel="Sort" style={styles.chips}>

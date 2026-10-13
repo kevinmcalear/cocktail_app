@@ -142,6 +142,27 @@ export interface BarMenuPicks<E extends ForYouEdition> {
   news: { edition: E; title: string; sub: string }[];
 }
 
+/** A bar's place on a ranked list ("No. 3, The World's 50 Best Bars 2026"). */
+export interface ListPlace {
+  barId: string;
+  position: number;
+  award: string;
+  year: number;
+}
+
+/**
+ * Bar menus for you before you've ranked anything (canvas E, decided 10 Oct):
+ * the menus on now at a ranked list's bars, best placed first, each saying its
+ * place. `places` in list order; menus you saved are left out.
+ */
+export function listMenuPicks<E extends ForYouEdition>(places: readonly ListPlace[], editions: readonly E[], saved: ReadonlySet<string>): { edition: E; reason: string }[] {
+  const order = [...places].sort((a, b) => a.position - b.position);
+  return order.flatMap((p) => {
+    const e = editions.find((x) => x.barId === p.barId && x.dates.isCurrent && !saved.has(x.id));
+    return e ? [{ edition: e, reason: `No. ${p.position}, ${p.award} ${p.year}` }] : [];
+  });
+}
+
 const RECENT_MONTHS = 6;
 
 function monthsAgo(year: number, month: number | null, now: number): number {

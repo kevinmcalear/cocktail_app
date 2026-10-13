@@ -76,7 +76,7 @@ function AboutForm({ profile }: { profile: MyProfile }) {
         <View style={styles.group}>
           <Body style={styles.strong}>Who sees your photo</Body>
           <Segmented
-            look="track"
+            variant="ink" stretch
             choice
             accessibilityLabel="Who sees your photo"
             options={PHOTO_CHOICES}

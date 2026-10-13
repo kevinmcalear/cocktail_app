@@ -113,7 +113,7 @@ function Hub({ profile }: { profile: MyProfile }) {
       <View style={styles.group}>
         <Headline role="heading">Who can see it</Headline>
         <Segmented
-          look="track"
+          variant="ink" stretch
           choice
           accessibilityLabel="Who can see your profile"
           options={WHO}
@@ -186,7 +186,7 @@ function MakeProfile() {
       />
       <View style={styles.group}>
         <Headline role="heading">Who can see it</Headline>
-        <Segmented look="track" choice accessibilityLabel="Who can see your profile" options={WHO} value={draft.isPublic ? 'public' : 'me'} onChange={(v) => edit({ isPublic: v === 'public' })} />
+        <Segmented variant="ink" stretch choice accessibilityLabel="Who can see your profile" options={WHO} value={draft.isPublic ? 'public' : 'me'} onChange={(v) => edit({ isPublic: v === 'public' })} />
         <Caption tone="muted">{draft.isPublic ? PUBLIC_MEANS : PRIVATE_MEANS}</Caption>
       </View>
       {save.error ? <Body tone="accent">{save.error.message}</Body> : null}

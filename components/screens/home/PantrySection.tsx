@@ -70,7 +70,7 @@ export function PantrySection({ items, extras, shelf, onShelf, cols, editing, on
                 key={s.id}
                 name={s.label}
                 meta="Tap if you keep it"
-                picture={<IngredientDrawing id={s.id} name={s.name} lazy />}
+                picture={<IngredientDrawing id={s.id} name={s.name} lazy bare />}
                 role="button"
                 accessibilityLabel={`I keep ${s.label}`}
                 ghost

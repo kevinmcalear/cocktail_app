@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, DsText, Headline, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
+import { Caption, DsText, GlassButton, Headline, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
@@ -21,6 +21,8 @@ interface MenuSheetProps {
   onShow?: () => void;
   /** A form's header: Cancel, the title in the middle, and Save, in place of the title and X. */
   save?: { label: string; onPress: () => void; disabled?: boolean };
+  /** The form header (Cancel and the title) with no Save: a step of a form whose own button saves. */
+  form?: boolean;
   /** A menu of places or actions (New, Switch to): the title in the body face, as the canvas draws those. */
   plain?: boolean;
 }
@@ -29,7 +31,7 @@ interface MenuSheetProps {
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children, footer, onShow, save, plain }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children, footer, onShow, save, plain, form }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -43,7 +45,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children
       keyboardOffset={footer ? -insets.bottom : 0}
       style={sheetIsDialog ? styles.dialog : undefined}
       header={
-        save ? (
+        save || form ? (
           <FormHeader title={title} save={save} />
         ) : (
           <View style={styles.header}>
@@ -71,17 +73,13 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children
 
 /** The X: closes the sheet it's in the way a drag does, sliding it away first. */
 function SheetCloseButton() {
-  const ds = useDs();
   const close = useSheetClose();
-  return (
-    <PressableScale accessibilityLabel="Close" onPress={close} style={styles.close}>
-      <IconSymbol name="xmark" size={18} color={ds.c.muted} />
-    </PressableScale>
-  );
+  // A round glass button, as the canvas draws a sheet's close.
+  return <GlassButton icon="xmark" accessibilityLabel="Close" onPress={close} />;
 }
 
 /** Cancel (closes the way a drag does), the title, and Save. */
-function FormHeader({ title, save }: { title: string; save: NonNullable<MenuSheetProps['save']> }) {
+function FormHeader({ title, save }: { title: string; save?: MenuSheetProps['save'] }) {
   const ds = useDs();
   const close = useSheetClose();
   return (
@@ -92,11 +90,15 @@ function FormHeader({ title, save }: { title: string; save: NonNullable<MenuShee
       <DsText role="heading" numberOfLines={1} style={[styles.formTitle, { fontFamily: fontFamilies.bodySemiBold }]}>
         {title}
       </DsText>
-      <PressableScale role="button" onPress={save.onPress} disabled={save.disabled} style={[styles.formButton, styles.formSave, save.disabled && styles.disabled]}>
-        <DsText color={ds.accentText} style={{ fontFamily: fontFamilies.bodySemiBold }}>
-          {save.label}
-        </DsText>
-      </PressableScale>
+      {save ? (
+        <PressableScale role="button" onPress={save.onPress} disabled={save.disabled} style={[styles.formButton, styles.formSave, save.disabled && styles.disabled]}>
+          <DsText color={ds.accentText} style={{ fontFamily: fontFamilies.bodySemiBold }}>
+            {save.label}
+          </DsText>
+        </PressableScale>
+      ) : (
+        <View style={styles.formButton} />
+      )}
     </View>
   );
 }
@@ -185,7 +187,6 @@ const styles = StyleSheet.create({
   formButton: { minWidth: 72, minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.sm },
   formSave: { alignItems: 'flex-end' },
   formTitle: { flex: 1, textAlign: 'center' },
-  close: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.md },
   body: { paddingHorizontal: space.xl, paddingTop: space.md, paddingBottom: space.xl, gap: space.md },
   footer: { paddingHorizontal: space.xl, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, gap: space.sm },
   flex: { flex: 1, gap: 2 },

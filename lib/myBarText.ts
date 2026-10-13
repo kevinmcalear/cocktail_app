@@ -63,6 +63,38 @@ export function inSentence(name: string, generic: boolean): string {
   return generic ? name.toLowerCase() : name;
 }
 
+/**
+ * A bottle as a tick calls it: its maker's short name when the name starts
+ * with the maker ("Woodford" for Woodford Reserve Double Oaked, "Cocchi",
+ * "Mr Black", "Ketel One"), the maker when the name carries it later
+ * ("Nonino" for Amaro Nonino), else the name.
+ */
+export function shortBottle(name: string, maker?: string | null): string {
+  const m = maker?.trim();
+  if (!m) return name;
+  const low = name.toLowerCase();
+  const ml = m.toLowerCase();
+  if (low.startsWith(ml)) {
+    const [first, second] = m.split(/\s+/);
+    return first.length <= 3 || (second && second.length <= 3) ? m : first;
+  }
+  return ` ${low} `.includes(` ${ml} `) ? m : name;
+}
+
+/**
+ * What of yours a drink uses, one short name per thing, as the canvas ticks
+ * them ("Woodford, lemon, sugar"): a bottle stands in for the kind it is (your
+ * Cocchi, not also "sweet vermouth"), "lemon" for "lemon juice", and a bottle
+ * goes by its short name (shortBottle).
+ */
+export function tickNames(items: readonly { name: string; generic: boolean; kind?: string | null; maker?: string | null }[]): string[] {
+  const kinds = new Set(items.filter((i) => !i.generic && i.kind).map((i) => i.kind!.toLowerCase()));
+  const kept = items.filter((i) => !(i.generic && kinds.has(i.name.toLowerCase())));
+  const lower = kept.map((i) => i.name.toLowerCase());
+  const names = kept.filter((_, n) => !lower.some((o, m) => m !== n && lower[n].startsWith(`${o} `))).map((i) => (i.generic ? inSentence(i.name, true) : shortBottle(i.name, i.maker)));
+  return [...new Set(names)];
+}
+
 /** Under a drink one or two bottles away: "Uses your Woodford, Campari", or "Nothing else needed". */
 export function usesLine(names: readonly string[]): string {
   return names.length ? `Uses your ${names.join(', ')}` : 'Nothing else needed';

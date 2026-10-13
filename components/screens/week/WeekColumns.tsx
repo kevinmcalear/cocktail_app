@@ -34,7 +34,8 @@ export function WeekColumns({ days, from, member, onAdd, bar, imported }: DayPro
             {items.map((item) => (
               <WeekCard key={`${item.kind}-${item.id}`} item={item} member={member} bar={bar} fromCalendar={item.kind === 'event' && !!imported?.includes(item.id)} />
             ))}
-            {onAdd ? <AddButton day={h.date} onPress={() => onAdd(day)} /> : null}
+            {/* Add sits in an empty day, as the board draws it; a busy day adds from the page's Add event. */}
+            {onAdd && !items.length ? <AddButton day={h.date} onPress={() => onAdd(day)} /> : null}
           </View>
         );
       })}

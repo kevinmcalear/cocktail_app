@@ -34,7 +34,7 @@ export function Tag({ label, tone = 'default', icon, dot, style }: { label: stri
     <View style={[styles.tag, { backgroundColor: look.bg, borderColor: look.border }, style]}>
       {icon ? <IconSymbol name={icon} size={12} color={look.fg} /> : null}
       {dot ? <View style={[styles.dot, { backgroundColor: look.fg }]} /> : null}
-      <DsText variant="caption" color={look.fg} numberOfLines={1}>
+      <DsText variant="caption" color={look.fg} numberOfLines={1} style={styles.label}>
         {label}
       </DsText>
     </View>
@@ -51,6 +51,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: space.sm + 2,
     paddingVertical: 2,
+    // A long label ("Need Bittersweet Orange Aperitivo") ends in an ellipsis inside its row, never past it.
+    maxWidth: '100%',
   },
+  label: { flexShrink: 1 },
   dot: { width: 7, height: 7, borderRadius: radius.pill },
 });

@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { createContext, use, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Caption, Chip, EquipmentDrawing, EquipmentThumb, GlassButton, Headline, IngredientDrawing, IngredientThumb, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { Caption, Chip, EquipmentDrawing, EquipmentThumb, Headline, IngredientDrawing, IngredientThumb, PressableScale, useBreakpoint, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
@@ -46,7 +46,17 @@ export function SectionActions({ section, editing, onEdit, canEdit }: { section:
   const ds = useDs();
   const title = SECTIONS[section].title;
   if (!canEdit) return null;
-  return <GlassButton icon={editing ? 'checkmark' : 'pencil'} color={editing ? ds.accentText : undefined} accessibilityLabel={editing ? `Done editing ${title}` : `Edit ${title}`} onPress={() => onEdit(!editing)} />;
+  return <SectionIcon icon={editing ? 'checkmark' : 'pencil'} color={editing ? ds.accentText : undefined} accessibilityLabel={editing ? `Done editing ${title}` : `Edit ${title}`} onPress={() => onEdit(!editing)} />;
+}
+
+/** A section's action as the canvas draws it: a bare line icon, muted, with a 44 pt target. */
+export function SectionIcon({ icon, color, accessibilityLabel, onPress }: { icon: IconName; color?: string; accessibilityLabel: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel={accessibilityLabel} onPress={onPress} style={styles.icon}>
+      <IconSymbol name={icon} size={20} color={color ?? ds.c.muted} />
+    </PressableScale>
+  );
 }
 
 /**
@@ -184,11 +194,11 @@ export function KitSection({ owned, opens, cols, editing, onEdit, onToggle, onAd
           />
         ))}
         {ideas.map((e) => (
-          <BarTile key={e.id} name={e.name} meta="Tap if you have it" picture={<EquipmentDrawing id={e.id} lazy />} role="button" accessibilityLabel={`I have ${e.name}`} ghost badge="plus" onPress={() => onToggle(e.id)} />
+          <BarTile key={e.id} name={e.name} meta="Tap if you keep it" picture={<EquipmentDrawing id={e.id} lazy bare />} role="button" accessibilityLabel={`I have ${e.name}`} ghost badge="plus" onPress={() => onToggle(e.id)} />
         ))}
       </TileGrid>
       <PressableScale role="link" onPress={() => router.push('/equipment' as never)} style={styles.link}>
-        <Caption>What each piece is for</Caption>
+        <Caption tone="accent">What each piece is for</Caption>
       </PressableScale>
     </View>
   );
@@ -236,5 +246,6 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   folds: { gap: space.sm },
   link: { alignSelf: 'flex-start', minHeight: layout.minTapTarget, justifyContent: 'center' },
+  icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   fold: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth },
 });

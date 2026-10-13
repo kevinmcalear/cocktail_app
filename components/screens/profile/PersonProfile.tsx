@@ -114,7 +114,7 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
 
       {showsMade ? <MenuCredits credits={credits} names={names} worked={worked} /> : null}
 
-      {tab ? <Segmented accessibilityLabel="Profile sections" look="track" options={tabs} value={tab} onChange={setTab} /> : null}
+      {tab ? <Segmented accessibilityLabel="Profile sections" variant="ink" stretch options={tabs} value={tab} onChange={setTab} /> : null}
       {mine && tab ? (
         <View style={styles.mine}>
           <Caption tone="muted" style={styles.flex}>

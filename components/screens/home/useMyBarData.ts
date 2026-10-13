@@ -4,7 +4,7 @@ import { useFinishBottle, useMadePreps, useMyBar, usePantryItems, usePrepDetails
 import { useTechniqueDrinks } from '@/hooks/useTechniqueDrinks';
 import { COLD_START_DRINKS, matchPercent } from '@/lib/flavor';
 import { SHELF_SECTIONS, type ShelfSection } from '@/lib/myBarRows';
-import { inSentence, prepMeta } from '@/lib/myBarText';
+import { inSentence, prepMeta, tickNames } from '@/lib/myBarText';
 import { PANTRY_WATER } from '@/lib/pantry';
 import { equipmentById } from '@/lib/techniques';
 import { waysToMake } from '@/lib/techniques/makeIt';
@@ -41,10 +41,11 @@ export function useMyBarData({ query, projectsOpen }: { query: string; projectsO
 
   // A shelf row as it reads in a sentence: "lemon", "Woodford Reserve".
   const shelfById = new Map(bar.shelf.map((s) => [s.id, s]));
-  const sentence = (id: string) => {
-    const s = shelfById.get(id);
-    return s && s.name !== PANTRY_WATER ? [inSentence(s.name, s.role === 'generic')] : [];
-  };
+  const ticks = (ids: readonly string[]) =>
+    tickNames(ids.flatMap((id) => {
+      const s = shelfById.get(id);
+      return s && s.name !== PANTRY_WATER ? [{ name: s.name, generic: s.role === 'generic', kind: s.kind, maker: s.maker }] : [];
+    }));
 
   // Make first: preps the shelf covers but you haven't made, kept to the ready drinks that need them.
   const made = useMadePreps();
@@ -105,8 +106,8 @@ export function useMyBarData({ query, projectsOpen }: { query: string; projectsO
     },
     noteFor: (id) => notes.get(id),
     scoreFor: (id) => scores?.[id],
-    usesFor: (d: BarItem) => (d.shelfUses ?? []).flatMap(sentence),
-    bottlesFor: (d: BarItem) => (d.shelfUses ?? []).filter((id) => bottleIds.has(id)).flatMap(sentence),
+    usesFor: (d: BarItem) => ticks(d.shelfUses ?? []),
+    bottlesFor: (d: BarItem) => ticks((d.shelfUses ?? []).filter((id) => bottleIds.has(id))),
     query: query.trim() || undefined,
   };
 

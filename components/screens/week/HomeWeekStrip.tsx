@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, TextLink, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { useMyWeek, useWeekStart } from '@/hooks/useWeek';
 import { detailLine, itemDay, kindLabel, shortDay, timeLine, upcoming, type WeekItem } from '@/lib/week';
 
@@ -55,8 +55,14 @@ function WeekCard({ item, from, wide }: { item: WeekItem; from: Date; wide: bool
       onPress={() => router.push(weekHref(item, false))}
       style={[styles.card, { width: wide ? 260 : 200, backgroundColor: ds.c.surface, borderColor: wide ? color : ds.c.line }]}
     >
-      <Caption color={day === 'Tonight' ? ds.accentText : ds.c.muted}>{when}</Caption>
-      <DsText numberOfLines={2} variant={wide ? 'headline' : 'body'}>
+      {/* When on the left, a takeover's kind on the right in its colour; the lead card's name in the display face (week-home-phone). */}
+      <View style={styles.cardHead}>
+        <Caption color={day === 'Tonight' ? ds.accentText : ds.c.muted} style={styles.flex}>
+          {when}
+        </Caption>
+        {wide ? <Caption color={color}>{kindLabel(item)}</Caption> : null}
+      </View>
+      <DsText numberOfLines={2} variant={wide ? 'headline' : 'body'} style={wide ? { fontFamily: displayFaces[ds.displayFace].regular } : styles.semi}>
         {item.name}
       </DsText>
       {detail ? (
@@ -73,5 +79,8 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   caps: { textTransform: 'uppercase', letterSpacing: 0.8 },
   row: { gap: space.sm },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  flex: { flex: 1, minWidth: 0 },
+  semi: { fontFamily: fontFamilies.bodySemiBold },
   card: { gap: space.xs, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
 });

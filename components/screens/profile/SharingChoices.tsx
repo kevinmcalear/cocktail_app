@@ -73,7 +73,7 @@ export function SharingChoices({ profile }: { profile: MyProfile }) {
                 />
               ) : null}
             </View>
-            <Segmented look="track" choice accessibilityLabel={title} options={SHARE_MODES} value={mode} onChange={(m) => choose(section, m)} />
+            <Segmented variant="ink" stretch choice accessibilityLabel={title} options={SHARE_MODES} value={mode} onChange={(m) => choose(section, m)} />
             {c ? <Caption style={styles.count}>{`${shown} of ${c.total} show`}</Caption> : null}
             <Caption tone="muted">{modeSummary(section, mode)}</Caption>
             {section === 'had' && mode !== 'none' ? (
