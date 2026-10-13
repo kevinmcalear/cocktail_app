@@ -72,7 +72,7 @@ export function PreferencesSection() {
             onChange={(id) => void setViewAsRoleLevel(id === 'off' ? null : Number(id))}
           />
           <Caption tone="muted" style={styles.note}>
-            View as never raises what you can see, only lowers it. It’s saved to your account, so the banner stays on every screen and every device until you exit.
+            View as never raises what you can see, only lowers it. The banner stays until you exit, on every screen.
           </Caption>
         </>
       ) : null}
