@@ -73,7 +73,7 @@ export function ProfileSection() {
     <SettingsSection title="Profile">
       <View style={styles.who}>
         <Pressable onPress={() => void pickPhoto()} disabled={uploading} role="button" aria-label="Change profile photo" aria-busy={uploading}>
-          <UserAvatar uri={avatarUrl} name={shownName} email={user?.email} size={AVATAR} borderWidth={1} borderColor={ds.c.line} />
+          <UserAvatar uri={avatarUrl} name={shownName} email={user?.email} size={AVATAR} borderWidth={1} borderColor={ds.c.line} neutral />
           <View style={[styles.badge, { backgroundColor: ds.c.ink, borderColor: ds.c.surface }]}>
             {uploading ? <ActivityIndicator size="small" color={ds.c.ground} /> : <IconSymbol name="camera.fill" size={13} color={ds.c.ground} />}
           </View>

@@ -17,7 +17,8 @@ export interface ButtonProps {
   onPress?: () => void;
   /** primary: the one main action on a screen, in the venue's accent. danger: removing or deleting, in status red. */
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-  size?: 'md' | 'lg';
+  /** sm: the canvas's compact row action ("Unblock"), 36 tall with its tap area grown to 44. */
+  size?: 'sm' | 'md' | 'lg';
   icon?: IconName;
   disabled?: boolean;
   /** When the label alone is ambiguous ("Cancel" in a list of invites). Defaults to the label. */
@@ -39,10 +40,12 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon,
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
       aria-disabled={disabled}
+      hitSlop={size === 'sm' ? (layout.minTapTarget - SMALL) / 2 : undefined}
       style={[
         styles.base,
+        size === 'sm' ? styles.small : null,
         {
-          height: size === 'lg' ? 52 : layout.minTapTarget,
+          height: size === 'lg' ? 52 : size === 'sm' ? SMALL : layout.minTapTarget,
           backgroundColor: fill,
           borderColor: border,
           opacity: disabled ? 0.45 : 1,
@@ -52,7 +55,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon,
     >
       <View style={styles.row}>
         {icon ? <IconSymbol name={icon} size={18} color={text} /> : null}
-        <DsText variant="body" color={text} style={styles.label} numberOfLines={1}>
+        <DsText variant={size === 'sm' ? 'caption' : 'body'} color={text} style={size === 'sm' ? null : styles.label} numberOfLines={1}>
           {label}
         </DsText>
       </View>
@@ -60,7 +63,10 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon,
   );
 }
 
+const SMALL = 36;
+
 const styles = StyleSheet.create({
+  small: { paddingHorizontal: space.md + 2 },
   base: {
     borderRadius: radius.pill,
     borderWidth: 1,

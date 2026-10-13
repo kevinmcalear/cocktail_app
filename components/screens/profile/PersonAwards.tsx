@@ -107,7 +107,7 @@ function AwardRow({ award: a, hidden = false, onToggle }: { award: Award; hidden
             <DsText variant="headline" style={styles.shrink}>
               {headline(a)}
             </DsText>
-            {a.is_finalist ? <Caption tone="muted">Finalist</Caption> : place ? <Spec>{place}</Spec> : null}
+            {a.is_finalist ? <Caption tone="muted" style={styles.place}>Finalist</Caption> : place ? <Spec style={styles.place}>{place}</Spec> : null}
           </View>
           <Caption>{body}</Caption>
           {pending ? (
@@ -177,6 +177,8 @@ const styles = StyleSheet.create({
   text: { flex: 1, minWidth: 0, gap: 2 },
   titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm },
   shrink: { flexShrink: 1 },
+  // "No. 64" and Finalist keep to one line beside a long title (ppl-person).
+  place: { flexShrink: 0 },
   logo: { width: LOGO, height: LOGO, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   logoImg: { width: LOGO - 8, height: LOGO - 8 },
   add: { borderStyle: 'dashed', borderWidth: 1 },

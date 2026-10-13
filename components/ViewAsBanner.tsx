@@ -16,7 +16,7 @@ import { roleLabel } from '@/lib/roles';
 export function ViewAsBanner() {
   const ds = useDs();
   const insets = useSafeAreaInsets();
-  const { viewAsRoleLevel, setViewAsRoleLevel, isSaving } = useViewAs();
+  const { viewAsRoleLevel, setViewAsRoleLevel, isSaving } = useViewAs({ fresh: true });
 
   if (viewAsRoleLevel == null) return null;
 

@@ -62,7 +62,7 @@ function BlockedRow({ person }: { person: BlockedPerson }) {
           </Caption>
         ) : null}
       </View>
-      <Button label={setBlocked.isPending ? 'Unblocking…' : 'Unblock'} variant="secondary" disabled={setBlocked.isPending} onPress={() => void unblock()} style={styles.unblock} />
+      <Button label={setBlocked.isPending ? 'Unblocking…' : 'Unblock'} variant="secondary" size="sm" disabled={setBlocked.isPending} onPress={() => void unblock()} />
     </View>
   );
 }
@@ -71,5 +71,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },
   name: { fontFamily: fontFamilies.bodySemiBold },
-  unblock: { paddingHorizontal: space.lg },
 });
