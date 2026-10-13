@@ -41,7 +41,7 @@ export function StartFromClassic({ set, match, onStarted }: Props) {
     const name = match.classic.name;
     return (
       <Surface raised style={styles.card}>
-        <Body>{match.exact ? `${name} is a classic. Start from its spec?` : `A riff on the ${name}? Start from its spec.`}</Body>
+        <Body>{`${name} is a classic. Start from its spec?`}</Body>
         <Caption tone="muted">Fills in what goes in, the method, glass, ice and garnish. Change any of it after.</Caption>
         <Button
           label={start.isPending ? 'Loading…' : `Start from the ${name}`}

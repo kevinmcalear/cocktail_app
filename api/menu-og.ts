@@ -1,4 +1,4 @@
-// The link preview image for a shared home menu: /api/menu-og?id=<menu id>.
+// The link preview image for a shared home menu: /api/menu-og?id=<menu id or slug>.
 // The menu on paper, like its guest card: its night, its name, its drinks,
 // who shared it, and up to four pictures (a drink's photo, or its own sketch
 // drawn from its drawing inputs; a drink that isn't public is a plain glass,
@@ -7,7 +7,7 @@
 import { ImageResponse } from '@vercel/og';
 
 import { SKETCH } from '../constants/sketch';
-import { drinksLine, fetchPreviewDrinks, fetchSharedMenu, fetchSketchInputs, isUuid, nightLabel, supabaseFromEnv, type PreviewDrink, type SharedMenuRow } from '../lib/menuPreview';
+import { drinksLine, fetchPreviewDrinks, fetchSharedMenu, fetchSketchInputs, isUuid, nightLabel, resolveShareId, supabaseFromEnv, type PreviewDrink, type SharedMenuRow } from '../lib/menuPreview';
 import { GLASS, googleFont, h, img, photo, type El, type Picture } from '../lib/ogCard';
 import { paintSketch } from '../lib/sketch/paint';
 import { sceneToSvg } from '../lib/sketch/svg';
@@ -79,10 +79,11 @@ function card(menu: SharedMenuRow, drinks: PreviewDrink[], pics: Picture[]): El 
 }
 
 export default async function handler(request: Request): Promise<Response> {
-  const id = new URL(request.url).searchParams.get('id');
   const db = supabaseFromEnv(process.env);
-  if (!isUuid(id) || !db) return new Response('Not found', { status: 404 });
-  const menu = await fetchSharedMenu(db, id);
+  if (!db) return new Response('Not found', { status: 404 });
+  // The menu's id, or its slug (halloween-party).
+  const id = await resolveShareId(db, 'm', new URL(request.url).searchParams.get('id'));
+  const menu = id ? await fetchSharedMenu(db, id) : null;
   if (!menu) return new Response('Not found', { status: 404, headers: { 'cache-control': 'public, max-age=60' } });
   const drinks = await fetchPreviewDrinks(db, menu.sections.flatMap((s) => s.item_ids).filter(isUuid));
   const night = nightLabel(menu.menu_date) ?? '';

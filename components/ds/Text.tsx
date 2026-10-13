@@ -24,6 +24,7 @@ const FAMILY: Record<TypeStyle, string> = {
   headline: fontFamilies.bodySemiBold,
   body: fontFamilies.body,
   spec: fontFamilies.monoMedium,
+  label: fontFamilies.bodyMedium,
   caption: fontFamilies.bodyMedium,
 };
 
@@ -39,7 +40,7 @@ const FAMILY: Record<TypeStyle, string> = {
 const SLACK = Platform.OS === 'ios' ? { paddingBottom: textSlack } : null;
 
 /**
- * Text in one of the six Back Bar styles. Display and title use the venue's
+ * Text in one of the seven Back Bar styles. Display and title use the venue's
  * display face; everything else is fixed so every venue stays legible.
  * Scales with the person's text size setting (Dynamic Type) by default.
  */

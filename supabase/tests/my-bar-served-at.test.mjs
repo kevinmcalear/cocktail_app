@@ -81,7 +81,7 @@ before(async () => {
     await item(key, { name: name(`Served ${label}`), item_type: 'ingredient', ingredient_role: 'generic' });
   }
 
-  ids.bar = (await serviceInsert('bars', { name: name('Gold Room'), page_visibility: 'open' })).id;
+  ids.bar = (await serviceInsert('bars', { name: name('Gold Room'), page_visibility: 'open', primary_color: '#D0643B' })).id;
   ids.goldRoom = (await serviceInsert('profiles', { kind: 'bar', handle: `sgold${run}`, display_name: name('Gold Room'), bar_id: ids.bar, is_public: true })).id;
   ids.lions = (await serviceInsert('profiles', { kind: 'bar', handle: `slions${run}`, display_name: name('The Lions'), is_public: true })).id;
   ids.moth = (await serviceInsert('profiles', { kind: 'bar', handle: `smoth${run}`, display_name: name('Pale Moth'), is_public: true })).id;
@@ -147,6 +147,13 @@ describe('my_bar_drinks: one row per recipe', () => {
     assert.equal(classic.served_at[0].name, name('Gold Room'));
     assert.deepEqual(classic.served_at.map((b) => b.name).sort(), [name('Gold Room'), name('Pale Moth'), name('The Lions')].sort());
     assert.equal(classic.spec_match, null);
+  });
+
+  test("each serving bar carries its venue's accent, when its page has one (20261016700000)", async () => {
+    const { classic } = await whatToMake('home');
+    const accent = Object.fromEntries(classic.served_at.map((b) => [b.name, b.accent]));
+    assert.equal(accent[name('Gold Room')], '#D0643B');
+    assert.equal(accent[name('The Lions')], null, 'a bar page with no venue has no accent');
   });
 
   test('a variation keeps its row and says what it changes; a riff says so', async () => {

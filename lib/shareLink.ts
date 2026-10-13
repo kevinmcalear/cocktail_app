@@ -4,9 +4,12 @@ import { Platform, Share } from 'react-native';
 import { showMessage } from '@/lib/dialogs';
 import { siteOrigin } from '@/lib/venueLink';
 
-/** A drink's public link: its page for anyone it's published to, or a sign-in for the rest. */
-export function drinkUrl(itemId: string): string {
-  return `${siteOrigin()}/d/${itemId}`;
+/**
+ * A drink's public link, by its slug (/d/penicillin, useShareSlug) or its id:
+ * its page for anyone it's published to, or a sign-in for the rest.
+ */
+export function drinkUrl(slugOrId: string): string {
+  return `${siteOrigin()}/d/${slugOrId}`;
 }
 
 /**

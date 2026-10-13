@@ -20,7 +20,7 @@ import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { StartFromClassic } from './StartFromClassic';
-import { WizardChip } from './WizardChrome';
+import { WizardChip, WizardNotice } from './WizardChrome';
 
 /** How many quick adds show under the field. */
 const QUICK = 8;
@@ -64,7 +64,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   /** The bottle line "What did you do to it?" is open for. */
   const [houseKey, setHouseKey] = useState<string | null>(null);
   const [nudgeOff, setNudgeOff] = useState(false);
-  /** A prep just made in the builder: "Shrub added" for a moment. */
+  /** A prep just made in the builder: "Shrub saved to your preps…" for a moment. */
   const [madePrep, setMadePrep] = useState<string | null>(null);
   // Shown the way it saves ("coconut fat washed rum" is "Coconut Fat Washed Rum").
   const make = (name: string, key?: string) => setMaking({ name: capitalize(name), key, replace: !!key });
@@ -131,7 +131,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 <Body numberOfLines={1} style={styles.flex}>
                   {l.name}
                 </Body>
-                <Spec tone="muted">{amountLabel(l)}</Spec>
+                <Spec>{amountLabel(l)}</Spec>
               </View>
             ) : l.key === swapKey ? (
               <View key={l.key} style={[styles.swap, { borderBottomColor: ds.c.line }]}>
@@ -203,11 +203,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         captions={forDrink}
         shelf={shelf}
       />
-      {madePrep ? (
-        <View role="status" style={[styles.undo, { backgroundColor: ds.c.raised }]}>
-          <Body style={[styles.flex, styles.status]}>{madePrep}</Body>
-        </View>
-      ) : null}
+      {/* In the flow under the field, so it never covers the balance or Goes with (canvas make-create-prep-back). */}
+      {madePrep ? <WizardNotice>{madePrep}</WizardNotice> : null}
       <PrepBuilder
         name={makingName}
         drinkName={draft.name.trim()}
@@ -222,8 +219,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
           else if (editingKey) change(editingKey, { prep, technique: prep.technique, later: undefined });
           else if (makingName) add({ id: null, name: makingName }, prep);
           setMaking(null);
-          // ponytail: the prep is saved with the drink, not before, so this says so rather than "saved".
-          if (!editingKey || replacing) setMadePrep(`${prepWord(prep, makingName ?? 'The prep')} added. It’s saved to your preps with the drink.`);
+          // The prep is saved with the drink, not before, so this says when rather than "saved" (canvas make-create-house-line).
+          if (!editingKey) setMadePrep(`${prepWord(prep, makingName ?? 'The prep')} saved to your preps when you save the drink. Its page is ready then.`);
+          else if (replacing) setMadePrep(`Saved to your bar’s preps when you save the drink. Next time, type “${(makingName ?? '').split(/[\s-]/)[0].toLowerCase()}”.`);
         }}
         onLater={() => {
           if (editingKey) change(editingKey, { id: null, name: makingName ?? '', prep: undefined, technique: undefined, later: true });
@@ -269,7 +267,6 @@ const styles = StyleSheet.create({
   nudgeButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs },
   flex: { flex: 1 },
-  status: { paddingVertical: space.md },
   compact: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderBottomWidth: StyleSheet.hairlineWidth },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

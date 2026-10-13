@@ -8,6 +8,8 @@ const mockShow = jest.fn();
 const jo = { id: 'jo', handle: 'jo', display_name: 'Jo Juniper', avatar_url: null };
 const bar = (name: string) => ({ id: name, handle: name.toLowerCase(), display_name: name, avatar_url: null });
 
+// BarMark reads a bar's public brand; none here.
+jest.mock('@/hooks/useBarBrands', () => ({ useBarBrand: () => null }));
 jest.mock('@/hooks/useProfiles', () => ({
   useProfilePositions: () => ({
     data: [

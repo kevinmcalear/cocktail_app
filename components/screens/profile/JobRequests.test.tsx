@@ -12,6 +12,8 @@ const request = (id: string, venue: string | null, name: string, title: string) 
   person_profile_id: `p-${id}`, person_handle: id, person_name: name, person_avatar_url: null, person_is_public: true,
 });
 
+// BarMark reads a bar's public brand; none here.
+jest.mock('@/hooks/useBarBrands', () => ({ useBarBrand: () => null }));
 jest.mock('@/hooks/usePositionRequests', () => ({
   usePositionRequests: () => ({
     data: [request('1', 'venue', 'Sam Sour', 'Bartender'), request('2', null, 'Ana Amaro', 'Head bartender')],

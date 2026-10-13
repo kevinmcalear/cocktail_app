@@ -13,6 +13,8 @@ import { useDs } from './theme';
 
 interface DateFieldProps {
   label: string;
+  /** A row of a grouped card, with no box of its own. */
+  bare?: boolean;
   /** A day, 2026-10-04, or '' for none. */
   value: string;
   onChange: (day: string) => void;
@@ -35,7 +37,7 @@ const WEEKDAYS = Array.from({ length: 7 }, (_, i) => new Date(2026, 9, 4 + ((FIR
  * the same on web, iOS and Android, so it sits inside sheets without a
  * second modal and ships without a native module.
  */
-export function DateField({ label, value, onChange, min, max, hint, error, placeholder = 'Pick a day', clearable }: DateFieldProps) {
+export function DateField({ label, value, onChange, min, max, hint, error, bare, placeholder = 'Pick a day', clearable }: DateFieldProps) {
   const [now] = useState(() => Date.now());
   const today = toDay(new Date(now));
   const start = () => monthOf(value || (min && today < min ? min : max && today > max ? max : today));
@@ -57,7 +59,7 @@ export function DateField({ label, value, onChange, min, max, hint, error, place
   const title = new Date(shown.year, shown.month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
   return (
-    <PickerField label={label} text={value ? dayLabel(value, now) : null} placeholder={placeholder} open={open} onToggle={toggle} hint={hint} error={error}>
+    <PickerField label={label} text={value ? dayLabel(value, now) : null} placeholder={placeholder} open={open} onToggle={toggle} hint={hint} error={error} bare={bare}>
       <View style={styles.head}>
         <MonthArrow back disabled={Boolean(min && first <= min)} onPress={() => setShown(shiftMonth(shown, -1))} />
         <DsText variant="body" style={styles.title} role="heading" aria-live="polite">

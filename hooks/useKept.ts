@@ -11,8 +11,12 @@ import { supabase } from '@/lib/supabase';
  * private to them. Plain JSON (the query cache is persisted).
  */
 
+/** What a loved bar may tell you about (loved_bars.alerts). */
+export type LoveAlerts = 'everything' | 'events' | 'menus' | 'none';
+
 export interface LovedBar {
   id: string;
+  alerts: LoveAlerts;
   handle: string | null;
   name: string;
   avatarUrl: string | null;
@@ -36,6 +40,7 @@ export interface SavedMenu {
 }
 
 interface LovedRow {
+  alerts: LoveAlerts;
   profile: { id: string; handle: string | null; display_name: string; avatar_url: string | null; locality: string | null; city: string | null; bar_id: string | null } | null;
 }
 
@@ -57,11 +62,11 @@ export function useLovedBars() {
     queryFn: async (): Promise<LovedBar[]> => {
       const { data, error } = await supabase
         .from('loved_bars')
-        .select('profile:profiles!profile_id(id, handle, display_name, avatar_url, locality, city, bar_id)')
+        .select('alerts, profile:profiles!profile_id(id, handle, display_name, avatar_url, locality, city, bar_id)')
         .order('loved_at', { ascending: false });
       if (error) throw error;
       // A bar whose page went private drops out (its profile embed comes back empty).
-      const bars = ((data ?? []) as unknown as LovedRow[]).flatMap((r) => (r.profile ? [r.profile] : []));
+      const bars = ((data ?? []) as unknown as LovedRow[]).flatMap((r) => (r.profile ? [{ ...r.profile, alerts: r.alerts ?? 'everything' }] : []));
       const ids = bars.map((b) => b.id);
       const venueIds = bars.flatMap((b) => (b.bar_id ? [b.bar_id] : []));
       const [current, releases] = await Promise.all([
@@ -82,6 +87,7 @@ export function useLovedBars() {
         const release = b.bar_id ? live.find((r) => r.bar_id === b.bar_id) : undefined;
         return {
           id: b.id,
+          alerts: b.alerts,
           handle: b.handle,
           name: b.display_name,
           avatarUrl: b.avatar_url,
@@ -102,6 +108,19 @@ export function useLoveBar() {
       const { error } = love
         ? await supabase.from('loved_bars').upsert({ profile_id: profileId }, { onConflict: 'user_id,profile_id', ignoreDuplicates: true })
         : await supabase.from('loved_bars').delete().eq('profile_id', profileId);
+      if (error) throw new Error(error.message);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['loved-bars'] }),
+    onError: () => {},
+  });
+}
+
+/** Choose what a bar you love may tell you about. */
+export function useSetLoveAlerts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ profileId, alerts }: { profileId: string; alerts: LoveAlerts }) => {
+      const { error } = await supabase.from('loved_bars').update({ alerts }).eq('profile_id', profileId);
       if (error) throw new Error(error.message);
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['loved-bars'] }),

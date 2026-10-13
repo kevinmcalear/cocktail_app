@@ -5,6 +5,8 @@ import { EMPTY_DRAFT, type WizardDraft, type WizardStep } from '@/lib/drinkWizar
 
 import { SketchHeader } from './SketchHeader';
 
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/components/ds/SketchDrawing', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
   return { SketchDrawing: () => <View testID="drawing" /> };

@@ -7,7 +7,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { dropIndex } from '@/lib/dropIndex';
 import { timerFromText } from '@/lib/makeSteps';
 import { keepsText, leadText, STORES, type PrepDraft } from '@/lib/prepKinds';
@@ -26,17 +26,17 @@ const pill = (seconds: number) => (seconds >= DAY && seconds % DAY === 0 ? `${se
 
 const KEEPS = [3 * 24, 7 * 24, 14 * 24, 21 * 24, 28 * 24, 56 * 24, 26 * 7 * 24];
 const LEADS = [20, 60, 24 * 60, 2 * 24 * 60, 3 * 24 * 60, 7 * 24 * 60];
-/** The grip column: only a touch there starts a drag, so the page still scrolls over the steps. */
-const GRIP = layout.minTapTarget;
+/** The grip column (dots and number): only a touch there starts a drag, so the page still scrolls over the steps. */
+const GRIP = layout.minTapTarget + space.lg;
 /** On a touch screen a drag starts after a short hold, so a swipe over the grip still scrolls. */
 const HOLD_MS = Platform.OS === 'web' ? 0 : 200;
 
 type Tile = 'keeps' | 'store' | 'start';
 
 /**
- * New prep, the method: the steps as text rows, each led by a numbered grip
- * (drag it, or arrow keys on the web, to move the step) with its timer as a
- * pill. Tap a step to change it; a time written in it ("for 2 hours")
+ * New prep, the method: the steps as text rows, each led by its grip (dots
+ * and number: drag it, or arrow keys on the web, to move the step) with its
+ * timer as a pill with a clock. Tap a step to change it; a time written in it ("for 2 hours")
  * becomes its timer. Then Keeps, Store and Start as three tiles, suggested
  * for the kind: tap one for its choices. A technique's safety notes come first.
  */
@@ -83,6 +83,7 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
               }}
               style={[styles.grip, dragGripStyle]}
             >
+              <Dots />
               <View style={[styles.number, { backgroundColor: ds.c.raised }]}>
                 <Caption>{String(i + 1)}</Caption>
               </View>
@@ -105,8 +106,9 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
               <PressableScale role="button" accessibilityLabel={`Step ${i + 1}: ${s.body || 'empty'}. Change it`} onPress={() => setEditing(s.key)} style={styles.text}>
                 <Body tone={s.body ? 'ink' : 'muted'}>{s.body || 'What to do'}</Body>
                 {s.timer ? (
-                  <View style={[styles.pill, { backgroundColor: ds.c.raised }]}>
-                    <Caption>{pill(s.timer)}</Caption>
+                  <View style={[styles.pill, { borderColor: ds.c.lineStrong }]}>
+                    <IconSymbol name="clock" size={13} color={ds.c.ink} />
+                    <Caption style={styles.pillText}>{pill(s.timer)}</Caption>
                   </View>
                 ) : null}
               </PressableScale>
@@ -222,6 +224,18 @@ function DragRow({ index, onDrop, onHeight, children }: { index: number; onDrop:
   );
 }
 
+/** The grip's six dots, left of the step's number. */
+function Dots() {
+  const ds = useDs();
+  return (
+    <View style={styles.dots}>
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <View key={i} style={[styles.dot, { backgroundColor: ds.c.muted }]} />
+      ))}
+    </View>
+  );
+}
+
 function Choices({ label, children }: { label: string; children: ReactNode }) {
   return (
     <View role="radiogroup" accessibilityLabel={label} style={styles.chips}>
@@ -233,11 +247,14 @@ function Choices({ label, children }: { label: string; children: ReactNode }) {
 const styles = StyleSheet.create({
   stack: { gap: space.lg },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  grip: { width: GRIP, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  number: { width: 26, height: 26, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  grip: { width: GRIP, minHeight: layout.minTapTarget, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.md },
+  dots: { width: 7, flexDirection: 'row', flexWrap: 'wrap', gap: 2 },
+  dot: { width: 2.5, height: 2.5, borderRadius: radius.pill },
+  number: { width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   text: { minHeight: layout.minTapTarget, justifyContent: 'center', gap: space.xs, paddingVertical: space.xs },
-  pill: { alignSelf: 'flex-start', paddingHorizontal: space.sm, borderRadius: radius.pill },
+  pill: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: 30, paddingHorizontal: space.md - 2, marginTop: space.xs, borderRadius: radius.pill, borderWidth: 1 },
+  pillText: { fontFamily: fontFamilies.bodySemiBold },
   editing: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs },
   remove: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   add: { alignSelf: 'flex-start' },

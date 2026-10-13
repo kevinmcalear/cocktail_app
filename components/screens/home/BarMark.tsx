@@ -18,12 +18,15 @@ export interface BarBrand {
 /**
  * A bar's round mark on Collection (home-collection-bars): its logo, or its
  * initials in its display face and accent on its ground. `filled` is the
- * accent disc with dark initials (Bar menus for you).
+ * accent disc with dark initials (Bar menus for you). `neutral` is a bar or
+ * maker with no brand to show: muted serif initials in a hairline ring
+ * (ppl-person's Corner Hotel, ppl-maker). `letter`: one letter, for the small
+ * mark before a What to make caption.
  * A bar's brand is public (bar_brands): give `profileId` (the bar page's id)
  * and a mark with no logo or `brand` reads its venue's logo, accent and face
  * for anyone; without one it draws in the app's accent and face.
  */
-export function BarMark({ name, logoUrl, size, brand, filled, profileId }: { name: string; logoUrl?: string | null; size: number; brand?: BarBrand | null; filled?: boolean; profileId?: string | null }) {
+export function BarMark({ name, logoUrl, size, brand, filled, neutral, letter, profileId }: { name: string; logoUrl?: string | null; size: number; brand?: BarBrand | null; filled?: boolean; neutral?: boolean; /** One letter, for a mark a caption leads with. */ letter?: boolean; profileId?: string | null }) {
   const ds = useDs();
   // Only asked when the caller has neither a logo nor the brand (null means it has none).
   const looked = useBarBrand(!logoUrl && brand === undefined ? profileId : null);
@@ -37,14 +40,22 @@ export function BarMark({ name, logoUrl, size, brand, filled, profileId }: { nam
   const face = displayFaces[own?.face ?? ds.displayFace].regular;
   const look = filled
     ? { backgroundColor: fill.fill, color: fill.text, borderColor: 'transparent' }
-    : { backgroundColor: own?.ground ?? ds.c.raised, color: accent, borderColor: accent };
+    : neutral && !own
+      ? { backgroundColor: ds.c.raised, color: ds.c.muted, borderColor: ds.c.lineStrong }
+      : { backgroundColor: own?.ground ?? ds.c.raised, color: accent, borderColor: accent };
   return (
     <View aria-hidden style={[styles.mark, round, { backgroundColor: look.backgroundColor, borderColor: look.borderColor }]}>
       <Text style={{ fontFamily: face, color: look.color, fontSize: Math.round(size * 0.42), lineHeight: Math.round(size * 0.56) }} allowFontScaling={false}>
-        {initials(name)}
+        {letter ? monogram(name) : initials(name)}
       </Text>
     </View>
   );
+}
+
+/** One letter for a bar: its first word's, past a number ("C" for 69 Colebrooke Row). */
+function monogram(name: string): string {
+  const all = initials(name);
+  return all.match(/\p{L}/u)?.[0] ?? all.slice(0, 1);
 }
 
 const styles = StyleSheet.create({

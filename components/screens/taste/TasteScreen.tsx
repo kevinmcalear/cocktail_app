@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, PalateFlower, Surface, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, DsText, GlassButton, PalateFlower, Surface, Title, useDs, useGutter } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { layout, palateHues, radius, space } from '@/constants/tokens';
 import { useAuthIdentity } from '@/ctx/AuthContext';
@@ -61,7 +61,7 @@ function TastePage() {
   ) : (
     <>
       <View style={styles.section}>
-        <Title role="heading">{headline ? `${headline}.` : 'Nothing stands out yet.'}</Title>
+        <Title role="heading">{headline ? <ItalicLast text={headline} /> : 'Nothing stands out yet.'}</Title>
         <View style={styles.center}>
           <PalateFlower values={preview} said={showSaid ? answers : null} size={Math.min(flower, 420)} labels />
         </View>
@@ -150,3 +150,14 @@ const styles = StyleSheet.create({
   controls: { position: 'absolute' },
   start: { alignSelf: 'flex-start' },
 });
+
+/** "Bitter, smoky and *herbal.*": the last word in the display italic (ppl-taste). */
+function ItalicLast({ text }: { text: string }) {
+  const cut = text.lastIndexOf(' ');
+  return (
+    <>
+      {cut < 0 ? '' : text.slice(0, cut + 1)}
+      <DsText variant="title" italic>{`${text.slice(cut + 1)}.`}</DsText>
+    </>
+  );
+}

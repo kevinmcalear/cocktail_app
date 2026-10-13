@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Platform, StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Field, useDs } from '@/components/ds';
-import { UserAvatar } from '@/components/ui/UserAvatar';
-import { backbar, radius, space } from '@/constants/tokens';
+import { Body, Button, Caption, Chip, DsText, Field, Switch, useDs } from '@/components/ds';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useMyProfile, useSaveSharing, type MyProfile } from '@/hooks/useMyProfile';
 import { useAnswerPosition } from '@/hooks/usePositionRequests';
 import { useEditPosition, useProfilePositions, type Position } from '@/hooks/useProfiles';
 import { jobYears } from '@/lib/profiles';
 
+import { BarMark } from '../home/BarMark';
 import { PlaceStep } from '../onboarding/CareerSteps';
 import { SafetyPage } from '../safety/SafetyPage';
 import { JobYears, PastJobs } from './PastJobs';
@@ -34,14 +34,15 @@ function Work({ profile }: { profile: MyProfile }) {
   const headline = save.isPending && save.variables?.headlinePositionId !== undefined ? save.variables.headlinePositionId : profile.headlinePositionId;
   const titleOn = !!titled && headline === titled.id;
   const ownLine = profile.tagline ? `Off: your own line, ${profile.tagline}, shows instead` : 'Off: nothing shows under your name';
-  const titleLine = !titled ? 'Once a bar confirms a job you show, it can stand under your name.' : titleOn ? `${titled.title} ${titled.is_current ? 'at' : 'formerly at'} ${titled.bar.display_name}` : ownLine;
+  // Off says what shows instead (ppl-work); the switch waits on a confirmed job you show.
+  const titleLine = titled && titleOn ? `${titled.title} ${titled.is_current ? 'at' : 'formerly at'} ${titled.bar.display_name}` : ownLine;
 
   return (
     <View style={styles.page}>
       {asking.map((p) => (
         <AskingCard key={p.id} job={p} />
       ))}
-      <View style={styles.row}>
+      <View style={[styles.row, styles.card, { backgroundColor: ds.c.surface }]}>
         <View style={styles.flex}>
           <Body>Job title under my name</Body>
           <Caption tone="muted">{titleLine}</Caption>
@@ -50,10 +51,7 @@ function Work({ profile }: { profile: MyProfile }) {
           value={titleOn}
           disabled={!titled}
           onValueChange={(on) => save.mutate({ id: profile.id, headlinePositionId: on && titled ? titled.id : null })}
-          aria-label="Show my job title under my name"
-          trackColor={{ false: ds.c.lineStrong, true: ds.accentFill.fill }}
-          thumbColor={backbar.light.surface}
-          {...(Platform.OS === 'web' ? { activeThumbColor: backbar.light.surface } : null)}
+          label="Show my job title under my name"
         />
       </View>
       {save.error ? (
@@ -63,9 +61,11 @@ function Work({ profile }: { profile: MyProfile }) {
       ) : null}
       <PastJobs personId={profile.id} />
       <AddJob personId={profile.id} />
-      <Caption tone="muted">
-        A job you add says “Not confirmed by the bar yet” until the bar confirms it. Hiding a job never removes it from the bar’s records, and drinks you created there keep your credit either way.
-      </Caption>
+      <View style={[styles.card, { backgroundColor: ds.c.surface }]}>
+        <Body tone="muted">
+          A job you add says “Not confirmed by the bar yet” until the bar confirms it. Hiding a job never removes it from the bar’s records, and drinks you created there keep your credit either way.
+        </Body>
+      </View>
     </View>
   );
 }
@@ -80,12 +80,14 @@ function AskingCard({ job }: { job: Position }) {
   const years = jobYears(job);
   const busy = answer.isPending || editTitle.isPending;
   return (
-    <View style={[styles.card, { backgroundColor: ds.c.raised }]}>
+    <View style={[styles.card, { backgroundColor: ds.c.surface }]}>
       <View style={styles.cardHead}>
-        <UserAvatar uri={job.bar.avatar_url} name={job.bar.display_name} size={40} />
+        <BarMark name={job.bar.display_name} logoUrl={job.bar.avatar_url} size={40} />
         <DsText variant="body" style={styles.flex}>
           {`${job.bar.display_name} says you ${job.is_current ? 'are' : 'were'} a `}
-          <DsText variant="headline">{job.title}</DsText>
+          <DsText variant="body" style={{ fontFamily: fontFamilies.bodySemiBold }}>
+            {job.title}
+          </DsText>
           {` there${years ? `, ${years}` : ''}.`}
         </DsText>
       </View>
@@ -99,9 +101,9 @@ function AskingCard({ job }: { job: Position }) {
         </View>
       ) : null}
       <View style={styles.actions}>
-        <Button label="That’s me" disabled={busy} onPress={() => answer.mutate({ id: job.id, accept: true })} />
-        <Button label="Edit" variant="secondary" disabled={busy} onPress={() => setEditing((v) => !v)} />
-        <Button label="Not me" variant="ghost" disabled={busy} onPress={() => answer.mutate({ id: job.id, accept: false })} />
+        <Button label="That’s me" disabled={busy} onPress={() => answer.mutate({ id: job.id, accept: true })} style={styles.compact} />
+        <Button label="Edit" variant="secondary" disabled={busy} onPress={() => setEditing((v) => !v)} style={styles.compact} />
+        <Button label="Not me" variant="ghost" disabled={busy} onPress={() => answer.mutate({ id: job.id, accept: false })} style={styles.compact} />
       </View>
       {answer.error ?? editTitle.error ? (
         <Caption tone="accent" role="alert">
@@ -136,4 +138,6 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   edit: { gap: space.sm },
   start: { alignSelf: 'flex-start' },
+  // Three answers on one row at phone width (ppl-work).
+  compact: { paddingHorizontal: space.lg },
 });

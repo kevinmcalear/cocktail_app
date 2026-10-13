@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Headline, PressableScale, Title, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, DsText, Headline, PressableScale, TextLink, Title, useBreakpoint, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { DrinkRow } from '@/components/screens/DrinkRow';
@@ -13,6 +13,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsHydrated } from '@/hooks/useIsHydrated';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
+import { useLovedBars } from '@/hooks/useKept';
 import { useBarProfile } from '@/hooks/useRankings';
 import { useBarWeek, useCalendarEventIds, useMyWeek, useWeekStart } from '@/hooks/useWeek';
 import { toDay } from '@/lib/collection';
@@ -22,7 +23,9 @@ import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 import { byDay, filterWeek, itemDay, newDrinks, shortDay, thingsOn, upcoming, weekMonday, weekRange, type WeekFilter, type WeekItem } from '@/lib/week';
 
+import { EachBarAlertsSheet } from '../kept/LoveAlertsSheet';
 import { EventSheet } from './EventSheet';
+import { HomeWeekDesk } from './HomeWeekDesk';
 import { ReviewBanner } from './ReviewImports';
 import { WeekAgenda, WeekColumns } from './WeekColumns';
 import { WeekRibbon } from './WeekParts';
@@ -59,6 +62,7 @@ export function WeekScreen() {
   const [filter, setFilter] = useState<WeekFilter>('all');
   const [addingOn, setAddingOn] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
+  const [choosing, setChoosing] = useState(false);
   const { data: imported } = useCalendarEventIds(canAdd ? barId : null);
   // Dates come from the device's clock, which the static web build doesn't have.
   const hydrated = useIsHydrated();
@@ -70,7 +74,12 @@ export function WeekScreen() {
   const on = upcoming(all, from);
   const fresh = newDrinks(items, weekMonday(from));
   const eventMenus = menus.filter((m) => m.barId === barId && menuStatus(m, now) !== 'previous').map((m) => ({ id: m.id, name: m.name }));
-  const subtitle = [weekRange(from), thingsOn(on.length), fresh.length ? `${fresh.length} new ${fresh.length === 1 ? 'drink' : 'drinks'}` : null].filter(Boolean).join(' · ');
+  // At home on a desktop: a dated agenda with the new drinks beside it (week-home-desk).
+  const homeDesk = wide && !venue;
+  const loved = useLovedBars().data?.length ?? 0;
+  const subtitle = homeDesk
+    ? [loved ? `From the ${loved} ${loved === 1 ? 'bar' : 'bars'} you love, and your own plans` : 'Your own plans', weekRange(from)].join(' · ')
+    : [weekRange(from), thingsOn(on.length), fresh.length ? `${fresh.length} new ${fresh.length === 1 ? 'drink' : 'drinks'}` : null].filter(Boolean).join(' · ');
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -97,7 +106,9 @@ export function WeekScreen() {
             ))}
           </View>
         ) : null}
-        {!hydrated ? null : wide ? (
+        {!hydrated ? null : homeDesk ? (
+          <HomeWeekDesk days={byDay(items.filter((i) => i.kind !== 'drink'), from)} from={from} fresh={fresh} aside={<TextLink label="Choose what each bar tells you" onPress={() => setChoosing(true)} />} />
+        ) : wide ? (
           <WeekColumns days={days} from={from} member={venue} bar={!venue} imported={imported} onAdd={canAdd ? setAddingOn : undefined} />
         ) : (
           <>
@@ -114,11 +125,12 @@ export function WeekScreen() {
           <EmptyWeek venue={venue} canAdd={canAdd} />
         ) : null}
         <View style={[styles.lower, wide && styles.lowerWide]}>
-          <NewDrinks drinks={fresh} from={from} venue={venue} barName={active?.name} />
+          {homeDesk ? null : <NewDrinks drinks={fresh} from={from} venue={venue} barName={active?.name} />}
           {venue ? <GuestView items={on.filter((i) => i.isPublic)} from={from} barId={barId} barName={active?.name} /> : null}
         </View>
       </ScrollView>
       {addingOn && barId ? <EventSheet visible barId={barId} menus={eventMenus} day={addingOn} onClose={() => setAddingOn(null)} /> : null}
+      {choosing ? <EachBarAlertsSheet visible onClose={() => setChoosing(false)} /> : null}
       {linking && barId ? <EventSheet visible barId={barId} menus={eventMenus} tab="link" onClose={() => setLinking(false)} /> : null}
     </View>
   );

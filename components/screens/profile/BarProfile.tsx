@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Segmented, Tag } from '@/components/ds';
+import { Button, Caption, Segmented, Tag } from '@/components/ds';
 import { BarWeek } from '@/components/screens/week/BarWeek';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
@@ -18,8 +18,8 @@ import { barPlace } from '../bar/BarFactLines';
 import { BarFactsBlock } from '../bar/BarFactsBlock';
 import { OnTheMenu } from '../bar/OnTheMenu';
 import { SpecLockPanel } from '../drink/SpecLockPanel';
-import { LoveBarButton } from '../kept/LoveBarButton';
 import { BarClassics } from './BarClassics';
+import { usePouredSplit } from './ClassicsTheyPour';
 import { BarMatches } from './BarMatches';
 import { BarRankings } from './BarRankings';
 import { BarFactsList, BarYours, useYouHere } from './BarYours';
@@ -27,7 +27,6 @@ import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { LockedOriginals } from './LockedOriginals';
 import { Positions } from './Positions';
-import { ProfileLinks } from './ProfileLinks';
 import { BarHeader, BarStats, MenuCredits, OriginalsGrid } from './ProfileSections';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'people';
@@ -56,11 +55,14 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
   const runs = drinkRunTags(useMenuEditions(profile.id).data ?? []);
   const { data: originals = [], isLoading } = useProfileOriginals(profile.id, { locked: profile.page_visibility === 'locked' });
   const { data: credits = [] } = useMenuCredits(originals.map((d) => d.id));
+  // Copies poured as a classic aren't originals: the stat and "All N originals" count the bar's own.
+  const { poured, own } = usePouredSplit(profile.id, originals);
   const names = new Map(originals.map((d) => [d.id, d.name]));
   const unclaimed = isUnclaimed(profile);
   const onTeam = useActiveVenue().venues.some((v) => v.id === profile.bar_id);
   const specsLocked = pageLocksSpecs(profile.page_visibility, onTeam);
-  const place = [profile.locality, profile.city].filter(Boolean).join(', ');
+  // The neighbourhood, else the city: "Cocktail bar · Fitzroy" (ppl-bar-top).
+  const place = profile.locality || profile.city;
   const searched = !!useLocalSearchParams<{ q?: string }>().q;
 
   return (
@@ -72,18 +74,18 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
         <BarHeader
           profile={profile}
           detail={[barPlace(facts?.bar_type, place) || 'Bar', here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ')}
-          love={<LoveBarButton profileId={profile.id} name={profile.display_name} labelled />}
+          // Opened from a search: the facts and actions, then straight into what matched (disc-search-bar).
+          tag={
+            searched ? null : (
+              <View style={styles.chips}>
+                <Tag label={unclaimed ? 'Not claimed yet' : 'Claimed'} tone={unclaimed ? 'default' : 'outline'} />
+                {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} tone="outline" /> : null}
+                {profile.is_public ? null : <Tag label="Private" tone="outline" />}
+              </View>
+            )
+          }
         />
-        {/* Opened from a search: the facts and actions, then straight into what matched (disc-search-bar). */}
-        {searched ? null : (
-          <View style={styles.chips}>
-            <Tag label={unclaimed ? 'Not claimed yet' : 'Claimed'} />
-            {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} /> : null}
-            {profile.is_public ? null : <Tag label="Private" />}
-          </View>
-        )}
-        {profile.bio && !searched ? <Body>{profile.bio}</Body> : null}
-        {searched ? null : <ProfileLinks profile={profile} align="start" />}
+        {/* No bio or link icons on a bar's page (ppl-bar-top, ppl-bar-unclaimed): Website sits with Directions and Call, Instagram under Online. */}
         <BarFactsBlock profileId={profile.id} />
         {unclaimed && facts?.hours ? <Caption tone="muted">{hoursSource(false, facts.hours_updated_at)}</Caption> : null}
       </View>
@@ -91,7 +93,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       {/* A search's matches (nothing without one) come right under the header. */}
       <BarMatches barProfileId={profile.id} />
 
-      <BarStats profile={profile} originals={originals.length} onAwards={() => setAwardsOpen((v) => !v)} />
+      <BarStats profile={profile} originals={own.length} onAwards={() => setAwardsOpen((v) => !v)} />
 
       {awardsOpen ? <Awards profileId={profile.id} /> : null}
 
@@ -117,7 +119,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
         ) : (
           <View style={styles.tab}>
             <OriginalsGrid
-              originals={allOriginals ? originals : originals.slice(0, FIRST_ORIGINALS)}
+              originals={allOriginals ? originals : [...poured, ...own.slice(0, FIRST_ORIGINALS)]}
               selfId={profile.id}
               columns={columns}
               layout="rows"
@@ -125,8 +127,8 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
               runs={runs}
               emptyText="No drinks credited to this bar yet."
             />
-            {originals.length > FIRST_ORIGINALS && !allOriginals ? (
-              <Button label={`All ${originals.length} originals`} variant="secondary" onPress={() => setAllOriginals(true)} style={styles.start} />
+            {own.length > FIRST_ORIGINALS && !allOriginals ? (
+              <Button label={`All ${own.length} originals`} variant="secondary" onPress={() => setAllOriginals(true)} style={styles.start} />
             ) : null}
             {/* Classics they pour sit with the originals now, not above the tabs (ppl-bar-originals). */}
             <BarClassics barId={profile.bar_id} />

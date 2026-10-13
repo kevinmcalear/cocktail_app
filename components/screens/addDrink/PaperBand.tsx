@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSeque
 
 import { Caption, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { ViewAsPill } from '@/components/ViewAsBanner';
 import { backbar, fontFamilies, layout, radius, space, springs } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
@@ -93,7 +94,7 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
             </View>
           </>
         )}
-        <Caption color={ink} style={styles.mono} numberOfLines={1}>
+        <Caption color={ink} style={[styles.mono, styles.label]} numberOfLines={1}>
           {progress.label}
         </Caption>
       </View>
@@ -115,6 +116,7 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
               {note}
             </Caption>
           </View>
+          <ViewAsPill ink={ink} />
         </>
       )}
     </View>
@@ -139,7 +141,9 @@ const styles = StyleSheet.create({
   backTo: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingLeft: space.sm, paddingRight: space.md, borderRadius: radius.pill, flexShrink: 1 },
   backToLabel: { fontFamily: fontFamilies.bodyMedium, flexShrink: 1 },
   spacer: { flex: 1 },
-  track: { flex: 1, height: 4, borderRadius: radius.pill, overflow: 'hidden' },
+  // The bar keeps some length however long the label is; the label gives way.
+  track: { flex: 1, minWidth: layout.minTapTarget, height: 4, borderRadius: radius.pill, overflow: 'hidden' },
+  label: { flexShrink: 1 },
   fill: { height: 4, borderRadius: radius.pill },
   mono: { fontFamily: fontFamilies.monoMedium },
   drawing: { marginTop: space.sm },
