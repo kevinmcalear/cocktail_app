@@ -65,6 +65,39 @@ export function useWeekEvent(id: string | null | undefined) {
   });
 }
 
+/** A drink on an event's menu, as its page lists it. Plain JSON. */
+export interface EventDrink {
+  id: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  glassKey: string | null;
+}
+
+/**
+ * The drinks on an event's menu (week_event_drinks): every one for the bar's
+ * team, the published ones for guests, nothing for an event they can't open.
+ */
+export function useWeekEventDrinks(id: string | null | undefined, enabled = true) {
+  const viewer = viewerScoped(useUserId());
+  return useQuery({
+    queryKey: ['week', 'event-drinks', id, viewer.key],
+    meta: viewer.meta,
+    enabled: !!id && enabled,
+    queryFn: async (): Promise<EventDrink[]> => {
+      const { data, error } = await supabase.rpc('week_event_drinks', { p_event_id: id });
+      if (error) throw error;
+      return ((data ?? []) as { id: string; name: string; description: string | null; image_url: string | null; glass_key: string | null }[]).map((d) => ({
+        id: d.id,
+        name: d.name,
+        description: d.description,
+        imageUrl: d.image_url,
+        glassKey: d.glass_key,
+      }));
+    },
+  });
+}
+
 /** Where a bar is, from its public page (readable signed out), for Directions. */
 export function useBarPlace(profileId: string | null | undefined) {
   return useQuery({

@@ -15,6 +15,7 @@ import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 import { directionsUrl, kindLabel, timeLine, type WeekItem } from '@/lib/week';
 
+import { EventDrinks } from './EventDrinks';
 import { EventSheet } from './EventSheet';
 import { useDotColor } from './WeekParts';
 
@@ -126,13 +127,7 @@ function EventPage({ id }: { id: string }) {
           ) : null}
           {directions ? <Button label="Directions" variant="secondary" onPress={() => Linking.openURL(directions)} style={styles.flex} /> : null}
         </View>
-        {event.drinkCount ? (
-          <Caption tone="muted">
-            {[`${event.drinkCount} ${event.drinkCount === 1 ? 'drink' : 'drinks'} on the ${kindLabel(event).replace(', team only', '').toLowerCase()} menu`, event.guestName ? `by ${event.guestName}` : null]
-              .filter(Boolean)
-              .join(' · ')}
-          </Caption>
-        ) : null}
+        <EventDrinks event={event} />
         {canEdit && event.menuId ? <TextLink label="Open the menu" onPress={() => router.push(`/menus/${event.menuId}` as Href)} /> : null}
         {shared === 'failed' ? <Caption tone="muted">{link}</Caption> : null}
         {canEdit ? <Button label="Delete event" variant="danger" onPress={confirmDelete} disabled={remove.isPending} style={styles.delete} /> : null}
