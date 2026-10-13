@@ -52,6 +52,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Directions (components/screens/bar/Directions.tsx) offers Google Maps
       // and Waze only when installed; iOS answers canOpenURL only for schemes listed here.
       infoPlist: { ...config.ios?.infoPlist, LSApplicationQueriesSchemes: ['comgooglemaps', 'waze'] },
+      // The sign-in email's link and venue staff links open the app, not the
+      // site (public/.well-known/apple-app-site-association lists these app
+      // ids). Store and preview builds only: local dev builds sign without it.
+      ...(variant === 'development' ? {} : { associatedDomains: ['applinks:babyvom.it'] }),
     },
     android: {
       ...config.android,
