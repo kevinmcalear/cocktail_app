@@ -1,11 +1,11 @@
-import { Camera, GeoJSONSource, Layer, Map, Marker, NativeUserLocation, type CameraRef, type GeoJSONSourceRef, type PressEventWithFeatures, type ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
+import { Camera, GeoJSONSource, Layer, Map, Marker, NativeUserLocation, type CameraRef, type GeoJSONSourceRef, type MapRef, type PressEventWithFeatures, type ViewState } from '@maplibre/maplibre-react-native';
 import { Image } from 'expo-image';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
 import { useLocationAccess } from '@/hooks/useLocationAccess';
-import { dotsOf, MAP_STYLE, pinDescription, pinLook, viewportFrom } from '@/lib/discoverMap';
+import { AREA_CLUSTER, areaLook, areasFrom, DOT_PAINT, dotsFilter, dotsOf, MAP_STYLE, pinDescription, pinLook, pinsToDraw, viewportFrom, type MapArea, type MapView } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
@@ -13,25 +13,24 @@ import type { DiscoverMapProps } from './DiscoverMap';
 export const mapAvailable = true;
 
 /**
- * Pins drawn as views (logo, score), best first. A view per pin is costly on
- * a phone (each is a native view, mounted again whenever the set changes), so
- * past these (and the selected one) the rest are labelled dots the map draws
- * itself, gathered into counted clusters (light, so a group of bars reads
- * apart from one bar's drink count) when they crowd.
- */
-const RICH_PINS = 12;
-
-/**
  * The native map: MapLibre Native with the same OpenFreeMap style and the
  * same pins as the web map (DiscoverMap.web.tsx), so it looks the same on a
  * phone as in the browser.
  */
 export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, me, style }: DiscoverMapProps) {
+  const mapRef = useRef<MapRef>(null);
   const cameraRef = useRef<CameraRef>(null);
   const dotsRef = useRef<GeoJSONSourceRef>(null);
-  // Rebuilt only when the pins or the selection change (the pins come memoized), never on a plain re-render.
-  const rich = useMemo(() => pins.filter((p, i) => i < RICH_PINS || p.id === selectedId), [pins, selectedId]);
-  const dots = useMemo(() => dotsOf(pins.filter((p, i) => i >= RICH_PINS && p.id !== selectedId)), [pins, selectedId]);
+  // Options C and D (13 Oct), as on the web map: every bar is a dot the map draws itself (one layer, cheap
+  // at any count), gathered into areas zoomed out; only the best few in view are pins, since a view per pin
+  // is costly on a phone (each a native view, mounted again whenever the set changes). What's on screen:
+  const [view, setView] = useState<MapView | null>(null);
+  const viewRef = useRef(view);
+  // Rebuilt only when the pins, the selection or the view change (the pins come memoized), never on a plain re-render.
+  const rich = useMemo(() => pinsToDraw(pins, view, selectedId), [pins, view, selectedId]);
+  const dots = useMemo(() => dotsOf(pins), [pins]);
+  const filter = useMemo(() => dotsFilter(rich.map((p) => p.id)), [rich]);
+  const [areas, setAreas] = useState<{ key: string; list: MapArea[] }>({ key: '', list: [] });
   // Where the map starts; later cameras move it (below).
   const [start] = useState(camera);
   // On iOS a pin tap also reaches the map's own tap handler just after, which
@@ -61,31 +60,45 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   const android = Platform.OS === 'android';
   const order = android ? rich.map((p) => p.id).join('|') : 'pins';
 
-  // A dot opens its bar; a cluster zooms in until it comes apart.
-  const onDot = async (e: NativeSyntheticEvent<PressEventWithFeatures>) => {
-    const f = e.nativeEvent.features[0];
-    if (!f) return;
+  // A dot opens its bar like a pin does.
+  const onDot = (e: NativeSyntheticEvent<PressEventWithFeatures>) => {
+    const id = e.nativeEvent.features[0]?.properties?.id;
+    if (typeof id !== 'string') return;
     pinTappedAt.current = Date.now();
-    const props = f.properties ?? {};
-    if (props.cluster && f.geometry.type === 'Point') {
-      const zoom = await dotsRef.current?.getClusterExpansionZoom(props.cluster_id);
-      const [lng, lat] = f.geometry.coordinates;
-      if (zoom !== undefined) cameraRef.current?.easeTo({ center: [lng, lat], zoom, duration: 400 });
-    } else if (typeof props.id === 'string') {
-      onSelect(props.id);
-    }
+    onSelect(id);
   };
-  const ink = backbar.light.ink;
-  const ring = backbar.dark.ink;
+  // An area zooms in until it comes apart.
+  const onArea = async (area: MapArea) => {
+    const zoom = await dotsRef.current?.getClusterExpansionZoom(area.id);
+    if (zoom !== undefined) cameraRef.current?.easeTo({ center: [area.longitude, area.latitude], zoom, duration: 400 });
+  };
 
-  // Only the person's own moves count for "search this area".
-  const onMoved = (e: NativeSyntheticEvent<ViewStateChangeEvent>) => {
-    const { userInteraction, center, bounds, zoom } = e.nativeEvent;
+  // The area labels: MapLibre's clusters in the loaded tiles (querySourceFeatures underneath), once the map settles.
+  const syncAreas = async () => {
+    const found = await dotsRef.current?.getData(['has', 'point_count']).catch(() => null);
+    if (!found) return;
+    const list = areasFrom(found.features, viewRef.current);
+    const key = list.map((a) => `${a.id}:${a.label}:${a.latitude}:${a.longitude}`).join('|');
+    setAreas((now) => (now.key === key ? now : { key, list }));
+  };
+
+  // Every settled move (ours too) picks the pins for what's on screen; only the person's own count for "search this area".
+  const onMoved = ({ nativeEvent: { userInteraction, center, bounds, zoom } }: NativeSyntheticEvent<ViewState & { userInteraction?: boolean }>) => {
+    const next = { bounds, zoom };
+    viewRef.current = next;
+    setView(next);
+    void syncAreas();
     if (userInteraction) onViewportChange(viewportFrom({ lng: center[0], lat: center[1] }, bounds, zoom));
+  };
+  // The first view, before any move.
+  const onLoaded = async () => {
+    const state = await mapRef.current?.getViewState().catch(() => null);
+    if (state && !viewRef.current) onMoved({ nativeEvent: state } as NativeSyntheticEvent<ViewState>);
   };
 
   return (
     <Map
+      ref={mapRef}
       style={[styles.fill, style]}
       mapStyle={MAP_STYLE[scheme]}
       // OpenStreetMap asks for a visible credit: on the map when there's room,
@@ -100,39 +113,27 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         if (Date.now() - pinTappedAt.current > 400) onSelect(null);
       }}
       onRegionDidChange={onMoved}
+      onDidFinishLoadingMap={() => void onLoaded()}
+      onDidFinishRenderingMapFully={() => void syncAreas()}
     >
       <Camera
         ref={cameraRef}
         initialViewState={start ? { center: [start.longitude, start.latitude], zoom: start.zoom } : { center: [0, 20], zoom: 1.5 }}
       />
-      <GeoJSONSource id="discover-dots" ref={dotsRef} data={dots} cluster clusterRadius={44} onPress={(e) => void onDot(e)}>
-        <Layer
-          id="discover-clusters"
-          type="circle"
-          filter={['has', 'point_count']}
-          paint={{ 'circle-color': ring, 'circle-radius': ['step', ['get', 'point_count'], 14, 10, 17, 50, 21], 'circle-stroke-color': ink, 'circle-stroke-width': 2 }}
-        />
-        <Layer
-          id="discover-cluster-counts"
-          type="symbol"
-          filter={['has', 'point_count']}
-          layout={{ 'text-field': ['get', 'point_count_abbreviated'], 'text-font': ['Noto Sans Bold'], 'text-size': type.caption.fontSize, 'text-allow-overlap': true }}
-          paint={{ 'text-color': ink }}
-        />
-        <Layer
-          id="discover-dots"
-          type="circle"
-          filter={['!', ['has', 'point_count']]}
-          paint={{ 'circle-color': ink, 'circle-radius': ['case', ['==', ['get', 'label'], ''], 6, 13], 'circle-stroke-color': ring, 'circle-stroke-width': 2 }}
-        />
-        <Layer
-          id="discover-dot-labels"
-          type="symbol"
-          filter={['all', ['!', ['has', 'point_count']], ['!=', ['get', 'label'], '']]}
-          layout={{ 'text-field': ['get', 'label'], 'text-font': ['Noto Sans Bold'], 'text-size': type.caption.fontSize - 1, 'text-allow-overlap': true }}
-          paint={{ 'text-color': ring }}
-        />
+      <GeoJSONSource id="discover-dots" ref={dotsRef} data={dots} {...AREA_CLUSTER} onPress={onDot}>
+        <Layer id="discover-dots" type="circle" filter={filter} paint={DOT_PAINT} />
       </GeoJSONSource>
+      {areas.list.map((area) => (
+        <Marker key={`area-${area.id}`} id={`area-${area.id}`} lngLat={[area.longitude, area.latitude]} onPress={() => {
+            pinTappedAt.current = Date.now();
+            void onArea(area);
+          }}
+        >
+          <View role="button" aria-label={`${area.label}. Zoom in to see each bar`} style={styles.area}>
+            <Text style={styles.areaLabel}>{area.label}</Text>
+          </View>
+        </Marker>
+      ))}
       {showMe ? <NativeUserLocation mode="heading" /> : null}
       <Fragment key={order}>
         {rich.map((pin, i) => {
@@ -161,6 +162,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
                     paddingLeft: look.paddingLeft,
                     paddingRight: look.paddingRight,
                     gap: look.gap,
+                    borderWidth: look.borderWidth,
                     borderColor: look.borderColor,
                     backgroundColor: look.backgroundColor,
                     opacity: look.opacity,
@@ -181,9 +183,13 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   );
 }
 
+// ponytail: no shadow under the pins and areas here, unlike the web map; a marker's view may clip a shadow
+// that falls outside it. Add areaLook.boxShadow / pinLook().boxShadow once checked on a phone.
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  pin: { flexDirection: 'row', borderRadius: radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  pin: { flexDirection: 'row', borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   logo: { borderRadius: radius.pill, backgroundColor: backbar.light.surface },
   label: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize },
+  area: { height: areaLook.height, paddingHorizontal: areaLook.paddingHorizontal, borderRadius: radius.pill, borderWidth: 1, borderColor: areaLook.borderColor, backgroundColor: areaLook.backgroundColor, justifyContent: 'center' },
+  areaLabel: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize, color: areaLook.color },
 });
