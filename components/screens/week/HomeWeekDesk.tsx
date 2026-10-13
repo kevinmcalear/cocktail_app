@@ -15,6 +15,9 @@ import { useDotColor, weekHref } from './WeekParts';
 
 const MARK = 44;
 
+/** A drink is added "today", not "Tonight" like an event. */
+const added = (day: string) => (day === 'Tonight' ? 'today' : day);
+
 /**
  * This week at home on a desktop (week-home-desk): a dated agenda, each day in
  * a gutter on the left and its things to the right (a takeover as a card with
@@ -136,7 +139,7 @@ function NewDrink({ item, from }: { item: WeekItem; from: Date }) {
         <Body style={styles.name} numberOfLines={1}>
           {item.name}
         </Body>
-        <Caption tone="muted">{[item.barName, `added ${shortDay(itemDay(item), from)}`].filter(Boolean).join(' · ')}</Caption>
+        <Caption tone="muted">{[item.barName, `added ${added(shortDay(itemDay(item), from))}`].filter(Boolean).join(' · ')}</Caption>
         {shelf ? <Caption color={ready ? palateHues[ds.scheme].green : ds.c.muted}>{shelf}</Caption> : null}
       </View>
     </PressableScale>
