@@ -96,7 +96,8 @@ function Page({ title, intro, kicker, eyebrow, children, noBack, backTo = '/sett
           paddingHorizontal: gutter,
         }}
       >
-        <View style={[frame.column, styles.readable]}>
+        {/* Signed out on the web (Support) there's no sidebar to sit beside, so the column centres (ppl-support-desktop). */}
+        <View style={[frame.column, styles.readable, frame.wide && !signedIn && styles.centred]}>
           {/* With the sidebar there's no Back row, so the action sits over the title. */}
           {action && sidebar ? <View style={styles.inline}>{action}</View> : null}
           {kicker ? <Caption tone="muted">{kicker}</Caption> : null}
@@ -147,6 +148,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   withAside: { flexDirection: 'row' },
   readable: { gap: space.md },
+  centred: { alignSelf: 'center' },
   back: { position: 'absolute' },
   flex: { flex: 1, minWidth: 0 },
   strong: { fontFamily: fontFamilies.bodySemiBold },
