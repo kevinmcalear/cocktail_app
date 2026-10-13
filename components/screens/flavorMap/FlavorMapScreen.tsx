@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
-import { BackbarTheme, Body, Button, Caption, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, dragDismissesKeyboard, GlassButton, PressableScale, Segmented, Title, useDs, useGutter } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
@@ -73,7 +73,7 @@ function FlavorMapPage() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView
-        keyboardShouldPersistTaps="handled"
+        {...dragDismissesKeyboard}
         contentContainerStyle={[
           styles.page,
           { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl + (picked.length ? layout.minTapTarget + space.xl : 0), paddingHorizontal: gutter },

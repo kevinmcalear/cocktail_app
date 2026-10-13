@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Button, Text, useTheme, XStack, YStack, type TamaguiElement } from "tamagui";
 
-import { IngredientThumb, SheetScrollView } from "@/components/ds";
+import { dragDismissesKeyboard, IngredientThumb, SheetScrollView } from "@/components/ds";
 import { SearchBar } from "@/components/SearchBar";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -87,7 +87,7 @@ export function IngredientPickerSheet({
                 contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
                 data={filtered}
                 keyExtractor={(item) => item.id}
-                keyboardShouldPersistTaps="handled"
+                {...dragDismissesKeyboard}
                 renderItem={({ item }) => {
                     const childDraft = drafts?.find(
                         (d: any) => d.id === item.id && d.entity_type === "ingredient"
