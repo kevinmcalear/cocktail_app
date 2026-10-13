@@ -206,12 +206,13 @@ describe('AddDrinkWizard', () => {
     expect(screen.queryByText('Is this one of your glasses?')).toBeNull();
   });
 
-  test('tapping a name swaps the ingredient and keeps its amount', async () => {
+  test('tapping a name, then Swap, swaps the ingredient and keeps its amount', async () => {
     useDrinkWizardStore.getState().patch('home', { name: 'Martinez', lines: [{ key: 'k1', id: 'gin', name: 'Gin', amount: '45', unit: 'ml' }] });
     useDrinkWizardStore.getState().setStep('home', 'ingredients');
     await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     await fireEvent.press(screen.getByRole('button', { name: 'Gin, 45 ml' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Swap Gin for another ingredient' }));
     await fireEvent.changeText(screen.getByLabelText('Swap Gin for…'), 'verm');
     await fireEvent.press(screen.getByRole('button', { name: 'Sweet Vermouth' }));
     expect(useDrinkWizardStore.getState().kept.home.draft.lines).toEqual([{ key: 'k1', id: 'vermouth', name: 'Sweet Vermouth', amount: '45', unit: 'ml' }]);

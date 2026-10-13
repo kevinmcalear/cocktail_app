@@ -78,3 +78,21 @@ export function PreferencesSection() {
     </SettingsSection>
   );
 }
+
+/**
+ * Layouts we're trying side by side before picking one (Kevin and Eddie, 13 Oct).
+ * Phones only: wide web keeps its sidebar and ⌘K. Saved on this device.
+ */
+export function TryItSection() {
+  const { bottomBar, setBottomBar } = useSettingsStore();
+  return (
+    <SettingsSection title="Try it" note="Ideas we're testing. Turn them off to go back to how the app is now.">
+      <SwitchRow
+        label="Search and New at the bottom"
+        detail="Search opens at the bottom, over the keyboard, and New moves from the top into the tab bar."
+        value={bottomBar}
+        onValueChange={setBottomBar}
+      />
+    </SettingsSection>
+  );
+}

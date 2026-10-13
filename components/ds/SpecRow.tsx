@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
-import { space, type } from '@/constants/tokens';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { radius, space, type } from '@/constants/tokens';
 
 import { IngredientThumb } from './IngredientThumb';
 import { PressableScale } from './PressableScale';
@@ -28,9 +29,15 @@ export interface SpecRowProps {
   detail?: string;
   /** Service mode reads bigger (1.25). */
   scale?: number;
+  /** Less padding above and below (the drink page, where the whole spec fits on the first screen). */
+  dense?: boolean;
   onPress?: () => void;
   /** Tapping the amount alone: the conversions sheet. */
   onPressAmount?: () => void;
+  /** Someone who can change the spec: a faint pencil says the line opens its fix (board KittyDrink). */
+  fix?: boolean;
+  /** Just changed: raised for a moment so the eye finds it (board KittyDone). */
+  highlight?: boolean;
   /**
    * Hold the amount column open when this line is blank, so its name lines up
    * with lines that are measured. Leave it off when the drink has no measurements.
@@ -45,13 +52,20 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, flag, detail, scale = 1, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, flag, detail, scale = 1, dense, onPress, onPressAmount, alignAmount, fix, highlight }: SpecRowProps) {
   const ds = useDs();
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   const showAmount = amount.length > 0 || !!alignAmount;
   const split = !!onPressAmount && amount.length > 0;
   const rest = [ingredient, detail, houseMade && 'house-made', optional && 'optional', note, flag].filter(Boolean).join(', ');
   const amountWidth = { width: 96 * scale };
+  const cell = dense ? styles.dense : styles.cell;
+  const lit = highlight ? [styles.lit, { backgroundColor: ds.c.raised }] : null;
+  const pencil = fix ? (
+    <View style={styles.pencil} aria-hidden>
+      <IconSymbol name="pencil" size={16} color={ds.c.faint} />
+    </View>
+  ) : null;
 
   const text = (
     <>
@@ -81,12 +95,12 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
     const Name = onPress ? PressableScale : View;
     return (
       <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-        <PressableScale role="button" aria-label={`${amount}, read in other units`} haptic={false} onPress={onPressAmount} style={[styles.cell, amountWidth]}>
+        <PressableScale role="button" aria-label={`${amount}, read in other units`} haptic={false} onPress={onPressAmount} style={[cell, amountWidth]}>
           <Spec tone="accent" style={big(type.spec)}>
             {amount}
           </Spec>
         </PressableScale>
-        <Name accessible aria-label={rest} role={onPress ? 'button' : undefined} onPress={onPress} haptic={onPress ? false : undefined} style={[styles.cell, styles.name, pictured && styles.pictured]}>
+        <Name accessible aria-label={rest} role={onPress ? 'button' : undefined} onPress={onPress} haptic={onPress ? false : undefined} style={[cell, styles.name, pictured && styles.pictured]}>
           {name}
         </Name>
       </View>
@@ -97,11 +111,11 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
   return (
     <Row
       accessible
-      aria-label={amount ? `${amount}, ${rest}` : rest}
+      aria-label={`${fix ? 'Fix ' : ''}${amount ? `${amount}, ${rest}` : rest}`}
       role={onPress ? 'button' : undefined}
       onPress={onPress}
       haptic={onPress ? false : undefined}
-      style={[styles.row, styles.cell, { borderBottomColor: ds.c.line }]}
+      style={[styles.row, cell, { borderBottomColor: ds.c.line }, lit]}
     >
       {showAmount ? (
         <Spec tone="accent" style={[amountWidth, big(type.spec)]}>
@@ -109,6 +123,7 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
         </Spec>
       ) : null}
       <View style={[styles.name, pictured && styles.pictured]}>{name}</View>
+      {pencil}
     </Row>
   );
 }
@@ -122,8 +137,11 @@ const styles = StyleSheet.create({
   },
   // In a split line each control carries the padding, so the whole line stays tappable.
   cell: { paddingVertical: space.md },
+  dense: { paddingVertical: space.sm },
   name: { flex: 1, gap: space.xs },
   pictured: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   text: { flex: 1, gap: space.xs },
   tags: { flexDirection: 'row', gap: space.xs, marginTop: space.xs },
+  pencil: { alignSelf: 'center' },
+  lit: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
 });

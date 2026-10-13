@@ -54,6 +54,13 @@ interface SettingsState {
     /** "Not now" to "Is this one of your glasses?", by lib/glassware.ts glassPromptKey: not asked again on this device. */
     glassesNotNow: string[];
     skipGlassPrompt: (key: string) => void;
+    /**
+     * Settings › Try it, on phones: search opens at the bottom over the
+     * keyboard, and New moves from the header into the tab bar (Eddie, 13 Oct).
+     * Off by default; the shipped layout stays the default until we pick one.
+     */
+    bottomBar: boolean;
+    setBottomBar: (on: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -71,6 +78,8 @@ export const useSettingsStore = create<SettingsState>()(
             setDirectionsApp: (app) => set({ directionsApp: app }),
             glassesNotNow: [],
             skipGlassPrompt: (key) => set((s) => (s.glassesNotNow.includes(key) ? s : { glassesNotNow: [...s.glassesNotNow, key] })),
+            bottomBar: false,
+            setBottomBar: (on) => set({ bottomBar: on }),
         }),
         {
             name: 'settings-storage',
