@@ -10,7 +10,7 @@ import { useMode } from '@/hooks/useMode';
 import { accentFill } from '@/lib/color';
 
 /** The venue's mark: its logo, or its initial in its display face on its own colour (not the active venue's). */
-export function VenueMark({ venue, size = 32 }: { venue: Omit<Venue, 'features'> | null; size?: number }) {
+export function VenueMark({ venue, size = 32 }: { venue: Venue | null; size?: number }) {
   const own = accentFill(venue?.accent ?? DEFAULT_ACCENT, backbar.dark.ground, backbar.light.surface);
   const box = { width: size, height: size, borderRadius: size * 0.28 };
   if (venue?.logoUrl) {

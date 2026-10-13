@@ -27,6 +27,35 @@ export function parseFeatures(raw: unknown): VenueFeatureKey[] {
   return Array.isArray(raw) ? raw.filter((k): k is VenueFeatureKey => typeof k === 'string' && KEYS.has(k)) : [];
 }
 
+type DbError = { code?: string | null } | null | undefined;
+
+/**
+ * The database doesn't have bars.enabled_features yet: the app shipped before
+ * its migration. Postgres says 42703 on a read, PostgREST PGRST204 on a write.
+ */
+export function isMissingColumn(error: DbError): boolean {
+  return error?.code === '42703' || error?.code === 'PGRST204';
+}
+
+/**
+ * A venue's switches from its read, never failing: the column not there yet
+ * means none (Discover, Library and Menus); any other error (offline, a
+ * timeout) keeps what was saved, or none. So a read never throws, never
+ * retries, and the tabs never wait on it twice.
+ */
+export function readFeatures(row: { enabled_features?: unknown } | null | undefined, error: DbError, saved?: VenueFeatureKey[]): VenueFeatureKey[] {
+  if (isMissingColumn(error)) return [];
+  if (error) return saved ?? [];
+  return parseFeatures(row?.enabled_features);
+}
+
+/** What the Features settings say when a switch didn't save. */
+export function featureSaveMessage(error: DbError): string {
+  return isMissingColumn(error)
+    ? 'Features can’t be switched on yet. They will be after the next update.'
+    : 'Couldn’t save that. Check your connection and try again.';
+}
+
 /** Switch one feature on or off, keeping the rest and the catalog's order. */
 export function withFeature(on: readonly VenueFeatureKey[], key: VenueFeatureKey, enabled: boolean): VenueFeatureKey[] {
   return VENUE_FEATURES.map((f) => f.key).filter((k) => (k === key ? enabled : on.includes(k)));

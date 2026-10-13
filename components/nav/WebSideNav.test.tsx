@@ -16,8 +16,15 @@ jest.mock('expo-router', () => ({
 const mockSetMode = jest.fn();
 const mockEnterVenue = jest.fn();
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode: mockSetMode }) }));
-// Tonight, Back bar and History switched on; the first test turns them off.
-const mockVenue = { id: 'caretakers', name: 'Caretakers', logoUrl: null, accent: null, displayFace: 'instrument', groundTint: null, roleLevel: 40, features: ['tonight', 'backBar', 'history'] };
+const mockVenue = { id: 'caretakers', name: 'Caretakers', logoUrl: null, accent: null, displayFace: 'instrument', groundTint: null, roleLevel: 40 };
+// The venue's switches come from their own query (hooks/useVenueFeatures.ts); here, a list per test.
+let mockFeatures: string[] = [];
+jest.mock('@/hooks/useVenueFeatures', () => {
+  const { featureAtHome } = jest.requireActual<typeof import('@/lib/venueFeatures')>('@/lib/venueFeatures');
+  const features = () => ({ ready: true, home: mockMode === 'home', has: (k: never) => (mockMode === 'home' ? featureAtHome(k) : mockFeatures.includes(k)) });
+  return { useVenueFeatures: features, useVenueFeature: (k: never) => features().has(k) };
+});
+
 const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockVenue, venues: [mockVenue, mockOther], enterVenue: mockEnterVenue }) }));
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: ['a', 'b', 'c'] }) }));
@@ -49,11 +56,12 @@ beforeEach(() => {
   mockPush.mockClear();
   mockRole = 40;
   mockMode = 'venue';
-  mockVenue.features = ['tonight', 'backBar', 'history'];
+  // Tonight, Back bar and History switched on; the first test turns them off.
+  mockFeatures = ['tonight', 'backBar', 'history'];
 });
 
 test('a venue with nothing switched on has Library, Menus and Discover, and its Venue section', async () => {
-  mockVenue.features = [];
+  mockFeatures = [];
   mockPathname = '/library';
   await renderWithTamagui(<WebSideNav />);
   expect(links()).toEqual(['Library', 'Menus', 'Discover', 'My team', 'Brand', 'Roles and access', 'Venue settings', 'You: Kevin M., Admin at Caretakers']);

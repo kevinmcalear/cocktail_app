@@ -1,26 +1,47 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 import { supabase } from '@/lib/supabase';
-import { featureAtHome, withFeature, type VenueFeatureKey } from '@/lib/venueFeatures';
+import { featureAtHome, featureSaveMessage, readFeatures, withFeature, type VenueFeatureKey } from '@/lib/venueFeatures';
+
+export const venueFeaturesKey = (barId: string | null) => ['venue-features', barId] as const;
 
 /**
- * Which extras are on where you are. At a venue, its Admin's switches
- * (bars.enabled_features, riding along on the cached venue list); at home,
- * what home mode always had. `ready` is false in venue mode until the venue
- * is known, so a tab or a redirect can wait instead of guessing.
+ * A venue's switches (bars.enabled_features), in a query of their own so the
+ * venue list never asks for the column: the app keeps working if it ships
+ * before the migration. The read never throws (lib/venueFeatures.ts
+ * readFeatures), so there's nothing to retry. Saved between launches.
+ */
+function useFeatureRow(barId: string | null) {
+  const client = useQueryClient();
+  return useQuery({
+    queryKey: venueFeaturesKey(barId),
+    enabled: !!barId,
+    meta: { persist: true },
+    queryFn: async (): Promise<VenueFeatureKey[]> => {
+      const { data, error } = await supabase.from('bars').select('enabled_features').eq('id', barId!).maybeSingle();
+      return readFeatures(data, error, client.getQueryData<VenueFeatureKey[]>(venueFeaturesKey(barId)));
+    },
+  });
+}
+
+/**
+ * Which extras are on where you are. At a venue, its Admin's switches; at
+ * home, what home mode always had. `ready` is false in venue mode until the
+ * venue and its switches are known, so a tab or a redirect can wait instead
+ * of guessing.
  */
 export function useVenueFeatures() {
   const { mode } = useMode();
   const { active } = useActiveVenue();
   const venue = mode === 'venue' ? active : null;
   const home = mode === 'home';
+  const { data } = useFeatureRow(venue?.id ?? null);
   return {
-    ready: home || !!venue,
+    ready: home || (!!venue && data !== undefined),
     home,
-    has: (key: VenueFeatureKey) => (venue ? venue.features.includes(key) : home && featureAtHome(key)),
+    has: (key: VenueFeatureKey) => (venue ? (data ?? []).includes(key) : home && featureAtHome(key)),
   };
 }
 
@@ -29,18 +50,15 @@ export function useVenueFeature(key: VenueFeatureKey): boolean {
   return useVenueFeatures().has(key);
 }
 
-type BarRow = { bar_id: string; bars: { id: string; enabled_features?: string[] } | { id: string; enabled_features?: string[] }[] | null };
-
 /**
- * A venue's switches, and turning one on or off. Saves straight away and updates the
- * cached venue list first, so the tabs change as the switch moves. The
- * database lets only the venue's Admins write it (bars_update).
+ * A venue's switches, and turning one on or off. Saves straight away and
+ * updates the cached switches first, so the tabs change as the switch moves.
+ * The database lets only the venue's Admins write it (bars_update).
  */
 export function useSetVenueFeature(barId: string) {
   const client = useQueryClient();
-  const userId = useUserId();
-  const current = useActiveVenue().venues.find((v) => v.id === barId)?.features ?? [];
-  const queryKey = ['bars', userId];
+  const queryKey = venueFeaturesKey(barId);
+  const current = useFeatureRow(barId).data ?? [];
   const mutation = useMutation({
     mutationFn: async (next: VenueFeatureKey[]) => {
       // .select().single(): a write RLS refuses changes no row, and should say so.
@@ -49,24 +67,16 @@ export function useSetVenueFeature(barId: string) {
     },
     onMutate: async (next) => {
       await client.cancelQueries({ queryKey });
-      const previous = client.getQueryData<BarRow[]>(queryKey);
-      client.setQueryData<BarRow[]>(queryKey, (rows) =>
-        rows?.map((row) => {
-          if (row.bar_id !== barId || !row.bars) return row;
-          const bar = Array.isArray(row.bars) ? row.bars[0] : row.bars;
-          return { ...row, bars: { ...bar, enabled_features: next } };
-        }),
-      );
+      const previous = client.getQueryData<VenueFeatureKey[]>(queryKey);
+      client.setQueryData(queryKey, next);
       return { previous };
     },
-    onError: (_error, _next, context) => {
-      if (context?.previous) client.setQueryData(queryKey, context.previous);
-    },
+    onError: (_error, _next, context) => client.setQueryData(queryKey, context?.previous ?? []),
     onSettled: () => client.invalidateQueries({ queryKey }),
   });
   return {
     features: current,
     set: (key: VenueFeatureKey, on: boolean) => mutation.mutate(withFeature(current, key, on)),
-    error: mutation.error,
+    error: mutation.error ? featureSaveMessage(mutation.error as { code?: string }) : null,
   };
 }

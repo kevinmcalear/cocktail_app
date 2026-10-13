@@ -24,7 +24,7 @@ export function VenueFeatures({ barId }: { barId: string }) {
       </SettingsSection>
       {error ? (
         <Caption tone="accent" role="alert">
-          Couldn’t save that. Check your connection and try again.
+          {error}
         </Caption>
       ) : null}
     </View>

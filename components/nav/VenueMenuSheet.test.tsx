@@ -11,7 +11,15 @@ let mockMode: 'venue' | 'home' = 'venue';
 const mockSetMode = jest.fn();
 const mockEnterVenue = jest.fn();
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode, setMode: mockSetMode }) }));
-const mockVenue = { id: 'rye', name: 'Little Rye', logoUrl: null, accent: null, displayFace: 'instrument', groundTint: null, roleLevel: 40, features: ['tonight', 'backBar'] };
+const mockVenue = { id: 'rye', name: 'Little Rye', logoUrl: null, accent: null, displayFace: 'instrument', groundTint: null, roleLevel: 40 };
+// The venue's switches come from their own query (hooks/useVenueFeatures.ts); here, a list per test.
+let mockFeatures: string[] = [];
+jest.mock('@/hooks/useVenueFeatures', () => {
+  const { featureAtHome } = jest.requireActual<typeof import('@/lib/venueFeatures')>('@/lib/venueFeatures');
+  const features = () => ({ ready: true, home: mockMode === 'home', has: (k: never) => (mockMode === 'home' ? featureAtHome(k) : mockFeatures.includes(k)) });
+  return { useVenueFeatures: features, useVenueFeature: (k: never) => features().has(k) };
+});
+
 const mockOther = { ...mockVenue, id: 'pale', name: 'Pale Moth', roleLevel: 30 };
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mockVenue, venues: [mockVenue, mockOther], enterVenue: mockEnterVenue }) }));
 jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => 40 }));
@@ -27,12 +35,12 @@ jest.mock('@/hooks/useCollection', () => ({ useCollection: () => ({ data: { drin
 
 beforeEach(() => {
   mockMode = 'venue';
-  mockVenue.features = ['tonight', 'backBar'];
+  mockFeatures = ['tonight', 'backBar'];
   jest.clearAllMocks();
 });
 
 test('a venue with nothing switched on: Menus, its Venue section and Settings', async () => {
-  mockVenue.features = [];
+  mockFeatures = [];
   await renderWithTamagui(<VenueMenuSheet onClose={jest.fn()} />);
   expect(screen.getAllByRole('link').map((el) => el.props.accessibilityLabel)).toEqual([
     'Menus. Autumn menu on · 2 drafts',

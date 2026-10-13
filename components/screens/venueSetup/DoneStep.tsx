@@ -25,7 +25,7 @@ import { SetupBanner } from './SetupBanner';
 const CLAIM_LINE = { email: 'Work email', instagram: 'A code sent from the bar’s Instagram', phone: 'A call to the bar', note: 'A call to the bar' } as const;
 
 /** The summary's mark: the venue's logo with a check in the accent beside it. */
-export function DoneMark({ venue }: { venue: Omit<Venue, 'features'> }) {
+export function DoneMark({ venue }: { venue: Venue }) {
   const ds = useDs();
   return (
     <View style={styles.head} aria-hidden>

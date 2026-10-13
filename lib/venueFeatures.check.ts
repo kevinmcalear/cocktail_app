@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 
-import { featureAtHome, parseFeatures, PHONE_TAB_LIMIT, VENUE_FEATURES, venueTabs, withFeature, type VenueFeatureKey } from './venueFeatures';
+import { featureAtHome, featureSaveMessage, isMissingColumn, parseFeatures, readFeatures, PHONE_TAB_LIMIT, VENUE_FEATURES, venueTabs, withFeature, type VenueFeatureKey } from './venueFeatures';
 
 const on = (...keys: VenueFeatureKey[]) => (k: VenueFeatureKey) => keys.includes(k);
 
@@ -12,6 +12,18 @@ assert.deepEqual(withFeature(['study'], 'tonight', true), ['tonight', 'study'], 
 assert.deepEqual(withFeature(['tonight', 'study'], 'tonight', false), ['study']);
 assert.equal(featureAtHome('prep'), false, 'home never had Prep');
 assert.equal(featureAtHome('history'), true);
+
+// --- reading before the migration has run (order-safe deploys) ---
+assert.deepEqual(readFeatures(null, { code: '42703' }, ['tonight']), [], 'no column yet: the default three');
+assert.deepEqual(readFeatures(null, { code: 'PGRST204' }), []);
+assert.deepEqual(readFeatures(null, { code: 'PGRST301' }, ['tonight']), ['tonight'], 'offline or a timeout keeps what was saved');
+assert.deepEqual(readFeatures(null, { code: '08006' }), [], 'and none when nothing was saved');
+assert.deepEqual(readFeatures(null, null), [], 'no row: none');
+assert.deepEqual(readFeatures({ enabled_features: null }, null), [], 'a null value: none');
+assert.deepEqual(readFeatures({ enabled_features: ['tonight', 'disco'] }, null), ['tonight']);
+assert.ok(isMissingColumn({ code: '42703' }) && !isMissingColumn(null) && !isMissingColumn({ code: '42501' }));
+assert.match(featureSaveMessage({ code: 'PGRST204' }), /after the next update/);
+assert.match(featureSaveMessage({ code: '42501' }), /Check your connection/);
 
 // --- tabs ---
 assert.deepEqual(venueTabs(on()), ['library', 'menus', 'discover'], 'the first release: Library, Menus, Discover');
