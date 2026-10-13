@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Segmented, Tag } from '@/components/ds';
+import { Button, Caption, Segmented, Tag } from '@/components/ds';
 import { BarWeek } from '@/components/screens/week/BarWeek';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
@@ -17,7 +17,6 @@ import { barPlace } from '../bar/BarFactLines';
 import { BarFactsBlock } from '../bar/BarFactsBlock';
 import { OnTheMenu } from '../bar/OnTheMenu';
 import { SpecLockPanel } from '../drink/SpecLockPanel';
-import { LoveBarButton } from '../kept/LoveBarButton';
 import { BarClassics } from './BarClassics';
 import { BarMatches } from './BarMatches';
 import { BarRankings } from './BarRankings';
@@ -26,7 +25,6 @@ import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { LockedOriginals } from './LockedOriginals';
 import { Positions } from './Positions';
-import { ProfileLinks } from './ProfileLinks';
 import { BarHeader, BarStats, MenuCredits, OriginalsGrid } from './ProfileSections';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'people';
@@ -70,15 +68,15 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
         <BarHeader
           profile={profile}
           detail={[barPlace(facts?.bar_type, place) || 'Bar', here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ')}
-          love={<LoveBarButton profileId={profile.id} name={profile.display_name} labelled />}
+          tag={
+            <View style={styles.chips}>
+              <Tag label={unclaimed ? 'Not claimed yet' : 'Claimed'} tone={unclaimed ? 'default' : 'outline'} />
+              {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} tone="outline" /> : null}
+              {profile.is_public ? null : <Tag label="Private" tone="outline" />}
+            </View>
+          }
         />
-        <View style={styles.chips}>
-          <Tag label={unclaimed ? 'Not claimed yet' : 'Claimed'} />
-          {profile.is_closed ? <Tag label={profile.closed_year ? `Closed ${profile.closed_year}` : 'Closed'} /> : null}
-          {profile.is_public ? null : <Tag label="Private" />}
-        </View>
-        {profile.bio ? <Body>{profile.bio}</Body> : null}
-        <ProfileLinks profile={profile} align="start" />
+        {/* No bio or link icons on a bar's page (ppl-bar-top, ppl-bar-unclaimed): Website sits with Directions and Call, Instagram under Online. */}
         <BarFactsBlock profileId={profile.id} />
         {unclaimed && facts?.hours ? <Caption tone="muted">{hoursSource(false, facts.hours_updated_at)}</Caption> : null}
       </View>

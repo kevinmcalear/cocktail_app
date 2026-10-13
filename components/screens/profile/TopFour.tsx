@@ -1,7 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, TextLink, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import type { HadDrink } from '@/lib/hadDrinks';
 import { itemHref } from '@/lib/itemRoutes';
@@ -23,7 +23,7 @@ export function TopFour({ slots, changeHref }: { slots: (HadDrink | null)[]; cha
     <View style={styles.section}>
       <View style={styles.head}>
         <Headline role="heading">Top four</Headline>
-        {changeHref ? <Button label="Change" variant="ghost" onPress={() => router.push(changeHref as Href)} /> : null}
+        {changeHref ? <TextLink label="Change" accessibilityHint="Choose your top four" onPress={() => router.push(changeHref as Href)} /> : null}
       </View>
       <View role="list" style={styles.row}>
         {slots.map((d, i) =>

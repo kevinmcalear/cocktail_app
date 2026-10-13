@@ -1,4 +1,4 @@
-import { GlassButton } from '@/components/ds';
+import { GlassButton, useDs } from '@/components/ds';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useLoveBar, useLovedBars } from '@/hooks/useKept';
 
@@ -9,6 +9,7 @@ import { useAgeGate } from '../safety/AgeGate';
  * only; loving a bar needs a confirmed age, like the rest of Collection.
  */
 export function LoveBarButton({ profileId, name, labelled = false }: { profileId: string; name: string; labelled?: boolean }) {
+  const ds = useDs();
   const signedIn = useSignedIn();
   const loved = useLovedBars().data?.some((b) => b.id === profileId) ?? false;
   const love = useLoveBar();
@@ -22,6 +23,7 @@ export function LoveBarButton({ profileId, name, labelled = false }: { profileId
         accessibilityLabel={on ? `Stop loving ${name}` : `Love ${name}: keep it in your Collection`}
         icon={on ? 'heart.fill' : 'heart'}
         label={labelled ? (on ? 'Loved' : 'Love') : undefined}
+        color={on && labelled ? ds.accentText : undefined}
         onPress={() => (on ? love.mutate({ profileId, love: false }) : age.gate(() => love.mutate({ profileId, love: true })))}
       />
       {age.sheet}

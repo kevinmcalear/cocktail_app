@@ -4,17 +4,17 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, Headline, PressableScale, RowScore, scoreWords, Spec, Title, useDs } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
-import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useProfileAwards, useProfilePositions, type MenuCreditWithProfile, type Original, type Profile, type WorkedMenu } from '@/hooks/useProfiles';
 import { heroPicture } from '@/lib/itemImages';
-import { rankedCount } from '@/lib/nearMe';
+import { peopleCount } from '@/lib/nearMe';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { versionLabel } from '@/lib/servedAt';
 
 import { CreditTag } from '../drink/DrinkCredit';
+import { BarMark } from '../home/BarMark';
 import { ClassicsTheyPour, usePouredSplit } from './ClassicsTheyPour';
 import { isShownPosition } from './Positions';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
@@ -180,30 +180,25 @@ export function MenuCredits({ credits, names, worked = [] }: { credits: MenuCred
  * The score is its drinks' scores averaged, weighted by how many people
  * ranked each. Early (under MIN_RANKERS people) gives the count, no number.
  */
-export function BarHeader({ profile, detail, love }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string; love?: ReactNode }) {
+export function BarHeader({ profile, detail, tag, neutral, size = 64 }: { profile: { id: string; display_name: string; avatar_url: string | null }; detail: string; tag?: ReactNode; neutral?: boolean; size?: number }) {
   const { data } = useVenueScore(profile.id);
   const score = data?.score ?? null;
-  const ranked = data?.rankers ? rankedCount(data.rankers) : null;
+  const ranked = data?.rankers ? `${peopleCount(data.rankers)} ranked` : null;
   const scoreLabel = score !== null ? `Bar score ${formatScore(score)} out of 10` : ranked ? `No bar score until ${MIN_RANKERS} people have ranked here` : null;
-  // The score over "Bar score · 212 ranked", then a labelled Love (disc-search-bar).
+  // The mark, then the name, its tag and the place line; the score over "bar score" and "212 people ranked" (ppl-bar-top).
   return (
-    <View style={styles.barHeader}>
-      <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={[styles.barHeader, styles.flex]}>
-        <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={52} />
-        <View style={styles.flex}>
-          <Title>{profile.display_name}</Title>
-          <Caption tone="muted">{score !== null ? detail : [detail, ranked].filter(Boolean).join(' · ')}</Caption>
-        </View>
+    <View accessible accessibilityLabel={[profile.display_name, detail, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.barHeader}>
+      <BarMark name={profile.display_name} logoUrl={profile.avatar_url} size={size} neutral={neutral} />
+      <View style={[styles.flex, styles.barName]}>
+        <Title>{profile.display_name}</Title>
+        {tag}
+        <Caption tone="muted">{score !== null ? detail : [detail, ranked].filter(Boolean).join(' · ')}</Caption>
       </View>
-      {score !== null || love ? (
+      {score !== null ? (
         <View style={styles.barScore}>
-          {score !== null ? (
-            <>
-              <Spec tone="accent">{formatScore(score)}</Spec>
-              <Caption tone="muted">{['Bar score', ranked].filter(Boolean).join(' · ')}</Caption>
-            </>
-          ) : null}
-          {love}
+          <Spec tone="accent">{formatScore(score)}</Spec>
+          <Caption tone="muted">bar score</Caption>
+          {ranked ? <Caption tone="muted">{ranked}</Caption> : null}
         </View>
       ) : null}
     </View>
@@ -260,7 +255,8 @@ const styles = StyleSheet.create({
   cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   menu: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   barHeader: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  barScore: { alignItems: 'flex-end', gap: space.xs },
+  barName: { gap: 2 },
+  barScore: { alignItems: 'flex-end' },
   stats: { flexDirection: 'row', justifyContent: 'center', gap: space.xxl },
   stat: { alignItems: 'center', minWidth: 72 },
 });

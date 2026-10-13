@@ -2,10 +2,10 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, PressableScale, Segmented, Tag, Title } from '@/components/ds';
+import { Body, Button, Caption, PressableScale, Segmented, Tag, TextLink, Title } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
-import { space } from '@/constants/tokens';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { isUnclaimed, useMenuCredits, useProfileAwards, useProfileOriginals, useProfilePicks, useProfilePositions, useWorkedMenus, type Profile } from '@/hooks/useProfiles';
@@ -83,7 +83,7 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
       <View style={styles.header}>
         <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={88} />
         <Title align="center">{profile.display_name}</Title>
-        <Caption tone="muted" align="center">
+        <Caption tone="muted" align="center" style={styles.mono}>
           {[`@${profile.handle}`, place].filter(Boolean).join(' · ')}
         </Caption>
         {line ? <Body align="center">{line}</Body> : null}
@@ -114,7 +114,7 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
 
       {showsMade ? <MenuCredits credits={credits} names={names} worked={worked} /> : null}
 
-      {tab ? <Segmented accessibilityLabel="Profile sections" options={tabs} value={tab} onChange={setTab} /> : null}
+      {tab ? <Segmented accessibilityLabel="Profile sections" look="track" options={tabs} value={tab} onChange={setTab} /> : null}
       {mine && tab ? (
         <View style={styles.mine}>
           <Caption tone="muted" style={styles.flex}>
@@ -151,7 +151,9 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
               emptyText="No drinks credited to them yet."
             />
             {originals.length > FIRST_ORIGINALS && !allOriginals ? (
-              <Button label={`All ${originals.length} originals`} variant="secondary" onPress={() => setAllOriginals(true)} style={styles.start} />
+              <View style={styles.start}>
+                <TextLink label={`All ${originals.length} originals`} onPress={() => setAllOriginals(true)} />
+              </View>
             ) : null}
           </View>
         )
@@ -168,4 +170,5 @@ const styles = StyleSheet.create({
   start: { alignSelf: 'flex-start' },
   mine: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
+  mono: { fontFamily: fontFamilies.monoMedium },
 });
