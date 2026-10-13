@@ -121,7 +121,7 @@ function UnitTile({ label, selected, onPress }: { label: string; selected: boole
 
 /**
  * ml, oz or g for new specs and reading. Joined from an invite, it's the last
- * step before the app: oz or ml, starting on the venue's own unit.
+ * step before the app, starting on the venue's own unit (canvas make-onboarding-invite-units).
  */
 export function UnitsStep({ onDone, pending, error, joined = null }: { onDone: () => void; pending: boolean; error?: string; joined?: { barId: string; name: string } | null }) {
   const specUnit = useSettingsStore((s) => s.specUnit);
@@ -130,7 +130,6 @@ export function UnitsStep({ onDone, pending, error, joined = null }: { onDone: (
   const venueUnit = useVenueSpecUnit(joined?.barId ?? null).data ?? null;
   const [picked, setUnit] = useState<MeasureUnit | null>(null);
   const unit = picked ?? (joined && venueUnit ? venueUnit : specUnit);
-  const units = joined ? MEASURE_UNITS.filter((u) => u.id !== 'g') : MEASURE_UNITS;
 
   const save = () => {
     setSpecUnit(unit);
@@ -141,7 +140,7 @@ export function UnitsStep({ onDone, pending, error, joined = null }: { onDone: (
   return (
     <SetupPage footer={<SetupFooter label={joined ? 'Have a look around' : 'Continue'} pending={pending} onPress={save} />}>
       <View role="radiogroup" accessibilityLabel="How do you measure?" style={styles.tiles}>
-        {units.map((u) => (
+        {MEASURE_UNITS.map((u) => (
           <UnitTile key={u.id} label={u.label} selected={unit === u.id} onPress={() => setUnit(u.id)} />
         ))}
       </View>

@@ -256,7 +256,8 @@ describe('OnboardingScreen', () => {
 
     expect(await screen.findByText('Step 2 of 3')).toBeTruthy();
     expect(screen.queryByText('Do you work in hospitality?')).toBeNull();
-    expect(screen.getByRole('radio', { name: 'oz', checked: true }) && !screen.queryByRole('radio', { name: 'g' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'oz', checked: true })).toBeTruthy();
+    expect(screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel)).toEqual(['oz', 'ml', 'g']);
     expect(screen.getByText('Caretakers writes its specs in oz. You can still read them in ml any time.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Have a look around' }));
     expect(mockFinish).toHaveBeenCalled();
