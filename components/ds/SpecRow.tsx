@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
-import { space, type } from '@/constants/tokens';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { radius, space, type } from '@/constants/tokens';
 
 import { IngredientThumb } from './IngredientThumb';
 import { PressableScale } from './PressableScale';
@@ -33,6 +34,10 @@ export interface SpecRowProps {
   onPress?: () => void;
   /** Tapping the amount alone: the conversions sheet. */
   onPressAmount?: () => void;
+  /** Someone who can change the spec: a faint pencil says the line opens its fix (board KittyDrink). */
+  fix?: boolean;
+  /** Just changed: raised for a moment so the eye finds it (board KittyDone). */
+  highlight?: boolean;
   /**
    * Hold the amount column open when this line is blank, so its name lines up
    * with lines that are measured. Leave it off when the drink has no measurements.
@@ -47,7 +52,7 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, flag, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, flag, detail, scale = 1, dense, onPress, onPressAmount, alignAmount, fix, highlight }: SpecRowProps) {
   const ds = useDs();
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   const showAmount = amount.length > 0 || !!alignAmount;
@@ -55,6 +60,12 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
   const rest = [ingredient, detail, houseMade && 'house-made', optional && 'optional', note, flag].filter(Boolean).join(', ');
   const amountWidth = { width: 96 * scale };
   const cell = dense ? styles.dense : styles.cell;
+  const lit = highlight ? [styles.lit, { backgroundColor: ds.c.raised }] : null;
+  const pencil = fix ? (
+    <View style={styles.pencil} aria-hidden>
+      <IconSymbol name="pencil" size={16} color={ds.c.faint} />
+    </View>
+  ) : null;
 
   const text = (
     <>
@@ -100,11 +111,11 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
   return (
     <Row
       accessible
-      aria-label={amount ? `${amount}, ${rest}` : rest}
+      aria-label={`${fix ? 'Fix ' : ''}${amount ? `${amount}, ${rest}` : rest}`}
       role={onPress ? 'button' : undefined}
       onPress={onPress}
       haptic={onPress ? false : undefined}
-      style={[styles.row, cell, { borderBottomColor: ds.c.line }]}
+      style={[styles.row, cell, { borderBottomColor: ds.c.line }, lit]}
     >
       {showAmount ? (
         <Spec tone="accent" style={[amountWidth, big(type.spec)]}>
@@ -112,6 +123,7 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
         </Spec>
       ) : null}
       <View style={[styles.name, pictured && styles.pictured]}>{name}</View>
+      {pencil}
     </Row>
   );
 }
@@ -130,4 +142,6 @@ const styles = StyleSheet.create({
   pictured: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   text: { flex: 1, gap: space.xs },
   tags: { flexDirection: 'row', gap: space.xs, marginTop: space.xs },
+  pencil: { alignSelf: 'center' },
+  lit: { borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
 });
