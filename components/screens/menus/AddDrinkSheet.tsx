@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DrinkImage, Field, Headline, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, DrinkImage, Field, Headline, PressableScale, SheetScrollView, useDs } from '@/components/ds';
+import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
@@ -10,7 +11,7 @@ import { cannotAdd, filterLibrary, libraryNote, type EditSection } from '@/lib/m
 import { sectionRule } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
-import { Choice, MenuSheet } from './MenuSheet';
+import { Choice, MenuSheet, menuSheetBody } from './MenuSheet';
 
 const CREATE_ROUTE: Record<MenuDrink['kind'], '/add-cocktail' | '/add-beer' | '/add-wine'> = { cocktail: '/add-cocktail', beer: '/add-beer', wine: '/add-wine' };
 
@@ -63,6 +64,7 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
   return (
     <MenuSheet
       visible
+      list
       onClose={onClose}
       title={`Add to ${section.name}`}
       subtitle={`${sectionRule(section)} · ${section.drinks.length} in`}
@@ -84,29 +86,34 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
         </>
       }
     >
-      <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search drinks" autoCapitalize="none" />
-      <View role="radiogroup" accessibilityLabel="Show" style={styles.filters}>
-        <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
-        <Choice label="Not on a menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />
-      </View>
-      {drinks.length === 0 ? (
-        <Body tone="muted">{query ? `Nothing called “${query}” that fits ${section.name}.` : `No drinks that fit ${section.name} yet.`}</Body>
-      ) : (
-        drinks.map((d) => (
-          <LibraryRow
-            key={d.id}
-            drink={d}
-            note={libraryNote(d, section, elsewhere)}
-            added={!!cannotAdd(section, d)}
-            onAdd={() => onAdd(d)}
-          />
-        ))
-      )}
+      {/* Only the rows in view are drawn: a venue's library can be hundreds of sketched drinks. */}
+      <FlatList
+        data={drinks}
+        keyExtractor={(d) => d.id}
+        extraData={section}
+        renderScrollComponent={(p) => <SheetScrollView {...p} />}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={menuSheetBody}
+        initialNumToRender={12}
+        windowSize={DRAWN_LIST_WINDOW}
+        ListHeaderComponent={
+          <View style={styles.head}>
+            <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search drinks" autoCapitalize="none" />
+            <View role="radiogroup" accessibilityLabel="Show" style={styles.filters}>
+              <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
+              <Choice label="Not on a menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />
+            </View>
+          </View>
+        }
+        ListEmptyComponent={<Body tone="muted">{query ? `Nothing called “${query}” that fits ${section.name}.` : `No drinks that fit ${section.name} yet.`}</Body>}
+        renderItem={({ item: d }) => <LibraryRow drink={d} note={libraryNote(d, section, elsewhere)} added={!!cannotAdd(section, d)} onAdd={() => onAdd(d)} />}
+      />
     </MenuSheet>
   );
 }
 
 const styles = StyleSheet.create({
+  head: { gap: space.md },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   thumb: { width: 48 },
