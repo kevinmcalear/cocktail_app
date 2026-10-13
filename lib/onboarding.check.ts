@@ -1,7 +1,7 @@
 // Checks for lib/onboarding.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { afterAgeCheck, authRedirect, barNameError, drinkNameError, handleError, inviteJobTitle, inviteStepLabel, menuNameError, nameError, needsOnboarding, nextStep, passwordError, roleError, splitName, venueLabel, withArticle, yearError } from './onboarding';
+import { afterAgeCheck, authRedirect, barNameError, drinkNameError, handleError, inviteJobTitle, inviteStepLabel, menuNameError, nameError, needsOnboarding, nextStep, roleError, splitName, venueLabel, withArticle, yearError } from './onboarding';
 
 assert.equal(needsOnboarding(null), false);
 assert.equal(needsOnboarding({}), false);
@@ -39,8 +39,6 @@ assert.equal(inviteJobTitle(40), 'Team member');
 assert.equal(withArticle('Bartender'), 'a Bartender');
 assert.equal(withArticle('Admin'), 'an Admin');
 assert.equal(withArticle('Employee'), 'an Employee');
-assert.equal(passwordError('12345'), 'Use at least 6 characters.');
-assert.equal(passwordError('123456'), null);
 
 assert.equal(venueLabel({ display_name: 'Attaboy', locality: 'New York' }), 'Attaboy, New York');
 assert.equal(venueLabel({ display_name: 'Attaboy', locality: null, is_closed: true }), 'Attaboy, closed');
@@ -77,15 +75,12 @@ assert.equal(yearError('2019'), null);
 assert.match(yearError('1899') ?? '', /1900/);
 assert.match(yearError('nope') ?? '', /1900/);
 
-const base = { hasSession: false, inAuthGroup: false, authScreen: undefined, stayInAuth: false, passwordRecovery: false, segment: undefined, needsOnboarding: false };
+const base = { hasSession: false, inAuthGroup: false, authScreen: undefined, stayInAuth: false, segment: undefined, needsOnboarding: false };
 assert.equal(authRedirect({ ...base, inAuthGroup: true, authScreen: 'login', segment: 'auth' }), null);
 assert.equal(authRedirect(base), '/auth/login');
-assert.equal(authRedirect({ ...base, passwordRecovery: true, authScreen: 'login' }), '/auth/reset-password');
-assert.equal(authRedirect({ ...base, hasSession: true, passwordRecovery: true, inAuthGroup: true, authScreen: 'reset-password', stayInAuth: true }), null);
-
-assert.equal(authRedirect({ ...base, hasSession: true, inAuthGroup: true, authScreen: 'sign-up' }), '/age-check');
 assert.equal(authRedirect({ ...base, hasSession: true, inAuthGroup: true, authScreen: 'login' }), '/(tabs)');
-assert.equal(authRedirect({ ...base, hasSession: true, inAuthGroup: true, authScreen: 'login', needsOnboarding: true }), '/onboarding');
+// A new account signed in with its first code: the age check, then setup.
+assert.equal(authRedirect({ ...base, hasSession: true, inAuthGroup: true, authScreen: 'login', needsOnboarding: true }), '/age-check');
 // The email link owns the next step; setup waits until the age check.
 assert.equal(authRedirect({ ...base, hasSession: true, inAuthGroup: true, authScreen: 'callback', stayInAuth: true, needsOnboarding: true }), null);
 assert.equal(authRedirect({ ...base, hasSession: true, segment: '(tabs)', needsOnboarding: true }), '/onboarding');
