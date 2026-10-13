@@ -173,7 +173,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
                 {look.logo ? (
                   <Image source={look.logo} style={[styles.logo, { width: look.logoSize, height: look.logoSize }]} contentFit="cover" />
                 ) : null}
-                {look.label ? <Text style={[styles.label, { color: look.color }]}>{look.label}</Text> : null}
+                {look.label ? <Text style={[styles.label, { color: look.color, fontSize: look.fontSize, fontFamily: fontFamilies[look.font] }]}>{look.label}</Text> : null}
               </View>
             </Marker>
           );

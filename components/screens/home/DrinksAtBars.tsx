@@ -79,6 +79,7 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atB
       itemId={d.id}
       imageUrl={d.imageUrl}
       glass={null}
+      dense
       caption={caption}
       logo={everywhere ? { uri: bar.logo, name: bar.name, profileId: d.barId } : undefined}
       note={everywhere ? (d.why ?? undefined) : undefined}

@@ -7,7 +7,7 @@ import { withAlpha } from '@/lib/color';
 import { AREA_CLUSTER, areasFrom, DOT_PAINT, dotsFilter, dotsOf, MAP_STYLE, pinsToDraw, viewportFrom, type MapArea, type MapView } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
-import { areaElement, loadMapStyles, paintPin } from './discoverMapDom';
+import { areaElement, loadMapStyles, paintPin, styleControls } from './discoverMapDom';
 
 export const mapAvailable = true;
 
@@ -162,6 +162,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
       });
       m.touchZoomRotate.disableRotation();
       if (!compact) m.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right');
+      styleControls(container, latest.current.scheme);
       // Only the person's own moves count for "search this area": every move
       // but the ones we start (below). Pointer events can't tell, since a
       // wheel zoom or a drag's inertia ends without one.
@@ -204,6 +205,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
 
   useEffect(() => {
     map.current?.setStyle(MAP_STYLE[scheme]);
+    if (map.current) styleControls(map.current.getContainer(), scheme);
   }, [scheme]);
 
   useEffect(() => {

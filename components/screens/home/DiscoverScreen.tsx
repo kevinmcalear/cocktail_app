@@ -224,7 +224,7 @@ export function DiscoverScreen() {
       ref={listRef}
       keyboardShouldPersistTaps="handled"
       stickyHeaderIndices={[1]}
-      style={split ? { width: breakpoint === 'desktop' ? 560 : 420, flexGrow: 0 } : undefined}
+      style={split ? { width: breakpoint === 'desktop' ? 428 : 420, flexGrow: 0 } : undefined}
       contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' }}
     >
       <ScreenHeaderSpacer title={<Title>Discover</Title>} />
@@ -237,7 +237,7 @@ export function DiscoverScreen() {
           </Caption>
         ) : null}
         {note ? <AllowLocation near={near} access={access} onAsk={onNearMe} /> : null}
-        {signedIn && home && !searching ? <HomeWeekStrip /> : null}
+        {signedIn && home && !searching && !split ? <HomeWeekStrip /> : null}
         {deskSearch ? (
           <DeskSearchResults filter={filter} drink={drink} results={results} layer={mapLayer} onLayer={setMapLayer} from={from} picked={picked} />
         ) : searching ? (

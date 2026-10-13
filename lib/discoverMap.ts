@@ -6,7 +6,7 @@
  */
 import type { CircleLayerSpecification, FilterSpecification, GeoJSONSourceSpecification } from 'maplibre-gl';
 
-import { backbar, space, type DisplayFace } from '../constants/tokens';
+import { backbar, fontFamilies, space, type, type DisplayFace } from '../constants/tokens';
 import { withAlpha } from './color';
 import { pinName } from './discoverMatch';
 import { formatScore } from './ranking';
@@ -139,11 +139,15 @@ function inView([west, south, east, north]: MapView['bounds'], p: Pick<MapPin, '
 export function pinsToDraw(pins: readonly MapPin[], view: MapView | null, selectedId: string | null): MapPin[] {
   const always = pins.filter((p) => p.id === selectedId || p.top);
   if (view && view.zoom < AREA_ZOOM) return always;
-  const best = pins
-    .filter((p) => p.score !== null && !p.closed && (!view || inView(view.bounds, p)))
-    .sort((a, b) => b.score! - a.score!)
-    .slice(0, BEST_PINS);
-  return [...always, ...best.filter((p) => !always.includes(p))];
+  const open = pins.filter((p) => !p.closed && (!view || inView(view.bounds, p)));
+  const best = open.filter((p) => p.score !== null).sort((a, b) => b.score! - a.score!).slice(0, BEST_PINS);
+  // A score needs MIN_RANKERS people, and most bars have none yet (prod, 13 Oct: none at all), which left
+  // the map all dots. Until then the busiest bars in view with a logo fill the rest, the logo in the score's place.
+  const known = open
+    .filter((p) => p.score === null && p.logo)
+    .sort((a, b) => (b.drinks ?? b.matches ?? 0) - (a.drinks ?? a.matches ?? 0))
+    .slice(0, BEST_PINS - best.length);
+  return [...always, ...[...best, ...known].filter((p) => !always.includes(p))];
 }
 
 /** An area's label: "9.1 · 24 bars", or just the count when none has a score yet. */
@@ -221,23 +225,32 @@ export function pinDescription(pin: MapPin): string {
  */
 export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }) {
   const label = pin.top ? pinName(pin.top, pin.drinks ?? 1) : pinLabel(pin);
-  const logoSize = 26;
-  // A lone logo needs room for its 2px ring.
-  const height = label ? 30 : pin.image ? logoSize + 4 : 18;
+  // Picked, a pin is a size up: a score 36 tall at 15 (disc-desk-browse), a named one 40 (disc-desk-search).
+  const big = selected && !!label;
+  // A searched pin (it names a drink) keeps its bar's logo when the drink has no picture; a bar with no score yet shows
+  // its logo alone (pinsToDraw); score pins have none, as drawn.
+  const logo = pin.image ?? (pin.top || !label ? pin.logo : null) ?? null;
+  // A named pin's picture sits 5 in from its edge (7 picked); a lone logo needs room for its 2px ring.
+  const logoSize = pin.top && !big ? 22 : 26;
+  const edge = pin.top ? (big ? space.md + 2 : space.md) : big ? space.md : space.sm + 2;
+  const height = pin.top ? (big ? 40 : 32) : big ? 36 : label ? 30 : logo ? logoSize + 4 : 18;
+  // Scores in mono, drink names in Geist (disc-desk-search).
+  const font: keyof typeof fontFamilies = pin.top ? (big ? 'bodySemiBold' : 'bodyMedium') : 'monoMedium';
   return {
     label,
-    // A searched pin (it names a drink) keeps its bar's logo when the drink has no picture; score pins have none, as drawn.
-    logo: pin.image ?? (pin.top ? pin.logo : null) ?? null,
+    logo,
     logoSize,
-    minWidth: label ? 44 : height,
+    font,
+    fontSize: big ? type.label.fontSize : type.caption.fontSize,
+    minWidth: big && !pin.top ? 56 : label ? 44 : height,
     height,
-    paddingLeft: label ? (pin.image ? 2 : space.sm + 2) : 0,
-    paddingRight: label ? space.sm + 2 : 0,
-    gap: space.xs,
-    borderWidth: selected ? 2 : 1,
+    paddingLeft: label ? (logo ? (big ? space.xs + 3 : space.xs + 1) : edge) : 0,
+    paddingRight: label ? edge : 0,
+    gap: label && pin.top ? space.xs + 2 : space.xs,
+    borderWidth: selected && !label ? 2 : 1,
     borderColor: selected ? accent.fill : withAlpha(backbar.dark.ink, 0.2),
-    backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks && !pin.matches ? backbar.light.muted : backbar.dark.raised,
-    boxShadow: `0 4px 12px ${withAlpha(backbar.dark.ground, 0.45)}`,
+    backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks && !pin.matches && !logo ? backbar.light.muted : backbar.dark.raised,
+    boxShadow: `0 ${big ? 6 : 4}px ${big ? 18 : 12}px ${withAlpha(backbar.dark.ground, big ? 0.5 : 0.45)}`,
     color: selected ? accent.text : backbar.dark.ink,
     opacity: (pin.closed || pin.weak) && !selected ? (pin.weak ? 0.55 : 0.6) : 1,
     // Where pins overlap: the selected one, then scored bars (higher over lower), over plain and closed ones.

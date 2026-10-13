@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
 import { PressableScale } from './PressableScale';
 import { DsText } from './Text';
@@ -17,9 +17,13 @@ import { useDs } from './theme';
  * `accessibilityLabel` names it when the label alone is ambiguous in a list ("I have it" beside each tool).
  * `leading` sits before the label: a small decorative picture (an ingredient drawing).
  * `count` follows the label, quieter: how many are in it ("Bottles 12"), or a word ("Negronis the style").
+ * `look` is Discover's map layers and sorts (disc-desk-browse, disc-desk-search): 36 tall, the picked one in
+ * the accent; `outline` rests as a line, `glass` rests bare inside a glass track.
  */
-export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel, leading, count }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string; leading?: ReactNode; count?: number | string }) {
+export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel, leading, count, look }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string; leading?: ReactNode; count?: number | string; look?: 'outline' | 'glass' }) {
   const ds = useDs();
+  const fill = look ? ds.accentFill.fill : ds.c.ink;
+  const text = selected ? (look ? ds.accentFill.text : ds.c.ground) : ds.c.ink;
   return (
     <PressableScale
       role={multi ? 'checkbox' : 'radio'}
@@ -32,12 +36,13 @@ export function Chip({ label, selected, onPress, quiet, multi, disabled, accessi
         styles.chip,
         leading || count ? styles.withLeading : null,
         leading ? styles.leadingPad : null,
-        quiet ? { borderWidth: StyleSheet.hairlineWidth, borderColor: selected ? ds.c.ink : ds.c.lineStrong } : null,
-        { backgroundColor: selected ? ds.c.ink : quiet ? 'transparent' : ds.c.raised, opacity: disabled ? 0.45 : 1 },
+        quiet || look === 'outline' ? { borderWidth: look ? 1 : StyleSheet.hairlineWidth, borderColor: selected ? fill : ds.c.lineStrong } : null,
+        look ? styles.small : null,
+        { backgroundColor: selected ? fill : quiet || look ? 'transparent' : ds.c.raised, opacity: disabled ? 0.45 : 1 },
       ]}
     >
       {leading}
-      <DsText variant="label" color={selected ? ds.c.ground : ds.c.ink}>
+      <DsText variant="label" color={text} style={look && selected ? styles.picked : null}>
         {label}
       </DsText>
       {count ? (
@@ -54,4 +59,7 @@ const styles = StyleSheet.create({
   withLeading: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   leadingPad: { paddingLeft: space.xs },
   quietCount: { opacity: 0.7 },
+  // 36 inside a 4-point track makes the 44-point target (disc-desk-browse).
+  small: { minHeight: layout.minTapTarget - space.sm, paddingHorizontal: space.md + 2 },
+  picked: { fontFamily: fontFamilies.bodySemiBold },
 });
