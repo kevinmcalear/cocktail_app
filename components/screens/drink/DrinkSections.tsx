@@ -68,7 +68,7 @@ export interface DrinkBodyProps {
   venueName: string | null;
 }
 
-/** A description this short reads with the spec; a longer one waits under More. */
+/** A description this short follows the spec; a longer one waits under More. */
 const SHORT_DESCRIPTION = 160;
 
 /**
@@ -198,7 +198,7 @@ function MoreHeading() {
 }
 
 const styles = StyleSheet.create({
-  header: { gap: space.md },
+  header: { gap: space.sm },
   make: { gap: space.md },
   standing: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   more: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.xl },

@@ -12,7 +12,7 @@ import { useSpecLevels } from '@/hooks/useSpecLevels';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
-import { lineAmount, lineDetail } from '@/lib/drinkMath';
+import { lineAmount } from '@/lib/drinkMath';
 import { ratio, specAccess, specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore, type SpecUnit } from '@/store/useSettingsStore';
 
@@ -53,7 +53,9 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
 }
 
 /**
- * The spec, showing exactly what this role can see. Anything the server
+ * The spec, showing exactly what this role can see. Dense rows and no ABV
+ * under each name, so a whole spec fits on a phone's first screen; each
+ * line's strength is in the strength sheet (ABV, under More). Anything the server
  * withheld stays on the page as a locked section that says who can open it.
  */
 export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], make, children }: SpecSectionProps) {
@@ -119,13 +121,13 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
             key={l.key}
             amount={access.amounts ? (lineAmount(l, unit) ?? '') : ''}
             alignAmount={measured}
+            dense
             ingredient={l.ingredient ?? 'Hidden ingredient'}
             ingredientId={l.ingredient ? l.ingredientId : undefined}
             optional={l.optional}
             houseMade={l.houseMade}
             note={l.note ?? undefined}
             flag={missing.includes(l.key) ? 'Not on your shelf' : undefined}
-            detail={access.amounts ? (lineDetail(l) ?? undefined) : undefined}
             onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
             onPress={l.ingredientId && !preview ? () => (l.houseMade ? setHouseLine(l) : router.push(`/ingredient/${l.ingredientId}` as never)) : undefined}
           />

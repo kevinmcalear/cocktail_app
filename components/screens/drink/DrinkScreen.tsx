@@ -33,7 +33,7 @@ import { useDrinkSections } from './DrinkSections';
 import { DrinkControls } from './DrinkControls';
 import { DrinkDesktop } from './DrinkDesktop';
 import { DrinkInspector } from './DrinkInspector';
-import { DrinkHero } from './DrinkHero';
+import { DrinkHero, phoneHeroHeight } from './DrinkHero';
 import { DrinkMoreMenu } from './DrinkMoreMenu';
 import { GlassSheet } from './GlassSheet';
 import type { ShownPicture } from './PictureViewer';
@@ -124,7 +124,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const shown = heroPictures(orderedPictures(links), useDrinkPhotos(preview ? null : item.id).data);
   const heroPic = shown.pictures[0] ?? null;
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : shown.pictures;
-  const heroHeight = pane ? PANE_HERO : wide ? height - top : Math.min(width, height * 0.42);
+  const heroHeight = pane ? PANE_HERO : wide ? height - top : phoneHeroHeight(width, height, top);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
