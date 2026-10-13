@@ -26,12 +26,12 @@ export interface BrandDraftState {
 }
 
 /** The accent cards: the current accent, colours from the logo, and the app's default, each once. */
-function accentOptions(row: VenueBrandRow, suggested: string[]): AccentOption[] {
+function accentOptions(row: VenueBrandRow, suggested: string[], withDefault: boolean): AccentOption[] {
   const named = [
     { hex: row.primary_color, source: 'Accent' },
     ...suggested.map((hex) => ({ hex, source: 'From your logo' })),
     { hex: row.secondary_color, source: 'From your logo' },
-    { hex: DEFAULT_ACCENT, source: 'App default' },
+    ...(withDefault ? [{ hex: DEFAULT_ACCENT, source: 'App default' }] : []),
   ];
   const seen = new Set<string>();
   return named.flatMap((o) => {
@@ -47,7 +47,7 @@ function accentOptions(row: VenueBrandRow, suggested: string[]): AccentOption[] 
  * Colours from your logo with Text on accent, Ground tint with the contrast
  * check, Display face, and the home-screen name and icon.
  */
-export function BrandForm({ row, draft, set, suggested, busy, problems, effectiveInk, onUpload, onRemoveBackground, hideIcon }: {
+export function BrandForm({ row, draft, set, suggested, busy, problems, effectiveInk, onUpload, onRemoveBackground, setup }: {
   row: VenueBrandRow;
   draft: BrandDraftState;
   set: <K extends keyof BrandDraftState>(key: K) => (value: BrandDraftState[K]) => void;
@@ -58,19 +58,38 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
   effectiveInk: AccentInk;
   onUpload: (kind: 'logo' | 'icon') => void;
   onRemoveBackground: () => void;
-  /** Venue setup's Look step leaves the home-screen icon to Brand. */
-  hideIcon?: boolean;
+  /**
+   * Venue setup's Look step (canvas make-venue-look): Logo, Colours, Display
+   * face, then Ground tint; the app default, Text on accent and the
+   * home-screen icon stay on Brand.
+   */
+  setup?: boolean;
 }) {
   const ds = useDs();
-  const options = accentOptions(row, suggested);
+  const options = accentOptions(row, suggested, !setup);
   const accent = normalizeHex(draft.accent);
   const custom = draft.custom || (!!draft.accent.trim() && !options.some((o) => o.hex === accent));
   const tint = usableGroundTint(normalizeHex(draft.tint));
   const shortCount = draft.shortName.trim().length;
 
+  const tintSection = (
+    <SettingsSection title="Ground tint" note={setup ? 'A tint behind everything in dark mode.' : 'A tint behind everything in dark mode. Tints too light for text are refused.'}>
+      <View style={styles.fields}>
+        <Swatches
+          label="Ground tint"
+          options={[{ label: 'Standard', hex: null }, ...GROUND_TINTS.map((t) => ({ label: t.label, hex: t.hex }))]}
+          value={normalizeHex(draft.tint)}
+          onChange={(hex) => set('tint')(hex ?? '')}
+        />
+        {problems.groundTint ? <Caption tone="accent" role="alert">{problems.groundTint}</Caption> : null}
+        {accent && !setup ? <ContrastCheck lines={contrastLines(accent, tint, draft.ink)} /> : null}
+      </View>
+    </SettingsSection>
+  );
+
   return (
     <>
-      <SettingsSection title="Logo" note="Picking a logo suggests colours from it.">
+      <SettingsSection title="Logo" note={setup ? 'A photo, a PNG or an SVG. We suggest colours from it.' : 'Picking a logo suggests colours from it.'}>
         <LogoRow
           venue={{ id: row.id, name: row.name, accent }}
           logoUrl={draft.logoUrl}
@@ -83,7 +102,11 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
 
       <SettingsSection
         title="Colours from your logo"
-        note="The accent goes on the one main button, the active tab and what’s selected, nowhere else. Light mode uses a deeper shade when it needs one."
+        note={
+          setup
+            ? 'The accent goes on the one main button, the active tab and what’s selected, nowhere else. Colours too light for text are refused.'
+            : 'The accent goes on the one main button, the active tab and what’s selected, nowhere else. Light mode uses a deeper shade when it needs one.'
+        }
       >
         <AccentCards
           options={options}
@@ -98,27 +121,19 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
           onCustom={() => set('custom')(true)}
           onHex={set('accent')}
         />
-        <AccentInkChoice value={draft.ink ?? effectiveInk} onChange={set('ink')} />
+        {setup ? null : <AccentInkChoice value={draft.ink ?? effectiveInk} onChange={set('ink')} />}
       </SettingsSection>
 
-      <SettingsSection title="Ground tint" note="A tint behind everything in dark mode. Tints too light for text are refused.">
-        <View style={styles.fields}>
-          <Swatches
-            label="Ground tint"
-            options={[{ label: 'Standard', hex: null }, ...GROUND_TINTS.map((t) => ({ label: t.label, hex: t.hex }))]}
-            value={normalizeHex(draft.tint)}
-            onChange={(hex) => set('tint')(hex ?? '')}
-          />
-          {problems.groundTint ? <Caption tone="accent" role="alert">{problems.groundTint}</Caption> : null}
-          {accent ? <ContrastCheck lines={contrastLines(accent, tint, draft.ink)} /> : null}
-        </View>
-      </SettingsSection>
+      {setup ? null : tintSection}
 
-      <SettingsSection title="Display face" note="For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed so they stay readable.">
+      <SettingsSection
+        title="Display face"
+        note={setup ? 'For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed.' : 'For drink names, menu names and big titles like Tonight. Body text, specs and numbers stay fixed so they stay readable.'}
+      >
         <FaceChoices name={row.name} value={draft.face} onChange={set('face')} />
       </SettingsSection>
 
-      {hideIcon ? null : (
+      {setup ? tintSection : (
         <SettingsSection title="Home-screen icon" note="What staff see when they add your staff link to their home screen.">
           <View style={styles.fields}>
             <Field

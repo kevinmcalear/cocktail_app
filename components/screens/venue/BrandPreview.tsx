@@ -6,6 +6,7 @@ import {
   BackbarTheme,
   BrandProvider,
   Caption,
+  Chip,
   Display,
   DsText,
   PressableScale,
@@ -108,15 +109,17 @@ function HomeIcon({ look }: { look: BrandLook }) {
  * (one at a time on phones), plus the home-screen icon. `stacked` puts the
  * two schemes one above the other, for a narrow side column.
  */
-export function BrandPreview({ look, stacked = false }: { look: BrandLook; stacked?: boolean }) {
-  const wide = useBreakpoint() !== 'phone';
+export function BrandPreview({ look, stacked = false, setup = false }: { look: BrandLook; stacked?: boolean; setup?: boolean }) {
+  const notPhone = useBreakpoint() !== 'phone';
+  // Venue setup's Look step: one phone at a time, Dark and Light as chips under it, no home-screen icon (canvas make-venue-look).
+  const wide = notPhone && !setup;
   // Phones show one scheme at a time, so the controls stay close to the preview.
   const [only, setOnly] = useState<'light' | 'dark'>('dark');
   const brand = { accent: look.accent ?? undefined, displayFace: look.displayFace, groundTint: look.groundTint ?? undefined, accentText: look.accentText ?? undefined };
   const schemes = wide ? (['dark', 'light'] as const) : [only];
   return (
     <View aria-label="Live preview" style={styles.wrap}>
-      {wide ? null : <Segmented options={SCHEMES} value={only} onChange={setOnly} accessibilityLabel="Preview scheme" />}
+      {wide || setup ? null : <Segmented options={SCHEMES} value={only} onChange={setOnly} accessibilityLabel="Preview scheme" />}
       <View style={[styles.schemes, wide && !stacked && styles.schemesWide]}>
         {schemes.map((scheme) => (
           <BackbarTheme key={scheme} scheme={scheme}>
@@ -131,7 +134,18 @@ export function BrandPreview({ look, stacked = false }: { look: BrandLook; stack
           </BackbarTheme>
         ))}
       </View>
-      <HomeIcon look={look} />
+      {setup ? (
+        <>
+          <View role="radiogroup" accessibilityLabel="Preview scheme" style={styles.chips}>
+            {SCHEMES.map((o) => (
+              <Chip key={o.value} quiet label={o.label} selected={only === o.value} onPress={() => setOnly(o.value)} />
+            ))}
+          </View>
+          <Caption tone="muted">Tonight, as your staff will see it. Changes as you pick.</Caption>
+        </>
+      ) : (
+        <HomeIcon look={look} />
+      )}
     </View>
   );
 }
@@ -178,6 +192,7 @@ export function Swatches({
 
 const styles = StyleSheet.create({
   wrap: { gap: space.lg },
+  chips: { flexDirection: 'row', gap: space.sm },
   schemes: { gap: space.md },
   schemesWide: { flexDirection: 'row' },
   flex: { flex: 1, gap: space.xs },
