@@ -32,7 +32,8 @@ export function useMineFacts(venueId: string | null, items: readonly SearchItem[
     return {
       menus: (menus ?? []).filter((m) => m.barId === venueId && m.kind !== 'rnd'),
       now,
-      staff: [...(staff ?? [])].sort((a, b) => (a.rank ?? 1e9) - (b.rank ?? 1e9)).map((p) => p.itemId),
+      staff: [...(staff ?? [])].filter((p) => p.rank !== null).sort((a, b) => a.rank! - b.rank!).map((p) => p.itemId),
+      unranked: (staff ?? []).filter((p) => p.rank === null).map((p) => p.itemId),
       usedIn,
       preps: new Set(shelves.preps.map((p) => p.id)),
     };
