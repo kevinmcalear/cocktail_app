@@ -12,6 +12,8 @@ jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/hooks/useDrafts', () => ({ useDrafts: () => ({ drafts: [], saveDraft: jest.fn() }) }));
 jest.mock('@/hooks/useBars', () => ({ useBars: () => ({ data: [] }) }));
 jest.mock('@/hooks/useRecipeMergeHandler', () => ({ useRecipeMergeHandler: () => ({ onMerge: jest.fn() }) }));
+jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: [] }) }));
+jest.mock('@/components/screens/venue/GlasswarePrompt', () => ({ GlasswarePrompt: () => null }));
 
 type Props = ComponentProps<typeof CocktailDetailContent>;
 type Editor = NonNullable<Props['editor']>;

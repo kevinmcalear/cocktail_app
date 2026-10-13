@@ -34,16 +34,15 @@ function useColumnRightPad(width: ColumnWidth): number {
 /**
  * The top of a page: the logo / New / You row (or, on a phone, a back button
  * for a page opened from another one), then the title, with the page's main
- * action on the right. Goes first inside a usePageColumn column; pass the
- * same `width`.
+ * action on the right. On a phone with the logo row, the title sits in that
+ * row beside the logo instead. Goes first inside a usePageColumn column; pass
+ * the same `width`.
  *
  * A subtitle is only for something the page doesn't already say: "2 on now",
  * not the venue's name, which the sidebar and the chip show.
  */
-export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', wordmark, crumbs, above, display }: {
+export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', crumbs, above, display }: {
   title: string;
-  /** The venue's name beside the logo on a phone (Tonight only). */
-  wordmark?: boolean;
   width?: ColumnWidth;
   subtitle?: string | null;
   action?: ReactNode;
@@ -66,6 +65,9 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
   const insets = useSafeAreaInsets();
   const sidebar = useIsWideWeb();
   const rightPad = useColumnRightPad(width);
+  // A phone's logo row carries the title, so the page starts a row higher.
+  const inLogoRow = !onBack && !sidebar;
+  const showAction = !!action && !(actionOnTop && onBack && !sidebar);
   return (
     <View style={styles.header}>
       {onBack && !sidebar ? (
@@ -83,18 +85,20 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
       ) : (
         // ScreenHeader brings its own gutter, and runs to the page's right edge.
         <View style={{ marginLeft: -gutter, marginRight: -rightPad }}>
-          <ScreenHeader wordmark={wordmark} />
+          <ScreenHeader title={inLogoRow ? title : undefined} />
         </View>
       )}
-      <View style={styles.titleRow}>
-        <View style={styles.title}>
-          {sidebar && crumbs?.length ? <Crumbs trail={crumbs} /> : null}
-          {above}
-          {display ? <Display>{title}</Display> : <Title>{title}</Title>}
-          {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+      {inLogoRow && !above && !subtitle && !showAction ? null : (
+        <View style={styles.titleRow}>
+          <View style={styles.title}>
+            {sidebar && crumbs?.length ? <Crumbs trail={crumbs} /> : null}
+            {above}
+            {inLogoRow ? null : display ? <Display>{title}</Display> : <Title>{title}</Title>}
+            {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+          </View>
+          {showAction ? <View style={styles.action}>{action}</View> : null}
         </View>
-        {action && !(actionOnTop && onBack && !sidebar) ? <View style={styles.action}>{action}</View> : null}
-      </View>
+      )}
     </View>
   );
 }

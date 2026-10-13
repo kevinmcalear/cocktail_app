@@ -5,7 +5,7 @@ import { recentEntry } from '@/hooks/useTrackRecent';
 import { likeExactly, type WizardPick } from '@/lib/drinkWizard';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import type { IngredientDraft } from '@/lib/ingredientWizard';
-import { capitalizeFirsts } from '@/lib/stringUtils';
+import { capitalizeFirst, capitalizeFirsts } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 
@@ -19,6 +19,9 @@ const number = (s: string) => {
   const n = parseFloat(s.replace(',', '.'));
   return Number.isFinite(n) ? n : null;
 };
+
+/** A bottle keeps its label's capitals ("BrewDog Punk IPA"); anything else is sentence case ("Lime cordial"). */
+const ingredientName = (draft: IngredientDraft) => (draft.role === 'product' ? capitalizeFirsts(draft.name) : capitalizeFirst(draft.name));
 
 /**
  * Saves the ingredient wizard's draft in one go: the ingredient, then its
@@ -35,7 +38,7 @@ export function useCreateIngredient() {
         .from('items')
         .insert({
           item_type: 'ingredient',
-          name: capitalizeFirsts(draft.name),
+          name: ingredientName(draft),
           brand_maker: draft.role === 'product' ? capitalizeFirsts(draft.maker) || null : null,
           generic_id: draft.generic?.id ?? null,
           abv: draft.role === 'other' ? null : number(draft.abv),
@@ -46,7 +49,7 @@ export function useCreateIngredient() {
         .select('id')
         .single();
       // A shared ingredient with this name (or an alias) already exists: say so, with which.
-      if (existingIngredientId(error)) throw new Error(`${capitalizeFirsts(draft.name)} is already here. Search for it instead.`);
+      if (existingIngredientId(error)) throw new Error(`${ingredientName(draft)} is already here. Search for it instead.`);
       if (error || !data) throw error ?? new Error('Couldn’t save the ingredient.');
       const id = data.id as string;
 
@@ -66,7 +69,7 @@ export function useCreateIngredient() {
         }
       }
 
-      useRecentActivityStore.getState().push(recentEntry('ingredient', id, capitalizeFirsts(draft.name), { barId }));
+      useRecentActivityStore.getState().push(recentEntry('ingredient', id, ingredientName(draft), { barId }));
       void qc.invalidateQueries({ queryKey: ['ingredients'] });
       void qc.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
@@ -97,7 +100,7 @@ export async function ensureIngredient(pick: WizardPick, barId: string | null, m
     made.set(key, found);
     return found;
   }
-  const { data, error } = await supabase.from('items').insert({ name: capitalizeFirsts(pick.name), item_type: 'ingredient', bar_id: barId }).select('id').single();
+  const { data, error } = await supabase.from('items').insert({ name: capitalizeFirst(pick.name), item_type: 'ingredient', bar_id: barId }).select('id').single();
   const existing = existingIngredientId(error);
   if (existing) return existing;
   if (error || !data) throw error ?? new Error(`Couldn’t add ${pick.name}.`);

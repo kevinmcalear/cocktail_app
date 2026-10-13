@@ -25,6 +25,15 @@ interface DrinkHeroProps {
 }
 
 /**
+ * The phone hero's height: 22% of the screen below the status bar
+ * (186 on a 390 x 844 phone), so the name, credit and a four to six line spec
+ * fit on the first screen under it (13 Oct). The page and its loading state share it.
+ */
+export function phoneHeroHeight(width: number, height: number, top: number) {
+  return top + Math.min(width, (height - top) * 0.22);
+}
+
+/**
  * The drink's pictures, full bleed: swipe through them, tap one to open it
  * full screen. Until photos carry a palette, the field behind them is the page
  * ground; with one, the drink's own colour glows through (docs/design_system.md,
