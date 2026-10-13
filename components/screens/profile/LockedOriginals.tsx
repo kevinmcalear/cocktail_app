@@ -29,6 +29,7 @@ export function LockedOriginals({
   details,
   emptyText,
   runs,
+  quiet = false,
 }: {
   originals: Original[];
   selfId: string;
@@ -36,6 +37,8 @@ export function LockedOriginals({
   emptyText: string;
   /** "on now" or "Past · 2024 to 2025" by drink id (drinkRunTags). */
   runs?: Readonly<Record<string, string>>;
+  /** No lock on each row (the page says once why its specs are kept), and short descriptions: the public page (ppl-pub-bar-desktop). */
+  quiet?: boolean;
 }) {
   const ds = useDs();
   const router = useRouter();
@@ -88,17 +91,19 @@ export function LockedOriginals({
                 <Body>{d.name}</Body>
                 {meta ? <Caption tone="muted">{meta}</Caption> : null}
                 {description ? (
-                  <Body tone="muted" style={styles.description}>
+                  <Body tone="muted" style={styles.description} numberOfLines={quiet ? 2 : undefined}>
                     {description}
                   </Body>
                 ) : null}
               </View>
-              <View
-                style={[styles.lock, { backgroundColor: ds.c.raised }]}
-                aria-hidden
-              >
-                <IconSymbol name="lock.fill" size={18} color={ds.c.muted} />
-              </View>
+              {quiet ? null : (
+                <View
+                  style={[styles.lock, { backgroundColor: ds.c.raised }]}
+                  aria-hidden
+                >
+                  <IconSymbol name="lock.fill" size={18} color={ds.c.muted} />
+                </View>
+              )}
             </PressableScale>
           );
         })}

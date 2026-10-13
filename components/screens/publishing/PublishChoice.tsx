@@ -5,6 +5,7 @@ import { space } from '@/constants/tokens';
 import { PUBLISH_COPY, type PublishMode, type PublishSource } from '@/lib/publishing';
 
 import { Choice } from '../menus/MenuSheet';
+import { RadioCard, RadioPill } from './RadioCard';
 
 const MODES: PublishMode[] = ['private', 'description', 'spec'];
 const FROM: Record<PublishSource, string> = { drink: 'this drink', menu: 'its menus', bar: 'the bar', none: 'the default' };
@@ -20,11 +21,37 @@ interface PublishChoiceProps {
   compact?: boolean;
   disabled?: boolean;
   error?: string | null;
+  /** Publishing's own look: radio cards, and small outlined pills for a menu. */
+  radios?: boolean;
 }
 
 /** Who outside the venue can see something: private, the menu card, or the full spec. */
-export function PublishChoice({ label, value, onChange, inherited, compact, disabled, error }: PublishChoiceProps) {
+export function PublishChoice({ label, value, onChange, inherited, compact, disabled, error, radios }: PublishChoiceProps) {
   const same = inherited ? `Same as ${FROM[inherited.source]}` : '';
+  if (radios) {
+    const options = [
+      ...(inherited ? [{ mode: null, label: compact ? `${same} (${PUBLISH_COPY[inherited.mode].label.toLowerCase()})` : same, detail: `${PUBLISH_COPY[inherited.mode].label} right now.` }] : []),
+      ...MODES.map((m) => ({ mode: m, label: PUBLISH_COPY[m].label, detail: PUBLISH_COPY[m].detail })),
+    ];
+    return (
+      <View style={styles.wrap}>
+        <View role="radiogroup" accessibilityLabel={label} style={compact ? styles.pills : styles.rows}>
+          {options.map((o) =>
+            compact ? (
+              <RadioPill key={o.mode ?? 'same'} label={o.label} selected={value === o.mode} disabled={disabled} onPress={() => onChange(o.mode)} />
+            ) : (
+              <RadioCard key={o.mode ?? 'same'} label={o.label} detail={o.detail} selected={value === o.mode} disabled={disabled} onPress={() => onChange(o.mode)} />
+            ),
+          )}
+        </View>
+        {error ? (
+          <Caption tone="accent" role="alert">
+            {error}
+          </Caption>
+        ) : null}
+      </View>
+    );
+  }
   return (
     <View style={styles.wrap}>
       <View role="radiogroup" accessibilityLabel={label} style={compact ? styles.pills : styles.rows}>

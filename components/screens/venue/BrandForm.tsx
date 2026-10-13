@@ -121,7 +121,7 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
           onCustom={() => set('custom')(true)}
           onHex={set('accent')}
         />
-        {setup ? null : <AccentInkChoice value={draft.ink ?? effectiveInk} onChange={set('ink')} />}
+        {setup ? null : <AccentInkChoice value={draft.ink ?? effectiveInk} accent={accent} onChange={set('ink')} />}
       </SettingsSection>
 
       {setup ? null : tintSection}

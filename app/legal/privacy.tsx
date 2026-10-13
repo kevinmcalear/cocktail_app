@@ -12,7 +12,7 @@ export default function PrivacyPolicy() {
       <LegalSection heading="What we collect">
         <Bullets
           items={[
-            'Account details: your email address, your password (stored only as a secure hash by our sign-in provider), your first and last name, and a profile photo if you add one.',
+            'Account details: your email address (we email you a code to sign in), your first and last name, and a profile photo if you add one. Accounts made before sign-in codes may also have a password, stored only as a secure hash by our sign-in provider.',
             'Content you create: drinks, ingredients, recipes, menus, drafts, photos you upload, and venue names, logos and colours.',
             'Venue membership: which venues you belong to and your role in each.',
             'Crash reports: what went wrong, the screen it happened on, and technical details such as your device model, operating system and app version. Email addresses and search terms are removed before a report is sent.',

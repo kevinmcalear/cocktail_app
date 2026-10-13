@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Caption, Display, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Caption, Display, DsText, GlassButton, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { BRAND } from '@/constants/brand';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
@@ -21,6 +21,10 @@ interface AuthShellProps {
   children: ReactNode;
   footer?: ReactNode;
   brand?: AuthBrand;
+  /** Display (56) is the default; steps inside a flow, like the code step, use the title size (34). */
+  titleSize?: 'display' | 'title';
+  /** A round Back button above the title. */
+  onBack?: () => void;
 }
 
 /**
@@ -36,7 +40,7 @@ export function AuthShell(props: AuthShellProps) {
   );
 }
 
-function Frame({ title, subtitle, children, footer, brand }: AuthShellProps) {
+function Frame({ title, subtitle, children, footer, brand, titleSize = 'display', onBack }: AuthShellProps) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
@@ -51,6 +55,11 @@ function Frame({ title, subtitle, children, footer, brand }: AuthShellProps) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.column}>
+            {onBack ? (
+              <View style={styles.back}>
+                <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={onBack} />
+              </View>
+            ) : null}
             <View style={styles.head}>
               {brand?.logoUrl ? (
                 <Image
@@ -59,11 +68,17 @@ function Frame({ title, subtitle, children, footer, brand }: AuthShellProps) {
                   contentFit="contain"
                   accessibilityLabel={`${brand.name} logo`}
                 />
+              ) : brand ? (
+                <View style={[styles.logo, styles.mark, { borderColor: ds.accentText }]} role="img" aria-label={`${brand.name} logo`}>
+                  <DsText variant="title" italic color={ds.accentText}>
+                    {initials(brand.name)}
+                  </DsText>
+                </View>
               ) : null}
               <Caption tone="accent" style={styles.eyebrow}>
                 {brand?.name ?? BRAND.productName}
               </Caption>
-              <Display>{title}</Display>
+              {titleSize === 'title' ? <Title>{title}</Title> : <Display>{title}</Display>}
               {subtitle ? <Body tone="muted">{subtitle}</Body> : null}
             </View>
             <View style={styles.body}>{children}</View>
@@ -73,6 +88,12 @@ function Frame({ title, subtitle, children, footer, brand }: AuthShellProps) {
       </KeyboardAvoidingView>
     </View>
   );
+}
+
+/** "Little Rye" -> "LR": the first letters of the first two words. */
+export function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('') || '·';
 }
 
 /** A form-level message under the fields. Errors say what went wrong and how to fix it. */
@@ -120,8 +141,10 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center' },
   column: { width: '100%', maxWidth: 420, alignSelf: 'center', gap: space.xxl },
+  back: { alignSelf: 'flex-start' },
   head: { gap: space.sm },
   logo: { width: 88, height: 88, borderRadius: radius.card, marginBottom: space.md },
+  mark: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: radius.pill, width: 64, height: 64 },
   eyebrow: { textTransform: 'uppercase', letterSpacing: 1.2 },
   body: { gap: space.lg },
   footer: { alignItems: 'center', gap: space.sm },

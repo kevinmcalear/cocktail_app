@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, PressableScale, Segmented, Tag, useDs } from '@/components/ds';
+import { Body, Caption, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { missingKit, type BuyAudience, type BuyLink, type Grade, type Source, type Technique } from '@/lib/techniques';
 import { useAppMode } from '@/store/useAppMode';
 
@@ -17,6 +17,11 @@ const GRADE: Record<Grade, { label: string; long: string }> = {
 /** How far to trust a number. Words, not a letter, so it reads without a key. */
 export function GradeTag({ grade }: { grade: Grade }) {
   return <Tag label={GRADE[grade].label} tone={grade === 'C' ? 'warning' : 'default'} />;
+}
+
+/** "Well tested": the grade in words, for a line of text. */
+export function gradeLabel(grade: Grade) {
+  return GRADE[grade].label;
 }
 
 export function gradeLong(grade: Grade) {
@@ -86,30 +91,25 @@ export function SourceList({ sources }: { sources: Source[] }) {
   );
 }
 
-const AUDIENCES = [
-  { value: 'home', label: 'For home' },
-  { value: 'bar', label: 'For a bar' },
-] as const;
-
 /**
  * Where to buy, opening the shop's page. When there are home and bar picks
- * (small sizes and home kit, or bulk and commercial), tabs switch between
- * them, starting on the mode the app is in.
+ * (small sizes and home kit, or bulk and commercial), the mode the app is in
+ * picks which.
  */
 export function BuyList({ links }: { links: BuyLink[] }) {
   const ds = useDs();
   const appMode = useAppMode((s) => s.known);
-  const [audience, setAudience] = useState<BuyAudience>(appMode === 'home' ? 'home' : 'bar');
+  // Plain rows as drawn (prep-ing-xanthan): the picks for the mode the app is in.
+  const audience: BuyAudience = appMode === 'home' ? 'home' : 'bar';
   const split = links.some((l) => l.audience === 'home') && links.some((l) => l.audience === 'bar');
   const shown = split ? links.filter((l) => !l.audience || l.audience === audience) : links;
   return (
     <View style={styles.notes}>
-      {split ? <Segmented options={AUDIENCES} value={audience} onChange={setAudience} accessibilityLabel="Buy for home or for a bar" /> : null}
       <View>
         {shown.map((l) => (
           <PressableScale key={`${l.url} ${l.name}`} role="link" accessibilityLabel={`${l.name}. Opens the shop`} onPress={() => void Linking.openURL(l.url)} style={[styles.source, { borderBottomColor: ds.c.line }]}>
             <Body style={styles.flex}>{l.name}</Body>
-            <IconSymbol name="link" size={16} color={ds.c.muted} />
+            <IconSymbol name="arrow.up.right" size={16} color={ds.c.muted} />
           </PressableScale>
         ))}
       </View>
@@ -134,7 +134,7 @@ export function Notes({ items, icon = 'exclamationmark.triangle' }: { items: str
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
-  eyebrow: { letterSpacing: 1 },
+  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   card: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
   source: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },

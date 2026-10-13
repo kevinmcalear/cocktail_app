@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { SectionHeading, UnsavedBar } from '@/components/screens/settings/SettingsParts';
@@ -20,7 +20,7 @@ import { confirmDiscardChanges } from '@/lib/dialogs';
 import { BrandForm, type BrandDraftState } from './BrandForm';
 import { BrandPreview } from './BrandPreview';
 
-const PREVIEW_WIDTH = 380;
+const PREVIEW_WIDTH = 300;
 /** Venue setup's preview column on wide web: one phone (canvas make-venue-desktop). */
 const SETUP_PREVIEW_WIDTH = 260;
 /** Preview as staff shows the app as a Bartender sees it. */
@@ -143,10 +143,9 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     </View>
   ) : (
     <View style={[styles.preview, wide && styles.previewSide, wide && sticky]}>
-      <SectionHeading>Live preview</SectionHeading>
-      <Surface>
-        <BrandPreview look={look} stacked={wide} />
-      </Surface>
+      {/* A phone's Dark | Light switch says what it is. */}
+      {wide ? <SectionHeading>Live preview</SectionHeading> : null}
+      <BrandPreview look={look} stacked={wide} />
     </View>
   );
 

@@ -5,7 +5,7 @@ import { radius, space } from '@/constants/tokens';
 import { PAGE_COPY, PAGE_VISIBILITIES, type PageVisibility } from '@/lib/pageVisibility';
 
 import { Choice } from '../menus/MenuSheet';
-import { RadioCard } from '../onboarding/SetupParts';
+import { RadioCard } from './RadioCard';
 
 interface PageVisibilityChoiceProps {
   venueName: string;
@@ -17,7 +17,7 @@ interface PageVisibilityChoiceProps {
   heading?: boolean;
   /** The line under the choice: setup says where the page stands today. */
   note?: string;
-  /** Venue setup: each level a card with its radio dot on the left (canvas make-venue-visibility). */
+  /** Publishing's own look: radio cards with the radio at the start. */
   radios?: boolean;
 }
 
@@ -27,7 +27,7 @@ interface PageVisibilityChoiceProps {
  * specs back; each drink's own setting still applies below Open.
  */
 export function PageVisibilityChoice({ venueName, value, onChange, disabled, error, heading = true, note, radios }: PageVisibilityChoiceProps) {
-  const Pick = radios ? RadioCard : Choice;
+  const Option = radios ? RadioCard : Choice;
   const ds = useDs();
   return (
     <View style={styles.group}>
@@ -35,7 +35,7 @@ export function PageVisibilityChoice({ venueName, value, onChange, disabled, err
       {heading ? <Caption tone="muted">{`For people outside ${venueName}. Your team always sees everything.`}</Caption> : null}
       <View role="radiogroup" accessibilityLabel="Who sees your page" style={styles.rows}>
         {PAGE_VISIBILITIES.map((v) => (
-          <Pick key={v} label={PAGE_COPY[v].label} detail={PAGE_COPY[v].detail} selected={value === v} disabled={disabled} onPress={() => onChange(v)} />
+          <Option key={v} label={PAGE_COPY[v].label} detail={PAGE_COPY[v].detail} selected={value === v} disabled={disabled} onPress={() => onChange(v)} />
         ))}
       </View>
       {error ? (

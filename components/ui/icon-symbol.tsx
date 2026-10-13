@@ -70,6 +70,7 @@ const MAPPING = {
   'play.fill': 'play',
   'flask': 'svg:flask',
   'line.3.horizontal': 'menu',
+  'circle.grid.3x3.fill': 'svg:grip',
   'line.3.horizontal.decrease': 'filter',
   'camera.fill': 'camera',
   'photo': 'image',
