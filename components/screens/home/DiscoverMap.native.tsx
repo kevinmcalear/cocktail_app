@@ -1,10 +1,10 @@
-import { Camera, GeoJSONSource, Layer, Map, Marker, type CameraRef, type GeoJSONSourceRef, type PressEventWithFeatures, type ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
+import { Camera, GeoJSONSource, Layer, Map, Marker, NativeUserLocation, type CameraRef, type GeoJSONSourceRef, type PressEventWithFeatures, type ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
 import { Image } from 'expo-image';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'react-native';
 
-import { backbar, fontFamilies, MAP_ME, radius, type } from '@/constants/tokens';
-import { withAlpha } from '@/lib/color';
+import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
+import { useLocationAccess } from '@/hooks/useLocationAccess';
 import { dotsOf, MAP_STYLE, pinDescription, pinLook, viewportFrom } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
@@ -37,6 +37,12 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   // On iOS a pin tap also reaches the map's own tap handler just after, which
   // would clear the selection at once; skip map taps that closely follow a pin tap.
   const pinTappedAt = useRef(0);
+  // "You are here" is the system's own dot (iOS and Android draw it and keep it moving), shown
+  // whenever location is allowed, so it's there even when near me fell back to the last place.
+  // Never mounted without permission: on iOS mounting it would ask, and Android checks only as
+  // the style loads, so a grant from Settings (rechecked on return) remounts it.
+  const access = useLocationAccess(me ? 'found' : null);
+  const showMe = access === 'granted' || !!me;
 
   // Move only when asked to (a new camera), never on every re-render, so the
   // person's own panning isn't undone.
@@ -127,13 +133,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
           paint={{ 'text-color': ring }}
         />
       </GeoJSONSource>
-      {me ? (
-        <Marker id="you-are-here" lngLat={[me.longitude, me.latitude]}>
-          <View role="img" aria-label="You are here" style={styles.halo}>
-            <View style={styles.me} />
-          </View>
-        </Marker>
-      ) : null}
+      {showMe ? <NativeUserLocation mode="heading" /> : null}
       <Fragment key={order}>
         {rich.map((pin, i) => {
           const selected = pin.id === selectedId;
@@ -186,6 +186,4 @@ const styles = StyleSheet.create({
   pin: { flexDirection: 'row', borderRadius: radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   logo: { borderRadius: radius.pill, backgroundColor: backbar.light.surface },
   label: { fontFamily: fontFamilies.monoMedium, fontSize: type.caption.fontSize },
-  halo: { width: 34, height: 34, borderRadius: radius.pill, backgroundColor: withAlpha(MAP_ME, 0.22), alignItems: 'center', justifyContent: 'center' },
-  me: { width: 18, height: 18, borderRadius: radius.pill, backgroundColor: MAP_ME, borderWidth: 3, borderColor: backbar.dark.ink },
 });

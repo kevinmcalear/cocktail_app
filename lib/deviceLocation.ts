@@ -5,6 +5,24 @@ export type DeviceLocation =
   | { ok: true; latitude: number; longitude: number }
   | { ok: false; reason: 'denied' | 'unavailable' };
 
+/**
+ * Whether the app may use location: allowed, can still ask (Near me shows the
+ * prompt), or blocked (the person said no and the OS won't ask again, so only
+ * Settings can turn it back on).
+ */
+export type LocationAccess = 'granted' | 'ask' | 'blocked';
+
+/** Native: the permission as it stands, never asking. */
+export async function getLocationAccess(): Promise<LocationAccess> {
+  try {
+    const { status, canAskAgain } = await Location.getForegroundPermissionsAsync();
+    if (status === 'granted') return 'granted';
+    return status === 'denied' && !canAskAgain ? 'blocked' : 'ask';
+  } catch {
+    return 'ask';
+  }
+}
+
 /** How long a fresh fix may take before near me gives up and says so. */
 const FIX_TIMEOUT_MS = 8000;
 
