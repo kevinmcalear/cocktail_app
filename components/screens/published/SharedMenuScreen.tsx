@@ -1,16 +1,18 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Body, Button, Caption, DrinkImage, DsText, PressableScale, Surface, Tag, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Button, Caption, DrinkImage, DsText, PressableScale, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { CustomIcon } from '@/components/ui/CustomIcons';
 import { backbar, displayFaces, radius, space } from '@/constants/tokens';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { publishedMenuDrink } from '@/hooks/useMenus';
 import { useSharedMenu } from '@/hooks/useSharedMenu';
-import { dayLabel } from '@/lib/collection';
+import { withAlpha } from '@/lib/color';
 import { plural } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
-import { ReportAction } from '../safety/ReportSheet';
+import { ReportSheet } from '../safety/ReportSheet';
 import { Kicker } from './PublicChrome';
 import { loadFailure, PublicMissing, PublicPage } from './PublicShell';
 import { SaveToMake } from './SaveToMake';
@@ -18,6 +20,12 @@ import { SaveToMake } from './SaveToMake';
 const PRIVATE = 'private:';
 /** How many drawings sit across the header. */
 const STRIP = 4;
+
+/** "Saturday 31 October", the night the menu is for (a date with no time zone). */
+export function menuNight(day: string, locale = 'en-GB'): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+}
 
 /** A drink on the menu that isn't public: it holds its place, with no name. */
 const privateDrink = (sectionId: string, index: number): MenuDrink => ({
@@ -28,7 +36,7 @@ const privateDrink = (sectionId: string, index: number): MenuDrink => ({
   price: null,
   imageUrl: null,
   isSketch: false,
-  glass: null,
+  glass: 'Martini',
 });
 
 /**
@@ -41,9 +49,11 @@ const privateDrink = (sectionId: string, index: number): MenuDrink => ({
 export function SharedMenuScreen({ id }: { id: string }) {
   const router = useRouter();
   const wide = useBreakpoint() !== 'phone';
+  const gutter = useGutter();
+  const signedIn = useSignedIn();
   const query = useSharedMenu(id);
   const { data, isPending } = query;
-  const [now] = useState(() => Date.now());
+  const [reporting, setReporting] = useState(false);
   if (!data) return <PublicMissing loading={isPending} what="menu" failed={loadFailure(query)} />;
 
   const { owner } = data;
@@ -54,7 +64,14 @@ export function SharedMenuScreen({ id }: { id: string }) {
     drinks: s.drinks.map((d, i) => (d && publishedMenuDrink(d)) ?? privateDrink(s.id, i)),
   }));
   const strip = sections.flatMap((s) => s.drinks).slice(0, STRIP);
-  const report = <ReportAction subject={data.name} targets={[{ label: `${owner.name}, who shared this menu`, target: { kind: 'profile', profileId: owner.profileId } }]} />;
+  // Signed out, Report asks you to sign in first: a report needs an account.
+  const report = (
+    <PressableScale role="link" accessibilityLabel="Report this menu" onPress={() => (signedIn ? setReporting(true) : router.push('/auth/login'))} style={styles.start}>
+      <Caption tone="muted" style={styles.underline}>
+        Report this menu
+      </Caption>
+    </PressableScale>
+  );
   const made = (
     <Surface style={styles.made}>
       <View style={styles.madeText}>
@@ -69,36 +86,29 @@ export function SharedMenuScreen({ id }: { id: string }) {
 
   return (
     <PublicPage title={data.name}>
-      <View style={[styles.header, { backgroundColor: backbar.light.paper }]}>
+      {/* On paper, centred: wide, a panel; on a phone, edge to edge under the nav (ppl-pub-menu-desktop, -phone). */}
+      <View style={[styles.header, wide ? styles.headerWide : [styles.headerPhone, { marginHorizontal: -gutter }], { backgroundColor: backbar.light.paper }]}>
         <PressableScale role="link" accessibilityLabel={`Shared by ${owner.name}, open their profile`} onPress={() => router.push(`/p/${owner.handle}`)} style={styles.start}>
-          <Tag label={`Shared by ${owner.name}`} />
+          <View style={[styles.shared, { backgroundColor: withAlpha(backbar.light.ink, 0.1) }]}>
+            <Caption color={backbar.light.ink}>{`Shared by ${owner.name}`}</Caption>
+          </View>
         </PressableScale>
         {strip.length ? (
-          <View style={styles.strip} aria-hidden>
-            {Array.from({ length: STRIP }, (_, i) => strip[i]).map((d, i) =>
-              d ? (
-                <DrinkImage
-                  key={d.id}
-                  source={d.imageUrl}
-                  generated={d.isSketch}
-                  itemId={d.id.startsWith(PRIVATE) ? null : d.id}
-                  glass={d.glass}
-                  accessibilityLabel={d.name}
-                  aspectRatio={0.85}
-                  radius="control"
-                  style={styles.flex}
-                  sketchDetail="thumb"
-                />
-              ) : (
-                <View key={`blank-${i}`} style={styles.flex} />
-              ),
-            )}
+          // A quarter of 640 each, so a short menu's drawings stay centred over the name.
+          <View style={[styles.strip, { maxWidth: (640 / STRIP) * strip.length }]} aria-hidden>
+            {strip.map((d) => (
+              <View key={d.id} style={styles.stripCell}>
+                <StripDrawing drink={d} size={wide ? 120 : 76} />
+              </View>
+            ))}
           </View>
         ) : null}
-        <DsText variant={wide ? 'display' : 'title'} role="heading" color={backbar.light.ink}>
+        <DsText variant={wide ? 'display' : 'title'} role="heading" align="center" color={backbar.light.ink}>
           {data.name}
         </DsText>
-        <Body color={backbar.light.muted}>{[data.menuDate ? dayLabel(data.menuDate, now) : null, plural(drinks.length, 'drink')].filter(Boolean).join(' · ')}</Body>
+        <Body align="center" color={backbar.light.muted}>
+          {[data.menuDate ? menuNight(data.menuDate) : null, plural(drinks.length, 'drink')].filter(Boolean).join(' · ')}
+        </Body>
         {strip.length ? <Caption color={backbar.light.muted}>Drawn from each drink’s spec</Caption> : null}
       </View>
       <View style={wide ? styles.columns : styles.stack}>
@@ -121,10 +131,29 @@ export function SharedMenuScreen({ id }: { id: string }) {
         </View>
         <View style={[styles.aside, wide && styles.asideWide]}>
           {made}
-          <View style={styles.start}>{report}</View>
+          {report}
         </View>
       </View>
+      {reporting ? (
+        <ReportSheet subject={data.name} targets={[{ label: `${owner.name}, who shared this menu`, target: { kind: 'profile', profileId: owner.profileId } }]} onClose={() => setReporting(false)} />
+      ) : null}
     </PublicPage>
+  );
+}
+
+/** A drawing in the header strip; a private drink's place is the plain martini line. */
+function StripDrawing({ drink: d, size }: { drink: MenuDrink; size: number }) {
+  if (d.id.startsWith(PRIVATE)) return <PrivateGlass size={size} />;
+  return <DrinkImage source={d.imageUrl} generated={d.isSketch} itemId={d.id} glass={d.glass} accessibilityLabel={d.name} radius={0} style={{ width: size, height: size }} sketchDetail="thumb" />;
+}
+
+/** The thin martini line on paper, for a drink kept private. */
+function PrivateGlass({ size, style }: { size: number; style?: StyleProp<ViewStyle> }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.privateGlass, { width: size, height: size, backgroundColor: ds.c.paper }, style]}>
+      <CustomIcon name="Martini" size={Math.round(size * 0.55)} color={ds.c.sketchInk} />
+    </View>
   );
 }
 
@@ -137,7 +166,7 @@ function MenuRow({ drink: d, open }: { drink: MenuDrink; open: (() => void) | nu
         {d.name}
       </DsText>
       {d.line ? (
-        <Caption tone="muted" numberOfLines={2}>
+        <Caption tone="muted" numberOfLines={1}>
           {d.line}
         </Caption>
       ) : null}
@@ -145,18 +174,11 @@ function MenuRow({ drink: d, open }: { drink: MenuDrink; open: (() => void) | nu
   );
   return (
     <View role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
-      <DrinkImage
-        source={d.imageUrl}
-        generated={d.isSketch}
-        itemId={open ? d.id : null}
-        glass={d.glass}
-        accessibilityLabel={d.name}
-        aspectRatio={56 / 64}
-        radius="control"
-        style={styles.thumb}
-        thumb
-        sketchDetail="thumb"
-      />
+      {open ? (
+        <DrinkImage source={d.imageUrl} generated={d.isSketch} itemId={d.id} glass={d.glass} accessibilityLabel={d.name} aspectRatio={56 / 64} radius="control" style={styles.thumb} thumb sketchDetail="thumb" />
+      ) : (
+        <PrivateGlass size={56} style={styles.privateThumb} />
+      )}
       {open ? (
         <PressableScale role="link" accessibilityLabel={[d.name, d.line].filter(Boolean).join('. ')} onPress={open} style={styles.rowText}>
           {text}
@@ -172,8 +194,15 @@ function MenuRow({ drink: d, open }: { drink: MenuDrink; open: (() => void) | nu
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   start: { alignSelf: 'flex-start' },
-  header: { gap: space.sm, padding: space.xl, borderRadius: radius.card },
-  strip: { flexDirection: 'row', gap: space.sm, marginVertical: space.sm },
+  header: { alignItems: 'center', gap: space.xs + 2 },
+  headerWide: { paddingVertical: space.xxl, paddingHorizontal: space.xxl + space.sm, borderRadius: radius.card },
+  headerPhone: { marginTop: -space.sm, paddingTop: space.lg, paddingBottom: space.lg + space.xs, paddingHorizontal: space.lg, borderBottomLeftRadius: radius.card, borderBottomRightRadius: radius.card },
+  shared: { paddingVertical: space.xs, paddingHorizontal: space.sm + 2, borderRadius: radius.pill },
+  strip: { flexDirection: 'row', gap: space.xs, width: '100%' },
+  stripCell: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+  privateGlass: { alignItems: 'center', justifyContent: 'center' },
+  privateThumb: { height: 64, borderRadius: radius.control },
+  underline: { textDecorationLine: 'underline' },
   columns: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: space.xxl + space.sm },
   stack: { gap: space.xl },
   list: { gap: space.md },
