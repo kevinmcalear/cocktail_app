@@ -167,7 +167,8 @@ export function EarlyList({ rows, love = false }: { rows: DiscoverRow[]; love?: 
                 {placeOf(r)}
               </Caption>
             </View>
-            <Caption tone="muted">{rankedCount(r.rankers)}</Caption>
+            {/* With the heart beside it, "Not ranked yet" is left to the list's note, so the name has room. */}
+            {love && !r.rankers ? null : <Caption tone="muted">{rankedCount(r.rankers)}</Caption>}
           </PressableScale>
           {love ? <LoveBarButton profileId={r.venue_profile_id} name={r.display_name} /> : null}
         </View>

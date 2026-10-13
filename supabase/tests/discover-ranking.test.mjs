@@ -87,6 +87,7 @@ before(async () => {
 });
 
 after(async () => {
+  await db.query('DELETE FROM public.items WHERE name LIKE $1', [`% ${run}`]);
   await service.from('profiles').delete().in('id', Object.values(ids));
   for (const u of [users.lover, users.other, ...(users.fans ?? [])]) if (u) await service.auth.admin.deleteUser(u.id);
   await db.end();
@@ -134,23 +135,43 @@ describe('Discover bar order', () => {
 });
 
 describe('who can call what', () => {
-  test('the relevance helpers are private: no app role can run them', async () => {
-    for (const role of ['anon', 'authenticated']) {
-      const { rows } = await db.query(
-        `SELECT has_function_privilege($1, 'private.bar_relevance(uuid[])', 'EXECUTE') AS relevance,
-                has_function_privilege($1, 'private.bar_stale_after()', 'EXECUTE') AS stale_after`,
-        [role]
-      );
-      assert.deepEqual(rows[0], { relevance: false, stale_after: false }, role);
-    }
-    await db.query('BEGIN');
-    try {
-      await db.query(`SELECT set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: users.other.id, role: 'authenticated' })]);
-      await db.query('SET LOCAL ROLE authenticated');
-      await assert.rejects(db.query('SELECT * FROM private.bar_relevance($1::uuid[])', [[ids.Zed]]), /permission denied/);
-    } finally {
-      await db.query('ROLLBACK');
-    }
+  test('the relevance helpers are private: signed out never; signed in only through discover_list', async () => {
+    const { rows } = await db.query(
+      `SELECT r.rolname,
+              has_function_privilege(r.rolname, 'private.bar_relevance(uuid[])', 'EXECUTE') AS relevance,
+              has_function_privilege(r.rolname, 'private.bar_stale_after()', 'EXECUTE') AS stale_after
+       FROM pg_roles r WHERE r.rolname IN ('anon', 'authenticated') ORDER BY r.rolname`
+    );
+    // discover_list runs as its caller, so signed-in people need relevance; the API exposes only public.
+    assert.deepEqual(rows, [
+      { rolname: 'anon', relevance: false, stale_after: false },
+      { rolname: 'authenticated', relevance: true, stale_after: false },
+    ]);
+    const { rows: def } = await db.query(`SELECT prosecdef FROM pg_proc WHERE oid = 'private.bar_relevance(uuid[])'::regprocedure`);
+    assert.equal(def[0].prosecdef, true, 'counts every love, so it runs as definer');
+    const viaApi = await users.other.client.schema('private').rpc('bar_relevance', { p_ids: [ids.Zed] });
+    assert.ok(viaApi.error, 'the API does not serve the private schema');
+    // Public bar pages only: a private page gets no row.
+    const hidden = await insert('profiles', [bar('Hidden', { is_public: false, longitude: -150.006 })]);
+    ids.Hidden = hidden[0].id;
+    const { rows: seen } = await db.query('SELECT id FROM private.bar_relevance($1::uuid[])', [[ids.Hidden, ids.Zed]]);
+    assert.deepEqual(seen.map((r) => r.id), [ids.Zed]);
+  });
+
+  test('the drinks list puts a stronger bar\'s drinks before alike drinks elsewhere, and your loved bar\'s first', async () => {
+    // Two plain drinks named so the old order (by name) would put Aaa's first.
+    const drink = async (name, barId) => (await insert('items', [{ item_type: 'cocktail', name: `${name} ${run}`, origin_bar_profile_id: barId }]))[0].id;
+    const atAaa = await drink('A Plain Drink', ids.Aaa);
+    const atVenue = await drink('Z Plain Drink', ids.Venue);
+    const atStale = await drink('M Plain Drink', ids.Stale);
+    await db.query('SELECT private.refresh_discover_facts($1::uuid[])', [[atAaa, atVenue, atStale]]);
+    const list = async (client) => {
+      const { data, error } = await client.rpc('discover_list', { p_country_code: 'NZ', p_city: city, p_query: `plain drink ${run}` });
+      assert.ifError(error);
+      return data.map((r) => r.id);
+    };
+    assert.deepEqual(await list(users.other.client), [atVenue, atAaa, atStale], 'claimed venue, then the rest, then stale');
+    assert.deepEqual(await list(users.lover.client), [atStale, atVenue, atAaa], 'the lover\'s bar first');
   });
 
   test('Top bars and Best <drink> keep their grants and run as definer', async () => {
