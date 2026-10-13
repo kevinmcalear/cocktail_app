@@ -167,6 +167,7 @@ export function MadeSheet({ item, ingredients, lines = [], barName, onClose }: M
             onChangeText={(t) => setNote(t.slice(0, NOTE_LIMIT))}
             placeholder="How it came out, what you'd change next time"
             multiline
+            minLines={3}
             hint={note.length > NOTE_LIMIT - 100 ? `${NOTE_LIMIT - note.length} characters left` : undefined}
           />
         </View>

@@ -131,8 +131,9 @@ interface SharedMadeRow {
 
 /**
  * The drinks someone made at home and chose to show, latest first, for the
- * Had list on their profile. Signed in or out: the server leaves out a
- * private profile, one showing no drinks had, and anyone on either side of a block.
+ * Had list on their profile. The server leaves out a private profile, one
+ * showing no drinks had, and anyone on either side of a block. (It answers
+ * signed out too, but person pages are behind sign-in.)
  */
 export function useProfileMade(profileId: string | null | undefined, enabled: boolean) {
   const userId = useUserId();

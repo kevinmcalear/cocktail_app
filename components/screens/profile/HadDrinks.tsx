@@ -148,7 +148,7 @@ interface SharedDrinksProps {
   drinks: HadDrink[] | undefined;
   bars: BarTally[] | undefined;
   failed: boolean;
-  /** The drinks they made at home and show, in Had. Signed out too. */
+  /** The drinks they made at home and show, in Had. */
   made?: SharedMade[];
   /** Your own profile: take a made drink off it. */
   onHideMade?: (id: string) => void;
@@ -173,19 +173,7 @@ export function SharedDrinks({ name, tab, shared, signedIn, drinks, bars, failed
       </View>
     );
   }
-  const signIn = <Body tone="muted">{`Sign in to see ${tab === 'had' ? 'the drinks' : 'the bars'} ${name} has had.`}</Body>;
-  if (!signedIn) {
-    // Signed out, the drinks they made at home and show, then the rest behind sign-in.
-    if (tab !== 'had' || !made.length) return signIn;
-    return (
-      <View style={styles.section}>
-        <View role="list">
-          <MadeRows made={made} />
-        </View>
-        {signIn}
-      </View>
-    );
-  }
+  if (!signedIn) return <Body tone="muted">{`Sign in to see ${tab === 'had' ? 'the drinks' : 'the bars'} ${name} has had.`}</Body>;
   if (failed) return <Body tone="muted">Couldn’t load them. Check your connection and try again.</Body>;
   if (tab === 'had') {
     if (!drinks) return <Caption tone="muted">Loading drinks…</Caption>;
