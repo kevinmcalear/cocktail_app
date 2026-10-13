@@ -174,7 +174,7 @@ export function SignInScreen({ brand, subtitle, expired }: { brand?: AuthBrand; 
       <AuthShell
         title="That link has run out"
         titleSize="title"
-        subtitle="Sign-in links and codes work once, for 10 minutes. This one is used or too old. We’ll send a fresh one."
+        subtitle="Sign-in links and codes work once, for an hour. This one is used or too old. We’ll send a fresh one."
         onBack={() => router.replace('/auth/login')}
       >
         {field}
