@@ -22,14 +22,22 @@ export interface ShelfCheck {
 
 const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
 
-/** Each bottle to buy marks the line that names it, by id, else by name. */
-export function checkShelf(lines: SpecLine[], verdict: ShelfVerdict): ShelfCheck | null {
+/**
+ * Each bottle to buy marks the line that names it: by id, by the kind the
+ * line's bottle is (my_bar_drinks asks for "Herbal Liqueur" when the spec
+ * says Green Chartreuse), else by name. `kindOf` maps a line's ingredient id
+ * to its generic's id.
+ */
+export function checkShelf(lines: SpecLine[], verdict: ShelfVerdict, kindOf: Record<string, string | null> = {}): ShelfCheck | null {
   const counted = lines.filter((l) => l.ingredient && !l.optional);
   if (!counted.length) return null;
   if (verdict?.ready) return { have: counted.length, total: counted.length, missing: [], buy: [], far: false };
   if (!verdict) return { have: Math.max(counted.length - 3, 0), total: counted.length, missing: [], buy: [], far: true };
   const missing = verdict.buy.flatMap((b) => {
-    const line = counted.find((l) => l.ingredientId === b.id) ?? counted.find((l) => norm(l.ingredient) === norm(b.name));
+    const line =
+      counted.find((l) => l.ingredientId === b.id) ??
+      counted.find((l) => !!l.ingredientId && kindOf[l.ingredientId] === b.id) ??
+      counted.find((l) => norm(l.ingredient) === norm(b.name));
     return line ? [line.key] : [];
   });
   const short = Math.max(missing.length, verdict.buy.length);
