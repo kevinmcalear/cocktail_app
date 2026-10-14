@@ -10,6 +10,7 @@ import { useVenueSuppliers, type VenueSupplier } from '@/hooks/useVenueSuppliers
 import { supplierLine } from '@/lib/venueKit';
 
 import { SupplierSheet } from './SupplierSheet';
+import { SupplierSuggestions } from './SupplierSuggestions';
 import { VenueSubPage } from './VenueSubPage';
 
 /** Buying: Suppliers. Who the venue orders from, private to people with Prep or Costs, who change them too. */
@@ -43,6 +44,7 @@ export function SuppliersScreen({ barId }: { barId: string }) {
         <Body tone="muted">No suppliers yet. Add the companies you order bottles, ice, produce and glassware from.</Body>
       ) : null}
       {allowed ? <Button label="Add a supplier" icon="plus" onPress={() => setOpen('new')} style={styles.add} /> : null}
+      {allowed && !isLoading ? <SupplierSuggestions barId={barId} suppliers={suppliers} /> : null}
       <SupplierSheet barId={barId} supplier={opened} isNew={open === 'new'} onClose={() => setOpen(null)} />
     </VenueSubPage>
   );

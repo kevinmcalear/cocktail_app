@@ -2,6 +2,7 @@
 // the ice it pours, the tools it has, and what its suppliers bring.
 
 import { andList } from './makers';
+import { SUPPLIES, type Supplies } from './suppliers';
 import { EQUIPMENT } from './techniques/equipment';
 
 /** The ice kinds a venue can list: the drawings' kinds less 'none' (the bar_kit_key_check list). */
@@ -71,11 +72,8 @@ export function toolGroups(have: readonly string[], all: boolean): ToolGroup[] {
   ];
 }
 
-/** What a supplier can bring: the database's suppliers_supplies_known list. */
-export const SUPPLIES = ['bottles', 'ice', 'produce', 'garnish', 'glassware', 'barware', 'equipment'] as const;
-export type Supply = (typeof SUPPLIES)[number];
-
-export const SUPPLY_LABEL: Record<Supply, string> = {
+// What a supplier brings uses lib/suppliers.ts's SUPPLIES, the list profiles and suppliers both check.
+export const SUPPLY_LABEL: Record<Supplies, string> = {
   bottles: 'Bottles',
   ice: 'Ice',
   produce: 'Produce',
