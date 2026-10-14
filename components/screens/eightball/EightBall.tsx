@@ -67,6 +67,8 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const wobble = useSharedValue(0);
   const rise = useSharedValue(0); // the triangle's words coming up
   const card = useSharedValue(0); // title, reason and buttons
+  // 1 with the white 8 side showing, 0 with the window: you ask with the 8 up, then turn it over to read.
+  const turn = useSharedValue(reduceMotion ? 0 : 1);
   const rolling = useRollingBall({ still: reduceMotion, insets });
 
   useEffect(() => {
@@ -98,6 +100,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     if (drink) prefetch(drink.id, { name: drink.name, imageUrl: drink.imageUrl });
     setAnswer({ state: 'shown', drink });
     turnDie();
+    if (!reduceMotion) turn.set(withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) }));
     floatUp();
     bringUp(card);
     if (native) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -108,6 +111,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   function think() {
     if (timer.current) clearTimeout(timer.current);
     card.set(withTiming(0, { duration: 150 }));
+    if (!reduceMotion) turn.set(withTiming(1, { duration: 320, easing: Easing.inOut(Easing.quad) }));
     floatUp();
     // A jolt, then the pour spring rings it out like a ball settling in the hand.
     if (!reduceMotion) wobble.set(withSequence(withTiming(1, { duration: 70 }), withSpring(0, springs.pour)));
@@ -138,6 +142,8 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // While the 8 side is up, the fortune shows under the ball instead of in the window.
+  const fortuneStyle = useAnimatedStyle(() => ({ opacity: Math.min(turn.get(), 1 - card.get()) }));
   const cardStyle = useAnimatedStyle(() => ({ opacity: card.get(), transform: [{ translateY: reduceMotion ? 0 : (1 - card.get()) * 24 }] }));
 
   const shown = answer.state === 'shown';
@@ -169,21 +175,31 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
                 wobble={wobble}
                 rise={rise}
                 roll={rolling.roll}
+                turn={turn}
                 still={reduceMotion}
               />
             </Animated.View>
           </GestureDetector>
         </View>
-        <Animated.View style={[styles.copy, cardStyle]} aria-live="polite">
-          {shown ? (
-            <>
-              <Title align="center">{drink ? makeA(drink.name) : 'Nothing to pick yet'}</Title>
+        <View style={styles.copySlot}>
+          <Animated.View style={[styles.copy, cardStyle]} aria-live="polite">
+            {shown ? (
+              <>
+                <Title align="center">{drink ? makeA(drink.name) : 'Nothing to pick yet'}</Title>
+                <Body tone="muted" align="center">
+                  {drink ? drink.reason : 'Add a few bottles to My Bar or save some drinks, then ask again.'}
+                </Body>
+              </>
+            ) : null}
+          </Animated.View>
+          {answer.state === 'thinking' && !reduceMotion ? (
+            <Animated.View style={[styles.fortune, fortuneStyle]} pointerEvents="none">
               <Body tone="muted" align="center">
-                {drink ? drink.reason : 'Add a few bottles to My Bar or save some drinks, then ask again.'}
+                {answer.fortune}
               </Body>
-            </>
+            </Animated.View>
           ) : null}
-        </Animated.View>
+        </View>
       </View>
       <Animated.View style={[styles.actions, cardStyle]} pointerEvents={shown ? 'auto' : 'none'}>
         <Button
@@ -214,6 +230,8 @@ const styles = StyleSheet.create({
   column: { flex: 1, width: '100%', maxWidth: 420, alignItems: 'center', gap: space.xl },
   eyebrow: { letterSpacing: 0.8 },
   copy: { gap: space.sm, alignItems: 'center', marginTop: space.md, minHeight: 120 },
+  copySlot: { alignSelf: 'stretch' },
+  fortune: { position: 'absolute', left: 0, right: 0, top: space.md },
   actions: { flexDirection: 'row', gap: space.sm, width: '100%', maxWidth: 420 },
   action: { flex: 1 },
 });
