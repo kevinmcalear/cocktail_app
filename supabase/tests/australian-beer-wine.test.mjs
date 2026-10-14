@@ -1,4 +1,4 @@
-// Australian beer, cider and wine (supabase/migrations/20261017540000_australian_beer_wine.sql):
+// Australian beer, cider and wine (supabase/migrations/20261017750000_australian_beer_wine.sql):
 // the load lands its bottles with maker pages and sources, Australian
 // fortifieds never file under Port or Sherry, and running it again changes
 // nothing.
@@ -20,7 +20,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run Australian beer and wine tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = readFileSync(new URL('../migrations/20261017540000_australian_beer_wine.sql', import.meta.url), 'utf8');
+const MIGRATION = readFileSync(new URL('../migrations/20261017750000_australian_beer_wine.sql', import.meta.url), 'utf8');
 const db = new pg.Client({ connectionString: status.DB_URL });
 
 // The style a row files under, and every style above it.
