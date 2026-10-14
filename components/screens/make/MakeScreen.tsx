@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, BrandProvider, Button, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useDrinkAllergens } from '@/hooks/useAllergens';
+import { useToolsFor } from '@/hooks/useBarKit';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useLearnYield, type PrepCardData } from '@/hooks/usePrepCard';
 import { allergenLabel } from '@/lib/allergens';
@@ -17,7 +18,7 @@ import { factorForLine, scaledYield, scaleRecipe, type RecipeLine } from '@/lib/
 
 import { copyForTape, MakeDone, shareLabel, type BatchLabel } from './MakeDone';
 import { BATCHES, FILLS, MakeHowMuch, type MakeMode } from './MakeHowMuch';
-import { makeKit, splitHint } from './makeLogic';
+import { makeKit, missingKit, splitHint } from './makeLogic';
 import { MakeGather, MakeStep } from './MakeSteps';
 import { useMakeSpot } from './useMakeSpot';
 
@@ -34,6 +35,8 @@ interface MakeScreenProps {
   startMode?: 'have';
   /** The viewer can change the prep card, so a real yield is saved. */
   canLearn: boolean;
+  /** Whose kit the tools are checked against: a venue (its id and name), or null for your own at home. */
+  kitVenue: { id: string; name: string } | null;
 }
 
 /**
@@ -51,7 +54,7 @@ export function MakeScreen(props: MakeScreenProps) {
   );
 }
 
-function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: MakeScreenProps) {
+function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn, kitVenue }: MakeScreenProps) {
   useKeepAwake();
   const ds = useDs();
   const router = useRouter();
@@ -77,6 +80,7 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
   const [copied, setCopied] = useState(false);
   const spot = useMakeSpot(itemId);
   const learn = useLearnYield(itemId);
+  const tools = useToolsFor(kitVenue?.id ?? null, kitVenue?.name ?? null);
   const me = useMyProfile().data;
   const allergens = useDrinkAllergens(itemId).data;
 
@@ -139,12 +143,14 @@ function Make({ itemId, name, recipe, card, startFactor, startMode, canLearn }: 
       />
     );
   } else if (at === -1) {
+    const kit = makeKit(scaled, steps.map((s) => s.body), container);
     screen = (
       <MakeGather
         lines={scaled}
         got={got}
         onToggle={(id) => setGot((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]))}
-        kit={makeKit(scaled, steps.map((s) => s.body), container)}
+        kit={kit}
+        missing={tools ? { label: tools.label, items: missingKit(kit, tools.have) } : null}
       />
     );
   } else if (at < n) {

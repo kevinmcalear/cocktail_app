@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useKit } from '@/hooks/useKit';
 import { supabase } from '@/lib/supabase';
 
 // A venue's ice and tools (bar_kit, supabase/migrations/20261019000000_venue_kit.sql):
@@ -89,4 +90,19 @@ export function useSetTools(barId: string) {
     onError: (_e, _v, ctx) => client.setQueryData(key, ctx?.before),
     onSettled: () => client.invalidateQueries({ queryKey: key }),
   });
+}
+
+/**
+ * The tools to check a prep against: a venue's (by id) or, with none, your
+ * own kit at home. Null while there's nothing listed, so an empty kit
+ * doesn't mark every tool as missing.
+ */
+export function useToolsFor(barId: string | null, venueName: string | null): { label: string; have: string[] } | null {
+  const venue = useBarKit(barId).data;
+  const home = useKit().owned;
+  if (barId) {
+    const tools = (venue ?? []).filter((r) => r.kind === 'tool').map((r) => r.key);
+    return tools.length ? { label: `${venueName ?? 'the venue'}’s kit`, have: tools } : null;
+  }
+  return home.length ? { label: 'your kit', have: home } : null;
 }

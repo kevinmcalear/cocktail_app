@@ -19,6 +19,14 @@ export const ICE_LABEL: Record<IceKind, string> = {
   sphere: 'Sphere',
 };
 
+/** The venue's ice in the wizard's words, in its order ("Cubes", "Large cube"). */
+export function venueIceNames(rows: readonly { kind: string; key: string }[]): string[] {
+  return rows.filter((r) => r.kind === 'ice' && r.key in ICE_LABEL).map((r) => ICE_LABEL[r.key as IceKind]);
+}
+
+/** Whether a wizard pick is one of the venue's ice, by name ("large cube" is "Large cube"). */
+export const isVenueIce = (names: readonly string[], name: string) => names.some((n) => n.toLowerCase() === name.trim().toLowerCase());
+
 /** The prep kitchen's tools shown before "All tools": the ones bars reach for first. */
 const PREP_FIRST = ['scale-fine', 'sous-vide', 'whipper', 'superbag', 'chamber-vac', 'centrifuge', 'rotovap'];
 

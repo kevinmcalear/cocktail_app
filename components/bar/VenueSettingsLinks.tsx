@@ -59,7 +59,7 @@ export function VenueKitLinks({ barId }: { barId: string }) {
   const tools = count('tool');
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
-    <SettingsSection title="Kit" note="What drinks here are made with. Anyone with Prep changes it.">
+    <SettingsSection title="Kit" note="What drinks here are made with. Drawings, the drink wizard and Make mode use it. Anyone with Prep changes it.">
       <SettingsRow
         icon="wineglass"
         label="Glassware"

@@ -13,15 +13,34 @@ export interface KitItem {
 
 // ponytail: kit read from the step words, since a prep card has no kit list.
 // Upgrade path: a kit column on item_prep, filled in the prep editor.
-const KIT_WORDS: [RegExp, KitItem][] = [
+// An `unless` match leaves the tool out (a stick blender isn't a blender).
+const KIT_WORDS: [RegExp, KitItem, RegExp?][] = [
   [/\b(pan|saucepan|pot|heat|simmer|boil|warm)\b/i, { name: 'Small pan' }],
   [/\b(stir|stirring|dissolve|dissolved)\b/i, { name: 'Spatula' }],
   [/\b(whisk|whisking)\b/i, { name: 'Whisk' }],
-  [/\b(blend|blender|blitz)\b/i, { name: 'Blender', equipment: 'blender' }],
+  [/\b(stick|immersion|hand) blender\b/i, { name: 'Stick blender', equipment: 'stick-blender' }],
+  [/\b(blend|blender|blitz)\b/i, { name: 'Blender', equipment: 'blender' }, /\b(stick|immersion|hand) blender\b/i],
+  [/\bsous[ -]?vide\b|\bcirculator\b|\bwater bath\b/i, { name: 'Sous vide circulator', equipment: 'sous-vide' }],
+  [/\b(isi|whipper|cream charger|n2o)\b/i, { name: 'iSi whipper', equipment: 'whipper' }],
+  [/\bvacuum[- ]?(seal|sealer|sealed|bag|pack)|\bchamber vac/i, { name: 'Chamber vacuum sealer', equipment: 'chamber-vac' }],
+  [/\b(centrifuge|spinzall)\b/i, { name: 'Centrifuge', equipment: 'centrifuge' }],
+  [/\b(rotovap|rotary evaporator|girovap)\b/i, { name: 'Rotary evaporator', equipment: 'rotovap' }],
+  [/\b(superbag|nut[- ]milk bag)s?\b/i, { name: 'Superbag', equipment: 'superbag' }],
+  [/\b(refractometer|brix)\b/i, { name: 'Refractometer', equipment: 'refractometer' }],
+  [/\bcarbonat/i, { name: 'CO2 rig', equipment: 'co2-rig' }],
+  [/\bdehydrat/i, { name: 'Dehydrator', equipment: 'dehydrator' }],
   [/\b(strain|sieve|filter)\b/i, { name: 'Fine strainer' }],
   [/\b(jar|container|tub)\b/i, { name: 'Jar' }],
   [/\b(bottle|bottled|funnel)\b/i, { name: 'Funnel' }],
 ];
+
+// A tool the kit has that does the same job: a fine scale weighs too.
+const COVERED_BY: Record<string, string[]> = { scale: ['scale-fine'] };
+
+/** The kit items with an equipment page that `have` doesn't list (a venue's tools, or your own kit). */
+export function missingKit(kit: readonly KitItem[], have: readonly string[]): KitItem[] {
+  return kit.filter((k) => k.equipment && !have.includes(k.equipment) && !(COVERED_BY[k.equipment] ?? []).some((id) => have.includes(id)));
+}
 
 /**
  * What to get out besides the ingredients, in bench order: the scale when a
@@ -31,7 +50,7 @@ export function makeKit(lines: readonly Pick<ScaledLine, 'scaled'>[], steps: rea
   const kit: KitItem[] = [];
   if (lines.some((l) => /\d\s*k?g$/.test(l.scaled))) kit.push({ name: 'Scale', equipment: 'scale' });
   const words = steps.join(' ');
-  for (const [re, item] of KIT_WORDS) if (re.test(words)) kit.push(item);
+  for (const [re, item, unless] of KIT_WORDS) if (re.test(words) && !unless?.test(words)) kit.push(item);
   kit.push({ name: container ?? 'Bottle or tub' }, { name: 'Label' });
   return kit;
 }

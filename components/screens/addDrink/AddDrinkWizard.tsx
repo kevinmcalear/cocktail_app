@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Alert } from 'react-native';
 
 import { useBarGlassware } from '@/hooks/useBarGlassware';
+import { useBarKit } from '@/hooks/useBarKit';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDropdowns } from '@/hooks/useDropdowns';
@@ -17,6 +18,7 @@ import {
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { iceWhy, serveGuess } from '@/lib/specDefaults';
 import { toastDone } from '@/lib/toast';
+import { isVenueIce, venueIceNames } from '@/lib/venueKit';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { CreditsStep } from './CreditsStep';
@@ -82,6 +84,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
   const me = useMyProfile().data ?? null;
   const create = useCreateDrink();
   const barGlasses = useBarGlassware(barId).data;
+  const barIce = venueIceNames(useBarKit(barId).data ?? []);
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
   const shelfIds = useShelf().data;
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'the venue';
@@ -136,7 +139,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
   const copy = STEP_COPY[step];
   const methods = choiceList(COMMON_METHODS, dropdowns?.methods ?? []);
   const glasses = choiceList(COMMON_GLASSES, dropdowns?.glassware ?? []);
-  const ices = choiceList(COMMON_ICE, dropdowns?.iceTypes ?? []);
+  const ices = choiceList([...COMMON_ICE, ...barIce], dropdowns?.iceTypes ?? []);
   // How it's probably served, from the spec: offered on the method, glass and ice steps.
   const guess = serveGuess(sketchLook(draft, barVariants));
   const guessed = (name: string, options: WizardPick[]) => options.find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
@@ -199,6 +202,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
             onChange={([ice]) => set({ ice: ice ?? null })}
             suggested={guess.ice}
             why={iceWhy(sketchLook(draft, barVariants))}
+            mine={barIce.length ? { has: (p) => isVenueIce(barIce, p.name), label: 'Your ice', restLabel: 'Other ice' } : undefined}
           />
         );
       case 'garnish':

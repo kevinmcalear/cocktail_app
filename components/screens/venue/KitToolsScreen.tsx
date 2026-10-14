@@ -23,7 +23,7 @@ export function KitToolsScreen({ barId }: { barId: string }) {
   const fromHome = home.filter((id) => !have.includes(id) && equipmentById(id));
 
   return (
-    <VenueSubPage barId={barId} title="Tools" intro="What’s behind the bar and in the prep kitchen.">
+    <VenueSubPage barId={barId} title="Tools" intro="What’s behind the bar and in the prep kitchen. Make mode checks a house prep against it and says which tool you don’t have.">
       {isLoading ? <Caption tone="muted">Loading…</Caption> : null}
       {error ? <Body tone="muted">Couldn’t load the tools. Check your connection and try again.</Body> : null}
       {canEdit && fromHome.length ? (
