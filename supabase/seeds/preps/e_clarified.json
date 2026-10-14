@@ -1,0 +1,1342 @@
+{
+  "migration": "20261018030000_prep_recipes_clarified.sql",
+  "header": [
+    "House prep recipes for clarification and washes (after 20261018020000).",
+    "Stage 4E of the bottle catalog plan:",
+    "https://claude.ai/artifact/Vu6seuSNtN42nKYb2nDCVR",
+    "",
+    "  * 16 shared catalog preps that had no recipe get one, each from the pages",
+    "    it cites (one item_sources row per recipe, yield and keep fact; two",
+    "    sites for the staples): tomato water and clarified tomato water,",
+    "    clarified lime, lemon, grapefruit, orange, apple, pineapple, watermelon,",
+    "    guava, coconut and citrus juice (Dave Arnold's agar methods), a milk",
+    "    wash, clarified and California milk punch, and an olive oil washed",
+    "    vodka.",
+    "  * Clarified guava and coconut apply Arnold's general agar dose to juices",
+    "    he never tested: they say \"Starting point: test a batch first.\"",
+    "  * The milk preps say they contain milk. One new plain ingredient:",
+    "    Cocktail batch (the base a milk wash is poured from).",
+    "  * An independent second check of every fact in this stage (64) against",
+    "    the cited pages found 4 wrong, all keeps that took the long end of a",
+    "    range (clarified citrus, milk wash, both milk punches). All four are",
+    "    fixed to the short end."
+  ],
+  "checked_on": "2026-10-13",
+  "ingredients": [
+    {
+      "name": "Cocktail batch",
+      "description": "Any drink mixed ahead in bulk before dilution or service. Used as the base for milk washes and punches."
+    }
+  ],
+  "preps": [
+    {
+      "name": "Clarified apple juice",
+      "kind": "clarified",
+      "kind_of": "Apple juice",
+      "aliases": [],
+      "description": "Fresh apple juice cleared with a weak agar gel, a third of it boiled with the agar and the rest whisked in cold. Clear, crisp apple for highballs, spritzes and carbonated drinks.",
+      "abv": 0,
+      "grade": "B",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Apple juice",
+          "amount": 500,
+          "unit": "g",
+          "note": "cold; boiled with the agar"
+        },
+        {
+          "ingredient": "Apple juice",
+          "amount": 1000,
+          "unit": "g",
+          "note": "cold; whisked in after"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 3,
+          "unit": "g",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 1000.0,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Whisk the agar into the smaller portion of cold juice, bring it to the boil while stirring, then simmer a couple of minutes so the agar hydrates.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Whisking hard, pour the rest of the cold juice into the boiling mix in a thin stream. Don't let it fall below 35 °C before it's all in or it sets in lumps."
+        },
+        {
+          "body": "Set the bowl over an ice bath until it firms to a soft, loose gel."
+        },
+        {
+          "body": "Break the gel into curds with a whisk, tip into a cheesecloth-lined sieve and let it drain. Stir the curds or twist the cloth gently; pressing hard pushes agar through."
+        },
+        {
+          "body": "Pass through a coffee filter if any agar specks got through, then bottle and chill."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "Arnold: juice that can take some heat has a third boiled with the agar (0.2% of the total) and two thirds whisked in cold; his orange batch is 250 g + 500 g + 1.5 g. Doubled to 500 g + 1000 g + 3 g."
+        },
+        {
+          "field": "recipe",
+          "url": "https://punchdrink.com/articles/how-to-clarified-cocktail-recipe-drink-science-super-lyan/",
+          "kind": "reference",
+          "note": "Team Lyan's quick gel: agar at 0.02% of the liquid weight, a tenth of Arnold's figure and most likely a misprint. We use Arnold's measured 0.2% (2 g per kilo)."
+        }
+      ]
+    },
+    {
+      "name": "Clarified citrus",
+      "kind": "clarified",
+      "kind_of": "Citrus juice",
+      "aliases": [
+        "Clarified lime juice",
+        "Clear lime juice"
+      ],
+      "description": "Lime (or lemon) juice made crystal clear with a weak agar gel, so it carbonates well and looks clean in clear drinks. Make it the day you use it.",
+      "abv": 0,
+      "grade": "A",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Lime juice",
+          "amount": 375,
+          "unit": "g",
+          "note": "freshly squeezed, room temperature; lemon works the same way"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 125,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 1,
+          "unit": "g"
+        }
+      ],
+      "yield": {
+        "amount": 345,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": 12,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Whisk the agar into the water, bring it to the boil and let it simmer a couple of minutes, whisking, until clear.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Off the heat, whisk the room temperature juice into the hot agar water. The mix should land near 39 °C; never boil the juice."
+        },
+        {
+          "body": "Leave it in the fridge or over ice until it sets to a soft gel."
+        },
+        {
+          "body": "Break the gel up gently with a whisk and pour it into a sieve lined with three layers of cheesecloth."
+        },
+        {
+          "body": "Massage the cloth gently to let the clear juice out. Squeezing hard pushes agar through; run it through a coffee filter if any bits get past."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2010/07/20/simple-agar-clarification-1-year-anniversary-plus-a-rundown-of-current-clarification-techniques/",
+          "kind": "reference",
+          "note": "Dave Arnold's quick agar clarification for heat-sensitive lime juice: 375 g juice, 1 g agar boiled in 125 g water, juice tempered in. His orange juice test returned about 69% (516.8 g from 750 g); our yield applies that."
+        },
+        {
+          "field": "keeps",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "hours": 12,
+          "note": "Arnold: clarified lime must be used the day it is made, not even the next morning; recorded as 12 hours."
+        },
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "The original method: agar at 0.2% of the juice weight, set, broken and drained through cheesecloth; 516.8 g clear juice back from 750 g orange juice."
+        }
+      ]
+    },
+    {
+      "name": "Clarified coconut",
+      "kind": "clarified",
+      "kind_of": "Coconut",
+      "aliases": [
+        "Clarified coconut water"
+      ],
+      "description": "Coconut water set with a weak agar gel and drained crystal clear, for clear tropical drinks and highballs. Starting point: test a batch first.",
+      "abv": 0,
+      "grade": "C",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Coconut water",
+          "amount": 375,
+          "unit": "g",
+          "note": "room temperature"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 125,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 1,
+          "unit": "g"
+        }
+      ],
+      "yield": {
+        "amount": 345,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Whisk the agar into the water, bring it to the boil and let it simmer a couple of minutes, whisking, until clear.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Off the heat, whisk the room temperature juice into the hot agar water. The mix should land near 39 °C; never boil the juice."
+        },
+        {
+          "body": "Leave it in the fridge or over ice until it sets to a soft gel."
+        },
+        {
+          "body": "Break the gel up gently with a whisk and pour it into a sieve lined with three layers of cheesecloth."
+        },
+        {
+          "body": "Massage the cloth gently to let the clear juice out. Squeezing hard pushes agar through; run it through a coffee filter if any bits get past."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2010/07/20/simple-agar-clarification-1-year-anniversary-plus-a-rundown-of-current-clarification-techniques/",
+          "kind": "reference",
+          "note": "Dave Arnold's quick agar ratio (2 g agar per kg of juice 'or whatever'), in his heat-sensitive form: 375 g liquid, 1 g agar boiled in 125 g water. He did not test coconut water, so this is untested arithmetic."
+        },
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "The 0.2% agar method in full, and hydrating agar in water for liquids that can't be boiled."
+        }
+      ]
+    },
+    {
+      "name": "Clarified grapefruit juice",
+      "kind": "clarified",
+      "kind_of": "Grapefruit juice",
+      "aliases": [],
+      "description": "Fresh grapefruit juice cleared with a weak agar gel. Clarifying leaves it clean and bright, with less bitterness, and it carbonates far better than cloudy juice: think clear Palomas and highballs.",
+      "abv": 0,
+      "grade": "B",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Grapefruit juice",
+          "amount": 800,
+          "unit": "g",
+          "note": "fresh, at room temperature"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 200,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 2,
+          "unit": "g",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 700,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Let the juice come to room temperature (about 25 °C). Whisk the agar into the water and bring it to the boil, whisking, then simmer a couple of minutes so it hydrates.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Off the heat, pour the juice into the hot agar water in a thin stream, whisking hard. Never boil the juice, and don't let the mix fall below 35 °C before it's all in or it sets in lumps."
+        },
+        {
+          "body": "Set the bowl over an ice bath until it firms to a soft, loose gel."
+        },
+        {
+          "body": "Break the gel into curds with a whisk, tip into a cheesecloth-lined sieve and let it drain. Stir the curds or twist the cloth gently; pressing hard pushes agar through."
+        },
+        {
+          "body": "Pass through a coffee filter if any agar specks got through, then bottle and chill."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "Arnold's quick agar clarification: agar at 0.2% of the total weight; heat-sensitive juice stays unboiled, 4 parts room-temperature juice to 1 part water that the agar is boiled in. Scaled to 800 g juice, 200 g water, 2 g agar."
+        },
+        {
+          "field": "recipe",
+          "url": "https://punchdrink.com/articles/how-to-clarified-cocktail-recipe-drink-science-super-lyan/",
+          "kind": "reference",
+          "note": "Team Lyan's quick gel: agar at 0.02% of the liquid weight, a tenth of Arnold's figure and most likely a misprint. We use Arnold's measured 0.2% (2 g per kilo)."
+        },
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/17/simple-agar-clarification-vs-gelatin-clarification-another-difference/",
+          "kind": "reference",
+          "note": "Arnold on clarified grapefruit: tastes clean and bright and loses some bitterness; he also clarifies it with gelatin. We treat it as fresh citrus and keep it unboiled."
+        }
+      ]
+    },
+    {
+      "name": "Clarified guava",
+      "kind": "clarified",
+      "kind_of": "Guava juice",
+      "aliases": [],
+      "description": "Guava juice set with a weak agar gel and drained clear, for clean, pale tropical highballs and stirred drinks. Starting point: test a batch first.",
+      "abv": 0,
+      "grade": "C",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Guava juice",
+          "amount": 375,
+          "unit": "g",
+          "note": "room temperature, sieved first if pulpy"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 125,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 1,
+          "unit": "g"
+        }
+      ],
+      "yield": {
+        "amount": 345,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Whisk the agar into the water, bring it to the boil and let it simmer a couple of minutes, whisking, until clear.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Off the heat, whisk the room temperature juice into the hot agar water. The mix should land near 39 °C; never boil the juice."
+        },
+        {
+          "body": "Leave it in the fridge or over ice until it sets to a soft gel."
+        },
+        {
+          "body": "Break the gel up gently with a whisk and pour it into a sieve lined with three layers of cheesecloth."
+        },
+        {
+          "body": "Massage the cloth gently to let the clear juice out. Squeezing hard pushes agar through; run it through a coffee filter if any bits get past."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2010/07/20/simple-agar-clarification-1-year-anniversary-plus-a-rundown-of-current-clarification-techniques/",
+          "kind": "reference",
+          "note": "Dave Arnold's quick agar ratio (2 g agar per kg of juice 'or whatever'), in his heat-sensitive form: 375 g juice, 1 g agar boiled in 125 g water. He tested lime and orange, not guava, so this is untested arithmetic."
+        },
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "The 0.2% agar method in full, and the way to hydrate agar in water for juices that can't be boiled."
+        }
+      ]
+    },
+    {
+      "name": "Clarified lemon juice",
+      "kind": "clarified",
+      "kind_of": "Lemon juice",
+      "aliases": [],
+      "description": "Fresh lemon juice cleared with a weak agar gel, which traps the haze so the juice drains out clear. For clear sours, carbonated drinks and stirred drinks that want lemon. Made like Arnold's lime, unboiled.",
+      "abv": 0,
+      "grade": "B",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Lemon juice",
+          "amount": 800,
+          "unit": "g",
+          "note": "fresh, at room temperature"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 200,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 2,
+          "unit": "g",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 700,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Let the juice come to room temperature (about 25 °C). Whisk the agar into the water and bring it to the boil, whisking, then simmer a couple of minutes so it hydrates.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Off the heat, pour the juice into the hot agar water in a thin stream, whisking hard. Never boil the juice, and don't let the mix fall below 35 °C before it's all in or it sets in lumps."
+        },
+        {
+          "body": "Set the bowl over an ice bath until it firms to a soft, loose gel."
+        },
+        {
+          "body": "Break the gel into curds with a whisk, tip into a cheesecloth-lined sieve and let it drain. Stir the curds or twist the cloth gently; pressing hard pushes agar through."
+        },
+        {
+          "body": "Pass through a coffee filter if any agar specks got through, then bottle and chill."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "Arnold's quick agar clarification: agar at 0.2% of the total weight; heat-sensitive juice stays unboiled, 4 parts room-temperature juice to 1 part water that the agar is boiled in. Scaled to 800 g juice, 200 g water, 2 g agar."
+        },
+        {
+          "field": "recipe",
+          "url": "https://punchdrink.com/articles/how-to-clarified-cocktail-recipe-drink-science-super-lyan/",
+          "kind": "reference",
+          "note": "Team Lyan's quick gel: agar at 0.02% of the liquid weight, a tenth of Arnold's figure and most likely a misprint. We use Arnold's measured 0.2% (2 g per kilo)."
+        }
+      ]
+    },
+    {
+      "name": "Clarified lime juice",
+      "kind": "clarified",
+      "kind_of": "Lime juice",
+      "aliases": [],
+      "description": "Fresh lime juice cleared with a weak agar gel, which traps the haze so the juice drains out water-clear. For clear sours, carbonated drinks and stirred drinks that want lime; use it the day it's made.",
+      "abv": 0,
+      "grade": "A",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Lime juice",
+          "amount": 800,
+          "unit": "g",
+          "note": "fresh, at room temperature"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 200,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 2,
+          "unit": "g",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 700,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": 12,
+        "storage": "Fridge, use the same day"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Let the juice come to room temperature (about 25 °C). Whisk the agar into the water and bring it to the boil, whisking, then simmer a couple of minutes so it hydrates.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Off the heat, pour the juice into the hot agar water in a thin stream, whisking hard. Never boil the juice, and don't let the mix fall below 35 °C before it's all in or it sets in lumps."
+        },
+        {
+          "body": "Set the bowl over an ice bath until it firms to a soft, loose gel."
+        },
+        {
+          "body": "Break the gel into curds with a whisk, tip into a cheesecloth-lined sieve and let it drain. Stir the curds or twist the cloth gently; pressing hard pushes agar through."
+        },
+        {
+          "body": "Pass through a coffee filter if any agar specks got through. Chill and use the same day."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "Arnold's quick agar clarification: agar at 0.2% of the total weight; heat-sensitive juice stays unboiled, 4 parts room-temperature juice to 1 part water that the agar is boiled in. Scaled to 800 g juice, 200 g water, 2 g agar."
+        },
+        {
+          "field": "recipe",
+          "url": "https://punchdrink.com/articles/how-to-clarified-cocktail-recipe-drink-science-super-lyan/",
+          "kind": "reference",
+          "note": "Team Lyan's quick gel: agar at 0.02% of the liquid weight, a tenth of Arnold's figure and most likely a misprint. We use Arnold's measured 0.2% (2 g per kilo)."
+        },
+        {
+          "field": "keeps",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "hours": 12,
+          "note": "Arnold: clarified lime keeps no better than fresh lime and must be used the day it's made. We record that as 12 hours."
+        }
+      ]
+    },
+    {
+      "name": "Clarified milk punch",
+      "kind": "milk-punch",
+      "aliases": [
+        "English milk punch"
+      ],
+      "description": "A batched gin, lemon and Earl Grey punch poured into milk so the curds filter it clear, silky and shelf stable. Bottle it and pour over ice. Contains milk: drinks made with it carry milk as an allergen.",
+      "grade": "B",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Gin",
+          "amount": 600,
+          "unit": "ml"
+        },
+        {
+          "ingredient": "Lemon juice",
+          "amount": 225,
+          "unit": "ml",
+          "note": "fresh, strained"
+        },
+        {
+          "ingredient": "Simple syrup",
+          "amount": 150,
+          "unit": "ml",
+          "note": "1:1"
+        },
+        {
+          "ingredient": "Earl Grey tea",
+          "amount": 600,
+          "unit": "ml",
+          "note": "brewed strong: 2 heaped tsp leaves per 240 ml hot water, cooled"
+        },
+        {
+          "ingredient": "Milk",
+          "amount": 395,
+          "unit": "ml",
+          "note": "whole, cold",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 1700,
+        "unit": "ml",
+        "derived": true
+      },
+      "keeps": {
+        "hours": 168,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Milk wash",
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Brew the Earl Grey strong, strain out the leaves and let it cool."
+        },
+        {
+          "body": "Mix the gin, lemon, syrup and tea. If there is time, let the batch sit a few hours."
+        },
+        {
+          "body": "Pour about a third of the batch into the cold milk (never the milk into the batch) and stir once. When it breaks, add the rest gently without stirring."
+        },
+        {
+          "body": "Cover and rest in the fridge at least 24 hours; 48 is better.",
+          "timer_seconds": 86400
+        },
+        {
+          "body": "Strain a scoop at a time through a coffee filter or a sieve lined with double cheesecloth. Pour the first cloudy run back through. Never press the curds."
+        },
+        {
+          "body": "Bottle and keep cold. Contains milk."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://milkpunch.substack.com/p/milk-punch-method",
+          "kind": "reference",
+          "note": "Mia Glanz's Earl Grey milk punch, batched x10: 20 oz gin, 7.5 oz lemon, 5 oz simple syrup, 20 oz Earl Grey tea (600 / 225 / 150 / 600 ml at 30 ml per oz), with milk at 4 parts batch to 1 (about 395 ml); rest 24 to 48 h."
+        },
+        {
+          "field": "recipe",
+          "url": "https://www.campariacademy.com/en-us/training/tools-techniques/milk-punch-guide-and-recipes/",
+          "kind": "reference",
+          "note": "Campari Academy: milk is batch volume x 0.25 (the same 4:1), and their test sour ran 2 vodka : 0.75 lemon : 0.75 simple syrup with 20% milk, no tea. Sweeter than Glanz's; we use Glanz's spec and Campari's third-first pouring."
+        },
+        {
+          "field": "keeps",
+          "url": "https://alcademics.com/milk-punch-science-and-practice/",
+          "kind": "reference",
+          "hours": 168,
+          "note": "After a week or two the solids drop out and it needs refiltering; we take the short end, a week."
+        }
+      ]
+    },
+    {
+      "name": "Clarified orange juice",
+      "kind": "clarified",
+      "kind_of": "Orange juice",
+      "aliases": [],
+      "description": "Orange juice cleared with a weak agar gel: a third of the juice is boiled with the agar, the rest whisked in cold. Arnold's own worked example; clear orange for stirred and carbonated drinks.",
+      "abv": 0,
+      "grade": "A",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Orange juice",
+          "amount": 250,
+          "unit": "g",
+          "note": "cold; boiled with the agar"
+        },
+        {
+          "ingredient": "Orange juice",
+          "amount": 500,
+          "unit": "g",
+          "note": "cold; whisked in after"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 1.5,
+          "unit": "g",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 517,
+        "unit": "g"
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Whisk the agar into the smaller portion of cold juice, bring it to the boil while stirring, then simmer a couple of minutes so the agar hydrates.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Whisking hard, pour the rest of the cold juice into the boiling mix in a thin stream. Don't let it fall below 35 °C before it's all in or it sets in lumps."
+        },
+        {
+          "body": "Set the bowl over an ice bath until it firms to a soft, loose gel."
+        },
+        {
+          "body": "Break the gel into curds with a whisk, tip into a cheesecloth-lined sieve and let it drain. Stir the curds or twist the cloth gently; pressing hard pushes agar through."
+        },
+        {
+          "body": "Pass through a coffee filter if any agar specks got through, then bottle and chill."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "Arnold's worked example as written: 1.5 g agar (0.2%) boiled in 250 g cold orange juice, then 500 g cold juice whisked in."
+        },
+        {
+          "field": "yield",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "Arnold got 516.8 g of clear juice from this 750 g batch, from unstrained juice."
+        }
+      ]
+    },
+    {
+      "name": "Clarified pineapple juice",
+      "kind": "clarified",
+      "kind_of": "Pineapple juice",
+      "aliases": [],
+      "description": "Fresh pineapple juice cleared with a weak agar gel, a third of it boiled with the agar and the rest whisked in cold. Clear pineapple for stirred tiki riffs and carbonated drinks.",
+      "abv": 0,
+      "grade": "B",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Pineapple juice",
+          "amount": 500,
+          "unit": "g",
+          "note": "cold; boiled with the agar"
+        },
+        {
+          "ingredient": "Pineapple juice",
+          "amount": 1000,
+          "unit": "g",
+          "note": "cold; whisked in after"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 3,
+          "unit": "g",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 1000.0,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Whisk the agar into the smaller portion of cold juice, bring it to the boil while stirring, then simmer a couple of minutes so the agar hydrates.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Whisking hard, pour the rest of the cold juice into the boiling mix in a thin stream. Don't let it fall below 35 °C before it's all in or it sets in lumps."
+        },
+        {
+          "body": "Set the bowl over an ice bath until it firms to a soft, loose gel."
+        },
+        {
+          "body": "Break the gel into curds with a whisk, tip into a cheesecloth-lined sieve and let it drain. Stir the curds or twist the cloth gently; pressing hard pushes agar through."
+        },
+        {
+          "body": "Pass through a coffee filter if any agar specks got through, then bottle and chill."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "Arnold: juice that can take some heat has a third boiled with the agar (0.2% of the total) and two thirds whisked in cold; his orange batch is 250 g + 500 g + 1.5 g. Doubled to 500 g + 1000 g + 3 g."
+        }
+      ]
+    },
+    {
+      "name": "Clarified tomato water",
+      "kind": "clarified",
+      "kind_of": "Tomato water",
+      "aliases": [],
+      "description": "Tomato purée set with a little gelatine, frozen and thawed slowly through cloth, so only crystal-clear tomato water drips out. The clearest tomato water for stirred drinks and carbonating.",
+      "abv": 0,
+      "grade": "A",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Tomato",
+          "amount": 1000,
+          "unit": "g",
+          "note": "ripe, blended smooth; unsalted"
+        },
+        {
+          "ingredient": "Gelatine",
+          "amount": 5,
+          "unit": "g",
+          "note": "powdered",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 600,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Blend",
+        "Freeze",
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Blend the tomatoes smooth. Don't salt them yet: what drips out first is more concentrated."
+        },
+        {
+          "body": "Bloom the gelatine in a little cold purée, melt it into a small warmed portion, then stir that through the rest."
+        },
+        {
+          "body": "Pour into a shallow tray, leave it in the fridge a while so the gelatine can work, then freeze it solid.",
+          "timer_seconds": 28800
+        },
+        {
+          "body": "Set the frozen block in a cloth-lined perforated pan or sieve over a container and let it thaw in the fridge. Don't press it."
+        },
+        {
+          "body": "Stir all the drips together before bottling: the first ones carry most of the flavour, sugar and acid."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2010/07/20/simple-agar-clarification-1-year-anniversary-plus-a-rundown-of-current-clarification-techniques/",
+          "kind": "reference",
+          "note": "Arnold's gelatin freeze-thaw: 5 g gelatin per kilo of product, rested in the fridge, frozen solid, thawed in the fridge over cheesecloth; batch all the drips together. Used as written for 1 kg."
+        },
+        {
+          "field": "recipe",
+          "url": "https://www.greatitalianchefs.com/recipes/tomato-water-fennel-puree-recipe",
+          "kind": "reference",
+          "note": "Damini brothers' tomato water: 400 g blitzed tomatoes with 2 g powdered gelatine (0.5%, the same ratio), frozen at least 8 hours and thawed in muslin in the fridge."
+        }
+      ]
+    },
+    {
+      "name": "Clarified watermelon juice",
+      "kind": "clarified",
+      "kind_of": "Watermelon juice",
+      "aliases": [],
+      "description": "Fresh watermelon juice cleared with a weak agar gel into a pale, clear juice in under an hour. For clear coolers, spritzes and carbonated drinks.",
+      "abv": 0,
+      "grade": "B",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Watermelon juice",
+          "amount": 800,
+          "unit": "g",
+          "note": "fresh, strained, at room temperature"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 200,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Agar",
+          "amount": 2,
+          "unit": "g",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 700,
+        "unit": "g",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Let the juice come to room temperature (about 25 °C). Whisk the agar into the water and bring it to the boil, whisking, then simmer a couple of minutes so it hydrates.",
+          "timer_seconds": 120
+        },
+        {
+          "body": "Off the heat, pour the juice into the hot agar water in a thin stream, whisking hard. Never boil the juice, and don't let the mix fall below 35 °C before it's all in or it sets in lumps."
+        },
+        {
+          "body": "Set the bowl over an ice bath until it firms to a soft, loose gel."
+        },
+        {
+          "body": "Break the gel into curds with a whisk, tip into a cheesecloth-lined sieve and let it drain. Stir the curds or twist the cloth gently; pressing hard pushes agar through."
+        },
+        {
+          "body": "Pass through a coffee filter if any agar specks got through, then bottle and chill."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://cookingissues.com/2009/07/14/agar-clarification-made-stupid-simple-best-technique-yet/",
+          "kind": "reference",
+          "note": "Arnold's quick agar clarification, unboiled version for delicate juice: 4 parts room-temperature juice to 1 part water the agar is boiled in, agar 0.2% of the total. Scaled to 800 g juice. A reader on the page reports watermelon clear in under an hour."
+        }
+      ]
+    },
+    {
+      "name": "Milk punch",
+      "kind": "milk-punch",
+      "aliases": [
+        "California milk punch"
+      ],
+      "description": "Jerry Thomas's bottling milk punch from 1887: brandy, Jamaican rum and arrack steeped with lemon, pineapple, spice and green tea, then broken with hot milk and filtered bright. Serve iced. Contains milk: drinks made with it carry milk as an allergen.",
+      "grade": "B",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Lemon",
+          "amount": 6,
+          "unit": "each",
+          "note": "juiced: 4 at the start, 2 more with the milk"
+        },
+        {
+          "ingredient": "Lemon peel",
+          "amount": 2,
+          "unit": "each",
+          "note": "rind of 2 lemons",
+          "removed": true
+        },
+        {
+          "ingredient": "Sugar",
+          "amount": 225,
+          "unit": "g",
+          "note": "dissolved in just enough hot water"
+        },
+        {
+          "ingredient": "Pineapple",
+          "amount": 1,
+          "unit": "each",
+          "note": "peeled, sliced and pounded",
+          "removed": true
+        },
+        {
+          "ingredient": "Clove",
+          "amount": 6,
+          "unit": "each",
+          "removed": true
+        },
+        {
+          "ingredient": "Coriander seed",
+          "amount": 20,
+          "unit": "each",
+          "removed": true
+        },
+        {
+          "ingredient": "Cinnamon",
+          "amount": 1,
+          "unit": "each",
+          "note": "1 small stick",
+          "removed": true
+        },
+        {
+          "ingredient": "Brandy",
+          "amount": 480,
+          "unit": "ml"
+        },
+        {
+          "ingredient": "Jamaican rum",
+          "amount": 480,
+          "unit": "ml"
+        },
+        {
+          "ingredient": "Batavia arrack",
+          "amount": 120,
+          "unit": "ml"
+        },
+        {
+          "ingredient": "Green tea",
+          "amount": 240,
+          "unit": "ml",
+          "note": "brewed strong"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 960,
+          "unit": "ml",
+          "note": "boiling"
+        },
+        {
+          "ingredient": "Milk",
+          "amount": 960,
+          "unit": "ml",
+          "note": "hot",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 3000,
+        "unit": "ml",
+        "derived": true
+      },
+      "keeps": {
+        "hours": 168,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Infuse",
+        "Milk wash",
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Put the juice of 4 lemons, the rind of 2, the dissolved sugar, pounded pineapple, spices, brandy, rum, arrack and tea in a large clean jar. Add the boiling water last."
+        },
+        {
+          "body": "Seal it so nothing evaporates and steep at least 6 hours.",
+          "timer_seconds": 21600
+        },
+        {
+          "body": "Add the hot milk and the juice of 2 more lemons and mix."
+        },
+        {
+          "body": "Filter through a jelly bag or coffee filter until it runs bright. Do not press."
+        },
+        {
+          "body": "Bottle tightly and keep cold; serve over ice. For same-day use the source says filtering can be skipped. Contains milk."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://archive.org/details/bartendersguideo00thom/page/86/",
+          "kind": "reference",
+          "note": "Jerry Thomas, Bar-Tender's Guide (1887), p. 86, California Milk Punch for bottling (public domain). Converted: pint 480 ml, quart 960 ml, gill 120 ml, cup 240 ml, half a pound of sugar about 225 g."
+        },
+        {
+          "field": "keeps",
+          "url": "https://alcademics.com/milk-punch-science-and-practice/",
+          "kind": "reference",
+          "hours": 168,
+          "note": "After a week or two the solids drop out and it needs refiltering; we take the short end, a week."
+        }
+      ]
+    },
+    {
+      "name": "Milk wash",
+      "kind": "wash",
+      "kind_of": "Milk",
+      "aliases": [
+        "Milk washing",
+        "Milk-washed batch"
+      ],
+      "description": "The base ratio for milk washing: a sour or tannic batch poured into a quarter of its volume of milk, rested and filtered through the curds until clear and silky. Contains milk: drinks made with it carry milk as an allergen.",
+      "grade": "B",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Cocktail batch",
+          "amount": 1000,
+          "unit": "ml",
+          "note": "must taste sour or tannic: citrus, tea, coffee or wine"
+        },
+        {
+          "ingredient": "Milk",
+          "amount": 250,
+          "unit": "ml",
+          "note": "whole, cold or room temperature",
+          "removed": true
+        },
+        {
+          "ingredient": "Lemon juice",
+          "note": "only if the batch has no acid or tannin, to taste",
+          "optional": true
+        }
+      ],
+      "yield": {
+        "amount": 1100,
+        "unit": "ml",
+        "derived": true
+      },
+      "keeps": {
+        "hours": 168,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Milk wash",
+        "Clarify",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Make sure the batch tastes sour or tannic. If not, add some acid."
+        },
+        {
+          "body": "Pour about a third of the batch into the milk (never the milk into the batch) and stir. Stop when it breaks."
+        },
+        {
+          "body": "Add the rest gently without stirring and leave it at least 15 minutes, up to a few hours.",
+          "timer_seconds": 900
+        },
+        {
+          "body": "Strain through a coffee filter or nut-milk bag. Pour the first cloudy run back through once the curds form a mat. Never press."
+        },
+        {
+          "body": "Bottle and chill. Contains milk."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://www.campariacademy.com/en-us/training/tools-techniques/milk-punch-guide-and-recipes/",
+          "kind": "reference",
+          "note": "Campari Academy: milk volume is batch volume x 0.25; add a third of the batch to the milk first, rest 15 minutes to a few hours. Their lab test used 20% milk. Scaled to a 1 litre batch."
+        },
+        {
+          "field": "recipe",
+          "url": "https://milkpunch.substack.com/p/milk-punch-method",
+          "kind": "reference",
+          "note": "Mia Glanz uses 4 parts cocktail to 1 part milk, the same as Campari's; she notes many bartenders use 6:1."
+        },
+        {
+          "field": "keeps",
+          "url": "https://alcademics.com/milk-punch-science-and-practice/",
+          "kind": "reference",
+          "hours": 168,
+          "note": "After a week or two the solids drop out and it needs refiltering; we take the short end, a week."
+        }
+      ]
+    },
+    {
+      "name": "Olive oil washed vodka",
+      "kind": "wash",
+      "kind_of": "Vodka",
+      "aliases": [
+        "Olive oil vodka",
+        "Oil-washed vodka"
+      ],
+      "description": "Vodka rested with extra virgin olive oil, then frozen so the oil sets and lifts off, leaving a rounder, peppery, grassy spirit for Martinis.",
+      "grade": "B",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Vodka",
+          "amount": 750,
+          "unit": "ml"
+        },
+        {
+          "ingredient": "Extra virgin olive oil",
+          "amount": 135,
+          "unit": "ml",
+          "note": "good quality",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 720,
+        "unit": "ml",
+        "derived": true
+      },
+      "keeps": {
+        "hours": 168,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Fat wash",
+        "Freeze",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Combine the vodka and olive oil in a freezer-safe container."
+        },
+        {
+          "body": "Leave it at room temperature for 5 days."
+        },
+        {
+          "body": "Freeze until the oil sets into a solid layer."
+        },
+        {
+          "body": "Break through the oil, lift it off and strain the vodka through cheesecloth or a coffee filter."
+        },
+        {
+          "body": "Bottle and keep in the fridge."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://imbibemagazine.com/recipe/olive-oil-washed-martini-recipe/",
+          "kind": "reference",
+          "note": "Mark Bystrom (Forequarter, Madison): 250 ml vodka to 45 ml extra virgin olive oil, 5 days at room temperature, then frozen and the oil scraped off. Scaled to a 750 ml bottle (135 ml oil)."
+        },
+        {
+          "field": "recipe",
+          "url": "https://imbibemagazine.com/recipe/caesar-martini/",
+          "kind": "reference",
+          "note": "Shy Shy's Caesar vodka washes a 750 ml bottle with 3 oz (90 ml) olive oil, freezes, then strains through cheesecloth. Lighter than Forequarter's; we use Forequarter's plain-vodka ratio."
+        },
+        {
+          "field": "recipe",
+          "url": "https://drinksworld.com/fat-washing-guide/",
+          "kind": "reference",
+          "note": "Drinks World's general fat wash runs 1 to 2 oz (30 to 60 ml) fat per 750 ml, far lighter; olive oil washes in bar recipes run heavier, so we use Forequarter's."
+        },
+        {
+          "field": "keeps",
+          "url": "https://drinksworld.com/fat-washing-guide/",
+          "kind": "reference",
+          "hours": 168,
+          "note": "General guidance for fat-washed spirits, fridge: about 1 to 2 weeks; we take the shorter. (Shy Shy says indefinitely; we use the cautious figure.)"
+        }
+      ]
+    },
+    {
+      "name": "Tomato water",
+      "kind": "clarified",
+      "kind_of": "Tomato",
+      "aliases": [],
+      "description": "The pale, savoury liquid that drips from blended salted tomatoes left to hang in cloth. Brings fresh tomato and umami to Martinis, highballs and Bloody Mary riffs without the pulp.",
+      "abv": 0,
+      "grade": "B",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Tomato",
+          "amount": 900,
+          "unit": "g",
+          "note": "ripe, quartered, with all juice and seeds"
+        },
+        {
+          "ingredient": "Salt",
+          "amount": 1,
+          "unit": "pinch"
+        }
+      ],
+      "yield": {
+        "amount": 500,
+        "unit": "ml",
+        "derived": true
+      },
+      "keeps": {
+        "hours": 72,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Blend",
+        "Strain",
+        "Clarify"
+      ],
+      "steps": [
+        {
+          "body": "Quarter ripe tomatoes, keeping all their juice and seeds, and blend with the salt until smooth."
+        },
+        {
+          "body": "Pour into a cheesecloth-lined sieve (or a coffee filter) over a clean bowl."
+        },
+        {
+          "body": "Let it drip in the fridge for several hours or overnight. Don't press, squeeze or stir, or it turns cloudy."
+        },
+        {
+          "body": "Bottle the clear liquid and keep it cold."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://imbibemagazine.com/recipe/little-sister-tomato-soju-cocktail/",
+          "kind": "reference",
+          "note": "Little Sister's tomato water: 2 lb tomatoes blended with a pinch of salt and strained clear through a coffee filter. 2 lb taken as about 900 g."
+        },
+        {
+          "field": "recipe",
+          "url": "https://punchdrink.com/recipes/ode-to-tomatoes/",
+          "kind": "reference",
+          "note": "Ode to Tomatoes: 2 quarts cherry tomatoes salted with 1 tsp kosher salt (herbs optional), pulsed and drained overnight through cheesecloth in the fridge. Salts much harder than Imbibe; we use Imbibe's pinch, and this page's cloth drip."
+        },
+        {
+          "field": "keeps",
+          "url": "https://imbibemagazine.com/recipe/little-sister-tomato-soju-cocktail/",
+          "kind": "reference",
+          "hours": 168,
+          "note": "A week in the fridge, for this same pinch-salted tomato water."
+        },
+        {
+          "field": "keeps",
+          "url": "https://punchdrink.com/recipes/ode-to-tomatoes/",
+          "kind": "reference",
+          "hours": 72,
+          "note": "3 to 4 days in the fridge for a herb and salt tomato water salted a little harder than ours; we take 3 days, the shorter keep. Another Imbibe tomato water (Eden's River) says to use it immediately."
+        }
+      ]
+    }
+  ]
+}
