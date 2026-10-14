@@ -87,8 +87,8 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
           )
         }
       />
-      {/* Hours, the address, then Directions, Call and Website three across (b32: claimed or not), and where the hours came from. */}
-      <PublicBarFacts profileId={profile.id} />
+      {/* Hours, the address and Instagram, then Directions, Call and Website three across (b32: claimed or not), and where the hours came from. */}
+      <PublicBarFacts profileId={profile.id} instagram={profile.instagram} />
 
       {/* A search's matches (nothing without one) come right under the header. */}
       <BarMatches barProfileId={profile.id} />
