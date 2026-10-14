@@ -6,7 +6,7 @@ import { GlasswarePrompt } from '@/components/screens/venue/GlasswarePrompt';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import { sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
-import { isVenueGlassName } from '@/lib/glassware';
+import { glassTitle, isVenueGlassName } from '@/lib/glassware';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { variantsOf } from '@/lib/sketch/geometry';
 import { glassFromName } from '@/supabase/functions/_shared/sketch';
@@ -27,9 +27,10 @@ interface GlassStepProps extends StepProps {
 }
 
 /**
- * The glass, then "Which shape?": that glass's shapes side by side as line
- * drawings (lib/sketch/geometry.ts GLASS_VARIANTS), the bar's own marked,
- * then a field for another glass. The sketch at the top redraws with the
+ * The glass, then "Which shape?": the drink sketched in each of the bar's own
+ * glasses of that type, by their names; a bar with none of that type gets
+ * every shape (lib/sketch/geometry.ts GLASS_VARIANTS). Then a field for
+ * another glass. The sketch at the top redraws with the
  * pick. Saved as items.sketch_variant. At a venue, its own glasses are
  * listed first, and a glass it doesn't list yet asks to be added.
  */
@@ -38,8 +39,14 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
   const key = JSON.stringify(sketchLook(draft, barVariants));
   const inputs = useMemo(() => draftSketchInputs(JSON.parse(key)), [key]);
   const list = variantsOf(inputs.glass);
-  const barGlass = barGlasses?.find((g) => g.glass === inputs.glass && g.is_default) ?? null;
-  const notes = barGlass ? { [barGlass.variant ?? list[0].key]: barGlass.bar_name ? `${barGlass.bar_name} uses this` : 'Your bar uses this' } : undefined;
+  // The bar's own glasses of this type, one tile per shape (its main glass first when two share one).
+  const own = (barGlasses ?? [])
+    .filter((g) => g.glass === inputs.glass)
+    .sort((a, b) => Number(b.is_default) - Number(a.is_default))
+    .map((g) => ({ key: g.variant ?? list[0].key, label: glassTitle(g) }))
+    .filter((g, i, all) => all.findIndex((x) => x.key === g.key) === i);
+  const shapes = own.length ? own : list;
+  const shown = inputs.variant ?? list[0].key;
   // Only a glass we can name is asked about: an unknown one is drawn as a guess.
   const picked = glassFromName(draft.glass?.name) === inputs.glass ? inputs.glass : null;
   const venueGlasses = barId && barGlasses?.length ? barGlasses : null;
@@ -50,14 +57,14 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
       options={options}
       selected={draft.glass ? [draft.glass] : []}
       suggested={suggested}
-      // A shape belongs to its glass: a new glass starts from the bar's (or the default).
-      onChange={([glass]) => set({ glass: glass ?? null, glassVariant: null })}
+      // A shape belongs to its glass: one of the bar's own glasses by name is that glass; else the bar's main one (or the default).
+      onChange={([glass]) => set({ glass: glass ?? null, glassVariant: barGlasses?.find((g) => g.name && g.name.trim().toLowerCase() === glass?.name.trim().toLowerCase())?.variant ?? null })}
       mine={venueGlasses ? { has: (p) => isVenueGlassName(venueGlasses, p.name), label: 'Your glasses', restLabel: 'Other glasses' } : undefined}
     >
-      {draft.glass && list.length > 1 ? (
+      {draft.glass && (own.length || list.length > 1) ? (
         <View style={styles.shapes}>
           <Eyebrow>Which shape?</Eyebrow>
-          <ShapeTiles shapes={list} value={list.find((x) => x.key === inputs.variant)?.key ?? list[0].key} onChange={(glassVariant) => set({ glassVariant })} notes={notes} />
+          <ShapeTiles shapes={shapes} inputs={inputs} seed="new-drink" value={shown} onChange={(glassVariant) => set({ glassVariant })} />
           <Caption tone="muted">The sketch at the top redraws in the shape you pick.</Caption>
         </View>
       ) : null}

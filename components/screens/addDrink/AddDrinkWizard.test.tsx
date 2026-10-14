@@ -182,8 +182,11 @@ describe('AddDrinkWizard', () => {
     expect(screen.getByRole('button', { name: 'Next: ingredients', disabled: true })).toBeTruthy();
   });
 
-  test('the glass step offers its shapes, marks the bar\'s, and a new glass drops the pick', async () => {
-    mockBarGlasses = [{ id: 'bg', glass: 'rocks', variant: 'rocks_tapered', is_default: true, bar_name: 'Little Rye' }];
+  test('the glass step offers the bar\'s own glasses, else every shape, and a new glass drops the pick', async () => {
+    mockBarGlasses = [
+      { id: 'bg', glass: 'rocks', variant: 'rocks_tapered', name: 'Butcher Glass', is_default: true, bar_name: 'Little Rye' },
+      { id: 'bg2', glass: 'rocks', variant: 'rocks_heavy', name: 'Heavy rocks', is_default: false, bar_name: 'Little Rye' },
+    ];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Negroni' });
     useDrinkWizardStore.getState().setStep('bar-1', 'glass');
     await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
@@ -192,15 +195,19 @@ describe('AddDrinkWizard', () => {
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
     expect(screen.getByText('WHICH SHAPE?')).toBeTruthy();
-    expect(screen.getByText('Little Rye uses this')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: 'Tapered. Little Rye uses this', checked: true })).toBeTruthy();
+    // The bar's two rocks glasses, by their names, its main one picked; not every rocks shape.
+    expect(screen.getByRole('radio', { name: 'Butcher Glass', checked: true })).toBeTruthy();
+    expect(screen.queryByRole('radio', { name: 'Straight' })).toBeNull();
 
-    await fireEvent.press(screen.getByRole('radio', { name: 'Heavy base' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Heavy rocks' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.glassVariant).toBe('rocks_heavy');
-    expect(screen.getByRole('radio', { name: 'Heavy base', checked: true })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.glassVariant).toBeNull();
+    // A glass the bar has none of offers every shape.
+    await fireEvent.press(screen.getByRole('radio', { name: 'Coupe' }));
+    expect(screen.getByRole('radio', { name: 'Wide', checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Saucer' })).toBeTruthy();
     // Only someone who may change the glassware is asked to add a glass.
     await fireEvent.press(screen.getByRole('radio', { name: 'Coupe' }));
     expect(screen.queryByText('Is this one of your glasses?')).toBeNull();
