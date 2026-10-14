@@ -134,6 +134,10 @@ export const fontFamilies = {
   fraunces: 'Fraunces',
   frauncesItalic: 'FrauncesItalic',
   bricolage: 'BricolageGrotesque',
+  playfair: 'PlayfairDisplay',
+  playfairItalic: 'PlayfairDisplayItalic',
+  josefin: 'JosefinSans',
+  tenor: 'TenorSans',
   body: 'Geist',
   bodyMedium: 'GeistMedium',
   bodySemiBold: 'GeistSemiBold',
@@ -141,11 +145,18 @@ export const fontFamilies = {
   monoMedium: 'GeistMonoMedium',
 } as const;
 
-/** The display faces a venue can pick for drink and menu names. */
+/**
+ * The display faces a venue can pick for drink and menu names, in the picker's
+ * order: serifs, then sans. The last three load only when a venue uses them
+ * (components/ds/faces.ts).
+ */
 export const displayFaces = {
   instrument: { label: 'Instrument Serif', regular: fontFamilies.instrument, italic: fontFamilies.instrumentItalic },
   fraunces: { label: 'Fraunces', regular: fontFamilies.fraunces, italic: fontFamilies.frauncesItalic },
+  playfair: { label: 'Playfair Display', regular: fontFamilies.playfair, italic: fontFamilies.playfairItalic },
   bricolage: { label: 'Bricolage Grotesque', regular: fontFamilies.bricolage, italic: fontFamilies.bricolage },
+  josefin: { label: 'Josefin Sans', regular: fontFamilies.josefin, italic: fontFamilies.josefin },
+  tenor: { label: 'Tenor Sans', regular: fontFamilies.tenor, italic: fontFamilies.tenor },
 } as const;
 
 export type DisplayFace = keyof typeof displayFaces;

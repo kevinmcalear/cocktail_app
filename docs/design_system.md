@@ -38,7 +38,7 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 
 - Nothing below 13 pt. Uppercase labels get letter spacing and still stay at 13 or more.
 - Where the canvas draws 15 px (a chip, a scope or tab label, a dose, a compact button), use `variant="label"` (15/20), not 13 or 17. A dose keeps its mono face on top of it.
-- Venue display faces: Instrument Serif, Fraunces, or Bricolage Grotesque. Body and spec faces are fixed.
+- Venue display faces: Instrument Serif, Fraunces, Playfair Display, Bricolage Grotesque, Josefin Sans or Tenor Sans. The last three load only when a venue on screen uses one (`components/ds/faces.ts`); until then they draw in Instrument Serif. A new face needs a `venue_display_face` value, its metrics in `components/ds/displayClip.check.ts`, and a WOFF2 for the web. Body and spec faces are fixed.
 - Respect Dynamic Type: sizes scale, layouts wrap rather than clip.
 
 ## Shape and space

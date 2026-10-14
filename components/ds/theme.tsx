@@ -7,6 +7,7 @@ import { ACCENT_INK } from '@/lib/brandColours';
 import { accentFill, readableAccent } from '@/lib/color';
 
 import { backbarThemeProps } from './backbarThemeProps';
+import { useLoadedFace } from './faces';
 
 interface Brand {
   accent: string;
@@ -23,14 +24,16 @@ const SchemeContext = createContext<BackbarScheme | null>(null);
 /** The active venue's accent and display face. Step 2 feeds this from `bars`. */
 export function BrandProvider({ accent, displayFace, groundTint, accentText, children }: Partial<Brand> & { children: ReactNode }) {
   const parent = useContext(BrandContext);
+  // A face that loads on demand shows as Instrument Serif until its file is in.
+  const face = useLoadedFace(displayFace ?? parent.displayFace);
   const value = useMemo(
     () => ({
       accent: accent ?? parent.accent,
-      displayFace: displayFace ?? parent.displayFace,
+      displayFace: face,
       groundTint: groundTint ?? parent.groundTint,
       accentText: accentText ?? parent.accentText,
     }),
-    [accent, displayFace, groundTint, accentText, parent]
+    [accent, face, groundTint, accentText, parent]
   );
   return <BrandContext.Provider value={value}>{children}</BrandContext.Provider>;
 }

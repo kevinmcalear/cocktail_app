@@ -67,7 +67,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
   const venue = venues.find((v) => v.id === props.item.bar_id);
   return (
     <BackbarTheme>
-      <BrandProvider accent={venue?.accent ?? undefined}>
+      <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace}>
         <DrinkPage {...props} />
       </BrandProvider>
     </BackbarTheme>

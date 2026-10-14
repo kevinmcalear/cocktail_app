@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 
 import { extractColors, uploadLogo } from '@/hooks/useBarEditor';
-import type { DbDisplayFace } from '@/lib/brand';
+import { isUnknownFaceError } from '@/lib/brand';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { supabase } from '@/lib/supabase';
 
@@ -13,7 +13,8 @@ export interface VenueBrandRow {
   logo_url: string | null;
   primary_color: string | null;
   secondary_color: string | null;
-  display_face: DbDisplayFace;
+  /** A venue_display_face value; one this build doesn't know reads as Instrument Serif (lib/brand faceFromDb). */
+  display_face: string;
   ground_tint: string | null;
   short_name: string | null;
   icon_url: string | null;
@@ -44,14 +45,23 @@ export function useVenueBrand(barId: string | null | undefined) {
 
 /**
  * Save brand fields. Only venue admins can update a bar (the bars_update
- * policy), and the database checks the tint and short name again.
+ * policy), and the database checks the tint and short name again. If the
+ * database doesn't have the picked display face yet (the app reached people
+ * before its migration), the rest is saved and the venue keeps its face:
+ * resolves `{ faceKept: true }`.
  */
 export function useSaveVenueBrand(barId: string | null | undefined) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (patch: VenueBrandPatch) => {
+    mutationFn: async (patch: VenueBrandPatch): Promise<{ faceKept: boolean }> => {
       const { error } = await supabase.from('bars').update(patch).eq('id', barId!);
-      if (error) throw error;
+      if (!error) return { faceKept: false };
+      if (!patch.display_face || !isUnknownFaceError(error)) throw error;
+      const { display_face: _face, ...rest } = patch;
+      if (Object.keys(rest).length === 0) return { faceKept: true };
+      const retry = await supabase.from('bars').update(rest).eq('id', barId!);
+      if (retry.error) throw retry.error;
+      return { faceKept: true };
     },
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['venue-brand', barId] });

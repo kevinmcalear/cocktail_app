@@ -2,10 +2,10 @@ import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Body, useDs } from '@/components/ds';
+import { Body, useDisplayFaces, useDs } from '@/components/ds';
 import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
-import { backbar, displayFaces, radius, space, type, type DisplayFace } from '@/constants/tokens';
+import { backbar, radius, space, type, type DisplayFace } from '@/constants/tokens';
 import { accentFill } from '@/lib/color';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { roleLabel } from '@/lib/roles';
@@ -41,9 +41,10 @@ export function VenuesSection() {
 /** A venue without a logo: its initial in its display face's italic on its accent (tools-settings-phone). */
 function VenueTile({ name, accent, face }: { name: string; accent: string | null; face: DisplayFace }) {
   const ds = useDs();
+  const family = useDisplayFaces([face]);
   return (
     <View aria-hidden style={[styles.logo, styles.tile, { backgroundColor: accent ?? ds.c.raised }]}>
-      <Text style={[styles.initial, { fontFamily: displayFaces[face].italic, color: accent ? accentFill(accent, backbar.light.ink, backbar.dark.ink).text : ds.c.ink }]} allowFontScaling={false}>
+      <Text style={[styles.initial, { fontFamily: family(face, 'italic'), color: accent ? accentFill(accent, backbar.light.ink, backbar.dark.ink).text : ds.c.ink }]} allowFontScaling={false}>
         {name.trim().charAt(0).toUpperCase()}
       </Text>
     </View>

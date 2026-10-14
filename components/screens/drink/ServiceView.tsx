@@ -30,7 +30,7 @@ export function ServiceView({ item, angle }: { item: DatabaseItem; angle?: strin
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
   return (
     <BackbarTheme>
-      <BrandProvider accent={venue?.accent ?? undefined}>
+      <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace}>
         <View style={styles.flex}>
           <Service item={item} start={ANGLES.includes(angle as ServiceAngle) ? (angle as ServiceAngle) : 'side'} venueName={venue?.name ?? null} />
         </View>
