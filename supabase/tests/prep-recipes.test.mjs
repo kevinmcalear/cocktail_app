@@ -92,10 +92,14 @@ describe('house prep recipes', { skip: seeds.length === 0 && 'no prep recipe see
         [id, p.recipe[0].ingredient]
       );
       const bar = await db.query("INSERT INTO public.bars (name) VALUES ('Prep recipes test bar') RETURNING id");
+      // Older venue preps share a catalog name with no "kind of"; the name guard
+      // stops new ones, so make one the way a cleanup would.
+      await db.query("SELECT set_config('app.ingredient_merge', 'on', true)");
       const venue = await db.query(
         "INSERT INTO public.items (name, item_type, ingredient_role, bar_id) VALUES ($1, 'ingredient', 'prep', $2) RETURNING id",
         [p.name, bar.rows[0].id]
       );
+      await db.query("SELECT set_config('app.ingredient_merge', 'off', true)");
       await db.query(migrations[seeds.indexOf(seed)]);
       const s = await shape(id);
       assert.equal(s.lines.length, p.recipe.length);
