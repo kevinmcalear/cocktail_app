@@ -39,6 +39,8 @@ assert.equal(formatDistance(14.6), '15 km');
 assert.equal(formatDistance(1.609344, true), '1.0 mi');
 assert.equal(formatDistance(20, true), '12 mi');
 assert.equal(formatDistance(0, true), '0.1 mi');
+assert.equal(formatDistance(16673, true), '10,360 mi');
+assert.equal(formatDistance(16673), '16,673 km');
 
 assert.equal(usesMiles({ measurementSystem: 'us', regionCode: 'AU' }), true);
 assert.equal(usesMiles({ measurementSystem: 'metric', regionCode: 'US' }), false);
