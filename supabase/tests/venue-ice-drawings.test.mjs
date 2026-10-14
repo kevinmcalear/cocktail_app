@@ -1,4 +1,4 @@
-// The venue's ice in its drinks' drawings (20261019100000_venue_ice_drawings.sql):
+// The venue's ice in its drinks' drawings (20261019600000_venue_ice_drawings.sql):
 // a guessed ice gives way to the venue's nearest kind (inputs.houseIce), a spec's
 // own ice never does, and a change to the venue's Ice list redraws its drinks.
 // Runs against the local stack only: `npm run test:security`.

@@ -21,7 +21,7 @@ export const ICE_LABEL: Record<IceKind, string> = {
 
 // The kinds a guessed ice gives way to, nearest first: big cubes for cubes,
 // the crushed family for crushed. Kept in step with private.house_ice
-// (supabase/migrations/20261019100000_venue_ice_drawings.sql).
+// (supabase/migrations/20261019600000_venue_ice_drawings.sql).
 const NEAR: Record<IceKind, readonly IceKind[]> = {
   cubes: ['cubes', 'large', 'sphere', 'spear'],
   large: ['large', 'sphere', 'cubes'],
