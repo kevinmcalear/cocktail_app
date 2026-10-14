@@ -51,14 +51,14 @@ export function areaParams(area: Area): Record<string, string | number> {
   return {};
 }
 
-/** "350 m", "1.2 km", "14 km"; or in miles ("0.2 mi", "9 mi") where people use them. */
+/** "350 m", "1.2 km", "14 km", "16,673 km"; or in miles ("0.2 mi", "9 mi") where people use them. */
 export function formatDistance(km: number, imperial = false): string {
   if (imperial) {
     const mi = Math.max(km / 1.609344, 0.1);
-    return `${mi < 10 ? mi.toFixed(1) : Math.round(mi)} mi`;
+    return `${mi < 10 ? mi.toFixed(1) : Math.round(mi).toLocaleString('en')} mi`;
   }
   if (km < 1) return `${Math.max(Math.round((km * 1000) / 50) * 50, 50)} m`;
-  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
+  return `${km < 10 ? km.toFixed(1) : Math.round(km).toLocaleString('en')} km`;
 }
 
 /** Miles for US and UK habits. Browsers don't say, so the region decides there. */
@@ -108,9 +108,9 @@ export function peopleCount(n: number): string {
   return n === 1 ? '1 person' : `${n} people`;
 }
 
-/** "3 people ranked", or "Not ranked yet" for a bar on Cocktail nobody has ranked. */
-export function rankedCount(n: number): string {
-  return n ? `${peopleCount(n)} ranked` : 'Not ranked yet';
+/** "3 people ranked"; null for a bar nobody has ranked, which says nothing about ranking. */
+export function rankedCount(n: number): string | null {
+  return n ? `${peopleCount(n)} ranked` : null;
 }
 
 /** The note over early bars: some people ranking them, or nobody yet. */

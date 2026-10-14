@@ -66,14 +66,10 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   const away = facts ? awayFrom(me, facts, usesMiles(getLocales()[0])) : null;
   const target = directionsTarget(facts, me);
   const count = pin.drinks ?? drinks.length;
-  const score = pin.closed ? (
-    <Tag label={pin.closed} />
-  ) : pin.score !== null ? (
-    <RowScore score={pin.score} detail={pin.rankers ? `${pin.rankers} ranked` : null} />
-  ) : (
-    <Caption tone="muted">{pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : 'Not ranked yet'}</Caption>
-  );
-  const said = pin.closed ? pin.closed : pin.score !== null ? `Score ${formatScore(pin.score)}, ${pin.rankers} ranked` : pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : 'Not ranked yet';
+  // A score or Closed sits at the right; an early bar says so under the place, and an unranked one says nothing.
+  const score = pin.closed ? <Tag label={pin.closed} /> : pin.score !== null ? <RowScore score={pin.score} detail={pin.rankers ? `${pin.rankers} ranked` : null} /> : null;
+  const early = !pin.closed && pin.score === null && pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : null;
+  const said = pin.closed ? pin.closed : pin.score !== null ? `Score ${formatScore(pin.score)}, ${pin.rankers} ranked` : pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : null;
 
   if (hero) {
     // The drink, then the bar it's at: a row that opens the bar.
@@ -106,13 +102,14 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
 
   const bar = (
     <View style={styles.cardRow}>
-      <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${place || 'Bar'}. ${said}`}>
+      <View style={styles.cardRow} accessible accessibilityLabel={[`${pin.name}, ${place || 'Bar'}`, said].filter(Boolean).join('. ')}>
         <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={48} />
         <View style={styles.flex}>
-          <Headline numberOfLines={1}>{pin.name}</Headline>
+          <Headline numberOfLines={2}>{pin.name}</Headline>
           <Caption tone="muted" numberOfLines={1}>
             {place || 'Bar'}
           </Caption>
+          {early ? <Caption tone="muted">{early}</Caption> : null}
         </View>
         {score}
       </View>
@@ -155,10 +152,12 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
       {facts$}
       <BarTopDrinks barId={pin.id} />
       <View style={[styles.cardActions, { borderTopColor: ds.c.line }]}>
-        {!pin.closed && count ? <Caption tone="muted" style={[styles.flex, styles.count]}>{`${drinkCount(count)} here`}</Caption> : <View style={styles.flex} />}
-        <Button label="Close" variant="ghost" size="sm" onPress={onClose} />
-        <DirectionsButton target={target} size="sm" />
-        <Button label="Open bar" size="sm" onPress={openBar} />
+        {!pin.closed && count ? <Caption tone="muted" style={styles.count}>{`${drinkCount(count)} here`}</Caption> : <View style={styles.count} />}
+        <View style={styles.buttons}>
+          <Button label="Close" variant="ghost" size="sm" onPress={onClose} />
+          <DirectionsButton target={target} size="sm" />
+          <Button label="Open bar" size="sm" onPress={openBar} />
+        </View>
       </View>
     </Surface>
   );
@@ -193,9 +192,10 @@ const styles = StyleSheet.create({
   picked: { borderWidth: 1, paddingVertical: space.md + 2, paddingHorizontal: space.lg, gap: space.sm + 2 },
   cardRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
   facts: { gap: space.xs },
-  // Wraps to a word a line beside the buttons, as drawn, rather than to a letter a line.
-  count: { flexBasis: space.xxl + space.md },
-  cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm + 2 },
+  // The count beside the buttons, as drawn; in a narrow column the buttons drop under it together rather than leaving Open bar alone.
+  count: { flexGrow: 1 },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, marginLeft: 'auto' },
+  cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm + 2 },
   // Wraps on a narrow phone: Directions and Open bar drop under All results rather than off the edge.
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   right: { flexDirection: 'row', gap: space.sm },

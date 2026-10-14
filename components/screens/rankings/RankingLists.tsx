@@ -156,7 +156,7 @@ export function EarlyList({ rows, love = false }: { rows: DiscoverRow[]; love?: 
         <View key={r.venue_profile_id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
           <PressableScale
             role="link"
-            accessibilityLabel={`${r.display_name}, ${placeOf(r)}. ${rankedCount(r.rankers)}`}
+            accessibilityLabel={[`${r.display_name}, ${placeOf(r)}`, rankedCount(r.rankers)].filter(Boolean).join('. ')}
             onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
             style={styles.link}
           >
@@ -167,8 +167,7 @@ export function EarlyList({ rows, love = false }: { rows: DiscoverRow[]; love?: 
                 {placeOf(r)}
               </Caption>
             </View>
-            {/* With the heart beside it, "Not ranked yet" is left to the list's note, so the name has room. */}
-            {love && !r.rankers ? null : <Caption tone="muted">{rankedCount(r.rankers)}</Caption>}
+            {r.rankers ? <Caption tone="muted">{rankedCount(r.rankers)}</Caption> : null}
           </PressableScale>
           {love ? <LoveBarButton profileId={r.venue_profile_id} name={r.display_name} /> : null}
         </View>

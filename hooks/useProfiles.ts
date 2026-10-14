@@ -49,13 +49,15 @@ export interface Profile {
   headline_position_id: string | null;
   /** A maker's: what it makes (bottles, ice, glassware...). Empty for bars and people. */
   makes: string[];
-  /** A maker's: the cities it delivers to. */
+  /** A maker's or supplier's: the cities it delivers to. */
   serves: string[];
+  /** A supplier's: what it supplies (bottles, ice, produce...). Empty for everyone else. */
+  supplies: string[];
   /** A maker's group (Tanqueray is part of Diageo), set by moderators. */
   part_of_profile_id: string | null;
 }
 
-const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, had_mode, bars_mode, made_mode, page_visibility, tagline, headline_position_id, makes, serves, part_of_profile_id';
+const COLUMNS = 'id, kind, handle, display_name, bio, avatar_url, website, instagram, social_links, locality, city, country_code, bar_id, is_public, is_claimed, is_closed, closed_year, had_mode, bars_mode, made_mode, page_visibility, tagline, headline_position_id, makes, serves, supplies, part_of_profile_id';
 
 export const isUnclaimed = (p: Pick<Profile, 'is_claimed'>) => !p.is_claimed;
 

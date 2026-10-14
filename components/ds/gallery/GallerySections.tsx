@@ -135,7 +135,7 @@ export function GallerySections() {
         {[
           { name: 'Dirty Martini', caption: rankCaption({ position: 2, of: 11, name: 'Martini', where: 'near you', rankers: 23 }), score: 8.7, detail: 'Bar 9.1' },
           { name: 'Whiskey Sour', caption: 'Classic · Make the Simple syrup first', score: 8.4, detail: '92% match' },
-          { name: 'Bourbon Collins', caption: 'Not ranked yet: % match on its own', score: null, detail: '86% match' },
+          { name: 'Bourbon Collins', caption: 'No score: % match on its own', score: null, detail: '86% match' },
           { name: 'Little Rye', caption: 'Cocktail bar · Fitzroy', score: 9.1, detail: '212 ranked' },
         ].map((r) => (
           <View key={r.name} style={[styles.scoreRow, { borderBottomColor: ds.c.line }]}>
