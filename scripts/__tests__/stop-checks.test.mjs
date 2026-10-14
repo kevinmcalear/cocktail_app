@@ -26,12 +26,13 @@ const git = (cwd, ...args) =>
   });
 
 const fake = (name, marker) =>
-  `#!/bin/sh\necho ${name} >> "$STOP_CHECKS_LOG"\nif grep -rl ${marker} src; then echo "${name}: found ${marker}"; exit 1; fi\n`;
+  `#!/bin/sh\necho ${name} >> "$STOP_CHECKS_LOG"\nif grep -rl ${marker} lib scripts; then echo "${name}: found ${marker}"; exit 1; fi\n`;
 
 function makeRepo(dir, { withNodeModules }) {
   git(root, 'init', '-b', 'feat/x', dir);
-  mkdirSync(join(dir, 'src'));
-  writeFileSync(join(dir, 'src', 'a.ts'), 'export const a = 1;\n');
+  mkdirSync(join(dir, 'lib'));
+  mkdirSync(join(dir, 'scripts'));
+  writeFileSync(join(dir, 'lib', 'a.ts'), 'export const a = 1;\n');
   writeFileSync(join(dir, '.gitignore'), 'node_modules\n');
   writeFileSync(join(dir, 'package.json'), JSON.stringify({ scripts: { 'check:design': 'sh ./design.sh' } }));
   writeFileSync(join(dir, 'design.sh'), fake('check:design', 'DESIGN_ERROR'));
@@ -84,8 +85,8 @@ test('no code changes: nothing runs', () => {
 
 test('a failing check blocks with the check name and its output', () => {
   rmSync(log, { force: true });
-  write('src/a.ts', 'export const a: number = "TYPE_ERROR";\n');
-  const r = runHook(join(repo, 'src')); // cwd below the repo root still resolves it
+  write('lib/a.ts', 'export const a: number = "TYPE_ERROR";\n');
+  const r = runHook(join(repo, 'lib')); // cwd below the repo root still resolves it
   assert.equal(r.status, 0, 'blocks through JSON, not the exit code');
   const out = JSON.parse(r.stdout);
   assert.equal(out.decision, 'block');
@@ -95,15 +96,39 @@ test('a failing check blocks with the check name and its output', () => {
   assert.deepEqual(runs(), ['tsc', 'eslint', 'check:design'], 'every check runs so all failures come back at once');
 });
 
-test('stopping again with the same failing changes is let through instead of looping', () => {
-  const r = runHook(repo, { active: true });
-  assert.equal(r.status, 0);
-  assert.equal(r.stdout, '');
+test('the same failing changes are reported once, not re-checked on every stop', () => {
+  rmSync(log, { force: true });
+  for (const active of [true, false]) {
+    const r = runHook(repo, { active });
+    assert.equal(r.status, 0);
+    assert.equal(r.stdout, '');
+  }
+  assert.deepEqual(runs(), []);
+});
+
+test('after three blocks in a row Claude is let stop even if its edits keep failing', () => {
+  for (let i = 1; i <= 3; i++) {
+    write('lib/a.ts', `export const a: number = "TYPE_ERROR ${i}";\n`);
+    assert.equal(JSON.parse(runHook(repo, { active: i > 1 }).stdout).decision, 'block', `block ${i}`);
+  }
+  write('lib/a.ts', 'export const a: number = "TYPE_ERROR 4";\n');
+  assert.equal(runHook(repo, { active: true }).stdout, '', 'fourth stop in the same turn');
+  write('lib/a.ts', 'export const a: number = "TYPE_ERROR 5";\n');
+  assert.equal(JSON.parse(runHook(repo).stdout).decision, 'block', 'a new turn starts the count again');
+});
+
+test('the design ratchet only runs when a file it covers changed', () => {
+  write('lib/a.ts', 'export const a = 1;\n');
+  write('scripts/tool.mjs', 'export const t = 1;\n');
+  rmSync(log, { force: true });
+  assert.equal(runHook(repo).stdout, '');
+  assert.deepEqual(runs(), ['tsc', 'eslint']);
+  rmSync(join(repo, 'scripts', 'tool.mjs'));
 });
 
 test('passing changes are fingerprinted and not checked again until they change', () => {
-  write('src/a.ts', 'export const a = 2;\n');
-  write('src/new.ts', 'export const b = 1;\n'); // untracked files count
+  write('lib/a.ts', 'export const a = 2;\n');
+  write('lib/new.ts', 'export const b = 1;\n'); // untracked files count
   rmSync(log, { force: true });
   assert.equal(runHook(repo).stdout, '');
   assert.deepEqual(runs(), ['tsc', 'eslint', 'check:design']);
@@ -112,14 +137,14 @@ test('passing changes are fingerprinted and not checked again until they change'
   assert.equal(runHook(repo).stdout, '');
   assert.deepEqual(runs(), [], 'same fingerprint: skipped');
 
-  write('src/new.ts', 'export const b = "LINT_ERROR";\n');
+  write('lib/new.ts', 'export const b = "LINT_ERROR";\n');
   const out = JSON.parse(runHook(repo).stdout);
   assert.match(out.reason, /eslint failed/);
-  assert.match(out.reason, /src\/new\.ts/, 'eslint is given the changed files');
+  assert.match(out.reason, /lib\/new\.ts/, 'eslint is given the changed files');
 });
 
 test('exits 0 without checking when node_modules is missing', () => {
-  writeFileSync(join(bare, 'src', 'a.ts'), 'export const a: number = "TYPE_ERROR DESIGN_ERROR";\n');
+  writeFileSync(join(bare, 'lib', 'a.ts'), 'export const a: number = "TYPE_ERROR DESIGN_ERROR";\n');
   rmSync(log, { force: true });
   const r = runHook(bare);
   assert.equal(r.status, 0);

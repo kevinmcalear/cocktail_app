@@ -9,7 +9,8 @@
 #
 # Cheap by design:
 #   - no changed .ts/.tsx/.js/.mjs files: exit at once;
-#   - the same changes already passed (fingerprint under the git dir): skip;
+#   - the same changes already passed, or already failed and were reported
+#     (fingerprints under the git dir): skip;
 #   - tsc runs with --incremental, its build info kept under the git dir, so a
 #     warm run takes a couple of seconds instead of a full check.
 #
@@ -22,7 +23,7 @@ run() {
   local payload cwd top active
   payload=$(cat)
   command -v node >/dev/null 2>&1 || return 0
-  # Line 1: stop_hook_active (Claude is already continuing because of a block), line 2: cwd.
+  # Line 1: stop_hook_active (Claude is continuing because of a block), line 2: cwd.
   payload=$(printf '%s' "$payload" | node -e '
     let s = "";
     process.stdin.on("data", (d) => (s += d)).on("end", () => {
@@ -38,12 +39,13 @@ run() {
 
   local code_re='\.(ts|tsx|js|mjs)$'
   local changed untracked
-  changed=$(git diff --name-only HEAD 2>/dev/null) || return 0
-  untracked=$(git ls-files --others --exclude-standard)
+  # quotePath off: otherwise a non-ASCII name comes back quoted and escaped.
+  changed=$(git -c core.quotePath=false diff --name-only HEAD 2>/dev/null) || return 0
+  untracked=$(git -c core.quotePath=false ls-files --others --exclude-standard)
   printf '%s\n%s\n' "$changed" "$untracked" | grep -Eq "$code_re" || return 0
 
   # Fingerprint: HEAD, the tracked diff, and each untracked file's name and content.
-  local fingerprint ok_file blocked_file
+  local fingerprint ok_file blocked_file blocked_fp="" streak=0
   fingerprint=$(
     {
       git rev-parse HEAD
@@ -59,17 +61,24 @@ run() {
   blocked_file=$(git rev-parse --path-format=absolute --git-path claude-stop-blocked)
   [ "$(cat "$ok_file" 2>/dev/null)" = "$fingerprint" ] && return 0
 
-  # Already blocked once on exactly these changes and Claude stopped again
-  # without touching anything: let it stop rather than loop forever.
-  if [ "$active" = true ] && [ "$(cat "$blocked_file" 2>/dev/null)" = "$fingerprint" ]; then
-    return 0
-  fi
+  # These exact changes already failed and Claude was told: don't run the
+  # checks or block again until something changes.
+  [ -f "$blocked_file" ] && read -r blocked_fp streak <"$blocked_file"
+  [ "$blocked_fp" = "$fingerprint" ] && return 0
+  # Sent back three times in a row this turn and still failing (maybe the
+  # failure isn't in its diff at all): let it stop rather than loop.
+  [ "$active" = true ] || streak=0
+  [ "${streak:-0}" -ge 3 ] && return 0
 
   # Changed files that still exist, for eslint (it reports its own ignores).
-  local lint_files=()
+  local lint_files=() ratchet=false
   while IFS= read -r f; do
     [ -f "$f" ] && lint_files+=("$f")
   done < <(printf '%s\n%s\n' "$changed" "$untracked" | grep -E "$code_re" | sort -u)
+  # The ratchet lints the whole tree (a few seconds), so run it only when a
+  # file it covers, or the ratchet itself, changed.
+  printf '%s\n%s\n' "$changed" "$untracked" |
+    grep -Eq '^((app|components|hooks|lib|store|ctx)/.*\.tsx?|scripts/design-ratchet\..*)$' && ratchet=true
 
   local out failures=""
   out=$(mktemp) || return 0
@@ -85,7 +94,7 @@ run() {
   if [ ${#lint_files[@]} -gt 0 ]; then
     check eslint node_modules/.bin/eslint --no-warn-ignored -- "${lint_files[@]}"
   fi
-  check check:design npm run --silent check:design
+  [ "$ratchet" = true ] && check check:design npm run --silent check:design
   rm -f "$out"
 
   if [ -z "$failures" ]; then
@@ -93,7 +102,7 @@ run() {
     rm -f "$blocked_file"
     return 0
   fi
-  printf '%s\n' "$fingerprint" >"$blocked_file"
+  printf '%s %s\n' "$fingerprint" "$((${streak:-0} + 1))" >"$blocked_file"
   REASON="CI checks fail on your uncommitted changes. Fix them before finishing (AGENTS.md, Enforced by CI).
 
 $failures" node -e 'process.stdout.write(JSON.stringify({decision:"block",reason:process.env.REASON.trimEnd()})+"\n")'

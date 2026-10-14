@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-checks.sh\"",
+            "command": "[ ! -f \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-checks.sh\" ] || bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-checks.sh\"",
             "timeout": 180
           }
         ]
