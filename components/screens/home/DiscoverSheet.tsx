@@ -28,11 +28,13 @@ export interface FiltersSheetProps {
   bars: number | null;
   /** Closed bars in the area, and whether they're shown. */
   closed: { count: number; shown: boolean; onShow: (on: boolean) => void };
+  /** Drinks from past menus: off, the list is only what's on a menu now. */
+  past: { shown: boolean; onShow: (on: boolean) => void };
   onClose: () => void;
 }
 
-/** Styles, spirits and tastes, several at once, and closed bars: the filters, wherever they're shown. */
-export function FilterGroups({ kinds, onChange, closed }: Pick<FiltersSheetProps, 'kinds' | 'onChange' | 'closed'>) {
+/** Styles, spirits and tastes, several at once, past menus and closed bars: the filters, wherever they're shown. */
+export function FilterGroups({ kinds, onChange, closed, past }: Pick<FiltersSheetProps, 'kinds' | 'onChange' | 'closed' | 'past'>) {
   const toggle = (id: string) => onChange(kinds.includes(id) ? kinds.filter((k) => k !== id) : [...kinds, id]);
   return (
     <>
@@ -50,18 +52,19 @@ export function FilterGroups({ kinds, onChange, closed }: Pick<FiltersSheetProps
       <View style={styles.group}>
         <Caption tone="muted">History</Caption>
         <View style={styles.chips}>
+          <Chip multi quiet label="Past menus" selected={past.shown} onPress={() => past.onShow(!past.shown)} />
           <Chip multi quiet label={closed.count ? `Closed bars · ${closed.count}` : 'Closed bars'} selected={closed.shown} onPress={() => closed.onShow(!closed.shown)} />
         </View>
-        <Caption tone="muted">Bars that have shut, kept for their history. Search finds them either way.</Caption>
+        <Caption tone="muted">Drinks bars no longer pour, and bars that have shut, kept for their history. Search finds them either way.</Caption>
       </View>
     </>
   );
 }
 
 /** Clear, and "Show 12 bars" to close: the filters sheet's buttons, and the options sheet's. */
-export function filterButtons({ onChange, closed, bars, onClose }: Omit<FiltersSheetProps, 'kinds'>) {
+export function filterButtons({ onChange, closed, past, bars, onClose }: Omit<FiltersSheetProps, 'kinds'>) {
   return {
-    action: <Button label="Clear" variant="ghost" onPress={() => (onChange([]), closed.onShow(false))} />,
+    action: <Button label="Clear" variant="ghost" onPress={() => (onChange([]), closed.onShow(false), past.onShow(false))} />,
     footer: <Button label={bars === null ? 'Show bars' : `Show ${bars} ${bars === 1 ? 'bar' : 'bars'}`} onPress={onClose} />,
   };
 }

@@ -14,11 +14,23 @@ Expo SDK 58 (RN 0.88.0-rc.3, React 19.3, React Compiler), Expo Router, Tamagui 2
 ## How we work
 
 - **Branch, PR, CI, Kevin merges.** Never commit or push to `main`; a hook in `.claude/settings.json` blocks it. One step per PR; stack PRs when steps depend on each other.
+- **Review your own branch first:** before asking for review, run `/code-review` on the branch and fix the findings you confirm.
 - **Verify the real thing before asking for review:** web at phone and desktop widths, plus the iOS simulator and Android when native code or layout changes. Put screenshots in the PR. Local recipes: [docs/dev_flow.md](docs/dev_flow.md#verify).
 - **Human-gated:** database migrations, RLS, auth, `lib/roles.ts`, and deploying edge functions. Build and test these against the local Supabase stack only; never push them to production without Kevin's explicit OK in the conversation. A migration merged to main (which needs his `human-approved` label) is applied to production by the Deploy migrations workflow; that label is the OK. Edge functions are still deployed by hand.
 - **Public repo:** no emails, user data, secrets or unfixed security details in code, commits or PR text.
 - **One app, no old UI.** The Back Bar redesign is the app; the old screens and the redesign flag were removed in step 9. New screens build from `components/ds`. A large change that must reach people gradually can use a PostHog flag, but remove the old path in the PR that makes the new one the default.
 - **Parallel work:** foundation pieces (tokens, shared components, navigation) go in order in one session. Independent screens can be built in parallel worktrees once those land.
+
+## Working within the usage budget
+
+Claude usage is the scarce resource here, not CI minutes (the repo is public, so Actions are free). Every call re-reads the whole conversation, so a long session or a waiting loop costs far more than it looks.
+
+- **Don't watch CI.** No `sleep`, `until` or repeated `gh pr checks` loops. Open the PR, call the ccd_pr tools once, and let the app's CI monitor wake the session when checks finish.
+- **Check locally only what you touched:** `npm run typecheck` and the tests nearest your change. Leave the full suite to CI. Run `npm run test:security` (it starts Supabase) only when the change touches `supabase/` or a file those tests read.
+- **Subagents default to Sonnet** (`CLAUDE_CODE_SUBAGENT_MODEL` in `.claude/settings.json`). Use them for searching, reading and data gathering. Pass `model: "opus"` only for a subagent that writes tricky code or makes a judgment call.
+- **One session per piece of work, not per fix.** Related fixes to the same PR or screen go in the same session. When a session passes about 300k tokens of context, write a short handoff and start fresh rather than carrying the history.
+- **Screenshots are expensive.** Prefer `read_page` / `get_page_text` to check text and structure; take one screenshot for the PR at the end.
+- **Store builds only for native changes.** A JS-only change ships with `eas update`; run `eas build` only when native config, a native dependency or the app version changes.
 
 ## Enforced by CI
 
@@ -57,4 +69,5 @@ Lazy means efficient, not careless. Before writing code, stop at the first rung 
 ## Agent setup
 
 - The Expo plugin for Claude Code is enabled for this project in `.claude/settings.json`: it adds Expo Skills and the Expo MCP server (docs, EAS builds, simulator screenshots). Run `/mcp` once to sign in to Expo.
+- A Stop hook (`.claude/hooks/stop-checks.sh`) runs typecheck, eslint on the changed files and `npm run check:design` when a turn ends with uncommitted code changes, and sends Claude back to fix any failure. It skips changes that already passed and worktrees without `node_modules`.
 - The Supabase MCP connector is read-only here. Use the linked `supabase` CLI for writes, and only with Kevin's OK.

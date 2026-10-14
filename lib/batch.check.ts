@@ -117,6 +117,8 @@ assert.equal(leaveOutFor('Lime juice', 'ml', null), 'citrus', 'undecided lines k
 assert.equal(leaveOutFor('Lime juice', 'ml', true), 'citrus', 'a decided station line keeps the reason its name gives');
 assert.equal(leaveOutFor('Simple syrup', 'ml', true), 'station');
 assert.equal(leaveOutFor('Lemon', 'twist', false), null);
+assert.equal(leaveOutFor('Lemon twist', '', null), 'garnish', 'a bare count of a twist never goes in the bottle');
+assert.equal(leaveOutFor('Lemon peel tincture', 'ml', null), null, 'a measured line is not a garnish by its name');
 assert.ok(isGarnishUnit('twist') && !isGarnishUnit('ml'));
 
 // Dilution follows the drink: the venue's figure, and bottled drinks get water too.

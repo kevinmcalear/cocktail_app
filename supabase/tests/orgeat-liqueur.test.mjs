@@ -35,6 +35,10 @@ const jobs = () => db.query('SELECT count(*)::int AS n FROM private.item_flavor_
 // Each test runs in a transaction that's rolled back, so they don't touch each other.
 const inTransaction = async (fn) => {
   await db.query('BEGIN');
+  // The local flavour worker (cron, every 30 s) finishes and deletes jobs while
+  // a test runs, so the queue count can drop under us. Hold other writers off
+  // the queue until the rollback: the count then moves only if we queue a job.
+  await db.query('LOCK TABLE private.item_flavor_jobs IN EXCLUSIVE MODE');
   try {
     await fn();
   } finally {

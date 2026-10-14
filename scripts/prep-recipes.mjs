@@ -71,7 +71,7 @@ export function build(seed) {
   for (const p of preps) {
     const keeps = p.keeps ?? {};
     prepRows.push(
-      `(${q(p.name)}, ${q(p.kind_of ?? null)}, ${bool(p.kind_of_force)}, ${q(p.description)}, ${num(p.abv)}, ${num(p.yield?.amount)}, ${q(p.yield?.unit)}, ${num(keeps.hours)}, ${q(keeps.storage)}, ${arr(p.actions)}, ${bool(p.replace)})`,
+      `(${q(p.name)}, ${q(p.kind_of ?? null)}, ${bool(p.kind_of_force)}, ${q(p.description)}, ${num(p.abv)}, ${bool('abv' in p)}, ${num(p.yield?.amount)}, ${q(p.yield?.unit)}, ${num(keeps.hours)}, ${q(keeps.storage)}, ${arr(p.actions)}, ${bool(p.replace)})`,
     );
     for (const alias of p.aliases ?? []) aliasRows.push(`(${q(p.name)}, ${q(alias)})`);
     (p.recipe ?? []).forEach((l, i) => {
@@ -98,7 +98,7 @@ CREATE TEMP TABLE "flavor_jobs_before" AS SELECT * FROM "private"."item_flavor_j
 
 CREATE TEMP TABLE stub_in (name text PRIMARY KEY, description text, kind_of text);
 CREATE TEMP TABLE prep_in (
-    name text PRIMARY KEY, kind_of text, kind_of_force boolean NOT NULL, description text, abv numeric,
+    name text PRIMARY KEY, kind_of text, kind_of_force boolean NOT NULL, description text, abv numeric, has_abv boolean NOT NULL,
     yield_amount numeric, yield_unit text, keeps_hours integer, storage text, actions text[] NOT NULL, replace boolean NOT NULL
 );
 CREATE TEMP TABLE alias_in (name text NOT NULL, alias text NOT NULL);
@@ -189,6 +189,13 @@ UPDATE public.items i SET description = r.description
  WHERE i.id = r.id AND r.description IS NOT NULL
    AND (NULLIF(btrim(i.description), '') IS NULL OR (r.replace AND i.description IS DISTINCT FROM r.description));
 
+-- A corrected recipe brings its strength when a source gives one; an unknown
+-- one only clears a 0 (orgeat with brandy in it isn't 0%).
+UPDATE public.items i SET abv = r.abv
+  FROM prep_row r
+ WHERE i.id = r.id AND r.replace AND r.has_abv AND i.abv IS DISTINCT FROM r.abv
+   AND (r.abv IS NOT NULL OR i.abv = 0);
+
 -- Other names people write it under, when nobody else has them.
 INSERT INTO public.ingredient_aliases (key, item_id)
 SELECT DISTINCT ON (public.ingredient_key(a.alias)) public.ingredient_key(a.alias), r.id
@@ -231,10 +238,11 @@ UPDATE public.items i SET serve_ml = NULL, serve_abv = NULL
 INSERT INTO public.item_prep AS ip (item_id, yield_amount, yield_unit, shelf_life_hours, storage, actions)
 SELECT r.id, r.yield_amount, r.yield_unit, r.keeps_hours, r.storage, r.actions FROM prep_row r
 ON CONFLICT (item_id) DO UPDATE SET
-    yield_amount = CASE WHEN EXCLUDED.yield_amount IS NOT NULL AND (ip.yield_amount IS NULL OR (SELECT r.replace FROM prep_row r WHERE r.id = ip.item_id))
-                        THEN EXCLUDED.yield_amount ELSE ip.yield_amount END,
-    yield_unit = CASE WHEN EXCLUDED.yield_amount IS NOT NULL AND (ip.yield_amount IS NULL OR (SELECT r.replace FROM prep_row r WHERE r.id = ip.item_id))
-                      THEN EXCLUDED.yield_unit ELSE ip.yield_unit END,
+    -- A corrected recipe's yield is its own, even none: the old one was for other amounts.
+    yield_amount = CASE WHEN (SELECT r.replace FROM prep_row r WHERE r.id = ip.item_id) THEN EXCLUDED.yield_amount
+                        WHEN ip.yield_amount IS NULL THEN EXCLUDED.yield_amount ELSE ip.yield_amount END,
+    yield_unit = CASE WHEN (SELECT r.replace FROM prep_row r WHERE r.id = ip.item_id) THEN EXCLUDED.yield_unit
+                      WHEN ip.yield_amount IS NULL THEN EXCLUDED.yield_unit ELSE ip.yield_unit END,
     shelf_life_hours = CASE WHEN (SELECT r.replace FROM prep_row r WHERE r.id = ip.item_id) THEN EXCLUDED.shelf_life_hours
                             ELSE COALESCE(ip.shelf_life_hours, EXCLUDED.shelf_life_hours) END,
     storage = CASE WHEN EXCLUDED.storage IS NOT NULL AND (NULLIF(btrim(ip.storage), '') IS NULL OR (SELECT r.replace FROM prep_row r WHERE r.id = ip.item_id))

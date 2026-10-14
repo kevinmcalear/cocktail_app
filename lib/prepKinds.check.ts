@@ -1,7 +1,7 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { flavourWords, guessKind, keepsText, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromTechnique, prepPhrase, prepYield, recipeEyebrow, slotMessage, startPrep, wayOf, withFacts } from './prepKinds';
+import { flavourWords, guessKind, keepsText, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, wayOf, withFacts } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
 import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
@@ -221,4 +221,24 @@ for (const tech of [t('fat-wash'), t('milk-wash'), t('nitrous-infusion'), t('col
   assert.deepEqual(JSON.parse(JSON.stringify(d)), JSON.parse(JSON.stringify(d)));
   for (const l of d.lines) if (/^(spirit|melted fat|solids|batch|flavour)$/i.test(l.name)) assert.ok(l.slot, `${tech.id}: ${l.name} is a stand-in`);
 }
+// A catalog recipe as the start of a house version: parts of the first weighed
+// line, its own amount for a counted one, steps and keep carried over.
+{
+  const d = prepFromCatalog('Grapefruit cordial', {
+    lines: [
+      { id: 'gf', name: 'Grapefruit juice', amount: 500, unit: 'g', note: 'fine strained', optional: false },
+      { id: 'su', name: 'Sugar', amount: 450, unit: 'g', note: null, optional: false },
+      { id: 'pe', name: 'Grapefruit peel', amount: 2, unit: 'each', note: null, optional: false },
+    ],
+    card: { prep: { shelf_life_hours: 120, lead_time_minutes: null, storage: 'Fridge, sealed bottle', actions: ['Syrup'] }, steps: [{ body: 'Warm and stir.', timer_seconds: null }] },
+  });
+  assert.equal(d.kind, 'cordial');
+  assert.deepEqual(prepAmounts(d).map((a) => a.amount), [500, 450, 2]);
+  assert.deepEqual(d.lines.map((l) => l.id), ['gf', 'su', 'pe']);
+  assert.equal(d.lines[0].note, 'fine strained');
+  assert.equal(d.keepsHours, 120);
+  assert.deepEqual(d.steps, [{ body: 'Warm and stir.', timer_seconds: null }]);
+}
+assert.equal(sourceSite('https://www.imbibemagazine.com/recipe/gomme-syrup-recipe'), 'imbibemagazine.com');
+assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
 console.log('prepKinds technique checks passed');

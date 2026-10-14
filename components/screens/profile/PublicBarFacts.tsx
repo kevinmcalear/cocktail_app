@@ -4,6 +4,7 @@ import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { LineGlyph } from '@/components/ui/lineGlyphs';
 import { STATUS } from '@/constants/palette';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
@@ -12,6 +13,7 @@ import { hoursStatus } from '@/lib/barHours';
 import { readableAccent } from '@/lib/color';
 import { awayFrom } from '@/lib/directions';
 import { usesMiles } from '@/lib/nearMe';
+import { instagramUrl, normalizeInstagram } from '@/lib/profiles';
 import { useLastPlace } from '@/store/useLastPlace';
 
 import { directionsTarget } from '../bar/BarFactLines';
@@ -30,12 +32,13 @@ export function hoursSourceLine(claimed: boolean, updatedAt: string | null): str
 /**
  * Hours and location on a bar's page (ppl-pub-bar-desktop aside, a card; on a
  * phone, loose under the name, ppl-bar-top): "Open now · until 1am" with Hours
- * (this week's hours, in the hours sheet), the address and how far, then
- * Directions (Google Maps in a new tab on the web, your maps app on a phone),
- * Call and Website three across, and where the hours came from. Typed by the
- * venue (b22 manual); nothing from Google. Nothing when the bar has none of it.
+ * (this week's hours, in the hours sheet), the address and how far, its
+ * Instagram under the address, then Directions (Google Maps in a new tab on
+ * the web, your maps app on a phone), Call and Website three across, and where
+ * the hours came from. Typed by the venue (b22 manual); nothing from Google.
+ * Nothing when the bar has none of it.
  */
-export function PublicBarFacts({ profileId }: { profileId: string }) {
+export function PublicBarFacts({ profileId, instagram }: { profileId: string; instagram?: string | null }) {
   const ds = useDs();
   const wide = useBreakpoint() !== 'phone';
   const hydrated = useIsHydrated();
@@ -44,7 +47,23 @@ export function PublicBarFacts({ profileId }: { profileId: string }) {
   // ponytail: the last near-me place, snapped to about 1 km, so the distance is rough; a live position needs the location prompt on this page.
   const from = useLastPlace((s) => s.place);
   const directions = useDirections(directionsTarget(facts, from));
-  if (!facts) return null;
+  const handle = instagram ? normalizeInstagram(instagram) : '';
+  if (!facts && !handle) return null;
+  const insta = handle ? (
+    <PressableScale role="link" accessibilityLabel={`@${handle} on Instagram`} accessibilityHint="Opens Instagram" onPress={() => void Linking.openURL(instagramUrl(handle))} style={styles.row}>
+      <LineGlyph name="instagram" size={18} color={ds.c.muted} />
+      <DsText variant="body" color={ds.accentText} style={[styles.flex, styles.text]} numberOfLines={1}>
+        {`@${handle}`}
+      </DsText>
+    </PressableScale>
+  ) : null;
+  const card = [styles.block, wide && [styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]];
+  if (!facts)
+    return (
+      <View style={card} role="region" aria-label="Instagram">
+        {insta}
+      </View>
+    );
   // The clock is read after hydration, so the static page and the first render agree.
   const status = hydrated ? hoursStatus(facts.hours, new Date(), facts.timezone) : null;
   const address = [facts.address_line, facts.locality].filter(Boolean).join(', ');
@@ -53,11 +72,11 @@ export function PublicBarFacts({ profileId }: { profileId: string }) {
   const away = awayFrom(from, facts, usesMiles(getLocales()[0]));
   const hasPoint = facts.latitude != null && facts.longitude != null;
   const source = facts.hours ? hoursSourceLine(facts.is_claimed, facts.hours_updated_at) : null;
-  if (!status && !address && !facts.phone && !facts.website) return null;
+  if (!status && !address && !facts.phone && !facts.website && !insta) return null;
   const glass = [styles.action, { backgroundColor: ds.c.glass, borderColor: ds.c.glassBorder }];
 
   return (
-    <View style={[styles.block, wide && [styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]]} role="region" aria-label="Hours and location">
+    <View style={card} role="region" aria-label="Hours and location">
       {status ? (
         <PressableScale role="button" accessibilityLabel={`${[status.state, status.detail].filter(Boolean).join(', ')}. Show this week’s hours`} onPress={() => setWeek(true)} style={styles.row}>
           <IconSymbol name="clock" size={18} color={ds.c.muted} />
@@ -80,6 +99,7 @@ export function PublicBarFacts({ profileId }: { profileId: string }) {
           </Body>
         </View>
       ) : null}
+      {insta}
       <View style={styles.actions}>
         <Button
           label="Directions"

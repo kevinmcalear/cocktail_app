@@ -183,6 +183,14 @@ describe('discover_list', () => {
     assert.equal(first.total_bars, 2);
   });
 
+  test('on now: only drinks on a menu now, and the totals count only those (20261019200000)', async () => {
+    const { data, error } = await near(users.viewer.client, { p_on_now: true });
+    assert.ifError(error);
+    assert.deepEqual(mine(data).map((r) => r.id), [ids.martini]);
+    assert.equal(data[0].total_drinks, 1);
+    assert.equal(data[0].total_bars, 1);
+  });
+
   test('a search puts name matches first and matches the bar name', async () => {
     const { data } = await near(users.viewer.client, { p_query: `martini ${run}` });
     assert.deepEqual(mine(data).map((r) => r.id), [ids.martini, ids.lineMartini]);

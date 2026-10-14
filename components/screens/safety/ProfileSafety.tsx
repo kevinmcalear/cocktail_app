@@ -17,10 +17,9 @@ export const BLOCK_EFFECT = 'You won’t see each other’s drinks, rankings or 
 /**
  * "More" on someone else's profile: report it, and for a person, block
  * them. Signed in only. Bars can be reported but not blocked: blocks are
- * between people. With `label`, a ghost button that says so ("Report or
- * block" in a bar page's actions on desktop, ppl-pub-bar-desktop) instead of the "More" icon.
+ * between people.
  */
-export function ProfileSafety({ profile, label }: { profile: Profile; label?: string }) {
+export function ProfileSafety({ profile }: { profile: Profile }) {
   const myId = useUserId();
   const { data: userId } = useProfileUserId(profile.kind === 'person' ? profile.id : null);
   const [sheet, setSheet] = useState<'menu' | 'report' | 'block' | null>(null);
@@ -32,11 +31,7 @@ export function ProfileSafety({ profile, label }: { profile: Profile; label?: st
 
   return (
     <>
-      {label ? (
-        <Button label={label} variant="ghost" accessibilityLabel={`${label} ${name}`} onPress={() => setSheet('menu')} />
-      ) : (
-        <GlassButton accessibilityLabel={`More for ${name}: ${canBlock ? 'report or block' : 'report'}`} icon="ellipsis" onPress={() => setSheet('menu')} />
-      )}
+      <GlassButton accessibilityLabel={`More for ${name}: ${canBlock ? 'report or block' : 'report'}`} icon="ellipsis" onPress={() => setSheet('menu')} />
       {sheet === 'menu' ? (
         <MenuSheet visible onClose={() => setSheet(null)} title={profile.display_name} subtitle={name}>
           <Button label={`Report ${name}`} icon="flag" variant="secondary" onPress={() => setSheet('report')} />

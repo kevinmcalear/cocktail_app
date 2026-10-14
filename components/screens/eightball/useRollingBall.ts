@@ -6,7 +6,7 @@ import { useAnimatedStyle, useFrameCallback, useSharedValue, withSequence, withS
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { springs } from '@/constants/tokens';
-import { AT_REST, isStill, MAX_FLING, MIN_HIT, screenGravity, stepRoll, type Bounds } from '@/lib/eightBallRoll';
+import { AT_REST, isStill, MAX_FLING, MIN_HIT, NO_SHAKE, screenGravity, stepRoll, stepShake, type Bounds } from '@/lib/eightBallRoll';
 
 import { BALL } from './BallArt';
 import { useTilt } from './useTilt';
@@ -23,13 +23,14 @@ const buzz = (hard: boolean) => void Haptics.impactAsync(hard ? Haptics.ImpactFe
  * rolls, drag and fling it (the web's way in), and it bounces off the
  * screen's edges with a squash and a light buzz. Runs on the UI thread and
  * moves views only (no SVG props, see BallArt). With Reduce Motion on it
- * stays put. `kick` jostles it, for a new roll.
+ * stays put. `kick` jostles it, for a new roll. Shaking it hard while
+ * holding it calls `onShake` (stepShake), to ask again.
  *
  * Layout: `screen` goes on the full-screen view, `column` on its child that
  * holds the ball, `slot` on an unmoving wrapper round the ball, so the walls
  * are the screen's edges (inside the safe area) wherever the ball's home is.
  */
-export function useRollingBall({ still, insets }: { still: boolean; insets: { top: number; bottom: number } }) {
+export function useRollingBall({ still, insets, onShake }: { still: boolean; insets: { top: number; bottom: number }; onShake: () => void }) {
   const tilt = useTilt();
   const roll = useSharedValue(AT_REST);
   const bounds = useSharedValue<Bounds>({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
@@ -39,6 +40,7 @@ export function useRollingBall({ still, insets }: { still: boolean; insets: { to
   // A ref, not a shared value: the three layout events land together, and a shared value read back on the JS thread can miss the last write.
   const layout = useRef({ width: 0, height: 0, columnX: 0, columnY: 0, slotX: 0, slotY: 0 });
   const drag = useSharedValue({ x: 0, y: 0 });
+  const shake = useSharedValue(NO_SHAKE);
 
   // The walls: the screen's edges inside the safe area, as offsets from the ball's home.
   function place(e: LayoutChangeEvent, part: 'screen' | 'column' | 'slot') {
@@ -86,6 +88,7 @@ export function useRollingBall({ still, insets }: { still: boolean; insets: { to
     .enabled(!still)
     .onBegin(() => {
       drag.set({ x: roll.get().x, y: roll.get().y });
+      shake.set(NO_SHAKE);
       roll.set({ ...roll.get(), held: true, vx: 0, vy: 0 });
     })
     .onUpdate((e) => {
@@ -98,6 +101,9 @@ export function useRollingBall({ still, insets }: { still: boolean; insets: { to
         vx: e.velocityX,
         vy: e.velocityY,
       });
+      const next = stepShake(shake.get(), e.velocityX, e.velocityY);
+      shake.set(next.shake);
+      if (next.fired) scheduleOnRN(onShake);
     })
     .onFinalize((e) => {
       // Inline on purpose: React Compiler hoists a helper arrow out of the worklet, and the UI thread can't call it.

@@ -3,7 +3,8 @@ import { Modal, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { IngredientDrawing } from '@/components/ds';
-import { guessKind, openSlots, prepFromTechnique, prepPhrase, recipeEyebrow, startPrep, withFacts, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
+import { useCatalogRecipe } from '@/hooks/usePrepCard';
+import { guessKind, openSlots, prepFromCatalog, prepFromTechnique, prepPhrase, recipeEyebrow, sourceSite, startPrep, withFacts, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { prepCardFor, waysToMake } from '@/lib/techniques/makeIt';
 import { techniqueById } from '@/lib/techniques';
@@ -69,8 +70,22 @@ function firstDraft(name: string, picked: PrepBuilderProps['picked'], technique:
 function Builder({ name, drinkName, initial, picked, technique, ingredients, aliases, onDone, onLater, onClose }: PrepBuilderProps & { name: string }) {
   const [step, setStep] = useState<Step>(initial || technique ? 'recipe' : 'kind');
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [draft, setDraft] = useState<PrepDraft>(() => initial ?? firstDraft(name, picked, technique));
+  const [draft, setDraftState] = useState<PrepDraft>(() => initial ?? firstDraft(name, picked, technique));
   const [view, setView] = useState<RecipeViewKind>('parts');
+  // A name the catalog has a sourced recipe for starts from it, until the maker changes anything.
+  const [touched, setTouched] = useState(false);
+  const setDraft = (d: PrepDraft) => {
+    setTouched(true);
+    setDraftState(d);
+  };
+  const { data: catalog } = useCatalogRecipe(initial || technique ? null : name);
+  const [seeded, setSeeded] = useState<string | null>(null);
+  if (catalog && !touched && seeded !== catalog.id) {
+    setSeeded(catalog.id);
+    setDraftState(prepFromCatalog(name, catalog));
+    if (step === 'kind') setStep('recipe');
+  }
+  const fromCatalog = seeded && catalog ? `Started from the catalog recipe${catalog.checkedOn.length ? `, checked on ${catalog.checkedOn.map(sourceSite).join(' and ')}` : ''}. Change anything.` : undefined;
   const at = STEPS.indexOf(step);
   const go = (to: Step) => {
     setDirection(STEPS.indexOf(to) >= at ? 1 : -1);
@@ -115,7 +130,7 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
       direction={direction}
       eyebrow={(step === 'recipe' && recipeEyebrow(draft)) || name}
       title={TITLES[step]}
-      intro={step === 'method' ? `${filled} ${timers}` : undefined}
+      intro={step === 'method' ? `${filled} ${timers}` : step === 'recipe' ? fromCatalog : undefined}
       aside={step === 'recipe' ? <RecipeView value={view} onChange={setView} /> : null}
       onHardwareBack={() => {
         back();

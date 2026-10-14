@@ -10,7 +10,7 @@ import { useSetLineService, useSetServiceStyle } from '@/hooks/useServiceSpec';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { pictureTag, type ItemImageLink } from '@/lib/itemImages';
 import { roleLabel } from '@/lib/roles';
-import { isServiceStyle } from '@/lib/service';
+import { isBatchedStyle, isServiceStyle } from '@/lib/service';
 import { EMPTY_SERVICE_NOTES } from '@/lib/serviceNotes';
 import { SERVICE_OPENS_AT, serviceShots, shotCaption, type ServiceShot } from '@/lib/servicePhotos';
 import type { SpecLine } from '@/lib/spec';
@@ -103,7 +103,7 @@ export function ServiceSection({ itemId, barId, name, links, canEdit, glass, lin
           <ShotTile key={shot.angle} shot={shot} itemId={itemId} name={name} glass={glass} basis="22%" onOpen={() => open(shot.angle)} />
         ))}
       </View>
-      {!showLines && lines.length ? (
+      {!showLines && lines.length && isBatchedStyle(serviceStyle) ? (
         <View style={styles.lock}>
           <IconSymbol name="lock.fill" size={13} color={ds.c.muted} />
           <Caption tone="muted">The batch and station split opens at {splitOpensAt}</Caption>

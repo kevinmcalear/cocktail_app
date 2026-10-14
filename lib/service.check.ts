@@ -1,7 +1,7 @@
 // Checks for lib/service.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { bottleLine, isAtStation, isServiceStyle, serviceSpec, serviceStyleLabel } from './service';
+import { bottleLine, isAtStation, isBatchedStyle, isServiceStyle, serviceSpec, serviceStyleLabel } from './service';
 import { specLines } from './spec';
 
 const row = (id: string, name: string, amount: number | null, unit: string | null, at_service: boolean | null = null) => ({
@@ -52,5 +52,12 @@ assert.equal(isAtStation(specLines([row('x', 'Lemon juice', null, null, false)])
 assert.equal(serviceStyleLabel('a_la_minute'), 'À la minute');
 assert.equal(serviceStyleLabel('nope'), null);
 assert.ok(isServiceStyle('draught') && !isServiceStyle('keg'));
+// No batch until the bar says so: unset and à la minute show no split.
+assert.ok(isBatchedStyle('batched') && isBatchedStyle('draught'));
+assert.ok(!isBatchedStyle(null) && !isBatchedStyle('a_la_minute'));
+
+// A bare count of a twist is a garnish, so it's never counted in the batch.
+const twist = serviceSpec(specLines([row('gin', 'Gin', 40, 'ml'), row('tw', 'Lemon twist', 1, null)]));
+assert.deepEqual(twist.station.map((l) => l.ingredient), ['Lemon twist']);
 
 console.log('service: ok');

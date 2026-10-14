@@ -7,6 +7,29 @@ import { PrepBuilder } from './PrepBuilder';
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
+// The catalog's sourced recipes: only Grapefruit cordial has one here.
+jest.mock('@/hooks/usePrepCard', () => ({
+  ...jest.requireActual('@/hooks/usePrepCard'),
+  useCatalogRecipe: (name: string | null) => ({
+    data:
+      name === 'Grapefruit cordial'
+        ? {
+            id: 'gc',
+            name: 'Grapefruit cordial',
+            lines: [
+              { id: 'gj', name: 'Grapefruit juice', amount: 500, unit: 'g', note: null, optional: false },
+              { id: 'su', name: 'Sugar', amount: 450, unit: 'g', note: null, optional: false },
+              { id: 'ca', name: 'Citric acid', amount: 10, unit: 'g', note: null, optional: false },
+            ],
+            card: {
+              prep: { yield_amount: 780, yield_unit: 'ml', shelf_life_hours: null, lead_time_minutes: null, lead_time_note: null, storage: 'Fridge, sealed bottle', actions: ['Syrup'] },
+              steps: [{ position: 0, body: 'Warm the juice with the sugar until it dissolves.', timer_seconds: null }],
+            },
+            checkedOn: ['https://www.starchefs.com/recipes/grapefruit-americano', 'https://sunset.com/recipe/ruby-dove'],
+          }
+        : null,
+  }),
+}));
 
 // The builder draws after its first layout, as the wizard does on iOS.
 const laidOut = () => fireEvent(screen.getByTestId('add-prep'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
@@ -80,6 +103,17 @@ describe('PrepBuilder', () => {
     expect(prep.allergensSet).toBe(true);
     expect(prep.lines.find((l: { name: string }) => l.name === 'Fresno chili').note).toBe('Sliced, seeds in');
     expect(onLater).not.toHaveBeenCalled();
+  });
+
+  test('a name the catalog has a sourced recipe for opens on that recipe, with where it comes from', async () => {
+    const onDone = await open('Grapefruit cordial');
+    expect(screen.getByText('The recipe')).toBeTruthy();
+    expect(screen.getByText('Started from the catalog recipe, checked on starchefs.com and sunset.com. Change anything.')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
+    const prep = onDone.mock.calls[0][0];
+    expect(prep.lines.map((l: { id: string }) => l.id)).toEqual(['gj', 'su', 'ca']);
+    expect(prep.steps.map((s: { body: string }) => s.body)).toEqual(['Warm the juice with the sugar until it dissolves.']);
   });
 
   test('Later on the first step leaves the recipe for later', async () => {
