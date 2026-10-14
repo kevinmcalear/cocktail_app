@@ -1,0 +1,2512 @@
+{
+ "migration": "20261018070000_prep_recipes_retried.sql",
+ "header": [
+  "House prep recipes retried after the search budget ran out (after",
+  "20261018060000). Stage 4 of the bottle catalog plan:",
+  "https://claude.ai/artifact/Vu6seuSNtN42nKYb2nDCVR",
+  "",
+  "  * 35 of the 53 preps dropped from stages C to G for want of a cited",
+  "    page now have one: one item_sources row per recipe, yield and keep",
+  "    fact, two sites for the staples.",
+  "  * Four catalog recipes left uncited in C are corrected or cited",
+  "    (replace): Rosemary syrup, Earl Grey syrup, Grapefruit sherbet and",
+  "    Salt air. Each entry's \"fix\" in the seed says what changed and why.",
+  "  * 31 new recipes on shared preps that had none: syrups (rose, popcorn,",
+  "    chipotle, piloncillo, jasmine, osmanthus, grapefruit, plum,",
+  "    champagne), tinctures, spicy and jalapeno tequila, horseradish vodka,",
+  "    lemongrass mezcal and shochu, clarified banana, yoghurt whey, jasmine",
+  "    and yuzu foam, strawberry cream, house-made cola, fig leaf soda,",
+  "    spiced salt, house brine and spiced cold brew.",
+  "  * New shared preps: Finger lime cordial, Desert lime cordial and",
+  "    Pepperberry tincture. New plain ingredients: Browning sauce and",
+  "    Desert lime (Dried osmanthus flowers is made only where missing).",
+  "  * A keep is the shortest any cited page gives; with nothing to cite",
+  "    there's no keep.",
+  "  * An independent second check of 100 random facts (of 152) against the",
+  "    cited pages found none wrong."
+ ],
+ "checked_on": "2026-10-14",
+ "ingredients": [
+  {
+   "name": "Browning sauce",
+   "description": "A dark caramel and vegetable based kitchen sauce (such as Kitchen Bouquet) used to colour sauces and syrups brown.",
+   "kind_of": "Caramel"
+  },
+  {
+   "name": "Desert lime",
+   "description": "Small, sharp wild lime from inland eastern Australia (Citrus glauca), used whole, skin and all, in preserves, syrups and sauces.",
+   "kind_of": "Citrus"
+  },
+  {
+   "name": "Dried osmanthus flowers",
+   "description": "The small dried golden flowers of sweet osmanthus, with an apricot and honey scent, steeped for teas and syrups.",
+   "kind_of": "Osmanthus"
+  }
+ ],
+ "preps": [
+  {
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [
+    "Sparkling wine syrup"
+   ],
+   "grade": "B",
+   "staple": false,
+   "name": "Champagne syrup",
+   "description": "Champagne (flat is fine) with an equal volume of sugar, dissolved over very low heat so the wine flavour stays bright. It keeps some alcohol. For Champagne daiquiris, French 75s and Bellinis.",
+   "recipe": [
+    {
+     "ingredient": "Champagne",
+     "amount": 240,
+     "unit": "ml",
+     "note": "or other dry sparkling wine; flat leftovers work"
+    },
+    {
+     "ingredient": "Sugar",
+     "amount": 200,
+     "unit": "g"
+    }
+   ],
+   "keeps": null,
+   "actions": [
+    "Syrup"
+   ],
+   "steps": [
+    {
+     "body": "Put the Champagne and sugar in a saucepan over very low heat."
+    },
+    {
+     "body": "Stir the whole time until the sugar has dissolved, then turn off the heat."
+    },
+    {
+     "body": "Cool to room temperature, bottle and keep in the fridge."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://cocktailsdistilled.com/champagne-syrup/",
+     "kind": "reference",
+     "note": "Cocktails Distilled (Tiff Christie): 1 cup Champagne to 1 cup sugar, dissolved over very low heat. Cup as 240 ml wine, 200 g sugar. Its keep is only \"a few weeks\", too vague to use."
+    }
+   ],
+   "yield": {
+    "amount": 360,
+    "unit": "ml",
+    "derived": true
+   }
+  },
+  {
+   "name": "Chile de arbol tincture",
+   "kind": "tincture",
+   "kind_of": "Tincture",
+   "aliases": [],
+   "description": "Dried árbol chiles steeped two weeks in grain alcohol: a clean, sharp heat dropped on top of a finished margarita or other agave drink, two or three drops at a time.",
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Chile de árbol",
+     "amount": 20,
+     "unit": "each",
+     "note": "dried, whole",
+     "removed": true
+    },
+    {
+     "ingredient": "Neutral grain spirit",
+     "amount": 420,
+     "unit": "ml",
+     "note": "grain alcohol such as Everclear; 1 3/4 cups at 240 ml"
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Tincture",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Put the chiles and grain alcohol in a small jar with a tight lid."
+    },
+    {
+     "body": "Leave at room temperature for 2 weeks, shaking hard for 5 to 10 seconds once a day."
+    },
+    {
+     "body": "Strain into dropper bottles and label each with what it is and its strength. It is very strong and flammable: use by the drop."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.tastingtable.com/687416/the-ultimate-margarita-recipe-la-dona/",
+     "kind": "reference",
+     "note": "Tasting Table's La Doña, adapted from Jeret Peña: 20 árbol chiles in 1 3/4 cups grain alcohol, 2 weeks at room temperature, shaken daily. Cups at 240 ml."
+    }
+   ]
+  },
+  {
+   "name": "Chili tincture",
+   "kind": "tincture",
+   "kind_of": "Tincture",
+   "aliases": [],
+   "description": "Chopped habaneros pulled into vodka overnight (or in two hours sous vide): a quick, hot chili tincture added by the dash to tequila and vegetal drinks.",
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Habanero",
+     "amount": 5,
+     "unit": "each",
+     "note": "roughly chopped (wear gloves)",
+     "removed": true
+    },
+    {
+     "ingredient": "Vodka",
+     "amount": 500,
+     "unit": "ml"
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Tincture",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Wearing gloves, roughly chop the habaneros and put them in a jar with the vodka."
+    },
+    {
+     "body": "Leave at room temperature overnight. Or seal in a vacuum bag and hold at 63 °C (145 °F) in a water bath for 2 hours, then chill.",
+     "timer_seconds": 7200
+    },
+    {
+     "body": "Fine strain into dropper bottles and label each with what it is. Use by the dash."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://punchdrink.com/recipes/green-pepper/",
+     "kind": "reference",
+     "note": "Shawn Lickliter and Vay Su, Vandell (Punch, Green Pepper): their chili tincture is 5 chopped habaneros in 500 ml vodka, sous vide at 145 F for 2 hours or overnight at room temperature, fine strained."
+    }
+   ]
+  },
+  {
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [
+    "Chipotle simple syrup"
+   ],
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "name": "Chipotle syrup",
+   "description": "1:1 syrup boiled with a whole dried chipotle and left to rest so the smoke and heat build. For mezcal and tequila sours, mules and margaritas.",
+   "recipe": [
+    {
+     "ingredient": "Sugar",
+     "amount": 200,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 240,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Chipotle",
+     "amount": 1,
+     "unit": "each",
+     "note": "dried chipotle chile",
+     "removed": true
+    }
+   ],
+   "keeps": null,
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Bring the sugar, water and dried chipotle to the boil in a small pot, stirring until the sugar dissolves, then take it off the heat."
+    },
+    {
+     "body": "Cool in a heatproof container, cover and refrigerate with the chile in. Make it at least 2 days ahead, ideally a week; it gets smokier as it sits."
+    },
+    {
+     "body": "Lift out or strain off the chile once it tastes right."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://patijinich.com/chipotle-simple-syrup/",
+     "kind": "reference",
+     "note": "Pati Jinich: 1 cup sugar, 1 cup water, 1 dried chipotle, boiled until dissolved, rested 48 h to a week. Cup as 200 g sugar, 240 ml water. Her yield of 1 cup reads low for these amounts, so ours is worked out."
+    }
+   ],
+   "yield": {
+    "amount": 360,
+    "unit": "ml",
+    "derived": true
+   }
+  },
+  {
+   "name": "Clarified banana",
+   "kind": "clarified",
+   "kind_of": "Banana",
+   "aliases": [],
+   "description": "Banana purée treated with pectinase and spun in a centrifuge, leaving a clear, pale yellow banana juice. For clear banana sours, highballs and stirred drinks; needs a centrifuge.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Banana",
+     "amount": 1000,
+     "unit": "g",
+     "note": "peeled weight; slightly under-ripe gives a greener, grassier juice"
+    },
+    {
+     "ingredient": "Pectinase",
+     "amount": 2,
+     "unit": "g",
+     "note": "Pectinex"
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Blend",
+    "Clarify",
+    "Centrifuge",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Blend the peeled bananas to a smooth purée and weigh it."
+    },
+    {
+     "body": "Stir in the Pectinex and leave it 10 minutes.",
+     "timer_seconds": 600
+    },
+    {
+     "body": "Divide into centrifuge bottles of matching weight and spin at about 5,000 rpm for 10 minutes. The pulp packs into a firm puck at the bottom.",
+     "timer_seconds": 600
+    },
+    {
+     "body": "Pour off the clear juice and pass it through a superbag, then a coffee filter. Keep cold."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://classbarmag.com/news/fullstory.php/aid/1968/Three_ways_to_clarify_cocktails.html",
+     "kind": "reference",
+     "note": "Stu Bale of Crucible (CLASS magazine): Pectinex at 2 g per kg of banana flesh, 10 minutes rest, 10 minutes in the centrifuge at 5,000 rpm, then superbag and coffee filter. Scaled to 1 kg."
+    }
+   ]
+  },
+  {
+   "name": "Desert lime cordial",
+   "kind": "cordial",
+   "kind_of": "Cordial",
+   "aliases": [
+    "Desert lime syrup"
+   ],
+   "description": "A rich desert lime syrup: chopped whole desert limes simmered in sugar syrup until it reduces by a third, then strained. Lengthen with soda as a cordial or use it in native-citrus sours. Starting point: test a batch first.",
+   "abv": 0,
+   "grade": "C",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Sugar",
+     "amount": 250,
+     "unit": "g",
+     "note": "1 1/4 cups white sugar at 200 g per cup"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 240,
+     "unit": "ml",
+     "note": "1 cup"
+    },
+    {
+     "ingredient": "Desert lime",
+     "amount": 60,
+     "unit": "ml",
+     "note": "1/4 cup whole fruit, chopped",
+     "removed": true
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Syrup",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Dissolve the sugar in the water in a heavy saucepan, add the chopped desert limes and bring to the boil."
+    },
+    {
+     "body": "Simmer gently until the liquid has dropped by about a third, roughly an hour. Taste: desert limes are sharper than finger limes.",
+     "timer_seconds": 3600
+    },
+    {
+     "body": "Strain out the fruit through a fine sieve and pour the syrup, still hot, into sterilised jars. Seal."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://anpsa.org.au/APOL30/jun03-3a.html",
+     "kind": "reference",
+     "note": "Australian Native Plants Society wild lime syrup (after Robbins, Wild Classics, 2000): 1 1/4 cups sugar, 1 cup water, 1/4 cup chopped wild limes, finger lime given as the example. We apply the same ratio to desert lime, another Australian wild lime."
+    }
+   ]
+  },
+  {
+   "name": "Earl Grey syrup",
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [],
+   "description": "A 1:1 simple syrup with loose Earl Grey steeped in it for a few minutes off the heat. Bergamot and light tannin for gin sours, punches and highballs.",
+   "abv": 0,
+   "grade": "B",
+   "staple": true,
+   "replace": true,
+   "fix": "Was 500 ml water, 500 g sugar and 15 g tea with a 504 h keep. Now both sources' 1 cup sugar to 1 cup water (200 g to 240 ml), doubled, with 3 tsp loose tea per cup steeped 3 to 4 minutes after the sugar dissolves. Yield 800 to 720 ml from a source. Keep cut from 504 h to 168 h, the shorter source keep.",
+   "recipe": [
+    {
+     "ingredient": "Water",
+     "amount": 480,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Sugar",
+     "amount": 400,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Earl Grey tea",
+     "amount": 6,
+     "unit": "tsp",
+     "note": "loose leaf, or 6 tea bags",
+     "removed": true
+    }
+   ],
+   "yield": {
+    "amount": 720,
+    "unit": "ml"
+   },
+   "keeps": {
+    "hours": 168,
+    "storage": "Fridge, sealed bottle"
+   },
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Warm the water and sugar in a small pan, stirring, until the sugar has dissolved."
+    },
+    {
+     "body": "Take the pan off the heat, add the tea and steep. Taste at 3 minutes: past 4 it turns bitter.",
+     "timer_seconds": 180
+    },
+    {
+     "body": "Strain out the leaves without pressing them."
+    },
+    {
+     "body": "Cool, bottle and keep in the fridge."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://twisttravelmag.com/earl-grey-simple-syrup-recipe/",
+     "kind": "reference",
+     "note": "Keryn Means: 1 cup water, 1 cup cane sugar, 3 tsp loose Earl Grey (or 3 bags), sugar dissolved first, tea steeped 3 to 4 min off the heat. Converted (cup sugar 200 g, cup water 240 ml) and doubled. We use this source's tea dose and short steep."
+    },
+    {
+     "field": "recipe",
+     "url": "https://www.milkglasshome.com/earl-grey-syrup",
+     "kind": "reference",
+     "note": "Same 1 cup sugar to 1 cup water; uses 2 tsp loose tea (or 2 bags) left in while the syrup cools. Sugar to water agrees exactly with the first source; tea is lighter because it steeps longer."
+    },
+    {
+     "field": "yield",
+     "url": "https://www.milkglasshome.com/earl-grey-syrup",
+     "kind": "reference",
+     "note": "About 1.5 cups from 1 cup each of sugar and water; doubled to 720 ml."
+    },
+    {
+     "field": "keeps",
+     "url": "https://twisttravelmag.com/earl-grey-simple-syrup-recipe/",
+     "kind": "reference",
+     "hours": 168,
+     "note": "About a week in the fridge for this syrup (or months frozen). The shorter of the two keeps, so it wins."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.milkglasshome.com/earl-grey-syrup",
+     "kind": "reference",
+     "hours": 504,
+     "note": "3 to 4 weeks sealed in the fridge; short end 3 weeks."
+    }
+   ]
+  },
+  {
+   "name": "Fig leaf soda",
+   "kind": "soda",
+   "kind_of": "Fig leaf",
+   "aliases": [],
+   "description": "Dried fig leaf steeped in hot water, made into a 1:1 syrup sharpened with citric acid, then cut 1 to 3 with water and force carbonated. A house soda for highballs, in place of club soda or ginger beer.",
+   "abv": 0,
+   "grade": "B",
+   "staple": true,
+   "recipe": [
+    {
+     "ingredient": "Water",
+     "amount": 240,
+     "unit": "ml",
+     "note": "hot, for the steep"
+    },
+    {
+     "ingredient": "Fig leaf",
+     "amount": 1,
+     "unit": "tbsp",
+     "note": "dried, crumbled; edible fig (Ficus carica) only",
+     "removed": true
+    },
+    {
+     "ingredient": "Caster sugar",
+     "amount": 200,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Citric acid",
+     "amount": 0.75,
+     "unit": "tsp"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 1080,
+     "unit": "ml",
+     "note": "cold, filtered: 3 parts to 1 part syrup"
+    }
+   ],
+   "yield": {
+    "amount": 1440,
+    "unit": "ml",
+    "derived": true
+   },
+   "keeps": null,
+   "actions": [
+    "Infuse",
+    "Strain",
+    "Syrup",
+    "Carbonate"
+   ],
+   "steps": [
+    {
+     "body": "Steep the dried fig leaf in the hot water, then strain it out.",
+     "timer_seconds": 600
+    },
+    {
+     "body": "Stir in the sugar and citric acid until fully dissolved, then cool."
+    },
+    {
+     "body": "Add three times the syrup's volume of cold filtered water and chill to near 0 °C."
+    },
+    {
+     "body": "Fill pressure-rated bottles to 75%, squeeze out the air and cap. Charge at about 45 psi and shake hard, rest a minute, vent.",
+     "timer_seconds": 60
+    },
+    {
+     "body": "Repeat the charge three times from flat. Keep cold and pour over ice."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://punchdrink.com/recipes/new-tone/",
+     "kind": "reference",
+     "note": "Punch (Claire Sprouse): syrup of 1 quart hot water, 1/4 cup dried fig leaf steeped 10 min, 1 quart superfine sugar, 1 tbsp citric acid; soda is 2 oz syrup to 6 oz water, carbonated. Quartered; 1 cup sugar at 200 g."
+    },
+    {
+     "field": "recipe",
+     "url": "https://wpr.org/food/larry-loved-homemade-soda",
+     "kind": "reference",
+     "note": "Second check: toasted fig leaf syrup at 1 cup sugar to 1 cup water, the same 1:1 by volume as Punch (both about 0.83 g sugar per ml water). Leaf dose differs (fresh toasted leaves there); we follow Punch."
+    }
+   ]
+  },
+  {
+   "name": "Finger lime cordial",
+   "kind": "cordial",
+   "kind_of": "Cordial",
+   "aliases": [
+    "Wild lime syrup",
+    "Finger lime syrup"
+   ],
+   "description": "A rich wild lime syrup: chopped finger limes simmered in sugar syrup for about an hour until it reduces by a third, then strained. No added acid; lengthen with soda as a cordial or use it in native-citrus sours and highballs.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Sugar",
+     "amount": 250,
+     "unit": "g",
+     "note": "1 1/4 cups white sugar at 200 g per cup"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 240,
+     "unit": "ml",
+     "note": "1 cup"
+    },
+    {
+     "ingredient": "Finger lime",
+     "amount": 60,
+     "unit": "ml",
+     "note": "1/4 cup whole fruit, chopped",
+     "removed": true
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Syrup",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Dissolve the sugar in the water in a heavy saucepan, add the chopped finger limes and bring to the boil."
+    },
+    {
+     "body": "Simmer gently until the liquid has dropped by about a third, roughly an hour. Longer gives a darker, stronger syrup.",
+     "timer_seconds": 3600
+    },
+    {
+     "body": "Strain out the fruit through a fine sieve and pour the syrup, still hot, into sterilised jars. Seal."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://anpsa.org.au/APOL30/jun03-3a.html",
+     "kind": "reference",
+     "note": "Australian Native Plants Society recipe page, after Robbins, Wild Classics (2000): 1 1/4 cups sugar, 1 cup water, 1/4 cup chopped wild limes such as finger limes, simmered about an hour to reduce by a third. Cups converted at 240 ml, sugar at 200 g per cup."
+    }
+   ]
+  },
+  {
+   "name": "Grapefruit sherbet",
+   "kind": "sherbet",
+   "kind_of": "Sherbet",
+   "aliases": [],
+   "description": "Grapefruit peel cured in sugar for a day, then dissolved in an equal measure of fresh grapefruit juice. Bittersweet and aromatic; for punches, Palomas and highballs.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "replace": true,
+   "fix": "Cited; sugar and juice unchanged (1:1). Peel weight (100 g) removed: the source counts fruit (peel about one grapefruit per 240 ml of juice) and gives no weight. Peels now rest at least 24 h, as the source says. Yield 850 to 800 ml, worked out. Keep 168 h unchanged.",
+   "recipe": [
+    {
+     "ingredient": "Grapefruit peel",
+     "note": "peels of the grapefruit you juice, about 1 grapefruit per 240 ml of juice, thin, as little pith as possible",
+     "removed": true
+    },
+    {
+     "ingredient": "Sugar",
+     "amount": 500,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Grapefruit juice",
+     "amount": 500,
+     "unit": "ml",
+     "note": "fresh, strained"
+    }
+   ],
+   "yield": {
+    "amount": 800,
+    "unit": "ml",
+    "derived": true
+   },
+   "keeps": {
+    "hours": 168,
+    "storage": "Fridge, sealed bottle"
+   },
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Peel the grapefruit thinly, leaving the white pith behind, then juice and strain them."
+    },
+    {
+     "body": "Muddle the peels into the sugar, cover and leave at room temperature until the oil has turned the sugar wet and syrupy.",
+     "timer_seconds": 86400
+    },
+    {
+     "body": "Lift out the peels and stir in the juice. Warm it gently, without boiling, just until the sugar dissolves."
+    },
+    {
+     "body": "Cool, bottle and keep in the fridge."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://the83k.substack.com/p/cocktail-nerdery-from-doctor-z-sherbet",
+     "kind": "reference",
+     "note": "Citrus sherbet: peels in sugar, covered, at least 24 h, then juice equal to the sugar, warmed until dissolved. Names grapefruit as a best fruit for it and counts about 8 oz juice per grapefruit, peeling as much fruit as you juice. Scaled to 500 g sugar and 500 ml juice."
+    },
+    {
+     "field": "recipe",
+     "url": "https://cocktailsandbars.com/how-to-make-lemon-sherbet/",
+     "kind": "reference",
+     "note": "Lemon sherbet at 120 g sugar to 120 ml juice: shows the 1:1 read as grams of sugar to ml of juice, which we use for grapefruit."
+    },
+    {
+     "field": "keeps",
+     "url": "https://veggiedesserts.com/wprm_print/grapefruit-syrup",
+     "kind": "reference",
+     "hours": 336,
+     "note": "Grapefruit syrup at 200 g sugar to 240 ml juice (less sugar than ours, though simmered 10 min) keeps 2 to 3 weeks; short end 2 weeks. We keep the catalog's shorter 168 h since ours is only warmed."
+    }
+   ]
+  },
+  {
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [
+    "Grapefruit simple syrup"
+   ],
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "name": "Grapefruit syrup",
+   "description": "Fresh pink grapefruit juice warmed with sugar and strips of zest, steeped and strained. For Palomas, grapefruit Negronis and highballs.",
+   "recipe": [
+    {
+     "ingredient": "Grapefruit juice",
+     "amount": 100,
+     "unit": "ml",
+     "note": "fresh red or pink, from 1 to 2 fruit"
+    },
+    {
+     "ingredient": "Grapefruit peel",
+     "amount": 2,
+     "unit": "peel",
+     "note": "strips, pith removed",
+     "removed": true
+    },
+    {
+     "ingredient": "Sugar",
+     "amount": 75,
+     "unit": "g",
+     "note": "use 100 g for white grapefruit"
+    }
+   ],
+   "keeps": {
+    "hours": 672,
+    "storage": "Fridge, sealed bottle"
+   },
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Put the juice, sugar and zest strips in a small pan and warm gently, stirring, until the sugar dissolves. Bring just to a simmer but do not boil."
+    },
+    {
+     "body": "Take off the heat and leave to infuse.",
+     "timer_seconds": 1800
+    },
+    {
+     "body": "Strain into a sealable bottle and keep cold. Shake before use."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.littlesugarsnaps.com/wprm_print/grapefruit-syrup",
+     "kind": "reference",
+     "note": "Little Sugar Snaps (Jane Coupland): 100 ml red or pink grapefruit juice, 2 strips zest, 75 g sugar (100 g for white grapefruit), infused 30 min off the heat. Optional rosemary left out."
+    },
+    {
+     "field": "yield",
+     "url": "https://www.littlesugarsnaps.com/wprm_print/grapefruit-syrup",
+     "kind": "reference",
+     "note": "8 servings of 15 ml, so 120 ml."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.littlesugarsnaps.com/grapefruit-syrup/",
+     "kind": "reference",
+     "hours": 672,
+     "note": "Up to 4 weeks in the fridge, for this recipe."
+    }
+   ],
+   "yield": {
+    "amount": 120,
+    "unit": "ml"
+   }
+  },
+  {
+   "name": "Habanero tincture",
+   "kind": "tincture",
+   "kind_of": "Tincture",
+   "aliases": [],
+   "description": "Seeded habaneros steeped in vodka for one to two weeks: fruity, fierce heat to add by the dash to tequila, rum and ginger drinks.",
+   "grade": "B",
+   "staple": true,
+   "recipe": [
+    {
+     "ingredient": "Habanero",
+     "amount": 12,
+     "unit": "each",
+     "note": "stems and seeds removed (wear gloves)",
+     "removed": true
+    },
+    {
+     "ingredient": "Vodka",
+     "amount": 1000,
+     "unit": "ml"
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Tincture",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Wearing gloves, pull the stems and seeds out of the habaneros."
+    },
+    {
+     "body": "Put the peppers in a jar, cover with the vodka and seal."
+    },
+    {
+     "body": "Leave at room temperature for one to two weeks, shaking now and then and tasting from day seven."
+    },
+    {
+     "body": "Strain out the peppers into dropper bottles and label each with what it is. Use by the dash."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://punchdrink.com/recipes/the-pastry-wars-spicy-with-tequila/",
+     "kind": "reference",
+     "note": "Bobby Heugel, The Pastry War (Punch): 12 seeded, destemmed habaneros in 1 litre of vodka for two weeks. 12 peppers a litre; we use this ratio."
+    },
+    {
+     "field": "recipe",
+     "url": "https://www.tastingtable.com/688747/border-storm-cocktail-recipe-from-anvil-bar-refuge/",
+     "kind": "reference",
+     "note": "Anvil Bar & Refuge (Tasting Table): 6 seeded habaneros in 2 cups (480 ml) vodka, one week at room temperature, then strained. About 12.5 peppers a litre, within 4% of the Pastry War ratio."
+    }
+   ]
+  },
+  {
+   "name": "Horseradish vodka",
+   "kind": "infusion",
+   "kind_of": "Vodka",
+   "aliases": [
+    "Hrenovuha"
+   ],
+   "description": "Vodka infused for four to six days with ribbons of fresh horseradish root and lemon zest, then served ice cold. Sharp, nose-clearing heat for Bloody Marys and shots with pickles.",
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Horseradish",
+     "amount": 1,
+     "unit": "each",
+     "note": "fresh root, a 5 inch (13 cm) piece, outer layers off, cut into thin ribbons, core discarded",
+     "removed": true
+    },
+    {
+     "ingredient": "Lemon zest",
+     "amount": 1,
+     "unit": "each",
+     "note": "zest of 1 large lemon in wide strips, no pith",
+     "removed": true
+    },
+    {
+     "ingredient": "Vodka",
+     "amount": 1000,
+     "unit": "ml"
+    }
+   ],
+   "yield": {
+    "amount": 1000,
+    "unit": "ml"
+   },
+   "keeps": null,
+   "actions": [
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Push the lemon zest and horseradish ribbons into a clean 1 litre bottle, fill it with the vodka and seal."
+    },
+    {
+     "body": "Leave in a dark place at room temperature. After a day or two, shake it gently."
+    },
+    {
+     "body": "Infuse 2 or 3 more days and taste; give it up to 2 more days for a bolder flavour."
+    },
+    {
+     "body": "Strain out the solids when it tastes right, then store in the freezer and serve very cold."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.jewishfoodsociety.org/recipes/hrenovuha-horseradish-vodka",
+     "kind": "reference",
+     "note": "Sasha Shor (Jewish Food Society): a 5 inch piece of horseradish in ribbons and the zest of 1 large lemon in 1 litre of vodka, 4 to 6 days in the dark, then frozen."
+    },
+    {
+     "field": "recipe",
+     "url": "https://www.sunset.com/recipe/horseradish-infused-vodka",
+     "kind": "reference",
+     "note": "Bonnie Frumkin Morales (Sunset): 1 sliced horseradish root steeped in a quart (about 950 ml) of vodka for a week, then strained. About one root per litre, like Shor's."
+    },
+    {
+     "field": "yield",
+     "url": "https://www.jewishfoodsociety.org/recipes/hrenovuha-horseradish-vodka",
+     "kind": "reference",
+     "note": "Makes 1 litre."
+    }
+   ]
+  },
+  {
+   "name": "House brine",
+   "kind": "food",
+   "kind_of": "Brine",
+   "aliases": [],
+   "description": "A salted, lightly soured water poured over crushed green olives and left to pick up their flavour in the fridge. For Dirty Martinis at 15 to 30 ml a drink.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Green olive",
+     "amount": 480,
+     "unit": "ml",
+     "note": "whole, firmly mashed; they stay in the jar",
+     "removed": true
+    },
+    {
+     "ingredient": "Water",
+     "amount": 600,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Vinegar",
+     "amount": 2,
+     "unit": "tbsp"
+    },
+    {
+     "ingredient": "Salt",
+     "amount": 2,
+     "unit": "tbsp"
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Mix",
+    "Infuse"
+   ],
+   "steps": [
+    {
+     "body": "Put the olives in a glass jar and crush them firmly with a wooden spoon to release their juice."
+    },
+    {
+     "body": "Stir the water, vinegar and salt together until the salt dissolves, then pour over the olives to cover, leaving some headspace."
+    },
+    {
+     "body": "Seal and shake hard, then refrigerate. Shake before each use; it grows stronger as it sits."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.lovetoknow.com/food-drink/cocktails/dirty-martini-olive-juice",
+     "kind": "reference",
+     "note": "Karen Frazier (LoveToKnow), olive juice for Dirty Martinis: 2 cups green olives, 2 1/2 cups water, 2 tbsp vinegar, 2 tbsp salt; 1/2 to 1 oz per drink. Cups at 240 ml, olives kept as ml."
+    }
+   ]
+  },
+  {
+   "name": "House-made cola",
+   "kind": "syrup",
+   "kind_of": "Cola",
+   "aliases": [],
+   "description": "A natural cola syrup of lemon, lime and orange zest and juice with cinnamon, dried bitter orange peel, coriander and nutmeg, darkened with browning sauce. Lengthen 1 part to 3 parts cold seltzer, or charge in a soda siphon.",
+   "abv": 0,
+   "grade": "B",
+   "staple": true,
+   "recipe": [
+    {
+     "ingredient": "Water",
+     "amount": 960,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Lemon",
+     "amount": 1,
+     "unit": "each",
+     "note": "finely grated zest and juice, kept apart"
+    },
+    {
+     "ingredient": "Lime",
+     "amount": 1,
+     "unit": "each",
+     "note": "finely grated zest and juice, kept apart"
+    },
+    {
+     "ingredient": "Orange",
+     "amount": 2,
+     "unit": "each",
+     "note": "finely grated zest and juice, kept apart"
+    },
+    {
+     "ingredient": "Cinnamon",
+     "amount": 3,
+     "unit": "each",
+     "note": "large 5 inch sticks, broken small",
+     "removed": true
+    },
+    {
+     "ingredient": "Bitter orange",
+     "amount": 2,
+     "unit": "tbsp",
+     "note": "dried peel",
+     "removed": true
+    },
+    {
+     "ingredient": "Coriander seed",
+     "amount": 2,
+     "unit": "tsp",
+     "removed": true
+    },
+    {
+     "ingredient": "Nutmeg",
+     "amount": 0.25,
+     "unit": "tsp",
+     "note": "finely grated"
+    },
+    {
+     "ingredient": "Gum Arabic",
+     "amount": 1,
+     "unit": "tsp",
+     "note": "optional, for body"
+    },
+    {
+     "ingredient": "Sugar",
+     "amount": 907,
+     "unit": "g",
+     "note": "2 lb"
+    },
+    {
+     "ingredient": "Browning sauce",
+     "amount": 60,
+     "unit": "ml",
+     "note": "such as Kitchen Bouquet, for colour"
+    },
+    {
+     "ingredient": "Vanilla extract",
+     "amount": 0.5,
+     "unit": "tsp"
+    }
+   ],
+   "yield": null,
+   "keeps": {
+    "hours": 336,
+    "storage": "Fridge, sealed bottle"
+   },
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Zest the citrus finely, then juice it and set the juice aside."
+    },
+    {
+     "body": "In a large pan, whisk the water, zests, cinnamon, bitter orange peel, coriander, nutmeg and gum arabic until the gum has dissolved."
+    },
+    {
+     "body": "Add the sugar and bring to the boil, stirring until it dissolves, then boil for 1 minute.",
+     "timer_seconds": 60
+    },
+    {
+     "body": "Take off the heat and stir in the citrus juices, browning sauce and vanilla. Cool, strain fine, bottle and keep cold."
+    },
+    {
+     "body": "To serve, 1 part syrup to 3 parts cold seltzer over ice, or about 180 ml syrup to 780 ml water charged with CO2 in a 1 litre soda siphon."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.splendidtable.org/recipes/natural-cola",
+     "kind": "reference",
+     "note": "Andrew Schloss (Homemade Soda): 1 quart water, zest and juice of 1 lemon, 1 lime, 2 oranges, 3 cinnamon sticks, 2 tbsp dried bitter orange peel, 2 tsp coriander, 1/4 tsp nutmeg, 1 tsp gum arabic, 2 lb sugar, 1/4 cup browning sauce, 1/2 tsp vanilla. Quart at 960 ml, 2 lb at 907 g, 1/4 cup at 60 ml."
+    },
+    {
+     "field": "recipe",
+     "url": "https://www.mrdistilling.com/recipe/cola-syrup/",
+     "kind": "reference",
+     "note": "Second check: 8 cups water to 8 cups demerara with 2 each lemon, lime and orange, cinnamon, coriander, nutmeg, vanilla. At 200 g a cup that is 0.83 g sugar per ml water against our 0.94 (about 12% apart). We use the Schloss amounts because they are measured and give a keep."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.splendidtable.org/recipes/natural-cola",
+     "kind": "reference",
+     "hours": 336,
+     "note": "This same cola syrup: up to 2 weeks in the fridge."
+    }
+   ]
+  },
+  {
+   "name": "Jalapeno tequila",
+   "kind": "infusion",
+   "kind_of": "Tequila",
+   "aliases": [],
+   "description": "Two sliced jalapeños steeped in a bottle of blanco tequila overnight to two days, then strained. Grassy, green heat for spicy margaritas.",
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Jalapeño",
+     "amount": 2,
+     "unit": "each",
+     "note": "medium, about 50 g; stems off, sliced thin, seeds kept for more heat",
+     "removed": true
+    },
+    {
+     "ingredient": "Blanco tequila",
+     "amount": 750,
+     "unit": "ml",
+     "note": "100% agave"
+    }
+   ],
+   "yield": {
+    "amount": 750,
+    "unit": "ml",
+    "derived": true
+   },
+   "keeps": null,
+   "actions": [
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Cut the stems off the jalapeños and slice them into thin rounds or strips. Keep the seeds in for more heat, or leave some out for less."
+    },
+    {
+     "body": "Put the peppers in a jar, pour in the tequila, seal and shake."
+    },
+    {
+     "body": "Leave in a cool, dark place, shaking now and then. Taste after one night and every few hours after; most batches are hot enough by day two."
+    },
+    {
+     "body": "Strain out the peppers and seeds when it tastes right and pour the tequila back into its bottle."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.tastingtable.com/694360/jalapeno-infused-tequila/",
+     "kind": "reference",
+     "note": "Carey Jones (Tasting Table): two medium jalapeños, sliced with their seeds, to a 750 ml bottle of 100% agave tequila, left overnight then strained."
+    },
+    {
+     "field": "recipe",
+     "url": "https://www.theinfatuation.com/cocktails/c/cocktails-how-to-make-jalapeno-tequila",
+     "kind": "reference",
+     "note": "Bryan Kim (The Infatuation): two jalapeños, about 50 g, in rounds, to a 750 ml bottle of blanco tequila, two days in a cool dark place, a day more if it needs heat. Same ratio as Tasting Table."
+    }
+   ]
+  },
+  {
+   "name": "Jasmine foam",
+   "kind": "foam",
+   "kind_of": "Jasmine",
+   "aliases": [],
+   "description": "A vegan siphon foam of jasmine pearl tea, lightly sweetened and soured with citric, malic and tartaric acid, set with methylcellulose and xanthan. Spoon or pipe it onto tea-led sours and highballs.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Water",
+     "amount": 300,
+     "unit": "ml",
+     "note": "at 60 to 70 °C"
+    },
+    {
+     "ingredient": "Jasmine Pearl Tea",
+     "amount": 5,
+     "unit": "g",
+     "removed": true
+    },
+    {
+     "ingredient": "Sugar",
+     "amount": 30,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Citric acid",
+     "amount": 0.5,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Malic acid",
+     "amount": 0.5,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Tartaric acid",
+     "amount": 0.5,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Methylcellulose",
+     "amount": 1.8,
+     "unit": "g",
+     "note": "F50 type"
+    },
+    {
+     "ingredient": "Xanthan gum",
+     "amount": 0.5,
+     "unit": "g"
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Infuse",
+    "Strain",
+    "Foam"
+   ],
+   "steps": [
+    {
+     "body": "Steep the jasmine pearls in the 60 to 70 °C water, then lift or strain them out so no leaf reaches the siphon valve.",
+     "timer_seconds": 600
+    },
+    {
+     "body": "Stir in the sugar and the three acids until dissolved."
+    },
+    {
+     "body": "Add the methylcellulose and xanthan and blend with a stick blender until smooth."
+    },
+    {
+     "body": "Pour into a cream whipper, charge with two N2O chargers and shake between charges."
+    },
+    {
+     "body": "Chill in the fridge before dispensing, then shake once and dispense upside down onto the drink.",
+     "timer_seconds": 7200
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.goodandpropertea.com/blogs/all/how-to-make-the-pirates-of-good-proper-the-curse-of-the-jasmine-pearl-tea-cocktail",
+     "kind": "producer",
+     "note": "Tea producer's cocktail recipe: 5 g jasmine pearls steeped 10 min in 300 ml water at 60 to 70 °C, then 30 g sugar, 0.5 g each citric, malic and tartaric acid, 1.8 g methylcellulose 50, 0.5 g xanthan; two N2O charges, at least 2 h cold before use."
+    }
+   ]
+  },
+  {
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [
+    "Jasmine tea syrup"
+   ],
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "name": "Jasmine syrup",
+   "description": "Jasmine tea simmered with sugar and water, then strained: a light, floral sweetener for gin sours, highballs and sparkling drinks.",
+   "recipe": [
+    {
+     "ingredient": "Jasmine tea",
+     "amount": 4,
+     "unit": "tsp",
+     "note": "loose leaf, or 4 tea bags",
+     "removed": true
+    },
+    {
+     "ingredient": "Sugar",
+     "amount": 200,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 360,
+     "unit": "ml"
+    }
+   ],
+   "keeps": null,
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Put the tea, sugar and water in a small pot and bring to the boil."
+    },
+    {
+     "body": "Simmer uncovered over medium heat, stirring until the sugar dissolves, for 10 to 15 minutes.",
+     "timer_seconds": 600
+    },
+    {
+     "body": "Cool to room temperature, strain out the tea and keep cold in an airtight bottle."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://carmyy.com/wprm_print/jasmine-syrup-recipe",
+     "kind": "reference",
+     "note": "Carmy: 4 tsp jasmine tea (or 4 bags), 1 cup sugar, 1 1/2 cups water, simmered 10 to 15 min. Cup as 200 g sugar, 240 ml water. Gives no keep."
+    }
+   ],
+   "yield": {
+    "amount": 360,
+    "unit": "ml",
+    "derived": true
+   }
+  },
+  {
+   "name": "Lemongrass mezcal",
+   "kind": "infusion",
+   "kind_of": "Mezcal",
+   "aliases": [],
+   "description": "Mezcal flash-infused with fresh lemongrass in a cream whipper: bright lemon and grass over the smoke, for sours and highballs. Arnold's nitrous lemongrass method, moved from vodka to mezcal. Starting point: test a batch first.",
+   "grade": "C",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Lemongrass",
+     "amount": 180,
+     "unit": "g",
+     "note": "fresh stalks, sliced into thin disks",
+     "removed": true
+    },
+    {
+     "ingredient": "Mezcal",
+     "amount": 300,
+     "unit": "ml"
+    }
+   ],
+   "yield": {
+    "amount": 270,
+    "unit": "ml",
+    "derived": true
+   },
+   "keeps": {
+    "hours": 24,
+    "storage": "Freezer, sealed bottle"
+   },
+   "actions": [
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Put the sliced lemongrass and the spirit in a 0.5 litre whipper and close it."
+    },
+    {
+     "body": "Charge with one N2O charger and shake, then add a second charger and shake again. The whole infusion takes about 2 minutes.",
+     "timer_seconds": 120
+    },
+    {
+     "body": "Hold the whipper upright, cover the nozzle with a glass and vent fast. Open it once the bubbling stops."
+    },
+    {
+     "body": "Strain, pressing the lemongrass hard to get the spirit back. Let it rest 10 minutes before using, and use it fresh.",
+     "timer_seconds": 600
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.cutoutandkeep.net/projects/the-lemon-pepper-fizz-and-lemongrass-vodka",
+     "kind": "reference",
+     "note": "Dave Arnold (Liquid Intelligence, reproduced with permission): 180 g fresh lemongrass to 300 ml 40% vodka, two N2O chargers in a 0.5 litre whipper, 2 minutes. He uses the whipper because long lemongrass soaks taste soapy. We swap the vodka for mezcal."
+    },
+    {
+     "field": "yield",
+     "url": "https://www.cutoutandkeep.net/projects/the-lemon-pepper-fizz-and-lemongrass-vodka",
+     "kind": "reference",
+     "note": "Arnold's vodka batch makes about 270 ml after pressing; we assume the same for mezcal."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.cutoutandkeep.net/projects/the-lemon-pepper-fizz-and-lemongrass-vodka",
+     "kind": "reference",
+     "hours": 24,
+     "note": "Arnold: use it fresh, within a day or two; kept in the freezer about a week. We take the short end, 24 hours."
+    }
+   ]
+  },
+  {
+   "name": "Lemongrass shochu",
+   "kind": "infusion",
+   "kind_of": "Shochu",
+   "aliases": [],
+   "description": "Shochu flash-infused with fresh lemongrass in a cream whipper: a clean citrus-grass shochu for chuhai and highballs. Arnold's nitrous lemongrass method, moved from vodka to shochu, which is lower in alcohol. Starting point: test a batch first.",
+   "grade": "C",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Lemongrass",
+     "amount": 180,
+     "unit": "g",
+     "note": "fresh stalks, sliced into thin disks",
+     "removed": true
+    },
+    {
+     "ingredient": "Shochu",
+     "amount": 300,
+     "unit": "ml"
+    }
+   ],
+   "yield": {
+    "amount": 270,
+    "unit": "ml",
+    "derived": true
+   },
+   "keeps": {
+    "hours": 24,
+    "storage": "Freezer, sealed bottle"
+   },
+   "actions": [
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Put the sliced lemongrass and the spirit in a 0.5 litre whipper and close it."
+    },
+    {
+     "body": "Charge with one N2O charger and shake, then add a second charger and shake again. The whole infusion takes about 2 minutes.",
+     "timer_seconds": 120
+    },
+    {
+     "body": "Hold the whipper upright, cover the nozzle with a glass and vent fast. Open it once the bubbling stops."
+    },
+    {
+     "body": "Strain, pressing the lemongrass hard to get the spirit back. Let it rest 10 minutes before using, and use it fresh.",
+     "timer_seconds": 600
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.cutoutandkeep.net/projects/the-lemon-pepper-fizz-and-lemongrass-vodka",
+     "kind": "reference",
+     "note": "Dave Arnold (Liquid Intelligence, reproduced with permission): 180 g fresh lemongrass to 300 ml 40% vodka, two N2O chargers in a 0.5 litre whipper, 2 minutes. He uses the whipper because long lemongrass soaks taste soapy. We swap the vodka for shochu."
+    },
+    {
+     "field": "yield",
+     "url": "https://www.cutoutandkeep.net/projects/the-lemon-pepper-fizz-and-lemongrass-vodka",
+     "kind": "reference",
+     "note": "Arnold's vodka batch makes about 270 ml after pressing; we assume the same for shochu."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.cutoutandkeep.net/projects/the-lemon-pepper-fizz-and-lemongrass-vodka",
+     "kind": "reference",
+     "hours": 24,
+     "note": "Arnold: use it fresh, within a day or two; kept in the freezer about a week. We take the short end, 24 hours."
+    }
+   ]
+  },
+  {
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [
+    "Osmanthus flower syrup",
+    "Sweet osmanthus syrup"
+   ],
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "name": "Osmanthus syrup",
+   "description": "Dried osmanthus flowers simmered briefly in 1:1 syrup and steeped, for a honeyed apricot floral note in gin, baijiu, sake and tea drinks.",
+   "recipe": [
+    {
+     "ingredient": "Sugar",
+     "amount": 100,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 120,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Dried osmanthus flowers",
+     "amount": 3,
+     "unit": "tbsp",
+     "removed": true
+    },
+    {
+     "ingredient": "Honey",
+     "amount": 1,
+     "unit": "tsp",
+     "optional": true
+    }
+   ],
+   "keeps": {
+    "hours": 336,
+    "storage": "Fridge, airtight jar"
+   },
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Boil the sugar and water over medium heat until the sugar has fully dissolved."
+    },
+    {
+     "body": "Lower the heat, add the dried osmanthus and simmer gently.",
+     "timer_seconds": 180
+    },
+    {
+     "body": "Off the heat, stir in the honey if using and let it steep.",
+     "timer_seconds": 600
+    },
+    {
+     "body": "Strain through a fine sieve (or leave the flowers in), cool and seal."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.siftandsimmer.com/wprm_print/osmanthus-syrup",
+     "kind": "reference",
+     "note": "Sift & Simmer: 1/2 cup sugar, 1/2 cup water, 3 tbsp dried osmanthus, 1 tsp honey optional; simmer 3 to 5 min, steep 10 min. Cup as 200 g sugar, 240 ml water."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.siftandsimmer.com/wprm_print/osmanthus-syrup",
+     "kind": "reference",
+     "hours": 336,
+     "note": "Up to 2 weeks in the fridge, for this recipe."
+    }
+   ],
+   "yield": {
+    "amount": 160,
+    "unit": "ml",
+    "derived": true
+   }
+  },
+  {
+   "name": "Pepperberry tincture",
+   "kind": "tincture",
+   "kind_of": "Tincture",
+   "aliases": [
+    "Mountain pepper tincture"
+   ],
+   "description": "Cracked dried Tasmanian pepperberries steeped a few days in high-proof vodka: a fruity, numbing native pepper heat dosed by the drop into Martinis, Bloody Marys and sours.",
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Vodka",
+     "amount": 100,
+     "unit": "ml",
+     "note": "over 50% ABV, or high-proof neutral grain spirit"
+    },
+    {
+     "ingredient": "Tasmanian pepperberry",
+     "amount": 7,
+     "unit": "g",
+     "note": "whole dried berries, coarsely cracked",
+     "removed": true
+    }
+   ],
+   "yield": {
+    "amount": 90,
+    "unit": "ml",
+    "derived": true
+   },
+   "keeps": null,
+   "actions": [
+    "Tincture",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Coarsely crack the pepperberries and put them in a clean jar with the spirit."
+    },
+    {
+     "body": "Seal and steep 3 to 5 days somewhere cool and dark, shaking gently once a day."
+    },
+    {
+     "body": "Strain twice through a fine strainer lined with cheesecloth into a dropper bottle. Label it and store cool and dark."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://cocktailsandbars.com/australian-native-tinctures-wattleseed-lemon-myrtle-pepperberry/",
+     "kind": "reference",
+     "note": "Corinne Mossati, Cocktails & Bars (Aug 2017): 7 g cracked whole pepperberries in 100 ml vodka over 50% ABV (or high-proof neutral spirit), 3 to 5 days, shaken daily, strained twice through cheesecloth."
+    }
+   ]
+  },
+  {
+   "kind": "syrup",
+   "kind_of": "Simple syrup",
+   "aliases": [
+    "Miel de piloncillo",
+    "Piloncillo simple syrup"
+   ],
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "name": "Piloncillo syrup",
+   "description": "A cone of piloncillo simmered with an equal weight of water into a dark, molasses edged syrup. For mezcal, tequila, rum and whiskey drinks.",
+   "recipe": [
+    {
+     "ingredient": "Piloncillo",
+     "amount": 227,
+     "unit": "g",
+     "note": "one 8 oz cone, broken up"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 240,
+     "unit": "ml"
+    }
+   ],
+   "keeps": {
+    "hours": 168,
+    "storage": "Fridge, airtight container"
+   },
+   "actions": [
+    "Syrup",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Break the piloncillo into pieces so it melts faster, then bring it and the water to a light boil."
+    },
+    {
+     "body": "Turn the heat down and simmer, stirring, until it has all melted.",
+     "timer_seconds": 600
+    },
+    {
+     "body": "Cool, strain into an airtight container and keep cold."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://mybartender.com/wprm_print/piloncillo-simple-syrup",
+     "kind": "reference",
+     "note": "MyBartender (Jenna Haley): one 8 oz piloncillo cone with 1 cup water, simmered 10 min; cinnamon and cloves optional and left out here. 8 oz as 227 g, cup as 240 ml."
+    },
+    {
+     "field": "recipe",
+     "url": "https://punchdrink.com/recipes/agave-gracias/",
+     "kind": "reference",
+     "note": "Punch (Agave Gracias): equal volumes of chopped piloncillo and water, boiled and strained; agrees on a roughly 1:1 syrup."
+    },
+    {
+     "field": "keeps",
+     "url": "https://mybartender.com/wprm_print/piloncillo-simple-syrup",
+     "kind": "reference",
+     "hours": 168,
+     "note": "1 to 2 weeks in the fridge; short end taken."
+    },
+    {
+     "field": "keeps",
+     "url": "https://punchdrink.com/recipes/agave-gracias/",
+     "kind": "reference",
+     "hours": 720,
+     "note": "Up to a month in the fridge; the shorter keep wins."
+    }
+   ],
+   "yield": {
+    "amount": 350,
+    "unit": "ml",
+    "derived": true
+   }
+  },
+  {
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [
+    "Plum simple syrup"
+   ],
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "name": "Plum syrup",
+   "description": "1:1 syrup simmered with pitted fresh plums for a soft stone fruit sweetener. Made for a gin Plum Sour; good in whisky and brandy sours too.",
+   "recipe": [
+    {
+     "ingredient": "Sugar",
+     "amount": 200,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 240,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Plum",
+     "amount": 3,
+     "unit": "each",
+     "note": "pitted",
+     "removed": true
+    }
+   ],
+   "keeps": null,
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Put the sugar, water and pitted plums in a small saucepan and bring to the boil."
+    },
+    {
+     "body": "Simmer until the sugar has dissolved, tasting now and then until the plum comes through."
+    },
+    {
+     "body": "Let it cool, strain out the fruit and keep somewhere cool."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://vinepair.com/cocktail-recipe/the-plum-sour-recipe/",
+     "kind": "reference",
+     "note": "VinePair (Plum Sour): 1 cup sugar, 1 cup water, 3 pitted plums, boiled then simmered until dissolved. Cup as 200 g sugar, 240 ml water. Gives no keep."
+    }
+   ],
+   "yield": {
+    "amount": 380,
+    "unit": "ml",
+    "derived": true
+   }
+  },
+  {
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [
+    "Popcorn simple syrup"
+   ],
+   "abv": 0,
+   "grade": "B",
+   "staple": true,
+   "name": "Popcorn syrup",
+   "description": "A light sugar syrup steeped with popped popcorn and a pinch of salt for a day, then strained. Buttery and toasty, for bourbon, rum and dessert drinks.",
+   "recipe": [
+    {
+     "ingredient": "Sugar",
+     "amount": 100,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 240,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Sea salt",
+     "amount": 1,
+     "unit": "pinch"
+    },
+    {
+     "ingredient": "Popcorn",
+     "note": "3 cups popped (720 ml by volume; too light to weigh by volume)",
+     "removed": true
+    }
+   ],
+   "keeps": {
+    "hours": 168,
+    "storage": "Fridge, sealed jar"
+   },
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Warm the sugar, water and salt to a simmer and cook a couple of minutes until the sugar has dissolved."
+    },
+    {
+     "body": "Stir in the popped popcorn, take it off the heat and let it cool."
+    },
+    {
+     "body": "Jar it with a tight lid and leave in the fridge at least a day.",
+     "timer_seconds": 86400
+    },
+    {
+     "body": "Strain out the popcorn, pressing lightly, and keep the syrup cold."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.hungrycouplenyc.com/2018/02/buttered-bourbon-pop-tail.html",
+     "kind": "reference",
+     "note": "Hungry Couple (Anita Schecter): 1/2 cup sugar, 1 cup water, 3 cups popcorn, pinch of sea salt, steeped at least 24 h cold. Sugar:water 1:2 by volume; cup as 200 g sugar, 240 ml water."
+    },
+    {
+     "field": "recipe",
+     "url": "https://www.cloverfoodlab.com/popcorn-soda/",
+     "kind": "reference",
+     "note": "Clover Food Lab popcorn soda syrup: 3 cups sugar to 6 cups water, the same 1:2 by volume, with popped popcorn blended in and strained (3 cups per 6 cups water, a lighter dose). We use the shared 1:2 ratio and the Hungry Couple popcorn dose."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.hungrycouplenyc.com/2018/02/buttered-bourbon-pop-tail.html",
+     "kind": "reference",
+     "hours": 168,
+     "note": "Up to a week in the fridge after straining, for this recipe."
+    }
+   ],
+   "yield": null
+  },
+  {
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [
+    "Rose simple syrup",
+    "Rose petal syrup"
+   ],
+   "abv": 0,
+   "grade": "B",
+   "staple": true,
+   "name": "Rose syrup",
+   "description": "Dried rose petals steeped in boiling water, then sweetened with an equal volume of sugar and lifted with a little rose water. For floral sours, spritzes and gin drinks.",
+   "recipe": [
+    {
+     "ingredient": "Dried rose",
+     "amount": 4,
+     "unit": "tbsp",
+     "note": "dried culinary rose petals (1/4 cup)",
+     "removed": true
+    },
+    {
+     "ingredient": "Water",
+     "amount": 240,
+     "unit": "ml",
+     "note": "boiling, plus a little more hot water to top back up after straining"
+    },
+    {
+     "ingredient": "Rose water",
+     "amount": 0.25,
+     "unit": "tsp"
+    },
+    {
+     "ingredient": "Sugar",
+     "amount": 200,
+     "unit": "g"
+    }
+   ],
+   "keeps": {
+    "hours": 336,
+    "storage": "Fridge, covered"
+   },
+   "actions": [
+    "Infuse",
+    "Strain",
+    "Syrup"
+   ],
+   "steps": [
+    {
+     "body": "Pour the boiling water over the dried rose petals and leave them to steep.",
+     "timer_seconds": 1800
+    },
+    {
+     "body": "Strain, pressing the petals lightly. Stir in the rose water, then add hot water to bring the liquid back to 240 ml."
+    },
+    {
+     "body": "Stir in the sugar until it dissolves. Cover and keep cold."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://imbibemagazine.com/how-to-make-simple-syrups/Rose-Syrup-Recipe",
+     "kind": "reference",
+     "note": "Imbibe (Erick Castro): 1/4 cup dried rose petals steeped 30 min in 1 cup boiling water, 1/4 tsp rose water, 1 cup sugar (gum arabic optional, left out). Sugar:water 1:1 by volume; cup as 240 ml water, 200 g sugar, 1/4 cup petals as 4 tbsp."
+    },
+    {
+     "field": "recipe",
+     "url": "https://fareisle.com/wprm_print/rose-petal-simple-syrup",
+     "kind": "reference",
+     "note": "Fare Isle: 1 cup sugar to 1 cup boiling water, petals steeped first then sugar added. Same 1:1 sugar to water by volume as Imbibe, so we use that ratio; Fare Isle uses far more petals (2 cups), we keep Imbibe's lighter dose."
+    },
+    {
+     "field": "keeps",
+     "url": "https://imbibemagazine.com/how-to-make-simple-syrups/Rose-Syrup-Recipe",
+     "kind": "reference",
+     "hours": 336,
+     "note": "Up to 2 weeks in the fridge for this recipe (Fare Isle says a month; the shorter wins)."
+    }
+   ],
+   "yield": {
+    "amount": 360,
+    "unit": "ml",
+    "derived": true
+   }
+  },
+  {
+   "name": "Rosemary syrup",
+   "kind": "syrup",
+   "kind_of": "Syrup",
+   "aliases": [],
+   "description": "A 1:1 simple syrup warmed with fresh rosemary and left to cool with the sprigs in. Piney and savoury; good with gin, grapefruit and whiskey sours.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "replace": true,
+   "fix": "Was 500 ml water, 500 g sugar and 20 g rosemary steeped covered, which no source we reached gives. Now Food Network Kitchen's 1 cup sugar to 1 cup water (200 g to 240 ml) with 1 sprig per cup, doubled, the sprig cooling in the syrup. Yield 800 to 720 ml from the source. Keep 504 h unchanged (source: up to 1 month).",
+   "recipe": [
+    {
+     "ingredient": "Water",
+     "amount": 480,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Sugar",
+     "amount": 400,
+     "unit": "g"
+    },
+    {
+     "ingredient": "Rosemary",
+     "amount": 2,
+     "unit": "sprig",
+     "note": "fresh",
+     "removed": true
+    }
+   ],
+   "yield": {
+    "amount": 720,
+    "unit": "ml"
+   },
+   "keeps": {
+    "hours": 504,
+    "storage": "Fridge, sealed bottle"
+   },
+   "actions": [
+    "Syrup",
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Put the sugar, water and rosemary in a small pan."
+    },
+    {
+     "body": "Warm over low heat, stirring, just until the sugar has dissolved."
+    },
+    {
+     "body": "Take it off the heat and let it cool with the rosemary still in."
+    },
+    {
+     "body": "Lift out the sprigs, bottle and keep in the fridge."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.foodnetwork.com/recipes/food-network-kitchen/rosemary-greyhound-cocktail-3363162",
+     "kind": "reference",
+     "note": "Food Network Kitchen rosemary simple syrup: 1 cup sugar, 1 cup water, 1 sprig rosemary, warmed low until dissolved and cooled with the sprig in. Converted (cup sugar 200 g, cup water 240 ml) and doubled."
+    },
+    {
+     "field": "yield",
+     "url": "https://www.foodnetwork.com/recipes/food-network-kitchen/rosemary-greyhound-cocktail-3363162",
+     "kind": "reference",
+     "note": "Makes 1.5 cups per batch; doubled to 3 cups, 720 ml."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.foodnetwork.com/recipes/food-network-kitchen/rosemary-greyhound-cocktail-3363162",
+     "kind": "reference",
+     "hours": 720,
+     "note": "Up to 1 month sealed in the fridge for this same syrup; we keep the catalog's shorter 3 weeks."
+    }
+   ]
+  },
+  {
+   "name": "Salt air",
+   "kind": "foam",
+   "kind_of": "Salt",
+   "aliases": [],
+   "description": "A salty lime air whipped from lime juice, water, kosher salt and a little soy lecithin with a stick blender. Spooned onto a Margarita in place of a salt rim.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "replace": true,
+   "fix": "Was 250 ml water, 125 ml lime, 15 g salt and 3 g lecithin, never cited together. Now Washingtonian's published restaurant salt air: 1 cup lime juice, 2 cups water, 1 tbsp kosher salt, 1/2 tsp soy lecithin (cups at 240 ml). Water to lime stays 2:1; salt and lecithin are now in spoons as the source gives them, with far less lecithin. Yield 720 ml worked out. Keep 24 h unchanged.",
+   "recipe": [
+    {
+     "ingredient": "Lime juice",
+     "amount": 240,
+     "unit": "ml",
+     "note": "fresh"
+    },
+    {
+     "ingredient": "Water",
+     "amount": 480,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Kosher salt",
+     "amount": 1,
+     "unit": "tbsp"
+    },
+    {
+     "ingredient": "Soy lecithin",
+     "amount": 0.5,
+     "unit": "tsp",
+     "note": "powder"
+    }
+   ],
+   "yield": {
+    "amount": 720,
+    "unit": "ml",
+    "derived": true
+   },
+   "keeps": {
+    "hours": 24,
+    "storage": "Fridge, unwhipped; whip fresh for service"
+   },
+   "actions": [
+    "Mix",
+    "Foam"
+   ],
+   "steps": [
+    {
+     "body": "Stir the lime juice, water, salt and lecithin together in a wide bowl until the salt and lecithin dissolve."
+    },
+    {
+     "body": "Tip the bowl away from you and run a stick blender in the far corner, half out of the liquid, until about 2.5 cm of air sits on top."
+    },
+    {
+     "body": "Let it settle for a minute, then spoon the air onto the drink.",
+     "timer_seconds": 60
+    },
+    {
+     "body": "When the air is used up, blend again. Keep the leftover liquid cold."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://washingtonian.com/?p=80457",
+     "kind": "reference",
+     "note": "Washingtonian (2007), a restaurant's salt air for margaritas: 1 cup lime juice, 2 cups water, 1 tbsp kosher salt, 1/2 tsp soy lecithin, blended at a tilted bowl until about an inch of foam forms. Cups at 240 ml."
+    },
+    {
+     "field": "keeps",
+     "url": "https://washingtonian.com/?p=80457",
+     "kind": "reference",
+     "hours": 48,
+     "note": "The unwhipped mix keeps several days in the fridge; we read that as at least 2 days and keep the catalog's shorter 24 h."
+    }
+   ]
+  },
+  {
+   "name": "Spiced cold brew",
+   "kind": "infusion",
+   "kind_of": "Cold brew",
+   "aliases": [],
+   "description": "Ground coffee steeped cold overnight with cinnamon, cardamom, turmeric and a pinch of saffron, then pressed. A chai-leaning cold brew for coffee highballs and Espresso Martini riffs.",
+   "abv": 0,
+   "grade": "A",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Ground coffee",
+     "amount": 320,
+     "unit": "ml",
+     "removed": true
+    },
+    {
+     "ingredient": "Ground cinnamon",
+     "amount": 2,
+     "unit": "tsp",
+     "removed": true
+    },
+    {
+     "ingredient": "Cardamom",
+     "amount": 2,
+     "unit": "tsp",
+     "note": "ground",
+     "removed": true
+    },
+    {
+     "ingredient": "Turmeric",
+     "amount": 1,
+     "unit": "tsp",
+     "note": "ground",
+     "removed": true
+    },
+    {
+     "ingredient": "Saffron",
+     "amount": 4,
+     "unit": "pinch",
+     "removed": true
+    },
+    {
+     "ingredient": "Water",
+     "amount": 1920,
+     "unit": "ml",
+     "note": "cold or room temperature"
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Put the coffee and spices in a large French press or jug."
+    },
+    {
+     "body": "Pour in the water, stir and refrigerate overnight."
+    },
+    {
+     "body": "Press the plunger, or strain through a fine filter, and keep cold."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.frontiercoop.com/recipes/chai-spiced-cold-brew-iced-coffee",
+     "kind": "producer",
+     "note": "Frontier Co-op (spice producer): 1/3 cup ground coffee, 1/2 tsp cinnamon, 1/2 tsp cardamom powder, 1/4 tsp turmeric, a pinch of saffron, 2 cups water, refrigerated overnight in a French press. Scaled x4; cups at 240 ml."
+    }
+   ]
+  },
+  {
+   "name": "Spiced salt",
+   "kind": "food",
+   "kind_of": "Salt",
+   "aliases": [],
+   "description": "Kosher salt rubbed with fresh lime zest, hot chile powder and a little cane sugar, with optional ground habanero. A rimming salt for Margaritas, Palomas and Micheladas.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Kosher salt",
+     "amount": 8,
+     "unit": "tbsp",
+     "note": "1/2 cup"
+    },
+    {
+     "ingredient": "Lime zest",
+     "amount": 1,
+     "unit": "each",
+     "note": "finely grated zest of 1 lime, no pith"
+    },
+    {
+     "ingredient": "Chile powder",
+     "amount": 1,
+     "unit": "tbsp",
+     "note": "hot"
+    },
+    {
+     "ingredient": "Cane sugar",
+     "amount": 1,
+     "unit": "tbsp"
+    },
+    {
+     "ingredient": "Habanero",
+     "amount": 0.5,
+     "unit": "tsp",
+     "note": "ground, optional"
+    }
+   ],
+   "yield": {
+    "amount": 120,
+    "unit": "ml"
+   },
+   "keeps": {
+    "hours": 1440,
+    "storage": "Airtight container"
+   },
+   "actions": [
+    "Mix"
+   ],
+   "steps": [
+    {
+     "body": "Grate the lime zest finely into a bowl, leaving the white pith behind."
+    },
+    {
+     "body": "Add the salt and rub or whisk until the zest is spread evenly with no clumps."
+    },
+    {
+     "body": "Whisk in the sugar, chile powder and habanero if using. Store airtight."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.thespicehouse.com/blogs/recipes/hot-chile-lime-margarita-salt",
+     "kind": "producer",
+     "note": "The Spice House: 1/2 cup kosher salt, zest of 1 lime, 1 tbsp hot chili powder, 1 tbsp cane sugar, optional 1/2 tsp ground habanero. 1/2 cup taken as 8 tbsp."
+    },
+    {
+     "field": "yield",
+     "url": "https://www.thespicehouse.com/blogs/recipes/hot-chile-lime-margarita-salt",
+     "kind": "producer",
+     "note": "Makes 1/2 cup (120 ml)."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.thespicehouse.com/blogs/recipes/hot-chile-lime-margarita-salt",
+     "kind": "producer",
+     "hours": 1440,
+     "note": "This same salt keeps a few months airtight, best within weeks; taken at the short end, 2 months."
+    }
+   ]
+  },
+  {
+   "name": "Spicy tequila",
+   "kind": "infusion",
+   "kind_of": "Tequila",
+   "aliases": [],
+   "description": "Blanco tequila infused with sliced jalapeños, from overnight to two days: green, bright heat for spicy margaritas and Palomas.",
+   "grade": "B",
+   "staple": true,
+   "recipe": [
+    {
+     "ingredient": "Jalapeño",
+     "amount": 2,
+     "unit": "each",
+     "note": "medium, about 50 g; stems off, sliced thin, seeds kept for more heat",
+     "removed": true
+    },
+    {
+     "ingredient": "Blanco tequila",
+     "amount": 750,
+     "unit": "ml",
+     "note": "100% agave"
+    }
+   ],
+   "yield": {
+    "amount": 750,
+    "unit": "ml",
+    "derived": true
+   },
+   "keeps": null,
+   "actions": [
+    "Infuse",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Cut the stems off the jalapeños and slice them into thin rounds or strips. Keep the seeds in for more heat, or leave some out for less."
+    },
+    {
+     "body": "Put the peppers in a jar, pour in the tequila, seal and shake."
+    },
+    {
+     "body": "Leave in a cool, dark place, shaking now and then. Taste after one night and every few hours after; most batches are hot enough by day two."
+    },
+    {
+     "body": "Strain out the peppers and seeds when it tastes right and pour the tequila back into its bottle."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.tastingtable.com/694360/jalapeno-infused-tequila/",
+     "kind": "reference",
+     "note": "Carey Jones (Tasting Table): two medium jalapeños, sliced with their seeds, to a 750 ml bottle of 100% agave tequila, left overnight then strained."
+    },
+    {
+     "field": "recipe",
+     "url": "https://www.theinfatuation.com/cocktails/c/cocktails-how-to-make-jalapeno-tequila",
+     "kind": "reference",
+     "note": "Bryan Kim (The Infatuation): two jalapeños, about 50 g, in rounds, to a 750 ml bottle of blanco tequila, two days in a cool dark place, a day more if it needs heat. Same ratio as Tasting Table."
+    }
+   ]
+  },
+  {
+   "name": "Spicy tincture",
+   "kind": "tincture",
+   "kind_of": "Tincture",
+   "aliases": [],
+   "description": "A bar's all-purpose heat: chiles steeped in high-proof spirit and added a few drops at a time, so the heat stays the same drink to drink. This version uses seeded habaneros in vodka.",
+   "grade": "B",
+   "staple": true,
+   "recipe": [
+    {
+     "ingredient": "Habanero",
+     "amount": 6,
+     "unit": "each",
+     "note": "stems and seeds removed (wear gloves)",
+     "removed": true
+    },
+    {
+     "ingredient": "Vodka",
+     "amount": 480,
+     "unit": "ml",
+     "note": "2 cups at 240 ml; 50% ABV vodka extracts more"
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Tincture",
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Wearing gloves, remove the stems and seeds from the habaneros."
+    },
+    {
+     "body": "Put them in a sealable jar with the vodka."
+    },
+    {
+     "body": "Leave at room temperature, tasting as it goes; about a week for full heat."
+    },
+    {
+     "body": "Strain into dropper bottles and label each with what it is. Use a few drops per drink."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.tastingtable.com/688747/border-storm-cocktail-recipe-from-anvil-bar-refuge/",
+     "kind": "reference",
+     "note": "Anvil Bar & Refuge (Tasting Table): 6 seeded habaneros in 2 cups (480 ml) vodka, one week at room temperature. We use this ratio. Cups at 240 ml."
+    },
+    {
+     "field": "recipe",
+     "url": "https://punchdrink.com/recipes/the-pastry-wars-spicy-with-tequila/",
+     "kind": "reference",
+     "note": "The Pastry War (Punch): 12 seeded habaneros per litre of vodka for two weeks, within 4% of Anvil's 12.5 a litre."
+    }
+   ]
+  },
+  {
+   "name": "Strawberry cream",
+   "kind": "foam",
+   "kind_of": "Cream",
+   "aliases": [],
+   "description": "Heavy cream and a little milk whipped with strawberry syrup into a soft, pourable pink cream. Floated on iced coffee, matcha or creamy sours.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Heavy cream",
+     "amount": 240,
+     "unit": "ml"
+    },
+    {
+     "ingredient": "Milk",
+     "amount": 120,
+     "unit": "ml",
+     "note": "2% milk"
+    },
+    {
+     "ingredient": "Strawberry syrup",
+     "amount": 120,
+     "unit": "ml"
+    }
+   ],
+   "yield": null,
+   "keeps": {
+    "hours": 48,
+    "storage": "Fridge, covered"
+   },
+   "actions": [
+    "Mix",
+    "Foam"
+   ],
+   "steps": [
+    {
+     "body": "Stir the cream, milk and strawberry syrup together in a French press, leaving room for it to swell."
+    },
+    {
+     "body": "Pump the plunger up and down about 40 times until it thickens to a soft, pourable foam."
+    },
+    {
+     "body": "Spoon onto the drink. Keep any extra cold and re-whip briefly before use."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.ohhowcivilized.com/strawberry-cold-foam",
+     "kind": "reference",
+     "note": "Jee Choe: 1/4 cup heavy cream, 2 tbsp 2% milk, 2 tbsp strawberry syrup per serve, pumped 40 times in a French press. Scaled x4; cups at 240 ml, tbsp at 15 ml."
+    },
+    {
+     "field": "keeps",
+     "url": "https://www.ohhowcivilized.com/strawberry-cold-foam",
+     "kind": "reference",
+     "hours": 48,
+     "note": "This same strawberry cold foam: up to 2 days in the fridge."
+    }
+   ]
+  },
+  {
+   "name": "Yoghurt whey",
+   "kind": "other",
+   "kind_of": "Whey",
+   "aliases": [],
+   "description": "The thin, tangy liquid that drains out of plain yoghurt as it thickens. Adds a soft lactic sourness and body to sours, highballs and whey sodas.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Yogurt",
+     "amount": 960,
+     "unit": "ml",
+     "note": "plain; 1 quart (4 cups at 240 ml). The source used nonfat."
+    }
+   ],
+   "yield": {
+    "amount": 480,
+    "unit": "ml"
+   },
+   "keeps": null,
+   "actions": [
+    "Strain"
+   ],
+   "steps": [
+    {
+     "body": "Line a sieve with cheesecloth or a coffee filter and set it over a bowl or jug."
+    },
+    {
+     "body": "Spoon in the yoghurt and leave it about an hour, then move the whole setup to the fridge.",
+     "timer_seconds": 3600
+    },
+    {
+     "body": "Drain in the fridge until the next day, about 24 hours in all. Keep the thick yoghurt for something else.",
+     "timer_seconds": 86400
+    },
+    {
+     "body": "Pour the whey into a clean bottle and keep it cold."
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://www.kingarthurbaking.com/blog/2012/04/20/beyond-greek-yogurt-%E2%80%93-a-bakers-secret",
+     "kind": "reference",
+     "note": "PJ Hamel (King Arthur Baking): a quart of plain yoghurt drained 24 hours, an hour out then in the fridge. Quart at 4 cups, 240 ml a cup."
+    },
+    {
+     "field": "yield",
+     "url": "https://www.kingarthurbaking.com/blog/2012/04/20/beyond-greek-yogurt-%E2%80%93-a-bakers-secret",
+     "kind": "reference",
+     "note": "A quart of yoghurt gives about 16 fl oz of whey (2 cups, 480 ml); a pint gives about 8 fl oz."
+    }
+   ]
+  },
+  {
+   "name": "Yuzu foam",
+   "kind": "foam",
+   "kind_of": "Yuzu",
+   "aliases": [],
+   "description": "A light lecithin air of yuzu juice and simple syrup, whipped with a stick blender and spooned onto the drink to order. Lasts minutes, so make it at service.",
+   "abv": 0,
+   "grade": "B",
+   "staple": false,
+   "recipe": [
+    {
+     "ingredient": "Yuzu juice",
+     "amount": 90,
+     "unit": "ml",
+     "note": "6 tbsp"
+    },
+    {
+     "ingredient": "Simple syrup",
+     "amount": 60,
+     "unit": "ml",
+     "note": "1:1, 4 tbsp"
+    },
+    {
+     "ingredient": "Soy lecithin",
+     "amount": 0.375,
+     "unit": "g",
+     "note": "weigh on a fine scale; about 1/8 tsp"
+    }
+   ],
+   "yield": null,
+   "keeps": null,
+   "actions": [
+    "Blend",
+    "Foam"
+   ],
+   "steps": [
+    {
+     "body": "Blend the yuzu juice, syrup and lecithin until the lecithin has fully dissolved, then chill the base."
+    },
+    {
+     "body": "Pour into a wide, shallow container, deep enough to cover most of the blender head."
+    },
+    {
+     "body": "Blend with the blades tilted up at the surface so they pull in air, just until a dense foam builds on top."
+    },
+    {
+     "body": "Rest a moment, then spoon the foam off onto the drink. Repeat as needed and serve straight away.",
+     "timer_seconds": 60
+    }
+   ],
+   "sources": [
+    {
+     "field": "recipe",
+     "url": "https://marxfood.com/frozen-yuzu-air-recipe/",
+     "kind": "retailer",
+     "note": "Marx Foods (Sarah Mickey): 6 tbsp yuzu juice, 4 tbsp 1:1 simple syrup, 0.375 g lecithin; scale at about 1.5 g lecithin per 500 g liquid. Tbsp at 15 ml. The source freezes the air as a palate cleanser; we serve it fresh on the drink."
+    }
+   ]
+  }
+ ]
+}

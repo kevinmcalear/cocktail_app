@@ -14,6 +14,7 @@ Expo SDK 58 (RN 0.88.0-rc.3, React 19.3, React Compiler), Expo Router, Tamagui 2
 ## How we work
 
 - **Branch, PR, CI, Kevin merges.** Never commit or push to `main`; a hook in `.claude/settings.json` blocks it. One step per PR; stack PRs when steps depend on each other.
+- **Review your own branch first:** before asking for review, run `/code-review` on the branch and fix the findings you confirm.
 - **Verify the real thing before asking for review:** web at phone and desktop widths, plus the iOS simulator and Android when native code or layout changes. Put screenshots in the PR. Local recipes: [docs/dev_flow.md](docs/dev_flow.md#verify).
 - **Human-gated:** database migrations, RLS, auth, `lib/roles.ts`, and deploying edge functions. Build and test these against the local Supabase stack only; never push them to production without Kevin's explicit OK in the conversation. A migration merged to main (which needs his `human-approved` label) is applied to production by the Deploy migrations workflow; that label is the OK. Edge functions are still deployed by hand.
 - **Public repo:** no emails, user data, secrets or unfixed security details in code, commits or PR text.
@@ -68,4 +69,5 @@ Lazy means efficient, not careless. Before writing code, stop at the first rung 
 ## Agent setup
 
 - The Expo plugin for Claude Code is enabled for this project in `.claude/settings.json`: it adds Expo Skills and the Expo MCP server (docs, EAS builds, simulator screenshots). Run `/mcp` once to sign in to Expo.
+- A Stop hook (`.claude/hooks/stop-checks.sh`) runs typecheck, eslint on the changed files and `npm run check:design` when a turn ends with uncommitted code changes, and sends Claude back to fix any failure. It skips changes that already passed and worktrees without `node_modules`.
 - The Supabase MCP connector is read-only here. Use the linked `supabase` CLI for writes, and only with Kevin's OK.
