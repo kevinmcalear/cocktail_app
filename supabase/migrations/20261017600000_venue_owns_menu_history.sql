@@ -10,10 +10,15 @@
 -- its own menus. private.move_menu_history_to_venue(bar) turns each edition
 -- into a public.menus row the venue's staff can edit or delete:
 --
---   dates      starts the first of its month (UTC); is_current: on now;
---              an end month: ends after that month; otherwise it ran for
---              its own month (its year, when the month isn't known). Months
---              the research didn't record stay unrecorded.
+--   dates      starts the 1st of its month; is_current: on now; an end
+--              month: ends the last day of that month; otherwise it ran
+--              for its own month (its year, when the month isn't known).
+--              Months the research didn't record stay unrecorded. Both at
+--              noon UTC: the Menus list shows the same day from UTC-11 to
+--              UTC+11, and get_menu_editions (which reads months in UTC)
+--              keeps the research's months.
+--              ponytail: bars have no timezone yet (profiles.timezone is
+--              empty for all of them); use local midnight once it's set.
 --   theme      becomes the menu's description. source_url is dropped: the
 --              bar's word replaces the research.
 --   drinks     the same items in the same order, in one "Drinks" section.
@@ -38,6 +43,7 @@ DECLARE
     v_menu uuid;
     v_section uuid;
     v_start timestamptz;
+    v_last_month timestamptz;
     v_end timestamptz;
     v_moved integer := 0;
 BEGIN
@@ -51,17 +57,17 @@ BEGIN
         WHERE p.bar_id = p_bar_id AND p.kind = 'bar'
         ORDER BY pe.year, pe.month NULLS FIRST, pe.created_at
     LOOP
-        v_start := make_timestamptz(e.year, COALESCE(e.month, 1), 1, 0, 0, 0, 'UTC');
-        v_end := CASE
-            WHEN e.is_current THEN NULL
-            WHEN e.end_year IS NOT NULL
-                THEN make_timestamptz(e.end_year, COALESCE(e.end_month, 12), 1, 0, 0, 0, 'UTC') + interval '1 month'
-            WHEN e.month IS NULL THEN v_start + interval '1 year'
-            ELSE v_start + interval '1 month'
+        v_start := make_timestamptz(e.year, COALESCE(e.month, 1), 1, 12, 0, 0, 'UTC');
+        v_last_month := CASE
+            WHEN e.end_year IS NOT NULL THEN make_timestamptz(e.end_year, COALESCE(e.end_month, 12), 1, 12, 0, 0, 'UTC')
+            WHEN e.month IS NULL THEN v_start + interval '11 months'
+            ELSE v_start
         END;
-        IF v_end IS NOT NULL AND v_end <= v_start THEN
-            v_end := v_start + interval '1 month';
+        IF v_last_month < v_start THEN
+            v_last_month := v_start;
         END IF;
+        -- The last day of the last month.
+        v_end := CASE WHEN e.is_current THEN NULL ELSE v_last_month + interval '1 month' - interval '1 day' END;
 
         INSERT INTO public.menus (bar_id, name, kind, description, starts_at, ends_at, created_by)
         VALUES (p_bar_id, e.name, 'menu', e.theme, v_start, v_end, NULL)

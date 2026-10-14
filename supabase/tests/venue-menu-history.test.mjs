@@ -134,8 +134,8 @@ describe('a bar gets staff', () => {
     assert.deepEqual(
       menus.map(({ name, description, created_by, starts, ends }) => ({ name, description, created_by, starts, ends })),
       [
-        { name: `Opening menu ${run}`, description: 'Weekly lists', created_by: null, starts: '2022-02-01', ends: '2022-05-01' },
-        { name: `July menu ${run}`, description: null, created_by: null, starts: '2023-07-01', ends: '2023-08-01' },
+        { name: `Opening menu ${run}`, description: 'Weekly lists', created_by: null, starts: '2022-02-01', ends: '2022-04-30' },
+        { name: `July menu ${run}`, description: null, created_by: null, starts: '2023-07-01', ends: '2023-07-31' },
         { name: `September menu ${run}`, description: null, created_by: null, starts: '2026-09-01', ends: null },
       ]
     );
@@ -160,6 +160,9 @@ describe('a bar gets staff', () => {
     assert.ok(data.every((m) => m.from_venue));
     const current = data.filter((m) => m.is_current).map((m) => m.name);
     assert.deepEqual(current, [`September menu ${run}`]);
+    // The research's months, as before.
+    const opening = data.find((m) => m.name === `Opening menu ${run}`);
+    assert.deepEqual([opening.year, opening.month, opening.end_year, opening.end_month], [2022, 2, 2022, 4]);
   });
 });
 
