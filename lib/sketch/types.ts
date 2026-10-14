@@ -1,6 +1,7 @@
 // A drink's drawing inputs, as the flavor-worker stores them in item_sketches
 // and as the add-drink wizard works them out live (lib/sketch/draft.ts). The
 // lists come from the rules both run (supabase/functions/_shared/sketchRules.ts).
+import { SKETCH_CLEAR_TINT } from '../../constants/sketch';
 import { FOAMS, GARNISHES, GLASSES, ICES, METHODS } from '../../supabase/functions/_shared/sketchRules';
 
 export const SKETCH_GLASSES = GLASSES;
@@ -33,6 +34,13 @@ export interface SketchInputs {
    * database, not the worker; null draws the default.
    */
   variant: string | null;
+  /**
+   * The colour the drink's editor picked ('#rrggbb', constants/sketch.ts
+   * SKETCH_TINTS) over the one in liquid, which stays the worker's. Set by the
+   * database from items.sketch_liquid; missing or null is Auto. Painted
+   * through liquidOf.
+   */
+  tint?: string | null;
 }
 
 const has = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
@@ -58,5 +66,22 @@ export function readSketchInputs(raw: unknown): SketchInputs | null {
     from: (x.from ?? {}) as SketchInputs['from'],
     coverage: Number(x.coverage) || 0,
     variant: typeof x.variant === 'string' && x.variant.startsWith(`${x.glass}_`) ? x.variant : null,
+    // Only when there is one: Auto rows read back as they were stored.
+    ...(isHex(x.tint) ? { tint: x.tint.toLowerCase() } : {}),
   };
 }
+
+/**
+ * The colour a drink is painted: its editor's tint over the worker's colour.
+ * A tint keeps the drink's strength unless that was clear (then it's a
+ * colour now), and the clear swatch paints thin, as a clear drink. Takes raw
+ * rows too (the link previews paint stored inputs as they are).
+ */
+export function liquidOf(inputs: Pick<SketchInputs, 'liquid' | 'tint'>): SketchInputs['liquid'] {
+  const tint = isHex(inputs.tint) ? inputs.tint.toLowerCase() : null;
+  if (!tint) return inputs.liquid;
+  return { hex: tint, alpha: tint === SKETCH_CLEAR_TINT ? 0.14 : Math.max(inputs.liquid.alpha, 0.75) };
+}
+
+/** The same drawing with another tint, or Auto (null): what the picker previews and the cache holds until the row comes back. */
+export const withTint = (inputs: SketchInputs, tint: string | null): SketchInputs => ({ ...inputs, tint });

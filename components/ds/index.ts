@@ -9,6 +9,7 @@ export { GlassButton, GlassSurface } from './Glass';
 export { IngredientThumb } from './IngredientThumb';
 export { EquipmentThumb } from './EquipmentThumb';
 export { GlassVariantPicker } from './GlassVariantPicker';
+export { SketchTintPicker } from './SketchTintPicker';
 export { LockedSection } from './LockedSection';
 export { PalateFlower } from './PalateFlower';
 export { PressableScale } from './PressableScale';

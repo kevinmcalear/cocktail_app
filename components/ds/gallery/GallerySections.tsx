@@ -20,7 +20,7 @@ import { useToast } from '../Toast';
 import { TimeField } from '../TimeField';
 import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
-import { AnimatedDrawings, GlassVariants } from './GlassVariants';
+import { AnimatedDrawings, GlassVariants, SketchTints } from './GlassVariants';
 import { KitDrawings } from './KitDrawings';
 import { SheetDemo } from './SheetDemo';
 import { IMAGES, PENICILLIN } from './samples';
@@ -190,6 +190,10 @@ export function GallerySections() {
 
       <Section title="Drawn glassware">
         <GlassVariants />
+      </Section>
+
+      <Section title="Sketch colour">
+        <SketchTints />
       </Section>
 
       <Section title="Drawn kit">

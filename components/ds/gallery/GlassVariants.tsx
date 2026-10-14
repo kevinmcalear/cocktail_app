@@ -10,6 +10,7 @@ import type { SketchGlass, SketchInputs } from '@/lib/sketch/types';
 import { AnimatedSketch } from '../AnimatedSketchLazy';
 import { Button } from '../Button';
 import { GlassVariantPicker } from '../GlassVariantPicker';
+import { SketchTintPicker } from '../SketchTintPicker';
 import { Caption } from '../Text';
 
 const from: SketchInputs['from'] = { glass: 'rules', ice: 'rules', method: 'rules', liquid: 'rules', garnish: 'rules' };
@@ -59,6 +60,12 @@ export function GlassVariants() {
       })}
     </>
   );
+}
+
+/** A drink's sketch colour: Auto or a house watercolour, on a Manhattan; tap to repaint it. */
+export function SketchTints() {
+  const [tint, setTint] = useState<string | null>(null);
+  return <SketchTintPicker inputs={SAMPLES.nick.inputs} seed="gallery-tint" value={tint} onChange={setTint} />;
 }
 
 const ANIMATED = ['rocks', 'spritz', 'beer', 'coupe'] as const;

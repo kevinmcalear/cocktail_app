@@ -16,7 +16,7 @@ import { makePainter, type LineOpts, type Painter } from './painter';
 import { gauss, hashString, mixHex, rng, type Rng } from './random';
 import { GLASS_BANDS, SceneBuilder, type Scene, type StageName } from './scene';
 import { CRUMB, DEFAULT_SKETCH_STYLE, LIFT, SKETCH_STYLES, SMUDGE, type SketchStyleKey } from './styles';
-import type { SketchFoam, SketchInputs } from './types';
+import { liquidOf, type SketchFoam, type SketchInputs } from './types';
 
 const FOAM: Record<SketchFoam, { depth: number; rise: number; bubbles: number }> = {
   cap: { depth: 7.5, rise: 2.4, bubbles: 70 },
@@ -138,10 +138,12 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   }
 
   // --- the drink ---
-  const clear = inputs.liquid.alpha < 0.2;
-  let tone = clear ? mixHex(inputs.liquid.hex, SKETCH.glassGrey, 0.55) : inputs.liquid.hex;
+  // The editor's tint, if they picked one, over the worker's colour.
+  const liquid = liquidOf(inputs);
+  const clear = liquid.alpha < 0.2;
+  let tone = clear ? mixHex(liquid.hex, SKETCH.glassGrey, 0.55) : liquid.hex;
   if (S.mute) tone = mixHex(tone, SKETCH.mute, S.mute);
-  const strength = clear ? 0.55 : Math.min(1.15, 0.55 + inputs.liquid.alpha * 0.6);
+  const strength = clear ? 0.55 : Math.min(1.15, 0.55 + liquid.alpha * 0.6);
   const floor = g.stemmed ? bot : g.base!;
   if (g.opaque) {
     P.wash(P.silhouette, g.opaque, 0.75, { spill: 0.4, fadeTo: 0.55 });
