@@ -99,6 +99,7 @@ export function BrandForm({ row, draft, set, suggested, busy, problems, effectiv
           onPick={() => onUpload('logo')}
           onRemoveBackground={onRemoveBackground}
           onRemove={() => set('logoUrl')(null)}
+          onUseOriginal={set('logoUrl')}
         />
       </SettingsSection>
 

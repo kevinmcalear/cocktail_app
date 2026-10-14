@@ -97,9 +97,14 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
     setBusy('background');
     setMessage(null);
     try {
-      const url = await removeLogoBackground(row.id, draft.logoUrl);
-      if (url) set('logoUrl')(url);
-      else setMessage('Background removal isn’t available yet. For now, upload a PNG with a transparent background.');
+      const done = await removeLogoBackground(row.id, draft.logoUrl);
+      if (done === 'unavailable') setMessage('Background removal arrives with the next update. For now, upload a PNG with a transparent background.');
+      else {
+        set('logoUrl')(done.url);
+        setMessage('Background removed. Check it on dark and light above, then save.');
+      }
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Couldn’t remove the background. Try again.');
     } finally {
       setBusy(null);
     }

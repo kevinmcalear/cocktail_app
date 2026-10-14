@@ -1,12 +1,12 @@
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { DsText, useDisplayFaces, useDs } from '@/components/ds';
+import { DsText, LogoImage, useDisplayFaces, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { backbar, DEFAULT_ACCENT } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
+import { iconFill } from '@/lib/brandColours';
 import { accentFill } from '@/lib/color';
 
 /** The venue's mark: its logo, or its initial in its display face on its own colour (not the active venue's). */
@@ -16,7 +16,7 @@ export function VenueMark({ venue, size = 32 }: { venue: Venue | null; size?: nu
   const family = useDisplayFaces([venue?.logoUrl ? null : venue?.displayFace]);
   const box = { width: size, height: size, borderRadius: size * 0.28 };
   if (venue?.logoUrl) {
-    return <Image source={{ uri: venue.logoUrl }} style={box} contentFit="cover" accessibilityIgnoresInvertColors />;
+    return <LogoImage uri={venue.logoUrl} size={size} radius={box.borderRadius} fill={logoFill(venue)} />;
   }
   return (
     <View style={[box, styles.initial, { backgroundColor: own.fill }]}>
@@ -25,6 +25,11 @@ export function VenueMark({ venue, size = 32 }: { venue: Venue | null; size?: nu
       </DsText>
     </View>
   );
+}
+
+/** What an opaque logo's mark sits on: the venue's home-screen icon background, else (null) the logo's own edge colour. */
+export function logoFill(venue: Pick<Venue, 'iconBackground' | 'accent' | 'groundTint'>): string | null {
+  return venue.iconBackground ? iconFill(venue.iconBackground, venue) : null;
 }
 
 /** Home mode's mark: a house on a plain tile. */

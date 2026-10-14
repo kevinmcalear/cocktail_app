@@ -2,10 +2,10 @@ import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDisplayFaces, useDs } from '@/components/ds';
-import { backbar, DEFAULT_ACCENT, GROUND_TINTS, radius, space, type DisplayFace } from '@/constants/tokens';
-import { ACCENT_INK, colourName } from '@/lib/brandColours';
+import { DEFAULT_ACCENT, GROUND_TINTS, radius, space, type DisplayFace } from '@/constants/tokens';
+import { ACCENT_INK, colourName, iconFill, type IconBackground } from '@/lib/brandColours';
 
-export type IconBackground = 'accent' | 'ground' | 'cream';
+export type { IconBackground };
 
 const BACKGROUNDS: IconBackground[] = ['accent', 'ground', 'cream'];
 const TILE = 64;
@@ -18,13 +18,6 @@ interface IconLook {
   displayFace: DisplayFace;
 }
 
-/** The colour behind the icon for a pick, as venue-app draws it (supabase/functions/_shared/iconBackground.ts). */
-function fillFor(bg: IconBackground, look: IconLook): string {
-  if (bg === 'accent') return look.accent ?? DEFAULT_ACCENT;
-  if (bg === 'ground') return look.groundTint ?? backbar.dark.ground;
-  return ACCENT_INK.cream;
-}
-
 /** The pick's name under its tile: the accent's colour name, the ground's tint name, or Cream. */
 function labelFor(bg: IconBackground, look: IconLook): string {
   if (bg === 'accent') return colourName(look.accent ?? DEFAULT_ACCENT);
@@ -34,7 +27,7 @@ function labelFor(bg: IconBackground, look: IconLook): string {
 
 /** The home-screen icon on one background: the logo, or the venue's initial in its display italic. */
 export function IconTile({ bg, look, size = TILE }: { bg: IconBackground; look: IconLook; size?: number }) {
-  const fill = fillFor(bg, look);
+  const fill = iconFill(bg, look);
   // The initial in the accent, except on the accent itself, where it's cream.
   const ink = bg === 'accent' ? ACCENT_INK.cream : (look.accent ?? DEFAULT_ACCENT);
   const family = useDisplayFaces([look.logoUrl ? null : look.displayFace]);

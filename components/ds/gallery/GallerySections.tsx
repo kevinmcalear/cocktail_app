@@ -22,6 +22,7 @@ import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
 import { AnimatedDrawings, GlassVariants, SketchTints } from './GlassVariants';
 import { KitDrawings } from './KitDrawings';
+import { LogoMarks } from './LogoMarks';
 import { SheetDemo } from './SheetDemo';
 import { IMAGES, PENICILLIN } from './samples';
 
@@ -186,6 +187,10 @@ export function GallerySections() {
             <Caption tone="muted">No image yet</Caption>
           </View>
         </View>
+      </Section>
+
+      <Section title="Logos">
+        <LogoMarks />
       </Section>
 
       <Section title="Drawn glassware">

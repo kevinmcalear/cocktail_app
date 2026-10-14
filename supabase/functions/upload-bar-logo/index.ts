@@ -1,11 +1,29 @@
-import { Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
+// Stores a venue's logo (or home-screen icon) and suggests colours from it.
+//
+// POST { bar_id, image_base64, extract_only? } -> { imageUrl, primaryColor, secondaryColor }
+//   The image is stored re-encoded as a real PNG, at most MAX_SIDE on a side,
+//   named with its edge (_shared/logoEdge.ts) so the app can draw it without
+//   a ring around it.
+// POST { action: "remove_background", bar_id, logo_url } -> { imageUrl, originalUrl }
+//   Takes a flat background out of one of the venue's stored logos and stores
+//   the result beside the original (which stays, for "Use original"). 422 when
+//   there's no flat background to take out.
+// Venue Admins only.
+import { decode, GIF, Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
-import { requireUser } from "../_shared/auth.ts";
+import { type Caller, requireUser } from "../_shared/auth.ts";
+import { drinksBucketUrl } from "../_shared/drinksUrl.ts";
 import { HttpError, serveJson } from "../_shared/http.ts";
 import { decodableSize } from "../_shared/imageSize.ts";
+import { logoEdge, logoFileTag, noBackgroundPath, removeLogoBackground } from "../_shared/logoEdge.ts";
 
 /** A logo's largest decoded file size: 5 MB, the same as the avatars bucket. */
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
+/** The longest side a stored logo keeps: sharp at the largest place it's drawn (the 512 home-screen icon), with room to spare. */
+const MAX_SIDE = 1024;
+/** Each stored logo has its own path, so it can be cached for a year. */
+const CACHE_A_YEAR = "31536000";
+const PUBLIC_DRINKS = "/storage/v1/object/public/drinks/";
 
 function rgbToHex(r: number, g: number, b: number): string {
   return `#${[r, g, b].map((c) => Math.max(0, Math.min(255, c)).toString(16).padStart(2, "0")).join("")}`;
@@ -25,10 +43,10 @@ function bucketKey(r: number, g: number, b: number, step = 24): string {
   return `${br},${bg},${bb}`;
 }
 
-async function extractBrandColors(bytes: Uint8Array): Promise<{ primaryColor: string; secondaryColor: string }> {
-  const image = await Image.decode(bytes);
+function extractBrandColors(image: Image): { primaryColor: string; secondaryColor: string } {
   const size = 64;
-  const resized = image.resize(size, size);
+  // resize() changes the image it's called on: work on a copy.
+  const resized = image.clone().resize(size, size);
 
   const buckets = new Map<string, { count: number; r: number; g: number; b: number }>();
 
@@ -67,10 +85,80 @@ async function extractBrandColors(bytes: Uint8Array): Promise<{ primaryColor: st
   return { primaryColor, secondaryColor };
 }
 
+/** PNG, JPEG or GIF (its first frame) bytes as an image no longer than MAX_SIDE on a side. */
+async function decodeLogo(bytes: Uint8Array): Promise<Image> {
+  // A small file can still decode to an enormous bitmap: check the header first.
+  if (!decodableSize(bytes)) throw new HttpError(400, "Use a PNG, JPEG or GIF logo up to 4096 by 4096 pixels.");
+  const decoded = await decode(bytes, true).catch(() => null);
+  let image: Image;
+  if (decoded instanceof GIF && decoded[0]) {
+    // A GIF's first frame, as a plain image.
+    image = new Image(decoded[0].width, decoded[0].height);
+    image.bitmap.set(decoded[0].bitmap);
+  } else if (decoded instanceof Image) image = decoded;
+  else throw new HttpError(400, "That logo isn't a readable image.");
+  const scale = MAX_SIDE / Math.max(image.width, image.height);
+  return scale < 1 ? image.resize(Math.max(1, Math.round(image.width * scale)), Math.max(1, Math.round(image.height * scale))) : image;
+}
+
+/** Only the venue's Admins (role 40 and up, while their role is current). */
+async function requireBarAdmin(caller: Caller, barId: string): Promise<void> {
+  const { data: membership, error: membershipError } = await caller.userClient
+    .from("user_bars")
+    .select("role_level")
+    .eq("bar_id", barId)
+    .eq("user_id", caller.user.id)
+    .maybeSingle();
+
+  // The bars row is visible only while the role is current (an ended
+  // venue role drops it), the same rule update_bar_settings uses.
+  const { data: bar, error: barError } = await caller.userClient.from("bars").select("id").eq("id", barId).maybeSingle();
+  if (membershipError || barError || !membership || !bar || membership.role_level < 40) {
+    throw new HttpError(403, "Only the venue's Admins can change its logo.");
+  }
+}
+
+async function storePng(caller: Caller, path: string, png: Uint8Array, upsert: boolean): Promise<string> {
+  const bucket = caller.admin.storage.from("drinks");
+  const { error } = await bucket.upload(path, png, { contentType: "image/png", cacheControl: CACHE_A_YEAR, upsert });
+  if (error) throw error;
+  return bucket.getPublicUrl(path).data.publicUrl;
+}
+
+/** Takes the flat background out of one of this venue's stored logos and stores the result beside it. */
+async function removeBackground(caller: Caller, barId: string, logoUrl: unknown) {
+  const url = typeof logoUrl === "string" ? drinksBucketUrl(logoUrl, Deno.env.get("SUPABASE_URL") ?? "") : null;
+  const path = url ? decodeURIComponent(new URL(url).pathname).slice(PUBLIC_DRINKS.length) : "";
+  // Only this venue's own uploads (all PNGs), never another venue's or another bucket's file.
+  if (!path.startsWith(`bars/${barId}/`) || !/^bars\/[0-9a-f-]{36}\/[\w.-]+\.png$/i.test(path)) {
+    throw new HttpError(422, "Upload the logo again, then remove its background.");
+  }
+  const { data: blob, error } = await caller.admin.storage.from("drinks").download(path);
+  if (error || !blob) throw new HttpError(404, "Couldn't find that logo. Upload it again.");
+  if (blob.size > MAX_LOGO_BYTES) throw new HttpError(413, "That logo is too large. Use an image under 5 MB.");
+
+  const image = await decodeLogo(new Uint8Array(await blob.arrayBuffer()));
+  if (logoEdge(image.bitmap, image.width, image.height).kind === "clear") {
+    throw new HttpError(422, "This logo already has a transparent background.");
+  }
+  if (!removeLogoBackground(image.bitmap, image.width, image.height)) {
+    throw new HttpError(422, "This logo has no plain background to remove. Upload a PNG with a transparent background instead.");
+  }
+  // The same original always gives the same result, so trying again just replaces it.
+  const imageUrl = await storePng(caller, noBackgroundPath(path), await image.encode(), true);
+  return { imageUrl, originalUrl: url };
+}
+
 serveJson("upload-bar-logo", async (req) => {
   const caller = await requireUser(req);
 
-  const { bar_id, image_base64, extract_only = false } = await req.json().catch(() => ({}));
+  const body = await req.json().catch(() => ({}));
+  const { bar_id, image_base64, extract_only = false } = body;
+  if (body.action === "remove_background") {
+    if (typeof bar_id !== "string" || !bar_id) throw new HttpError(400, "bar_id and logo_url are required");
+    await requireBarAdmin(caller, bar_id);
+    return await removeBackground(caller, bar_id, body.logo_url);
+  }
   if (typeof bar_id !== "string" || typeof image_base64 !== "string" || !bar_id || !image_base64) {
     throw new HttpError(400, "bar_id and image_base64 are required");
   }
@@ -79,19 +167,7 @@ serveJson("upload-bar-logo", async (req) => {
     throw new HttpError(413, "That logo is too large. Use an image under 5 MB.");
   }
 
-  const { data: membership, error: membershipError } = await caller.userClient
-    .from("user_bars")
-    .select("role_level")
-    .eq("bar_id", bar_id)
-    .eq("user_id", caller.user.id)
-    .maybeSingle();
-
-  // The bars row is visible only while the role is current (an ended
-  // venue role drops it), the same rule update_bar_settings uses.
-  const { data: bar, error: barError } = await caller.userClient.from("bars").select("id").eq("id", bar_id).maybeSingle();
-  if (membershipError || barError || !membership || !bar || membership.role_level < 40) {
-    throw new HttpError(403, "Only the venue's Admins can change its logo.");
-  }
+  await requireBarAdmin(caller, bar_id);
 
   let binaryStr: string;
   try {
@@ -106,29 +182,16 @@ serveJson("upload-bar-logo", async (req) => {
   if (bytes.length > MAX_LOGO_BYTES) {
     throw new HttpError(413, "That logo is too large. Use an image under 5 MB.");
   }
-  if (!decodableSize(bytes)) {
-    throw new HttpError(400, "Use a PNG, JPEG or GIF logo up to 4096 by 4096 pixels.");
-  }
 
-  const { primaryColor, secondaryColor } = await extractBrandColors(bytes);
+  const image = await decodeLogo(bytes);
+  const { primaryColor, secondaryColor } = extractBrandColors(image);
 
   if (extract_only) {
     return { primaryColor, secondaryColor };
   }
 
-  // Each upload gets its own path, so it can be cached for a year.
-  const storageFilePath = `bars/${bar_id}/${Date.now()}.png`;
-  const bucket = caller.admin.storage.from("drinks");
-  const { error: uploadError } = await bucket.upload(storageFilePath, bytes, {
-    contentType: "image/png",
-    cacheControl: "31536000",
-    upsert: false,
-  });
-  if (uploadError) throw uploadError;
-
-  return {
-    imageUrl: bucket.getPublicUrl(storageFilePath).data.publicUrl,
-    primaryColor,
-    secondaryColor,
-  };
+  // Always a real PNG (it keeps transparency and says what it is), named with its edge.
+  const edge = logoEdge(image.bitmap, image.width, image.height);
+  const imageUrl = await storePng(caller, `bars/${bar_id}/${Date.now()}.${logoFileTag(edge)}.png`, await image.encode(), false);
+  return { imageUrl, primaryColor, secondaryColor };
 });

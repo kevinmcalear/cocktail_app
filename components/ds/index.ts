@@ -11,6 +11,7 @@ export { EquipmentThumb } from './EquipmentThumb';
 export { GlassVariantPicker } from './GlassVariantPicker';
 export { SketchTintPicker } from './SketchTintPicker';
 export { LockedSection } from './LockedSection';
+export { LogoImage, type LogoImageProps } from './LogoImage';
 export { PalateFlower } from './PalateFlower';
 export { PressableScale } from './PressableScale';
 export { ReviewMark, ReviewRow, TextLink, type ReviewChoice, type ReviewState } from './ReviewRow';

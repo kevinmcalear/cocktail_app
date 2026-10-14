@@ -3,12 +3,22 @@
  * "Cream", "Ink"), and the contrast check under Ground tint, worked out with
  * the same rules the app uses to draw the brand (lib/color).
  */
-import { backbar, GROUND_TINTS } from '@/constants/tokens';
+import { backbar, DEFAULT_ACCENT, GROUND_TINTS } from '@/constants/tokens';
 import { accentFill, contrast, parseHex, readableAccent } from '@/lib/color';
 
 /** The two inks a venue picks between for text on accent buttons. */
 export const ACCENT_INK = { cream: backbar.dark.ink, ink: backbar.dark.ground } as const;
 export type AccentInk = keyof typeof ACCENT_INK;
+
+/** The home-screen icon's background a venue picks on Brand (bars.icon_background). */
+export type IconBackground = 'accent' | 'ground' | 'cream';
+
+/** The colour behind the icon for a pick, as venue-app draws it (supabase/functions/_shared/iconBackground.ts). */
+export function iconFill(bg: IconBackground, look: { accent: string | null; groundTint: string | null }): string {
+  if (bg === 'accent') return look.accent ?? DEFAULT_ACCENT;
+  if (bg === 'ground') return look.groundTint ?? backbar.dark.ground;
+  return ACCENT_INK.cream;
+}
 
 const AA = 4.5;
 const BIG_TYPE = 3;
