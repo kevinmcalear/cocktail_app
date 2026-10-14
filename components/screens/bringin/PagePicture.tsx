@@ -4,7 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Caption, DsText, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { displayFaces, radius, space } from '@/constants/tokens';
 import { boxRect, cropLayout } from '@/lib/bringIn';
 import { withAlpha } from '@/lib/color';
 import type { ReadFile } from '@/lib/readAnything';
@@ -83,7 +83,8 @@ export function SourceCrop({ file, box, words, width = 64, height = 44, children
           onLoad={(e) => setSize({ width: e.source.width, height: e.source.height })}
         />
       ) : (
-        <DsText variant="caption" italic color={ds.c.sketchInk} numberOfLines={3} style={styles.words}>
+        // Set like the printed menu (the venue's display face, which is narrow), so a name fits without breaking.
+        <DsText variant="caption" color={ds.c.sketchInk} numberOfLines={3} style={[styles.words, { fontFamily: displayFaces[ds.displayFace].regular }]}>
           {words}
         </DsText>
       )}
@@ -99,5 +100,5 @@ const styles = StyleSheet.create({
   number: { position: 'absolute', top: -11, alignSelf: 'center', minWidth: 22, height: 22, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   crop: { borderRadius: radius.mark, overflow: 'hidden', flexShrink: 0 },
   abs: { position: 'absolute' },
-  words: { padding: 5 },
+  words: { paddingVertical: 5, paddingHorizontal: 6, lineHeight: 15 },
 });

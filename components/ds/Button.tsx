@@ -17,11 +17,15 @@ export interface ButtonProps {
   onPress?: () => void;
   /**
    * primary: the one main action on a screen, in the venue's accent. ink: the
-   * main action on light working screens (Make), where the accent is kept for
-   * the timer. danger: removing or deleting, in status red.
+   * main action on light working screens (Make) or a card's own main action
+   * (a project's Method), where the accent is spoken for. danger: removing or
+   * deleting, in status red.
    */
   variant?: 'primary' | 'ink' | 'secondary' | 'ghost' | 'danger';
-  size?: 'md' | 'lg';
+  /** sm: a compact pill (My Bar's Add both, a row action like "Unblock"), 36 tall with its tap area grown to 44, 15 pt label. */
+  size?: 'sm' | 'md' | 'lg';
+  /** Full height with a 15 pt semibold label, for three across a phone (a bar page's Directions, Call and Website, ppl-bar-top). */
+  dense?: boolean;
   icon?: IconName;
   disabled?: boolean;
   /** When the label alone is ambiguous ("Cancel" in a list of invites). Defaults to the label. */
@@ -30,12 +34,12 @@ export interface ButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function Button({ label, onPress, variant = 'primary', size = 'md', icon, disabled, accessibilityLabel, accessibilityHint, style }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', size = 'md', dense, icon, disabled, accessibilityLabel, accessibilityHint, style }: ButtonProps) {
   const ds = useDs();
   const fill = variant === 'primary' ? ds.accentFill.fill : variant === 'ink' ? ds.c.ink : 'transparent';
   const danger = readableAccent(STATUS.danger, ds.c.ground);
   const text = variant === 'primary' ? ds.accentFill.text : variant === 'ink' ? ds.c.ground : variant === 'danger' ? danger : ds.c.ink;
-  const border = variant === 'secondary' ? ds.c.lineStrong : variant === 'danger' ? withAlpha(danger, 0.45) : 'transparent';
+  const border = variant === 'secondary' ? ds.c.lineStrong : variant === 'danger' ? withAlpha(danger, 0.45) : variant === 'ink' ? ds.c.ink : 'transparent';
   return (
     <PressableScale
       onPress={onPress}
@@ -43,26 +47,31 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', icon,
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
       aria-disabled={disabled}
+      hitSlop={size === 'sm' ? (layout.minTapTarget - SMALL) / 2 : undefined}
       style={[
         styles.base,
+        size === 'sm' ? styles.small : null,
         {
-          height: size === 'lg' ? 52 : layout.minTapTarget,
+          height: size === 'lg' ? 52 : size === 'sm' ? SMALL : layout.minTapTarget,
           backgroundColor: fill,
           borderColor: border,
           opacity: disabled ? 0.45 : 1,
         },
+        size === 'sm' ? styles.small : null,
         style,
       ]}
     >
       <View style={styles.row}>
         {icon ? <IconSymbol name={icon} size={18} color={text} /> : null}
-        <DsText variant="body" color={text} style={styles.label} numberOfLines={1}>
+        <DsText variant={size === 'sm' || dense ? 'label' : 'body'} color={text} style={size === 'sm' ? null : styles.label} numberOfLines={1}>
           {label}
         </DsText>
       </View>
     </PressableScale>
   );
 }
+
+const SMALL = 36;
 
 const styles = StyleSheet.create({
   base: {
@@ -73,6 +82,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderCurve: 'continuous',
   },
+  small: { paddingHorizontal: space.md + 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   label: { fontFamily: fontFamilies.bodySemiBold },
 });

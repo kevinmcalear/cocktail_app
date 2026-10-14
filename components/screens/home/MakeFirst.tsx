@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, IngredientThumb, PressableScale, Surface, useDs } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { BarItem } from '@/hooks/useHomeBar';
 import { itemHref } from '@/lib/itemRoutes';
 
@@ -56,13 +57,13 @@ export function MakeFirst({ preps, short, onMade, onAdd }: { preps: PrepToMake[]
                 {p.meta ? <Caption tone="muted">{p.meta}</Caption> : null}
               </View>
             </View>
-            <CheckList names={p.has} />
+            <CheckList names={p.has} chips />
             <Body>
-              <Body>{`${opens(p.drinks.length)}: `}</Body>
+              <Body style={styles.strong}>{`${opens(p.drinks.length)}: `}</Body>
               <Body tone="muted">{more > 0 ? `${named.join(', ')} and ${more} more` : named.join(', ')}</Body>
             </Body>
             <View style={styles.actions}>
-              <Button label="Recipe" variant="secondary" onPress={() => router.push(itemHref('Ingredient', p.id) as never)} style={styles.flex} />
+              <Button label="Recipe" variant="ink" onPress={() => router.push(itemHref('Ingredient', p.id) as never)} style={styles.flex} />
               <Button label="I made it" variant="secondary" accessibilityHint="Puts it with your house preps" onPress={() => onMade(p.id)} style={styles.flex} />
             </View>
           </Surface>
@@ -70,18 +71,23 @@ export function MakeFirst({ preps, short, onMade, onAdd }: { preps: PrepToMake[]
       })}
       {short.length ? (
         <View style={styles.short}>
-          <Headline role="heading">One thing short</Headline>
+          <Eyebrow>One thing short</Eyebrow>
           {short.map((p) => (
-            <View key={p.id} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-              <PressableScale role="link" accessibilityLabel={`${p.name}, ${opens(p.drinks.length)}, needs ${p.missing.name}`} onPress={() => router.push(itemHref('Ingredient', p.id) as never)} style={styles.rowMain}>
-                <IngredientThumb id={p.id} name={p.name} size={40} />
+            <Surface key={p.id} style={styles.card}>
+              <PressableScale role="link" accessibilityLabel={`${p.name}, ${opens(p.drinks.length)}, needs ${p.missing.name}`} onPress={() => router.push(itemHref('Ingredient', p.id) as never)} style={styles.top}>
+                <IngredientThumb id={p.id} name={p.name} size={44} />
                 <View style={styles.flex}>
-                  <Body>{p.name}</Body>
-                  <Caption tone="muted">{`${opens(p.drinks.length)} · Needs ${p.missing.name.toLowerCase()}`}</Caption>
+                  <Body style={styles.strong}>{p.name}</Body>
+                  <Caption tone="muted">{opens(p.drinks.length)}</Caption>
                 </View>
               </PressableScale>
-              <Button label={`Add ${p.missing.name}`} variant="secondary" onPress={() => onAdd([p.missing.id])} />
-            </View>
+              <View style={styles.needRow}>
+                <View style={[styles.need, { borderColor: ds.c.lineStrong }]}>
+                  <Caption>{`Needs ${p.missing.name.toLowerCase()}`}</Caption>
+                </View>
+                <Button label={`Add ${p.missing.name}`} variant="secondary" onPress={() => onAdd([p.missing.id])} />
+              </View>
+            </Surface>
           ))}
         </View>
       ) : null}
@@ -95,21 +101,18 @@ export function MakeFirstStrip({ preps }: { preps: PrepToMake[] }) {
   if (!preps.length) return null;
   return (
     <View style={styles.strip}>
-      <Caption tone="muted">Make one of these first and open up more</Caption>
+      <Body style={styles.strong}>Make one of these first and open up more</Body>
       <View style={styles.stripCards}>
         {preps.slice(0, 3).map((p) => (
           <PressableScale key={p.id} role="link" accessibilityLabel={[p.name, p.meta, opens(p.drinks.length)].filter(Boolean).join(', ')} onPress={() => router.push(itemHref('Ingredient', p.id) as never)} style={styles.stripCard}>
             <Surface style={styles.stripInner}>
-              <View style={styles.top}>
-                <IngredientThumb id={p.id} name={p.name} size={36} />
-                <View style={styles.flex}>
-                  <Body numberOfLines={1}>{p.name}</Body>
-                  <Caption tone="muted" numberOfLines={2}>
-                    {[p.meta, p.has.join(', ')].filter(Boolean).join(' · ')}
-                  </Caption>
-                </View>
-              </View>
-              <Caption>{opens(p.drinks.length)}</Caption>
+              <Body numberOfLines={1} style={styles.strong}>
+                {p.name}
+              </Body>
+              <Caption tone="muted" numberOfLines={2}>
+                {[p.meta, p.has.join(', ')].filter(Boolean).join(' · ')}
+              </Caption>
+              <Caption style={styles.strong}>{opens(p.drinks.length)}</Caption>
             </Surface>
           </PressableScale>
         ))}
@@ -124,11 +127,12 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1 },
   actions: { flexDirection: 'row', gap: space.sm },
-  short: { gap: space.xs, paddingTop: space.lg },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
-  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
+  short: { gap: space.md, paddingTop: space.lg },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
+  needRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  need: { minHeight: 32, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', justifyContent: 'center' },
   strip: { gap: space.sm, paddingTop: space.xs },
   stripCards: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   stripCard: { flexGrow: 1, flexBasis: 220 },
-  stripInner: { gap: space.sm },
+  stripInner: { gap: space.xs },
 });

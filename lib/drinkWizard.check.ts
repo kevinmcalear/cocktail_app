@@ -15,12 +15,12 @@ const rows = [
   { id: 'i4', name: null },
 ];
 
-// Common choices reuse existing rows (any case), new ones are made on save, then the rest A to Z.
+// Common choices reuse existing rows (any case) in our spelling, new ones are made on save, then the rest A to Z.
 const ice = choiceList(COMMON_ICE, rows);
 assert.deepEqual(ice.slice(0, 4), [
   { id: null, name: 'No ice' },
   { id: 'i2', name: 'Cubes' },
-  { id: 'i1', name: 'Large Cube' },
+  { id: 'i1', name: 'Large cube' },
   { id: null, name: 'Crushed' },
 ]);
 assert.equal(ice.at(-1)?.name, 'Shaved', 'other rows follow the common ones');

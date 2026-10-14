@@ -18,3 +18,7 @@ export { default as Inter_600SemiBold } from '@/assets/fonts/web/Inter_600SemiBo
 export { default as Inter_700Bold } from '@/assets/fonts/web/Inter_700Bold.woff2';
 export { default as InstrumentSerif_400Regular } from '@/assets/fonts/web/InstrumentSerif_400Regular.woff2';
 export { default as InstrumentSerif_400Regular_Italic } from '@/assets/fonts/web/InstrumentSerif_400Regular_Italic.woff2';
+export { default as JosefinSans_600SemiBold } from '@/assets/fonts/web/JosefinSans_600SemiBold.woff2';
+export { default as PlayfairDisplay_400Regular } from '@/assets/fonts/web/PlayfairDisplay_400Regular.woff2';
+export { default as PlayfairDisplay_400Regular_Italic } from '@/assets/fonts/web/PlayfairDisplay_400Regular_Italic.woff2';
+export { default as TenorSans_400Regular } from '@/assets/fonts/web/TenorSans_400Regular.woff2';

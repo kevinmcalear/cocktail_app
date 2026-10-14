@@ -87,15 +87,18 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
         </View>
         <DrinkHero key={hero.id} drink={hero} query={query} area={area} />
         {next ? <NextMatch drink={next} score={scores?.drinks[next.id]} count={matches.length} page={page} onNext={() => setPage((page + 1) % matches.length)} /> : null}
-        <PressableScale role="link" accessibilityLabel={`At ${pin.name}, ${[pin.place, away].filter(Boolean).join(', ')}. Open the bar`} onPress={openBar} style={[styles.atBar, { borderColor: ds.c.line }]}>
-          <BarMark logoUrl={pin.logo} name={pin.name} size={32} />
-          <View style={styles.flex}>
-            <Caption tone="muted">At</Caption>
-            <Caption numberOfLines={1}>{[pin.name, pin.place, away].filter(Boolean).join(' · ')}</Caption>
-          </View>
-          <Caption>Bar</Caption>
-          <IconSymbol name="chevron.right" size={14} color={ds.c.muted} />
-        </PressableScale>
+        <View style={[styles.atBar, { borderColor: ds.c.line }]}>
+          <PressableScale role="link" accessibilityLabel={`At ${pin.name}, ${[pin.place, away].filter(Boolean).join(', ')}. Open the bar`} onPress={openBar} style={styles.atLink}>
+            <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={32} />
+            <View style={styles.flex}>
+              <Caption tone="muted">At</Caption>
+              <Caption numberOfLines={1}>{[pin.name, pin.place, away].filter(Boolean).join(' · ')}</Caption>
+            </View>
+            <Caption>Bar</Caption>
+            <IconSymbol name="chevron.right" size={14} color={ds.c.muted} />
+          </PressableScale>
+          <LoveBarButton profileId={pin.id} name={pin.name} />
+        </View>
         <BarTopDrinks barId={pin.id} title="Also good here" />
       </View>
     );
@@ -104,7 +107,7 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   const bar = (
     <View style={styles.cardRow}>
       <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${place || 'Bar'}. ${said}`}>
-        <BarMark logoUrl={pin.logo} name={pin.name} size={48} />
+        <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={48} />
         <View style={styles.flex}>
           <Headline numberOfLines={1}>{pin.name}</Headline>
           <Caption tone="muted" numberOfLines={1}>
@@ -147,15 +150,15 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
 
   // Wide screens: the bar's drinks stay in the list below; the card says how many (g048).
   return (
-    <Surface raised style={[styles.card, styles.raised]}>
+    <Surface style={[styles.card, styles.picked, { borderColor: ds.c.lineStrong }]}>
       {bar}
       {facts$}
       <BarTopDrinks barId={pin.id} />
-      <View style={styles.cardActions}>
-        {!pin.closed && count ? <Caption tone="muted" style={styles.flex}>{`${drinkCount(count)} here`}</Caption> : <View style={styles.flex} />}
-        <Button label="Close" variant="ghost" onPress={onClose} />
-        <DirectionsButton target={target} variant="ghost" />
-        <Button label="Open bar" onPress={openBar} />
+      <View style={[styles.cardActions, { borderTopColor: ds.c.line }]}>
+        {!pin.closed && count ? <Caption tone="muted" style={[styles.flex, styles.count]}>{`${drinkCount(count)} here`}</Caption> : <View style={styles.flex} />}
+        <Button label="Close" variant="ghost" size="sm" onPress={onClose} />
+        <DirectionsButton target={target} size="sm" />
+        <Button label="Open bar" size="sm" onPress={openBar} />
       </View>
     </Surface>
   );
@@ -186,12 +189,16 @@ export function PickedBar({ pin, filter, best, me, onClose }: PickedBarProps) {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   card: { gap: space.sm },
-  raised: { padding: space.lg },
+  // disc-desk-browse: the surface with a stronger edge, 14 by 16 inside.
+  picked: { borderWidth: 1, paddingVertical: space.md + 2, paddingHorizontal: space.lg, gap: space.sm + 2 },
   cardRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
   facts: { gap: space.xs },
-  cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm },
+  // Wraps to a word a line beside the buttons, as drawn, rather than to a letter a line.
+  count: { flexBasis: space.xxl + space.md },
+  cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm + 2 },
   // Wraps on a narrow phone: Directions and Open bar drop under All results rather than off the edge.
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   right: { flexDirection: 'row', gap: space.sm },
   atBar: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderRadius: radius.mark, paddingVertical: space.sm },
+  atLink: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md },
 });

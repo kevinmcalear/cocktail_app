@@ -5,7 +5,7 @@ import { BackbarTheme, Display, useBreakpoint, useDs, useGutter } from '@/compon
 import { layout, space } from '@/constants/tokens';
 import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 
-import { DrinkHero } from './DrinkHero';
+import { DrinkHero, phoneHeroHeight } from './DrinkHero';
 
 interface DrinkLoadingProps {
   /** The tapped row (lib/drinkSeeds.ts): its picture and name paint where the page's will. */
@@ -32,7 +32,7 @@ function LoadingGround({ seed }: DrinkLoadingProps) {
   const { width, height } = useWindowDimensions();
   // As DrinkPage lays out a sheet (the route always opens one).
   const top = Platform.OS === 'ios' ? space.sm : insets.top;
-  const heroHeight = wide ? height - top : Math.min(width, height * 0.42);
+  const heroHeight = wide ? height - top : phoneHeroHeight(width, height, top);
   if (!seed) return <View style={[styles.screen, { backgroundColor: ds.c.ground }]} accessibilityLabel="Loading drink" />;
   const pictures = orderedPictures(seed.item_images as ItemImageLink[] | undefined);
   const hero = <DrinkHero name={seed.name} pictures={pictures} glass={null} itemId={seed.id} height={heroHeight} fade={!wide} />;

@@ -60,7 +60,7 @@ export function useDirections(target: DirectionsTarget | null) {
 }
 
 /** The Directions pill: "Directions to Little Rye, opens your maps app". */
-export function DirectionsButton({ target, variant = 'secondary' }: { target: DirectionsTarget | null; variant?: 'secondary' | 'ghost' }) {
+export function DirectionsButton({ target, variant = 'secondary', size }: { target: DirectionsTarget | null; variant?: 'secondary' | 'ghost'; size?: 'sm' }) {
   const { open, sheet } = useDirections(target);
   if (!target) return null;
   return (
@@ -69,6 +69,7 @@ export function DirectionsButton({ target, variant = 'secondary' }: { target: Di
         label="Directions"
         icon="arrow.triangle.turn.up.right.diamond"
         variant={variant}
+        size={size}
         onPress={open}
         accessibilityLabel={`Directions to ${target.name}, ${Platform.OS === 'web' ? 'opens Google Maps in a new tab' : 'opens your maps app'}`}
       />

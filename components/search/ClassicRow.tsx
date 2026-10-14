@@ -94,17 +94,29 @@ export function StyleCard({ label, count, where, takesIn, drawingId, onPress }: 
   );
 }
 
-/** "Browse": the style and the ingredient a search names, as chips (nav-search-everywhere). */
+/** "Browse": the style (a filter icon, "the style" quieter) and the ingredient (a drop) a search names, as outlined chips (nav-search-everywhere). */
 export function BrowseChips({ style, ingredient }: { style?: { id: string; label: string }; ingredient?: { id: string; name: string } }) {
   const router = useRouter();
+  const ds = useDs();
   if (!style && !ingredient) return null;
   return (
     <View style={styles.browse}>
       <Caption tone="muted" role="heading" style={styles.cap}>
         Browse
       </Caption>
-      {style ? <Chip label={`${style.label} the style`} selected={false} onPress={() => router.push(`/discover?kind=${encodeURIComponent(style.id)}` as never)} /> : null}
-      {ingredient ? <Chip label={ingredient.name} selected={false} onPress={() => router.push(itemHref('Ingredient', ingredient.id) as never)} /> : null}
+      {style ? (
+        <Chip
+          quiet
+          label={style.label}
+          count="the style"
+          leading={<IconSymbol name="line.3.horizontal.decrease" size={16} color={ds.c.muted} />}
+          selected={false}
+          onPress={() => router.push(`/discover?kind=${encodeURIComponent(style.id)}` as never)}
+        />
+      ) : null}
+      {ingredient ? (
+        <Chip quiet label={ingredient.name} leading={<IconSymbol name="drop.fill" size={16} color={ds.c.muted} />} selected={false} onPress={() => router.push(itemHref('Ingredient', ingredient.id) as never)} />
+      ) : null}
     </View>
   );
 }

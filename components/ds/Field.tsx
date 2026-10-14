@@ -22,10 +22,14 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'ref'> {
   minLines?: number;
   /** Buttons inside the box, at its right end: a clear, a camera. Keep them 44 pt square. */
   trailing?: ReactNode;
+  /** An icon inside the box at its left: the magnifier on a search box. */
+  icon?: IconName;
+  /** A row of a grouped card (the New event sheet): no box of its own, the card is the box. */
+  bare?: boolean;
 }
 
 /** A labelled text input in the Back Bar style. */
-export function Field({ label, hideLabel, hint, error, minLines, trailing, ...input }: FieldProps) {
+export function Field({ label, hideLabel, hint, error, minLines, trailing, icon, bare, ...input }: FieldProps) {
   const ds = useDs();
   const box = (
     <TextInput
@@ -39,16 +43,24 @@ export function Field({ label, hideLabel, hint, error, minLines, trailing, ...in
         minLines ? { minHeight: layout.minTapTarget * minLines, paddingVertical: space.md, textAlignVertical: 'top' } : null,
         { fontFamily: fontFamilies.body, color: ds.c.ink, backgroundColor: ds.c.raised, borderColor: error ? ds.accentText : ds.c.line },
         trailing ? styles.withTrailing : null,
+        icon ? styles.withIcon : null,
+        bare ? styles.bare : null,
       ]}
     />
   );
+  const lead = icon ? (
+    <View pointerEvents="none" style={styles.icon}>
+      <IconSymbol name={icon} size={18} color={ds.c.muted} />
+    </View>
+  ) : null;
   return (
     <View style={styles.field}>
       {hideLabel ? null : <Caption tone="muted">{label}</Caption>}
-      {trailing ? (
+      {trailing || lead ? (
         <View>
           {box}
-          <View style={styles.trailing}>{trailing}</View>
+          {lead}
+          {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
         </View>
       ) : (
         box
@@ -74,5 +86,8 @@ const styles = StyleSheet.create({
   // Room for two 44 pt buttons.
   withTrailing: { paddingRight: layout.minTapTarget * 2 },
   button: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  bare: { backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 0, minHeight: 28 },
+  withIcon: { paddingLeft: space.md + 18 + space.sm + 2 },
+  icon: { position: 'absolute', top: 0, bottom: 0, left: space.md + 2, justifyContent: 'center' },
   trailing: { position: 'absolute', top: 0, bottom: 0, right: 0, flexDirection: 'row', alignItems: 'center' },
 });

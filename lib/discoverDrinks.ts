@@ -5,6 +5,9 @@
  * Pure; checked by lib/discoverDrinks.check.ts. The data comes from
  * hooks/useDiscoverDrinks.ts.
  */
+import type { DisplayFace } from '../constants/tokens';
+import { faceFromDb, markBrand } from './brand';
+import { isHexColor } from './color';
 import { foldName } from './discover';
 import type { MapPin } from './discoverMap';
 import { matchWhy, toMatch, type DrinkMatch } from './discoverMatch';
@@ -28,6 +31,10 @@ export interface DiscoverBar {
   closedYear: number | null;
   /** How many of its drinks match Discover's filters (0 when closed). */
   drinks: number;
+  /** With a search: how many of those are on one of its menus now (a server without 20261016200000 doesn't say). */
+  onNow?: number | null;
+  /** Its venue's public accent and face, for its monogram (BarMark); null when it has none. Undefined: not said (BarMark looks it up). */
+  brand?: { accent: string; face: DisplayFace } | null;
 }
 
 /** A discover_bars row. */
@@ -44,6 +51,10 @@ export interface BarRow {
   is_closed: boolean;
   closed_year: number | null;
   drinks: number;
+  on_now?: number | null;
+  /** Its venue's public accent and display face (bar_brands); a server without 20261016200000 doesn't say. */
+  brand_accent?: string | null;
+  brand_face?: string | null;
 }
 
 export function toDiscoverBar(r: BarRow): DiscoverBar {
@@ -60,6 +71,8 @@ export function toDiscoverBar(r: BarRow): DiscoverBar {
     closed: r.is_closed,
     closedYear: r.closed_year,
     drinks: r.drinks,
+    onNow: r.on_now ?? null,
+    brand: 'brand_accent' in r ? markBrand({ accent: isHexColor(r.brand_accent) ? r.brand_accent : null, face: faceFromDb(r.brand_face) }) : undefined,
   };
 }
 
@@ -225,6 +238,7 @@ function pinOf(b: DiscoverBar, drinks: number): MapPin | null {
     handle: b.handle,
     name: b.name,
     logo: b.logo,
+    brand: b.brand,
     place: [b.locality, b.city].filter(Boolean).join(', '),
     latitude: b.latitude,
     longitude: b.longitude,
@@ -302,6 +316,12 @@ export function venueScores(ranked: readonly DiscoverRow[]): Record<string, BarS
   return out;
 }
 
+/** Pins in Top bars' order (`order`: the viewer's loved bars, then the most relevant), from the area's early rows. */
+export function withBarOrder(pins: readonly MapPin[], early: readonly DiscoverRow[]): MapPin[] {
+  const order = new Map(early.map((r, i) => [r.venue_profile_id, i]));
+  return pins.map((p) => (order.has(p.id) ? { ...p, order: order.get(p.id) } : p));
+}
+
 /** The drinks layer's pins with their bar's score, which the pin then shows (b02); bars without one stay dots. */
 export function withBarScores(pins: readonly MapPin[], bars: Readonly<Record<string, BarScore>>): MapPin[] {
   return pins.map((p) => (bars[p.id] ? { ...p, score: bars[p.id].score, rankers: bars[p.id].rankers } : p));
@@ -324,11 +344,17 @@ export function closedPins(bars: readonly DiscoverBar[]): MapPin[] {
   return bars.flatMap((b) =>
     b.latitude === null || b.longitude === null
       ? []
-      : [{ id: b.id, handle: b.handle, name: b.name, logo: b.logo, place: [b.locality, b.city].filter(Boolean).join(', '), latitude: b.latitude, longitude: b.longitude, score: null, position: null, rankers: 0, closed: closedLabel(b.closedYear) }]
+      : [{ id: b.id, handle: b.handle, name: b.name, logo: b.logo, brand: b.brand, place: [b.locality, b.city].filter(Boolean).join(', '), latitude: b.latitude, longitude: b.longitude, score: null, position: null, rankers: 0, closed: closedLabel(b.closedYear) }]
   );
 }
 
 /** "3 drinks", "1 drink". */
 export function drinkCount(n: number): string {
   return `${n} ${n === 1 ? 'drink' : 'drinks'}`;
+}
+
+/** A bar row's drinks in search: "14 drinks on now" when some are on, else how many match ("3 drinks"), else nothing. */
+export function barDrinksLine(bar: Pick<DiscoverBar, 'drinks' | 'onNow'>): string | null {
+  if (bar.onNow) return `${drinkCount(bar.onNow)} on now`;
+  return bar.drinks ? drinkCount(bar.drinks) : null;
 }

@@ -2,13 +2,12 @@ import React, { useMemo, useRef, useState } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Button, Text, useTheme, XStack, YStack, type TamaguiElement } from "tamagui";
 
-import { IngredientThumb, SheetScrollView } from "@/components/ds";
+import { dragDismissesKeyboard, IngredientThumb, SheetScrollView } from "@/components/ds";
 import { SearchBar } from "@/components/SearchBar";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { calculateDraftProgress } from "@/lib/draftProgress";
 import { focusInModal, MODAL_AUTOFOCUS, type FocusableRef } from '@/lib/modalAutoFocus';
-import { capitalize } from "@/lib/stringUtils";
 
 export type IngredientPickerItem = {
     id: string;
@@ -88,7 +87,7 @@ export function IngredientPickerSheet({
                 contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24 }}
                 data={filtered}
                 keyExtractor={(item) => item.id}
-                keyboardShouldPersistTaps="handled"
+                {...dragDismissesKeyboard}
                 renderItem={({ item }) => {
                     const childDraft = drafts?.find(
                         (d: any) => d.id === item.id && d.entity_type === "ingredient"
@@ -108,7 +107,7 @@ export function IngredientPickerSheet({
                             <XStack gap="$3" alignItems="center" flexShrink={1}>
                                 <IngredientThumb id={item.id} name={item.name} size={36} />
                                 <Text color="$color" fontSize={16}>
-                                    {capitalize(item.name)}
+                                    {item.name}
                                 </Text>
                                 {childProgress ? (
                                     <View

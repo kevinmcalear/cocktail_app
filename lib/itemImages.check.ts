@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { batchedDrinkKey, heroPicture, orderedPictures, pictureLabel, pictureTag, withDrinkPhotos } from './itemImages';
+import { batchedDrinkKey, glassOver, heroPicture, isPng, orderedPictures, pictureLabel, pictureTag, withDrinkPhotos } from './itemImages';
 
 const sketch = { sort_order: 0, is_generated: true, images: { url: 'sketch.png' } };
 const photoB = { sort_order: 2, is_generated: false, images: { url: 'b.jpg' } };
@@ -58,3 +58,11 @@ assert.equal(heroPicture(withDrinkPhotos([photoA], [photoB]))?.url, 'a.jpg');
 assert.equal(heroPicture(withDrinkPhotos(null, [photoB]))?.url, 'b.jpg');
 
 console.log('itemImages.check: ok');
+
+// A cut-out (a PNG) and a sketch sit on paper, so glass over them goes light; a JPEG photo gets dark glass.
+assert.equal(isPng('https://x/drinks/cocktails/a/1_b.png?v=2'), true);
+assert.equal(isPng('https://x/drinks/cocktails/a/1_b.jpg'), false);
+assert.equal(glassOver({ url: 'cut.png', isSketch: false }), 'light');
+assert.equal(glassOver({ url: 'photo.jpg', isSketch: false }), 'dark');
+assert.equal(glassOver({ url: 'sketch.webp', isSketch: true }), 'light');
+assert.equal(glassOver(null), 'light');

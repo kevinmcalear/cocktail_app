@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
 
 import { Body, Button, Caption, GlassButton, useDs } from '@/components/ds';
+import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space, type } from '@/constants/tokens';
@@ -90,16 +91,23 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
         <Choice label="All" pill="accent" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
         <Choice label="Not on a menu" pill="accent" selected={freeOnly} onPress={() => setFreeOnly(true)} />
       </View>
-      <ScrollView style={styles.flex}>
-        {target && drinks.length === 0 ? <Body tone="muted">No drinks that fit {target.name}.</Body> : null}
-        {target
-          ? drinks.map((d) => (
-              <View key={d.id} {...(drag.on ? dragSource(d.id) : {})} style={drag.on && styles.grab}>
-                <LibraryRow drink={d} note={libraryNote(d, target, editor.elsewhere)} added={!!cannotAdd(target, d)} onAdd={() => editor.add(target.key, d)} />
-              </View>
-            ))
-          : null}
-      </ScrollView>
+      {/* Only the rows in view are drawn: a venue's library can be hundreds of sketched drinks. */}
+      <FlatList
+        style={styles.flex}
+        data={drinks}
+        keyExtractor={(d) => d.id}
+        extraData={target}
+        initialNumToRender={12}
+        windowSize={DRAWN_LIST_WINDOW}
+        ListEmptyComponent={target ? <Body tone="muted">No drinks that fit {target.name}.</Body> : undefined}
+        renderItem={({ item: d }) =>
+          target ? (
+            <View {...(drag.on ? dragSource(d.id) : {})} style={drag.on && styles.grab}>
+              <LibraryRow drink={d} note={libraryNote(d, target, editor.elsewhere)} added={!!cannotAdd(target, d)} onAdd={() => editor.add(target.key, d)} />
+            </View>
+          ) : null
+        }
+      />
       <Caption tone="muted">{drag.on ? 'Tap + or drag a drink into any section.' : 'Tap + to add to the section marked Adding here, or click another section.'}</Caption>
     </View>
   );

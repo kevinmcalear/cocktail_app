@@ -234,3 +234,22 @@ export function myBarRows<B extends ShelfBottle, D extends Drink, G extends Grou
   }
   return rows;
 }
+
+/** Two drinks side by side: a desktop's What to make lays its drinks out as cards, two to a row. */
+export interface DrinkPair<R> {
+  kind: 'pair';
+  key: string;
+  rows: R[];
+}
+
+/** Rows with each run of drinks folded two to a row (the desktop grid); everything else as it was. */
+export function pairDrinks<R extends { kind: string; key: string }>(rows: readonly R[]): (R | DrinkPair<R>)[] {
+  const out: (R | DrinkPair<R>)[] = [];
+  for (const r of rows) {
+    const last = out[out.length - 1];
+    if (r.kind !== 'drink') out.push(r);
+    else if (last && last.kind === 'pair' && (last as DrinkPair<R>).rows.length < 2) (last as DrinkPair<R>).rows.push(r);
+    else out.push({ kind: 'pair', key: `pair:${r.key}`, rows: [r] });
+  }
+  return out;
+}

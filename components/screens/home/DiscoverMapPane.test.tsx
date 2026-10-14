@@ -43,6 +43,7 @@ jest.mock('@/hooks/useDiscoverDrinks', () => ({
 jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTopDrinks }) }));
 jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, useBarVersions: () => ({}), useSpecMatches: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useBarFacts', () => ({ useBarFacts: () => ({ data: null }) }));
+jest.mock('@/hooks/useBarBrands', () => ({ useBarBrand: () => null }));
 jest.mock('@/components/screens/kept/LoveBarButton', () => ({ LoveBarButton: () => null }));
 // The hero's Collect and Rank have their own tests; here they only need to be there.
 jest.mock('@/components/screens/published/CollectButton', () => {
@@ -100,6 +101,8 @@ const more = { total: null, hasMore: false, loadMore: () => {}, loading: false }
 interface Extra {
   from?: { latitude: number; longitude: number } | null;
   pick?: { id: string | null; onPick: (pin: unknown) => void; onLayer: (layer: string) => void };
+  /** Wide browsing offers a drink's best only once a style is picked. */
+  kinds?: string[];
 }
 
 function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side', search = '', extra: Extra = {}) {
@@ -111,16 +114,14 @@ function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } 
       area={area}
       onArea={() => {}}
       drink={pick}
-      filter={{ kinds: [], search, area }}
+      filter={{ kinds: extra.kinds ?? [], search, area }}
       results={{ drinks, more, barsById: new Map([[bar.id, bar]]), isLoading: false, title: 'Martinis anywhere' }}
       {...extra}
     />
   );
 }
 
-beforeEach(() => {
-  mockMartinis = new Set();
-});
+beforeEach(() => (mockMartinis = new Set()));
 
 test("a drinks pin's card says how many drinks are there, beside its actions (g048)", async () => {
   const drinks = [drink('d1', 'House Martini'), drink('d2', 'Bamboo'), drink('d3', 'Vesper'), drink('d4', 'Martini No. 4')];
@@ -215,14 +216,14 @@ test('Best Martini lists every martini at the bar, scores beside the scored ones
   mockTopDrinks = [];
   mockScores = { d2: 9.2 };
   const drinks = [drink('d1', 'House Martini', ['martini']), drink('d2', 'Gibson', ['martini']), drink('d3', 'Bamboo')];
-  await renderPane(drinks, { id: 'martini', name: 'Martini' });
+  await renderPane(drinks, { id: 'martini', name: 'Martini' }, 'side', '', { kinds: ['gin'] });
 
   await fireEvent.press(screen.getByRole('radio', { name: 'Best Martini' }));
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
 
-  // The bar's score is its best martini's, with no "ranked by" line; the card counts its martinis.
+  // A style is picked, so the card leads with its best martini (one 9.2, no "ranked by" line), then the next.
   expect(screen.getAllByText('9.2')).toHaveLength(1);
-  expect(screen.getByText('2 drinks here')).toBeTruthy();
+  expect(screen.getByLabelText('Next: House Martini')).toBeTruthy();
   expect(screen.queryByText('Bamboo')).toBeNull();
   expect(screen.queryByText('Not ranked yet')).toBeNull();
 });

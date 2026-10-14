@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, DsText, IngredientThumb, PressableScale, Tag, useDs } from '@/components/ds';
+import { Body, Caption, DsText, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
@@ -15,7 +15,7 @@ interface LineRowProps {
   line: WizardLine;
   onChange: (change: Partial<WizardLine>) => void;
   onRemove: () => void;
-  /** Tapping the name: swap it for another ingredient, keeping the amount. */
+  /** Swap it for another ingredient, keeping the amount (behind a tap on the name). */
   onSwap: () => void;
   /** A new house prep made here: open its recipe again. */
   onEditPrep?: () => void;
@@ -26,58 +26,48 @@ interface LineRowProps {
 }
 
 /**
- * One spec line, everything in sight: the ingredient (tap to swap it), its
- * amount (type it, or − and + through the pours bartenders use), its unit
- * (tap to change) and remove. On a phone the controls sit under the name; on
- * a wider screen they share its line.
+ * One spec line, kept short: the ingredient, its amount (type it, or − and +
+ * through the pours bartenders use), its unit (tap to change) and remove.
+ * Tapping the name opens the rest: swap, a note, make it house, the recipe.
+ * On a phone the controls sit under the name; on a wider screen they share
+ * its line, on the right.
  */
 export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS }: LineRowProps) {
   const ds = useDs();
   const [units, setUnits] = useState(false);
   const [noting, setNoting] = useState(!!line.note);
+  const [open, setOpen] = useState(false);
   const from = line.prep?.madeFrom ?? null;
   const top = line.unit === 'top';
   const amountLabel = top ? 'Top' : line.amount ? `${line.amount} ${line.unit}` : `no amount, ${line.unit}`;
+  // What the line is, when it isn't a bottle that already exists: shown with its actions, not under every row.
+  const status = line.id
+    ? null
+    : line.prep
+      ? { text: ['House-made', from ? `from ${from.name}` : null, leadText(line.prep.leadMinutes) ?? 'your recipe'].filter(Boolean).join(', '), accent: false }
+      : line.later
+        ? { text: 'House prep, recipe to write', accent: true }
+        : line.technique
+          ? { text: `House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`, accent: true }
+          : { text: 'New, added when you save', accent: false };
   return (
     <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line }]}>
       <View style={styles.row}>
         <IngredientThumb id={line.id} name={line.name} size={40} />
         <View style={styles.main}>
-          <PressableScale
-            onPress={onSwap}
-            haptic={false}
-            role="button"
-            accessibilityLabel={`${line.name}, ${amountLabel}`}
-            accessibilityHint="Swaps it for another ingredient"
-            style={styles.name}
-          >
-            <Body numberOfLines={2}>{line.name}</Body>
-            {line.id ? null : line.prep ? (
-              <View style={styles.prepNote}>
-                <Tag label="House-made" tone="accent" />
-                {from ? <Caption tone="muted">{`from ${from.name}`}</Caption> : null}
-                <Caption tone="muted">{leadText(line.prep.leadMinutes) ?? 'Your recipe'}</Caption>
-              </View>
-            ) : line.later ? (
-              <Caption tone="accent">House prep, recipe to write</Caption>
-            ) : line.technique ? (
-              <Caption tone="accent">{`House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`}</Caption>
-            ) : (
-              <Caption tone="muted">New, added when you save</Caption>
-            )}
-          </PressableScale>
-          <View style={styles.links}>
-            {line.prep && onEditPrep ? <TextAction label="Edit the recipe" a11y={`Edit the recipe for ${line.name}`} onPress={onEditPrep} /> : null}
-            {line.later && !line.prep && onEditPrep ? <TextAction label="Write the recipe" a11y={`Write the recipe for ${line.name}`} onPress={onEditPrep} /> : null}
-            {from ? (
-              <TextAction
-                label={`Back to ${from.name}`}
-                a11y={`Back to plain ${from.name}`}
-                onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })}
-              />
-            ) : null}
-            {!line.prep && !line.technique && line.id && onMakeHouse ? <TextAction label="Make it house" a11y={`Make ${line.name} house: wash, infuse, clarify`} onPress={onMakeHouse} /> : null}
-            {noting ? null : <TextAction label="Note" a11y={`Add a note to ${line.name}`} onPress={() => setNoting(true)} />}
+          <View style={styles.head}>
+            {/* The name opens what else the line can do; closed, the row is the ingredient and its pour (board make-create-ingredients). */}
+            <PressableScale
+              onPress={() => setOpen(!open)}
+              haptic={false}
+              role="button"
+              aria-expanded={open}
+              accessibilityLabel={`${line.name}, ${amountLabel}`}
+              accessibilityHint="Shows swap, note and more"
+              style={styles.name}
+            >
+              <Body numberOfLines={2}>{line.name}</Body>
+            </PressableScale>
           </View>
           <View style={styles.controls}>
             <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
@@ -126,6 +116,31 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
           <IconSymbol name="xmark" size={16} color={ds.c.muted} />
         </PressableScale>
       </View>
+      {open ? (
+        <View style={styles.more}>
+          {status ? <Caption tone={status.accent ? 'accent' : 'muted'}>{status.text}</Caption> : null}
+          {/* The recipe links lead in the accent; the rest stay quiet (the accent is for the one primary action). */}
+          <View style={styles.links}>
+            {line.prep && onEditPrep ? <TextAction label="Edit the recipe" a11y={`Edit the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
+            {line.later && !line.prep && onEditPrep ? <TextAction label="Write the recipe" a11y={`Write the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
+            <TextAction label="Swap" a11y={`Swap ${line.name} for another ingredient`} onPress={onSwap} />
+            {from ? (
+              <TextAction label={`Back to ${from.name}`} a11y={`Back to plain ${from.name}`} onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })} />
+            ) : null}
+            {noting ? null : (
+              <TextAction
+                label="Note"
+                a11y={`Add a note to ${line.name}`}
+                onPress={() => {
+                  setNoting(true);
+                  setOpen(false);
+                }}
+              />
+            )}
+            {!line.prep && !line.technique && line.id && onMakeHouse ? <TextAction label="Make it house" a11y={`Make ${line.name} house: wash, infuse, clarify`} onPress={onMakeHouse} /> : null}
+          </View>
+        </View>
+      ) : null}
       {noting ? (
         <TextInput
           value={line.note ?? ''}
@@ -160,11 +175,11 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
   );
 }
 
-/** A small text button under the name: Edit the recipe, Make it house, Note. */
-function TextAction({ label, a11y, onPress }: { label: string; a11y: string; onPress: () => void }) {
+/** A small text button under the line: Edit the recipe (accent); Swap, Note and Make it house (quiet). */
+function TextAction({ label, a11y, onPress, accent }: { label: string; a11y: string; onPress: () => void; accent?: boolean }) {
   return (
     <PressableScale onPress={onPress} role="button" accessibilityLabel={a11y} style={styles.link}>
-      <Caption tone="accent">{label}</Caption>
+      <Caption tone={accent ? 'accent' : 'muted'}>{label}</Caption>
     </PressableScale>
   );
 }
@@ -179,15 +194,16 @@ function Round({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: string
 }
 
 const styles = StyleSheet.create({
-  prepNote: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap', paddingTop: 2 },
-  links: { flexBasis: '100%', flexDirection: 'row', flexWrap: 'wrap', columnGap: space.lg },
+  more: { paddingLeft: 40 + space.md, gap: space.xs },
+  links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.lg },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   note: { minHeight: layout.minTapTarget, marginLeft: 40 + space.md, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.md },
   wrap: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
-  // Name and controls wrap: two lines on a phone, one on a wide screen.
+  // The name (with its links) and the controls wrap: two lines on a phone, one on a wide screen.
   main: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md, rowGap: space.xs },
-  name: { flexGrow: 1, flexBasis: 150, minHeight: layout.minTapTarget, justifyContent: 'center' },
+  head: { flexGrow: 1, flexShrink: 1, flexBasis: 150 },
+  name: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, height: layout.minTapTarget },
   step: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
@@ -206,5 +222,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   remove: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingLeft: 40 + space.md },
+  // Five units to a phone row, as drawn.
+  units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2, paddingLeft: 40 + space.md },
 });

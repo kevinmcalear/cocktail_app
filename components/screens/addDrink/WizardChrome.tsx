@@ -14,14 +14,20 @@ interface ChipProps {
   /** A quick add: "+ Lemon". */
   add?: boolean;
   kind?: 'radio' | 'checkbox' | 'button';
-  /** Our guess from the spec: outlined in the accent, with a spark. */
+  /** Our guess from the spec: a dashed ring in the accent. */
   suggested?: boolean;
+  /** A dashed chip that opens more choices ("More"). */
+  dashed?: boolean;
   onPress: () => void;
 }
 
-/** The wizard's chip: a quiet outline, filled in the accent when chosen. */
-export function WizardChip({ label, selected = false, add, kind = 'radio', suggested, onPress }: ChipProps) {
+/**
+ * The wizard's chip: a quiet outline, solid ink when chosen (the accent is
+ * kept for the one primary action), a dashed accent ring for our guess.
+ */
+export function WizardChip({ label, selected = false, add, kind = 'radio', suggested, dashed, onPress }: ChipProps) {
   const ds = useDs();
+  const guess = suggested && !selected;
   return (
     <PressableScale
       role={kind}
@@ -30,19 +36,31 @@ export function WizardChip({ label, selected = false, add, kind = 'radio', sugge
       onPress={onPress}
       style={[
         styles.chip,
-        suggested && styles.suggested,
+        add && styles.add,
         {
-          borderColor: selected || suggested ? ds.accentFill.fill : ds.c.lineStrong,
-          backgroundColor: selected ? ds.accentFill.fill : 'transparent',
-          borderWidth: suggested && !selected ? 2 : 1,
+          borderColor: selected ? ds.c.ink : guess ? ds.accentText : ds.c.lineStrong,
+          backgroundColor: selected ? ds.c.ink : 'transparent',
+          borderStyle: guess || dashed ? 'dashed' : 'solid',
+          borderWidth: guess ? 1.5 : 1,
         },
       ]}
     >
-      {suggested && !selected ? <IconSymbol name="sparkles" size={14} color={ds.c.ink} /> : null}
-      <DsText variant="body" color={selected ? ds.accentFill.text : ds.c.ink} style={selected ? styles.on : null}>
-        {add ? `+ ${label}` : label}
+      {add ? <IconSymbol name="plus" size={14} color={ds.accentText} /> : null}
+      <DsText variant="body" color={selected ? ds.c.ground : dashed ? ds.c.muted : ds.c.ink} style={selected ? styles.on : null}>
+        {label}
       </DsText>
     </PressableScale>
+  );
+}
+
+/** A short confirmation over the footer, with a tick: "Shrub saved to your preps when you save the drink." */
+export function WizardNotice({ children }: { children: string }) {
+  const ds = useDs();
+  return (
+    <View role="status" style={[styles.notice, { backgroundColor: ds.c.raised }]}>
+      <IconSymbol name="checkmark" size={16} color={ds.accentText} />
+      <Caption style={styles.flex}>{children}</Caption>
+    </View>
   );
 }
 
@@ -85,8 +103,9 @@ export function WizardFooter({ nextLabel, optional, skipLabel = 'Skip', canNext,
 }
 
 const styles = StyleSheet.create({
-  chip: { minHeight: layout.minTapTarget, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
-  suggested: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  chip: { minHeight: layout.minTapTarget, paddingHorizontal: space.md + 2, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center' },
+  add: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  notice: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.sm, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.control },
   on: { fontFamily: fontFamilies.bodySemiBold },
   eyebrow: { letterSpacing: 0.6 },
   footer: { flexDirection: 'row', gap: space.md, paddingTop: space.md },

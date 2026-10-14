@@ -177,7 +177,8 @@ export function choiceList<T extends { id: string; name: string | null }>(common
     seen.add(norm(p.name));
     out.push(p);
   };
-  for (const name of common) add(pickByName(name, rows));
+  // Our spelling of a common one ("Large cube"), with the row's id when there is one ("Large Cube").
+  for (const name of common) add({ ...pickByName(name, rows), name });
   for (const r of [...rows].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))) if (r.name) add({ id: r.id, name: r.name });
   return out;
 }
@@ -206,11 +207,10 @@ export const COMMON_INGREDIENTS = [
   'Gin', 'Lime juice', 'Lemon juice', 'Simple syrup', 'Sweet vermouth', 'Campari', 'Angostura bitters', 'Rye whiskey',
   'Bourbon', 'White rum', 'Tequila', 'Mezcal', 'Vodka', 'Dry vermouth', 'Soda water', 'Egg white',
 ] as const;
-/** The method step's chips, in its three groups, all shown. */
+/** The method step's chips, in its two groups, all shown. A float, mist or rinse is on the Finish step. */
 export const METHOD_GROUPS: readonly { label: string; methods: readonly string[] }[] = [
   { label: 'Mix', methods: ['Shake', 'Stir', 'Build', 'Throw', 'Swizzle', 'Blend', 'Muddle'] },
   { label: 'Air and texture', methods: ['Dry shake', 'Reverse dry shake', 'Whip (iSi)', 'Top with foam'] },
-  { label: 'Finish', methods: ['Float', 'Mist', 'Smoke', 'Carbonate'] },
 ];
 export const COMMON_METHODS = METHOD_GROUPS.flatMap((g) => g.methods);
 /** What a picked method's step card says under its name. */

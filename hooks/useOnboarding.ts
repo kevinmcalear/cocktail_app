@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth, useUserId } from '@/ctx/AuthContext';
-import { splitName } from '@/lib/onboarding';
+import { majorityUnit, splitName } from '@/lib/onboarding';
 import { DEFAULT_IDENTITY } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
 
@@ -167,5 +167,24 @@ export function useFinishOnboarding() {
       if (error) throw new Error(SAVED);
     },
     onError: () => {},
+  });
+}
+
+/** The unit a venue writes its specs in (oz or ml), from its own recipes, for the invited units step. Null when it has none yet. */
+export function useVenueSpecUnit(barId: string | null) {
+  return useQuery({
+    queryKey: ['venue-spec-unit', barId],
+    enabled: !!barId,
+    staleTime: 10 * 60_000,
+    queryFn: async (): Promise<'oz' | 'ml' | null> => {
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('unit, drink:items!recipe_item_id!inner(bar_id)')
+        .eq('drink.bar_id', barId!)
+        .in('unit', ['oz', 'ml'])
+        .limit(500);
+      if (error) throw error;
+      return majorityUnit((data ?? []).map((r) => r.unit));
+    },
   });
 }

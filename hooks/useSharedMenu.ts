@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
-import { isUuid } from '@/lib/menuPreview';
+import { resolveShareKey } from '@/hooks/useShareSlug';
+import type { IngredientName } from '@/lib/publicDrink';
 import { supabase } from '@/lib/supabase';
 
-/** A home menu someone shared, as anyone reads it: /m/<id>. */
+/** A home menu someone shared, as anyone reads it: /m/<id> or /m/<slug>. */
 export interface SharedMenuPage {
   id: string;
   name: string;
@@ -13,6 +14,8 @@ export interface SharedMenuPage {
   owner: { profileId: string; name: string; handle: string };
   /** Each entry is a public drink, or null for one that isn't public (its name stays private). */
   sections: { id: string; name: string; drinks: (PublishedDrink | null)[] }[];
+  /** Each public drink's ingredient names, never amounts, by drink id. */
+  ingredients: Record<string, IngredientName[]>;
 }
 
 interface SharedMenuRow {
@@ -36,13 +39,18 @@ export function useSharedMenu(id: string | null | undefined) {
     meta: { public: true },
     enabled: !!id,
     queryFn: async (): Promise<SharedMenuPage | null> => {
-      // A mangled link is Not available, not a failed load.
-      if (!isUuid(id)) return null;
-      const { data, error } = await supabase.rpc('shared_menu', { p_menu_id: id });
+      // The id or the readable slug (/m/halloween-party). A mangled link is Not available, not a failed load.
+      const menuId = id ? await resolveShareKey('m', id) : null;
+      if (!menuId) return null;
+      const { data, error } = await supabase.rpc('shared_menu', { p_menu_id: menuId });
       if (error) throw error;
       if (!data) return null;
       const row = data as SharedMenuRow;
-      const drinks = await fetchPublished(row.sections.flatMap((s) => s.item_ids).filter((x): x is string => !!x));
+      const ids = row.sections.flatMap((s) => s.item_ids).filter((x): x is string => !!x);
+      const [drinks, names] = await Promise.all([fetchPublished(ids), ids.length ? supabase.rpc('public_drink_ingredients', { p_item_ids: ids }) : Promise.resolve({ data: [], error: null })]);
+      if (names.error) throw names.error;
+      const ingredients: Record<string, IngredientName[]> = {};
+      for (const n of (names.data ?? []) as (IngredientName & { item_id: string })[]) (ingredients[n.item_id] ??= []).push({ name: n.name, brand: n.brand });
       return {
         id: row.id,
         name: row.name,
@@ -54,6 +62,7 @@ export function useSharedMenu(id: string | null | undefined) {
           name: s.name,
           drinks: s.item_ids.map((itemId) => drinks.find((d) => d.id === itemId) ?? null),
         })),
+        ingredients,
       };
     },
   });

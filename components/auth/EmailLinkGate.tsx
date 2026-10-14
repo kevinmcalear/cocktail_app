@@ -7,6 +7,7 @@ import {
   type AuthLinkState,
 } from '@/lib/authLink';
 import { createSessionFromUrl } from '@/lib/createSessionFromUrl';
+import { SignInScreen } from '@/components/auth/SignInScreen';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { ReactNode, useEffect, useState } from 'react';
@@ -70,19 +71,8 @@ export function EmailLinkGate({
     );
   }
 
-  const showError = error || link.error;
-
-  if (showError) {
-    return (
-      <AuthShell
-        title="Link expired"
-        subtitle={showError}
-        footer={<AuthLink label="Back to sign in" href="/auth/login" />}
-      >
-        <Button label={retryLabel} size="lg" onPress={() => router.push(retryHref)} />
-      </AuthShell>
-    );
-  }
+  // A used or old link (canvas make-onboarding-signin-link-old): the email again and a new code, here.
+  if (link.error) return <SignInScreen expired />;
 
   if (!link.hasCredential && noLink) return <>{noLink}</>;
 

@@ -8,6 +8,7 @@ import { SketchGlassPicker } from "@/components/cocktail/SketchGlassPicker";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { ItemDetailLayout } from "@/components/ItemDetailLayout";
 import { ShotList } from "@/components/screens/drink/ShotList";
+import { SketchColour } from "@/components/screens/drink/SketchColour";
 import { AdaptiveSheetModal } from "@/components/ui/AdaptiveSheetModal";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useCocktail, useDeleteCocktail } from "@/hooks/useCocktails";
@@ -140,6 +141,7 @@ export function CocktailEditor({ id, isEditing, setIsEditing }: { id: string; is
                             value={editor.sketchVariant}
                             onChange={editor.setSketchVariant}
                         />
+                        <SketchColour itemId={cocktail.id} />
                     </View>
                 ) : null}
                 <CocktailDetailContent cocktail={cocktail} isEditing={isEditing} editor={isEditing ? editor : null} />

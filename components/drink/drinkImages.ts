@@ -5,9 +5,13 @@ import { Alert } from 'react-native';
 import { imageExtFromUri, uriToBase64 } from '@/lib/imageBase64';
 import { isHeroLink } from '@/lib/itemImages';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
+import { offerCutout } from '@/store/useCutoutOffer';
+
+/** `cutout`: a venue's drink photo, so offer to lift the drink off its background (store/useCutoutOffer). */
+type PickOptions = { cutout?: boolean };
 
 /** Asks for photo access and lets the user pick photos; returns their local URIs. */
-export async function pickDrinkPhotos(): Promise<string[]> {
+export async function pickDrinkPhotos({ cutout = false }: PickOptions = {}): Promise<string[]> {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== 'granted') {
     Alert.alert('Permission needed', 'We need access to your photos.');
@@ -19,18 +23,21 @@ export async function pickDrinkPhotos(): Promise<string[]> {
     aspect: [4, 5],
     quality: 0.8,
   });
-  return result.canceled ? [] : result.assets.map((asset) => asset.uri);
+  if (result.canceled) return [];
+  const uris = result.assets.map((asset) => asset.uri);
+  return cutout && uris.length === 1 ? [await offerCutout(uris[0])] : uris;
 }
 
 /** Asks for camera access and takes one photo; returns its local URI, or null if cancelled. */
-export async function takeDrinkPhoto(): Promise<string | null> {
+export async function takeDrinkPhoto({ cutout = false }: PickOptions = {}): Promise<string | null> {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
   if (status !== 'granted') {
     Alert.alert('Camera access needed', 'Allow camera access in Settings to take drink photos.');
     return null;
   }
   const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 5], quality: 0.8 });
-  return result.canceled ? null : (result.assets[0]?.uri ?? null);
+  const uri = result.canceled ? null : (result.assets[0]?.uri ?? null);
+  return uri && cutout ? offerCutout(uri) : uri;
 }
 
 /** Uploads a local photo to the drinks bucket at `folder/`; returns its new `images` row id. */

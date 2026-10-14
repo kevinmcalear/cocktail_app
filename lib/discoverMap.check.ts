@@ -1,7 +1,7 @@
 // Checks for lib/discoverMap.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { areaFromViewport, cameraFor, cameraForArea, dotsOf, pinLabel, pinLook, pinsFrom, movedFrom, viewportFrom } from './discoverMap';
+import { AREA_ZOOM, areaFromViewport, areaLabel, areasFrom, BEST_PINS, cameraFor, cameraForArea, dotsOf, MAX_AREAS, pinLabel, pinLook, pinsFrom, pinsToDraw, movedFrom, viewportFrom, type MapView } from './discoverMap';
 import type { DiscoverRow } from './nearMe';
 
 const row = (over: Partial<DiscoverRow>): DiscoverRow => ({
@@ -25,10 +25,13 @@ assert.deepEqual(pinsFrom(undefined), []);
 const accent = { fill: '#D0643B', text: '#FFFFFF' };
 assert.equal(pinLook(pins[0], false, accent).label, '9.1');
 assert.equal(pinLook(pins[0], false, accent).minWidth, 44);
-assert.equal(pinLook(pins[0], false, accent).logo, 'https://x/a.png');
-assert.equal(pinLook(pins[0], false, accent).paddingLeft, 2, 'the logo sits close to the pill edge');
+assert.equal(pinLook(pins[0], false, accent).logo, null, 'the score alone on the pill (disc-map-opt-c), no bar logo');
+assert.equal(pinLook({ ...pins[0], image: 'https://x/d.png' }, false, accent).logo, 'https://x/d.png', 'searching: the best match');
+assert.equal(pinLook({ ...pins[0], image: 'https://x/d.png' }, false, accent).paddingLeft, 5, 'the picture sits 5 in from the pill edge (disc-desk-search)');
+assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, false, accent).font, 'bodyMedium', 'a drink name in Geist, not mono');
+assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, true, accent).height, 40);
 assert.equal(pinLook(pins[1], false, accent).height, 18);
-assert.equal(pinLook({ ...pins[1], logo: 'https://x/b.png' }, false, accent).height, 30, 'a lone logo leaves room for its ring');
+assert.equal(pinLook({ ...pins[1], image: 'https://x/b.png' }, false, accent).height, 30, 'a lone picture leaves room for its ring');
 assert.ok(pinLook(pins[0], false, accent).zIndex > pinLook(pins[1], false, accent).zIndex, 'a scored pin sits over an early one');
 assert.ok(pinLook({ ...pins[0], score: 9.5 }, false, accent).zIndex > pinLook({ ...pins[0], score: 7.1 }, false, accent).zIndex, 'the higher score on top');
 assert.ok(pinLook(pins[1], true, accent).zIndex > pinLook({ ...pins[0], score: 10 }, false, accent).zIndex, 'the selected pin over all');
@@ -83,8 +86,75 @@ assert.equal(movedFrom({ ...at, longitude: 179.999 }, { ...view, longitude: -179
 
 console.log('discoverMap: ok');
 
-// --- dots: the map's own layer for pins past the drawn ones, labelled like the pins, closed bars unlabelled ---
-// The drinks layer's pins say the bar's score too (b02), not how many drinks match; an unscored bar is a dot.
-const dots = dotsOf([{ ...pins[0], drinks: 12 }, { ...pins[1], drinks: 3 }, { ...pins[1], id: 'shut', closed: 'Closed 2019' }]);
-assert.deepEqual(dots.features.map((f) => f.properties), [{ id: 'a', label: '9.1' }, { id: 'b', label: '' }, { id: 'shut', label: '' }]);
+// --- dots: every bar in the map's own layer, a plain dot; the score (or -1) feeds an area's best ---
+const dots = dotsOf([{ ...pins[0], drinks: 12 }, { ...pins[1], drinks: 3 }, { ...pins[0], id: 'shut', closed: 'Closed 2019' }]);
+assert.deepEqual(dots.features.map((f) => f.properties), [{ id: 'a', score: 9.14, closed: false }, { id: 'b', score: -1, closed: false }, { id: 'shut', score: -1, closed: true }]);
 assert.deepEqual(dots.features[0].geometry.coordinates, [144.96, -37.8]);
+
+// --- which bars become pins at a zoom (options C and D, 13 Oct) ---
+// A 20 x 20 grid of bars around (0, 0), scores 0.0 to 9.9 by index, every fifth unscored.
+const grid = Array.from({ length: 400 }, (_, i) => ({
+  ...pins[0], id: `g${i}`, latitude: Math.floor(i / 20) * 0.01 - 0.1, longitude: (i % 20) * 0.01 - 0.1,
+  score: i % 5 === 0 ? null : (i % 100) / 10, logo: null,
+}));
+const wide: MapView = { bounds: [-0.2, -0.2, 0.2, 0.2], zoom: AREA_ZOOM };
+const drawn = pinsToDraw(grid, wide, null);
+assert.equal(drawn.length, BEST_PINS, 'up close: the best few in view, no more');
+assert.ok(drawn.every((p) => p.score !== null), 'unscored bars stay dots');
+assert.deepEqual(drawn.map((p) => p.score), [...drawn.map((p) => p.score!)].sort((a, b) => b - a), 'best first');
+const worst = Math.min(...drawn.map((p) => p.score!));
+assert.ok(grid.filter((p) => p.score !== null && p.score > worst).every((p) => drawn.includes(p)), 'no better bar left as a dot');
+// Zoom in on one corner: different, lesser bars there are promoted to pins, still about ten.
+const corner: MapView = { bounds: [-0.1, -0.1, -0.03, -0.03], zoom: AREA_ZOOM + 2 };
+const close = pinsToDraw(grid, corner, null);
+assert.equal(close.length, BEST_PINS);
+assert.ok(close.every((p) => p.latitude <= -0.03 && p.longitude <= -0.03), 'only bars in view');
+assert.ok(close.some((p) => !drawn.includes(p)), 'zooming in promotes dots to pins');
+// Fewer scored bars in view than BEST_PINS: all of them, no padding.
+assert.equal(pinsToDraw(grid, { bounds: [-0.1, -0.1, -0.085, -0.085], zoom: 16 }, null).length, 2);
+// No scores yet (prod, 13 Oct): the busiest bars in view with a logo fill the pins, logo alone; logo-less ones stay dots.
+const early = grid.map((p, i) => ({ ...p, score: null, drinks: i, logo: i % 2 ? `https://x/${i}.png` : null }));
+const known = pinsToDraw(early, wide, null);
+assert.equal(known.length, BEST_PINS);
+assert.ok(known.every((p) => p.logo), 'only bars with a logo');
+assert.deepEqual(known.map((p) => p.drinks), [399, 397, 395, 393, 391, 389, 387, 385, 383, 381], 'busiest first');
+// On Top bars (loved, then most relevant): that order wins over drink counts, and the rest follow, busiest first.
+const ordered = pinsToDraw(early.map((p) => (p.id === 'g1' ? { ...p, order: 1 } : p.id === 'g3' ? { ...p, order: 0 } : p)), wide, null);
+assert.deepEqual(ordered.slice(0, 3).map((p) => p.id), ['g3', 'g1', 'g399']);
+assert.deepEqual(pinsFrom({ ranked: [row({ venue_profile_id: 'a', position: 1, score: 9, is_early: false })], early: [row({ venue_profile_id: 'b' }), row({ venue_profile_id: 'c' })] }).map((p) => p.order), [undefined, 1, 2]);
+assert.equal(pinLook(known[0], false, accent).logo, known[0].logo);
+assert.equal(pinLook(known[0], false, accent).height, 30);
+assert.equal(pinLook(known[0], false, accent).label, '');
+// Scored bars come first; logos only fill what's left.
+const mixed = pinsToDraw(early.map((p, i) => (i < 3 ? { ...p, score: 8 } : p)), wide, null);
+assert.deepEqual(mixed.slice(0, 3).map((p) => p.score), [8, 8, 8]);
+assert.equal(mixed.length, BEST_PINS);
+// A picked score pin is a size up (disc-desk-browse).
+assert.equal(pinLook(pins[0], true, accent).height, 36);
+assert.equal(pinLook(pins[0], true, accent).minWidth, 56);
+// Zoomed out: areas instead, so no score pins; the selected and named search pins stay.
+assert.deepEqual(pinsToDraw(grid, { ...wide, zoom: AREA_ZOOM - 0.1 }, null), []);
+const named = grid.map((p) => (p.id === 'g7' ? { ...p, top: 'Martini' } : p));
+assert.deepEqual(pinsToDraw(named, { ...wide, zoom: 9 }, 'g0').map((p) => p.id), ['g0', 'g7']);
+// Up close the selected bar is a pin even off the best list or out of view, and never twice.
+const sel = pinsToDraw(grid, corner, 'g399');
+assert.equal(sel[0].id, 'g399');
+assert.equal(sel.length, BEST_PINS + 1);
+assert.equal(pinsToDraw(grid, wide, drawn[0].id).length, BEST_PINS);
+// Closed bars are never score pins; before the map says what it shows, the best anywhere.
+assert.ok(pinsToDraw(grid.map((p) => ({ ...p, closed: 'Closed 2019' })), wide, null).length === 0);
+assert.equal(pinsToDraw(grid, null, null)[0].score, 9.9);
+// Across the antimeridian.
+assert.equal(pinsToDraw([{ ...pins[0], longitude: 179.9 }, { ...pins[0], id: 'e', longitude: -179.9 }, { ...pins[0], id: 'far', longitude: 0 }], { bounds: [179, -40, -179, -30], zoom: 14 }, null).length, 2);
+
+// --- area labels, read back from MapLibre's clusters ---
+assert.equal(areaLabel(9.14, 24), '9.1 · 24 bars');
+assert.equal(areaLabel(-1, 5), '5 bars', 'no scored bar yet');
+assert.equal(areaLabel(8, 1), '8.0 · 1 bar');
+const cluster = (id: number, best: number, count: number): GeoJSON.Feature => ({ type: 'Feature', properties: { cluster: true, cluster_id: id, best, point_count: count }, geometry: { type: 'Point', coordinates: [1, 2] } });
+const areas = areasFrom([cluster(1, 9.1, 24), cluster(1, 9.1, 24), cluster(2, -1, 3), { type: 'Feature', properties: { id: 'a' }, geometry: { type: 'Point', coordinates: [0, 0] } }], null);
+assert.deepEqual(areas, [{ id: 1, latitude: 2, longitude: 1, label: '9.1 · 24 bars' }, { id: 2, latitude: 2, longitude: 1, label: '3 bars' }], 'one per cluster, plain bars left out');
+assert.equal(areasFrom(Array.from({ length: 100 }, (_, i) => cluster(i, 5, 2)), null).length, MAX_AREAS);
+assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [5, 5, 6, 6], zoom: 9 }), [], 'out of view');
+assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM }), [], 'up close there are no areas');
+assert.equal(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM - 1 }).length, 1);

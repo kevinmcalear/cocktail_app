@@ -10,6 +10,7 @@ const mockShare = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useMenuMutations', () => ({ useShareMenu: () => ({ mutateAsync: mockShare, isPending: false }) }));
+jest.mock('@/hooks/useShareSlug', () => ({ useShareSlug: (_kind: string, _id: string, on: boolean) => ({ data: on ? 'saturday-at-home' : undefined }) }));
 
 const menu = { id: 'm1', name: 'Saturday at home', sharedAt: null };
 
@@ -37,5 +38,10 @@ describe('ShareMenuSheet', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Share link' }));
     expect(await screen.findByText('That didn’t work. Try again.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Set up your public profile' })).toBeNull();
+  });
+
+  test('a shared menu shows its readable link', async () => {
+    await renderWithTamagui(<ShareMenuSheet menu={{ ...menu, sharedAt: '2026-10-12T00:00:00Z' }} onClose={() => {}} />);
+    expect(screen.getByText(/\/m\/saturday-at-home$/)).toBeTruthy();
   });
 });

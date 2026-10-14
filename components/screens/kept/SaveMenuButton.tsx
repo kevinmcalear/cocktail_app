@@ -11,8 +11,9 @@ import { useAgeGate } from '../safety/AgeGate';
 /**
  * Save a bar's menu to Collection, and how much of it your shelf makes.
  * Signed in only; saving needs a confirmed age, like the menu page itself.
+ * `paired`: the outlined half beside Open the menu on a bar's menu card (ppl-bar-menus).
  */
-export function SaveMenuButton({ editionId, drinkIds }: { editionId: string; drinkIds: string[] }) {
+export function SaveMenuButton({ editionId, drinkIds, paired = false }: { editionId: string; drinkIds: string[]; paired?: boolean }) {
   const signedIn = useSignedIn();
   const saved = useSavedMenus().data?.some((m) => m.editionId === editionId) ?? false;
   const save = useSaveBarMenu();
@@ -22,11 +23,12 @@ export function SaveMenuButton({ editionId, drinkIds }: { editionId: string; dri
   const on = save.isPending && save.variables ? save.variables.save : saved;
   const ready = drinkIds.filter((id) => bar.canMakeIds.has(id)).length;
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, paired ? styles.paired : null]}>
       <Button
         label={on ? 'Saved' : 'Save menu'}
         icon={on ? 'bookmark.fill' : 'bookmark'}
-        variant={on ? 'secondary' : 'primary'}
+        variant={on || paired ? 'secondary' : 'primary'}
+        dense={paired}
         accessibilityHint={on ? 'Removes this menu from your Collection' : 'Keeps this menu in your Collection'}
         onPress={() => (on ? save.mutate({ editionId, save: false }) : age.gate(() => save.mutate({ editionId, save: true })))}
       />
@@ -39,4 +41,5 @@ export function SaveMenuButton({ editionId, drinkIds }: { editionId: string; dri
 
 const styles = StyleSheet.create({
   wrap: { gap: space.xs, alignItems: 'flex-start' },
+  paired: { alignItems: 'stretch' },
 });

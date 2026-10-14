@@ -4,9 +4,15 @@ import type { MenuDrink } from '@/types/menus';
 export interface MenuEditionDrink {
   id: string;
   name: string;
+  /** A venue's own menu: the price as the venue typed it, and the menu section it sits in. */
+  price?: string | null;
+  section?: string | null;
 }
 
-/** One cocktail menu a bar put out, as stored in profile_menu_editions. */
+/**
+ * One cocktail menu a bar put out: a researched one (profile_menu_editions),
+ * or the venue's own menu on now or ended (from_venue; its id is a menus.id).
+ */
 export interface MenuEdition {
   id: string;
   name: string;
@@ -21,6 +27,8 @@ export interface MenuEdition {
   theme: string | null;
   drinks: MenuEditionDrink[];
   source_url: string | null;
+  /** The venue's own menu, not a researched one. Not savable to a Collection yet. */
+  from_venue?: boolean;
 }
 
 /**
@@ -151,8 +159,24 @@ export function sortEditions<T extends Pick<MenuEdition, 'year' | 'month' | 'nam
 export function editionMenuDrinks(drinks: MenuEditionDrink[], loaded: MenuDrink[]): MenuDrink[] {
   const byId = new Map(loaded.map((d) => [d.id, d]));
   return drinks.map(
-    (d) => byId.get(d.id) ?? { id: d.id, name: d.name, kind: 'cocktail', line: '', price: null, imageUrl: null, isSketch: false, glass: null }
+    (d) => byId.get(d.id) ?? { id: d.id, name: d.name, kind: 'cocktail', line: '', price: d.price ?? null, imageUrl: null, isSketch: false, glass: null }
   );
+}
+
+/**
+ * A menu's drinks in its sections, in order ("Cocktails" when the menu has
+ * none, as a researched menu doesn't). `drinks` is editionMenuDrinks' result,
+ * one per edition drink in the same order.
+ */
+export function editionSections(edition: Pick<MenuEdition, 'id' | 'drinks'>, drinks: MenuDrink[]): { id: string; name: string; drinks: MenuDrink[] }[] {
+  const sections: { id: string; name: string; drinks: MenuDrink[] }[] = [];
+  edition.drinks.forEach((d, i) => {
+    const name = d.section?.trim() || 'Cocktails';
+    let section = sections.find((s) => s.name === name);
+    if (!section) sections.push((section = { id: `${edition.id}:${name}`, name, drinks: [] }));
+    section.drinks.push(drinks[i]);
+  });
+  return sections;
 }
 
 /**

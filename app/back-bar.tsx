@@ -3,7 +3,7 @@ import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { BackBarScreen } from '@/components/screens/BackBarScreen';
 import { WebHead } from '@/components/WebHead';
-import { useMode } from '@/hooks/useMode';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 
 /**
  * The back bar map. `?place=<item id>&name=<item name>` opens it
@@ -12,7 +12,10 @@ import { useMode } from '@/hooks/useMode';
  */
 export default function BackBar() {
   const { place, name } = useLocalSearchParams<{ place?: string; name?: string }>();
-  if (useMode().mode === 'home') return <Redirect href="/discover" />;
+  const { ready, home, has } = useVenueFeatures();
+  if (home) return <Redirect href="/discover" />;
+  if (!ready) return null;
+  if (!has('backBar')) return <Redirect href="/" />;
   return (
     <VenueBrandProvider>
       <Stack.Screen options={{ headerShown: false, title: 'Back bar' }} />

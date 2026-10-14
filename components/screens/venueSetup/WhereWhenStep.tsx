@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, DsText, Field, TimeField, useDs, type IconName } from '@/components/ds';
+import { Body, Button, Caption, Chip, DsText, Field, PressableScale, TimeField, useDs, type IconName } from '@/components/ds';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useSaveClaimSetup } from '@/hooks/useBarClaims';
 import { useBarFacts, useSaveBarFacts, type BarFactsChange } from '@/hooks/useBarFacts';
 import type { ProfileClaim } from '@/hooks/useProfiles';
@@ -23,17 +23,22 @@ function deviceZone(): string | null {
 }
 
 /** One fact: an icon, its label and value, and Edit (which opens its editor in place). */
-function FactRow({ icon, label, children, editing, onEdit, canEdit, editor }: { icon: IconName; label: string; children: ReactNode; editing: boolean; onEdit: () => void; canEdit: boolean; editor: ReactNode }) {
+function FactRow({ icon, label, children, editing, onEdit, canEdit, editor, last }: { icon: IconName; label: string; children: ReactNode; editing: boolean; onEdit: () => void; canEdit: boolean; editor: ReactNode; last?: boolean }) {
   const ds = useDs();
   return (
-    <View style={[styles.fact, { borderBottomColor: ds.c.line }]}>
+    <View style={[styles.fact, !last && { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth }]}>
       <View style={styles.factTop}>
-        <IconSymbol name={icon} size={20} color={ds.c.muted} />
+        <IconSymbol name={icon} size={18} color={ds.c.muted} />
         <View style={styles.flex}>
           <Caption tone="muted">{label}</Caption>
           {children}
         </View>
-        {canEdit && !editing ? <Button label="Edit" variant="ghost" accessibilityLabel={`Edit ${label.toLowerCase()}`} onPress={onEdit} /> : null}
+        {canEdit && !editing ? (
+          <PressableScale role="button" accessibilityLabel={`Edit ${label.toLowerCase()}`} onPress={onEdit} hitSlop={space.sm} style={styles.edit}>
+            <IconSymbol name="pencil" size={14} color={ds.c.ink} />
+            <Caption style={styles.editLabel}>Edit</Caption>
+          </PressableScale>
+        ) : null}
       </View>
       {editing ? editor : null}
     </View>
@@ -92,6 +97,7 @@ function TextEditor({ label, initial, keyboard, onSave, onCancel }: { label: str
  * claim waits they wait on the claim (save_claim_setup) and go on at approval.
  */
 export function WhereWhenStep({ profileId, claim, writable, onDone }: { profileId: string | null; claim: ProfileClaim | null; writable: boolean; onDone: () => void }) {
+  const ds = useDs();
   const facts = useBarFacts(profileId).data;
   const saveFacts = useSaveBarFacts(profileId ?? '');
   const saveSetup = useSaveClaimSetup();
@@ -115,15 +121,17 @@ export function WhereWhenStep({ profileId, claim, writable, onDone }: { profileI
 
   return (
     <SetupPage footer={<SetupFooter label="Looks right" onPress={onDone} onSkip={onDone} />}>
+      {/* The four facts in one card (canvas make-venue-place). */}
+      <View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
       <FactRow icon="mappin.and.ellipse" label="Address" canEdit={false} editing={false} onEdit={() => {}} editor={null}>
         <Body>{address || 'No address yet'}</Body>
       </FactRow>
-      <FactRow icon="clock.arrow.circlepath" label="Hours" canEdit={canEdit} editing={editing === 'hours'} onEdit={() => setEditing('hours')} editor={<HoursEditor initial={hours ?? {}} onSave={(h) => save({ hours: h })} onCancel={() => setEditing(null)} />}>
+      <FactRow icon="clock" label="Hours" canEdit={canEdit} editing={editing === 'hours'} onEdit={() => setEditing('hours')} editor={<HoursEditor initial={hours ?? {}} onSave={(h) => save({ hours: h })} onCancel={() => setEditing(null)} />}>
         {hours ? (
           <View role="list">
             {weekRows(hours, now, facts?.timezone).map((r) => (
               <View key={r.day} role="listitem" style={styles.hoursRow}>
-                <Body style={styles.dayName}>{r.day.slice(0, 3)}</Body>
+                <Body tone="muted" style={styles.dayName}>{r.day.slice(0, 3)}</Body>
                 <Body tone={r.closed ? 'muted' : 'ink'}>{r.text}</Body>
               </View>
             ))}
@@ -132,12 +140,13 @@ export function WhereWhenStep({ profileId, claim, writable, onDone }: { profileI
           <Body tone="muted">Not added yet</Body>
         )}
       </FactRow>
-      <FactRow icon="building.2" label="Phone" canEdit={canEdit} editing={editing === 'phone'} onEdit={() => setEditing('phone')} editor={<TextEditor label="Phone" initial={phone ?? ''} keyboard="phone-pad" onSave={(v) => save({ phone: v.trim() || null })} onCancel={() => setEditing(null)} />}>
+      <FactRow icon="phone" label="Phone" canEdit={canEdit} editing={editing === 'phone'} onEdit={() => setEditing('phone')} editor={<TextEditor label="Phone" initial={phone ?? ''} keyboard="phone-pad" onSave={(v) => save({ phone: v.trim() || null })} onCancel={() => setEditing(null)} />}>
         <Body tone={phone ? 'ink' : 'muted'}>{phone ?? 'Not added yet'}</Body>
       </FactRow>
-      <FactRow icon="globe" label="Website" canEdit={canEdit} editing={editing === 'website'} onEdit={() => setEditing('website')} editor={<TextEditor label="Website" initial={website ?? ''} keyboard="url" onSave={(v) => save({ website: normalizeWebsite(v) })} onCancel={() => setEditing(null)} />}>
+      <FactRow last icon="globe" label="Website" canEdit={canEdit} editing={editing === 'website'} onEdit={() => setEditing('website')} editor={<TextEditor label="Website" initial={website ?? ''} keyboard="url" onSave={(v) => save({ website: normalizeWebsite(v) })} onCancel={() => setEditing(null)} />}>
         <Body tone={website ? 'ink' : 'muted'}>{website ?? 'Not added yet'}</Body>
       </FactRow>
+      </View>
       {error ? (
         <Caption tone="accent" role="alert">
           {error.message}
@@ -155,7 +164,10 @@ export function WhereWhenStep({ profileId, claim, writable, onDone }: { profileI
 }
 
 const styles = StyleSheet.create({
-  fact: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  card: { borderWidth: 1, borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.lg },
+  fact: { paddingVertical: space.lg, gap: space.md },
+  edit: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 24 },
+  editLabel: { fontFamily: fontFamilies.bodySemiBold },
   factTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
   editor: { gap: space.md },

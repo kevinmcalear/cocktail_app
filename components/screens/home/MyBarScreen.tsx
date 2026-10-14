@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Display, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Body, Caption, dragDismissesKeyboard, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useAuthIdentity } from '@/ctx/AuthContext';
 import type { BarItem, ShelfItem } from '@/hooks/useHomeBar';
-import { MAKE_PAGE, makeTab, myBarRows, pickSection, type MakeTab, type MyBarRow, type ShelfSection } from '@/lib/myBarRows';
+import { MAKE_PAGE, makeTab, myBarRows, pairDrinks, pickSection, type DrinkPair, type MakeTab, type MyBarRow, type ShelfSection } from '@/lib/myBarRows';
 import { barSubtitle, shelfCountsLine } from '@/lib/myBarText';
 import type { ShelfSort } from '@/lib/pantry';
 
@@ -17,7 +17,7 @@ import { useTileCols } from './BarTile';
 import { KitSection, LabSection, MoreSections, OpenShelfItem, PrepsSection, SectionChips, type Jumpable } from './BarSections';
 import { BottleSheet } from './BottleSheet';
 import { MakeFirst, MakeFirstStrip } from './MakeFirst';
-import { BottleGroup, MakeDrink, type AwayGroup } from './MakeRows';
+import { BottleGroup, MakeCard, MakeDrink, type AwayGroup } from './MakeRows';
 import { PantrySection } from './PantrySection';
 import { Projects } from './Projects';
 import { BottleTiles, ShelfFoot, ShelfHead } from './ShelfSection';
@@ -26,6 +26,7 @@ import { useMyBarData } from './useMyBarData';
 import { MakeEmpty, MakeFoot, MakeHead, MakeSearchRow, useMakeSearch } from './WhatToMake';
 
 type Row = MyBarRow<ShelfItem, BarItem, AwayGroup>;
+type ListRow = Row | DrinkPair<Row>;
 
 /**
  * My Bar, in home mode: the bottles on your shelf, what's in your kitchen,
@@ -39,7 +40,9 @@ export function MyBarScreen() {
   const gutter = useGutter();
   const bottom = useTabBarInset();
   const wide = useBreakpoint() === 'desktop';
-  const cols = useTileCols();
+  // A desktop's shelf column fits five tiles to a row (home-mybar-desktop).
+  const tileCols = useTileCols();
+  const cols = wide ? 5 : tileCols;
   const [adding, setAdding] = useState<AddFilter | null>(null);
   const [snapping, setSnapping] = useState(false);
   const [opened, setOpened] = useState<ShelfItem | null>(null);
@@ -90,14 +93,20 @@ export function MyBarScreen() {
   const cut = wide ? rows.findIndex((r) => r.kind === 'make-head') : -1;
   const split = cut > 0;
 
-  const renderRow = ({ item, index }: { item: Row; index: number }) => {
+  const renderRow = ({ item, prev }: { item: ListRow; prev?: ListRow }) => {
     switch (item.kind) {
+      case 'pair':
+        return (
+          <View style={styles.pair}>
+            {item.rows.map((r) => (r.kind === 'drink' ? <MakeCard key={r.key} drink={r.drink} text={m.text} needs={r.needs} /> : null))}
+            {item.rows.length < 2 ? <View style={styles.flex} /> : null}
+          </View>
+        );
       case 'top':
         return split ? null : (
           <View>
-            <ScreenHeaderSpacer />
+            <ScreenHeaderSpacer title="My Bar" />
             <View style={styles.top}>
-              <Display>My Bar</Display>
               <Caption tone="muted">{bar.isLoading ? 'Checking your shelf…' : barSubtitle(bar.canMake.length, toMake.length)}</Caption>
               {bar.error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
             </View>
@@ -140,7 +149,7 @@ export function MyBarScreen() {
       case 'drink':
         return <MakeDrink drink={item.drink} text={m.text} ready={!item.needs} needs={item.needs} />;
       case 'group':
-        return <BottleGroup id={item.key} group={item.group} open={openGroups.has(item.key)} onOpen={openGroup} text={m.text} onAdd={addIds} style={rows[index - 1]?.kind === 'group' ? styles.nextGroup : null} />;
+        return <BottleGroup id={item.key} group={item.group} open={openGroups.has(item.key)} onOpen={openGroup} text={m.text} onAdd={addIds} style={prev?.kind === 'group' ? styles.nextGroup : null} />;
       case 'first':
         return <MakeFirst preps={toMake} short={m.short} onMade={addIds} onAdd={addIds} />;
       case 'projects':
@@ -156,14 +165,14 @@ export function MyBarScreen() {
     }
   };
 
-  const list = (data: Row[], offset: number, style: object | null, padding: object) => (
+  const list = (data: ListRow[], style: object | null, padding: object) => (
     <FlatList
       data={data}
       keyExtractor={(r) => r.key}
-      renderItem={({ item, index }) => renderRow({ item, index: index + offset })}
+      renderItem={({ item, index }) => renderRow({ item, prev: data[index - 1] })}
       // Two screens either side: a sort or tab change re-renders every mounted row.
       windowSize={5}
-      keyboardShouldPersistTaps="handled"
+      {...dragDismissesKeyboard}
       style={style}
       contentContainerStyle={padding}
     />
@@ -194,18 +203,18 @@ export function MyBarScreen() {
             <ScreenHeader />
             <View style={[styles.deskHead, { paddingHorizontal: gutter }]}>
               <View style={styles.deskTitle}>
-                <Display>My Bar</Display>
+                <Title>My Bar</Title>
                 <Caption tone="muted">{shelfCountsLine(counts)}</Caption>
               </View>
               <SectionChips sections={m.filled} counts={counts} picked={showing} onPick={(s) => setShow(pickSection(showing, s))} multi />
             </View>
             <View style={styles.columns}>
-              {list(rows.slice(0, cut), 0, styles.shelfColumn, { paddingLeft: gutter, paddingRight: space.xl, paddingBottom: bottom })}
-              {list(rows.slice(cut), cut, styles.makeColumn, { paddingLeft: space.xl, paddingRight: gutter, paddingBottom: bottom })}
+              {list(rows.slice(0, cut), styles.shelfColumn, { paddingLeft: gutter, paddingRight: space.xl, paddingBottom: bottom })}
+              {list(pairDrinks(rows.slice(cut)), styles.makeColumn, { paddingLeft: space.xl, paddingRight: gutter, paddingBottom: bottom })}
             </View>
           </>
         ) : (
-          list(rows, 0, null, { paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' })
+          list(rows, null, { paddingHorizontal: gutter, paddingBottom: bottom, maxWidth: 760, width: '100%' })
         )}
         {sheets}
       </View>
@@ -221,7 +230,10 @@ const styles = StyleSheet.create({
   /** Each section starts this far below the last. */
   section: { paddingTop: space.xl },
   nextGroup: { marginTop: space.md },
-  deskHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.lg, paddingBottom: space.md },
+  // The title, then the section chips under it, as the desktop board draws them.
+  deskHead: { gap: space.md, paddingBottom: space.md },
+  pair: { flexDirection: 'row', gap: space.sm + 2, paddingTop: space.sm + 2 },
+  flex: { flex: 1 },
   deskTitle: { gap: 2, flexShrink: 1 },
   columns: { flex: 1, flexDirection: 'row' },
   shelfColumn: { flex: 4, maxWidth: 560 },

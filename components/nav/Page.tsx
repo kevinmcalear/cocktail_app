@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Caption, Display, GlassButton, PressableScale, useDs, useGutter } from '@/components/ds';
+import { Body, Caption, Display, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { useIsWideWeb, useWebNavWidth } from '@/hooks/useIsWideWeb';
@@ -34,16 +34,15 @@ function useColumnRightPad(width: ColumnWidth): number {
 /**
  * The top of a page: the logo / New / You row (or, on a phone, a back button
  * for a page opened from another one), then the title, with the page's main
- * action on the right. Goes first inside a usePageColumn column; pass the
- * same `width`.
+ * action on the right. On a phone with the logo row, the title sits in that
+ * row beside the logo instead. Goes first inside a usePageColumn column; pass
+ * the same `width`.
  *
  * A subtitle is only for something the page doesn't already say: "2 on now",
  * not the venue's name, which the sidebar and the chip show.
  */
-export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', wordmark, crumbs }: {
+export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', crumbs, above, display }: {
   title: string;
-  /** The venue's name beside the logo on a phone (Tonight only). */
-  wordmark?: boolean;
   width?: ColumnWidth;
   subtitle?: string | null;
   action?: ReactNode;
@@ -56,12 +55,19 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
   actionOnTop?: boolean;
   /** Wide web: the pages above this one, over the title (the sidebar stands in for Back there). */
   crumbs?: Crumb[];
+  /** Over the title: an event's two bar marks and its kind. */
+  above?: ReactNode;
+  /** The venue's own pages (Tonight, Library, Menus, a menu) draw their title at display size; the rest at title size. */
+  display?: boolean;
 }) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const sidebar = useIsWideWeb();
   const rightPad = useColumnRightPad(width);
+  // A phone's logo row carries the title, so the page starts a row higher.
+  const inLogoRow = !onBack && !sidebar;
+  const showAction = !!action && !(actionOnTop && onBack && !sidebar);
   return (
     <View style={styles.header}>
       {onBack && !sidebar ? (
@@ -79,17 +85,20 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
       ) : (
         // ScreenHeader brings its own gutter, and runs to the page's right edge.
         <View style={{ marginLeft: -gutter, marginRight: -rightPad }}>
-          <ScreenHeader wordmark={wordmark} />
+          <ScreenHeader title={inLogoRow ? title : undefined} />
         </View>
       )}
-      <View style={styles.titleRow}>
-        <View style={styles.title}>
-          {sidebar && crumbs?.length ? <Crumbs trail={crumbs} /> : null}
-          <Display>{title}</Display>
-          {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+      {inLogoRow && !above && !subtitle && !showAction ? null : (
+        <View style={styles.titleRow}>
+          <View style={styles.title}>
+            {sidebar && crumbs?.length ? <Crumbs trail={crumbs} /> : null}
+            {above}
+            {inLogoRow ? null : display ? <Display>{title}</Display> : <Title>{title}</Title>}
+            {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+          </View>
+          {showAction ? <View style={styles.action}>{action}</View> : null}
         </View>
-        {action && !(actionOnTop && onBack && !sidebar) ? <View style={styles.action}>{action}</View> : null}
-      </View>
+      )}
     </View>
   );
 }

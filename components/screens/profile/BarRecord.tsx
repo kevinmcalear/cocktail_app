@@ -3,8 +3,8 @@ import { useRouter, type Href } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, PressableScale, Tag, TextLink, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { Body, Button, Caption, DsText, PressableScale, Tag, useDs } from '@/components/ds';
+import { radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { useMenuEditions, useProfileAwards } from '@/hooks/useProfiles';
 import { awardInitials, groupAwards } from '@/lib/awards';
@@ -93,6 +93,7 @@ function SourceLink({ url, label, children }: { url: string | null; label: strin
  * months") or an unknown end said plainly. Each opens its menu.
  */
 export function MenuHistory({ profileId, name }: { profileId: string; name: string }) {
+  const ds = useDs();
   const { data = [], isLoading } = useMenuEditions(profileId);
   const [all, setAll] = useState(false);
   const [report, setReport] = useState(false);
@@ -109,10 +110,12 @@ export function MenuHistory({ profileId, name }: { profileId: string; name: stri
       {data.length > FIRST_MENUS && !all ? (
         <Button label={`Show all ${data.length} menus`} variant="secondary" onPress={() => setAll(true)} />
       ) : null}
-      <View style={styles.foot}>
-        <Caption tone="muted">From the bar’s site and press. Each menu links to its source. Something wrong?</Caption>
-        <TextLink label="Tell us." onPress={() => setReport(true)} />
-      </View>
+      <Caption tone="muted" style={styles.foot}>
+        {data.every((m) => m.from_venue) ? `From ${name}’s own menus. Something wrong? ` : 'From the bar’s site and press. Each menu links to its source. Something wrong? '}
+        <Caption role="link" accessibilityLabel="Tell us what's wrong" onPress={() => setReport(true)} style={[styles.underline, { color: ds.accentText }]}>
+          Tell us.
+        </Caption>
+      </Caption>
       {report ? (
         <ReportSheet subject={`${name}'s menus`} targets={[{ label: name, target: { kind: 'profile', profileId } }]} onClose={() => setReport(false)} />
       ) : null}
@@ -129,7 +132,7 @@ function EditionRow({ edition: m, last, href }: { edition: MenuEdition; last: bo
   return (
     <View role="listitem" style={styles.edition}>
       <View style={styles.rail} aria-hidden>
-        <View style={[styles.node, { borderColor: now ? ds.accentText : ds.c.muted, backgroundColor: now ? ds.accentText : 'transparent' }]} />
+        <View style={[styles.node, now ? styles.nodeNow : null, { borderColor: now ? ds.accentText : ds.c.muted, backgroundColor: now ? ds.accentText : 'transparent' }]} />
         {last ? null : <View style={[styles.line, { backgroundColor: ds.c.line }]} />}
       </View>
       {now ? (
@@ -141,14 +144,21 @@ function EditionRow({ edition: m, last, href }: { edition: MenuEdition; last: bo
             {drinks}
           </Body>
           <View style={styles.nowActions}>
-            <Button label="Open the menu" variant="secondary" accessibilityLabel={`Open the ${m.name} menu`} onPress={() => router.push(href as Href)} />
-            <SaveMenuButton editionId={m.id} drinkIds={m.drinks.map((d) => d.id)} />
+            <Button label="Open the menu" variant="secondary" accessibilityLabel={`Open the ${m.name} menu`} dense onPress={() => router.push(href as Href)} style={m.from_venue ? null : styles.grow} />
+            {/* ponytail: a venue's own menu can't be saved until saved_menu_editions takes a menu id. */}
+            {m.from_venue ? null : (
+              <View style={styles.grow}>
+                <SaveMenuButton editionId={m.id} drinkIds={m.drinks.map((d) => d.id)} paired />
+              </View>
+            )}
           </View>
         </View>
       ) : (
-        <PressableScale role="link" accessibilityLabel={`${m.name}. ${when}. ${drinks}. Open the menu`} onPress={() => router.push(href as Href)} style={styles.entry}>
+        <PressableScale role="link" accessibilityLabel={`${m.name}. ${when}. ${drinks}. Open the menu`} onPress={() => router.push(href as Href)} style={[styles.entry, styles.past]}>
           <Caption style={[styles.cap, { color: ds.c.muted }]}>{when}</Caption>
-          <DsText variant="title">{m.name}</DsText>
+          <DsText variant="title" style={styles.pastName}>
+            {m.name}
+          </DsText>
           <Body tone="muted" numberOfLines={2}>
             {drinks}
           </Body>
@@ -167,13 +177,20 @@ const styles = StyleSheet.create({
   logo: { width: 44, height: 44, borderRadius: radius.control, borderCurve: 'continuous', padding: space.xs, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   logoImg: { width: '100%', height: '100%' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  edition: { flexDirection: 'row', gap: space.md },
+  // The timeline as drawn (ppl-bar-menus): a 14 rail, 14 to the entry; the dot level with the kicker.
+  edition: { flexDirection: 'row', gap: space.md + 2 },
   rail: { width: 14, alignItems: 'center' },
-  node: { width: 12, height: 12, borderRadius: radius.pill, borderWidth: 2, marginTop: space.lg },
+  node: { width: 12, height: 12, borderRadius: radius.pill, borderWidth: 2, marginTop: space.xs + 2 },
+  nodeNow: { marginTop: space.lg + 2 },
   line: { flex: 1, width: 2, marginTop: space.xs },
-  entry: { flex: 1, minWidth: 0, gap: space.xs, paddingTop: space.md, paddingBottom: space.lg },
-  nowCard: { paddingHorizontal: space.lg, marginBottom: space.md, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
+  entry: { flex: 1, minWidth: 0, gap: space.xs },
+  past: { paddingTop: 2, paddingBottom: space.lg + space.xs + 2 },
+  // 28 on 32 for a past menu's name.
+  pastName: { fontSize: type.title.fontSize - 6, lineHeight: type.title.lineHeight - 6 },
+  nowCard: { gap: space.xs + 2, padding: space.lg, marginBottom: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
+  grow: { flex: 1, minWidth: 0 },
   start: { alignSelf: 'flex-start' },
-  nowActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
-  foot: { gap: space.xs, alignItems: 'flex-start' },
+  nowActions: { flexDirection: 'row', gap: space.sm, marginTop: space.xs + 2 },
+  foot: { marginLeft: 14 + space.md + 2 },
+  underline: { textDecorationLine: 'underline' },
 });

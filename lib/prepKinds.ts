@@ -92,7 +92,7 @@ export const PREP_KINDS: PrepKind[] = [
   { id: 'syrup', name: 'Syrup', ratio: 'Sugar and water, 1 : 1' },
   { id: 'rich', name: 'Rich syrup', ratio: 'Sugar and water, 2 : 1' },
   { id: 'shrub', name: 'Shrub', ratio: 'Fruit, sugar, vinegar' },
-  { id: 'cordial', name: 'Cordial', ratio: 'Juice, sugar, citric acid, no heat' },
+  { id: 'cordial', name: 'Cordial', ratio: 'Juice, sugar, acid' },
   { id: 'oleo', name: 'Oleo saccharum', ratio: 'Peels and sugar' },
   { id: 'infusion', name: 'Infusion', ratio: 'Spirit plus a flavour' },
   { id: 'super', name: 'Super juice', ratio: 'Peels, acids, water' },
@@ -191,6 +191,22 @@ const key = () => `p${Date.now().toString(36)}${(n++).toString(36)}`;
 const line = (name: string, parts: number | null, unit: string, yieldPer?: number, amount = ''): PrepDraftLine => ({ key: key(), id: null, name, parts, unit, amount, yieldPer });
 const slotLine = (name: string, slot: string, parts: number | null, unit: string, yieldPer?: number): PrepDraftLine => ({ ...line(name, parts, unit, yieldPer), slot });
 
+/**
+ * Extra flavours a name gives that have a usual amount, so the recipe starts
+ * with one (make-create-prep-recipe: "Fresno chili, 2 whole, sliced").
+ * ponytail: only the chili the canvas draws; anything else starts to taste.
+ * Add a row here when a board draws another.
+ */
+const EXTRA_STARTS: { re: RegExp; name: string; amount: string; unit: string; note: string }[] = [
+  { re: /^chil+[ie](e?s)?$/i, name: 'Fresno chili', amount: '2', unit: 'whole', note: 'Sliced, seeds in for more heat' },
+];
+
+/** An extra flavour's line: its usual amount when known, else to taste. */
+function extraLine(word: string): PrepDraftLine {
+  const known = EXTRA_STARTS.find((e) => e.re.test(word.trim()));
+  return known ? { ...line(known.name, null, known.unit, 0, known.amount), note: known.note } : line(word, null, '', 0);
+}
+
 /** Where it's kept, as the method step's chips say it. */
 export const STORES = ['Fridge, sealed bottle', 'Freezer', 'Ambient, dark', 'Airtight, dry'] as const;
 const STORE_TEXT: Record<string, (typeof STORES)[number]> = { fridge: STORES[0], freezer: STORES[1], ambient: STORES[2], airtight: STORES[3] };
@@ -201,7 +217,7 @@ const STORE_TEXT: Record<string, (typeof STORES)[number]> = { fridge: STORES[0],
  */
 export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDraft {
   const [flavour = '', ...extra] = flavourWords(name);
-  const extras = extra.map((w) => line(w, null, '', 0));
+  const extras = extra.map(extraLine);
   const shrubWay = kind === 'shrub' ? (way ?? 'cold') : undefined;
   const hot = shrubWay === 'hot';
   const draft = (lines: PrepDraftLine[], baseAmount: number, steps: PrepDraftStep[], keepsHours: number | null, storage: string, leadMinutes: number | null, actions: string[]): PrepDraft =>
@@ -219,7 +235,7 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
       ], rich ? 8 * WEEK : 4 * WEEK, fridge, 20, ['Syrup']);
     }
     case 'shrub':
-      return draft([flavour ? line(flavour, 1, 'g', 0.6) : slotLine('Fruit', 'fruit', 1, 'g', 0.6), line('Sugar', 1, 'g', 0.62), line('Apple cider vinegar', 1, 'g', 1), ...extras], 300, shrubWay === 'oleo'
+      return draft([flavour ? line(flavour, 1, 'g', 0.6) : slotLine('Fruit', 'fruit', 1, 'g', 0.6), line('White sugar', 1, 'g', 0.62), line('Apple cider vinegar', 1, 'g', 1), ...extras], 300, shrubWay === 'oleo'
         ? [
             s('Muddle the fruit, and any citrus peel, with the sugar.'),
             s('Cover and leave at room temperature until the sugar has turned to syrup.', DAY * 3600),
@@ -237,7 +253,7 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
             s('Cover and leave in the fridge until it’s syrupy.', DAY * 3600),
             s('Strain, pressing the fruit. Scrape in any sugar left behind.'),
             s('Stir in the vinegar until the sugar is gone.'),
-            s('Bottle and rest in the fridge for 2 days before using.'),
+            s('Bottle and rest in the fridge before using.', 2 * DAY * 3600),
           ], 3 * WEEK, fridge, hot ? 60 : shrubWay === 'oleo' ? 2 * DAY * 60 : 3 * DAY * 60, ['Infuse', 'Strain']); // 3 to 6 weeks if opened often: the shorter.
     case 'cordial':
       return draft([flavour ? line(`${flavour} juice`, 1, 'g', 1) : slotLine('Juice', 'juice', 1, 'g', 1), line('Sugar', 1, 'g', 0.62), line('Citric acid', 0.02, 'g', 0), ...extras], 500, [
@@ -457,6 +473,6 @@ export function prepFromTechnique(
   // With no base (orgeat, kombucha), what it's made of leads and the flavour follows.
   const all = base ? [base, ...lines, ...extra] : [...extra, ...lines];
   if (!all.length) all.push(...blank.lines);
-  const steps = t.base && t.parts?.length ? card.steps.slice(1) : card.steps;
-  return finish(all, all[0].key, t.base ? (t.base.amounts[Math.min(1, t.base.amounts.length - 1)] ?? 100) : 100, steps);
+  // The card's first step gives the usual batch's amounts ("For 750 ml spirit: 60 ml melted fat."), as the canvas keeps it.
+  return finish(all, all[0].key, t.base ? (t.base.amounts[Math.min(1, t.base.amounts.length - 1)] ?? 100) : 100, card.steps);
 }

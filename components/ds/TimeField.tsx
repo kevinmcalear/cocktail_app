@@ -10,6 +10,8 @@ import { Caption } from './Text';
 
 interface TimeFieldProps {
   label: string;
+  /** A row of a grouped card, with no box of its own. */
+  bare?: boolean;
   /** A time, 19:00, or '' for none. */
   value: string;
   onChange: (time: string) => void;
@@ -30,7 +32,7 @@ const rows = <T,>(list: T[], size: number) => Array.from({ length: Math.ceil(lis
  * A labelled time, picked from hours and minutes that open under it, the
  * way the locale writes a clock (7 PM or 19:00). Pairs with DateField.
  */
-export function TimeField({ label, value, onChange, hint, error, placeholder = 'Pick a time' }: TimeFieldProps) {
+export function TimeField({ label, value, onChange, hint, error, bare, placeholder = 'Pick a time' }: TimeFieldProps) {
   const time = parseTime(value);
   const [open, setOpen] = useState(!time);
   // The half of the day to show hours from, before an hour is picked.
@@ -49,7 +51,7 @@ export function TimeField({ label, value, onChange, hint, error, placeholder = '
   };
 
   return (
-    <PickerField label={label} text={time ? timeLabel(value) : null} placeholder={placeholder} open={open} onToggle={() => setOpen(!open)} hint={hint} error={error}>
+    <PickerField label={label} text={time ? timeLabel(value) : null} placeholder={placeholder} open={open} onToggle={() => setOpen(!open)} hint={hint} error={error} bare={bare}>
       {TWELVE ? (
         <View role="radiogroup" accessibilityLabel="AM or PM" style={styles.half}>
           <Chip label="AM" selected={!pm} onPress={() => setHalf(false)} quiet />

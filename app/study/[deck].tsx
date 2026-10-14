@@ -2,12 +2,14 @@ import { Redirect, Stack, useLocalSearchParams } from 'expo-router';
 
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { StudySession } from '@/components/screens/study/StudySession';
-import { FEATURES } from '@/constants/features';
 import { useStudyDecks } from '@/hooks/useStudyDecks';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 
 /** A study session for one deck: /study/tonight, /study/pile, /study/venue. */
 export default function StudyRoute() {
-  return FEATURES.study ? <StudyDeck /> : <Redirect href="/" />;
+  const { ready, has } = useVenueFeatures();
+  if (!ready) return null;
+  return has('study') ? <StudyDeck /> : <Redirect href="/" />;
 }
 
 function StudyDeck() {

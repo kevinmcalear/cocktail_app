@@ -31,6 +31,15 @@ export interface PreviewMeta {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (s: string | null | undefined): s is string => !!s && UUID.test(s);
 
+// A readable link's name (/d/penicillin, /m/halloween-party): words joined by
+// hyphens, as share_slug_base() makes them (20261016300000_share_slugs.sql).
+// A uuid is always read as the id.
+const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/i;
+export const isShareSlug = (s: string | null | undefined): s is string => !!s && s.length <= 100 && SLUG.test(s) && !UUID.test(s);
+
+/** /d/<id> is a drink's link, /m/<id> a shared menu's. */
+export type ShareKind = 'd' | 'm';
+
 // Chat apps and social sites fetch a link to build its preview; none of them run the app.
 // iMessage sends "facebookexternalhit … Twitterbot", Signal sends "WhatsApp".
 const PREVIEW_BOTS = /facebookexternalhit|facebot|twitterbot|whatsapp|slackbot|discordbot|telegrambot|linkedinbot|skypeuripreview|applebot|googlebot|bingbot|pinterest|redditbot|embedly|iframely|mastodon|vkshare|viber|line-poker|snapchat|bluesky|cardyb/i;
@@ -55,14 +64,15 @@ export function drinksLine(menu: SharedMenuRow, drinks: PreviewDrink[]): string 
 }
 
 /** Changes whenever what the image shows changes, so a chat app's cached image doesn't outlive an edit. */
-export function menuVersion(menu: SharedMenuRow): string {
-  const text = [menu.name, menu.menu_date, menu.cover_url, menu.owner.name, ...menu.sections.flatMap((s) => s.item_ids)].join('|');
+export function menuVersion(menu: SharedMenuRow, drawn = ''): string {
+  const text = [menu.name, menu.menu_date, menu.cover_url, menu.owner.name, ...menu.sections.flatMap((s) => s.item_ids), drawn].join('|');
   let h = 5381;
   for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
   return h.toString(36);
 }
 
-export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin: string): PreviewMeta {
+/** `link` is what the shared link named the menu by: its slug, or its id. `drawn` is drawingsKey's. */
+export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin: string, link: string = menu.id, drawn = ''): PreviewMeta {
   const night = nightLabel(menu.menu_date);
   const count = menu.sections.reduce((n, s) => n + s.item_ids.length, 0);
   const howMany = `${count} ${count === 1 ? 'drink' : 'drinks'}`;
@@ -70,8 +80,8 @@ export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin:
     // As the boards draw it (ppl-preview-imessage): the name, then "4 drinks for Saturday 31 October."
     title: menu.name,
     description: `${night ? `${howMany} for ${night}` : howMany}. A menu on Cocktail.`,
-    image: `${origin}/api/menu-og?id=${menu.id}&v=${menuVersion(menu)}`,
-    url: `${origin}/m/${menu.id}`,
+    image: `${origin}/api/menu-og?id=${menu.id}&v=${menuVersion(menu, drawn)}`,
+    url: `${origin}/m/${link}`,
   };
 }
 
@@ -107,6 +117,24 @@ interface Supabase {
   anonKey: string;
 }
 
+/**
+ * The id behind a link's last part, signed out: a uuid is itself, a slug is
+ * asked of share_target(), which answers only while the drink is published or
+ * the menu is shared. Null for anything else.
+ */
+export async function resolveShareId(db: Supabase, kind: ShareKind, key: string | null | undefined): Promise<string | null> {
+  if (isUuid(key)) return key;
+  if (!isShareSlug(key)) return null;
+  const res = await fetch(`${db.url}/rest/v1/rpc/share_target`, {
+    method: 'POST',
+    headers: { apikey: db.anonKey, Authorization: `Bearer ${db.anonKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_kind: kind, p_slug: key }),
+  });
+  if (!res.ok) throw new Error(`share_target ${res.status}`);
+  const id = (await res.json()) as string | null;
+  return isUuid(id) ? id : null;
+}
+
 /** Signed out, as anyone reads it: the shared menu, or null if it isn't shared (or its owner isn't public). */
 export async function fetchSharedMenu(db: Supabase, id: string): Promise<SharedMenuRow | null> {
   const res = await fetch(`${db.url}/rest/v1/rpc/shared_menu`, {
@@ -136,6 +164,16 @@ export function fetchPreviewDrinks(db: Supabase, ids: string[]): Promise<Preview
 export function fetchSketchInputs<T>(db: Supabase, ids: string[]): Promise<{ item_id: string; inputs: T }[]> {
   if (!ids.length) return Promise.resolve([]);
   return select<{ item_id: string; inputs: T }>(db, `item_sketches?select=item_id,inputs&item_id=${inList(ids)}`);
+}
+
+/**
+ * What the drinks' drawings were picked to look like (their glass drawing and
+ * sketch colour), for an image's version: a recolour is a new image, not a
+ * week of the cached one.
+ */
+export async function drawingsKey(db: Supabase, ids: string[]): Promise<string> {
+  const rows = await fetchSketchInputs<{ variant?: string | null; tint?: string | null }>(db, ids);
+  return rows.map((r) => `${r.item_id}:${r.inputs?.variant ?? ''}:${r.inputs?.tint ?? ''}`).sort().join(',');
 }
 
 /** The project's public Supabase settings, as the web build has them. */

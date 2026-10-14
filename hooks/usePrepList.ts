@@ -5,7 +5,7 @@ import type { Quantity } from '@/lib/quantity';
 import { onHandByItem, parByItem, type OnHandRow, type ParQuantity } from '@/lib/stock';
 import { supabase } from '@/lib/supabase';
 
-interface RecipeRow {
+export interface RecipeRow {
   recipe_item_id: string;
   amount: number | null;
   unit: string | null;
@@ -32,13 +32,13 @@ export interface PrepData {
 
 const MAX_LEVELS = 3;
 
-function toLines(rows: RecipeRow[], recipeId: string): SpecLine[] {
+export function toLines(rows: RecipeRow[], recipeId: string): SpecLine[] {
   return rows
     .filter((r) => r.recipe_item_id === recipeId && r.display_ingredient_id && r.display_ingredient)
     .map((r) => ({ ingredientId: r.display_ingredient!.id, name: r.display_ingredient!.name, amount: r.amount, unit: r.unit }));
 }
 
-async function recipesFor(ids: string[]): Promise<RecipeRow[]> {
+export async function recipesFor(ids: string[]): Promise<RecipeRow[]> {
   if (!ids.length) return [];
   const { data, error } = await supabase
     .from('app_recipe_presentation')
@@ -46,6 +46,71 @@ async function recipesFor(ids: string[]): Promise<RecipeRow[]> {
     .in('recipe_item_id', ids);
   if (error) throw error;
   return (data ?? []) as unknown as RecipeRow[];
+}
+
+/**
+ * Walks down from some ingredients: any with its own recipe or prep row is
+ * house-made (its recipe, yield, lead time and shelf life, a few levels
+ * deep); the rest are leaves, bought as they are.
+ */
+export async function houseMadeUnder(ingredientIds: string[], skip: Set<string> = new Set()): Promise<{ houseMade: Record<string, HouseMade>; leaves: string[] }> {
+  const houseMade: Record<string, HouseMade> = {};
+  const seen = new Set<string>(skip);
+  let frontier = [...new Set(ingredientIds)];
+  const leaves = new Set<string>();
+  for (let level = 0; level < MAX_LEVELS && frontier.length; level++) {
+    const ids = frontier.filter((id) => !seen.has(id));
+    ids.forEach((id) => seen.add(id));
+    if (!ids.length) break;
+    const [subRecipes, prepRes] = await Promise.all([
+      recipesFor(ids),
+      supabase.from('item_prep').select('item_id, yield_amount, yield_unit, lead_time_minutes, lead_time_note, shelf_life_hours').in('item_id', ids),
+    ]);
+    if (prepRes.error) throw prepRes.error;
+    const prepById = new Map((prepRes.data ?? []).map((p) => [p.item_id as string, p]));
+    const next: string[] = [];
+    for (const id of ids) {
+      const recipe = toLines(subRecipes, id);
+      const prep = prepById.get(id);
+      if (!recipe.length && !prep) {
+        leaves.add(id);
+        continue;
+      }
+      houseMade[id] = {
+        recipe,
+        yieldAmount: prep?.yield_amount ?? null,
+        yieldUnit: prep?.yield_unit ?? null,
+        leadTimeMinutes: prep?.lead_time_minutes ?? null,
+        leadTimeNote: prep?.lead_time_note ?? null,
+        shelfLifeHours: prep?.shelf_life_hours ?? null,
+      };
+      next.push(...recipe.map((l) => l.ingredientId));
+    }
+    frontier = next;
+  }
+  frontier.forEach((id) => !houseMade[id] && !skip.has(id) && leaves.add(id));
+  return { houseMade, leaves: [...leaves] };
+}
+
+/** How the bar buys some items: supplier and pack size ("700 ml"). */
+export async function purchasingFor(barId: string, itemIds: string[]): Promise<Record<string, Purchasing>> {
+  const purchasing: Record<string, Purchasing> = {};
+  if (!itemIds.length) return purchasing;
+  const [buyRes, supplierRes] = await Promise.all([
+    supabase.from('item_purchasing').select('item_id, supplier_id, pack_size_amount, pack_size_unit').eq('bar_id', barId).in('item_id', itemIds),
+    supabase.from('suppliers').select('id, name').eq('bar_id', barId),
+  ]);
+  // ponytail: without the prep or costs capability these reads come back
+  // empty (RLS), and the order list just has no packs or suppliers.
+  const suppliers = new Map((supplierRes.data ?? []).map((s) => [s.id as string, s.name as string]));
+  for (const row of buyRes.data ?? []) {
+    purchasing[row.item_id as string] = {
+      supplierName: row.supplier_id ? (suppliers.get(row.supplier_id as string) ?? null) : null,
+      packAmount: row.pack_size_amount as number | null,
+      packUnit: row.pack_size_unit as string | null,
+    };
+  }
+  return purchasing;
 }
 
 /**
@@ -82,59 +147,8 @@ export function usePrepData(barId: string | null | undefined, menuIds: string[])
         return { id, name: item.name, recipe: toLines(drinkRecipes, id), iceType: item.ice_id ? (iceNames.get(item.ice_id) ?? null) : null, icePerServeG: item.ice_per_serve_g };
       });
 
-      // Walk down: any ingredient with its own recipe or prep row is house-made.
-      const houseMade: Record<string, HouseMade> = {};
-      const seen = new Set<string>(drinkIds);
-      let frontier = [...new Set(drinks.flatMap((d) => d.recipe.map((l) => l.ingredientId)))];
-      const leaves = new Set<string>();
-      for (let level = 0; level < MAX_LEVELS && frontier.length; level++) {
-        const ids = frontier.filter((id) => !seen.has(id));
-        ids.forEach((id) => seen.add(id));
-        const [subRecipes, prepRes] = await Promise.all([
-          recipesFor(ids),
-          supabase.from('item_prep').select('item_id, yield_amount, yield_unit, lead_time_minutes, lead_time_note').in('item_id', ids),
-        ]);
-        if (prepRes.error) throw prepRes.error;
-        const prepById = new Map((prepRes.data ?? []).map((p) => [p.item_id as string, p]));
-        const next: string[] = [];
-        for (const id of ids) {
-          const recipe = toLines(subRecipes, id);
-          const prep = prepById.get(id);
-          if (!recipe.length && !prep) {
-            leaves.add(id);
-            continue;
-          }
-          houseMade[id] = {
-            recipe,
-            yieldAmount: prep?.yield_amount ?? null,
-            yieldUnit: prep?.yield_unit ?? null,
-            leadTimeMinutes: prep?.lead_time_minutes ?? null,
-            leadTimeNote: prep?.lead_time_note ?? null,
-          };
-          next.push(...recipe.map((l) => l.ingredientId));
-        }
-        frontier = next;
-      }
-      frontier.forEach((id) => !houseMade[id] && leaves.add(id));
-
-      const purchasing: Record<string, Purchasing> = {};
-      const leafIds = [...leaves];
-      if (leafIds.length) {
-        const [buyRes, supplierRes] = await Promise.all([
-          supabase.from('item_purchasing').select('item_id, supplier_id, pack_size_amount, pack_size_unit').eq('bar_id', barId!).in('item_id', leafIds),
-          supabase.from('suppliers').select('id, name').eq('bar_id', barId!),
-        ]);
-        // ponytail: without the prep or costs capability these reads come back
-        // empty (RLS), and the order list just has no packs or suppliers.
-        const suppliers = new Map((supplierRes.data ?? []).map((s) => [s.id as string, s.name as string]));
-        for (const row of buyRes.data ?? []) {
-          purchasing[row.item_id as string] = {
-            supplierName: row.supplier_id ? (suppliers.get(row.supplier_id as string) ?? null) : null,
-            packAmount: row.pack_size_amount as number | null,
-            packUnit: row.pack_size_unit as string | null,
-          };
-        }
-      }
+      const { houseMade, leaves } = await houseMadeUnder(drinks.flatMap((d) => d.recipe.map((l) => l.ingredientId)), new Set(drinkIds));
+      const purchasing = await purchasingFor(barId!, leaves);
       // The shelf: the last count at each spot, and par per item. Both come
       // back empty below the locations capability (RLS), and the list then
       // assumes the bar starts from zero, as before.

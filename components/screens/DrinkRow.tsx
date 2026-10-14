@@ -2,10 +2,10 @@ import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DrinkImage, Headline, MatchText, PressableScale, Tag, useDs, type MatchTextProps } from '@/components/ds';
-import { UserAvatar } from '@/components/ui/UserAvatar';
+import { Body, Caption, DrinkImage, Headline, MatchText, PressableScale, Tag, useDs, type MatchTextProps } from '@/components/ds';
+import { BarMark } from '@/components/screens/home/BarMark';
 import { useSearchNavRow } from '@/components/search/searchNav';
-import { displayFaces, radius, space } from '@/constants/tokens';
+import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 import { withAlpha } from '@/lib/color';
 import { drinkIdFromHref } from '@/lib/itemRoutes';
@@ -22,7 +22,14 @@ export interface DrinkRowProps {
   itemId?: string | null;
   caption?: string;
   /** A small logo before the caption, for the bar that pours the drink (initials when it has none). */
-  logo?: { uri: string | null; name: string };
+  /** With `profileId` (the bar page) a logo-less bar shows its initials in its venue's colours. */
+  logo?: { uri: string | null; name: string; profileId?: string };
+  /** Drawn in place of the logo's picture: a bar's monogram in its colours (What to make). */
+  mark?: ReactNode;
+  /** A list of many short rows (What to make): the name a size down, as the canvas draws those. */
+  compact?: boolean;
+  /** Discover's rows (disc-list, disc-desk-browse): compact's name, a 44-point picture, 64 tall. */
+  dense?: boolean;
   /** A small pill after the caption: "Past · Mar 2024 to Jan 2025". */
   tag?: string;
   /** A second, longer line: a note of your own. */
@@ -45,18 +52,19 @@ export interface DrinkRowProps {
 const LOGO = 18;
 
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, tag, note, below, trailing, label, query, matchLook, displayName }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, mark, compact: small, dense, tag, note, below, trailing, label, query, matchLook, displayName }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
+  const compact = small || dense;
   // A drink page starts loading on press, ahead of the tap.
   const prefetch = usePrefetchCocktail();
   const drinkId = onPress ? null : drinkIdFromHref(href);
   // In the ⌘K palette: the row the arrow keys are on, which Return opens.
   const nav = useSearchNavRow();
   // The logo sits on the caption's first line and the caption wraps beside it, never under it.
-  const byline = logo ? (
+  const byline = logo || mark ? (
     <View style={styles.byline}>
-      <UserAvatar uri={logo.uri} name={logo.name} size={LOGO} />
+      {mark ?? (logo ? <BarMark name={logo.name} logoUrl={logo.uri} profileId={logo.profileId} size={LOGO} filled /> : null)}
       {caption ? (
         <Caption tone="muted" style={styles.shrink}>
           {caption}
@@ -72,15 +80,21 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
       onPressIn={drinkId ? () => prefetch(drinkId, { name, imageUrl }) : undefined}
       onPress={onPress ?? (() => href && router.push(href as never))}
       nativeID={nav.nativeID}
-      style={[styles.row, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
+      style={[styles.row, dense ? styles.dense : null, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
     >
-      <View style={styles.thumb}>
+      <View style={dense ? styles.denseThumb : styles.thumb}>
         <DrinkImage thumb sketchDetail="thumb" source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" />
       </View>
       <View style={styles.text}>
-        <Headline numberOfLines={1} style={displayName ? { fontFamily: displayFaces[ds.displayFace].regular } : null}>
-          <MatchText text={name} query={query} look={matchLook} />
-        </Headline>
+        {compact ? (
+          <Body numberOfLines={1} style={styles.compactName}>
+            <MatchText text={name} query={query} look={matchLook} />
+          </Body>
+        ) : (
+          <Headline numberOfLines={1} style={displayName ? { fontFamily: displayFaces[ds.displayFace].regular } : null}>
+            <MatchText text={name} query={query} look={matchLook} />
+          </Headline>
+        )}
         {tag ? (
           <View style={styles.captionRow}>
             {byline}
@@ -106,8 +120,11 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
   thumb: { width: 56 },
+  dense: { minHeight: 64, paddingVertical: space.sm },
+  denseThumb: { width: 44 },
   text: { flex: 1, gap: 2 },
   byline: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs, flexShrink: 1 },
   shrink: { flexShrink: 1 },
+  compactName: { fontFamily: fontFamilies.bodyMedium },
   captionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs },
 });

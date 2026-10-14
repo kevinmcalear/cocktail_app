@@ -2,12 +2,13 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
+import { Body, Caption, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
+import { BarMark, type BarBrand } from '@/components/screens/home/BarMark';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
-import { closedLabel, drinkCount, type DiscoverBar } from '@/lib/discoverDrinks';
+import { barDrinksLine, closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
 import { groupLabel, moreCount, moreLabel, PER_GROUP } from '@/lib/searchScope';
 
 import { useSearchNavRow } from './searchNav';
@@ -17,9 +18,11 @@ const THUMB = 56;
 interface ResultRowProps {
   title: string;
   caption?: string;
-  /** An icon tile (ingredients, menus, recents), or a round avatar for bars and people. */
+  /** An icon tile (ingredients, menus, recents), or a round avatar for people; `bar` makes it the bar's mark, in its own colours. */
   icon?: IconName;
-  avatar?: { uri: string | null };
+  /** The icon in the accent, not muted: the flavor map's target (prep-flavor-entry). */
+  accentIcon?: boolean;
+  avatar?: { uri: string | null; bar?: { profileId: string; brand?: BarBrand | null } };
   /** An ingredient's drawing in place of the icon. A null id draws from the title (drafts). */
   ingredient?: { id: string | null };
   /** A short label after the caption ("Closed 2019"); the avatar fades with it. */
@@ -35,7 +38,7 @@ interface ResultRowProps {
 }
 
 /** A search result that isn't a drink: the same row as DrinkRow, with an icon or avatar. */
-export function ResultRow({ title, caption, icon, avatar, ingredient, tag, trailing, query, matchLook, label, onPress }: ResultRowProps) {
+export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient, tag, trailing, query, matchLook, label, onPress }: ResultRowProps) {
   const ds = useDs();
   // In the ⌘K palette: the row the arrow keys are on, which Return opens.
   const nav = useSearchNavRow();
@@ -50,10 +53,12 @@ export function ResultRow({ title, caption, icon, avatar, ingredient, tag, trail
       <View style={[styles.thumb, !avatar && !ingredient && { backgroundColor: ds.c.surface }, tag ? styles.faded : null]}>
         {ingredient ? (
           <IngredientThumb id={ingredient.id} name={title} size={THUMB} />
+        ) : avatar?.bar ? (
+          <BarMark name={title} logoUrl={avatar.uri} profileId={avatar.bar.profileId} brand={avatar.bar.brand} size={THUMB - space.sm} filled />
         ) : avatar ? (
           <UserAvatar uri={avatar.uri} name={title} size={THUMB - space.sm} />
         ) : (
-          <IconSymbol name={icon ?? 'magnifyingglass'} size={22} color={ds.c.muted} />
+          <IconSymbol name={icon ?? 'magnifyingglass'} size={22} color={accentIcon ? ds.accentText : ds.c.muted} />
         )}
       </View>
       <View style={styles.text}>
@@ -62,7 +67,7 @@ export function ResultRow({ title, caption, icon, avatar, ingredient, tag, trail
         </Headline>
         <View style={styles.captionRow}>
           {caption ? (
-            <Caption tone="muted" numberOfLines={1} style={styles.shrink}>
+            <Caption tone="muted" numberOfLines={2} style={styles.shrink}>
               {caption}
             </Caption>
           ) : null}
@@ -84,13 +89,14 @@ const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', '
  */
 export function BarResultRow({ bar, score, away, query, matchLook }: { bar: DiscoverBar; score?: number; away?: string | null; query?: string; matchLook?: MatchTextProps['look'] }) {
   const router = useRouter();
-  const caption = [bar.locality || bar.city, away, bar.drinks ? drinkCount(bar.drinks) : null].filter(Boolean).join(' · ') || place(bar) || undefined;
+  // "Fitzroy · 14 drinks on now" (nav-search-home).
+  const caption = [bar.locality || bar.city, away, barDrinksLine(bar)].filter(Boolean).join(' · ') || place(bar) || undefined;
   const said = scoreWords(score, score !== undefined ? 'bar score' : null);
   return (
     <ResultRow
       title={bar.name}
       caption={caption}
-      avatar={{ uri: bar.logo }}
+      avatar={{ uri: bar.logo, bar: { profileId: bar.id, brand: bar.brand } }}
       tag={bar.closed ? closedLabel(bar.closedYear) : undefined}
       trailing={bar.closed ? null : <RowScore score={score} detail={score !== undefined ? 'bar' : null} />}
       query={query}
@@ -103,12 +109,46 @@ export function BarResultRow({ bar, score, away, query, matchLook }: { bar: Disc
 
 interface ResultGroupProps<T> {
   label: string;
+  /** False when the label already says how many ("Everywhere has 1 classic"). */
+  counted?: boolean;
   items: readonly T[];
   render: (item: T) => ReactNode;
 }
 
+/** "Search everywhere for “negroni”" in the ⌘K palette: a slim outlined row with a globe, one the arrow keys reach. */
+export function EverywhereRow({ label, onPress }: { label: string; onPress: () => void }) {
+  const ds = useDs();
+  const nav = useSearchNavRow();
+  return (
+    <PressableScale
+      role="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      nativeID={nav.nativeID}
+      style={[styles.everywhere, { borderColor: ds.c.lineStrong }, nav.active && { backgroundColor: withAlpha(ds.accentText, 0.14) }]}
+    >
+      <IconSymbol name="globe" size={16} color={ds.c.muted} />
+      <Caption style={[styles.moreText, styles.shrink]} numberOfLines={1}>
+        {label}
+      </Caption>
+      {nav.active ? <Caption tone="muted">Open ↵</Caption> : null}
+    </PressableScale>
+  );
+}
+
+/** "All 18 ›": flush left, ink, with a chevron, as the search boards draw it. */
+function MoreLink({ label, onPress }: { label: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel={label} onPress={onPress} style={styles.more}>
+      <Body style={styles.moreText}>{label}</Body>
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+    </PressableScale>
+  );
+}
+
 /** "Drinks · 12": the first few, then the rest behind "All 12", a page at a time. Nothing when empty. */
-export function ResultGroup<T>({ label, items, render }: ResultGroupProps<T>) {
+export function ResultGroup<T>({ label, counted = true, items, render }: ResultGroupProps<T>) {
   const [count, setCount] = useState(PER_GROUP);
   if (!items.length) return null;
   const shown = items.slice(0, count);
@@ -116,10 +156,10 @@ export function ResultGroup<T>({ label, items, render }: ResultGroupProps<T>) {
   return (
     <View style={styles.group}>
       <Caption tone="muted" role="heading" style={styles.cap}>
-        {groupLabel(label, items.length)}
+        {counted ? groupLabel(label, items.length) : label}
       </Caption>
       <View role="list">{shown.map(render)}</View>
-      {more ? <Button label={more} variant="ghost" onPress={() => setCount(moreCount(items.length, shown.length))} style={styles.more} /> : null}
+      {more ? <MoreLink label={more} onPress={() => setCount(moreCount(items.length, shown.length))} /> : null}
     </View>
   );
 }
@@ -134,5 +174,7 @@ const styles = StyleSheet.create({
   active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
   group: { gap: space.xs },
   cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
-  more: { alignSelf: 'flex-start' },
+  more: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget },
+  moreText: { fontFamily: fontFamilies.bodyMedium },
+  everywhere: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderWidth: 1, borderRadius: radius.control },
 });

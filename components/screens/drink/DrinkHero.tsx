@@ -2,8 +2,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Caption, DrinkImage, GlassSurface, Tag, useDs } from '@/components/ds';
+import { Caption, DrinkImage, GlassButton, GlassSurface, Tag, useDs } from '@/components/ds';
 import { backbar, space } from '@/constants/tokens';
+import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
 import { pictureLabel, pictureTag } from '@/lib/itemImages';
 
@@ -22,6 +23,17 @@ interface DrinkHeroProps {
   height: number;
   /** Phone: the photo fades into the page. Wide: it sits in its own column. */
   fade: boolean;
+  /** The drink's editors: a Colour button on its drawing, to repaint it (SketchColourSheet). */
+  onColour?: () => void;
+}
+
+/**
+ * The phone hero's height: 22% of the screen below the status bar
+ * (186 on a 390 x 844 phone), so the name, credit and a four to six line spec
+ * fit on the first screen under it (13 Oct). The page and its loading state share it.
+ */
+export function phoneHeroHeight(width: number, height: number, top: number) {
+  return top + Math.min(width, (height - top) * 0.22);
 }
 
 /**
@@ -30,7 +42,7 @@ interface DrinkHeroProps {
  * ground; with one, the drink's own colour glows through (docs/design_system.md,
  * "Drink field").
  */
-export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade }: DrinkHeroProps) {
+export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade, onColour }: DrinkHeroProps) {
   const ds = useDs();
   const [index, setIndex] = useState(0);
   const [viewing, setViewing] = useState(false);
@@ -95,7 +107,18 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
           ) : null}
         </View>
       ) : null}
+      {onColour && total === 0 && itemId ? <ColourButton itemId={itemId} name={name} bottom={bottom} onPress={onColour} /> : null}
       <PictureViewer pictures={pictures} name={name} open={viewing} startIndex={index} onClose={() => setViewing(false)} />
+    </View>
+  );
+}
+
+/** Only a drawn drink has a colour to change: the same query its drawing reads. */
+function ColourButton({ itemId, name, bottom, onPress }: { itemId: string; name: string; bottom: number; onPress: () => void }) {
+  if (!useItemSketch(itemId).data) return null;
+  return (
+    <View style={[styles.colour, { bottom }]}>
+      <GlassButton accessibilityLabel={`Sketch colour, ${name}`} icon="paintpalette.fill" label="Colour" scheme="light" onPress={onPress} />
     </View>
   );
 }
@@ -105,5 +128,6 @@ const styles = StyleSheet.create({
   page: { flex: 1 },
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
   badges: { position: 'absolute', right: space.lg, flexDirection: 'row', alignItems: 'center', gap: space.sm, pointerEvents: 'none' },
+  colour: { position: 'absolute', left: space.lg },
   count: { paddingHorizontal: space.md, paddingVertical: space.xs },
 });

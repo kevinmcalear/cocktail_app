@@ -30,7 +30,7 @@ export function ScopeSwitch<T extends string = SearchScope>({ options, scope, on
             onPress={() => onScope(o.value)}
             style={[styles.side, fit && styles.fit, on && { backgroundColor: ds.accentFill.fill }]}
           >
-            <DsText variant={fit ? 'caption' : 'body'} color={on ? ds.accentFill.text : fit ? ds.c.ink : ds.c.muted} style={on ? styles.bold : null} numberOfLines={1}>
+            <DsText variant={fit ? 'caption' : 'label'} color={on ? ds.accentFill.text : fit ? ds.c.ink : ds.c.muted} style={on ? styles.bold : null} numberOfLines={1}>
               {o.label}
             </DsText>
           </PressableScale>

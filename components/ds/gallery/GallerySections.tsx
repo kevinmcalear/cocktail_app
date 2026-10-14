@@ -16,10 +16,11 @@ import { Segmented } from '../Segmented';
 import { SpecRow } from '../SpecRow';
 import { Surface } from '../Surface';
 import { Tag } from '../Tag';
+import { useToast } from '../Toast';
 import { TimeField } from '../TimeField';
 import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
-import { AnimatedDrawings, GlassVariants } from './GlassVariants';
+import { AnimatedDrawings, GlassVariants, SketchTints } from './GlassVariants';
 import { KitDrawings } from './KitDrawings';
 import { SheetDemo } from './SheetDemo';
 import { IMAGES, PENICILLIN } from './samples';
@@ -53,6 +54,7 @@ const TYPE_SAMPLES: Record<TypeStyle, string> = {
   headline: 'Bartender notes',
   body: 'Shake hard with ice and strain over a large cube.',
   spec: '22.5 ml',
+  label: 'Add both',
   caption: 'Shaken · Rocks · Large cube',
 };
 
@@ -62,6 +64,7 @@ export function GallerySections() {
   const [pick, setPick] = useState<string | null>(null);
   const [day, setDay] = useState('');
   const [time, setTime] = useState('19:00');
+  const toast = useToast();
   return (
     <View>
       <Section title="Colour">
@@ -99,6 +102,7 @@ export function GallerySections() {
 
       <Section title="Sheets">
         <SheetDemo />
+        <Button label="Show a toast" variant="secondary" onPress={() => toast.show({ title: 'Penicillin now uses Fernhill', detail: 'The old spec is in its history.', action: { label: 'Undo', onPress: () => {} } })} />
       </Section>
 
       <Section title="Tags and tabs">
@@ -186,6 +190,10 @@ export function GallerySections() {
 
       <Section title="Drawn glassware">
         <GlassVariants />
+      </Section>
+
+      <Section title="Sketch colour">
+        <SketchTints />
       </Section>
 
       <Section title="Drawn kit">

@@ -24,6 +24,8 @@ export interface HouseMade {
   yieldUnit: string | null;
   leadTimeMinutes: number | null;
   leadTimeNote: string | null;
+  /** How long a batch keeps (item_prep.shelf_life_hours), for the run sheet. */
+  shelfLifeHours?: number | null;
 }
 
 export interface Purchasing {
@@ -33,8 +35,9 @@ export interface Purchasing {
 }
 
 export interface PrepInput {
-  /** One serve of each drink on the menu, with its ice per serve when set. */
-  drinks: { id: string; name: string; recipe: SpecLine[]; iceType?: string | null; icePerServeG?: number | null }[];
+  /** One serve of each drink on the menu, with its ice per serve when set, and its own serves when it has them. */
+  drinks: { id: string; name: string; recipe: SpecLine[]; iceType?: string | null; icePerServeG?: number | null; serves?: number | null }[];
+  /** Serves of each drink without its own. */
   servesPerDrink: number;
   houseMade: Record<string, HouseMade>;
   purchasing: Record<string, Purchasing>;
@@ -64,6 +67,8 @@ export interface MakeLine {
   leadTimeNote: string | null;
   /** Drinks it goes into, for the row's subtitle. */
   forDrinks: string[];
+  /** What's needed, summed by kind (the numbers behind `needed`). */
+  quantities: Quantity[];
 }
 
 export interface BuyLine {
@@ -73,6 +78,9 @@ export interface BuyLine {
   have: string | null;
   /** "5 × 700 ml", when the pack size is known. */
   packs: string | null;
+  /** Drinks it goes into (or the house prep it goes into, when it's an ingredient of one). */
+  forDrinks: string[];
+  quantities: Quantity[];
 }
 
 export interface PrepList {
@@ -139,7 +147,7 @@ export function buildPrepList(input: PrepInput): PrepList {
   for (const drink of input.drinks) {
     for (const line of drink.recipe) {
       const q = toQuantity(line.amount, line.unit);
-      add(needs, line.ingredientId, line.name, q && scale(q, input.servesPerDrink), drink.name);
+      add(needs, line.ingredientId, line.name, q && scale(q, drink.serves ?? input.servesPerDrink), drink.name);
     }
   }
   // Short items from the count come back up to par even when no drink tonight uses them.
@@ -179,6 +187,7 @@ export function buildPrepList(input: PrepInput): PrepList {
         late: !!startBy && startBy.getTime() < input.now.getTime(),
         leadTimeNote: hm.leadTimeNote,
         forDrinks: [...need.forDrinks].sort(),
+        quantities: need.quantities,
       });
       // Without a yield, one batch per spec amount is the only honest guess.
       const multiplier = batchCount ?? 1;
@@ -205,6 +214,8 @@ export function buildPrepList(input: PrepInput): PrepList {
       have: stocked.have,
       needed: stocked.quantities.map(formatQuantity).join(' + ') || 'Amount not set',
       packs: packs && pack ? `${packs} × ${formatQuantity(pack)}` : null,
+      forDrinks: [...need.forDrinks].sort(),
+      quantities: stocked.quantities,
     };
     const supplier = p?.supplierName ?? NO_SUPPLIER;
     bySupplier.set(supplier, [...(bySupplier.get(supplier) ?? []), line]);
@@ -215,7 +226,7 @@ export function buildPrepList(input: PrepInput): PrepList {
     .sort(([a], [b]) => (a === NO_SUPPLIER ? 1 : b === NO_SUPPLIER ? -1 : a.localeCompare(b)))
     .map(([supplier, lines]) => ({ supplier, lines: lines.sort((a, b) => a.name.localeCompare(b.name)) }));
   const ice = iceForEvent(
-    input.drinks.map((d) => ({ name: d.name, iceType: d.iceType ?? null, icePerServeG: d.icePerServeG ?? null })),
+    input.drinks.map((d) => ({ name: d.name, iceType: d.iceType ?? null, icePerServeG: d.icePerServeG ?? null, serves: d.serves })),
     input.servesPerDrink
   );
   return { make, order, ice };

@@ -25,6 +25,7 @@ import { usePricedItemIds } from '@/hooks/usePricing';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { useStaffList } from '@/hooks/useStaffList';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { venueContextIds } from '@/lib/barContextFilter';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import type { SearchScope } from '@/lib/searchScope';
@@ -34,15 +35,16 @@ import type { SearchItem } from '@/types/search';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 // The staff list drags to reorder, with gesture and animation code the rest of the
-// Library doesn't need: it loads when the Staff list is picked.
+// Library doesn't need: it loads when Classics is picked.
 const StaffList = lazy(() => import('@/components/screens/library/StaffList').then((m) => ({ default: m.StaffList })));
 
 const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
 
 /**
- * Library: the venue's spec book. All its drinks, what's on the menu now (one
- * menu or every one that's on), the staff list (ranked, with cut lines), what
- * was on past menus, then the shelves: drinks poured from a batch, preps,
+ * Library: the venue's spec book. All its drinks, Classics (the staff list,
+ * ranked, with cut lines), what's on the menu now (one menu or every one
+ * that's on), Old drinks (on past menus), beer and wine. With More library
+ * filters on, R&D and the shelves too: drinks poured from a batch, preps,
  * garnishes and bottles. Without a venue, each type on its own. The filter lives
  * in the URL (?show=staff&menu=<id>), so a link opens the same view. Drinks
  * without a photo still get a proper tile, never someone else's photo.
@@ -60,7 +62,8 @@ export function LibraryScreen() {
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const activeId = active?.id ?? null;
   const params = useLocalSearchParams<{ show?: string; menu?: string; kind?: string }>();
-  const show = parseShow(params.show, !!activeId || venuesLoading);
+  const extras = useVenueFeature('libraryExtras');
+  const show = parseShow(params.show, !!activeId || venuesLoading, extras);
   const contextIds = useMemo(() => venueContextIds(activeId, venuesLoading), [activeId, venuesLoading]);
   const { items, isLoading } = useSearchCatalog(contextIds);
   const { data: capabilities, isLoading: capsLoading } = useCapabilities(activeId);
@@ -129,14 +132,14 @@ export function LibraryScreen() {
     return tileLine(method, glassName(i), show === 'rnd' ? rndOf.get(i.id) : null);
   };
   const count = (value: Show) => (value === 'staff' ? (staff.data?.length ?? 0) : lists[value].length);
-  const groups = filterGroups(!!activeId, canCost);
+  const groups = filterGroups(!!activeId, canCost, extras);
   const pick = (value: Show) => router.setParams({ show: value, menu: undefined, kind: undefined });
   const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
   const content = { paddingHorizontal: gutter, paddingBottom: bottom, gap: space.lg };
   const header = (
     <View style={styles.header}>
-      <PageHeader title="Library" width="full" />
+      <PageHeader title="Library" width="full" display />
       <SearchPill query="" placeholder={`Search ${active?.name ?? 'your drinks'}`} onOpen={() => setSearching(true)} onClear={() => setQuery('')} />
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
       <FilterRow
@@ -196,7 +199,7 @@ export function LibraryScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <LibraryPanes items={shown} lineOf={lineOf} header={header} empty={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>} />
+        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />}>

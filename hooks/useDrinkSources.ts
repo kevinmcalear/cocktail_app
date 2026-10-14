@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { chunk } from '@/lib/commandSearchGrid';
-import { ingredientLine } from '@/lib/menus';
+import { ingredientLine, readingName } from '@/lib/menus';
 import { sortRecipesByOrder } from '@/lib/recipeUtils';
 import { supabase } from '@/lib/supabase';
 
@@ -63,24 +63,35 @@ export function useDrinkSources(itemIds: readonly string[]) {
   });
 }
 
-type LineRow = { id: string; recipes: { sort_order: number | null; created_at?: string; display_ingredient: { name: string } | { name: string }[] | null }[] | null };
+type LineIngredient = { name: string; ingredient_role: string | null };
+type LineRow = { id: string; recipes: { sort_order: number | null; created_at?: string; display_ingredient: LineIngredient | LineIngredient[] | null }[] | null };
 const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
 
-/** Each drink's ingredients in spec order ("Gin, Campari, Sweet Vermouth"), for a classic's search caption. */
+/** How many ingredients a classic's search caption names, as the search boards draw it. */
+const LINE_MAX = 4;
+
+/**
+ * Each drink's ingredients in spec order as they read in a sentence, plain
+ * ones in lower case and bottles as named ("gin, Campari, sweet vermouth"),
+ * the first four: a classic's search caption (nav-search-everywhere).
+ */
 export function useDrinkLines(itemIds: readonly string[]) {
   const ids = [...new Set(itemIds)].sort();
   return useQuery({
-    queryKey: ['drink-lines', ids],
+    queryKey: ['drink-lines', 2, ids],
     enabled: ids.length > 0,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<Record<string, string>> => {
       const { data, error } = await supabase
         .from('items')
-        .select('id, recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name))')
+        .select('id, recipes:app_recipe_presentation!recipe_item_id(sort_order, created_at, display_ingredient(name, ingredient_role))')
         .in('id', ids.slice(0, 100));
       if (error) throw error;
       return Object.fromEntries(
-        ((data ?? []) as unknown as LineRow[]).map((r) => [r.id, ingredientLine(sortRecipesByOrder(r.recipes ?? []).map((x) => one(x.display_ingredient)?.name))])
+        ((data ?? []) as unknown as LineRow[]).map((r) => {
+          const names = sortRecipesByOrder(r.recipes ?? []).map((x) => readingName(one(x.display_ingredient)));
+          return [r.id, ingredientLine(names).split(', ').slice(0, LINE_MAX).join(', ')];
+        })
       );
     },
   });

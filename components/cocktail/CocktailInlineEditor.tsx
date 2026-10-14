@@ -3,6 +3,7 @@ import { ActivityIndicator, Platform, View } from "react-native";
 import { YStack, useTheme } from "tamagui";
 
 import { ShotList } from "@/components/screens/drink/ShotList";
+import { SketchColour } from "@/components/screens/drink/SketchColour";
 import { SortableImageList } from "@/components/cocktail/SortableImageList";
 import { CocktailDetailContent } from "@/components/cocktail/CocktailDetailContent";
 import { SketchGlassPicker } from "@/components/cocktail/SketchGlassPicker";
@@ -119,6 +120,7 @@ export function CocktailInlineEditor({
                         value={editor.sketchVariant}
                         onChange={editor.setSketchVariant}
                     />
+                    <SketchColour itemId={cocktail.id} />
                 </View>
                 <CocktailDetailContent
                     cocktail={cocktail}

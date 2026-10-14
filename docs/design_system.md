@@ -33,10 +33,12 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 | Headline | 20 | Geist 600 |
 | Body | 17 | Geist 400 |
 | Spec (measurements) | 17 | Geist Mono 500, tabular numbers |
+| Label (chips, scope and tab labels, doses, compact `sm` buttons) | 15 | Geist 500 |
 | Caption | 13 | Geist 500 |
 
 - Nothing below 13 pt. Uppercase labels get letter spacing and still stay at 13 or more.
-- Venue display faces: Instrument Serif, Fraunces, or Bricolage Grotesque. Body and spec faces are fixed.
+- Where the canvas draws 15 px (a chip, a scope or tab label, a dose, a compact button), use `variant="label"` (15/20), not 13 or 17. A dose keeps its mono face on top of it.
+- Venue display faces: Instrument Serif, Fraunces, Playfair Display, Bricolage Grotesque, Josefin Sans or Tenor Sans. The last three load only when a venue on screen uses one (`components/ds/faces.ts`); until then they draw in Instrument Serif. A new face needs a `venue_display_face` value, its metrics in `components/ds/displayClip.check.ts`, and a WOFF2 for the web. Body and spec faces are fixed.
 - Respect Dynamic Type: sizes scale, layouts wrap rather than clip.
 
 ## Shape and space
@@ -81,7 +83,9 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 
 **Sheets are for phones.** On the web, at any width, a sheet is a dialog in the middle of the window, never a panel docked to the bottom. Every sheet is the one `Sheet` (`components/ds/Sheet.tsx`), or `MenuSheet` for a titled one: a plain dark backdrop fades in on its own (about 200 ms, easing out) and never moves with the sheet, which springs up on the glide spring with a grabber and a 36 radius top; drag it down from anywhere to close it (a long pull or a flick; the backdrop lightens as it goes, a pull up rubber-bands, and the keyboard drops); Reduce Motion fades it instead. Put a sheet's scrolling body in `SheetScrollView` (a FlatList: `renderScrollComponent`), so the scroll hands over to the drag at its top. Try both in the gallery's Sheets section. Its X and Cancel buttons close it with `useSheetClose()`, so it slides away first. Don't hand-build a sheet on a `Modal` (`npm run test:unit` fails on one).
 
-Venue mode tabs: Tonight, Library, Discover. Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Prep, Study and Service mode are built but switched off for launch in `constants/features.ts` (their routes redirect home). The venue chip in the corner switches between venues and modes.
+**Toasts** confirm a change and can carry one action, like Undo: `useToast().show({ title, detail, action })` (`components/ds/Toast.tsx`, mounted once at the root). A glass pill floats above the bottom edge (bottom centre on the web, `lift` clears a screen's own bottom bar), is announced as a status, and goes after five seconds, a swipe or a tap; Reduce Motion fades it. A plain "Saved" with no action can stay on `toastDone` (`lib/toast.ts`).
+
+Venue mode tabs: Library, Menus, Discover, plus Tonight, Prep and Study when the venue's Admin switches them on (Venue settings, Features; `lib/venueFeatures.ts`, stored in `bars.enabled_features`). Home mode tabs: Discover, My Bar, Collection, You. Search sits beside both. Phone bars hold four items and Search; with Settings › Try it's New in the bar, New takes one of the four (`phoneTabs`: You at home, the next venue tab to drop at a venue). A switched-off feature's links are hidden and its routes redirect to the first tab. The venue chip in the corner switches between venues and modes.
 
 ## Permissions in the UI
 

@@ -13,13 +13,14 @@ import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
 import { useDrinkMakerCredits } from '@/hooks/useMakers';
 import { useMode } from '@/hooks/useMode';
+import { useShareSlug } from '@/hooks/useShareSlug';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
 import { useTeamRole } from '@/hooks/useTeamRole';
 import { useItemVersions } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { heroPictures } from '@/lib/drinkPhotos';
-import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { glassOver, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
@@ -32,10 +33,11 @@ import { useDrinkSections } from './DrinkSections';
 import { DrinkControls } from './DrinkControls';
 import { DrinkDesktop } from './DrinkDesktop';
 import { DrinkInspector } from './DrinkInspector';
-import { DrinkHero } from './DrinkHero';
+import { DrinkHero, phoneHeroHeight } from './DrinkHero';
 import { DrinkMoreMenu } from './DrinkMoreMenu';
 import { GlassSheet } from './GlassSheet';
 import type { ShownPicture } from './PictureViewer';
+import { SketchColourSheet } from './SketchColour';
 import { StrengthSheet } from './StrengthSheet';
 import { useDrinkActions } from './useDrinkActions';
 import { useDrinkFacts } from './useDrinkFacts';
@@ -65,7 +67,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
   const venue = venues.find((v) => v.id === props.item.bar_id);
   return (
     <BackbarTheme>
-      <BrandProvider accent={venue?.accent ?? undefined}>
+      <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace}>
         <DrinkPage {...props} />
       </BrandProvider>
     </BackbarTheme>
@@ -96,6 +98,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const [batchOpen, setBatchOpen] = useState(!!openBatch);
   const [strengthOpen, setStrengthOpen] = useState(false);
   const [glassOpen, setGlassOpen] = useState(false);
+  const [colourOpen, setColourOpen] = useState(false);
   const role = useEffectiveRole(item.bar_id);
   const teamRole = useTeamRole(preview ? null : item.bar_id);
   // The venue's own team sees its staff rows, in venue mode (decision b49). Viewing as a lower role, the app's
@@ -108,7 +111,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const version = useItemVersions(item.id, caps.includes('specs')).data?.[0]?.version;
   const venue = useActiveVenue().venues.find((v) => v.id === item.bar_id);
 
-  const { facts, tags, glass, ice, method, methods, strength } = useDrinkFacts(item, {
+  const { make, facts, tags, glass, ice, method, methods, strength } = useDrinkFacts(item, {
     lines,
     amounts: access.amounts && !preview,
     dilutionDefaults,
@@ -123,14 +126,16 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const shown = heroPictures(orderedPictures(links), useDrinkPhotos(preview ? null : item.id).data);
   const heroPic = shown.pictures[0] ?? null;
   const pictures: ShownPicture[] = preview ? (preview.heroSource ? [{ url: preview.heroSource, isSketch: false, isOutdated: false }] : []) : shown.pictures;
-  const heroHeight = pane ? PANE_HERO : wide ? height - top : Math.min(width, height * 0.42);
+  const heroHeight = pane ? PANE_HERO : wide ? height - top : phoneHeroHeight(width, height, top);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });
   const glassKey = glass?.icon_key || glass?.name || null;
   const actions = useDrinkActions(item, heroPic, lines, venue?.name ?? null);
-  const share = () => void shareOrCopy(drinkUrl(item.id), item.name);
+  // A public drink shares its readable link (/d/penicillin); any other its id link, which asks the rest to sign in.
+  const slug = useShareSlug('d', preview ? null : item.id).data;
+  const share = () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name);
   const onRiff = signedIn && !preview ? () => router.push({ pathname: '/add-cocktail', params: { from: item.id, ...(item.bar_id ? { barId: item.bar_id } : {}) } } as unknown as Href) : null;
 
   // Pinned on phones (board drink-phone-venue): Batch, the accent in venue mode; at home the journey strip has I made it.
@@ -154,6 +159,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
     access,
     amountsOpenAt,
     lines,
+    make,
     facts,
     tags,
     glass: glassKey,
@@ -164,9 +170,9 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
     venueName: teamRole !== null ? (venue?.name ?? null) : null,
   };
   const sections = useDrinkSections(bodyProps);
-  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} />;
+  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} onColour={canEdit && !preview ? () => setColourOpen(true) : undefined} />;
   const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />;
-  const heroScheme = pictures[0] && !pictures[0].isSketch ? 'dark' : 'light';
+  const heroScheme = glassOver(pictures[0]);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -218,6 +224,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
       {glassOpen ? (
         <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} canEditDrink={canEdit} accent={venue?.accent ?? undefined} />
       ) : null}
+      {colourOpen ? <SketchColourSheet visible onClose={() => setColourOpen(false)} itemId={item.id} name={item.name} accent={venue?.accent ?? undefined} /> : null}
       {canBatch && batchOpen ? (
         <BatchSheet
           visible

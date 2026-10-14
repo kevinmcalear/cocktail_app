@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Field } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { samePick, type WizardPick } from '@/lib/drinkWizard';
 
-import { WizardChip } from './WizardChrome';
+import { Eyebrow, WizardChip } from './WizardChrome';
 
-/** How many chips show before "More". */
-const FIRST = 8;
+/** How many chips show before "More": the canvas draws seven glasses, then More. */
+const FIRST = 7;
 
 interface PickStepProps {
   label: string;
@@ -23,20 +23,27 @@ interface PickStepProps {
   suggested?: string | null;
   /** Why we guess it: "It has citrus, so it's shaken". */
   why?: string | null;
+  /** Between the chips and the field for your own: the glass's shapes. */
+  children?: ReactNode;
+  /** The venue's own (its glasses): listed first under "Your …", then the rest under "Other …". */
+  mine?: { has: (p: WizardPick) => boolean; label: string; restLabel: string };
 }
 
 /**
  * Big chips for a step's common choices (existing rows first, so nothing is
  * duplicated) and a field for your own, made when the drink is saved.
  */
-export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why }: PickStepProps) {
+export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why, children, mine }: PickStepProps) {
   const [all, setAll] = useState(false);
   // Your own choices stay on the list once added.
   const extra = selected.filter((s) => !options.some((o) => samePick(o, s)));
   // The guess leads the list, so it's the first chip and never a second copy.
   const guess = suggested && !selected.length ? options.find((o) => samePick(o, { id: null, name: suggested })) ?? { id: null, name: suggested } : null;
-  const list = [...(guess ? [guess] : []), ...extra, ...options.filter((o) => !guess || !samePick(o, guess))];
+  const listed = [...(guess ? [guess] : []), ...extra, ...options.filter((o) => !guess || !samePick(o, guess))];
+  // The venue's own lead, in the same order among themselves.
+  const list = mine ? [...listed.filter(mine.has), ...listed.filter((p) => !mine.has(p))] : listed;
   const shown = all ? list : list.slice(0, Math.max(FIRST, extra.length + selected.length));
+  const ownCount = mine ? shown.filter(mine.has).length : 0;
   const order = (p: WizardPick) => selected.findIndex((s) => samePick(s, p));
 
   const toggle = (p: WizardPick) => {
@@ -45,26 +52,45 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel, 
     else onChange(at >= 0 ? [] : [p]);
   };
 
+  // The order shows in the caption, not on the chip: a label that grows reflows the row under the next tap.
+  const chip = (p: WizardPick) => (
+    <WizardChip
+      key={p.id ?? `new:${p.name}`}
+      kind={multi ? 'checkbox' : 'radio'}
+      label={p.name}
+      selected={order(p) >= 0}
+      suggested={!!guess && samePick(p, guess)}
+      onPress={() => toggle(p)}
+    />
+  );
+  const more = !all && list.length > shown.length ? <WizardChip label="More" kind="button" onPress={() => setAll(true)} /> : null;
+  const rest = shown.slice(ownCount);
+
   return (
     <View style={styles.stack}>
-      <View role={multi ? 'group' : 'radiogroup'} accessibilityLabel={label} style={styles.chips}>
-        {shown.map((p) => {
-          // The order shows in the caption, not on the chip: a label that grows reflows the row under the next tap.
-          return (
-            <WizardChip
-              key={p.id ?? `new:${p.name}`}
-              kind={multi ? 'checkbox' : 'radio'}
-              label={p.name}
-              selected={order(p) >= 0}
-              suggested={!!guess && samePick(p, guess)}
-              onPress={() => toggle(p)}
-            />
-          );
-        })}
-        {!all && list.length > shown.length ? <WizardChip label="More" kind="button" onPress={() => setAll(true)} /> : null}
+      <View role={multi ? 'group' : 'radiogroup'} accessibilityLabel={label} style={ownCount ? styles.groups : styles.chips}>
+        {mine && ownCount ? (
+          <>
+            <Eyebrow>{mine.label}</Eyebrow>
+            <View style={styles.chips}>{shown.slice(0, ownCount).map(chip)}</View>
+            {rest.length || more ? <Eyebrow>{mine.restLabel}</Eyebrow> : null}
+            {rest.length || more ? (
+              <View style={styles.chips}>
+                {rest.map(chip)}
+                {more}
+              </View>
+            ) : null}
+          </>
+        ) : (
+          <>
+            {shown.map(chip)}
+            {more}
+          </>
+        )}
       </View>
       {guess && why ? <Caption tone="muted">{`Suggested: ${why}.`}</Caption> : null}
       {multi && selected.length > 1 ? <Caption tone="muted">{selected.map((s) => s.name).join(', then ')}</Caption> : null}
+      {children}
       <OwnField
         label={ownLabel}
         onAdd={(name) => {
@@ -99,6 +125,7 @@ export function OwnField({ label, onAdd, placeholder, autoFocus }: { label: stri
 const styles = StyleSheet.create({
   stack: { gap: space.lg },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  groups: { gap: space.sm },
   own: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
   flex: { flex: 1 },
 });

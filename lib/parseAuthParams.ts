@@ -26,7 +26,7 @@ function humanizeAuthError(params: Record<string, string>): string | null {
   if (!raw) return null;
   const text = decodeURIComponent(raw.replace(/\+/g, ' '));
   if (/otp_expired|invalid|expired/i.test(params.error_code || text)) {
-    return 'This email link is invalid or has already been used. Request a new one — and open it in your browser (mail app previews often burn the link).';
+    return 'This email link is invalid or has already been used. Request a new one, and open it in your browser (mail app previews often burn the link).';
   }
   return text;
 }

@@ -61,7 +61,7 @@ before(async () => {
   await db.connect();
   for (const label of ['viewer', 'creator']) users[label] = await makeUser(label);
 
-  ids.bar = (await serviceInsert('bars', { name: `Index Bar ${run}`, page_visibility: 'open' })).id;
+  ids.bar = (await serviceInsert('bars', { name: `Index Bar ${run}`, page_visibility: 'open', logo_url: `https://example.test/ix-logo-${run}.png`, primary_color: '#2E6BD6', display_face: 'fraunces' })).id;
   const bar = (row) => serviceInsert('profiles', { kind: 'bar', is_public: true, ...row, handle: `${row.handle}${run}`, display_name: `${row.display_name} ${run}` });
   ids.open = (await bar({ handle: 'ixopen', display_name: 'Open Shed', bar_id: ids.bar, latitude: HERE.lat, longitude: HERE.lng, city: 'Lau', country_code: 'FJ' })).id;
   // Across the antimeridian from the open bar, under 2 km away.
@@ -172,8 +172,9 @@ describe('discover_list', () => {
   test('near a point, across the antimeridian: open bars only, nothing the caller cannot read, best first', async () => {
     const { data, error } = await near(users.viewer.client);
     assert.ifError(error);
-    // On a menu now with a picture first, then the rest by name with letters before digits.
-    assert.deepEqual(mine(data).map((r) => r.id), [ids.martini, ids.lineMartini, ids.sour, ids.zzz]);
+    // On a menu now with a picture first, then the rest: alike ones by their bar's standing (Open Shed
+    // is a venue, so before Date Line; 20261017000000), then by name, letters before digits.
+    assert.deepEqual(mine(data).map((r) => r.id), [ids.martini, ids.sour, ids.lineMartini, ids.zzz]);
     const first = data.find((r) => r.id === ids.martini);
     assert.equal(first.image_url, `https://example.test/ix-hero-${run}.jpg`);
     assert.deepEqual(first.menu_run, [2026, null, null, null, 1]);
@@ -277,6 +278,26 @@ describe('discover_bars', () => {
     assert.equal(byId[ids.east].drinks, 1);
     assert.equal(byId[ids.closed].is_closed, true);
     assert.equal(byId[ids.closed].drinks, 0);
+  });
+
+  test('asked (p_on_now), how many of the matching drinks are on now; not asked, none said (20261016200000)', async () => {
+    const where = { p_latitude: HERE.lat, p_longitude: HERE.lng, p_radius_km: 5 };
+    const searched = (await users.viewer.client.rpc('discover_bars', { ...where, p_query: `Open Shed ${run}`, p_on_now: true })).data;
+    const open = searched.find((b) => b.id === ids.open);
+    assert.ok(open.drinks >= 2, 'the name matches, so all its drinks count');
+    assert.equal(open.on_now, 1, 'only the House Martini is on a current menu');
+    const plain = (await users.viewer.client.rpc('discover_bars', where)).data;
+    assert.equal(plain.find((b) => b.id === ids.open).on_now, null);
+  });
+
+  test("a venue's Brand logo, accent and face stand in for its page's picture, for everyone", async () => {
+    const { data } = await users.viewer.client.rpc('discover_bars', { p_latitude: HERE.lat, p_longitude: HERE.lng, p_radius_km: 5 });
+    const open = data.find((b) => b.id === ids.open);
+    assert.equal(open.avatar_url, `https://example.test/ix-logo-${run}.png`, 'the viewer is not on Index Bar and still sees its public logo');
+    assert.equal(open.brand_accent, '#2E6BD6');
+    assert.equal(open.brand_face, 'fraunces');
+    const east = data.find((b) => b.id === ids.east);
+    assert.deepEqual([east.avatar_url, east.brand_accent, east.brand_face], [null, null, null], 'a page with no venue has no brand');
   });
 
   test('a box, including one across the antimeridian', async () => {

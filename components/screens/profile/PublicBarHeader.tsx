@@ -2,26 +2,27 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, DsText, Title, useBreakpoint, useDs } from '@/components/ds';
-import { initialsFor, UserAvatar } from '@/components/ui/UserAvatar';
-import { radius, space, type } from '@/constants/tokens';
+import { Body, Button, Caption, Display, DsText, Title, useBreakpoint } from '@/components/ds';
+import { BarMark } from '@/components/screens/home/BarMark';
+import { space, type } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import type { Profile } from '@/hooks/useProfiles';
-import { withAlpha } from '@/lib/color';
 import { rankedCount } from '@/lib/nearMe';
 import { instagramUrl } from '@/lib/profiles';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 
+import { LoveBarButton } from '../kept/LoveBarButton';
+import { ProfileSafety } from '../safety/ProfileSafety';
+
 /**
  * A bar's name on its public page (ppl-pub-bar-desktop, -phone): the logo, or
- * its initials in the display face on a ring; the name large; what and where
+ * its initials in its venue's display face and accent on a ring (BarMark); the name large; what and where
  * it is, then claimed and how many have ranked; its score at the right (under
  * the name on a phone). The score shows once MIN_RANKERS people have ranked.
  */
 export function PublicBarHeader({ profile, place, claimed }: { profile: Profile; place: string; claimed: string }) {
-  const ds = useDs();
   const wide = useBreakpoint() !== 'phone';
   const { data } = useVenueScore(profile.id);
   const score = data?.score ?? null;
@@ -40,18 +41,11 @@ export function PublicBarHeader({ profile, place, claimed }: { profile: Profile;
   return (
     <View style={styles.block}>
       <View accessible accessibilityLabel={[profile.display_name, place, claimed, ranked, scoreLabel].filter(Boolean).join('. ')} style={styles.header}>
-        {profile.avatar_url ? (
-          <UserAvatar uri={profile.avatar_url} name={profile.display_name} size={size} />
-        ) : (
-          <View style={[styles.ring, { width: size, height: size, backgroundColor: ds.c.surface, borderColor: withAlpha(ds.accentText, 0.5) }]}>
-            <DsText variant="title" tone="accent">
-              {initialsFor(profile.display_name)}
-            </DsText>
-          </View>
-        )}
+        {/* Its logo, else its venue's public Brand logo, else its initials in the venue's accent and face. */}
+        <BarMark name={profile.display_name} logoUrl={profile.avatar_url} profileId={profile.id} size={size} />
         <View style={styles.name}>
           {wide ? <Display>{profile.display_name}</Display> : <Title>{profile.display_name}</Title>}
-          {place ? <Body tone="muted">{place}</Body> : null}
+          {place ? <Body tone="muted" style={styles.place}>{place}</Body> : null}
           <Caption tone="muted">{[claimed, ranked].filter(Boolean).join(' · ')}</Caption>
         </View>
         {wide ? scoreBlock : null}
@@ -63,10 +57,11 @@ export function PublicBarHeader({ profile, place, claimed }: { profile: Profile;
 
 /**
  * Love, Share, Instagram and Report or block, under the bar's name. Signed
- * out (the only way this page shows), Love and Report ask you to sign in
- * first. On a phone: Love, Share and Report, three across.
+ * out, Love and Report ask you to sign in first; signed in (the desktop page
+ * in the app) they love the bar and open the report sheet. On a phone: Love,
+ * Share and Report, three across.
  */
-export function PublicBarActions({ profile }: { profile: Profile }) {
+export function PublicBarActions({ profile, signedIn = false }: { profile: Profile; signedIn?: boolean }) {
   const router = useRouter();
   const wide = useBreakpoint() !== 'phone';
   const [copied, setCopied] = useState(false);
@@ -81,7 +76,11 @@ export function PublicBarActions({ profile }: { profile: Profile }) {
   const grow = wide ? undefined : styles.grow;
   return (
     <View style={[styles.actions, wide ? styles.wrap : null]}>
-      <Button label="Love" icon="heart" variant="secondary" accessibilityHint={`Sign in to love ${profile.display_name}`} onPress={signIn} style={grow} />
+      {signedIn ? (
+        <LoveBarButton profileId={profile.id} name={profile.display_name} labelled />
+      ) : (
+        <Button label="Love" icon="heart" variant="secondary" accessibilityHint={`Sign in to love ${profile.display_name}`} onPress={signIn} style={grow} />
+      )}
       <Button label={copied ? 'Link copied' : 'Share'} icon="square.and.arrow.up" variant="secondary" onPress={() => void share()} style={grow} />
       {wide && profile.instagram ? (
         <Button
@@ -92,13 +91,17 @@ export function PublicBarActions({ profile }: { profile: Profile }) {
           onPress={() => void Linking.openURL(instagramUrl(profile.instagram!))}
         />
       ) : null}
-      <Button
-        label={wide ? 'Report or block' : 'Report'}
-        variant={wide ? 'ghost' : 'secondary'}
-        accessibilityHint={`Sign in to report ${profile.display_name}`}
-        onPress={signIn}
-        style={grow}
-      />
+      {signedIn ? (
+        <ProfileSafety profile={profile} label="Report or block" />
+      ) : (
+        <Button
+          label={wide ? 'Report or block' : 'Report'}
+          variant={wide ? 'ghost' : 'secondary'}
+          accessibilityHint={`Sign in to report ${profile.display_name}`}
+          onPress={signIn}
+          style={grow}
+        />
+      )}
     </View>
   );
 }
@@ -106,8 +109,9 @@ export function PublicBarActions({ profile }: { profile: Profile }) {
 const styles = StyleSheet.create({
   block: { gap: space.md },
   header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.lg + space.xs, rowGap: space.lg },
-  ring: { borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   name: { flex: 1, minWidth: 200, gap: space.xs },
+  // 15, as drawn.
+  place: { fontSize: type.label.fontSize, lineHeight: 22 },
   scoreWide: { alignItems: 'flex-end' },
   scorePhone: { alignItems: 'flex-start' },
   actions: { flexDirection: 'row', gap: space.sm },

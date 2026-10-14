@@ -8,8 +8,8 @@ import { ItemDetailLayout } from '@/components/ItemDetailLayout';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useFavorites } from '@/hooks/useFavorites';
-import { FEATURES } from '@/constants/features';
 import { useStudyPile } from '@/hooks/useStudyPile';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { useCanEditItem } from '@/hooks/useViewAs';
 import { savedSketch } from '@/lib/beerWineWizard';
@@ -47,6 +47,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const { toggleStudyPile, isInStudyPile } = useStudyPile();
+  const study = useVenueFeature('study');
   const { data: dropdowns } = useDropdowns();
   // isPending, not isLoading: "no data yet" includes the static prerender and the
   // first paint, when nothing is fetching, and those must not read as not found.
@@ -104,7 +105,7 @@ export function DrinkDetailScreen({ kind: kindName }: { kind: DrinkKind }) {
       isFavorite={isFavorite(prefixedId)}
       isInStudyPile={isInStudyPile(prefixedId)}
       onToggleFavorite={toggleFavorite}
-      onToggleStudyPile={FEATURES.study ? toggleStudyPile : undefined}
+      onToggleStudyPile={study ? toggleStudyPile : undefined}
       onEditPress={canEdit ? () => router.push(`/${kind.kind}/${id}/edit`) : undefined}
     >
       <XStack flexWrap="wrap" gap="$2" paddingHorizontal="$4" marginBottom="$4">

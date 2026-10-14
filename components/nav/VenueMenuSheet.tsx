@@ -11,18 +11,18 @@ import { useItemLocations, useWaitingForSpot } from '@/hooks/useBackBar';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useCollection } from '@/hooks/useCollection';
-import { useShelf } from '@/hooks/useHomeBar';
+import { useBarDrinks, useShelf } from '@/hooks/useHomeBar';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { useEffectiveRole } from '@/hooks/useViewAs';
-import { useBarWeek, useMyWeek, useWeekStart } from '@/hooks/useWeek';
+import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
 import { groupMenus } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
 import { backBarLine, collectionLine, menusLine, shelfLine, teamLine } from '@/lib/shellNav';
 import { canManageTeam } from '@/lib/team';
 import { weekLine } from '@/lib/week';
 
-import { useNavPlaces, type Place } from './navPlaces';
+import { MENUS_PLACE, useNavPlaces, type Place } from './navPlaces';
 import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
 
 function SwitchRow({ mark, name, detail, selected, onPress }: { mark: React.ReactNode; name: string; detail: string; selected: boolean; onPress: () => void }) {
@@ -39,10 +39,10 @@ function SwitchRow({ mark, name, detail, selected, onPress }: { mark: React.Reac
   );
 }
 
-function PlaceRow({ icon, label, detail, onPress }: { icon: IconName; label: string; detail: string; onPress: () => void }) {
+function PlaceRow({ icon, label, detail, last, onPress }: { icon: IconName; label: string; detail: string; last: boolean; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={`${label}. ${detail}`} onPress={onPress} style={[styles.placeRow, { borderBottomColor: ds.c.line }]}>
+    <PressableScale role="link" accessibilityLabel={`${label}. ${detail}`} onPress={onPress} style={[styles.placeRow, { borderBottomColor: ds.c.line }, last && styles.last]}>
       <View style={[styles.tile, { backgroundColor: ds.c.raised }]}>
         <IconSymbol name={icon} size={18} color={ds.c.ink} />
       </View>
@@ -55,7 +55,9 @@ function PlaceRow({ icon, label, detail, onPress }: { icon: IconName; label: str
   );
 }
 
-const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'gearshape', path: '/settings' };
+// The switcher draws Settings as a sun and Menus as a document (nav-switcher); the sidebar keeps its own.
+const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'sun.min', path: '/settings' };
+const SHEET_ICON: Record<string, IconName> = { menus: 'doc' };
 
 /** The venue's own lines under each place: live counts where the app already has them. */
 function useVenueLines(venue: Venue): Record<string, string> {
@@ -82,43 +84,40 @@ function useVenueLines(venue: Venue): Record<string, string> {
 
 function useHomeLines(): Record<string, string> {
   const bottles = useShelf().data?.length ?? 0;
+  const ready = useBarDrinks().canMake.length;
   const toMake = useCollection().data?.drinks.length ?? 0;
   const menus = (useVenueMenus(null).data ?? []).filter((m) => !m.barId).length;
-  const week = useMyWeek().data;
-  const from = useWeekStart();
   return {
-    bar: shelfLine(bottles),
+    bar: shelfLine(bottles, ready),
     collection: collectionLine(toMake, menus),
     profile: 'Your profile, ranks and taste',
-    week: week ? weekLine(week, from) : 'At the bars you love',
     settings: 'Your account and the app',
   };
 }
 
 function Places({ places, lines, onGo }: { places: Place[]; lines: Record<string, string>; onGo: (p: Place) => void }) {
-  return places.map((p) => <PlaceRow key={p.key} icon={p.icon} label={p.label} detail={lines[p.key] ?? ''} onPress={() => onGo(p)} />);
+  return places.map((p, i) => <PlaceRow key={p.key} icon={SHEET_ICON[p.key] ?? p.icon} label={p.label} detail={lines[p.key] ?? ''} last={i === places.length - 1} onPress={() => onGo(p)} />);
 }
 
 function VenuePlaces({ venue, onGo }: { venue: Venue; onGo: (p: Place) => void }) {
   const { work, venuePlaces, week } = useNavPlaces();
-  return <Places places={[...work, ...venuePlaces, week, SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
+  return <Places places={[MENUS_PLACE, ...work, ...venuePlaces, ...(week ? [week] : []), SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
 }
 
 function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
-  // My Bar, Collection and You: the home tabs past Discover, which the tab bar already shows.
-  const { tabs: all, week } = useNavPlaces();
+  // My Bar, Collection, You and Settings, as decided on the canvas (10 Oct): the home tabs past Discover.
+  const { tabs: all } = useNavPlaces();
   const tabs = all.filter((t) => t.key !== 'discover');
-  return <Places places={[...tabs, week, SETTINGS]} lines={useHomeLines()} onGo={onGo} />;
+  return <Places places={[...tabs, SETTINGS]} lines={useHomeLines()} onGo={onGo} />;
 }
 
 /**
  * The venue menu, opened from the logo on phones and the tablet rail: switch
  * to home or another venue, then this venue's places (Menus, Back bar, My
  * team, Brand, Venue settings, This week, Settings), or at home My Bar,
- * Collection, You, This week and Settings. Everything the desktop sidebar has, in one sheet.
+ * Collection, You and Settings. Everything the desktop sidebar has, in one sheet.
  */
 export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
-  const ds = useDs();
   const router = useRouter();
   const { venues, active } = useActiveVenue();
   const home = useMode().mode === 'home';
@@ -135,7 +134,7 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
   const venue = home ? null : active;
   return (
     <MenuSheet visible onClose={onClose} title="Switch to" plain>
-      <View role="radiogroup" accessibilityLabel="Switch to" style={[styles.group, { borderBottomColor: ds.c.line }]}>
+      <View role="radiogroup" accessibilityLabel="Switch to">
         <SwitchRow mark={<HomeMark size={40} />} name="Home bar" detail="Your shelf and collection" selected={home} onPress={() => choose('home')} />
         {venues.map((v) => (
           <SwitchRow key={v.id} mark={<VenueMark venue={v} size={40} />} name={v.name} detail={roleLabel(v.roleLevel)} selected={!home && v.id === active?.id} onPress={() => choose(v)} />
@@ -152,10 +151,11 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  group: { borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.sm },
   // Hairlines between rows and a chevron on each place, as the board draws them.
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, borderBottomWidth: StyleSheet.hairlineWidth },
   placeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth },
+  // The last place ends the sheet: no hairline under it.
+  last: { borderBottomWidth: 0 },
   tile: { width: 36, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   rowText: { flex: 1, gap: 2 },
   strong: { fontFamily: fontFamilies.bodySemiBold },

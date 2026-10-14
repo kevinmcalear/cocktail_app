@@ -1,11 +1,12 @@
 import type { IconName } from '@/components/ds';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { NavMatch } from '@/lib/shellNav';
 import { canSeeTeam } from '@/lib/team';
 
-import { HOME_TABS, VENUE_TABS } from './WebTabBar';
+import { useModeTabs } from './WebTabBar';
 
 /** A place the shell links to: the sidebar, the tablet rail and the phone's venue menu share these. */
 export interface Place extends NavMatch {
@@ -17,25 +18,26 @@ export interface Place extends NavMatch {
 
 const tabPath = (name: string) => (name === 'index' ? '/' : `/${name}`);
 
+/** Menus, for the phone's venue menu: a tab everywhere else. */
+export const MENUS_PLACE: Place = { key: 'menus', label: 'Menus', icon: 'text.alignleft', path: '/menus/all', prefix: '/menus' };
+
 /**
- * Where the shell can take you, for the mode you're in: the tabs (the same
- * ones as the phone bar), the venue's working pages (Menus, Back bar), and
- * its Venue section (My team, Brand, Roles and access, Venue settings).
+ * Where the shell can take you, for the mode you're in: the tabs (the
+ * phone bar's, with none left out), the venue's working pages (Back bar),
+ * and its Venue section (My team, Brand, Roles and access, Venue settings).
+ * History and This week are null where the venue hasn't switched them on.
  */
 export function useNavPlaces() {
   const { mode } = useMode();
   const { active } = useActiveVenue();
+  const { has } = useVenueFeatures();
   const role = useEffectiveRole(active?.id ?? null);
   const home = mode === 'home';
   const venue = home ? null : active;
 
-  const tabs: Place[] = (home ? HOME_TABS : VENUE_TABS).map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: tabPath(t.name), tab: true }));
-  const work: Place[] = venue
-    ? [
-        { key: 'menus', label: 'Menus', icon: 'list.bullet', path: '/menus/all', prefix: '/menus' },
-        { key: 'back-bar', label: 'Back bar', icon: 'map.fill', path: '/back-bar' },
-      ]
-    : [];
+  // Menus covers its own pages (/menus/<id>/edit) too.
+  const tabs: Place[] = useModeTabs().map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: tabPath(t.name), prefix: t.name === 'menus' ? '/menus' : undefined, tab: true }));
+  const work: Place[] = venue && has('backBar') ? [{ key: 'back-bar', label: 'Back bar', icon: 'map.fill', path: '/back-bar' }] : [];
   const settings = venue ? `/settings/bar/${venue.id}` : null;
   const venuePlaces: Place[] =
     venue && settings
@@ -47,8 +49,8 @@ export function useNavPlaces() {
         ]
       : [];
   // History sits under Discover in the sidebar (decided on the canvas), in both modes.
-  const history: Place = { key: 'history', label: 'History', icon: 'clock.arrow.circlepath', path: '/history' };
+  const history: Place | null = has('history') ? { key: 'history', label: 'History', icon: 'clock.arrow.circlepath', path: '/history' } : null;
   // This week: the venue's week, or at home the bars you love and your dated menus. The sidebar lists it itself (WeekNav).
-  const week: Place = { key: 'week', label: 'This week', icon: 'calendar', path: '/week' };
+  const week: Place | null = has('tonight') ? { key: 'week', label: 'This week', icon: 'calendar', path: '/week' } : null;
   return { home, venue, tabs, work, venuePlaces, history, week };
 }

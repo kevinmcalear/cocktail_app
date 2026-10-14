@@ -3,13 +3,15 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { BackbarTheme, useDs, useGutter } from '@/components/ds';
+import { useDs, useGutter } from '@/components/ds';
+import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { AccountSection, SignOutSection } from '@/components/screens/settings/AccountSection';
-import { PreferencesSection } from '@/components/screens/settings/PreferencesSection';
+import { PreferencesSection, TryItSection } from '@/components/screens/settings/PreferencesSection';
 import { ProfileSection } from '@/components/screens/settings/ProfileSection';
 import { VenuesSection } from '@/components/screens/settings/VenuesSection';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { confirmAsync } from '@/lib/dialogs';
 
 /**
@@ -19,10 +21,11 @@ import { confirmAsync } from '@/lib/dialogs';
  * each venue's settings open on a page of their own.
  */
 export function SettingsScreen() {
+  // In venue mode the page takes the venue's accent and ground (tools-settings-phone).
   return (
-    <BackbarTheme>
+    <VenueBrandProvider>
       <Settings />
-    </BackbarTheme>
+    </VenueBrandProvider>
   );
 }
 
@@ -33,6 +36,7 @@ function Settings() {
   const router = useRouter();
   const tabBarInset = useTabBarInset();
   const { signOut } = useAuth();
+  const wide = useIsWideWeb();
 
   const logOut = async () => {
     const ok = await confirmAsync({
@@ -58,10 +62,11 @@ function Settings() {
         }}
       >
         <View style={[frame.column, styles.page]}>
-          <SubPageHead title="Settings" onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+          <SubPageHead title="Settings" close onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
           <ProfileSection />
           <VenuesSection />
           <PreferencesSection />
+          {wide ? null : <TryItSection />}
           <AccountSection />
           <SignOutSection onLogOut={() => void logOut()} />
         </View>

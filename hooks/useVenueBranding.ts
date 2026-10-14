@@ -9,6 +9,9 @@ export interface VenueBranding {
   logo_url: string | null;
   primary_color: string | null;
   secondary_color: string | null;
+  /** The venue's dark ground and display face: the signed-out staff link wears them too. */
+  ground_tint?: string | null;
+  display_face?: string | null;
 }
 
 /** A venue's public name, logo and colours, by its staff-link slug. Works signed out. */

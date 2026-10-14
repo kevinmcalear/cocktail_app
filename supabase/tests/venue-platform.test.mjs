@@ -197,6 +197,15 @@ describe('venue identity', () => {
     assert.ifError(ok.error);
   });
 
+  test('every face the app offers is one the database takes', async () => {
+    const client = users.admin.client;
+    for (const face of ['instrument_serif', 'fraunces', 'playfair_display', 'bricolage_grotesque', 'josefin_sans', 'tenor_sans']) {
+      const { error } = await client.from('bars').update({ display_face: face }).eq('id', ids.barOne);
+      assert.ifError(error);
+    }
+    assert.ifError((await client.from('bars').update({ display_face: 'fraunces' }).eq('id', ids.barOne)).error);
+  });
+
   test('only admins change the brand', async () => {
     const { data } = await users.maker.client.from('bars').update({ short_name: 'Hijacked' }).eq('id', ids.barOne).select('id');
     assert.deepEqual(data, []);

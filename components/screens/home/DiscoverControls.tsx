@@ -15,17 +15,20 @@ export function areaChipLabel(area: Area, preferNear: boolean): string {
 /**
  * Discover's one search: a pill that opens the search sheet. It shows the
  * query once there is one, with a clear button that's always there.
+ * `compact`: 44 tall, to sit in a header row beside the logo and you.
+ * `label`: what a screen reader hears before there's a query, when the
+ * placeholder is shortened to fit.
  */
-export function SearchPill({ query, placeholder, onOpen, onClear }: { query: string; placeholder: string; onOpen: () => void; onClear: () => void }) {
+export function SearchPill({ query, placeholder, label = placeholder, onOpen, onClear, compact }: { query: string; placeholder: string; label?: string; onOpen: () => void; onClear: () => void; compact?: boolean }) {
   const ds = useDs();
   const q = query.trim();
   return (
-    <GlassSurface interactive style={styles.pill}>
+    <GlassSurface interactive style={[styles.pill, compact ? styles.compact : null]}>
       <PressableScale
         role="button"
-        accessibilityLabel={q ? `Search: ${q}. Change the search` : placeholder}
+        accessibilityLabel={q ? `Search: ${q}. Change the search` : label}
         onPress={onOpen}
-        style={styles.pillOpen}
+        style={[styles.pillOpen, compact ? styles.compactOpen : null]}
       >
         <IconSymbol name="magnifyingglass" size={18} color={ds.c.muted} />
         <Body numberOfLines={1} tone={q ? 'ink' : 'muted'} style={styles.flex}>
@@ -63,33 +66,22 @@ interface FilterRowProps {
   filters: number;
   onArea: () => void;
   onFilters: () => void;
-  /** Phones: switch between the list and the map. */
-  view?: { showing: 'list' | 'map'; onToggle: () => void };
 }
 
-/** Where (the area chip), what (Filters), and the list or map, in one row. */
-export function FilterRow({ area, preferNear, filters, onArea, onFilters, view }: FilterRowProps) {
+/** Where (the area chip) and what (Filters) in one row, on wide screens. Phones have them in the header's options. */
+export function FilterRow({ area, preferNear, filters, onArea, onFilters }: FilterRowProps) {
   const where = areaChipLabel(area, preferNear);
   return (
     <View style={styles.row}>
       <RowButton icon="mappin.and.ellipse" label={where} a11y={`Where: ${where}. Change`} active={false} onPress={onArea} />
-      <RowButton
-        icon="line.3.horizontal.decrease"
-        label={filters ? `Filters · ${filters}` : 'Filters'}
-        a11y={filters ? `Filters, ${filters} on` : 'Filters'}
-        active={filters > 0}
-        onPress={onFilters}
-      />
-      <View style={styles.flex} />
-      {view ? (
-        view.showing === 'map' ? (
-          <GlassButton accessibilityLabel="Show the list" label="List" icon="list.bullet" onPress={view.onToggle} />
-        ) : (
-          <GlassButton accessibilityLabel="Show the map" label="Map" icon="map.fill" onPress={view.onToggle} />
-        )
-      ) : null}
+      <FiltersChip filters={filters} onPress={onFilters} />
     </View>
   );
+}
+
+/** Filters, and how many are on, as a chip (disc-desk-browse); also beside the scope while searching (disc-desk-search). */
+export function FiltersChip({ filters, onPress }: { filters: number; onPress: () => void }) {
+  return <RowButton icon="line.3.horizontal.decrease" label={filters ? `Filters · ${filters}` : 'Filters'} a11y={filters ? `Filters, ${filters} on` : 'Filters'} active={filters > 0} onPress={onPress} />;
 }
 
 /** "Search this area", once the person has moved the map. */
@@ -111,6 +103,8 @@ interface MapLayersProps {
   searching: boolean;
   /** Whether there's a place to measure Nearest from. */
   nearest: boolean;
+  /** Over the map, in a glass track: the unpicked ones rest bare. */
+  onGlass?: boolean;
 }
 
 /**
@@ -118,31 +112,36 @@ interface MapLayersProps {
  * or the top bars. Searching, they read as a sort of what was found: Best
  * match, Top rated, and Nearest when there's somewhere to measure from.
  */
-export function MapLayers({ layer, onLayer, drinkName, searching, nearest }: MapLayersProps) {
+export function MapLayers({ layer, onLayer, drinkName, searching, nearest, onGlass }: MapLayersProps) {
+  const look = onGlass ? 'glass' : 'outline';
   return (
-    <View role="radiogroup" accessibilityLabel="Show on the map" style={styles.chips}>
-      <Chip label={searching ? 'Best match' : 'Drinks'} selected={layer === 'drinks'} onPress={() => onLayer('drinks')} />
-      {drinkName ? <Chip label={searching ? 'Top rated' : `Best ${drinkName}`} selected={layer === 'best'} onPress={() => onLayer('best')} /> : null}
-      {nearest ? <Chip label="Nearest" selected={layer === 'nearest'} onPress={() => onLayer('nearest')} /> : null}
-      {searching ? null : <Chip label="Top bars" selected={layer === 'bars'} onPress={() => onLayer('bars')} />}
+    <View role="radiogroup" accessibilityLabel="Show on the map" style={[styles.chips, onGlass ? styles.glassChips : null]}>
+      <Chip look={look} label={searching ? 'Best match' : 'Drinks'} selected={layer === 'drinks'} onPress={() => onLayer('drinks')} />
+      {drinkName ? <Chip look={look} label={searching ? 'Top rated' : `Best ${drinkName}`} selected={layer === 'best'} onPress={() => onLayer('best')} /> : null}
+      {nearest ? <Chip look={look} label="Nearest" selected={layer === 'nearest'} onPress={() => onLayer('nearest')} /> : null}
+      {searching ? null : <Chip look={look} label="Top bars" selected={layer === 'bars'} onPress={() => onLayer('bars')} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
+  glassChips: { gap: space.xs + 2 },
   center: { alignItems: 'center' },
   flex: { flex: 1, minWidth: 0 },
   shrink: { flexShrink: 1 },
+  // 48 tall, as every Discover board draws its search (disc-desk-browse, disc-map).
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: layout.minTapTarget,
-    paddingRight: space.sm,
+    minHeight: layout.minTapTarget + space.xs,
+    paddingRight: space.xs,
   },
-  pillOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingLeft: space.lg },
+  pillOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, minHeight: layout.minTapTarget + space.xs, paddingLeft: space.lg + 2 },
+  compact: { minHeight: layout.minTapTarget },
+  compactOpen: { minHeight: layout.minTapTarget, paddingLeft: space.md + 2, gap: space.sm },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   buttonWrap: { maxWidth: 200 },
-  button: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingHorizontal: space.md },
+  button: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: layout.minTapTarget, paddingHorizontal: space.md + 2 },
 });

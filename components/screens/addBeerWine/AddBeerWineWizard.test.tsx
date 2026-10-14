@@ -9,6 +9,8 @@ const mockCreate = jest.fn();
 const mockSaved = jest.fn();
 const PUNK = { id: 'b-punk', name: 'BrewDog Punk IPA', brand_maker: 'BrewDog', abv: 5.4, description: 'Scottish IPA.', origin: 'UK', categories: ['IPA'] };
 
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/useCreateBeerWine', () => ({
   useCreateBeerWine: () => ({ mutate: mockCreate, isPending: false }),

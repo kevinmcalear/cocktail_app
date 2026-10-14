@@ -10,6 +10,8 @@ const mockCreate = jest.fn();
 const mockSaved = jest.fn();
 let mockBarGlasses: unknown[] = [];
 
+// The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' }, loading: false }), useUserId: () => 'me' }));
 let mockClosest: { id: string; name: string } | null = null;
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: mockClosest }) }));
@@ -33,10 +35,11 @@ jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) 
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [{ id: 'c-negroni', name: 'Negroni', imageUrl: null }] }) }));
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
-jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }) }));
+// "Is this one of your glasses?" (components/screens/venue/GlasswarePrompt.test.tsx) asks no one here: nobody has brand.
+jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }), useBarPageId: () => ({ data: 'page-1' }), useSaveBarGlass: () => ({ mutate: jest.fn() }) }));
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));
 const mockStart = jest.fn();
-jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }) }));
+jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }), useClassicPreview: () => ({ data: null }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 
 beforeEach(() => {
@@ -190,7 +193,7 @@ describe('AddDrinkWizard', () => {
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
     expect(screen.getByText('WHICH SHAPE?')).toBeTruthy();
     expect(screen.getByText('Little Rye uses this')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: 'Tapered', checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Tapered. Little Rye uses this', checked: true })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Heavy base' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.glassVariant).toBe('rocks_heavy');
@@ -198,14 +201,18 @@ describe('AddDrinkWizard', () => {
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.glassVariant).toBeNull();
+    // Only someone who may change the glassware is asked to add a glass.
+    await fireEvent.press(screen.getByRole('radio', { name: 'Coupe' }));
+    expect(screen.queryByText('Is this one of your glasses?')).toBeNull();
   });
 
-  test('tapping a name swaps the ingredient and keeps its amount', async () => {
+  test('tapping a name, then Swap, swaps the ingredient and keeps its amount', async () => {
     useDrinkWizardStore.getState().patch('home', { name: 'Martinez', lines: [{ key: 'k1', id: 'gin', name: 'Gin', amount: '45', unit: 'ml' }] });
     useDrinkWizardStore.getState().setStep('home', 'ingredients');
     await renderWithTamagui(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
     await fireEvent.press(screen.getByRole('button', { name: 'Gin, 45 ml' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Swap Gin for another ingredient' }));
     await fireEvent.changeText(screen.getByLabelText('Swap Gin for…'), 'verm');
     await fireEvent.press(screen.getByRole('button', { name: 'Sweet Vermouth' }));
     expect(useDrinkWizardStore.getState().kept.home.draft.lines).toEqual([{ key: 'k1', id: 'vermouth', name: 'Sweet Vermouth', amount: '45', unit: 'ml' }]);

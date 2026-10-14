@@ -2,16 +2,20 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { AccessibilityInfo, Modal, Platform, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
+import { GestureDetector } from 'react-native-gesture-handler';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs } from '@/components/ds';
+import { GestureRoot } from '@/components/ds/GestureRoot';
 import { space, springs } from '@/constants/tokens';
 import { useEightBallPool } from '@/hooks/useEightBall';
 import { FORTUNES, makeA, pickDrink, RECENT, type Candidate } from '@/lib/eightBall';
+import { randomPose, SQUARE } from '@/lib/eightBallFace';
 import { itemHref } from '@/lib/itemRoutes';
 
 import { BallArt } from './BallArt';
+import { useRollingBall } from './useRollingBall';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 /** How long the ball "thinks" before it answers. */
@@ -29,15 +33,19 @@ const randomFortune = () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)
  * The magic eight ball (issue #18), as the approved Shake design: the ball
  * wobbles, its window turns up a fortune, then the drink, with "Make a …",
  * why, and Another and Open recipe. Shaking again (routed in by
- * EightBallHost through `rollRef`) is Another. With Reduce Motion on,
- * nothing moves: the answer fades in.
+ * EightBallHost through `rollRef`) is Another. The ball rolls when the
+ * phone tilts and can be dragged and flung (useRollingBall). With Reduce
+ * Motion on, nothing moves: the answer fades in.
  */
 export function EightBall({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<(() => void) | null> }) {
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <BackbarTheme scheme="dark">
-        <Ball onClose={onClose} rollRef={rollRef} />
-      </BackbarTheme>
+      {/* Native gestures need their own root inside a Modal. */}
+      <GestureRoot style={styles.root}>
+        <BackbarTheme scheme="dark">
+          <Ball onClose={onClose} rollRef={rollRef} />
+        </BackbarTheme>
+      </GestureRoot>
     </Modal>
   );
 }
@@ -50,6 +58,8 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const insets = useSafeAreaInsets();
   const { pool, isLoading } = useEightBallPool();
   const [answer, setAnswer] = useState<Answer>(() => ({ state: 'thinking', fortune: randomFortune() }));
+  // How the die lands against the window, new each time it floats up. Square on with Reduce Motion.
+  const [pose, setPose] = useState(SQUARE);
   const latest = useRef({ pool, isLoading });
   const recent = useRef<string[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,10 +67,22 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const wobble = useSharedValue(0);
   const rise = useSharedValue(0); // the triangle's words coming up
   const card = useSharedValue(0); // title, reason and buttons
+  // 1 with the white 8 side showing, 0 with the window: you ask with the 8 up, then turn it over to read.
+  const turn = useSharedValue(reduceMotion ? 0 : 1);
+  const rolling = useRollingBall({ still: reduceMotion, insets });
 
   useEffect(() => {
     latest.current = { pool, isLoading };
   });
+
+  // A new landing for the die once the old face has sunk out of sight (bringUp's first 90 ms).
+  const turnDie = () => {
+    if (!reduceMotion) setTimeout(() => setPose(randomPose()), 90);
+  };
+
+  // The die sinks fast, then floats up slowly through the liquid, as the real one does.
+  const floatUp = () =>
+    rise.set(reduceMotion ? withTiming(1, { duration: 200 }) : withSequence(withTiming(0, { duration: 90 }), withTiming(1, { duration: 1000, easing: Easing.out(Easing.cubic) })));
 
   const bringUp = (value: SharedValue<number>) =>
     value.set(reduceMotion ? withTiming(1, { duration: 200 }) : withSequence(withTiming(0, { duration: 90 }), withSpring(1, springs.pour)));
@@ -77,7 +99,9 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     // Open recipe is a ds Button (no press-in): load the page as the answer shows.
     if (drink) prefetch(drink.id, { name: drink.name, imageUrl: drink.imageUrl });
     setAnswer({ state: 'shown', drink });
-    bringUp(rise);
+    turnDie();
+    if (!reduceMotion) turn.set(withTiming(0, { duration: 420, easing: Easing.out(Easing.cubic) }));
+    floatUp();
     bringUp(card);
     if (native) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     // Android and web read the live region; iOS needs telling.
@@ -87,15 +111,18 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   function think() {
     if (timer.current) clearTimeout(timer.current);
     card.set(withTiming(0, { duration: 150 }));
-    bringUp(rise);
+    if (!reduceMotion) turn.set(withTiming(1, { duration: 320, easing: Easing.inOut(Easing.quad) }));
+    floatUp();
     // A jolt, then the pour spring rings it out like a ball settling in the hand.
     if (!reduceMotion) wobble.set(withSequence(withTiming(1, { duration: 70 }), withSpring(0, springs.pour)));
+    rolling.kick();
     if (native) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     timer.current = setTimeout(() => reveal(), reduceMotion ? 300 : THINK_MS);
   }
 
   function roll() {
     setAnswer({ state: 'thinking', fortune: randomFortune() });
+    turnDie();
     think();
   }
 
@@ -115,6 +142,8 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // While the 8 side is up, the fortune shows under the ball instead of in the window.
+  const fortuneStyle = useAnimatedStyle(() => ({ opacity: Math.min(turn.get(), 1 - card.get()) }));
   const cardStyle = useAnimatedStyle(() => ({ opacity: card.get(), transform: [{ translateY: reduceMotion ? 0 : (1 - card.get()) * 24 }] }));
 
   const shown = answer.state === 'shown';
@@ -126,25 +155,51 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.xxxl, paddingBottom: insets.bottom + space.xxl }]}>
+    <View
+      style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.xxxl, paddingBottom: insets.bottom + space.xxl }]}
+      onLayout={rolling.onScreenLayout}
+    >
       <View style={[styles.close, { top: insets.top + space.sm }]}>
         <GlassButton icon="xmark" accessibilityLabel="Close" onPress={onClose} />
       </View>
-      <View style={styles.column}>
+      <View style={styles.column} onLayout={rolling.onColumnLayout}>
         <Caption tone="muted" style={styles.eyebrow}>
           {shown ? 'THE BAR HAS SPOKEN' : 'ASKING THE BAR'}
         </Caption>
-        <BallArt text={answer.state === 'thinking' ? answer.fortune : (drink?.name ?? 'Ask again later')} wobble={wobble} rise={rise} still={reduceMotion} />
-        <Animated.View style={[styles.copy, cardStyle]} aria-live="polite">
-          {shown ? (
-            <>
-              <Title align="center">{drink ? makeA(drink.name) : 'Nothing to pick yet'}</Title>
+        <View onLayout={rolling.onSlotLayout}>
+          <GestureDetector gesture={rolling.pan}>
+            <Animated.View style={rolling.style}>
+              <BallArt
+                text={answer.state === 'thinking' ? answer.fortune : (drink?.name ?? 'Ask again later')}
+                pose={pose}
+                wobble={wobble}
+                rise={rise}
+                roll={rolling.roll}
+                turn={turn}
+                still={reduceMotion}
+              />
+            </Animated.View>
+          </GestureDetector>
+        </View>
+        <View style={styles.copySlot}>
+          <Animated.View style={[styles.copy, cardStyle]} aria-live="polite">
+            {shown ? (
+              <>
+                <Title align="center">{drink ? makeA(drink.name) : 'Nothing to pick yet'}</Title>
+                <Body tone="muted" align="center">
+                  {drink ? drink.reason : 'Add a few bottles to My Bar or save some drinks, then ask again.'}
+                </Body>
+              </>
+            ) : null}
+          </Animated.View>
+          {answer.state === 'thinking' && !reduceMotion ? (
+            <Animated.View style={[styles.fortune, fortuneStyle]} pointerEvents="none">
               <Body tone="muted" align="center">
-                {drink ? drink.reason : 'Add a few bottles to My Bar or save some drinks, then ask again.'}
+                {answer.fortune}
               </Body>
-            </>
+            </Animated.View>
           ) : null}
-        </Animated.View>
+        </View>
       </View>
       <Animated.View style={[styles.actions, cardStyle]} pointerEvents={shown ? 'auto' : 'none'}>
         <Button
@@ -169,11 +224,14 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: space.xl, alignItems: 'center' },
   close: { position: 'absolute', right: space.lg, zIndex: 1 },
   column: { flex: 1, width: '100%', maxWidth: 420, alignItems: 'center', gap: space.xl },
   eyebrow: { letterSpacing: 0.8 },
   copy: { gap: space.sm, alignItems: 'center', marginTop: space.md, minHeight: 120 },
+  copySlot: { alignSelf: 'stretch' },
+  fortune: { position: 'absolute', left: 0, right: 0, top: space.md },
   actions: { flexDirection: 'row', gap: space.sm, width: '100%', maxWidth: 420 },
   action: { flex: 1 },
 });

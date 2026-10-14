@@ -1,22 +1,28 @@
+import { useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, useBreakpoint } from '@/components/ds';
 import { BarWeek } from '@/components/screens/week/BarWeek';
+import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
 import { useItemScores } from '@/hooks/useFlavor';
 import { usePublicClassics } from '@/hooks/useStaffList';
-import { isUnclaimed, useMenuEditions, useProfileAwards, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
+import { isUnclaimed, useMenuCredits, useMenuEditions, useProfileAwards, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { sortAwards } from '@/lib/awards';
 import { drinkRunTags } from '@/lib/menuEditions';
+import { plural } from '@/lib/menus';
 import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
 
 import { barPlace } from '../bar/BarFactLines';
+import { OnTheMenu } from '../bar/OnTheMenu';
 import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { Kicker, SignInBand } from '../published/PublicChrome';
 import { PublicPage } from '../published/PublicShell';
+import { BarMatches } from './BarMatches';
 import { BarRankings } from './BarRankings';
+import { BarYours, useYouHere } from './BarYours';
 import { ClaimProfile } from './ClaimProfile';
 import { ClassicsTheyPour } from './ClassicsTheyPour';
 import { LockedOriginals } from './LockedOriginals';
@@ -24,7 +30,7 @@ import { Positions } from './Positions';
 import { PublicBarActions, PublicBarHeader } from './PublicBarHeader';
 import { PublicBarFacts } from './PublicBarFacts';
 import { PublicMenus } from './PublicMenus';
-import { OriginalsGrid } from './ProfileSections';
+import { MenuCredits, OriginalsGrid } from './ProfileSections';
 
 /** Their drinks shown before "All 12 originals". */
 const FIRST_ORIGINALS = 2;
@@ -38,17 +44,24 @@ const FIRST_AWARDS = 4;
  * actions under the name, then This week, Menus, Top drinks, Their drinks,
  * Classics they pour and People. Love and Report ask to sign in; the
  * sign-in band closes it.
+ * `signedIn`: the same desktop page inside the app (ppl-pub-bar-desktop is the
+ * only desktop bar page drawn): no site nav or sign-in band, Love and Report
+ * work, your drinks here over Top drinks, a search's matches under the name.
+ * A phone signed in has its own page with tabs (BarProfile).
  */
-export function PublicBarPage({ profile }: { profile: Profile }) {
+export function PublicBarPage({ profile, signedIn = false }: { profile: Profile; signedIn?: boolean }) {
   const wide = useBreakpoint() !== 'phone';
+  const here = useYouHere(profile.id);
+  const searched = !!useLocalSearchParams<{ q?: string }>().q;
   const { data: facts } = useBarFacts(profile.id);
   const locked = profile.page_visibility === 'locked';
   const { data: originals = [], isLoading } = useProfileOriginals(profile.id, { locked });
   const runs = drinkRunTags(useMenuEditions(profile.id).data ?? []);
+  const { data: credits = [] } = useMenuCredits(signedIn ? originals.map((d) => d.id) : []);
   const [allOriginals, setAllOriginals] = useState(false);
   const unclaimed = isUnclaimed(profile);
   const specsLocked = pageLocksSpecs(profile.page_visibility, false);
-  const place = barPlace(facts?.bar_type ?? 'Bar', [profile.locality, profile.city].filter(Boolean).join(', '));
+  const place = [barPlace(facts?.bar_type ?? 'Bar', [profile.locality, profile.city].filter(Boolean).join(', ')), signedIn && here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ');
 
   const section = (title: string, body: ReactNode, kicker = false) => (
     <View style={styles.section}>
@@ -64,7 +77,7 @@ export function PublicBarPage({ profile }: { profile: Profile }) {
     ) : (
       <>
         {specsLocked ? (
-          <LockedOriginals originals={shown} selfId={profile.id} details={pageShowsDescriptions(profile.page_visibility)} runs={runs} quiet emptyText="No drinks credited to this bar yet." />
+          <LockedOriginals originals={shown} selfId={profile.id} details={pageShowsDescriptions(profile.page_visibility)} runs={runs} quiet={!signedIn} emptyText="No drinks credited to this bar yet." />
         ) : (
           <OriginalsGrid originals={shown} selfId={profile.id} columns={1} layout="rows" ownerName={profile.display_name} runs={runs} emptyText="No drinks credited to this bar yet." />
         )}
@@ -80,20 +93,37 @@ export function PublicBarPage({ profile }: { profile: Profile }) {
   const menus = section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide);
   const people = section('People', <Positions profile={profile} currentUntitled emptyText={`Nobody is listed at ${profile.display_name} yet.`} />, true);
   const awards = <PublicAwards profileId={profile.id} />;
-
-  return (
-    <PublicPage title={`${profile.display_name} (@${profile.handle})`}>
+  const top = section(
+    'Top drinks',
+    <>
+      {signedIn ? <BarYours profileId={profile.id} drinkIds={originals.map((d) => d.id)} /> : null}
+      <BarRankings bar={profile} />
+    </>,
+  );
+  // Why the specs are kept back, with Claim: in the main column under the drinks it explains (ppl-bar-unclaimed).
+  const lock = specsLocked ? (
+    <SpecLockPanel note={specLockNote(profile.display_name, unclaimed, false)} action={unclaimed ? <ClaimProfile profile={profile} label="Work here? Claim this page" /> : null} />
+  ) : unclaimed ? (
+    <ClaimProfile profile={profile} />
+  ) : null;
+  const body = (
+    <>
       <View style={styles.head}>
         <PublicBarHeader profile={profile} place={place} claimed={unclaimed ? 'Not claimed yet' : 'Claimed'} />
         {wide ? null : facts_}
-        <PublicBarActions profile={profile} />
+        <PublicBarActions profile={profile} signedIn={signedIn} />
       </View>
+      {signedIn ? <BarMatches barProfileId={profile.id} /> : null}
+      {/* Opened from a search: the menu it's pouring follows the matches (disc-search-bar). */}
+      {signedIn && searched ? <OnTheMenu profileId={profile.id} /> : null}
       {wide ? (
         <View style={styles.columns}>
           <View style={styles.main}>
-            {section('Top drinks', <BarRankings bar={profile} />)}
+            {top}
             {theirDrinks}
             {classics}
+            {lock}
+            {signedIn ? <MenuCredits credits={credits} names={new Map(originals.map((d) => [d.id, d.name]))} /> : null}
           </View>
           <View style={styles.aside}>
             {facts_}
@@ -107,18 +137,29 @@ export function PublicBarPage({ profile }: { profile: Profile }) {
         <View style={styles.stack}>
           {week}
           {menus}
-          {section('Top drinks', <BarRankings bar={profile} />)}
+          {top}
           {theirDrinks}
           {classics}
+          {lock}
           {people}
           {awards}
         </View>
       )}
-      {specsLocked ? (
-        <SpecLockPanel note={specLockNote(profile.display_name, unclaimed, false)} action={unclaimed ? <ClaimProfile profile={profile} label="Work here? Claim this page" /> : null} />
-      ) : unclaimed ? (
-        <ClaimProfile profile={profile} />
-      ) : null}
+    </>
+  );
+  if (signedIn)
+    return (
+      <View style={styles.page}>
+        <WebHead>
+          <title>{`${profile.display_name} (@${profile.handle})`}</title>
+        </WebHead>
+        {body}
+      </View>
+    );
+
+  return (
+    <PublicPage title={`${profile.display_name} (@${profile.handle})`}>
+      {body}
       <SignInBand text={wide ? 'Tap any drink to see more. Sign in to rank what you had here and love the bar.' : 'Sign in to rank what you had here and love the bar.'} />
     </PublicPage>
   );
@@ -159,6 +200,7 @@ function PublicAwards({ profileId }: { profileId: string }) {
 }
 
 const styles = StyleSheet.create({
+  page: { gap: space.xxl },
   head: { gap: space.lg },
   columns: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: space.xxl + space.sm },
   main: { flexGrow: 3, flexShrink: 1, flexBasis: 480, minWidth: 0, gap: space.xl + space.xs },

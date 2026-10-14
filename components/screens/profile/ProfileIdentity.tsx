@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, DsText, Field, TextLink, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { TAGLINES, type ProfileDraft } from '@/lib/profiles';
 
 const OWN = 'own';
@@ -34,11 +34,11 @@ export function ProfileIdentity({ draft, edit, error }: { draft: ProfileDraft; e
 
   return (
     <View style={styles.group}>
-      <DsText variant="headline">What do you do with drinks?</DsText>
+      <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>What do you do with drinks?</Body>
       <Caption tone="muted">Shown under your name. Pick Nothing and nothing shows. We never make one up.</Caption>
       <View role="radiogroup" accessibilityLabel="What do you do with drinks?" style={styles.wrap}>
         {options.map((o) => (
-          <Chip key={o.value} label={o.label} selected={picked === o.value} onPress={() => pick(o.value)} />
+          <Chip key={o.value} quiet label={o.label} selected={picked === o.value} onPress={() => pick(o.value)} />
         ))}
       </View>
       {picked === OWN ? (

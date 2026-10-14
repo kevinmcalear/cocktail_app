@@ -18,7 +18,7 @@ function WhileYouWait({ name }: { name: string }) {
   return (
     <View role="status">
       <Surface style={styles.status}>
-        <IconSymbol name="clock.arrow.circlepath" size={20} color={ds.accentText} />
+        <IconSymbol name="clock" size={20} color={ds.accentText} />
         <View style={styles.flex}>
           <Body style={styles.strong}>A person checks claims, usually within a day.</Body>
           <Caption tone="muted">{`You can set up while you wait. Until it’s approved, ${name}’s public page stays as it is.`}</Caption>

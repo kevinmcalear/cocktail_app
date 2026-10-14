@@ -12,13 +12,16 @@ const facts: MineFacts = {
   menus: [menu('autumn', 'Autumn menu', '2026-09-01T00:00:00Z', null, ['neg', 'boul']), menu('spring', 'Spring', '2024-03-05T00:00:00Z', '2025-01-20T00:00:00Z', ['plum', 'neg'])],
   now,
   staff: ['x', 'y', 'z', 'neg'],
+  unranked: ['late'],
   usedIn: new Map([['campari', ['neg', 'boul', 'plum', 'a', 'b', 'c']], ['batch', ['neg']]]),
   preps: new Set(['batch']),
 };
 
-assert.deepEqual(drinkFacts('neg', 'Cocktail', facts), { caption: 'On the Autumn menu · Staff list 4' });
+assert.deepEqual(drinkFacts('neg', 'Cocktail', facts), { caption: 'On the Autumn menu · Classics 4' });
 assert.deepEqual(drinkFacts('plum', 'Cocktail', facts), { caption: 'Cocktail', tag: 'Past · Mar 2024 to Jan 2025' });
-assert.deepEqual(drinkFacts('z', 'Cocktail', facts), { caption: 'Staff list 3' });
+assert.deepEqual(drinkFacts('plum', 'Cocktail', facts, true), { caption: 'Cocktail', tag: 'Past · 2024 to 2025' });
+assert.deepEqual(drinkFacts('z', 'Cocktail', facts), { caption: 'Classics 3 · off menu' });
+assert.deepEqual(drinkFacts('late', 'Cocktail', facts), { caption: 'Classics · off menu' });
 assert.deepEqual(drinkFacts('new', 'Beer', facts), { caption: 'Beer' });
 
 assert.equal(ingredientFacts('campari', facts), 'In 6 drinks');

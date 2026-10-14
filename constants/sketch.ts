@@ -79,3 +79,28 @@ export const SKETCH_SAMPLES = {
   irishCoffee: '#3a2010',
   cream: '#f4eedd',
 } as const;
+
+/** The clear swatch: painted thin, as a clear drink is. The rules' clear (sketchRules.ts DRINK_COLORS.clear). */
+export const SKETCH_CLEAR_TINT = '#f2f2ec';
+
+/**
+ * The colours a drink's editor can paint its sketch instead of the one worked
+ * out from its spec (items.sketch_liquid; lib/sketch/types.ts liquidOf).
+ * Lowercase, as the database stores them. Picked to read apart on the paper,
+ * with several ways out of a menu of stirred browns. The hex is what's saved,
+ * so changing one leaves drinks on the old colour: add, don't edit.
+ */
+export const SKETCH_TINTS = [
+  { key: 'amber', label: 'Amber', hex: '#c98a35' },
+  { key: 'mahogany', label: 'Mahogany', hex: '#6e2c1c' },
+  { key: 'garnet', label: 'Garnet', hex: '#6f1426' },
+  { key: 'red', label: 'Deep red', hex: '#b3202e' },
+  { key: 'rose', label: 'Rose', hex: '#d0697a' },
+  { key: 'blush', label: 'Blush', hex: '#efb7ae' },
+  { key: 'gold', label: 'Pale gold', hex: '#e1b84c' },
+  { key: 'straw', label: 'Straw', hex: '#e9dc96' },
+  { key: 'olive', label: 'Olive', hex: '#8a8b3c' },
+  { key: 'smoke', label: 'Smoky grey', hex: '#77726e' },
+  { key: 'water', label: 'Clear', hex: SKETCH_CLEAR_TINT },
+] as const;
+export type SketchTint = (typeof SKETCH_TINTS)[number];

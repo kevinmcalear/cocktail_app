@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { readBarBrands } from '@/hooks/useBarBrands';
 import type { RankVenue } from '@/hooks/useRankings';
 import { allRowsById } from '@/lib/allRows';
 import { viewerScoped } from '@/lib/authCache';
+import type { PublicBrand } from '@/lib/brand';
 import { citiesFrom, findDrinks, orderDrinks, type City } from '@/lib/discover';
 import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import {
@@ -91,17 +93,18 @@ function asRows(data: unknown): DiscoverRow[] {
 }
 
 /**
- * Each bar's logo (its profile avatar), for the lists and the map. Logos are
- * decoration, so a failed read leaves them out rather than failing the list.
- * ponytail: a second read after the RPC. Upgrade path: return avatar_url
- * from discover_top_bars and discover_drink_rankings (needs a migration).
+ * Each bar's logo (its profile avatar, else its venue's public Brand logo),
+ * for the lists and the map. Logos are decoration, so a failed read leaves
+ * them out rather than failing the list.
+ * ponytail: second reads after the RPC, side by side. Upgrade path: return
+ * avatar_url from discover_top_bars and discover_drink_rankings (needs a migration).
  */
 async function withLogos(rows: DiscoverRow[]): Promise<DiscoverRow[]> {
   if (!rows.length) return rows;
   const ids = rows.map((r) => r.venue_profile_id);
-  const { data } = await supabase.from('profiles').select('id, avatar_url').in('id', ids);
+  const [{ data }, brands] = await Promise.all([supabase.from('profiles').select('id, avatar_url').in('id', ids), readBarBrands(ids).catch(() => ({}) as Record<string, PublicBrand>)]);
   const logos = new Map((data ?? []).map((p) => [p.id, p.avatar_url]));
-  return rows.map((r) => ({ ...r, avatar_url: logos.get(r.venue_profile_id) ?? null }));
+  return rows.map((r) => ({ ...r, avatar_url: logos.get(r.venue_profile_id) ?? brands[r.venue_profile_id]?.logo ?? null }));
 }
 
 /**
@@ -110,10 +113,12 @@ async function withLogos(rows: DiscoverRow[]): Promise<DiscoverRow[]> {
  */
 export function useDiscoverRankings(rankedAsItemId: string | null | undefined, area: Area, enabled = true) {
   const params = areaParams(area);
+  // The viewer's loved bars lead the early ones, so the list is theirs.
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['discover-rankings', rankedAsItemId, params],
+    queryKey: ['discover-rankings', rankedAsItemId, params, viewer.key],
     enabled: enabled && !!rankedAsItemId,
-    meta: pointMeta(area),
+    meta: { ...viewer.meta, ...pointMeta(area) },
     queryFn: async () => {
       const { data, error } = await supabase.rpc('discover_drink_rankings', { p_ranked_as_item_id: rankedAsItemId, ...params, p_limit: 20 });
       if (error) throw error;
@@ -124,15 +129,17 @@ export function useDiscoverRankings(rankedAsItemId: string | null | undefined, a
 
 /**
  * "Top bars near you": bars by their bar score, then early ones (including
- * bars nobody has ranked yet). Up to 50, so a seeded list like The World's
+ * bars nobody has ranked yet): the viewer's loved bars first, then the most
+ * relevant (discover_top_bars). Up to 50, so a seeded list like The World's
  * 50 Best Bars fits whole. Works signed out.
  */
 export function useTopBars(area: Area, enabled = true) {
   const params = areaParams(area);
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['discover-top-bars', params],
+    queryKey: ['discover-top-bars', params, viewer.key],
     enabled,
-    meta: pointMeta(area),
+    meta: { ...viewer.meta, ...pointMeta(area) },
     queryFn: async () => {
       const { data, error } = await supabase.rpc('discover_top_bars', { ...params, p_limit: 50 });
       if (error) throw error;

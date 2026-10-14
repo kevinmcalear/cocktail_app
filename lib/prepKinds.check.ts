@@ -18,11 +18,15 @@ assert.equal(guessKind('Clarified grapefruit'), null);
 assert.deepEqual(flavourWords('Pineapple chili shrub'), ['Pineapple', 'Chili']);
 assert.deepEqual(flavourWords('Rich simple syrup'), []);
 
-// A cold shrub: the fruit is the base, equal parts, the extra flavour waits for an amount.
+// A cold shrub: the fruit is the base, equal parts, and the chili starts at two, sliced (make-create-prep-recipe).
 const shrub = startPrep('shrub', 'Pineapple chili shrub');
-assert.deepEqual(shrub.lines.map((l) => l.name), ['Pineapple', 'Sugar', 'Apple cider vinegar', 'Chili']);
+assert.deepEqual(shrub.lines.map((l) => l.name), ['Pineapple', 'White sugar', 'Apple cider vinegar', 'Fresno chili']);
 assert.equal(shrub.baseKey, shrub.lines[0].key);
-assert.deepEqual(prepAmounts(shrub).map((a) => a.amount), [300, 300, 300, null]);
+assert.deepEqual(prepAmounts(shrub).map((a) => a.amount), [300, 300, 300, 2]);
+assert.deepEqual({ unit: shrub.lines[3].unit, note: shrub.lines[3].note }, { unit: 'whole', note: 'Sliced, seeds in for more heat' });
+// An extra with no usual amount still waits for one.
+assert.equal(prepAmounts(startPrep('shrub', 'Strawberry basil shrub'))[3].amount, null);
+assert.equal(startPrep('shrub', 'Strawberry basil shrub').lines[3].name, 'Basil');
 assert.equal(prepYield(shrub), 670, '300 g fruit gives about 180 ml juice, plus the sugar and vinegar');
 assert.equal(shrub.steps.length, 5);
 assert.equal(shrub.steps[1].timer_seconds, 86400, 'the day in the fridge is a timer');
@@ -30,10 +34,10 @@ assert.equal(leadText(shrub.leadMinutes), 'Start 3 days ahead');
 assert.equal(shrub.keepsHours, 3 * 7 * 24, '3 to 6 weeks once opened: the shorter');
 
 // The base can move; everything follows.
-assert.deepEqual(prepAmounts({ ...shrub, baseAmount: 450 }).map((a) => a.amount), [450, 450, 450, null]);
+assert.deepEqual(prepAmounts({ ...shrub, baseAmount: 450 }).map((a) => a.amount), [450, 450, 450, 2], 'the chili keeps its own amount');
 // A typed amount on a line with no parts counts.
-const withChili = { ...shrub, lines: shrub.lines.map((l) => (l.name === 'Chili' ? { ...l, amount: '2' } : l)) };
-assert.equal(prepAmounts(withChili)[3].amount, 2);
+const withChili = { ...shrub, lines: shrub.lines.map((l) => (l.name === 'Fresno chili' ? { ...l, amount: '3' } : l)) };
+assert.equal(prepAmounts(withChili)[3].amount, 3);
 
 // A hot shrub is quicker; an oleo shrub sits two days.
 assert.equal(leadText(startPrep('shrub', 'Plum shrub', 'hot').leadMinutes), 'Start an hour ahead');
@@ -88,7 +92,7 @@ const fromAgar = prepFromTechnique(
   { steps: [{ body: 'For 400 g juice: 0.8 g agar, 100 ml water.', timer_seconds: null }, { body: 'Boil the agar in the water.', timer_seconds: 60 }], leadMinutes: 45, actions: ['Clarify'] },
 );
 assert.deepEqual(prepAmounts(fromAgar).map((a) => a.amount), [400, 0.8, 100]);
-assert.deepEqual(fromAgar.steps.map((s) => s.body), ['Boil the agar in the water.'], 'the "For 400 g" line is the recipe now');
+assert.deepEqual(fromAgar.steps.map((s) => s.body), ['For 400 g juice: 0.8 g agar, 100 ml water.', 'Boil the agar in the water.'], 'the usual batch\'s amounts stay the first step (canvas make-create-house-method)');
 assert.equal(fromAgar.technique, 'agar-quick');
 assert.equal(prepFromTechnique({ id: 'smoke' }, 'Smoked salt', { steps: [{ body: 'Smoke it.', timer_seconds: null }], leadMinutes: 10, actions: ['Infuse'] }).steps.length, 1);
 

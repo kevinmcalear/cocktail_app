@@ -3,9 +3,10 @@ import { addIngredientFn, updateIngredientFn } from '@/hooks/useIngredients';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
-import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
+import { focusManager, notifyManager, onlineManager, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
+import { coalesceTimer } from '@/lib/coalesceTimer';
 import { createCachePersister, guardStorage, PERSISTED_KEYS, shouldPersistQuery } from '@/lib/queryCachePersist';
 import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
 
@@ -25,6 +26,9 @@ if (Platform.OS !== 'web') {
     return () => sub.remove();
   });
 }
+
+// Every query result that lands in one tick reaches the screen in one commit (lib/coalesceTimer.ts).
+notifyManager.setScheduler(coalesceTimer());
 
 export const queryClient = new QueryClient({
   defaultOptions: {

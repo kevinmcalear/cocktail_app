@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, PressableScale, useDisplayFaces, useDs } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, radius, space, type, type DisplayFace } from '@/constants/tokens';
@@ -66,14 +66,24 @@ export function LogoRow({ venue, logoUrl, busy, onPick, onRemoveBackground, onRe
   );
 }
 
-/** How each face sets the sample, as tools-brand-desktop draws them: Fraunces in its italic, Bricolage a step smaller. */
-const FACE_SAMPLE: Record<DisplayFace, { italic?: boolean; scale?: number }> = { instrument: {}, fraunces: { italic: true }, bricolage: { scale: 28 / 32 } };
+/** How each face sets the sample, as tools-brand-desktop draws them: Fraunces in its italic, the wide sans a step smaller. */
+const FACE_SAMPLE: Record<DisplayFace, { italic?: boolean; scale?: number }> = {
+  instrument: {},
+  fraunces: { italic: true },
+  playfair: {},
+  bricolage: { scale: 28 / 32 },
+  josefin: { scale: 28 / 32 },
+  tenor: { scale: 28 / 32 },
+};
 
 /** The display faces side by side, each a card with the venue's name set large in it; the picked one is ringed in ink with a tick. */
-export function FaceChoices({ name, value, onChange }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void }) {
+/** `setup`: venue setup's Look step (canvas make-venue-look), which draws the same cards. */
+export function FaceChoices({ name, value, onChange, setup }: { name: string; value: DisplayFace; onChange: (face: DisplayFace) => void; setup?: boolean }) {
   const ds = useDs();
+  // The picker shows every face, so it fetches the ones that load on demand.
+  const family = useDisplayFaces(FACES);
   return (
-    <View role="radiogroup" accessibilityLabel="Display face" style={styles.faces}>
+    <View role="radiogroup" accessibilityLabel="Display face" style={[styles.faces, setup && styles.bare]}>
       {FACES.map((face) => {
         const selected = face === value;
         const look = FACE_SAMPLE[face];
@@ -94,7 +104,7 @@ export function FaceChoices({ name, value, onChange }: { name: string; value: Di
             <DsText
               variant="headline"
               numberOfLines={1}
-              style={[styles.sample, look.scale ? { fontSize: styles.sample.fontSize * look.scale } : null, { fontFamily: look.italic ? displayFaces[face].italic : displayFaces[face].regular }]}
+              style={[styles.sample, look.scale ? { fontSize: styles.sample.fontSize * look.scale } : null, { fontFamily: family(face, look.italic ? 'italic' : 'regular') }]}
             >
               {name}
             </DsText>
@@ -116,4 +126,5 @@ const styles = StyleSheet.create({
   face: { flexGrow: 1, flexShrink: 1, flexBasis: 160, minWidth: 0, gap: space.sm, padding: space.lg, borderRadius: radius.control + 4, borderCurve: 'continuous' },
   tick: { position: 'absolute', top: space.md, right: space.md },
   sample: { fontSize: type.headline.fontSize * 1.6, lineHeight: 36, paddingRight: space.lg },
+  bare: { paddingVertical: 0 },
 });
