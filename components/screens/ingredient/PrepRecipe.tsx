@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, Headline, SpecRow, useDs } from '@/components/ds';
+import { Caption, Chip, Headline, SpecRow, TextLink, useDs } from '@/components/ds';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
+import { sourceSite } from '@/lib/prepKinds';
 import { partsRatio, prepParts, sizeOptions } from '@/lib/prepParts';
 import { toQuantity } from '@/lib/quantity';
 import { scaledYield, scaleRecipe, type RecipeLine } from '@/lib/scale';
@@ -25,6 +26,8 @@ interface PrepRecipeProps {
   onSize: (factor: number, makes: string | null) => void;
   /** "From what I have": straight into Make, scaled from one line. */
   onFromWhatIHave: () => void;
+  /** The pages the catalog's ratio was checked on: "Ratio checked on imbibemagazine.com". */
+  checkedOn?: string[];
 }
 
 const VIEWS = [
@@ -37,7 +40,7 @@ const VIEWS = [
  * scaled to a batch or a bottle. The sizes stay in both views, since they also
  * set what Make makes. Scaling here never changes the saved recipe.
  */
-export function PrepRecipe({ lines, yieldAmount, yieldUnit, onSize, onFromWhatIHave }: PrepRecipeProps) {
+export function PrepRecipe({ lines, yieldAmount, yieldUnit, onSize, onFromWhatIHave, checkedOn = [] }: PrepRecipeProps) {
   const ds = useDs();
   const router = useRouter();
   const parts = prepParts(lines);
@@ -99,6 +102,14 @@ export function PrepRecipe({ lines, yieldAmount, yieldUnit, onSize, onFromWhatIH
           />
         ))}
       </View>
+      {checkedOn.length ? (
+        <View style={styles.sources}>
+          <Caption tone="muted">Ratio checked on</Caption>
+          {checkedOn.map((url) => (
+            <TextLink key={url} label={sourceSite(url)} accessibilityHint="Opens the page the ratio was checked on" onPress={() => void Linking.openURL(url)} />
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -109,4 +120,5 @@ const styles = StyleSheet.create({
   title: { gap: 2 },
   sizes: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   ratio: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden', gap: 2 },
+  sources: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md },
 });

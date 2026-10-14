@@ -476,3 +476,50 @@ export function prepFromTechnique(
   // The card's first step gives the usual batch's amounts ("For 750 ml spirit: 60 ml melted fat."), as the canvas keeps it.
   return finish(all, all[0].key, t.base ? (t.base.amounts[Math.min(1, t.base.amounts.length - 1)] ?? 100) : 100, card.steps);
 }
+
+/** A shared catalog recipe, as useCatalogRecipe reads it (structurally). */
+export interface CatalogRecipeLike {
+  lines: { id: string | null; name: string; amount: number | null; unit: string | null; note: string | null; optional: boolean }[];
+  card: {
+    prep: { shelf_life_hours: number | null; lead_time_minutes: number | null; storage: string | null; actions: string[] } | null;
+    steps: { body: string; timer_seconds: number | null }[];
+  };
+}
+
+/**
+ * A new house version that starts from the catalog's recipe: its lines as
+ * parts of the first weighed or measured line (others keep their own amount),
+ * its steps, keep, storage and tags. The maker changes what they like.
+ */
+export function prepFromCatalog(name: string, recipe: CatalogRecipeLike): PrepDraft {
+  const base = recipe.lines.find((l) => l.amount != null && l.amount > 0 && (l.unit === 'g' || l.unit === 'ml')) ?? null;
+  const lines: PrepDraftLine[] = recipe.lines.map((l) => {
+    const sameUnit = !!base && l.amount != null && l.amount > 0 && l.unit === base.unit;
+    return {
+      key: key(),
+      id: l.id,
+      name: l.name,
+      parts: sameUnit ? Math.round((l.amount! / base!.amount!) * 1000) / 1000 : null,
+      unit: l.unit ?? base?.unit ?? 'g',
+      amount: sameUnit || l.amount == null ? '' : String(l.amount),
+      ...(l.note ? { note: l.note } : {}),
+    };
+  });
+  const prep = recipe.card.prep;
+  return withFacts({
+    kind: guessKind(name) ?? 'other',
+    baseKey: lines[base ? recipe.lines.indexOf(base) : 0]?.key ?? '',
+    baseAmount: base?.amount ?? 100,
+    lines,
+    steps: recipe.card.steps.map((s) => ({ body: s.body, timer_seconds: s.timer_seconds })),
+    keepsHours: prep?.shelf_life_hours ?? null,
+    storage: prep?.storage ?? 'Fridge, sealed bottle',
+    leadMinutes: prep?.lead_time_minutes ?? null,
+    actions: prep?.actions ?? [],
+  });
+}
+
+/** "https://www.imbibemagazine.com/recipe/x" → "imbibemagazine.com": a source as people say it. */
+export function sourceSite(url: string): string {
+  return url.replace(/^https?:\/\/(www\.)?/i, '').split(/[/?#]/)[0];
+}
