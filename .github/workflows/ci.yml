@@ -13,48 +13,6 @@ permissions:
   contents: read
 
 jobs:
-  # Decides which of the slow jobs this change needs. Most PRs touch only
-  # app code, and the database job (20+ minutes, a full Supabase stack) has
-  # nothing to test for them. A skipped job counts as passing for a required
-  # check, so the jobs below run whenever this one fails or is unsure.
-  changes:
-    name: Changed areas
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      database: ${{ steps.areas.outputs.database }}
-      functions: ${{ steps.areas.outputs.functions }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - id: areas
-        env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: |
-          # No usable base (first push, force push): run everything.
-          if ! files=$(git diff --name-only "$BASE...HEAD" 2>/dev/null) || [ -z "$BASE" ]; then
-            echo "database=true" >> "$GITHUB_OUTPUT"
-            echo "functions=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          printf '%s\n' "$files"
-          # App files the security tests read or import (../../lib/x.ts and
-          # the like), so a test that starts reading one is covered here too.
-          deps=$(grep -ohE "\.\./\.\./[A-Za-z0-9_./-]+\.[a-z]+" supabase/tests/*.mjs | sed 's|^\.\./\.\./||' | sort -u || true)
-          db=false
-          while IFS= read -r f; do
-            case "$f" in
-              supabase/*|scripts/check-local-migrations.mjs|package.json|package-lock.json|.github/workflows/ci.yml) db=true ;;
-            esac
-            if [ -n "$f" ] && printf '%s\n' "$deps" | grep -qxF "$f"; then db=true; fi
-          done <<< "$files"
-          fn=false
-          if printf '%s\n' "$files" | grep -qE '^(supabase/functions/|\.github/workflows/ci\.yml$)'; then fn=true; fi
-          echo "database=$db" >> "$GITHUB_OUTPUT"
-          echo "functions=$fn" >> "$GITHUB_OUTPUT"
-          echo "database=$db functions=$fn"
-
   app:
     name: Typecheck, lint, unit tests, web build
     runs-on: ubuntu-latest
@@ -85,6 +43,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       database: ${{ steps.check.outputs.database }}
+      functions: ${{ steps.check.outputs.functions }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -92,9 +51,16 @@ jobs:
       - id: check
         run: |
           if [ "${{ github.event_name }}" = pull_request ]; then
-            git diff --name-only HEAD^1 HEAD | node scripts/database-ci.mjs >> "$GITHUB_OUTPUT"
+            files=$(git diff --name-only HEAD^1 HEAD)
+            printf '%s\n' "$files" | node scripts/database-ci.mjs >> "$GITHUB_OUTPUT"
+            if printf '%s\n' "$files" | grep -qE '^(supabase/functions/|\.github/workflows/ci\.yml$)'; then
+              echo functions=true >> "$GITHUB_OUTPUT"
+            else
+              echo functions=false >> "$GITHUB_OUTPUT"
+            fi
           else
             echo database=true >> "$GITHUB_OUTPUT"
+            echo functions=true >> "$GITHUB_OUTPUT"
           fi
 
   database:
@@ -109,8 +75,6 @@ jobs:
     # The Australian catalog loads (Oct 14) pushed busy runs past 30 too:
     # quiet runs take 19 to 24 minutes, runs beside other PRs hit the limit.
     timeout-minutes: 45
-    needs: changes
-    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database == 'true') }}
     # Supabase's images come from public.ecr.aws by default, which rate limits
     # anonymous pulls ("toomanyrequests: Rate exceeded") when several PRs run
     # at once. The same images are on GitHub's registry, where this job's own
