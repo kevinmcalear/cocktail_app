@@ -172,8 +172,9 @@ describe('discover_list', () => {
   test('near a point, across the antimeridian: open bars only, nothing the caller cannot read, best first', async () => {
     const { data, error } = await near(users.viewer.client);
     assert.ifError(error);
-    // On a menu now with a picture first, then the rest by name with letters before digits.
-    assert.deepEqual(mine(data).map((r) => r.id), [ids.martini, ids.lineMartini, ids.sour, ids.zzz]);
+    // On a menu now with a picture first, then the rest: alike ones by their bar's standing (Open Shed
+    // is a venue, so before Date Line; 20261017000000), then by name, letters before digits.
+    assert.deepEqual(mine(data).map((r) => r.id), [ids.martini, ids.sour, ids.lineMartini, ids.zzz]);
     const first = data.find((r) => r.id === ids.martini);
     assert.equal(first.image_url, `https://example.test/ix-hero-${run}.jpg`);
     assert.deepEqual(first.menu_run, [2026, null, null, null, 1]);

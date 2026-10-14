@@ -113,10 +113,12 @@ async function withLogos(rows: DiscoverRow[]): Promise<DiscoverRow[]> {
  */
 export function useDiscoverRankings(rankedAsItemId: string | null | undefined, area: Area, enabled = true) {
   const params = areaParams(area);
+  // The viewer's loved bars lead the early ones, so the list is theirs.
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['discover-rankings', rankedAsItemId, params],
+    queryKey: ['discover-rankings', rankedAsItemId, params, viewer.key],
     enabled: enabled && !!rankedAsItemId,
-    meta: pointMeta(area),
+    meta: { ...viewer.meta, ...pointMeta(area) },
     queryFn: async () => {
       const { data, error } = await supabase.rpc('discover_drink_rankings', { p_ranked_as_item_id: rankedAsItemId, ...params, p_limit: 20 });
       if (error) throw error;
@@ -127,15 +129,17 @@ export function useDiscoverRankings(rankedAsItemId: string | null | undefined, a
 
 /**
  * "Top bars near you": bars by their bar score, then early ones (including
- * bars nobody has ranked yet). Up to 50, so a seeded list like The World's
+ * bars nobody has ranked yet): the viewer's loved bars first, then the most
+ * relevant (discover_top_bars). Up to 50, so a seeded list like The World's
  * 50 Best Bars fits whole. Works signed out.
  */
 export function useTopBars(area: Area, enabled = true) {
   const params = areaParams(area);
+  const viewer = viewerScoped(useAuth().user?.id);
   return useQuery({
-    queryKey: ['discover-top-bars', params],
+    queryKey: ['discover-top-bars', params, viewer.key],
     enabled,
-    meta: pointMeta(area),
+    meta: { ...viewer.meta, ...pointMeta(area) },
     queryFn: async () => {
       const { data, error } = await supabase.rpc('discover_top_bars', { ...params, p_limit: 50 });
       if (error) throw error;

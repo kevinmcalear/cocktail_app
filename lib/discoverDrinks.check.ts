@@ -20,6 +20,7 @@ import {
   scorePins,
   toDiscoverBar,
   toDiscoverDrink,
+  withBarOrder,
   type BarRow,
   type DiscoverBar,
   type DrinkRow,
@@ -149,5 +150,10 @@ assert.deepEqual(toDiscoverBar(barRow({ brand_accent: '#D0643B', brand_face: 'fr
 assert.equal(toDiscoverBar(barRow({ brand_accent: null, brand_face: null })).brand, null);
 assert.equal(toDiscoverBar(barRow({})).brand, undefined);
 assert.equal(barPins([{ ...toDiscoverBar(barRow({ brand_accent: '#D0643B', brand_face: null })), latitude: 1, longitude: 1, drinks: 2 }])[0]?.brand?.accent, '#D0643B', 'its pin carries it');
+
+// --- Top bars' order onto the drinks layer's pins: on the list, its place; off it, none ---
+const early = (id: string) => ({ venue_profile_id: id }) as DiscoverRow;
+const ordered = withBarOrder(barPins([{ ...bar('x', 'X', null, 1, 1), drinks: 3 }, { ...bar('y', 'Y', null, 1, 1), drinks: 2 }]), [early('y'), early('z')]);
+assert.deepEqual(ordered.map((p) => [p.id, p.order]), [['x', undefined], ['y', 0]]);
 
 console.log('discoverDrinks: ok');

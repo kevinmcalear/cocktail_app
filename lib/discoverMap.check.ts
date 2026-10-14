@@ -118,6 +118,10 @@ const known = pinsToDraw(early, wide, null);
 assert.equal(known.length, BEST_PINS);
 assert.ok(known.every((p) => p.logo), 'only bars with a logo');
 assert.deepEqual(known.map((p) => p.drinks), [399, 397, 395, 393, 391, 389, 387, 385, 383, 381], 'busiest first');
+// On Top bars (loved, then most relevant): that order wins over drink counts, and the rest follow, busiest first.
+const ordered = pinsToDraw(early.map((p) => (p.id === 'g1' ? { ...p, order: 1 } : p.id === 'g3' ? { ...p, order: 0 } : p)), wide, null);
+assert.deepEqual(ordered.slice(0, 3).map((p) => p.id), ['g3', 'g1', 'g399']);
+assert.deepEqual(pinsFrom({ ranked: [row({ venue_profile_id: 'a', position: 1, score: 9, is_early: false })], early: [row({ venue_profile_id: 'b' }), row({ venue_profile_id: 'c' })] }).map((p) => p.order), [undefined, 1, 2]);
 assert.equal(pinLook(known[0], false, accent).logo, known[0].logo);
 assert.equal(pinLook(known[0], false, accent).height, 30);
 assert.equal(pinLook(known[0], false, accent).label, '');

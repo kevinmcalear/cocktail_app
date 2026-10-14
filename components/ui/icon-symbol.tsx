@@ -35,7 +35,8 @@ const MAPPING = {
   'clock.arrow.circlepath': 'rotate-ccw',
   'pencil': 'edit-2',
   'heart': 'heart',
-  'heart.fill': 'heart',
+  // Loved, favourited: filled, as iOS's SF Symbol and the Loved pill draw it.
+  'heart.fill': 'svg:heartFill',
   'book': 'book-open',
   'book.fill': 'book-open',
   'hammer.fill': 'tool',
