@@ -66,10 +66,10 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   const away = facts ? awayFrom(me, facts, usesMiles(getLocales()[0])) : null;
   const target = directionsTarget(facts, me);
   const count = pin.drinks ?? drinks.length;
-  // A score or Closed sits at the right; "Not ranked yet" goes under the place so the name keeps its room.
+  // A score or Closed sits at the right; an early bar says so under the place, and an unranked one says nothing.
   const score = pin.closed ? <Tag label={pin.closed} /> : pin.score !== null ? <RowScore score={pin.score} detail={pin.rankers ? `${pin.rankers} ranked` : null} /> : null;
-  const unranked = !pin.closed && pin.score === null ? (pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : 'Not ranked yet') : null;
-  const said = pin.closed ? pin.closed : pin.score !== null ? `Score ${formatScore(pin.score)}, ${pin.rankers} ranked` : pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : 'Not ranked yet';
+  const early = !pin.closed && pin.score === null && pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : null;
+  const said = pin.closed ? pin.closed : pin.score !== null ? `Score ${formatScore(pin.score)}, ${pin.rankers} ranked` : pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : null;
 
   if (hero) {
     // The drink, then the bar it's at: a row that opens the bar.
@@ -102,14 +102,14 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
 
   const bar = (
     <View style={styles.cardRow}>
-      <View style={styles.cardRow} accessible accessibilityLabel={`${pin.name}, ${place || 'Bar'}. ${said}`}>
+      <View style={styles.cardRow} accessible accessibilityLabel={[`${pin.name}, ${place || 'Bar'}`, said].filter(Boolean).join('. ')}>
         <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={48} />
         <View style={styles.flex}>
           <Headline numberOfLines={2}>{pin.name}</Headline>
           <Caption tone="muted" numberOfLines={1}>
             {place || 'Bar'}
           </Caption>
-          {unranked ? <Caption tone="muted">{unranked}</Caption> : null}
+          {early ? <Caption tone="muted">{early}</Caption> : null}
         </View>
         {score}
       </View>
