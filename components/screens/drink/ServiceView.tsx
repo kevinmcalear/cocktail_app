@@ -12,7 +12,7 @@ import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { glassOver, type ItemImageLink } from '@/lib/itemImages';
 import { roleLabel } from '@/lib/roles';
-import { serviceSpec, serviceStyleLabel } from '@/lib/service';
+import { isBatchedStyle, serviceSpec, serviceStyleLabel } from '@/lib/service';
 import { EMPTY_SERVICE_NOTES } from '@/lib/serviceNotes';
 import { photoShots, photosTaken, SERVICE_OPENS_AT, type ServiceAngle } from '@/lib/servicePhotos';
 import { specLines, type PresentationRecipe } from '@/lib/spec';
@@ -55,6 +55,8 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);
   const spec = serviceSpec(lines);
   const style = serviceStyleLabel(item.service_style);
+  // Only a drink the bar batches has a pour from the bottle and a station split.
+  const batched = isBatchedStyle(item.service_style);
   // Glass takes the picture's colours: dark on a photo, light on the drawing's paper.
   const glass = glassOver(shot.picture);
   const heroHeight = Math.min(Math.max(width * 0.9, 320), height * 0.5);
@@ -110,7 +112,7 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
               </Group>
             ) : null}
             {!notes.garnish && !notes.handoff.length ? <Body tone="muted">No garnish or hand-off notes yet. Editors add them on the drink page.</Body> : null}
-            {access.amounts && lines.length ? (
+            {!batched ? (style ? <Tag label={style} /> : null) : access.amounts && lines.length ? (
               <Group title="AT THE STATION" tag={style}>
                 {spec.pour ? <Line amount={spec.pour} name={`${item.name} base, from the bottle`} /> : null}
                 {spec.station.map((l) => (

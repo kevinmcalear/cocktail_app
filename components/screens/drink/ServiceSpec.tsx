@@ -3,13 +3,13 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, PressableScale, Spec, Tag, useDs } from '@/components/ds';
 import { fontFamilies, layout, space } from '@/constants/tokens';
-import { bottleLine, SERVICE_STYLES, serviceSpec, serviceStyleLabel, type ServiceLine, type ServiceStyle } from '@/lib/service';
+import { bottleLine, isBatchedStyle, SERVICE_STYLES, serviceSpec, serviceStyleLabel, type ServiceLine, type ServiceStyle } from '@/lib/service';
 import type { SpecLine } from '@/lib/spec';
 
 interface ServiceSpecProps {
   lines: SpecLine[];
   style: ServiceStyle | null;
-  /** This role sees amounts, so it sees the split too. */
+  /** This role sees amounts, so it sees the split too (batched drinks only). */
   showLines: boolean;
   canEdit: boolean;
   onSetLine?: (key: string, atService: boolean) => void;
@@ -17,20 +17,25 @@ interface ServiceSpecProps {
 }
 
 /**
- * What goes in the batch and what's added at the station, with the batch
- * pour that follows. Editors decide per line (until they do, the split is the
- * same guess Batch makes from the names) and say how the drink is served.
+ * How the drink goes out, and for batched drinks what goes in the batch and
+ * what's added at the station, with the batch pour that follows. We never
+ * assume a bar batches: until an editor says how it's served, they're asked,
+ * and nobody else sees a split. Editors decide per line (until they do, the
+ * split is the same guess Batch makes from the names).
  */
 export function ServiceSpec({ lines, style, showLines, canEdit, onSetLine, onSetStyle }: ServiceSpecProps) {
   const [editing, setEditing] = useState(false);
   const spec = serviceSpec(lines);
   const styleLabel = serviceStyleLabel(style);
+  const batched = isBatchedStyle(style);
   const bottle = bottleLine(spec);
-  if (!showLines && !styleLabel && !canEdit) return null;
+  if (!styleLabel && !canEdit) return null;
+  const asking = canEdit && !styleLabel;
 
   return (
     <View style={styles.block}>
-      {editing ? (
+      {asking ? <Body>How does this drink go out? Pick one. Batched drinks show what goes in the batch.</Body> : null}
+      {editing || asking ? (
         <View style={styles.styles} role="radiogroup" accessibilityLabel="How it's served">
           {SERVICE_STYLES.map((s) => (
             <Chip key={s.value} label={s.label} selected={s.value === style} onPress={() => onSetStyle?.(s.value === style ? null : s.value)} />
@@ -39,7 +44,7 @@ export function ServiceSpec({ lines, style, showLines, canEdit, onSetLine, onSet
       ) : styleLabel ? (
         <Tag label={styleLabel} />
       ) : null}
-      {showLines ? (
+      {batched && showLines ? (
         <>
           <Group title="From the batch" lines={spec.batch} empty="Nothing batched. Every line is made at the station." atStation={false} editing={editing} onSetLine={onSetLine} />
           {spec.pour ? (
@@ -50,15 +55,15 @@ export function ServiceSpec({ lines, style, showLines, canEdit, onSetLine, onSet
           ) : null}
           <Group title="Add at the station" lines={spec.station} empty="Nothing added at the station. Pour and serve." atStation editing={editing} onSetLine={onSetLine} />
           {spec.allGuessed ? (
-            <Caption tone="muted">{canEdit ? 'Guessed from the ingredient names. Set it once and Batch follows.' : 'Guessed from the ingredient names.'}</Caption>
+            <Caption tone="muted">{canEdit ? 'Guessed from the ingredient names. Move any line that\'s wrong and Batch follows.' : 'Guessed from the ingredient names.'}</Caption>
           ) : null}
         </>
       ) : null}
-      {canEdit ? (
+      {canEdit && !asking ? (
         <Button
-          label={editing ? 'Done' : 'Set the service spec'}
+          label={editing ? 'Done' : batched ? 'Set the batch split' : 'Change how it goes out'}
           variant="secondary"
-          accessibilityHint={editing ? undefined : 'Decide what goes in the batch and how the drink is served'}
+          accessibilityHint={editing ? undefined : batched ? 'Decide what goes in the batch and how the drink is served' : 'Say how the drink is served'}
           onPress={() => setEditing((e) => !e)}
           style={styles.edit}
         />

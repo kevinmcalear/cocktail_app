@@ -10,6 +10,7 @@
 
 import { formatVolume, isGarnishUnit, leaveOutFor } from '@/lib/batch';
 import { barMl, lineAmount } from '@/lib/drinkMath';
+import { BATCHED_STYLES } from '@/lib/libraryFilters';
 import { toQuantity } from '@/lib/quantity';
 import type { SpecLine } from '@/lib/spec';
 
@@ -29,6 +30,14 @@ export function serviceStyleLabel(style: string | null | undefined): string | nu
 
 export function isServiceStyle(value: unknown): value is ServiceStyle {
   return SERVICE_STYLES.some((s) => s.value === value);
+}
+
+/**
+ * The bar said this drink goes out from a batch, bottle or keg. Only then is
+ * there a batch to split: we never assume a bar batches (Kevin, 14 Oct 2026).
+ */
+export function isBatchedStyle(style: string | null | undefined): boolean {
+  return BATCHED_STYLES.includes(style ?? '');
 }
 
 export interface ServiceLine {
