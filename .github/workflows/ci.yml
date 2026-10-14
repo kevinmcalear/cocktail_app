@@ -43,6 +43,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       database: ${{ steps.check.outputs.database }}
+      functions: ${{ steps.check.outputs.functions }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -50,9 +51,16 @@ jobs:
       - id: check
         run: |
           if [ "${{ github.event_name }}" = pull_request ]; then
-            git diff --name-only HEAD^1 HEAD | node scripts/database-ci.mjs >> "$GITHUB_OUTPUT"
+            files=$(git diff --name-only HEAD^1 HEAD)
+            printf '%s\n' "$files" | node scripts/database-ci.mjs >> "$GITHUB_OUTPUT"
+            if printf '%s\n' "$files" | grep -qE '^(supabase/functions/|\.github/workflows/ci\.yml$)'; then
+              echo functions=true >> "$GITHUB_OUTPUT"
+            else
+              echo functions=false >> "$GITHUB_OUTPUT"
+            fi
           else
             echo database=true >> "$GITHUB_OUTPUT"
+            echo functions=true >> "$GITHUB_OUTPUT"
           fi
 
   database:
@@ -103,6 +111,8 @@ jobs:
     name: Edge functions typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.functions == 'true') }}
     steps:
       - uses: actions/checkout@v7
       - uses: denoland/setup-deno@v2

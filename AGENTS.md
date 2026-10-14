@@ -21,6 +21,17 @@ Expo SDK 58 (RN 0.88.0-rc.3, React 19.3, React Compiler), Expo Router, Tamagui 2
 - **One app, no old UI.** The Back Bar redesign is the app; the old screens and the redesign flag were removed in step 9. New screens build from `components/ds`. A large change that must reach people gradually can use a PostHog flag, but remove the old path in the PR that makes the new one the default.
 - **Parallel work:** foundation pieces (tokens, shared components, navigation) go in order in one session. Independent screens can be built in parallel worktrees once those land.
 
+## Working within the usage budget
+
+Claude usage is the scarce resource here, not CI minutes (the repo is public, so Actions are free). Every call re-reads the whole conversation, so a long session or a waiting loop costs far more than it looks.
+
+- **Don't watch CI.** No `sleep`, `until` or repeated `gh pr checks` loops. Open the PR, call the ccd_pr tools once, and let the app's CI monitor wake the session when checks finish.
+- **Check locally only what you touched:** `npm run typecheck` and the tests nearest your change. Leave the full suite to CI. Run `npm run test:security` (it starts Supabase) only when the change touches `supabase/` or a file those tests read.
+- **Subagents default to Sonnet** (`CLAUDE_CODE_SUBAGENT_MODEL` in `.claude/settings.json`). Use them for searching, reading and data gathering. Pass `model: "opus"` only for a subagent that writes tricky code or makes a judgment call.
+- **One session per piece of work, not per fix.** Related fixes to the same PR or screen go in the same session. When a session passes about 300k tokens of context, write a short handoff and start fresh rather than carrying the history.
+- **Screenshots are expensive.** Prefer `read_page` / `get_page_text` to check text and structure; take one screenshot for the PR at the end.
+- **Store builds only for native changes.** A JS-only change ships with `eas update`; run `eas build` only when native config, a native dependency or the app version changes.
+
 ## Enforced by CI
 
 - `npm run typecheck`: zero type errors, and it must stay that way.
