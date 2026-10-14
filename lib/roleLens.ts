@@ -1,5 +1,5 @@
 // What each role opens on a venue drink (boards drink-role-lens and the
-// desktop inspector's View as). Default levels: a venue can move specs to
+// drink page More menu's View as). Default levels: a venue can move specs to
 // another role (bars.measurement_level), and its own roles can grant or
 // revoke the overridable parts, so the page itself always asks the server.
 
