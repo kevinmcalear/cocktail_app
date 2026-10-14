@@ -15,6 +15,13 @@ assert.equal(parseShow('preps', true), 'preps');
 assert.equal(parseShow('ingredients', true), 'bottles');
 assert.equal(parseShow('garnishes', false), 'ingredients');
 assert.equal(parseShow('batched', false), 'cocktails');
+// A venue without More library filters: the extras fall back to All; the rest stay.
+assert.equal(parseShow('bottles', true, false), 'all');
+assert.equal(parseShow('rnd', true, false), 'all');
+assert.equal(parseShow('ingredients', true, false), 'all');
+assert.equal(parseShow('staff', true, false), 'staff');
+assert.equal(parseShow('wine', true, false), 'wine');
+assert.equal(parseShow('wine', false, false), 'wine', 'extras only apply at a venue');
 
 assert.ok(isGarnishLine('garnish, discarded', null) && isGarnishLine(null, 'Twist') && !isGarnishLine('not in batch', 'ml'));
 {
@@ -92,7 +99,7 @@ assert.deepEqual(menuDrinks(menus, now, 'autumn').onNow.sort(), ['martini', 'neg
 const onNow = new Set(all.onNow);
 const past = new Set(all.past);
 assert.equal(menuState('spritz', onNow, past), 'On menu');
-assert.equal(menuState('paloma', onNow, past), 'Past');
+assert.equal(menuState('paloma', onNow, past), 'Old drink');
 assert.equal(menuState('secret', onNow, past), 'Off menu');
 
 assert.equal(itemIdOf('beer-0000-1'), '0000-1');
@@ -101,11 +108,14 @@ assert.equal(itemIdOf('0000-3'), '0000-3');
 
 {
   assert.deepEqual(filterGroups(true, false).map((g) => g.map((f) => f.label)), [
-    ['All', 'On menu', 'Staff list', 'Past', 'R&D'],
+    ['All', 'Classics', 'On menu', 'Old drinks', 'R&D'],
     ['Batched', 'Preps', 'Garnishes', 'Bottles'],
     ['Cocktails', 'Beer', 'Wine'],
   ]);
   assert.deepEqual(filterGroups(false, true).map((g) => g.map((f) => f.label)), [['Cocktails', 'Ingredients', 'Beer', 'Wine', 'Needs a price']]);
+  // The first release (13 Oct): All, Classics, On menu, Old drinks, Beer, Wine.
+  assert.deepEqual(filterGroups(true, true, false).map((g) => g.map((f) => f.label)), [['All', 'Classics', 'On menu', 'Old drinks'], ['Beer', 'Wine']]);
+  assert.deepEqual(filterGroups(false, true, false), filterGroups(false, true), 'no venue: extras do not apply');
   assert.equal(tileLine('Stirred', 'Coupe'), 'Stirred · Coupe');
   assert.equal(tileLine('Stirred', null, 'Martini flight'), 'Stirred · Martini flight');
   assert.equal(tileLine(null, ''), null);

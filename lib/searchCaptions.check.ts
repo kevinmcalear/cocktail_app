@@ -17,11 +17,11 @@ const facts: MineFacts = {
   preps: new Set(['batch']),
 };
 
-assert.deepEqual(drinkFacts('neg', 'Cocktail', facts), { caption: 'On the Autumn menu · Staff list 4' });
+assert.deepEqual(drinkFacts('neg', 'Cocktail', facts), { caption: 'On the Autumn menu · Classics 4' });
 assert.deepEqual(drinkFacts('plum', 'Cocktail', facts), { caption: 'Cocktail', tag: 'Past · Mar 2024 to Jan 2025' });
 assert.deepEqual(drinkFacts('plum', 'Cocktail', facts, true), { caption: 'Cocktail', tag: 'Past · 2024 to 2025' });
-assert.deepEqual(drinkFacts('z', 'Cocktail', facts), { caption: 'Staff list 3 · off menu' });
-assert.deepEqual(drinkFacts('late', 'Cocktail', facts), { caption: 'Staff list · off menu' });
+assert.deepEqual(drinkFacts('z', 'Cocktail', facts), { caption: 'Classics 3 · off menu' });
+assert.deepEqual(drinkFacts('late', 'Cocktail', facts), { caption: 'Classics · off menu' });
 assert.deepEqual(drinkFacts('new', 'Beer', facts), { caption: 'Beer' });
 
 assert.equal(ingredientFacts('campari', facts), 'In 6 drinks');

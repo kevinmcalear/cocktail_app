@@ -1,6 +1,6 @@
 /**
  * What a venue's search rows say about why each is here (nav-search-venue):
- * "On the Autumn menu · Staff list 4", a "Past · Mar 2024 to Jan 2025" pill,
+ * "On the Autumn menu · Classics 4", a "Past · Mar 2024 to Jan 2025" pill,
  * "In 6 drinks", "Prep · in 1 drink", "On now · 2 of these drinks". Pure;
  * checked by lib/searchCaptions.check.ts.
  */
@@ -39,9 +39,9 @@ export function drinkFacts(id: string, kind: string, facts: MineFacts, years = f
   const groups = groupMenus(facts.menus, facts.now);
   const on = groups.on.filter((m) => m.itemIds.includes(id)).map((m) => `On the ${menuName(m.name)}`);
   const at = facts.staff.indexOf(id);
-  // A staff list drink that isn't on a menu says so: "Staff list 2 · off menu" (nav-tablet, the palette).
-  // An unranked pick is on the list without a place: "Staff list · off menu".
-  const listed = at >= 0 ? `Staff list ${at + 1}` : facts.unranked?.includes(id) ? 'Staff list' : null;
+  // A Classics drink that isn't on a menu says so: "Classics 2 · off menu" (nav-tablet, the palette).
+  // An unranked pick is on the list without a place: "Classics · off menu".
+  const listed = at >= 0 ? `Classics ${at + 1}` : facts.unranked?.includes(id) ? 'Classics' : null;
   const staff = listed && !on.length ? `${listed} · off menu` : listed;
   const caption = [...on.slice(0, 1), staff].filter(Boolean).join(' · ') || kind;
   if (on.length) return { caption };
