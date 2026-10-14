@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kevinmcalear.cocktail",
+      "sha256_cert_fingerprints": [
+        "78:4B:4E:B0:FA:B9:96:6A:A3:2E:0C:45:01:46:3A:FA:12:31:8A:F2:4E:81:66:DE:64:E4:B1:32:76:33:35:82"
+      ]
+    }
+  }
+]
