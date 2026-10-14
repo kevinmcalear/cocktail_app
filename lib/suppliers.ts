@@ -53,3 +53,50 @@ export function byRegion<T extends { region: string }>(lines: readonly T[]): { r
     .map(([region, ls]) => ({ region, heading: regionHeading(region), lines: ls }))
     .sort((a, b) => Number(!a.region.includes('-')) - Number(!b.region.includes('-')) || a.heading.localeCompare(b.heading));
 }
+
+// State names a bar page may hold that differ from STATES' words.
+const STATE_ALIASES: Record<string, string> = { 'australian capital territory': 'AU-ACT' };
+
+/**
+ * The supplier_lines regions that reach a venue: its state ("AU-VIC") and its
+ * country ("AU"), from the bar page's country and region. A region is stored
+ * as typed ("VIC" or "Victoria"), so both are read; one that can't be read
+ * leaves the country alone.
+ */
+export function venueRegions(country: string | null | undefined, region: string | null | undefined): string[] {
+  if (!country || !/^[A-Z]{2}$/.test(country)) return [];
+  const r = (region ?? '').trim();
+  const byName = STATE_ALIASES[r.toLowerCase()] ?? Object.entries(STATES).find(([code, name]) => code.startsWith(`${country}-`) && name.replace(/^the /, '').toLowerCase() === r.toLowerCase())?.[0];
+  const byCode = /^[A-Za-z0-9]{1,3}$/.test(r) ? `${country}-${r.toUpperCase()}` : null;
+  const state = byName ?? byCode;
+  return state ? [state, country] : [country];
+}
+
+export interface SuggestedSupplier<P> {
+  page: P;
+  /** How many of the venue's bottles come from makers it carries there. */
+  bottles: number;
+}
+
+/**
+ * Supplier pages that carry the makers of a venue's bottles where it is, most
+ * bottles first, leaving out the suppliers it already has.
+ */
+export function suggestSuppliers<P extends { id: string; display_name: string }>(
+  bottles: readonly { itemId: string; makerId: string }[],
+  lines: readonly { makerId: string; region: string; page: P }[],
+  regions: readonly string[],
+  have: ReadonlySet<string>
+): SuggestedSupplier<P>[] {
+  const pages = new Map<string, { page: P; makers: Set<string> }>();
+  for (const l of lines) {
+    if (!regions.includes(l.region) || have.has(l.page.id)) continue;
+    const hit = pages.get(l.page.id) ?? { page: l.page, makers: new Set<string>() };
+    hit.makers.add(l.makerId);
+    pages.set(l.page.id, hit);
+  }
+  return [...pages.values()]
+    .map(({ page, makers }) => ({ page, bottles: new Set(bottles.filter((b) => makers.has(b.makerId)).map((b) => b.itemId)).size }))
+    .filter((s) => s.bottles > 0)
+    .sort((a, b) => b.bottles - a.bottles || a.page.display_name.localeCompare(b.page.display_name));
+}

@@ -6,7 +6,8 @@ import { Body, Button, Caption, Chip, Field, Headline, Sheet, SheetScrollView, T
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useRemoveSupplier, useSaveSupplier, useSupplierItems, type VenueSupplier } from '@/hooks/useVenueSuppliers';
 import { confirmAsync } from '@/lib/dialogs';
-import { SUPPLIES, SUPPLY_LABEL } from '@/lib/venueKit';
+import { SUPPLIES } from '@/lib/suppliers';
+import { SUPPLY_LABEL } from '@/lib/venueKit';
 
 const FIRST = 4;
 

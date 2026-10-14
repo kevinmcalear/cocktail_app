@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { byRegion, regionHeading, suppliesLine } from './suppliers';
+import { byRegion, regionHeading, suggestSuppliers, suppliesLine, venueRegions } from './suppliers';
 
 assert.equal(suppliesLine(['glassware', 'bottles']), 'Supplies bottles and glassware');
 assert.equal(suppliesLine(['equipment']), 'Supplies bar equipment');
@@ -25,6 +25,35 @@ assert.deepEqual(
     ['In Victoria', ['b', 'd']],
     ['Across Australia', ['a']],
   ]
+);
+
+// A venue's regions, from its region as typed.
+assert.deepEqual(venueRegions('AU', 'VIC'), ['AU-VIC', 'AU']);
+assert.deepEqual(venueRegions('AU', 'New South Wales'), ['AU-NSW', 'AU']);
+assert.deepEqual(venueRegions('AU', 'Australian Capital Territory'), ['AU-ACT', 'AU']);
+assert.deepEqual(venueRegions('AU', 'Northern Territory'), ['AU-NT', 'AU']);
+assert.deepEqual(venueRegions('AU', 'act'), ['AU-ACT', 'AU']);
+assert.deepEqual(venueRegions('US', 'NY'), ['US-NY', 'US']);
+assert.deepEqual(venueRegions('AU', null), ['AU']);
+assert.deepEqual(venueRegions(null, 'VIC'), []);
+
+// Suggestions: suppliers carrying the venue's makers where it is, most bottles first, none it has.
+const page = (id: string) => ({ id, display_name: id });
+const bottles = [
+  { itemId: 'gin', makerId: 'saltbush' },
+  { itemId: 'vodka', makerId: 'saltbush' },
+  { itemId: 'amaro', makerId: 'wattle' },
+];
+const lines = [
+  { makerId: 'saltbush', region: 'AU-VIC', page: page('bluestone') },
+  { makerId: 'wattle', region: 'AU', page: page('bluestone') },
+  { makerId: 'wattle', region: 'AU-VIC', page: page('harbour') },
+  { makerId: 'saltbush', region: 'AU-NSW', page: page('sydneyco') },
+  { makerId: 'wattle', region: 'AU', page: page('mine') },
+];
+assert.deepEqual(
+  suggestSuppliers(bottles, lines, ['AU-VIC', 'AU'], new Set(['mine'])).map((s) => [s.page.id, s.bottles]),
+  [['bluestone', 3], ['harbour', 1]]
 );
 
 console.log('suppliers: ok');
