@@ -1,8 +1,8 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
+import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { BackbarTheme, Body, Button, Caption, PressableScale, Surface, Tag, useDs, useGutter } from '@/components/ds';
 import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
@@ -15,8 +15,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { confirmAsync } from '@/lib/dialogs';
 import { GLASS_TYPE_LABEL, glassCapacity, glassTitle } from '@/lib/glassware';
-import { glassShape } from '@/lib/sketch/geometry';
-import { glassOutline } from '@/lib/sketch/glassOutline';
+import { draftSketchInputs } from '@/lib/sketch/draft';
 
 import { GlassForm } from './GlassForm';
 
@@ -140,14 +139,16 @@ function GlasswarePage({ barId }: { barId: string }) {
   );
 }
 
-/** The glass's outline, drawn as the sketches draw it, on paper. */
+// An empty glass, sketched (as the glass form draws it).
+const EMPTY = draftSketchInputs({ name: '', lines: [] });
+
+/** The glass, sketched on paper. */
 function GlassDrawing({ glass }: { glass: BarGlass }) {
   const ds = useDs();
+  const inputs = useMemo(() => ({ ...EMPTY, glass: glass.glass, variant: glass.variant }), [glass.glass, glass.variant]);
   return (
     <View style={[styles.paper, { backgroundColor: ds.c.paper }]} aria-hidden>
-      <Svg width={40} height={40} viewBox="0 0 100 100">
-        <Path d={glassOutline(glassShape(glass.glass, glass.variant))} fill="none" stroke={ds.c.sketchInk} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" />
-      </Svg>
+      <SketchDrawing inputs={inputs} seed="bar-glass" detail="thumb" />
     </View>
   );
 }
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
   card: { gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm },
   flex: { flex: 1, minWidth: 0 },
-  paper: { width: 48, height: 48, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
+  paper: { width: 48, height: 48, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
   slot: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: radius.card, borderCurve: 'continuous' },
   slotMark: { backgroundColor: 'transparent' },
 });
