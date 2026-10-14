@@ -14,14 +14,19 @@ import { join } from 'node:path';
 // ponytail: needs an nm that reads arm64 Mach-O (Xcode's, or llvm-nm); it skips
 // where there is none. Unpin expo-print when we move to a newer expo-modules-core.
 
-const nm = ['nm', 'llvm-nm', ...globSync('/usr/bin/llvm-nm-*').sort().reverse()].find(
-  (bin) => spawnSync(bin, ['--version']).status === 0,
-);
+// GNU nm (Linux's default) runs but can't read Mach-O, so each candidate is
+// tried on the core binary below. Ubuntu keeps llvm-nm under /usr/lib/llvm-N.
+const nms = [
+  'llvm-nm',
+  ...globSync('/usr/lib/llvm-*/bin/llvm-nm').sort().reverse(),
+  ...globSync('/usr/bin/llvm-nm-*').sort().reverse(),
+  'nm',
+];
 
-function symbols(binary: string, flag: '-gU' | '-u'): string[] | null {
+function symbols(nm: string, binary: string, flag: '-gU' | '-u'): string[] | null {
   // -gU (Apple) is "defined globals"; llvm-nm spells it --defined-only.
   const args = flag === '-u' ? ['-u', binary] : ['-g', '--defined-only', binary];
-  const out = spawnSync(nm!, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const out = spawnSync(nm, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (out.status !== 0) return null;
   return out.stdout
     .split('\n')
@@ -41,8 +46,17 @@ const coreTarball = `node_modules/expo-modules-core/${release}/ExpoModulesCore.t
 const work = mkdtempSync(join(tmpdir(), 'prebuilt-symbols-'));
 
 try {
-  const core = nm && globSync(coreTarball).length ? symbols(unpack(coreTarball, work, 'ExpoModulesCore'), '-gU') : null;
-  if (!core) {
+  const coreBinary = globSync(coreTarball).length ? unpack(coreTarball, work, 'ExpoModulesCore') : null;
+  let nm = '';
+  let core: string[] | null = null;
+  for (const bin of coreBinary ? nms : []) {
+    core = symbols(bin, coreBinary!, '-gU');
+    if (core?.length) {
+      nm = bin;
+      break;
+    }
+  }
+  if (!core?.length) {
     console.log('prebuiltSymbols skipped (no nm for Mach-O, or no core prebuild)');
   } else {
     const exported = new Set(core);
@@ -51,12 +65,12 @@ try {
     for (const tarball of tarballs) {
       const pkg = tarball.slice('node_modules/'.length, tarball.indexOf(`/${release}`));
       const framework = tarball.split('/').pop()!.replace('.tar.gz', '');
-      const imports = symbols(unpack(tarball, work, framework), '-u') ?? [];
+      const imports = symbols(nm, unpack(tarball, work, framework), '-u') ?? [];
       const missing = imports.filter((s) => !exported.has(s));
       const version = JSON.parse(readFileSync(`node_modules/${pkg}/package.json`, 'utf8')).version;
       assert.deepEqual(missing, [], `${pkg}@${version} (${framework}) needs symbols expo-modules-core@${coreVersion} lacks; the app would die at launch. Pin ${pkg} to an exact version built against this core.`);
     }
-    console.log(`prebuiltSymbols ✓ (${tarballs.length} prebuilt modules against expo-modules-core ${coreVersion})`);
+    console.log(`prebuiltSymbols ✓ (${tarballs.length} prebuilt modules against expo-modules-core ${coreVersion}, ${nm})`);
   }
 } finally {
   rmSync(work, { recursive: true, force: true });
