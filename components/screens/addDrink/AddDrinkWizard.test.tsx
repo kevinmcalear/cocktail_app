@@ -9,6 +9,7 @@ import { AddDrinkWizard } from './AddDrinkWizard';
 const mockCreate = jest.fn();
 const mockSaved = jest.fn();
 let mockBarGlasses: unknown[] = [];
+let mockBarKit: unknown[] = [];
 
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
@@ -37,6 +38,7 @@ jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 // "Is this one of your glasses?" (components/screens/venue/GlasswarePrompt.test.tsx) asks no one here: nobody has brand.
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }), useBarPageId: () => ({ data: 'page-1' }), useSaveBarGlass: () => ({ mutate: jest.fn() }) }));
+jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: mockBarKit }) }));
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));
 const mockStart = jest.fn();
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }), useClassicPreview: () => ({ data: null }) }));
@@ -47,6 +49,7 @@ beforeEach(() => {
   mockStart.mockReset();
   mockSaved.mockReset();
   mockBarGlasses = [];
+  mockBarKit = [];
   mockClosest = null;
   useDrinkWizardStore.setState({ kept: {} });
   useSettingsStore.setState({ defaultUnit: 'ml' });
@@ -211,6 +214,18 @@ describe('AddDrinkWizard', () => {
     // Only someone who may change the glassware is asked to add a glass.
     await fireEvent.press(screen.getByRole('radio', { name: 'Coupe' }));
     expect(screen.queryByText('Is this one of your glasses?')).toBeNull();
+  });
+
+  test('the ice step offers the venue\'s own ice first', async () => {
+    mockBarKit = [{ kind: 'ice', key: 'shaved' }, { kind: 'tool', key: 'shaker' }, { kind: 'ice', key: 'large' }];
+    useDrinkWizardStore.getState().patch('bar-1', { name: 'Julep' });
+    useDrinkWizardStore.getState().setStep('bar-1', 'ice');
+    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    expect(screen.getByText('YOUR ICE')).toBeTruthy();
+    // Shaved isn't one of the common ones, but it's the venue's, so it's offered.
+    await fireEvent.press(screen.getByRole('radio', { name: 'Shaved' }));
+    expect(useDrinkWizardStore.getState().kept['bar-1'].draft.ice?.name).toBe('Shaved');
   });
 
   test('tapping a name, then Swap, swaps the ingredient and keeps its amount', async () => {

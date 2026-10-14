@@ -26,7 +26,7 @@ interface GlasswarePromptProps {
  * Under a glass pick (the add-drink wizard, the drink editor): "Is this one of
  * your glasses?" when the venue doesn't list it yet. One tap adds it to the
  * venue's glassware; "Not now" isn't asked again for that glass on this
- * device. Only for people who may change the glassware (brand, which the
+ * device. Only for people who may change the glassware (prep, which the
  * database checks too).
  */
 export function GlasswarePrompt({ barId, glass, variant, name, style }: GlasswarePromptProps) {
@@ -41,7 +41,7 @@ export function GlasswarePrompt({ barId, glass, variant, name, style }: Glasswar
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name;
   // The glass just added here, so the line under it says so (and links to the list).
   const [added, setAdded] = useState<string | null>(null);
-  if (!barId || !glass || !rows || !pageId || !caps.includes('brand')) return null;
+  if (!barId || !glass || !rows || !pageId || !caps.includes('prep')) return null;
 
   // No pick for this glass is drawn in the venue's own glass of it, as the sketch is.
   const drawn = variant?.startsWith(`${glass}_`) ? variant : (barGlassFor(rows, glass)?.variant ?? null);

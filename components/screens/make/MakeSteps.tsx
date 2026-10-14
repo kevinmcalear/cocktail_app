@@ -6,13 +6,21 @@ import { BigTimer } from '@/components/prep/StepTimer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
+import { andList } from '@/lib/makers';
 import type { StepPart } from '@/lib/makeSteps';
 import type { ScaledLine } from '@/lib/scale';
 
 import { weighHint, type KitItem } from './makeLogic';
 
 /** Make, second screen: everything out on the bench, ticked off as it comes out, and the kit to get out with it. */
-export function MakeGather({ lines, got, onToggle, kit }: { lines: ScaledLine[]; got: string[]; onToggle: (id: string) => void; kit: KitItem[] }) {
+export function MakeGather({ lines, got, onToggle, kit, missing }: {
+  lines: ScaledLine[];
+  got: string[];
+  onToggle: (id: string) => void;
+  kit: KitItem[];
+  /** The tools here that the venue's kit (or yours, at home) doesn't list. */
+  missing?: { label: string; items: KitItem[] } | null;
+}) {
   const ds = useDs();
   const router = useRouter();
   // Two or more things that can go on the scale: tare between them (prep-make-gather).
@@ -60,6 +68,11 @@ export function MakeGather({ lines, got, onToggle, kit }: { lines: ScaledLine[];
           ),
         )}
       </View>
+      {missing?.items.length ? (
+        <Caption tone="accent" role="alert">
+          {`Not in ${missing.label}: ${andList(missing.items.map((k) => k.name))}.`}
+        </Caption>
+      ) : null}
       {weighed >= 2 ? (
         <View style={[styles.tip, { backgroundColor: ds.c.raised }]}>
           <IconSymbol name="info.circle" size={18} color={ds.c.ink} />

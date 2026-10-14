@@ -5,7 +5,7 @@ import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
 import { VenueBasics } from '@/components/bar/VenueBasics';
 import { VenueFeatures } from '@/components/bar/VenueFeatures';
 import { VenueHoursEditor } from '@/components/bar/VenueHoursEditor';
-import { VenueSettingsLinks, VenueTeamLinks } from '@/components/bar/VenueSettingsLinks';
+import { VenueBuyingLinks, VenueKitLinks, VenueSettingsLinks, VenueTeamLinks } from '@/components/bar/VenueSettingsLinks';
 import { BackbarTheme, Body, Caption, Surface, useDs } from '@/components/ds';
 import { RowDivider, SelectRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -113,6 +113,8 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
             {editor.canEdit ? <VenueFeatures barId={barId} /> : null}
 
             <VenueTeamLinks barId={barId} barName={editor.name || 'This venue'} role={editor.roleLevel} />
+            <VenueKitLinks barId={barId} />
+            <VenueBuyingLinks barId={barId} />
             <VenueSettingsLinks barId={barId} />
         </View>
     );

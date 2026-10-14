@@ -23,7 +23,8 @@ export default function MakeRoute() {
     // The prep's own venue, else the venue you're working at (a shared prep at work wears its colours).
     const { venues, active } = useActiveVenue();
     const home = useMode().mode === "home";
-    const accent = (venues.find((v) => v.id === ingredient?.bar_id) ?? (home ? null : active))?.accent ?? undefined;
+    const venue = venues.find((v) => v.id === ingredient?.bar_id) ?? (home ? null : active);
+    const accent = venue?.accent ?? undefined;
 
     if (!ingredient || !card) return <Waiting />;
     const recipe: (RecipeLine & { ingredientId: string | null })[] = ((data?.recipe ?? []) as unknown as { id: string; ingredient: { id: string; name: string } | null; amount: string | null; unit: string | null }[]).map((r) => ({
@@ -44,6 +45,7 @@ export default function MakeRoute() {
             startFactor={start > 0 ? start : 1}
             startMode={mode === 'have' ? 'have' : undefined}
             canLearn={ingredient.bar_id ? !!capabilities?.includes('prep') || canEdit : canEdit}
+            kitVenue={venue ? { id: venue.id, name: venue.name } : null}
         />
     );
 }

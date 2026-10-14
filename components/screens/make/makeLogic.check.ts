@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { dayName, makeKit, qrPath, splitHint, stepHave, weighHint } from './makeLogic';
+import { dayName, makeKit, missingKit, qrPath, splitHint, stepHave, weighHint } from './makeLogic';
 
 // Kit: scale when weighed, tools from the step words, the container, then a label.
 assert.deepEqual(
@@ -9,6 +9,17 @@ assert.deepEqual(
 );
 assert.equal(makeKit([{ scaled: '500 g' }], [], null)[0].equipment, 'scale');
 assert.deepEqual(makeKit([{ scaled: '30 ml' }], [], null).map((k) => k.name), ['Bottle or tub', 'Label']);
+// Modernist kit by name, and a stick blender isn't also a blender.
+assert.deepEqual(
+  makeKit([{ scaled: '30 ml' }], ['Seal it in a vacuum bag and cook sous vide at 60°C.', 'Spin it in the Spinzall.', 'Blend with a stick blender.'], null)
+    .filter((k) => k.equipment)
+    .map((k) => k.equipment),
+  ['stick-blender', 'sous-vide', 'chamber-vac', 'centrifuge'],
+);
+// What the kit doesn't list; a fine scale covers the scale.
+const prepKit = makeKit([{ scaled: '500 g' }], ['Distil it in the rotovap.'], null);
+assert.deepEqual(missingKit(prepKit, ['scale-fine']).map((k) => k.equipment), ['rotovap']);
+assert.deepEqual(missingKit(prepKit, ['scale', 'rotovap']), []);
 
 // Weigh-it hint only for water by volume.
 assert.equal(weighHint({ name: 'Water', scaled: '332 ml' }), 'Or weigh it: 332 g');
