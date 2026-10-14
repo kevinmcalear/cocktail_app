@@ -70,7 +70,7 @@ export function RunSheetPrint({ menuId }: { menuId: string }) {
 
 function Actions({ sheet, menu }: { sheet: NonNullable<ReturnType<typeof buildRunSheet>>; menu: { id: string; name: string; startsAt: string | null; endsAt: string | null } }) {
   const a = useSheetActions(sheet, menu);
-  return a.web ? <Button label="Print or save as PDF" variant="secondary" icon="printer" onPress={() => window.print()} /> : <Button label="Share" variant="secondary" icon="square.and.arrow.up" onPress={a.share} />;
+  return a.web ? <Button label="Print or save as PDF" variant="secondary" icon="printer" onPress={() => window.print()} /> : <Button label={a.pdf ? 'Share PDF' : 'Share'} variant="secondary" icon="square.and.arrow.up" onPress={() => void a.share()} />;
 }
 
 const styles = StyleSheet.create({

@@ -6,13 +6,18 @@ import { Platform, Share, StyleSheet, View } from 'react-native';
 import { Button, Caption, TextLink } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import type { RunSheet } from '@/lib/runSheet';
+import { runSheetHtml } from '@/lib/runSheetHtml';
 import { runSheetText } from '@/lib/runSheetText';
 
+import { canSharePdf, sharePdf } from './sharePdf';
 import { SheetPaper } from './SheetPaper';
 
 type Menu = { id: string; name: string; startsAt: string | null; endsAt: string | null };
 
-/** Print or save as PDF (web: the bare print page), or share as text (phones, today's binary). */
+/**
+ * Print or save as PDF (web: the bare print page). On a phone, Share sends a
+ * PDF when the binary has expo-print and expo-sharing, else the sheet as text.
+ */
 export function useSheetActions(sheet: RunSheet, menu: Menu, breakDown = false) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -22,7 +27,14 @@ export function useSheetActions(sheet: RunSheet, menu: Menu, breakDown = false) 
     copied,
     print: () => router.push(`/menus/${menu.id}/run-sheet/print?print=1${breakDown ? '&breakdown=1' : ''}` as Href),
     openFull: () => router.push(`/menus/${menu.id}/run-sheet/print${breakDown ? '?breakdown=1' : ''}` as Href),
-    share: () => void Share.share({ title: `Run sheet: ${menu.name}`, message: runSheetText(sheet, menu) }),
+    pdf: !web && canSharePdf(),
+    shareText: () => void Share.share({ title: `Run sheet: ${menu.name}`, message: runSheetText(sheet, menu) }),
+    share: async () => {
+      const title = `Run sheet: ${menu.name}`;
+      // A PDF that fails to make (low storage, a print service error) still goes out as text.
+      const sent = await sharePdf(runSheetHtml(sheet, menu), title).catch(() => false);
+      if (!sent) await Share.share({ title, message: runSheetText(sheet, menu) });
+    },
     copy: async () => {
       await Clipboard.setStringAsync(runSheetText(sheet, menu));
       setCopied(true);
@@ -45,14 +57,15 @@ export function SheetStep({ sheet, menu, breakDown }: { sheet: RunSheet; menu: M
         {a.web ? (
           <Button label="Save as PDF or print" icon="printer" size="lg" onPress={a.print} />
         ) : (
-          <Button label="Share" icon="square.and.arrow.up" size="lg" accessibilityHint="Send it by Mail, Messages or anything else as text" onPress={a.share} />
+          <Button label={a.pdf ? 'Share PDF' : 'Share'} icon="square.and.arrow.up" size="lg" accessibilityHint={a.pdf ? 'Mail, Messages, Files or AirDrop, as an A4 PDF' : 'Send it by Mail, Messages or anything else as text'} onPress={() => void a.share()} />
         )}
+        {a.pdf ? <Button label="Share as text" variant="secondary" onPress={a.shareText} /> : null}
         <Button label={a.copied ? 'Copied' : 'Copy as text'} variant="secondary" icon="doc.on.doc" onPress={a.copy} />
       </View>
       <Caption tone="muted">
         {a.web
           ? 'Pick “Save as PDF” in the print dialog to send it. Changes to serves or swaps update the sheet straight away.'
-          : 'Share opens Mail, Messages and the rest. Changes to serves or swaps update the sheet straight away.'}
+          : `Share opens Mail, Messages and the rest${a.pdf ? ' with the PDF attached' : ''}. Changes to serves or swaps update the sheet straight away.`}
       </Caption>
     </View>
   );
