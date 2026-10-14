@@ -26,7 +26,7 @@ export function KitIceScreen({ barId }: { barId: string }) {
   const missing = ICE_KINDS.filter((k) => !ices.some((r) => r.key === k));
 
   return (
-    <VenueSubPage barId={barId} title="Ice" intro={`The ice ${venue?.name ?? 'the venue'} pours with. The drink wizard offers these first, and each drink is drawn with its own.`}>
+    <VenueSubPage barId={barId} title="Ice" intro={`The ice ${venue?.name ?? 'the venue'} pours with. The drink wizard offers these first, and a drink whose spec doesn’t say is drawn with the nearest of yours.`}>
       {isLoading ? <Caption tone="muted">Loading…</Caption> : null}
       {error ? <Body tone="muted">Couldn’t load the ice. Check your connection and try again.</Body> : null}
       {ices.length ? (

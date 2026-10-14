@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { drinksLine, isPreviewBot, isShareSlug, isUuid, menuVersion, nightLabel, previewHtml, previewMeta, type PreviewDrink, type SharedMenuRow } from './menuPreview';
+import { drawingsKey, drinksLine, fetchSketchInputs, isPreviewBot, isShareSlug, isUuid, menuVersion, nightLabel, previewHtml, previewMeta, type PreviewDrink, type SharedMenuRow } from './menuPreview';
 import { createdBy, drinkKickerFor, drinkLine, drinkPreviewMeta, drinkVersion, madeBy, type PreviewDrinkCard } from './drinkPreview';
 import { paintSketch } from './sketch/paint';
 import { sceneToSvg } from './sketch/svg';
@@ -120,4 +120,19 @@ assert.notEqual(drinkVersion(penicillin), drinkVersion(shared));
 assert.notEqual(drinkVersion(penicillin, 'x:martini_pony:'), drinkVersion(penicillin, 'x:martini_pony:#6f1426'));
 assert.notEqual(menuVersion(menu, 'a::'), menuVersion(menu, 'a::#6f1426'));
 
-console.log('menuPreview: ok');
+// Previews draw the venue's ice over a guessed one, and a new ice is a new image.
+void (async () => {
+  const real = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify([
+      { item_id: 'a', inputs: { ice: 'large', houseIce: 'cubes' } },
+      { item_id: 'b', inputs: { ice: 'large', houseIce: 'gravel' } },
+      { item_id: 'c', inputs: { ice: 'crushed' } },
+    ]))) as typeof fetch;
+  const db = { url: 'https://db.example', anonKey: 'k' };
+  const rows = await fetchSketchInputs<{ ice: string }>(db, ['a', 'b', 'c']);
+  assert.deepEqual(rows.map((r) => r.inputs.ice), ['cubes', 'large', 'crushed']);
+  assert.equal(await drawingsKey(db, ['a', 'b', 'c']), 'a:::cubes,b:::large,c:::crushed');
+  globalThis.fetch = real;
+  console.log('menuPreview: ok');
+})();

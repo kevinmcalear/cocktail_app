@@ -126,6 +126,12 @@ assert.equal(draftSketchInputs(sketchLook({ ...negroni, glassVariant: 'martini_p
 assert.equal(draftSketchInputs(sketchLook(negroni, ['martini_soft', 'rocks_tapered'])).variant, 'rocks_tapered');
 assert.equal(draftSketchInputs(sketchLook({ ...negroni, glassVariant: 'rocks_heavy' }, ['rocks_tapered'])).variant, 'rocks_heavy');
 
+// The venue's ice: a guessed ice gives way to its nearest kind; a picked one stays.
+const unpicked = { ...negroni, ice: null };
+assert.equal(draftSketchInputs(sketchLook(unpicked)).ice, 'large', 'the rules guess a large cube for a Negroni');
+assert.equal(draftSketchInputs(sketchLook(unpicked, [], ['cubes', 'crushed'])).ice, 'cubes', 'the venue has cubes, not large');
+assert.equal(draftSketchInputs(sketchLook(negroni, [], ['cubes'])).ice, 'large', 'picked, so it stays');
+
 // The kept draft is plain JSON (it lives in storage until the drink is saved).
 assert.deepEqual(JSON.parse(JSON.stringify(negroni)), negroni);
 

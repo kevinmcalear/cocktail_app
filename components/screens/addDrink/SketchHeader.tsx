@@ -37,6 +37,8 @@ interface SketchHeaderProps {
   folded?: boolean;
   /** The bar's glasses' drawings (bar_glassware), drawn when no shape is picked. */
   barVariants?: readonly string[];
+  /** The venue's ice kinds, drawn in place of a guessed ice. */
+  barIce?: readonly string[];
   /** The drawing's side; by default 200 in a column and 152 in a phone's band. */
   size?: number;
 }
@@ -46,8 +48,8 @@ interface SketchHeaderProps {
  * added. Every step redraws it (glass, ice, method, colour, garnish) with the
  * rules the saved drink is drawn with.
  */
-export function SketchHeader({ draft, step, barVariants, ...band }: SketchHeaderProps) {
-  const look = sketchLook(draft, barVariants);
+export function SketchHeader({ draft, step, barVariants, barIce, ...band }: SketchHeaderProps) {
+  const look = sketchLook(draft, barVariants, barIce);
   // Nothing in it yet: a coupe waiting to be filled, as the canvas draws the first step.
   const empty = !look.glass && !look.lines.length && !look.methods?.length;
   const inputs = inputsFor(empty ? { ...look, glass: 'Coupe' } : look);
