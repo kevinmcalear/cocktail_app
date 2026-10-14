@@ -38,4 +38,11 @@ assert.equal(garnished.liquid.hex, spec.liquid.hex, 'a garnish adds no colour');
 const dusted = draftSketchInputs({ name: 'Flip', lines: [{ name: 'Nutmeg', amount: 1, unit: 'pinch' }] });
 assert.equal(dusted.garnish, 'grated_spice', 'a pinch on top is a garnish');
 
+
+// A stored row draws the venue's ice over a guessed one (set by the database).
+const stored = readSketchInputs({ ...bare, ice: 'cubes', houseIce: 'large' });
+assert.equal(stored?.ice, 'large');
+assert.equal(readSketchInputs({ ...bare, ice: 'cubes', houseIce: 'none' })?.ice, 'cubes', 'never no ice');
+assert.equal(readSketchInputs({ ...bare, ice: 'cubes', houseIce: 'gravel' })?.ice, 'cubes', 'an unknown kind is ignored');
+
 console.log('draft sketch: ok');

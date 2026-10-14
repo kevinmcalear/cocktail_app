@@ -41,6 +41,12 @@ export interface SketchInputs {
    * through liquidOf.
    */
   tint?: string | null;
+  /**
+   * The venue's own ice in place of a guessed one (lib/venueKit.ts houseIce).
+   * Set by the database from the venue's Ice list; a stored row reads back
+   * with it in "ice".
+   */
+  houseIce?: SketchIce | null;
 }
 
 const has = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
@@ -55,7 +61,8 @@ export function readSketchInputs(raw: unknown): SketchInputs | null {
   return {
     v: Number(x.v) || 1,
     glass: x.glass,
-    ice: x.ice,
+    // The venue's ice over a guessed one, as the database worked it out.
+    ice: has(SKETCH_ICES, x.houseIce) && x.houseIce !== 'none' ? x.houseIce : x.ice,
     method: x.method,
     liquid: { hex: x.liquid.hex.toLowerCase(), alpha: Math.min(1, Math.max(0.05, x.liquid.alpha)) },
     foam: has(SKETCH_FOAMS, x.foam) ? x.foam : null,

@@ -25,10 +25,11 @@ interface ReviewStepProps extends StepProps {
   venueName: string;
   hasProfile: boolean;
   barVariants: readonly string[];
+  barIce?: readonly string[];
 }
 
 /** The photo slots, then every answer on one screen; tap a row to go back and change it. */
-export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, barVariants }: ReviewStepProps) {
+export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, barVariants, barIce }: ReviewStepProps) {
   const venue = useBarPublishing(barId).data;
   const caps = useCapabilities(barId).data;
   // A venue's drink takes photos from those who may add them; at home it's yours.
@@ -49,7 +50,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
   return (
     <View style={styles.review}>
       {canPhoto ? (
-        <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, barVariants))} seed={draft.id ?? 'new-drink'} />
+        <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, barVariants, barIce))} seed={draft.id ?? 'new-drink'} />
       ) : null}
       <ReviewList
         rows={rows.map(([step, value]) => ({ key: step, label: STEP_COPY[step].short, value }))}

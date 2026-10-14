@@ -84,7 +84,9 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
   const me = useMyProfile().data ?? null;
   const create = useCreateDrink();
   const barGlasses = useBarGlassware(barId).data;
-  const barIce = venueIceNames(useBarKit(barId).data ?? []);
+  const barKit = useBarKit(barId).data ?? [];
+  const barIce = venueIceNames(barKit);
+  const barIceKinds = barKit.filter((r) => r.kind === 'ice').map((r) => r.key);
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
   const shelfIds = useShelf().data;
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'the venue';
@@ -214,7 +216,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
       case 'publish':
         return <PublishStep draft={draft} set={set} barId={barId} />;
       case 'review':
-        return <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} />;
+        return <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} />;
     }
   })();
 
@@ -224,7 +226,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
       testID="add-drink"
       pageTitle="Add a drink"
       embedded={embedded}
-      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} {...place} />}
+      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} {...place} />}
       stepKey={step}
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.

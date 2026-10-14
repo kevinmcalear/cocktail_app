@@ -160,20 +160,30 @@ export function fetchPreviewDrinks(db: Supabase, ids: string[]): Promise<Preview
   return select<PreviewDrink>(db, `published_items?select=id,name,image_url,image_is_generated&is_reference=eq.false&id=${inList(ids)}`);
 }
 
-/** The drawing inputs of drinks without a photo (item_sketches; readable wherever the drink is). */
-export function fetchSketchInputs<T>(db: Supabase, ids: string[]): Promise<{ item_id: string; inputs: T }[]> {
-  if (!ids.length) return Promise.resolve([]);
-  return select<{ item_id: string; inputs: T }>(db, `item_sketches?select=item_id,inputs&item_id=${inList(ids)}`);
+const HOUSE_ICE = ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere'];
+
+/**
+ * The drawing inputs of drinks without a photo (item_sketches; readable
+ * wherever the drink is), with the venue's ice over a guessed one, as
+ * readSketchInputs (lib/sketch/types.ts) draws it in the app.
+ */
+export async function fetchSketchInputs<T>(db: Supabase, ids: string[]): Promise<{ item_id: string; inputs: T }[]> {
+  if (!ids.length) return [];
+  const rows = await select<{ item_id: string; inputs: T }>(db, `item_sketches?select=item_id,inputs&item_id=${inList(ids)}`);
+  return rows.map((r) => {
+    const x = r.inputs as { houseIce?: unknown } | null;
+    return typeof x?.houseIce === 'string' && HOUSE_ICE.includes(x.houseIce) ? { ...r, inputs: { ...r.inputs, ice: x.houseIce } } : r;
+  });
 }
 
 /**
- * What the drinks' drawings were picked to look like (their glass drawing and
- * sketch colour), for an image's version: a recolour is a new image, not a
+ * What the drinks' drawings were picked to look like (their glass drawing,
+ * sketch colour and ice), for an image's version: a recolour is a new image, not a
  * week of the cached one.
  */
 export async function drawingsKey(db: Supabase, ids: string[]): Promise<string> {
-  const rows = await fetchSketchInputs<{ variant?: string | null; tint?: string | null }>(db, ids);
-  return rows.map((r) => `${r.item_id}:${r.inputs?.variant ?? ''}:${r.inputs?.tint ?? ''}`).sort().join(',');
+  const rows = await fetchSketchInputs<{ variant?: string | null; tint?: string | null; ice?: string }>(db, ids);
+  return rows.map((r) => `${r.item_id}:${r.inputs?.variant ?? ''}:${r.inputs?.tint ?? ''}:${r.inputs?.ice ?? ''}`).sort().join(',');
 }
 
 /** The project's public Supabase settings, as the web build has them. */
