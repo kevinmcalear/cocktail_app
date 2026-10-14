@@ -79,7 +79,7 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 |---|---|---|
 | Under 768 | Labelled glass tabs, search at the bottom | One column, sheets for detail |
 | 768 to 1199 | Icon rail | Two panes. Service mode can fill the screen on a station iPad. |
-| 1200 and up | Branded sidebar with ⌘K search | Content plus an inspector (photos, locations, "view as") |
+| 1200 and up | Branded sidebar with ⌘K search | Content, plus a side pane only where it adds something the page lacks. The drink page has none: its shot list is on the Service tab and View as is in More. |
 
 **Sheets are for phones.** On the web, at any width, a sheet is a dialog in the middle of the window, never a panel docked to the bottom. Every sheet is the one `Sheet` (`components/ds/Sheet.tsx`), or `MenuSheet` for a titled one: a plain dark backdrop fades in on its own (about 200 ms, easing out) and never moves with the sheet, which springs up on the glide spring with a grabber and a 36 radius top; drag it down from anywhere to close it (a long pull or a flick; the backdrop lightens as it goes, a pull up rubber-bands, and the keyboard drops); Reduce Motion fades it instead. Put a sheet's scrolling body in `SheetScrollView` (a FlatList: `renderScrollComponent`), so the scroll hands over to the drag at its top. Try both in the gallery's Sheets section. Its X and Cancel buttons close it with `useSheetClose()`, so it slides away first. Don't hand-build a sheet on a `Modal` (`npm run test:unit` fails on one).
 

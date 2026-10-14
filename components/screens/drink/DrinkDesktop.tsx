@@ -16,7 +16,6 @@ interface DrinkDesktopProps {
   heroActions: ReactNode;
   /** Batch, Rank it, I made it, in a row under the method. */
   actions: ReactNode;
-  inspector: ReactNode;
   /** The venue's team: a Service tab. */
   staff: boolean;
   top: number;
@@ -27,13 +26,13 @@ const HERO_H = 640;
 
 /**
  * The drink page from tablet width up (board drink-desktop): the hero as a
- * card on the left, the page beside it with Spec | Service | More tabs,
- * and on desktop an inspector on the right. It sits left, beside the sidebar,
- * in the 1240 column (docs/design_system.md, Layout). As on the phone
+ * card on the left, the page beside it with Spec | Service | More tabs.
+ * No inspector column: the shot list is on the Service tab and View as is
+ * in More (13 Oct). It sits left, beside the sidebar, in the 1240 column (docs/design_system.md, Layout). As on the phone
  * (13 Oct), the Spec tab is just what you need to make it; strength,
  * allergens, flavor, the backstory and the rest are under More.
  */
-export function DrinkDesktop({ sections: s, hero, heroActions, actions, inspector, staff, top }: DrinkDesktopProps) {
+export function DrinkDesktop({ sections: s, hero, heroActions, actions, staff, top }: DrinkDesktopProps) {
   const ds = useDs();
   const gutter = useGutter();
   const desktop = useBreakpoint() === 'desktop';
@@ -84,7 +83,6 @@ export function DrinkDesktop({ sections: s, hero, heroActions, actions, inspecto
             </View>
           ) : null}
         </View>
-        {desktop ? inspector : null}
       </View>
     </ScrollView>
   );

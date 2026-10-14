@@ -32,7 +32,6 @@ import { DrinkBody } from './DrinkBody';
 import { useDrinkSections } from './DrinkSections';
 import { DrinkControls } from './DrinkControls';
 import { DrinkDesktop } from './DrinkDesktop';
-import { DrinkInspector } from './DrinkInspector';
 import { DrinkHero, phoneHeroHeight } from './DrinkHero';
 import { DrinkMoreMenu } from './DrinkMoreMenu';
 import { GlassSheet } from './GlassSheet';
@@ -191,7 +190,6 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
               {more}
             </>
           }
-          inspector={preview ? null : <DrinkInspector itemId={item.id} barId={item.bar_id} name={item.name} links={links} lines={lines} glass={glass} teamRole={teamRole} />}
         />
       ) : (
         <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + (pinned ? ACTION_BAR_HEIGHT : 0) + space.xxxl }}>
