@@ -16,13 +16,14 @@ export function AppTabs() {
       <Tabs tabBar={isWideWeb ? () => null : (props) => <WebTabBar {...props} />} screenOptions={{ headerShown: false }}>
         <Tabs.Screen name="index" options={{ title: 'Tonight' }} />
         <Tabs.Screen name="library" options={{ title: 'Library' }} />
+        <Tabs.Screen name="menus" options={{ title: 'Menus' }} />
         <Tabs.Screen name="prep" options={{ title: 'Prep' }} />
         <Tabs.Screen name="test" options={{ title: 'Study' }} />
         <Tabs.Screen name="discover" options={{ title: 'Discover' }} />
         <Tabs.Screen name="bar" options={{ title: 'My Bar' }} />
         <Tabs.Screen name="collection" options={{ title: 'Collection' }} />
         <Tabs.Screen name="search" options={{ title: 'Search' }} />
-        <Tabs.Screen name="menus" options={{ href: null }} />
+        <Tabs.Screen name="new" options={{ href: null }} />
         <Tabs.Screen name="profile" options={{ title: 'You' }} />
       </Tabs>
     </VenueBrandProvider>

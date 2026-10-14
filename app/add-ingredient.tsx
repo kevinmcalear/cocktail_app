@@ -27,7 +27,7 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { renameIngredientEntity, resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 import type { EditorChromeState } from "@/lib/editorChrome";
 import { applyIngredientHandoff, withoutSelfRecipeRefs } from "@/lib/ingredientHandoff";
-import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
+import { capitalize, capitalizeFirst } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
 import { getPreferredUnit } from "@/store/useSettingsStore";
@@ -82,7 +82,7 @@ function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSa
     const [exiting, setExiting] = useState(false);
 
     // Form State
-    const [name, setName] = useState(initialNameParam ? capitalize(initialNameParam) : "");
+    const [name, setName] = useState(initialNameParam ? capitalizeFirst(initialNameParam) : "");
     const [description, setDescription] = useState("");
     const [brandMaker, setBrandMaker] = useState("");
     const [generic, setGeneric] = useState<{ id: string; name: string } | null>(null);
@@ -227,7 +227,7 @@ function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSa
 
             const draftIdToNotify = updatedDraftId || (result && result.id);
             if (draftIdToNotify) {
-                const displayName = capitalize(name.trim()) || "Untitled Ingredient Draft";
+                const displayName = capitalizeFirst(name) || "Untitled Ingredient Draft";
                 // Only notify the parent that opened create — never broadcast to every mounted editor
                 if (attachToParentId) {
                     setRecentlyCreatedItem({
@@ -319,7 +319,7 @@ function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSa
             const { data: ingredient, error: ingredientError } = await supabase
                 .from('items')
                 .insert({
-                    name: capitalize(name),
+                    name: capitalizeFirst(name),
                     description: description.trim() || null,
                     item_type: 'ingredient',
                     brand_maker: capitalize(brandMaker) || null,
@@ -370,7 +370,7 @@ function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSa
                     ingredientId,
                     drafts,
                     saveDraft,
-                    capitalize(name)
+                    capitalizeFirst(name)
                 );
                 await deleteDraft(currentDraftId);
             }
@@ -474,8 +474,8 @@ function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSa
                 isEditing
                 editableTitle={{
                     value: name,
-                    onChange: (val) => handleCapitalizedChange(val, name, setName),
-                    onBlur: () => setName(capitalize(name)),
+                    onChange: setName,
+                    onBlur: () => setName(capitalizeFirst(name)),
                     placeholder: "e.g. Rich Simple Syrup",
                 }}
                 onBack={isInline ? undefined : handleBack}
@@ -655,7 +655,7 @@ function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSa
                         ...recipeItems,
                         {
                             ingredient_id: item.id,
-                            name: capitalize(item.name),
+                            name: item.name,
                             amount: "",
                             unit: getPreferredUnit(),
                         },

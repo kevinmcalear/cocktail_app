@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, DsText, GlassButton, Headline, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
+import { Caption, dragDismissesKeyboard, DsText, GlassButton, Headline, PressableScale, Sheet, sheetIsDialog, SheetScrollView, Title, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
@@ -72,7 +72,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children
       {list ? (
         children
       ) : (
-        <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <SheetScrollView contentContainerStyle={styles.body} {...dragDismissesKeyboard}>
           {children}
         </SheetScrollView>
       )}

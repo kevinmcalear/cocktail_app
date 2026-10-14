@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { draftMethodIds } from '@/lib/drinkMethods';
-import { capitalize } from '@/lib/stringUtils';
+import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 
 /**
  * A published ingredient a draft line points at. Ingredients merged since the
@@ -45,7 +45,7 @@ export async function resolveIngredientId(id: string, drafts: any[], name?: stri
     const { data: ingredient, error: ingredientError } = await supabase
         .from('items')
         .insert({
-            name: capitalize(data.name) || "Untitled Ingredient",
+            name: capitalizeFirst(data.name) || "Untitled Ingredient",
             description: data.description?.trim() || null,
             item_type: 'ingredient',
             brand_maker: capitalize(data.brandMaker) || null,
@@ -112,7 +112,7 @@ export async function renameIngredientEntity(
     drafts: any[],
     saveDraftFn: any
 ): Promise<string> {
-    const displayName = capitalize(name.trim());
+    const displayName = capitalizeFirst(name);
     if (!displayName || !ingredientId) return displayName;
 
     const draft = drafts.find((d) => d.id === ingredientId && d.entity_type === 'ingredient');

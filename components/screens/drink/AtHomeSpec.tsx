@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption } from '@/components/ds';
@@ -14,6 +15,8 @@ interface AtHomeSpecProps {
   lines: SpecLine[];
   recipes: PresentationRecipe[] | undefined;
   method: string | null;
+  /** Method, glass, ice and garnish, under the lines. */
+  make: ReactNode;
   /** "Swap it for…": log your version with the change (the I made it sheet). */
   onSwap: () => void;
 }
@@ -24,10 +27,10 @@ interface AtHomeSpecProps {
  * closest to the one you're missing. "Add Cynar to shopping" waits for the
  * shopping list (decision b37, later).
  */
-export function AtHomeSpec({ item, lines, recipes, method, onSwap }: AtHomeSpecProps) {
+export function AtHomeSpec({ item, lines, recipes, method, make, onSwap }: AtHomeSpecProps) {
   const { check, missingName, closest } = useShelfCheck(item.id, lines);
   return (
-    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} heading="At home" caption={check ? shelfCaption(check) : null} missing={check?.missing ?? []}>
+    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} heading="At home" caption={check ? shelfCaption(check) : null} missing={check?.missing ?? []} make={make}>
       {method ? <Body>{method}</Body> : null}
       {check?.missing.length ? (
         <View style={styles.swap}>

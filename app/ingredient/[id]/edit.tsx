@@ -22,7 +22,7 @@ import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import type { EditorChromeState } from "@/lib/editorChrome";
 import { applyIngredientHandoff } from "@/lib/ingredientHandoff";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
-import { capitalize, handleCapitalizedChange } from "@/lib/stringUtils";
+import { capitalize, capitalizeFirst } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
 import { getPreferredUnit } from "@/store/useSettingsStore";
@@ -227,7 +227,7 @@ export default function EditIngredientScreen({
             const { error: updateError } = await supabase
                 .from("items")
                 .update({
-                    name: capitalize(name),
+                    name: capitalizeFirst(name),
                     description: description.trim() || null,
                     brand_maker: capitalize(brandMaker) || null,
                     generic_id: generic?.id ?? null,
@@ -345,7 +345,7 @@ export default function EditIngredientScreen({
 
             {/* A house prep edits as its lines (prep-prep-edit-shared); All fields opens the full form. */}
             {!isInline && !allFields && (recipeItems.length > 0 || data?.ingredient?.ingredient_role === "prep") ? (
-                <PrepEditor name={name} onName={(val) => handleCapitalizedChange(val, name, setName)} lines={recipeItems} onAmount={(i, amount) => setRecipeItems(recipeItems.map((r, j) => (j === i ? { ...r, amount } : r)))} onAdd={() => setShowIngredientPicker(true)} description={description} onDescription={setDescription} onBack={handleClose} onSave={() => (askAtSave.ask() ? undefined : void handleSave())} saving={saving} onAllFields={() => setAllFields(true)} />
+                <PrepEditor name={name} onName={setName} lines={recipeItems} onAmount={(i, amount) => setRecipeItems(recipeItems.map((r, j) => (j === i ? { ...r, amount } : r)))} onAdd={() => setShowIngredientPicker(true)} description={description} onDescription={setDescription} onBack={handleClose} onSave={() => (askAtSave.ask() ? undefined : void handleSave())} saving={saving} onAllFields={() => setAllFields(true)} />
             ) : (
             <ItemDetailLayout
                 id={id as string}
@@ -359,8 +359,8 @@ export default function EditIngredientScreen({
                 isEditing
                 editableTitle={{
                     value: name,
-                    onChange: (val) => handleCapitalizedChange(val, name, setName),
-                    onBlur: () => setName(capitalize(name)),
+                    onChange: setName,
+                    onBlur: () => setName(capitalizeFirst(name)),
                     placeholder: "Ingredient name",
                 }}
                 onBack={isInline ? undefined : handleClose}
@@ -535,7 +535,7 @@ export default function EditIngredientScreen({
                         ...recipeItems,
                         {
                             ingredient_id: item.id,
-                            name: capitalize(item.name),
+                            name: item.name,
                             amount: "",
                             unit: getPreferredUnit(),
                         },

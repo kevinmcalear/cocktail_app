@@ -9,13 +9,13 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { recentMatchesContext } from '@/hooks/useTrackRecent';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { belongsHere, inSelectedContext } from '@/lib/barContextFilter';
 import { fallbackGlass } from '@/lib/itemRoutes';
 import type { Area } from '@/lib/nearMe';
 import { friendlyWhen, menuFacts } from '@/lib/searchCaptions';
 import { scopeOptions, type SearchScope } from '@/lib/searchScope';
-import { capitalize } from '@/lib/stringUtils';
 import { useRecentActivityStore, type RecentActivity } from '@/store/useRecentActivityStore';
 import type { SearchItem } from '@/types/search';
 
@@ -53,12 +53,19 @@ interface HeadProps {
   cancel?: boolean;
 }
 
+/** What the field says it searches: the venue, the area or everywhere. */
+export function searchPlaceholder(scope: SearchScope, mine: SearchMine, area?: SearchArea | null): string {
+  if (scope === 'everywhere') return 'Search bars, drinks and people';
+  if (scope === 'area') return `Search ${area?.label === 'This area' ? 'this area' : (area?.label ?? 'here')}`;
+  return `Search ${mine.venueId ? mine.label : 'your drinks'}`;
+}
+
 /** The search field and where it looks. The same at every door: the tab, ⌘K, Library and Discover. */
 export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys, cancel }: HeadProps) {
   const ds = useDs();
   const gutter = useGutter();
   const options = scopeOptions(mine.label, area?.label ?? null);
-  const placeholder = scope === 'everywhere' ? 'Search bars, drinks and people' : scope === 'area' ? `Search ${area?.label === 'This area' ? 'this area' : (area?.label ?? 'here')}` : `Search ${mine.venueId ? mine.label : 'your drinks'}`;
+  const placeholder = searchPlaceholder(scope, mine, area);
   return (
     <View style={styles.head}>
       <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys={keys} cancel={cancel} />
@@ -123,11 +130,11 @@ const JUMPS = [
   { label: 'Ingredients', href: '/library?show=ingredients' },
 ] as const;
 
-/** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry). */
+/** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry), each when it's switched on. */
 const ENTRIES = [
-  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map' },
-  { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history' },
-  { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques' },
+  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map', feature: 'flavorMap' },
+  { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history', feature: 'history' },
+  { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques', feature: 'techniques' },
 ] as const;
 
 function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: SearchMine; onJump?: () => void; commands?: ReactNode }) {
@@ -137,6 +144,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
   const venue = scope === 'mine' && !!mine.venueId;
   const facts = useMineFacts(venue ? mine.venueId : null, NO_ITEMS);
   const { drafts } = useDrafts();
+  const { has } = useVenueFeatures();
   const [now] = useState(() => Date.now());
   const recent = all.filter((r) => (scope === 'mine' ? recentMatchesContext(r, mine.contextIds) : belongsHere(r.barId, myVenueIds, mine.venueId)));
   const open = (r: RecentActivity) => router.push((r.kind === 'menu' && !r.isDraft ? `/menus/${encodeURIComponent(r.id)}` : r.href) as never);
@@ -158,11 +166,11 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
         items={recent}
         render={(r) =>
           drink(r.kind) ? (
-            <DrinkRow key={`${r.kind}-${r.id}`} name={capitalize(r.title)} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} onPress={() => open(r)} />
+            <DrinkRow key={`${r.kind}-${r.id}`} name={r.title} itemId={r.id} imageUrl={r.imageUrl ?? null} glass={fallbackGlass(r.kind === 'beer' ? 'Beer' : r.kind === 'wine' ? 'Wine' : 'Cocktail')} caption={caption(r)} onPress={() => open(r)} />
           ) : (
             <ResultRow
               key={`${r.kind}-${r.id}`}
-              title={capitalize(r.title)}
+              title={r.title}
               caption={caption(r)}
               icon={r.kind === 'menu' ? 'list.bullet' : r.kind === 'flavor' ? 'target' : 'drop.fill'}
               accentIcon={r.kind === 'flavor'}
@@ -188,7 +196,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
       ) : null}
       {commands}
       <View>
-        {ENTRIES.map((e) => (
+        {ENTRIES.filter((e) => has(e.feature)).map((e) => (
           <ResultRow key={e.href} title={e.title} caption={e.caption} icon={e.icon} accentIcon={e.href === '/flavor-map'} onPress={() => go(e.href)} />
         ))}
       </View>

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { DsText, PressableScale, useDs } from '@/components/ds';
+import { PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, layout, space } from '@/constants/tokens';
+import { layout, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useMode } from '@/hooks/useMode';
 
@@ -37,18 +37,6 @@ export function VenueSwitcher({ size = 32 }: { size?: number }) {
   );
 }
 
-/** The venue's name in its own display face, italic as the boards draw it, beside the logo: Tonight and the sidebar only (the brief). */
-export function VenueWordmark({ venue }: { venue: Venue | null }) {
-  const ds = useDs();
-  if (!venue) return null;
-  return (
-    <DsText variant="headline" numberOfLines={1} style={[styles.wordmark, { fontFamily: displayFaces[ds.displayFace].italic }]}>
-      {venue.name}
-    </DsText>
-  );
-}
-
 const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, minWidth: layout.minTapTarget },
-  wordmark: { flexShrink: 1 },
 });

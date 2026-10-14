@@ -64,16 +64,53 @@ export function agoLabel(iso: string | null | undefined, now: number): string | 
   return `${Math.floor(days / 30)} months ago`;
 }
 
+type RosterPerson = { display_name?: string | null; email: string | null };
+
+const byName = (a: RosterPerson, b: RosterPerson) => personName(a).localeCompare(personName(b)) || (a.email ?? '').localeCompare(b.email ?? '');
+
 /**
- * The roster an admin is looking through. An empty query keeps everyone.
- * Matches the visible name or the email.
+ * The roster an admin is looking through, A to Z. An empty query keeps
+ * everyone. Matches the visible name or the email.
  */
-export function roster<T extends { display_name?: string | null; email: string | null }>(people: T[], query: string): T[] {
+export function roster<T extends RosterPerson>(people: T[], query: string): T[] {
   const q = query.trim().toLowerCase();
   const shown = q
     ? people.filter((p) => personName(p).toLowerCase().includes(q) || (p.email ?? '').toLowerCase().includes(q))
     : people.slice();
-  return shown.sort((a, b) => personName(a).localeCompare(personName(b)) || (a.email ?? '').localeCompare(b.email ?? ''));
+  return shown.sort(byName);
+}
+
+/** How My team lists people: by role (Admin first, a heading per role) or A to Z. */
+export type TeamSort = 'role' | 'name';
+
+export const TEAM_SORTS: { value: TeamSort; label: string }[] = [
+  { value: 'role', label: 'Role' },
+  { value: 'name', label: 'A to Z' },
+];
+
+/**
+ * The roster in groups. By role: one group per role name shown on the rows,
+ * highest level first (a venue's own role sits with its level, A to Z), names
+ * A to Z inside each. A to Z: one group with no heading.
+ */
+export function rosterGroups<T extends RosterPerson & { role_level: number; venue_role_name?: string | null }>(
+  people: T[],
+  query: string,
+  sort: TeamSort
+): { title: string | null; people: T[] }[] {
+  const shown = roster(people, query);
+  if (sort === 'name') return shown.length ? [{ title: null, people: shown }] : [];
+  const groups = new Map<string, { title: string; level: number; people: T[] }>();
+  for (const p of shown) {
+    const title = memberRoleName(p);
+    const group = groups.get(title) ?? { title, level: p.role_level, people: [] };
+    group.level = Math.max(group.level, p.role_level);
+    group.people.push(p);
+    groups.set(title, group);
+  }
+  return [...groups.values()]
+    .sort((a, b) => b.level - a.level || a.title.localeCompare(b.title))
+    .map(({ title, people: inGroup }) => ({ title, people: inGroup }));
 }
 
 /**

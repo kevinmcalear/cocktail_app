@@ -112,3 +112,9 @@ export function handleCapitalizedChange(
 export function capitalizeFirsts(str: string | null | undefined): string {
     return (str ?? '').trim().replace(/(^|[\s-])(\p{Ll})/gu, (_, before: string, letter: string) => before + letter.toUpperCase());
 }
+
+/** The first letter up, the rest as written: "lime juice" is "Lime juice", "fat-washed Campari" is "Fat-washed Campari". Ingredient names are sentence case. */
+export function capitalizeFirst(str: string | null | undefined): string {
+    const s = (str ?? '').trim();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
