@@ -74,8 +74,9 @@ export function useEffectiveRole(barId: string | null) {
  *
  * - Venue items: a Drink Creator (35) or above at the item's own venue, not
  *   the selected one. View-as caps the role.
- * - Shared items (no venue): their creator or a catalog admin. The client
- *   can't see catalog admins, so this asks the can_edit_item RPC. A view-as
+ * - Shared items (no venue): their creator, a Drink Creator or above at the
+ *   bar a drink is credited to, or a catalog admin. The client can't see
+ *   catalog admins or credits, so this asks the can_edit_item RPC. A view-as
  *   role of Bartender (30) or lower hides editing here too.
  */
 export function useCanEditItem(item: { id: string; bar_id: string | null } | null | undefined) {
