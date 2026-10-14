@@ -47,6 +47,16 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
     const t = setTimeout(() => input.current?.focus(), 50);
     return () => clearTimeout(t);
   }, [autoFocus]);
+  const cancelSearch = () => {
+    onQuery('');
+    input.current?.blur();
+  };
+  // react-native-web's TextInput stops every keydown from bubbling, so the overlays' window Escape never hears it from here.
+  const onKeyPress = (e: { nativeEvent: { key: string } }) => {
+    if (e.nativeEvent.key !== 'Escape') return;
+    if (onDone) onDone();
+    else if (cancel) cancelSearch();
+  };
   return (
     <View style={styles.row}>
       <View style={[styles.field, keys ? styles.bare : { backgroundColor: ds.c.raised, borderColor: ds.accentText }]}>
@@ -61,6 +71,7 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
           autoCapitalize="none"
           returnKeyType="search"
           onSubmitEditing={onSubmit}
+          onKeyPress={Platform.OS === 'web' ? onKeyPress : undefined}
           onFocus={() => {
             setFocused(true);
             onFocusChange?.(true);
@@ -96,10 +107,7 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
         <PressableScale
           role="button"
           accessibilityLabel="Cancel the search"
-          onPress={() => {
-            onQuery('');
-            input.current?.blur();
-          }}
+          onPress={cancelSearch}
           style={styles.cancel}
         >
           <Body style={styles.cancelText}>Cancel</Body>
