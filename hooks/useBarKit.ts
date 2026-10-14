@@ -1,0 +1,92 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { supabase } from '@/lib/supabase';
+
+// A venue's ice and tools (bar_kit, supabase/migrations/20261019000000_venue_kit.sql):
+// its team reads them, anyone with Prep changes them. Row shapes are written
+// by hand until types/ is regenerated.
+
+export interface KitRow {
+  id: string;
+  kind: 'ice' | 'tool';
+  key: string;
+  note: string | null;
+  made_here: boolean;
+  supplier_id: string | null;
+  /** Null when the supplier isn't said, or this person can't see the venue's suppliers. */
+  supplier_name: string | null;
+}
+
+export type KitChange = Pick<KitRow, 'kind' | 'key'> & Partial<Pick<KitRow, 'id' | 'note' | 'made_here' | 'supplier_id'>>;
+
+export const barKitKey = (barId: string | null | undefined) => ['bar-kit', barId] as const;
+
+/** The venue's ice and tools, in the order they were added. */
+export function useBarKit(barId: string | null | undefined) {
+  return useQuery({
+    queryKey: barKitKey(barId),
+    enabled: !!barId,
+    staleTime: 10 * 60_000,
+    queryFn: async (): Promise<KitRow[]> => {
+      const { data, error } = await supabase
+        .from('bar_kit')
+        .select('id, kind, key, note, made_here, supplier_id, supplier:suppliers(name)')
+        .eq('bar_id', barId!)
+        .order('sort_order')
+        .order('created_at');
+      if (error) throw error;
+      type Row = Omit<KitRow, 'supplier_name'> & { supplier: { name: string } | null };
+      return ((data ?? []) as unknown as Row[]).map(({ supplier, ...row }) => ({ ...row, supplier_name: supplier?.name ?? null }));
+    },
+  });
+}
+
+/** Add a kit row, or change one (by id). */
+export function useSaveKit(barId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...row }: KitChange) => {
+      const { error } = id
+        ? await supabase.from('bar_kit').update({ note: row.note ?? null, made_here: !!row.made_here, supplier_id: row.supplier_id ?? null }).eq('id', id)
+        : await supabase.from('bar_kit').insert({ bar_id: barId, ...row });
+      if (error) throw error;
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: barKitKey(barId) }),
+  });
+}
+
+/** Take a row off the venue's kit. */
+export function useRemoveKit(barId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('bar_kit').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: barKitKey(barId) }),
+  });
+}
+
+/** A tool's switch: on adds it, off takes it away. The list follows at once and goes back if the save fails. */
+export function useSetTools(barId: string) {
+  const client = useQueryClient();
+  const key = barKitKey(barId);
+  return useMutation({
+    mutationFn: async ({ ids, on }: { ids: string[]; on: boolean }) => {
+      const { error } = on
+        ? await supabase.from('bar_kit').upsert(ids.map((k) => ({ bar_id: barId, kind: 'tool', key: k })), { onConflict: 'bar_id,kind,key', ignoreDuplicates: true })
+        : await supabase.from('bar_kit').delete().eq('bar_id', barId).eq('kind', 'tool').in('key', ids);
+      if (error) throw error;
+    },
+    onMutate: async ({ ids, on }) => {
+      await client.cancelQueries({ queryKey: key });
+      const before = client.getQueryData<KitRow[]>(key);
+      const rest = (before ?? []).filter((r) => !(r.kind === 'tool' && ids.includes(r.key)));
+      const added = on ? ids.map((k): KitRow => ({ id: `new-${k}`, kind: 'tool', key: k, note: null, made_here: false, supplier_id: null, supplier_name: null })) : [];
+      client.setQueryData<KitRow[]>(key, [...rest, ...added]);
+      return { before };
+    },
+    onError: (_e, _v, ctx) => client.setQueryData(key, ctx?.before),
+    onSettled: () => client.invalidateQueries({ queryKey: key }),
+  });
+}

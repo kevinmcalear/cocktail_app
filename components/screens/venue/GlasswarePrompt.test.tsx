@@ -31,7 +31,7 @@ function Step() {
 beforeEach(() => {
   mockSave.mockReset();
   mockPush.mockReset();
-  mockCaps = ['brand'];
+  mockCaps = ['prep'];
   useSettingsStore.setState({ glassesNotNow: [] });
 });
 

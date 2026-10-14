@@ -103,6 +103,18 @@
       "destination": "/settings/bar/[id]/glassware"
     },
     {
+      "source": "/settings/bar/:id/ice",
+      "destination": "/settings/bar/[id]/ice"
+    },
+    {
+      "source": "/settings/bar/:id/tools",
+      "destination": "/settings/bar/[id]/tools"
+    },
+    {
+      "source": "/settings/bar/:id/suppliers",
+      "destination": "/settings/bar/[id]/suppliers"
+    },
+    {
       "source": "/settings/bar/:id/pricing",
       "destination": "/settings/bar/[id]/pricing"
     },

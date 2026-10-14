@@ -82,7 +82,7 @@ export interface BarGlassInput {
 /**
  * Add or change one of the venue's glasses. Only one glass of a type is the
  * main one (a unique index), so marking this one first unmarks the others.
- * The database checks the venue's brand permission and the maker page.
+ * The database checks the venue's Prep permission and the maker page.
  */
 export function useSaveBarGlass(barId: string | null | undefined, profileId: string | null | undefined) {
   const client = useQueryClient();

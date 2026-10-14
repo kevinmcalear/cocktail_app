@@ -22,8 +22,8 @@ import { GlassForm } from './GlassForm';
 /**
  * Your glassware: the glasses a venue pours into (bar_glassware), each drawn
  * with its size. Each type's main glass is how its drinks are drawn, and a
- * glass that names its maker's page puts the venue on that page. Admins
- * change them (the brand permission, which the database checks too);
+ * glass that names its maker's page puts the venue on that page. Anyone
+ * with Prep changes them (Kit, decided 14 Oct 2026; the database checks too);
  * everyone at the venue can look. "Is this one of your glasses?" in the
  * add-drink wizard and the drink editor adds to it too.
  */
@@ -43,7 +43,7 @@ function GlasswarePage({ barId }: { barId: string }) {
   const tabBarInset = useTabBarInset();
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const { data: caps = [] } = useCapabilities(barId);
-  const canEdit = caps.includes('brand');
+  const canEdit = caps.includes('prep');
   const { data: pageId, isLoading: pageLoading } = useBarPageId(barId);
   const { data: glasses = [], isLoading, error } = useBarGlassware(barId);
   const items = useDropdowns().data?.glassware ?? [];
@@ -129,7 +129,7 @@ function GlasswarePage({ barId }: { barId: string }) {
               ) : canEdit ? (
                 <AddSlot first={!glasses.length} onPress={() => setOpen('new')} />
               ) : (
-                <Caption tone="muted">You can look, but changing the glassware needs an Admin at this venue.</Caption>
+                <Caption tone="muted">You can look, but changing the kit needs Prep at this venue.</Caption>
               )}
             </>
           ) : null}
