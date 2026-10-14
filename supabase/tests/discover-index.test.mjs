@@ -183,7 +183,7 @@ describe('discover_list', () => {
     assert.equal(first.total_bars, 2);
   });
 
-  test('on now: only drinks on a menu now, and the totals count only those (20261019100000)', async () => {
+  test('on now: only drinks on a menu now, and the totals count only those (20261019200000)', async () => {
     const { data, error } = await near(users.viewer.client, { p_on_now: true });
     assert.ifError(error);
     assert.deepEqual(mine(data).map((r) => r.id), [ids.martini]);
