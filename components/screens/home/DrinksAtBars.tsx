@@ -51,14 +51,15 @@ export function scoreWords(drink?: number, bar?: number): string | null {
 export const BarAway = createContext<(barId: string) => string | null>(() => null);
 
 /**
- * One drink at its bar, the sub line plain as drawn (disc-list): the bar,
- * how far it is (else where), what it is to its classic ("the classic
- * spec", or what its variation changes) and "on now"; the scores (when
- * given) at the end, and the searched word lit (tint on Discover). `atBar`:
- * a tapped bar's own drinks (disc-map-bar), so the bar isn't repeated.
- * `everywhere`: search's Everywhere, which adds the bar's small logo before
- * the caption and puts why it matched ("Riff on a Negroni") on its own line,
- * the word lit (nav-search-everywhere).
+ * One drink at its bar, the sub line plain as drawn (disc-list): the bar's
+ * small logo, the bar, how far it is (else where), and what it is to its
+ * classic ("the classic spec", or what its variation changes); the scores
+ * (when given) at the end, and the searched word lit (tint on Discover).
+ * No "on now": Discover lists only what's on now unless Past menus is on,
+ * and a past drink carries its "Past · 2024 to 2025" tag (Kevin, 14 Oct).
+ * `atBar`: a tapped bar's own drinks (disc-map-bar), so the bar and its logo
+ * aren't repeated. `everywhere`: search's Everywhere, which puts why it
+ * matched ("Riff on a Negroni") on its own line, the word lit (nav-search-everywhere).
  */
 export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false, everywhere = false, onPress }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean; everywhere?: boolean; onPress?: () => void }) {
   const bar = d.bar;
@@ -67,7 +68,7 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atB
   const away = d.distance === null || d.distance === undefined ? near : formatDistance(d.distance / 1000, usesMiles(getLocales()[0]));
   // A tapped bar's rows say what the drink is instead (ponytail: its description; the ingredient line needs discover_list to return the spec's lines).
   const what = atBar ? (d.why ?? version ?? d.description) : everywhere ? version : (d.why ?? version);
-  const caption = (atBar ? [what, d.menu.onNow ? 'on now' : null] : [bar.name, away ?? place(bar), what, d.menu.onNow ? 'on now' : null]).filter(Boolean).join(' · ');
+  const caption = (atBar ? [what] : [bar.name, away ?? place(bar), what]).filter(Boolean).join(' · ');
   const drinkScore = scores?.drinks[d.id];
   const barScore = atBar ? undefined : scores?.bars[d.barId]?.score;
   const said = scoreWords(drinkScore, barScore);
@@ -81,7 +82,7 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atB
       glass={null}
       dense
       caption={caption}
-      logo={everywhere ? { uri: bar.logo, name: bar.name, profileId: d.barId } : undefined}
+      logo={atBar ? undefined : { uri: bar.logo, name: bar.name, profileId: d.barId }}
       note={everywhere ? (d.why ?? undefined) : undefined}
       tag={d.menu.past ?? undefined}
       trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
