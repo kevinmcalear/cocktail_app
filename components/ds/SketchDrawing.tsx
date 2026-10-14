@@ -100,6 +100,8 @@ export interface SketchDrawingProps {
   seed: string;
   /** 'thumb' for small tiles: lighter, without the searching lines and hatching. */
   detail?: SketchDetail;
+  /** Paint in a coming idle slice, blank paper until then: a list or grid tile. Thumbs always are. */
+  lazy?: boolean;
 }
 
 /**
@@ -107,8 +109,8 @@ export interface SketchDrawingProps {
  * sketch on the house paper, fitted inside its frame. Decorative: the frame around
  * it carries the label.
  */
-export const SketchDrawing = memo(function SketchDrawing({ inputs, seed, detail = 'full' }: SketchDrawingProps) {
-  const scene = useScene(scenesOf(inputs), `${seed}|${detail}|false`, detail === 'thumb', () => paintSketch(inputs, { seed, detail, bands: false }));
+export const SketchDrawing = memo(function SketchDrawing({ inputs, seed, detail = 'full', lazy = detail === 'thumb' }: SketchDrawingProps) {
+  const scene = useScene(scenesOf(inputs), `${seed}|${detail}|false`, lazy, () => paintSketch(inputs, { seed, detail, bands: false }));
   return <SceneSvg scene={scene} />;
 });
 
@@ -136,7 +138,10 @@ export const SceneSvg = memo(function SceneSvg({ scene, bare }: { scene: Scene; 
   const u = useId().replace(/[^A-Za-z0-9]/g, '');
   const paper = bare ? 'transparent' : ds.c.paper;
   if (Platform.OS !== 'web') {
-    return <Image source={{ uri: sceneUri(scene, paper) }} style={[styles.fill, { backgroundColor: paper }]} contentFit="contain" cachePolicy="memory" accessible={false} />;
+    // enforceEarlyResizing: iOS draws the SVG into a bitmap the frame's size, off
+    // the main thread. Without it the picture stays a vector, redrawn on the main
+    // thread each time a tile shows: Library's scroll froze 0.5-1.2 s at a time.
+    return <Image source={{ uri: sceneUri(scene, paper) }} style={[styles.fill, { backgroundColor: paper }]} contentFit="contain" cachePolicy="memory" enforceEarlyResizing accessible={false} />;
   }
   return (
     // The paper runs past the square when the frame is wider (a phone hero).
