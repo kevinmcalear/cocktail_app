@@ -112,11 +112,16 @@ describe('a bar\'s glassware', () => {
     assert.ok(error || anonData.length === 0, 'anon reads nothing');
   });
 
-  test('only the bar\'s admins write it', async () => {
-    for (const who of ['creator', 'bartender', 'outsider']) {
+  test('only the bar\'s people with Prep write it', async () => {
+    for (const who of ['bartender', 'outsider']) {
       const { error } = await users[who].client.from('bar_glassware').insert({ profile_id: ids.barProfile, glass: 'martini', variant: 'martini_pony' });
       assert.ok(error, `${who} refused`);
     }
+    // A drink creator has Prep, so Kit (glassware included) is theirs too (14 Oct 2026).
+    const { data: rocks, error: creatorError } = await users.creator.client
+      .from('bar_glassware').insert({ profile_id: ids.barProfile, glass: 'rocks' }).select('id').single();
+    assert.ifError(creatorError);
+    await service.from('bar_glassware').delete().eq('id', rocks.id);
     const { error: elsewhere } = await users.admin.client.from('bar_glassware').insert({ profile_id: ids.otherProfile, glass: 'martini' });
     assert.ok(elsewhere, 'not at another bar');
     const { data, error } = await users.admin.client
