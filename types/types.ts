@@ -122,6 +122,10 @@ export interface DatabaseItem {
     brand_maker: string | null;
     abv: number | null;
     bar_id: string | null;
+    /** A person's own drink: who made it. Shared drinks have none. */
+    created_by?: string | null;
+    /** A shared drink credited to a bar: that bar's page. */
+    origin_bar_profile_id?: string | null;
     icon_key?: string | null;
     icon_url?: string | null;
     hide_from_search?: boolean;

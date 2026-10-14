@@ -32,6 +32,10 @@ export function CocktailEditor({ id, isEditing, setIsEditing }: { id: string; is
     const isLoading = query.isPending || query.isPlaceholderData;
     const cocktail = query.isPlaceholderData ? undefined : query.data;
     const canEdit = useCanEditItem(cocktail);
+    // A drink credited to a bar: its staff edit it, but it stays shared
+    // (others rank and save it), so only SQL deletes it.
+    // ponytail: catalog admins lose the button here too; give them a can_delete RPC if they need it.
+    const credited = !!cocktail && !cocktail.bar_id && !cocktail.created_by && !!cocktail.origin_bar_profile_id;
 
     const editor = useCocktailEditor(id, { enabled: isEditing });
     const [showPhotoSheet, setShowPhotoSheet] = useState(false);
@@ -110,7 +114,7 @@ export function CocktailEditor({ id, isEditing, setIsEditing }: { id: string; is
                 onCancelEdit={handleCancelEdit}
                 isEditing={isEditing}
                 onSave={isEditing ? handleSave : undefined}
-                onDelete={isEditing && canEdit ? () => void handleDelete() : undefined}
+                onDelete={isEditing && canEdit && !credited ? () => void handleDelete() : undefined}
                 saving={editor.saving}
                 isDirty={editor.isDirty}
                 editableTitle={
