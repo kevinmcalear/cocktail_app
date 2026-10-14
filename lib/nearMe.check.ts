@@ -102,7 +102,7 @@ assert.equal(venueAddressesFrom({ features: [
 assert.deepEqual(venueAddressesFrom(null), []);
 
 // A bar nobody has ranked says so, rather than "0 people ranked".
-assert.equal(rankedCount(0), 'Not ranked yet');
+assert.equal(rankedCount(0), null);
 assert.equal(rankedCount(1), '1 person ranked');
 const unranked = { rankers: 0 } as Parameters<typeof earlyNote>[0][number];
 assert.match(earlyNote([unranked], 20), /^Nobody has ranked/);

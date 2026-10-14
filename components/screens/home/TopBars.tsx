@@ -39,7 +39,7 @@ export function TopBars({ area }: { area: Area }) {
 
   return (
     <View style={styles.section}>
-      <Caption tone="muted">{ranked.length || isLoading ? 'Bar score, from every drink ranked there' : early.some((r) => r.rankers > 0) ? 'Early' : early.length ? 'Not ranked yet' : 'No bars yet'}</Caption>
+      <Caption tone="muted">{early.some((r) => r.rankers > 0) && !ranked.length ? 'Early' : early.length || ranked.length || isLoading ? 'Bar score, from every drink ranked there' : 'No bars yet'}</Caption>
       <Headline role="heading">{`Top bars ${where}`}</Headline>
       {body}
     </View>

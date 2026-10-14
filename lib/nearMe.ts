@@ -108,9 +108,9 @@ export function peopleCount(n: number): string {
   return n === 1 ? '1 person' : `${n} people`;
 }
 
-/** "3 people ranked", or "Not ranked yet" for a bar on Cocktail nobody has ranked. */
-export function rankedCount(n: number): string {
-  return n ? `${peopleCount(n)} ranked` : 'Not ranked yet';
+/** "3 people ranked"; null for a bar nobody has ranked, which says nothing about ranking. */
+export function rankedCount(n: number): string | null {
+  return n ? `${peopleCount(n)} ranked` : null;
 }
 
 /** The note over early bars: some people ranking them, or nobody yet. */
