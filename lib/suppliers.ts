@@ -100,3 +100,26 @@ export function suggestSuppliers<P extends { id: string; display_name: string }>
     .filter((s) => s.bottles > 0)
     .sort((a, b) => b.bottles - a.bottles || a.page.display_name.localeCompare(b.page.display_name));
 }
+
+/** An ingredient a venue uses or buys (hooks/useVenueIngredients.ts). */
+export interface VenueIngredient {
+  id: string;
+  name: string;
+  /** items.item_type: 'ingredient' for anything bought. */
+  type: string;
+  /** items.ingredient_role: 'prep' is made in house, not bought. */
+  role: string | null;
+  makerId: string | null;
+  supplierId: string | null;
+  /** In one of the venue's drinks or preps (not just bought). */
+  used: boolean;
+}
+
+const WATER = /^(filtered |still |tap |cold |hot )?water$/i;
+
+/** What the venue uses that it buys but has no supplier for, A to Z: not house preps, not water. */
+export function withoutSupplier(ings: readonly VenueIngredient[]): VenueIngredient[] {
+  return ings
+    .filter((i) => i.used && !i.supplierId && i.type === 'ingredient' && i.role !== 'prep' && !WATER.test(i.name.trim()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
