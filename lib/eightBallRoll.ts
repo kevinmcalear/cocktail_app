@@ -189,3 +189,43 @@ export function isStill(s: Roll, gravity: { x: number; y: number } | null): bool
     s.depth < 0.005
   );
 }
+
+/**
+ * Shaking the ball in your hand (Kevin, 14 Oct 2026: grab it, shake it hard
+ * enough, and it asks again). Fed the drag's speed each move; a shake is
+ * SHAKE_TURNS hard changes of direction, each soon after the last. Then it
+ * rests a while so one long shake asks once.
+ */
+export interface Shake {
+  /** The last hard direction on each axis (-1, 0 or 1). */
+  sx: number;
+  sy: number;
+  turns: number;
+  /** Milliseconds: the last change of direction, and when it can fire again. */
+  at: number;
+  quietUntil: number;
+}
+
+export const NO_SHAKE: Shake = { sx: 0, sy: 0, turns: 0, at: 0, quietUntil: 0 };
+/** Drag speed (pixels a second) that counts as shaking, not moving. */
+const SHAKE_SPEED = 800;
+const SHAKE_TURNS = 3;
+/** Longer than this between changes of direction and it starts counting again. */
+const SHAKE_GAP_MS = 400;
+const SHAKE_REST_MS = 1200;
+
+export function stepShake(s: Shake, vx: number, vy: number, now = Date.now()): { shake: Shake; fired: boolean } {
+  'worklet';
+  if (now < s.quietUntil) return { shake: s, fired: false };
+  const hx = vx > SHAKE_SPEED ? 1 : vx < -SHAKE_SPEED ? -1 : 0;
+  const hy = vy > SHAKE_SPEED ? 1 : vy < -SHAKE_SPEED ? -1 : 0;
+  // Speed passes through zero at every change of direction, so the last hard direction is kept.
+  const turned = (hx !== 0 && s.sx !== 0 && hx !== s.sx) || (hy !== 0 && s.sy !== 0 && hy !== s.sy);
+  let { turns, at } = s;
+  if (turned) {
+    turns = now - at <= SHAKE_GAP_MS ? turns + 1 : 1;
+    at = now;
+  }
+  if (turns >= SHAKE_TURNS) return { shake: { ...NO_SHAKE, quietUntil: now + SHAKE_REST_MS }, fired: true };
+  return { shake: { sx: hx || s.sx, sy: hy || s.sy, turns, at, quietUntil: s.quietUntil }, fired: false };
+}

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { AT_REST, isStill, MIN_HIT, screenGravity, stepRoll, type Bounds, type Roll } from './eightBallRoll';
+import { AT_REST, isStill, MIN_HIT, NO_SHAKE, screenGravity, stepRoll, stepShake, type Bounds, type Roll } from './eightBallRoll';
 
 const box: Bounds = { minX: -60, maxX: 60, minY: -200, maxY: 300 };
 const frame = 1 / 60;
@@ -63,5 +63,29 @@ assert.ok(stalled.x <= box.maxX);
 // No reading yet (or no sensor): no tilt. Screen y runs down, the sensor's runs up.
 assert.equal(screenGravity({ x: 0, y: 0, z: 0 }), null);
 assert.deepEqual(screenGravity({ x: 1, y: -9.7, z: 0.5 }), { x: 1, y: 9.7 });
+
+// Shaking it in your hand: count the shakes a drag sets off, sampled at 60 a second.
+function shakes(speed: (t: number) => { x: number; y: number }, seconds: number) {
+  let shake = NO_SHAKE;
+  let fired = 0;
+  for (let ms = 0; ms < seconds * 1000; ms += 1000 / 60) {
+    const v = speed(ms / 1000);
+    const next = stepShake(shake, v.x, v.y, 10_000 + ms);
+    shake = next.shake;
+    if (next.fired) fired++;
+  }
+  return fired;
+}
+const wave = (hz: number, peak: number, axis: 'x' | 'y' = 'x') => (t: number) => {
+  const v = Math.sin(2 * Math.PI * hz * t) * peak;
+  return axis === 'x' ? { x: v, y: 0 } : { x: 0, y: v };
+};
+assert.equal(shakes(wave(3, 1800), 0.9), 1, 'a hard shake asks again');
+assert.equal(shakes(wave(3, 1800, 'y'), 0.9), 1, 'up and down counts too');
+assert.equal(shakes(wave(3, 500), 3), 0, 'moving it about gently is not a shake');
+assert.equal(shakes(wave(0.5, 2000), 4), 0, 'slow sweeps back and forth are not a shake');
+assert.equal(shakes(() => ({ x: 3000, y: 0 }), 1), 0, 'one hard fling is not a shake');
+const long = shakes(wave(4, 2000), 3);
+assert.ok(long >= 1 && long <= 3, `a long shake rests between asks: ${long}`);
 
 console.log('eightBallRoll checks passed');
