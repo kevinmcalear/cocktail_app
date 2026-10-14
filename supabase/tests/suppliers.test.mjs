@@ -1,4 +1,4 @@
-// Supplier pages (20261017530000_supplier_kind.sql, 20261017530100_suppliers.sql):
+// Supplier pages (20261017720000_supplier_kind.sql, 20261017720100_suppliers.sql):
 // a supplier's page is owned by a venue team like a maker's and claimed the
 // same way, never holds an address, says what it supplies from a known list;
 // supplier_lines say whose brands it carries where, readable signed out,
