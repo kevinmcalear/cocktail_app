@@ -1,7 +1,7 @@
 -- Australian beer, cider and perry, non-alcoholic beer, sparkling wine,
 -- fortified wine and non-alcoholic wine: every bottle checked on its
 -- producer's own page (or, where that page was blocked, an Australian
--- retailer), after 20261017500000. Step 6b of the bottle catalog plan:
+-- retailer), after 20261017530100. Step 6b of the bottle catalog plan:
 -- https://claude.ai/artifact/Vu6seuSNtN42nKYb2nDCVR
 --
 --   * Leads: 576 Australian breweries, cideries and wineries from the
