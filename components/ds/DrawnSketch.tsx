@@ -17,9 +17,11 @@ interface DrawnSketchProps {
   animate?: boolean;
   /** 'thumb' for list rows (under about 140 wide): no searching lines or hatching. */
   detail?: SketchDetail;
+  /** A list or grid tile: paint in a coming idle slice (SketchDrawing). */
+  lazy?: boolean;
 }
 
-function Loaded({ itemId, fallback, animate, detail = 'full' }: DrawnSketchProps) {
+function Loaded({ itemId, fallback, animate, detail = 'full', lazy }: DrawnSketchProps) {
   const person = usePeopleHero(itemId).data ?? null;
   const sketch = useItemSketch(person ? null : itemId).data ?? null;
   const [play, setPlay] = useState(0);
@@ -37,7 +39,7 @@ function Loaded({ itemId, fallback, animate, detail = 'full' }: DrawnSketchProps
   // second render, and nothing waits on a layout event that may never come (#284).
   return (
     <View style={styles.fill}>
-      <SketchDrawing inputs={sketch} seed={itemId} detail={detail} />
+      <SketchDrawing inputs={sketch} seed={itemId} detail={detail} lazy={lazy} />
     </View>
   );
 }
