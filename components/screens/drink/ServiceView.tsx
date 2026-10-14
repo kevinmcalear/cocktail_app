@@ -10,7 +10,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useServiceNotes } from '@/hooks/useServiceNotes';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useEffectiveRole } from '@/hooks/useViewAs';
-import type { ItemImageLink } from '@/lib/itemImages';
+import { glassOver, type ItemImageLink } from '@/lib/itemImages';
 import { roleLabel } from '@/lib/roles';
 import { serviceSpec, serviceStyleLabel } from '@/lib/service';
 import { EMPTY_SERVICE_NOTES } from '@/lib/serviceNotes';
@@ -56,7 +56,7 @@ function Service({ item, start, venueName }: { item: DatabaseItem; start: Servic
   const spec = serviceSpec(lines);
   const style = serviceStyleLabel(item.service_style);
   // Glass takes the picture's colours: dark on a photo, light on the drawing's paper.
-  const glass = shot.picture && !shot.picture.isSketch ? 'dark' : 'light';
+  const glass = glassOver(shot.picture);
   const heroHeight = Math.min(Math.max(width * 0.9, 320), height * 0.5);
   const back = () => (router.canGoBack() ? router.back() : router.replace(`/cocktail/${item.id}` as Href));
 
