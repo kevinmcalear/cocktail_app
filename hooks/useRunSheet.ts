@@ -280,3 +280,29 @@ export function useSetOwners(menuId: string) {
     },
   );
 }
+
+export interface PartyPage {
+  id: string;
+  display_name: string;
+  handle: string;
+}
+
+/** Pages to link a party to: bars for the guest venue, makers for a brand. */
+export function usePartySearch(term: string, kind: 'guest' | 'brand') {
+  const q = term.trim();
+  return useQuery({
+    queryKey: ['run-sheet-party-search', kind, q],
+    enabled: q.length >= 2,
+    queryFn: async (): Promise<PartyPage[]> => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, handle')
+        .eq('kind', kind === 'guest' ? 'bar' : 'maker')
+        .ilike('display_name', `%${q.replace(/[\\%_]/g, '\\$&')}%`)
+        .order('display_name')
+        .limit(8);
+      if (error) throw error;
+      return (data ?? []) as PartyPage[];
+    },
+  });
+}

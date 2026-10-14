@@ -7,6 +7,7 @@ import { Body, Caption, Display, DsText, GlassButton, PressableScale, Tag, useBr
 import { Crumbs } from '@/components/nav/PageFrame';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { DrinkHero } from '@/components/screens/drink/DrinkHero';
+import { RunSheetLink } from '@/components/screens/runSheet/parts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
@@ -148,6 +149,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
                 {has('prep') && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
                 {menu.barId && Array.isArray(caps.data) && caps.data.includes('costs') ? <MenuAction label="Costing" icon="dollarsign.circle.fill" onPress={() => go(`/menus/${menu.id}/costing`)} /> : null}
               </View>
+              {canEdit && drinkCount > 0 ? <RunSheetLink menuId={menu.id} /> : null}
               {drinkCount === 0 ? <Body tone="muted">No drinks on this menu yet.</Body> : null}
             </View>
           </>

@@ -101,6 +101,15 @@ export const MAP_ME = '#8FB7E8';
  */
 export const dayHues = ['#1A1714', '#2F6DB5', '#E3B505', '#C8372D', '#7A4E2D', '#3F8A3A', '#E07020'] as const;
 
+/**
+ * A run sheet's guest venue and brands, as the dot on each owner chip (the
+ * host takes the accent). Always beside the party's name, never alone.
+ */
+export const partyHues = ['#D0643B', '#8FB3E8', '#9CC9A0', '#C9A0DC', '#E8C25A', '#7FC4C0'] as const;
+
+/** The printed run sheet: black on white, whatever the theme (run sheet board "Sheet"). */
+export const printPaper = { paper: '#FFFFFF', ink: '#1A1714', muted: '#555049', rule: '#C9C2B6', hairline: '#E6E0D6' } as const;
+
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
