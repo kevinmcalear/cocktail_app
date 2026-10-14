@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { AccessibilityInfo, Modal, Platform, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs } from '@/components/ds';
@@ -20,22 +20,27 @@ import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 /** How long the ball "thinks" before it answers. */
 const THINK_MS = 1100;
+/** How long the window takes to turn away to the 8 side. */
+const TURN_AWAY_MS = 320;
 /** After thinking, how long to wait on a slow shelf before answering from the rest of the pool. */
 const MAX_WAIT_MS = 1500;
 const POLL_MS = 250;
 const native = Platform.OS !== 'web';
 
-type Answer = { state: 'thinking'; fortune: string } | { state: 'shown'; drink: Candidate | null };
+// `last` is the answer still in the window while it turns away, so the new one only shows once it turns back.
+type Answer = { state: 'thinking'; fortune: string; last?: string } | { state: 'shown'; drink: Candidate | null };
 
 const randomFortune = () => FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
 
 /**
  * The magic eight ball (issue #18), as the approved Shake design: the ball
  * wobbles, its window turns up a fortune, then the drink, with "Make a …",
- * why, and Another and Open recipe. Shaking again (routed in by
- * EightBallHost through `rollRef`) is Another. The ball rolls when the
- * phone tilts and can be dragged and flung (useRollingBall). With Reduce
- * Motion on, nothing moves: the answer fades in.
+ * why, and Another and Open recipe. Another turns it over to its 8 side,
+ * gives it a shake, and turns it back to a new answer. Shaking the phone
+ * again (routed in by EightBallHost through `rollRef`), or grabbing the
+ * ball and shaking it, is Another. The ball rolls when the phone tilts and
+ * can be dragged and flung (useRollingBall). With Reduce Motion on, nothing
+ * moves: the answer fades in.
  */
 export function EightBall({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<(() => void) | null> }) {
   return (
@@ -69,7 +74,8 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
   const card = useSharedValue(0); // title, reason and buttons
   // 1 with the white 8 side showing, 0 with the window: you ask with the 8 up, then turn it over to read.
   const turn = useSharedValue(reduceMotion ? 0 : 1);
-  const rolling = useRollingBall({ still: reduceMotion, insets });
+  // Shaking the ball in your hand asks again, as a shake of the phone does.
+  const rolling = useRollingBall({ still: reduceMotion, insets, onShake: () => rollRef.current?.() });
 
   useEffect(() => {
     latest.current = { pool, isLoading };
@@ -108,33 +114,49 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
     if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(drink ? `${makeA(drink.name)}. ${drink.reason}` : 'Nothing to pick yet');
   }
 
-  function think() {
+  function think({ kick }: { kick: boolean }) {
     if (timer.current) clearTimeout(timer.current);
     card.set(withTiming(0, { duration: 150 }));
-    if (!reduceMotion) turn.set(withTiming(1, { duration: 320, easing: Easing.inOut(Easing.quad) }));
-    floatUp();
-    // A jolt, then the pour spring rings it out like a ball settling in the hand.
-    if (!reduceMotion) wobble.set(withSequence(withTiming(1, { duration: 70 }), withSpring(0, springs.pour)));
-    rolling.kick();
+    // The window is up (an answer showing): it turns away first, and its face stays put as it goes.
+    const away = !reduceMotion && turn.get() < 0.5 ? TURN_AWAY_MS : 0;
+    if (!away) floatUp();
+    if (!reduceMotion) {
+      // Turned over to the 8 side, it gets a shake in the hand before it answers.
+      turn.set(withTiming(1, { duration: TURN_AWAY_MS, easing: Easing.inOut(Easing.quad) }));
+      wobble.set(
+        withDelay(
+          away,
+          withSequence(
+            withTiming(1, { duration: 60 }),
+            withTiming(-0.8, { duration: 110 }),
+            withTiming(0.7, { duration: 110 }),
+            withTiming(-0.5, { duration: 100 }),
+            withTiming(0.25, { duration: 90 }),
+            withTiming(0, { duration: 110 }),
+          ),
+        ),
+      );
+    }
+    // A shaken phone sends the ball rolling too; Another shakes it in place.
+    if (kick) rolling.kick();
     if (native) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     timer.current = setTimeout(() => reveal(), reduceMotion ? 300 : THINK_MS);
   }
 
-  function roll() {
-    setAnswer({ state: 'thinking', fortune: randomFortune() });
-    turnDie();
-    think();
+  function roll({ kick }: { kick: boolean }) {
+    setAnswer((a) => ({ state: 'thinking', fortune: randomFortune(), last: a.state === 'shown' ? (a.drink?.name ?? 'Ask again later') : a.last }));
+    think({ kick });
   }
 
   useEffect(() => {
-    rollRef.current = roll;
+    rollRef.current = () => roll({ kick: true });
     return () => {
       rollRef.current = null;
     };
   });
 
   useEffect(() => {
-    think();
+    think({ kick: true });
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
@@ -170,7 +192,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
           <GestureDetector gesture={rolling.pan}>
             <Animated.View style={rolling.style}>
               <BallArt
-                text={answer.state === 'thinking' ? answer.fortune : (drink?.name ?? 'Ask again later')}
+                text={answer.state === 'thinking' ? (reduceMotion ? answer.fortune : (answer.last ?? answer.fortune)) : (drink?.name ?? 'Ask again later')}
                 pose={pose}
                 wobble={wobble}
                 rise={rise}
@@ -207,7 +229,7 @@ function Ball({ onClose, rollRef }: { onClose: () => void; rollRef: RefObject<((
           icon="arrow.clockwise"
           variant="secondary"
           size="lg"
-          onPress={roll}
+          onPress={() => roll({ kick: false })}
           style={styles.action}
         />
         {drink ? <Button label="Open recipe" size="lg" onPress={open} style={styles.action} /> : null}
