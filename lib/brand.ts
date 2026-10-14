@@ -6,21 +6,40 @@
 import { backbar, type DisplayFace } from '@/constants/tokens';
 import { contrast, isHexColor } from '@/lib/color';
 
-/** The database's venue_display_face values, and the app's names for them. */
-const FACE_FROM_DB: Record<string, DisplayFace> = {
-  instrument_serif: 'instrument',
+/** The app's display faces and their venue_display_face values in the database. */
+const FACE_TO_DB = {
+  instrument: 'instrument_serif',
   fraunces: 'fraunces',
-  bricolage_grotesque: 'bricolage',
-};
+  playfair: 'playfair_display',
+  bricolage: 'bricolage_grotesque',
+  josefin: 'josefin_sans',
+  tenor: 'tenor_sans',
+} as const satisfies Record<DisplayFace, string>;
 
-export type DbDisplayFace = 'instrument_serif' | 'fraunces' | 'bricolage_grotesque';
+export type DbDisplayFace = (typeof FACE_TO_DB)[DisplayFace];
 
+/** A face this app doesn't know (a newer one) shows as Instrument Serif. */
 export function faceFromDb(value: string | null | undefined): DisplayFace {
-  return FACE_FROM_DB[value ?? ''] ?? 'instrument';
+  return (Object.keys(FACE_TO_DB) as DisplayFace[]).find((f) => FACE_TO_DB[f] === value) ?? 'instrument';
 }
 
 export function faceToDb(face: DisplayFace): DbDisplayFace {
-  return face === 'fraunces' ? 'fraunces' : face === 'bricolage' ? 'bricolage_grotesque' : 'instrument_serif';
+  return FACE_TO_DB[face];
+}
+
+/**
+ * The display_face to save: the stored value as it is while the picked face
+ * still reads as it (so a face this build doesn't know survives a save of
+ * other fields), else the picked one.
+ */
+export function faceToSave(picked: DisplayFace, stored: string | null | undefined): string {
+  return stored && faceFromDb(stored) === picked ? stored : faceToDb(picked);
+}
+
+/** The database turned down a display face it doesn't have yet (the app shipped before its migration). */
+export function isUnknownFaceError(e: unknown): boolean {
+  const err = e as { code?: string; message?: string } | null;
+  return err?.code === '22P02' && /venue_display_face/.test(err.message ?? '');
 }
 
 /** "d0643b" or " #D0643B " to "#D0643B"; anything else (short forms too) to null. */

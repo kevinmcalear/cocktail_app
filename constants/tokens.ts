@@ -101,6 +101,15 @@ export const MAP_ME = '#8FB7E8';
  */
 export const dayHues = ['#1A1714', '#2F6DB5', '#E3B505', '#C8372D', '#7A4E2D', '#3F8A3A', '#E07020'] as const;
 
+/**
+ * A run sheet's guest venue and brands, as the dot on each owner chip (the
+ * host takes the accent). Always beside the party's name, never alone.
+ */
+export const partyHues = ['#D0643B', '#8FB3E8', '#9CC9A0', '#C9A0DC', '#E8C25A', '#7FC4C0'] as const;
+
+/** The printed run sheet: black on white, whatever the theme (run sheet board "Sheet"). */
+export const printPaper = { paper: '#FFFFFF', ink: '#1A1714', muted: '#555049', rule: '#C9C2B6', hairline: '#E6E0D6' } as const;
+
 /** The accent when there's no venue brand: bar-light amber. */
 export const DEFAULT_ACCENT = '#E4B062';
 
@@ -125,6 +134,10 @@ export const fontFamilies = {
   fraunces: 'Fraunces',
   frauncesItalic: 'FrauncesItalic',
   bricolage: 'BricolageGrotesque',
+  playfair: 'PlayfairDisplay',
+  playfairItalic: 'PlayfairDisplayItalic',
+  josefin: 'JosefinSans',
+  tenor: 'TenorSans',
   body: 'Geist',
   bodyMedium: 'GeistMedium',
   bodySemiBold: 'GeistSemiBold',
@@ -132,11 +145,18 @@ export const fontFamilies = {
   monoMedium: 'GeistMonoMedium',
 } as const;
 
-/** The display faces a venue can pick for drink and menu names. */
+/**
+ * The display faces a venue can pick for drink and menu names, in the picker's
+ * order: serifs, then sans. The last three load only when a venue uses them
+ * (components/ds/faces.ts).
+ */
 export const displayFaces = {
   instrument: { label: 'Instrument Serif', regular: fontFamilies.instrument, italic: fontFamilies.instrumentItalic },
   fraunces: { label: 'Fraunces', regular: fontFamilies.fraunces, italic: fontFamilies.frauncesItalic },
+  playfair: { label: 'Playfair Display', regular: fontFamilies.playfair, italic: fontFamilies.playfairItalic },
   bricolage: { label: 'Bricolage Grotesque', regular: fontFamilies.bricolage, italic: fontFamilies.bricolage },
+  josefin: { label: 'Josefin Sans', regular: fontFamilies.josefin, italic: fontFamilies.josefin },
+  tenor: { label: 'Tenor Sans', regular: fontFamilies.tenor, italic: fontFamilies.tenor },
 } as const;
 
 export type DisplayFace = keyof typeof displayFaces;
@@ -192,16 +212,36 @@ export const layout = {
 } as const;
 
 /**
- * The magic eight ball (components/screens/eightball). A black ball with an
- * ink-blue window in both themes, like the toy; its ring and triangle edge
- * take the venue accent.
+ * The magic eight ball (components/screens/eightball), in both themes and
+ * every venue, like the toy: a black ball, a black window, and a glowing
+ * electric-blue die face with small white capitals. No venue accent: the
+ * real one has none.
  */
 export const eightBall = {
   shine: '#3A352F',
   body: '#141210',
   edge: '#0A0908',
-  window: '#0F131C',
-  triangle: '#1F2E4A',
+  window: '#040507',
+  /** The face: bright in the middle, darker at its edges, a soft glow around it. */
+  faceCore: '#4A72FF',
+  face: '#2747E6',
+  faceEdge: '#1A2FAE',
+  glow: '#2D50FF',
+  /** The faces next to it, tipping away into the dark. */
+  neighbour: '#0C1856',
+  text: '#E4ECFF',
+  /** The other side: a white circle with a black 8, shown while the bar thinks. */
+  eightFace: '#F3EFE8',
+  eightShade: '#CFC8BC',
+  eightInk: '#0B0A09',
+  /** The window's clear rim and the shine on it. */
+  rim: 'rgba(255,255,255,0.10)',
+  glass: '#FFFFFF',
+  /** The answer's size on the face: capitals, the first letter of each word a little bigger, as printed on the toy. */
+  type: {
+    normal: { lead: 12, rest: 9, lineHeight: 11, letterSpacing: 0.5 },
+    small: { lead: 9.5, rest: 7.5, lineHeight: 9, letterSpacing: 0.3 },
+  },
 } as const;
 
 /** Reanimated withSpring configs. Use these three and nothing else. */

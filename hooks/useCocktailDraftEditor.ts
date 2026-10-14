@@ -1,6 +1,6 @@
 import { toastDone } from '@/lib/toast';
 import { decode } from "base64-arraybuffer";
-import * as FilePicker from "expo-image-picker";
+import { pickDrinkPhotos } from "@/components/drink/drinkImages";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Platform } from "react-native";
@@ -291,22 +291,7 @@ export function useCocktailDraftEditor({
         [markDirty]
     );
 
-    const pickImage = async () => {
-        const { status } = await FilePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== "granted") {
-            Alert.alert("Permission needed", "We need access to your photos.");
-            return;
-        }
-        const result = await FilePicker.launchImageLibraryAsync({
-            mediaTypes: FilePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 5],
-            quality: 0.8,
-        });
-        if (!result.canceled) {
-            addImages(result.assets.map((asset) => asset.uri));
-        }
-    };
+    const pickImage = async () => addImages(await pickDrinkPhotos({ cutout: true }));
 
     const uploadImage = async (uri: string, cocktailId: string): Promise<string | null> => {
         try {

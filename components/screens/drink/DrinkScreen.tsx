@@ -20,7 +20,7 @@ import { useTeamRole } from '@/hooks/useTeamRole';
 import { useItemVersions } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { heroPictures } from '@/lib/drinkPhotos';
-import { orderedPictures, type ItemImageLink } from '@/lib/itemImages';
+import { glassOver, orderedPictures, type ItemImageLink } from '@/lib/itemImages';
 import { drinkUrl, shareOrCopy } from '@/lib/shareLink';
 import { specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
@@ -37,6 +37,7 @@ import { DrinkHero, phoneHeroHeight } from './DrinkHero';
 import { DrinkMoreMenu } from './DrinkMoreMenu';
 import { GlassSheet } from './GlassSheet';
 import type { ShownPicture } from './PictureViewer';
+import { SketchColourSheet } from './SketchColour';
 import { StrengthSheet } from './StrengthSheet';
 import { useDrinkActions } from './useDrinkActions';
 import { useDrinkFacts } from './useDrinkFacts';
@@ -66,7 +67,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
   const venue = venues.find((v) => v.id === props.item.bar_id);
   return (
     <BackbarTheme>
-      <BrandProvider accent={venue?.accent ?? undefined}>
+      <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace}>
         <DrinkPage {...props} />
       </BrandProvider>
     </BackbarTheme>
@@ -97,6 +98,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const [batchOpen, setBatchOpen] = useState(!!openBatch);
   const [strengthOpen, setStrengthOpen] = useState(false);
   const [glassOpen, setGlassOpen] = useState(false);
+  const [colourOpen, setColourOpen] = useState(false);
   const role = useEffectiveRole(item.bar_id);
   const teamRole = useTeamRole(preview ? null : item.bar_id);
   // The venue's own team sees its staff rows, in venue mode (decision b49). Viewing as a lower role, the app's
@@ -168,9 +170,9 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
     venueName: teamRole !== null ? (venue?.name ?? null) : null,
   };
   const sections = useDrinkSections(bodyProps);
-  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} />;
+  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} onColour={canEdit && !preview ? () => setColourOpen(true) : undefined} />;
   const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />;
-  const heroScheme = pictures[0] && !pictures[0].isSketch ? 'dark' : 'light';
+  const heroScheme = glassOver(pictures[0]);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -222,6 +224,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
       {glassOpen ? (
         <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} canEditDrink={canEdit} accent={venue?.accent ?? undefined} />
       ) : null}
+      {colourOpen ? <SketchColourSheet visible onClose={() => setColourOpen(false)} itemId={item.id} name={item.name} accent={venue?.accent ?? undefined} /> : null}
       {canBatch && batchOpen ? (
         <BatchSheet
           visible

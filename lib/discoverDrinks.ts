@@ -316,6 +316,12 @@ export function venueScores(ranked: readonly DiscoverRow[]): Record<string, BarS
   return out;
 }
 
+/** Pins in Top bars' order (`order`: the viewer's loved bars, then the most relevant), from the area's early rows. */
+export function withBarOrder(pins: readonly MapPin[], early: readonly DiscoverRow[]): MapPin[] {
+  const order = new Map(early.map((r, i) => [r.venue_profile_id, i]));
+  return pins.map((p) => (order.has(p.id) ? { ...p, order: order.get(p.id) } : p));
+}
+
 /** The drinks layer's pins with their bar's score, which the pin then shows (b02); bars without one stay dots. */
 export function withBarScores(pins: readonly MapPin[], bars: Readonly<Record<string, BarScore>>): MapPin[] {
   return pins.map((p) => (bars[p.id] ? { ...p, score: bars[p.id].score, rankers: bars[p.id].rankers } : p));

@@ -5,12 +5,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, LockedSection, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
+import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { fontFamilies, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { groupMenus, plural } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
 
@@ -29,15 +31,19 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 }
 
 /**
- * Every menu at the venue: on now, coming up, drafts and previous. Reached
- * from Tonight and, on wide web, the sidebar. In home mode (or with no venue)
- * it's the person's own menus, reached from Collection. The two never mix.
+ * Every menu at the venue: on now, coming up, drafts and previous. The Menus
+ * tab (`tab`), and opened from Tonight and the venue menu. In home mode (or
+ * with no venue) it's the person's own menus, reached from Collection. The
+ * two never mix.
  */
-export function MenusScreen() {
+export function MenusScreen({ tab = false }: { tab?: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabBarInset = useTabBarInset();
   const column = usePageColumn();
+  // Back from a venue's menus goes to its first tab: Tonight, or Library when Tonight is off.
+  const first = useVenueFeature('tonight') ? 'Tonight' : 'Library';
   const userId = useUserId();
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const home = useMode().mode === 'home';
@@ -65,15 +71,15 @@ export function MenusScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={[column, styles.content, { paddingBottom: insets.bottom + space.xxxl }]}>
+      <ScrollView contentContainerStyle={[column, styles.content, { paddingBottom: (tab ? tabBarInset : insets.bottom) + space.xxxl }]}>
         <PageHeader
           title="Menus"
           display={!!barId}
           subtitle={summary}
-          onBack={() => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
-          backLabel={barId ? 'Back to Tonight' : 'Back'}
-          backText={barId ? 'Tonight' : 'Collection'}
-          crumbs={[barId ? { label: 'Tonight', href: '/' } : { label: 'Collection', href: '/collection' }]}
+          onBack={tab ? undefined : () => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
+          backLabel={barId ? `Back to ${first}` : 'Back'}
+          backText={barId ? first : 'Collection'}
+          crumbs={tab ? undefined : [barId ? { label: first, href: '/' } : { label: 'Collection', href: '/collection' }]}
           actionOnTop
           action={canCreate ? <Button label="New menu" icon="plus" onPress={() => setCreating(true)} /> : null}
         />

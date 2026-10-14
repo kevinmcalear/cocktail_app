@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, Button, Caption, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { CutoutOfferHost } from '@/components/drink/CutoutOfferHost';
 import { pickDrinkPhotos, takeDrinkPhoto } from '@/components/drink/drinkImages';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
@@ -34,6 +35,7 @@ export function ShotList({ itemId, barId, links }: { itemId: string; barId: stri
   return (
     <BackbarTheme>
       <AddPhotos itemId={itemId} shots={shots} open={open} onToggle={() => setOpen((v) => !v)} />
+      <CutoutOfferHost />
     </BackbarTheme>
   );
 }
@@ -84,7 +86,7 @@ function ShotRow({ shot, busy, uploading, onPhoto }: { shot: ServiceShot; busy: 
   const hint = `${action}s the ${shot.label.toLowerCase()} photo`;
   const choose = async (shoot: boolean) => {
     try {
-      const uri = shoot ? await takeDrinkPhoto() : (await pickDrinkPhotos())[0];
+      const uri = shoot ? await takeDrinkPhoto({ cutout: true }) : (await pickDrinkPhotos({ cutout: true }))[0];
       if (uri) onPhoto(uri);
     } catch {
       showMessage(shoot ? "Couldn't open the camera" : "Couldn't open your photos", 'Try again, or choose a photo from your library.');

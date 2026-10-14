@@ -7,7 +7,7 @@
 // link-preview bot goes straight to the page.
 
 import { drinkPreviewMeta, fetchPreviewDrinkCard } from './lib/drinkPreview';
-import { fetchPreviewDrinks, fetchSharedMenu, isPreviewBot, isUuid, previewHtml, previewMeta, resolveShareId, supabaseFromEnv, type PreviewMeta } from './lib/menuPreview';
+import { drawingsKey, fetchPreviewDrinks, fetchSharedMenu, isPreviewBot, isUuid, previewHtml, previewMeta, resolveShareId, supabaseFromEnv, type PreviewMeta } from './lib/menuPreview';
 
 export const config = { matcher: ['/m/:id', '/d/:id'] };
 
@@ -24,10 +24,14 @@ export default async function middleware(request: Request): Promise<Response | u
     let meta: PreviewMeta | null = null;
     if (kind === 'm') {
       const menu = await fetchSharedMenu(db, id);
-      if (menu) meta = previewMeta(menu, await fetchPreviewDrinks(db, menu.sections.flatMap((s) => s.item_ids).filter(isUuid)), url.origin, key);
+      if (menu) {
+        const ids = menu.sections.flatMap((s) => s.item_ids).filter(isUuid);
+        const [drinks, drawn] = await Promise.all([fetchPreviewDrinks(db, ids), drawingsKey(db, ids)]);
+        meta = previewMeta(menu, drinks, url.origin, key, drawn);
+      }
     } else {
-      const drink = await fetchPreviewDrinkCard(db, id);
-      if (drink) meta = drinkPreviewMeta(drink, url.origin, key);
+      const [drink, drawn] = await Promise.all([fetchPreviewDrinkCard(db, id), drawingsKey(db, [id])]);
+      if (drink) meta = drinkPreviewMeta(drink, url.origin, key, drawn);
     }
     // Not shared or not public (any more): the page's own generic tags, as before.
     if (!meta) return undefined;

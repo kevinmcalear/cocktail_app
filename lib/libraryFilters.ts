@@ -2,18 +2,22 @@ import type { ItemCategory } from '@/lib/itemRoutes';
 import { groupMenus } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
-/** Library's filters, as they read in the URL: /library?show=staff. */
+/** Library's filters, as they read in the URL: /library?show=staff (Classics; the old Staff list's value, kept so old links work). */
 export type Show =
   | 'all' | 'on-menu' | 'staff' | 'past' | 'rnd'
   | 'batched' | 'preps' | 'garnishes' | 'bottles'
   | 'cocktails' | 'ingredients' | 'beer' | 'wine' | 'needs-price';
 
-/** Which drinks: only at a venue. */
+/**
+ * Which drinks: only at a venue. Classics is the ranked list that used to be
+ * called Staff list (?show=staff), Old drinks what was Past (?show=past).
+ * R&D is one of the extras (EXTRA_FILTERS).
+ */
 export const LIST_FILTERS: { value: Show; label: string }[] = [
   { value: 'all', label: 'All' },
+  { value: 'staff', label: 'Classics' },
   { value: 'on-menu', label: 'On menu' },
-  { value: 'staff', label: 'Staff list' },
-  { value: 'past', label: 'Past' },
+  { value: 'past', label: 'Old drinks' },
   { value: 'rnd', label: 'R&D' },
 ];
 
@@ -43,10 +47,21 @@ export const DRINK_CATEGORIES: readonly ItemCategory[] = ['Cocktail', 'Beer', 'W
 
 const SHOWS = new Set<string>([...LIST_FILTERS, ...SHELF_FILTERS, ...TYPE_FILTERS, NEEDS_PRICE].map((f) => f.value));
 
-/** The filter in the URL, or All. The old Off menu screen arrives as ?show=staff. */
-export function parseShow(param: string | string[] | undefined, atVenue: boolean): Show {
+/**
+ * The filters past All, Classics, On menu, Old drinks, Beer and Wine: a venue
+ * shows them once it switches on More library filters (the libraryExtras
+ * feature, lib/venueFeatures.ts).
+ */
+export const EXTRA_FILTERS: ReadonlySet<Show> = new Set<Show>(['rnd', 'batched', 'preps', 'garnishes', 'bottles', 'cocktails', 'ingredients', 'needs-price']);
+
+/**
+ * The filter in the URL, or All. The old Off menu screen arrives as ?show=staff.
+ * At a venue without the extras, theirs fall back to All.
+ */
+export function parseShow(param: string | string[] | undefined, atVenue: boolean, extras = true): Show {
   const value = Array.isArray(param) ? param[0] : param;
   const show = value && SHOWS.has(value) ? (value as Show) : 'all';
+  if (atVenue && !extras && EXTRA_FILTERS.has(show)) return 'all';
   // Without a venue there are no menus, staff list or shelves.
   if (!atVenue && (LIST_FILTERS.some((f) => f.value === show) || show === 'batched')) return 'cocktails';
   if (!atVenue && SHELF_FILTERS.some((f) => f.value === show)) return 'ingredients';
@@ -90,12 +105,12 @@ export function menuDrinks(
   return { onMenus, on, onNow: [...onNow], past, rndMenus, rnd };
 }
 
-export type MenuState = 'On menu' | 'Past' | 'Off menu';
+export type MenuState = 'On menu' | 'Old drink' | 'Off menu';
 
-/** Where a drink stands with the menus: on one now, on one before, or never. */
+/** Where a drink stands with the menus: on one now, on one before (an old drink, as the Old drinks filter says), or never. */
 export function menuState(itemId: string, onNow: ReadonlySet<string>, past: ReadonlySet<string>): MenuState {
   if (onNow.has(itemId)) return 'On menu';
-  return past.has(itemId) ? 'Past' : 'Off menu';
+  return past.has(itemId) ? 'Old drink' : 'Off menu';
 }
 
 /** Service styles poured from a batch made ahead (lib/service.ts). */
@@ -153,11 +168,17 @@ export function venueShelves(
   return out;
 }
 
-/** The three groups of the chip row, in order (desktop draws a thin line between them). */
-export function filterGroups(atVenue: boolean, canCost: boolean): { value: Show; label: string }[][] {
+/**
+ * The groups of the chip row, in order (desktop draws a thin line between
+ * them). A venue starts with All, Classics, On menu, Old drinks, then Beer and
+ * Wine; `extras` adds R&D, the shelves, Cocktails and Needs a price.
+ */
+export function filterGroups(atVenue: boolean, canCost: boolean, extras = true): { value: Show; label: string }[][] {
   const types = atVenue ? TYPE_FILTERS.filter((f) => f.value !== 'ingredients') : TYPE_FILTERS;
   const groups = atVenue ? [LIST_FILTERS, SHELF_FILTERS] : [];
-  return [...groups, [...types, ...(canCost ? [NEEDS_PRICE] : [])]];
+  const all = [...groups, [...types, ...(canCost ? [NEEDS_PRICE] : [])]];
+  if (!atVenue || extras) return all;
+  return all.map((g) => g.filter((f) => !EXTRA_FILTERS.has(f.value))).filter((g) => g.length);
 }
 
 /** "Stirred · Coupe", "Stirred · Martini · Martini flight", "Beer · Pint": a tile's second line. */

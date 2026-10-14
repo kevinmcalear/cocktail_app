@@ -1,13 +1,25 @@
 import assert from 'node:assert/strict';
 
-import { GROUND_TINTS } from '../constants/tokens';
+import { displayFaces, GROUND_TINTS, type DisplayFace } from '../constants/tokens';
 
-import { brandProblems, faceFromDb, faceToDb, markBrand, normalizeHex, toPublicBrand, usableGroundTint } from './brand';
+import { brandProblems, faceFromDb, faceToDb, faceToSave, isUnknownFaceError, markBrand, normalizeHex, toPublicBrand, usableGroundTint } from './brand';
 
 // Display faces round-trip between the database enum and the app's names.
-for (const face of ['instrument', 'fraunces', 'bricolage'] as const) assert.equal(faceFromDb(faceToDb(face)), face);
+const faces = Object.keys(displayFaces) as DisplayFace[];
+assert.equal(faces.length, 6);
+for (const face of faces) assert.equal(faceFromDb(faceToDb(face)), face);
+assert.deepEqual(faces.slice(2).map(faceToDb), ['playfair_display', 'bricolage_grotesque', 'josefin_sans', 'tenor_sans']);
 assert.equal(faceFromDb(null), 'instrument');
 assert.equal(faceFromDb('something-new'), 'instrument');
+// A face from a newer build is kept when someone saves other fields here, and replaced when they pick one.
+assert.equal(faceToSave('instrument', 'something-new'), 'something-new');
+assert.equal(faceToSave('fraunces', 'something-new'), 'fraunces');
+assert.equal(faceToSave('playfair', 'instrument_serif'), 'playfair_display');
+assert.equal(faceToSave('instrument', null), 'instrument_serif');
+// The error PostgREST returns for an enum value the database doesn't have yet.
+assert.equal(isUnknownFaceError({ code: '22P02', message: 'invalid input value for enum venue_display_face: "tenor_sans"' }), true);
+assert.equal(isUnknownFaceError({ code: '22P02', message: 'invalid input syntax for type uuid' }), false);
+assert.equal(isUnknownFaceError(null), false);
 
 assert.equal(normalizeHex(' d0643b '), '#D0643B');
 assert.equal(normalizeHex('#abc'), null);

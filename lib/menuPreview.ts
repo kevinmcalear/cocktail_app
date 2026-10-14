@@ -64,15 +64,15 @@ export function drinksLine(menu: SharedMenuRow, drinks: PreviewDrink[]): string 
 }
 
 /** Changes whenever what the image shows changes, so a chat app's cached image doesn't outlive an edit. */
-export function menuVersion(menu: SharedMenuRow): string {
-  const text = [menu.name, menu.menu_date, menu.cover_url, menu.owner.name, ...menu.sections.flatMap((s) => s.item_ids)].join('|');
+export function menuVersion(menu: SharedMenuRow, drawn = ''): string {
+  const text = [menu.name, menu.menu_date, menu.cover_url, menu.owner.name, ...menu.sections.flatMap((s) => s.item_ids), drawn].join('|');
   let h = 5381;
   for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
   return h.toString(36);
 }
 
-/** `link` is what the shared link named the menu by: its slug, or its id. */
-export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin: string, link: string = menu.id): PreviewMeta {
+/** `link` is what the shared link named the menu by: its slug, or its id. `drawn` is drawingsKey's. */
+export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin: string, link: string = menu.id, drawn = ''): PreviewMeta {
   const night = nightLabel(menu.menu_date);
   const count = menu.sections.reduce((n, s) => n + s.item_ids.length, 0);
   const howMany = `${count} ${count === 1 ? 'drink' : 'drinks'}`;
@@ -80,7 +80,7 @@ export function previewMeta(menu: SharedMenuRow, drinks: PreviewDrink[], origin:
     // As the boards draw it (ppl-preview-imessage): the name, then "4 drinks for Saturday 31 October."
     title: menu.name,
     description: `${night ? `${howMany} for ${night}` : howMany}. A menu on Cocktail.`,
-    image: `${origin}/api/menu-og?id=${menu.id}&v=${menuVersion(menu)}`,
+    image: `${origin}/api/menu-og?id=${menu.id}&v=${menuVersion(menu, drawn)}`,
     url: `${origin}/m/${link}`,
   };
 }
@@ -164,6 +164,16 @@ export function fetchPreviewDrinks(db: Supabase, ids: string[]): Promise<Preview
 export function fetchSketchInputs<T>(db: Supabase, ids: string[]): Promise<{ item_id: string; inputs: T }[]> {
   if (!ids.length) return Promise.resolve([]);
   return select<{ item_id: string; inputs: T }>(db, `item_sketches?select=item_id,inputs&item_id=${inList(ids)}`);
+}
+
+/**
+ * What the drinks' drawings were picked to look like (their glass drawing and
+ * sketch colour), for an image's version: a recolour is a new image, not a
+ * week of the cached one.
+ */
+export async function drawingsKey(db: Supabase, ids: string[]): Promise<string> {
+  const rows = await fetchSketchInputs<{ variant?: string | null; tint?: string | null }>(db, ids);
+  return rows.map((r) => `${r.item_id}:${r.inputs?.variant ?? ''}:${r.inputs?.tint ?? ''}`).sort().join(',');
 }
 
 /** The project's public Supabase settings, as the web build has them. */

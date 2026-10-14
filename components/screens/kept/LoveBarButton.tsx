@@ -60,7 +60,8 @@ export function LoveBarButton({ profileId, name, labelled = false }: { profileId
           // The outlined Love pill (ppl-bar-unclaimed, ppl-pub-bar-desktop).
           <Button label="Love" icon="heart" variant="secondary" dense accessibilityLabel={label} onPress={toggle} style={styles.love} />
         ) : (
-          <GlassButton accessibilityLabel={label} icon={on ? 'heart.fill' : 'heart'} onPress={toggle} />
+          // Loved: the filled heart in the accent, as on the Loved pill.
+          <GlassButton accessibilityLabel={label} icon={on ? 'heart.fill' : 'heart'} color={on ? ds.accentText : undefined} onPress={toggle} />
         )
       )}
       {age.sheet}

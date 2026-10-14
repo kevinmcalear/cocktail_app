@@ -11,7 +11,7 @@ export interface StaffRowProps {
   pick: StaffPick;
   /** Its place in the ranking, or null for a drink on the list but not ranked. */
   place: number | null;
-  /** On menu, Off menu or Past. */
+  /** On menu, Off menu or Old drink. */
   status: string;
   onOpen: () => void;
   /** Starts loading the drink as it's pressed (usePrefetchCocktail). */

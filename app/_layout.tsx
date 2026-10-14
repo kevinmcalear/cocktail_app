@@ -89,8 +89,8 @@ function RootLayoutNav() {
   // `user`, not `session`: at launch it can be the saved session's user, whose
   // cached venues paint before auth-js finishes refreshing their token.
   // The menu builder fills the whole width (its library, the menu and the guest card), as
-  // drawn, and the printable guest card is a bare page.
-  const building = segments[0] === 'menus' && ['edit', 'card'].includes((segments as string[])[2]);
+  // drawn, and the printable guest card and run sheet are bare pages.
+  const building = segments[0] === 'menus' && (['edit', 'card'].includes((segments as string[])[2]) || (segments as string[])[3] === 'print');
   const showWebSidebar = isWideWeb && !!user && segments[0] !== 'auth' && segments[0] !== 'v' && segments[0] !== 'onboarding' && segments[0] !== 'venue-setup' && !building;
 
   return (
@@ -218,6 +218,8 @@ function RootLayoutNav() {
             <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/card" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/costing" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/[id]/run-sheet/index" options={{ headerShown: false }} />
+            <Stack.Screen name="menus/[id]/run-sheet/print" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/releases/[releaseId]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>

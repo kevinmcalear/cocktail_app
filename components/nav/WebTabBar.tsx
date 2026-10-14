@@ -5,11 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { FEATURES } from '@/constants/features';
 import { space } from '@/constants/tokens';
 import { useBottomBar, useBottomSearchFocus } from '@/hooks/useBottomBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
+import { phoneTabs, venueTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
 
 import { CalendarDayIcon } from './CalendarDayIcon';
 import { CreateSheet } from './CreateSheet';
@@ -18,21 +19,33 @@ export type WebTab = { name: string; label: string; icon: IconName };
 
 const DISCOVER: WebTab = { name: 'discover', label: 'Discover', icon: 'safari' };
 
-/** Prep and Study only when they're switched on (constants/features.ts). */
-export const VENUE_TABS: WebTab[] = [
-  { name: 'index', label: 'Tonight', icon: 'calendar' },
-  { name: 'library', label: 'Library', icon: 'book' },
-  FEATURES.prep && { name: 'prep', label: 'Prep', icon: 'flask' },
-  FEATURES.study && { name: 'test', label: 'Study', icon: 'rectangle.stack' },
-  DISCOVER,
-].filter((t): t is WebTab => !!t);
+const VENUE_TABS: Record<VenueTab, WebTab> = {
+  index: { name: 'index', label: 'Tonight', icon: 'calendar' },
+  library: { name: 'library', label: 'Library', icon: 'book' },
+  menus: { name: 'menus', label: 'Menus', icon: 'text.alignleft' },
+  prep: { name: 'prep', label: 'Prep', icon: 'flask' },
+  test: { name: 'test', label: 'Study', icon: 'rectangle.stack' },
+  discover: DISCOVER,
+};
 
-export const HOME_TABS: WebTab[] = [
-  DISCOVER,
-  { name: 'bar', label: 'My Bar', icon: 'wineglass' },
-  { name: 'collection', label: 'Collection', icon: 'bookmark' },
-  { name: 'profile', label: 'You', icon: 'person.crop.circle' },
-];
+const HOME_TABS = {
+  bar: { name: 'bar', label: 'My Bar', icon: 'wineglass' },
+  collection: { name: 'collection', label: 'Collection', icon: 'bookmark' },
+  profile: { name: 'profile', label: 'You', icon: 'person.crop.circle' },
+} satisfies Record<string, WebTab>;
+
+const TABS: Record<Exclude<PhoneTab, 'new'>, WebTab> = { ...VENUE_TABS, ...HOME_TABS };
+
+/**
+ * The tabs for the mode you're in, for the sidebar. At a venue: Library,
+ * Menus and Discover, plus Tonight, Prep and Study when the venue switched
+ * them on (lib/venueFeatures.ts). Phone bars use phoneTabs, which caps them.
+ */
+export function useModeTabs(): WebTab[] {
+  const { mode } = useMode();
+  const { has } = useVenueFeatures();
+  return mode === 'home' ? [DISCOVER, ...Object.values(HOME_TABS)] : venueTabs(has).map((name) => VENUE_TABS[name]);
+}
 
 /** A tab's icon. 'calendar' is Tonight's page with the date on it; the rest are symbols. */
 export function TabIcon({ name, size, color }: { name: IconName; size: number; color: ColorValue }) {
@@ -85,13 +98,14 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const { mode } = useMode();
+  const { has } = useVenueFeatures();
   const current = state.routes[state.index]?.name;
-  // Settings › Try it: New joins the tabs (home mode's You makes room; the avatar opens it),
+  // Settings › Try it: New joins the tabs and takes a tab's room (phoneTabs),
   // and while the bottom search field has focus it takes the bar's place.
   const bottomBar = useBottomBar();
   const searching = useBottomSearchFocus((s) => s.focused);
   const [creating, setCreating] = useState(false);
-  const tabs = mode === 'home' ? (bottomBar ? HOME_TABS.filter((t) => t.name !== 'profile') : HOME_TABS) : VENUE_TABS;
+  const tabs = phoneTabs(mode === 'home', has, bottomBar).flatMap((name) => (name === 'new' ? [] : [TABS[name]]));
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;

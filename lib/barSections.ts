@@ -49,6 +49,11 @@ export function barSection({ name, kind, role, abv, hasRecipe }: Sortable): BarS
   return 'fridge';
 }
 
+/** A mixer (soda, tonic, ginger beer): the fridge, but bought by the case, not squeezed. */
+export function isMixer(name: string): boolean {
+  return MIXER.test(name.toLowerCase());
+}
+
 /** When a house prep went on the shelf, as "Made today", "Made yesterday" or "Made 3 Oct". */
 export function madeLine(addedAt: string | null | undefined, now = new Date()): string | null {
   if (!addedAt) return null;

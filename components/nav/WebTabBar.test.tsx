@@ -7,14 +7,17 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { WebTabBar } from './WebTabBar';
 
-jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'home' }) }));
+let mockMode = 'home';
+let mockFeatures: string[] = [];
+jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode }) }));
+jest.mock('@/hooks/useVenueFeatures', () => ({ useVenueFeatures: () => ({ ready: true, has: (k: string) => mockFeatures.includes(k) }) }));
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => false }));
 jest.mock('./CreateSheet', () => {
   const { Text } = jest.requireActual('react-native');
   return { CreateSheet: () => <Text>New sheet</Text> };
 });
 
-const names = ['discover', 'bar', 'collection', 'profile', 'search'];
+const names = ['index', 'library', 'menus', 'prep', 'test', 'discover', 'bar', 'collection', 'profile', 'search'];
 const props = {
   state: { index: 0, routes: names.map((name) => ({ key: name, name })) },
   emitter: { emit: () => ({ defaultPrevented: false }) },
@@ -22,6 +25,8 @@ const props = {
 } as unknown as BottomTabBarProps;
 
 afterEach(() => {
+  mockMode = 'home';
+  mockFeatures = [];
   useSettingsStore.setState({ bottomBar: false });
   useBottomSearchFocus.setState({ focused: false });
 });
@@ -46,4 +51,14 @@ test('Try it: while the bottom search field has focus, the bar steps aside for i
   expect(screen.getByRole('tab', { name: 'Discover' })).toBeTruthy();
   await act(async () => useBottomSearchFocus.setState({ focused: true }));
   expect(screen.queryByRole('tab', { name: 'Discover' })).toBeNull();
+});
+
+test('Try it at a venue with every tab on: New takes a tab’s room, so the bar stays at five with Search', async () => {
+  mockMode = 'venue';
+  mockFeatures = ['tonight', 'prep', 'study'];
+  useSettingsStore.setState({ bottomBar: true });
+  await renderWithTamagui(<WebTabBar {...props} />);
+  expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(['Tonight', 'Library', 'Discover']);
+  expect(screen.getByRole('button', { name: /^New:/ })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
 });

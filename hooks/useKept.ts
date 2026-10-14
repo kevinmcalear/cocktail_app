@@ -110,7 +110,8 @@ export function useLoveBar() {
         : await supabase.from('loved_bars').delete().eq('profile_id', profileId);
       if (error) throw new Error(error.message);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['loved-bars'] }),
+    // Discover's bar lists put loved bars first.
+    onSettled: () => Promise.all([['loved-bars'], ['discover-top-bars'], ['discover-rankings']].map((queryKey) => qc.invalidateQueries({ queryKey }))),
     onError: () => {},
   });
 }

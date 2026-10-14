@@ -6,7 +6,7 @@
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { displayFaces, type } from '../../constants/tokens';
+import { displayFaces, displayName, type } from '../../constants/tokens';
 
 // Per em, from the bundled @expo-google-fonts files: hhea descent and the
 // tallest lowercase ascender (d, h, k, l, f). Accented capitals still reach
@@ -16,14 +16,22 @@ const METRICS: Record<keyof typeof displayFaces, { descent: number; ascender: nu
   instrument: { descent: 0.31, ascender: 0.748 },
   fraunces: { descent: 0.255, ascender: 0.738 },
   bricolage: { descent: 0.27, ascender: 0.712 },
+  // Playfair's italic ascender, the taller of the two. Josefin's hhea ascent
+  // (0.75) is below its own ascenders, so only this rule keeps it clear.
+  playfair: { descent: 0.251, ascender: 0.795 },
+  josefin: { descent: 0.25, ascender: 0.78 },
+  tenor: { descent: 0.25, ascender: 0.712 },
 };
 
-for (const variant of ['display', 'title'] as const) {
-  const { fontSize, lineHeight } = type[variant];
+// Display and title, plus the sizes names are set at in the display face:
+// headlines (rows, tiles) and the menu row and card names.
+const SIZES = { display: type.display, title: type.title, headline: type.headline, row: displayName.row, card: displayName.card };
+
+for (const [variant, { fontSize, lineHeight }] of Object.entries(SIZES)) {
   for (const [face, m] of Object.entries(METRICS)) {
     const room = lineHeight - m.descent * fontSize - m.ascender * fontSize;
     assert.ok(room >= 1, `${variant} in ${face}: ascenders clip on iOS (${room.toFixed(1)}pt of room above them)`);
   }
 }
 
-console.log('displayClip: display and title ascenders fit their line on iOS');
+console.log('displayClip: display-face ascenders fit their line on iOS');

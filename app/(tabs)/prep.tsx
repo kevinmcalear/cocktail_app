@@ -1,12 +1,14 @@
 import { Redirect } from 'expo-router';
 
 import { PrepScreen } from '@/components/screens/PrepScreen';
-import { FEATURES } from '@/constants/features';
 import { MountOnFocus } from '@/components/nav/MountOnFocus';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 
-/** The Prep tab, in venue mode. */
+/** The Prep tab, in venue mode, when the venue switched Prep on. */
 export default function Prep() {
-  return FEATURES.prep ? (
+  const { ready, has } = useVenueFeatures();
+  if (!ready) return null;
+  return has('prep') ? (
     <MountOnFocus>
       <PrepScreen />
     </MountOnFocus>

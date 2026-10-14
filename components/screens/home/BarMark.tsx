@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { LogoImage, useDs } from '@/components/ds';
-import { backbar, displayFaces, type DisplayFace } from '@/constants/tokens';
+import { LogoImage, useDisplayFaces, useDs } from '@/components/ds';
+import { backbar, type DisplayFace } from '@/constants/tokens';
 import { useBarBrand } from '@/hooks/useBarBrands';
 import { markBrand } from '@/lib/brand';
 import { accentFill, readableAccent } from '@/lib/color';
@@ -31,12 +31,13 @@ export function BarMark({ name, logoUrl, size, brand, filled, neutral, letter, p
   const looked = useBarBrand(!logoUrl && brand === undefined ? profileId : null);
   const logo = logoUrl || looked?.logo;
   const own: BarBrand | null = brand ?? markBrand(looked);
+  const family = useDisplayFaces([logo ? null : own?.face]);
   const round = { width: size, height: size, borderRadius: size / 2 };
   if (logo) return <LogoImage uri={logo} size={size} radius={size / 2} />;
   // The bar's accent made readable on this ground, and its fill with the ink that reads on it.
   const accent = own ? readableAccent(own.accent, ds.c.ground) : ds.accentText;
   const fill = own ? accentFill(own.accent, backbar.dark.ground, backbar.light.surface) : ds.accentFill;
-  const face = displayFaces[own?.face ?? ds.displayFace].regular;
+  const face = family(own?.face ?? ds.displayFace);
   const look = filled
     ? { backgroundColor: fill.fill, color: fill.text, borderColor: 'transparent' }
     : neutral && !own

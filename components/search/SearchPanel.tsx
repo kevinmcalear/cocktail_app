@@ -9,6 +9,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { recentMatchesContext } from '@/hooks/useTrackRecent';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { belongsHere, inSelectedContext } from '@/lib/barContextFilter';
 import { fallbackGlass } from '@/lib/itemRoutes';
@@ -121,19 +122,20 @@ export function SearchBody({ query, scope, onScope, mine, area, onJump, commands
 }
 
 const KIND_LABEL: Record<RecentActivity['kind'], string> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine', ingredient: 'Ingredient', menu: 'Menu', bar: 'Bar', flavor: 'Flavor map' };
+// Ingredients is one of Library's extras: it shows with More library filters.
 const JUMPS = [
+  { label: 'Classics', href: '/library?show=staff' },
   { label: 'On menu now', href: '/library?show=on-menu' },
-  { label: 'Staff list', href: '/library?show=staff' },
-  { label: 'Past', href: '/library?show=past' },
+  { label: 'Old drinks', href: '/library?show=past' },
   { label: 'Drafts', href: '/drafts' },
-  { label: 'Ingredients', href: '/library?show=ingredients' },
+  { label: 'Ingredients', href: '/library?show=ingredients', extra: true },
 ] as const;
 
-/** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry). */
+/** The ways in that aren't a search: the flavor map, the history and the techniques (prep-flavor-entry), each when it's switched on. */
 const ENTRIES = [
-  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map' },
-  { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history' },
-  { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques' },
+  { title: 'Flavor map', caption: 'What goes with what, counted from real drinks', icon: 'target', href: '/flavor-map', feature: 'flavorMap' },
+  { title: 'Cocktail history', caption: "Every classic's family tree, back to the punch bowl", icon: 'book', href: '/history', feature: 'history' },
+  { title: 'Techniques and equipment', caption: 'Foams, clarifying, milk punch, infusions, and the kit for each', icon: 'flask', href: '/techniques', feature: 'techniques' },
 ] as const;
 
 function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: SearchMine; onJump?: () => void; commands?: ReactNode }) {
@@ -143,6 +145,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
   const venue = scope === 'mine' && !!mine.venueId;
   const facts = useMineFacts(venue ? mine.venueId : null, NO_ITEMS);
   const { drafts } = useDrafts();
+  const { has } = useVenueFeatures();
   const [now] = useState(() => Date.now());
   const recent = all.filter((r) => (scope === 'mine' ? recentMatchesContext(r, mine.contextIds) : belongsHere(r.barId, myVenueIds, mine.venueId)));
   const open = (r: RecentActivity) => router.push((r.kind === 'menu' && !r.isDraft ? `/menus/${encodeURIComponent(r.id)}` : r.href) as never);
@@ -186,7 +189,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
           </Caption>
           <View style={styles.chips}>
             {/* Drafts stays with its count, even at none (decided 10 Oct, b53); outlined chips, as drawn. */}
-            {JUMPS.map((j) => (
+            {JUMPS.filter((j) => !('extra' in j) || has('libraryExtras')).map((j) => (
               <Chip key={j.label} label={j.label} count={j.label === 'Drafts' ? draftCount : undefined} quiet selected={false} onPress={() => go(j.href)} />
             ))}
           </View>
@@ -194,7 +197,7 @@ function Recent({ scope, mine, onJump, commands }: { scope: SearchScope; mine: S
       ) : null}
       {commands}
       <View>
-        {ENTRIES.map((e) => (
+        {ENTRIES.filter((e) => has(e.feature)).map((e) => (
           <ResultRow key={e.href} title={e.title} caption={e.caption} icon={e.icon} accentIcon={e.href === '/flavor-map'} onPress={() => go(e.href)} />
         ))}
       </View>

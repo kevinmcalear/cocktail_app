@@ -16,3 +16,7 @@ export { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 export { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 export { InstrumentSerif_400Regular } from '@expo-google-fonts/instrument-serif/400Regular';
 export { InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif/400Regular_Italic';
+export { JosefinSans_600SemiBold } from '@expo-google-fonts/josefin-sans/600SemiBold';
+export { PlayfairDisplay_400Regular } from '@expo-google-fonts/playfair-display/400Regular';
+export { PlayfairDisplay_400Regular_Italic } from '@expo-google-fonts/playfair-display/400Regular_Italic';
+export { TenorSans_400Regular } from '@expo-google-fonts/tenor-sans/400Regular';
