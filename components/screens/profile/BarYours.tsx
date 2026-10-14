@@ -1,6 +1,6 @@
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, PressableScale, Spec, useDs } from '@/components/ds';
+import { Caption, DsText, Spec, useDs } from '@/components/ds';
 import { radius, space, type } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useBarFacts } from '@/hooks/useBarFacts';
@@ -9,7 +9,6 @@ import { useMadeDrinks } from '@/hooks/useMade';
 import { useProfileAwards, type Profile } from '@/hooks/useProfiles';
 import { useMyHadDrinks } from '@/hooks/useRankings';
 import { awardLines, sortAwards } from '@/lib/awards';
-import { instagramUrl, normalizeInstagram } from '@/lib/profiles';
 import { formatScore } from '@/lib/ranking';
 
 /** What you've had at this bar: how many drinks, and your average across them. */
@@ -51,11 +50,10 @@ export function BarYours({ profileId, drinkIds }: { profileId: string; drinkIds:
 
 /**
  * The facts an unclaimed bar's page lists (ppl-bar-unclaimed): when it
- * opened, its best award, and where it is online. Rows it has no fact for
- * are left out.
+ * opened and its best award (its Instagram is in PublicBarFacts). Rows it
+ * has no fact for are left out.
  */
 export function BarFactsList({ profile }: { profile: Profile }) {
-  const ds = useDs();
   const facts = useBarFacts(profile.id).data;
   const best = sortAwards(useProfileAwards(profile.id).data ?? [])[0];
   const award = best ? awardLines(best) : null;
@@ -63,7 +61,7 @@ export function BarFactsList({ profile }: { profile: Profile }) {
     facts?.opened_year ? { term: 'Opened', value: String(facts.opened_year) } : null,
     award ? { term: 'Award', value: `${award.detail} · ${award.headline}` } : null,
   ].filter((r): r is { term: string; value: string } => !!r);
-  if (!rows.length && !profile.instagram) return null;
+  if (!rows.length) return null;
   return (
     <View role="list" style={styles.facts}>
       {rows.map((r) => (
@@ -76,18 +74,6 @@ export function BarFactsList({ profile }: { profile: Profile }) {
           </DsText>
         </View>
       ))}
-      {profile.instagram ? (
-        <View role="listitem" style={styles.fact}>
-          <DsText variant="body" tone="muted" style={[styles.text, styles.term]}>
-            Online
-          </DsText>
-          <PressableScale role="link" accessibilityLabel="Instagram" accessibilityHint={`@${normalizeInstagram(profile.instagram)}, opens Instagram`} onPress={() => void Linking.openURL(instagramUrl(normalizeInstagram(profile.instagram!)))}>
-            <DsText variant="body" color={ds.accentText} style={styles.text}>
-              Instagram
-            </DsText>
-          </PressableScale>
-        </View>
-      ) : null}
     </View>
   );
 }

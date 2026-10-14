@@ -20,6 +20,29 @@ export const ICE_LABEL: Record<IceKind, string> = {
   sphere: 'Sphere',
 };
 
+// The kinds a guessed ice gives way to, nearest first: big cubes for cubes,
+// the crushed family for crushed. Kept in step with private.house_ice
+// (supabase/migrations/20261019600000_venue_ice_drawings.sql).
+const NEAR: Record<IceKind, readonly IceKind[]> = {
+  cubes: ['cubes', 'large', 'sphere', 'spear'],
+  large: ['large', 'sphere', 'cubes'],
+  sphere: ['sphere', 'large', 'cubes'],
+  spear: ['spear', 'cubes', 'large'],
+  crushed: ['crushed', 'pebble', 'shaved', 'cubes'],
+  pebble: ['pebble', 'crushed', 'shaved', 'cubes'],
+  shaved: ['shaved', 'crushed', 'pebble', 'cubes'],
+};
+
+/**
+ * The venue's own ice for a drink whose ice was guessed: the guess when the
+ * venue has it, else its nearest kind the venue has. Null when there's
+ * nothing to change: no ice, a venue with no ice listed, or nothing near.
+ */
+export function houseIce(ice: string, kinds: readonly string[]): IceKind | null {
+  if (!kinds.length || !(ice in NEAR) || kinds.includes(ice)) return null;
+  return NEAR[ice as IceKind].find((k) => kinds.includes(k)) ?? null;
+}
+
 /** The venue's ice in the wizard's words, in its order ("Cubes", "Large cube"). */
 export function venueIceNames(rows: readonly { kind: string; key: string }[]): string[] {
   return rows.filter((r) => r.kind === 'ice' && r.key in ICE_LABEL).map((r) => ICE_LABEL[r.key as IceKind]);

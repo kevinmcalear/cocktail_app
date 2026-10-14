@@ -19,7 +19,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useShelf, useShelfEdit } from '@/hooks/useHomeBar';
 import type { IngredientBottle } from '@/hooks/useIngredients';
 import { useMode } from '@/hooks/useMode';
-import { useItemPrep, usePrepUsedIn } from '@/hooks/usePrepCard';
+import { useItemPrep, usePrepSources, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { readNoteRecipe } from '@/lib/noteRecipe';
 import { toQuantity } from '@/lib/quantity';
@@ -87,6 +87,8 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
   const { width, height } = useWindowDimensions();
   const { data: card } = useItemPrep(ingredient.id);
   const { data: used } = usePrepUsedIn(ingredient.id);
+  // Shared preps cite their ratio; signed-in readers only, like the sources themselves.
+  const { data: sources } = usePrepSources(ingredient.id, !!userId && !ingredient.bar_id);
   const { data: capabilities } = useCapabilities(ingredient.bar_id);
   // A venue's recipe is for its Drink Creators and up; shared ones are open.
   const venueRole = useEffectiveRole(ingredient.bar_id);
@@ -149,7 +151,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
       {technical ? <WhereToBuy name={ingredient.name} /> : null}
     </View>
   );
-  const recipe = showRecipe ? <PrepRecipe lines={lines} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} onSize={(f, m) => setSize({ factor: f, makes: m })} onFromWhatIHave={() => make('have')} /> : null;
+  const recipe = showRecipe ? <PrepRecipe lines={lines} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} onSize={(f, m) => setSize({ factor: f, makes: m })} onFromWhatIHave={() => make('have')} checkedOn={sources?.filter((s) => s.field === 'recipe').map((s) => s.url)} /> : null;
   const method = isPrep && canViewDetails ? <PrepMethod steps={steps} takes={leadTimeLabel(prep?.lead_time_minutes ?? null, prep?.lead_time_note ?? null)} onEdit={canEditPrep ? () => setEditingPrep(true) : undefined} /> : null;
   const around = <AroundIt ingredient={ingredient} bottles={bottles} isPrep={isPrep} />;
   const pairs = <PairsWith itemId={ingredient.id} name={ingredient.name} />;

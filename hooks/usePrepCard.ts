@@ -317,3 +317,87 @@ export function useMakeVenueVersion() {
     },
   });
 }
+
+export interface PrepSource {
+  field: 'recipe' | 'yield' | 'keeps';
+  url: string;
+  note: string | null;
+}
+
+/**
+ * Where a shared prep's recipe, yield and keep come from (item_sources), so the
+ * page can say "Ratio from imbibemagazine.com". Signed-in readers only, like
+ * the table; a venue's own prep has none.
+ */
+export function usePrepSources(itemId: string | null | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ['prep-sources', itemId],
+    enabled: !!itemId && enabled,
+    staleTime: 60 * 60 * 1000,
+    queryFn: async (): Promise<PrepSource[]> => {
+      const { data, error } = await supabase
+        .from('item_sources')
+        .select('field, url, note')
+        .eq('item_id', itemId!)
+        .in('field', ['recipe', 'yield', 'keeps'])
+        .order('url');
+      if (error) throw error;
+      return (data ?? []) as PrepSource[];
+    },
+  });
+}
+
+export interface CatalogRecipe {
+  id: string;
+  name: string;
+  lines: { id: string | null; name: string; amount: number | null; unit: string | null; note: string | null; optional: boolean }[];
+  card: PrepCardData;
+  /** The pages its ratio was checked on (two for a staple), when it cites any. */
+  checkedOn: string[];
+}
+
+/**
+ * The shared catalog's recipe for a prep of this name (or alias), when it has
+ * one with amounts: what a new house version starts from. Null otherwise.
+ */
+export function useCatalogRecipe(name: string | null | undefined) {
+  const key = name?.trim().toLowerCase() ?? '';
+  return useQuery({
+    queryKey: ['catalog-recipe', key],
+    enabled: !!key,
+    staleTime: 60 * 60 * 1000,
+    queryFn: async (): Promise<CatalogRecipe | null> => {
+      const { data: id, error } = await supabase.rpc('resolve_ingredient', { p_name: name!.trim() });
+      if (error) throw error;
+      if (!id) return null;
+      const [item, lines, prep, steps, sources] = await Promise.all([
+        supabase.from('items').select('id, name, bar_id, ingredient_role').eq('id', id).maybeSingle(),
+        supabase
+          .from('app_recipe_presentation')
+          .select('amount, unit, preparation_notes, is_optional, sort_order, display_ingredient(id, name)')
+          .eq('recipe_item_id', id)
+          .order('sort_order'),
+        supabase.from('item_prep').select(PREP_COLUMNS).eq('item_id', id).maybeSingle(),
+        supabase.from('item_steps').select('position, body, timer_seconds').eq('item_id', id).order('position'),
+        supabase.from('item_sources').select('url').eq('item_id', id).eq('field', 'recipe').order('url'),
+      ]);
+      if (item.error) throw item.error;
+      if (lines.error) throw lines.error;
+      const row = item.data as { id: string; name: string; bar_id: string | null; ingredient_role: string | null } | null;
+      if (!row || row.bar_id || row.ingredient_role !== 'prep') return null;
+      type Line = { amount: number | null; unit: string | null; preparation_notes: string | null; is_optional: boolean | null; display_ingredient: { id: string; name: string } | null };
+      const recipe = ((lines.data ?? []) as unknown as Line[])
+        .filter((l) => l.display_ingredient)
+        .map((l) => ({ id: l.display_ingredient!.id, name: l.display_ingredient!.name, amount: l.amount, unit: l.unit, note: l.preparation_notes, optional: !!l.is_optional }));
+      if (!recipe.some((l) => l.amount != null)) return null;
+      return {
+        id: row.id,
+        name: row.name,
+        lines: recipe,
+        card: { prep: (prep.data as ItemPrep | null) ?? null, steps: (steps.data ?? []) as PrepStep[] },
+        // A signed-out reader can't read sources: the recipe still comes, without its pages.
+        checkedOn: ((sources.data ?? []) as { url: string }[]).map((s) => s.url),
+      };
+    },
+  });
+}

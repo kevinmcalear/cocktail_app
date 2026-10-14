@@ -6,6 +6,8 @@
 import { partWeight } from '../../supabase/functions/_shared/flavor';
 import { sketchFromDrink } from '../../supabase/functions/_shared/sketchRules';
 
+import { houseIce } from '../venueKit';
+
 import type { SketchInputs } from './types';
 
 export interface DraftLine {
@@ -28,6 +30,8 @@ export interface DraftLook {
   variant?: string | null;
   /** The bar's own glasses' drawings, for when nothing is picked (bar_glassware). */
   barVariants?: readonly string[];
+  /** The venue's ice kinds ('cubes', 'large'), for when the ice is only guessed (bar_kit). */
+  barIce?: readonly string[];
 }
 
 export function draftSketchInputs(draft: DraftLook): SketchInputs {
@@ -49,5 +53,7 @@ export function draftSketchInputs(draft: DraftLook): SketchInputs {
   // As the database resolves it after a save: the pick, else the bar's glass of this type.
   const forGlass = (v: string | null | undefined) => (v?.startsWith(`${inputs.glass}_`) ? v : null);
   const variant = forGlass(draft.variant) ?? (draft.barVariants ?? []).map(forGlass).find(Boolean) ?? null;
-  return { ...inputs, variant };
+  // And its ice: a guessed one gives way to the venue's nearest kind.
+  const ice = inputs.from.ice === 'data' ? null : houseIce(inputs.ice, draft.barIce ?? []);
+  return { ...inputs, ice: ice ?? inputs.ice, variant };
 }

@@ -31,6 +31,8 @@ const GLYPHS = {
   sun: ['M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0', 'M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1'],
   // The eight ball (Pick for me): the ball, its window and the 8, as the palette board draws it.
   eightball: ['M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0', 'M7.8 11a4.2 4.2 0 1 0 8.4 0a4.2 4.2 0 1 0-8.4 0', 'M10.8 9.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0', 'M10.5 12.4a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0'],
+  // A bar's Instagram, on every platform (SF Symbols has no brand marks), as ppl-pub-bar-desktop draws it.
+  instagram: ['M8.5 3.5h7a5 5 0 0 1 5 5v7a5 5 0 0 1-5 5h-7a5 5 0 0 1-5-5v-7a5 5 0 0 1 5-5z', 'M8 12a4 4 0 1 0 8 0a4 4 0 1 0-8 0', 'M17.2 6.8h.01'],
 } as const;
 
 export type LineGlyphName = keyof typeof GLYPHS | 'dot' | 'grip';

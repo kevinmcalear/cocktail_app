@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { EQUIPMENT } from './techniques/equipment';
-import { ICE_KINDS, isVenueIce, kitSourceLine, supplierLine, toolGroups, venueIceNames } from './venueKit';
+import { houseIce, ICE_KINDS, isVenueIce, kitSourceLine, supplierLine, toolGroups, venueIceNames } from './venueKit';
 
 // The database's bar_kit_key_check list, less nothing: keep them in step.
 assert.deepEqual([...ICE_KINDS], ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere']);
@@ -28,3 +28,11 @@ const names = venueIceNames([{ kind: 'ice', key: 'large' }, { kind: 'tool', key:
 assert.deepEqual(names, ['Large cube', 'Cubes']);
 assert.ok(isVenueIce(names, ' large cube'));
 assert.ok(!isVenueIce(names, 'Crushed'));
+
+// Drawings: a guessed ice gives way to the venue's nearest kind.
+assert.equal(houseIce('cubes', ['large', 'crushed']), 'large');
+assert.equal(houseIce('crushed', ['cubes', 'pebble']), 'pebble');
+assert.equal(houseIce('spear', ['crushed']), null, 'nothing near');
+assert.equal(houseIce('cubes', ['cubes', 'large']), null, 'the venue has it');
+assert.equal(houseIce('none', ['cubes']), null, 'no ice stays no ice');
+assert.equal(houseIce('cubes', []), null, 'no ice listed');

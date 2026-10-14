@@ -33,6 +33,9 @@ export interface DrinkImageProps {
   /**
    * List or grid size: the 480 px copy (lib/thumbnails.ts) instead of the
    * original, which can be 2-3 MB. Falls back to the original until the copy exists.
+   * A drawing paints in an idle slice, not in the render that mounts the tile:
+   * a full sketch is tens of ms on a phone, and a scrolled-in batch of tiles
+   * painting at once stalled Library's scroll.
    */
   thumb?: boolean;
   /** With no image: draw the sketch in front of you (AnimatedSketch). One per screen. */
@@ -99,10 +102,10 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
         />
       ) : sketch ? (
         <View style={styles.fill}>
-          <SketchDrawing inputs={sketch} seed={itemId ?? accessibilityLabel} detail={sketchDetail} />
+          <SketchDrawing inputs={sketch} seed={itemId ?? accessibilityLabel} detail={sketchDetail} lazy={thumb || sketchDetail === 'thumb'} />
         </View>
       ) : itemId ? (
-        <DrawnSketch itemId={itemId} fallback={glassIcon} animate={animate} detail={sketchDetail} />
+        <DrawnSketch itemId={itemId} fallback={glassIcon} animate={animate} detail={sketchDetail} lazy={thumb || sketchDetail === 'thumb'} />
       ) : (
         glassIcon
       )}

@@ -34,8 +34,41 @@ jobs:
       - run: npm run test:unit
       - run: npm run build:web
 
+  # A PR that changes nothing the database job reads skips it
+  # (scripts/database-ci.mjs). On a pull_request the checkout is GitHub's merge
+  # commit, so HEAD^1 is the base branch and the diff is just this PR.
+  changes:
+    name: Database job needed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      database: ${{ steps.check.outputs.database }}
+      functions: ${{ steps.check.outputs.functions }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            files=$(git diff --name-only HEAD^1 HEAD)
+            printf '%s\n' "$files" | node scripts/database-ci.mjs >> "$GITHUB_OUTPUT"
+            if printf '%s\n' "$files" | grep -qE '^(supabase/functions/|\.github/workflows/ci\.yml$)'; then
+              echo functions=true >> "$GITHUB_OUTPUT"
+            else
+              echo functions=false >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo database=true >> "$GITHUB_OUTPUT"
+            echo functions=true >> "$GITHUB_OUTPUT"
+          fi
+
   database:
     name: Migrations and security tests
+    needs: changes
+    # A skipped job passes the required check. Skip only on an explicit "no":
+    # if the changes job fails, this still runs. Pushes to main always run it.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
     runs-on: ubuntu-latest
     # Rebuilding the database now replays several large catalog data
     # migrations; busy runs passed 20 minutes and were cut off mid-suite.
@@ -78,6 +111,8 @@ jobs:
     name: Edge functions typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.functions == 'true') }}
     steps:
       - uses: actions/checkout@v7
       - uses: denoland/setup-deno@v2

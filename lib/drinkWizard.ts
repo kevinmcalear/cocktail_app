@@ -361,7 +361,7 @@ export const amountOf = (s: string): number | null => {
 };
 
 /** What the live sketch is drawn from. */
-export function sketchLook(d: WizardDraft, barVariants: readonly string[] = []): DraftLook {
+export function sketchLook(d: WizardDraft, barVariants: readonly string[] = [], barIce: readonly string[] = []): DraftLook {
   return {
     name: d.name.trim() || 'New drink',
     description: d.description,
@@ -371,6 +371,7 @@ export function sketchLook(d: WizardDraft, barVariants: readonly string[] = []):
     lines: [...d.lines, ...d.garnishes].map((l) => ({ name: l.name, amount: amountOf(l.amount), unit: l.unit || null })),
     variant: d.glassVariant ?? null,
     barVariants,
+    barIce,
   };
 }
 
