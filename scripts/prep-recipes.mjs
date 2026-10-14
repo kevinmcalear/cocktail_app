@@ -20,7 +20,7 @@
 //     rewrites what the seed gives.
 //   * Every fact keeps the page it came from in item_sources.
 // Venue preps are never touched.
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -28,6 +28,8 @@ export const DIR = 'supabase/seeds/preps';
 export const CHECKED_ON_DEFAULT = '2026-10-14';
 
 export function readSeeds(dir = DIR) {
+  // No seeds yet is fine: git keeps no empty folder.
+  if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith('.json'))
     .sort()
