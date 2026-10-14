@@ -16,11 +16,12 @@ import { BarProfile } from './BarProfile';
 import { MakerProfile } from './MakerProfile';
 import { PersonProfile } from './PersonProfile';
 import { PublicBarPage } from './PublicBarPage';
+import { SupplierProfile } from './SupplierProfile';
 import { useShareLink } from './useShareLink';
 
 /**
  * A public profile: a person or a bar, the same kind of page (a maker's has
- * its own, MakerProfile). Who they are, the drinks credited to them, and the
+ * its own, MakerProfile, and so does a supplier's, SupplierProfile). Who they are, the drinks credited to them, and the
  * bars that put those drinks on a menu (the credit that matters most). A
  * person who chooses to can show the drinks they've had, with their scores.
  */
@@ -77,6 +78,8 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
     body =
       profile.kind === 'maker' ? (
         <MakerProfile profile={profile} columns={columns} />
+      ) : profile.kind === 'supplier' ? (
+        <SupplierProfile profile={profile} />
       ) : profile.kind === 'person' ? (
         <PersonProfile profile={profile} columns={columns} />
       ) : wideBar ? (

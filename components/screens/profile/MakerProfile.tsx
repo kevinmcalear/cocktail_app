@@ -13,13 +13,15 @@ import { makesLine, servesLine } from '@/lib/makers';
 import { Awards } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { MakerGlassBars } from './MakerGlassBars';
+import { MakerSuppliers } from './MakerSuppliers';
 import { ProfileLinks } from './ProfileLinks';
 import { BarHeader, OriginalsGrid, Stat, Stats } from './ProfileSections';
 
 /**
  * A maker's page: the house that makes a bottle, cuts a bar's ice or makes
  * its glass. Who they are, what they make and where they deliver, their
- * bottles, and the drinks that credit them (once they've confirmed it).
+ * bottles, the drinks that credit them (once they've confirmed it), and the
+ * suppliers bars order them from.
  * Owned by a venue team like a bar's page; never on the map or in Discover.
  */
 export function MakerProfile({ profile, columns }: { profile: Profile; columns: number }) {
@@ -92,6 +94,8 @@ export function MakerProfile({ profile, columns }: { profile: Profile; columns: 
       ) : null}
 
       {signedIn ? <MakerGlassBars profileId={profile.id} name={profile.display_name} /> : null}
+
+      <MakerSuppliers profileId={profile.id} name={profile.display_name} />
     </View>
   );
 }

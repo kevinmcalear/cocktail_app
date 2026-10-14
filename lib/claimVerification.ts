@@ -127,8 +127,8 @@ function defaultRandom(): number {
 
 export const spacedCode = (code: string) => code.replace(/^(\d{3})(\d{3})$/, '$1 $2');
 
-/** What a claim calls the place behind the page: a bar, or a maker's company. */
-export const claimPlace = (kind: string | null | undefined) => (kind === 'maker' ? 'company' : 'bar');
+/** What a claim calls the place behind the page: a bar, or a maker's or supplier's company. */
+export const claimPlace = (kind: string | null | undefined) => (kind === 'maker' || kind === 'supplier' ? 'company' : 'bar');
 
 /** Errors from starting or reviewing a claim, in words. The database's own messages (P0001) are written for people. */
 export function claimProblem(error: unknown): string {
