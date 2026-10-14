@@ -22,7 +22,8 @@ test('the search pill clears only once there is a query', async () => {
 test('filters pick several at once and clear together', async () => {
   const onChange = jest.fn();
   const onShow = jest.fn();
-  await renderWithTamagui(<FiltersSheet kinds={['martini']} onChange={onChange} bars={3} closed={{ count: 4, shown: false, onShow }} onClose={() => {}} />);
+  const onPast = jest.fn();
+  await renderWithTamagui(<FiltersSheet kinds={['martini']} onChange={onChange} bars={3} closed={{ count: 4, shown: false, onShow }} past={{ shown: false, onShow: onPast }} onClose={() => {}} />);
   expect(screen.getByRole('checkbox', { name: 'Martinis', checked: true })).toBeTruthy();
 
   await fireEvent.press(screen.getByRole('checkbox', { name: 'Gin' }));
@@ -31,9 +32,12 @@ test('filters pick several at once and clear together', async () => {
   expect(onChange).toHaveBeenLastCalledWith([]);
   await fireEvent.press(screen.getByRole('checkbox', { name: 'Closed bars · 4', checked: false }));
   expect(onShow).toHaveBeenLastCalledWith(true);
+  await fireEvent.press(screen.getByRole('checkbox', { name: 'Past menus', checked: false }));
+  expect(onPast).toHaveBeenLastCalledWith(true);
   await fireEvent.press(screen.getByRole('button', { name: 'Clear' }));
   expect(onChange).toHaveBeenLastCalledWith([]);
   expect(onShow).toHaveBeenLastCalledWith(false);
+  expect(onPast).toHaveBeenLastCalledWith(false);
   expect(screen.getByRole('button', { name: 'Show 3 bars' })).toBeTruthy();
 });
 
@@ -43,7 +47,7 @@ test('options: list or map closes the sheet; where and filters keep it open', as
   const onArea = jest.fn();
   const onChange = jest.fn();
   const where = { area: { kind: 'anywhere' } as const, near: { status: 'idle' } as const, access: null, preferNear: false, onArea, onNearMe: jest.fn(), onThisArea: jest.fn() };
-  await renderWithTamagui(<OptionsSheet kinds={[]} onChange={onChange} bars={3} closed={{ count: 0, shown: false, onShow: jest.fn() }} onClose={onClose} where={where} view={{ showing: 'list', onChange: onView }} />);
+  await renderWithTamagui(<OptionsSheet kinds={[]} onChange={onChange} bars={3} closed={{ count: 0, shown: false, onShow: jest.fn() }} past={{ shown: false, onShow: jest.fn() }} onClose={onClose} where={where} view={{ showing: 'list', onChange: onView }} />);
   await fireEvent.press(screen.getByRole('checkbox', { name: 'Gin' }));
   expect(onChange).toHaveBeenLastCalledWith(['gin']);
   await fireEvent.press(screen.getByRole('radio', { name: 'Anywhere' }));
