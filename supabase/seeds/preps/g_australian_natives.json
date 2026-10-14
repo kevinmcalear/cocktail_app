@@ -1,0 +1,321 @@
+{
+  "migration": "20261018050000_prep_recipes_australian_natives.sql",
+  "header": [
+    "House prep recipes from Australian native ingredients (after",
+    "20261018040000). Stage 4G of the bottle catalog plan:",
+    "https://claude.ai/artifact/Vu6seuSNtN42nKYb2nDCVR",
+    "",
+    "  * Four house preps get a recipe from the pages they cite, Australian",
+    "    producers' own recipes first (three are new catalog rows; Macadamia",
+    "    orgeat existed and moves from Syrup to Orgeat): lemon myrtle syrup (Warndu),",
+    "    wattleseed syrup (Outback Spirit), macadamia orgeat (the Australian",
+    "    Macadamia Society, two sources) and anise myrtle syrup (Warndu). FSANZ",
+    "    lists lemon myrtle and wattleseed as traditional, not novel, foods.",
+    "  * Strawberry gum waits for a toxicity check (it's a eucalyptus, and",
+    "    FSANZ has no record of it as a food); other natives had no published",
+    "    recipe with amounts this round.",
+    "  * One new plain ingredient: Anise myrtle.",
+    "  * An independent second check of every fact in this stage (16) against",
+    "    the cited pages found none wrong."
+  ],
+  "checked_on": "2026-10-13",
+  "ingredients": [
+    {
+      "name": "Anise myrtle",
+      "description": "Dried, milled leaf of an Australian rainforest tree (Syzygium anisatum) with a sweet aniseed and liquorice flavour. Used in teas, syrups and baking.",
+      "kind_of": "Spices"
+    }
+  ],
+  "preps": [
+    {
+      "name": "Anise myrtle syrup",
+      "kind": "syrup",
+      "kind_of": "Syrup",
+      "aliases": [],
+      "description": "A sugar syrup made on an overnight anise myrtle tea, with a soft aniseed and liquorice flavour. For sours, highballs and anywhere a gentle anise note suits.",
+      "abv": 0,
+      "grade": "B",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Anise myrtle",
+          "amount": 4,
+          "unit": "tsp",
+          "note": "dried, milled leaf",
+          "removed": true
+        },
+        {
+          "ingredient": "Water",
+          "amount": 480,
+          "unit": "ml",
+          "note": "boiling"
+        },
+        {
+          "ingredient": "Caster sugar",
+          "amount": 500,
+          "unit": "g"
+        }
+      ],
+      "yield": {
+        "amount": 750,
+        "unit": "ml",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Infuse",
+        "Strain",
+        "Syrup"
+      ],
+      "steps": [
+        {
+          "body": "Pour the boiling water over the anise myrtle in a heatproof bowl, cover with a cloth and leave overnight at room temperature."
+        },
+        {
+          "body": "Strain into a saucepan, pressing the leaf to get all the liquid out."
+        },
+        {
+          "body": "Add the sugar and warm gently, stirring, until it has dissolved. Do not let it boil."
+        },
+        {
+          "body": "Cool, bottle and keep in the fridge."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://warndu.com/blogs/recipes/anise-myrtle-granita",
+          "kind": "producer",
+          "note": "Warndu (native food producer) anise myrtle granita: 4 tsp anise myrtle steeped overnight in 480 ml boiling water, strained, then 500 g caster sugar dissolved without boiling. We stop at that syrup stage, before freezing. Used as given."
+        }
+      ]
+    },
+    {
+      "name": "Lemon myrtle syrup",
+      "kind": "syrup",
+      "kind_of": "Syrup",
+      "aliases": [],
+      "description": "Raw sugar ground with dried lemon myrtle leaf and a little finger lime, then dissolved in an equal volume of water. A bright, lemongrass-scented syrup for gin sours, Collinses and native-botanical highballs.",
+      "abv": 0,
+      "grade": "B",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Raw sugar",
+          "amount": 300,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Lemon myrtle",
+          "amount": 72,
+          "unit": "leaf",
+          "note": "dried leaves"
+        },
+        {
+          "ingredient": "Finger lime",
+          "amount": 8,
+          "unit": "tsp",
+          "note": "dried finger lime chips; up to double for more tang"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 360,
+          "unit": "ml"
+        }
+      ],
+      "yield": {
+        "amount": 540,
+        "unit": "ml",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Syrup",
+        "Blend"
+      ],
+      "steps": [
+        {
+          "body": "Grind the raw sugar, dried lemon myrtle leaves and finger lime chips together in a spice grinder until fine."
+        },
+        {
+          "body": "Put the flavoured sugar and the water in a small pan over medium heat and simmer only until the sugar has dissolved."
+        },
+        {
+          "body": "Let it cool, bottle it and keep it in the fridge."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://warndu.com/blogs/recipes/lemon-myrtle-finger-lime-gin-muddle",
+          "kind": "producer",
+          "note": "Warndu (native food producer): 3 tbsp raw sugar ground with 8 to 10 dried lemon myrtle leaves and 1 to 2 tsp finger lime chips, simmered with 3 tbsp water. Taken as 37.5 g sugar (1 tbsp 12.5 g), 9 leaves, 1 tsp chips, 45 ml water; scaled x8. The method's 'lemon balm' is the page's slip for its lemon myrtle sugar."
+        }
+      ]
+    },
+    {
+      "name": "Macadamia orgeat",
+      "kind": "orgeat",
+      "kind_of": "Orgeat",
+      "kind_of_force": true,
+      "aliases": [],
+      "description": "An orgeat made with ground macadamias in place of almonds, steeped overnight in a hot sugar syrup with a little orange flower water. Rich and buttery, for tiki drinks, sours and long drinks with soda.",
+      "abv": 0,
+      "grade": "B",
+      "staple": true,
+      "recipe": [
+        {
+          "ingredient": "Caster sugar",
+          "amount": 600,
+          "unit": "g",
+          "note": "raw caster sugar"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 600,
+          "unit": "ml"
+        },
+        {
+          "ingredient": "Macadamia",
+          "amount": 536,
+          "unit": "g",
+          "note": "finely ground",
+          "removed": true
+        },
+        {
+          "ingredient": "Orange blossom water",
+          "amount": 1,
+          "unit": "tsp"
+        }
+      ],
+      "yield": {
+        "amount": 900,
+        "unit": "ml",
+        "derived": true
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Fridge, sealed bottle"
+      },
+      "actions": [
+        "Syrup",
+        "Infuse",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Pulse the macadamias in a food processor until finely ground."
+        },
+        {
+          "body": "Bring the sugar and water to the boil, stirring to dissolve, then simmer for 3 to 4 minutes to reduce slightly.",
+          "timer_seconds": 240
+        },
+        {
+          "body": "Stir in the ground macadamias and bring back to the boil."
+        },
+        {
+          "body": "Take off the heat, add the orange flower water, cover and leave to stand for about 8 hours or overnight.",
+          "timer_seconds": 28800
+        },
+        {
+          "body": "Strain through a fine strainer, pressing the nuts, then bottle and keep in the fridge."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://www.australian-macadamias.org/recipe/macadamia-orgeat/",
+          "kind": "producer",
+          "note": "Australian Macadamia Society (the growers' body): 2 cups macadamias, 1.5 cups raw caster sugar, 1.25 cups water, 0.5 tsp orange flower water, steeped about 8 h. Converted (nuts 134 g a cup per USDA FoodData Central 170178, sugar 200 g a cup, 240 ml a cup) and doubled."
+        },
+        {
+          "field": "recipe",
+          "url": "https://australianbartender.com.au/2018/01/02/macadamia-orgeat-recipe/",
+          "kind": "reference",
+          "note": "Jono Carr (Door Knock, Sydney): 250 g macadamias simmered in 1 L almond milk, blended with 200 ml bought orgeat, 15 ml each orange blossom and rose water, salt. Much less sweet and built on almond milk; we use the Australian Macadamia Society ratio."
+        }
+      ]
+    },
+    {
+      "name": "Wattleseed syrup",
+      "kind": "syrup",
+      "kind_of": "Syrup",
+      "aliases": [],
+      "description": "Caster and brown sugar simmered with roasted ground wattleseed and reduced by a third, for a rich syrup with a nutty, coffee-like flavour. Made for whisky and brandy drinks such as an Athol Brose, Espresso Martini riffs and desserts.",
+      "abv": 0,
+      "grade": "A",
+      "staple": false,
+      "recipe": [
+        {
+          "ingredient": "Caster sugar",
+          "amount": 200,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Brown sugar",
+          "amount": 150,
+          "unit": "g"
+        },
+        {
+          "ingredient": "Water",
+          "amount": 240,
+          "unit": "ml"
+        },
+        {
+          "ingredient": "Wattleseed",
+          "amount": 20,
+          "unit": "g",
+          "note": "roasted and ground",
+          "removed": true
+        }
+      ],
+      "yield": {
+        "amount": 500,
+        "unit": "ml"
+      },
+      "keeps": {
+        "hours": null,
+        "storage": "Sterile bottle sealed hot; fridge once open"
+      },
+      "actions": [
+        "Syrup",
+        "Infuse",
+        "Strain"
+      ],
+      "steps": [
+        {
+          "body": "Warm the water with the caster and brown sugar in a heavy pan until the sugar has dissolved."
+        },
+        {
+          "body": "Add the ground wattleseed, bring to the boil, then lower the heat and simmer gently until the volume is down by a third."
+        },
+        {
+          "body": "Strain through muslin for a clear syrup, twice if needed (or leave the grounds in if you don't mind the specks)."
+        },
+        {
+          "body": "Pour hot into sterilised bottles and seal. The producer says sealed jars keep up to a year; once opened, keep it in the fridge."
+        }
+      ],
+      "sources": [
+        {
+          "field": "recipe",
+          "url": "https://outbackspirit.com.au/blogs/recipes/sweet-wattleseed-syrup",
+          "kind": "producer",
+          "note": "Outback Spirit (native food producer): 1 cup caster sugar, 3/4 cup brown sugar, 1 cup water, 1 tbsp (20 g) roasted ground wattleseed, reduced by a third. Converted at 1 cup sugar 200 g, 1 cup water 240 ml; batch as written."
+        },
+        {
+          "field": "yield",
+          "url": "https://outbackspirit.com.au/blogs/recipes/sweet-wattleseed-syrup",
+          "kind": "producer",
+          "note": "The page states the batch makes 2 cups (500 ml)."
+        }
+      ]
+    }
+  ]
+}
