@@ -9,6 +9,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueSuppliers, type VenueSupplier } from '@/hooks/useVenueSuppliers';
 import { supplierLine } from '@/lib/venueKit';
 
+import { NoSupplierRow } from './NoSupplier';
 import { SupplierSheet } from './SupplierSheet';
 import { SupplierSuggestions } from './SupplierSuggestions';
 import { VenueSubPage } from './VenueSubPage';
@@ -43,6 +44,7 @@ export function SuppliersScreen({ barId }: { barId: string }) {
       ) : allowed && !isLoading && !error ? (
         <Body tone="muted">No suppliers yet. Add the companies you order bottles, ice, produce and glassware from.</Body>
       ) : null}
+      {allowed && !isLoading ? <NoSupplierRow barId={barId} suppliers={suppliers} /> : null}
       {allowed ? <Button label="Add a supplier" icon="plus" onPress={() => setOpen('new')} style={styles.add} /> : null}
       {allowed && !isLoading ? <SupplierSuggestions barId={barId} suppliers={suppliers} /> : null}
       <SupplierSheet barId={barId} supplier={opened} isNew={open === 'new'} onClose={() => setOpen(null)} />

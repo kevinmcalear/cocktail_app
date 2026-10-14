@@ -5,6 +5,7 @@ import { Body, Button, Caption, PressableScale, Surface, useDs } from '@/compone
 import { SectionHeading } from '@/components/screens/settings/SettingsParts';
 import { Monogram } from '@/components/screens/onboarding/SetupParts';
 import { space } from '@/constants/tokens';
+import { useVenueIngredients } from '@/hooks/useVenueIngredients';
 import { useSaveSupplier, useSupplierSuggestionData, type SupplierPage, type VenueSupplier } from '@/hooks/useVenueSuppliers';
 import { regionHeading, suggestSuppliers, SUPPLIES } from '@/lib/suppliers';
 
@@ -18,11 +19,13 @@ const SHOWN = 5;
 export function SupplierSuggestions({ barId, suppliers }: { barId: string; suppliers: readonly VenueSupplier[] }) {
   const ds = useDs();
   const router = useRouter();
-  const { data } = useSupplierSuggestionData(barId);
+  const ings = useVenueIngredients(barId).data;
+  const bottles = (ings ?? []).flatMap((i) => (i.makerId ? [{ itemId: i.id, makerId: i.makerId }] : []));
+  const { data } = useSupplierSuggestionData(barId, ings ? bottles.map((b) => b.makerId) : undefined);
   const save = useSaveSupplier(barId);
   if (!data) return null;
   const have = new Set(suppliers.flatMap((s) => (s.page ? [s.page.id] : [])));
-  const list = suggestSuppliers(data.bottles, data.lines, data.regions, have).slice(0, SHOWN);
+  const list = suggestSuppliers(bottles, data.lines, data.regions, have).slice(0, SHOWN);
   if (!list.length) return null;
   const where = regionHeading(data.regions[0]);
 
@@ -40,13 +43,13 @@ export function SupplierSuggestions({ barId, suppliers }: { barId: string; suppl
       <SectionHeading>{`Carry your bottles ${where.charAt(0).toLowerCase()}${where.slice(1)}`}</SectionHeading>
       <Surface style={styles.list}>
         <View role="list">
-          {list.map(({ page, bottles }, i) => (
+          {list.map(({ page, bottles: n }, i) => (
             <View key={page.id} role="listitem" style={[styles.row, i ? { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth } : null]}>
-              <PressableScale role="link" accessibilityLabel={`${page.display_name}, carries ${bottles} of your bottles`} onPress={() => router.push(`/p/${page.handle}` as Href)} style={[styles.row, styles.flex]}>
+              <PressableScale role="link" accessibilityLabel={`${page.display_name}, carries ${n} of your bottles`} onPress={() => router.push(`/p/${page.handle}` as Href)} style={[styles.row, styles.flex]}>
                 <Monogram name={page.display_name} size={40} />
                 <View style={styles.flex}>
                   <Body numberOfLines={1}>{page.display_name}</Body>
-                  <Caption tone="muted">{`Carries ${bottles} of your ${bottles === 1 ? 'bottle' : 'bottles'}`}</Caption>
+                  <Caption tone="muted">{`Carries ${n} of your ${n === 1 ? 'bottle' : 'bottles'}`}</Caption>
                 </View>
               </PressableScale>
               <Button label="Add" variant="secondary" size="sm" accessibilityLabel={`Add ${page.display_name}`} disabled={save.isPending} onPress={() => add(page)} />

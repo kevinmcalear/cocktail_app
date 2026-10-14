@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { byRegion, regionHeading, suggestSuppliers, suppliesLine, venueRegions } from './suppliers';
+import { byRegion, regionHeading, suggestSuppliers, suppliesLine, venueRegions, withoutSupplier, type VenueIngredient } from './suppliers';
 
 assert.equal(suppliesLine(['glassware', 'bottles']), 'Supplies bottles and glassware');
 assert.equal(suppliesLine(['equipment']), 'Supplies bar equipment');
@@ -54,6 +54,22 @@ const lines = [
 assert.deepEqual(
   suggestSuppliers(bottles, lines, ['AU-VIC', 'AU'], new Set(['mine'])).map((s) => [s.page.id, s.bottles]),
   [['bluestone', 3], ['harbour', 1]]
+);
+
+// No supplier yet: used, bought (not a house prep, not water), no supplier; A to Z.
+const ing = (name: string, more: Partial<VenueIngredient> = {}): VenueIngredient => ({ id: name, name, type: 'ingredient', role: 'product', makerId: null, supplierId: null, used: true, ...more });
+assert.deepEqual(
+  withoutSupplier([
+    ing('Cynar'),
+    ing('Campari'),
+    ing('Gin', { supplierId: 's1' }),
+    ing('Honey syrup', { role: 'prep' }),
+    ing('Filtered water', { role: 'generic' }),
+    ing('Lime', { role: 'generic' }),
+    ing('Bought, not used', { used: false }),
+    ing('A house drink', { type: 'cocktail', role: null }),
+  ]).map((i) => i.name),
+  ['Campari', 'Cynar', 'Lime']
 );
 
 console.log('suppliers: ok');
