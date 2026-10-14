@@ -39,8 +39,8 @@ const FIRST_AWARDS = 4;
 
 /**
  * A bar's page signed out (ppl-pub-bar-desktop, -phone): one page, no tabs.
- * Wide: Top drinks, Their drinks and Classics they pour beside hours and
- * location, This week, menus, people and awards. Phone: hours and the
+ * Wide: Top drinks, Their drinks and Classics they pour beside hours,
+ * location and Instagram, This week, menus, people and awards. Phone: hours and the
  * actions under the name, then This week, Menus, Top drinks, Their drinks,
  * Classics they pour and People. Love and Report ask to sign in; the
  * sign-in band closes it.
@@ -88,7 +88,7 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
     ),
   );
   const classics = originals.some((d) => d.riff_of_id) ? null : <StaffClassics barId={profile.bar_id} />;
-  const facts_ = <PublicBarFacts profileId={profile.id} />;
+  const facts_ = <PublicBarFacts profileId={profile.id} instagram={profile.instagram} />;
   const week = <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />;
   const menus = section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide);
   const people = section('People', <Positions profile={profile} currentUntitled emptyText={`Nobody is listed at ${profile.display_name} yet.`} />, true);

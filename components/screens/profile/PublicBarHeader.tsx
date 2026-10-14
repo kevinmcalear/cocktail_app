@@ -1,14 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Display, DsText, Title, useBreakpoint } from '@/components/ds';
+import { Body, Button, Caption, Display, DsText, GlassButton, Title, useBreakpoint } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { space, type } from '@/constants/tokens';
 import { useVenueScore } from '@/hooks/useDiscover';
 import type { Profile } from '@/hooks/useProfiles';
 import { rankedCount } from '@/lib/nearMe';
-import { instagramUrl } from '@/lib/profiles';
 import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
@@ -56,10 +55,11 @@ export function PublicBarHeader({ profile, place, claimed }: { profile: Profile;
 }
 
 /**
- * Love, Share, Instagram and Report or block, under the bar's name. Signed
- * out, Love and Report ask you to sign in first; signed in (the desktop page
- * in the app) they love the bar and open the report sheet. On a phone: Love,
- * Share and Report, three across.
+ * Love and Share under the bar's name, then a quiet More (...) that reports it.
+ * Signed out, Love and More ask you to sign in first; signed in (the desktop
+ * page in the app) they love the bar and open the report sheet. Its Instagram
+ * is in the hours and location card (PublicBarFacts). On a phone, Love and
+ * Share split the row.
  */
 export function PublicBarActions({ profile, signedIn = false }: { profile: Profile; signedIn?: boolean }) {
   const router = useRouter();
@@ -82,25 +82,10 @@ export function PublicBarActions({ profile, signedIn = false }: { profile: Profi
         <Button label="Love" icon="heart" variant="secondary" accessibilityHint={`Sign in to love ${profile.display_name}`} onPress={signIn} style={grow} />
       )}
       <Button label={copied ? 'Link copied' : 'Share'} icon="square.and.arrow.up" variant="secondary" onPress={() => void share()} style={grow} />
-      {wide && profile.instagram ? (
-        <Button
-          label="Instagram"
-          icon="camera"
-          variant="ghost"
-          accessibilityLabel={`${profile.display_name} on Instagram, opens in a new tab`}
-          onPress={() => void Linking.openURL(instagramUrl(profile.instagram!))}
-        />
-      ) : null}
       {signedIn ? (
-        <ProfileSafety profile={profile} label="Report or block" />
+        <ProfileSafety profile={profile} />
       ) : (
-        <Button
-          label={wide ? 'Report or block' : 'Report'}
-          variant={wide ? 'ghost' : 'secondary'}
-          accessibilityHint={`Sign in to report ${profile.display_name}`}
-          onPress={signIn}
-          style={grow}
-        />
+        <GlassButton icon="ellipsis" accessibilityLabel={`More for @${profile.handle}: report. Sign in first`} onPress={signIn} />
       )}
     </View>
   );
