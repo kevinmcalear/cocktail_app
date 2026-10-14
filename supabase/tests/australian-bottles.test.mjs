@@ -1,4 +1,4 @@
-// Australian bottles (supabase/migrations/20261017500000_australian_bottles.sql):
+// Australian bottles (supabase/migrations/20261017710000_australian_bottles.sql):
 // the load lands its bottles and maker pages, every bottle it checked keeps
 // the page it was checked on, cane spirits file under their own style beneath
 // Rum, and running it again changes nothing.
@@ -20,7 +20,7 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost)/.test(status.API_URL)) {
   throw new Error(`Refusing to run Australian bottle tests against a non-local API: ${status.API_URL}`);
 }
 
-const MIGRATION = readFileSync(new URL('../migrations/20261017500000_australian_bottles.sql', import.meta.url), 'utf8');
+const MIGRATION = readFileSync(new URL('../migrations/20261017710000_australian_bottles.sql', import.meta.url), 'utf8');
 const db = new pg.Client({ connectionString: status.DB_URL });
 
 // The bottles this load checked: their sources carry its date.
