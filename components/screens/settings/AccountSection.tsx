@@ -7,6 +7,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Caption } from '@/components/ds';
 import { SafetyLinks, type LinkRowProps } from '@/components/screens/safety/SafetyLinks';
 import { ReportProblemSheet } from '@/components/screens/settings/ReportProblemSheet';
+import { useFirstRound } from '@/hooks/useFirstRound';
 import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { analyticsAvailable, analyticsOptedOut, subscribeAnalytics } from '@/lib/analytics';
 import { space } from '@/constants/tokens';
@@ -39,6 +40,12 @@ function AnalyticsSwitch() {
 export function AccountSection() {
   const router = useRouter();
   const [reporting, setReporting] = useState(false);
+  const { replay: restart, venue } = useFirstRound();
+  const replay = () => {
+    restart();
+    if (venue) router.navigate('/library');
+    else showMessage('First round', 'It starts the next time you open a venue.');
+  };
   const linkRow = ({ label, detail, icon, onPress }: LinkRowProps) => (
     <View key={label}>
       <RowDivider />
@@ -48,6 +55,7 @@ export function AccountSection() {
   return (
     <SettingsSection title="Privacy and support">
       <SettingsRow label="Help and support" detail="Questions people ask, and how to reach a person" icon="questionmark" onPress={() => router.push('/support')} />
+      {linkRow({ label: 'Replay the first round', detail: 'The short intro at a venue that opens the app a bit at a time', icon: 'arrow.clockwise', onPress: replay })}
       {linkRow({ label: 'Report a problem', detail: 'Something broken or wrong in the app', icon: 'exclamationmark.triangle', onPress: () => setReporting(true) })}
       <SafetyLinks row={linkRow} />
       {linkRow({ label: 'Privacy policy', icon: 'lock.fill', onPress: () => router.push('/legal/privacy') })}
