@@ -5,7 +5,8 @@ import { Platform, StyleSheet, Text, View, type NativeSyntheticEvent } from 'rea
 import { LogoImage } from '@/components/ds';
 import { backbar, fontFamilies, radius, type } from '@/constants/tokens';
 import { useLocationAccess } from '@/hooks/useLocationAccess';
-import { AREA_CLUSTER, areaLook, areasFrom, DOT_PAINT, dotsFilter, dotsOf, MAP_STYLE, pinDescription, pinLook, pinsToDraw, viewportFrom, type MapArea, type MapView } from '@/lib/discoverMap';
+import { useMapStyle } from '@/hooks/useMapStyle';
+import { AREA_CLUSTER, areaLook, areasFrom, DOT_PAINT, dotsFilter, dotsOf, pinDescription, pinLook, pinsToDraw, viewportFrom, type MapArea, type MapView } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 
@@ -42,6 +43,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   // the style loads, so a grant from Settings (rechecked on return) remounts it.
   const access = useLocationAccess(me ? 'found' : null);
   const showMe = access === 'granted' || !!me;
+  const mapStyle = useMapStyle(scheme);
 
   // Move only when asked to (a new camera), never on every re-render, so the
   // person's own panning isn't undone.
@@ -96,11 +98,13 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     if (state && !viewRef.current) onMoved({ nativeEvent: state } as NativeSyntheticEvent<ViewState>);
   };
 
+  // The style with readable labels comes first (a small fetch, then cached), so the map never swaps styles under the person.
+  if (!mapStyle) return <View style={[styles.fill, { backgroundColor: backbar[scheme].ground }, style]} />;
   return (
     <Map
       ref={mapRef}
       style={[styles.fill, style]}
-      mapStyle={MAP_STYLE[scheme]}
+      mapStyle={mapStyle}
       // OpenStreetMap asks for a visible credit: on the map when there's room,
       // in the results sheet on phones (MapCredit).
       attribution={!compact}
@@ -138,7 +142,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
       <Fragment key={order}>
         {rich.map((pin, i) => {
           const selected = pin.id === selectedId;
-          const look = pinLook(pin, selected, accent);
+          const look = pinLook(pin, selected, accent, view?.zoom);
           return (
             <Marker
               key={pin.id}

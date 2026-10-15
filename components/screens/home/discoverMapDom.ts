@@ -42,10 +42,10 @@ function paintLogo(img: HTMLImageElement, edge: KnownEdge, size: number) {
 }
 
 /** Paints a pin's HTML element with the look both maps share (lib/discoverMap pinLook). */
-export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: DiscoverMapProps['accent']) {
-  const look = pinLook(pin, selected, accent);
+export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: DiscoverMapProps['accent'], zoom?: number) {
+  const look = pinLook(pin, selected, accent, zoom);
   // Only rebuild what's inside when it changes, so logos don't reload on every render.
-  const key = `${look.logo ?? ''}|${look.label}`;
+  const key = `${look.logo ?? ''}|${look.logoSize}|${look.label}`;
   if (el.dataset.key !== key) {
     el.dataset.key = key;
     const parts: (HTMLElement | string)[] = [];

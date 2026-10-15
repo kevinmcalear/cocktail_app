@@ -1,7 +1,7 @@
 // Checks for lib/discoverMap.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { AREA_ZOOM, areaFromViewport, areaLabel, areasFrom, BEST_PINS, cameraFor, cameraForArea, dotsOf, MAX_AREAS, pinLabel, pinLook, pinsFrom, pinsToDraw, movedFrom, viewportFrom, type MapView } from './discoverMap';
+import { AREA_ZOOM, CLOSE_ZOOM, readableLabels, areaFromViewport, areaLabel, areasFrom, BEST_PINS, cameraFor, cameraForArea, dotsOf, MAX_AREAS, pinLabel, pinLook, pinsFrom, pinsToDraw, movedFrom, viewportFrom, type MapView } from './discoverMap';
 import type { DiscoverRow } from './nearMe';
 
 const row = (over: Partial<DiscoverRow>): DiscoverRow => ({
@@ -39,6 +39,24 @@ assert.notEqual(pinLook(pins[0], false, accent).backgroundColor, pinLook(pins[1]
 assert.equal(pinLook(pins[1], true, accent).backgroundColor, accent.fill);
 assert.equal(pinLook(pins[1], true, accent).color, accent.text);
 assert.equal(pinLook(pins[1], true, accent).borderColor, accent.fill);
+
+// --- up close: the bar's logo, bigger, beside its name ---
+const logoPin = { ...pins[1], logo: 'https://x/l.png' };
+assert.equal(pinLook(logoPin, false, accent, CLOSE_ZOOM - 1).label, '', 'further out, a logo pin is the logo alone');
+assert.equal(pinLook(logoPin, false, accent, CLOSE_ZOOM - 1).logoSize, 26);
+assert.equal(pinLook(logoPin, false, accent, CLOSE_ZOOM).label, logoPin.name);
+assert.equal(pinLook(logoPin, false, accent, CLOSE_ZOOM).logoSize, 32, 'a size up from the 26 further out');
+assert.equal(pinLook(logoPin, false, accent, CLOSE_ZOOM).font, 'bodyMedium');
+assert.equal(pinLook(pins[0], false, accent, CLOSE_ZOOM).label, `9.1 · ${pins[0].name}`, 'a score keeps its place before the name');
+assert.equal(pinLook({ ...logoPin, name: 'The Exceptionally Long Bar Name' }, false, accent, 17).label.length, 18, 'long names cut as drink names are');
+assert.equal(pinLook({ ...pins[0], top: 'Dirty Martini' }, false, accent, CLOSE_ZOOM).label, 'Dirty Martini', 'searching: the drink, not the bar');
+
+// --- the dark map's street names are readable; the light one is left as it is ---
+const style = { version: 8, sources: {}, layers: [{ id: 'highway_name_other', type: 'symbol', source: 's', layout: { 'text-size': 10 }, paint: { 'text-color': 'rgba(80, 78, 78, 1)' } }, { id: 'water', type: 'fill', source: 's' }] } as Parameters<typeof readableLabels>[0];
+const road = readableLabels(style, 'dark').layers[0] as { paint: Record<string, unknown> };
+assert.notEqual(road.paint['text-color'], 'rgba(80, 78, 78, 1)');
+assert.equal(readableLabels(style, 'dark').layers[1], style.layers[1]);
+assert.equal(readableLabels(style, 'light'), style);
 
 // --- viewport from MapLibre's centre and [west, south, east, north] bounds ---
 assert.deepEqual(viewportFrom({ lat: 40.72, lng: -73.99 }, [-74.01, 40.7, -73.97, 40.74], 13), {
