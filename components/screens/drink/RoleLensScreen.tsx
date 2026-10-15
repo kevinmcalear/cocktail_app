@@ -7,7 +7,9 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { RoleMatrixTable, type MatrixLegend, type MatrixRowSpec } from '@/components/screens/venue/RoleMatrixTable';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
+import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useBarMembers } from '@/hooks/useBarDetail';
 import { useRoleMatrix, type RoleMatrixRow } from '@/hooks/useVenueRoles';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { defaultColumns, LENS_GROUPS, lensValue, type LensRow } from '@/lib/roleLens';
@@ -39,8 +41,11 @@ export function RoleLensScreen({ itemId, barId, name }: { itemId: string; barId:
   const columns: RoleMatrixRow[] = matrix.data?.length ? matrix.data : defaultColumns();
   const drink = name ?? 'this drink';
   const back = () => (router.canGoBack() ? router.back() : router.replace(`/cocktail/${itemId}` as Href));
-  // Your column: your level (or the one you're viewing as).
-  const isYou = (c: RoleMatrixRow) => c.role_id === null && c.base_level === mine;
+  // Your column: your venue role if you hold one, else your level; viewing as another level marks that one.
+  const userId = useUserId();
+  const myRoleId = (useBarMembers(barId).data ?? []).find((m) => m.user_id === userId)?.venue_role_id ?? null;
+  const viewingAs = !!venue && mine !== venue.roleLevel;
+  const isYou = (c: RoleMatrixRow) => (myRoleId && !viewingAs ? c.role_id === myRoleId : c.role_id === null && c.base_level === mine);
   const rowOf = (r: MatrixRowSpec) => r as LensRow;
 
   return (
