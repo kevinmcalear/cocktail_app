@@ -216,3 +216,14 @@ test('a house prep made for the finish is saved like an ingredient’s: its own 
   const [, lines] = mockSaveSpec.mock.calls[0];
   expect(lines.map((l: { ingredient_item_id: string; amount: number; unit: string }) => [l.ingredient_item_id, l.amount, l.unit])).toEqual([['lime', 30, 'ml'], ['new-row', 3, 'drop']]);
 });
+
+test('at home, where and when it was first made are saved; another bar on it is a suggestion', async () => {
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const run = result.current.mutationFn;
+  mockInserts.length = 0;
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', originYear: 2019, place: { id: 'bar-p-attaboy', name: 'Attaboy' } }, barId: null, myProfileId: 'p-me' });
+  expect(mockInserts[0]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: 'bar-p-attaboy', creator_profile_id: 'p-me', credit_status: null });
+
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', originYear: 2019 }, barId: null, myProfileId: 'p-me' });
+  expect(mockInserts[1]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: null, credit_status: 'claimed' });
+});

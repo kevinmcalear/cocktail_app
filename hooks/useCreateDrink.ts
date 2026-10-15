@@ -184,13 +184,15 @@ export function useCreateDrink() {
       const glassId = draft.glass ? await ensure(draft.glass, 'glassware') : null;
       const iceId = draft.ice ? await ensure(draft.ice, 'ice') : null;
 
-      // A venue's drink is credited to the venue too.
-      let originBar: string | null = null;
+      // A venue's drink is credited to the venue too; one added at home, to the bar it was first made at.
+      let originBar: string | null = barId ? null : (draft.place?.id ?? null);
       if (barId) {
         const { data } = await supabase.from('profiles').select('id').eq('bar_id', barId).eq('kind', 'bar').limit(1).maybeSingle();
         originBar = data?.id ?? null;
       }
       const creatorId = creatorProfileId(draft, myProfileId);
+      // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
+      const otherBar = !barId && !!originBar;
 
       const row = {
         id: undefined as string | undefined,
@@ -205,8 +207,9 @@ export function useCreateDrink() {
         riff_of_id: draft.riffOf?.id ?? null,
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
+        origin_year: draft.originYear ?? null,
         // You can claim your own credit; anyone else's starts as suggested.
-        credit_status: creatorId && creatorId === myProfileId ? 'claimed' : null,
+        credit_status: creatorId && creatorId === myProfileId && !otherBar ? 'claimed' : null,
       };
       // Under the draft's id, so it's drawn with the wizard's seed. A clash
       // (an earlier try that saved but never answered) gets an id of its own.
