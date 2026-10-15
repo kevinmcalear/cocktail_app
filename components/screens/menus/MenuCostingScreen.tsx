@@ -141,6 +141,21 @@ function Row({ row, wide, tax, targets, currency, money }: { row: MenuCostRow; w
   // Marked only once it has a price: an unpriced drink isn't under anything yet.
   const under = m && target && !target.onTarget ? target.under : null;
   const draftMinor = parseMoney(draft, currency);
+  // Under a target: the tag and the price that clears it. Phones give it its own line under the row.
+  const flag =
+    under && target && !target.onTarget ? (
+      <View style={styles.flag}>
+        <Tag label={underLabel(under, targets, money)} tone="accent" />
+        <Button
+          label={set.isPending ? 'Saving…' : `Use ${money(target.priceMinor)}`}
+          accessibilityLabel={`Use ${money(target.priceMinor)} for ${row.name}`}
+          variant="secondary"
+          size="sm"
+          disabled={set.isPending}
+          onPress={() => set.mutate(target.priceMinor)}
+        />
+      </View>
+    ) : null;
   const cell = (text: string, tone: 'ink' | 'muted' | 'accent' = 'ink') => (
     <Spec tone={tone} align="right" style={{ flex: COLS.num }}>
       {text}
@@ -150,45 +165,36 @@ function Row({ row, wide, tax, targets, currency, money }: { row: MenuCostRow; w
     <View
       role="row"
       accessibilityLabel={`${row.name}: cost ${money(costMinor)}, price ${money(row.priceMinor)}, ${m ? `profit ${money(Math.round(m.profitMinor))}, GP ${formatPct(m.gp)}` : 'no price'}${under ? `, ${underLabel(under, targets, money)}` : ''}`}
-      style={[styles.row, { borderBottomColor: ds.c.line }]}
+      style={[styles.rowWrap, { borderBottomColor: ds.c.line }]}
     >
-      <View style={{ flex: wide ? COLS.drink : COLS.drinkPhone, gap: space.xs }}>
-        <Body>{row.name}</Body>
-        {row.cost?.missing ? <Tag label={`${row.cost.missing} without a price`} tone="warning" /> : null}
-        {under && target && !target.onTarget ? (
-          <View style={styles.flag}>
-            <Tag label={underLabel(under, targets, money)} tone="accent" />
-            <Button
-              label={set.isPending ? 'Saving…' : `Use ${money(target.priceMinor)}`}
-              accessibilityLabel={`Use ${money(target.priceMinor)} for ${row.name}`}
-              variant="secondary"
-              size="sm"
-              disabled={set.isPending}
-              onPress={() => set.mutate(target.priceMinor)}
-            />
-          </View>
-        ) : null}
-        {editing ? (
-          <View style={styles.edit}>
-            <Field label={`Menu price (${currency})`} value={draft} onChangeText={setDraft} placeholder="12.00" keyboardType="decimal-pad" />
-            <View style={styles.editActions}>
-              <Button label={set.isPending ? 'Saving…' : 'Save'} size="md" disabled={set.isPending || (!!draft.trim() && draftMinor === null)} onPress={() => set.mutateAsync(draft.trim() ? draftMinor : null).then(() => setEditing(false), () => {})} />
-              <Button label="Cancel" variant="ghost" onPress={() => setEditing(false)} />
+      <View style={styles.cells}>
+        <View style={{ flex: wide ? COLS.drink : COLS.drinkPhone, gap: space.xs }}>
+          <Body>{row.name}</Body>
+          {row.cost?.missing ? <Tag label={`${row.cost.missing} without a price`} tone="warning" /> : null}
+          {wide ? flag : null}
+          {editing ? (
+            <View style={styles.edit}>
+              <Field label={`Menu price (${currency})`} value={draft} onChangeText={setDraft} placeholder="12.00" keyboardType="decimal-pad" />
+              <View style={styles.editActions}>
+                <Button label={set.isPending ? 'Saving…' : 'Save'} size="md" disabled={set.isPending || (!!draft.trim() && draftMinor === null)} onPress={() => set.mutateAsync(draft.trim() ? draftMinor : null).then(() => setEditing(false), () => {})} />
+                <Button label="Cancel" variant="ghost" onPress={() => setEditing(false)} />
+              </View>
             </View>
-          </View>
-        ) : null}
+          ) : null}
+        </View>
+        {cell(costMinor == null ? '–' : money(costMinor), costMinor == null ? 'muted' : 'ink')}
+        <PressableScale role="button" accessibilityLabel={`Change the price of ${row.name}`} onPress={() => setEditing((e) => !e)} style={{ flex: COLS.num, minHeight: layout.minTapTarget, justifyContent: 'center' }}>
+          <Spec tone="accent" align="right">
+            {row.priceMinor == null ? 'Set' : money(row.priceMinor)}
+          </Spec>
+        </PressableScale>
+        {wide ? cell(m ? money(Math.round(m.exTaxMinor)) : '–', 'muted') : null}
+        {cell(m ? money(Math.round(m.profitMinor)) : '–', under === 'profit' || under === 'both' || (!wide && under) ? 'accent' : 'ink')}
+        {wide ? cell(m ? formatPct(m.gp) : '–', under === 'gp' || under === 'both' ? 'accent' : 'ink') : null}
+        {wide ? cell(m ? formatPct(m.pourCost) : '–', 'muted') : null}
+        {wide ? cell(target ? (target.onTarget ? 'on target' : money(target.priceMinor)) : '–', target && !target.onTarget ? 'accent' : 'muted') : null}
       </View>
-      {cell(costMinor == null ? '–' : money(costMinor), costMinor == null ? 'muted' : 'ink')}
-      <PressableScale role="button" accessibilityLabel={`Change the price of ${row.name}`} onPress={() => setEditing((e) => !e)} style={{ flex: COLS.num, minHeight: layout.minTapTarget, justifyContent: 'center' }}>
-        <Spec tone="accent" align="right">
-          {row.priceMinor == null ? 'Set' : money(row.priceMinor)}
-        </Spec>
-      </PressableScale>
-      {wide ? cell(m ? money(Math.round(m.exTaxMinor)) : '–', 'muted') : null}
-      {cell(m ? money(Math.round(m.profitMinor)) : '–', under === 'profit' || under === 'both' || (!wide && under) ? 'accent' : 'ink')}
-      {wide ? cell(m ? formatPct(m.gp) : '–', under === 'gp' || under === 'both' ? 'accent' : 'ink') : null}
-      {wide ? cell(m ? formatPct(m.pourCost) : '–', 'muted') : null}
-      {wide ? cell(target ? (target.onTarget ? 'on target' : money(target.priceMinor)) : '–', target && !target.onTarget ? 'accent' : 'muted') : null}
+      {wide ? null : flag}
     </View>
   );
 }
@@ -199,6 +205,8 @@ const styles = StyleSheet.create({
   readable: { maxWidth: 1040, width: '100%', gap: space.md, paddingTop: space.md },
   table: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: space.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  rowWrap: { gap: space.sm, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  cells: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   header: { paddingVertical: space.sm },
   edit: { gap: space.xs, marginTop: space.xs },
   editActions: { flexDirection: 'row', gap: space.sm },
