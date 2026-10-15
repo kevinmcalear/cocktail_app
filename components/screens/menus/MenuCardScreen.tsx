@@ -55,6 +55,8 @@ interface GuestCardContentProps {
   pictures: CardPictures;
   /** Smaller type and pictures: the editor's live preview beside the menu. */
   compact?: boolean;
+  /** Drinks not made yet (New menu's pasted list), marked NEW and not drawn. */
+  newIds?: ReadonlySet<string>;
 }
 
 /**
@@ -64,7 +66,7 @@ interface GuestCardContentProps {
  * drink" and the venue's mark. The editor's preview (`compact`) is just when,
  * name and sections. Inside the light theme, on paper.
  */
-export function GuestCardContent({ name, when, venue, sections, pictures, compact = false }: GuestCardContentProps) {
+export function GuestCardContent({ name, when, venue, sections, pictures, compact = false, newIds }: GuestCardContentProps) {
   const ds = useDs();
   return (
     <View style={styles.card}>
@@ -88,6 +90,7 @@ export function GuestCardContent({ name, when, venue, sections, pictures, compac
           sections={sections}
           variant="card"
           pictures={pictures}
+          newIds={newIds}
           compact={compact}
           codes={!compact}
           foot={
