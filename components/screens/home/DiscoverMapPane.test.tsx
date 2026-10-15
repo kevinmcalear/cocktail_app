@@ -44,8 +44,7 @@ jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTo
 jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, useBarVersions: () => ({}), useSpecMatches: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useBarFacts', () => ({ useBarFacts: () => ({ data: null }) }));
 jest.mock('@/hooks/useBarBrands', () => ({ useBarBrand: () => null }));
-jest.mock('@/components/screens/kept/LoveBarButton', () => ({ LoveBarButton: () => null }));
-jest.mock('@/components/screens/kept/HideBarButton', () => ({ HideBarButton: () => null }));
+jest.mock('@/components/screens/kept/LoveBarButton', () => ({ LoveBarButton: () => null })); jest.mock('@/components/screens/kept/HideBarButton', () => ({ HideBarButton: () => null }));
 // The hero's Collect and Rank have their own tests; here they only need to be there.
 jest.mock('@/components/screens/published/CollectButton', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
