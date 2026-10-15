@@ -10,6 +10,7 @@ import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tok
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCocktail, useDeleteCocktail } from '@/hooks/useCocktails';
 import { useCocktailEditor } from '@/hooks/useCocktailEditor';
+import { useHoldUpdates } from '@/hooks/useOtaUpdates';
 import { confirmAsync } from '@/lib/dialogs';
 import { applyIngredientHandoff } from '@/lib/ingredientHandoff';
 import type { ItemImageLink } from '@/lib/itemImages';
@@ -73,6 +74,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
   const cocktail = useCocktail(id ?? undefined).data;
   const draft = 'draftId' in editor ? editor : null;
   const history = useEditHistory(editor);
+  useHoldUpdates();
   const deleteCocktail = useDeleteCocktail();
   // A drink credited to a bar stays shared (others rank and save it), so only SQL deletes it.
   const credited = !!cocktail && !cocktail.bar_id && !cocktail.created_by && !!cocktail.origin_bar_profile_id;
