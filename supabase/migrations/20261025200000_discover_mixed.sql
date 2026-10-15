@@ -12,7 +12,8 @@
 -- Rows also return the drink's styles (the "Zero-proof" tag).
 --
 -- New arguments and columns are a new signature: drop the old one and grant
--- the new. Without p_mix, as 20261019200000, so old builds are unchanged.
+-- the new. Without p_mix, as 20261020200000 (hidden bars stay off the
+-- list), so old builds are unchanged.
 
 DROP FUNCTION "public"."discover_list"(double precision, double precision, double precision, "text", "text", "uuid", "text"[], "text"[], "text"[], "text", smallint, "text", "uuid", integer, double precision, double precision, integer, boolean);
 
@@ -114,6 +115,8 @@ BEGIN
                ))))::integer END AS mix_m
         FROM public.profiles p
         WHERE p.kind = 'bar' AND p.is_public AND NOT p.is_closed
+          -- A bar the viewer hid keeps its drinks off the list, except on its own page.
+          AND (p_bar_id IS NOT NULL OR NOT EXISTS (SELECT 1 FROM public.hidden_bars h WHERE h.profile_id = p.id AND h.user_id = (SELECT auth.uid())))
           AND (NOT v_from OR (p.latitude IS NOT NULL AND p.longitude IS NOT NULL))
           AND (p_bar_id IS NULL OR p.id = p_bar_id)
           AND (p_bar_id IS NOT NULL OR p_country_code IS NULL OR v_point OR p.country_code = upper(p_country_code))
