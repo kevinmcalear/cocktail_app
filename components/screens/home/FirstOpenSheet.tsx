@@ -12,7 +12,7 @@ import { useTopBars } from '@/hooks/useDiscover';
 import { useHiddenBars, useHideBar } from '@/hooks/useHiddenBars';
 import { useLoveBar, useLovedBars } from '@/hooks/useKept';
 import { useMode } from '@/hooks/useMode';
-import type { Area, DiscoverRow } from '@/lib/nearMe';
+import { areaLabel, type Area, type DiscoverRow } from '@/lib/nearMe';
 import { useFirstOpen } from '@/store/useFirstOpen';
 
 type Pick = 'love' | 'hide';
@@ -40,10 +40,10 @@ export function FirstOpenSheet({ area }: { area: Area }) {
   const { data } = useTopBars(area, fresh);
   const rows = data ? [...data.ranked, ...data.early] : [];
   if (!fresh || rows.length < AT_LEAST) return null;
-  return <Ask userId={userId} rows={rows} />;
+  return <Ask userId={userId} rows={rows} where={areaLabel(area)} />;
 }
 
-function Ask({ userId, rows }: { userId: string; rows: DiscoverRow[] }) {
+function Ask({ userId, rows, where }: { userId: string; rows: DiscoverRow[]; where: string }) {
   const markAsked = useFirstOpen((s) => s.markAsked);
   const [picks, setPicks] = useState<Record<string, Pick | undefined>>({});
   const [shown, setShown] = useState(FIRST);
@@ -84,7 +84,7 @@ function Ask({ userId, rows }: { userId: string; rows: DiscoverRow[] }) {
       >
         <Body tone="muted">Love the bars you go to and they lead Discover. Hide any you never want to see. You can change either later.</Body>
         <Caption tone="muted" style={styles.lead}>
-          Top bars near you, best first
+          {`Top bars ${where}, best first`}
         </Caption>
         <View role="list" aria-label="Bars near you">
           {rows.slice(0, shown).map((r) => (
