@@ -100,7 +100,7 @@ function GlasswarePage({ barId }: { barId: string }) {
                       <GlassRow
                         key={g.id}
                         glass={g}
-                        size={glassCapacity(g, items, barId)}
+                        size={g.model?.capacity_ml ? `${Math.round(g.model.capacity_ml)} ml` : glassCapacity(g, items, barId)}
                         first={i === 0}
                         canEdit={canEdit}
                         onOpen={() => setOpen(g.id)}
@@ -124,6 +124,8 @@ function GlasswarePage({ barId }: { barId: string }) {
                     onSave={(row) => save.mutate(row, { onSuccess: close })}
                     onCancel={close}
                     onDelete={editing ? () => void confirmRemove(editing, close) : undefined}
+                    venueModelIds={glasses.flatMap((g) => (g.model_id ? [g.model_id] : []))}
+                    venueName={venue?.name}
                   />
                 </Surface>
               ) : canEdit ? (
@@ -155,7 +157,7 @@ function GlassDrawing({ glass }: { glass: BarGlass }) {
 
 interface GlassRowProps {
   glass: BarGlass;
-  /** "180 ml", from the glassware item of the same name. */
+  /** "180 ml": a real glass's, else the glassware item's of the same name. */
   size: string | null;
   first: boolean;
   canEdit: boolean;

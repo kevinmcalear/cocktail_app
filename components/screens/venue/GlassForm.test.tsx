@@ -16,14 +16,38 @@ jest.mock('@/components/maker/MakerPicker', () => ({
   },
 }));
 
+const mockFenwick = {
+  id: 'm1', maker_profile_id: 'corvid', maker: { handle: 'corvid', display_name: 'Corvid Glass Works' }, shape_item_id: 'coupe-shape', glass: 'coupe' as const,
+  variant: 'coupe_wide', name: 'Fenwick coupe', series: 'Fenwick', designer: null, model_code: null, capacity_ml: 190, height_mm: 165, rim_mm: null,
+  material: 'crystal', product_url: null,
+};
+jest.mock('@/components/glass/GlassModelPicker', () => ({
+  GlassThumb: () => null,
+  GlassModelPicker: ({ onPick, onDescribe }: { onPick: (m: typeof mockFenwick) => void; onDescribe: () => void }) => {
+    const { Pressable, Text } = jest.requireActual<typeof import('react-native')>('react-native');
+    return (
+      <>
+        <Pressable role="button" onPress={() => onPick(mockFenwick)}>
+          <Text>Pick Fenwick</Text>
+        </Pressable>
+        <Pressable role="button" onPress={onDescribe}>
+          <Text>Describe it</Text>
+        </Pressable>
+      </>
+    );
+  },
+}));
+
 const glass = {
   id: 'g1', glass: 'coupe' as const, variant: null, name: 'House coupe', maker: 'A potter', maker_profile_id: null, maker_page: null,
-  designer: null, series: null, shape_note: null, source_urls: [], is_default: false, bar_name: 'Bar',
+  designer: null, series: null, shape_note: null, source_urls: [], is_default: false, bar_name: 'Bar', model_id: null, model: null,
 };
 
 test('adding a glass picks its maker page, keeps the name as written, and trims empty fields to null', async () => {
   const onSave = jest.fn();
   await renderWithTamagui(<GlassForm glass={null} saving={false} onSave={onSave} onCancel={() => {}} />);
+  expect(screen.getByText('Which glass is it?')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Describe it'));
   await fireEvent.press(screen.getByText('Rocks'));
   await fireEvent.changeText(screen.getByLabelText('Name'), '  Old fashioned  ');
   await fireEvent.press(screen.getByText('Find its maker’s page'));
@@ -32,8 +56,25 @@ test('adding a glass picks its maker page, keeps the name as written, and trims 
   await fireEvent.press(screen.getByText('Save glass'));
   expect(onSave).toHaveBeenCalledWith({
     id: undefined, glass: 'rocks', variant: null, name: 'Old fashioned', maker: 'Kimura Glass', maker_profile_id: 'kimura',
-    designer: null, series: null, shape_note: null, is_default: true,
+    designer: null, series: null, shape_note: null, model_id: null, is_default: true,
   });
+});
+
+test('a maker\'s model brings its type, drawing, maker and series; the venue\'s own name wins', async () => {
+  const onSave = jest.fn();
+  await renderWithTamagui(<GlassForm glass={null} saving={false} onSave={onSave} onCancel={() => {}} />);
+  await fireEvent.press(screen.getByText('Pick Fenwick'));
+  expect(screen.getByText('190 ml · 165 mm tall · Crystal')).toBeTruthy();
+  expect(screen.queryByText('Who makes it')).toBeNull();
+  await fireEvent.press(screen.getByText('Save glass'));
+  expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
+    glass: 'coupe', variant: 'coupe_wide', name: 'Fenwick coupe', maker: 'Corvid Glass Works', maker_profile_id: 'corvid', series: 'Fenwick', model_id: 'm1',
+  }));
+  await fireEvent.changeText(screen.getByLabelText('Name'), 'Our coupe');
+  await fireEvent.press(screen.getByText('Save glass'));
+  expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({ name: 'Our coupe', model_id: 'm1' }));
+  await fireEvent.press(screen.getByText('Not this one'));
+  expect(screen.getByText('Who makes it')).toBeTruthy();
 });
 
 test('changing a glass keeps its id and refuses a name over the limit', async () => {

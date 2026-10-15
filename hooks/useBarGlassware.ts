@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { GLASS_MODEL_SELECT, type GlassModel } from '@/hooks/useGlassModels';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
@@ -21,6 +22,9 @@ export interface BarGlass {
   series: string | null;
   shape_note: string | null;
   source_urls: string[];
+  /** The real glass it is, when the venue picked one (20261023100000). */
+  model_id: string | null;
+  model: GlassModel | null;
   /** The glass of its type the bar's drinks are drawn in. */
   is_default: boolean;
   /** The bar's name, for "Little Rye uses this". */
@@ -37,7 +41,7 @@ export function useBarGlassware(barId: string | null | undefined) {
       const { data, error } = await supabase
         .from('bar_glassware')
         .select(
-          'id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)'
+          `id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, model_id, model:glass_models!bar_glassware_model_id_fkey(${GLASS_MODEL_SELECT}), profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)`
         )
         .eq('profiles.bar_id', barId!)
         .order('sort_order')
@@ -76,6 +80,8 @@ export interface BarGlassInput {
   designer: string | null;
   series: string | null;
   shape_note: string | null;
+  /** The real glass, when one was picked; picking fills what the row leaves empty. */
+  model_id?: string | null;
   is_default: boolean;
 }
 
