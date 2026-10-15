@@ -4,7 +4,7 @@
  * by lib/discoverMap.check.ts. The map views are components/screens/home/DiscoverMap
  * (MapLibre on every platform: GL JS on web, MapLibre Native on iOS and Android).
  */
-import type { CircleLayerSpecification, FilterSpecification, GeoJSONSourceSpecification } from 'maplibre-gl';
+import type { CircleLayerSpecification, FilterSpecification, GeoJSONSourceSpecification, StyleSpecification } from 'maplibre-gl';
 
 import { backbar, fontFamilies, space, type, type DisplayFace } from '../constants/tokens';
 import { withAlpha } from './color';
@@ -21,6 +21,32 @@ export const MAP_STYLE = {
   light: 'https://tiles.openfreemap.org/styles/positron',
   dark: 'https://tiles.openfreemap.org/styles/dark',
 } as const;
+
+/** The dark style's street and place names: 37% grey at 10 px read as nothing on a phone (Eddie, 14 Oct). */
+const DARK_LABELS = new Set(['highway_name_other', 'highway_name_motorway', 'place_other', 'place_suburb', 'place_village', 'place_town']);
+
+/**
+ * A map style with street and area names you can read: on the dark map, the
+ * muted ink on a ground-coloured halo, a size up from street level. The light
+ * map's are already dark grey at 12 px, so it's left as it is. Pure, so web
+ * (setStyle's transformStyle) and native (useMapStyle) patch it the same way.
+ */
+export function readableLabels(style: StyleSpecification, scheme: keyof typeof MAP_STYLE): StyleSpecification {
+  if (scheme !== 'dark') return style;
+  const c = backbar.dark;
+  return {
+    ...style,
+    layers: style.layers.map((layer) =>
+      layer.type === 'symbol' && DARK_LABELS.has(layer.id)
+        ? {
+            ...layer,
+            layout: { ...layer.layout, 'text-size': ['interpolate', ['linear'], ['zoom'], 14, 10, 16, 12, 18, 13] },
+            paint: { ...layer.paint, 'text-color': c.muted, 'text-halo-color': c.ground, 'text-halo-width': 1.5, 'text-halo-blur': 0 },
+          }
+        : layer,
+    ),
+  };
+}
 
 export interface MapPin {
   id: string;
@@ -222,35 +248,50 @@ export function pinDescription(pin: MapPin): string {
 }
 
 /**
+ * From street level in, each bar's pin writes its name beside a bigger logo,
+ * as a searched pin writes its drink's (Eddie, 14 Oct: logos were hard to
+ * read and you couldn't tell which bar was which).
+ */
+export const CLOSE_ZOOM = 16;
+
+/**
  * How a pin looks on either map (disc-map, disc-map-opt-c): the score in mono
  * on a dark pill with a soft ring and shadow, or a dot while early; while
  * searching, its best match's picture too. The accent when selected. A closed
- * bar is muted and faded, so it reads as history, not a plan.
+ * bar is muted and faded, so it reads as history, not a plan. Up close
+ * (CLOSE_ZOOM, `zoom` is the map's), the bar's logo and name.
  */
-export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }) {
-  const label = pin.top ? pinName(pin.top, pin.drinks ?? 1) : pinLabel(pin);
+export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }, zoom?: number) {
+  const close = !pin.top && !pin.closed && zoom !== undefined && zoom >= CLOSE_ZOOM;
+  // A pin that writes a name: a searched drink's, or up close the bar's (after its score, when it has one).
+  const named = !!pin.top || close;
+  const label = pin.top
+    ? pinName(pin.top, pin.drinks ?? 1)
+    : close
+      ? [pin.score !== null ? formatScore(pin.score) : '', pinName(pin.name, 1)].filter(Boolean).join(' · ')
+      : pinLabel(pin);
   // Picked, a pin is a size up: a score 36 tall at 15 (disc-desk-browse), a named one 40 (disc-desk-search).
   const big = selected && !!label;
   // A searched pin (it names a drink) keeps its bar's logo when the drink has no picture; a bar with no score yet shows
-  // its logo alone (pinsToDraw); score pins have none, as drawn.
-  const logo = pin.image ?? (pin.top || !label ? pin.logo : null) ?? null;
-  // A named pin's picture sits 5 in from its edge (7 picked); a lone logo needs room for its 2px ring.
-  const logoSize = pin.top && !big ? 22 : 26;
-  const edge = pin.top ? (big ? space.md + 2 : space.md) : big ? space.md : space.sm + 2;
-  const height = pin.top ? (big ? 40 : 32) : big ? 36 : label ? 30 : logo ? logoSize + 4 : 18;
-  // Scores in mono, drink names in Geist (disc-desk-search).
-  const font: keyof typeof fontFamilies = pin.top ? (big ? 'bodySemiBold' : 'bodyMedium') : 'monoMedium';
+  // its logo alone (pinsToDraw), and up close beside its name; score pins have none, as drawn.
+  const logo = pin.image ?? (named || !label ? pin.logo : null) ?? null;
+  // A named pin's picture sits 5 in from its edge (7 picked); a lone logo needs room for its 2px ring; up close, 4 in.
+  const logoSize = close ? (big ? 36 : 32) : pin.top && !big ? 22 : 26;
+  const edge = named ? (big ? space.md + 2 : space.md) : big ? space.md : space.sm + 2;
+  const height = close ? logoSize + 2 * space.xs : pin.top ? (big ? 40 : 32) : big ? 36 : label ? 30 : logo ? logoSize + 4 : 18;
+  // Scores in mono, names in Geist (disc-desk-search).
+  const font: keyof typeof fontFamilies = named ? (big ? 'bodySemiBold' : 'bodyMedium') : 'monoMedium';
   return {
     label,
     logo,
     logoSize,
     font,
     fontSize: big ? type.label.fontSize : type.caption.fontSize,
-    minWidth: big && !pin.top ? 56 : label ? 44 : height,
+    minWidth: big && !named ? 56 : label ? 44 : height,
     height,
-    paddingLeft: label ? (logo ? (big ? space.xs + 3 : space.xs + 1) : edge) : 0,
+    paddingLeft: label ? (logo ? (close ? space.xs - 1 : big ? space.xs + 3 : space.xs + 1) : edge) : 0,
     paddingRight: label ? edge : 0,
-    gap: label && pin.top ? space.xs + 2 : space.xs,
+    gap: label && named ? space.xs + 2 : space.xs,
     borderWidth: selected && !label ? 2 : 1,
     borderColor: selected ? accent.fill : withAlpha(backbar.dark.ink, 0.2),
     backgroundColor: selected ? accent.fill : pin.score === null && !pin.drinks && !pin.matches && !logo ? backbar.light.muted : backbar.dark.raised,

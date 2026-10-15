@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { backbar, MAP_ME, radius } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
-import { AREA_CLUSTER, areasFrom, DOT_PAINT, dotsFilter, dotsOf, MAP_STYLE, pinsToDraw, viewportFrom, type MapArea, type MapView } from '@/lib/discoverMap';
+import { AREA_CLUSTER, areasFrom, DOT_PAINT, dotsFilter, dotsOf, MAP_STYLE, pinsToDraw, readableLabels, viewportFrom, type MapArea, type MapView } from '@/lib/discoverMap';
 
 import type { DiscoverMapProps } from './DiscoverMap';
 import { areaElement, loadMapStyles, paintPin, styleControls } from './discoverMapDom';
@@ -23,6 +23,11 @@ function addDots(m: MapLibreMap, data: GeoJSON.FeatureCollection, drawn: readonl
   if (m.getSource(DOTS)) return;
   m.addSource(DOTS, { type: 'geojson', data, ...AREA_CLUSTER });
   m.addLayer({ id: DOTS, type: 'circle', source: DOTS, filter: dotsFilter(drawn), paint: DOT_PAINT });
+}
+
+/** The OpenFreeMap style with readable street names (lib/discoverMap readableLabels), patched as it loads. */
+function setReadableStyle(m: MapLibreMap, scheme: DiscoverMapProps['scheme']) {
+  m.setStyle(MAP_STYLE[scheme], { transformStyle: (_, next) => readableLabels(next, scheme) });
 }
 
 /**
@@ -107,7 +112,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         markers.current.set(pin.id, entry);
       }
       entry.marker.setLngLat([pin.longitude, pin.latitude]);
-      paintPin(entry.el, pin, pin.id === sel, acc);
+      paintPin(entry.el, pin, pin.id === sel, acc, view.current?.zoom);
     }
   };
 
@@ -150,9 +155,6 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
       const start = latest.current.camera;
       const m = new ml.Map({
         container,
-        // The scheme now, not at mount: it starts light until hydration, and
-        // a flip to dark while maplibre loads finds no map to restyle.
-        style: MAP_STYLE[latest.current.scheme],
         center: start ? [start.longitude, start.latitude] : [0, 20],
         zoom: start?.zoom ?? 1.5,
         // OpenStreetMap asks for a visible credit: in full here, or in the sheet (MapCredit) on phones.
@@ -160,6 +162,9 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         dragRotate: false,
         pitchWithRotate: false,
       });
+      // The scheme now, not at mount: it starts light until hydration, and
+      // a flip to dark while maplibre loads finds no map to restyle.
+      setReadableStyle(m, latest.current.scheme);
       m.touchZoomRotate.disableRotation();
       if (!compact) m.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right');
       styleControls(container, latest.current.scheme);
@@ -204,7 +209,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   }, []);
 
   useEffect(() => {
-    map.current?.setStyle(MAP_STYLE[scheme]);
+    if (map.current) setReadableStyle(map.current, scheme);
     if (map.current) styleControls(map.current.getContainer(), scheme);
   }, [scheme]);
 
