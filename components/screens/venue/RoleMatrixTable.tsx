@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, PressableScale, Surface, useDs } from '@/components/ds';
+import { Body, Caption, PressableScale, Surface, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { RoleMatrixRow } from '@/hooks/useVenueRoles';
@@ -10,6 +10,8 @@ import { CAPABILITY_GROUPS, cell, endsLabel, type Cell } from '@/lib/roleMatrix'
 import { roleLabel } from '@/lib/roles';
 
 const LABEL_WIDTH = 240;
+/** Phones keep room for two or three role columns beside the names (drink-role-lens-phone). */
+const LABEL_WIDTH_PHONE = 150;
 const COLUMN = 92;
 const MARK = 14;
 const CHANGED_DOT = 7;
@@ -69,6 +71,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
   isYou?: (column: RoleMatrixRow) => boolean;
 }) {
   const ds = useDs();
+  const labelWidth = { width: useBreakpoint() === 'phone' ? LABEL_WIDTH_PHONE : LABEL_WIDTH };
   const value = cellOf ?? ((c: RoleMatrixRow, r: MatrixRowSpec) => cell(matrix, c, r.id));
   return (
     <View style={styles.wrap}>
@@ -77,7 +80,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.scroll}>
           <View role="table" accessibilityLabel={label ?? `What each ${barName} role can do`} style={styles.table}>
             <View role="row" style={[styles.row, { borderBottomColor: ds.c.lineStrong }]}>
-              <View role="columnheader" style={styles.label}>
+              <View role="columnheader" style={[styles.label, labelWidth]}>
                 <Caption tone="muted">{heading}</Caption>
               </View>
               {matrix.map((c) => {
@@ -115,7 +118,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
                 </View>
                 {g.rows.map((r) => (
                   <View key={r.id} role="row" style={[styles.row, { borderBottomColor: ds.c.line }]}>
-                    <View role="rowheader" style={[styles.label, styles.labelRow]}>
+                    <View role="rowheader" style={[styles.label, labelWidth, styles.labelRow]}>
                       <View style={styles.labelText}>
                         <Body numberOfLines={2}>{r.label}</Body>
                         {r.detail ? <Caption tone="muted">{r.detail}</Caption> : null}
@@ -175,7 +178,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
   groupRow: { paddingTop: space.lg, paddingBottom: space.xs },
   groupTitle: { letterSpacing: 0.8 },
-  label: { width: LABEL_WIDTH, paddingVertical: space.sm, paddingRight: space.md },
+  label: { paddingVertical: space.sm, paddingRight: space.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   labelText: { flexShrink: 1, gap: 2 },
   column: { flexGrow: 1, flexBasis: COLUMN, minWidth: COLUMN, alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs, paddingHorizontal: space.xs },
