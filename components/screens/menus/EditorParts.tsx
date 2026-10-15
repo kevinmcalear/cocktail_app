@@ -117,6 +117,7 @@ export function EditorSections({ editor, targetable, drag }: { editor: LayoutEdi
           onAdd={targetable && editor.targetKey === s.key ? () => editor.setSheet({ kind: 'add', key: s.key }) : undefined}
           onSettings={() => editor.setSheet({ kind: 'section', key: s.key })}
           home={home}
+          made={editor.made}
           onRemove={(id) => editor.remove(s.key, id)}
           onReorder={(drinks) => editor.reorder(s.key, drinks)}
           onMove={(from, to) => editor.move(s.key, from, to)}

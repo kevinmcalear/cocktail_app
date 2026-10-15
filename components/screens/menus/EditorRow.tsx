@@ -3,7 +3,7 @@ import { useRef, useState, type ComponentRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { ScaleDecorator } from 'react-native-draggable-flatlist';
 
-import { Caption, DrinkImage, DsText, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, PressableScale, Spec, Tag, useBreakpoint, useDs } from '@/components/ds';
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, radius, space, type } from '@/constants/tokens';
@@ -25,6 +25,8 @@ interface EditorRowProps {
   count: number;
   /** A home menu: no prices. */
   home?: boolean;
+  /** Made from this menu just now: a New tag after its name. */
+  isNew?: boolean;
   active: boolean;
   drag: () => void;
   onRemove: () => void;
@@ -55,7 +57,7 @@ const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail'
  * another section, Open the drink, Move to top (and on a phone, Remove). On a
  * desktop browser, Remove and ... show on hover or keyboard focus.
  */
-export function EditorRow({ drink, index: i, count, home, active, drag, onRemove, onMove, others, onMoveTo, web: dnd }: EditorRowProps) {
+export function EditorRow({ drink, index: i, count, home, isNew, active, drag, onRemove, onMove, others, onMoveTo, web: dnd }: EditorRowProps) {
   const ds = useDs();
   const router = useRouter();
   const [menu, setMenu] = useState<'open' | 'sections'>('open');
@@ -105,9 +107,12 @@ export function EditorRow({ drink, index: i, count, home, active, drag, onRemove
             <DrinkImage thumb sketchDetail="thumb" aspectRatio={TILE} source={drink.imageUrl} generated={drink.isSketch} glass={drink.glass} itemId={drink.id} accessibilityLabel={drink.name} radius="control" />
           </View>
           <View style={styles.text}>
-            <DsText variant="headline" numberOfLines={2} style={[nameSize, { fontFamily: displayFaces[ds.displayFace].regular }]}>
-              {drink.name}
-            </DsText>
+            <View style={styles.nameRow}>
+              <DsText variant="headline" numberOfLines={2} style={[nameSize, styles.shrink, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+                {drink.name}
+              </DsText>
+              {isNew ? <Tag label="New" tone="success" /> : null}
+            </View>
             {drink.line ? (
               <Caption tone="muted" numberOfLines={1}>
                 {drink.line}
@@ -157,6 +162,8 @@ export function EditorRow({ drink, index: i, count, home, active, drag, onRemove
 }
 
 const styles = StyleSheet.create({
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  shrink: { flexShrink: 1 },
   wrap: { borderBottomWidth: StyleSheet.hairlineWidth },
   // No right padding: the grip is the row's last GRIP points (gripOnly 'right').
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
