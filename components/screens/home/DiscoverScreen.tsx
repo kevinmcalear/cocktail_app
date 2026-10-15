@@ -250,7 +250,7 @@ export function DiscoverScreen() {
             more={results.more}
             isLoading={results.isLoading}
             signedIn={signedIn}
-            area={area} near={{ filter, from, onNow: !showPast }}
+            area={area} near={{ filter, from, onNow: !showPast }} onKind={addKind}
             empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
           />
         )}

@@ -4,10 +4,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Headline, RowScore, Segmented, scoreWords as rowScoreWords, type MatchTextProps } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
+import { DiscoverShelves } from '@/components/screens/home/DiscoverShelves';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useRowScores } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
+import { useDiscoverShelves } from '@/hooks/useDiscoverShelves';
 import { useVersionLabel } from '@/hooks/useSpecMatches';
 import { drinkCount, drinkReason, type BarScore, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { isStrong } from '@/lib/discoverMatch';
@@ -152,6 +154,8 @@ interface DrinksHereProps {
   area: Area;
   /** Mixed | Nearest: the same drinks closest first, counted from `from` (no switch without it). */
   near?: { filter: DrinkFilter; from: { latitude: number; longitude: number } | null; onNow: boolean };
+  /** A shelf's See all: list just that kind. */
+  onKind?: (kind: string) => void;
 }
 
 const SORTS = [
@@ -161,9 +165,11 @@ const SORTS = [
 
 /**
  * "Martinis near you": the drinks at bars that match, with how many bars pour
- * them; mixed a bar at a time, or Nearest (option A, Kevin 15 Oct).
+ * them; mixed a bar at a time, or Nearest (option A, Kevin 15 Oct). Browsing
+ * on now with no filter, shelves come first and this reads "All drinks near
+ * you" (option B, Kevin 15 Oct).
  */
-export function DrinksHere({ title, drinks: mixed, totals, more: mixedMore, isLoading: mixedLoading, signedIn, empty, area, near }: DrinksHereProps) {
+export function DrinksHere({ title, drinks: mixed, totals, more: mixedMore, isLoading: mixedLoading, signedIn, empty, area, near, onKind }: DrinksHereProps) {
   const [sort, setSort] = useState<'mixed' | 'nearest'>('mixed');
   const nearest = sort === 'nearest' && !!near?.from;
   const closest = useDiscoverList(near?.filter ?? { kinds: [], search: '', area }, { from: near?.from ?? null, onNow: near?.onNow, enabled: nearest });
@@ -171,22 +177,27 @@ export function DrinksHere({ title, drinks: mixed, totals, more: mixedMore, isLo
   const more = nearest ? { total: closest.totals?.drinks ?? null, hasMore: closest.hasMore, loadMore: closest.loadMore, loading: closest.isLoadingMore } : mixedMore;
   const isLoading = nearest ? closest.isLoading : mixedLoading;
   const scores = useRowScores(drinks, area, signedIn);
+  const browsing = signedIn && !!near && near.onNow && !near.filter.kinds.length && !mixedLoading;
+  const shelves = useDiscoverShelves(near?.filter ?? { kinds: [], search: '', area }, mixed, browsing);
   let body;
   if (!signedIn) body = <ListNote>Sign in to see the drinks bars pour.</ListNote>;
   else if (isLoading) body = <ListNote>Loading…</ListNote>;
   else if (!drinks.length) body = <ListNote>{empty}</ListNote>;
   else body = <DrinkAtBarList drinks={drinks} more={more} scores={scores} />;
   return (
-    <View style={styles.section}>
-      <Caption tone="muted">{totals?.drinks ? `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'}` : 'At bars'}</Caption>
-      <View style={styles.head}>
-        <Headline role="heading" style={styles.title}>
-          {title}
-        </Headline>
-        {near?.from && signedIn ? <Segmented options={SORTS} value={sort} onChange={setSort} variant="pill" choice accessibilityLabel="Order" /> : null}
+    <>
+      <DiscoverShelves shelves={shelves} onKind={onKind} />
+      <View style={styles.section}>
+        <Caption tone="muted">{totals?.drinks ? `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'}` : 'At bars'}</Caption>
+        <View style={styles.head}>
+          <Headline role="heading" style={styles.title}>
+            {shelves.length ? title.replace(/^Drinks/, 'All drinks') : title}
+          </Headline>
+          {near?.from && signedIn ? <Segmented options={SORTS} value={sort} onChange={setSort} variant="pill" choice accessibilityLabel="Order" /> : null}
+        </View>
+        {body}
       </View>
-      {body}
-    </View>
+    </>
   );
 }
 
