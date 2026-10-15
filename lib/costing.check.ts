@@ -2,7 +2,7 @@
 // The example is the Ethyl study's: £12.00 on the menu, £1.90 to make, 20% VAT.
 import assert from 'node:assert/strict';
 
-import { exTax, formatPct, margin, menuSummary, priceForProfit, priceForTarget, targetsLine, targetStatus, underLabel } from './costing';
+import { exTax, formatPct, lineCostMinor, margin, menuSummary, priceForProfit, priceForTarget, targetsLine, targetStatus, underLabel } from './costing';
 
 const uk = { taxRate: 20, pricesIncludeTax: true };
 const us = { taxRate: 8.875, pricesIncludeTax: false };
@@ -79,3 +79,13 @@ assert.equal(underLabel('profit', { gp: 78, minProfitMinor: 1100 }, usd), 'Makes
 assert.equal(underLabel('both', { gp: 78, minProfitMinor: 1100 }, usd), 'Under both targets');
 
 console.log('costing: ok');
+
+// A line's cost from the pack: 30 ml of a 750 ml bottle at 32.00 is 1.28.
+assert.equal(lineCostMinor(30, 'ml', { amount: 750, unit: 'ml', costMinor: 3200 }, 1), 128);
+assert.equal(lineCostMinor(1, 'oz', { amount: 1, unit: 'l', costMinor: 1000 }, 1), 30);
+assert.equal(lineCostMinor(20, 'g', { amount: 1, unit: 'kg', costMinor: 500 }, 1), 10, 'weights meet weights');
+assert.equal(lineCostMinor(15, 'ml', { amount: 1, unit: 'kg', costMinor: 400 }, 1.23), 7, 'a syrup by the kilo through its density');
+assert.equal(lineCostMinor(1, 'each', { amount: 12, unit: 'each', costMinor: 600 }, 1), 50);
+assert.equal(lineCostMinor(1, 'wedge', { amount: 12, unit: 'each', costMinor: 600 }, 1), 50, 'any count is one of the pack');
+assert.equal(lineCostMinor(1, 'wedge', { amount: 750, unit: 'ml', costMinor: 600 }, 1), null, 'a count never meets a bottle');
+assert.equal(lineCostMinor(null, 'top', { amount: 750, unit: 'ml', costMinor: 600 }, 1), null);

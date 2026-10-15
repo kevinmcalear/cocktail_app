@@ -94,13 +94,13 @@ export function useVenueClaim(barId: string | null) {
   });
 }
 
-/** The venue's own bar page, once a claim has linked it (null before). */
+/** The venue's own bar page, once a claim has linked it (null before), with where it is (New menu's season names). */
 export function useVenuePage(barId: string | null) {
   return useQuery({
     queryKey: ['venue-page', barId],
     enabled: !!barId,
-    queryFn: async (): Promise<{ id: string; handle: string } | null> => {
-      const { data, error } = await supabase.from('profiles').select('id, handle').eq('bar_id', barId!).eq('kind', 'bar').maybeSingle();
+    queryFn: async (): Promise<{ id: string; handle: string; latitude?: number | null; timezone?: string | null } | null> => {
+      const { data, error } = await supabase.from('profiles').select('id, handle, latitude, timezone').eq('bar_id', barId!).eq('kind', 'bar').maybeSingle();
       if (error) throw error;
       return data ?? null;
     },

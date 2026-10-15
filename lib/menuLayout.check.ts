@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import type { MenuDrink } from '@/types/menus';
 
 import {
+  nameToMake,
+  nearLibrary,
   moveToSection,
   addDrink,
   dropDrink,
@@ -126,3 +128,12 @@ console.log('menuLayout: ok');
   assert.equal(dropDrink(l, d('z'), null, 'b', 0), l, 'already in that section');
   assert.equal(dropDrink(l, d('x'), 'a', 'beer', 0), l, 'a section that does not take it');
 }
+
+// --- Make "name" from the library search ---
+assert.equal(nameToMake(library, 'fig leaf  spritz '), 'Fig Leaf Spritz');
+assert.equal(nameToMake(library, 'Fig leaf Spritz'), 'Fig leaf Spritz', 'typed with capitals, kept as typed');
+assert.equal(nameToMake(library, 'bolo tie'), null, 'a drink already has it');
+assert.equal(nameToMake(library, '  '), null);
+assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['cocktail'] }, 'stamp collector')), ['Champ Stamp']);
+assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['cocktail'] }, 'tie')), [], 'short words don\'t count');
+assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['beer'] }, 'stamp')), []);

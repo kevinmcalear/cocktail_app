@@ -253,6 +253,37 @@ describe('discover_list', () => {
     assert.ok(plain.every((r) => r.distance_m === null), 'no distance without Nearest');
   });
 
+  test('mixed: a drink from every bar before a second from any, paging by place (20261028100000)', async () => {
+    const { data, error } = await near(users.viewer.client, { p_mix: true });
+    assert.ifError(error);
+    const rows = mine(data);
+    // Round 1: Open Shed's best (on now, with a picture), then Date Line's only drink. Round 2 on: Open Shed's others.
+    assert.deepEqual(rows.slice(0, 2).map((r) => r.id), [ids.martini, ids.lineMartini]);
+    assert.deepEqual(rows.slice(2).map((r) => r.id).sort(), [ids.sour, ids.zzz].sort());
+    assert.ok(data.every((r, i) => i === 0 || r.mix_pos > data[i - 1].mix_pos), 'mix_pos rises down the list');
+    assert.equal(data[0].total_drinks, 4);
+    assert.ok(Array.isArray(rows.find((r) => r.id === ids.sour).styles));
+    const pages = [];
+    let cursor = {};
+    for (;;) {
+      const { data: page, error: pageError } = await near(users.viewer.client, { p_mix: true, p_limit: 1, ...cursor });
+      assert.ifError(pageError);
+      if (!page.length) break;
+      if (pages.length) assert.equal(page[0].total_drinks, null);
+      pages.push(...page);
+      cursor = { p_after_pos: page[page.length - 1].mix_pos };
+    }
+    assert.deepEqual(pages.map((r) => r.id), data.map((r) => r.id));
+    const { error: unmixed } = await near(users.viewer.client, { p_after_pos: 1 });
+    assert.ok(unmixed, 'a place cursor needs the mixed list');
+    const from = { p_from_latitude: HERE.lat, p_from_longitude: -179.995 };
+    const { data: nearest } = await near(users.viewer.client, { ...from, p_mix: true });
+    assert.deepEqual(nearest.map((r) => r.id), (await near(users.viewer.client, from)).data.map((r) => r.id), 'Nearest is never mixed');
+    assert.ok(nearest.every((r) => r.mix_pos === null));
+    const { data: plain } = await near(users.viewer.client);
+    assert.ok(plain.every((r) => r.mix_pos === null), 'no place unless mixed');
+  });
+
   test('says why each drink matched: name, then the classic it riffs on, then lines, description or bar', async () => {
     const why = async (q) => Object.fromEntries(mine((await near(users.viewer.client, { p_query: q })).data).map((r) => [r.id, [r.match_kind, r.match_text]]));
     assert.deepEqual((await why(`martini ${run}`))[ids.martini], ['name', null]);

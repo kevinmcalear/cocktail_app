@@ -4,6 +4,7 @@
  * prices include VAT strips it first, and a US bar that adds tax at the till
  * uses the menu price as it is. Pure; money stays in minor units.
  */
+import { toMl } from './drinkMath';
 
 export interface Margin {
   /** The menu price without tax, in minor units. */
@@ -83,6 +84,31 @@ export function targetStatus(costMinor: number, priceMinor: number | null | unde
   const needed = [gp != null ? priceForTarget(costMinor, gp, tax) : null, floor != null ? priceForProfit(costMinor, floor, tax) : null].filter((p): p is number => p != null);
   if (!needed.length) return null;
   return { onTarget: false, priceMinor: Math.max(...needed), under: missGp && missProfit ? 'both' : missGp ? 'gp' : 'profit' };
+}
+
+/** A bar's pack of an ingredient: its size and price (item_purchasing, item_costs). */
+export interface PackPrice {
+  amount: number;
+  unit: string;
+  costMinor: number;
+}
+
+/**
+ * What one spec line costs from its pack price, in minor units, as
+ * drink_cost reads a bought bottle: volumes and weights meet through the
+ * density, and any count (a wedge, a peel) is one of a pack counted in
+ * each. Null when it can't be said: no amount, a top, a count against a
+ * bottle. ponytail: a house prep's cost from its own recipe and yield is
+ * left to drink_cost once the drink is saved.
+ */
+export function lineCostMinor(amount: number | null, unit: string, pack: PackPrice, gPerMl: number): number | null {
+  if (amount == null || !(pack.amount > 0)) return null;
+  const used = toMl(amount, unit, gPerMl);
+  const bought = toMl(pack.amount, pack.unit, gPerMl);
+  if (used != null && bought != null) return Math.round((pack.costMinor * used) / bought);
+  // Two counts: a wedge of a box of 12 limes is one of 12, as drink_cost counts them.
+  if (used == null && bought == null) return Math.round((pack.costMinor * amount) / pack.amount);
+  return null;
 }
 
 /** "81.0%". */

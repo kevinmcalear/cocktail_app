@@ -74,6 +74,9 @@ export function featureAtHome(key: VenueFeatureKey): boolean {
 /** A venue-mode tab, by its route name. Study's route is still /test. */
 export type VenueTab = 'index' | 'library' | 'menus' | 'prep' | 'test' | 'discover';
 
+/** A tab's path, by its route name: index is /. */
+export const tabPath = (name: string) => (name === 'index' ? '/' : `/${name}`);
+
 /**
  * The phone tab bars hold four items and Search: Android's bar takes five at
  * most (react-native-screens throws past that), and five labels is as many

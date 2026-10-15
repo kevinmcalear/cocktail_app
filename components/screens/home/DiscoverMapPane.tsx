@@ -35,7 +35,7 @@ interface DiscoverMapPaneProps {
    * default layer, a page at a time (`more`). `barsById`: the area's bars.
    * Closed bars pin on every layer when given.
    */
-  results: { drinks: DiscoverDrink[]; more: MoreDrinks; barsById: ReadonlyMap<string, DiscoverBar>; isLoading: boolean; title: string; closed?: DiscoverBar[]; totals?: { drinks: number; bars: number } | null };
+  results: { drinks: DiscoverDrink[]; more: MoreDrinks; barsById: ReadonlyMap<string, DiscoverBar>; isLoading: boolean; title: string; closed?: DiscoverBar[]; totals?: { drinks: number; bars: number } | null; /** Browsing: only drinks on now, Nearest too. */ onNow?: boolean };
   /** What the map shows once the person has moved it (null after a refit), so search can stay in view. */
   onViewport?: (viewport: Viewport | null) => void;
   /** sheet: phones, the list in a bottom sheet over the map. side: wide screens, the list is beside it. */
@@ -44,7 +44,7 @@ interface DiscoverMapPaneProps {
   top?: ReactNode;
   /** Room for the screen header over the top of the map: the controls and the open sheet stay below it. */
   topInset?: number;
-  /** Nearest (phones, searching): where distances count from, the person else the area's middle. */
+  /** Nearest (phones, and wide screens searching): where distances count from, the person else the area's middle. */
   from?: { latitude: number; longitude: number } | null;
   /** Where the person is: the "You are here" dot, and how far a tapped bar is. */
   me?: { latitude: number; longitude: number } | null;
@@ -84,7 +84,8 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
     setOwn(next);
     pick?.onLayer(next);
   };
-  const canNear = searching && !!from;
+  // Phones browse with Nearest beside the mixed list (Kevin, 15 Oct); wide screens' list pane has its own switch.
+  const canNear = !!from && (searching || mode === 'sheet');
   const [peek, setPeek] = useState(SHEET_PEEK);
   const layer = (chosen === 'nearest' && !canNear) || (chosen === 'best' && !drink) ? 'drinks' : chosen;
   const nearest = layer === 'nearest';
@@ -108,7 +109,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   // "Best Martini": every martini here, scored where people have ranked it, best first.
   const { picked, scores, isLoading: pickedLoading } = useBestDrink(drink, filter, { load: byDrink || warm, active: byDrink });
   // Nearest: the same matches, closest first.
-  const near = useDiscoverList(filter, { from, enabled: nearest });
+  const near = useDiscoverList(filter, { from, enabled: nearest, onNow: !searching && results.onNow });
   const rows = byDrinks
     ? { data: undefined, isLoading: (nearest ? near.isLoading : results.isLoading) || areaBars.isPending }
     : byDrink

@@ -5,6 +5,7 @@ import { Alert } from "react-native";
 
 import { useCocktail } from "@/hooks/useCocktails";
 import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
+import { GLASS_MODEL_SELECT, type GlassModel } from "@/hooks/useGlassModels";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
 import { isHeroLink } from "@/lib/itemImages";
@@ -43,6 +44,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const [iceId, setIceId] = useState<string | null>(null);
     // How its glass is drawn (lib/sketch/geometry.ts GLASS_VARIANTS); null is the bar's glass or the default.
     const [sketchVariant, setSketchVariant] = useState<string | null>(null);
+    // The real glass it's served in (items.glass_model_id); glasswareId stays its shape.
+    const [glassModel, setGlassModelState] = useState<GlassModel | null>(null);
 
     const [barId, setBarId] = useState<string | null>(null);
     const [overrideVisibility, setOverrideVisibility] = useState<string | null>(null);
@@ -120,7 +123,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             supabase
                 .from("items")
                 .select(
-                    "bar_id, sketch_variant, override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level"
+                    `bar_id, sketch_variant, override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level, glass_model:glass_models!items_glass_model_id_fkey(${GLASS_MODEL_SELECT})`
                 )
                 .eq("id", id)
                 .single(),
@@ -134,6 +137,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 );
                 setBarId(data.bar_id);
                 setSketchVariant(data.sketch_variant ?? null);
+                setGlassModelState((data as unknown as { glass_model: GlassModel | null }).glass_model ?? null);
                 setOverrideVisibility(data.override_visibility_level?.toString() || null);
                 setOverrideGeneric(data.override_generic_ingredient_level?.toString() || null);
                 setOverrideSpecific(data.override_specific_brand_level?.toString() || null);
@@ -238,7 +242,11 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     function setSpecId(category: SpecCategory, value: string | null) {
         const setters = {
             method: (id: string | null) => setMethodIdsDirty(id ? [id] : []),
-            glassware: setGlasswareIdDirty,
+            // Another shape lets the model go (the database does the same).
+            glassware: (id: string | null) => {
+                setGlasswareIdDirty(id);
+                setGlassModelState((m) => (m && m.shape_item_id === id ? m : null));
+            },
             family: setFamilyIdDirty,
             ice: setIceIdDirty,
         };
@@ -248,6 +256,13 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const getSpecId = (category: SpecCategory) => {
         const ids = { method: methodIds[0] ?? null, glassware: glasswareId, family: familyId, ice: iceId };
         return ids[category];
+    };
+
+    /** Serves it in a maker's glass, and in that glass's shape; null keeps the shape. */
+    const setGlassModel = (model: GlassModel | null) => {
+        setGlassModelState(model);
+        if (model?.shape_item_id) setGlasswareId(model.shape_item_id);
+        markDirty();
     };
 
     /** Adds a method to this drink, or takes it off. Never touches the method itself. */
@@ -290,6 +305,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     family_id: familyId,
                     ice_id: iceId,
                     sketch_variant: sketchVariant,
+                    glass_model_id: glassModel?.id ?? null,
                     bar_id: barId || null,
                     override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
                     override_generic_ingredient_level: overrideGeneric ? parseInt(overrideGeneric) : null,
@@ -320,6 +336,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });
             // The database redraws it in the chosen glass as the row saves.
             await queryClient.invalidateQueries({ queryKey: ["item-sketch", id] });
+            await queryClient.invalidateQueries({ queryKey: ["drink-glass-model", id] });
             setIsDirty(false);
             isLoaded.current = false;
             return true;
@@ -359,6 +376,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         iceId,
         sketchVariant,
         setSketchVariant: setSketchVariantDirty,
+        glassModel,
+        setGlassModel,
         setSpecId,
         getSpecId,
         barId,

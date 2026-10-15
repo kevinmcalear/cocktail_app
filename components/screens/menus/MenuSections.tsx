@@ -107,7 +107,7 @@ interface MenuSectionsProps {
   pictures?: CardPictures;
   /** The card at preview size: smaller pictures and names. */
   compact?: boolean;
-  /** Page rows: drinks new on this menu, marked NEW. */
+  /** Drinks new on this menu, marked NEW (on the card, not made yet, so not drawn). */
   newIds?: ReadonlySet<string>;
   /** The printed card: a QR code under each drink that opens its page. */
   codes?: boolean;
@@ -222,8 +222,8 @@ export function MenuSections({ sections, variant, hrefFor, pictures = 'above', c
               <View style={styles.cardGrid}>
                 {s.drinks.map((d) => (
                   <View key={d.id} style={styles.cardTile}>
-                    <DrinkThumb drink={d} drawable size={compact ? 96 : 144} />
-                    <DrinkLine drink={d} centered card={compact ? 'compact' : true} code={codes} />
+                    <DrinkThumb drink={d} drawable={!newIds?.has(d.id)} size={compact ? 96 : 144} />
+                    <DrinkLine drink={d} centered card={compact ? 'compact' : true} code={codes} isNew={!!newIds?.has(d.id)} />
                   </View>
                 ))}
               </View>

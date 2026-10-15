@@ -1,0 +1,5999 @@
+{
+ "maker": "libbey",
+ "models": [
+  {
+   "name": "Citation Gourmet Coupette/Margarita",
+   "series": "Citation",
+   "designer": null,
+   "model_code": "8429",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8429",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8429",
+    "https://libbeyfoodservice.com/products/beverageware?page=7"
+   ]
+  },
+  {
+   "name": "Citation Gourmet Coupette/Margarita",
+   "series": "Citation",
+   "designer": null,
+   "model_code": "8430",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 436,
+   "capacity_as_stated": "14.75 oz.",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8430",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8430",
+    "https://libbeyfoodservice.com/products/beverageware?page=7"
+   ]
+  },
+  {
+   "name": "Embassy Champagne",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3777",
+   "glass": "coupe",
+   "variant": "coupe_saucer",
+   "capacity_ml": 133,
+   "capacity_as_stated": "4.5 oz.",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3777",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3777",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Champagne",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3773",
+   "glass": "coupe",
+   "variant": "coupe_saucer",
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3773",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3773",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Infinium Prism Coupe",
+   "series": "Infinium Prism",
+   "designer": null,
+   "model_code": "92452",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92452",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92452",
+    "https://libbeyfoodservice.com/products/beverageware?page=19"
+   ]
+  },
+  {
+   "name": "Linear Coupe",
+   "series": "Linear",
+   "designer": null,
+   "model_code": "7401",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/7401",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/7401",
+    "https://libbeyfoodservice.com/products/beverageware?page=22"
+   ]
+  },
+  {
+   "name": "Perception Cocktail Coupe",
+   "series": "Perception",
+   "designer": null,
+   "model_code": "3055",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3055",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3055",
+    "https://libbeyfoodservice.com/products/beverageware?page=26"
+   ]
+  },
+  {
+   "name": "Prism Coupe",
+   "series": "Prism",
+   "designer": null,
+   "model_code": "9328",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9328",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9328",
+    "https://libbeyfoodservice.com/products/beverageware?page=27"
+   ]
+  },
+  {
+   "name": "Prism Coupe",
+   "series": "Prism",
+   "designer": null,
+   "model_code": "9329",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9329",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9329",
+    "https://libbeyfoodservice.com/products/beverageware?page=27"
+   ]
+  },
+  {
+   "name": "Renaissance Coupe",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9134",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9134",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9134",
+    "https://libbeyfoodservice.com/products/beverageware?page=28"
+   ]
+  },
+  {
+   "name": "Renewal Inspire Coupe",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9329/AM8Y8J",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9329-am8y8j",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9329-am8y8j",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Renewal Crosshatch Coupe",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9134/69477",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9134-69477",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9134-69477",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Speakeasy Coupe",
+   "series": "Speakeasy",
+   "designer": null,
+   "model_code": "601602",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/601602",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/601602",
+    "https://libbeyfoodservice.com/products/beverageware?page=34"
+   ]
+  },
+  {
+   "name": "Symbio Coupe",
+   "series": "Symbio",
+   "designer": null,
+   "model_code": "1102",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 124,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1102",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1102",
+    "https://libbeyfoodservice.com/products/beverageware"
+   ]
+  },
+  {
+   "name": "Virtuoso Coupe",
+   "series": "Virtuoso",
+   "designer": null,
+   "model_code": "1009304",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "6.75 oz.",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009304",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009304",
+    "https://libbeyfoodservice.com/products/beverageware?page=39"
+   ]
+  },
+  {
+   "name": "Circa Cocktails Nick & Nora",
+   "series": "Circa",
+   "designer": null,
+   "model_code": "9252",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9252",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9252",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Renewal Inspire Nick & Nora",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9252/AM8Y8J",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9252-am8y8j",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9252-am8y8j",
+    "https://libbeyfoodservice.com/products/beverageware?page=30"
+   ]
+  },
+  {
+   "name": "Speakeasy Nick & Nora",
+   "series": "Speakeasy",
+   "designer": null,
+   "model_code": "601329",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 140,
+   "capacity_as_stated": "4.75 oz.",
+   "height_mm": 162,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/601329",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/601329",
+    "https://libbeyfoodservice.com/products/beverageware?page=34"
+   ]
+  },
+  {
+   "name": "Boost Cocktail",
+   "series": "Boost",
+   "designer": null,
+   "model_code": "5874",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5874",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5874",
+    "https://libbeyfoodservice.com/products/beverageware?page=4"
+   ]
+  },
+  {
+   "name": "Bristol Valley Cocktail",
+   "series": "Bristol Valley",
+   "designer": null,
+   "model_code": "8555SR",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 159,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8555sr",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8555sr",
+    "https://libbeyfoodservice.com/products/beverageware?page=5"
+   ]
+  },
+  {
+   "name": "Citation Cocktail",
+   "series": "Citation",
+   "designer": null,
+   "model_code": "8455",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8455",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8455",
+    "https://libbeyfoodservice.com/products/beverageware?page=7"
+   ]
+  },
+  {
+   "name": "Retro Cocktail",
+   "series": "Cocktail",
+   "designer": null,
+   "model_code": "8876",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 192,
+   "capacity_as_stated": "6.5 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8876",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8876",
+    "https://libbeyfoodservice.com/products/beverageware?page=31"
+   ]
+  },
+  {
+   "name": "Cosmopolitan Cocktail",
+   "series": "Cosmopolitan",
+   "designer": null,
+   "model_code": "400",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 244,
+   "capacity_as_stated": "8.25 oz.",
+   "height_mm": 99,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/400",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/400",
+    "https://libbeyfoodservice.com/products/beverageware?page=8"
+   ]
+  },
+  {
+   "name": "Domaine Martini",
+   "series": "Domaine",
+   "designer": null,
+   "model_code": "8978",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8978",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8978",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Embassy Mini Martini",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3701",
+   "glass": "martini",
+   "variant": "martini_pony",
+   "capacity_ml": 89,
+   "capacity_as_stated": "3 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3701",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3701",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Embassy Cocktail",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3771",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 148,
+   "capacity_as_stated": "5 oz.",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3771",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3771",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Cocktail",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3733",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 162,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3733",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3733",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Martini",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3779",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3779",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3779",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Grande Salud",
+   "series": "Grande",
+   "designer": null,
+   "model_code": "8485",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 171,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8485",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8485",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Grande Salud",
+   "series": "Grande",
+   "designer": null,
+   "model_code": "8480",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8480",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8480",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Infinium Classic Martini",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "92412",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 187,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92412",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92412",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Infinium Cosmopolitan",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "112645",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 99,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/112645",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/112645",
+    "https://libbeyfoodservice.com/products/beverageware?page=19"
+   ]
+  },
+  {
+   "name": "Linear Martini",
+   "series": "Linear",
+   "designer": null,
+   "model_code": "7402",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 281,
+   "capacity_as_stated": "9.5 oz.",
+   "height_mm": 201,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/7402",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/7402",
+    "https://libbeyfoodservice.com/products/beverageware?page=22"
+   ]
+  },
+  {
+   "name": "Renaissance Martini",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9135",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 176,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9135",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9135",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Renaissance Martini",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9136",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9136",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9136",
+    "https://libbeyfoodservice.com/products/beverageware?page=28"
+   ]
+  },
+  {
+   "name": "Renewal Inspire Martini Glass",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9135/AM8Y8J",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 176,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9135-am8y8j",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9135-am8y8j",
+    "https://libbeyfoodservice.com/products/beverageware?page=30"
+   ]
+  },
+  {
+   "name": "Renewal Crosshatch Martini",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9136/69477",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9136-69477",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9136-69477",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Speakeasy Martini",
+   "series": "Speakeasy",
+   "designer": null,
+   "model_code": "601404",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 192,
+   "capacity_as_stated": "6.5 oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/601404",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/601404",
+    "https://libbeyfoodservice.com/products/beverageware?page=34"
+   ]
+  },
+  {
+   "name": "Stemless Martini",
+   "series": "Stemless",
+   "designer": null,
+   "model_code": "224",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/224",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/224",
+    "https://libbeyfoodservice.com/products/beverageware?page=34"
+   ]
+  },
+  {
+   "name": "Super Stems Super Martini",
+   "series": "Super Stem",
+   "designer": null,
+   "model_code": "9570101",
+   "glass": "martini",
+   "variant": "martini_wide",
+   "capacity_ml": 1301,
+   "capacity_as_stated": "44 oz.",
+   "height_mm": 257,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9570101",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9570101",
+    "https://libbeyfoodservice.com/products/beverageware?page=36"
+   ]
+  },
+  {
+   "name": "Symbio Martini",
+   "series": "Symbio",
+   "designer": null,
+   "model_code": "1103",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1103",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1103",
+    "https://libbeyfoodservice.com/products/beverageware"
+   ]
+  },
+  {
+   "name": "Vina Martini",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7512",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/7512",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/7512",
+    "https://libbeyfoodservice.com/products/beverageware?page=38"
+   ]
+  },
+  {
+   "name": "Vina Martini",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7518",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 184,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/7518",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/7518",
+    "https://libbeyfoodservice.com/products/beverageware?page=38"
+   ]
+  },
+  {
+   "name": "Vina Martini",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7507",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 187,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/7507",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/7507",
+    "https://libbeyfoodservice.com/products/beverageware?page=38"
+   ]
+  },
+  {
+   "name": "Z Stem Martini",
+   "series": "Z Stem",
+   "designer": null,
+   "model_code": "37799",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/37799",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/37799",
+    "https://libbeyfoodservice.com/products/beverageware?page=41"
+   ]
+  },
+  {
+   "name": "Aruba Shot",
+   "series": "Aruba",
+   "designer": null,
+   "model_code": "92311",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 74,
+   "capacity_as_stated": "2.5 oz.",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/92311",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92311",
+    "https://libbeyfoodservice.com/products/beverageware?page=2"
+   ]
+  },
+  {
+   "name": "Aruba Rocks",
+   "series": "Aruba",
+   "designer": null,
+   "model_code": "92313",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/92313",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92313",
+    "https://libbeyfoodservice.com/products/beverageware?page=2"
+   ]
+  },
+  {
+   "name": "Aruba Rocks",
+   "series": "Aruba",
+   "designer": null,
+   "model_code": "92302",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/92302",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92302",
+    "https://libbeyfoodservice.com/products/beverageware?page=2"
+   ]
+  },
+  {
+   "name": "Chicago Cordial Super Sham",
+   "series": "Chicago",
+   "designer": null,
+   "model_code": "1650",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 74,
+   "capacity_as_stated": "2.5 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1650",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1650",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Chivalry Rocks",
+   "series": "Chivalry",
+   "designer": null,
+   "model_code": "2485",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2485",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2485",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Cidra Rocks",
+   "series": "Cidra",
+   "designer": null,
+   "model_code": "3282VCP22",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 229,
+   "capacity_as_stated": "7.75 oz.",
+   "height_mm": 61,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3282vcp22",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3282vcp22",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Cidra Double Old Fashioned",
+   "series": "Cidra",
+   "designer": null,
+   "model_code": "3282VCP37",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 392,
+   "capacity_as_stated": "13.25 oz.",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3282vcp37",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3282vcp37",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Circa Cocktails Distill Whiskey",
+   "series": "Circa",
+   "designer": null,
+   "model_code": "9217",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9217",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9217",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Cosmopolitan Double Old Fashioned",
+   "series": "Cosmopolitan",
+   "designer": null,
+   "model_code": "402",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/402",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/402",
+    "https://libbeyfoodservice.com/products/beverageware?page=8"
+   ]
+  },
+  {
+   "name": "Dahlia Rocks",
+   "series": "Dahlia",
+   "designer": null,
+   "model_code": "1009461",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009461",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009461",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Dahlia Old Fashioned",
+   "series": "Dahlia",
+   "designer": null,
+   "model_code": "1009460",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009460",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009460",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Dahlia Double Old Fashioned",
+   "series": "Dahlia",
+   "designer": null,
+   "model_code": "1009459",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009459",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009459",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Elan Duratuff Rocks",
+   "series": "Elan",
+   "designer": null,
+   "model_code": "15807",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15807",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15807",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Elan Duratuff Rocks",
+   "series": "Elan",
+   "designer": null,
+   "model_code": "15809",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 99,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15809",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15809",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Elan Double Old Fashioned",
+   "series": "Elan",
+   "designer": null,
+   "model_code": "15811",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15811",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15811",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Embassy Footed Rocks",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3746",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3746",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3746",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Embassy Rocks",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "1514",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1514",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1514",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Embassy Rocks",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "1512",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1512",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1512",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Endeavor Rocks",
+   "series": "Endeavor",
+   "designer": null,
+   "model_code": "15709",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15709",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15709",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Endeavor Rocks",
+   "series": "Endeavor",
+   "designer": null,
+   "model_code": "15869",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15869",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15869",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Endeavor Rocks",
+   "series": "Endeavor",
+   "designer": null,
+   "model_code": "15710",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 99,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15710",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15710",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Endeavor Double Old Fashioned",
+   "series": "Endeavor",
+   "designer": null,
+   "model_code": "15712",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15712",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15712",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Everest Rocks",
+   "series": "Everest",
+   "designer": null,
+   "model_code": "15432",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15432",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15432",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Everest Rocks",
+   "series": "Everest",
+   "designer": null,
+   "model_code": "15433",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15433",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15433",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Everest Rocks",
+   "series": "Everest",
+   "designer": null,
+   "model_code": "15434",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15434",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15434",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Everest Rocks",
+   "series": "Everest",
+   "designer": null,
+   "model_code": "15435",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15435",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15435",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Flare Shooter",
+   "series": "Flare",
+   "designer": null,
+   "model_code": "243",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 74,
+   "capacity_as_stated": "2.5 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/243",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/243",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Gallery Rocks",
+   "series": "Gallery",
+   "designer": null,
+   "model_code": "15969",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz.",
+   "height_mm": 98,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15969",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15969",
+    "https://libbeyfoodservice.com/products/beverageware?page=14"
+   ]
+  },
+  {
+   "name": "Gallery Double Old Fashioned",
+   "series": "Gallery",
+   "designer": null,
+   "model_code": "15970",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz.",
+   "height_mm": 104,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15970",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15970",
+    "https://libbeyfoodservice.com/products/beverageware?page=14"
+   ]
+  },
+  {
+   "name": "Geo Dof Glass",
+   "series": "Geo",
+   "designer": null,
+   "model_code": "2307",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 392,
+   "capacity_as_stated": "13.25 oz.",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2307",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2307",
+    "https://libbeyfoodservice.com/products/beverageware?page=14"
+   ]
+  },
+  {
+   "name": "Gibraltar Rocks",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15248",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 133,
+   "capacity_as_stated": "4.5 oz.",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15248",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15248",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Rocks",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15249",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15249",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15249",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Rocks",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15241",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15241",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15241",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Tall Rocks",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15245",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15245",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15245",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Rocks",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15240",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15240",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15240",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Rocks",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15242",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15242",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15242",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Tall Rocks",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15231",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 99,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15231",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15231",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Rocks",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15232",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15232",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15232",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Double Rocks",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15243",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15243",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15243",
+    "https://libbeyfoodservice.com/products/beverageware?page=14"
+   ]
+  },
+  {
+   "name": "Heavy Base Old Fashioned",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "124",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/124",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/124",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base Rocks",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "916CD",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/916cd",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/916cd",
+    "https://libbeyfoodservice.com/products/beverageware?page=17"
+   ]
+  },
+  {
+   "name": "Heavy Base Old Fashioned",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "128",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/128",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/128",
+    "https://libbeyfoodservice.com/products/beverageware?page=17"
+   ]
+  },
+  {
+   "name": "Heavy Base Rocks",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "917CD",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/917cd",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/917cd",
+    "https://libbeyfoodservice.com/products/beverageware?page=17"
+   ]
+  },
+  {
+   "name": "Heavy Base Finedge Double Old Fashioned",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "918CD",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/918cd",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/918cd",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base Finedge Double Old Fashioned",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "816CD",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 111,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/816cd",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/816cd",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Hobstar Double Old Fashioned",
+   "series": "Hobstar",
+   "designer": null,
+   "model_code": "5632",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5632",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5632",
+    "https://libbeyfoodservice.com/products/beverageware?page=17"
+   ]
+  },
+  {
+   "name": "Impressions Old Fashioned",
+   "series": "Impressions",
+   "designer": null,
+   "model_code": "1767580",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1767580",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1767580",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Blue Ribbon Impressions Rocks",
+   "series": "Impressions",
+   "designer": null,
+   "model_code": "6758B12",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/6758b12",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/6758b12",
+    "https://libbeyfoodservice.com/products/beverageware?page=4"
+   ]
+  },
+  {
+   "name": "Impressions Blue Ribbon Double Old Fashioned",
+   "series": "Impressions",
+   "designer": null,
+   "model_code": "6759B12",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/6759b12",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/6759b12",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Impressions Double Old Fashioned",
+   "series": "Impressions",
+   "designer": null,
+   "model_code": "1767591",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1767591",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1767591",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Infinium Classic Shot",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "92400",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92400",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92400",
+    "https://libbeyfoodservice.com/products/beverageware?page=19"
+   ]
+  },
+  {
+   "name": "Infinium Classic Stacking Rocks",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "92402",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92402",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92402",
+    "https://libbeyfoodservice.com/products/beverageware?page=19"
+   ]
+  },
+  {
+   "name": "Infinium Classic Stacking Rocks",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "92403",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92403",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92403",
+    "https://libbeyfoodservice.com/products/beverageware?page=19"
+   ]
+  },
+  {
+   "name": "Infinium Classic Stacking Double Old Fashioned",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "92404",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92404",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92404",
+    "https://libbeyfoodservice.com/products/beverageware?page=19"
+   ]
+  },
+  {
+   "name": "Infinium Alto Rocks",
+   "series": "Infinium Alto",
+   "designer": null,
+   "model_code": "113073",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://libbeyfoodservice.com/product/113073",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/113073",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Infinium Alto Double Old Fashioned",
+   "series": "Infinium Alto",
+   "designer": null,
+   "model_code": "113072",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/113072",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/113072",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Infinium Wake Stacking Rocks",
+   "series": "Infinium Wake",
+   "designer": null,
+   "model_code": "92428",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92428",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92428",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Infinium Wake Stacking Double Old Fashioned",
+   "series": "Infinium Wake",
+   "designer": null,
+   "model_code": "92429",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 91,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92429",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92429",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Infinium Wake Stacking Double Old Fashioned",
+   "series": "Infinium Wake",
+   "designer": null,
+   "model_code": "92430",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92430",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92430",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Inverness Rocks",
+   "series": "Inverness",
+   "designer": null,
+   "model_code": "15480",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15480",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15480",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Inverness Rocks",
+   "series": "Inverness",
+   "designer": null,
+   "model_code": "15481",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15481",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15481",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Inverness Double Old Fashioned",
+   "series": "Inverness",
+   "designer": null,
+   "model_code": "15482",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 362,
+   "capacity_as_stated": "12.25 oz.",
+   "height_mm": 99,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15482",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15482",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Jicara Agave Cocktail",
+   "series": "Jicara",
+   "designer": null,
+   "model_code": "1009413",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009413",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009413",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Bourbon Cocktail",
+   "series": "Kentucky Bourbon Trail",
+   "designer": null,
+   "model_code": "1009289",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009289",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009289",
+    "https://libbeyfoodservice.com/products/beverageware?page=5"
+   ]
+  },
+  {
+   "name": "Lexington Whiskey",
+   "series": "Lexington",
+   "designer": null,
+   "model_code": "2303",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 89,
+   "capacity_as_stated": "3 oz.",
+   "height_mm": 67,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2303",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2303",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Lexington Old Fashioned",
+   "series": "Lexington",
+   "designer": null,
+   "model_code": "2328",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 229,
+   "capacity_as_stated": "7.75 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2328",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2328",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Lexington Old Fashioned",
+   "series": "Lexington",
+   "designer": null,
+   "model_code": "2338",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 303,
+   "capacity_as_stated": "10.25 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2338",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2338",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Lexington Double Old Fashioned",
+   "series": "Lexington",
+   "designer": null,
+   "model_code": "2339",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2339",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2339",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Marcela Old Fashioned Glass, 10 Oz.",
+   "series": "Marcela",
+   "designer": null,
+   "model_code": "1009739",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009739",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009739",
+    "https://libbeyfoodservice.com/products/beverageware?page=22"
+   ]
+  },
+  {
+   "name": "Marcela Double Old Fashioned Glass, 12 Oz.",
+   "series": "Marcela",
+   "designer": null,
+   "model_code": "1009738",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009738",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009738",
+    "https://libbeyfoodservice.com/products/beverageware?page=22"
+   ]
+  },
+  {
+   "name": "Miscellaneous Tumblers Old Fashioned",
+   "series": "Miscellaneous Tumbler",
+   "designer": null,
+   "model_code": "5131",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 118,
+   "capacity_as_stated": "4 oz.",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5131",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5131",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Miscellaneous Tumblers Old Fashioned",
+   "series": "Miscellaneous Tumbler",
+   "designer": null,
+   "model_code": "5130",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 148,
+   "capacity_as_stated": "5 oz.",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5130",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5130",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Miscellaneous Tumblers Rocks",
+   "series": "Miscellaneous Tumbler",
+   "designer": null,
+   "model_code": "15626",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15626",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15626",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Modernist Rocks Glass",
+   "series": "Modernist",
+   "designer": null,
+   "model_code": "9032",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 148,
+   "capacity_as_stated": "5 oz.",
+   "height_mm": 74,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9032",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9032",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Modernist Rocks",
+   "series": "Modernist",
+   "designer": null,
+   "model_code": "9033",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9033",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9033",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Modernist Rocks",
+   "series": "Modernist",
+   "designer": null,
+   "model_code": "9034",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9034",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9034",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Modernist Rocks",
+   "series": "Modernist",
+   "designer": null,
+   "model_code": "9035",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9035",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9035",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Modernist Double Old Fashioned",
+   "series": "Modernist",
+   "designer": null,
+   "model_code": "9036",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9036",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9036",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Newton Rocks Glass, 8-Ounce",
+   "series": "Newton",
+   "designer": null,
+   "model_code": "1009419",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 79,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009419",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009419",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Newton Rocks",
+   "series": "Newton",
+   "designer": null,
+   "model_code": "12037",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 87,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/12037",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/12037",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Newton Dof",
+   "series": "Newton",
+   "designer": null,
+   "model_code": "12038",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/12038",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/12038",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Nob Hill Old Fashioned",
+   "series": "Nob Hill",
+   "designer": null,
+   "model_code": "23286",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 229,
+   "capacity_as_stated": "7.75 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/23286",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/23286",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Nob Hill Old Fashioned",
+   "series": "Nob Hill",
+   "designer": null,
+   "model_code": "23386",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 303,
+   "capacity_as_stated": "10.25 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/23386",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/23386",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Nob Hill Double Old Fashioned",
+   "series": "Nob Hill",
+   "designer": null,
+   "model_code": "23396",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 362,
+   "capacity_as_stated": "12.25 oz.",
+   "height_mm": 99,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/23396",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/23396",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Ocular Rocks",
+   "series": "Ocular",
+   "designer": null,
+   "model_code": "1009455",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009455",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009455",
+    "https://libbeyfoodservice.com/products/beverageware?page=25"
+   ]
+  },
+  {
+   "name": "Ocular Old Fashioned",
+   "series": "Ocular",
+   "designer": null,
+   "model_code": "1009454",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009454",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009454",
+    "https://libbeyfoodservice.com/products/beverageware?page=25"
+   ]
+  },
+  {
+   "name": "Ocular Double Old Fashioned",
+   "series": "Ocular",
+   "designer": null,
+   "model_code": "925500",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 104,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/925500",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/925500",
+    "https://libbeyfoodservice.com/products/beverageware?page=25"
+   ]
+  },
+  {
+   "name": "Optiva Rocks",
+   "series": "Optiva",
+   "designer": null,
+   "model_code": "15962",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15962",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15962",
+    "https://libbeyfoodservice.com/products/beverageware?page=25"
+   ]
+  },
+  {
+   "name": "Optiva Double Old Fashioned",
+   "series": "Optiva",
+   "designer": null,
+   "model_code": "15963",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15963",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15963",
+    "https://libbeyfoodservice.com/products/beverageware?page=25"
+   ]
+  },
+  {
+   "name": "Orbital Rocks",
+   "series": "Orbital",
+   "designer": null,
+   "model_code": "12018",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/12018",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/12018",
+    "https://libbeyfoodservice.com/products/beverageware"
+   ]
+  },
+  {
+   "name": "Pisa Rocks",
+   "series": "Pisa",
+   "designer": null,
+   "model_code": "11006721",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 281,
+   "capacity_as_stated": "9.5 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/11006721",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/11006721",
+    "https://libbeyfoodservice.com/products/beverageware?page=27"
+   ]
+  },
+  {
+   "name": "Pisa Double Old Fashioned",
+   "series": "Pisa",
+   "designer": null,
+   "model_code": "11006821",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/11006821",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/11006821",
+    "https://libbeyfoodservice.com/products/beverageware?page=27"
+   ]
+  },
+  {
+   "name": "Prism Shot",
+   "series": "Prism",
+   "designer": null,
+   "model_code": "5277",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 64,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5277",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5277",
+    "https://libbeyfoodservice.com/products/beverageware?page=27"
+   ]
+  },
+  {
+   "name": "Prism Rocks",
+   "series": "Prism",
+   "designer": null,
+   "model_code": "5279",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5279",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5279",
+    "https://libbeyfoodservice.com/products/beverageware?page=27"
+   ]
+  },
+  {
+   "name": "Quartet Rocks",
+   "series": "Quartet",
+   "designer": null,
+   "model_code": "2207",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 274,
+   "capacity_as_stated": "9.25 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2207",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2207",
+    "https://libbeyfoodservice.com/products/beverageware?page=28"
+   ]
+  },
+  {
+   "name": "Quartet Double Old Fashioned",
+   "series": "Quartet",
+   "designer": null,
+   "model_code": "2205",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2205",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2205",
+    "https://libbeyfoodservice.com/products/beverageware?page=28"
+   ]
+  },
+  {
+   "name": "Radius Rocks Glass, 10-Ounce",
+   "series": "Radius",
+   "designer": null,
+   "model_code": "9181",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 82,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9181",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9181",
+    "https://libbeyfoodservice.com/products/beverageware?page=28"
+   ]
+  },
+  {
+   "name": "Radius Double Old Fashioned, 12-Ounce",
+   "series": "Radius",
+   "designer": null,
+   "model_code": "9183",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 91,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9183",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9183",
+    "https://libbeyfoodservice.com/products/beverageware?page=28"
+   ]
+  },
+  {
+   "name": "Renewal Chisel Rocks",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9022/69474",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9022-69474",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9022-69474",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Renewal Crosshatch Rocks",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9034/69477",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9034-69477",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9034-69477",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Repurposed Wine Short Tumbler",
+   "series": "Repurposed Wine Bottles",
+   "designer": null,
+   "model_code": "97287",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/97287",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/97287",
+    "https://libbeyfoodservice.com/products/beverageware?page=30"
+   ]
+  },
+  {
+   "name": "Restaurant Basics Stacking Rocks",
+   "series": "Restaurant Basics",
+   "designer": null,
+   "model_code": "15766",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15766",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15766",
+    "https://libbeyfoodservice.com/products/beverageware?page=31"
+   ]
+  },
+  {
+   "name": "Restaurant Basics Double Old Fashioned",
+   "series": "Restaurant Basics",
+   "designer": null,
+   "model_code": "15587",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15587",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15587",
+    "https://libbeyfoodservice.com/products/beverageware?page=30"
+   ]
+  },
+  {
+   "name": "Restaurant Basics Stacking Double Old Fashioned",
+   "series": "Restaurant Basics",
+   "designer": null,
+   "model_code": "15769",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15769",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15769",
+    "https://libbeyfoodservice.com/products/beverageware?page=30"
+   ]
+  },
+  {
+   "name": "Series V Series V65 Shooter",
+   "series": "Series V",
+   "designer": null,
+   "model_code": "11110722",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 67,
+   "capacity_as_stated": "2.25 oz.",
+   "height_mm": 70,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/11110722",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/11110722",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Series V Series V140 Tall Rocks",
+   "series": "Series V",
+   "designer": null,
+   "model_code": "11126021",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 140,
+   "capacity_as_stated": "4.75 oz.",
+   "height_mm": 111,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/11126021",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/11126021",
+    "https://libbeyfoodservice.com/products/beverageware?page=31"
+   ]
+  },
+  {
+   "name": "Series V Series V250 Rocks",
+   "series": "Series V",
+   "designer": null,
+   "model_code": "11058021",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/11058021",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/11058021",
+    "https://libbeyfoodservice.com/products/beverageware?page=31"
+   ]
+  },
+  {
+   "name": "Series V Series V350 Double Old Fashioned",
+   "series": "Series V",
+   "designer": null,
+   "model_code": "11106520",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 351,
+   "capacity_as_stated": "11.875 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/11106520",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/11106520",
+    "https://libbeyfoodservice.com/products/beverageware?page=31"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Narrow Tall Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5030",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 22,
+   "capacity_as_stated": "0.75 oz.",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5030",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5030",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5128",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 26,
+   "capacity_as_stated": "0.875 oz.",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5128",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5128",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Imperial Shot",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "6284",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 30,
+   "capacity_as_stated": "1 oz.",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/6284",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/6284",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Narrow Tall Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5031",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 30,
+   "capacity_as_stated": "1 oz.",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5031",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5031",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Tall Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5138",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 30,
+   "capacity_as_stated": "1 oz.",
+   "height_mm": 76,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5138",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5138",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5122",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 30,
+   "capacity_as_stated": "1 oz.",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5122",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5122",
+    "https://libbeyfoodservice.com/products/beverageware?page=33"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Fluted Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5135",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 37,
+   "capacity_as_stated": "1.25 oz.",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5135",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5135",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5121",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 37,
+   "capacity_as_stated": "1.25 oz.",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5121",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5121",
+    "https://libbeyfoodservice.com/products/beverageware?page=33"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Fluted Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5127",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 44,
+   "capacity_as_stated": "1.5 oz.",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5127",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5127",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Tequila Shooter",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "9862324",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 44,
+   "capacity_as_stated": "1.5 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9862324",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9862324",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5120",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 44,
+   "capacity_as_stated": "1.5 oz.",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5120",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5120",
+    "https://libbeyfoodservice.com/products/beverageware?page=33"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5114",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 52,
+   "capacity_as_stated": "1.75 oz.",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5114",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5114",
+    "https://libbeyfoodservice.com/products/beverageware?page=33"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Fluted Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5126",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5126",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5126",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Shooter",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "5109",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5109",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5109",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Tequila Shooter",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "9562269",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9562269",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9562269",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Shots & Shooters Whiskey",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "48",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/48",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/48",
+    "https://libbeyfoodservice.com/products/beverageware?page=33"
+   ]
+  },
+  {
+   "name": "Troyano Tequila Shooter",
+   "series": "Shooters",
+   "designer": null,
+   "model_code": "1787386",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 159,
+   "capacity_as_stated": "5.375 oz.",
+   "height_mm": 137,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1787386",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1787386",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Gibraltar Stackable Rocks",
+   "series": "Stacking Gibraltar",
+   "designer": null,
+   "model_code": "15661",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 78,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15661",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15661",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Stackable Rocks",
+   "series": "Stacking Gibraltar",
+   "designer": null,
+   "model_code": "15659",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15659",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15659",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Structure Stackable Rocks",
+   "series": "Structure",
+   "designer": null,
+   "model_code": "1009130",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009130",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009130",
+    "https://libbeyfoodservice.com/products/beverageware?page=35"
+   ]
+  },
+  {
+   "name": "Structure Stackable Dof",
+   "series": "Structure",
+   "designer": null,
+   "model_code": "1009131",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009131",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009131",
+    "https://libbeyfoodservice.com/products/beverageware?page=35"
+   ]
+  },
+  {
+   "name": "Symmetry Rocks",
+   "series": "Symmetry",
+   "designer": null,
+   "model_code": "9022",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9022",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9022",
+    "https://libbeyfoodservice.com/products/beverageware?page=36"
+   ]
+  },
+  {
+   "name": "Symmetry Rocks",
+   "series": "Symmetry",
+   "designer": null,
+   "model_code": "9023",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9023",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9023",
+    "https://libbeyfoodservice.com/products/beverageware?page=36"
+   ]
+  },
+  {
+   "name": "Infinium Torque Stacking Shot",
+   "series": "Torque",
+   "designer": null,
+   "model_code": "92440",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 44,
+   "capacity_as_stated": "1.5 oz.",
+   "height_mm": 54,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92440",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92440",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Infinium Torque Stacking Rocks",
+   "series": "Torque",
+   "designer": null,
+   "model_code": "92441",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92441",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92441",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Infinium Torque Stacking Double Old Fashioned",
+   "series": "Torque",
+   "designer": null,
+   "model_code": "92442",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92442",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92442",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Traverse Rocks",
+   "series": "Traverse",
+   "designer": null,
+   "model_code": "2043",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2043",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2043",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Traverse Rocks",
+   "series": "Traverse",
+   "designer": null,
+   "model_code": "2044",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2044",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2044",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Vibe Rocks",
+   "series": "Vibe",
+   "designer": null,
+   "model_code": "2313",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2313",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2313",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Vibe Double Old Fashioned",
+   "series": "Vibe",
+   "designer": null,
+   "model_code": "2311",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2311",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2311",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Whitney Old Fashioned Glass, 10 Oz.",
+   "series": "Whitney",
+   "designer": null,
+   "model_code": "1009736",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009736",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009736",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  },
+  {
+   "name": "Whitney Double Old Fashioned Glass, 12 Oz.",
+   "series": "Whitney",
+   "designer": null,
+   "model_code": "1009735",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009735",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009735",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  },
+  {
+   "name": "Winchester Rocks",
+   "series": "Winchester",
+   "designer": null,
+   "model_code": "15453",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15453",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15453",
+    "https://libbeyfoodservice.com/products/beverageware?page=41"
+   ]
+  },
+  {
+   "name": "Winchester Rocks",
+   "series": "Winchester",
+   "designer": null,
+   "model_code": "15454",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15454",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15454",
+    "https://libbeyfoodservice.com/products/beverageware?page=41"
+   ]
+  },
+  {
+   "name": "Winchester Rocks",
+   "series": "Winchester",
+   "designer": null,
+   "model_code": "15457",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15457",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15457",
+    "https://libbeyfoodservice.com/products/beverageware?page=41"
+   ]
+  },
+  {
+   "name": "Cascade Heat-Treated Beverage",
+   "series": "Cascade",
+   "designer": null,
+   "model_code": "29411HT",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 137,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/29411ht",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/29411ht",
+    "https://libbeyfoodservice.com/products/beverageware?page=5"
+   ]
+  },
+  {
+   "name": "Chicago Tall Hi-Ball",
+   "series": "Chicago",
+   "designer": null,
+   "model_code": "2518",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2518",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2518",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Chivalry Beverage",
+   "series": "Chivalry",
+   "designer": null,
+   "model_code": "2488",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2488",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2488",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Dahlia Highball",
+   "series": "Dahlia",
+   "designer": null,
+   "model_code": "1009458",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 142,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009458",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009458",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Elan Duratuff Beverage",
+   "series": "Elan",
+   "designer": null,
+   "model_code": "15812",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 159,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15812",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15812",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Elan Duratuff Beverage",
+   "series": "Elan",
+   "designer": null,
+   "model_code": "15814",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15814",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15814",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Embassy Footed Hi-Ball",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3736",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 137,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3736",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3736",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Embassy Hi-Ball",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "12261",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/12261",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/12261",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Embassy Footed Hi-Ball",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3737",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3737",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3737",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Hi-Ball",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "12262",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/12262",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/12262",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Embassy Cooler",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "12263",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/12263",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/12263",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Endeavor Hi-Ball",
+   "series": "Endeavor",
+   "designer": null,
+   "model_code": "15711",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 159,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15711",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15711",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Endeavor Beverage",
+   "series": "Endeavor",
+   "designer": null,
+   "model_code": "15713",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 159,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15713",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15713",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Endeavor Beverage",
+   "series": "Endeavor",
+   "designer": null,
+   "model_code": "15714",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15714",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15714",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Esquire Hi-Ball",
+   "series": "Esquire",
+   "designer": null,
+   "model_code": "225",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 274,
+   "capacity_as_stated": "9.25 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/225",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/225",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Everest Hi-Ball",
+   "series": "Everest",
+   "designer": null,
+   "model_code": "15430",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15430",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15430",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Everest Beverage",
+   "series": "Everest",
+   "designer": null,
+   "model_code": "15436",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15436",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15436",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Everest Cooler",
+   "series": "Everest",
+   "designer": null,
+   "model_code": "15437",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 121,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15437",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15437",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Gallery Beverage",
+   "series": "Gallery",
+   "designer": null,
+   "model_code": "15971",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz.",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15971",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15971",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Gallery Beverage",
+   "series": "Gallery",
+   "designer": null,
+   "model_code": "15972",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15972",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15972",
+    "https://libbeyfoodservice.com/products/beverageware?page=13"
+   ]
+  },
+  {
+   "name": "Gibraltar Hi-Ball",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15236",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 121,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15236",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15236",
+    "https://libbeyfoodservice.com/products/beverageware?page=14"
+   ]
+  },
+  {
+   "name": "Gibraltar Beverage",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15237",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15237",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15237",
+    "https://libbeyfoodservice.com/products/beverageware?page=14"
+   ]
+  },
+  {
+   "name": "Gibraltar Beverage",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15238",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15238",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15238",
+    "https://libbeyfoodservice.com/products/beverageware?page=14"
+   ]
+  },
+  {
+   "name": "Gibraltar Beverage",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15244",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15244",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15244",
+    "https://libbeyfoodservice.com/products/beverageware?page=14"
+   ]
+  },
+  {
+   "name": "Heavy Base Diplomat Hi-Ball",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "131",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 192,
+   "capacity_as_stated": "6.5 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/131",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/131",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base Hi-Ball",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "123",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 111,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/123",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/123",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base Hi-Ball",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "132",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/132",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/132",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base Hi-Ball",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "133",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/133",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/133",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base Hi-Ball",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "125",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 121,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/125",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/125",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base Hi-Ball",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "161",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 303,
+   "capacity_as_stated": "10.25 oz.",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/161",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/161",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base Beverage",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "159",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 143,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/159",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/159",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base Beverage",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "814CD",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 143,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/814cd",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/814cd",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Heavy Base English Hi-Ball",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "139",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/139",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/139",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Impressions Beverage",
+   "series": "Impressions",
+   "designer": null,
+   "model_code": "9860594",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 oz.",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9860594",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9860594",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Infinium Classic Stacking Beverage",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "92405",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92405",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92405",
+    "https://libbeyfoodservice.com/products/beverageware?page=19"
+   ]
+  },
+  {
+   "name": "Infinium Classic Stacking Beverage",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "92406",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92406",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92406",
+    "https://libbeyfoodservice.com/products/beverageware?page=19"
+   ]
+  },
+  {
+   "name": "Infinium Alto Highball",
+   "series": "Infinium Alto",
+   "designer": null,
+   "model_code": "113071",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://libbeyfoodservice.com/product/113071",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/113071",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Infinium Wake Stacking Beverage",
+   "series": "Infinium Wake",
+   "designer": null,
+   "model_code": "92431",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92431",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92431",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Inverness Beverage",
+   "series": "Inverness",
+   "designer": null,
+   "model_code": "15478",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 137,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15478",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15478",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Inverness Beverage",
+   "series": "Inverness",
+   "designer": null,
+   "model_code": "15483",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 143,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15483",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15483",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Inverness Beverage",
+   "series": "Inverness",
+   "designer": null,
+   "model_code": "15479",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15479",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15479",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Lexington Hi-Ball",
+   "series": "Lexington",
+   "designer": null,
+   "model_code": "2318",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2318",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2318",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Lexington Tall Hi-Ball",
+   "series": "Lexington",
+   "designer": null,
+   "model_code": "2310",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2310",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2310",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Lexington Beverage",
+   "series": "Lexington",
+   "designer": null,
+   "model_code": "2359",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2359",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2359",
+    "https://libbeyfoodservice.com/products/beverageware?page=21"
+   ]
+  },
+  {
+   "name": "Marcela Highball Glass, 14 Oz.",
+   "series": "Marcela",
+   "designer": null,
+   "model_code": "1009737",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009737",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009737",
+    "https://libbeyfoodservice.com/products/beverageware?page=22"
+   ]
+  },
+  {
+   "name": "Modernist Beverage",
+   "series": "Modernist",
+   "designer": null,
+   "model_code": "9037",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9037",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9037",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Modernist Beverage",
+   "series": "Modernist",
+   "designer": null,
+   "model_code": "9038",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9038",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9038",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Modernist Beverage",
+   "series": "Modernist",
+   "designer": null,
+   "model_code": "9039",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 171,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9039",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9039",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Newton Beverage",
+   "series": "Newton",
+   "designer": null,
+   "model_code": "12039",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 144,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/12039",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/12039",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Nob Hill Hi-Ball",
+   "series": "Nob Hill",
+   "designer": null,
+   "model_code": "23256",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/23256",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/23256",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Nob Hill Tall Hi-Ball",
+   "series": "Nob Hill",
+   "designer": null,
+   "model_code": "23106",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/23106",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/23106",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Nob Hill Beverage",
+   "series": "Nob Hill",
+   "designer": null,
+   "model_code": "23596",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/23596",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/23596",
+    "https://libbeyfoodservice.com/products/beverageware?page=24"
+   ]
+  },
+  {
+   "name": "Optiva Beverage",
+   "series": "Optiva",
+   "designer": null,
+   "model_code": "15964",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15964",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15964",
+    "https://libbeyfoodservice.com/products/beverageware?page=25"
+   ]
+  },
+  {
+   "name": "Optiva Beverage",
+   "series": "Optiva",
+   "designer": null,
+   "model_code": "15965",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15965",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15965",
+    "https://libbeyfoodservice.com/products/beverageware?page=25"
+   ]
+  },
+  {
+   "name": "Pisa Beverage",
+   "series": "Pisa",
+   "designer": null,
+   "model_code": "11007021",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 362,
+   "capacity_as_stated": "12.25 oz.",
+   "height_mm": 137,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/11007021",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/11007021",
+    "https://libbeyfoodservice.com/products/beverageware?page=27"
+   ]
+  },
+  {
+   "name": "Puebla Tumbler",
+   "series": "Puebla",
+   "designer": null,
+   "model_code": "1795441",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1795441",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1795441",
+    "https://libbeyfoodservice.com/products/beverageware?page=28"
+   ]
+  },
+  {
+   "name": "Puebla Tumbler",
+   "series": "Puebla",
+   "designer": null,
+   "model_code": "1790845",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1790845",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1790845",
+    "https://libbeyfoodservice.com/products/beverageware?page=28"
+   ]
+  },
+  {
+   "name": "Renewal Chisel Cooler",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9025/69474",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9025-69474",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9025-69474",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Renewal Crosshatch Highball",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9038/69477",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9038-69477",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9038-69477",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Renewal Crosshatch Beverage",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9039/69477",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 171,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9039-69477",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9039-69477",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Restaurant Basics Hi-Ball",
+   "series": "Restaurant Basics",
+   "designer": null,
+   "model_code": "15585",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15585",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15585",
+    "https://libbeyfoodservice.com/products/beverageware?page=30"
+   ]
+  },
+  {
+   "name": "Restaurant Basics Beverage",
+   "series": "Restaurant Basics",
+   "designer": null,
+   "model_code": "15588",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15588",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15588",
+    "https://libbeyfoodservice.com/products/beverageware?page=30"
+   ]
+  },
+  {
+   "name": "Series V Series V350 Beverage",
+   "series": "Series V",
+   "designer": null,
+   "model_code": "11058521",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 351,
+   "capacity_as_stated": "11.875 oz.",
+   "height_mm": 162,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/11058521",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/11058521",
+    "https://libbeyfoodservice.com/products/beverageware?page=31"
+   ]
+  },
+  {
+   "name": "Series V Series V420 Beverage",
+   "series": "Series V",
+   "designer": null,
+   "model_code": "11106721",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 421,
+   "capacity_as_stated": "14.25 oz.",
+   "height_mm": 171,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/11106721",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/11106721",
+    "https://libbeyfoodservice.com/products/beverageware?page=32"
+   ]
+  },
+  {
+   "name": "Gibraltar Stackable Hi-Ball",
+   "series": "Stacking Gibraltar",
+   "designer": null,
+   "model_code": "15656",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15656",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15656",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Gibraltar Stackable Beverage",
+   "series": "Stacking Gibraltar",
+   "designer": null,
+   "model_code": "15654",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15654",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15654",
+    "https://libbeyfoodservice.com/products/beverageware?page=15"
+   ]
+  },
+  {
+   "name": "Structure Stackable Cooler",
+   "series": "Structure",
+   "designer": null,
+   "model_code": "1009132",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009132",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009132",
+    "https://libbeyfoodservice.com/products/beverageware?page=35"
+   ]
+  },
+  {
+   "name": "Symmetry Highball",
+   "series": "Symmetry",
+   "designer": null,
+   "model_code": "9025",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9025",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9025",
+    "https://libbeyfoodservice.com/products/beverageware?page=36"
+   ]
+  },
+  {
+   "name": "Symmetry Highball",
+   "series": "Symmetry",
+   "designer": null,
+   "model_code": "9026",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9026",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9026",
+    "https://libbeyfoodservice.com/products/beverageware?page=36"
+   ]
+  },
+  {
+   "name": "Infinium Torque Stacking Beverage",
+   "series": "Torque",
+   "designer": null,
+   "model_code": "92443",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92443",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92443",
+    "https://libbeyfoodservice.com/products/beverageware?page=20"
+   ]
+  },
+  {
+   "name": "Traverse Hi-Ball",
+   "series": "Traverse",
+   "designer": null,
+   "model_code": "2042",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 121,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2042",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2042",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Traverse Hi-Ball",
+   "series": "Traverse",
+   "designer": null,
+   "model_code": "2045",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2045",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2045",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Whitney Highball Glass, 14 Oz.",
+   "series": "Whitney",
+   "designer": null,
+   "model_code": "1009734",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009734",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009734",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  },
+  {
+   "name": "Winchester Hi-Ball",
+   "series": "Winchester",
+   "designer": null,
+   "model_code": "15451",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "6.75 oz.",
+   "height_mm": 111,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15451",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15451",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  },
+  {
+   "name": "Winchester Hi-Ball",
+   "series": "Winchester",
+   "designer": null,
+   "model_code": "15456",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15456",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15456",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  },
+  {
+   "name": "Winchester Beverage",
+   "series": "Winchester",
+   "designer": null,
+   "model_code": "15458",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 137,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15458",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15458",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  },
+  {
+   "name": "Aruba Zombie Cooler",
+   "series": "Aruba",
+   "designer": null,
+   "model_code": "92304",
+   "glass": "collins",
+   "variant": "collins_zombie",
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 184,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/92304",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92304",
+    "https://libbeyfoodservice.com/products/beverageware?page=2"
+   ]
+  },
+  {
+   "name": "Embassy Poco Grande",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3715",
+   "glass": "collins",
+   "variant": "collins_hurricane",
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3715",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3715",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Embassy Poco Grande",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3717",
+   "glass": "collins",
+   "variant": "collins_hurricane",
+   "capacity_ml": 392,
+   "capacity_as_stated": "13.25 oz.",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3717",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3717",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Esquire Collins",
+   "series": "Esquire",
+   "designer": null,
+   "model_code": "226",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 137,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/226",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/226",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Esquire Collins",
+   "series": "Esquire",
+   "designer": null,
+   "model_code": "259",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 362,
+   "capacity_as_stated": "12.25 oz.",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/259",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/259",
+    "https://libbeyfoodservice.com/products/beverageware?page=12"
+   ]
+  },
+  {
+   "name": "Heavy Base Collins",
+   "series": "Heavy Base",
+   "designer": null,
+   "model_code": "126",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/126",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/126",
+    "https://libbeyfoodservice.com/products/beverageware?page=16"
+   ]
+  },
+  {
+   "name": "Infinium Classic Hurricane",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "92421",
+   "glass": "collins",
+   "variant": "collins_hurricane",
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 197,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92421",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92421",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Specialty Glassware Cyclone",
+   "series": "Specialty Glasses",
+   "designer": null,
+   "model_code": "3617",
+   "glass": "collins",
+   "variant": "collins_hurricane",
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3617",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3617",
+    "https://libbeyfoodservice.com/products/beverageware?page=34"
+   ]
+  },
+  {
+   "name": "Specialty Glassware Squall",
+   "series": "Specialty Glasses",
+   "designer": null,
+   "model_code": "3616",
+   "glass": "collins",
+   "variant": "collins_hurricane",
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3616",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3616",
+    "https://libbeyfoodservice.com/products/beverageware?page=34"
+   ]
+  },
+  {
+   "name": "Specialty Glassware Bamboo Cooler",
+   "series": "Specialty Glasses",
+   "designer": null,
+   "model_code": "32802",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 171,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/32802",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/32802",
+    "https://libbeyfoodservice.com/products/beverageware?page=34"
+   ]
+  },
+  {
+   "name": "Straight Sided Collins",
+   "series": "Straight Sided",
+   "designer": null,
+   "model_code": "53",
+   "glass": "collins",
+   "variant": "collins_straight",
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 121,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/53",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/53",
+    "https://libbeyfoodservice.com/products/beverageware?page=35"
+   ]
+  },
+  {
+   "name": "Straight Sided Zombie",
+   "series": "Straight Sided",
+   "designer": null,
+   "model_code": "95",
+   "glass": "collins",
+   "variant": "collins_zombie",
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/95",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/95",
+    "https://libbeyfoodservice.com/products/beverageware?page=35"
+   ]
+  },
+  {
+   "name": "Straight Sided Zombie",
+   "series": "Straight Sided",
+   "designer": null,
+   "model_code": "96",
+   "glass": "collins",
+   "variant": "collins_zombie",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/96",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/96",
+    "https://libbeyfoodservice.com/products/beverageware?page=35"
+   ]
+  },
+  {
+   "name": "Straight Sided Zombie",
+   "series": "Straight Sided",
+   "designer": null,
+   "model_code": "115",
+   "glass": "collins",
+   "variant": "collins_zombie",
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/115",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/115",
+    "https://libbeyfoodservice.com/products/beverageware?page=35"
+   ]
+  },
+  {
+   "name": "Chicago Juice",
+   "series": "Chicago",
+   "designer": null,
+   "model_code": "2523",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 140,
+   "capacity_as_stated": "4.75 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/2523",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/2523",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Straight Sided Juice",
+   "series": "Straight Sided",
+   "designer": null,
+   "model_code": "56",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 148,
+   "capacity_as_stated": "5 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/56",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/56",
+    "https://libbeyfoodservice.com/products/beverageware?page=35"
+   ]
+  },
+  {
+   "name": "Straight Sided Seltzer",
+   "series": "Straight Sided",
+   "designer": null,
+   "model_code": "58",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/58",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/58",
+    "https://libbeyfoodservice.com/products/beverageware?page=35"
+   ]
+  },
+  {
+   "name": "Bristol Valley Flute",
+   "series": "Bristol Valley",
+   "designer": null,
+   "model_code": "8595SR",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 197,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8595sr",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8595sr",
+    "https://libbeyfoodservice.com/products/beverageware?page=5"
+   ]
+  },
+  {
+   "name": "Charisma Tall Flute",
+   "series": "Charisma",
+   "designer": null,
+   "model_code": "4196",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 222,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/4196",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/4196",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Citation Gourmet Tulip Champagne",
+   "series": "Citation",
+   "designer": null,
+   "model_code": "8477",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 197,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8477",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8477",
+    "https://libbeyfoodservice.com/products/beverageware?page=7"
+   ]
+  },
+  {
+   "name": "Citation Flute",
+   "series": "Citation",
+   "designer": null,
+   "model_code": "8495",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 185,
+   "capacity_as_stated": "6.25 oz.",
+   "height_mm": 184,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8495",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8495",
+    "https://libbeyfoodservice.com/products/beverageware?page=7"
+   ]
+  },
+  {
+   "name": "Citation Gourmet Tulip Champagne",
+   "series": "Citation",
+   "designer": null,
+   "model_code": "8476",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 216,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8476",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8476",
+    "https://libbeyfoodservice.com/products/beverageware?page=7"
+   ]
+  },
+  {
+   "name": "Contour Flute",
+   "series": "Contour",
+   "designer": null,
+   "model_code": "9157",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9157",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9157",
+    "https://libbeyfoodservice.com/products/beverageware?page=7"
+   ]
+  },
+  {
+   "name": "Contour Flute",
+   "series": "Contour",
+   "designer": null,
+   "model_code": "9236",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 236,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9236",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9236",
+    "https://libbeyfoodservice.com/products/beverageware?page=8"
+   ]
+  },
+  {
+   "name": "Contour Flute, 8-Ounce",
+   "series": "Contour",
+   "designer": null,
+   "model_code": "1009406",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009406",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009406",
+    "https://libbeyfoodservice.com/products/beverageware?page=8"
+   ]
+  },
+  {
+   "name": "Domaine Flute",
+   "series": "Domaine",
+   "designer": null,
+   "model_code": "8995",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 226,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8995",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8995",
+    "https://libbeyfoodservice.com/products/beverageware?page=9"
+   ]
+  },
+  {
+   "name": "Embassy Flute",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3794",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 133,
+   "capacity_as_stated": "4.5 oz.",
+   "height_mm": 187,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3794",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3794",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Flute",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3795",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 207,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3795",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3795",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Tall Flute",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3796",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 222,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3796",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3796",
+    "https://libbeyfoodservice.com/products/beverageware?page=11"
+   ]
+  },
+  {
+   "name": "Infinium Classic Flute",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "92415",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 192,
+   "capacity_as_stated": "6.5 oz.",
+   "height_mm": 229,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92415",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92415",
+    "https://libbeyfoodservice.com/products/beverageware?page=18"
+   ]
+  },
+  {
+   "name": "Infinium Prism Flute",
+   "series": "Infinium Prism",
+   "designer": null,
+   "model_code": "92451",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 241,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/92451",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92451",
+    "https://libbeyfoodservice.com/products/beverageware?page=19"
+   ]
+  },
+  {
+   "name": "Linear Flute",
+   "series": "Linear",
+   "designer": null,
+   "model_code": "7403",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 233,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/7403",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/7403",
+    "https://libbeyfoodservice.com/products/beverageware?page=22"
+   ]
+  },
+  {
+   "name": "Napa Country Flute",
+   "series": "Napa Country",
+   "designer": null,
+   "model_code": "8795",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "5.75 oz.",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8795",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8795",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Perception Flute",
+   "series": "Perception",
+   "designer": null,
+   "model_code": "3096",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "5.75 oz.",
+   "height_mm": 216,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3096",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3096",
+    "https://libbeyfoodservice.com/products/beverageware?page=26"
+   ]
+  },
+  {
+   "name": "Prism Flute",
+   "series": "Prism",
+   "designer": null,
+   "model_code": "9332",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 244,
+   "capacity_as_stated": "8.25 oz.",
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9332",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9332",
+    "https://libbeyfoodservice.com/products/beverageware?page=27"
+   ]
+  },
+  {
+   "name": "Renaissance Trumpet Flute, 6 Oz.",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9139",
+   "glass": "flute",
+   "variant": "flute_trumpet",
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 214,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9139",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9139",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Renaissance Trumpet Flute, 7.5 Oz.",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9148",
+   "glass": "flute",
+   "variant": "flute_trumpet",
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9148",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9148",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Renaissance Flute",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9138",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9138",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9138",
+    "https://libbeyfoodservice.com/products/beverageware?page=28"
+   ]
+  },
+  {
+   "name": "Renewal Crosshatch Flute",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9332/69477",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 244,
+   "capacity_as_stated": "8.25 oz.",
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9332-69477",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9332-69477",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Renewal Inspire Flute",
+   "series": "Renewal",
+   "designer": null,
+   "model_code": "9432/AM8Y8J",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz.",
+   "height_mm": 241,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9432-am8y8j",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9432-am8y8j",
+    "https://libbeyfoodservice.com/products/beverageware?page=29"
+   ]
+  },
+  {
+   "name": "Rivere Flute",
+   "series": "Rivere",
+   "designer": null,
+   "model_code": "9432",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz.",
+   "height_mm": 241,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9432",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9432",
+    "https://libbeyfoodservice.com/products/beverageware?page=31"
+   ]
+  },
+  {
+   "name": "Stemless Flute",
+   "series": "Stemless",
+   "designer": null,
+   "model_code": "228",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/228",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/228",
+    "https://libbeyfoodservice.com/products/beverageware?page=34"
+   ]
+  },
+  {
+   "name": "Symbio Flute",
+   "series": "Symbio",
+   "designer": null,
+   "model_code": "1100",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 281,
+   "capacity_as_stated": "9.5 oz.",
+   "height_mm": 181,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1100",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1100",
+    "https://libbeyfoodservice.com/products/beverageware"
+   ]
+  },
+  {
+   "name": "Teardrop Flute",
+   "series": "Teardrop",
+   "designer": null,
+   "model_code": "3996",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "5.75 oz.",
+   "height_mm": 197,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3996",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3996",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Vina Trumpet Flute",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7552",
+   "glass": "flute",
+   "variant": "flute_trumpet",
+   "capacity_ml": 192,
+   "capacity_as_stated": "6.5 oz.",
+   "height_mm": 248,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/7552",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/7552",
+    "https://libbeyfoodservice.com/products/beverageware?page=38"
+   ]
+  },
+  {
+   "name": "Vina Flute",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7500",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/7500",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/7500",
+    "https://libbeyfoodservice.com/products/beverageware?page=38"
+   ]
+  },
+  {
+   "name": "Virtuoso Flute",
+   "series": "Virtuoso",
+   "designer": null,
+   "model_code": "1009305",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 247,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009305",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009305",
+    "https://libbeyfoodservice.com/products/beverageware?page=39"
+   ]
+  },
+  {
+   "name": "Symbio Gin And Tonic",
+   "series": "Symbio",
+   "designer": null,
+   "model_code": "1104",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 145,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1104",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1104",
+    "https://libbeyfoodservice.com/products/beverageware"
+   ]
+  },
+  {
+   "name": "Catalina Cordial",
+   "series": "Catalina",
+   "designer": null,
+   "model_code": "3826",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3826",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3826",
+    "https://libbeyfoodservice.com/products/beverageware?page=5"
+   ]
+  },
+  {
+   "name": "Citation Brandy",
+   "series": "Citation",
+   "designer": null,
+   "model_code": "8405",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8405",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8405",
+    "https://libbeyfoodservice.com/products/beverageware?page=6"
+   ]
+  },
+  {
+   "name": "Embassy Brandy",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3702",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 163,
+   "capacity_as_stated": "5.5 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3702",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3702",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Brandy",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3704",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 274,
+   "capacity_as_stated": "9.25 oz.",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3704",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3704",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Brandy",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3705",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3705",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3705",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Brandy",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3708",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 518,
+   "capacity_as_stated": "17.5 oz.",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3708",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3708",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Embassy Brandy",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3709",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 651,
+   "capacity_as_stated": "22 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3709",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3709",
+    "https://libbeyfoodservice.com/products/beverageware?page=10"
+   ]
+  },
+  {
+   "name": "Reserve By Libbey Bourbon Tasting Glass",
+   "series": "Kentucky Bourbon Trail",
+   "designer": null,
+   "model_code": "9196",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9196",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9196",
+    "https://libbeyfoodservice.com/products/beverageware?page=30"
+   ]
+  },
+  {
+   "name": "Modernist Cordial",
+   "series": "Modernist",
+   "designer": null,
+   "model_code": "9031",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 74,
+   "capacity_as_stated": "2.5 oz.",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9031",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9031",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Metal Beverage Mint Julep Cup - Beaded",
+   "series": "Metal Beverage",
+   "designer": null,
+   "model_code": "JC-25",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 121,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://libbeyfoodservice.com/product/jc-25",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/jc-25",
+    "https://libbeyfoodservice.com/products/all?subcategory=Bar"
+   ]
+  },
+  {
+   "name": "Tiki Glass",
+   "series": "Tiki",
+   "designer": null,
+   "model_code": "92142",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 117,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/92142",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/92142",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Tiki Pineapple Glass",
+   "series": "Tiki",
+   "designer": null,
+   "model_code": "56880",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 503,
+   "capacity_as_stated": "17 oz.",
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/56880",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/56880",
+    "https://libbeyfoodservice.com/products/beverageware?page=37"
+   ]
+  },
+  {
+   "name": "Georgian Irish Coffee",
+   "series": "Georgian",
+   "designer": null,
+   "model_code": "8054",
+   "glass": "mug",
+   "variant": "mug_irish",
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/8054",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/8054",
+    "https://libbeyfoodservice.com/products/beverageware?page=14"
+   ]
+  },
+  {
+   "name": "Metal Beverage Copper Moscow Mule Cup",
+   "series": "Moscow Mule",
+   "designer": null,
+   "model_code": "CMM-200",
+   "glass": "mug",
+   "variant": "mug_copper",
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://libbeyfoodservice.com/product/cmm-200",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/cmm-200",
+    "https://libbeyfoodservice.com/products/beverageware?page=22"
+   ]
+  },
+  {
+   "name": "Metal Beverage Copper Moscow Mule Mug",
+   "series": "Moscow Mule",
+   "designer": null,
+   "model_code": "CMM-100",
+   "glass": "mug",
+   "variant": "mug_copper",
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://libbeyfoodservice.com/product/cmm-100",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/cmm-100",
+    "https://libbeyfoodservice.com/products/beverageware?page=22"
+   ]
+  },
+  {
+   "name": "Metal Beverage Moscow Hammered Mule Cup",
+   "series": "Moscow Mule",
+   "designer": null,
+   "model_code": "MM-200",
+   "glass": "mug",
+   "variant": "mug_copper",
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://libbeyfoodservice.com/product/mm-200",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/mm-200",
+    "https://libbeyfoodservice.com/products/beverageware?page=22"
+   ]
+  },
+  {
+   "name": "Metal Beverage Moscow Hammered Mule Mug",
+   "series": "Moscow Mule",
+   "designer": null,
+   "model_code": "MM-100",
+   "glass": "mug",
+   "variant": "mug_copper",
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://libbeyfoodservice.com/product/mm-100",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/mm-100",
+    "https://libbeyfoodservice.com/products/beverageware?page=23"
+   ]
+  },
+  {
+   "name": "Warm Beverage Straight Sided Irish Coffee",
+   "series": "Warm Beverage",
+   "designer": null,
+   "model_code": "5292",
+   "glass": "mug",
+   "variant": "mug_irish",
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 162,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5292",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5292",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  },
+  {
+   "name": "Warm Beverage Catalina Irish Coffee",
+   "series": "Warm Beverage",
+   "designer": null,
+   "model_code": "5293",
+   "glass": "mug",
+   "variant": "mug_irish",
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5293",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5293",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  },
+  {
+   "name": "Warm Beverage Flared Irish Coffee",
+   "series": "Warm Beverage",
+   "designer": null,
+   "model_code": "5295",
+   "glass": "mug",
+   "variant": "mug_irish",
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5295",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5295",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  },
+  {
+   "name": "Warm Beverage Irish Coffee",
+   "series": "Warm Beverage",
+   "designer": null,
+   "model_code": "5304",
+   "glass": "mug",
+   "variant": "mug_irish",
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5304",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5304",
+    "https://libbeyfoodservice.com/products/beverageware?page=40"
+   ]
+  }
+ ]
+}

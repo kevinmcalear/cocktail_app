@@ -238,9 +238,9 @@ test('searching on a phone with somewhere to count from, Nearest lists the close
   expect(screen.getByText(/400 m|0\.2 mi/)).toBeTruthy();
 });
 
-test('no Nearest without a search, or without somewhere to count from', async () => {
+test('browsing on a phone, Nearest sits beside the mixed list; none without somewhere to count from', async () => {
   await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', '', { from: { latitude: -37.8, longitude: 144.97 } });
-  expect(screen.queryByRole('radio', { name: 'Nearest' })).toBeNull();
+  expect(screen.getByRole('radio', { name: 'Nearest' })).toBeTruthy();
   await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', 'martini');
   expect(screen.queryByRole('radio', { name: 'Nearest' })).toBeNull();
 });

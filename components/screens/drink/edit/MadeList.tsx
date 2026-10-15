@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, PressableScale, Sheet, useDs } from '@/components/ds';
-import { SketchGlassPicker } from '@/components/cocktail/SketchGlassPicker';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { SpecCategory } from '@/hooks/useCocktailEditor';
 
 import type { DrinkEditor as Editor } from './EditParts';
+import { GlassPickSheet } from './GlassPickSheet';
 type Option = { id: string; name: string };
 
 const SHEET_PAD = { paddingHorizontal: space.xl, paddingBottom: space.xxl };
@@ -24,6 +24,7 @@ const optionsOf = (editor: Editor, category: SpecCategory): Option[] =>
   ({ glassware: editor.glassware, ice: editor.iceTypes, method: editor.methods, family: editor.families })[category] as Option[];
 
 const valueOf = (editor: Editor, category: SpecCategory, options: Option[]) => {
+  if (category === 'glassware' && 'glassModel' in editor && editor.glassModel) return editor.glassModel.name;
   const ids = category === 'method' ? editor.methodIds : [editor.getSpecId(category)].filter(Boolean);
   return ids.map((id) => options.find((o) => o.id === id)?.name).filter(Boolean).join(', ');
 };
@@ -61,13 +62,13 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
           );
         })}
       </View>
-      {open ? <PickSheet editor={editor} itemId={itemId} category={open} label={ROWS.find((r) => r.category === open)?.label ?? ''} onClose={() => setOpen(null)} /> : null}
+      {open === 'glassware' ? <GlassPickSheet editor={editor} itemId={itemId} onClose={() => setOpen(null)} /> : open ? <PickSheet editor={editor} category={open} label={ROWS.find((r) => r.category === open)?.label ?? ''} onClose={() => setOpen(null)} /> : null}
     </View>
   );
 }
 
-/** One of How it's made's sheets: tap to pick (methods take several), or add a new one by name. */
-function PickSheet({ editor, itemId, category, label, onClose }: { editor: Editor; itemId: string | null; category: SpecCategory; label: string; onClose: () => void }) {
+/** Ice, method and family's sheets (the glass has its own): tap to pick (methods take several), or add a new one by name. */
+function PickSheet({ editor, category, label, onClose }: { editor: Editor; category: SpecCategory; label: string; onClose: () => void }) {
   const ds = useDs();
   const [adding, setAdding] = useState('');
   const options = optionsOf(editor, category);
@@ -131,16 +132,6 @@ function PickSheet({ editor, itemId, category, label, onClose }: { editor: Edito
         />
         <Button label="Add" size="sm" variant="secondary" disabled={!adding.trim()} onPress={() => void add()} />
       </View>
-      {/* A draft has no drawing yet, so its glass shape is picked once it's published. */}
-      {category === 'glassware' && itemId && 'sketchVariant' in editor ? (
-        <SketchGlassPicker
-          itemId={itemId}
-          barId={editor.barId}
-          glasswareName={editor.glassware.find((g) => g.id === editor.glasswareId)?.name ?? null}
-          value={editor.sketchVariant}
-          onChange={editor.setSketchVariant}
-        />
-      ) : null}
       {multi ? <Caption tone="muted">A drink can have more than one: shaken then topped, built then swizzled.</Caption> : null}
     </Sheet>
   );
