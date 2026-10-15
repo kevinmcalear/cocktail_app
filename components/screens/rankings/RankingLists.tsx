@@ -101,7 +101,7 @@ export function MyRankList({ entries, listName }: { entries: RankEntry[]; listNa
 const imperial = () => usesMiles(getLocales()[0]);
 
 /** "Brunswick, Melbourne · 1.2 km" */
-function placeOf(r: { locality: string | null; city: string | null; distance_km?: number | null }): string {
+export function placeOf(r: { locality: string | null; city: string | null; distance_km?: number | null }): string {
   const place = [r.locality, r.city].filter(Boolean).join(', ') || 'Bar';
   return r.distance_km == null ? place : `${place} · ${formatDistance(r.distance_km, imperial())}`;
 }
