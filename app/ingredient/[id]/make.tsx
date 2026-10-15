@@ -6,6 +6,7 @@ import { MakeScreen } from "@/components/screens/make/MakeScreen";
 import { space } from "@/constants/tokens";
 import { useActiveVenue } from "@/hooks/useActiveVenue";
 import { useMode } from "@/hooks/useMode";
+import { useHoldUpdates } from "@/hooks/useOtaUpdates";
 import { useCapabilities } from "@/hooks/useCapabilities";
 import { useIngredient } from "@/hooks/useIngredients";
 import { useItemPrep } from "@/hooks/usePrepCard";
@@ -15,6 +16,7 @@ import type { RecipeLine } from "@/lib/scale";
 /** Make mode for a house prep: /ingredient/<id>/make?factor=0.66 opens on the size picked on its page. */
 export default function MakeRoute() {
     const { id, factor, mode } = useLocalSearchParams<{ id: string; factor?: string; mode?: string }>();
+    useHoldUpdates();
     const { data } = useIngredient(id);
     const { data: card } = useItemPrep(id);
     const ingredient = data?.ingredient ?? null;

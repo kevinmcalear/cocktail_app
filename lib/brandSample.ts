@@ -2,7 +2,8 @@ import { backbar, familyHues } from '@/constants/tokens';
 import type { SketchInputs } from '@/lib/sketch/types';
 
 const FROM: SketchInputs['from'] = { glass: 'rules', ice: 'rules', method: 'rules', liquid: 'rules', garnish: 'rules' };
-const sketch = (glass: SketchInputs['glass'], ice: SketchInputs['ice'], hex: string, garnish: SketchInputs['garnish']): SketchInputs => ({
+/** A stirred drink's drawing inputs, for bundled samples drawn without asking the server. */
+export const sampleSketch = (glass: SketchInputs['glass'], ice: SketchInputs['ice'], hex: string, garnish: SketchInputs['garnish']): SketchInputs => ({
   v: 1,
   glass,
   ice,
@@ -24,7 +25,7 @@ const sketch = (glass: SketchInputs['glass'], ice: SketchInputs['ice'], hex: str
  * photo-less drink without asking the server.
  */
 export const BRAND_SAMPLE = [
-  { name: 'House Martini', line: 'Gin · dry vermouth', price: '18', isNew: false, sketch: sketch('martini', 'none', backbar.dark.ink, 'lemon_peel') },
-  { name: 'Bolo Tie', line: 'Rye · amaro · orange', price: '19', isNew: true, sketch: sketch('rocks', 'large', familyHues.dark.oldfashioned, 'orange_peel') },
-  { name: 'Champ Stamp', line: 'Bourbon · strawberry · smoke', price: '20', isNew: false, sketch: sketch('rocks', 'cubes', familyHues.dark.negroni, 'strawberry') },
+  { name: 'House Martini', line: 'Gin · dry vermouth', price: '18', isNew: false, sketch: sampleSketch('martini', 'none', backbar.dark.ink, 'lemon_peel') },
+  { name: 'Bolo Tie', line: 'Rye · amaro · orange', price: '19', isNew: true, sketch: sampleSketch('rocks', 'large', familyHues.dark.oldfashioned, 'orange_peel') },
+  { name: 'Champ Stamp', line: 'Bourbon · strawberry · smoke', price: '20', isNew: false, sketch: sampleSketch('rocks', 'cubes', familyHues.dark.negroni, 'strawberry') },
 ];

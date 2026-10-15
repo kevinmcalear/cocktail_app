@@ -73,8 +73,18 @@ export interface WizardDraft {
   /** Everyone else who made it with them (person profiles). */
   coCreators: WizardPick[];
   riffOf: WizardPick | null;
+  /** The year it was first made (items.origin_year); null is not sure. */
+  originYear?: number | null;
+  /**
+   * Where it was first made, for a drink added at home: a bar's public
+   * profile (items.origin_bar_profile_id); null is at home. A venue's drink
+   * is always the venue's.
+   */
+  place?: WizardPick | null;
   description: string;
   notes: string;
+  /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink. */
+  notesPrivate?: boolean;
   /** null follows the venue (or is private, for a drink at home). */
   publish: PublishMode | null;
   /**
@@ -132,7 +142,7 @@ export function stepFilled(step: WizardStep, d: WizardDraft): boolean {
     case 'garnish':
       return d.garnishes.length > 0;
     case 'credits':
-      return d.creator !== null || d.coCreators.length > 0 || !!d.riffOf;
+      return d.creator !== null || d.coCreators.length > 0 || !!d.riffOf || d.originYear != null || !!d.place;
     case 'notes':
       return !!(d.description.trim() || d.notes.trim());
     case 'publish':
@@ -147,6 +157,17 @@ export function creatorProfileId(d: WizardDraft, myProfileId: string | null): st
   if (d.creator === 'nobody') return null;
   if (d.creator === null || d.creator === 'me') return myProfileId;
   return d.creator.id;
+}
+
+/** The earliest year items.origin_year takes (its check is 1600 to 2100). */
+export const FIRST_YEAR = 1600;
+
+/** A typed year ("1998") as a number, or null while it isn't a whole year from 1600 to this one. */
+export function parseYear(text: string, thisYear = new Date().getFullYear()): number | null {
+  const t = text.trim();
+  if (!/^\d{4}$/.test(t)) return null;
+  const y = Number(t);
+  return y >= FIRST_YEAR && y <= thisYear ? y : null;
 }
 
 /** Only the name is required: everything else can be skipped and added later. */

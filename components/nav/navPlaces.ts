@@ -1,5 +1,6 @@
 import type { IconName } from '@/components/ds';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useFirstRound } from '@/hooks/useFirstRound';
 import { useMode } from '@/hooks/useMode';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useEffectiveRole } from '@/hooks/useViewAs';
@@ -32,25 +33,31 @@ export function useNavPlaces() {
   const { active } = useActiveVenue();
   const { has } = useVenueFeatures();
   const role = useEffectiveRole(active?.id ?? null);
+  // The first round keeps the venue's places to Venue settings until it's over (lib/firstRound.ts).
+  const round = useFirstRound().active;
   const home = mode === 'home';
   const venue = home ? null : active;
 
   // Menus covers its own pages (/menus/<id>/edit) too.
   const tabs: Place[] = useModeTabs().map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: tabPath(t.name), prefix: t.name === 'menus' ? '/menus' : undefined, tab: true }));
-  const work: Place[] = venue && has('backBar') ? [{ key: 'back-bar', label: 'Back bar', icon: 'map.fill', path: '/back-bar' }] : [];
+  const work: Place[] = venue && !round && has('backBar') ? [{ key: 'back-bar', label: 'Back bar', icon: 'map.fill', path: '/back-bar' }] : [];
   const settings = venue ? `/settings/bar/${venue.id}` : null;
   const venuePlaces: Place[] =
     venue && settings
       ? [
-          ...(canSeeTeam(role) ? [{ key: 'team', label: 'My team', icon: 'person.2.fill', path: '/team' } as Place] : []),
-          { key: 'brand', label: 'Brand', icon: 'paintpalette.fill', path: `${settings}/brand` },
-          { key: 'roles', label: 'Roles and access', icon: 'lock.shield.fill', path: `${settings}/roles` },
+          ...(canSeeTeam(role) && !round ? [{ key: 'team', label: 'My team', icon: 'person.2.fill', path: '/team' } as Place] : []),
+          ...(round
+            ? []
+            : [
+                { key: 'brand', label: 'Brand', icon: 'paintpalette.fill', path: `${settings}/brand` } as Place,
+                { key: 'roles', label: 'Roles and access', icon: 'lock.shield.fill', path: `${settings}/roles` } as Place,
+              ]),
           { key: 'venue-settings', label: 'Venue settings', icon: 'slider.horizontal.3', path: settings, prefix: settings },
         ]
       : [];
   // History sits under Discover in the sidebar (decided on the canvas), in both modes.
-  const history: Place | null = has('history') ? { key: 'history', label: 'History', icon: 'clock.arrow.circlepath', path: '/history' } : null;
+  const history: Place | null = !round && has('history') ? { key: 'history', label: 'History', icon: 'clock.arrow.circlepath', path: '/history' } : null;
   // This week: the venue's week, or at home the bars you love and your dated menus. The sidebar lists it itself (WeekNav).
-  const week: Place | null = has('tonight') ? { key: 'week', label: 'This week', icon: 'calendar', path: '/week' } : null;
+  const week: Place | null = !round && has('tonight') ? { key: 'week', label: 'This week', icon: 'calendar', path: '/week' } : null;
   return { home, venue, tabs, work, venuePlaces, history, week };
 }

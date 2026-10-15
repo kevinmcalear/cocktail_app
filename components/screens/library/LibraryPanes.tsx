@@ -66,7 +66,7 @@ function OtherPane({ item }: { item: SearchItem }) {
  * search's rows do. The pick lives in the URL (?pick=<id>), so a link opens
  * the same drink; with none, the first one shows.
  */
-export function LibraryPanes({ venueId, items, lineOf, header, empty }: { venueId: string | null; items: SearchItem[]; lineOf?: (item: SearchItem) => string | null; header: ReactElement; empty: ReactElement | null }) {
+export function LibraryPanes({ venueId, items, lineOf, header, empty, footer }: { venueId: string | null; items: SearchItem[]; lineOf?: (item: SearchItem) => string | null; header: ReactElement; empty: ReactElement | null; footer?: ReactElement | null }) {
   const ds = useDs();
   const router = useRouter();
   const { pick } = useLocalSearchParams<{ pick?: string }>();
@@ -84,6 +84,7 @@ export function LibraryPanes({ venueId, items, lineOf, header, empty }: { venueI
         keyExtractor={(i) => i.id}
         ListHeaderComponent={header}
         ListEmptyComponent={empty ?? undefined}
+        ListFooterComponent={footer ?? undefined}
         renderItem={({ item }) => {
           const { caption, tag } = why(item);
           const score = scores?.[item.id];

@@ -223,7 +223,7 @@ export function BarHeader({ profile, detail, tag, tagInline, neutral, size = 64 
 }
 
 /** The numbers under a bar's name (its score sits in BarHeader): awards, people and originals, ruled above and below (ppl-bar-top). */
-export function BarStats({ profile, originals, onAwards }: { profile: Pick<Profile, 'id' | 'kind'>; originals: number; onAwards?: () => void }) {
+export function BarStats({ profile, originals, onAwards }: { profile: Pick<Profile, 'id' | 'kind'>; originals: number | null; onAwards?: () => void }) {
   const { data: awards = [] } = useProfileAwards(profile.id);
   const people = (useProfilePositions(profile).data ?? []).filter(isShownPosition).length;
   const label = awards.length === 1 ? 'award' : 'awards';
@@ -238,7 +238,8 @@ export function BarStats({ profile, originals, onAwards }: { profile: Pick<Profi
         <Stat value={awards.length} label={label} ruled />
       )}
       <Stat value={people} label={people === 1 ? 'person' : 'people'} ruled />
-      <Stat value={originals} label={originals === 1 ? 'original' : 'originals'} ruled />
+      {/* A Private page doesn't count its drinks (ppl-bar-private). */}
+      {originals === null ? null : <Stat value={originals} label={originals === 1 ? 'original' : 'originals'} ruled />}
     </Stats>
   );
 }

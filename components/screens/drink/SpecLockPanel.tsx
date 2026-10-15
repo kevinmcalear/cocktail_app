@@ -1,16 +1,17 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, DsText, Surface, useDs } from '@/components/ds';
+import { Body, Caption, DsText, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space, type } from '@/constants/tokens';
 
 /**
  * "Recipes stay with the bar": where a spec would be, on a drink (or a bar's
- * page of drinks) whose bar keeps its specs back. Says why and, for an
- * unclaimed bar, carries the claim action.
+ * page of drinks) whose bar keeps its specs back. Says why, lists what goes
+ * in the drink without amounts when the bar shares that (ppl-drink-menu-level),
+ * and, for an unclaimed bar, carries the claim action.
  */
-export function SpecLockPanel({ note, action }: { note: string; action?: ReactNode }) {
+export function SpecLockPanel({ note, ingredients, action, title = 'Recipes stay with the bar' }: { note: string; ingredients?: string | null; action?: ReactNode; title?: string }) {
   const ds = useDs();
   return (
     <Surface style={[styles.panel, { borderColor: ds.c.line }]}>
@@ -18,11 +19,19 @@ export function SpecLockPanel({ note, action }: { note: string; action?: ReactNo
         <IconSymbol name="lock.fill" size={20} color={ds.c.ink} />
       </View>
       <DsText variant="body" role="heading" align="center" style={styles.title}>
-        Recipes stay with the bar
+        {title}
       </DsText>
       <Body tone="muted" align="center" style={styles.note}>
         {note}
       </Body>
+      {ingredients ? (
+        <View style={[styles.ingredients, { borderTopColor: ds.c.line }]}>
+          <Caption tone="muted" role="heading" aria-level={3} style={styles.cap}>
+            What goes in it
+          </Caption>
+          <Body>{ingredients}</Body>
+        </View>
+      ) : null}
       {action ? <View style={styles.action}>{action}</View> : null}
     </Surface>
   );
@@ -34,5 +43,7 @@ const styles = StyleSheet.create({
   title: { fontFamily: fontFamilies.bodySemiBold, lineHeight: 22 },
   note: { fontSize: type.label.fontSize, lineHeight: 22 },
   ring: { width: 52, height: 52, borderRadius: radius.pill, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  ingredients: { alignSelf: 'stretch', gap: space.xs, marginTop: space.xs, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
+  cap: { letterSpacing: 1.2, textTransform: 'uppercase' },
   action: { marginTop: space.xs, alignSelf: 'stretch', alignItems: 'center' },
 });
