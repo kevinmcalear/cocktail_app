@@ -11,7 +11,7 @@ import { useEffectiveRole } from '@/hooks/useViewAs';
 import { teamLine } from '@/lib/shellNav';
 import { canManageTeam, canSeeTeam, personName } from '@/lib/team';
 
-const FACES = 4;
+const FACES = 3;
 const FACE = 30;
 
 /**
@@ -71,8 +71,12 @@ export function TeamCard({ barId, onGo }: { barId: string; onGo: (invite: boolea
         <IconSymbol name="person.2.fill" size={20} color={ds.c.ink} />
       </View>
       <View style={styles.text}>
-        <Body style={styles.strong}>My team</Body>
-        <Caption tone="muted">{line}</Caption>
+        <Body numberOfLines={1} style={styles.strong}>
+          My team
+        </Body>
+        <Caption tone="muted" numberOfLines={1}>
+          {line}
+        </Caption>
       </View>
       <View aria-hidden style={styles.faces}>
         {(members ?? []).slice(0, FACES).map((m, i) => (
