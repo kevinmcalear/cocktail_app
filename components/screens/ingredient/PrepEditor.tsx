@@ -24,7 +24,7 @@ interface PrepEditorProps {
   onBack: () => void;
   onSave: () => void;
   saving: boolean;
-  /** The full form: brand, ABV, tags, who sees it, reordering and removing lines. */
+  /** The full form (IngredientEditPage): brand, ABV, tags, who sees it, reordering and removing lines. */
   onAllFields: () => void;
 }
 
@@ -48,19 +48,7 @@ function PrepEditorBody({ name, onName, lines, onAmount, onAdd, description, onD
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.page, { paddingTop: insets.top + space.sm, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }]}>
-        <View style={styles.head}>
-          <PressableScale role="button" accessibilityLabel="Back" onPress={onBack} style={styles.headSide}>
-            <Body>Back</Body>
-          </PressableScale>
-          <Caption tone="muted" style={styles.eyebrow}>
-            PREP
-          </Caption>
-          <PressableScale role="button" accessibilityLabel="Save" aria-disabled={saving} disabled={saving} onPress={onSave} style={[styles.headSide, styles.right]}>
-            <Body color={ds.accentText} style={styles.bold}>
-              {saving ? 'Saving…' : 'Save'}
-            </Body>
-          </PressableScale>
-        </View>
+        <EditorHead eyebrow="PREP" onBack={onBack} onSave={onSave} saving={saving} />
         <TextInput
           value={name}
           onChangeText={onName}
@@ -82,6 +70,26 @@ function PrepEditorBody({ name, onName, lines, onAmount, onAdd, description, onD
           <TextLink label="All fields" tone="ink" onPress={onAllFields} />
         </View>
       </ScrollView>
+    </View>
+  );
+}
+
+/** Editing's header (prep-prep-edit-shared): Back, what's being edited, and Save in the accent. */
+export function EditorHead({ eyebrow, onBack, onSave, saving, saveLabel = 'Save' }: { eyebrow: string; onBack: () => void; onSave: () => void; saving: boolean; saveLabel?: string }) {
+  const ds = useDs();
+  return (
+    <View style={styles.head}>
+      <PressableScale role="button" accessibilityLabel="Back" onPress={onBack} style={styles.headSide}>
+        <Body>Back</Body>
+      </PressableScale>
+      <Caption tone="muted" style={styles.eyebrow}>
+        {eyebrow}
+      </Caption>
+      <PressableScale role="button" accessibilityLabel={saveLabel} aria-disabled={saving} disabled={saving} onPress={onSave} style={[styles.headSide, styles.right]}>
+        <Body color={ds.accentText} style={styles.bold}>
+          {saving ? 'Saving…' : saveLabel}
+        </Body>
+      </PressableScale>
     </View>
   );
 }

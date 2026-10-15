@@ -1,8 +1,6 @@
 {
   "violations": {
     "app/+html.tsx": 2,
-    "app/add-ingredient.tsx": 19,
-    "app/ingredient/[id]/edit.tsx": 20,
     "components/BarAssignmentAccordion.tsx": 6,
     "components/CategoryTree.tsx": 2,
     "components/ErrorScreen.tsx": 14,
@@ -35,8 +33,6 @@
     "lib/recipeUtils.ts": 2
   },
   "longFiles": {
-    "app/add-ingredient.tsx": 742,
-    "app/ingredient/[id]/edit.tsx": 570,
     "components/ItemDetailLayout.tsx": 725,
     "components/drink/AddDrinkScreen.tsx": 353,
     "components/ui/CustomIcons.tsx": 500
