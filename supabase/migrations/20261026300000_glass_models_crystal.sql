@@ -1,4 +1,4 @@
--- Glass models, load 2 of 2: crystal houses, after 20261023200000.
+-- Glass models, load 2 of 2: crystal houses, after 20261026200000.
 --
 --   * Schott Zwiesel 41, from the maker's Consumer Katalog 2026 (its web
 --     pages sit behind a Cloudflare challenge; the PDF on its own domain

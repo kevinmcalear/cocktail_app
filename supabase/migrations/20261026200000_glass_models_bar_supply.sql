@@ -1,4 +1,4 @@
--- Glass models, load 1 of 2: bar-supply houses, after 20261023100000.
+-- Glass models, load 1 of 2: bar-supply houses, after 20261026100000.
 -- Kevin, 15 Oct 2026: a model-level glass catalog ("every coupe in
 -- existence that you can buy", 7 Oct jam).
 --

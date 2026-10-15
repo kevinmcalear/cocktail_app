@@ -44,10 +44,10 @@ interface Load {
 
 export const LOADS: Load[] = [
   {
-    file: 'supabase/migrations/20261023200000_glass_models_bar_supply.sql',
+    file: 'supabase/migrations/20261026200000_glass_models_bar_supply.sql',
     makers: ['libbey', 'urban.bar'],
     header: `
--- Glass models, load 1 of 2: bar-supply houses, after 20261023100000.
+-- Glass models, load 1 of 2: bar-supply houses, after 20261026100000.
 -- Kevin, 15 Oct 2026: a model-level glass catalog ("every coupe in
 -- existence that you can buy", 7 Oct jam).
 --
@@ -64,10 +64,10 @@ export const LOADS: Load[] = [
 --     sibling rows. 2 of 100 wrong at audit time, at the 2% bar.`,
   },
   {
-    file: 'supabase/migrations/20261023300000_glass_models_crystal.sql',
+    file: 'supabase/migrations/20261026300000_glass_models_crystal.sql',
     makers: ['schott.zwiesel', 'spiegelau', 'riedel'],
     header: `
--- Glass models, load 2 of 2: crystal houses, after 20261023200000.
+-- Glass models, load 2 of 2: crystal houses, after 20261026200000.
 --
 --   * Schott Zwiesel 41, from the maker's Consumer Katalog 2026 (its web
 --     pages sit behind a Cloudflare challenge; the PDF on its own domain
