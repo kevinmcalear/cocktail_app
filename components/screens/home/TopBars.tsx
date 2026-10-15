@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Headline } from '@/components/ds';
+import { FirstOpenSheet } from '@/components/screens/home/FirstOpenSheet';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useTopBars } from '@/hooks/useDiscover';
@@ -42,6 +43,8 @@ export function TopBars({ area }: { area: Area }) {
       <Caption tone="muted">{early.some((r) => r.rankers > 0) && !ranked.length ? 'Early' : early.length || ranked.length || isLoading ? 'Bar score, from every drink ranked there' : 'No bars yet'}</Caption>
       <Headline role="heading">{`Top bars ${where}`}</Headline>
       {body}
+      {/* The first time someone opens Discover, these same bars ask to be loved or hidden (disc-first-open). */}
+      <FirstOpenSheet area={area} />
     </View>
   );
 }

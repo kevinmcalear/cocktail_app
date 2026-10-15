@@ -7,6 +7,7 @@ import { Button, Caption, Headline, PressableScale, RowScore, Surface, Tag, useD
 import { AddressLine, barPlace, directionsTarget, HoursLine } from '@/components/screens/bar/BarFactLines';
 import { DirectionsButton } from '@/components/screens/bar/Directions';
 import { type DrinkScores } from '@/components/screens/home/DrinksAtBars';
+import { HideBarButton } from '@/components/screens/kept/HideBarButton';
 import { LoveBarButton } from '@/components/screens/kept/LoveBarButton';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
@@ -114,6 +115,7 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
         {score}
       </View>
       <LoveBarButton profileId={pin.id} name={pin.name} />
+      <HideBarButton profileId={pin.id} name={pin.name} />
     </View>
   );
   const facts$ = (
