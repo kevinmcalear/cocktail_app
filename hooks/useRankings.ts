@@ -4,6 +4,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
 import { track } from '@/lib/analytics';
 import { viewerScoped } from '@/lib/authCache';
+import { allRowsById } from '@/lib/allRows';
 import { toTopDrink, type BarTopDrink } from '@/lib/barTopDrinks';
 import { fromSharedBarRow, fromSharedRow, toHadDrink, type BarTally, type HadDrink, type HadRow, type SharedBarRow, type SharedHadRow } from '@/lib/hadDrinks';
 import type { ItemImageLink } from '@/lib/itemImages';
@@ -109,6 +110,27 @@ export function useMyHadDrinks() {
       const { data, error } = await supabase.from('rank_entry_scores').select(HAD_COLUMNS).eq('user_id', userId!);
       if (error) throw error;
       return (await withPublishedItems((data ?? []) as unknown as HadRow[])).map(toHadDrink);
+    },
+  });
+}
+
+/**
+ * The drinks I've had or ranked, by id: Discover's "Not had yet". A rank
+ * entry is a drink had (at a bar, or made at home). Read only when asked
+ * (`enabled`), and kept fresh by ranking (it's under 'my-had').
+ */
+export function useMyHadIds(enabled = true) {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['my-had', userId, 'ids'],
+    enabled: enabled && !!userId,
+    queryFn: async (): Promise<string[]> => {
+      const rows = await allRowsById<{ id: string; item_id: string }>((after, size) => {
+        let query = supabase.from('rank_entries').select('id, item_id').eq('user_id', userId!);
+        if (after) query = query.gt('id', after);
+        return query.order('id').limit(size);
+      });
+      return [...new Set(rows.map((r) => r.item_id))];
     },
   });
 }
