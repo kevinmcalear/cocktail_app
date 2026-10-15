@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useUserId } from '@/ctx/AuthContext';
 import { supabase } from '@/lib/supabase';
 
-/** A note only its writer reads (20261021100000_item_private_notes). Plain JSON. */
+/** A note only its writer reads (20261025100000_item_private_notes). Plain JSON. */
 export interface PrivateNote {
   body: string;
   updatedAt: string;
@@ -19,7 +19,7 @@ export function usePrivateNote(itemId: string | null | undefined) {
     enabled: !!itemId && !!userId,
     queryFn: async (): Promise<PrivateNote | null> => {
       const { data, error } = await supabase.from('item_private_notes').select('body, updated_at').eq('item_id', itemId!).maybeSingle();
-      // ponytail: a database without 20261021100000 has no table yet (PGRST205); read as no note. Drop once it's in production.
+      // ponytail: a database without 20261025100000 has no table yet (PGRST205); read as no note. Drop once it's in production.
       if (error?.code === 'PGRST205') return null;
       if (error) throw error;
       return data ? { body: data.body as string, updatedAt: data.updated_at as string } : null;

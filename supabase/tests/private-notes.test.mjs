@@ -1,4 +1,4 @@
-// Notes only their writer reads (supabase/migrations/20261021100000_item_private_notes.sql):
+// Notes only their writer reads (supabase/migrations/20261025100000_item_private_notes.sql):
 // written on a drink the writer can read, read, changed and removed by the
 // writer alone, never by the drink's venue, another person, or a signed-out
 // visitor, and gone with the drink. Runs through the real API against the
