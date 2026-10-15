@@ -60,13 +60,13 @@ export function DeskStartTiles({ picked, saved, onPick }: { picked: DeskStart; s
   );
 }
 
-/** A menu you saved, as small guest cards four across: its drinks, its name, how many or On now; then saved layouts. */
+/** A menu you saved, as small guest cards four across (and on, a row at a time): its drinks, its name, how many or On now; then saved layouts. */
 export function SavedCards({ menus, layouts, start, now, onPick }: { menus: MenuSummary[]; layouts: MenuLayoutTemplate[]; start: Start; now: number; onPick: (start: Start) => void }) {
   const ds = useDs();
   const items = [
     ...menus.map((m) => ({ key: m.id, name: m.name, start: { kind: 'copy', menuId: m.id } as Start, menu: m, line: menuStatus(m, now) === 'on' ? 'On now' : plural(m.itemIds.length, 'drink') })),
     ...layouts.map((l) => ({ key: l.id, name: l.name, start: { kind: 'layout', layoutId: l.id } as Start, menu: null, line: 'Layout' })),
-  ].slice(0, 4);
+  ];
   const picked = start.kind === 'copy' ? start.menuId : start.kind === 'layout' ? start.layoutId : null;
   return (
     <View role="radiogroup" accessibilityLabel="Which menu" style={styles.saved}>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tile: { flexBasis: '48%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, minHeight: 64, padding: space.md, borderRadius: radius.control + 2, borderWidth: 1, borderCurve: 'continuous' },
   icon: { width: 32, height: 32, borderRadius: radius.control - 4, alignItems: 'center', justifyContent: 'center' },
-  saved: { flexDirection: 'row', gap: space.sm },
+  saved: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   savedCard: { flexBasis: '23%', flexGrow: 0, minWidth: 0, borderRadius: radius.control + 2, borderWidth: 1, overflow: 'hidden', borderCurve: 'continuous' },
   savedPic: { height: 52, justifyContent: 'center' },
   savedText: { padding: space.sm, gap: 2 },

@@ -8,6 +8,7 @@ import { useSetMissingPrices } from '@/hooks/useBulk';
 import { stageBringIn } from '@/lib/bringInHandoff';
 import { plural, savedLine } from '@/lib/menus';
 import { bringInText } from '@/lib/paste';
+import { MAX_MENU_PHOTOS } from '@/lib/readMenu';
 import type { MenuSummary } from '@/types/menus';
 
 import { HomeNightFields } from './HomeNight';
@@ -57,7 +58,7 @@ function DeskBody({ onClose, menus, now }: NewMenuDeskProps) {
   const root = useRef<ComponentRef<typeof View>>(null);
   const dragging = useMenuPhotoDrop(root, (more) => {
     m.setStart({ kind: 'photo' });
-    m.setPhotos((before) => [...before, ...more].slice(0, 4));
+    m.setPhotos((before) => [...before, ...more].slice(0, MAX_MENU_PHOTOS));
   });
 
   const pick = (kind: DeskStart) => {
@@ -71,6 +72,9 @@ function DeskBody({ onClose, menus, now }: NewMenuDeskProps) {
     if (m.pending || setPrices.isPending) return;
     if (!pasting) return void (await m.submit());
     if (!paste.found && !paste.missing.length) return m.setError('Paste the drinks first, one a line.');
+    if (paste.unsure) return m.setError(`${plural(paste.unsure, 'name matches', 'names match')} more than one drink. Add the bar or year to say which.`);
+    // Nothing is written until the draft can be made.
+    if (m.problem()) return;
     try {
       if (paste.prices.length) await setPrices.mutateAsync(paste.prices);
     } catch {
@@ -114,7 +118,7 @@ function DeskBody({ onClose, menus, now }: NewMenuDeskProps) {
             : 'Drop the pages anywhere on this window, or add them on the left.'
           : pasting
             ? text.trim()
-              ? [`${paste.found} found${m.venue ? ` in ${m.venue.name}` : ''}`, paste.missing.length ? `${paste.missing.length} new, Bring in starts ${paste.missing.length === 1 ? 'it' : 'them'} for you` : null, paste.unsure ? `${paste.unsure} to pick in the builder` : null].filter(Boolean).join(' · ')
+              ? [`${paste.found} found${m.venue ? ` in ${m.venue.name}` : ''}`, paste.missing.length ? `${paste.missing.length} new, Bring in starts ${paste.missing.length === 1 ? 'it' : 'them'} for you` : null, paste.unsure ? `${paste.unsure} to say which` : null].filter(Boolean).join(' · ')
               : 'Paste drink names and they’re matched as you go.'
             : 'One section to start. Drinks go in once it’s made.';
 
