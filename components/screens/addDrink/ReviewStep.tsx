@@ -7,6 +7,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useBarPublishing } from '@/hooks/usePublishing';
 import { amountLabel, finishLabel, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { PUBLISH_COPY } from '@/lib/publishing';
+import { capitalizeFirst } from '@/lib/stringUtils';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 
 import { ReviewPhotos } from './ReviewPhotos';
@@ -16,7 +17,7 @@ function credits(d: WizardDraft, hasProfile: boolean): string {
   const withThem = d.coCreators.length ? `with ${d.coCreators.map((c) => c.name).join(', ')}` : '';
   const riff = d.riffOf ? `riff on ${d.riffOf.name}` : '';
   const where = [d.place ? `first made at ${d.place.name}` : '', d.originYear ? `in ${d.originYear}` : ''].filter(Boolean).join(' ');
-  return [[by, withThem].filter(Boolean).join(' '), where, riff].filter(Boolean).join(', ');
+  return capitalizeFirst([[by, withThem].filter(Boolean).join(' '), where, riff].filter(Boolean).join(', '));
 }
 
 interface ReviewStepProps extends StepProps {
