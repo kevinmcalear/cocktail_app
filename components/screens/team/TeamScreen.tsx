@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { TeamRoster } from './TeamRoster';
 /**
  * My team, for the venue in the sidebar. Employee and above see who is on it;
  * an Admin also invites people, changes roles and removes them (TeamRoster).
+ * `?invite=1` opens straight on Invite.
  */
 export function TeamScreen() {
   const ds = useDs();
@@ -28,7 +29,9 @@ export function TeamScreen() {
   const { active } = useActiveVenue();
   const role = useEffectiveRole(active?.id ?? null);
   const visible = !home && !!active && canSeeTeam(role);
-  const [inviting, setInviting] = useState(false);
+  // /team?invite=1 (the venue sheet's and empty Library's Invite your team) opens the invite sheet.
+  const { invite } = useLocalSearchParams<{ invite?: string }>();
+  const [inviting, setInviting] = useState(invite === '1');
 
   let body: ReactNode;
   if (home || !active) body = <Body tone="muted">My team is part of a venue. Switch to your bar to see it.</Body>;

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, LockedSection, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
+import { InviteTeamCard, useOpenTeam, useTeamCard } from '@/components/nav/TeamCard';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { fontFamilies, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
@@ -86,9 +87,12 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
 
         {error ? <Body tone="muted">Couldn’t load the menus. Pull down or come back in a moment.</Body> : null}
         {!isLoading && !venuesLoading && !error && menus.length === 0 ? (
-          <Body tone="muted">
-            {barId ? `${active?.name ?? 'This venue'} has no menus yet.` : 'Plan a night in: pick the drinks, then share the menu with your guests.'}
-          </Body>
+          <>
+            <Body tone="muted">
+              {barId ? `${active?.name ?? 'This venue'} has no menus yet.` : 'Plan a night in: pick the drinks, then share the menu with your guests.'}
+            </Body>
+            <InviteIfAlone barId={barId} />
+          </>
         ) : null}
 
         {venue.on.length ? (
@@ -157,3 +161,10 @@ const styles = StyleSheet.create({
   group: { gap: space.sm },
   groupTitle: { letterSpacing: 1.5, fontFamily: fontFamilies.mono },
 });
+
+/** An empty venue's Menus asks an Admin alone on the team to invite people (venue-library-empty-admin). */
+function InviteIfAlone({ barId }: { barId: string | null }) {
+  const { alone } = useTeamCard(barId);
+  const openTeam = useOpenTeam();
+  return alone ? <InviteTeamCard onInvite={() => openTeam(true)} /> : null;
+}
