@@ -4,6 +4,7 @@ import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
 import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
+import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
@@ -200,7 +201,8 @@ export function useCreateDrink() {
         item_type: 'cocktail',
         bar_id: barId,
         description: draft.description.trim() || null,
-        notes: draft.notes.trim() || null,
+        // "Just me" notes are kept apart, as yours (below).
+        notes: draft.notesPrivate ? null : draft.notes.trim() || null,
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
         ice_id: iceId,
@@ -248,6 +250,15 @@ export function useCreateDrink() {
       if (coIds.length) {
         const { error } = await supabase.from('item_co_creators').insert(coIds.map((profile_id) => ({ item_id: id, profile_id })));
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
+      }
+
+      // "Just me": the notes are yours alone, never the drink's.
+      if (draft.notesPrivate && draft.notes.trim()) {
+        try {
+          await savePrivateNote(id, draft.notes);
+        } catch {
+          warnings.push(`Your note wasn’t saved: “${draft.notes.trim().slice(0, 80)}”. Add it again on the drink’s page.`);
+        }
       }
 
       // Photos picked on the review: the hero and the service angles. One that
@@ -298,6 +309,7 @@ export function useCreateDrink() {
       if (newSpecs) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
+      if (draft.notesPrivate) void qc.invalidateQueries({ queryKey: ['private-note', id] });
       return { id, warnings, created, later };
     },
     onSuccess: (_, { barId, menuSectionId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuSectionId }),

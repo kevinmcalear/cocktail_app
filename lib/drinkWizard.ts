@@ -83,6 +83,8 @@ export interface WizardDraft {
   place?: WizardPick | null;
   description: string;
   notes: string;
+  /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink. */
+  notesPrivate?: boolean;
   /** null follows the venue (or is private, for a drink at home). */
   publish: PublishMode | null;
   /**
