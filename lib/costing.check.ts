@@ -86,5 +86,6 @@ assert.equal(lineCostMinor(1, 'oz', { amount: 1, unit: 'l', costMinor: 1000 }, 1
 assert.equal(lineCostMinor(20, 'g', { amount: 1, unit: 'kg', costMinor: 500 }, 1), 10, 'weights meet weights');
 assert.equal(lineCostMinor(15, 'ml', { amount: 1, unit: 'kg', costMinor: 400 }, 1.23), 7, 'a syrup by the kilo through its density');
 assert.equal(lineCostMinor(1, 'each', { amount: 12, unit: 'each', costMinor: 600 }, 1), 50);
+assert.equal(lineCostMinor(1, 'wedge', { amount: 12, unit: 'each', costMinor: 600 }, 1), 50, 'any count is one of the pack');
 assert.equal(lineCostMinor(1, 'wedge', { amount: 750, unit: 'ml', costMinor: 600 }, 1), null, 'a count never meets a bottle');
 assert.equal(lineCostMinor(null, 'top', { amount: 750, unit: 'ml', costMinor: 600 }, 1), null);

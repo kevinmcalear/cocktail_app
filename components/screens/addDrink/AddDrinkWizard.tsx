@@ -176,6 +176,22 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Until its spec is used, the sketch already draws that classic (a Negroni's red).
   const preview = useClassicPreview(classic?.classic.id ?? null).data;
   const drawn = preview ? { ...draft, ...preview, name: draft.name } : draft;
+  if (desk) {
+    return (
+      <DrinkDesk
+        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, classic, resumed }}
+        loading={!dropdowns?.ingredients}
+        aliases={dropdowns?.ingredientAliases}
+        shelf={barId ? undefined : new Set(shelfIds ?? [])}
+        onStartOver={startOver}
+        saving={create.isPending}
+        canSave={canSave(draft)}
+        onSave={save}
+        onClose={onClose}
+      />
+    );
+  }
+
   const body = (() => {
     switch (step) {
       case 'name':
@@ -243,22 +259,6 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         );
     }
   })();
-
-  if (desk) {
-    return (
-      <DrinkDesk
-        {...{ draft, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, classic, resumed }}
-        loading={!dropdowns?.ingredients}
-        aliases={dropdowns?.ingredientAliases}
-        shelf={barId ? undefined : new Set(shelfIds ?? [])}
-        onStartOver={startOver}
-        saving={create.isPending}
-        canSave={canSave(draft)}
-        onSave={save}
-        onClose={onClose}
-      />
-    );
-  }
 
   const following = WIZARD_STEPS[at + 1];
   return (

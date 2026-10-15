@@ -61,13 +61,14 @@ export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly Wizar
           {balance.hint ? <Headline>{balance.hint}</Headline> : null}
           {DIMS.map(([dim, label]) => {
             const word = tasteWord(dim, balance[dim]);
-            const on = Math.round(balance[dim] * 5);
+            // Lit as the word reads: "none" is no segment, anything more at least one.
+            const on = word === 'none' ? 0 : Math.max(1, Math.round(balance[dim] * 5));
             return (
               <View key={dim} style={styles.meter}>
                 <Body style={styles.meterLabel}>{label}</Body>
                 <View role="img" aria-label={`${label}: ${word}`} style={styles.segments}>
                   {[0, 1, 2, 3, 4].map((i) => (
-                    <View key={i} style={[styles.segment, { backgroundColor: i < Math.max(on, balance[dim] > 0.02 ? 1 : 0) ? ds.c.ink : ds.c.line }]} />
+                    <View key={i} style={[styles.segment, { backgroundColor: i < on ? ds.c.ink : ds.c.line }]} />
                   ))}
                 </View>
                 <Caption tone="muted" style={styles.meterWord}>
@@ -100,6 +101,8 @@ export function DeskCost({ lines, pricing, priceMinor, onPrice }: { lines: DeskC
   const currency = pricing?.currency ?? 'GBP';
   const money = (minor: number) => formatMoney(minor, currency) ?? '';
   const [text, setText] = useState(() => (priceMinor != null ? moneyFieldValue(priceMinor, currency) : ''));
+  // Start over clears the draft's price: the field follows.
+  if (priceMinor == null && text.trim() && parseMoney(text, currency) != null) setText('');
   const total = lines.reduce((n, l) => n + (l.minor ?? 0), 0);
   const missing = lines.filter((l) => l.minor == null).length;
   const m = pricing ? margin(total, priceMinor, { taxRate: pricing.tax_rate, pricesIncludeTax: pricing.prices_include_tax }) : null;
@@ -124,7 +127,7 @@ export function DeskCost({ lines, pricing, priceMinor, onPrice }: { lines: DeskC
         <Body style={styles.flex}>Costs to make</Body>
         <Headline>{money(total)}</Headline>
       </View>
-      {missing ? <Caption tone="muted">{`${missing === 1 ? 'One line has' : `${missing} lines have`} no pack price yet, so it costs more than this.`}</Caption> : null}
+      {missing ? <Caption tone="muted">{`${missing === 1 ? 'One line has' : `${missing} lines have`} no price yet, so it costs more than this.`}</Caption> : null}
       <View style={styles.priceRow}>
         <View style={styles.flex}>
           <Field

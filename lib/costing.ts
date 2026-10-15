@@ -94,18 +94,20 @@ export interface PackPrice {
 }
 
 /**
- * What one spec line costs from the pack price, in minor units, the way
- * drink_cost works it out: volumes and weights meet through the density,
- * counts only meet counts. Null when it can't be said (no amount, a top,
- * a count against a bottle).
+ * What one spec line costs from its pack price, in minor units, as
+ * drink_cost reads a bought bottle: volumes and weights meet through the
+ * density, and any count (a wedge, a peel) is one of a pack counted in
+ * each. Null when it can't be said: no amount, a top, a count against a
+ * bottle. ponytail: a house prep's cost from its own recipe and yield is
+ * left to drink_cost once the drink is saved.
  */
 export function lineCostMinor(amount: number | null, unit: string, pack: PackPrice, gPerMl: number): number | null {
   if (amount == null || !(pack.amount > 0)) return null;
   const used = toMl(amount, unit, gPerMl);
   const bought = toMl(pack.amount, pack.unit, gPerMl);
   if (used != null && bought != null) return Math.round((pack.costMinor * used) / bought);
-  // Two counts (a lemon of a box of lemons) in the same word.
-  if (used == null && bought == null && unit.trim().toLowerCase() === pack.unit.trim().toLowerCase()) return Math.round((pack.costMinor * amount) / pack.amount);
+  // Two counts: a wedge of a box of 12 limes is one of 12, as drink_cost counts them.
+  if (used == null && bought == null) return Math.round((pack.costMinor * amount) / pack.amount);
   return null;
 }
 

@@ -34,6 +34,8 @@ import { Eyebrow, WizardChip } from './WizardChrome';
 
 export interface DrinkDeskProps {
   draft: WizardDraft;
+  /** What the sketch draws: the draft, or a classic its name matches until that spec is used. */
+  drawn: WizardDraft;
   set: (change: Partial<WizardDraft>) => void;
   barId: string | null;
   venueName: string;
@@ -74,17 +76,20 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const caps = useCapabilities(barId).data;
   const canCost = !!barId && !!caps?.includes('costs');
   const pricing = usePricingSettings(canCost ? barId : null).data ?? null;
-  const ids = draft.lines.flatMap((l) => (l.id ? [l.id] : []));
+  const costed = [...draft.lines, ...draft.garnishes];
+  const ids = costed.flatMap((l) => (l.id ? [l.id] : []));
   const packs = useDraftPacks(barId, ids, canCost).data ?? [];
   const currency = pricing?.currency ?? 'GBP';
-  const [finishing, setFinishing] = useState(draft.garnishes.length > 0);
+  const [finishOpen, setFinishOpen] = useState(false);
+  // A classic or a riff can bring garnishes in after the page opens: they show.
+  const finishing = finishOpen || draft.garnishes.length > 0;
 
   const pack = (l: WizardLine) => packs.find((k) => k.itemId === l.id) ?? null;
   const cost = (l: WizardLine) => {
     const k = pack(l);
     return k?.costMinor != null && k.amount && k.unit ? lineCostMinor(amountOf(l.amount), l.unit, { amount: k.amount, unit: k.unit, costMinor: k.costMinor }, density(l.name, null)) : null;
   };
-  const costLines: DeskCostLine[] = draft.lines.map((l) => ({ key: l.key, name: l.name, minor: cost(l) }));
+  const costLines: DeskCostLine[] = costed.map((l) => ({ key: l.key, name: l.name, minor: cost(l) }));
   const lineDetail = (l: WizardLine) => {
     if (!canCost) return null;
     const minor = cost(l);
@@ -94,7 +99,9 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const addByName = (name: string) => {
     const pick = pickByName(name, p.ingredients);
     const unit = guessUnit(pick.name, getPreferredUnit());
-    set({ lines: [...draft.lines, newLine(pick, unit, suggestAmount({ name: pick.name }, unit, draft.lines.map((l) => ({ name: l.name }))))] });
+    const generic = (id: string | null) => p.ingredients.find((i) => i.id === p.ingredients.find((x) => x.id === id)?.generic_id)?.name ?? null;
+    const amount = suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
+    set({ lines: [...draft.lines, newLine(pick, unit, amount)] });
   };
 
   // ⌘↵ (Ctrl+Enter off a Mac) saves from anywhere on the page.
@@ -104,7 +111,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
   });
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      // Not while a sheet is open over the page (a prep being written): that sheet's work isn't done.
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !document.querySelector('[role="dialog"][aria-modal="true"]')) {
         e.preventDefault();
         latest.current();
       }
@@ -113,7 +121,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
     return () => window.removeEventListener('keydown', key, true);
   }, []);
 
-  const look = sketchLook(draft, p.barVariants, p.barIceKinds);
+  const look = sketchLook(p.drawn, p.barVariants, p.barIceKinds);
   const eyebrow = menu ? ['New drink for ' + menu, place?.section].filter(Boolean).join(' · ') : barId ? `New drink at ${p.venueName}` : 'New drink';
   const saveLabel = p.saving ? 'Saving…' : menu ? `Add to ${menu}` : 'Save drink';
 
@@ -172,7 +180,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
               <FinishStep draft={draft} set={set} ingredients={p.ingredients} loading={p.loading} aliases={p.aliases} coreIds={p.coreIds} />
             ) : (
               <View style={styles.chips}>
-                <WizardChip label="Garnish, oil, mist or rinse" add kind="button" onPress={() => setFinishing(true)} />
+                <WizardChip label="Garnish, oil, mist or rinse" add kind="button" onPress={() => setFinishOpen(true)} />
               </View>
             )}
           </Row>
@@ -183,7 +191,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           <Eyebrow>Who sees it</Eyebrow>
           <PublishStep draft={draft} set={set} barId={barId} />
           <Eyebrow>Photos</Eyebrow>
-          <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(look)} seed={draft.id ?? 'new-drink'} />
+          <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, p.barVariants, p.barIceKinds))} seed={draft.id ?? 'new-drink'} />
         </ScrollView>
         <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
           <Eyebrow>The drink, as you go</Eyebrow>
