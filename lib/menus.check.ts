@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { cardWhen, EMPTY_PLAN, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
+import { cardWhen, EMPTY_PLAN, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -203,3 +203,34 @@ assert.equal(sentenceLine(ingredientLine(['gin', 'dry vermouth', 'Campari'])), '
   if (!('error' in run)) assert.equal(run.plannedEndsAt, null);
   assert.match(nightLine(new Date(2026, 9, 31, 18).toISOString(), 'en-US'), /^Saturday, October 31, from 6 pm$/);
 }
+
+// --- New menu's name ideas and quick picks ---
+{
+  const oct = new Date(2026, 9, 15);
+  assert.equal(seasonOf(oct, false), 'Autumn');
+  assert.equal(seasonOf(oct, true), 'Spring', 'October is spring in Melbourne');
+  assert.equal(seasonOf(new Date(2026, 11, 7), false), 'Winter');
+  assert.equal(seasonOf(new Date(2026, 1, 1), false), 'Winter', 'February is still winter up north');
+  assert.equal(seasonOf(new Date(2026, 1, 1), true), 'Summer');
+  assert.equal(isSouthern(-37.8, null), true);
+  assert.equal(isSouthern(51.5, 'Australia/Melbourne'), false, 'a latitude wins');
+  assert.equal(isSouthern(null, 'Australia/Melbourne'), true);
+  assert.equal(isSouthern(null, 'Pacific/Auckland'), true);
+  assert.equal(isSouthern(null, 'America/New_York'), false);
+  assert.equal(isSouthern(undefined, undefined), false);
+  assert.deepEqual(menuNameIdeas({ at: new Date(2026, 11, 7), southern: false }), ['Winter menu', 'December', 'Holiday menu']);
+  assert.deepEqual(menuNameIdeas({ at: oct, southern: true }), ['Spring menu', 'October', 'Halloween']);
+  assert.deepEqual(menuNameIdeas({ at: oct, southern: false, copied: 'Autumn menu' }), ['Winter menu', 'Autumn menu', 'October']);
+  assert.deepEqual(menuNameIdeas({ at: new Date(2026, 3, 2), southern: false, copied: 'Fall 2025' }), ['Winter menu', 'Spring menu', 'April']);
+  assert.deepEqual(menuNameIdeas({ at: new Date(2026, 6, 2), southern: false, copied: 'Summer menu' }), ['Autumn menu', 'Summer menu', 'July']);
+  // Thursday 15 October 2026: the next two Mondays.
+  assert.deepEqual(nextMondays(new Date(2026, 9, 15, 12).getTime()), ['2026-10-19', '2026-10-26']);
+  // On a Monday, the next one is a week on.
+  assert.deepEqual(nextMondays(new Date(2026, 9, 19, 9).getTime(), 1), ['2026-10-26']);
+  assert.deepEqual(nextMondays(new Date(2026, 9, 18, 9).getTime(), 1), ['2026-10-19']);
+}
+assert.equal(savedLine(['Autumn menu', 'Summer menu', 'Spring menu', 'Seasonal three']), 'Autumn, Summer and 2 more');
+assert.equal(savedLine(['Autumn menu', 'Summer menu', 'Spring menu', 'Seasonal three'], true), 'Autumn, Summer, 2 more');
+assert.equal(savedLine(['Autumn menu', 'Halloween']), 'Autumn and Halloween');
+assert.equal(savedLine(['Autumn menu']), 'Autumn');
+assert.equal(savedLine(['Test', 'Test', 'Autumn menu']), 'Test and Autumn', 'a name twice is named once');
