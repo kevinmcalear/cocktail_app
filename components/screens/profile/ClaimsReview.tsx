@@ -54,7 +54,7 @@ function ClaimsPage() {
         contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
         <View style={styles.readable}>
           <Title>Profile claims</Title>
-          <Body tone="muted">People asking to take over a profile. Check what they gave against the page before you approve. A bar’s page starts Locked.</Body>
+          <Body tone="muted">People asking to take over a profile. Check what they gave against the page before you approve. A bar’s page starts at Names.</Body>
           {review.error ? (
             <Caption tone="accent" role="alert">
               {reviewError(review.error)}

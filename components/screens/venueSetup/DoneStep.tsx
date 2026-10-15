@@ -81,7 +81,7 @@ export function DoneStep({
   const facts = useBarFacts(profileId).data;
   const visibility = (useBarPublishing(barId).data?.pageVisibility ?? null) as PageVisibility | null;
   const held = claimState === 'pending' ? claim?.setup?.page_visibility : null;
-  // Approval starts the page Locked unless setup kept a choice on the claim.
+  // Approval starts the page at Names unless setup kept a choice on the claim.
   const shown = claimState === 'pending' ? (held ?? 'locked') : (visibility ?? 'locked');
   const names = invites.map((i) => i.name?.trim().split(/\s+/)[0] || i.email);
   const count = onItsWay({ claim: claimState, invites: invites.length, waitingFiles });

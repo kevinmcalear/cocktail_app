@@ -3,11 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useUserId } from '@/ctx/AuthContext';
 import { viewerScoped } from '@/lib/authCache';
 import type { PageVisibility } from '@/lib/pageVisibility';
+import type { IngredientName } from '@/lib/publicDrink';
 import { supabase } from '@/lib/supabase';
 
 export interface SpecLock {
   /** The bar whose page keeps the spec back, to name it and link to it. */
   bar: { id: string; handle: string; name: string; isClaimed: boolean; visibility: PageVisibility | null };
+  /** Its ingredient names without amounts, as the signed-out page shows them (public_drink_ingredients); none on a Names page. */
+  names: IngredientName[];
 }
 
 /**
@@ -24,15 +27,20 @@ export function useSpecLock(item: { id: string; bar_id?: string | null; origin_b
     meta: viewer.meta,
     enabled: !!item && !!barProfileId,
     queryFn: async (): Promise<SpecLock | null> => {
-      const [locked, profile] = await Promise.all([
+      const [locked, profile, names] = await Promise.all([
         supabase.rpc('is_spec_locked', { p_item_id: item!.id }),
         supabase.from('profiles').select('id, handle, display_name, is_claimed, page_visibility').eq('id', barProfileId!).maybeSingle(),
+        supabase.rpc('public_drink_ingredients', { p_item_ids: [item!.id] }),
       ]);
       if (locked.error) throw locked.error;
       if (profile.error) throw profile.error;
+      if (names.error) throw names.error;
       if (!locked.data || !profile.data) return null;
       const p = profile.data as { id: string; handle: string; display_name: string; is_claimed: boolean; page_visibility: PageVisibility | null };
-      return { bar: { id: p.id, handle: p.handle, name: p.display_name, isClaimed: p.is_claimed, visibility: p.page_visibility } };
+      return {
+        bar: { id: p.id, handle: p.handle, name: p.display_name, isClaimed: p.is_claimed, visibility: p.page_visibility },
+        names: ((names.data ?? []) as IngredientName[]).map(({ name, brand }) => ({ name, brand })),
+      };
     },
   });
 }
