@@ -1,27 +1,23 @@
-import { Link, Stack } from 'expo-router';
-import { WebHead } from '@/components/WebHead';
-import { Text, YStack } from 'tamagui';
+import { Stack, useRouter } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 
-import { BRAND } from '@/constants/brand';
+import { Button } from '@/components/ds';
+import { SafetyPage } from '@/components/screens/safety/SafetyPage';
+import { space } from '@/constants/tokens';
 
+/** A link that goes nowhere: the same plain page as Not available, with a way home. */
 export default function NotFound() {
+  const router = useRouter();
   return (
-    <YStack flex={1} alignItems="center" justifyContent="center" padding="$6" gap="$3" backgroundColor="$background">
-      <Stack.Screen options={{ title: 'Not found' }} />
-      <WebHead>
-        <title>{`Page not found · ${BRAND.productName}`}</title>
-      </WebHead>
-      <Text fontSize={28} fontWeight="700" color="$color" role="heading">
-        Page not found
-      </Text>
-      <Text fontSize={16} color="$color11" textAlign="center" maxWidth={360}>
-        This link doesn&apos;t go anywhere. It may be old, or the drink or menu may have been removed.
-      </Text>
-      <Link href="/">
-        <Text fontSize={16} fontWeight="600" color="$color8">
-          Go to home
-        </Text>
-      </Link>
-    </YStack>
+    <SafetyPage title="Page not found" intro="This link doesn’t go anywhere. It may be old, or the drink or menu may have been removed." backTo="/">
+      <Stack.Screen options={{ headerShown: false, title: 'Not found' }} />
+      <View style={styles.actions}>
+        <Button label="Go to home" onPress={() => router.replace('/')} />
+      </View>
+    </SafetyPage>
   );
 }
+
+const styles = StyleSheet.create({
+  actions: { alignItems: 'flex-start', marginTop: space.md },
+});

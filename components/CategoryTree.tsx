@@ -1,4 +1,4 @@
-import { SpecPillButton } from '@/components/SpecPillButton';
+import { Chip } from '@/components/ds';
 import { LayoutAnimation } from 'react-native';
 import { Text, XStack, YStack } from 'tamagui';
 
@@ -34,11 +34,12 @@ function CategoryLayer({
 
   return (
     <YStack gap="$3">
-      <XStack flexWrap="wrap" gap="$2">
+      <XStack role="group" flexWrap="wrap" gap="$2">
         {nodes.map((child) => (
-          <SpecPillButton
+          <Chip
             key={child.id}
-            name={child.name}
+            label={child.name}
+            multi
             selected={selectedIds.includes(child.id)}
             onPress={() => {
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

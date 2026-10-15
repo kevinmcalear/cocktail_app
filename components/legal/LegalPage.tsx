@@ -1,76 +1,59 @@
 import { Stack } from 'expo-router';
-import { WebHead } from '@/components/WebHead';
 import type { ReactNode } from 'react';
-import { Linking } from 'react-native';
-import { ScrollView, Text, YStack } from 'tamagui';
+import { Linking, StyleSheet, View } from 'react-native';
 
+import { Body, Headline } from '@/components/ds';
+import { SafetyPage } from '@/components/screens/safety/SafetyPage';
 import { BRAND } from '@/constants/brand';
+import { fontFamilies, space } from '@/constants/tokens';
 
-/** A readable, single-column page for policies. Works signed in or out. */
+/** A readable, single-column page for policies, on the same plain page as Support. Works signed in or out. */
 export function LegalPage({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <ScrollView flex={1} backgroundColor="$background">
-      <Stack.Screen options={{ title }} />
-      <WebHead>
-        <title>{`${title} · ${BRAND.productName}`}</title>
-      </WebHead>
-      <YStack width="100%" maxWidth={720} alignSelf="center" paddingHorizontal="$5" paddingVertical="$7" gap="$5">
-        <YStack gap="$2">
-          <Text fontSize={32} fontWeight="700" color="$color" role="heading">
-            {title}
-          </Text>
-          <Text fontSize={14} color="$color11">
-            {BRAND.productName} · Last updated {BRAND.legalUpdated}
-          </Text>
-        </YStack>
-        {children}
-      </YStack>
-    </ScrollView>
+    <SafetyPage title={title} intro={`${BRAND.productName} · Last updated ${BRAND.legalUpdated}`} backTo="/">
+      <Stack.Screen options={{ headerShown: false, title }} />
+      {children}
+    </SafetyPage>
   );
 }
 
 export function LegalSection({ heading, children }: { heading: string; children: ReactNode }) {
   return (
-    <YStack gap="$2.5">
-      <Text fontSize={19} fontWeight="700" color="$color" role="heading">
-        {heading}
-      </Text>
+    <View style={styles.section}>
+      <Headline role="heading">{heading}</Headline>
       {children}
-    </YStack>
+    </View>
   );
 }
 
 export function P({ children }: { children: ReactNode }) {
-  return (
-    <Text fontSize={16} lineHeight={25} color="$color">
-      {children}
-    </Text>
-  );
+  return <Body>{children}</Body>;
 }
 
 export function Bullets({ items }: { items: ReactNode[] }) {
   return (
-    <YStack gap="$2">
+    <View role="list" style={styles.bullets}>
       {items.map((item, i) => (
-        <Text key={i} fontSize={16} lineHeight={25} color="$color">
+        <Body key={i} role="listitem">
           {'•  '}
           {item}
-        </Text>
+        </Body>
       ))}
-    </YStack>
+    </View>
   );
 }
 
 export function SupportEmail() {
   return (
-    <Text
-      fontSize={16}
-      color="$color8"
-      textDecorationLine="underline"
-      role="link"
-      onPress={() => void Linking.openURL(`mailto:${BRAND.supportEmail}`)}
-    >
+    <Body role="link" style={styles.link} onPress={() => void Linking.openURL(`mailto:${BRAND.supportEmail}`)}>
       {BRAND.supportEmail}
-    </Text>
+    </Body>
   );
 }
+
+const styles = StyleSheet.create({
+  section: { gap: space.sm, marginTop: space.md },
+  bullets: { gap: space.sm },
+  // As Support's links: ink, underlined, a step heavier.
+  link: { fontFamily: fontFamilies.bodySemiBold, textDecorationLine: 'underline' },
+});

@@ -1,6 +1,5 @@
 import { Redirect, useLocalSearchParams } from "expo-router";
 import React, { lazy, Suspense, useState } from "react";
-import { View } from "react-native";
 
 import { useCocktail } from "@/hooks/useCocktails";
 import { useStudyPile } from "@/hooks/useStudyPile";
@@ -8,7 +7,7 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
 import { heroPicture } from "@/lib/itemImages";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
-import { ErrorState } from "@/components/ui/ErrorState";
+import { CouldNotLoad } from "@/components/screens/safety/NotAvailable";
 
 // Editing in place only loads when someone edits, which keeps its gesture code off the web's first load.
 const DrinkEditScreen = lazy(() => import("@/components/screens/drink/edit/DrinkEditScreen").then((m) => ({ default: m.DrinkEditScreen })));
@@ -43,13 +42,7 @@ export default function CocktailDetailsScreen() {
 
     // Not yours to read (another bar's drink): its public page, if it's published.
     if ((error as { code?: string } | null)?.code === "PGRST116") return <Redirect href={`/d/${id}`} />;
-    if (error) {
-        return (
-            <View style={{ flex: 1, justifyContent: "center" }}>
-                <ErrorState title="Couldn't load this cocktail" onRetry={() => void refetch()} />
-            </View>
-        );
-    }
+    if (error) return <CouldNotLoad what="drink" failed={{ retry: () => void refetch() }} />;
     // The drink page reads it; Edit turns the same page into editing in place (DrinkEditScreen).
     if (!isEditing) {
         return cocktail ? (

@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ImageCarousel } from "@/components/ImageCarousel";
 import { CocktailPhotoPlaceholder } from "@/components/cocktail/CocktailPhotoPlaceholder";
-import { PicturePlaceholder } from "@/components/ui/PicturePlaceholder";
+import { DrinkImage } from "@/components/ds";
 import { GlassView } from "@/components/ui/GlassView";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Text, useTheme, XStack } from "tamagui";
@@ -388,7 +388,7 @@ export function ItemDetailLayout({
         }
         // ponytail: edit with no photos always gets a tappable add affordance
         if (emptyPhotoPlaceholder || (isEditing && onManageImages)) return <CocktailPhotoPlaceholder onPress={handleImagePress} onDropImages={onDropImages} />;
-        return isLoading ? null : (hero ?? <PicturePlaceholder />);
+        return isLoading ? null : (hero ?? <DrinkImage accessibilityLabel={title} aspectRatio={0} radius={0} style={{ flex: 1, height: '100%' }} />);
     };
 
     const mainContent = isLargeScreen ? (

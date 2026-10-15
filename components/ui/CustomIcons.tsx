@@ -478,10 +478,6 @@ const ICON_MAP: Record<string, (color: ColorValue) => React.ReactNode> = {
   ),
 };
 
-export function hasCustomIcon(name: string) {
-  return Object.prototype.hasOwnProperty.call(ICON_MAP, name);
-}
-
 export function CustomIcon({ name, size = 24, color = '#000' }: CustomIconProps) {
   // Try to find the icon, or fall back to an elegant "sparkle/star"
   const renderIcon = ICON_MAP[name] || ((c) => (
