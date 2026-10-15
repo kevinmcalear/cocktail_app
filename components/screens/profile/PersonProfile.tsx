@@ -9,7 +9,7 @@ import { fontFamilies, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useProfileMade, useSetMadeShown } from '@/hooks/useMade';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { isUnclaimed, useMenuCredits, useProfileAwards, useProfileOriginals, useProfilePicks, useProfilePositions, useWorkedMenus, type Profile } from '@/hooks/useProfiles';
+import { isUnclaimed, useMenuCredits, useProfileAwards, useProfileNameCredits, useProfileOriginals, useProfilePicks, useProfilePositions, useWorkedMenus, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
 import { hadStats, topFour } from '@/lib/hadDrinks';
 import { plural } from '@/lib/menus';
@@ -20,6 +20,7 @@ import { SharedDrinks } from './HadDrinks';
 import { PersonAwards } from './PersonAwards';
 import { Positions } from './Positions';
 import { ProfileLinks } from './ProfileLinks';
+import { NameCredits } from './NameCredits';
 import { MenuCredits, OriginalsGrid, Stat, Stats } from './ProfileSections';
 import { TopFour, fourSlots } from './TopFour';
 
@@ -65,6 +66,7 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
   const setMadeShown = useSetMadeShown();
   const madePicks = useProfilePicks(profile.id, 'originals').data ?? {};
   const { data: credited = [], isLoading } = useProfileOriginals(profile.id);
+  const nameCredits = useProfileNameCredits(profile.id, profile.made_mode !== 'none').data ?? [];
   const originals = credited.filter((d) => pickedShown(profile.made_mode, madePicks[d.id]));
   const { data: credits = [] } = useMenuCredits(originals.map((d) => d.id));
   const worked = useWorkedMenus(profile.id).data ?? [];
@@ -148,18 +150,22 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
           <Caption tone="muted">Loading drinks…</Caption>
         ) : (
           <View style={styles.section}>
-            <OriginalsGrid
-              originals={allOriginals ? originals : originals.slice(0, FIRST_ORIGINALS)}
-              selfId={profile.id}
-              columns={columns}
-              ownerName={profile.display_name}
-              emptyText="No drinks credited to them yet."
-            />
+            {/* Only name-only credits: no empty grid above them. */}
+            {originals.length || !nameCredits.length ? (
+              <OriginalsGrid
+                originals={allOriginals ? originals : originals.slice(0, FIRST_ORIGINALS)}
+                selfId={profile.id}
+                columns={columns}
+                ownerName={profile.display_name}
+                emptyText="No drinks credited to them yet."
+              />
+            ) : null}
             {originals.length > FIRST_ORIGINALS && !allOriginals ? (
               <View style={styles.start}>
                 <TextLink label={`All ${originals.length} originals`} onPress={() => setAllOriginals(true)} />
               </View>
             ) : null}
+            <NameCredits credits={nameCredits} hidden={new Set(credited.map((d) => d.id))} />
           </View>
         )
       ) : null}

@@ -76,7 +76,7 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
   );
 }
 
-/** The page is theirs: where it stands (Names) and where to choose who sees it. */
+/** The page is theirs: where it stands (Menu) and where to choose who sees it. */
 export function ClaimApproved({ profile }: { profile: Profile }) {
   const ds = useDs();
   const router = useRouter();
@@ -88,7 +88,7 @@ export function ClaimApproved({ profile }: { profile: Profile }) {
       <Title>{`${profile.display_name} is yours`}</Title>
       <Body tone="muted">
         {profile.kind === 'bar'
-          ? 'You’re its Admin. The page starts at Names: guests see the bar, its awards, team, menus and drink names, not photos, descriptions or specs.'
+          ? 'You’re its Admin. The page starts at Menu: guests see the bar, its team and its drinks with their photos, descriptions and ingredients, not amounts or methods.'
           : 'You’re its Admin. Invite your team from the venue settings.'}
       </Body>
       {profile.bar_id && profile.kind === 'bar' ? (

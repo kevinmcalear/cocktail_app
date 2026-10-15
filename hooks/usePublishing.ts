@@ -54,8 +54,12 @@ const MENU_STATUS_WORDS = { on: 'On now', upcoming: 'Coming up', draft: 'Not on 
 
 export interface BarPublishing {
   barDefault: PublishMode;
-  /** Who outside the venue sees its page: Locked, names and descriptions, or Open. */
+  /** Who outside the venue sees its page: Private, Names, Menu or Open. */
   pageVisibility: PageVisibility;
+  /** When the venue last changed it itself (one change every 30 days), as ISO text. */
+  pageChangedAt: string | null;
+  /** Private needs a verified claim (public.bar_claim_verified). */
+  privateAllowed: boolean;
   /** Whether people outside the venue see how its published specs changed. Off by default. */
   showSpecChanges: boolean;
   /** The venue's public page, which has to exist before anything goes public. */
@@ -92,16 +96,23 @@ export function useBarPublishing(barId: string | null) {
     enabled: !!barId,
     staleTime: 0,
     queryFn: async (): Promise<BarPublishing> => {
-      const [bar, profile, menus, items] = await Promise.all([
-        supabase.from('bars').select('default_publish_mode, page_visibility, show_spec_changes').eq('id', barId).single(),
+      const [bar, profile, menus, items, verified] = await Promise.all([
+        supabase.from('bars').select('default_publish_mode, page_visibility, page_visibility_changed_at, show_spec_changes').eq('id', barId).single(),
         supabase.from('profiles').select('id, handle, instagram, kind, makes, serves').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
         supabase.from('menus').select('id, name, publish_mode, starts_at, ends_at, menu_drinks(item_id)').eq('bar_id', barId).order('name'),
         supabase.from('items').select('id, name, item_type, publish_mode').eq('bar_id', barId).in('item_type', ['cocktail', 'beer', 'wine']),
+        supabase.rpc('bar_claim_verified', { p_bar_id: barId! }),
       ]);
-      for (const r of [bar, profile, menus, items]) if (r.error) throw r.error;
-      const { default_publish_mode: barDefault, page_visibility: pageVisibility, show_spec_changes: showSpecChanges } = bar.data as {
+      for (const r of [bar, profile, menus, items, verified]) if (r.error) throw r.error;
+      const {
+        default_publish_mode: barDefault,
+        page_visibility: pageVisibility,
+        page_visibility_changed_at: pageChangedAt,
+        show_spec_changes: showSpecChanges,
+      } = bar.data as {
         default_publish_mode: PublishMode;
         page_visibility: PageVisibility;
+        page_visibility_changed_at: string | null;
         show_spec_changes: boolean;
       };
       const menuRows = (menus.data ?? []) as {
@@ -123,6 +134,8 @@ export function useBarPublishing(barId: string | null) {
       return {
         barDefault,
         pageVisibility,
+        pageChangedAt,
+        privateAllowed: verified.data === true,
         showSpecChanges,
         profile: (profile.data as PublishingProfile | null) ?? null,
         menus: menuRows.map(({ id, name, publish_mode, starts_at, ends_at, menu_drinks }) => ({
