@@ -36,6 +36,9 @@ const tie = [drink('n1', 'a', ['negroni']), drink('n2', 'b', ['negroni']), drink
 assert.equal(topStyle(tie), 'martini', 'a tie goes to the chips order');
 assert.equal(topStyle([drink('u1', 'a')]), null, 'no styles (a server before 20261025100000)');
 
+const pageTwo = [...Array.from({ length: 30 }, (_, i) => drink(`p${i}`, 'a')), ...sours];
+assert.equal(topStyle(pageTwo), null, 'only the first page counts, so Show more never swaps the shelf');
+
 assert.equal(waysTitle('martini', 5), 'Martinis, five ways');
 assert.equal(waysTitle('sour', 10), 'Sours, ten ways');
 

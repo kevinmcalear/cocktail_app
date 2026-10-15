@@ -10,6 +10,8 @@ import { kindLabel, STYLES } from './drinkStyles';
 export const SHELF_MIN = 3;
 /** The most drinks a shelf shows; See all has the rest. */
 export const SHELF_MAX = 10;
+/** discover_list's first page: the top style counts only these, so it holds still as more load. */
+export const FIRST_PAGE = 30;
 
 const ZERO = 'zero-proof';
 const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
@@ -37,14 +39,14 @@ export function onePerBar(drinks: readonly DiscoverDrink[], max = SHELF_MAX): Di
 }
 
 /**
- * The style the most bars here pour, from the drinks loaded so far, so long
+ * The style the most bars here pour, from the first page of drinks, so long
  * as at least SHELF_MIN bars pour it; ties go to the chips' order. Zero-proof
  * has its own shelf. ponytail: counts the mixed list's first page; the
  * upgrade is a per-style bar count from the server.
  */
 export function topStyle(drinks: readonly DiscoverDrink[]): string | null {
   const bars = new Map<string, Set<string>>();
-  for (const d of drinks) {
+  for (const d of drinks.slice(0, FIRST_PAGE)) {
     for (const s of d.styles ?? []) {
       if (s === ZERO) continue;
       if (!bars.has(s)) bars.set(s, new Set());
@@ -74,9 +76,9 @@ export function pickShelves({ where, around, style, styled, zero }: { where: str
   const near = where === 'near you';
   const ways = style ? onePerBar(styled) : [];
   const shelves: Shelf[] = [
-    { key: 'around', title: `On menus ${near ? 'around you' : where}`, note: 'One from each bar, nearest first', kind: null, drinks: onePerBar(around) },
+    { key: 'around', title: `On menus ${near ? 'around you' : where}`, note: 'One from each bar', kind: null, drinks: onePerBar(around) },
     { key: 'style', title: style ? waysTitle(style, ways.length) : '', note: `The style poured most ${near ? 'around here' : where}`, kind: style, drinks: ways },
-    { key: 'zero', title: `Zero-proof ${where}`, note: 'Every bar here that pours one', kind: ZERO, drinks: onePerBar(zero) },
+    { key: 'zero', title: `Zero-proof ${where}`, note: 'From bars here that pour one', kind: ZERO, drinks: onePerBar(zero) },
   ];
   return shelves.filter((s) => s.drinks.length >= SHELF_MIN);
 }
