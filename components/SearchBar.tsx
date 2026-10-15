@@ -1,197 +1,121 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useState, type Ref } from "react";
-import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
-import { ScrollView, TouchableOpacity, View, ViewStyle } from "react-native";
-import { Button, Input, Text, useTheme, XStack, YStack, styled, type TamaguiElement } from "tamagui";
-import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
+import { useState, type ComponentRef, type Ref } from 'react';
+import { ScrollView, StyleSheet, View, type TextInput, type ViewStyle } from 'react-native';
+import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated';
+import type { TamaguiElement } from 'tamagui';
 
-const StyledBottomSheetTextInput = styled(BottomSheetTextInput, {
-    flex: 1,
-    paddingVertical: 0,
-    fontSize: 16,
-    fontFamily: '$body',
-    color: '$color',
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    outlineWidth: 0,
-}, { isInput: true });
+import { Body, Caption, Chip, Field, FieldButton, PressableScale, useDs } from '@/components/ds';
+import { radius, space } from '@/constants/tokens';
 
 export interface SearchChip {
-    id: string;
-    label: string;
-    type: string;
+  id: string;
+  label: string;
+  type: string;
 }
 
 interface SearchBarProps {
-    value: string;
-    onChangeText: (text: string) => void;
-    style?: ViewStyle;
-    placeholder?: string;
-    onFilterPress?: () => void;
-    chips?: SearchChip[];
-    onRemoveChip?: (id: string) => void;
-    suggestions?: SearchChip[];
-    onSuggestionPress?: (suggestion: SearchChip) => void;
-    isBottomSheet?: boolean;
-    autoFocus?: boolean;
-    /** The plain input (not the bottom-sheet one), e.g. to focus it when a Modal opens. */
-    ref?: Ref<TamaguiElement>;
+  value: string;
+  onChangeText: (text: string) => void;
+  style?: ViewStyle;
+  placeholder?: string;
+  onFilterPress?: () => void;
+  chips?: SearchChip[];
+  onRemoveChip?: (id: string) => void;
+  suggestions?: SearchChip[];
+  onSuggestionPress?: (suggestion: SearchChip) => void;
+  /**
+   * ponytail: ignored. It swapped in @gorhom's sheet input, and no gorhom sheet
+   * hosts a search bar any more (sheets are ds Sheet). Drop it with the last caller.
+   */
+  isBottomSheet?: boolean;
+  autoFocus?: boolean;
+  /** The input, e.g. to focus it when a Modal opens. */
+  ref?: Ref<TamaguiElement>;
 }
 
-export function SearchBar({ 
-    value, 
-    onChangeText, 
-    style, 
-    placeholder = "Find your drink...", 
-    onFilterPress,
-    chips = [],
-    onRemoveChip,
-    suggestions = [],
-    onSuggestionPress,
-    isBottomSheet = false,
-    autoFocus = false,
-    ref,
+/** A search box in the Back Bar style (a ds Field with the magnifier), with optional filter chips and suggestions under it. */
+export function SearchBar({
+  value,
+  onChangeText,
+  style,
+  placeholder = 'Find your drink...',
+  onFilterPress,
+  chips = [],
+  onRemoveChip,
+  suggestions = [],
+  onSuggestionPress,
+  autoFocus = false,
+  ref,
 }: SearchBarProps) {
-    const theme = useTheme();
-    const [isFocused, setIsFocused] = useState(false);
-    return (
-        <View style={[{ zIndex: 50 }, style] as object}>
-            <YStack
-                backgroundColor="$backgroundStrong"
-                borderWidth={0}
-                borderColor="transparent"
-                borderRadius="$10"
-                elevation="$2"
-            >
-                {/* Text Input Row */}
-                <XStack
-                    alignItems="center"
-                    paddingHorizontal="$4"
-                    height={56}
-                    gap="$3"
-                >
-                    <IconSymbol name="magnifyingglass" size={22} color={isFocused ? theme.color8?.get() as string : theme.color11?.get() as string} />
-                    {isBottomSheet ? (
-                        <StyledBottomSheetTextInput
-                            placeholder={placeholder}
-                            placeholderTextColor={theme.color11?.get() as string}
-                            value={value}
-                            onChangeText={onChangeText}
-                            autoFocus={autoFocus}
-                            onFocus={() => setIsFocused(true)}
-                            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                        />
-                    ) : (
-                        <Input
-                            ref={ref}
-                            flex={1}
-                            unstyled
-                            size="$4"
-                            paddingVertical={0}
-                            placeholder={placeholder}
-                            placeholderTextColor="$color11"
-                            color="$color"
-                            fontSize={16}
-                            value={value}
-                            onChangeText={onChangeText}
-                            autoFocus={autoFocus}
-                            onFocus={() => setIsFocused(true)}
-                            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                            fontFamily="$body"
-                            backgroundColor="transparent"
-                            borderWidth={0}
-                            outlineWidth={0}
-                        />
-                    )}
-                    {value.length > 0 && (
-                        <Button unstyled onPress={() => onChangeText("")} padding="$1" pressStyle={{ opacity: 0.5 }}>
-                            <IconSymbol name="xmark.circle.fill" size={20} color={theme.color11?.get() as string} />
-                        </Button>
-                    )}
-                    {onFilterPress && (
-                        <Button unstyled onPress={onFilterPress} padding="$2" pressStyle={{ opacity: 0.5 }}>
-                            <IconSymbol name="line.3.horizontal.decrease" size={24} color={theme.color11?.get() as string} />
-                        </Button>
-                    )}
-                </XStack>
-                    <XStack 
-                        flexWrap="wrap" 
-                        paddingHorizontal="$4" 
-                        overflow="hidden"
-                    >
-                            {chips.map(chip => (
-                                <Animated.View
-                                    key={`chip-${chip.id}`}
-                                    entering={ZoomIn.duration(250)}
-                                    exiting={ZoomOut.duration(250)}
-                                >
-                                    <XStack 
-                                        backgroundColor="$color4"
-                                        borderRadius="$8"
-                                        alignItems="center"
-                                        paddingVertical="$1.5"
-                                        paddingLeft="$3"
-                                        paddingRight="$2"
-                                        marginBottom="$2.5"
-                                        marginRight="$2"
-                                        gap="$1.5"
-                                        borderWidth={0}
-                                    >
-                                        <Text color="$color" fontSize={13} fontWeight="500">{chip.label}</Text>
-                                        <TouchableOpacity 
-                                            onPress={() => onRemoveChip?.(chip.id)} 
-                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                            style={{ padding: 4 }}
-                                        >
-                                            <IconSymbol name="xmark" size={11} color={theme.color?.get() as string} weight="bold" />
-                                        </TouchableOpacity>
-                                    </XStack>
-                                </Animated.View>
-                            ))}
-                    </XStack>
-            </YStack>
-
-            {/* Suggestions Dropdown */}
-            {isFocused && suggestions.length > 0 && (
-                <View style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    marginTop: 8,
-                    backgroundColor: theme.backgroundStrong?.get() as string,
-                    borderRadius: 16,
-                    paddingVertical: 8,
-                    shadowColor: '#000',
-                    shadowOpacity: 0.3,
-                    shadowRadius: 10,
-                    shadowOffset: { width: 0, height: 4 },
-                    elevation: 10,
-                }}>
-                    <ScrollView style={{ maxHeight: 220 }} keyboardShouldPersistTaps="handled">
-                        {suggestions.map((item, index) => (
-                            <TouchableOpacity 
-                                key={`sug-${item.type}-${item.id}-${index}`}
-                                style={{
-                                    paddingVertical: 12,
-                                    paddingHorizontal: 16,
-                                    borderBottomWidth: index < suggestions.length - 1 ? 1 : 0,
-                                    borderBottomColor: 'rgba(255,255,255,0.05)',
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between'
-                                }}
-                                onPress={() => onSuggestionPress?.(item)}
-                            >
-                                <Text color="$color" fontSize={15}>{item.label}</Text>
-                                <Text color="$color11" fontSize={12} fontFamily="IBMPlexSansItalic" opacity={0.8}>
-                                    {item.type.toUpperCase()}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                </View>
-            )}
+  const ds = useDs();
+  const [isFocused, setIsFocused] = useState(false);
+  const clear = value.length > 0 ? <FieldButton icon="xmark.circle.fill" label="Clear search" onPress={() => onChangeText('')} /> : null;
+  const filter = onFilterPress ? <FieldButton icon="line.3.horizontal.decrease" label="Filters" onPress={onFilterPress} /> : null;
+  return (
+    <View style={[styles.bar, style]}>
+      <Field
+        // ponytail: callers hold a Tamagui ref (TamaguiElement types the RN View, not the input); both focus() and blur().
+        ref={ref as unknown as Ref<ComponentRef<typeof TextInput>>}
+        label={placeholder}
+        hideLabel
+        icon="magnifyingglass"
+        placeholder={placeholder}
+        value={value}
+        onChangeText={onChangeText}
+        autoFocus={autoFocus}
+        onFocus={() => setIsFocused(true)}
+        // Late, so a tap on a suggestion lands before the list goes.
+        onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+        trailing={clear || filter ? <>{clear}{filter}</> : undefined}
+      />
+      {chips.length > 0 ? (
+        <View role="group" aria-label="Filters" style={styles.chips}>
+          {chips.map((chip) => (
+            <Animated.View key={`chip-${chip.id}`} entering={ZoomIn.duration(250)} exiting={ZoomOut.duration(250)}>
+              <Chip label={chip.label} selected multi accessibilityLabel={`Remove ${chip.label}`} onPress={() => onRemoveChip?.(chip.id)} />
+            </Animated.View>
+          ))}
         </View>
-    );
+      ) : null}
+
+      {isFocused && suggestions.length > 0 ? (
+        <View style={[styles.suggestions, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+          <ScrollView style={styles.suggestionScroll} keyboardShouldPersistTaps="handled">
+            {suggestions.map((item, index) => (
+              <PressableScale
+                key={`sug-${item.type}-${item.id}-${index}`}
+                accessibilityLabel={`${item.label}, ${item.type}`}
+                onPress={() => onSuggestionPress?.(item)}
+                style={[styles.suggestion, index < suggestions.length - 1 ? { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth } : null]}
+              >
+                <Body numberOfLines={1} style={styles.suggestionLabel}>
+                  {item.label}
+                </Body>
+                <Caption tone="muted">{item.type.toUpperCase()}</Caption>
+              </PressableScale>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  bar: { zIndex: 50 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
+  suggestions: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: space.sm,
+    paddingVertical: space.sm,
+    borderRadius: radius.card,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  suggestionScroll: { maxHeight: 220 },
+  suggestion: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.lg },
+  suggestionLabel: { flexShrink: 1 },
+});

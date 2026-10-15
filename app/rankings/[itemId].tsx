@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, Title, useDs } from '@/components/ds';
 import { RankingsScreen } from '@/components/screens/rankings/RankingsScreen';
-import { ErrorState } from '@/components/ui/ErrorState';
+import { CouldNotLoad } from '@/components/screens/safety/NotAvailable';
 import { space } from '@/constants/tokens';
 import { signatureBarOf, useBarProfile, useRankTarget } from '@/hooks/useRankings';
 import { rankedAs } from '@/lib/ranking';
@@ -20,7 +20,7 @@ export default function RankingsRoute() {
   const { data: home, isLoading: homeLoading } = useBarProfile(target?.bar_id, signatureBar);
   const list = target ? rankedAs(target) : null;
   let content;
-  if (error) content = <ErrorState title="Couldn't load these rankings" onRetry={() => void refetch()} />;
+  if (error) content = <CouldNotLoad what="rankings" failed={{ retry: () => void refetch() }} />;
   else if (!isLoading && !target) content = <Page message="It may have been removed, or it belongs to a bar you're not part of." />;
   else if (!list || ((target?.bar_id || signatureBar) && homeLoading)) content = <Page />;
   else content = <RankingsScreen rankedAs={list} home={home ?? null} />;

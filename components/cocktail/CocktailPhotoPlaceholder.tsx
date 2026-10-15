@@ -1,72 +1,55 @@
-import { useState } from "react";
-import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Text, useTheme } from "tamagui";
+import { useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import { CustomIcon } from "@/components/ui/CustomIcons";
-import { useWebImageDrop } from "@/hooks/useWebImageDrop";
+import { Caption, PressableScale, useDs } from '@/components/ds';
+import { CustomIcon } from '@/components/ui/CustomIcons';
+import { radius, space } from '@/constants/tokens';
+import { useWebImageDrop } from '@/hooks/useWebImageDrop';
 
 interface CocktailPhotoPlaceholderProps {
-    onPress?: () => void;
-    onDropImages?: (uris: string[]) => void;
+  onPress?: () => void;
+  onDropImages?: (uris: string[]) => void;
 }
 
+/** Where a drink with no photo yet takes one: tap to add, or drop a file on the web. */
 export function CocktailPhotoPlaceholder({ onPress, onDropImages }: CocktailPhotoPlaceholderProps) {
-    const theme = useTheme();
-    const iconColor = theme.color11?.get() as string;
-    const [dragOver, setDragOver] = useState(false);
-    const isWeb = Platform.OS === "web";
-    const dropRef = useWebImageDrop(onDropImages, setDragOver);
+  const ds = useDs();
+  const [dragOver, setDragOver] = useState(false);
+  const dropRef = useWebImageDrop(onDropImages, setDragOver);
+  const label = dragOver ? 'Drop to add photo' : Platform.OS === 'web' ? 'Drop or tap to add photo' : 'Tap to add photo';
 
-    const content = (
-        <View
-            ref={dropRef}
-            style={[
-                styles.container,
-                {
-                    backgroundColor: theme.backgroundStrong?.get() as string,
-                    borderColor: dragOver
-                        ? (theme.color8?.get() as string)
-                        : (theme.borderColor?.get() as string),
-                    opacity: dragOver ? 0.95 : 1,
-                },
-            ]}
-        >
-            <CustomIcon name="Coupette" size={80} color={iconColor} />
-            <Text color="$color11" fontSize={13} opacity={0.65} marginTop="$3" textAlign="center">
-                {dragOver ? "Drop to add photo" : isWeb ? "Drop or tap to add photo" : "Tap to add photo"}
-            </Text>
-        </View>
-    );
+  const content = (
+    <View
+      ref={dropRef}
+      style={[styles.zone, { backgroundColor: dragOver ? ds.c.raised : ds.c.surface, borderColor: dragOver ? ds.accentText : ds.c.lineStrong }]}
+    >
+      <CustomIcon name="Coupette" size={80} color={ds.c.muted} />
+      <Caption tone="muted" align="center">
+        {label}
+      </Caption>
+    </View>
+  );
 
-    if (!onPress) {
-        return (
-            <View style={styles.pressable}>
-                {content}
-            </View>
-        );
-    }
-
-    return (
-        <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.pressable}>
-            {content}
-        </TouchableOpacity>
-    );
+  if (!onPress) return <View style={styles.fill}>{content}</View>;
+  return (
+    <PressableScale accessibilityLabel="Add photo" onPress={onPress} style={styles.fill}>
+      {content}
+    </PressableScale>
+  );
 }
 
 const styles = StyleSheet.create({
-    pressable: {
-        flex: 1,
-        width: "100%",
-        height: "100%",
-    },
-    container: {
-        flex: 1,
-        width: "100%",
-        height: "100%",
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 1,
-        borderStyle: "dashed",
-        borderRadius: 24,
-    },
+  fill: { flex: 1, width: '100%', height: '100%' },
+  zone: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: space.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: radius.card,
+    borderCurve: 'continuous',
+  },
 });
