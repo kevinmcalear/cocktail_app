@@ -9,7 +9,7 @@ import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { usePricingSettings, useSetPricingSettings } from '@/hooks/usePricing';
 import { useEffectiveRole } from '@/hooks/useViewAs';
-import { COMMON_CURRENCIES, isCurrencyCode } from '@/lib/money';
+import { COMMON_CURRENCIES, isCurrencyCode, moneyFieldValue, parseMoney } from '@/lib/money';
 
 /** bars_update needs an Admin (level 40). */
 const ADMIN = 40;
@@ -37,17 +37,21 @@ function PricingPage({ barId }: { barId: string }) {
   const { data, isLoading, error } = usePricingSettings(barId);
   const save = useSetPricingSettings(barId);
   // What the person has typed; anything untouched shows the saved figure.
-  const [draft, setDraft] = useState<{ currency?: string; tax?: string; gp?: string; included?: boolean }>({});
+  const [draft, setDraft] = useState<{ currency?: string; tax?: string; gp?: string; profit?: string; included?: boolean }>({});
   const currency = (draft.currency ?? data?.currency ?? '').toUpperCase();
   const tax = draft.tax ?? (data ? String(data.tax_rate) : '');
   const gp = draft.gp ?? (data?.target_gp == null ? '' : String(data.target_gp));
   const included = draft.included ?? data?.prices_include_tax ?? true;
+  const validCurrency = isCurrencyCode(currency);
+  const profit = draft.profit ?? (data?.min_profit_minor != null && validCurrency ? moneyFieldValue(data.min_profit_minor, currency) : '');
+  const profitN = profit.trim() === '' || !validCurrency ? null : parseMoney(profit, currency);
   const taxN = tax.trim() === '' ? 0 : Number(tax);
   const gpN = gp.trim() === '' ? null : Number(gp);
   const problems = {
     currency: currency && !isCurrencyCode(currency) ? 'Three capital letters, like GBP or USD.' : null,
     tax: !Number.isFinite(taxN) || taxN < 0 || taxN > 100 ? 'A percent between 0 and 100.' : null,
     gp: gpN !== null && (!Number.isFinite(gpN) || gpN < 0 || gpN >= 100) ? 'A percent from 0 up to 100.' : null,
+    profit: profit.trim() && !validCurrency ? 'Set the currency first.' : profit.trim() && profitN === null ? `An amount in ${currency}, like 9.00.` : null,
   };
   const invalid = Object.values(problems).some(Boolean);
 
@@ -63,8 +67,8 @@ function PricingPage({ barId }: { barId: string }) {
         <View style={styles.readable}>
           <Title>Pricing</Title>
           <Body tone="muted">
-            The currency {venue?.name ?? 'the venue'} buys and sells in, how its menu prices handle tax, and the gross profit it aims for. Pack prices, cost per
-            serve and GP on every drink page follow from these.
+            The currency {venue?.name ?? 'the venue'} buys and sells in, how its menu prices handle tax, and what every drink should make. Costing and each
+            drink’s Cost and margin follow from these.
           </Body>
           {isLoading ? <Caption tone="muted">Loading…</Caption> : null}
           {error ? <Body tone="muted">Couldn’t load the settings. Check your connection and try again.</Body> : null}
@@ -86,14 +90,25 @@ function PricingPage({ barId }: { barId: string }) {
             <Field label="Tax rate (percent)" value={tax} onChangeText={(t) => setDraft((d) => ({ ...d, tax: t }))} placeholder="20" keyboardType="decimal-pad" editable={canEdit} error={problems.tax ?? undefined} hint={included ? 'GP is taken on the price without the tax.' : 'GP is taken on the menu price as shown.'} />
           </View>
           <View style={styles.group}>
-            <Headline>Target GP</Headline>
-            <Field label="Gross profit the bar aims for (percent)" value={gp} onChangeText={(t) => setDraft((d) => ({ ...d, gp: t }))} placeholder="80" keyboardType="decimal-pad" editable={canEdit} error={problems.gp ?? undefined} hint="Drinks under it are marked, and each one says the price that gets there." />
+            <Headline>Targets</Headline>
+            <Field label="Target GP (percent)" value={gp} onChangeText={(t) => setDraft((d) => ({ ...d, gp: t }))} placeholder="80" keyboardType="decimal-pad" editable={canEdit} error={problems.gp ?? undefined} hint="Gross profit the bar aims for on every drink." />
+            <Field
+              label={`Least a drink should make${validCurrency ? ` (${currency})` : ''}`}
+              value={profit}
+              onChangeText={(t) => setDraft((d) => ({ ...d, profit: t }))}
+              placeholder="9.00"
+              keyboardType="decimal-pad"
+              editable={canEdit}
+              error={problems.profit ?? undefined}
+              hint="Profit after tax and ingredients. A cheap highball can hit your GP and still make too little."
+            />
+            <Caption tone="muted">Drinks under either target are marked in costing and on the drink, with the price that clears both.</Caption>
           </View>
           {canEdit ? (
             <Button
               label={save.isPending ? 'Saving…' : 'Save pricing'}
               disabled={save.isPending || invalid}
-              onPress={() => save.mutate({ currency: currency || null, tax_rate: taxN, prices_include_tax: included, target_gp: gpN })}
+              onPress={() => save.mutate({ currency: currency || null, tax_rate: taxN, prices_include_tax: included, target_gp: gpN, min_profit_minor: profitN })}
               style={styles.save}
             />
           ) : (

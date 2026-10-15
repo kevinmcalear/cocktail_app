@@ -78,6 +78,20 @@ describe('pricing settings', () => {
     assert.ok((await service.from('bars').update({ tax_rate: 120 }).eq('id', ids.bar)).error, 'tax over 100% is refused');
     assert.ok((await service.from('bars').update({ target_gp: 100 }).eq('id', ids.bar)).error, 'a 100% GP is refused');
     assert.ok((await service.from('bars').update({ currency: 'pounds' }).eq('id', ids.bar)).error, 'a currency is three capital letters');
+    assert.ok((await service.from('bars').update({ min_profit_minor: -1 }).eq('id', ids.bar)).error, 'a negative profit floor is refused');
+  });
+
+  test('the least a drink should make: none to start, members read it, only an admin sets it', async () => {
+    const start = await users.employee.client.from('bars').select('min_profit_minor').eq('id', ids.bar).single();
+    assert.ifError(start.error);
+    assert.equal(start.data.min_profit_minor, null);
+    const asCreator = await users.creator.client.from('bars').update({ min_profit_minor: 900 }).eq('id', ids.bar).select('id');
+    assert.ok(asCreator.error || asCreator.data.length === 0, 'a Drink Creator changes nothing');
+    const asAdmin = await users.admin.client.from('bars').update({ min_profit_minor: 1100 }).eq('id', ids.bar).select('min_profit_minor').single();
+    assert.ifError(asAdmin.error);
+    assert.equal(asAdmin.data.min_profit_minor, 1100);
+    const read = await users.employee.client.from('bars').select('min_profit_minor').eq('id', ids.bar).single();
+    assert.equal(read.data.min_profit_minor, 1100);
   });
 });
 

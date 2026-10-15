@@ -2,12 +2,15 @@ import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Field, LockedSection, Spec, Tag, useDs } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Body, Button, Caption, Field, Headline, LockedSection, Spec, Tag, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { radius, space } from '@/constants/tokens';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useDrinkCost, useSetMenuPrice } from '@/hooks/useDrinkCost';
 import { usePricingSettings } from '@/hooks/usePricing';
-import { formatPct, margin, priceForTarget, targetStatus } from '@/lib/costing';
+import { withAlpha } from '@/lib/color';
+import { formatPct, margin, priceForTarget, targetsLine, targetStatus, type Margin, type Targets } from '@/lib/costing';
 import { formatMoney, moneyFieldValue, parseMoney } from '@/lib/money';
 import { roleLabel } from '@/lib/roles';
 
@@ -21,9 +24,11 @@ interface CostSectionProps {
 
 /**
  * Cost and margin: cost per serve through every sub-recipe at today's pack
- * prices, the menu price with and without tax, GP and pour cost, and the
- * price that hits the venue's target. Locked until the costs capability;
- * the server returns nothing below it either.
+ * prices, the menu price with and without tax, profit, GP and pour cost.
+ * Under the venue's targets (a GP, and the least a drink should make) it
+ * says so with the price that clears them, and editors can use it
+ * (drink-cost-floor). Locked until the costs capability; the server returns
+ * nothing below it either.
  */
 export function CostSection({ itemId, barId, priceMinor, canEdit }: CostSectionProps) {
   const { data: capabilities } = useCapabilities(barId);
@@ -36,7 +41,7 @@ export function CostSection({ itemId, barId, priceMinor, canEdit }: CostSectionP
     <LockedSection title="Cost and margin" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Drink Creator'}>
       {error ? <Body tone="muted">Couldn’t work out the cost. Check your connection and try again.</Body> : null}
       {isPending && !error ? <Caption tone="muted">Adding it up…</Caption> : null}
-      {cost && settings ? <Costed itemId={itemId} barId={barId} cost={cost} priceMinor={priceMinor ?? null} canEdit={canEdit} currency={settings.currency} taxRate={settings.tax_rate} pricesIncludeTax={settings.prices_include_tax} targetGp={settings.target_gp} /> : null}
+      {cost && settings ? <Costed itemId={itemId} barId={barId} cost={cost} priceMinor={priceMinor ?? null} canEdit={canEdit} currency={settings.currency} taxRate={settings.tax_rate} pricesIncludeTax={settings.prices_include_tax} targets={{ gp: settings.target_gp, minProfitMinor: settings.min_profit_minor }} /> : null}
     </LockedSection>
   );
 }
@@ -50,10 +55,10 @@ interface CostedProps {
   currency: string | null;
   taxRate: number;
   pricesIncludeTax: boolean;
-  targetGp: number | null;
+  targets: Targets;
 }
 
-function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, pricesIncludeTax, targetGp }: CostedProps) {
+function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, pricesIncludeTax, targets }: CostedProps) {
   const ds = useDs();
   const router = useRouter();
   const tax = { taxRate, pricesIncludeTax };
@@ -61,10 +66,11 @@ function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, p
   // Every line unpriced: no cost yet, so no margin either.
   const known = !(cost.total_minor === 0 && cost.missing > 0);
   const m = known ? margin(cost.total_minor, priceMinor, tax) : null;
-  const target = known ? targetStatus(cost.total_minor, priceMinor, targetGp, tax) : null;
+  const target = known ? targetStatus(cost.total_minor, priceMinor, targets, tax) : null;
+  const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'The venue';
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(currency ? moneyFieldValue(priceMinor, currency) : '');
-  const [ask, setAsk] = useState(targetGp == null ? '' : String(targetGp));
+  const [ask, setAsk] = useState(targets.gp == null ? '' : String(targets.gp));
   const setPrice = useSetMenuPrice(itemId);
   const askN = Number(ask);
   const askPrice = known && ask.trim() && Number.isFinite(askN) ? priceForTarget(cost.total_minor, askN, tax) : null;
@@ -106,12 +112,22 @@ function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, p
       </View>
       <View style={styles.facts}>
         <Fact label="Menu price" value={priceMinor == null ? 'Not set' : money(priceMinor)} sub={m ? (pricesIncludeTax ? `${money(Math.round(m.exTaxMinor))} without tax` : 'tax added at the till') : undefined} />
+        <Fact label="Profit" value={m ? money(Math.round(m.profitMinor)) : '–'} sub={m ? 'after tax and ingredients' : 'set a price'} />
         <Fact label="GP" value={m ? formatPct(m.gp) : '–'} sub={m ? `pour cost ${formatPct(m.pourCost)}` : 'set a price'} />
       </View>
-      {target ? (
-        <Body>
-          Your target is {targetGp}%. {target.onTarget ? 'This drink is on target.' : `${money(target.priceMinor)} gets there.`}
-        </Body>
+      {target?.onTarget ? <Body tone="muted">{`On ${venueName}’s target: ${targetsLine(targets, money)}.`}</Body> : null}
+      {target && !target.onTarget ? (
+        <UnderTarget
+          venueName={venueName}
+          wants={targetsLine(targets, money) ?? ''}
+          margin={m}
+          price={money(target.priceMinor)}
+          both={targets.gp != null && targets.minProfitMinor != null}
+          money={money}
+          onUse={canEdit ? () => setPrice.mutate(target.priceMinor) : undefined}
+          busy={setPrice.isPending}
+          onPricing={() => router.push(`/settings/bar/${barId}/pricing` as Href)}
+        />
       ) : null}
       {canEdit ? (
         editing ? (
@@ -130,6 +146,35 @@ function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, p
       <View style={styles.calc}>
         <Field label="Price for a GP of (percent)" value={ask} onChangeText={setAsk} placeholder="80" keyboardType="decimal-pad" />
         <Caption tone="muted">{askPrice == null ? 'Enter a GP under 100 to see the menu price it needs.' : `${money(askPrice)} on the menu${pricesIncludeTax ? `, with ${taxRate}% tax in it` : ''}.`}</Caption>
+      </View>
+    </View>
+  );
+}
+
+/** Under the venue's targets: what it wants, what this drink makes, and the price that clears it (drink-cost-floor). */
+function UnderTarget({ venueName, wants, margin: m, price, both, money, onUse, busy, onPricing }: {
+  venueName: string;
+  wants: string;
+  margin: Margin | null;
+  price: string;
+  both: boolean;
+  money: (minor: number) => string;
+  onUse?: () => void;
+  busy: boolean;
+  onPricing: () => void;
+}) {
+  const ds = useDs();
+  const makes = m ? `This one makes ${formatPct(m.gp)} and ${money(Math.round(m.profitMinor))}.` : 'It has no price yet.';
+  return (
+    <View role="status" style={[styles.under, { borderColor: withAlpha(ds.accentText, 0.45), backgroundColor: withAlpha(ds.accentText, 0.1) }]}>
+      <View style={styles.underHead}>
+        <IconSymbol name="exclamationmark.triangle" size={18} color={ds.accentText} />
+        <Headline>{`Under ${venueName}’s target`}</Headline>
+      </View>
+      <Body>{`${venueName} wants ${wants}. ${makes} ${price} on the menu clears ${both ? 'both' : 'it'}.`}</Body>
+      <View style={styles.actions}>
+        {onUse ? <Button label={busy ? 'Saving…' : `Use ${price}`} disabled={busy} onPress={onUse} /> : null}
+        <Button label="Pricing" variant="secondary" onPress={onPricing} />
       </View>
     </View>
   );
@@ -158,4 +203,6 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   button: { alignSelf: 'flex-start' },
   calc: { gap: space.xs, marginTop: space.sm },
+  under: { gap: space.sm, padding: space.lg, borderRadius: radius.card, borderWidth: 1 },
+  underHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
