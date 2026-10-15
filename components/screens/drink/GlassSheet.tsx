@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Field, Headline, Sheet, SheetScrollView, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSetGlassSize, useSetIcePerServe } from '@/hooks/useGlassIce';
+import { glassModelFacts, type GlassModel } from '@/hooks/useGlassModels';
 import { useCanEditItem } from '@/hooks/useViewAs';
 import { defaultIcePerServe, formatIce, glassFit, glassSizeLabel, type GlassSize } from '@/lib/glass';
 
@@ -14,6 +15,8 @@ export interface GlassSheetGlass extends GlassSize {
   name: string;
   bar_id: string | null;
   icon_key?: string | null;
+  /** The real glass the drink is served in: its size is the maker's, not editable here. */
+  model?: GlassModel | null;
 }
 
 interface GlassSheetProps {
@@ -83,7 +86,9 @@ function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, canEdi
             {glassSizeLabel(glass) ?? 'No capacity on file yet.'}
             {fit ? ` Serve of ${Math.round(serveMl!)} ml: ${fit.fits ? 'fits' : `over by ${Math.round(fit.overMl)} ml`}${withIce && glass.iced_capacity_ml ? ' with the ice in' : ''}.` : ''}
           </Body>
-          {canEditGlass ? (
+          {glass.model ? (
+            <Caption tone="muted">{[glassModelFacts(glass.model), glass.model.maker ? `From ${glass.model.maker.display_name}’s catalog.` : null].filter(Boolean).join('. ')}</Caption>
+          ) : canEditGlass ? (
             <>
               <Field label="Capacity (ml, to the brim)" value={capacity} onChangeText={setCapacity} placeholder="180" keyboardType="decimal-pad" />
               <Field label="Iced capacity (ml, what the liquid fills with ice in)" value={iced} onChangeText={setIced} placeholder={capacity || '180'} keyboardType="decimal-pad" error={sizeProblem ?? undefined} />
