@@ -6,6 +6,7 @@ import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } fr
 import { displayFaces, displayName, fontFamilies, space } from '@/constants/tokens';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { formatPrice } from '@/lib/menus';
+import type { SketchInputs } from '@/lib/sketch/types';
 import type { MenuDrink, MenuSectionDetail } from '@/types/menus';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 import { siteOrigin } from '@/lib/venueLink';
@@ -25,7 +26,7 @@ export const isDrawn = (d: MenuDrink) => !d.imageUrl || d.isSketch;
  * what it is. Only a drink with a real id (one that opens, or any drink on
  * your own guest card) can be drawn as a sketch.
  */
-function DrinkThumb({ drink, drawable, size = 56 }: { drink: MenuDrink; drawable: boolean; size?: number }) {
+function DrinkThumb({ drink, drawable, size = 56, sketch }: { drink: MenuDrink; drawable: boolean; size?: number; sketch?: SketchInputs | null }) {
   return (
     <View style={{ width: size }} aria-hidden>
       <DrinkImage
@@ -35,6 +36,7 @@ function DrinkThumb({ drink, drawable, size = 56 }: { drink: MenuDrink; drawable
         generated={drink.isSketch}
         glass={drink.glass}
         itemId={drawable ? drink.id : null}
+        sketch={sketch}
         accessibilityLabel={drink.name}
         radius="control"
       />
@@ -139,15 +141,18 @@ export function SectionHead({ name, count }: { name: string; count: number | nul
 /** Where a page row opens by default: the drink's own page. */
 export const menuDrinkHref = (d: MenuDrink) => itemHref(CATEGORY[d.kind], d.id);
 
-/** A drink's row on a menu page: its picture, its line and price, opening `href` (still when null). */
-export function MenuDrinkRow({ drink: d, href, isNew = false }: { drink: MenuDrink; href: string | null; isNew?: boolean }) {
+/**
+ * A drink's row on a menu page: its picture, its line and price, opening `href` (still when null).
+ * `sketch`: a still row's drawing inputs, for a bundled sample drink with no id to draw from.
+ */
+export function MenuDrinkRow({ drink: d, href, isNew = false, sketch }: { drink: MenuDrink; href: string | null; isNew?: boolean; sketch?: SketchInputs | null }) {
   const ds = useDs();
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
   if (!href) {
     return (
       <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
-        <DrinkThumb drink={d} drawable={false} />
+        <DrinkThumb drink={d} drawable={false} sketch={sketch} />
         <DrinkLine drink={d} centered={false} isNew={isNew} />
         <RowPrice drink={d} />
       </View>
