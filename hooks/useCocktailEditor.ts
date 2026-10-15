@@ -333,6 +333,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
 
     return {
         loading: loadingDropdowns || loadingCocktail || (enabled && !rawLoaded),
+        /** The drink's own spec and settings are in (the ingredient catalogue may still be downloading). */
+        specLoaded: rawLoaded,
         saving,
         isDirty,
         dropdowns,
@@ -350,6 +352,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         notes,
         setNotes: setNotesDirty,
         methodIds,
+        setMethodIds: setMethodIdsDirty,
         toggleMethod,
         glasswareId,
         familyId,
