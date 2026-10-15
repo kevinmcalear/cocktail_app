@@ -5,7 +5,7 @@ import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/com
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
+import { GLASS_SEARCH_LIMIT, glassModelMaterial, glassModelSize, useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import type { SketchGlass } from '@/lib/sketch/types';
@@ -41,9 +41,8 @@ interface RowProps {
 /** One maker's glass: its drawing, name, maker and material, and its size. */
 export function GlassModelRow({ model, note, first, selected, onPress }: RowProps) {
   const ds = useDs();
-  const material = model.material ? model.material[0].toUpperCase() + model.material.slice(1) : null;
-  const sub = [model.maker?.display_name, material, note].filter(Boolean).join(' · ');
-  const size = model.capacity_ml ? `${Math.round(model.capacity_ml)} ml` : null;
+  const sub = [model.maker?.display_name, glassModelMaterial(model), note].filter(Boolean).join(' · ');
+  const size = glassModelSize(model);
   return (
     <PressableScale
       role={selected === undefined ? 'button' : 'radio'}
@@ -139,7 +138,9 @@ export function GlassModelPicker({ venueModelIds = [], venueName, initialGlass =
         <Caption tone="muted">Type a maker or a name, or pick a type.</Caption>
       ) : null}
       {models.length ? (
-        <Caption tone="muted">{`From the makers’ own catalogs. ${models.length === 40 ? 'The first 40; type more to narrow it.' : ''}`.trim()}</Caption>
+        <Caption tone="muted">
+          {`From the makers’ own catalogs. ${data.length >= GLASS_SEARCH_LIMIT ? `The first ${GLASS_SEARCH_LIMIT}; type more to narrow it.` : ''}`.trim()}
+        </Caption>
       ) : null}
       {onDescribe ? <Button label="Not listed? Describe it yourself" variant="ghost" onPress={onDescribe} style={styles.start} /> : null}
     </View>

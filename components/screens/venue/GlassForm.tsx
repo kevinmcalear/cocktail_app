@@ -93,6 +93,8 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
   };
 
   const pick = (m: GlassModel) => {
+    // A name the last model filled in goes with it; one the venue typed stays.
+    setFields((f) => (f.name.trim() && f.name !== model?.name ? f : { ...f, name: '' }));
     setModel(m);
     setType(m.glass);
     setVariant(m.variant);

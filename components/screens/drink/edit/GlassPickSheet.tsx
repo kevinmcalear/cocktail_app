@@ -54,6 +54,8 @@ export function GlassPickSheet({ editor, itemId, onClose }: { editor: Editor; it
     onClose();
   };
   const pickShape = (id: string) => {
+    // A shape is a choice of its own: it lets the real glass go, even when it's that glass's shape.
+    if (model && 'setGlassModel' in editor) editor.setGlassModel(null);
     editor.setSpecId('glassware', editor.glasswareId === id && !model ? null : id);
     onClose();
   };
@@ -82,7 +84,16 @@ export function GlassPickSheet({ editor, itemId, onClose }: { editor: Editor; it
     >
       <SheetScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {canModel ? (
-          <Field label="Find a glass" hideLabel icon="magnifyingglass" value={term} onChangeText={setTerm} placeholder="Find a glass: maker, name, shape" autoCorrect={false} maxLength={80} />
+          <Field
+            label="Find a glass"
+            hideLabel
+            icon="magnifyingglass"
+            value={term}
+            onChangeText={setTerm}
+            placeholder="Find a glass: maker, name, shape"
+            autoCorrect={false}
+            maxLength={80}
+          />
         ) : null}
         <View role="radiogroup" aria-label="Glass" style={styles.body}>
           {ours.filter(matches).length ? (
@@ -102,7 +113,12 @@ export function GlassPickSheet({ editor, itemId, onClose }: { editor: Editor; it
             <Caption tone="muted">No maker lists a glass like that yet.</Caption>
           ) : null}
           {!searching && !all && makers.length > FEW && glassType ? (
-            <Button label={`Every ${GLASS_TYPE_LABEL[glassType].toLowerCase()} makers list`} variant="ghost" onPress={() => setAll(true)} style={styles.start} />
+            <Button
+              label={`Every ${GLASS_TYPE_LABEL[glassType].toLowerCase()} makers list`}
+              variant="ghost"
+              onPress={() => setAll(true)}
+              style={styles.start}
+            />
           ) : null}
           <View style={styles.section}>
             <Caption tone="muted" role="heading">

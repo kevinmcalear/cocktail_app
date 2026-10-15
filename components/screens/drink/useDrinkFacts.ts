@@ -1,5 +1,5 @@
 import { useDropdowns } from '@/hooks/useDropdowns';
-import { useDrinkGlassModel } from '@/hooks/useGlassModels';
+import { glassModelSize, useDrinkGlassModel } from '@/hooks/useGlassModels';
 import { classifyMethod, isGarnishUnit, type BatchMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
@@ -114,6 +114,6 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
 
 /** Under the glass's name: who made it, and a real glass's size. */
 function glassSub(glass: GlassSheetGlass, by: string | undefined) {
-  const size = glass.model?.capacity_ml ? `${Math.round(glass.model.capacity_ml)} ml` : null;
+  const size = glass.model ? glassModelSize(glass.model) : null;
   return [by ? `by ${by}` : null, size].filter(Boolean).join(' · ') || undefined;
 }

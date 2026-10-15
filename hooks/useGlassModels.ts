@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { glassSizeLabel } from '@/lib/glass';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
@@ -30,12 +31,18 @@ export interface GlassModel {
 export const GLASS_MODEL_SELECT =
   'id, maker_profile_id, shape_item_id, glass, variant, name, series, designer, model_code, capacity_ml, height_mm, rim_mm, material, product_url, maker:profiles!glass_models_maker_profile_id_fkey(handle, display_name)';
 
+/** How many glasses a search returns at most. */
+export const GLASS_SEARCH_LIMIT = 40;
+
+/** "190 ml": a model's size to the brim, or null. */
+export const glassModelSize = (m: Pick<GlassModel, 'capacity_ml'>) => glassSizeLabel({ capacity_ml: m.capacity_ml, iced_capacity_ml: null });
+
+/** "Lead-free crystal", or null. */
+export const glassModelMaterial = (m: Pick<GlassModel, 'material'>) => (m.material ? m.material[0].toUpperCase() + m.material.slice(1) : null);
+
 /** "190 ml · 165 mm tall · Crystal": the facts a row shows under its name. */
 export function glassModelFacts(m: Pick<GlassModel, 'capacity_ml' | 'height_mm' | 'material'>): string {
-  const material = m.material ? m.material[0].toUpperCase() + m.material.slice(1) : null;
-  return [m.capacity_ml ? `${Math.round(m.capacity_ml)} ml` : null, m.height_mm ? `${Math.round(m.height_mm)} mm tall` : null, material]
-    .filter(Boolean)
-    .join(' · ');
+  return [glassModelSize(m), m.height_mm ? `${Math.round(m.height_mm)} mm tall` : null, glassModelMaterial(m)].filter(Boolean).join(' · ');
 }
 
 /**
@@ -43,7 +50,7 @@ export function glassModelFacts(m: Pick<GlassModel, 'capacity_ml' | 'height_mm' 
  * name, series, designer, item code or size), of one type when given. An
  * empty search lists the type's glasses, maker by maker.
  */
-export function useGlassModelSearch(term: string, glass: SketchGlass | null, { enabled = true, limit = 40 } = {}) {
+export function useGlassModelSearch(term: string, glass: SketchGlass | null, { enabled = true, limit = GLASS_SEARCH_LIMIT } = {}) {
   const q = term.trim();
   return useQuery({
     queryKey: ['glass-models', q, glass, limit],

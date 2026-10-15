@@ -88,3 +88,19 @@ test('changing a glass keeps its id and refuses a name over the limit', async ()
   await fireEvent.press(screen.getByText('Save glass'));
   expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ id: 'g1', name: 'Coupe no. 2', maker: 'A potter', maker_profile_id: null, is_default: false }));
 });
+
+test('another model replaces a name the last model filled in, but not one the venue typed', async () => {
+  const onSave = jest.fn();
+  const sour = { ...mockFenwick, id: 'm0', name: 'Sour Glass', maker: { handle: 'riedel', display_name: 'Riedel' } };
+  const saved = { ...glass, name: 'Sour Glass', model_id: 'm0', model: sour };
+  await renderWithTamagui(<GlassForm glass={saved} saving={false} onSave={onSave} onCancel={() => {}} />);
+  await fireEvent.press(screen.getByText('Another glass'));
+  await fireEvent.press(screen.getByText('Pick Fenwick'));
+  await fireEvent.press(screen.getByText('Save glass'));
+  expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'g1', name: 'Fenwick coupe', model_id: 'm1' }));
+  await fireEvent.changeText(screen.getByLabelText('Name'), 'Our coupe');
+  await fireEvent.press(screen.getByText('Another glass'));
+  await fireEvent.press(screen.getByText('Pick Fenwick'));
+  await fireEvent.press(screen.getByText('Save glass'));
+  expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({ name: 'Our coupe' }));
+});

@@ -336,6 +336,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             await queryClient.invalidateQueries({ queryKey: ["cocktails"] });
             // The database redraws it in the chosen glass as the row saves.
             await queryClient.invalidateQueries({ queryKey: ["item-sketch", id] });
+            await queryClient.invalidateQueries({ queryKey: ["drink-glass-model", id] });
             setIsDirty(false);
             isLoaded.current = false;
             return true;
