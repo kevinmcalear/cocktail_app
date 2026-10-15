@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { cardWhen, EMPTY_PLAN, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
+import { cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -234,3 +234,10 @@ assert.equal(savedLine(['Autumn menu', 'Summer menu', 'Spring menu', 'Seasonal t
 assert.equal(savedLine(['Autumn menu', 'Halloween']), 'Autumn and Halloween');
 assert.equal(savedLine(['Autumn menu']), 'Autumn');
 assert.equal(savedLine(['Test', 'Test', 'Autumn menu']), 'Test and Autumn', 'a name twice is named once');
+{
+  const s = (id: string, n: number) => ({ id, drinks: Array.from({ length: n }, (_, i) => `${id}${i}`) });
+  const cut = previewSections([s('a', 2), s('b', 2), s('c', 3)], 5);
+  assert.deepEqual(cut.sections.map((x) => x.drinks), [['a0', 'a1'], ['b0', 'b1'], ['c0']]);
+  assert.equal(cut.more, 2);
+  assert.deepEqual(previewSections([s('a', 2), s('b', 0)], 6), { sections: [s('a', 2)], more: 0 });
+}

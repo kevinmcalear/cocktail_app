@@ -382,3 +382,15 @@ export function savedLine(names: string[], phone = false): string {
   const and = phone ? ', ' : ' and ';
   return short.length > 2 ? `${short[0]}, ${short[1]}${and}${short.length - 2} more` : short.join(and);
 }
+
+/** The first `max` drinks, section by section, for a card too small for them all, and how many are left out. */
+export function previewSections<S extends { drinks: unknown[] }>(sections: S[], max: number): { sections: S[]; more: number } {
+  let room = max;
+  const shown = sections.map((s) => {
+    const drinks = s.drinks.slice(0, Math.max(room, 0));
+    room -= drinks.length;
+    return { ...s, drinks };
+  });
+  const total = sections.reduce((n, s) => n + s.drinks.length, 0);
+  return { sections: shown.filter((s) => s.drinks.length), more: total - Math.min(total, max) };
+}
