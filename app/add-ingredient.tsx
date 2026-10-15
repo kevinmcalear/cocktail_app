@@ -506,7 +506,6 @@ function IngredientDraftEditor({ isInline, draftIdProp, barIdProp, onClose, onSa
                             }}
                             onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
                             onMerge={onMerge}
-                            variant="detail"
                             onNestedItemPress={onNestedItemPress}
                             onRenameIngredient={async (ingredientId, nextName) => {
                                 try {
