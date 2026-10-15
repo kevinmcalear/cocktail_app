@@ -12,6 +12,8 @@ export interface Margin {
   gp: number;
   /** Cost as a percent of the ex-tax price. */
   pourCost: number;
+  /** What the drink makes after tax and ingredients, in minor units. */
+  profitMinor: number;
 }
 
 export interface TaxRule {
@@ -28,7 +30,14 @@ export function exTax(priceMinor: number, tax: TaxRule): number {
 export function margin(costMinor: number, priceMinor: number | null | undefined, tax: TaxRule): Margin | null {
   if (priceMinor == null || priceMinor <= 0) return null;
   const ex = exTax(priceMinor, tax);
-  return { exTaxMinor: ex, gp: ((ex - costMinor) / ex) * 100, pourCost: (costMinor / ex) * 100 };
+  return { exTaxMinor: ex, gp: ((ex - costMinor) / ex) * 100, pourCost: (costMinor / ex) * 100, profitMinor: ex - costMinor };
+}
+
+/** Put the tax back on where the menu carries it, then round up to the nearest 10 minor units. */
+function menuPrice(exTaxMinor: number, tax: TaxRule): number {
+  const menu = tax.pricesIncludeTax ? exTaxMinor * (1 + tax.taxRate / 100) : exTaxMinor;
+  // Float noise (2900.0000000004) would otherwise round a clean price up a step.
+  return Math.ceil(Math.round(menu * 1e6) / 1e7) * 10;
 }
 
 /**
@@ -38,20 +47,42 @@ export function margin(costMinor: number, priceMinor: number | null | undefined,
  */
 export function priceForTarget(costMinor: number, targetGp: number, tax: TaxRule): number | null {
   if (!(targetGp >= 0 && targetGp < 100) || costMinor < 0) return null;
-  const ex = costMinor / (1 - targetGp / 100);
-  const menu = tax.pricesIncludeTax ? ex * (1 + tax.taxRate / 100) : ex;
-  return Math.ceil(menu / 10) * 10;
+  return menuPrice(costMinor / (1 - targetGp / 100), tax);
 }
 
-/** "on target", "£12.70 gets there", or null with no target. */
-export type TargetStatus = { onTarget: true } | { onTarget: false; priceMinor: number } | null;
+/** The menu price that makes at least `minProfitMinor` after tax and ingredients, rounded up like priceForTarget. */
+export function priceForProfit(costMinor: number, minProfitMinor: number, tax: TaxRule): number | null {
+  if (!(minProfitMinor >= 0) || costMinor < 0) return null;
+  return menuPrice(costMinor + minProfitMinor, tax);
+}
 
-export function targetStatus(costMinor: number, priceMinor: number | null | undefined, targetGp: number | null | undefined, tax: TaxRule): TargetStatus {
-  if (targetGp == null) return null;
+/**
+ * What a venue wants every drink to make (Pricing): a GP in percent, and the
+ * least it should make in money (bars.min_profit_minor). Either can be unset.
+ */
+export interface Targets {
+  gp: number | null | undefined;
+  minProfitMinor: number | null | undefined;
+}
+
+/** Which target a drink misses. */
+export type Under = 'gp' | 'profit' | 'both';
+
+/** "on target", or the target it misses and the menu price that clears every target set; null with none set. */
+export type TargetStatus = { onTarget: true } | { onTarget: false; priceMinor: number; under: Under } | null;
+
+export function targetStatus(costMinor: number, priceMinor: number | null | undefined, targets: Targets, tax: TaxRule): TargetStatus {
+  const gp = targets.gp ?? null;
+  const floor = targets.minProfitMinor ?? null;
+  if (gp == null && floor == null) return null;
   const m = margin(costMinor, priceMinor, tax);
-  if (m && m.gp >= targetGp) return { onTarget: true };
-  const needed = priceForTarget(costMinor, targetGp, tax);
-  return needed == null ? null : { onTarget: false, priceMinor: needed };
+  // No price yet: every target set is missed, and the price says what it would take.
+  const missGp = gp != null && (!m || m.gp < gp);
+  const missProfit = floor != null && (!m || m.profitMinor < floor);
+  if (!missGp && !missProfit) return { onTarget: true };
+  const needed = [gp != null ? priceForTarget(costMinor, gp, tax) : null, floor != null ? priceForProfit(costMinor, floor, tax) : null].filter((p): p is number => p != null);
+  if (!needed.length) return null;
+  return { onTarget: false, priceMinor: Math.max(...needed), under: missGp && missProfit ? 'both' : missGp ? 'gp' : 'profit' };
 }
 
 /** "81.0%". */
@@ -69,20 +100,39 @@ export interface MenuCostLine {
 export interface MenuCostSummary {
   /** Mean GP over the drinks that have a cost and a price. */
   averageGp: number | null;
+  /** Mean profit per drink over the same drinks, in minor units. */
+  averageProfitMinor: number | null;
   underTarget: number;
   /** Drinks whose cost is still incomplete. */
   incomplete: number;
   priced: number;
 }
 
-/** The footer of a menu costing: average GP, how many drinks miss the target, how many are incomplete. */
-export function menuSummary(rows: MenuCostLine[], targetGp: number | null | undefined, tax: TaxRule): MenuCostSummary {
+const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+
+/** The footer of a menu costing: average GP and profit, how many priced drinks miss a target, how many are incomplete. */
+export function menuSummary(rows: MenuCostLine[], targets: Targets, tax: TaxRule): MenuCostSummary {
   const margins = rows.map((r) => (r.costMinor == null ? null : margin(r.costMinor, r.priceMinor, tax)));
-  const gps = margins.filter((m): m is Margin => !!m).map((m) => m.gp);
+  const priced = margins.filter((m): m is Margin => !!m);
+  const under = (m: Margin) => (targets.gp != null && m.gp < targets.gp) || (targets.minProfitMinor != null && m.profitMinor < targets.minProfitMinor);
   return {
-    averageGp: gps.length ? gps.reduce((a, b) => a + b, 0) / gps.length : null,
-    underTarget: targetGp == null ? 0 : margins.filter((m) => m && m.gp < targetGp).length,
+    averageGp: mean(priced.map((m) => m.gp)),
+    averageProfitMinor: mean(priced.map((m) => m.profitMinor)),
+    underTarget: priced.filter(under).length,
     incomplete: rows.filter((r) => r.costMinor == null || r.missing > 0).length,
-    priced: gps.length,
+    priced: priced.length,
   };
+}
+
+/** "78% GP and at least $11.00 a drink": what a venue's targets ask for; null with none set. */
+export function targetsLine(targets: Targets, money: (minor: number) => string): string | null {
+  const parts = [targets.gp != null ? `${targets.gp}% GP` : null, targets.minProfitMinor != null ? `at least ${money(targets.minProfitMinor)} a drink` : null].filter(Boolean);
+  return parts.length ? parts.join(' and ') : null;
+}
+
+/** The tag on a drink under target: "Under 78% GP", "Makes under $11.00", "Under both targets". */
+export function underLabel(under: Under, targets: Targets, money: (minor: number) => string): string {
+  if (under === 'both') return 'Under both targets';
+  if (under === 'gp') return `Under ${targets.gp}% GP`;
+  return `Makes under ${money(targets.minProfitMinor ?? 0)}`;
 }
