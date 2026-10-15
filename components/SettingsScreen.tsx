@@ -5,7 +5,7 @@ import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
-import { AccountSection, SignOutSection } from '@/components/screens/settings/AccountSection';
+import { AccountSection, AppVersion, SignOutSection } from '@/components/screens/settings/AccountSection';
 import { PreferencesSection, TryItSection } from '@/components/screens/settings/PreferencesSection';
 import { ProfileSection } from '@/components/screens/settings/ProfileSection';
 import { VenuesSection } from '@/components/screens/settings/VenuesSection';
@@ -69,6 +69,7 @@ function Settings() {
           {wide ? null : <TryItSection />}
           <AccountSection />
           <SignOutSection onLogOut={() => void logOut()} />
+          <AppVersion />
         </View>
       </ScrollView>
     </View>

@@ -11,9 +11,11 @@ import { DraftEditScreen } from "@/components/screens/drink/edit/DraftEditScreen
  */
 export default function AddCocktailScreen() {
     const router = useRouter();
-    const { barId, draftId, name, menuSectionId, from } = useLocalSearchParams<{
+    const { barId, draftId, name, menuSectionId, from, round } = useLocalSearchParams<{
         barId?: string;
         from?: string;
+        /** "1" from the first round: the Old Fashioned, straight to Review, then back to the Library. */
+        round?: string;
         draftId?: string;
         name?: string;
         menuSectionId?: string;
@@ -32,11 +34,13 @@ export default function AddCocktailScreen() {
                     menuSectionId={menuSectionId}
                     initialName={name}
                     startFrom={from || null}
+                    firstRound={round === "1"}
                     embedded={false}
                     onClose={goBack}
                     onSaved={(id) => {
                         // From a menu, back to the menu; otherwise to the new drink.
                         if (menuSectionId) goBack();
+                        else if (round === "1") router.replace("/library");
                         else router.replace(`/cocktail/${id}`);
                     }}
                 />

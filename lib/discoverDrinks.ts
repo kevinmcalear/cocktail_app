@@ -86,7 +86,7 @@ export interface DiscoverDrink {
   bar: { name: string; handle: string; logo: string | null; locality: string | null; city: string | null };
   /** Its bar's menus: on now, or past with when ("Past · Mar 2024 to Jan 2025"); order 0 on now, 1 not dated, 2 past; `since` when its menu began. */
   menu: { onNow: boolean; past: string | null; order: number; since?: { year: number; month: number | null } | null };
-  /** Its styles ("martini", "zero-proof"); a server without 20261025100000 doesn't say. */
+  /** Its styles ("martini", "zero-proof"); a server without 20261025200000 doesn't say. */
   styles?: string[];
   /** Mixed list (p_mix): its place in the list, the cursor for the next page; else null. */
   pos?: number | null;
@@ -237,6 +237,23 @@ export interface DrinkFilter {
   /** Typed search: every word must match the drink's name, description, ingredients or bar. */
   search: string;
   area: Area;
+  /** "Not had yet": leave out the drinks you've had or ranked. */
+  notHad?: boolean;
+}
+
+/**
+ * "Not had yet": the drinks loaded so far without the ones you've had (your
+ * rank entries), and the totals less those.
+ * ponytail: filtered on the phone, a page at a time, so until every page is
+ * in, the counts can run a little high (had drinks on pages still to load,
+ * and bars where you've had everything). Upgrade: a p_not_had argument on
+ * discover_list and discover_bars, which is a migration.
+ */
+export function withoutHad(drinks: DiscoverDrink[], totals: { drinks: number; bars: number } | null, had: readonly string[]) {
+  if (!had.length) return { drinks, totals };
+  const seen = new Set(had);
+  const left = drinks.filter((d) => !seen.has(d.id));
+  return { drinks: left, totals: totals && { drinks: Math.max(left.length, totals.drinks - (drinks.length - left.length)), bars: totals.bars } };
 }
 
 /** Bars whose name (or a word in it), neighbourhood or city starts with the search, name matches first. */

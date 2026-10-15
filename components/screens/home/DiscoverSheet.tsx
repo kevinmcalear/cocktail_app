@@ -30,11 +30,13 @@ export interface FiltersSheetProps {
   closed: { count: number; shown: boolean; onShow: (on: boolean) => void };
   /** Drinks from past menus: off, the list is only what's on a menu now. */
   past: { shown: boolean; onShow: (on: boolean) => void };
+  /** "Not had yet": hide the drinks you've had or ranked. Signed in only. */
+  notHad?: { shown: boolean; onShow: (on: boolean) => void };
   onClose: () => void;
 }
 
-/** Styles, spirits and tastes, several at once, past menus and closed bars: the filters, wherever they're shown. */
-export function FilterGroups({ kinds, onChange, closed, past }: Pick<FiltersSheetProps, 'kinds' | 'onChange' | 'closed' | 'past'>) {
+/** Styles, spirits and tastes, several at once, past menus and closed bars, and what you haven't had: the filters, wherever they're shown. */
+export function FilterGroups({ kinds, onChange, closed, past, notHad }: Pick<FiltersSheetProps, 'kinds' | 'onChange' | 'closed' | 'past' | 'notHad'>) {
   const toggle = (id: string) => onChange(kinds.includes(id) ? kinds.filter((k) => k !== id) : [...kinds, id]);
   return (
     <>
@@ -57,14 +59,23 @@ export function FilterGroups({ kinds, onChange, closed, past }: Pick<FiltersShee
         </View>
         <Caption tone="muted">Drinks bars no longer pour, and bars that have shut, kept for their history. Search finds them either way.</Caption>
       </View>
+      {notHad ? (
+        <View style={styles.group}>
+          <Caption tone="muted">You</Caption>
+          <View style={styles.chips}>
+            <Chip multi quiet label="Not had yet" selected={notHad.shown} onPress={() => notHad.onShow(!notHad.shown)} />
+          </View>
+          <Caption tone="muted">Hides the drinks you’ve had or ranked. Catch them all.</Caption>
+        </View>
+      ) : null}
     </>
   );
 }
 
 /** Clear, and "Show 12 bars" to close: the filters sheet's buttons, and the options sheet's. */
-export function filterButtons({ onChange, closed, past, bars, onClose }: Omit<FiltersSheetProps, 'kinds'>) {
+export function filterButtons({ onChange, closed, past, notHad, bars, onClose }: Omit<FiltersSheetProps, 'kinds'>) {
   return {
-    action: <Button label="Clear" variant="ghost" onPress={() => (onChange([]), closed.onShow(false), past.onShow(false))} />,
+    action: <Button label="Clear" variant="ghost" onPress={() => (onChange([]), closed.onShow(false), past.onShow(false), notHad?.onShow(false))} />,
     footer: <Button label={bars === null ? 'Show bars' : `Show ${bars} ${bars === 1 ? 'bar' : 'bars'}`} onPress={onClose} />,
   };
 }

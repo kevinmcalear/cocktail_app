@@ -81,8 +81,8 @@ export function DoneStep({
   const facts = useBarFacts(profileId).data;
   const visibility = (useBarPublishing(barId).data?.pageVisibility ?? null) as PageVisibility | null;
   const held = claimState === 'pending' ? claim?.setup?.page_visibility : null;
-  // Approval starts the page at Names unless setup kept a choice on the claim.
-  const shown = claimState === 'pending' ? (held ?? 'locked') : (visibility ?? 'locked');
+  // Approval starts the page at Menu unless setup kept a choice on the claim.
+  const shown = claimState === 'pending' ? (held ?? 'description') : (visibility ?? 'description');
   const names = invites.map((i) => i.name?.trim().split(/\s+/)[0] || i.email);
   const count = onItsWay({ claim: claimState, invites: invites.length, waitingFiles });
   const tint = `${GROUND_TINTS.find((t) => normalizeHex(t.hex) === normalizeHex(brand?.ground_tint ?? ''))?.label ?? 'Standard'} ground`;

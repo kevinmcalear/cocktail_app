@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
-  newDraftId, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY,
+  newDraftId, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY, parseYear,
 } from './drinkWizard';
 import { draftSketchInputs } from './sketch/draft';
 import { RECIPE_UNITS } from './units';
@@ -96,6 +96,16 @@ assert.equal(creatorProfileId({ ...named, creator: 'nobody' }, 'me-1'), null);
 assert.equal(creatorProfileId({ ...named, creator: { id: 'p-9', name: 'Sam' } }, 'me-1'), 'p-9');
 
 assert.ok(stepFilled('credits', { ...named, coCreators: [{ id: 'p-2', name: 'Ali' }] }), 'naming who else made it fills the step');
+assert.ok(stepFilled('credits', { ...named, originYear: 2019 }), 'a year fills the step');
+assert.ok(stepFilled('credits', { ...named, place: { id: 'bar-1', name: 'Attaboy' } }), 'a bar fills the step');
+
+// A year is four digits, from 1600 (the database's floor) to this one; anything else is not yet a year.
+assert.equal(parseYear('1998', 2026), 1998);
+assert.equal(parseYear(' 2026 ', 2026), 2026);
+assert.equal(parseYear('2027', 2026), null, 'not a year still to come');
+assert.equal(parseYear('1599', 2026), null);
+assert.equal(parseYear('19', 2026), null, 'half typed');
+assert.equal(parseYear('19a8', 2026), null);
 
 // The spec saves ingredients then garnishes, and the sketch sees both.
 const negroni: WizardDraft = {
