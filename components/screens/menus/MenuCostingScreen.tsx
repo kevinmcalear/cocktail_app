@@ -154,6 +154,7 @@ function Row({ row, wide, tax, targets, currency, money }: { row: MenuCostRow; w
           disabled={set.isPending}
           onPress={() => set.mutate(target.priceMinor)}
         />
+        {set.error && !editing ? <Caption tone="accent" role="alert">Couldn’t save. Try again.</Caption> : null}
       </View>
     ) : null;
   const cell = (text: string, tone: 'ink' | 'muted' | 'accent' = 'ink') => (

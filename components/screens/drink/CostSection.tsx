@@ -129,6 +129,7 @@ function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, p
           onPricing={() => router.push(`/settings/bar/${barId}/pricing` as Href)}
         />
       ) : null}
+      {setPrice.error && !editing ? <Caption tone="accent" role="alert">{"Couldn't save the price. Check your connection and try again."}</Caption> : null}
       {canEdit ? (
         editing ? (
           <View style={styles.edit}>
