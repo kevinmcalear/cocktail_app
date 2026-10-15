@@ -9,6 +9,8 @@ import { Eyebrow, WizardChip } from './WizardChrome';
 
 /** How many chips show before "More": the canvas draws seven glasses, then More. */
 const FIRST = 7;
+/** The desktop page's rows (make-create-desktop): four, then More. */
+const COMPACT = 4;
 
 interface PickStepProps {
   label: string;
@@ -27,13 +29,15 @@ interface PickStepProps {
   children?: ReactNode;
   /** The venue's own (its glasses): listed first under "Your …", then the rest under "Other …". */
   mine?: { has: (p: WizardPick) => boolean; label: string; restLabel: string };
+  /** One row on the desktop page: four chips, then More shows the rest and the field for your own. */
+  compact?: boolean;
 }
 
 /**
  * Big chips for a step's common choices (existing rows first, so nothing is
  * duplicated) and a field for your own, made when the drink is saved.
  */
-export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why, children, mine }: PickStepProps) {
+export function PickStep({ label, options, selected, multi, onChange, ownLabel, suggested, why, children, mine, compact }: PickStepProps) {
   const [all, setAll] = useState(false);
   // Your own choices stay on the list once added.
   const extra = selected.filter((s) => !options.some((o) => samePick(o, s)));
@@ -42,7 +46,7 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel, 
   const listed = [...(guess ? [guess] : []), ...extra, ...options.filter((o) => !guess || !samePick(o, guess))];
   // The venue's own lead, in the same order among themselves.
   const list = mine ? [...listed.filter(mine.has), ...listed.filter((p) => !mine.has(p))] : listed;
-  const shown = all ? list : list.slice(0, Math.max(FIRST, extra.length + selected.length));
+  const shown = all ? list : list.slice(0, Math.max(compact ? COMPACT : FIRST, extra.length + selected.length));
   const ownCount = mine ? shown.filter(mine.has).length : 0;
   const order = (p: WizardPick) => selected.findIndex((s) => samePick(s, p));
 
@@ -63,7 +67,7 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel, 
       onPress={() => toggle(p)}
     />
   );
-  const more = !all && list.length > shown.length ? <WizardChip label="More" kind="button" onPress={() => setAll(true)} /> : null;
+  const more = !all && (list.length > shown.length || compact) ? <WizardChip label="More" kind="button" onPress={() => setAll(true)} /> : null;
   const rest = shown.slice(ownCount);
 
   return (
@@ -91,14 +95,16 @@ export function PickStep({ label, options, selected, multi, onChange, ownLabel, 
       {guess && why ? <Caption tone="muted">{`Suggested: ${why}.`}</Caption> : null}
       {multi && selected.length > 1 ? <Caption tone="muted">{selected.map((s) => s.name).join(', then ')}</Caption> : null}
       {children}
-      <OwnField
-        label={ownLabel}
-        onAdd={(name) => {
-          const hit = list.find((o) => samePick(o, { id: null, name }));
-          const pick = hit ?? { id: null, name };
-          if (order(pick) < 0) onChange(multi ? [...selected, pick] : [pick]);
-        }}
-      />
+      {compact && !all ? null : (
+        <OwnField
+          label={ownLabel}
+          onAdd={(name) => {
+            const hit = list.find((o) => samePick(o, { id: null, name }));
+            const pick = hit ?? { id: null, name };
+            if (order(pick) < 0) onChange(multi ? [...selected, pick] : [pick]);
+          }}
+        />
+      )}
     </View>
   );
 }

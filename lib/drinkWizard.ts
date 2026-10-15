@@ -95,6 +95,8 @@ export interface WizardDraft {
    * if that bites.
    */
   photos?: Partial<Record<ImageAngle, string>>;
+  /** The menu price at a venue (items.price_minor), set on the desktop page beside the cost; unset leaves it for later. */
+  priceMinor?: number | null;
 }
 
 export const EMPTY_DRAFT: WizardDraft = {
