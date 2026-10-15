@@ -128,10 +128,10 @@ function NewMenuSteps({ visible, onClose, menus, now }: NewMenuSheetProps) {
 
       {step === 'name' || (photo && step === 'when') ? (
         <>
-          {photo ? null : <MonoLabel>What’s it called?</MonoLabel>}
+          <MonoLabel>{photo ? 'Name' : 'What’s it called?'}</MonoLabel>
           <Field
             label="Name"
-            hideLabel={!photo}
+            hideLabel
             value={m.name}
             onChangeText={m.setName}
             placeholder={photo ? 'From the photo' : m.home ? 'Friday at ours' : (m.ideas[0] ?? 'Winter menu')}

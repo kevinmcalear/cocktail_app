@@ -94,8 +94,9 @@ function DeskBody({ onClose, menus, now }: NewMenuDeskProps) {
         void latest.current();
       }
     };
-    window.addEventListener('keydown', key);
-    return () => window.removeEventListener('keydown', key);
+    // Capture: a text field can stop Enter before it bubbles up.
+    window.addEventListener('keydown', key, true);
+    return () => window.removeEventListener('keydown', key, true);
   }, []);
 
   const cardSections = m.start.kind === 'copy' ? (m.source?.sections ?? null) : pasting ? paste.preview.map((s) => ({ id: s.key, name: s.name, drinks: s.drinks })) : null;

@@ -73,7 +73,7 @@ export function SavedCards({ menus, layouts, start, now, onPick }: { menus: Menu
       {items.map((it) => (
         <PressableScale key={it.key} role="radio" aria-checked={picked === it.key} accessibilityLabel={`${it.name}. ${it.line}`} onPress={() => onPick(it.start)} style={[styles.savedCard, { borderColor: picked === it.key ? ds.accentText : ds.c.line, backgroundColor: ds.c.surface }]}>
           <View style={[styles.savedPic, { backgroundColor: ds.c.paper }]} aria-hidden>
-            {it.menu ? <MenuVisual name={it.name} coverUrl={it.menu.coverUrl} coverPosition={it.menu.coverPosition} pictures={it.menu.pictures} height={52} /> : <Rules />}
+            {it.menu ? <MenuVisual name={it.name} coverUrl={it.menu.coverUrl} coverPosition={it.menu.coverPosition} pictures={it.menu.pictures.slice(0, 2)} height={52} /> : <Rules />}
           </View>
           <View style={styles.savedText}>
             <DsText variant="body" numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
@@ -181,11 +181,12 @@ const styles = StyleSheet.create({
   tile: { flexBasis: '48%', flexGrow: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, minHeight: 64, padding: space.md, borderRadius: radius.control + 2, borderWidth: 1, borderCurve: 'continuous' },
   icon: { width: 32, height: 32, borderRadius: radius.control - 4, alignItems: 'center', justifyContent: 'center' },
   saved: { flexDirection: 'row', gap: space.sm },
-  savedCard: { flex: 1, minWidth: 0, borderRadius: radius.control + 2, borderWidth: 1, overflow: 'hidden', borderCurve: 'continuous' },
+  savedCard: { flexBasis: '23%', flexGrow: 0, minWidth: 0, borderRadius: radius.control + 2, borderWidth: 1, overflow: 'hidden', borderCurve: 'continuous' },
   savedPic: { height: 52, justifyContent: 'center' },
   savedText: { padding: space.sm, gap: 2 },
   rules: { alignItems: 'center', gap: space.xs + 1 },
-  paper: { width: '100%', aspectRatio: 1, borderRadius: radius.card, overflow: 'hidden', alignItems: 'center', paddingVertical: space.xl, paddingHorizontal: space.lg, borderCurve: 'continuous' },
+  // Square, as big as the column's height allows.
+  paper: { flex: 1, maxWidth: '100%', aspectRatio: 1, borderRadius: radius.card, overflow: 'hidden', alignItems: 'center', paddingVertical: space.xl, paddingHorizontal: space.lg, borderCurve: 'continuous' },
   card: { flex: 1, width: '100%', alignItems: 'center', overflow: 'hidden', gap: space.sm },
   page: { flex: 1, width: '100%' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
