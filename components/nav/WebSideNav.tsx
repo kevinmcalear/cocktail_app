@@ -14,6 +14,7 @@ import { isApplePlatform } from '@/lib/platformKeys';
 import { navCurrent } from '@/lib/shellNav';
 
 import { WeekNav } from '@/components/screens/week/WeekNav';
+import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 
 import { CreateSheet } from './CreateSheet';
 import { useNavPlaces, type Place } from './navPlaces';
@@ -28,6 +29,8 @@ export interface SideNavProps {
   searching: boolean;
   onSearch: () => void;
   onNew: () => void;
+  /** Tabs the venue just switched on, not opened yet (hooks/useFeatureNews.ts). */
+  dots: string[];
 }
 
 /**
@@ -51,6 +54,7 @@ function SideNav() {
   const [creating, setCreating] = useState(false);
   const searching = useSearchPalette((s) => s.open);
   const setSearching = useSearchPalette((s) => s.setOpen);
+  const dots = useFeatureNewsDots();
 
   // A page that isn't a row (a drink, the add wizard) keeps the row it came from lit.
   const rows = [...places.tabs, places.history, ...places.work, ...places.venuePlaces, places.week].filter((p): p is Place => !!p);
@@ -87,6 +91,7 @@ function SideNav() {
     searching: searching || pathname === '/search',
     onSearch: () => setSearching(true),
     onNew: () => setCreating(true),
+    dots,
   };
   return (
     <>
@@ -103,10 +108,10 @@ function SideNav() {
  * Tonight, Prep, Study, History, Back bar and This week are here. Pages need no header row of
  * their own.
  */
-function Sidebar({ current, go, searching, onSearch, onNew }: SideNavProps) {
+function Sidebar({ current, go, searching, onSearch, onNew, dots }: SideNavProps) {
   const ds = useDs();
   const { venue, tabs, work, venuePlaces, history, week } = useNavPlaces();
-  const row = (p: Place) => <NavRow key={p.key} label={p.label} icon={p.icon} current={current === p.key} onPress={() => go(p)} />;
+  const row = (p: Place) => <NavRow key={p.key} label={p.label} icon={p.icon} current={current === p.key} isNew={!!p.tab && dots.includes(p.key)} onPress={() => go(p)} />;
   // History sits right under Discover.
   const nav = tabs.flatMap((t) => (t.key === 'discover' && history ? [t, history] : [t]));
   return (

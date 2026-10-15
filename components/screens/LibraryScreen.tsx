@@ -11,6 +11,7 @@ import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet'
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { SearchPill } from '@/components/screens/home/DiscoverControls';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
+import { FeatureNewsLine } from '@/components/screens/library/FeatureNewsLine';
 import { Filter, FilterRow } from '@/components/screens/library/LibraryChips';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
@@ -141,6 +142,7 @@ export function LibraryScreen() {
   const header = (
     <View style={styles.header}>
       <PageHeader title="Library" width="full" display />
+      <FeatureNewsLine />
       <SearchPill query="" placeholder={`Search ${active?.name ?? 'your drinks'}`} onOpen={() => setSearching(true)} onClear={() => setQuery('')} />
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
       <FilterRow

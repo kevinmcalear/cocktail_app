@@ -5,6 +5,7 @@ import { View } from 'react-native';
 
 import { useDs } from '@/components/ds';
 import { useBottomBar } from '@/hooks/useBottomBar';
+import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useMode } from '@/hooks/useMode';
 import { useServiceDay } from '@/hooks/useServiceDay';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
@@ -41,6 +42,9 @@ function Tabs() {
   // tab's room (at home You steps out and the avatar opens it).
   const bottomBar = useBottomBar();
   const [creating, setCreating] = useState(false);
+  // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
+  const dots = useFeatureNewsDots();
+  const dot = (name: PhoneTab) => <NativeTabs.Trigger.Badge hidden={!dots.some((d) => d === name)} />;
   // Venue and home have different tabs, and switching remounts them all:
   // wait for the mode (a moment, on a first launch) and the venue's switches
   // rather than open the wrong set.
@@ -52,7 +56,7 @@ function Tabs() {
   // bar hides unselected labels past three tabs; "labeled" keeps every tab named.
   return (
     <>
-      <NativeTabs tintColor={ds.accentText} minimizeBehavior="onScrollDown" labelVisibilityMode="labeled">
+      <NativeTabs tintColor={ds.accentText} badgeBackgroundColor={ds.accentFill.fill} minimizeBehavior="onScrollDown" labelVisibilityMode="labeled">
         <NativeTabs.Trigger name="index" hidden={off('index')}>
           {/* No filled variant of a dated calendar: the tint marks the selected tab. */}
           <NativeTabs.Trigger.Icon
@@ -61,6 +65,7 @@ function Tabs() {
             renderingMode="template"
           />
           <NativeTabs.Trigger.Label>Tonight</NativeTabs.Trigger.Label>
+          {dot('index')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="library" hidden={off('library')}>
           <NativeTabs.Trigger.Icon sf={{ default: 'book', selected: 'book.fill' }} md="menu_book" />
@@ -73,10 +78,12 @@ function Tabs() {
         <NativeTabs.Trigger name="prep" hidden={off('prep')}>
           <NativeTabs.Trigger.Icon sf={{ default: 'flask', selected: 'flask.fill' }} md="science" />
           <NativeTabs.Trigger.Label>Prep</NativeTabs.Trigger.Label>
+          {dot('prep')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="test" hidden={off('test')}>
           <NativeTabs.Trigger.Icon sf={{ default: 'rectangle.stack', selected: 'rectangle.stack.fill' }} md="style" />
           <NativeTabs.Trigger.Label>Study</NativeTabs.Trigger.Label>
+          {dot('test')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="discover">
           <NativeTabs.Trigger.Icon sf={{ default: 'safari', selected: 'safari.fill' }} md="explore" />

@@ -5,8 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { useBottomBar, useBottomSearchFocus } from '@/hooks/useBottomBar';
+import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
@@ -105,6 +106,8 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
   const bottomBar = useBottomBar();
   const searching = useBottomSearchFocus((s) => s.focused);
   const [creating, setCreating] = useState(false);
+  // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
+  const dots: string[] = useFeatureNewsDots();
   const tabs = phoneTabs(mode === 'home', has, bottomBar).flatMap((name) => (name === 'new' ? [] : [TABS[name]]));
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
@@ -119,16 +122,19 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
         <View role="tablist" style={styles.row}>
           {tabs.map((t) => {
             const selected = current === t.name;
-            const color = selected ? ds.accentText : ds.c.muted;
+            const isNew = dots.includes(t.name);
+            // The board lifts a new tab's label and icon to ink, beside its dot.
+            const color = selected ? ds.accentText : isNew ? ds.c.ink : ds.c.muted;
             return (
               <PressableScale
                 key={t.name}
                 role="tab"
                 aria-selected={selected}
-                accessibilityLabel={t.label}
+                accessibilityLabel={isNew ? `${t.label}, new` : t.label}
                 onPress={() => go(t.name)}
                 style={[styles.tab, selected && { backgroundColor: ds.c.line }]}
               >
+                {isNew ? <View style={[styles.dot, { backgroundColor: ds.accentFill.fill }]} /> : null}
                 <TabIcon name={t.icon} size={20} color={color} />
                 <DsText variant="caption" color={color} numberOfLines={1}>
                   {t.label}
@@ -158,4 +164,6 @@ const styles = StyleSheet.create({
   tabs: { flex: 1, height: WEB_TAB_BAR_HEIGHT },
   row: { flex: 1, flexDirection: 'row', padding: space.xs },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: WEB_TAB_BAR_HEIGHT / 2, gap: 2 },
+  // The board's new-tab dot: 8 across, up by the icon's top right.
+  dot: { position: 'absolute', top: 6, left: '50%', marginLeft: 18, width: space.sm, height: space.sm, borderRadius: radius.pill },
 });
