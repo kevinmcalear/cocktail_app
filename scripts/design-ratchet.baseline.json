@@ -8,7 +8,6 @@
     "components/CategoryTree.tsx": 2,
     "components/DialogHost.tsx": 8,
     "components/ErrorScreen.tsx": 14,
-    "components/GenerateImageButton.tsx": 14,
     "components/ImageCarousel.tsx": 5,
     "components/IngredientPickerSheet.tsx": 7,
     "components/ItemDetailLayout.tsx": 34,
@@ -16,15 +15,12 @@
     "components/SearchBar.tsx": 8,
     "components/auth/EmailLinkGate.tsx": 1,
     "components/cocktail/CocktailPhotoPlaceholder.tsx": 2,
-    "components/cocktail/SortableImageList.tsx": 20,
     "components/drink/AddDrinkScreen.tsx": 6,
     "components/drink/DrinkDetailScreen.tsx": 7,
     "components/drink/DrinkFormFields.tsx": 2,
     "components/drink/EditDrinkScreen.tsx": 8,
     "components/drink/drinkImages.ts": 9,
     "components/legal/LegalPage.tsx": 6,
-    "components/recipe/SortableRecipeList.tsx": 28,
-    "components/recipe/UnitPicker.tsx": 3,
     "components/ui/AdaptiveSheetModal.tsx": 1,
     "components/ui/CustomIcons.tsx": 1,
     "components/ui/ErrorState.tsx": 4,
@@ -47,11 +43,10 @@
     "lib/recipeUtils.ts": 2
   },
   "longFiles": {
-    "app/add-ingredient.tsx": 743,
-    "app/ingredient/[id]/edit.tsx": 571,
+    "app/add-ingredient.tsx": 742,
+    "app/ingredient/[id]/edit.tsx": 570,
     "components/ItemDetailLayout.tsx": 725,
     "components/drink/AddDrinkScreen.tsx": 353,
-    "components/recipe/SortableRecipeList.tsx": 585,
     "components/ui/CustomIcons.tsx": 504
   }
 }
