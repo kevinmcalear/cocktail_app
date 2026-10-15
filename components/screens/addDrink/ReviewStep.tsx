@@ -46,7 +46,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
     ['ice', draft.ice?.name ?? ''],
     ['garnish', draft.garnishes.map(finishLabel).join(', ')],
     ['credits', credits(draft, hasProfile)],
-    ['notes', [draft.description.trim(), draft.notes.trim()].filter(Boolean).join('\n\n')],
+    ['notes', [draft.description.trim(), draft.notes.trim() && draft.notesPrivate ? `Just me: ${draft.notes.trim()}` : draft.notes.trim()].filter(Boolean).join('\n\n')],
     ['publish', draft.publish ? PUBLISH_COPY[draft.publish].label : barId ? followed : 'Private'],
   ];
   return (

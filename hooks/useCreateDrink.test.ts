@@ -38,6 +38,8 @@ const mockTaken = new Set<string>();
 const TAKEN_ID = '11111111-2222-3333-4444-555555555555';
 const mockTakenNames = new Set<string>();
 const mockIngredientInserts: Record<string, unknown>[] = [];
+// Rows for other tables, by table.
+const mockOtherInserts: [string, Record<string, unknown>][] = [];
 jest.mock('@/lib/supabase', () => {
   const chain = (result: () => unknown) => {
     const q: Record<string, unknown> = {};
@@ -61,6 +63,7 @@ jest.mock('@/lib/supabase', () => {
             mockIngredientInserts.push(row);
             if (mockTakenNames.has(row.name as string)) return chain(() => ({ data: null, error: { code: 'P0001', message: 'taken', hint: TAKEN_ID } }));
           }
+          if (table !== 'items') mockOtherInserts.push([table, row]);
           if (table !== 'items' || row.item_type !== 'cocktail') return chain(() => ({ data: { id: 'new-row' }, error: null }));
           mockInserts.push(row);
           const id = row.id as string | undefined;
@@ -226,4 +229,18 @@ test('at home, where and when it was first made are saved; another bar on it is 
 
   await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', originYear: 2019 }, barId: null, myProfileId: 'p-me' });
   expect(mockInserts[1]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: null, credit_status: 'claimed' });
+});
+
+test('"Just me" notes are kept apart as yours, never on the drink', async () => {
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const run = result.current.mutationFn;
+  mockInserts.length = 0;
+  mockOtherInserts.length = 0;
+  await run({ draft: { ...EMPTY_DRAFT, id: 'd-private', name: 'Ash Garden', notes: ' Less agave next time. ', notesPrivate: true }, barId: null, myProfileId: null });
+  expect(mockInserts[0].notes).toBeNull();
+  expect(mockOtherInserts).toContainEqual(['item_private_notes', { item_id: 'd-private', body: 'Less agave next time.' }]);
+
+  await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Dry shake hard.' }, barId: null, myProfileId: null });
+  expect(mockInserts[1].notes).toBe('Dry shake hard.');
+  expect(mockOtherInserts.filter(([t]) => t === 'item_private_notes')).toHaveLength(1);
 });
