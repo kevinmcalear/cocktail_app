@@ -6,7 +6,6 @@
     "app/ingredient/[id]/edit.tsx": 20,
     "components/BarAssignmentAccordion.tsx": 6,
     "components/CategoryTree.tsx": 2,
-    "components/DialogHost.tsx": 8,
     "components/ErrorScreen.tsx": 14,
     "components/GenerateImageButton.tsx": 14,
     "components/ImageCarousel.tsx": 5,
