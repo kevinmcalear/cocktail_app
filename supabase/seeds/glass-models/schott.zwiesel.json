@@ -1,0 +1,702 @@
+{
+ "maker": "schott.zwiesel",
+ "models": [
+  {
+   "name": "Age Shot",
+   "series": "Age & Fave",
+   "designer": null,
+   "model_code": "124298",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 60,
+   "capacity_as_stated": "60 ml",
+   "height_mm": 61,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=111"
+   ]
+  },
+  {
+   "name": "Age Whisky",
+   "series": "Age & Fave",
+   "designer": null,
+   "model_code": "124299",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 294,
+   "capacity_as_stated": "294 ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=111"
+   ]
+  },
+  {
+   "name": "Age Allround",
+   "series": "Age & Fave",
+   "designer": null,
+   "model_code": "124300",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 297,
+   "capacity_as_stated": "297 ml",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=111"
+   ]
+  },
+  {
+   "name": "Age Longdrink",
+   "series": "Age & Fave",
+   "designer": null,
+   "model_code": "124301",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 410,
+   "capacity_as_stated": "410 ml",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=111"
+   ]
+  },
+  {
+   "name": "Fave Shot",
+   "series": "Age & Fave",
+   "designer": null,
+   "model_code": "124302",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 60,
+   "capacity_as_stated": "60 ml",
+   "height_mm": 61,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=111"
+   ]
+  },
+  {
+   "name": "Fave Whisky",
+   "series": "Age & Fave",
+   "designer": null,
+   "model_code": "124303",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 294,
+   "capacity_as_stated": "294 ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/spirit-glasses/whisky-glass-fave",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=111"
+   ]
+  },
+  {
+   "name": "Fave Allround",
+   "series": "Age & Fave",
+   "designer": null,
+   "model_code": "124304",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 297,
+   "capacity_as_stated": "297 ml",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=111"
+   ]
+  },
+  {
+   "name": "Fave Longdrink",
+   "series": "Age & Fave",
+   "designer": null,
+   "model_code": "124305",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 410,
+   "capacity_as_stated": "410 ml",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=111"
+   ]
+  },
+  {
+   "name": "Bar Special Sparkling Wine Saucer",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "123620",
+   "glass": "coupe",
+   "variant": "coupe_saucer",
+   "capacity_ml": 281,
+   "capacity_as_stated": "281 ml",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Premium Sparkling Wine Glass with effervescence point",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "124325",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 384,
+   "capacity_as_stated": "384 ml",
+   "height_mm": 232,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Margarita",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "123627",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 283,
+   "capacity_as_stated": "283 ml",
+   "height_mm": 166,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/cocktail-glasses/margarita-glass-bar-special",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Hurricane",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "123628",
+   "glass": "collins",
+   "variant": "collins_hurricane",
+   "capacity_ml": 530,
+   "capacity_as_stated": "530 ml",
+   "height_mm": 183,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/cocktail-glasses/hurricane-glass-bar-special",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Gin Tonic",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "130002",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 696,
+   "capacity_as_stated": "696 ml",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/cocktail-glasses/gin-tonic-glass-bar-special-set-of-4",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special PARTY Dancing Tumbler",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "123629",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 396,
+   "capacity_as_stated": "396 ml",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Martini (Form 8213, Classico)",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "123658",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": 272,
+   "capacity_as_stated": "272 ml",
+   "height_mm": 179,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/cocktail-glasses/martini-glass-bar-special",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Grappa (Form 8213, Classico)",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "120518",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 95,
+   "capacity_as_stated": "95 ml",
+   "height_mm": 174,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/spirit-glasses/grappa-glass-bar-special",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Whisky Tasting",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "130001",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 218,
+   "capacity_as_stated": "218 ml",
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Whisky Nosing",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "130000",
+   "glass": "snifter",
+   "variant": "snifter_glencairn",
+   "capacity_ml": 322,
+   "capacity_as_stated": "322 ml",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/spirit-glasses/whisky-nosing-tumbler-bar-special-set-of-4",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Brandy XXL",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "123633",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 774,
+   "capacity_as_stated": "774 ml",
+   "height_mm": 163,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/spirit-glasses/cognac-glass-xxl-bar-special",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Allround",
+   "series": "Bar Special",
+   "designer": "Charles Schumann",
+   "model_code": "123636",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "330 ml",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/drinking-glasses/water-glasses/allround-glass-bar-special",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Whisky",
+   "series": "Bar Special",
+   "designer": "Charles Schumann",
+   "model_code": "123638",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 352,
+   "capacity_as_stated": "352 ml",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/tumbler/whisky-glass-bar-special",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Bar Special Longdrink",
+   "series": "Bar Special",
+   "designer": "Charles Schumann",
+   "model_code": "123639",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 361,
+   "capacity_as_stated": "361 ml",
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=113"
+   ]
+  },
+  {
+   "name": "Classico Sparkling Wine / Champagne with effervescence point",
+   "series": "Classico",
+   "designer": null,
+   "model_code": "123657",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": 210,
+   "capacity_as_stated": "210 ml",
+   "height_mm": 242,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=117"
+   ]
+  },
+  {
+   "name": "Forté Sparkling Wine with effervescence point",
+   "series": "Forté",
+   "designer": null,
+   "model_code": "123616",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 227,
+   "capacity_as_stated": "227 ml",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=121"
+   ]
+  },
+  {
+   "name": "Fortissimo Sparkling Wine / Champagne with effervescence point",
+   "series": "Fortissimo",
+   "designer": null,
+   "model_code": "123686",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": 240,
+   "capacity_as_stated": "240 ml",
+   "height_mm": 267,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=123"
+   ]
+  },
+  {
+   "name": "For You Sparkling Wine with effervescence point",
+   "series": "For You",
+   "designer": null,
+   "model_code": "121872",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": 210,
+   "capacity_as_stated": "210 ml",
+   "height_mm": 221,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=125"
+   ]
+  },
+  {
+   "name": "For You Shot (Form 6500)",
+   "series": "For You",
+   "designer": null,
+   "model_code": "121874",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 75,
+   "capacity_as_stated": "75 ml",
+   "height_mm": 63,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=125"
+   ]
+  },
+  {
+   "name": "For You Whisky (Form 6500)",
+   "series": "For You",
+   "designer": null,
+   "model_code": "121876",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 400,
+   "capacity_as_stated": "400 ml",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=125"
+   ]
+  },
+  {
+   "name": "Miovino Sparkling Wine with effervescence point",
+   "series": "Miovino",
+   "designer": null,
+   "model_code": "124052",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": 260,
+   "capacity_as_stated": "260 ml",
+   "height_mm": 228,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=131"
+   ]
+  },
+  {
+   "name": "Modo Sparkling Wine",
+   "series": "Modo",
+   "designer": null,
+   "model_code": "119901",
+   "glass": "flute",
+   "variant": "flute_slim",
+   "capacity_ml": 163,
+   "capacity_as_stated": "163 ml",
+   "height_mm": 250,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=133"
+   ]
+  },
+  {
+   "name": "Show Whisky",
+   "series": "Show & Stage",
+   "designer": null,
+   "model_code": "121877",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 334,
+   "capacity_as_stated": "334 ml",
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/spirit-glasses/set-of-4-whisky-glasses-show",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=135"
+   ]
+  },
+  {
+   "name": "Show Longdrink",
+   "series": "Show & Stage",
+   "designer": null,
+   "model_code": "121878",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 368,
+   "capacity_as_stated": "368 ml",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=135"
+   ]
+  },
+  {
+   "name": "Show Shot",
+   "series": "Show & Stage",
+   "designer": null,
+   "model_code": "123932",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 78,
+   "capacity_as_stated": "78 ml",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=135"
+   ]
+  },
+  {
+   "name": "Stage Whisky",
+   "series": "Show & Stage",
+   "designer": null,
+   "model_code": "121879",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 364,
+   "capacity_as_stated": "364 ml",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/spirit-glasses/set-of-4-whisky-glasses-stage",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=135"
+   ]
+  },
+  {
+   "name": "Stage Longdrink",
+   "series": "Show & Stage",
+   "designer": null,
+   "model_code": "121880",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 440,
+   "capacity_as_stated": "440 ml",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=135"
+   ]
+  },
+  {
+   "name": "Stage Shot",
+   "series": "Show & Stage",
+   "designer": null,
+   "model_code": "123933",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 78,
+   "capacity_as_stated": "78 ml",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=135"
+   ]
+  },
+  {
+   "name": "Simple Shot",
+   "series": "Simple",
+   "designer": null,
+   "model_code": "123662",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 46,
+   "capacity_as_stated": "46 ml",
+   "height_mm": 77,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/spirit-glasses/shot-glass-simple",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=137"
+   ]
+  },
+  {
+   "name": "Simple Whisky",
+   "series": "Simple",
+   "designer": null,
+   "model_code": "123664",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 300,
+   "capacity_as_stated": "300 ml",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.zwiesel-glas.com/en/shop/bar-glasses/tumbler/whisky-glass-simple",
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=137"
+   ]
+  },
+  {
+   "name": "Simple Longdrink",
+   "series": "Simple",
+   "designer": null,
+   "model_code": "123665",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 370,
+   "capacity_as_stated": "370 ml",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=137"
+   ]
+  },
+  {
+   "name": "Tulip Sparkling Wine / Champagne with effervescence point",
+   "series": "Tulip",
+   "designer": null,
+   "model_code": "123610",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 283,
+   "capacity_as_stated": "283 ml",
+   "height_mm": 231,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=139"
+   ]
+  },
+  {
+   "name": "Vinos Sparkling Wine with effervescence point",
+   "series": "Vinos",
+   "designer": null,
+   "model_code": "130010",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 238,
+   "capacity_as_stated": "238 ml",
+   "height_mm": 253,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": null,
+   "source_urls": [
+    "https://www.zwiesel-glas.com/media/e5/d6/2c/1770894525/Katalog_Consumer_2026_ES_XLQ.pdf#page=141"
+   ]
+  }
+ ]
+}
