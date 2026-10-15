@@ -9,7 +9,7 @@ import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useMode } from '@/hooks/useMode';
 import { useServiceDay } from '@/hooks/useServiceDay';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
-import { phoneTabs, type PhoneTab } from '@/lib/venueFeatures';
+import { phoneTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
 
 import { CreateSheet } from './CreateSheet';
 import { calendarDayImage, hasNumberedCalendarSymbols } from './tabCalendar';
@@ -44,7 +44,8 @@ function Tabs() {
   const [creating, setCreating] = useState(false);
   // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
   const dots = useFeatureNewsDots();
-  const dot = (name: PhoneTab) => <NativeTabs.Trigger.Badge hidden={!dots.some((d) => d === name)} />;
+  const isNew = (name: VenueTab) => dots.includes(name);
+  const dot = (name: VenueTab) => <NativeTabs.Trigger.Badge hidden={!isNew(name)} />;
   // Venue and home have different tabs, and switching remounts them all:
   // wait for the mode (a moment, on a first launch) and the venue's switches
   // rather than open the wrong set.
@@ -57,7 +58,7 @@ function Tabs() {
   return (
     <>
       <NativeTabs tintColor={ds.accentText} badgeBackgroundColor={ds.accentFill.fill} minimizeBehavior="onScrollDown" labelVisibilityMode="labeled">
-        <NativeTabs.Trigger name="index" hidden={off('index')}>
+        <NativeTabs.Trigger name="index" hidden={off('index')} accessibilityLabel={isNew('index') ? 'Tonight, new' : undefined}>
           {/* No filled variant of a dated calendar: the tint marks the selected tab. */}
           <NativeTabs.Trigger.Icon
             sf={hasNumberedCalendarSymbols ? (`${day}.calendar` as SFSymbol) : undefined}
@@ -75,12 +76,12 @@ function Tabs() {
           <NativeTabs.Trigger.Icon sf={{ default: 'list.bullet.rectangle', selected: 'list.bullet.rectangle.fill' }} md="restaurant_menu" />
           <NativeTabs.Trigger.Label>Menus</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="prep" hidden={off('prep')}>
+        <NativeTabs.Trigger name="prep" hidden={off('prep')} accessibilityLabel={isNew('prep') ? 'Prep, new' : undefined}>
           <NativeTabs.Trigger.Icon sf={{ default: 'flask', selected: 'flask.fill' }} md="science" />
           <NativeTabs.Trigger.Label>Prep</NativeTabs.Trigger.Label>
           {dot('prep')}
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="test" hidden={off('test')}>
+        <NativeTabs.Trigger name="test" hidden={off('test')} accessibilityLabel={isNew('test') ? 'Study, new' : undefined}>
           <NativeTabs.Trigger.Icon sf={{ default: 'rectangle.stack', selected: 'rectangle.stack.fill' }} md="style" />
           <NativeTabs.Trigger.Label>Study</NativeTabs.Trigger.Label>
           {dot('test')}

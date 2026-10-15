@@ -5,6 +5,7 @@ import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { NavMatch } from '@/lib/shellNav';
 import { canSeeTeam } from '@/lib/team';
+import { tabPath } from '@/lib/venueFeatures';
 
 import { useModeTabs } from './WebTabBar';
 
@@ -15,8 +16,6 @@ export interface Place extends NavMatch {
   /** Tabs switch with navigate; the rest open over them with push. */
   tab?: boolean;
 }
-
-const tabPath = (name: string) => (name === 'index' ? '/' : `/${name}`);
 
 /** Menus, for the phone's venue menu: a tab everywhere else. */
 export const MENUS_PLACE: Place = { key: 'menus', label: 'Menus', icon: 'text.alignleft', path: '/menus/all', prefix: '/menus' };

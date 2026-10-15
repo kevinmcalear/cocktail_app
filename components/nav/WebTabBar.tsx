@@ -107,7 +107,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
   const searching = useBottomSearchFocus((s) => s.focused);
   const [creating, setCreating] = useState(false);
   // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
-  const dots: string[] = useFeatureNewsDots();
+  const dots = useFeatureNewsDots();
   const tabs = phoneTabs(mode === 'home', has, bottomBar).flatMap((name) => (name === 'new' ? [] : [TABS[name]]));
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
@@ -122,7 +122,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
         <View role="tablist" style={styles.row}>
           {tabs.map((t) => {
             const selected = current === t.name;
-            const isNew = dots.includes(t.name);
+            const isNew = dots.some((d) => d === t.name);
             // The board lifts a new tab's label and icon to ink, beside its dot.
             const color = selected ? ds.accentText : isNew ? ds.c.ink : ds.c.muted;
             return (

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { dayWord, dotTabs, featureIcon, featureTab, firstName, lineNews, newsDetail, parseSeen, pendingNews, withSeen, type FeatureEvent } from './featureNews';
+import { dayWord, dotTabs, mergeSeen, featureIcon, featureTab, firstName, lineNews, newsDetail, parseSeen, pendingNews, withSeen, type FeatureEvent } from './featureNews';
 
 const NOW = new Date(2026, 9, 15, 18, 0).getTime();
 const hoursAgo = (h: number) => new Date(NOW - h * 3600_000).toISOString();
@@ -44,6 +44,15 @@ assert.deepEqual(parseSeen({ feature_news: { b: { tonight: { line: 'x', tab: 3 }
 assert.deepEqual(parseSeen({ feature_news: 'x' }), {});
 const old = withSeen({ b: { prep: { line: hoursAgo(20 * 24) } } }, 'b', tonight, 'line', NOW);
 assert.deepEqual(old, { b: { tonight: { line: tonight.at } } }, 'marks past two weeks are dropped');
+
+const phone = { b: { tonight: { line: tonight.at } } };
+const ipad = { b: { tonight: { tab: hoursAgo(3) }, prep: { line: prep.at } } };
+assert.deepEqual(
+  mergeSeen(phone, ipad, { b: { tonight: { tab: hoursAgo(1) } } }),
+  { b: { tonight: { line: tonight.at, tab: hoursAgo(1) }, prep: { line: prep.at } } },
+  'merging keeps every mark, the later time of each',
+);
+assert.deepEqual(mergeSeen(null, undefined), {});
 
 // --- wording ---
 assert.equal(dayWord(hoursAgo(1), NOW), 'today');

@@ -107,6 +107,27 @@ export function parseSeen(meta: unknown): FeatureNewsSeen {
 }
 
 /**
+ * Several copies of the marks (this device's, the account's as the server has
+ * it now, one not saved yet) as one: the later time of each mark wins, so a
+ * save from one place never undoes a mark made in another.
+ */
+export function mergeSeen(...all: (FeatureNewsSeen | null | undefined)[]): FeatureNewsSeen {
+  const out: FeatureNewsSeen = {};
+  const later = (a?: string, b?: string) => (!a ? b : !b ? a : time(b) > time(a) ? b : a);
+  for (const seen of all) {
+    for (const [bar, features] of Object.entries(seen ?? {})) {
+      for (const [feature, marks] of Object.entries(features)) {
+        const had = out[bar]?.[feature] ?? {};
+        const line = later(had.line, marks.line);
+        const tab = later(had.tab, marks.tab);
+        (out[bar] ??= {})[feature] = { ...(line ? { line } : {}), ...(tab ? { tab } : {}) };
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * The marks with one more seen, ready to save. Marks older than NEWS_DAYS are
  * dropped: news that old never shows, and the metadata rides in every token.
  */
