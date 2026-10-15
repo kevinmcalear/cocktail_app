@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { groupCatalog, groupLabel, moreCount, moreLabel, scopeOptions } from './searchScope';
+import { completions, groupCatalog, groupLabel, moreCount, moreLabel, PER_GROUP, scopeOptions, showOptions, shows } from './searchScope';
 import type { SearchItem } from '@/types/search';
 
 // "All 30" when a tap shows the rest, else a page at a time; nothing once all show.
@@ -41,3 +41,26 @@ assert.deepEqual(c.drinks.map((i) => i.id), ['7']);
 
 assert.equal(groupLabel('Drinks', 3), 'Drinks · 3');
 assert.equal(groupLabel('Drinks', 0), 'Drinks');
+
+// Groups show three before "All n", as the search boards draw them.
+assert.equal(PER_GROUP, 3);
+assert.equal(moreLabel(5, PER_GROUP), 'All 5');
+
+// What the typed word could finish as: names that start with it, shortest first, at most two.
+assert.deepEqual(completions(['Negroni Sbagliato', 'Negroni', 'Plum Negroni', 'Negroni batch, 1 L'], 'negr'), ['negroni', 'negroni sbagliato']);
+assert.deepEqual(completions(['Negroni', 'negroni'], 'NEG'), ['negroni']);
+// One letter, or a query that's already a whole name: nothing to finish.
+assert.deepEqual(completions(['Negroni'], 'n'), []);
+assert.deepEqual(completions(['Negroni Sbagliato', 'Negroni'], 'negroni'), []);
+// Accents fold the way the search does.
+assert.deepEqual(completions(['Café Brûlot'], 'cafe'), ['cafe brulot']);
+
+// The type chips: All plus each kind found, only when there's a choice.
+assert.deepEqual(showOptions({ drinks: 3 }), []);
+assert.deepEqual(
+  showOptions({ menus: 1, drinks: 4, people: 0, ingredients: 2 }).map((o) => `${o.label}${o.count ?? ''}`),
+  ['All', 'Drinks4', 'Ingredients2', 'Menus1']
+);
+assert.equal(shows(undefined, 'menus'), true);
+assert.equal(shows('all', 'menus'), true);
+assert.equal(shows('drinks', 'menus'), false);

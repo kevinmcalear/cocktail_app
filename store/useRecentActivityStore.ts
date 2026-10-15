@@ -22,6 +22,10 @@ export type RecentActivity = {
 type RecentState = {
   items: RecentActivity[];
   push: (entry: Omit<RecentActivity, 'at'>) => void;
+  /** Search's Recent: the x on a row. */
+  remove: (kind: RecentKind, id: string) => void;
+  /** Search's Recent: Clear. Only the entries shown go, so another venue's stay. */
+  clear: (keep: (entry: RecentActivity) => boolean) => void;
 };
 
 const MAX = 8; // ponytail: enough for palette RECENT; was 3 for continue cards
@@ -39,6 +43,8 @@ export const useRecentActivityStore = create<RecentState>()(
           ].slice(0, MAX);
           return { items: next };
         }),
+      remove: (kind, id) => set((state) => ({ items: state.items.filter((i) => !(i.kind === kind && i.id === id)) })),
+      clear: (keep) => set((state) => ({ items: state.items.filter(keep) })),
     }),
     {
       name: 'recent-activity',

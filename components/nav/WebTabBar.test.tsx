@@ -45,8 +45,7 @@ test('Try it: New joins the tabs in place of You and opens the New sheet', async
   expect(screen.getByText('New sheet')).toBeTruthy();
 });
 
-test('Try it: while the bottom search field has focus, the bar steps aside for it', async () => {
-  useSettingsStore.setState({ bottomBar: true });
+test('while the bottom search field has focus, the bar steps aside for it', async () => {
   await renderWithTamagui(<WebTabBar {...props} />);
   expect(screen.getByRole('tab', { name: 'Discover' })).toBeTruthy();
   await act(async () => useBottomSearchFocus.setState({ focused: true }));
