@@ -20,9 +20,10 @@ import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { DrinkHero } from '../DrinkHero';
 import { ShotList } from '../ShotList';
-import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, IngredientSheet, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
+import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
 import { EditSpecList } from './EditSpecList';
 import { EditToolbar } from './EditToolbar';
+import { IngredientPickSheet } from './IngredientPickSheet';
 import { MadeList } from './MadeList';
 import { SpecPad } from './SpecPad';
 import { useEditHistory } from './useEditHistory';
@@ -236,9 +237,11 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
         />
       ) : null}
       {picking ? (
-        <IngredientSheet
+        <IngredientPickSheet
           editor={editor}
-          swapping={picking.swap !== null ? (lines[picking.swap]?.name ?? null) : null}
+          drink={editor.name || cocktail?.name || 'This drink'}
+          swapping={picking.swap !== null && lines[picking.swap] ? { id: lines[picking.swap].ingredient_id || null, name: lines[picking.swap].name } : null}
+          inSpec={lines.map((l) => l.ingredient_id).filter(Boolean)}
           onClose={() => setPicking(null)}
           onPick={(p) => {
             if (picking.swap !== null) setLine(picking.swap, { ingredient_id: p.id!, name: p.name });
