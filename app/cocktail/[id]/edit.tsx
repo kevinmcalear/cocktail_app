@@ -1,38 +1,17 @@
-import { Redirect, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { CocktailInlineEditor } from "@/components/cocktail/CocktailInlineEditor";
+import { DrinkEditScreen } from "@/components/screens/drink/edit/DrinkEditScreen";
 
-interface EditCocktailProps {
-    isInline?: boolean;
-    idProp?: string;
-    onClose?: () => void;
-    onSave?: () => void;
-    onNestedItemPress?: (ingredientId: string) => void;
-    onChromeState?: (state: import("@/lib/editorChrome").EditorChromeState | null) => void;
-}
-
-export default function EditCocktailScreen({
-    isInline,
-    idProp,
-    onClose,
-    onSave,
-    onNestedItemPress,
-    onChromeState,
-}: EditCocktailProps = {}) {
-    const { id: paramId } = useLocalSearchParams();
-    const id = (idProp !== undefined ? idProp : paramId) as string;
-
-    if (isInline) {
-        return (
-            <CocktailInlineEditor
-                id={id}
-                onClose={onClose}
-                onSave={onSave}
-                onNestedItemPress={onNestedItemPress}
-                onChromeState={onChromeState}
-            />
-        );
-    }
-
-    return <Redirect href={`/cocktail/${id}`} />;
+/**
+ * /cocktail/<id>/edit: the drink page in editing, for the Library's drink pane
+ * (and links). Done or leaving goes back to where Edit was pressed.
+ */
+export default function EditCocktailScreen() {
+    const router = useRouter();
+    const { id } = useLocalSearchParams<{ id: string }>();
+    const exit = () => {
+        if (router.canGoBack()) router.back();
+        else router.replace(`/cocktail/${id}`);
+    };
+    return <DrinkEditScreen id={id} onExit={exit} />;
 }

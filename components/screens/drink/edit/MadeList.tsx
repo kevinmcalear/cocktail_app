@@ -5,9 +5,9 @@ import { Body, Button, Caption, Headline, PressableScale, Sheet, useDs } from '@
 import { SketchGlassPicker } from '@/components/cocktail/SketchGlassPicker';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import type { SpecCategory, useCocktailEditor } from '@/hooks/useCocktailEditor';
+import type { SpecCategory } from '@/hooks/useCocktailEditor';
 
-type Editor = ReturnType<typeof useCocktailEditor>;
+import type { DrinkEditor as Editor } from './EditParts';
 type Option = { id: string; name: string };
 
 const SHEET_PAD = { paddingHorizontal: space.xl, paddingBottom: space.xxl };
@@ -33,7 +33,7 @@ const valueOf = (editor: Editor, category: SpecCategory, options: Option[]) => {
  * family as one grouped list, each value with a chevron that opens a small
  * sheet to pick it. Replaces the old strip of plus signs.
  */
-export function MadeList({ editor, itemId }: { editor: Editor; itemId: string }) {
+export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | null }) {
   const ds = useDs();
   const [open, setOpen] = useState<SpecCategory | null>(null);
   return (
@@ -67,7 +67,7 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string })
 }
 
 /** One of How it's made's sheets: tap to pick (methods take several), or add a new one by name. */
-function PickSheet({ editor, itemId, category, label, onClose }: { editor: Editor; itemId: string; category: SpecCategory; label: string; onClose: () => void }) {
+function PickSheet({ editor, itemId, category, label, onClose }: { editor: Editor; itemId: string | null; category: SpecCategory; label: string; onClose: () => void }) {
   const ds = useDs();
   const [adding, setAdding] = useState('');
   const options = optionsOf(editor, category);
@@ -131,7 +131,8 @@ function PickSheet({ editor, itemId, category, label, onClose }: { editor: Edito
         />
         <Button label="Add" size="sm" variant="secondary" disabled={!adding.trim()} onPress={() => void add()} />
       </View>
-      {category === 'glassware' ? (
+      {/* A draft has no drawing yet, so its glass shape is picked once it's published. */}
+      {category === 'glassware' && itemId && 'sketchVariant' in editor ? (
         <SketchGlassPicker
           itemId={itemId}
           barId={editor.barId}

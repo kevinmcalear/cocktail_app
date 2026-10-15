@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 
-import { CocktailDraftInlineEditor } from "@/components/cocktail/CocktailDraftInlineEditor";
 import { VenueBrandProvider } from "@/components/nav/VenueBrandProvider";
 import { AddDrinkWizard } from "@/components/screens/addDrink/AddDrinkWizard";
+import { DraftEditScreen } from "@/components/screens/drink/edit/DraftEditScreen";
 
 /**
  * A new drink is added with the step-by-step wizard. A draft saved by the
- * older editor (New > Drafts) still opens in it.
+ * older editor (New > Drafts) opens on the drink edit page.
  */
 export default function AddCocktailScreen() {
     const router = useRouter();
@@ -44,5 +44,5 @@ export default function AddCocktailScreen() {
         );
     }
 
-    return <CocktailDraftInlineEditor draftId={draftId} barId={barId} initialName={name} embedded={false} onClose={goBack} onSave={goBack} />;
+    return <DraftEditScreen draftId={draftId} barId={barId} initialName={name} onExit={goBack} />;
 }
