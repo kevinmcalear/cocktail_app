@@ -104,10 +104,15 @@ export function useLovedBars() {
 export function useLoveBar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ profileId, love }: { profileId: string; love: boolean }) => {
+    /** Several ids at once (a Google Maps import) are one write and one refresh. */
+    mutationFn: async ({ profileId, love }: { profileId: string | string[]; love: boolean }) => {
+      const ids = typeof profileId === 'string' ? [profileId] : profileId;
       const { error } = love
-        ? await supabase.from('loved_bars').upsert({ profile_id: profileId }, { onConflict: 'user_id,profile_id', ignoreDuplicates: true })
-        : await supabase.from('loved_bars').delete().eq('profile_id', profileId);
+        ? await supabase.from('loved_bars').upsert(
+            ids.map((id) => ({ profile_id: id })),
+            { onConflict: 'user_id,profile_id', ignoreDuplicates: true },
+          )
+        : await supabase.from('loved_bars').delete().in('profile_id', ids);
       if (error) throw new Error(error.message);
     },
     // Discover's bar lists put loved bars first.

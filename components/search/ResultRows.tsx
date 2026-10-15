@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
+import { Body, Caption, DsText, Headline, IngredientThumb, MatchText, PressableScale, RowScore, scoreWords, Tag, useDs, type IconName, type MatchTextProps } from '@/components/ds';
 import { BarMark, type BarBrand } from '@/components/screens/home/BarMark';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -113,6 +113,8 @@ interface ResultGroupProps<T> {
   counted?: boolean;
   items: readonly T[];
   render: (item: T) => ReactNode;
+  /** A button at the heading's end: Recent's Clear. */
+  action?: { label: string; onPress: () => void };
 }
 
 /** "Search everywhere for “negroni”" in the ⌘K palette: a slim outlined row with a globe, one the arrow keys reach. */
@@ -136,6 +138,35 @@ export function EverywhereRow({ label, onPress }: { label: string; onPress: () =
   );
 }
 
+/**
+ * "Nothing at Little Rye called “paloma”": one quiet card with what to do
+ * about it, so the results from everywhere can follow right under it (search-miss).
+ */
+export function MissCard({ title, detail, action }: { title: string; detail: string; action?: { label: string; onPress: () => void } }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.miss, { backgroundColor: ds.c.raised }]}>
+      <View style={[styles.missIcon, { backgroundColor: ds.c.ground }]}>
+        <IconSymbol name="magnifyingglass" size={20} color={ds.c.muted} />
+      </View>
+      <View style={styles.missText}>
+        <Body role="heading" style={styles.missTitle}>
+          {title}
+        </Body>
+        <Caption tone="muted">{detail}</Caption>
+        {action ? (
+          <PressableScale role="button" accessibilityLabel={action.label} onPress={action.onPress} style={[styles.missAction, { borderColor: ds.c.lineStrong }]}>
+            <IconSymbol name="plus" size={16} color={ds.accentText} />
+            <DsText variant="label" style={styles.moreText}>
+              {action.label}
+            </DsText>
+          </PressableScale>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 /** "All 18 ›": flush left, ink, with a chevron, as the search boards draw it. */
 function MoreLink({ label, onPress }: { label: string; onPress: () => void }) {
   const ds = useDs();
@@ -148,16 +179,25 @@ function MoreLink({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 /** "Drinks · 12": the first few, then the rest behind "All 12", a page at a time. Nothing when empty. */
-export function ResultGroup<T>({ label, counted = true, items, render }: ResultGroupProps<T>) {
+export function ResultGroup<T>({ label, counted = true, items, render, action }: ResultGroupProps<T>) {
   const [count, setCount] = useState(PER_GROUP);
   if (!items.length) return null;
   const shown = items.slice(0, count);
   const more = moreLabel(items.length, shown.length);
   return (
     <View style={styles.group}>
-      <Caption tone="muted" role="heading" style={styles.cap}>
-        {counted ? groupLabel(label, items.length) : label}
-      </Caption>
+      <View style={styles.head}>
+        <Caption tone="muted" role="heading" style={styles.cap}>
+          {counted ? groupLabel(label, items.length) : label}
+        </Caption>
+        {action ? (
+          <PressableScale role="button" accessibilityLabel={action.label} onPress={action.onPress} style={styles.headAction}>
+            <DsText variant="label" style={styles.moreText}>
+              {action.label}
+            </DsText>
+          </PressableScale>
+        ) : null}
+      </View>
       <View role="list">{shown.map(render)}</View>
       {more ? <MoreLink label={more} onPress={() => setCount(moreCount(items.length, shown.length))} /> : null}
     </View>
@@ -173,8 +213,26 @@ const styles = StyleSheet.create({
   faded: { opacity: 0.5 },
   active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
   group: { gap: space.xs },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headAction: { minHeight: 32, justifyContent: 'center' },
   cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
   more: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget },
   moreText: { fontFamily: fontFamilies.bodyMedium },
+  miss: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
+  missIcon: { width: 40, height: 40, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  missText: { flex: 1, minWidth: 0, gap: space.xs },
+  missTitle: { fontFamily: fontFamilies.bodySemiBold },
+  missAction: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 40, marginTop: space.xs, paddingHorizontal: space.md, borderWidth: 1, borderRadius: radius.pill },
+  forget: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.md },
   everywhere: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderWidth: 1, borderRadius: radius.control },
 });
+
+/** The x on a Recent row: forgets it. */
+export function ForgetButton({ title, onPress }: { title: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel={`Remove ${title} from Recent`} onPress={onPress} style={styles.forget}>
+      <IconSymbol name="xmark" size={16} color={ds.c.muted} />
+    </PressableScale>
+  );
+}

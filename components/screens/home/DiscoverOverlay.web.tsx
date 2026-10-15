@@ -16,7 +16,7 @@ import { overlayStyles as styles, useOverlayKeys, type DiscoverOverlayProps } fr
  * the keyboard away and the head tucks away while the results are read
  * (HidingHeadScroll); the ⌘K card keeps its field while the wheel scrolls.
  */
-export function DiscoverOverlay({ label, onClose, full, action, head, footer, children }: DiscoverOverlayProps) {
+export function DiscoverOverlay({ label, onClose, full, action, head, footer, aside, children }: DiscoverOverlayProps) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
@@ -24,9 +24,10 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
   const wide = useBreakpoint() !== 'phone';
   const page = full && !wide;
   const card = !page;
+  const side = card && wide && aside ? aside : null;
   useOverlayKeys(onClose);
   const frame = card
-    ? [styles.card, !wide && styles.narrowCard, { borderColor: ds.c.line, backgroundColor: ds.c.ground }]
+    ? [styles.card, side ? styles.wideCard : null, !wide && styles.narrowCard, { borderColor: ds.c.line, backgroundColor: ds.c.ground }]
     : [styles.flex, { paddingTop: insets.top, backgroundColor: ds.c.ground }];
   const heading = head ?? (
     <View style={styles.head}>
@@ -52,13 +53,16 @@ export function DiscoverOverlay({ label, onClose, full, action, head, footer, ch
         ) : (
           <>
             <View style={[styles.gap, { paddingHorizontal: gutter, paddingBottom: space.md }]}>{heading}</View>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              style={styles.shrink}
-              contentContainerStyle={[styles.gap, { paddingHorizontal: gutter, paddingBottom: footer ? space.lg : space.xl }]}
-            >
-              {children}
-            </ScrollView>
+            <View style={side ? styles.body : styles.shrink}>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                style={side ? styles.flex : styles.shrink}
+                contentContainerStyle={[styles.gap, { paddingHorizontal: gutter, paddingBottom: footer ? space.lg : space.xl }]}
+              >
+                {children}
+              </ScrollView>
+              {side ? <View style={[styles.aside, { borderLeftColor: ds.c.line }]}>{side}</View> : null}
+            </View>
           </>
         )}
         {footer ? <View style={{ paddingHorizontal: gutter, paddingBottom: card ? space.lg : bottom }}>{footer}</View> : null}

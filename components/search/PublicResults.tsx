@@ -1,6 +1,6 @@
 import { getLocales } from 'expo-localization';
 import { useRouter } from 'expo-router';
-import { useMemo, type ReactNode } from 'react';
+import { isValidElement, useEffect, useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, RowScore } from '@/components/ds';
@@ -28,12 +28,13 @@ import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { areaLabel, formatDistance, usesMiles, type Area } from '@/lib/nearMe';
 import { openSearchItem } from '@/lib/openSearchItem';
-import { groupCatalog } from '@/lib/searchScope';
+import { completions, groupCatalog, shows, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 import { foldIntoClassics, gatherVariations } from '@/lib/servedAt';
 import { capitalize } from '@/lib/stringUtils';
 
 import { BrowseChips, ClassicRow, StyleCard } from './ClassicRow';
 import { BarResultRow, ResultGroup, ResultRow } from './ResultRows';
+import { Completions, TopHit } from './SearchParts';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
 const NO_IDS: string[] = [];
@@ -50,6 +51,12 @@ interface PublicResultsProps {
   onEverywhere?: () => void;
   /** Whose search it is: a venue's (classics lead) or someone at home (bars lead, then their own drinks). */
   mine?: SearchMine;
+  /** The type chips' pick. */
+  show?: SearchShow;
+  /** Hears how many of each kind were found, for the type chips. */
+  onCounts?: (counts: ShowCounts) => void;
+  /** The search tab: finishes the typed word, and puts a classic named that first as a Top hit. */
+  typeAhead?: (query: string) => void;
 }
 
 /**
@@ -59,7 +66,7 @@ interface PublicResultsProps {
  * ends with its score (b02) and lights the searched word. Bars' drinks need
  * an account; the rest is public.
  */
-export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine }: PublicResultsProps) {
+export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, onCounts, typeAhead }: PublicResultsProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const q = query.trim();
@@ -113,6 +120,13 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const { data: ownScores } = useItemScores([...shownClassics, ...yours.slice(0, 20).map((i) => i.id)]);
 
   const found = drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length + yours.length;
+  const countKey = JSON.stringify({ drinks: drinks.length + classics.length + yours.length, bars: bars.length, people: people?.length ?? 0, ingredients: ingredients.length });
+  useEffect(() => {
+    onCounts?.(JSON.parse(countKey) as ShowCounts);
+  }, [countKey, onCounts]);
+  // The search tab: a classic whose name starts with what's typed leads, bigger (search-typing).
+  const top = typeAhead && !onKind && shows(show, 'drinks') ? classics.find((c) => foldName(c.name).startsWith(foldName(q))) : undefined;
+  const finish = typeAhead && !onKind ? completions([...classics, ...drinks, ...bars, ...ingredients].map((d) => d.name), q) : [];
   const named = findKinds(q);
   const style = named.find((k) => STYLES.some((s) => s.id === k.id));
   const strong = drinks.filter((d) => isStrong(d.match));
@@ -143,7 +157,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     <ResultGroup
       key="classics"
       label="Classics"
-      items={classics}
+      items={top ? classics.filter((c) => c !== top) : classics}
       render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} />}
     />
   );
@@ -188,8 +202,26 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     groups = [classicGroup, drinkGroup(`Drinks ${area ? where : 'at bars'}`, strong), alsoGroup, barGroup, peopleGroup, ingredientGroup];
   }
 
+  // The type chips narrow the groups to one kind.
+  const kindOf: Record<string, 'bars' | 'people' | 'ingredients'> = { bars: 'bars', people: 'people', ingredients: 'ingredients' };
+  const shown = groups.filter((g) => shows(show, (isValidElement(g) && g.key ? kindOf[g.key] : undefined) ?? 'drinks'));
+
   return (
     <View style={styles.results}>
+      {typeAhead ? <Completions query={q} names={finish} onPick={typeAhead} /> : null}
+      {top ? (
+        <TopHit
+          name={top.name}
+          itemId={top.id}
+          imageUrl={top.imageUrl}
+          glass={null}
+          caption={['Classic', servedBy[top.id]?.length ? `served at ${servedBy[top.id].length} ${servedBy[top.id].length === 1 ? 'bar' : 'bars'}` : null].filter(Boolean).join(' · ')}
+          line={lines?.[top.id]}
+          score={ownScores?.[top.id]}
+          query={q}
+          onPress={() => router.push(itemHref('Cocktail', top.id) as never)}
+        />
+      ) : null}
       {/* "martini" offers the Martinis style first on Discover; elsewhere a Browse line with the style and the ingredient. */}
       {onKind && style ? (
         <StyleCard label={style.label} count={strong.length} where={where} takesIn={styleTakesIn(style.id)} drawingId={pick?.id} onPress={() => onKind(style.id)} />
@@ -199,7 +231,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       {/* A spirit or a tasting note the search names becomes a filter on Discover. */}
       <ResultGroup label="Filter by" items={onKind ? named.filter((k) => k !== style) : []} render={(k) => <ResultRow key={k.id} title={k.label} caption={kindCaption(k.id)} icon="line.3.horizontal.decrease" onPress={() => onKind?.(k.id)} />} />
       {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
-      {groups}
+      {shown}
       {!found && signedIn ? <Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption> : null}
       {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
     </View>

@@ -1,4 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Body, Caption, DsText, Headline, PressableScale, useDs } from '@/components/ds';
@@ -11,6 +12,7 @@ import type { HadDrink } from '@/lib/hadDrinks';
 import { formatScore } from '@/lib/ranking';
 
 import { BarMark } from './BarMark';
+import { GoogleImportEntry, GoogleImportSheet } from './GoogleImport';
 
 const barHref = (bar: LovedBar) => `/p/${bar.handle || bar.id}` as Href;
 
@@ -80,20 +82,22 @@ function WishRow({ bar }: { bar: LovedBar }) {
 /**
  * Collection's Bars: the bars you love (the heart on a bar's page). The ones
  * you've had drinks at, with your average there and their latest news, and a
- * heart to let go; then the ones you want to go to.
+ * heart to let go; then the ones you want to go to. From Google Maps brings
+ * the bars someone saved there.
  */
 export function CollectionBars() {
   const { data: bars = [], isLoading, error } = useLovedBars();
   const had = useMyHadDrinks().data ?? [];
+  const [importing, setImporting] = useState(false);
   if (error) return <Body tone="muted">Couldn’t load your bars. Try again in a moment.</Body>;
   if (isLoading) return null;
-  if (!bars.length) return <Body tone="muted">Tap the heart on a bar’s page to keep it here, with what it’s pouring now.</Body>;
-
   const hadAt = (id: string) => had.filter((h) => h.venue?.id === id);
   const been = bars.filter((b) => hadAt(b.id).length > 0);
   const want = bars.filter((b) => hadAt(b.id).length === 0);
+  // One tree whether or not there are bars yet: loving the first ones mustn't remount the open import.
   return (
     <View style={styles.wrap}>
+      {!bars.length ? <Body tone="muted">Tap the heart on a bar’s page to keep it here, with what it’s pouring now.</Body> : null}
       {been.length ? (
         <View style={styles.section}>
           <Headline role="heading">Bars you love</Headline>
@@ -120,6 +124,8 @@ export function CollectionBars() {
           </View>
         </View>
       ) : null}
+      <GoogleImportEntry onPress={() => setImporting(true)} />
+      <GoogleImportSheet visible={importing} onClose={() => setImporting(false)} />
     </View>
   );
 }

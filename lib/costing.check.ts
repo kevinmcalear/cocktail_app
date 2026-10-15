@@ -2,7 +2,7 @@
 // The example is the Ethyl study's: £12.00 on the menu, £1.90 to make, 20% VAT.
 import assert from 'node:assert/strict';
 
-import { exTax, formatPct, margin, menuSummary, priceForTarget, targetStatus } from './costing';
+import { exTax, formatPct, margin, menuSummary, priceForProfit, priceForTarget, targetsLine, targetStatus, underLabel } from './costing';
 
 const uk = { taxRate: 20, pricesIncludeTax: true };
 const us = { taxRate: 8.875, pricesIncludeTax: false };
@@ -24,10 +24,25 @@ assert.equal(priceForTarget(190, 82, us), 1060);
 assert.equal(priceForTarget(190, 100, uk), null);
 assert.equal(priceForTarget(0, 80, uk), 0);
 
-assert.deepEqual(targetStatus(190, 1200, 80, uk), { onTarget: true });
-assert.deepEqual(targetStatus(190, 1200, 82, uk), { onTarget: false, priceMinor: 1270 });
-assert.deepEqual(targetStatus(190, null, 82, uk), { onTarget: false, priceMinor: 1270 }, 'no price yet: say what it would take');
-assert.equal(targetStatus(190, 1200, null, uk), null);
+assert.equal(m.profitMinor, 810, '£10.00 ex VAT less £1.90');
+
+// At least £9.00 a drink on £1.90: £10.90 ex VAT, £13.08 on the menu, so £13.10.
+assert.equal(priceForProfit(190, 900, uk), 1310);
+assert.equal(priceForProfit(190, 900, us), 1090);
+assert.equal(priceForProfit(190, -1, uk), null);
+// Clean figures stay put: AUD 5.80 at 78% GP with 10% GST is exactly 29.00.
+assert.equal(priceForTarget(580, 78, { taxRate: 10, pricesIncludeTax: true }), 2900);
+
+const gpOnly = (gp: number | null) => ({ gp, minProfitMinor: null });
+assert.deepEqual(targetStatus(190, 1200, gpOnly(80), uk), { onTarget: true });
+assert.deepEqual(targetStatus(190, 1200, gpOnly(82), uk), { onTarget: false, priceMinor: 1270, under: 'gp' });
+assert.deepEqual(targetStatus(190, null, gpOnly(82), uk), { onTarget: false, priceMinor: 1270, under: 'gp' }, 'no price yet: say what it would take');
+assert.equal(targetStatus(190, 1200, gpOnly(null), uk), null);
+// A cheap drink at 81% GP that makes only £8.10: under the £9 floor, and £13.10 clears both.
+assert.deepEqual(targetStatus(190, 1200, { gp: 80, minProfitMinor: 900 }, uk), { onTarget: false, priceMinor: 1310, under: 'profit' });
+assert.deepEqual(targetStatus(190, 1200, { gp: 82, minProfitMinor: 900 }, uk), { onTarget: false, priceMinor: 1310, under: 'both' }, 'the higher price clears both');
+assert.deepEqual(targetStatus(190, 1400, { gp: 80, minProfitMinor: 900 }, uk), { onTarget: true });
+assert.deepEqual(targetStatus(190, null, { gp: null, minProfitMinor: 900 }, uk), { onTarget: false, priceMinor: 1310, under: 'profit' });
 assert.equal(formatPct(81.04), '81.0%');
 
 // A menu: two priced and on target, one under, one with no price yet, one incomplete.
@@ -39,14 +54,28 @@ const summary = menuSummary(
     { costMinor: 138, priceMinor: null, missing: 0 },
     { costMinor: 240, priceMinor: 1200, missing: 1 },
   ],
-  82,
+  gpOnly(82),
   uk
 );
 assert.equal(summary.priced, 4);
 assert.equal(summary.averageGp!.toFixed(1), '79.0');
 assert.equal(summary.underTarget, 3, 'the mai tai at 75.1%, the incomplete one at 76%, and 81.0% is under 82 too');
 assert.equal(summary.incomplete, 1);
-assert.equal(menuSummary([], 82, uk).averageGp, null);
-assert.equal(menuSummary([{ costMinor: 190, priceMinor: 1200, missing: 0 }], null, uk).underTarget, 0);
+assert.equal(menuSummary([], gpOnly(82), uk).averageGp, null);
+assert.equal(menuSummary([], gpOnly(82), uk).averageProfitMinor, null);
+assert.equal(menuSummary([{ costMinor: 190, priceMinor: 1200, missing: 0 }], gpOnly(null), uk).underTarget, 0);
+// On GP alone the £12 drink passes 80%; a £9 floor catches it.
+const floor = menuSummary([{ costMinor: 190, priceMinor: 1200, missing: 0 }, { costMinor: 190, priceMinor: 1500, missing: 0 }], { gp: 80, minProfitMinor: 900 }, uk);
+assert.equal(floor.underTarget, 1);
+assert.equal(floor.averageProfitMinor, (810 + 1060) / 2);
+
+
+const usd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
+assert.equal(targetsLine({ gp: 78, minProfitMinor: 1100 }, usd), '78% GP and at least $11.00 a drink');
+assert.equal(targetsLine({ gp: null, minProfitMinor: 1100 }, usd), 'at least $11.00 a drink');
+assert.equal(targetsLine({ gp: null, minProfitMinor: null }, usd), null);
+assert.equal(underLabel('gp', { gp: 78, minProfitMinor: 1100 }, usd), 'Under 78% GP');
+assert.equal(underLabel('profit', { gp: 78, minProfitMinor: 1100 }, usd), 'Makes under $11.00');
+assert.equal(underLabel('both', { gp: 78, minProfitMinor: 1100 }, usd), 'Under both targets');
 
 console.log('costing: ok');

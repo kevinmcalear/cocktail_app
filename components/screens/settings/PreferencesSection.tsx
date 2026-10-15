@@ -88,8 +88,8 @@ export function TryItSection() {
   return (
     <SettingsSection title="Try it" note="Ideas we're testing. Turn them off to go back to how the app is now.">
       <SwitchRow
-        label="Search and New at the bottom"
-        detail="Search opens at the bottom, over the keyboard, and New moves from the top into the tab bar."
+        label="New in the tab bar"
+        detail="New moves from the top of the screen into the tab bar."
         value={bottomBar}
         onValueChange={setBottomBar}
       />

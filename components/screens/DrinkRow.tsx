@@ -60,7 +60,7 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
   const prefetch = usePrefetchCocktail();
   const drinkId = onPress ? null : drinkIdFromHref(href);
   // In the ⌘K palette: the row the arrow keys are on, which Return opens.
-  const nav = useSearchNavRow();
+  const nav = useSearchNavRow(itemId ? { itemId, name, imageUrl: imageUrl ?? null, glass: glass ?? null, caption } : undefined);
   // The logo sits on the caption's first line and the caption wraps beside it, never under it.
   const byline = logo || mark ? (
     <View style={styles.byline}>

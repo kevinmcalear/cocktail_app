@@ -1,21 +1,21 @@
 import { Stack } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type RefObject } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SearchBarCommands } from 'react-native-screens';
 
-import { useDs, useGutter } from '@/components/ds';
+import { Title, useDs, useGutter } from '@/components/ds';
 import { WEB_TAB_BAR_HEIGHT } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import type { SearchMine } from '@/hooks/useSearchMine';
-import { scopeOptions, type SearchScope } from '@/lib/searchScope';
+import type { SearchScope, SearchShow, ShowCounts } from '@/lib/searchScope';
 
-import { ScopeSwitch } from './ScopeSwitch';
 import { SearchField } from './SearchField';
 import { SearchBody, searchPlaceholder } from './SearchPanel';
+import { ScopeToken, ShowChips } from './SearchParts';
 
-/** The search tab's state, shared by today's layout and the two bottom ones. */
+/** The search tab's state, shared by the wide web's page and the two bottom layouts. */
 export interface SearchTabState {
   query: string;
   setQuery: (query: string) => void;
@@ -26,21 +26,29 @@ export interface SearchTabState {
   focused: boolean;
   /** A search carried in with ?q=. */
   carried?: string;
+  /** The type chips: what the results show, and how many of each they found. */
+  show: SearchShow;
+  setShow: (show: SearchShow) => void;
+  counts: ShowCounts;
+  setCounts: (counts: ShowCounts) => void;
 }
 
-// ponytail: the keyboard dismissal below is this variant's own (a parallel
-// session is reworking dismissal for today's search). Fold the two together
-// once one layout wins.
+/** "Little Rye ⌄" in the field: a tap flips between the venue (or your drinks) and Everywhere. */
+function Token({ scope, setScope, mine }: Pick<SearchTabState, 'scope' | 'setScope' | 'mine'>) {
+  return <ScopeToken label={scope === 'mine' ? mine.label : 'Everywhere'} onPress={() => setScope(scope === 'mine' ? 'everywhere' : 'mine')} />;
+}
+
 const DISMISS = Platform.OS === 'ios' ? 'interactive' : 'on-drag';
 
 /**
- * Settings › Try it on iOS 26: the system's search tab. The screen carries a
- * native search bar, and iOS turns the tab bar into that field when the tab
- * opens, sitting on the keyboard while you type, with a button back to the
- * tabs beside it. Recents and results scroll above it; dragging them pulls
- * the keyboard down with your finger.
+ * iOS 26: the system's search tab. The screen carries a native search bar,
+ * and iOS turns the tab bar into that field when the tab opens, sitting on
+ * the keyboard while you type, with a button back to the tabs beside it.
+ * The system field can't hold the place token or the type chips, so they
+ * lead the results here. Recents and results scroll above the field;
+ * dragging them pulls the keyboard down with your finger.
  */
-export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, focused, carried }: SearchTabState) {
+export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, focused, carried, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
   const gutter = useGutter();
   const bar = useRef<SearchBarCommands>(null);
@@ -82,27 +90,45 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, foc
         // automaticallyAdjustKeyboardInsets, which scrolls the recents off the top.
         contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: keyboard + layout.minTapTarget + space.xl, gap: space.lg }}
       >
-        <ScopeSwitch options={scopeOptions(mine.label, null)} scope={scope} onScope={setScope} />
-        <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} />
+        {query ? null : <Title role="heading">Search</Title>}
+        <View style={styles.chipRow}>
+          <Token scope={scope} setScope={setScope} mine={mine} />
+          {query ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
+        </View>
+        <SearchBody
+          query={query}
+          scope={scope}
+          onScope={setScope}
+          mine={mine}
+          show={show}
+          onCounts={setCounts}
+          typeAhead={(next) => {
+            bar.current?.setText(next);
+            setQuery(next);
+          }}
+        />
       </ScrollView>
     </View>
   );
 }
 
 /**
- * Settings › Try it on Android, phone web and iOS before 26: the field docked
- * at the bottom, results and recents above it. While you type it rides on the
+ * Android, phone web and iOS before 26: the field docked at the bottom, with
+ * where it searches inside it and the type chips over it; recents and results
+ * scroll above (search-start, search-typing). While you type it rides on the
  * keyboard and takes the tab bar's place (Android's keyboard covers the bar;
  * phone web hides its bar); with the keyboard down it sits just above the
- * tabs. Cancel empties it and puts the keyboard away.
+ * tabs. The round x empties it and puts the keyboard away.
  */
-export function BottomSearch({ query, setQuery, scope, setScope, mine, focused }: SearchTabState) {
+export function BottomSearch({ query, setQuery, scope, setScope, mine, focused, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const typing = useKeyboardHeight() > 0;
   const webKeyboard = useWebKeyboardInset();
   const [fieldFocused, setFieldFocused] = useState(false);
+  const dock = useRef<ComponentRef<typeof View>>(null);
+  useKeepFieldFocus(dock);
   // Phone web: while the field has focus, it takes the tab bar's place.
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -128,21 +154,42 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, focused }
         onScrollBeginDrag={Platform.OS === 'web' ? Keyboard.dismiss : undefined}
         contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: space.sm, paddingBottom: space.lg, gap: space.lg }}
       >
-        <ScopeSwitch options={scopeOptions(mine.label, null)} scope={scope} onScope={setScope} />
-        <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} />
+        {query ? null : <Title role="heading">Search</Title>}
+        <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} show={show} onCounts={setCounts} typeAhead={setQuery} />
       </ScrollView>
-      <View style={[styles.dock, { paddingHorizontal: gutter, paddingBottom: under + space.sm, borderTopColor: ds.c.line }]}>
+      <View ref={dock} style={[styles.dock, { paddingHorizontal: gutter, paddingBottom: under + space.sm, backgroundColor: ds.c.ground }]}>
+        {query ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
         <SearchField
           query={query}
           onQuery={setQuery}
-          placeholder={searchPlaceholder(scope, mine)}
+          // Short, so the place token beside it fits.
+          placeholder={scope === 'mine' ? 'Drinks, menus' : 'Bars, drinks'}
           autoFocus={focused}
           cancel
+          token={<Token scope={scope} setScope={setScope} mine={mine} />}
           onFocusChange={setFieldFocused}
         />
       </View>
     </KeyboardAvoidingView>
   );
+}
+
+/**
+ * Phone web: a press on the dock's chips or its place token keeps the focus
+ * (and the keyboard) in the field. Otherwise the field blurs on mouse down,
+ * the dock drops back above the tab bar, and the press lands on whatever
+ * moved under the finger.
+ */
+function useKeepFieldFocus(dock: RefObject<ComponentRef<typeof View> | null>) {
+  useEffect(() => {
+    const el = dock.current as unknown as HTMLElement | null;
+    if (Platform.OS !== 'web' || !el?.addEventListener) return;
+    const keep = (e: MouseEvent) => {
+      if (!(e.target instanceof HTMLInputElement)) e.preventDefault();
+    };
+    el.addEventListener('mousedown', keep);
+    return () => el.removeEventListener('mousedown', keep);
+  }, [dock]);
 }
 
 /** How tall the native keyboard is, 0 while it's down (iOS hears before it moves, Android after). */
@@ -185,5 +232,6 @@ function useWebKeyboardInset() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  dock: { paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
+  dock: { paddingTop: space.sm, gap: space.sm },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });

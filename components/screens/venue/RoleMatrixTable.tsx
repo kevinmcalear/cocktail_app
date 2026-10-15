@@ -1,14 +1,17 @@
 import { Fragment } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, PressableScale, Surface, useDs } from '@/components/ds';
+import { Body, Caption, PressableScale, Surface, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { RoleMatrixRow } from '@/hooks/useVenueRoles';
+import { withAlpha } from '@/lib/color';
 import { CAPABILITY_GROUPS, cell, endsLabel, type Cell } from '@/lib/roleMatrix';
 import { roleLabel } from '@/lib/roles';
 
 const LABEL_WIDTH = 240;
+/** Phones keep room for two or three role columns beside the names (drink-role-lens-phone). */
+const LABEL_WIDTH_PHONE = 150;
 const COLUMN = 92;
 const MARK = 14;
 const CHANGED_DOT = 7;
@@ -32,26 +35,53 @@ function Mark({ value, label }: { value: Cell; label: string }) {
   );
 }
 
+/** A row of the table: a capability on Roles and access, a drink section on Who sees what. */
+export interface MatrixRowSpec {
+  id: string;
+  label: string;
+  detail?: string;
+  levelBound?: boolean;
+}
+
+/** The words under the table, which differ between Roles and access and Who sees what. */
+export interface MatrixLegend {
+  yes: string;
+  no: string;
+  lock: string;
+}
+
+const ROLES_LEGEND: MatrixLegend = { yes: 'Can', no: 'Can’t', lock: 'Set by the base level. Menu and Specs also follow Who sees what in venue settings.' };
+
 /**
  * What each role can do: base levels and the venue's own roles as columns,
  * capabilities as rows in three groups. Scrolls sideways when it doesn't fit.
- * Admins get an Edit button on each of the venue's roles.
+ * Admins get an Edit button on each of the venue's roles. Who sees what on a
+ * drink (drink-role-lens) passes its own rows, cells and words, and marks the
+ * viewer's column You.
  */
-export function RoleMatrixTable({ matrix, barName, onEdit }: {
+export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_GROUPS, cellOf, label, heading = 'What they can do', legend = ROLES_LEGEND, isYou }: {
   matrix: RoleMatrixRow[];
   barName: string;
   onEdit?: (role: RoleMatrixRow) => void;
+  groups?: { title: string; rows: MatrixRowSpec[] }[];
+  cellOf?: (column: RoleMatrixRow, row: MatrixRowSpec) => Cell;
+  label?: string;
+  heading?: string;
+  legend?: MatrixLegend;
+  isYou?: (column: RoleMatrixRow) => boolean;
 }) {
   const ds = useDs();
+  const labelWidth = { width: useBreakpoint() === 'phone' ? LABEL_WIDTH_PHONE : LABEL_WIDTH };
+  const value = cellOf ?? ((c: RoleMatrixRow, r: MatrixRowSpec) => cell(matrix, c, r.id));
   return (
     <View style={styles.wrap}>
       <Surface style={styles.card}>
         {/* The table fills the card; it scrolls sideways only when the card is too narrow. */}
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.scroll}>
-          <View role="table" accessibilityLabel={`What each ${barName} role can do`} style={styles.table}>
+          <View role="table" accessibilityLabel={label ?? `What each ${barName} role can do`} style={styles.table}>
             <View role="row" style={[styles.row, { borderBottomColor: ds.c.lineStrong }]}>
-              <View role="columnheader" style={styles.label}>
-                <Caption tone="muted">What they can do</Caption>
+              <View role="columnheader" style={[styles.label, labelWidth]}>
+                <Caption tone="muted">{heading}</Caption>
               </View>
               {matrix.map((c) => {
                 const name = columnName(c);
@@ -60,6 +90,11 @@ export function RoleMatrixTable({ matrix, barName, onEdit }: {
                   <>
                     <Body style={[styles.center, styles.head]} numberOfLines={2}>{name}</Body>
                     <Caption tone="muted" style={styles.center}>{sub}</Caption>
+                    {isYou?.(c) ? (
+                      <View style={[styles.you, { backgroundColor: withAlpha(ds.accentText, 0.2) }]}>
+                        <Caption color={ds.accentText} style={styles.head}>You</Caption>
+                      </View>
+                    ) : null}
                   </>
                 );
                 return (
@@ -76,16 +111,16 @@ export function RoleMatrixTable({ matrix, barName, onEdit }: {
                 );
               })}
             </View>
-            {CAPABILITY_GROUPS.map((g) => (
+            {groups.map((g) => (
               <Fragment key={g.title}>
                 <View role="row" style={styles.groupRow}>
                   <Caption tone="muted" role="rowheader" style={styles.groupTitle}>{g.title.toUpperCase()}</Caption>
                 </View>
                 {g.rows.map((r) => (
                   <View key={r.id} role="row" style={[styles.row, { borderBottomColor: ds.c.line }]}>
-                    <View role="rowheader" style={[styles.label, styles.labelRow]}>
+                    <View role="rowheader" style={[styles.label, labelWidth, styles.labelRow]}>
                       <View style={styles.labelText}>
-                        <Body numberOfLines={1}>{r.label}</Body>
+                        <Body numberOfLines={2}>{r.label}</Body>
                         {r.detail ? <Caption tone="muted">{r.detail}</Caption> : null}
                       </View>
                       {r.levelBound ? (
@@ -95,11 +130,11 @@ export function RoleMatrixTable({ matrix, barName, onEdit }: {
                       ) : null}
                     </View>
                     {matrix.map((c) => {
-                      const value = cell(matrix, c, r.id);
-                      const words = `${value.can ? 'Yes' : 'No'}${value.changed ? ', changed from its base level' : ''}`;
+                      const v = value(c, r);
+                      const words = `${v.can ? legend.yes : legend.no}${v.changed ? ', changed from its base level' : ''}`;
                       return (
                         <View key={c.role_id ?? c.base_level} role="cell" style={styles.column}>
-                          <Mark value={value} label={`${columnName(c)}: ${r.label}: ${words}`} />
+                          <Mark value={v} label={`${columnName(c)}: ${r.label}: ${words}`} />
                         </View>
                       );
                     })}
@@ -113,11 +148,11 @@ export function RoleMatrixTable({ matrix, barName, onEdit }: {
       <View style={styles.legend}>
         <View style={styles.key}>
           <View style={[styles.keyMark, { backgroundColor: ds.c.ink }]} />
-          <Caption tone="muted">Can</Caption>
+          <Caption tone="muted">{legend.yes}</Caption>
         </View>
         <View style={styles.key}>
           <View style={[styles.keyMark, { borderWidth: 1.5, borderColor: ds.c.faint }]} />
-          <Caption tone="muted">Can’t</Caption>
+          <Caption tone="muted">{legend.no}</Caption>
         </View>
         <View style={styles.key}>
           <View style={[styles.keyChanged, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>
@@ -127,7 +162,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit }: {
         </View>
         <View style={styles.key}>
           <IconSymbol name="lock.fill" size={14} color={ds.c.muted} />
-          <Caption tone="muted">Set by the base level. Menu and Specs also follow Who sees what in venue settings.</Caption>
+          <Caption tone="muted">{legend.lock}</Caption>
         </View>
       </View>
     </View>
@@ -143,11 +178,12 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
   groupRow: { paddingTop: space.lg, paddingBottom: space.xs },
   groupTitle: { letterSpacing: 0.8 },
-  label: { width: LABEL_WIDTH, paddingVertical: space.sm, paddingRight: space.md },
+  label: { paddingVertical: space.sm, paddingRight: space.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   labelText: { flexShrink: 1, gap: 2 },
   column: { flexGrow: 1, flexBasis: COLUMN, minWidth: COLUMN, alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs, paddingHorizontal: space.xs },
   center: { textAlign: 'center' },
+  you: { marginTop: 2, paddingHorizontal: space.sm, borderRadius: radius.pill },
   edit: { alignItems: 'center', gap: 2, paddingVertical: space.xs, paddingHorizontal: space.sm, borderRadius: radius.control, borderWidth: 1 },
   cell: { width: 40, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   mark: { width: MARK, height: MARK, borderRadius: radius.pill },

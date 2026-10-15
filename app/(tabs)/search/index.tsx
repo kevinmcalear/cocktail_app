@@ -3,9 +3,9 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { BottomSearch, SystemBottomSearch, type SearchTabState } from '@/components/search/BottomSearch';
 import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
 import { space } from '@/constants/tokens';
-import { SYSTEM_BOTTOM_SEARCH, useBottomBar } from '@/hooks/useBottomBar';
+import { SYSTEM_BOTTOM_SEARCH, useBottomSearch } from '@/hooks/useBottomBar';
 import { useSearchMine } from '@/hooks/useSearchMine';
-import type { SearchScope } from '@/lib/searchScope';
+import type { SearchScope, SearchShow, ShowCounts } from '@/lib/searchScope';
 import { Stack, useIsFocused, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
@@ -14,13 +14,12 @@ import { MountOnFocus } from '@/components/nav/MountOnFocus';
 
 /**
  * The search circle beside the tabs: the one search, opened on the venue in
- * venue mode and on Everywhere in home mode. The field is focused, keyboard
- * up, every time the tab opens, on phones as on the web; leaving the tab or
- * a drag anywhere on the screen puts the keyboard away, and reading down the
- * results tucks the field away until a scroll back up (HidingHeadScroll).
- * Wide web opens the same search as a palette (⌘K) instead. With Settings ›
- * Try it on, the field sits at the bottom over the keyboard instead
- * (components/search/BottomSearch.tsx).
+ * venue mode and on Everywhere in home mode. On phones the field sits at the
+ * bottom, over the keyboard (components/search/BottomSearch.tsx); it's
+ * focused, keyboard up, every time the tab opens, and leaving the tab puts
+ * the keyboard away. Wide web opens the same search as a palette (⌘K); its
+ * /search page keeps the field at the top, tucked away while reading down
+ * the results (HidingHeadScroll).
  */
 export default function SearchScreen() {
   return (
@@ -34,7 +33,7 @@ export default function SearchScreen() {
 
 function SearchTab() {
   const state = useSearchTabState();
-  const bottom = useBottomBar();
+  const bottom = useBottomSearch();
   if (!bottom) return <Search {...state} />;
   return SYSTEM_BOTTOM_SEARCH ? <SystemBottomSearch {...state} /> : <BottomSearch {...state} />;
 }
@@ -49,14 +48,21 @@ function useSearchTabState(): SearchTabState {
     setCarried(q);
     if (q) setQuery(q);
   }
-  const [picked, setScope] = useState<SearchScope | null>(null);
+  const [picked, pickScope] = useState<SearchScope | null>(null);
   const scope = picked ?? mine.defaultScope;
+  // The type chips: All, Drinks 4, Ingredients 2. A new place starts back on All.
+  const [show, setShow] = useState<SearchShow>('all');
+  const [counts, setCounts] = useState<ShowCounts>({});
+  const setScope = (next: SearchScope) => {
+    pickScope(next);
+    setShow('all');
+  };
   // Native tabs stay mounted, so focus follows the tab rather than the first mount.
   const focused = useIsFocused();
   useEffect(() => {
     if (!focused) Keyboard.dismiss();
   }, [focused]);
-  return { query, setQuery, scope, setScope, mine, focused, carried: q };
+  return { query, setQuery, scope, setScope, mine, focused, carried: q, show, setShow, counts, setCounts };
 }
 
 function Search({ query, setQuery, scope, setScope, mine, focused }: SearchTabState) {

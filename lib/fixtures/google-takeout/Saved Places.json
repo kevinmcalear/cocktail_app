@@ -1,0 +1,67 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "geometry": { "coordinates": [144.96921, -37.81071], "type": "Point" },
+      "properties": {
+        "date": "2025-11-02T09:14:31Z",
+        "google_maps_url": "http://maps.google.com/?cid=1000000000000000001",
+        "location": { "address": "Basement, 123 Example Lane, Melbourne VIC 3000, Australia", "country_code": "AU", "name": "Bar Margaux" }
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [144.97881, -37.79811], "type": "Point" },
+      "properties": {
+        "date": "2025-08-19T21:02:11Z",
+        "google_maps_url": "http://maps.google.com/?cid=1000000000000000002",
+        "location": { "address": "1 Example St, Fitzroy VIC 3065, Australia", "country_code": "AU", "name": "The Black Pearl Bar" }
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [144.96745, -37.81363], "type": "Point" },
+      "properties": {
+        "date": "2024-03-07T07:45:00Z",
+        "google_maps_url": "http://maps.google.com/?cid=1000000000000000003",
+        "location": { "address": "2 Example Pl, Melbourne VIC 3000, Australia", "country_code": "AU", "name": "Bar Ampère" }
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [144.97488, -37.79990], "type": "Point" },
+      "properties": {
+        "date": "2024-01-20T10:00:00Z",
+        "google_maps_url": "http://maps.google.com/?cid=1000000000000000004",
+        "location": { "address": "3 Example Rd, Carlton VIC 3053, Australia", "country_code": "AU", "name": "Bar Olo" }
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [144.95680, -37.80760], "type": "Point" },
+      "properties": {
+        "date": "2023-12-01T00:00:00Z",
+        "google_maps_url": "http://maps.google.com/?cid=1000000000000000005",
+        "location": { "address": "Example Market, Melbourne VIC 3000, Australia", "country_code": "AU", "name": "Example Night Market" }
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [0, 0], "type": "Point" },
+      "properties": {
+        "date": "2023-06-30T00:00:00Z",
+        "google_maps_url": "http://maps.google.com/?q=Bar+Spontana",
+        "location": { "address": "Brunswick VIC 3056, Australia", "name": "Bar Spontana" }
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": { "coordinates": [144.98001, -37.80002], "type": "Point" },
+      "properties": {
+        "date": "2023-05-05T00:00:00Z",
+        "google_maps_url": "http://maps.google.com/?q=-37.80002,144.98001"
+      },
+      "type": "Feature"
+    }
+  ]
+}

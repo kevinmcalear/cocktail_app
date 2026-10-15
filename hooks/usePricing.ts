@@ -7,11 +7,13 @@ export interface PricingSettings {
   tax_rate: number;
   prices_include_tax: boolean;
   target_gp: number | null;
+  /** The least a drink should make after tax and ingredients, in minor units. */
+  min_profit_minor: number | null;
 }
 
-const SETTINGS_COLUMNS = 'currency, tax_rate, prices_include_tax, target_gp';
+const SETTINGS_COLUMNS = 'currency, tax_rate, prices_include_tax, target_gp, min_profit_minor';
 
-/** The bar's currency, tax and target GP (bars.*); readable by its members. */
+/** The bar's currency, tax and targets (bars.*); readable by its members. */
 export function usePricingSettings(barId: string | null | undefined) {
   return useQuery({
     queryKey: ['pricing-settings', barId],
@@ -37,6 +39,7 @@ export function useSetPricingSettings(barId: string) {
       void queryClient.invalidateQueries({ queryKey: ['pricing-settings', barId] });
       void queryClient.invalidateQueries({ queryKey: ['item-purchase'] });
       void queryClient.invalidateQueries({ queryKey: ['drink-cost'] });
+      void queryClient.invalidateQueries({ queryKey: ['menu-costing'] });
     },
   });
 }

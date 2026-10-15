@@ -15,6 +15,8 @@ export interface DiscoverOverlayProps {
   /** Replaces the heading row (the search field and its Done). */
   head?: ReactNode;
   footer?: ReactNode;
+  /** Wide web cards only: a pane beside the results (the ⌘K palette's preview). */
+  aside?: ReactNode;
   children: ReactNode;
 }
 
@@ -49,6 +51,10 @@ export const overlayStyles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
+  // With a pane beside the results the card is wider, and the two share its height.
+  wideCard: { maxWidth: 960 },
+  body: { flexDirection: 'row', flexShrink: 1, minHeight: 0 },
+  aside: { width: 400, paddingHorizontal: space.lg, paddingBottom: space.lg, borderLeftWidth: StyleSheet.hairlineWidth },
   // Phone-width web: the card keeps a margin to the window's edges.
   narrowCard: { width: 'auto', alignSelf: 'stretch', marginHorizontal: space.lg },
   sheet: {
