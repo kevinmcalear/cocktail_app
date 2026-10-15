@@ -77,7 +77,7 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
       const params = { ...where, p_bar_id: barId, ...kinds, p_query: search || null, ...near, ...pageParam, p_limit: pageSize };
       const asked = { ...params, ...(onNow ? { p_on_now: true } : {}), ...(mix ? { p_mix: true } : {}) };
       let { data, error } = await supabase.rpc('discover_list', asked).abortSignal(signal);
-      // ponytail: a database without 20261025200000 doesn't know p_mix; ask unmixed (one bar can fill the list then). Drop once it's in production.
+      // ponytail: a database without 20261028100000 doesn't know p_mix; ask unmixed (one bar can fill the list then). Drop once it's in production.
       if (error?.code === 'PGRST202' && mix) ({ data, error } = await supabase.rpc('discover_list', { ...params, ...(onNow ? { p_on_now: true } : {}) }).abortSignal(signal));
       // ponytail: a database without 20261019200000 doesn't know p_on_now; ask without it (past drinks too then). Drop once it's in production.
       if (error?.code === 'PGRST202' && onNow) ({ data, error } = await supabase.rpc('discover_list', params).abortSignal(signal));

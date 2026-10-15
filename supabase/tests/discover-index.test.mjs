@@ -253,7 +253,7 @@ describe('discover_list', () => {
     assert.ok(plain.every((r) => r.distance_m === null), 'no distance without Nearest');
   });
 
-  test('mixed: a drink from every bar before a second from any, paging by place (20261025200000)', async () => {
+  test('mixed: a drink from every bar before a second from any, paging by place (20261028100000)', async () => {
     const { data, error } = await near(users.viewer.client, { p_mix: true });
     assert.ifError(error);
     const rows = mine(data);
