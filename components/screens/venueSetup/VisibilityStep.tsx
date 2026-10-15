@@ -41,14 +41,14 @@ function Choose({ barId, name, claim, writable, onDone, current }: Props & { cur
   const busy = setPublish.isPending || saveSetup.isPending;
 
   const save = () => {
-    // While the claim waits the choice is always kept, even the default: approving otherwise starts the page Locked.
+    // While the claim waits the choice is always kept, even the default: approving otherwise starts the page at Names.
     if (pending && claim) return saveSetup.mutate({ claimId: claim.id, setup: { page_visibility: shown } }, { onSuccess: onDone });
     if (!value || value === current) return onDone();
     if (writable) setPublish.mutate({ level: 'page', visibility: value }, { onSuccess: onDone });
     else onDone();
   };
   const note = pending
-    ? `Today ${name}’s page is unclaimed, so it shows names and descriptions. This takes over once your claim is approved. Any single drink can still be kept private from its own page, and you can change this in Publishing.`
+    ? `Today ${name}’s page is unclaimed, so it shows its menu: photos, descriptions and ingredients without amounts. This takes over once your claim is approved. Any single drink can still be kept private from its own page, and you can change this in Publishing.`
     : writable
       ? 'Any single drink can still be kept private from its own page, and you can change this in Publishing.'
       : 'This applies once your bar’s page is claimed. Any single drink can still be kept private from its own page.';

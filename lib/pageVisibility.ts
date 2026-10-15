@@ -1,6 +1,6 @@
 /**
  * Who sees a bar's page (bars.page_visibility, copied to the bar's profile).
- * An unclaimed bar is 'description'. The database keeps the specs back
+ * An unclaimed bar is 'description' (Menu). The database keeps the specs back
  * (public.is_spec_locked, app_recipe_presentation); this is the copy and the
  * page-level rule the app shows.
  */
@@ -9,17 +9,21 @@ export type PageVisibility = 'locked' | 'description' | 'open';
 
 export const PAGE_VISIBILITIES: PageVisibility[] = ['locked', 'description', 'open'];
 
-/** What each setting shows people outside the venue, and what a guest will see. */
+/**
+ * What each setting shows people outside the venue, and what a guest will see.
+ * The labels are the ladder's names (Names, Menu, Open); the stored values keep
+ * their old names so nothing in the database moves.
+ */
 export const PAGE_COPY: Record<PageVisibility, { label: string; detail: string; preview: string }> = {
   locked: {
-    label: 'Locked',
-    detail: 'Name, address, awards, people and drink names. Like a private account.',
-    preview: 'Your bar, awards and team, and the names of your drinks. No descriptions or specs.',
+    label: 'Names',
+    detail: 'Your bar, awards, people, menus and drink names. No photos, descriptions or specs.',
+    preview: 'Your bar, awards and team, your menus, and the names of your drinks. No photos, descriptions or specs.',
   },
   description: {
-    label: 'Names and descriptions',
-    detail: 'Adds what each drink is like, its photo and who made it. Specs stay private.',
-    preview: 'Every drink with its photo, a line on what it tastes like, and who made it. Specs stay with you.',
+    label: 'Menu',
+    detail: 'Adds each drink’s photo, description and ingredients, without amounts. Amounts and methods stay private.',
+    preview: 'Every drink with its photo, what it tastes like, who made it and what goes in it, without amounts. Amounts and methods stay with you.',
   },
   open: {
     label: 'Open',

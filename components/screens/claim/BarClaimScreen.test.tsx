@@ -97,9 +97,9 @@ test('a pending Instagram claim shows its code and can be withdrawn', async () =
   expect(mockWithdraw).toHaveBeenCalledWith('c1');
 });
 
-test('an approved claim says the page is theirs and starts Locked', async () => {
+test('an approved claim says the page is theirs and starts at Names', async () => {
   mockClaims = [claim({ status: 'approved', method: 'email' })];
   await renderWithTamagui(<BarClaimScreen profileRef="pale.moth" />);
   expect(screen.getByText('Pale Moth is yours')).toBeTruthy();
-  expect(screen.getByText(/starts Locked/)).toBeTruthy();
+  expect(screen.getByText(/starts at Names/)).toBeTruthy();
 });

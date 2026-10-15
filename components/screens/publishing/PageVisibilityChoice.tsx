@@ -22,7 +22,7 @@ interface PageVisibilityChoiceProps {
 }
 
 /**
- * "Who sees your page": Locked, Names and descriptions, or Open, for people
+ * "Who sees your page": Names, Menu or Open, for people
  * outside the venue, with what a guest will see. The database keeps the
  * specs back; each drink's own setting still applies below Open.
  */
