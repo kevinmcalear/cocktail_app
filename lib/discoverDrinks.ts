@@ -86,7 +86,7 @@ export interface DiscoverDrink {
   bar: { name: string; handle: string; logo: string | null; locality: string | null; city: string | null };
   /** Its bar's menus: on now, or past with when ("Past · Mar 2024 to Jan 2025"); order 0 on now, 1 not dated, 2 past; `since` when its menu began. */
   menu: { onNow: boolean; past: string | null; order: number; since?: { year: number; month: number | null } | null };
-  /** Its styles ("martini", "zero-proof"); a server without 20261025200000 doesn't say. */
+  /** Its styles ("martini", "zero-proof"); a server without 20261028100000 doesn't say. */
   styles?: string[];
   /** Mixed list (p_mix): its place in the list, the cursor for the next page; else null. */
   pos?: number | null;

@@ -210,6 +210,7 @@ export function useCreateDrink() {
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
         origin_year: draft.originYear ?? null,
+        price_minor: barId ? (draft.priceMinor ?? null) : null,
         // You can claim your own credit; anyone else's starts as suggested.
         credit_status: creatorId && creatorId === myProfileId && !otherBar ? 'claimed' : null,
       };

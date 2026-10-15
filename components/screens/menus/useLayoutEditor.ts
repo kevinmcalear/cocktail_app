@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useToast } from '@/components/ds';
+import { itemHref } from '@/lib/itemRoutes';
 import { useMenuLibrary, usePickMenuCover, useSaveMenu } from '@/hooks/useMenuMutations';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { confirmDiscardChanges } from '@/lib/dialogs';
@@ -52,6 +54,14 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const library = libraryQuery.data ?? [];
   const refetchLibrary = libraryQuery.refetch;
   const { data: venueMenus = [] } = useVenueMenus(menu.barId);
+  const toast = useToast();
+  // The handoff below subscribes once; it reads these as they are now.
+  const latest = useRef({ toast, router, name: menu.name });
+  useEffect(() => {
+    latest.current = { toast, router, name: menu.name };
+  });
+  // Drinks made from this menu while it's open (step 8): their rows say New.
+  const [made, setMade] = useState<string[]>([]);
 
   // A drink made with "Create a new drink" in a section (AddDrinkSheet) goes
   // in that section once it's saved. This screen stays mounted under the wizard.
@@ -63,7 +73,11 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
         if (!handoff) return;
         const { data } = await refetchLibrary();
         const drink = data?.find((d) => d.id === handoff.drinkId);
-        if (drink) setLayout((l) => addDrink(l, handoff.sectionId, drink));
+        if (!drink) return;
+        setLayout((l) => addDrink(l, handoff.sectionId, drink));
+        setMade((ids) => [...ids, drink.id]);
+        const now = latest.current;
+        now.toast.show({ title: `${drink.name} is made and on ${now.name}`, action: { label: 'Open it', onPress: () => now.router.push(itemHref(drink.kind === 'beer' ? 'Beer' : drink.kind === 'wine' ? 'Wine' : 'Cocktail', drink.id) as never) } });
       }),
     [refetchLibrary]
   );
@@ -132,6 +146,13 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     coverBusy: cover.isPending,
     rename: (name: string) => edit({ ...layout, name }),
     add: (key: string, drink: MenuDrink) => edit(addDrink(layout, key, drink)),
+    /** Added from the library: says so, with Undo (which takes back only that drink). */
+    addWithUndo: (key: string, drink: MenuDrink) => {
+      edit(addDrink(layout, key, drink));
+      const into = section(key)?.name ?? 'the menu';
+      toast.show({ title: `${drink.name} added to ${into}`, action: { label: 'Undo', onPress: () => setLayout((l) => removeDrink(l, key, drink.id)) } });
+    },
+    made,
     remove: (key: string, drinkId: string) => edit(removeDrink(layout, key, drinkId)),
     reorder: (key: string, drinks: MenuDrink[]) => edit(setDrinks(layout, key, drinks)),
     move: (key: string, from: number, to: number) => edit(moveDrink(layout, key, from, to)),

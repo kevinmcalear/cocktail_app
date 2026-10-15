@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, TextInput, useWindowDimensions, View, type ViewStyle } from 'react-native';
 
@@ -10,9 +10,10 @@ import { radius, space, type } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateMenu, useSaveLayout } from '@/hooks/useMenuMutations';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
-import { cannotAdd, copySections, filterLibrary, libraryNote } from '@/lib/menuLayout';
+import { cannotAdd, copySections, filterLibrary, libraryNote, nameToMake, nearLibrary } from '@/lib/menuLayout';
 
 import { LibraryRow } from './AddDrinkSheet';
+import { MakeFromSearch, useMakeDrink } from './MakeFromSearch';
 import { EDITOR_STATUS, EditorSections, MenuCoverEdit, MenuNameInput, NextStep, SaveLine, useHomeMenu } from './EditorParts';
 import { GuestPreview } from './GuestPreview';
 import { Check, MonoLabel, ReadyChecks, type CheckTarget } from './ReviewParts';
@@ -70,8 +71,14 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
   const [query, setQuery] = useState('');
   const [freeOnly, setFreeOnly] = useState(false);
   const target = editor.section(editor.targetKey) ?? editor.layout.sections[0] ?? null;
-  const drinks = target ? filterLibrary(editor.library, target, query, freeOnly, editor.elsewhere) : [];
-  const where = venues.find((v) => v.id === editor.menu.barId)?.name ?? 'your drinks';
+  const router = useRouter();
+  const found = target ? filterLibrary(editor.library, target, query, freeOnly, editor.elsewhere) : [];
+  const venueName = venues.find((v) => v.id === editor.menu.barId)?.name ?? null;
+  const where = venueName ?? 'your drinks';
+  // Not there? The same search makes it, and close names follow (dm-decided).
+  const missing = target ? nameToMake(editor.library, query) : null;
+  const drinks = found.length || !target ? found : nearLibrary(editor.library, target, query);
+  const make = useMakeDrink(target, editor.menu.barId);
   return (
     <View style={[styles.side, { borderRightColor: ds.c.line }]}>
       <MonoLabel>{target ? `Add to ${target.name}` : 'Add a section first'}</MonoLabel>
@@ -81,8 +88,9 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
           value={query}
           onChangeText={setQuery}
           aria-label={`Search ${where}`}
-          placeholder={`Search ${where}`}
+          placeholder={`Search ${where}, or type a new name`}
           placeholderTextColor={ds.c.faint}
+          onSubmitEditing={() => (missing ? make(missing) : undefined)}
           autoCapitalize="none"
           style={[type.body, styles.searchInput, { color: ds.c.ink }]}
         />
@@ -99,16 +107,24 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
         extraData={target}
         initialNumToRender={12}
         windowSize={DRAWN_LIST_WINDOW}
-        ListEmptyComponent={target ? <Body tone="muted">No drinks that fit {target.name}.</Body> : undefined}
+        ListHeaderComponent={
+          missing && target ? (
+            <>
+              <MakeFromSearch name={missing} section={target} where={venueName} onMake={() => make(missing)} onBringIn={() => router.push('/bring-in' as Href)} />
+              {drinks.length ? <Caption tone="muted">{venueName ? `Close, at ${venueName}` : 'Close'}</Caption> : null}
+            </>
+          ) : undefined
+        }
+        ListEmptyComponent={target && !missing ? <Body tone="muted">No drinks that fit {target.name}.</Body> : undefined}
         renderItem={({ item: d }) =>
           target ? (
             <View {...(drag.on ? dragSource(d.id) : {})} style={drag.on && styles.grab}>
-              <LibraryRow drink={d} note={libraryNote(d, target, editor.elsewhere)} added={!!cannotAdd(target, d)} onAdd={() => editor.add(target.key, d)} />
+              <LibraryRow drink={d} note={libraryNote(d, target, editor.elsewhere)} added={!!cannotAdd(target, d)} onAdd={() => editor.addWithUndo(target.key, d)} />
             </View>
           ) : null
         }
       />
-      <Caption tone="muted">{drag.on ? 'Tap + or drag a drink into any section.' : 'Tap + to add to the section marked Adding here, or click another section.'}</Caption>
+      <Caption tone="muted">{drag.on ? 'Click + or drag a drink onto any section.' : 'Tap + to add to the section marked Adding here, or click another section.'} Not here? Type its name to make it.</Caption>
     </View>
   );
 }

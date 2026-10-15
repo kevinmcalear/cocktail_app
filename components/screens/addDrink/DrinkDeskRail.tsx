@@ -1,0 +1,173 @@
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { Body, Caption, DsText, Field, Headline, Spec, Surface, Title, useDs } from '@/components/ds';
+import { SketchDrawing } from '@/components/ds/SketchDrawing';
+import { radius, space } from '@/constants/tokens';
+import { balanceOf, fixesFor, tasteWord } from '@/lib/balance';
+import { formatPct, margin } from '@/lib/costing';
+import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
+import { formatMoney, moneyFieldValue, parseMoney } from '@/lib/money';
+import type { DraftLook } from '@/lib/sketch/draft';
+import type { PricingSettings } from '@/hooks/usePricing';
+
+import { inputsFor } from './SketchHeader';
+import { Eyebrow, WizardChip } from './WizardChrome';
+import type { CatalogIngredient } from './IngredientSearch';
+
+/** The drink as it's written: its drawing, name and what's in it (make-create-desktop, "The drink, as you go"). */
+export function DeskDrinkCard({ draft, look, seed }: { draft: WizardDraft; look: DraftLook; seed: string }) {
+  const ds = useDs();
+  const empty = !look.glass && !look.lines.length && !look.methods?.length;
+  const inputs = inputsFor(empty ? { ...look, glass: 'Coupe' } : look);
+  const name = draft.name.trim() || 'New drink';
+  const what = [...draft.lines, ...draft.garnishes].map((l) => l.name.toLowerCase()).join(', ');
+  return (
+    <View style={[styles.drink, { backgroundColor: ds.c.paper }]}>
+      <View style={styles.sketch} role="img" aria-label={`Sketch of ${name}`}>
+        <SketchDrawing inputs={inputs} seed={seed} detail="full" />
+      </View>
+      <View style={styles.flex}>
+        <Title color={ds.c.sketchInk} numberOfLines={2}>
+          {name}
+        </Title>
+        {what ? <Body color={ds.c.sketchInk}>{what.charAt(0).toUpperCase() + what.slice(1)}</Body> : <Caption color={ds.c.sketchInk}>Draws itself as you write the spec.</Caption>}
+      </View>
+    </View>
+  );
+}
+
+const DIMS = [
+  ['strong', 'Strong'],
+  ['sour', 'Sour'],
+  ['sweet', 'Sweet'],
+  ['bitter', 'Bitter'],
+] as const;
+
+/** Taste so far, from the same rules as the wizard's balance card, as five-step meters with a word each. */
+export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly WizardLine[]; ingredients: readonly CatalogIngredient[]; onAdd: (name: string) => void }) {
+  const ds = useDs();
+  const byId = new Map(ingredients.map((i) => [i.id, i]));
+  const parts = lines.map((l) => ({ name: l.name, genericName: (l.id && byId.get(byId.get(l.id)?.generic_id ?? '')?.name) || null, amount: amountOf(l.amount), unit: l.unit || null }));
+  const balance = balanceOf(parts);
+  const fixes = balance?.need ? fixesFor(balance.need, parts) : [];
+  return (
+    <Surface raised style={styles.card}>
+      <Eyebrow>Taste</Eyebrow>
+      {!balance ? (
+        <Caption tone="muted">{lines.length ? 'Not enough we know in it yet to say.' : 'Fills in as you add ingredients.'}</Caption>
+      ) : (
+        <>
+          {balance.hint ? <Headline>{balance.hint}</Headline> : null}
+          {DIMS.map(([dim, label]) => {
+            const word = tasteWord(dim, balance[dim]);
+            // Lit as the word reads: "none" is no segment, anything more at least one.
+            const on = word === 'none' ? 0 : Math.max(1, Math.round(balance[dim] * 5));
+            return (
+              <View key={dim} style={styles.meter}>
+                <Body style={styles.meterLabel}>{label}</Body>
+                <View role="img" aria-label={`${label}: ${word}`} style={styles.segments}>
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <View key={i} style={[styles.segment, { backgroundColor: i < on ? ds.c.ink : ds.c.line }]} />
+                  ))}
+                </View>
+                <Caption tone="muted" style={styles.meterWord}>
+                  {word}
+                </Caption>
+              </View>
+            );
+          })}
+          {fixes.length ? (
+            <View role="group" aria-label="To balance it" style={styles.chips}>
+              {fixes.map((name) => (
+                <WizardChip key={name} label={name} add kind="button" onPress={() => onAdd(name)} />
+              ))}
+            </View>
+          ) : null}
+        </>
+      )}
+    </Surface>
+  );
+}
+
+export interface DeskCostLine {
+  key: string;
+  name: string;
+  minor: number | null;
+}
+
+/** What it costs to make from the bar's pack prices, then the price and GP against the bar's target. */
+export function DeskCost({ lines, pricing, priceMinor, onPrice }: { lines: DeskCostLine[]; pricing: PricingSettings | null; priceMinor: number | null; onPrice: (minor: number | null) => void }) {
+  const currency = pricing?.currency ?? 'GBP';
+  const money = (minor: number) => formatMoney(minor, currency) ?? '';
+  const [text, setText] = useState(() => (priceMinor != null ? moneyFieldValue(priceMinor, currency) : ''));
+  // Start over clears the draft's price: the field follows.
+  if (priceMinor == null && text.trim() && parseMoney(text, currency) != null) setText('');
+  const total = lines.reduce((n, l) => n + (l.minor ?? 0), 0);
+  const missing = lines.filter((l) => l.minor == null).length;
+  const m = pricing ? margin(total, priceMinor, { taxRate: pricing.tax_rate, pricesIncludeTax: pricing.prices_include_tax }) : null;
+  return (
+    <Surface raised style={styles.card}>
+      <Eyebrow>Cost</Eyebrow>
+      {lines.length ? (
+        <View role="list" aria-label="What each costs">
+          {lines.map((l) => (
+            <View key={l.key} role="listitem" style={styles.costRow}>
+              <Body style={styles.flex} numberOfLines={1}>
+                {l.name}
+              </Body>
+              <Spec tone={l.minor == null ? 'muted' : 'ink'}>{l.minor == null ? 'No price' : money(l.minor)}</Spec>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <Caption tone="muted">Adds up as you write the spec.</Caption>
+      )}
+      <View style={[styles.costRow, styles.total]}>
+        <Body style={styles.flex}>Costs to make</Body>
+        <Headline>{money(total)}</Headline>
+      </View>
+      {missing ? <Caption tone="muted">{`${missing === 1 ? 'One line has' : `${missing} lines have`} no price yet, so it costs more than this.`}</Caption> : null}
+      <View style={styles.priceRow}>
+        <View style={styles.flex}>
+          <Field
+            label="Price"
+            value={text}
+            onChangeText={(t) => {
+              setText(t);
+              onPrice(t.trim() ? parseMoney(t, currency) : null);
+            }}
+            keyboardType="decimal-pad"
+            placeholder={money(0).replace(/0/g, '–')}
+          />
+        </View>
+        {m ? (
+          <View style={styles.gp}>
+            <Caption tone="muted">{pricing?.target_gp != null ? `GP · target ${Math.round(pricing.target_gp)}%` : 'GP'}</Caption>
+            <DsText variant="title" tone={pricing?.target_gp != null && m.gp < pricing.target_gp ? 'accent' : 'ink'}>
+              {formatPct(m.gp)}
+            </DsText>
+            <Caption tone="muted">{`Makes ${money(Math.round(m.profitMinor))}`}</Caption>
+          </View>
+        ) : null}
+      </View>
+    </Surface>
+  );
+}
+
+const styles = StyleSheet.create({
+  drink: { flexDirection: 'row', alignItems: 'center', gap: space.lg, padding: space.lg, borderRadius: radius.card + 6 },
+  sketch: { width: 130, height: 160 },
+  flex: { flex: 1 },
+  card: { gap: space.sm },
+  meter: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  meterLabel: { width: 64 },
+  meterWord: { width: 72 },
+  segments: { flex: 1, flexDirection: 'row', gap: space.xs },
+  segment: { flex: 1, height: 8, borderRadius: radius.pill },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingTop: space.xs },
+  costRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.xs },
+  total: { paddingTop: space.sm },
+  priceRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.lg, paddingTop: space.sm },
+  gp: { alignItems: 'flex-end' },
+});
