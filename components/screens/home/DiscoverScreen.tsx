@@ -102,12 +102,12 @@ export function DiscoverScreen() {
   const searching = search.trim().length > 0;
   const shownArea = searching && scope === 'everywhere' ? ANYWHERE : area;
   const filter = { kinds, search, area: shownArea };
-  const results = useDiscoverResults(filter, !locating || searching, !searching && !showPast);
+  const results = useDiscoverResults(filter, !locating || searching, !searching && !showPast, !searching);
   const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${locating && !searching ? 'near you' : areaLabel(shownArea)}`;
   const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
   const drink = pick ? { id: pick.id, name: pick.name } : null;
   const closed = { count: results.closed.length, shown: showClosed, onShow: setShowClosed }, past = { shown: showPast, onShow: setShowPast };
-  const mapResults = { ...results, title, closed: showClosed ? results.closed : [] };
+  const mapResults = { ...results, title, closed: showClosed ? results.closed : [], onNow: !showPast };
   // Nearest counts from the person, else the middle of the area.
   const from = near.status === 'ready' ? near : area.kind === 'point' ? area : null;
   // Where the person is, once found: the map's dot, and "400 m" on rows and bars.
@@ -250,7 +250,7 @@ export function DiscoverScreen() {
             more={results.more}
             isLoading={results.isLoading}
             signedIn={signedIn}
-            area={area}
+            area={area} near={{ filter, from, onNow: !showPast }}
             empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
           />
         )}

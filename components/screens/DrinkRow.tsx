@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DrinkImage, Headline, MatchText, PressableScale, Tag, useDs, type MatchTextProps } from '@/components/ds';
+import { Body, Caption, DrinkImage, Headline, MatchText, PressableScale, Tag, useDs, type MatchTextProps, type TagTone } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { useSearchNavRow } from '@/components/search/searchNav';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
@@ -30,8 +30,9 @@ export interface DrinkRowProps {
   compact?: boolean;
   /** Discover's rows (disc-list, disc-desk-browse): compact's name, a 44-point picture, 64 tall. */
   dense?: boolean;
-  /** A small pill after the caption: "Past · Mar 2024 to Jan 2025". */
+  /** A small pill after the caption: "Past · Mar 2024 to Jan 2025", or in the accent, a mixed list's "New". */
   tag?: string;
+  tagTone?: TagTone;
   /** A second, longer line: a note of your own. */
   note?: string;
   /** Under the note: more about the drink (My Bar's "✓ Woodford ✓ lemon" checklist). Say it in `label` too. */
@@ -52,7 +53,7 @@ export interface DrinkRowProps {
 const LOGO = 18;
 
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, mark, compact: small, dense, tag, note, below, trailing, label, query, matchLook, displayName }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, mark, compact: small, dense, tag, tagTone, note, below, trailing, label, query, matchLook, displayName }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
   const compact = small || dense;
@@ -98,7 +99,7 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
         {tag ? (
           <View style={styles.captionRow}>
             {byline}
-            <Tag label={tag} />
+            <Tag label={tag} tone={tagTone} />
           </View>
         ) : (
           byline

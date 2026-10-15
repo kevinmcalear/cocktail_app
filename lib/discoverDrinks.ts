@@ -84,8 +84,12 @@ export interface DiscoverDrink {
   barId: string;
   /** What a row says about its bar. */
   bar: { name: string; handle: string; logo: string | null; locality: string | null; city: string | null };
-  /** Its bar's menus: on now, or past with when ("Past · Mar 2024 to Jan 2025"); order 0 on now, 1 not dated, 2 past. */
-  menu: { onNow: boolean; past: string | null; order: number };
+  /** Its bar's menus: on now, or past with when ("Past · Mar 2024 to Jan 2025"); order 0 on now, 1 not dated, 2 past; `since` when its menu began. */
+  menu: { onNow: boolean; past: string | null; order: number; since?: { year: number; month: number | null } | null };
+  /** Its styles ("martini", "zero-proof"); a server without 20261025100000 doesn't say. */
+  styles?: string[];
+  /** Mixed list (p_mix): its place in the list, the cursor for the next page; else null. */
+  pos?: number | null;
   /** Where it sorts (discover_list's rank): with the name and id, the cursor for the next page. */
   rank: number;
   /** Why it matched the search (lib/discoverMatch.ts); null with no search. */
@@ -119,6 +123,9 @@ export interface DrinkRow {
   match_text?: string | null;
   /** With p_from_latitude/longitude: metres to the bar. */
   distance_m?: number | null;
+  styles?: string[] | null;
+  /** With p_mix: its place in the mixed list. */
+  mix_pos?: number | null;
 }
 
 /** Plain JSON for the query cache. `search`: what was searched, for the words on why it matched. */
@@ -134,7 +141,9 @@ export function toDiscoverDrink(r: DrinkRow, search = ''): DiscoverDrink {
     imageUrl: r.image_url,
     barId: r.bar_profile_id,
     bar: { name: r.bar_name, handle: r.bar_handle, logo: r.bar_logo, locality: r.bar_locality, city: r.bar_city },
-    menu: { onNow: !!tag?.onNow, past: tag?.past ?? null, order: menuOrder(dates) },
+    menu: { onNow: !!tag?.onNow, past: tag?.past ?? null, order: menuOrder(dates), since: run ? { year: run[0], month: run[1] } : null },
+    styles: r.styles ?? [],
+    pos: r.mix_pos ?? null,
     rank: r.rank,
     match,
     why: matchWhy(match, r.description, search, r.name),
@@ -142,9 +151,27 @@ export function toDiscoverDrink(r: DrinkRow, search = ''): DiscoverDrink {
   };
 }
 
-/** discover_list's cursor after a drink. */
-export function cursorAfter(d: Pick<DiscoverDrink, 'id' | 'name' | 'rank' | 'distance'>) {
+/** discover_list's cursor after a drink: its place in a mixed list, else its rank (or distance), name and id. */
+export function cursorAfter(d: Pick<DiscoverDrink, 'id' | 'name' | 'rank' | 'distance' | 'pos'>) {
+  if (d.pos !== null && d.pos !== undefined) return { p_after_pos: d.pos };
   return { p_after_rank: d.rank, p_after_name: d.name, p_after_id: d.id, ...(d.distance === null ? {} : { p_after_distance: d.distance }) };
+}
+
+/** How long a drink on a menu now reads as "New". */
+const NEW_MONTHS = 3;
+
+/**
+ * The one short reason a mixed-list row carries, only when it's true: "New"
+ * (on a menu that began in the last three months, dated to the month), else
+ * "Zero-proof". Most rows carry none (Kevin, 15 Oct, option A).
+ */
+export function drinkReason(d: Pick<DiscoverDrink, 'menu' | 'styles'>, now: Date): string | null {
+  const since = d.menu.since;
+  if (d.menu.onNow && since?.month) {
+    const months = (now.getFullYear() - since.year) * 12 + (now.getMonth() + 1 - since.month);
+    if (months >= 0 && months < NEW_MONTHS) return 'New';
+  }
+  return d.styles?.includes('zero-proof') ? 'Zero-proof' : null;
 }
 
 const KM_PER_DEG = 111.045;

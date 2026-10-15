@@ -2,13 +2,14 @@ import { getLocales } from 'expo-localization';
 import { createContext, useContext, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, RowScore, scoreWords as rowScoreWords, type MatchTextProps } from '@/components/ds';
+import { Button, Caption, Headline, RowScore, Segmented, scoreWords as rowScoreWords, type MatchTextProps } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useRowScores } from '@/hooks/useBestDrink';
+import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
 import { useVersionLabel } from '@/hooks/useSpecMatches';
-import { drinkCount, type BarScore, type DiscoverDrink } from '@/lib/discoverDrinks';
+import { drinkCount, drinkReason, type BarScore, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { isStrong } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
 import { formatDistance, usesMiles, type Area } from '@/lib/nearMe';
@@ -57,6 +58,7 @@ export const BarAway = createContext<(barId: string) => string | null>(() => nul
  * (when given) at the end, and the searched word lit (tint on Discover).
  * No "on now": Discover lists only what's on now unless Past menus is on,
  * and a past drink carries its "Past · 2024 to 2025" tag (Kevin, 14 Oct).
+ * A mixed list's row may carry one reason instead: "New" or "Zero-proof" (15 Oct).
  * `atBar`: a tapped bar's own drinks (disc-map-bar), so the bar and its logo
  * aren't repeated. `everywhere`: search's Everywhere, which puts why it
  * matched ("Riff on a Negroni") on its own line, the word lit (nav-search-everywhere).
@@ -67,6 +69,7 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atB
   const near = useContext(BarAway)(d.barId);
   const away = d.distance === null || d.distance === undefined ? near : formatDistance(d.distance / 1000, usesMiles(getLocales()[0]));
   // A tapped bar's rows say what the drink is instead (ponytail: its description; the ingredient line needs discover_list to return the spec's lines).
+  const reason = d.menu.past ? null : d.pos != null ? drinkReason(d, new Date()) : null;
   const what = atBar ? (d.why ?? version ?? d.description) : everywhere ? version : (d.why ?? version);
   const caption = (atBar ? [what] : [bar.name, away ?? place(bar), what]).filter(Boolean).join(' · ');
   const drinkScore = scores?.drinks[d.id];
@@ -84,7 +87,8 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atB
       caption={caption}
       logo={atBar ? undefined : { uri: bar.logo, name: bar.name, profileId: d.barId }}
       note={everywhere ? (d.why ?? undefined) : undefined}
-      tag={d.menu.past ?? undefined}
+      tag={d.menu.past ?? reason ?? undefined}
+      tagTone={reason ? 'accent' : undefined}
       trailing={<DrinkScore drink={drinkScore} bar={barScore} />}
       query={query}
       matchLook={matchLook}
@@ -146,10 +150,26 @@ interface DrinksHereProps {
   empty: string;
   /** Where: the bars' scores under each drink come from its top bars. */
   area: Area;
+  /** Mixed | Nearest: the same drinks closest first, counted from `from` (no switch without it). */
+  near?: { filter: DrinkFilter; from: { latitude: number; longitude: number } | null; onNow: boolean };
 }
 
-/** "Martinis near you": the drinks at bars that match, with how many bars pour them. */
-export function DrinksHere({ title, drinks, totals, more, isLoading, signedIn, empty, area }: DrinksHereProps) {
+const SORTS = [
+  { value: 'mixed', label: 'Mixed' },
+  { value: 'nearest', label: 'Nearest' },
+] as const;
+
+/**
+ * "Martinis near you": the drinks at bars that match, with how many bars pour
+ * them; mixed a bar at a time, or Nearest (option A, Kevin 15 Oct).
+ */
+export function DrinksHere({ title, drinks: mixed, totals, more: mixedMore, isLoading: mixedLoading, signedIn, empty, area, near }: DrinksHereProps) {
+  const [sort, setSort] = useState<'mixed' | 'nearest'>('mixed');
+  const nearest = sort === 'nearest' && !!near?.from;
+  const closest = useDiscoverList(near?.filter ?? { kinds: [], search: '', area }, { from: near?.from ?? null, onNow: near?.onNow, enabled: nearest });
+  const drinks = nearest ? closest.drinks : mixed;
+  const more = nearest ? { total: closest.totals?.drinks ?? null, hasMore: closest.hasMore, loadMore: closest.loadMore, loading: closest.isLoadingMore } : mixedMore;
+  const isLoading = nearest ? closest.isLoading : mixedLoading;
   const scores = useRowScores(drinks, area, signedIn);
   let body;
   if (!signedIn) body = <ListNote>Sign in to see the drinks bars pour.</ListNote>;
@@ -159,7 +179,12 @@ export function DrinksHere({ title, drinks, totals, more, isLoading, signedIn, e
   return (
     <View style={styles.section}>
       <Caption tone="muted">{totals?.drinks ? `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'}` : 'At bars'}</Caption>
-      <Headline role="heading">{title}</Headline>
+      <View style={styles.head}>
+        <Headline role="heading" style={styles.title}>
+          {title}
+        </Headline>
+        {near?.from && signedIn ? <Segmented options={SORTS} value={sort} onChange={setSort} variant="pill" choice accessibilityLabel="Order" /> : null}
+      </View>
       {body}
     </View>
   );
@@ -167,6 +192,8 @@ export function DrinksHere({ title, drinks, totals, more, isLoading, signedIn, e
 
 const styles = StyleSheet.create({
   section: { gap: space.xs },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
+  title: { flexShrink: 1 },
   more: { alignItems: 'flex-start', paddingTop: space.sm },
   also: { paddingTop: space.lg },
 });

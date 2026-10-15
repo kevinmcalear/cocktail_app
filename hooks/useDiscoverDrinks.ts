@@ -36,6 +36,8 @@ interface ListOptions {
   from?: { latitude: number; longitude: number } | null;
   /** Only drinks on one of their bar's menus now (Discover's list unless "Past menus" is on). */
   onNow?: boolean;
+  /** Mixed: one drink from every bar, then a second, and so on (browsing, not Nearest or one bar). */
+  mix?: boolean;
 }
 
 interface ListPage {
@@ -49,7 +51,7 @@ interface ListPage {
  * same area keeps the last results up while it loads; a new area doesn't, so
  * the map refits.
  */
-export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = true, pageSize = PAGE, from = null, onNow = false }: ListOptions = {}) {
+export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = true, pageSize = PAGE, from = null, onNow = false, mix = false }: ListOptions = {}) {
   const signedIn = !!useAuth().user;
   const search = searchKey(useDebounced(filter.search, 250));
   const where = barId ? {} : areaParams(filter.area);
@@ -59,7 +61,7 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
   // On the ~100 m grid, so a phone's position wobbling doesn't ask again.
   const near = from ? { p_from_latitude: roundCoord(from.latitude), p_from_longitude: roundCoord(from.longitude) } : null;
   const query = useInfiniteQuery({
-    queryKey: ['discover-list', where, barId, kinds, search, pageSize, near, ...(onNow ? ['on-now'] : [])],
+    queryKey: ['discover-list', where, barId, kinds, search, pageSize, near, ...(onNow ? ['on-now'] : []), ...(mix ? ['mix'] : [])],
     // Saved: the first screen of an area people come back to. Not a searched patch of map, a bar's own, or a big page.
     meta: { persist: !barId && !searchedHere && !near && pageSize === PAGE },
     enabled: signedIn && enabled,
@@ -72,7 +74,10 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
     getNextPageParam: (last: ListPage) => (last.drinks.length < pageSize ? undefined : cursorAfter(last.drinks[last.drinks.length - 1])),
     queryFn: async ({ pageParam, signal }): Promise<ListPage> => {
       const params = { ...where, p_bar_id: barId, ...kinds, p_query: search || null, ...near, ...pageParam, p_limit: pageSize };
-      let { data, error } = await supabase.rpc('discover_list', onNow ? { ...params, p_on_now: true } : params).abortSignal(signal);
+      const asked = { ...params, ...(onNow ? { p_on_now: true } : {}), ...(mix ? { p_mix: true } : {}) };
+      let { data, error } = await supabase.rpc('discover_list', asked).abortSignal(signal);
+      // ponytail: a database without 20261025100000 doesn't know p_mix; ask unmixed (one bar can fill the list then). Drop once it's in production.
+      if (error?.code === 'PGRST202' && mix) ({ data, error } = await supabase.rpc('discover_list', { ...params, ...(onNow ? { p_on_now: true } : {}) }).abortSignal(signal));
       // ponytail: a database without 20261019200000 doesn't know p_on_now; ask without it (past drinks too then). Drop once it's in production.
       if (error?.code === 'PGRST202' && onNow) ({ data, error } = await supabase.rpc('discover_list', params).abortSignal(signal));
       if (error) throw error;
@@ -182,11 +187,11 @@ export function useTileBars(viewport: Viewport | null, filter: { kinds: readonly
  * Discover's results for an area and filter: the first pages of drinks, the
  * area's bars, and its closed ones. Empty (not loading) when signed out.
  * `enabled` false holds the load (Discover waits for location); it reads as loading.
- * `onNow`: only the drinks on a menu now.
+ * `onNow`: only the drinks on a menu now. `mix`: a bar at a time (browsing).
  */
-export function useDiscoverResults(filter: DrinkFilter, enabled = true, onNow = false) {
+export function useDiscoverResults(filter: DrinkFilter, enabled = true, onNow = false, mix = false) {
   useTrackSearch(filter.search, 'discover');
-  const list = useDiscoverList(filter, { enabled, onNow });
+  const list = useDiscoverList(filter, { enabled, onNow, mix });
   const barsQuery = useDiscoverBars(filter.area, {}, enabled);
   const bars = barsQuery.data;
   const barsById = useMemo(() => new Map((bars ?? []).map((b) => [b.id, b])), [bars]);

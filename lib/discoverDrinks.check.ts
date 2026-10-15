@@ -12,6 +12,7 @@ import {
   closedLabel,
   closedPins,
   cursorAfter,
+  drinkReason,
   distanceKm,
   findBars,
   kindParams,
@@ -88,12 +89,23 @@ assert.equal(kindsTitle(['martini', 'gin', 'note:smoky']), 'Drinks, 3 filters');
 
 // --- rows: menu tags, the bar, and the next page's cursor ---
 const onNow = toDiscoverDrink(row('6', 'Negroni', 'dante', { menu_run: [2026, null, null, null, 1], rank: 0 }));
-assert.deepEqual(onNow.menu, { onNow: true, past: null, order: 0 });
+assert.deepEqual(onNow.menu, { onNow: true, past: null, order: 0, since: { year: 2026, month: null } });
 const past = toDiscoverDrink(row('7', 'Old Negroni', 'dante', { menu_run: [2023, 3, 2024, 1, 0] }));
 assert.equal(past.menu.order, 2);
 assert.match(past.menu.past ?? '', /^Past · Mar 2023 to Jan 2024$/);
 assert.equal(past.bar.name, 'Dante');
 assert.deepEqual(cursorAfter(onNow), { p_after_rank: 0, p_after_name: 'Negroni', p_after_id: '6' });
+// A mixed list (p_mix) pages by place, not rank.
+const mixed = toDiscoverDrink(row('8', 'Free Spirit', 'dante', { menu_run: [2026, 8, null, null, 1], styles: ['zero-proof'], mix_pos: 31 }));
+assert.deepEqual(cursorAfter(mixed), { p_after_pos: 31 });
+
+// --- the one reason a mixed row carries: New (dated to the month, under three months on), else Zero-proof, else none ---
+const oct15 = new Date(2026, 9, 15);
+assert.equal(drinkReason(mixed, oct15), 'New', 'on since August');
+assert.equal(drinkReason(mixed, new Date(2026, 10, 1)), 'Zero-proof', 'November: three months on, no longer new');
+assert.equal(drinkReason(onNow, oct15), null, 'no month: not called new');
+assert.equal(drinkReason(past, oct15), null, 'past menus are never new');
+assert.equal(drinkReason({ menu: { onNow: true, past: null, order: 0, since: { year: 2027, month: 1 } }, styles: [] }, oct15), null, 'a date ahead of today is not new');
 
 // --- bars: name first, then place ---
 assert.deepEqual(ids(findBars([nomad, dante, attaboy], 'da')), ['dante']);
