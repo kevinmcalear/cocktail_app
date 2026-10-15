@@ -17,7 +17,7 @@ import { PublicSpecChanges } from './PublicSpecChanges';
  * "The spec" on the public drink page (b30 teaser). Signed in: the facts and
  * the spec as the bar shares it. Signed out: the ingredient names only, the
  * amounts as blanks, and one "Sign in to see the full spec". A drink whose
- * bar keeps its spec (Locked or Names only) says so either way.
+ * bar keeps its spec (Names or Menu) says so either way.
  */
 export function PublicSpec({
   page,

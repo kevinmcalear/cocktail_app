@@ -22,17 +22,18 @@ interface Props {
  */
 export function VisibilityStep(props: Props) {
   if (props.writable && props.barId) return <FromVenue {...props} barId={props.barId} />;
-  return <Choose {...props} current={props.claim?.setup?.page_visibility ?? 'description'} />;
+  // A claim still waiting isn't verified yet, so Private stays closed.
+  return <Choose {...props} current={props.claim?.setup?.page_visibility ?? 'description'} privateAllowed={false} />;
 }
 
 /** The venue's own page: start from what it has now. */
 function FromVenue(props: Props & { barId: string }) {
   const publishing = useBarPublishing(props.barId);
   if (!publishing.data) return <SetupPage>{null}</SetupPage>;
-  return <Choose {...props} current={publishing.data.pageVisibility} />;
+  return <Choose {...props} current={publishing.data.pageVisibility} privateAllowed={publishing.data.privateAllowed} />;
 }
 
-function Choose({ barId, name, claim, writable, onDone, current }: Props & { current: PageVisibility }) {
+function Choose({ barId, name, claim, writable, onDone, current, privateAllowed }: Props & { current: PageVisibility; privateAllowed: boolean }) {
   const setPublish = useSetPublish(barId);
   const saveSetup = useSaveClaimSetup();
   const pending = !writable && claim?.status === 'pending';
@@ -41,21 +42,21 @@ function Choose({ barId, name, claim, writable, onDone, current }: Props & { cur
   const busy = setPublish.isPending || saveSetup.isPending;
 
   const save = () => {
-    // While the claim waits the choice is always kept, even the default: approving otherwise starts the page Locked.
+    // While the claim waits the choice is always kept, even the default: approving otherwise starts the page at Menu.
     if (pending && claim) return saveSetup.mutate({ claimId: claim.id, setup: { page_visibility: shown } }, { onSuccess: onDone });
     if (!value || value === current) return onDone();
     if (writable) setPublish.mutate({ level: 'page', visibility: value }, { onSuccess: onDone });
     else onDone();
   };
   const note = pending
-    ? `Today ${name}’s page is unclaimed, so it shows names and descriptions. This takes over once your claim is approved. Any single drink can still be kept private from its own page, and you can change this in Publishing.`
+    ? `Today ${name}’s page is unclaimed, so it shows its menu: photos, descriptions and ingredients without amounts. This takes over once your claim is approved. Any single drink can still be kept private from its own page, and you can change this in Publishing once every 30 days.`
     : writable
       ? 'Any single drink can still be kept private from its own page, and you can change this in Publishing.'
       : 'This applies once your bar’s page is claimed. Any single drink can still be kept private from its own page.';
 
   return (
     <SetupPage footer={<SetupFooter pending={busy} onPress={save} onSkip={onDone} />}>
-      <PageVisibilityChoice radios heading={false} venueName={name} value={shown} onChange={setValue} disabled={busy} error={(setPublish.error ?? saveSetup.error)?.message ?? null} note={note} />
+      <PageVisibilityChoice radios heading={false} venueName={name} value={shown} privateAllowed={privateAllowed} onChange={setValue} disabled={busy} error={(setPublish.error ?? saveSetup.error)?.message ?? null} note={note} />
     </SetupPage>
   );
 }

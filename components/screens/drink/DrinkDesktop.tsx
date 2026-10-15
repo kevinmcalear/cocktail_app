@@ -60,6 +60,7 @@ export function DrinkDesktop({ sections: s, hero, heroActions, actions, staff, t
               {s.spec}
               {actions}
               {s.journey}
+              {s.myNote}
               {s.floor}
             </View>
           ) : null}

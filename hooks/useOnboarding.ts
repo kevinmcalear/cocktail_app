@@ -5,6 +5,7 @@ import { majorityUnit, splitName } from '@/lib/onboarding';
 import { DEFAULT_IDENTITY } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
 
+import { saveNewRound } from './useFirstRound';
 import { useSaveMyProfile } from './useMyProfile';
 
 const SAVED = "Couldn't save that. Check your connection and try again.";
@@ -165,6 +166,8 @@ export function useFinishOnboarding() {
     mutationFn: async () => {
       const { error } = await updateProfile({ onboarded: true });
       if (error) throw new Error(SAVED);
+      // New people get the first round at their venue (lib/firstRound.ts). A miss only skips the intro.
+      await saveNewRound();
     },
     onError: () => {},
   });

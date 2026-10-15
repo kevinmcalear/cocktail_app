@@ -13,7 +13,8 @@ import { isUnclaimed, useMenuCredits, useMenuEditions, useProfileAwards, useProf
 import { sortAwards } from '@/lib/awards';
 import { drinkRunTags } from '@/lib/menuEditions';
 import { plural } from '@/lib/menus';
-import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
+import { pageLocksSpecs, pageShowsDescriptions, pageShowsDrinks, privatePageNote, specLockNote } from '@/lib/pageVisibility';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 
 import { barPlace } from '../bar/BarFactLines';
 import { OnTheMenu } from '../bar/OnTheMenu';
@@ -61,6 +62,8 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
   const [allOriginals, setAllOriginals] = useState(false);
   const unclaimed = isUnclaimed(profile);
   const specsLocked = pageLocksSpecs(profile.page_visibility, false);
+  // Private: facts, hours, people and awards; no drinks, menus or scores (ppl-bar-private).
+  const drinksShown = pageShowsDrinks(profile.page_visibility, useActiveVenue().venues.some((v) => v.id === profile.bar_id));
   const place = [barPlace(facts?.bar_type ?? 'Bar', [profile.locality, profile.city].filter(Boolean).join(', ')), signedIn && here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ');
 
   const section = (title: string, body: ReactNode, kicker = false) => (
@@ -70,7 +73,7 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
     </View>
   );
   const shown = allOriginals ? originals : originals.slice(0, FIRST_ORIGINALS);
-  const theirDrinks = section(
+  const drinksSection = section(
     'Their drinks',
     isLoading ? (
       <Caption tone="muted">Loading drinks…</Caption>
@@ -87,13 +90,14 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
       </>
     ),
   );
-  const classics = originals.some((d) => d.riff_of_id) ? null : <StaffClassics barId={profile.bar_id} />;
+  const theirDrinks = drinksShown ? drinksSection : null;
+  const classics = !drinksShown || originals.some((d) => d.riff_of_id) ? null : <StaffClassics barId={profile.bar_id} />;
   const facts_ = <PublicBarFacts profileId={profile.id} instagram={profile.instagram} />;
   const week = <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />;
-  const menus = section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide);
+  const menus = drinksShown ? section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide) : null;
   const people = section('People', <Positions profile={profile} currentUntitled emptyText={`Nobody is listed at ${profile.display_name} yet.`} />, true);
   const awards = <PublicAwards profileId={profile.id} />;
-  const top = section(
+  const topSection = section(
     'Top drinks',
     <>
       {signedIn ? <BarYours profileId={profile.id} drinkIds={originals.map((d) => d.id)} /> : null}
@@ -101,7 +105,10 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
     </>,
   );
   // Why the specs are kept back, with Claim: in the main column under the drinks it explains (ppl-bar-unclaimed).
-  const lock = specsLocked ? (
+  const top = drinksShown ? topSection : null;
+  const lock = !drinksShown ? (
+    <SpecLockPanel title="Drinks stay with the bar" note={privatePageNote(profile.display_name, signedIn)} />
+  ) : specsLocked ? (
     <SpecLockPanel note={specLockNote(profile.display_name, unclaimed, false)} action={unclaimed ? <ClaimProfile profile={profile} label="Work here? Claim this page" /> : null} />
   ) : unclaimed ? (
     <ClaimProfile profile={profile} />

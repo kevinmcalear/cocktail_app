@@ -33,6 +33,7 @@ jest.mock('@/hooks/useDropdowns', () => ({
 }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p-me', displayName: 'Jo', isPublic: false, isModerated: false } }) }));
 jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) }));
+jest.mock('@/hooks/useRankings', () => ({ usePublicBars: (q: string) => ({ data: q.length >= 2 ? [{ id: 'bar-p-attaboy', display_name: 'Attaboy', city: 'New York' }] : [] }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [{ id: 'c-negroni', name: 'Negroni', imageUrl: null }] }) }));
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
@@ -259,6 +260,7 @@ describe('AddDrinkWizard', () => {
     useDrinkWizardStore.getState().setStep('bar-1', 'credits');
     expect(await screen.findByText('Picked from the ingredients step: it’s close to a Negroni.')).toBeTruthy();
     expect(screen.getByText('It’s credited to Little Rye too.')).toBeTruthy();
+    expect(screen.getByText('First made at Little Rye.')).toBeTruthy();
   });
 
   test('a name that is a classic offers its spec, and the method step offers the guess from it', async () => {
