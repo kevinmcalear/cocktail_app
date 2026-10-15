@@ -15,7 +15,8 @@ function credits(d: WizardDraft, hasProfile: boolean): string {
   const by = d.creator === 'nobody' ? '' : typeof d.creator === 'object' && d.creator ? `By ${d.creator.name}` : hasProfile ? 'By you' : '';
   const withThem = d.coCreators.length ? `with ${d.coCreators.map((c) => c.name).join(', ')}` : '';
   const riff = d.riffOf ? `riff on ${d.riffOf.name}` : '';
-  return [[by, withThem].filter(Boolean).join(' '), riff].filter(Boolean).join(', ');
+  const where = [d.place ? `first made at ${d.place.name}` : '', d.originYear ? `in ${d.originYear}` : ''].filter(Boolean).join(' ');
+  return [[by, withThem].filter(Boolean).join(' '), where, riff].filter(Boolean).join(', ');
 }
 
 interface ReviewStepProps extends StepProps {
