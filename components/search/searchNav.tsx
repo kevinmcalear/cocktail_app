@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useState, type ReactNode } from 'react';
 import { Platform } from 'react-native';
 
 /**
@@ -10,13 +10,36 @@ import { Platform } from 'react-native';
  */
 const Active = createContext<string | null>(null);
 
+/** What the palette's preview pane shows for a highlighted drink row. */
+export interface SearchPreviewItem {
+  itemId: string;
+  name: string;
+  imageUrl: string | null;
+  glass: string | null;
+  caption?: string;
+}
+
+/** Where the palette's rows say what they preview (null clears it). Null outside the palette. */
+type Register = (id: string, preview: SearchPreviewItem | null) => void;
+const Previews = createContext<Register | null>(null);
+
 /** Every row's DOM id starts with this, so the palette can list them in screen order. */
 const PREFIX = 'search-row-';
 
-/** A row's part: the id to render (`nativeID`) and whether it's the highlighted one. */
-export function useSearchNavRow(): { nativeID: string | undefined; active: boolean } {
+/**
+ * A row's part: the id to render (`nativeID`) and whether it's the
+ * highlighted one. A drink row passes what the palette's preview shows.
+ */
+export function useSearchNavRow(preview?: SearchPreviewItem): { nativeID: string | undefined; active: boolean } {
   const id = PREFIX + useId();
   const active = useContext(Active);
+  const register = useContext(Previews);
+  const key = preview ? JSON.stringify(preview) : '';
+  useEffect(() => {
+    if (!register || !key) return;
+    register(id, JSON.parse(key) as SearchPreviewItem);
+    return () => register(id, null);
+  }, [register, id, key]);
   return { nativeID: Platform.OS === 'web' ? id : undefined, active: active === id };
 }
 
@@ -69,6 +92,25 @@ export function useSearchNav(rootId: string, resultsKey: string, onTab: () => vo
   };
 }
 
-export function SearchNavProvider({ active, children }: { active: string | null; children: ReactNode }) {
-  return <Active.Provider value={active}>{children}</Active.Provider>;
+/** The palette's side of the previews: the rows register into it, and `preview(active)` reads the highlighted one. */
+export function useSearchPreviews() {
+  const [all, setAll] = useState<Record<string, SearchPreviewItem>>({});
+  const register = useCallback<Register>((id, preview) => {
+    setAll((was) => {
+      if (preview) return { ...was, [id]: preview };
+      if (!(id in was)) return was;
+      const next = { ...was };
+      delete next[id];
+      return next;
+    });
+  }, []);
+  return { register, preview: (active: string | null) => (active ? (all[active] ?? null) : null) };
+}
+
+export function SearchNavProvider({ active, register, children }: { active: string | null; register?: Register; children: ReactNode }) {
+  return (
+    <Previews.Provider value={register ?? null}>
+      <Active.Provider value={active}>{children}</Active.Provider>
+    </Previews.Provider>
+  );
 }
