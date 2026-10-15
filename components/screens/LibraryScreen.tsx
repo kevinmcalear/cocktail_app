@@ -12,6 +12,7 @@ import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsN
 import { SearchPill } from '@/components/screens/home/DiscoverControls';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
+import { useFirstRound } from '@/hooks/useFirstRound';
 import { Filter, FilterRow } from '@/components/screens/library/LibraryChips';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
@@ -84,6 +85,8 @@ export function LibraryScreen() {
   const staff = useStaffList(activeId);
   const { data: specs } = useDropdowns();
   const [now] = useState(() => Date.now());
+  // The first round's first step points at the Old Fashioned.
+  const startHere = useFirstRound().current?.key === 'house_spec';
 
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
   const shelves = useVenueShelves(activeId, published);
@@ -229,6 +232,7 @@ export function LibraryScreen() {
                 line={lineOf(item)}
                 glassName={glassName(item)}
                 width={`${100 / columns}%`}
+                mark={startHere && item.name.trim().toLowerCase() === 'old fashioned' ? 'Start here' : null}
                 onPressIn={category === 'Cocktail' ? () => prefetch(item.id, { name: item.name, item_images: item.item_images }) : undefined}
                 onPress={() => router.push(itemHref(category, item.id) as never)}
               />
