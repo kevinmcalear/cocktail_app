@@ -19,6 +19,7 @@ import type { SpecLock } from '@/hooks/useSpecLock';
 import type { DatabaseItem } from '@/types/types';
 
 import { PublishSection } from '../publishing/PublishSection';
+import { MyNote } from './MyNote';
 import { AllergensSection } from './AllergensSection';
 import { AtHomeSpec } from './AtHomeSpec';
 import { Backstory } from './Backstory';
@@ -148,6 +149,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
           <DrinkTags tags={tags} />
         </View>
       ) : null,
+    myNote: live && signedIn ? <MyNote itemId={item.id} name={item.name} /> : null,
     journey:
       home && signedIn && live ? (
         <JourneyStrip itemId={item.id} name={item.name} saved={p.toMake.saved} onToggleSaved={p.toMake.toggle} onRank={p.actions.rank} onMade={p.actions.made} madeTimes={p.actions.madeTimes} lines={lines} />

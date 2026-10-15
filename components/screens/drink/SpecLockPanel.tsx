@@ -11,7 +11,7 @@ import { fontFamilies, radius, space, type } from '@/constants/tokens';
  * in the drink without amounts when the bar shares that (ppl-drink-menu-level),
  * and, for an unclaimed bar, carries the claim action.
  */
-export function SpecLockPanel({ note, ingredients, action }: { note: string; ingredients?: string | null; action?: ReactNode }) {
+export function SpecLockPanel({ note, ingredients, action, title = 'Recipes stay with the bar' }: { note: string; ingredients?: string | null; action?: ReactNode; title?: string }) {
   const ds = useDs();
   return (
     <Surface style={[styles.panel, { borderColor: ds.c.line }]}>
@@ -19,7 +19,7 @@ export function SpecLockPanel({ note, ingredients, action }: { note: string; ing
         <IconSymbol name="lock.fill" size={20} color={ds.c.ink} />
       </View>
       <DsText variant="body" role="heading" align="center" style={styles.title}>
-        Recipes stay with the bar
+        {title}
       </DsText>
       <Body tone="muted" align="center" style={styles.note}>
         {note}

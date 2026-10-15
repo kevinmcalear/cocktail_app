@@ -25,6 +25,7 @@ import {
   type BarRow,
   type DiscoverBar,
   type DrinkRow,
+  withoutHad,
 } from './discoverDrinks';
 import { pinDescription, pinLabel } from './discoverMap';
 import type { DiscoverRow } from './nearMe';
@@ -169,3 +170,14 @@ const ordered = withBarOrder(barPins([{ ...bar('x', 'X', null, 1, 1), drinks: 3 
 assert.deepEqual(ordered.map((p) => [p.id, p.order]), [['x', undefined], ['y', 0]]);
 
 console.log('discoverDrinks: ok');
+
+// "Not had yet": what's loaded, less the drinks you've had; the total less those it found.
+{
+  const loaded = [drink('a', 'Martini', 'attaboy'), drink('b', 'Vesper', 'nomad'), drink('c', 'Gibson', 'attaboy')];
+  const left = withoutHad(loaded, { drinks: 40, bars: 12 }, ['b', 'zz']);
+  assert.deepEqual(ids(left.drinks), ['a', 'c']);
+  assert.deepEqual(left.totals, { drinks: 39, bars: 12 });
+  assert.deepEqual(withoutHad(loaded, { drinks: 3, bars: 2 }, ['a', 'b', 'c']).totals, { drinks: 0, bars: 2 });
+  assert.equal(withoutHad(loaded, null, ['a']).totals, null, 'no totals on a later page');
+  assert.equal(withoutHad(loaded, { drinks: 3, bars: 2 }, []).drinks, loaded, 'nothing had: the same list');
+}

@@ -34,7 +34,7 @@ assert.equal(topStyle(martinis), null, 'two bars is too few');
 assert.equal(topStyle([drink('z1', 'a', ['zero-proof']), drink('z2', 'b', ['zero-proof']), drink('z3', 'c', ['zero-proof'])]), null, 'zero-proof has its own shelf');
 const tie = [drink('n1', 'a', ['negroni']), drink('n2', 'b', ['negroni']), drink('n3', 'c', ['negroni']), drink('x1', 'a', ['martini']), drink('x2', 'b', ['martini']), drink('x3', 'c', ['martini'])];
 assert.equal(topStyle(tie), 'martini', 'a tie goes to the chips order');
-assert.equal(topStyle([drink('u1', 'a')]), null, 'no styles (a server before 20261025100000)');
+assert.equal(topStyle([drink('u1', 'a')]), null, 'no styles (a server before 20261025200000)');
 
 const pageTwo = [...Array.from({ length: 30 }, (_, i) => drink(`p${i}`, 'a')), ...sours];
 assert.equal(topStyle(pageTwo), null, 'only the first page counts, so Show more never swaps the shelf');

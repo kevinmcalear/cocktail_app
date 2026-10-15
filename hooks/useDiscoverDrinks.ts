@@ -5,7 +5,8 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useDebounced } from '@/hooks/useDiscover';
 import { useTrackSearch } from '@/hooks/useTrackSearch';
 import { foldName } from '@/lib/discover';
-import { closedBars, cursorAfter, kindParams, toDiscoverBar, toDiscoverDrink, type BarRow, type DiscoverBar, type DiscoverDrink, type DrinkFilter, type DrinkRow } from '@/lib/discoverDrinks';
+import { useMyHadIds } from '@/hooks/useRankings';
+import { closedBars, cursorAfter, kindParams, toDiscoverBar, toDiscoverDrink, withoutHad, type BarRow, type DiscoverBar, type DiscoverDrink, type DrinkFilter, type DrinkRow } from '@/lib/discoverDrinks';
 import type { Viewport } from '@/lib/discoverMap';
 import { inBox, parentTiles, tileBox, tilesFor, type Tile } from '@/lib/discoverTiles';
 import { areaParams, roundCoord, type Area } from '@/lib/nearMe';
@@ -76,7 +77,7 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
       const params = { ...where, p_bar_id: barId, ...kinds, p_query: search || null, ...near, ...pageParam, p_limit: pageSize };
       const asked = { ...params, ...(onNow ? { p_on_now: true } : {}), ...(mix ? { p_mix: true } : {}) };
       let { data, error } = await supabase.rpc('discover_list', asked).abortSignal(signal);
-      // ponytail: a database without 20261025100000 doesn't know p_mix; ask unmixed (one bar can fill the list then). Drop once it's in production.
+      // ponytail: a database without 20261025200000 doesn't know p_mix; ask unmixed (one bar can fill the list then). Drop once it's in production.
       if (error?.code === 'PGRST202' && mix) ({ data, error } = await supabase.rpc('discover_list', { ...params, ...(onNow ? { p_on_now: true } : {}) }).abortSignal(signal));
       // ponytail: a database without 20261019200000 doesn't know p_on_now; ask without it (past drinks too then). Drop once it's in production.
       if (error?.code === 'PGRST202' && onNow) ({ data, error } = await supabase.rpc('discover_list', params).abortSignal(signal));
@@ -87,12 +88,19 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
     },
   });
   const pages = query.data?.pages;
-  const drinks = useMemo(() => (pages ?? []).flatMap((p) => p.drinks), [pages]);
+  // "Not had yet" leaves out what you've had, from what's loaded (withoutHad).
+  const had = useMyHadIds(!!filter.notHad);
+  const hidden = filter.notHad ? had.data : undefined;
+  const { drinks, totals } = useMemo(() => {
+    const all = (pages ?? []).flatMap((p) => p.drinks);
+    const firstTotals = pages?.[0]?.totals ?? null;
+    return hidden ? withoutHad(all, firstTotals, hidden) : { drinks: all, totals: firstTotals };
+  }, [pages, hidden]);
   return {
     drinks,
-    totals: pages?.[0]?.totals ?? null,
+    totals,
     // Held (not enabled) reads as loading: Discover waits for location rather than show nothing.
-    isLoading: signedIn && query.isPending,
+    isLoading: signedIn && (query.isPending || (!!filter.notHad && had.isPending)),
     hasMore: !!query.hasNextPage,
     isLoadingMore: query.isFetchingNextPage,
     loadMore: () => {

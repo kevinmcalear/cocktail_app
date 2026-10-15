@@ -177,7 +177,7 @@ export function DrinksHere({ title, drinks: mixed, totals, more: mixedMore, isLo
   const more = nearest ? { total: closest.totals?.drinks ?? null, hasMore: closest.hasMore, loadMore: closest.loadMore, loading: closest.isLoadingMore } : mixedMore;
   const isLoading = nearest ? closest.isLoading : mixedLoading;
   const scores = useRowScores(drinks, area, signedIn);
-  const browsing = signedIn && !!near && near.onNow && !near.filter.kinds.length && !mixedLoading;
+  const browsing = signedIn && !!near && near.onNow && !near.filter.kinds.length && !near.filter.notHad && !mixedLoading;
   const shelves = useDiscoverShelves(near?.filter ?? { kinds: [], search: '', area }, mixed, browsing);
   let body;
   if (!signedIn) body = <ListNote>Sign in to see the drinks bars pour.</ListNote>;
