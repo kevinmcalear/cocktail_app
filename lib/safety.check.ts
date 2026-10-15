@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { countries, countryName, searchCountries } from './countries';
-import { localeCountry, parseBirthDate, REPORT_REASONS, reportErrorMessage, reportOutcome, reportRow, reportSubject } from './safety';
+import { birthPartDone, localeCountry, parseBirthDate, REPORT_REASONS, reportErrorMessage, reportOutcome, reportRow, reportSubject } from './safety';
 
 // Every reason the reports table takes, once, each with words.
 assert.deepEqual(
@@ -66,3 +66,8 @@ assert.equal(reportSubject('item', names), 'Martini');
 assert.equal(reportSubject('release', names), null);
 assert.equal(reportSubject('photo', names), 'A photo of Martini');
 assert.equal(reportSubject('ranking', { ...names, item: null }), null);
+
+// --- the date of birth moves on once a field is filled in ---
+assert.deepEqual(['1', '3', '4', '9', '07', '31', '32', '0', '00'].map((v) => birthPartDone('day', v)), [false, false, true, true, true, true, false, false, false]);
+assert.deepEqual(['1', '2', '9', '01', '12', '18', '0'].map((v) => birthPartDone('month', v)), [false, true, true, true, true, false, false]);
+assert.deepEqual(['199', '1990', '19a0'].map((v) => birthPartDone('year', v)), [false, true, false]);
