@@ -52,6 +52,15 @@ export function balanceOf(lines: readonly BalanceLine[]): Balance | null {
   return { strong, sour, sweet, bitter, hint, need };
 }
 
+/** A taste meter's value as the desktop page says it: strength is light to strong, the rest none to a lot. */
+export function tasteWord(dimension: 'strong' | 'sour' | 'sweet' | 'bitter', value: number): string {
+  if (dimension === 'strong') return value < 0.35 ? 'light' : value < 0.7 ? 'medium' : 'strong';
+  if (value < 0.05) return 'none';
+  if (value < 0.2) return 'a touch';
+  if (value < 0.4) return 'a little';
+  return value < 0.65 ? 'some' : 'a lot';
+}
+
 // The base spirit decides which sugar, citrus or vermouth is the natural fit.
 const BASES: readonly [RegExp, Record<Need, readonly string[]>][] = [
   [/tequila|mezcal|raicilla|sotol|agave/, { sweet: ['Agave syrup', 'Orange liqueur'], sour: ['Lime juice', 'Angostura bitters'], body: ['Agave syrup', 'Orange bitters'] }],

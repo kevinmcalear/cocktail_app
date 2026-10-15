@@ -1,5 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
+
+import { useBreakpoint } from '@/components/ds';
 
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useBarKit } from '@/hooks/useBarKit';
@@ -23,6 +25,7 @@ import { isVenueIce, venueIceNames } from '@/lib/venueKit';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { CreditsStep } from './CreditsStep';
+import { DrinkDesk } from './DrinkDesk';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
 import { FinishStep } from './FinishStep';
@@ -97,6 +100,9 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
   const shelfIds = useShelf().data;
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'the venue';
+  // A desktop browser writes the drink on one page (DrinkDesk); the first round keeps its steps.
+  const breakpoint = useBreakpoint();
+  const desk = Platform.OS === 'web' && breakpoint === 'desktop' && !embedded && !firstRound;
 
   const set = (change: Partial<WizardDraft>) => patch(place, change);
   const at = WIZARD_STEPS.indexOf(step);
@@ -166,7 +172,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   };
   // A name that is a classic ("House Negroni") offers its spec, until there's one.
   const classics = useDrinkLists().data ?? [];
-  const classic = step === 'name' && !draft.lines.length ? suggestClassic(draft.name, classics) : null;
+  const classic = (desk || step === 'name') && !draft.lines.length ? suggestClassic(draft.name, classics) : null;
   // Until its spec is used, the sketch already draws that classic (a Negroni's red).
   const preview = useClassicPreview(classic?.classic.id ?? null).data;
   const drawn = preview ? { ...draft, ...preview, name: draft.name } : draft;
@@ -237,6 +243,22 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         );
     }
   })();
+
+  if (desk) {
+    return (
+      <DrinkDesk
+        {...{ draft, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, classic, resumed }}
+        loading={!dropdowns?.ingredients}
+        aliases={dropdowns?.ingredientAliases}
+        shelf={barId ? undefined : new Set(shelfIds ?? [])}
+        onStartOver={startOver}
+        saving={create.isPending}
+        canSave={canSave(draft)}
+        onSave={save}
+        onClose={onClose}
+      />
+    );
+  }
 
   const following = WIZARD_STEPS[at + 1];
   return (

@@ -24,6 +24,8 @@ interface GlassStepProps extends StepProps {
   barVariants: readonly string[];
   /** Our guess from the spec, while no glass is picked. */
   suggested?: string | null;
+  /** The desktop page's row: four glasses, then More. */
+  compact?: boolean;
 }
 
 /**
@@ -34,7 +36,7 @@ interface GlassStepProps extends StepProps {
  * pick. Saved as items.sketch_variant. At a venue, its own glasses are
  * listed first, and a glass it doesn't list yet asks to be added.
  */
-export function GlassStep({ draft, set, options, barId, barGlasses, barVariants, suggested }: GlassStepProps) {
+export function GlassStep({ draft, set, options, barId, barGlasses, barVariants, suggested, compact }: GlassStepProps) {
   // Stable while the drink is: the tiles' drawings are cached by this object.
   const key = JSON.stringify(sketchLook(draft, barVariants));
   const inputs = useMemo(() => draftSketchInputs(JSON.parse(key)), [key]);
@@ -57,6 +59,7 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
       options={options}
       selected={draft.glass ? [draft.glass] : []}
       suggested={suggested}
+      compact={compact}
       // A shape belongs to its glass: one of the bar's own glasses by name is that glass; else the bar's main one (or the default).
       onChange={([glass]) => set({ glass: glass ?? null, glassVariant: barGlasses?.find((g) => g.name && g.name.trim().toLowerCase() === glass?.name.trim().toLowerCase())?.variant ?? null })}
       mine={venueGlasses ? { has: (p) => isVenueGlassName(venueGlasses, p.name), label: 'Your glasses', restLabel: 'Other glasses' } : undefined}
@@ -65,7 +68,7 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
         <View style={styles.shapes}>
           <Eyebrow>Which shape?</Eyebrow>
           <ShapeTiles shapes={shapes} inputs={inputs} seed="new-drink" value={shown} onChange={(glassVariant) => set({ glassVariant })} />
-          <Caption tone="muted">The sketch at the top redraws in the shape you pick.</Caption>
+          <Caption tone="muted">{`The sketch ${compact ? 'on the right' : 'at the top'} redraws in the shape you pick.`}</Caption>
         </View>
       ) : null}
       {draft.glass ? <GlasswarePrompt barId={barId} glass={picked} variant={inputs.variant} name={draft.glass.name} /> : null}

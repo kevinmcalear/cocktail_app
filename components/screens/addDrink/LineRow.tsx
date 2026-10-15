@@ -23,6 +23,8 @@ interface LineRowProps {
   onMakeHouse?: () => void;
   /** The units to pick from; the finish offers drops, sprays, rinses and the garnish counts. */
   units?: readonly string[];
+  /** Under the name on the desktop page: who brings it and what this pour costs ("Bluestone Trade · $1.28"). */
+  detail?: string | null;
 }
 
 /**
@@ -32,7 +34,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name; on a wider screen they share
  * its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail }: LineRowProps) {
   const ds = useDs();
   const [units, setUnits] = useState(false);
   const [noting, setNoting] = useState(!!line.note);
@@ -67,6 +69,11 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
               style={styles.name}
             >
               <Body numberOfLines={2}>{line.name}</Body>
+              {detail ? (
+                <Caption tone="muted" numberOfLines={1}>
+                  {detail}
+                </Caption>
+              ) : null}
             </PressableScale>
           </View>
           <View style={styles.controls}>
