@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, GlassButton, Headline, useDs } from '@/components/ds';
@@ -20,6 +20,13 @@ const FIRST = 8;
 const MORE = 12;
 /** Fewer bars than this near you and there is nothing worth asking about. */
 const AT_LEAST = 3;
+/**
+ * iOS drops a modal presented while another is still closing, which is how
+ * people often arrive (Home bar, picked in the venue sheet, then Discover).
+ * ponytail: a short settle after mount; present on the sheet's onDismiss if
+ * it ever proves too short.
+ */
+const SETTLE_MS = 700;
 
 const plural = (n: number, word: string) => `${n} ${word}`;
 
@@ -33,13 +40,18 @@ const plural = (n: number, word: string) => `${n} ${word}`;
 export function FirstOpenSheet({ area }: { area: Area }) {
   const userId = useUserId();
   const home = useMode().mode === 'home';
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSettled(true), SETTLE_MS);
+    return () => clearTimeout(t);
+  }, []);
   const asked = useFirstOpen((s) => (userId ? s.asked.includes(userId) : true));
   const loved = useLovedBars().data;
   const hidden = useHiddenBars().data;
   const fresh = !!userId && home && !asked && loved?.length === 0 && hidden?.length === 0;
   const { data } = useTopBars(area, fresh);
   const rows = data ? [...data.ranked, ...data.early] : [];
-  if (!fresh || rows.length < AT_LEAST) return null;
+  if (!fresh || !settled || rows.length < AT_LEAST) return null;
   return <Ask userId={userId} rows={rows} where={areaLabel(area)} />;
 }
 

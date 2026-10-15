@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 import { useFirstOpen } from '@/store/useFirstOpen';
@@ -22,7 +22,11 @@ jest.mock('@/hooks/useDiscover', () => ({ useTopBars: (_area: unknown, enabled: 
 
 const area = { kind: 'anywhere' } as const;
 
+// The sheet waits a moment after mount (another sheet may still be closing on iOS).
+const settle = () => act(() => jest.advanceTimersByTime(1000));
+
 beforeEach(() => {
+  jest.useFakeTimers();
   mockMode = 'home';
   mockLoved = [];
   mockHidden = [];
@@ -33,6 +37,8 @@ beforeEach(() => {
 
 test('asks once, at home, before any bar is loved or hidden; Done saves the picks', async () => {
   await renderWithTamagui(<FirstOpenSheet area={area} />);
+  expect(screen.queryByText('Any favourites?')).toBeNull();
+  await settle();
   expect(screen.getByText('Any favourites?')).toBeTruthy();
   await fireEvent.press(screen.getByLabelText('Love Little Rye'));
   await fireEvent.press(screen.getByLabelText('Hide 1806 from Discover'));
@@ -45,6 +51,7 @@ test('asks once, at home, before any bar is loved or hidden; Done saves the pick
 
 test('a second tap undoes a pick; Skip asks nothing again and saves nothing', async () => {
   await renderWithTamagui(<FirstOpenSheet area={area} />);
+  await settle();
   await fireEvent.press(screen.getByLabelText('Love Pale Moth'));
   await fireEvent.press(screen.getByLabelText('You love Pale Moth: undo'));
   expect(screen.getByText('Nothing picked yet')).toBeTruthy();
@@ -63,6 +70,7 @@ test('says nothing once asked, at a venue, with a bar already loved, or with too
   ]) {
     setup();
     const view = await renderWithTamagui(<FirstOpenSheet area={area} />);
+    await settle();
     expect(screen.queryByText('Any favourites?')).toBeNull();
     await view.unmount();
     mockMode = 'home';
