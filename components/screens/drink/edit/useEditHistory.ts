@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 import type { SortableRecipeItem } from '@/components/recipe/SortableRecipeList';
-import type { useCocktailEditor } from '@/hooks/useCocktailEditor';
 import { record, redo, startHistory, undo, type History } from '@/lib/editHistory';
 
-type Editor = ReturnType<typeof useCocktailEditor>;
+import type { DrinkEditor as Editor } from './EditParts';
 
 /** What undo puts back: the drink's words, spec and how it's made (not photos or who can see it). */
 interface EditSnapshot {

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,7 +19,7 @@ import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { DrinkHero } from '../DrinkHero';
 import { ShotList } from '../ShotList';
-import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, IngredientSheet, PhotosSheet, type MoreChoice } from './EditParts';
+import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, IngredientSheet, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
 import { EditSpecList } from './EditSpecList';
 import { EditToolbar } from './EditToolbar';
 import { MadeList } from './MadeList';
@@ -34,22 +34,35 @@ const PHONE_HERO = 300;
  * page itself, with every part editable where it reads. Glass toolbar with
  * undo, redo and Done (which saves); spec lines with a grip and a spec pad;
  * how it's made in small sheets; photos, story and team notes. Replaces the
- * old editor form (decided 15 Oct 2026).
+ * old editor form (decided 15 Oct 2026). Drafts open the same page (DraftEditScreen).
  */
 export function DrinkEditScreen({ id, onExit }: { id: string; onExit: () => void }) {
+  return (
+    <EditBrand barId={useCocktail(id).data?.bar_id}>
+      <SavedDrinkEdit id={id} onExit={onExit} />
+    </EditBrand>
+  );
+}
+
+/** Editing's theme, in the colours of the venue the drink belongs to. */
+export function EditBrand({ barId, children }: { barId: string | null | undefined; children: ReactNode }) {
   const { venues } = useActiveVenue();
-  const barId = useCocktail(id).data?.bar_id;
   const venue = venues.find((v) => v.id === barId);
   return (
     <BackbarTheme>
       <BrandProvider accent={venue?.accent ?? undefined} displayFace={venue?.displayFace}>
-        <EditPage id={id} onExit={onExit} />
+        {children}
       </BrandProvider>
     </BackbarTheme>
   );
 }
 
-function EditPage({ id, onExit }: { id: string; onExit: () => void }) {
+function SavedDrinkEdit({ id, onExit }: { id: string; onExit: () => void }) {
+  return <EditPage editor={useCocktailEditor(id)} id={id} onExit={onExit} />;
+}
+
+/** The page for a saved drink (`id`) or a draft (`id` null): a draft's Done keeps it a draft, and More publishes it. */
+export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: string | null; onExit: () => void }) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -57,12 +70,14 @@ function EditPage({ id, onExit }: { id: string; onExit: () => void }) {
   const wide = useBreakpoint() !== 'phone';
   // The drink page opens as a page sheet on iOS, which starts below the status bar (as DrinkScreen).
   const top = Platform.OS === 'ios' ? space.sm : insets.top;
-  const cocktail = useCocktail(id).data;
-  const editor = useCocktailEditor(id);
+  const cocktail = useCocktail(id ?? undefined).data;
+  const draft = 'draftId' in editor ? editor : null;
   const history = useEditHistory(editor);
   const deleteCocktail = useDeleteCocktail();
   // A drink credited to a bar stays shared (others rank and save it), so only SQL deletes it.
   const credited = !!cocktail && !cocktail.bar_id && !cocktail.created_by && !!cocktail.origin_bar_profile_id;
+  // Who a new ingredient made from here comes back to: this drink, or this draft.
+  const selfId = id ?? draft?.draftId ?? null;
 
   const [pad, setPad] = useState<number | null>(null);
   const [picking, setPicking] = useState<{ swap: number | null } | null>(null);
@@ -71,15 +86,15 @@ function EditPage({ id, onExit }: { id: string; onExit: () => void }) {
   // A new ingredient made from here comes back onto this drink's spec.
   const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
   useEffect(() => {
-    if (recentlyCreatedItem?.type !== 'ingredient' || recentlyCreatedItem.targetId !== id) return;
+    if (recentlyCreatedItem?.type !== 'ingredient' || !selfId || recentlyCreatedItem.targetId !== selfId) return;
     const handoff = recentlyCreatedItem;
-    editor.setRecipeItems((prev) => applyIngredientHandoff(prev, handoff, id, { amount: '', unit: getPreferredUnit(), preparation_notes: '', is_optional: false }) ?? prev);
+    editor.setRecipeItems((prev) => applyIngredientHandoff(prev, handoff, selfId, { amount: '', unit: getPreferredUnit(), preparation_notes: '', is_optional: false }) ?? prev);
     setRecentlyCreatedItem(null);
-  }, [editor, recentlyCreatedItem, setRecentlyCreatedItem, id]);
+  }, [editor, recentlyCreatedItem, setRecentlyCreatedItem, selfId]);
 
   const done = async () => {
     if (!editor.isDirty) return onExit();
-    if (await editor.handleSave()) onExit();
+    if (draft ? await draft.handleSaveDraft(false) : await editor.handleSave()) onExit();
   };
   const leave = async () => {
     if (editor.isDirty && !(await confirmAsync({ title: 'Discard your changes?', message: 'Nothing you changed here is saved yet.', confirmText: 'Discard', destructive: true }))) return;
@@ -87,6 +102,7 @@ function EditPage({ id, onExit }: { id: string; onExit: () => void }) {
     onExit();
   };
   const remove = async () => {
+    if (draft) return void ((await draft.handleDelete()) && onExit());
     if (!cocktail) return;
     const ok = await confirmAsync({ title: `Delete ${cocktail.name}?`, message: "This removes the drink, its spec and its photos for everyone at the venue. It can't be undone.", confirmText: 'Delete', destructive: true });
     if (!ok) return;
@@ -98,7 +114,8 @@ function EditPage({ id, onExit }: { id: string; onExit: () => void }) {
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)');
   };
-  const onMore = (c: MoreChoice) => (c === 'discard' ? void leave() : c === 'delete' ? void remove() : setSheet(c));
+  const publish = async () => void (draft && (await draft.handlePublish()) && onExit());
+  const onMore = (c: MoreChoice) => (c === 'discard' ? void leave() : c === 'delete' ? void remove() : c === 'publish' ? void publish() : setSheet(c));
 
   // The web: ⌘↵ is Done, ⌘Z and ⇧⌘Z undo and redo outside a text field, Escape leaves.
   useEffect(() => {
@@ -165,7 +182,7 @@ function EditPage({ id, onExit }: { id: string; onExit: () => void }) {
       </View>
     </>
   );
-  const servicePhotos = cocktail ? <ShotList itemId={id} barId={cocktail.bar_id ?? null} links={cocktail.item_images as ItemImageLink[] | undefined} /> : null;
+  const servicePhotos = cocktail && id ? <ShotList itemId={id} barId={cocktail.bar_id ?? null} links={cocktail.item_images as ItemImageLink[] | undefined} /> : null;
   const toolbar = <EditToolbar canUndo={history.canUndo} canRedo={history.canRedo} onUndo={history.undo} onRedo={history.redo} onDone={() => void done()} saving={editor.saving} wide={wide} media={pictures.length ? 'photo' : 'paper'} more={wide ? <GlassButton accessibilityLabel="More" icon="ellipsis" onPress={() => setSheet('more')} /> : undefined} />;
 
   return (
@@ -229,13 +246,15 @@ function EditPage({ id, onExit }: { id: string; onExit: () => void }) {
             // A new line goes straight to its amount.
             if (picking.swap === null) setPad(at);
           }}
-          onNew={(name) => {
+          onNew={async (name) => {
             setPicking(null);
-            router.push({ pathname: '/add-ingredient', params: { name, barId: editor.barId || '', attachTo: id } });
+            // A draft saves first, so coming back doesn't lose its spec and the new ingredient knows where to go.
+            const parent = draft ? await draft.persistDraft(true) : id;
+            router.push({ pathname: '/add-ingredient', params: { name, barId: editor.barId || '', attachTo: parent || '' } });
           }}
         />
       ) : null}
-      <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty} onPick={onMore} />
+      <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty} draft={!!draft} onPick={onMore} />
       {sheet === 'photos' ? <PhotosSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'access' ? <AccessSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'calc' ? <ToolsSheet visible onClose={() => setSheet(null)} tool="prep" prepName={editor.name} scheme={ds.scheme} /> : null}

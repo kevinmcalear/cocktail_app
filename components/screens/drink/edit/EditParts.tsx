@@ -9,10 +9,13 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { layout, radius, space } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
+import type { useCocktailDraftEditor } from '@/hooks/useCocktailDraftEditor';
 import type { useCocktailEditor } from '@/hooks/useCocktailEditor';
 import type { WizardPick } from '@/lib/drinkWizard';
 
-type Editor = ReturnType<typeof useCocktailEditor>;
+/** What editing in place drives: a saved drink's editor, or a draft's (which saves to drafts until it's published). */
+export type DrinkEditor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
+type Editor = DrinkEditor;
 
 const SHEET_PAD = { paddingHorizontal: space.xl, paddingBottom: space.xxl };
 
@@ -43,10 +46,10 @@ export function EditBottomBar({ onLine, onPhoto, onCalc, onMore }: { onLine: () 
   );
 }
 
-export type MoreChoice = 'photos' | 'access' | 'discard' | 'delete';
+export type MoreChoice = 'publish' | 'photos' | 'access' | 'discard' | 'delete';
 
-/** Editing's More: photos in order, who can see the spec, discard the changes, delete the drink. */
-export function EditMoreMenu({ open, onClose, canDelete, dirty, onPick }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; onPick: (c: MoreChoice) => void }) {
+/** Editing's More: photos in order, who can see the spec, discard the changes, delete the drink. A draft can also be published. */
+export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; draft?: boolean; onPick: (c: MoreChoice) => void }) {
   // What to open once the menu has gone: two sheets never stack.
   const then = useRef<MoreChoice | null>(null);
   const run = () => {
@@ -65,10 +68,11 @@ export function EditMoreMenu({ open, onClose, canDelete, dirty, onPick }: { open
       accessibilityLabel="More"
       header={<Headline role="heading">More</Headline>}
     >
+      {draft ? <MoreRow icon="paperplane.fill" label="Publish drink" onPick={() => (then.current = 'publish')} /> : null}
       <MoreRow icon="photo" label="Photos" onPick={() => (then.current = 'photos')} />
       <MoreRow icon="lock.shield.fill" label="Who can see the spec" onPick={() => (then.current = 'access')} />
       {dirty ? <MoreRow icon="arrow.uturn.backward" label="Discard changes" onPick={() => (then.current = 'discard')} /> : null}
-      {canDelete ? <MoreRow icon="trash" label="Delete drink" danger onPick={() => (then.current = 'delete')} /> : null}
+      {canDelete ? <MoreRow icon="trash" label={draft ? 'Delete draft' : 'Delete drink'} danger onPick={() => (then.current = 'delete')} /> : null}
     </Sheet>
   );
 }

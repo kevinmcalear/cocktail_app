@@ -592,6 +592,8 @@ export function useCocktailDraftEditor({
 
     return {
         loading,
+        /** The draft's own spec is in, so undo starts from it. */
+        specLoaded: !loading,
         saving,
         isDirty,
         draftId: currentDraftId,
@@ -610,6 +612,7 @@ export function useCocktailDraftEditor({
         notes,
         setNotes: wrap(setNotes),
         methodIds,
+        setMethodIds: wrap(setMethodIds),
         toggleMethod,
         glasswareId,
         familyId,
