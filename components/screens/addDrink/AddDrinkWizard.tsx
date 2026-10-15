@@ -37,6 +37,8 @@ import { StartFromClassic } from './StartFromClassic';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
 import { WizardFrame } from './WizardFrame';
+import { RoundStrip } from '@/components/screens/firstRound/RoundElsewhere';
+import { useFirstRound } from '@/hooks/useFirstRound';
 
 export interface AddDrinkWizardProps {
   /** The venue it's added at; null or missing for a drink at home. */
@@ -45,6 +47,8 @@ export interface AddDrinkWizardProps {
   initialName?: string | null;
   /** "Riff on this" on a drink page: a fresh draft starts from that drink's spec, credited as a version of it. */
   startFrom?: string | null;
+  /** The first round's "Make the Old Fashioned yours": straight to Review, with the round's strip. */
+  firstRound?: boolean;
   /** Inside the desktop workspace: no safe-area padding. */
   embedded?: boolean;
   onClose: () => void;
@@ -61,7 +65,7 @@ export function AddDrinkWizard(props: AddDrinkWizardProps) {
   return ready ? <Wizard {...props} /> : null;
 }
 
-function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded, onClose, onSaved }: AddDrinkWizardProps) {
+function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRound, embedded, onClose, onSaved }: AddDrinkWizardProps) {
   const place = wizardPlace(barId);
   const kept = useDrinkWizardStore((s) => s.kept[place]);
   const patch = useDrinkWizardStore((s) => s.patch);
@@ -83,6 +87,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const me = useMyProfile().data ?? null;
   const create = useCreateDrink();
+  const roundDone = useFirstRound().done;
   const barGlasses = useBarGlassware(barId).data;
   const barKit = useBarKit(barId).data ?? [];
   const barIce = venueIceNames(barKit);
@@ -111,8 +116,13 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
   useEffect(() => {
     const kept = useDrinkWizardStore.getState().kept[place]?.draft;
     if (!startFrom || (kept && hasContent(kept))) return;
-    startSpec(startFrom, { onSuccess: (change) => patch(place, change) });
-  }, [startFrom, place, patch, startSpec]);
+    startSpec(startFrom, {
+      onSuccess: (change) => {
+        patch(place, change);
+        if (firstRound) setStoredStep(place, 'review');
+      },
+    });
+  }, [startFrom, place, patch, startSpec, firstRound, setStoredStep]);
 
   const save = () =>
     create.mutate(
@@ -120,6 +130,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
       {
         onSuccess: ({ id, warnings, later = [] }) => {
           clear(place);
+          if (firstRound) roundDone('house_spec');
           toastDone('Drink saved', draft.name.trim());
           // The reminder "Just add the name" promised: the preps whose recipes are still to write.
           const one = later.length === 1;
@@ -216,7 +227,12 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
       case 'publish':
         return <PublishStep draft={draft} set={set} barId={barId} />;
       case 'review':
-        return <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} />;
+        return (
+          <>
+            {firstRound ? <RoundStrip onSkip={onClose} /> : null}
+            <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} />
+          </>
+        );
     }
   })();
 
@@ -231,7 +247,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.
       eyebrow={(step !== 'name' || resumed ? draft.name.trim() : '') || 'New drink'}
-      title={copy.title}
+      title={firstRound && step === 'review' ? 'Make it yours' : copy.title}
       intro={copy.intro}
       // Android's back button steps back through the wizard before leaving it.
       onHardwareBack={() => {
@@ -241,7 +257,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, embedded,
       }}
       footer={
         <WizardFooter
-          nextLabel={step === 'review' ? (create.isPending ? 'Saving…' : 'Save drink') : `Next: ${STEP_COPY[following].short.toLowerCase()}`}
+          nextLabel={step === 'review' ? (create.isPending ? 'Saving…' : firstRound ? 'Save as our house spec' : 'Save drink') : `Next: ${STEP_COPY[following].short.toLowerCase()}`}
           optional={copy.optional}
           canNext={step === 'name' || step === 'review' ? canSave(draft) : true}
           saving={create.isPending}
