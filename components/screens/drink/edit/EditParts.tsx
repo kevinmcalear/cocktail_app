@@ -4,14 +4,12 @@ import { Platform, ScrollView, StyleSheet, TextInput, View, type TextInputProps 
 import { BarAssignmentAccordion } from '@/components/BarAssignmentAccordion';
 import { SortableImageList } from '@/components/cocktail/SortableImageList';
 import { Caption, DsText, GlassSurface, Headline, PressableScale, Sheet, useDs, useSheetClose, type IconName } from '@/components/ds';
-import { IngredientSearch } from '@/components/screens/addDrink/IngredientSearch';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { layout, radius, space } from '@/constants/tokens';
 import { readableAccent } from '@/lib/color';
 import type { useCocktailDraftEditor } from '@/hooks/useCocktailDraftEditor';
 import type { useCocktailEditor } from '@/hooks/useCocktailEditor';
-import type { WizardPick } from '@/lib/drinkWizard';
 
 /** What editing in place drives: a saved drink's editor, or a draft's (which saves to drafts until it's published). */
 export type DrinkEditor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
@@ -98,25 +96,6 @@ function MoreRow({ icon, label, danger, onPick }: { icon: IconName; label: strin
   );
 }
 
-/** Add a line, or swap one's ingredient: the wizard's ingredient search in a sheet. */
-export function IngredientSheet({ editor, swapping, onPick, onNew, onClose }: { editor: Editor; swapping: string | null; onPick: (p: WizardPick) => void; onNew: (name: string) => void; onClose: () => void }) {
-  const ingredients = (editor.allIngredients ?? []) as { id: string; name: string | null }[];
-  return (
-    <Sheet style={SHEET_PAD} visible onClose={onClose} accessibilityLabel={swapping ? `Swap ${swapping}` : 'Add a line'} keyboard>
-      <View style={styles.search}>
-        <IngredientSearch
-          ingredients={ingredients}
-          loading={!editor.dropdowns?.ingredients}
-          label={swapping ? `Swap ${swapping} for…` : 'Add an ingredient'}
-          autoFocus
-          onCancel={onClose}
-          onPick={(p) => (p.id ? onPick(p) : onNew(p.name))}
-        />
-      </View>
-    </Sheet>
-  );
-}
-
 /**
  * The drink's photos in order, from More (the hero shows the first).
  * ponytail: the legacy SortableImageList inside a ds Sheet; redraw it in ds when photos get their own board.
@@ -169,7 +148,6 @@ const styles = StyleSheet.create({
   tool: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, minHeight: 56 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
-  search: { minHeight: 420 },
   access: { maxHeight: 480 },
 });
 
