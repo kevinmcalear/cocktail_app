@@ -1,7 +1,7 @@
 import { GlassButton, useToast } from '@/components/ds';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useHiddenBars, useHideBar } from '@/hooks/useHiddenBars';
-import { useLoveBar, useLovedBars } from '@/hooks/useKept';
+import { useLovedBars } from '@/hooks/useKept';
 
 /**
  * Hide a bar from your Discover, beside its heart (disc-hide-bar): it leaves
@@ -13,7 +13,6 @@ export function HideBarButton({ profileId, name }: { profileId: string; name: st
   const hidden = useHiddenBars().data?.some((b) => b.id === profileId) ?? false;
   const hideBar = useHideBar();
   const loved = useLovedBars().data?.some((b) => b.id === profileId) ?? false;
-  const love = useLoveBar();
   const toast = useToast();
   if (!signedIn) return null;
   const on = hideBar.isPending && hideBar.variables ? hideBar.variables.hide : hidden;
@@ -25,7 +24,7 @@ export function HideBarButton({ profileId, name }: { profileId: string; name: st
     // Hiding stops loving it (useHideBar); Undo brings both back.
     const wasLoved = loved;
     hideBar.mutate({ profileId, hide: true });
-    const undo = () => hideBar.mutate({ profileId, hide: false }, { onSuccess: () => (wasLoved ? love.mutate({ profileId, love: true }) : undefined) });
+    const undo = () => hideBar.mutate({ profileId, hide: false, relove: wasLoved });
     toast.show({ title: `${name} is hidden from Discover`, detail: 'Show it again from its page or in Settings.', action: { label: 'Undo', onPress: undo } });
   };
   return (

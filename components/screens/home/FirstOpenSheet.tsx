@@ -45,13 +45,16 @@ export function FirstOpenSheet({ area }: { area: Area }) {
     const t = setTimeout(() => setSettled(true), SETTLE_MS);
     return () => clearTimeout(t);
   }, []);
+  // Who has been asked is read from storage: wait for it, or someone who answered sees it flash.
+  const [hydrated, setHydrated] = useState(() => useFirstOpen.persist.hasHydrated());
+  useEffect(() => useFirstOpen.persist.onFinishHydration(() => setHydrated(true)), []);
   const asked = useFirstOpen((s) => (userId ? s.asked.includes(userId) : true));
   const loved = useLovedBars().data;
   const hidden = useHiddenBars().data;
   const fresh = !!userId && home && !asked && loved?.length === 0 && hidden?.length === 0;
   const { data } = useTopBars(area, fresh);
   const rows = data ? [...data.ranked, ...data.early] : [];
-  if (!fresh || !settled || rows.length < AT_LEAST) return null;
+  if (!fresh || !settled || !hydrated || rows.length < AT_LEAST) return null;
   return <Ask userId={userId} rows={rows} where={areaLabel(area)} />;
 }
 
@@ -60,6 +63,7 @@ function Ask({ userId, rows, where }: { userId: string; rows: DiscoverRow[]; whe
   const [picks, setPicks] = useState<Record<string, Pick | undefined>>({});
   const [shown, setShown] = useState(FIRST);
   const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
   const love = useLoveBar();
   const hide = useHideBar();
   const age = useAgeGate();
@@ -70,8 +74,14 @@ function Ask({ userId, rows, where }: { userId: string; rows: DiscoverRow[]; whe
   const close = () => markAsked(userId);
   const save = async () => {
     setSaving(true);
-    await Promise.allSettled(chosen.map(([profileId, p]) => (p === 'love' ? love.mutateAsync({ profileId, love: true }) : hide.mutateAsync({ profileId, hide: true }))));
-    close();
+    setFailed(false);
+    const results = await Promise.allSettled(chosen.map(([profileId, p]) => (p === 'love' ? love.mutateAsync({ profileId, love: true }) : hide.mutateAsync({ profileId, hide: true }))));
+    // Keep what didn't save on screen to try again; ask nothing more once all of it has.
+    const left = chosen.filter((_, i) => results[i].status === 'rejected');
+    setSaving(false);
+    if (!left.length) return close();
+    setPicks(Object.fromEntries(left));
+    setFailed(true);
   };
   // Loving needs a confirmed age, like the hearts everywhere else; hiding doesn't.
   const done = () => (loves ? age.gate(() => void save()) : void save());
@@ -86,7 +96,9 @@ function Ask({ userId, rows, where }: { userId: string; rows: DiscoverRow[]; whe
         title={where === 'anywhere' ? 'Any favourites?' : `Any favourites ${where}?`}
         footer={
           <View style={styles.footer}>
-            <Caption tone="muted">{summary}</Caption>
+            <Caption tone={failed ? 'accent' : 'muted'} role={failed ? 'alert' : undefined}>
+              {failed ? `Couldn’t save ${summary}. Check your connection and try again.` : summary}
+            </Caption>
             <View style={styles.actions}>
               <Button label="Skip for now" variant="secondary" onPress={close} />
               <Button label={saving ? 'Saving…' : 'Done'} disabled={saving || !chosen.length} onPress={done} />

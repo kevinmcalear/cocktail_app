@@ -140,6 +140,21 @@ describe('Discover respects it', () => {
     assert.deepEqual(await list(users.hider.client, { p_bar_id: ids.Gone }), [drinks.gone]);
   });
 
+  test('the drink rankings too: bar_relevance, which they join, leaves it out for the hider only', async () => {
+    const asUser = async (userId) => {
+      await db.query('BEGIN');
+      try {
+        await db.query("SELECT set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub: userId, role: 'authenticated' })]);
+        const { rows } = await db.query('SELECT id FROM private.bar_relevance($1::uuid[]) ORDER BY id', [[ids.Keep, ids.Gone]]);
+        return rows.map((r) => r.id);
+      } finally {
+        await db.query('ROLLBACK');
+      }
+    };
+    assert.deepEqual(await asUser(users.hider.id), [ids.Keep]);
+    assert.deepEqual(await asUser(users.other.id), [ids.Keep, ids.Gone].sort());
+  });
+
   test('showing it again puts it back', async () => {
     const { error } = await users.hider.client.from('hidden_bars').delete().eq('profile_id', ids.Gone);
     assert.ifError(error);

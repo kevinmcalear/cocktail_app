@@ -60,6 +60,18 @@ test('a second tap undoes a pick; Skip asks nothing again and saves nothing', as
   expect(useFirstOpen.getState().asked).toEqual(['me']);
 });
 
+test('a pick that fails to save stays on screen with a note, and nothing is marked asked', async () => {
+  mockLove.mockImplementationOnce(() => Promise.reject(new Error('offline')));
+  await renderWithTamagui(<FirstOpenSheet area={area} />);
+  await settle();
+  await fireEvent.press(screen.getByLabelText('Love Little Rye'));
+  await fireEvent.press(screen.getByLabelText('Hide 1806 from Discover'));
+  await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+  expect(await screen.findByText('Couldn’t save 1 loved. Check your connection and try again.')).toBeTruthy();
+  expect(screen.getByLabelText('You love Little Rye: undo')).toBeTruthy();
+  expect(useFirstOpen.getState().asked).toEqual([]);
+});
+
 test('says nothing once asked, at a venue, with a bar already loved, or with too few bars', async () => {
   for (const setup of [
     () => useFirstOpen.setState({ asked: ['me'] }),

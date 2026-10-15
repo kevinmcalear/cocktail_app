@@ -16,8 +16,8 @@ interface HiddenRow {
   profile: { id: string; handle: string | null; display_name: string; avatar_url: string | null; locality: string | null; city: string | null } | null;
 }
 
-/** Every Discover read that leaves hidden bars out (the map, drinks list, Top bars, rankings). */
-const DISCOVER_KEYS = [['hidden-bars'], ['discover-top-bars'], ['discover-rankings'], ['discover-list'], ['discover-bars']];
+/** Discover's reads that leave hidden bars out (the map, drinks list, Top bars, rankings). */
+const DISCOVER_KEYS = [['discover-top-bars'], ['discover-rankings'], ['discover-list'], ['discover-bars']];
 
 /** Bars you hid, latest first. */
 export function useHiddenBars() {
@@ -44,23 +44,33 @@ export function useHiddenBars() {
 
 /**
  * Hide a bar from your Discover, or show it again. Hiding a bar you love
- * stops loving it too: a bar can't lead your list and be off it.
+ * stops loving it too: a bar can't lead your list and be off it. `relove`
+ * (Undo after hiding a loved bar) loves it again in the same call, so it
+ * still happens when the button that hid it has gone from the screen.
  */
 export function useHideBar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ profileId, hide }: { profileId: string; hide: boolean }) => {
+    mutationFn: async ({ profileId, hide, relove = false }: { profileId: string; hide: boolean; relove?: boolean }) => {
       if (hide) {
         const { error } = await supabase.from('hidden_bars').upsert({ profile_id: profileId }, { onConflict: 'user_id,profile_id', ignoreDuplicates: true });
         if (error) throw new Error(error.message);
         const unlove = await supabase.from('loved_bars').delete().eq('profile_id', profileId);
-        if (unlove.error) throw new Error(unlove.error.message);
-      } else {
-        const { error } = await supabase.from('hidden_bars').delete().eq('profile_id', profileId);
-        if (error) throw new Error(error.message);
+        if (unlove.error) {
+          // Never leave it hidden and loved at once: undo the hide and say so.
+          await supabase.from('hidden_bars').delete().eq('profile_id', profileId);
+          throw new Error(unlove.error.message);
+        }
+        return;
+      }
+      const { error } = await supabase.from('hidden_bars').delete().eq('profile_id', profileId);
+      if (error) throw new Error(error.message);
+      if (relove) {
+        const back = await supabase.from('loved_bars').upsert({ profile_id: profileId }, { onConflict: 'user_id,profile_id', ignoreDuplicates: true });
+        if (back.error) throw new Error(back.error.message);
       }
     },
-    onSettled: (_d, _e, v) => Promise.all([...DISCOVER_KEYS, ...(v?.hide ? [['loved-bars']] : [])].map((queryKey) => qc.invalidateQueries({ queryKey }))),
+    onSettled: () => Promise.all([['hidden-bars'], ['loved-bars'], ...DISCOVER_KEYS].map((queryKey) => qc.invalidateQueries({ queryKey }))),
     onError: () => {},
   });
 }
