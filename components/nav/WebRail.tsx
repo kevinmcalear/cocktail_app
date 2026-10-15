@@ -16,17 +16,18 @@ import { VenueSwitcher } from './VenueSwitcher';
 import { TabIcon } from './WebTabBar';
 import type { SideNavProps } from './WebSideNav';
 
-function RailItem({ place, current, onPress }: { place: Place; current: boolean; onPress: () => void }) {
+function RailItem({ place, current, isNew, onPress }: { place: Place; current: boolean; isNew: boolean; onPress: () => void }) {
   const ds = useDs();
-  const color = current ? ds.accentText : ds.c.muted;
+  const color = current ? ds.accentText : isNew ? ds.c.ink : ds.c.muted;
   return (
     <PressableScale
       role="link"
       {...currentProps(current)}
-      accessibilityLabel={place.label}
+      accessibilityLabel={isNew ? `${place.label}, new` : place.label}
       onPress={onPress}
       style={[styles.item, current && { backgroundColor: withAlpha(ds.accentText, 0.16) }]}
     >
+      {isNew ? <View style={[styles.dot, { backgroundColor: ds.accentFill.fill }]} /> : null}
       <View style={styles.icon}>
         <TabIcon name={place.icon} size={20} color={color} />
       </View>
@@ -43,7 +44,7 @@ function RailItem({ place, current, onPress }: { place: Place; current: boolean;
  * Menus and Back bar at a venue, New (an outlined circle), and you at the
  * foot. The page beside it gets the rest of the width.
  */
-export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProps) {
+export function WebRail({ current, go, searching, onSearch, onNew, dots }: SideNavProps) {
   const ds = useDs();
   const router = useRouter();
   const { venue, tabs, work } = useNavPlaces();
@@ -60,7 +61,7 @@ export function WebRail({ current, go, searching, onSearch, onNew }: SideNavProp
       </View>
       <View style={styles.items}>
         {[...tabs, ...work].map((p) => (
-          <RailItem key={p.key} place={p} current={current === p.key} onPress={() => go(p)} />
+          <RailItem key={p.key} place={p} current={current === p.key} isNew={!!p.tab && dots.includes(p.key)} onPress={() => go(p)} />
         ))}
       </View>
       <PressableScale accessibilityLabel="New" onPress={onNew} style={[styles.new, { borderColor: ds.c.lineStrong }]}>
@@ -87,6 +88,8 @@ const styles = StyleSheet.create({
   item: { width: 64, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radius.control + 2 },
   // The board's 22 box draws a smaller glyph than Feather's: a 20 Feather icon matches its size and stroke.
   icon: { width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
+  // A tab the venue just switched on: the phone bar's dot, by the icon's top right.
+  dot: { position: 'absolute', top: space.sm, left: '50%', marginLeft: 14, width: space.sm, height: space.sm, borderRadius: radius.pill },
   // The board sets these 13/16 with no tracking, so a semibold Collection still fits the 64.
   label: { lineHeight: 16, letterSpacing: 0 },
   strong: { fontFamily: fontFamilies.bodySemiBold },

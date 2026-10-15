@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
@@ -6,14 +6,14 @@ import { Body, Button, Caption, dragDismissesKeyboard, DrinkImage, Field, Headli
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { withAlpha } from '@/lib/color';
-import { cannotAdd, filterLibrary, libraryNote, type EditSection } from '@/lib/menuLayout';
+import { cannotAdd, filterLibrary, libraryNote, nameToMake, nearLibrary, type EditSection } from '@/lib/menuLayout';
 import { sectionRule } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
+import { MakeFromSearch, useMakeDrink } from './MakeFromSearch';
 import { Choice, MenuSheet, menuSheetBody } from './MenuSheet';
-
-const CREATE_ROUTE: Record<MenuDrink['kind'], '/add-cocktail' | '/add-beer' | '/add-wine'> = { cocktail: '/add-cocktail', beer: '/add-beer', wine: '/add-wine' };
 
 interface AddDrinkSheetProps {
   section: EditSection | null;
@@ -57,8 +57,17 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [freeOnly, setFreeOnly] = useState(false);
+  const make = useMakeDrink(section, barId);
+  const where = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? null;
   if (!section) return null;
-  const drinks = filterLibrary(library, section, query, freeOnly, elsewhere);
+  const found = filterLibrary(library, section, query, freeOnly, elsewhere);
+  // Not there? Make it from the same search, close names under it (dm-decided).
+  const missing = nameToMake(library, query);
+  const drinks = found.length ? found : nearLibrary(library, section, query);
+  const makeIt = (name: string | null) => {
+    onClose();
+    make(name);
+  };
   const kind = section.allowedTypes[0] ?? 'cocktail';
 
   return (
@@ -69,21 +78,21 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
       title={`Add to ${section.name}`}
       subtitle={`${sectionRule(section)} · ${section.drinks.length} in`}
       footer={
-        <>
-          <Button
-            label={`Create a new ${kind === 'cocktail' ? 'drink' : kind}`}
-            icon="plus"
-            variant="secondary"
-            onPress={() => {
-              onClose();
+        // A typed name has its own Make in the list.
+        missing ? undefined : (
+          <>
+            <Button
+              label={`Create a new ${kind === 'cocktail' ? 'drink' : kind}`}
+              icon="plus"
+              variant="secondary"
               // The editor puts it in this section once it's saved (useLayoutEditor).
-              router.push({ pathname: CREATE_ROUTE[kind], params: { menuSectionId: section.key, ...(barId ? { barId } : {}) } });
-            }}
-          />
-          <Caption tone="muted" align="center">
-            Once it’s saved, it goes in {section.name}.
-          </Caption>
-        </>
+              onPress={() => makeIt(null)}
+            />
+            <Caption tone="muted" align="center">
+              Once it’s saved, it goes in {section.name}.
+            </Caption>
+          </>
+        )
       }
     >
       {/* Only the rows in view are drawn: a venue's library can be hundreds of sketched drinks. */}
@@ -98,14 +107,28 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
         windowSize={DRAWN_LIST_WINDOW}
         ListHeaderComponent={
           <View style={styles.head}>
-            <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search drinks" autoCapitalize="none" />
+            <Field label="Search" value={query} onChangeText={setQuery} placeholder="Search drinks, or type a new name" autoCapitalize="none" onSubmitEditing={() => (missing ? makeIt(missing) : undefined)} />
             <View role="radiogroup" accessibilityLabel="Show" style={styles.filters}>
               <Choice label="All" selected={!freeOnly} onPress={() => setFreeOnly(false)} />
               <Choice label="Not on a menu" selected={freeOnly} onPress={() => setFreeOnly(true)} />
             </View>
+            {missing ? (
+              <MakeFromSearch
+                phone
+                name={missing}
+                section={section}
+                where={where}
+                onMake={() => makeIt(missing)}
+                onBringIn={() => {
+                  onClose();
+                  router.push('/bring-in' as Href);
+                }}
+              />
+            ) : null}
+            {missing && drinks.length ? <Caption tone="muted">CLOSE</Caption> : null}
           </View>
         }
-        ListEmptyComponent={<Body tone="muted">{query ? `Nothing called “${query}” that fits ${section.name}.` : `No drinks that fit ${section.name} yet.`}</Body>}
+        ListEmptyComponent={missing ? undefined : <Body tone="muted">{query ? `Nothing called “${query}” that fits ${section.name}.` : `No drinks that fit ${section.name} yet.`}</Body>}
         renderItem={({ item: d }) => <LibraryRow drink={d} note={libraryNote(d, section, elsewhere)} added={!!cannotAdd(section, d)} onAdd={() => onAdd(d)} />}
       />
     </MenuSheet>

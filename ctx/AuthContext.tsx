@@ -1,6 +1,7 @@
 import { track } from '@/lib/analytics';
 import { isFirstSignIn, type AuthProblem } from '@/lib/authCode';
 import { getAuthRedirectTo } from '@/lib/authRedirect';
+import type { FeatureNewsSeen } from '@/lib/featureNews';
 import { forgetStoredSession, readStoredUser, supabase } from '@/lib/supabase';
 import { isAuthRetryableFetchError, Session, User } from '@supabase/supabase-js';
 import { onlineManager } from '@tanstack/react-query';
@@ -40,6 +41,8 @@ type AuthContextType = {
     /** False on a new account until setup finishes. Existing accounts leave it unset. */
     onboarded?: boolean;
     avatarUrl?: string;
+    /** "New at <venue>" lines dismissed and new tabs opened (lib/featureNews.ts). Replaces the whole map. */
+    featureNews?: FeatureNewsSeen;
   }) => Promise<{ error: Error | null }>;
 };
 
@@ -202,19 +205,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName,
     onboarded,
     avatarUrl,
+    featureNews,
   }: {
     firstName?: string;
     lastName?: string;
     fullName?: string;
     onboarded?: boolean;
     avatarUrl?: string;
+    featureNews?: FeatureNewsSeen;
   }) => {
-    const updates: { data: Record<string, string | boolean> } = { data: {} };
+    const updates: { data: Record<string, string | boolean | FeatureNewsSeen> } = { data: {} };
     if (firstName) updates.data.first_name = firstName;
     if (lastName !== undefined) updates.data.last_name = lastName;
     if (fullName) updates.data.full_name = fullName;
     if (onboarded !== undefined) updates.data.onboarded = onboarded;
     if (avatarUrl) updates.data.avatar_url = avatarUrl;
+    if (featureNews) updates.data.feature_news = featureNews;
 
     if (Object.keys(updates.data).length === 0) {
       return { error: null };

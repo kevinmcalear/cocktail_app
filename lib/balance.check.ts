@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { balanceOf } from './balance';
+import { balanceOf, tasteWord } from './balance';
 
 const line = (name: string, amount: number | null, unit: string | null = 'ml') => ({ name, amount, unit });
 
@@ -25,3 +25,9 @@ assert.match(balanceOf([line('Rye Whiskey', 60)])?.hint ?? '', /All spirit/);
 assert.equal(balanceOf([line('Fermented Plum Koji Thing', 60), line('Gin', 15)]), null);
 
 console.log('balance checks passed');
+
+assert.equal(tasteWord('strong', 0.2), 'light');
+assert.equal(tasteWord('strong', 0.9), 'strong');
+assert.equal(tasteWord('sweet', 0), 'none');
+assert.equal(tasteWord('sour', 0.1), 'a touch');
+assert.equal(tasteWord('bitter', 0.3), 'a little');

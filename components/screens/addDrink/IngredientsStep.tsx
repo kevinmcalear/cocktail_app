@@ -36,6 +36,10 @@ interface IngredientsStepProps extends StepProps {
   forDrink?: boolean;
   /** At home: the bottles on your shelf, so search says "On your shelf". */
   shelf?: ReadonlySet<string>;
+  /** Off on the desktop page, where the taste sits beside the spec. */
+  balance?: boolean;
+  /** Under each line's name on the desktop page: its supplier and cost. */
+  lineDetail?: (line: WizardLine) => string | null;
 }
 
 /**
@@ -44,7 +48,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, balance = true, lineDetail }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -164,6 +168,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 onSwap={() => setSwapKey(l.key)}
                 onEditPrep={() => setMaking({ name: l.name, key: l.key })}
                 onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
+                detail={lineDetail?.(l)}
               />
             )
           )}
@@ -238,7 +243,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       />
 
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
-      {forDrink && !typing ? <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
+      {forDrink && balance && !typing ? <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
       {typing || !forDrink ? null : (
         <>
           <GoesWith

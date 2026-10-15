@@ -1,0 +1,1246 @@
+{
+ "maker": "spiegelau",
+ "models": [
+  {
+   "name": "Apero Pro Long Drink Glass",
+   "series": "Apero Pro",
+   "designer": null,
+   "model_code": "4268009",
+   "glass": "highball",
+   "variant": "highball_tapered",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-apero-pro-long-drink-glass/4268009",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-apero-pro-long-drink-glass/4268009"
+   ]
+  },
+  {
+   "name": "Apero Pro Spritz Glass",
+   "series": "Apero Pro",
+   "designer": null,
+   "model_code": "4268039",
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-apero-pro-spritz-glass/4268039",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-apero-pro-spritz-glass/4268039"
+   ]
+  },
+  {
+   "name": "Apero Pro Whisky Glass",
+   "series": "Apero Pro",
+   "designer": null,
+   "model_code": "4268010",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-apero-pro-whisky-glass/4268010",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-apero-pro-whisky-glass/4268010"
+   ]
+  },
+  {
+   "name": "Authentis Champagne Flute",
+   "series": "Authentis",
+   "designer": null,
+   "model_code": "4400187",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-authentis-champagne-flute/4400187",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-authentis-champagne-flute/4400187"
+   ]
+  },
+  {
+   "name": "Authentis Digestif Glass",
+   "series": "Authentis",
+   "designer": null,
+   "model_code": "4400170",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 188,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-authentis-digestif-glass/4400170",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-authentis-digestif-glass/4400170"
+   ]
+  },
+  {
+   "name": "Classic Bar Long Drink Glass",
+   "series": "Classic Bar",
+   "designer": null,
+   "model_code": "9000172",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-classic-bar-long-drink-glass/9000172",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-classic-bar-long-drink-glass/9000172"
+   ]
+  },
+  {
+   "name": "Classic Bar Pro Mix Drink Glass",
+   "series": "Classic Bar Pro",
+   "designer": null,
+   "model_code": "9008009",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-classic-bar-pro-mix-drink-glass/9008009",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-classic-bar-pro-mix-drink-glass/9008009"
+   ]
+  },
+  {
+   "name": "Classic Bar Pro Shot Glass",
+   "series": "Classic Bar Pro",
+   "designer": null,
+   "model_code": "9008020",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-classic-bar-pro-shot-glass/9008020",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-classic-bar-pro-shot-glass/9008020"
+   ]
+  },
+  {
+   "name": "Classic Bar Tumbler",
+   "series": "Classic Bar",
+   "designer": null,
+   "model_code": "9000175",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-classic-bar-tumbler/9000175",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-classic-bar-tumbler/9000175"
+   ]
+  },
+  {
+   "name": "Club Pro Double Old Fashioned Glass",
+   "series": "Club Pro",
+   "designer": null,
+   "model_code": "2660116",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-club-pro-double-old-fashioned-glass/2660116",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-club-pro-double-old-fashioned-glass/2660116"
+   ]
+  },
+  {
+   "name": "Definition Digestif Glass",
+   "series": "Definition",
+   "designer": null,
+   "model_code": "1350166",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 218,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-definition-digestif-glass/1350166",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-definition-digestif-glass/1350166"
+   ]
+  },
+  {
+   "name": "Elegance Pro Long Drink Glass",
+   "series": "Elegance Pro",
+   "designer": null,
+   "model_code": "2758012",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-elegance-pro-long-drink-glass/2758012",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-elegance-pro-long-drink-glass/2758012"
+   ]
+  },
+  {
+   "name": "Elegance Pro Tumbler",
+   "series": "Elegance Pro",
+   "designer": null,
+   "model_code": "2758016",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-elegance-pro-tumbler/2758016",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-elegance-pro-tumbler/2758016"
+   ]
+  },
+  {
+   "name": "Feels Good Gin Tonic Glasses with Straws",
+   "series": "Feels Good",
+   "designer": null,
+   "model_code": "4450298",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-feels-good-gin-tonic-glasses-with-straws/4450298",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-feels-good-gin-tonic-glasses-with-straws/4450298"
+   ]
+  },
+  {
+   "name": "Festival Pro Champagne Flute",
+   "series": "Festival Pro",
+   "designer": null,
+   "model_code": "4028007",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 224,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-festival-pro-champagne-flute/4028007",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-festival-pro-champagne-flute/4028007"
+   ]
+  },
+  {
+   "name": "Festival Pro Long Drink Glass",
+   "series": "Festival Pro",
+   "designer": null,
+   "model_code": "4028012",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-festival-pro-long-drink-glass/4028012",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-festival-pro-long-drink-glass/4028012"
+   ]
+  },
+  {
+   "name": "Festival Pro Whisky Glass",
+   "series": "Festival Pro",
+   "designer": null,
+   "model_code": "4028016",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-festival-pro-whisky-glass/4028016",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-festival-pro-whisky-glass/4028016"
+   ]
+  },
+  {
+   "name": "Hi-Lite Coupette",
+   "series": "Hi-Lite",
+   "designer": null,
+   "model_code": "1750168",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 180,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-hi-lite-coupette/1750168",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-hi-lite-coupette/1750168"
+   ]
+  },
+  {
+   "name": "Lifestyle Coupette Glass",
+   "series": "Lifestyle",
+   "designer": null,
+   "model_code": "4450178",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 166,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-lifestyle-coupette-glass/4450178",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-lifestyle-coupette-glass/4450178"
+   ]
+  },
+  {
+   "name": "Lifestyle Long Drink Glass",
+   "series": "Lifestyle",
+   "designer": null,
+   "model_code": "4450179",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-lifestyle-long-drink-glass/4450179",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-lifestyle-long-drink-glass/4450179"
+   ]
+  },
+  {
+   "name": "Lifestyle Tumbler",
+   "series": "Lifestyle",
+   "designer": null,
+   "model_code": "4450175",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-lifestyle-tumbler/4450175",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-lifestyle-tumbler/4450175"
+   ]
+  },
+  {
+   "name": "Lounge 2.0 Long Drink Glass",
+   "series": "Lounge 2.0",
+   "designer": null,
+   "model_code": "2710162",
+   "glass": "highball",
+   "variant": "highball_tapered",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-lounge-2.0-long-drink-glass/2710162",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-lounge-2.0-long-drink-glass/2710162"
+   ]
+  },
+  {
+   "name": "Lounge 2.0 Shot Glass",
+   "series": "Lounge 2.0",
+   "designer": null,
+   "model_code": "2710160",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 76,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-lounge-2.0-shot-glass/2710160",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-lounge-2.0-shot-glass/2710160"
+   ]
+  },
+  {
+   "name": "Lounge 2.0 Single Old Fashioned Glass",
+   "series": "Lounge 2.0",
+   "designer": null,
+   "model_code": "2710165",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-lounge-2.0-single-old-fashioned-glass/2710165",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-lounge-2.0-single-old-fashioned-glass/2710165"
+   ]
+  },
+  {
+   "name": "Lounge 2.0 Whisky Glass",
+   "series": "Lounge 2.0",
+   "designer": null,
+   "model_code": "2710166",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-lounge-2.0-whisky-glass/2710166",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-lounge-2.0-whisky-glass/2710166"
+   ]
+  },
+  {
+   "name": "Perfect Serve Perfect Cocktail Glass",
+   "series": "Perfect Serve Collection",
+   "designer": "Stephan Hinz",
+   "model_code": "4500175",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-cocktail-glass/4500175",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-cocktail-glass/4500175"
+   ]
+  },
+  {
+   "name": "Perfect Serve Perfect Coupette Glass",
+   "series": "Perfect Serve Collection",
+   "designer": "Stephan Hinz",
+   "model_code": "4500174",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-coupette-glass/4500174",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-coupette-glass/4500174"
+   ]
+  },
+  {
+   "name": "Perfect Serve Perfect Nick & Nora Glass",
+   "series": "Perfect Serve Collection",
+   "designer": "Stephan Hinz",
+   "model_code": "4500156",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-nick-nora-glass/4500156",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-nick-nora-glass/4500156"
+   ]
+  },
+  {
+   "name": "Perfect Serve Perfect D.O.F. Glass",
+   "series": "Perfect Serve Collection",
+   "designer": "Stephan Hinz",
+   "model_code": "4500176",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 101,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-d.o.f.-glass/4500176",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-d.o.f.-glass/4500176"
+   ]
+  },
+  {
+   "name": "Perfect Serve Perfect S.O.F. Glass",
+   "series": "Perfect Serve Collection",
+   "designer": "Stephan Hinz",
+   "model_code": "4500177",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 82,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-s.o.f.-glass/4500177",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-s.o.f.-glass/4500177"
+   ]
+  },
+  {
+   "name": "Perfect Serve Perfect Long Drink Glass",
+   "series": "Perfect Serve Collection",
+   "designer": "Stephan Hinz",
+   "model_code": "4500179",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-long-drink-glass/4500179",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-long-drink-glass/4500179"
+   ]
+  },
+  {
+   "name": "Perfect Serve Perfect Shot Glass",
+   "series": "Perfect Serve Collection",
+   "designer": "Stephan Hinz",
+   "model_code": "4500170",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 91,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-shot-glass/4500170",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-shot-glass/4500170"
+   ]
+  },
+  {
+   "name": "Perfect Serve Perfect Small Long Drink Glass",
+   "series": "Perfect Serve Collection",
+   "designer": "Stephan Hinz",
+   "model_code": "4500172",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 101,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-small-long-drink-glass/4500172",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-perfect-small-long-drink-glass/4500172"
+   ]
+  },
+  {
+   "name": "Perfect Serve Pro Perfect Pool D.O.F. Glass - Tritan™ from Eastman",
+   "series": "Perfect Serve Collection Pro",
+   "designer": "Stephan Hinz",
+   "model_code": "4507516",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 101,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-pro-perfect-pool-d.o.f.-glass-tritan-from-eastman/4507516",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-pro-perfect-pool-d.o.f.-glass-tritan-from-eastman/4507516"
+   ]
+  },
+  {
+   "name": "Perfect Serve Pro Perfect Pool Long Drink Glass - Tritan™ from Eastman",
+   "series": "Perfect Serve Collection Pro",
+   "designer": "Stephan Hinz",
+   "model_code": "4507519",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-pro-perfect-pool-long-drink-glass-tritan-from-eastman/4507519",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-perfect-serve-pro-perfect-pool-long-drink-glass-tritan-from-eastman/4507519"
+   ]
+  },
+  {
+   "name": "Salute Champagne Flute",
+   "series": "Salute",
+   "designer": null,
+   "model_code": "4720175",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-salute-champagne-flute/4720175",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-salute-champagne-flute/4720175"
+   ]
+  },
+  {
+   "name": "Soiree Pro Champagne Flute",
+   "series": "Soiree Pro",
+   "designer": null,
+   "model_code": "4078007",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 226,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-champagne-flute/4078007",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-champagne-flute/4078007"
+   ]
+  },
+  {
+   "name": "Soiree Pro Double Old Fashioned Glass",
+   "series": "Soiree Pro",
+   "designer": null,
+   "model_code": "4078016",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-double-old-fashioned-glass/4078016",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-double-old-fashioned-glass/4078016"
+   ]
+  },
+  {
+   "name": "Soiree Pro Highball Glass",
+   "series": "Soiree Pro",
+   "designer": null,
+   "model_code": "4078013",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 144,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-highball-glass/4078013",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-highball-glass/4078013"
+   ]
+  },
+  {
+   "name": "Soiree Pro Juice Glass",
+   "series": "Soiree Pro",
+   "designer": null,
+   "model_code": "4078009",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-juice-glass/4078009",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-juice-glass/4078009"
+   ]
+  },
+  {
+   "name": "Soiree Pro Juice Glass",
+   "series": "Soiree Pro",
+   "designer": null,
+   "model_code": "4078014",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-juice-glass/4078014",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-juice-glass/4078014"
+   ]
+  },
+  {
+   "name": "Soiree Pro Long Drink Glass",
+   "series": "Soiree Pro",
+   "designer": null,
+   "model_code": "4078012",
+   "glass": "highball",
+   "variant": "highball_tapered",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 158,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-long-drink-glass/4078012",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-soiree-pro-long-drink-glass/4078012"
+   ]
+  },
+  {
+   "name": "Special Glasses Champagne Coupe",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4710050",
+   "glass": "coupe",
+   "variant": "coupe_saucer",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-champagne-coupe/4710050",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-champagne-coupe/4710050"
+   ]
+  },
+  {
+   "name": "Special Glasses Champagne Glass Sparkling Party 160 ml",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4340329",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 160,
+   "capacity_as_stated": "160 ml",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-champagne-glass-sparkling-party-160-ml/4340329",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-champagne-glass-sparkling-party-160-ml/4340329"
+   ]
+  },
+  {
+   "name": "Special Glasses Champagne Glass Sparkling Party 230 ml",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4270329",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 230,
+   "capacity_as_stated": "230 ml",
+   "height_mm": 215,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-champagne-glass-sparkling-party-230-ml/4270329",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-champagne-glass-sparkling-party-230-ml/4270329"
+   ]
+  },
+  {
+   "name": "Special Glasses Champagne Glass Sparkling Party 250 ml",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4900329",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 250,
+   "capacity_as_stated": "250 ml",
+   "height_mm": 239,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-champagne-glass-sparkling-party-250-ml/4900329",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-champagne-glass-sparkling-party-250-ml/4900329"
+   ]
+  },
+  {
+   "name": "Special Glasses Digestif Glass",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4510173",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 197,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-digestif-glass/4510173",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-digestif-glass/4510173"
+   ]
+  },
+  {
+   "name": "Special Glasses Gin & Tonic Glass",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4390179",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-gin-tonic-glass/4390179",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-gin-tonic-glass/4390179"
+   ]
+  },
+  {
+   "name": "Special Glasses Gin & Tonic Glass",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4810180",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 119,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-gin-tonic-glass/4810180",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-gin-tonic-glass/4810180"
+   ]
+  },
+  {
+   "name": "Special Glasses Single Barrel Bourbon Glass",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4460166",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 112,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-single-barrel-bourbon-glass/4460166",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-single-barrel-bourbon-glass/4460166"
+   ]
+  },
+  {
+   "name": "Special Glasses Summer Drinks Glass",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4670171",
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-summer-drinks-glass/4670171",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-summer-drinks-glass/4670171"
+   ]
+  },
+  {
+   "name": "Special Glasses Whisky Snifter Premium",
+   "series": "Special Glasses",
+   "designer": null,
+   "model_code": "4460167",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 192,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-special-glasses-whisky-snifter-premium/4460167",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-special-glasses-whisky-snifter-premium/4460167"
+   ]
+  },
+  {
+   "name": "Espresso Martini Glass",
+   "series": "Lifestyle",
+   "designer": null,
+   "model_code": "4450194",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-spiegelau-espresso-martini-glass/4450194",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-spiegelau-espresso-martini-glass/4450194"
+   ]
+  },
+  {
+   "name": "Style Champagne Flute",
+   "series": "Style",
+   "designer": null,
+   "model_code": "4670187",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-style-champagne-flute/4670187",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-style-champagne-flute/4670187"
+   ]
+  },
+  {
+   "name": "Style Coupette Glass",
+   "series": "Style",
+   "designer": null,
+   "model_code": "4670188",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-style-coupette-glass/4670188",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-style-coupette-glass/4670188"
+   ]
+  },
+  {
+   "name": "Style Tumbler S",
+   "series": "Style",
+   "designer": null,
+   "model_code": "4670184",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-style-tumbler-s/4670184",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-style-tumbler-s/4670184"
+   ]
+  },
+  {
+   "name": "Topline Champagne Flute",
+   "series": "Topline",
+   "designer": null,
+   "model_code": "4190129",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 265,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-topline-champagne-flute/4190129",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-topline-champagne-flute/4190129"
+   ]
+  },
+  {
+   "name": "Ultra Pro Long Drink Glass",
+   "series": "Ultra Pro",
+   "designer": null,
+   "model_code": "4918009",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-ultra-pro-long-drink-glass/4918009",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-ultra-pro-long-drink-glass/4918009"
+   ]
+  },
+  {
+   "name": "Ultra Pro Red Wine / Spritz Glass",
+   "series": "Ultra Pro",
+   "designer": null,
+   "model_code": "4918001",
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-ultra-pro-red-wine-spritz-glass/4918001",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-ultra-pro-red-wine-spritz-glass/4918001"
+   ]
+  },
+  {
+   "name": "Ultra Pro Whisky Tumbler",
+   "series": "Ultra Pro",
+   "designer": null,
+   "model_code": "4918016",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-ultra-pro-whisky-tumbler/4918016",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-ultra-pro-whisky-tumbler/4918016"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Champagne Saucer",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518008",
+   "glass": "coupe",
+   "variant": "coupe_saucer",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 163,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-champagne-saucer/4518008",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-champagne-saucer/4518008"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Cognac Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518018",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 154,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-cognac-glass/4518018",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-cognac-glass/4518018"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Digestif Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518023",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 197,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-digestif-glass/4518023",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-digestif-glass/4518023"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Juice Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518009",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 128,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-juice-glass/4518009",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-juice-glass/4518009"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Long Drink Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518012",
+   "glass": "highball",
+   "variant": "highball_tapered",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-long-drink-glass/4518012",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-long-drink-glass/4518012"
+   ]
+  },
+  {
+   "name": "Vino Grande Pro Martini Glass",
+   "series": "Vino Grande Pro",
+   "designer": null,
+   "model_code": "4518025",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-martini-glass/4518025",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-vino-grande-pro-martini-glass/4518025"
+   ]
+  },
+  {
+   "name": "Willsberger Anniversary Digestif Glass",
+   "series": "Willsberger Anniversary",
+   "designer": "Johann Willsberger",
+   "model_code": "1416176",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-digestif-glass/1416176",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-digestif-glass/1416176"
+   ]
+  },
+  {
+   "name": "Willsberger Anniversary Pro Martini Glass",
+   "series": "Willsberger Anniversary Pro",
+   "designer": "Johann Willsberger",
+   "model_code": "1418025",
+   "glass": "martini",
+   "variant": "martini_tall",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-martini-glass/1418025",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-pro-martini-glass/1418025"
+   ]
+  },
+  {
+   "name": "Willsberger Anniversary Whisky Glass",
+   "series": "Willsberger Anniversary",
+   "designer": "Johann Willsberger",
+   "model_code": "1416186",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-whisky-glass/1416186",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-willsberger-anniversary-whisky-glass/1416186"
+   ]
+  },
+  {
+   "name": "Winelovers Champagne Flute",
+   "series": "Winelovers",
+   "designer": null,
+   "model_code": "4090187",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 219,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-winelovers-champagne-flute/4090187",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-winelovers-champagne-flute/4090187"
+   ]
+  },
+  {
+   "name": "Winelovers Pro Long Drink Glass",
+   "series": "Winelovers Pro",
+   "designer": null,
+   "model_code": "4098012",
+   "glass": "highball",
+   "variant": "highball_tapered",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 158,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-winelovers-pro-long-drink-glass/4098012",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-winelovers-pro-long-drink-glass/4098012"
+   ]
+  },
+  {
+   "name": "Winelovers Pro Martini Glass",
+   "series": "Winelovers Pro",
+   "designer": null,
+   "model_code": "4098025",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 153,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-winelovers-pro-martini-glass/4098025",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-winelovers-pro-martini-glass/4098025"
+   ]
+  },
+  {
+   "name": "Winelovers Pro On The Rocks",
+   "series": "Winelovers Pro",
+   "designer": null,
+   "model_code": "4098016",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.spiegelau.com/en-de/spiegelau-winelovers-pro-on-the-rocks/4098016",
+   "source_urls": [
+    "https://www.spiegelau.com/en-de/spiegelau-winelovers-pro-on-the-rocks/4098016"
+   ]
+  }
+ ]
+}

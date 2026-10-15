@@ -1,0 +1,1046 @@
+{
+ "maker": "riedel",
+ "models": [
+  {
+   "name": "Drink Specific Glassware Neat Glass",
+   "series": "Drink Specific Glassware",
+   "designer": "Zane Harris",
+   "model_code": "6417/01",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 174,
+   "capacity_as_stated": "174 ml / 6.13 US fl. oz. full capacity",
+   "height_mm": 77,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-neat-glass/641700001",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-neat-glass/641700001"
+   ]
+  },
+  {
+   "name": "Drink Specific Glassware Rocks Glass",
+   "series": "Drink Specific Glassware",
+   "designer": "Zane Harris",
+   "model_code": "6417/02",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-rocks-glass/641700002",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-rocks-glass/641700002"
+   ]
+  },
+  {
+   "name": "Drink Specific Glassware Double Rocks Glass",
+   "series": "Drink Specific Glassware",
+   "designer": "Zane Harris",
+   "model_code": "6417/07",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 103,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-double-rocks-glass/641700007",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-double-rocks-glass/641700007"
+   ]
+  },
+  {
+   "name": "Drink Specific Glassware Highball Glass",
+   "series": "Drink Specific Glassware",
+   "designer": "Zane Harris",
+   "model_code": "6417/04",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 154,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-highball-glass/641700004",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-highball-glass/641700004"
+   ]
+  },
+  {
+   "name": "Drink Specific Glassware Fizz Glass",
+   "series": "Drink Specific Glassware",
+   "designer": "Zane Harris",
+   "model_code": "6417/03",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 265,
+   "capacity_as_stated": "265 ml / 9.34 US fl. oz. full capacity",
+   "height_mm": 163,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-fizz-glass/641700003",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-fizz-glass/641700003"
+   ]
+  },
+  {
+   "name": "Drink Specific Glassware Nick & Nora Glass",
+   "series": "Drink Specific Glassware",
+   "designer": "Zane Harris",
+   "model_code": "6417/05",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 153,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-nick-nora-glass/641700005",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-nick-nora-glass/641700005"
+   ]
+  },
+  {
+   "name": "Drink Specific Glassware Nick & Nora Glass Large",
+   "series": "Drink Specific Glassware",
+   "designer": "Zane Harris",
+   "model_code": "6417/08",
+   "glass": "nick",
+   "variant": "nick_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 177,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-nick-nora-glass-large/641700008",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-nick-nora-glass-large/641700008"
+   ]
+  },
+  {
+   "name": "Drink Specific Glassware Sour Glass",
+   "series": "Drink Specific Glassware",
+   "designer": "Zane Harris",
+   "model_code": "6417/06",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 158,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-sour-glass/641700006",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-sour-glass/641700006"
+   ]
+  },
+  {
+   "name": "Drink Specific Glassware Sour Glass Optic",
+   "series": "Drink Specific Glassware",
+   "designer": "Zane Harris",
+   "model_code": "6417/09",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-sour-glass-optic/641700009",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-drink-specific-glassware-sour-glass-optic/641700009"
+   ]
+  },
+  {
+   "name": "Resort Highball - Tritan from Eastman",
+   "series": "Resort",
+   "designer": "Zane Harris",
+   "model_code": "6417/94",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://www.riedel.com/de-at/riedel-resort-highball-tritan-from-eastman/641700094",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-resort-highball-tritan-from-eastman/641700094"
+   ]
+  },
+  {
+   "name": "Resort Double Rocks - Tritan from Eastman",
+   "series": "Resort",
+   "designer": "Zane Harris",
+   "model_code": "6417/97",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 411,
+   "capacity_as_stated": "411 ml / 14.49 US fl. oz. full capacity",
+   "height_mm": 103,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://www.riedel.com/de-at/riedel-resort-double-rocks-tritan-from-eastman/641700097",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-resort-double-rocks-tritan-from-eastman/641700097"
+   ]
+  },
+  {
+   "name": "Bar Rituals Restaurant Rocks Glass",
+   "series": "Bar Rituals",
+   "designer": "Zane Harris",
+   "model_code": "0421/02",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 283,
+   "capacity_as_stated": "283 ml / 9.98 US fl. oz. full capacity",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-bar-rituals-restaurant-rocks-glass/042101202",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-bar-rituals-restaurant-rocks-glass/042101202"
+   ]
+  },
+  {
+   "name": "Bar Rituals Double Rocks Glass",
+   "series": "Bar Rituals",
+   "designer": "Zane Harris",
+   "model_code": "6421/07",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 350,
+   "capacity_as_stated": "350 ml / 12.34 US fl. oz. full capacity",
+   "height_mm": 101,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-bar-rituals-double-rocks-glass/642100007",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-bar-rituals-double-rocks-glass/642100007"
+   ]
+  },
+  {
+   "name": "Bar Rituals Highball Glass",
+   "series": "Bar Rituals",
+   "designer": "Zane Harris",
+   "model_code": "6421/04",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 310,
+   "capacity_as_stated": "310 ml / 10.93 US fl. oz. full capacity",
+   "height_mm": 158,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-bar-rituals-highball-glass/642100004",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-bar-rituals-highball-glass/642100004"
+   ]
+  },
+  {
+   "name": "Tumbler Collection Optical \"O\" Whisky",
+   "series": "Tumbler Collection",
+   "designer": "Maximilian J. Riedel",
+   "model_code": "0515/05",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 96,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-tumbler-collection-optical-o-whisky/051500005",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-tumbler-collection-optical-o-whisky/051500005"
+   ]
+  },
+  {
+   "name": "Tumbler Collection Optical \"O\" Longdrink",
+   "series": "Tumbler Collection",
+   "designer": "Maximilian J. Riedel",
+   "model_code": "0515/90",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 113,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-tumbler-collection-optical-o-longdrink/051500090",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-tumbler-collection-optical-o-longdrink/051500090"
+   ]
+  },
+  {
+   "name": "Tumbler Collection Optical \"O\" All Purpose Glass",
+   "series": "Tumbler Collection",
+   "designer": "Maximilian J. Riedel",
+   "model_code": "0515/67",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 124,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-tumbler-collection-optical-o-all-purpose-glass/051500067",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-tumbler-collection-optical-o-all-purpose-glass/051500067"
+   ]
+  },
+  {
+   "name": "Gin Set Classic (gin glass)",
+   "series": "Mixing Sets",
+   "designer": null,
+   "model_code": "5414/67",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 124,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-gin-set-classic/541400067",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-gin-set-classic/541400067"
+   ]
+  },
+  {
+   "name": "Tumbler Collection RIEDEL Fire Whisky",
+   "series": "Tumbler Collection",
+   "designer": "Georg Riedel",
+   "model_code": "0515/02S1",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 98,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-tumbler-collection-riedel-fire-whisky/051500102",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-tumbler-collection-riedel-fire-whisky/051500102"
+   ]
+  },
+  {
+   "name": "Tumbler Collection RIEDEL Fire Longdrink",
+   "series": "Tumbler Collection",
+   "designer": "Georg Riedel",
+   "model_code": "0515/04S1",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-tumbler-collection-riedel-fire-longdrink/051500104",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-tumbler-collection-riedel-fire-longdrink/051500104"
+   ]
+  },
+  {
+   "name": "Tumbler Collection RIEDEL Spey Whisky",
+   "series": "Tumbler Collection",
+   "designer": null,
+   "model_code": "0515/02S3",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-tumbler-collection-riedel-spey-whisky/051500302",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-tumbler-collection-riedel-spey-whisky/051500302",
+    "https://www.riedel.com/en-us/riedel-tumbler-collection-restaurant-spey-whisky/041801202"
+   ]
+  },
+  {
+   "name": "Tumbler Collection RIEDEL Spey Longdrink",
+   "series": "Tumbler Collection",
+   "designer": null,
+   "model_code": "0515/04S3",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-tumbler-collection-riedel-spey-longdrink/051500304",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-tumbler-collection-riedel-spey-longdrink/051500304"
+   ]
+  },
+  {
+   "name": "Tumbler Collection Single Old Fashioned",
+   "series": "Tumbler Collection",
+   "designer": null,
+   "model_code": "0515/01S3",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-tumbler-collection-single-old-fashioned/051500301",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-tumbler-collection-single-old-fashioned/051500301"
+   ]
+  },
+  {
+   "name": "Laudon Tumbler",
+   "series": "Laudon",
+   "designer": null,
+   "model_code": "1515/02S3B",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-laudon-tumbler-schwarz/15150b302",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-laudon-tumbler-schwarz/15150b302"
+   ]
+  },
+  {
+   "name": "Laudon Highball",
+   "series": "Laudon",
+   "designer": null,
+   "model_code": "1515/04S3B",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-laudon-highball-black/15150b304",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-laudon-highball-black/15150b304"
+   ]
+  },
+  {
+   "name": "Mixing Rum Set (rum glass)",
+   "series": "Mixing Sets",
+   "designer": "Maximilian J. Riedel",
+   "model_code": "5515/52S5",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-mixing-rum-set/551500552",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-mixing-rum-set/551500552"
+   ]
+  },
+  {
+   "name": "Manhattan Restaurant Single Old Fashioned",
+   "series": "Manhattan Restaurant",
+   "designer": null,
+   "model_code": "0419/01",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-manhattan-restaurant-single-old-fashioned/041901201",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-manhattan-restaurant-single-old-fashioned/041901201"
+   ]
+  },
+  {
+   "name": "Manhattan Restaurant Double Old Fashioned",
+   "series": "Manhattan Restaurant",
+   "designer": null,
+   "model_code": "0419/02",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 370,
+   "capacity_as_stated": "370 ml / 13.03 US fl. oz. full capacity",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-manhattan-restaurant-double-old-fashioned/041901202",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-manhattan-restaurant-double-old-fashioned/041901202"
+   ]
+  },
+  {
+   "name": "Manhattan Restaurant Highball",
+   "series": "Manhattan Restaurant",
+   "designer": null,
+   "model_code": "0419/04",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-manhattan-restaurant-highball/041901204",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-manhattan-restaurant-highball/041901204"
+   ]
+  },
+  {
+   "name": "The O Wine Tumbler Whisky",
+   "series": "The O Wine Tumbler",
+   "designer": "Maximilian J. Riedel",
+   "model_code": "0414/02",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-the-o-wine-tumbler-whisky/041400002",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-the-o-wine-tumbler-whisky/041400002"
+   ]
+  },
+  {
+   "name": "Manufaktur Vitis Whisky / Water Tumbler",
+   "series": "Manufaktur Vitis",
+   "designer": null,
+   "model_code": "4303/02",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 445,
+   "capacity_as_stated": "445 ml / 15.69 US fl. oz. full capacity",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-manufaktur-vitis-whisky-water-tumbler/430300002",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-manufaktur-vitis-whisky-water-tumbler/430300002"
+   ]
+  },
+  {
+   "name": "The O Wine Tumbler Spirits / Fortified Wines / Cask Aged Brandies",
+   "series": "The O Wine Tumbler",
+   "designer": "Maximilian J. Riedel",
+   "model_code": "0414/60",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 235,
+   "capacity_as_stated": "235 ml / 8.28 US fl. oz. full capacity",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-the-o-wine-tumbler-spirits-fortified-wines-cask-aged-brandies/041400060",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-the-o-wine-tumbler-spirits-fortified-wines-cask-aged-brandies/041400060"
+   ]
+  },
+  {
+   "name": "All American Bourbon Glass",
+   "series": "Vinum",
+   "designer": "Georg J. Riedel",
+   "model_code": "6416/73",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "Full capacity: 250 ml, 8.81\"",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-all-american-bourbon-glass/641600073",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-all-american-bourbon-glass/641600073"
+   ]
+  },
+  {
+   "name": "Vinum Martini",
+   "series": "Vinum",
+   "designer": "Georg J. Riedel",
+   "model_code": "6416/77",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 147,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-martini/641600077",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-martini/641600077"
+   ]
+  },
+  {
+   "name": "Sommeliers Martini",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "4400/17",
+   "glass": "martini",
+   "variant": "martini_tall",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 182,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-martini/440090117",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-martini/440090117"
+   ]
+  },
+  {
+   "name": "Extreme Martini",
+   "series": "Extreme",
+   "designer": null,
+   "model_code": "4441/17",
+   "glass": "martini",
+   "variant": "martini_wide",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-extreme-martini/444100017",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-extreme-martini/444100017"
+   ]
+  },
+  {
+   "name": "GRAPE@RIEDEL Martini / Cocktail",
+   "series": "GRAPE@RIEDEL",
+   "designer": null,
+   "model_code": "6424/77",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": 200,
+   "capacity_as_stated": "200 ml / 7.05 US fl. oz. full capacity",
+   "height_mm": 185,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-grapeatriedel-martini-cocktail/642400077",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-grapeatriedel-martini-cocktail/642400077"
+   ]
+  },
+  {
+   "name": "Veritas Coupe / Cocktail",
+   "series": "Veritas",
+   "designer": null,
+   "model_code": "6449/09",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-coupe-cocktail/644900009",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-coupe-cocktail/644900009"
+   ]
+  },
+  {
+   "name": "GRAPE@RIEDEL Coupe / Cocktail",
+   "series": "GRAPE@RIEDEL",
+   "designer": null,
+   "model_code": "0424/09",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 320,
+   "capacity_as_stated": "320 ml / 11.28 US fl. oz. full capacity",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-grapeatriedel-coupe-cocktail/042401209",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-grapeatriedel-coupe-cocktail/042401209"
+   ]
+  },
+  {
+   "name": "Vinum Champagne Flute",
+   "series": "Vinum",
+   "designer": "Georg J. Riedel",
+   "model_code": "6416/08",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": 162,
+   "capacity_as_stated": "162 ml / 5.47 US fl. oz. full capacity",
+   "height_mm": 226,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-champagne-flute/641600008",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-champagne-flute/641600008"
+   ]
+  },
+  {
+   "name": "GRAPE@RIEDEL Champagne Flute",
+   "series": "GRAPE@RIEDEL",
+   "designer": null,
+   "model_code": "6424/08",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 250,
+   "capacity_as_stated": "250 ml / 8.81 US fl. oz. full capacity",
+   "height_mm": 241,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-grapeatriedel-champagne-flute/642400008",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-grapeatriedel-champagne-flute/642400008"
+   ]
+  },
+  {
+   "name": "Vinum Cognac",
+   "series": "Vinum",
+   "designer": "Georg J. Riedel",
+   "model_code": "6416/71",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 183,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-cognac/641600071",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-cognac/641600071"
+   ]
+  },
+  {
+   "name": "Vinum Brandy",
+   "series": "Vinum",
+   "designer": "Georg J. Riedel",
+   "model_code": "6416/18",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-brandy/641600018",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-brandy/641600018"
+   ]
+  },
+  {
+   "name": "Vinum Single Malt Whisky",
+   "series": "Vinum",
+   "designer": "Georg J. Riedel",
+   "model_code": "6416/80",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 113,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-single-malt-whisky/641600080",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-single-malt-whisky/641600080"
+   ]
+  },
+  {
+   "name": "Sommeliers Single Malt Whisky",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "4400/80",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 115,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-single-malt-whisky/440090180",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-single-malt-whisky/440090180"
+   ]
+  },
+  {
+   "name": "Sommeliers Cognac XO",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "4400/70",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 170,
+   "capacity_as_stated": "170 ml / 5.99 US fl. oz. full capacity",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-cognac-xo/440090170",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-cognac-xo/440090170"
+   ]
+  },
+  {
+   "name": "Sommeliers Cognac VSOP",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "4400/71",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 160,
+   "capacity_as_stated": "160 ml / 5.64 US fl. oz. full capacity",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-sommeliers-cognac-vsop/440000071",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-sommeliers-cognac-vsop/440000071"
+   ]
+  },
+  {
+   "name": "Sommeliers Sherry / Tequila",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "4400/18",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 190,
+   "capacity_as_stated": "190 ml / 6.70 US fl. oz. full capacity",
+   "height_mm": 211,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-sherry-tequila/440090118",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-sherry-tequila/440090118",
+    "https://www.riedel.com/de-at/riedel-sommeliers-sherry-tequila/440000018"
+   ]
+  },
+  {
+   "name": "Sommeliers Grappa",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "4200/03",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-sommeliers-grappa/420000003",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-sommeliers-grappa/420000003"
+   ]
+  },
+  {
+   "name": "Sommeliers Orchard Fruit",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "4200/04",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-sommeliers-kernobst/420000004",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-sommeliers-kernobst/420000004"
+   ]
+  },
+  {
+   "name": "Sommeliers Stone Fruit",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "4200/06",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 180,
+   "capacity_as_stated": "180 ml / 6.34 US fl. oz. full capacity",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-sommeliers-steinfrucht/420000006",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-sommeliers-steinfrucht/420000006"
+   ]
+  },
+  {
+   "name": "Ouverture Tequila",
+   "series": "Ouverture",
+   "designer": null,
+   "model_code": "6408/18",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-ouverture-tequila/640800018",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-ouverture-tequila/640800018"
+   ]
+  },
+  {
+   "name": "Veritas Spirits",
+   "series": "Veritas",
+   "designer": null,
+   "model_code": "6449/71",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-spirits/644900071",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-spirits/644900071"
+   ]
+  },
+  {
+   "name": "Superleggero Spirits",
+   "series": "Superleggero",
+   "designer": null,
+   "model_code": "6425/10",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 244,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-superleggero-spirits/642500010",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-superleggero-spirits/642500010"
+   ]
+  },
+  {
+   "name": "Restaurant Cognac",
+   "series": "Restaurant",
+   "designer": null,
+   "model_code": "0446/71",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 175,
+   "capacity_as_stated": "175 ml / 6.17 US fl. oz. full capacity",
+   "height_mm": 190,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-restaurant-cognac/044601271",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-restaurant-cognac/044601271"
+   ]
+  },
+  {
+   "name": "Bar Restaurant Rum / Aquavit",
+   "series": "Bar Restaurant",
+   "designer": null,
+   "model_code": "0512/10",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 205,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/de-at/riedel-bar-restaurant-rum-aquavit/051201210",
+   "source_urls": [
+    "https://www.riedel.com/de-at/riedel-bar-restaurant-rum-aquavit/051201210"
+   ]
+  },
+  {
+   "name": "GRAPE@RIEDEL Chardonnay / Gin Tonic",
+   "series": "GRAPE@RIEDEL",
+   "designer": null,
+   "model_code": "6424/97",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 650,
+   "capacity_as_stated": "650 ml / 22.92 US fl. oz. full capacity",
+   "height_mm": 215,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-grapeatriedel-chardonnay-gin-tonic/642400097",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-grapeatriedel-chardonnay-gin-tonic/642400097",
+    "https://www.riedel.com/en-gb/riedel-grapeatriedel-restaurant-chardonnay-gin-tonic/042401297"
+   ]
+  },
+  {
+   "name": "GRAPE@RIEDEL White Wine / Champagne Glass / Rosé / Spritz Drinks",
+   "series": "GRAPE@RIEDEL",
+   "designer": null,
+   "model_code": "6424/05",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 236,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-grapeatriedel-white-wine-champagne-glass-rose-spritz-drinks/642400005",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-grapeatriedel-white-wine-champagne-glass-rose-spritz-drinks/642400005"
+   ]
+  },
+  {
+   "name": "GRAPE@RIEDEL Restaurant Optical White Wine / Champagne Glass / Spritz Drinks",
+   "series": "GRAPE@RIEDEL Restaurant",
+   "designer": null,
+   "model_code": "0424/55",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "550 ml / 19.40 US fl. oz. full capacity",
+   "height_mm": 236,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-grapeatriedel-restaurant-optical-white-wine-champagne-glass-spritz-drinks/042401255",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-grapeatriedel-restaurant-optical-white-wine-champagne-glass-spritz-drinks/042401255"
+   ]
+  },
+  {
+   "name": "GRAPE@RIEDEL Pinot Noir / Nebbiolo / Aperitivo",
+   "series": "GRAPE@RIEDEL",
+   "designer": null,
+   "model_code": "6424/07",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-grapeatriedel-pinot-noir-nebbiolo-aperitivo/642400007",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-grapeatriedel-pinot-noir-nebbiolo-aperitivo/642400007",
+    "https://www.riedel.com/en-us/riedel-grapeatriedel-restaurant-pinot-noir-nebbiolo-aperitivo/042401207"
+   ]
+  },
+  {
+   "name": "GRAPE@RIEDEL Cabernet / Merlot / Cocktail",
+   "series": "GRAPE@RIEDEL",
+   "designer": null,
+   "model_code": "6424/98",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 830,
+   "capacity_as_stated": "830 ml / 29.27 US fl. oz. full capacity",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-grapeatriedel-cabernet-merlot-cocktail/642400098",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-grapeatriedel-cabernet-merlot-cocktail/642400098"
+   ]
+  }
+ ]
+}

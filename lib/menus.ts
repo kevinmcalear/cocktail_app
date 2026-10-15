@@ -333,3 +333,64 @@ export function nightLine(startsAt: string, locale?: string): string {
   const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: d.getMinutes() ? '2-digit' : undefined }).replace(/\s?([AP])M$/i, (_, x: string) => ` ${x.toLowerCase()}m`);
   return `${day}, from ${time}`;
 }
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const SEASONS = ['Winter', 'Spring', 'Summer', 'Autumn'] as const;
+type Season = (typeof SEASONS)[number];
+
+/** The season a day falls in where the venue is: March to May is spring up north and autumn down south. */
+export function seasonOf(date: Date, southern: boolean): Season {
+  const north = SEASONS[Math.floor(((date.getMonth() + 1) % 12) / 3)];
+  return southern ? SEASONS[(SEASONS.indexOf(north) + 2) % 4] : north;
+}
+
+// ponytail: the zones of the southern countries most likely to have a venue here. A venue
+// with a latitude never gets this far; one with neither is taken to be up north.
+const SOUTHERN_ZONES = /^(Australia\/|Antarctica\/|Pacific\/(Auckland|Chatham)|America\/(Argentina|Santiago|Montevideo|Sao_Paulo|Asuncion)|Africa\/(Johannesburg|Maputo|Windhoek))/;
+
+/** Whether a venue is south of the equator: by its latitude, or failing that its time zone. */
+export function isSouthern(latitude: number | null | undefined, timeZone: string | null | undefined): boolean {
+  if (typeof latitude === 'number') return latitude < 0;
+  return SOUTHERN_ZONES.test(timeZone ?? '');
+}
+
+/**
+ * Names to tap in New menu (nm-decided): the next season after a copied menu's
+ * ("Autumn menu" makes "Winter menu"), the season where the venue is on `at`,
+ * the month, and the month's own night out where it has one. At most three.
+ */
+export function menuNameIdeas({ at, southern, copied }: { at: Date; southern: boolean; copied?: string | null }): string[] {
+  const ideas: string[] = [];
+  const was = SEASONS.find((s) => new RegExp(`\\b${s}\\b`, 'i').test(copied ?? '') || (s === 'Autumn' && /\bfall\b/i.test(copied ?? '')));
+  if (was) ideas.push(`${SEASONS[(SEASONS.indexOf(was) + 1) % 4]} menu`);
+  ideas.push(`${seasonOf(at, southern)} menu`, MONTHS[at.getMonth()]);
+  const special = at.getMonth() === 11 ? 'Holiday menu' : at.getMonth() === 9 ? 'Halloween' : null;
+  if (special) ideas.push(special);
+  return [...new Set(ideas)].slice(0, 3);
+}
+
+/** The next `count` Mondays after today, as days (2026-10-19): New menu's quick picks for when it goes on. */
+export function nextMondays(now: number, count = 2): string[] {
+  const d = new Date(now);
+  d.setDate(d.getDate() + (((8 - d.getDay()) % 7) || 7));
+  return Array.from({ length: count }, (_, i) => toDay(new Date(d.getFullYear(), d.getMonth(), d.getDate() + i * 7)));
+}
+
+/** "Autumn, Summer and 2 more" (a phone's tile: "Autumn, Summer, 2 more"): the saved menus a New menu start names, without "menu". */
+export function savedLine(names: string[], phone = false): string {
+  const short = [...new Set(names.map((n) => n.replace(/\s+menu$/i, '')))];
+  const and = phone ? ', ' : ' and ';
+  return short.length > 2 ? `${short[0]}, ${short[1]}${and}${short.length - 2} more` : short.join(and);
+}
+
+/** The first `max` drinks, section by section, for a card too small for them all, and how many are left out. */
+export function previewSections<S extends { drinks: unknown[] }>(sections: S[], max: number): { sections: S[]; more: number } {
+  let room = max;
+  const shown = sections.map((s) => {
+    const drinks = s.drinks.slice(0, Math.max(room, 0));
+    room -= drinks.length;
+    return { ...s, drinks };
+  });
+  const total = sections.reduce((n, s) => n + s.drinks.length, 0);
+  return { sections: shown.filter((s) => s.drinks.length), more: total - Math.min(total, max) };
+}

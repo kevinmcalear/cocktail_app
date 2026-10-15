@@ -18,7 +18,7 @@ const FADE_FIRST_MS = 450;
 // The last drawing's inputs, so a keystroke that doesn't change the drink
 // hands SketchDrawing the same object (it caches the painted scene by it).
 let last: { key: string; inputs: SketchInputs } | null = null;
-function inputsFor(look: DraftLook): SketchInputs {
+export function inputsFor(look: DraftLook): SketchInputs {
   const key = JSON.stringify(look);
   if (last?.key !== key) last = { key, inputs: draftSketchInputs(look) };
   return last.inputs;

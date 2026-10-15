@@ -199,3 +199,21 @@ export function libraryNote(drink: Pick<MenuDrink, 'id'>, section: Pick<EditSect
   if (section.drinks.some((d) => d.id === drink.id)) return `Already in ${section.name}`;
   return elsewhere[drink.id] ? `On ${elsewhere[drink.id]}` : 'Not on a menu';
 }
+
+/**
+ * A name typed in the library search that no drink there has, as Make "…"
+ * offers it: trimmed, and in title case when it was typed all lower case
+ * ("fig leaf spritz" makes "Fig Leaf Spritz"). Null when a drink has it.
+ */
+export function nameToMake(library: Pick<MenuDrink, 'name'>[], query: string): string | null {
+  const typed = query.trim().replace(/\s+/g, ' ');
+  if (!typed || library.some((d) => d.name.trim().toLowerCase() === typed.toLowerCase())) return null;
+  return typed === typed.toLowerCase() ? typed.replace(/(^|\s)(\S)/g, (_, gap: string, c: string) => gap + c.toUpperCase()) : typed;
+}
+
+/** Drinks that fit the section and share a word (four letters or more) with the search: "Close" when nothing matches. */
+export function nearLibrary(library: MenuDrink[], section: Pick<EditSection, 'allowedTypes'>, query: string, limit = 3): MenuDrink[] {
+  const words = query.toLowerCase().split(/\W+/).filter((w) => w.length >= 4);
+  if (!words.length) return [];
+  return library.filter((d) => section.allowedTypes.includes(d.kind) && words.some((w) => d.name.toLowerCase().includes(w))).slice(0, limit);
+}

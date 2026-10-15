@@ -1,4 +1,5 @@
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { glassModelSize, useDrinkGlassModel } from '@/hooks/useGlassModels';
 import { classifyMethod, isGarnishUnit, type BatchMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
@@ -45,9 +46,14 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const { data: dropdowns } = useDropdowns();
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const glassItem = find(dropdowns?.glassware as Named[], item.glassware_id);
-  const glass: GlassSheetGlass | null = glassItem
+  const { data: model } = useDrinkGlassModel(item.id);
+  const shape: GlassSheetGlass | null = glassItem
     ? { id: glassItem.id, name: glassItem.name, icon_key: glassItem.icon_key, bar_id: glassItem.bar_id ?? null, capacity_ml: glassItem.capacity_ml ?? null, iced_capacity_ml: glassItem.iced_capacity_ml ?? null }
     : null;
+  // A real glass names itself and brings its maker's size (to the brim; the iced size is the venue's to weigh).
+  const glass: GlassSheetGlass | null = model
+    ? { ...(shape ?? { id: model.id, icon_key: null, bar_id: null }), name: model.name, capacity_ml: model.capacity_ml ?? shape?.capacity_ml ?? null, iced_capacity_ml: model.capacity_ml ? null : (shape?.iced_capacity_ml ?? null), model }
+    : shape;
   const ice = find(dropdowns?.iceTypes as Named[], item.ice_id) ?? null;
   const family = find(dropdowns?.families as Named[], item.family_id);
   const methods = orderedMethodIds(item.item_methods).map((id) => find(dropdowns?.methods as Named[], id)?.name).filter((n): n is string => !!n);
@@ -59,7 +65,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const glassHint = openGlass && measures ? 'Opens the glass size and the ice per serve' : undefined;
   const madeBy = (makes: string) => makers.find((c) => c.makes === makes && c.confirmed_at)?.maker?.display_name;
   const iceBy = madeBy('ice');
-  const glassBy = madeBy('glassware');
+  const glassBy = madeBy('glassware') ?? model?.maker?.display_name;
 
   // The finish: the last count-unit line (a twist, a pick, a pinch).
   const garnish = [...lines].reverse().find((l) => l.ingredient && isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient));
@@ -80,7 +86,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   const make = (
     [
       methods.length ? { label: 'Method', value: methods.join(', ') } : null,
-      glass && { label: 'Glass', value: glass.name, sub: glassBy ? `by ${glassBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
+      glass && { label: 'Glass', value: glass.name, sub: glassSub(glass, glassBy),  onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
       ice && { label: 'Ice', value: ice.name, sub: iceBy ? `cut by ${iceBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
       garnish ? { label: 'Garnish', value: garnish.ingredient! } : null,
     ] as (Fact | null | undefined)[]
@@ -104,4 +110,10 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
   // The method is in the make line now, so the tags are only where the drink comes from.
   const tags = item.origin ? [ORIGIN_LABEL[item.origin] ?? item.origin] : [];
   return { make, facts, tags, glass, ice: ice ? { name: ice.name } : null, method, methods, strength };
+}
+
+/** Under the glass's name: who made it, and a real glass's size. */
+function glassSub(glass: GlassSheetGlass, by: string | undefined) {
+  const size = glass.model ? glassModelSize(glass.model) : null;
+  return [by ? `by ${by}` : null, size].filter(Boolean).join(' · ') || undefined;
 }

@@ -12,6 +12,7 @@ import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarGlassware, useBarPageId, useDeleteBarGlass, useSaveBarGlass, type BarGlass } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { glassModelSize } from '@/hooks/useGlassModels';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { confirmAsync } from '@/lib/dialogs';
 import { GLASS_TYPE_LABEL, glassCapacity, glassTitle } from '@/lib/glassware';
@@ -100,7 +101,7 @@ function GlasswarePage({ barId }: { barId: string }) {
                       <GlassRow
                         key={g.id}
                         glass={g}
-                        size={glassCapacity(g, items, barId)}
+                        size={(g.model && glassModelSize(g.model)) ?? glassCapacity(g, items, barId)}
                         first={i === 0}
                         canEdit={canEdit}
                         onOpen={() => setOpen(g.id)}
@@ -124,6 +125,8 @@ function GlasswarePage({ barId }: { barId: string }) {
                     onSave={(row) => save.mutate(row, { onSuccess: close })}
                     onCancel={close}
                     onDelete={editing ? () => void confirmRemove(editing, close) : undefined}
+                    venueModelIds={glasses.flatMap((g) => (g.model_id ? [g.model_id] : []))}
+                    venueName={venue?.name}
                   />
                 </Surface>
               ) : canEdit ? (
@@ -155,7 +158,7 @@ function GlassDrawing({ glass }: { glass: BarGlass }) {
 
 interface GlassRowProps {
   glass: BarGlass;
-  /** "180 ml", from the glassware item of the same name. */
+  /** "180 ml": a real glass's, else the glassware item's of the same name. */
   size: string | null;
   first: boolean;
   canEdit: boolean;

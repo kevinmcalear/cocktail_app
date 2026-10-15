@@ -13,6 +13,8 @@ interface EditSnapshot {
   notes: string;
   methodIds: string[];
   glasswareId: string | null;
+  /** The drink's real glass, where the editor has one (a draft doesn't). */
+  glassModel: unknown;
   familyId: string | null;
   iceId: string | null;
   recipeItems: SortableRecipeItem[];
@@ -28,6 +30,7 @@ const snapshotOf = (e: Editor): EditSnapshot => ({
   notes: e.notes,
   methodIds: e.methodIds,
   glasswareId: e.glasswareId,
+  glassModel: 'glassModel' in e ? e.glassModel : null,
   familyId: e.familyId,
   iceId: e.iceId,
   recipeItems: e.recipeItems,
@@ -68,6 +71,7 @@ export function useEditHistory(editor: Editor) {
     editor.setNotes(s.notes);
     editor.setMethodIds(s.methodIds);
     editor.setSpecId('glassware', s.glasswareId);
+    if ('setGlassModel' in editor) editor.setGlassModel(s.glassModel as typeof editor.glassModel);
     editor.setSpecId('family', s.familyId);
     editor.setSpecId('ice', s.iceId);
     editor.setRecipeItems(s.recipeItems);

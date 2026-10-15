@@ -1,0 +1,3063 @@
+{
+ "maker": "urban.bar",
+ "models": [
+  {
+   "name": "Retro Optic Champagne Glass Coupe 21cl",
+   "series": "Retro",
+   "designer": null,
+   "model_code": "UB2972",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/retro-optic-champagne-glass-coupe-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/retro-optic-champagne-glass-coupe-21cl",
+    "https://www.urbanbar.com/products/retro-optic-champagne-glass-coupe-21cl-box-4"
+   ]
+  },
+  {
+   "name": "Retro Champagne Glass Coupe 21cl",
+   "series": "Retro",
+   "designer": null,
+   "model_code": "UB2974",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/retro-coupe-glass-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/retro-coupe-glass-21cl",
+    "https://www.urbanbar.com/products/retro-champagne-glass-coupe-21cl-box-4"
+   ]
+  },
+  {
+   "name": "1910 Champagne Glass Coupe 21cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB2975",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-coupe-glass-1910-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-coupe-glass-1910-21cl",
+    "https://www.urbanbar.com/products/1910-champagne-glass-coupe-21cl-box4"
+   ]
+  },
+  {
+   "name": "1920 Champagne Glass Coupe 21cl",
+   "series": "1920",
+   "designer": null,
+   "model_code": "UB2976",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-coupe-glass-1920-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-coupe-glass-1920-21cl",
+    "https://www.urbanbar.com/products/1920-champagne-glass-coupe-21cl-box4"
+   ]
+  },
+  {
+   "name": "Gold Rim Champagne Glass Coupe 21cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB2977",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-gold-rim-coupe-glass-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-gold-rim-coupe-glass-21cl",
+    "https://www.urbanbar.com/products/gold-rim-champagne-glass-coupe-21cl-box4"
+   ]
+  },
+  {
+   "name": "Coley® Crystal Cocktail Glass Coupe 17cl",
+   "series": "Coley",
+   "designer": null,
+   "model_code": "UB2978",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/coley-reg-coupe-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/coley-reg-coupe-17cl"
+   ]
+  },
+  {
+   "name": "1910 Coley® Coupe Cocktail Glass 17cl",
+   "series": "Coley",
+   "designer": null,
+   "model_code": "UB2979",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-coley-coupe-1910-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-coley-coupe-1910-17cl"
+   ]
+  },
+  {
+   "name": "Gold Rim Coley® Crystal Glass Coupe 17cl",
+   "series": "Coley",
+   "designer": null,
+   "model_code": "UB2981",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-coley-coupe-1920-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-coley-coupe-1920-17cl"
+   ]
+  },
+  {
+   "name": "Retro Fizzio Champagne Glass Coupe 26cl",
+   "series": "Fizzio",
+   "designer": null,
+   "model_code": "UB3004",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 260,
+   "capacity_as_stated": "26cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-fizzio-coupe-glass-26cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-fizzio-coupe-glass-26cl"
+   ]
+  },
+  {
+   "name": "1910 Fizzio Champagne Glass Coupe 26cl",
+   "series": "Fizzio",
+   "designer": null,
+   "model_code": "UB3005",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 260,
+   "capacity_as_stated": "26cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-fizzio-coupe-glass-1910-26cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-fizzio-coupe-glass-1910-26cl"
+   ]
+  },
+  {
+   "name": "1920 Fizzio Champagne Glass Coupe 26cl",
+   "series": "Fizzio",
+   "designer": null,
+   "model_code": "UB3006",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 260,
+   "capacity_as_stated": "26cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/copy-of-1920-fizzio-champagne-glass-coupe-26cl-2",
+   "source_urls": [
+    "https://www.urbanbar.com/products/copy-of-1920-fizzio-champagne-glass-coupe-26cl-2"
+   ]
+  },
+  {
+   "name": "Gold Rim Fizzio Champagne Glass Coupe 26cl",
+   "series": "Fizzio",
+   "designer": null,
+   "model_code": "UB4510",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 260,
+   "capacity_as_stated": "26cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/retro-fizzio-gold-rim-coupe-glass-26cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/retro-fizzio-gold-rim-coupe-glass-26cl"
+   ]
+  },
+  {
+   "name": "Castello Coupe Glass 22cl",
+   "series": "Castello",
+   "designer": null,
+   "model_code": "UB3807",
+   "glass": "coupe",
+   "variant": "coupe_saucer",
+   "capacity_ml": 220,
+   "capacity_as_stated": "22cl",
+   "height_mm": 163,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/handmade-crystal-castello-coupe-glass-22cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/handmade-crystal-castello-coupe-glass-22cl"
+   ]
+  },
+  {
+   "name": "Black Champagne Cocktail Glass Coupe 21cl Oro Nero",
+   "series": "Oro Nero",
+   "designer": null,
+   "model_code": "UB4785",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/oro-nero-coupe-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/oro-nero-coupe-glass",
+    "https://www.urbanbar.com/products.json?limit=250&page=4"
+   ]
+  },
+  {
+   "name": "Black Champagne Cocktail Glass Goblet 20cl Oro Nero Fizz",
+   "series": "Oro Nero",
+   "designer": null,
+   "model_code": "UB4786",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/oro-nero-fizz-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/oro-nero-fizz-glass"
+   ]
+  },
+  {
+   "name": "Black Champagne Cocktail Glass Saucer 26cl Oro Nero Fizzio",
+   "series": "Oro Nero",
+   "designer": null,
+   "model_code": "UB4787",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 260,
+   "capacity_as_stated": "26cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/oro-nero-fizzio-coupe-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/oro-nero-fizzio-coupe-glass"
+   ]
+  },
+  {
+   "name": "Freddo Coupe 21cl",
+   "series": "Freddo",
+   "designer": null,
+   "model_code": "UB5458",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/freddo-coupe",
+   "source_urls": [
+    "https://www.urbanbar.com/products/freddo-coupe"
+   ]
+  },
+  {
+   "name": "Calabrese ZigZag Coupe 23cl",
+   "series": "Calabrese",
+   "designer": "Salvatore Calabrese",
+   "model_code": "UB5677",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 230,
+   "capacity_as_stated": "23cl",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/calabrese-zigzag-coupe-23cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/calabrese-zigzag-coupe-23cl",
+    "https://www.urbanbar.com/products/calabrese-zigzag-coupe-23cl-box-6"
+   ]
+  },
+  {
+   "name": "Mini Coupe 5.5cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB5857",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 55,
+   "capacity_as_stated": "5.5cl",
+   "height_mm": 71,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/mini-coupe",
+   "source_urls": [
+    "https://www.urbanbar.com/products/mini-coupe"
+   ]
+  },
+  {
+   "name": "Retro Champagne Glass Coupette 15cl",
+   "series": "Retro",
+   "designer": null,
+   "model_code": "UB6309",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 150,
+   "capacity_as_stated": "15cl",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/retro-champagne-glass-coupette-15cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/retro-champagne-glass-coupette-15cl"
+   ]
+  },
+  {
+   "name": "Retro Optic Champagne Glass Coupette 15cl",
+   "series": "Retro",
+   "designer": null,
+   "model_code": "UB6311",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 150,
+   "capacity_as_stated": "15cl",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/retro-optic-champagne-glass-coupette-15cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/retro-optic-champagne-glass-coupette-15cl"
+   ]
+  },
+  {
+   "name": "1910 Champagne Glass Coupette 15cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB6312",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 150,
+   "capacity_as_stated": "15cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-champagne-glass-coupette-15cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-champagne-glass-coupette-15cl"
+   ]
+  },
+  {
+   "name": "1920 Champagne Glass Coupette 15cl",
+   "series": "1920",
+   "designer": null,
+   "model_code": "UB6313",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 150,
+   "capacity_as_stated": "15cl",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1920-champagne-glass-coupette-15cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1920-champagne-glass-coupette-15cl"
+   ]
+  },
+  {
+   "name": "Gold Rim Champagne Glass Coupette 15cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB6314",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 150,
+   "capacity_as_stated": "15cl",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/gold-rim-champagne-glass-coupette-15cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gold-rim-champagne-glass-coupette-15cl"
+   ]
+  },
+  {
+   "name": "Alto Coupe 18cl",
+   "series": "Alto",
+   "designer": null,
+   "model_code": "UB7039",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 180,
+   "capacity_as_stated": "18cl",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/alto-cocktail-glass-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/alto-cocktail-glass-17cl",
+    "https://www.urbanbar.com/products/alto-coupe-18cl-b4"
+   ]
+  },
+  {
+   "name": "1910 Alto Coupe 18cl",
+   "series": "Alto",
+   "designer": null,
+   "model_code": "UB7040",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 180,
+   "capacity_as_stated": "18cl",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-alto-cocktail-glass-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-alto-cocktail-glass-17cl",
+    "https://www.urbanbar.com/products/1910-alto-coupe-18cl-b4"
+   ]
+  },
+  {
+   "name": "1920 Alto Coupe 18cl",
+   "series": "Alto",
+   "designer": null,
+   "model_code": "UB7041",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 180,
+   "capacity_as_stated": "18cl",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1920-alto-cocktail-glass-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1920-alto-cocktail-glass-17cl",
+    "https://www.urbanbar.com/products/1920-alto-coupe-18cl-b4"
+   ]
+  },
+  {
+   "name": "Gold Rim Alto Coupe 18cl",
+   "series": "Alto",
+   "designer": null,
+   "model_code": "UB7042",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 180,
+   "capacity_as_stated": "18cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/gold-rim-alto-cocktail-glass-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gold-rim-alto-cocktail-glass-17cl",
+    "https://www.urbanbar.com/products/gold-rim-alto-coupe-18cl-b4"
+   ]
+  },
+  {
+   "name": "Iris Shatterproof Plastic Champagne Saucer Coupe 28cl",
+   "series": "Iris",
+   "designer": null,
+   "model_code": "UB878",
+   "glass": "coupe",
+   "variant": "coupe_saucer",
+   "capacity_ml": 280,
+   "capacity_as_stated": "28cl",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://www.urbanbar.com/products/iris-plastic-coupe-glass-28cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/iris-plastic-coupe-glass-28cl"
+   ]
+  },
+  {
+   "name": "Retro Fizz Champagne Cocktail Glass 20cl",
+   "series": "Retro Fizz",
+   "designer": null,
+   "model_code": "UB800",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-fizz-cocktail-glass-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-fizz-cocktail-glass-20cl"
+   ]
+  },
+  {
+   "name": "1890 Fizz Cocktail Glass Coupe 20cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB800-1",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-fizz-1890-cocktail-glass-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-fizz-1890-cocktail-glass-20cl"
+   ]
+  },
+  {
+   "name": "1890 Gold Fizz Cocktail Glass Coupe 20cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB800-1G",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-fizz-1890-gold-cocktail-glass-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-fizz-1890-gold-cocktail-glass-20cl"
+   ]
+  },
+  {
+   "name": "1910 Fizz Champagne Cocktail Glass 20cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB800-2",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-fizz-1910-cocktail-glass-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-fizz-1910-cocktail-glass-20cl"
+   ]
+  },
+  {
+   "name": "1910 Fizz Gold Cocktail Glass Coupe 20cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB800-2G",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-fizz-1910-gold-cocktail-glass-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-fizz-1910-gold-cocktail-glass-20cl"
+   ]
+  },
+  {
+   "name": "1920 Fizz Cocktail Coupe 20cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB800-3",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-fizz-1920-cocktail-glass-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-fizz-1920-cocktail-glass-20cl"
+   ]
+  },
+  {
+   "name": "Gold Rim Fizz Cocktail Glass Coupe 20cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB800-4",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-gold-rim-fizz-cocktail-glass-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-gold-rim-fizz-cocktail-glass-20cl"
+   ]
+  },
+  {
+   "name": "Crystal Retro Fizz Engraved Cocktail Glass 20cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB803",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-retro-fizz-engraved-cocktail-glass-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-retro-fizz-engraved-cocktail-glass-20cl"
+   ]
+  },
+  {
+   "name": "Retro Nick & Nora Cocktail Glass 17cl",
+   "series": "Retro",
+   "designer": null,
+   "model_code": "UB3569",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-nick-nora-glass-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-nick-nora-glass-17cl",
+    "https://www.urbanbar.com/products/retro-nick-nora-cocktail-glass-17cl-box-6"
+   ]
+  },
+  {
+   "name": "1910 Nick & Nora Cocktail Glass 17cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB3570",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-nick-nora-1910-glass-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-nick-nora-1910-glass-17cl",
+    "https://www.urbanbar.com/products/1910-nick-nora-cocktail-glass-17cl-box-4"
+   ]
+  },
+  {
+   "name": "1920 Nick & Nora Cocktail Glass 17cl",
+   "series": "1920",
+   "designer": null,
+   "model_code": "UB3572",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-nick-nora-1920-glass-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-nick-nora-1920-glass-17cl",
+    "https://www.urbanbar.com/products/1920-nick-nora-cocktail-glass-17cl-box-4"
+   ]
+  },
+  {
+   "name": "Gold Rim Nick & Nora Glass 17cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB3577",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/gold-rim-nick-nora-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gold-rim-nick-nora-glass",
+    "https://www.urbanbar.com/products/gold-rim-nick-nora-glass-17cl-box-4"
+   ]
+  },
+  {
+   "name": "Freddo Nick & Nora 17cl",
+   "series": "Freddo",
+   "designer": null,
+   "model_code": "UB5459",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/freddo-nick-nora",
+   "source_urls": [
+    "https://www.urbanbar.com/products/freddo-nick-nora",
+    "https://www.urbanbar.com/products/freddo-nick-nora-17cl-box-4"
+   ]
+  },
+  {
+   "name": "Alto Cocktail 17cl",
+   "series": "Alto",
+   "designer": null,
+   "model_code": "UB6979",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/alto-cocktail-17cl-copy",
+   "source_urls": [
+    "https://www.urbanbar.com/products/alto-cocktail-17cl-copy",
+    "https://www.urbanbar.com/products/alto-cocktail-17cl-b4"
+   ]
+  },
+  {
+   "name": "1910 Alto Cocktail 17cl",
+   "series": "Alto",
+   "designer": null,
+   "model_code": "UB6980",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-alto-cocktail-17cl-copy",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-alto-cocktail-17cl-copy",
+    "https://www.urbanbar.com/products/1910-alto-cocktail-17cl-b4"
+   ]
+  },
+  {
+   "name": "1920 Alto Cocktail 17cl",
+   "series": "Alto",
+   "designer": null,
+   "model_code": "UB6981",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1920-alto-cocktail-17cl-copy",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1920-alto-cocktail-17cl-copy",
+    "https://www.urbanbar.com/products/1920-alto-cocktail-17cl-b4"
+   ]
+  },
+  {
+   "name": "Gold Rim Alto Cocktail 17cl",
+   "series": "Alto",
+   "designer": null,
+   "model_code": "UB6982",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/gold-rim-alto-cocktail-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gold-rim-alto-cocktail-17cl",
+    "https://www.urbanbar.com/products/gold-rim-alto-cocktail-17cl-b4"
+   ]
+  },
+  {
+   "name": "Verdot Crystal Martini Glass 21cl",
+   "series": "Verdot",
+   "designer": null,
+   "model_code": "UB3244",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 182,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/verdot-crystal-martini-glass-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/verdot-crystal-martini-glass-21cl",
+    "https://www.urbanbar.com/products/verdot-crystal-martini-glass-21cl-box-6"
+   ]
+  },
+  {
+   "name": "Verdot Gold Rim Martini Glass 21cl",
+   "series": "Verdot",
+   "designer": null,
+   "model_code": "UB4900",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 182,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-verdot-gold-rim-martini-glass-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-verdot-gold-rim-martini-glass-21cl",
+    "https://www.urbanbar.com/products/verdot-gold-rim-martini-glass-21cl-box-6"
+   ]
+  },
+  {
+   "name": "1910 Martini Cocktail Glass 21cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB4507",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 182,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-1910-martini-glass-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-1910-martini-glass-21cl",
+    "https://www.urbanbar.com/products/1910-martini-cocktail-glass-21cl-box-6"
+   ]
+  },
+  {
+   "name": "1920 Martini Cocktail Glass 21cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB4508",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 182,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-1920-martini-glass-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-1920-martini-glass-21cl",
+    "https://www.urbanbar.com/products/1920-martini-cocktail-glass-21cl-box-6"
+   ]
+  },
+  {
+   "name": "Ginza Tall Cuts Martini Glass 21cl",
+   "series": "Ginza Tall Cuts",
+   "designer": null,
+   "model_code": "UB4833",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 182,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-ginza-tall-cuts-martini-glass-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-ginza-tall-cuts-martini-glass-21cl",
+    "https://www.urbanbar.com/products/ginza-tall-cuts-martini-glass-21cl-box-6"
+   ]
+  },
+  {
+   "name": "Calabrese Cocktail Martini Glass 15cl",
+   "series": "Calabrese",
+   "designer": "Salvatore Calabrese",
+   "model_code": "UB4130",
+   "glass": "martini",
+   "variant": "martini_wide",
+   "capacity_ml": 150,
+   "capacity_as_stated": "15cl",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/calabrese-martini-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/calabrese-martini-glass"
+   ]
+  },
+  {
+   "name": "Calabrese Martini Glass 7cl",
+   "series": "Calabrese",
+   "designer": "Salvatore Calabrese",
+   "model_code": "UB4131",
+   "glass": "martini",
+   "variant": "martini_pony",
+   "capacity_ml": 70,
+   "capacity_as_stated": "7cl",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/calabrese-mini-martini-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/calabrese-mini-martini-glass",
+    "https://www.urbanbar.com/products/calabrese-martini-glass-7cl-b6"
+   ]
+  },
+  {
+   "name": "Verdot Mini Martini Glass 4.5cl",
+   "series": "Verdot",
+   "designer": null,
+   "model_code": "UB5159",
+   "glass": "martini",
+   "variant": "martini_pony",
+   "capacity_ml": 45,
+   "capacity_as_stated": "4.5cl",
+   "height_mm": 111,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/handmade-crystal-verdot-mini-martini-glass-4-5cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/handmade-crystal-verdot-mini-martini-glass-4-5cl"
+   ]
+  },
+  {
+   "name": "Verdot Small Martini Glass 12.5cl",
+   "series": "Verdot",
+   "designer": null,
+   "model_code": "UB5160",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": 125,
+   "capacity_as_stated": "12.5cl",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/handmade-crystal-verdot-mini-martini-glass-12-5cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/handmade-crystal-verdot-mini-martini-glass-12-5cl"
+   ]
+  },
+  {
+   "name": "Verdot Petite Martini Glass 7cl",
+   "series": "Verdot",
+   "designer": null,
+   "model_code": "UB7295",
+   "glass": "martini",
+   "variant": "martini_pony",
+   "capacity_ml": 70,
+   "capacity_as_stated": "7cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/verdot-petite-martini-glass-7cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/verdot-petite-martini-glass-7cl"
+   ]
+  },
+  {
+   "name": "Artisan Martini Cocktail Glass 48cl",
+   "series": "Artisan",
+   "designer": null,
+   "model_code": "UB5836",
+   "glass": "martini",
+   "variant": "martini_wide",
+   "capacity_ml": 480,
+   "capacity_as_stated": "48cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/artisan-wine-glass-large",
+   "source_urls": [
+    "https://www.urbanbar.com/products/artisan-wine-glass-large"
+   ]
+  },
+  {
+   "name": "Handmade Crystal Ice Cocktail Tumbler 25cl",
+   "series": "Ice",
+   "designer": null,
+   "model_code": "UB11",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 250,
+   "capacity_as_stated": "25cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/handmade-crystal-ice-cocktail-tumbler-25cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/handmade-crystal-ice-cocktail-tumbler-25cl"
+   ]
+  },
+  {
+   "name": "Thistle Old Fashioned Whisky Glass 27cl",
+   "series": "Thistle",
+   "designer": null,
+   "model_code": "UB1320",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 270,
+   "capacity_as_stated": "27cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/thistle-old-fashioned-whisky-glass-27cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/thistle-old-fashioned-whisky-glass-27cl"
+   ]
+  },
+  {
+   "name": "Glass Tin Can Tumbler 31cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB3171",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 310,
+   "capacity_as_stated": "31cl",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/tin-can-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/tin-can-glass"
+   ]
+  },
+  {
+   "name": "Verdot Crystal Old Fashioned Whisky Glass 36cl",
+   "series": "Verdot",
+   "designer": null,
+   "model_code": "UB3247",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 360,
+   "capacity_as_stated": "36cl",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/verdot-crystal-old-fashioned-whisky-glasses-36cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/verdot-crystal-old-fashioned-whisky-glasses-36cl"
+   ]
+  },
+  {
+   "name": "Castello Old Fashioned Tumbler 30cl",
+   "series": "Castello",
+   "designer": null,
+   "model_code": "UB3811",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/castello-old-fashioned-tumbler-30cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/castello-old-fashioned-tumbler-30cl"
+   ]
+  },
+  {
+   "name": "Koto Old Fashioned Crystal Glass 30cl",
+   "series": "Koto",
+   "designer": null,
+   "model_code": "UB4136",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/koto-old-fashioned-glass-30cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/koto-old-fashioned-glass-30cl"
+   ]
+  },
+  {
+   "name": "Ginza Tall Cuts Old Fashioned Tumbler 31cl",
+   "series": "Ginza Tall Cuts",
+   "designer": null,
+   "model_code": "UB4830",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 310,
+   "capacity_as_stated": "31cl",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/ginza-tall-cuts-old-fashioned-tumbler-31cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/ginza-tall-cuts-old-fashioned-tumbler-31cl"
+   ]
+  },
+  {
+   "name": "Tiki Old Fashioned Tumbler 25cl",
+   "series": "Tiki",
+   "designer": null,
+   "model_code": "UB4949",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 250,
+   "capacity_as_stated": "25cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/tiki-old-fashioned-glass-25cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/tiki-old-fashioned-glass-25cl"
+   ]
+  },
+  {
+   "name": "Tattoo Old Fashioned Tumbler 25cl",
+   "series": "Tattoo",
+   "designer": null,
+   "model_code": "UB4951",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 250,
+   "capacity_as_stated": "25cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/tattoo-old-fashioned-glass-25cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/tattoo-old-fashioned-glass-25cl"
+   ]
+  },
+  {
+   "name": "Classic Shot Glass 5cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB5",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 50,
+   "capacity_as_stated": "5cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/classic-shot-glass-5cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/classic-shot-glass-5cl"
+   ]
+  },
+  {
+   "name": "Misato Recycled Old Fashioned Tumbler 27cl",
+   "series": "Misato",
+   "designer": null,
+   "model_code": "UB5260",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 270,
+   "capacity_as_stated": "27cl",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/misato-recycled-old-fashioned-tumbler-27cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/misato-recycled-old-fashioned-tumbler-27cl"
+   ]
+  },
+  {
+   "name": "Gili Old Fashioned Glass 30cl",
+   "series": "Gili",
+   "designer": null,
+   "model_code": "UB5284",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/gili-old-fashioned-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gili-old-fashioned-glass"
+   ]
+  },
+  {
+   "name": "Cubana Old Fashioned Glass 26cl",
+   "series": "Cubana",
+   "designer": null,
+   "model_code": "UB54",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 260,
+   "capacity_as_stated": "26cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/handmade-crystal-cubana-old-fashioned-glass-26cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/handmade-crystal-cubana-old-fashioned-glass-26cl"
+   ]
+  },
+  {
+   "name": "Vuelto Old Fashioned Tumbler 29cl",
+   "series": "Vuelto",
+   "designer": null,
+   "model_code": "UB5416",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 290,
+   "capacity_as_stated": "29cl",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/vuelto-old-fashioned-tumbler-29cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/vuelto-old-fashioned-tumbler-29cl"
+   ]
+  },
+  {
+   "name": "Vuelto Double Old Fashioned Tumbler 40cl",
+   "series": "Vuelto",
+   "designer": null,
+   "model_code": "UB5418",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 400,
+   "capacity_as_stated": "40cl",
+   "height_mm": 101,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/vuelto-double-old-fashioned-tumbler-40cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/vuelto-double-old-fashioned-tumbler-40cl"
+   ]
+  },
+  {
+   "name": "Urbino Old Fashioned 35cl",
+   "series": "Urbino",
+   "designer": null,
+   "model_code": "UB5420",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/urbino-old-fashioned-35cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/urbino-old-fashioned-35cl"
+   ]
+  },
+  {
+   "name": "Freddo Old Fashioned 29cl",
+   "series": "Freddo",
+   "designer": null,
+   "model_code": "UB5462",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 290,
+   "capacity_as_stated": "29cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/freddo-old-fashioned-29cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/freddo-old-fashioned-29cl"
+   ]
+  },
+  {
+   "name": "Classico Margot Old Fashioned 32cl",
+   "series": "Classico Margot",
+   "designer": "Giancarlo Mancino",
+   "model_code": "UB5472",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 320,
+   "capacity_as_stated": "32cl",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/classico-margot-old-fashioned-32cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/classico-margot-old-fashioned-32cl",
+    "https://www.urbanbar.com/products/classic-margot-old-fashioned-32cl"
+   ]
+  },
+  {
+   "name": "Gradara Old Fashioned 35cl",
+   "series": "Gradara",
+   "designer": null,
+   "model_code": "UB5687",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/gradara-old-fashioned-35cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gradara-old-fashioned-35cl"
+   ]
+  },
+  {
+   "name": "Qubo Fashioned Whisky Tumbler 23cl",
+   "series": "Qubo",
+   "designer": null,
+   "model_code": "UB60",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 230,
+   "capacity_as_stated": "23cl",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/handmade-crystal-qubo-square-old-fashioned-tumbler-23cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/handmade-crystal-qubo-square-old-fashioned-tumbler-23cl"
+   ]
+  },
+  {
+   "name": "1890 Shot Glass 6cl",
+   "series": "1890",
+   "designer": null,
+   "model_code": "UB600-1",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 60,
+   "capacity_as_stated": "6cl",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1890-shot-glass-6cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1890-shot-glass-6cl"
+   ]
+  },
+  {
+   "name": "1910 Shot Glass 6cl",
+   "series": "1910",
+   "designer": null,
+   "model_code": "UB600-2",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 60,
+   "capacity_as_stated": "6cl",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-shot-glass-6cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-shot-glass-6cl"
+   ]
+  },
+  {
+   "name": "Fluet Old Fashioned 1910 34cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6375",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 340,
+   "capacity_as_stated": "34cl",
+   "height_mm": 75,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-old-fashioned-1910-ultra-thin-34cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-old-fashioned-1910-ultra-thin-34cl"
+   ]
+  },
+  {
+   "name": "Fluet Double Old Fashioned 1910 44cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6376",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 440,
+   "capacity_as_stated": "44cl",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-double-old-fashioned-1910-ultra-thin-44cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-double-old-fashioned-1910-ultra-thin-44cl"
+   ]
+  },
+  {
+   "name": "Fluet Old Fashioned 1920 34cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6378",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 340,
+   "capacity_as_stated": "34cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-old-fashioned-1920-ultra-thin-34cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-old-fashioned-1920-ultra-thin-34cl"
+   ]
+  },
+  {
+   "name": "Fluet Double Old Fashioned 1920 45cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6379",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 450,
+   "capacity_as_stated": "45cl",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-double-old-fashioned-1920-ultra-thin-45cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-double-old-fashioned-1920-ultra-thin-45cl"
+   ]
+  },
+  {
+   "name": "Fluet Old Fashioned Gold Rim 34cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6382",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 340,
+   "capacity_as_stated": "34cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-old-fashioned-gold-rim-ultra-thin-34cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-old-fashioned-gold-rim-ultra-thin-34cl"
+   ]
+  },
+  {
+   "name": "Fluet Double Old Fashioned Gold Rim 45cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6383",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 450,
+   "capacity_as_stated": "45cl",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-double-old-fashioned-gold-rim-ultra-thin-45cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-double-old-fashioned-gold-rim-ultra-thin-45cl"
+   ]
+  },
+  {
+   "name": "Fluet Old Fashioned 34cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6385",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 340,
+   "capacity_as_stated": "34cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-old-fashioned-ultra-thin-44cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-old-fashioned-ultra-thin-44cl"
+   ]
+  },
+  {
+   "name": "Fluet Double old Fashioned 44cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6386",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 440,
+   "capacity_as_stated": "44cl",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-double-old-fashioned-ultra-thin-44cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-double-old-fashioned-ultra-thin-44cl"
+   ]
+  },
+  {
+   "name": "1890 Old Fashioned Tumbler 30cl",
+   "series": "1890",
+   "designer": null,
+   "model_code": "UB700-1",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1890-old-fashioned-tumbler-30cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1890-old-fashioned-tumbler-30cl"
+   ]
+  },
+  {
+   "name": "1910 Old Fashioned Tumbler 30cl",
+   "series": "1910",
+   "designer": null,
+   "model_code": "UB700-2",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-old-fashioned-tumbler-30cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-old-fashioned-tumbler-30cl"
+   ]
+  },
+  {
+   "name": "Chara Old Fashioned 32cl",
+   "series": "Chara",
+   "designer": null,
+   "model_code": "UB7122",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 320,
+   "capacity_as_stated": "32cl",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/chara-old-fashioned-32cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/chara-old-fashioned-32cl"
+   ]
+  },
+  {
+   "name": "Soho Spun Old Fashioned Tumbler 25cl",
+   "series": "Soho",
+   "designer": null,
+   "model_code": "UB814",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "25cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/soho-spun-old-fashioned-tumbler-25cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/soho-spun-old-fashioned-tumbler-25cl",
+    "https://www.urbanbar.com/products.json?limit=250&page=1"
+   ]
+  },
+  {
+   "name": "Stacking Plastic Old Fashioned Tumbler 31cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB872",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 310,
+   "capacity_as_stated": "31cl",
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/stacking-plastic-old-fashioned-tumbler-31cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/stacking-plastic-old-fashioned-tumbler-31cl"
+   ]
+  },
+  {
+   "name": "Spey® Tumbler 25cl",
+   "series": "Spey",
+   "designer": null,
+   "model_code": "SB1003",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 250,
+   "capacity_as_stated": "25cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/spey-reg-whisky-glass-25cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/spey-reg-whisky-glass-25cl"
+   ]
+  },
+  {
+   "name": "Rolling Whisky Tumbler 28cl",
+   "series": null,
+   "designer": null,
+   "model_code": "SB1007",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 280,
+   "capacity_as_stated": "28cl",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/rolling-tumbler-28cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/rolling-tumbler-28cl"
+   ]
+  },
+  {
+   "name": "Rondo Old Fashioned Tumbler 34cl",
+   "series": "Rondo",
+   "designer": null,
+   "model_code": "SB1008",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 340,
+   "capacity_as_stated": "34cl",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/rondo-old-fashioned-tumbler-34cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/rondo-old-fashioned-tumbler-34cl"
+   ]
+  },
+  {
+   "name": "Calabrese ZigZag Old Fashioned 34cl",
+   "series": "Calabrese",
+   "designer": "Salvatore Calabrese",
+   "model_code": "SB1008-3",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 340,
+   "capacity_as_stated": "34cl",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/calabrese-zigzag-old-fashioned-34cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/calabrese-zigzag-old-fashioned-34cl"
+   ]
+  },
+  {
+   "name": "Grantown Whisky Tumbler 34cl",
+   "series": "Grantown",
+   "designer": null,
+   "model_code": "SB1055",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 340,
+   "capacity_as_stated": "34cl",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/grantown-whisky-tumbler-34cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/grantown-whisky-tumbler-34cl"
+   ]
+  },
+  {
+   "name": "Rocking Whisky Glass 30cl",
+   "series": null,
+   "designer": null,
+   "model_code": "SB3986",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/rocking-whisky-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/rocking-whisky-glass"
+   ]
+  },
+  {
+   "name": "The Mini 4.5cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB7235",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 45,
+   "capacity_as_stated": "4.5cl",
+   "height_mm": 72,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/the-mini-4-5cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/the-mini-4-5cl",
+    "https://www.urbanbar.com/products/the-mini-4-5cl-box-6"
+   ]
+  },
+  {
+   "name": "Barrel Dram 7cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB4917",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 70,
+   "capacity_as_stated": "7cl",
+   "height_mm": 70,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/barrel-dram-7cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/barrel-dram-7cl"
+   ]
+  },
+  {
+   "name": "Perfect Whisky Dram Glass 9cl",
+   "series": "Perfect",
+   "designer": null,
+   "model_code": "SB1018",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 90,
+   "capacity_as_stated": "9cl",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/perfect-dram-9cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/perfect-dram-9cl"
+   ]
+  },
+  {
+   "name": "Spey® Dram Glass 12cl",
+   "series": "Spey",
+   "designer": null,
+   "model_code": "SB1004",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 120,
+   "capacity_as_stated": "12cl",
+   "height_mm": 78,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/spey-reg-dram-glass-12cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/spey-reg-dram-glass-12cl"
+   ]
+  },
+  {
+   "name": "Taster Tumbler 22cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB5067",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 220,
+   "capacity_as_stated": "22cl",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/push-up-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/push-up-glass"
+   ]
+  },
+  {
+   "name": "Ice Cocktail Highball Glass 35cl",
+   "series": "Ice",
+   "designer": null,
+   "model_code": "UB14",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 166,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/ice-cocktail-highball-35cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/ice-cocktail-highball-35cl"
+   ]
+  },
+  {
+   "name": "Sling Cocktail Glass 33cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB15",
+   "glass": "highball",
+   "variant": "highball_tapered",
+   "capacity_ml": 330,
+   "capacity_as_stated": "33cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/sling-cocktail-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/sling-cocktail-glass"
+   ]
+  },
+  {
+   "name": "Castello Highball Glass 30cl",
+   "series": "Castello",
+   "designer": null,
+   "model_code": "UB3814",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/castello-highball-glass-30cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/castello-highball-glass-30cl"
+   ]
+  },
+  {
+   "name": "Koto Crystal Highball Glass 35cl",
+   "series": "Koto",
+   "designer": null,
+   "model_code": "UB4135",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/koto-highball-glass-35cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/koto-highball-glass-35cl"
+   ]
+  },
+  {
+   "name": "Ginza Tall Cuts Highball Glass 35cl",
+   "series": "Ginza Tall Cuts",
+   "designer": null,
+   "model_code": "UB4831",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/ginza-tall-cuts-highball-glass-35cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/ginza-tall-cuts-highball-glass-35cl"
+   ]
+  },
+  {
+   "name": "Tiki Highball Glass 30cl",
+   "series": "Tiki",
+   "designer": null,
+   "model_code": "UB4950",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/tiki-highball-glass-30cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/tiki-highball-glass-30cl"
+   ]
+  },
+  {
+   "name": "Tattoo Highball Glass 30cl",
+   "series": "Tattoo",
+   "designer": null,
+   "model_code": "UB4952",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/tattoo-highball-glass-30cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/tattoo-highball-glass-30cl"
+   ]
+  },
+  {
+   "name": "Misato Recycled Highball 30cl",
+   "series": "Misato",
+   "designer": null,
+   "model_code": "UB5272",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/misato-highball-30cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/misato-highball-30cl"
+   ]
+  },
+  {
+   "name": "Gili Highball Glass 30cl",
+   "series": "Gili",
+   "designer": null,
+   "model_code": "UB5315",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30cl",
+   "height_mm": 142,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/gili-highball-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gili-highball-glass"
+   ]
+  },
+  {
+   "name": "Gili Mixer Glass 42cl",
+   "series": "Gili",
+   "designer": null,
+   "model_code": "UB5556",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 420,
+   "capacity_as_stated": "42cl",
+   "height_mm": 142,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/gili-mixer-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gili-mixer-glass"
+   ]
+  },
+  {
+   "name": "Urbino Highball Glass 45cl",
+   "series": "Urbino",
+   "designer": null,
+   "model_code": "UB5421",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 450,
+   "capacity_as_stated": "45cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/urbino-highball-glass-45cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/urbino-highball-glass-45cl"
+   ]
+  },
+  {
+   "name": "Freddo Highball 32cl",
+   "series": "Freddo",
+   "designer": null,
+   "model_code": "UB5461",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 320,
+   "capacity_as_stated": "32cl",
+   "height_mm": 132,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/freddo-highball-32cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/freddo-highball-32cl"
+   ]
+  },
+  {
+   "name": "Classico Margot Highball 35cl",
+   "series": "Classico Margot",
+   "designer": "Giancarlo Mancino",
+   "model_code": "UB5473",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/classico-margot-highball-35cl-box-2",
+   "source_urls": [
+    "https://www.urbanbar.com/products/classico-margot-highball-35cl-box-2",
+    "https://www.urbanbar.com/products/classic-margot-highball-35cl-box-2"
+   ]
+  },
+  {
+   "name": "Cubana Highball Glass 37cl",
+   "series": "Cubana",
+   "designer": null,
+   "model_code": "UB55",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 370,
+   "capacity_as_stated": "37cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/cubana-highball-glass-37cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/cubana-highball-glass-37cl"
+   ]
+  },
+  {
+   "name": "Cubana Mixer Glass 44cl",
+   "series": "Cubana",
+   "designer": null,
+   "model_code": "UB57",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 440,
+   "capacity_as_stated": "44cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/handmade-crystal-cubana-mixer-glass-44cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/handmade-crystal-cubana-mixer-glass-44cl"
+   ]
+  },
+  {
+   "name": "Gradara Highball Glass 45cl",
+   "series": "Gradara",
+   "designer": null,
+   "model_code": "UB5688",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 450,
+   "capacity_as_stated": "45cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/gradara-highball-glass-45cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gradara-highball-glass-45cl"
+   ]
+  },
+  {
+   "name": "Qubo Crystal Highball Glass 32cl",
+   "series": "Qubo",
+   "designer": null,
+   "model_code": "UB61",
+   "glass": "highball",
+   "variant": "highball_heavy",
+   "capacity_ml": 320,
+   "capacity_as_stated": "32cl",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/qubo-highball-glass-32cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/qubo-highball-glass-32cl"
+   ]
+  },
+  {
+   "name": "Fluet Highball 1910 45cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6377",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 450,
+   "capacity_as_stated": "45cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-highball-1910-ultra-thin-45cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-highball-1910-ultra-thin-45cl"
+   ]
+  },
+  {
+   "name": "Fluet Highball 1920 45cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6380",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 450,
+   "capacity_as_stated": "45cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-highball-1920-ultra-thin-45cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-highball-1920-ultra-thin-45cl"
+   ]
+  },
+  {
+   "name": "Fluet Highball Gold Rim 45cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6384",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 450,
+   "capacity_as_stated": "45cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-highball-gold-rim-ultra-thin-45cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-highball-gold-rim-ultra-thin-45cl"
+   ]
+  },
+  {
+   "name": "Fluet Highball 45cl",
+   "series": "Fluet",
+   "designer": null,
+   "model_code": "UB6387",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 450,
+   "capacity_as_stated": "45cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/fluet-high-ball-ultra-thin-45cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/fluet-high-ball-ultra-thin-45cl"
+   ]
+  },
+  {
+   "name": "Soho Diamond Highball Glass 31cl",
+   "series": "Soho",
+   "designer": null,
+   "model_code": "UB811",
+   "glass": "highball",
+   "variant": "highball_tapered",
+   "capacity_ml": 310,
+   "capacity_as_stated": "31cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/soho-diamond-highball-glass-31cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/soho-diamond-highball-glass-31cl"
+   ]
+  },
+  {
+   "name": "Stacking Plastic Highball 38cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB871",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 380,
+   "capacity_as_stated": "38cl",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/stacking-plastic-hiball-38cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/stacking-plastic-hiball-38cl"
+   ]
+  },
+  {
+   "name": "1890 Highball Tumbler Glass 35cl",
+   "series": "1890",
+   "designer": null,
+   "model_code": "UB900-1",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1890-highball-glass-35cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1890-highball-glass-35cl"
+   ]
+  },
+  {
+   "name": "1910 Highball Tumbler Glass 35cl",
+   "series": "1910",
+   "designer": null,
+   "model_code": "UB900-2",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-highball-glass-35cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-highball-glass-35cl"
+   ]
+  },
+  {
+   "name": "Rondo Highball Glass 37cl",
+   "series": "Rondo",
+   "designer": null,
+   "model_code": "SB1009",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 370,
+   "capacity_as_stated": "37cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/rondo-highball-glass-37cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/rondo-highball-glass-37cl"
+   ]
+  },
+  {
+   "name": "Calabrese ZigZag Highball 37cl",
+   "series": "Calabrese",
+   "designer": "Salvatore Calabrese",
+   "model_code": "SB1009-3",
+   "glass": "highball",
+   "variant": "highball_straight",
+   "capacity_ml": 370,
+   "capacity_as_stated": "37cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/calabrese-zigzag-highball",
+   "source_urls": [
+    "https://www.urbanbar.com/products/calabrese-zigzag-highball"
+   ]
+  },
+  {
+   "name": "Bacci Crystal Champagne Flute 32cl",
+   "series": "Bacci",
+   "designer": null,
+   "model_code": "UB3234",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 320,
+   "capacity_as_stated": "32cl",
+   "height_mm": 246,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/bacci-crystal-champagne-flute-32cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/bacci-crystal-champagne-flute-32cl"
+   ]
+  },
+  {
+   "name": "Bacci Crystal Champagne Flute 19cl",
+   "series": "Bacci",
+   "designer": null,
+   "model_code": "UB3237",
+   "glass": "flute",
+   "variant": "flute_slim",
+   "capacity_ml": 190,
+   "capacity_as_stated": "19cl",
+   "height_mm": 278,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/bacci-crystal-champagne-flute-19cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/bacci-crystal-champagne-flute-19cl"
+   ]
+  },
+  {
+   "name": "Castello Champagne Flute 21cl",
+   "series": "Castello",
+   "designer": null,
+   "model_code": "UB3808",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": 210,
+   "capacity_as_stated": "21cl",
+   "height_mm": 205,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/castello-champagne-flute-21cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/castello-champagne-flute-21cl"
+   ]
+  },
+  {
+   "name": "1910 Champagne Flute 32cl",
+   "series": "1910",
+   "designer": null,
+   "model_code": "UB4513",
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 320,
+   "capacity_as_stated": "32cl",
+   "height_mm": 246,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-champagne-flute-32cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-champagne-flute-32cl"
+   ]
+  },
+  {
+   "name": "Cubana Champagne Flute 16cl",
+   "series": "Cubana",
+   "designer": null,
+   "model_code": "UB52",
+   "glass": "flute",
+   "variant": "flute_slim",
+   "capacity_ml": 160,
+   "capacity_as_stated": "16cl",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/handmade-crystal-cubana-champagne-flute-16cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/handmade-crystal-cubana-champagne-flute-16cl"
+   ]
+  },
+  {
+   "name": "Urbino Flute 17cl",
+   "series": "Urbino",
+   "designer": null,
+   "model_code": "UB5423",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 227,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/urbino-flute-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/urbino-flute-17cl"
+   ]
+  },
+  {
+   "name": "Gradara Flute 17cl",
+   "series": "Gradara",
+   "designer": null,
+   "model_code": "UB5690",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 227,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/gradara-flute-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gradara-flute-17cl"
+   ]
+  },
+  {
+   "name": "Umbo Flute 20cl",
+   "series": "Umbo",
+   "designer": null,
+   "model_code": "UB7593",
+   "glass": "flute",
+   "variant": "flute_slim",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 202,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/umbo-flute-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/umbo-flute-20cl"
+   ]
+  },
+  {
+   "name": "1910 Umbo Flute 20cl",
+   "series": "Umbo",
+   "designer": null,
+   "model_code": "UB7594",
+   "glass": "flute",
+   "variant": "flute_slim",
+   "capacity_ml": 200,
+   "capacity_as_stated": "20cl",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-umbo-flute-20cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-umbo-flute-20cl"
+   ]
+  },
+  {
+   "name": "Iris Shatterproof Plastic Champagne Flute 24cl",
+   "series": "Iris",
+   "designer": null,
+   "model_code": "UB877",
+   "glass": "flute",
+   "variant": "flute_classic",
+   "capacity_ml": 240,
+   "capacity_as_stated": "24cl",
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://www.urbanbar.com/products/iris-plastic-champagne-flute-24cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/iris-plastic-champagne-flute-24cl"
+   ]
+  },
+  {
+   "name": "Umbo 23cl",
+   "series": "Umbo",
+   "designer": null,
+   "model_code": "UB7595",
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": 230,
+   "capacity_as_stated": "23cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/umbo-23cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/umbo-23cl"
+   ]
+  },
+  {
+   "name": "Umbo 26cl",
+   "series": "Umbo",
+   "designer": null,
+   "model_code": "UB7597",
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": 260,
+   "capacity_as_stated": "26cl",
+   "height_mm": 145,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/umbo-26cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/umbo-26cl"
+   ]
+  },
+  {
+   "name": "Umbo 35cl",
+   "series": "Umbo",
+   "designer": null,
+   "model_code": "UB7599",
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/umbo-35cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/umbo-35cl"
+   ]
+  },
+  {
+   "name": "1910 Umbo 23cl",
+   "series": "Umbo",
+   "designer": null,
+   "model_code": "UB7596",
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": 230,
+   "capacity_as_stated": "23cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/umbo-23cl-copy",
+   "source_urls": [
+    "https://www.urbanbar.com/products/umbo-23cl-copy"
+   ]
+  },
+  {
+   "name": "1910 Umbo 26cl",
+   "series": "Umbo",
+   "designer": null,
+   "model_code": "UB7598",
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": 260,
+   "capacity_as_stated": "26cl",
+   "height_mm": 145,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-umbo-26cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-umbo-26cl"
+   ]
+  },
+  {
+   "name": "1910 Umbo 35cl",
+   "series": "Umbo",
+   "designer": null,
+   "model_code": "UB7600",
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": 350,
+   "capacity_as_stated": "35cl",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/1910-umbo-35cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/1910-umbo-35cl"
+   ]
+  },
+  {
+   "name": "Gin Balloon Lead Free Crystal Glass 65cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB3563",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 650,
+   "capacity_as_stated": "65cl",
+   "height_mm": 213,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/premium-gin-balloon-glass-65cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/premium-gin-balloon-glass-65cl"
+   ]
+  },
+  {
+   "name": "1910 Gin Balloon Glass 65cl",
+   "series": "1910",
+   "designer": null,
+   "model_code": "UB4512",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 650,
+   "capacity_as_stated": "65cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-1910-gin-balloon-glass-65cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-1910-gin-balloon-glass-65cl",
+    "https://www.urbanbar.com/products.json?limit=250&page=5"
+   ]
+  },
+  {
+   "name": "Gin Balloon Glass 60cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB5400",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 600,
+   "capacity_as_stated": "60cl",
+   "height_mm": 193,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/pulled-stem-gin-balloon-glass-60cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/pulled-stem-gin-balloon-glass-60cl"
+   ]
+  },
+  {
+   "name": "Amber Stem Gin Balloon Glass 60cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB5400-AMB",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 600,
+   "capacity_as_stated": "60cl",
+   "height_mm": 193,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/amber-stem-gin-balloon-glass-60cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/amber-stem-gin-balloon-glass-60cl"
+   ]
+  },
+  {
+   "name": "Blue Stem Gin Balloon Glass 60cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB5400-BLU",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 600,
+   "capacity_as_stated": "60cl",
+   "height_mm": 193,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/blue-stem-gin-balloon-glass-60cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/blue-stem-gin-balloon-glass-60cl"
+   ]
+  },
+  {
+   "name": "Green Stem Gin Balloon Glass 60cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB5400-GRE",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 600,
+   "capacity_as_stated": "60cl",
+   "height_mm": 193,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/green-stem-gin-balloon-glass-60cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/green-stem-gin-balloon-glass-60cl"
+   ]
+  },
+  {
+   "name": "Gineva Stacking Gin Glass 60cl",
+   "series": "Gineva",
+   "designer": null,
+   "model_code": "UB4506",
+   "glass": "spritz",
+   "variant": "spritz_copa",
+   "capacity_ml": 600,
+   "capacity_as_stated": "60cl",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/gineva-stacking-gin-glass-60cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gineva-stacking-gin-glass-60cl"
+   ]
+  },
+  {
+   "name": "Gin Mixer Glass 60cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB5935",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 600,
+   "capacity_as_stated": "60cl",
+   "height_mm": 190,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/new-gin-mixer-glass-60cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/new-gin-mixer-glass-60cl"
+   ]
+  },
+  {
+   "name": "Gin Globe 54cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB7210",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 540,
+   "capacity_as_stated": "54cl",
+   "height_mm": 145,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/copy-of-gin-balloon-lead-free-crystal-glass-65cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/copy-of-gin-balloon-lead-free-crystal-glass-65cl"
+   ]
+  },
+  {
+   "name": "Gin Balloon Tumbler 47cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB820",
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 470,
+   "capacity_as_stated": "47cl",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/gin-balloon-tumbler-47cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/gin-balloon-tumbler-47cl"
+   ]
+  },
+  {
+   "name": "Distillery Whisky Taster Glass 14cl",
+   "series": "Distillery",
+   "designer": null,
+   "model_code": "SB1001",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 140,
+   "capacity_as_stated": "14cl",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/distillery-taster-glass-14cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/distillery-taster-glass-14cl"
+   ]
+  },
+  {
+   "name": "Distillery Whisky Taster Glass with Gauge Lines 14cl",
+   "series": "Distillery",
+   "designer": null,
+   "model_code": "SB1001G",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 140,
+   "capacity_as_stated": "14cl",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.urbanbar.com/products/distillery-taster-with-gauge-lines-14cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/distillery-taster-with-gauge-lines-14cl"
+   ]
+  },
+  {
+   "name": "Spey® Taster Glass 13cl",
+   "series": "Spey",
+   "designer": null,
+   "model_code": "SB1002",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 130,
+   "capacity_as_stated": "13cl",
+   "height_mm": 132,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/spey-reg-whisky-taster-glass-13cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/spey-reg-whisky-taster-glass-13cl"
+   ]
+  },
+  {
+   "name": "Distillery Malt Whisky Taster Glass 18cl",
+   "series": "Distillery",
+   "designer": null,
+   "model_code": "SB1005",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 180,
+   "capacity_as_stated": "18cl",
+   "height_mm": 117,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/malt-taster-whisky-nosing-and-tasting-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/malt-taster-whisky-nosing-and-tasting-glass"
+   ]
+  },
+  {
+   "name": "Distillery Blind Tasting Whisky Taster Glass Cobalt Blue 14cl",
+   "series": "Distillery",
+   "designer": null,
+   "model_code": "sb2002",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 140,
+   "capacity_as_stated": "14cl",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/blue-crystal-distillery-blind-taster-glass-and-watch-glass-lid-14cl-in-gift-box",
+   "source_urls": [
+    "https://www.urbanbar.com/products/blue-crystal-distillery-blind-taster-glass-and-watch-glass-lid-14cl-in-gift-box"
+   ]
+  },
+  {
+   "name": "Lochy Whisky Taster Glass 11cl",
+   "series": "Lochy",
+   "designer": null,
+   "model_code": "UB4176",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 110,
+   "capacity_as_stated": "11cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/lochy-whisky-tasting-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/lochy-whisky-tasting-glass"
+   ]
+  },
+  {
+   "name": "Spirit Crystal Whisky Taster Glass 12cl",
+   "series": "Spirit",
+   "designer": null,
+   "model_code": "UB6098",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 120,
+   "capacity_as_stated": "12cl",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-spirit-taster-glass-12cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-spirit-taster-glass-12cl"
+   ]
+  },
+  {
+   "name": "Strathspey Rum Glass 33cl",
+   "series": "Strathspey",
+   "designer": null,
+   "model_code": "UB1005F",
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 330,
+   "capacity_as_stated": "33cl",
+   "height_mm": 128,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/strathspey-rum-glass",
+   "source_urls": [
+    "https://www.urbanbar.com/products/strathspey-rum-glass"
+   ]
+  },
+  {
+   "name": "Rummer Glass 9.3cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB6474",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 93,
+   "capacity_as_stated": "9.3cl",
+   "height_mm": 56,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/rummer-glass-9-3cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/rummer-glass-9-3cl"
+   ]
+  },
+  {
+   "name": "Julep Cup 41cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB65",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 410,
+   "capacity_as_stated": "41cl",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/julep-cup-41cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/julep-cup-41cl"
+   ]
+  },
+  {
+   "name": "Copper Julep Cup 41cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB65-CP",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 410,
+   "capacity_as_stated": "41cl",
+   "height_mm": 115,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/copper-julep-cup-41cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/copper-julep-cup-41cl"
+   ]
+  },
+  {
+   "name": "Octagonal Stainless Steel Julep Cup 39cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB2971",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39cl",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/octagonal-julep-cup-39cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/octagonal-julep-cup-39cl"
+   ]
+  },
+  {
+   "name": "Octagonal Copper Julep Cup 39cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB2971CP",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39cl",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/octagonal-copper-julep-cup-39cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/octagonal-copper-julep-cup-39cl"
+   ]
+  },
+  {
+   "name": "Tiki Stainless Steel Julep Cup 40cl",
+   "series": "Tiki",
+   "designer": null,
+   "model_code": "UB3549",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40cl",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/tiki-julep-cup-40cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/tiki-julep-cup-40cl"
+   ]
+  },
+  {
+   "name": "Tattoo Stainless Steel Julep Cup 40cl",
+   "series": "Tattoo",
+   "designer": null,
+   "model_code": "UB3550",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40cl",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/tattoo-julep-cup-40cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/tattoo-julep-cup-40cl"
+   ]
+  },
+  {
+   "name": "Lono Tiki Tropical Cocktail Mug 50cl",
+   "series": null,
+   "designer": "John Mulder",
+   "model_code": "UB5649",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "50cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://www.urbanbar.com/products/tiki-ivory-stoneware-mug-lono-50cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/tiki-ivory-stoneware-mug-lono-50cl"
+   ]
+  },
+  {
+   "name": "Moai Tiki Tropical Cocktail Mug 50cl",
+   "series": null,
+   "designer": "John Mulder",
+   "model_code": "UB5650",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "50cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://www.urbanbar.com/products/copy-of-tiki-ivory-stoneware-mug-moai-50cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/copy-of-tiki-ivory-stoneware-mug-moai-50cl"
+   ]
+  },
+  {
+   "name": "Moko Tiki Tropical Cocktail Mug 50cl",
+   "series": null,
+   "designer": "John Mulder",
+   "model_code": "UB5651",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "50cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://www.urbanbar.com/products/copy-of-copy-of-tiki-ivory-stoneware-mug-moko-50cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/copy-of-copy-of-tiki-ivory-stoneware-mug-moko-50cl"
+   ]
+  },
+  {
+   "name": "Vintage Irish Coffee Glass 17cl",
+   "series": "Vintage",
+   "designer": null,
+   "model_code": "UB5882",
+   "glass": "mug",
+   "variant": "mug_irish",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17cl",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.urbanbar.com/products/vintage-irish-coffee-glass-17cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/vintage-irish-coffee-glass-17cl",
+    "https://www.urbanbar.com/products/vintage-irish-coffee-glass-17cl-b6"
+   ]
+  },
+  {
+   "name": "Copper Plated Mug 32.5cl",
+   "series": null,
+   "designer": null,
+   "model_code": "UB3071",
+   "glass": "mug",
+   "variant": "mug_copper",
+   "capacity_ml": 325,
+   "capacity_as_stated": "32.5cl",
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/copper-plated-mug-32-5cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/copper-plated-mug-32-5cl"
+   ]
+  },
+  {
+   "name": "Moscow Large Aluminium Mule Cup 50cl",
+   "series": "Moscow",
+   "designer": null,
+   "model_code": "UB3920",
+   "glass": "mug",
+   "variant": "mug_copper",
+   "capacity_ml": 500,
+   "capacity_as_stated": "50cl",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/moscow-mule-cup-50cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/moscow-mule-cup-50cl"
+   ]
+  },
+  {
+   "name": "Moscow Aluminium Mule Cup 37cl",
+   "series": "Moscow",
+   "designer": null,
+   "model_code": "UB3968",
+   "glass": "mug",
+   "variant": "mug_copper",
+   "capacity_ml": 370,
+   "capacity_as_stated": "37cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/moscow-mule-cup-37cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/moscow-mule-cup-37cl"
+   ]
+  }
+ ]
+}

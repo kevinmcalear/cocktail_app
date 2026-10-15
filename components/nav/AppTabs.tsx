@@ -5,11 +5,12 @@ import { View } from 'react-native';
 
 import { useDs } from '@/components/ds';
 import { useBottomBar } from '@/hooks/useBottomBar';
+import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useMode } from '@/hooks/useMode';
 import { useServiceDay } from '@/hooks/useServiceDay';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
-import { phoneTabs, type PhoneTab } from '@/lib/venueFeatures';
+import { phoneTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
 
 import { CreateSheet } from './CreateSheet';
 import { calendarDayImage, hasNumberedCalendarSymbols } from './tabCalendar';
@@ -42,6 +43,10 @@ function Tabs() {
   // tab's room (at home You steps out and the avatar opens it).
   const bottomBar = useBottomBar();
   const [creating, setCreating] = useState(false);
+  // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
+  const dots = useFeatureNewsDots();
+  const isNew = (name: VenueTab) => dots.includes(name);
+  const dot = (name: VenueTab) => <NativeTabs.Trigger.Badge hidden={!isNew(name)} />;
   // The first round holds Menus and Discover back until their steps come up (lib/firstRound.ts).
   const { hidden } = useFirstRound();
   // Venue and home have different tabs, and switching remounts them all:
@@ -55,8 +60,8 @@ function Tabs() {
   // bar hides unselected labels past three tabs; "labeled" keeps every tab named.
   return (
     <>
-      <NativeTabs tintColor={ds.accentText} minimizeBehavior="onScrollDown" labelVisibilityMode="labeled">
-        <NativeTabs.Trigger name="index" hidden={off('index')}>
+      <NativeTabs tintColor={ds.accentText} badgeBackgroundColor={ds.accentFill.fill} minimizeBehavior="onScrollDown" labelVisibilityMode="labeled">
+        <NativeTabs.Trigger name="index" hidden={off('index')} accessibilityLabel={isNew('index') ? 'Tonight, new' : undefined}>
           {/* No filled variant of a dated calendar: the tint marks the selected tab. */}
           <NativeTabs.Trigger.Icon
             sf={hasNumberedCalendarSymbols ? (`${day}.calendar` as SFSymbol) : undefined}
@@ -64,6 +69,7 @@ function Tabs() {
             renderingMode="template"
           />
           <NativeTabs.Trigger.Label>Tonight</NativeTabs.Trigger.Label>
+          {dot('index')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="library" hidden={off('library')}>
           <NativeTabs.Trigger.Icon sf={{ default: 'book', selected: 'book.fill' }} md="menu_book" />
@@ -73,13 +79,15 @@ function Tabs() {
           <NativeTabs.Trigger.Icon sf={{ default: 'list.bullet.rectangle', selected: 'list.bullet.rectangle.fill' }} md="restaurant_menu" />
           <NativeTabs.Trigger.Label>Menus</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="prep" hidden={off('prep')}>
+        <NativeTabs.Trigger name="prep" hidden={off('prep')} accessibilityLabel={isNew('prep') ? 'Prep, new' : undefined}>
           <NativeTabs.Trigger.Icon sf={{ default: 'flask', selected: 'flask.fill' }} md="science" />
           <NativeTabs.Trigger.Label>Prep</NativeTabs.Trigger.Label>
+          {dot('prep')}
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="test" hidden={off('test')}>
+        <NativeTabs.Trigger name="test" hidden={off('test')} accessibilityLabel={isNew('test') ? 'Study, new' : undefined}>
           <NativeTabs.Trigger.Icon sf={{ default: 'rectangle.stack', selected: 'rectangle.stack.fill' }} md="style" />
           <NativeTabs.Trigger.Label>Study</NativeTabs.Trigger.Label>
+          {dot('test')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="discover" hidden={off('discover')}>
           <NativeTabs.Trigger.Icon sf={{ default: 'safari', selected: 'safari.fill' }} md="explore" />

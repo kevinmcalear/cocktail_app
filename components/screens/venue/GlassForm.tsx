@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, GlassVariantPicker, Headline } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, GlassVariantPicker, Headline, Surface } from '@/components/ds';
+import { GlassModelPicker, GlassThumb } from '@/components/glass/GlassModelPicker';
 import { MakerPicker } from '@/components/maker/MakerPicker';
 import { space } from '@/constants/tokens';
 import type { BarGlass, BarGlassInput } from '@/hooks/useBarGlassware';
+import { glassModelFacts, type GlassModel } from '@/hooks/useGlassModels';
 import { GLASS_TYPE_LABEL, GLASS_TYPES, glassFieldProblem, textOrNull, type GlassFields } from '@/lib/glassware';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { variantsOf } from '@/lib/sketch/geometry';
@@ -19,15 +21,22 @@ interface GlassFormProps {
   onSave: (row: BarGlassInput) => void;
   onCancel: () => void;
   onDelete?: () => void;
+  /** The venue's real glasses, listed first in the search. */
+  venueModelIds?: readonly string[];
+  venueName?: string;
 }
 
 /**
- * One of the venue's glasses: its type and drawing, its name, who makes it
+ * One of the venue's glasses. A new one starts with "Which glass is it?"
+ * (a maker's model brings its type, drawing, size, maker and series), or is
+ * described by hand: its type and drawing, its name, who makes it
  * (a maker's page when there is one, and the name as the bar gives it),
  * designer, series, what the shape is like, and whether it's the glass of
  * its type the venue's drinks are drawn in.
  */
-export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, onDelete }: GlassFormProps) {
+export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, onDelete, venueModelIds, venueName }: GlassFormProps) {
+  const [model, setModel] = useState<GlassModel | null>(glass?.model ?? null);
+  const [finding, setFinding] = useState(!glass);
   const [type, setType] = useState<SketchGlass>(glass?.glass ?? 'coupe');
   const [variant, setVariant] = useState<string | null>(glass?.variant ?? null);
   const [fields, setFields] = useState<GlassFields>({
@@ -38,7 +47,7 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
     shape_note: glass?.shape_note ?? '',
   });
   const [makerPage, setMakerPage] = useState<{ id: string; display_name: string } | null>(
-    glass?.maker_profile_id && glass.maker_page ? { id: glass.maker_profile_id, display_name: glass.maker_page.display_name } : null
+    glass?.maker_profile_id && glass.maker_page ? { id: glass.maker_profile_id, display_name: glass.maker_page.display_name } : null,
   );
   const [picking, setPicking] = useState(false);
   const [isMain, setIsMain] = useState(glass?.is_default ?? true);
@@ -52,8 +61,25 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
   const save = () => {
     setTried(true);
     if (glassFieldProblem(fields)) return;
+    // A model brings its maker, series and designer; the venue's own name wins.
+    if (model) {
+      return onSave({
+        id: glass?.id,
+        glass: model.glass,
+        variant: shapes.some((s) => s.key === variant) ? variant : null,
+        name: textOrNull(fields.name) ?? model.name,
+        maker: model.maker?.display_name ?? null,
+        maker_profile_id: model.maker_profile_id,
+        designer: model.designer,
+        series: model.series,
+        shape_note: textOrNull(fields.shape_note),
+        model_id: model.id,
+        is_default: isMain,
+      });
+    }
     onSave({
       id: glass?.id,
+      model_id: null,
       glass: type,
       variant: shapes.some((s) => s.key === variant) ? variant : null,
       name: textOrNull(fields.name),
@@ -66,80 +92,151 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
     });
   };
 
+  const pick = (m: GlassModel) => {
+    // A name the last model filled in goes with it; one the venue typed stays.
+    setFields((f) => (f.name.trim() && f.name !== model?.name ? f : { ...f, name: '' }));
+    setModel(m);
+    setType(m.glass);
+    setVariant(m.variant);
+    setFinding(false);
+  };
+
+  if (finding) {
+    return (
+      <View style={styles.form}>
+        <View style={styles.stack}>
+          <Headline role="heading">Which glass is it?</Headline>
+          <Caption tone="muted">Find the one you pour into. Its size and drawing come with it.</Caption>
+        </View>
+        <GlassModelPicker
+          venueModelIds={venueModelIds}
+          venueName={venueName}
+          initialGlass={glass?.glass ?? null}
+          onPick={pick}
+          onDescribe={() => setFinding(false)}
+        />
+        <Button label="Cancel" variant="ghost" onPress={glass ? () => setFinding(false) : onCancel} style={styles.start} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.form}>
       <Headline role="heading">{glass ? 'Change this glass' : 'Add a glass'}</Headline>
-      <View style={styles.stack}>
-        <Caption tone="muted">Type</Caption>
-        <View role="radiogroup" aria-label="Glass type" style={styles.chips}>
-          {GLASS_TYPES.map((g) => (
-            <Chip
-              key={g}
-              label={GLASS_TYPE_LABEL[g]}
-              selected={g === type}
-              onPress={() => {
-                setType(g);
-                setVariant(null);
-              }}
-            />
-          ))}
+      {model ? (
+        <View style={styles.stack}>
+          <Surface style={styles.picked}>
+            <GlassThumb glass={model.glass} variant={variant} size={72} />
+            <View style={styles.flex}>
+              <Body>{model.name}</Body>
+              <Caption tone="muted">{glassModelFacts(model)}</Caption>
+              {model.maker ? <Caption tone="muted">{`by ${model.maker.display_name}`}</Caption> : null}
+            </View>
+          </Surface>
+          <View style={styles.actions}>
+            <Button label="Another glass" variant="secondary" onPress={() => setFinding(true)} />
+            <Button label="Not this one" variant="ghost" onPress={() => setModel(null)} />
+          </View>
         </View>
-      </View>
+      ) : (
+        <Button label="Find it in the makers’ catalogs" variant="secondary" onPress={() => setFinding(true)} style={styles.start} />
+      )}
+      {model ? null : (
+        <View style={styles.stack}>
+          <Caption tone="muted">Type</Caption>
+          <View role="radiogroup" aria-label="Glass type" style={styles.chips}>
+            {GLASS_TYPES.map((g) => (
+              <Chip
+                key={g}
+                label={GLASS_TYPE_LABEL[g]}
+                selected={g === type}
+                onPress={() => {
+                  setType(g);
+                  setVariant(null);
+                }}
+              />
+            ))}
+          </View>
+        </View>
+      )}
       {shapes.length > 1 ? (
         <View style={styles.stack}>
-          <Caption tone="muted">Which drawing is closest</Caption>
+          <Caption tone="muted">{model ? 'Drawn as: picked from the glass, change it if yours looks different' : 'Which drawing is closest'}</Caption>
           <GlassVariantPicker glass={type} inputs={inputs} seed="bar-glass" value={variant} onChange={setVariant} accessibilityLabel="Glass drawing" />
         </View>
       ) : null}
-      <Field label="Name" value={fields.name} onChangeText={set('name')} placeholder={GLASS_TYPE_LABEL[type]} maxLength={80} error={problem?.field === 'name' ? problem.message : undefined} />
-
-      <View style={styles.stack}>
-        <Caption tone="muted">Who makes it</Caption>
-        {makerPage && !picking ? (
-          <View style={styles.stack}>
-            <Body>{`Maker’s page: ${makerPage.display_name}`}</Body>
-            <View style={styles.actions}>
-              <Button label="Change" variant="secondary" onPress={() => setPicking(true)} />
-              <Button label="Remove" variant="ghost" onPress={() => setMakerPage(null)} />
-            </View>
-          </View>
-        ) : picking ? (
-          <View style={styles.stack}>
-            <MakerPicker
-              label="Find its maker’s page"
-              makes="glassware"
-              onPick={(m) => {
-                setMakerPage({ id: m.id, display_name: m.display_name });
-                if (!fields.maker.trim()) setFields((f) => ({ ...f, maker: m.display_name }));
-                setPicking(false);
-              }}
-            />
-            <Button label="Cancel" variant="ghost" onPress={() => setPicking(false)} style={styles.start} />
-          </View>
-        ) : (
-          <Button label="Find its maker’s page" variant="secondary" onPress={() => setPicking(true)} style={styles.start} />
-        )}
-        <Field
-          label="Maker, as you’d write it"
-          value={fields.maker}
-          onChangeText={set('maker')}
-          placeholder="A glassworks, a potter, an edition"
-          maxLength={80}
-          hint="Shown when the maker has no page."
-          error={problem?.field === 'maker' ? problem.message : undefined}
-        />
-      </View>
-      <Field label="Designer" value={fields.designer} onChangeText={set('designer')} maxLength={80} error={problem?.field === 'designer' ? problem.message : undefined} />
-      <Field label="Series" value={fields.series} onChangeText={set('series')} maxLength={80} error={problem?.field === 'series' ? problem.message : undefined} />
       <Field
-        label="What the shape is like"
-        value={fields.shape_note}
-        onChangeText={set('shape_note')}
-        placeholder="Tall, narrow V on a short stem"
-        minLines={2}
-        maxLength={500}
-        error={problem?.field === 'shape_note' ? problem.message : undefined}
+        label="Name"
+        value={fields.name}
+        onChangeText={set('name')}
+        placeholder={model?.name ?? GLASS_TYPE_LABEL[type]}
+        maxLength={80}
+        error={problem?.field === 'name' ? problem.message : undefined}
       />
+
+      {model ? null : (
+        <>
+          <View style={styles.stack}>
+            <Caption tone="muted">Who makes it</Caption>
+            {makerPage && !picking ? (
+              <View style={styles.stack}>
+                <Body>{`Maker’s page: ${makerPage.display_name}`}</Body>
+                <View style={styles.actions}>
+                  <Button label="Change" variant="secondary" onPress={() => setPicking(true)} />
+                  <Button label="Remove" variant="ghost" onPress={() => setMakerPage(null)} />
+                </View>
+              </View>
+            ) : picking ? (
+              <View style={styles.stack}>
+                <MakerPicker
+                  label="Find its maker’s page"
+                  makes="glassware"
+                  onPick={(m) => {
+                    setMakerPage({ id: m.id, display_name: m.display_name });
+                    if (!fields.maker.trim()) setFields((f) => ({ ...f, maker: m.display_name }));
+                    setPicking(false);
+                  }}
+                />
+                <Button label="Cancel" variant="ghost" onPress={() => setPicking(false)} style={styles.start} />
+              </View>
+            ) : (
+              <Button label="Find its maker’s page" variant="secondary" onPress={() => setPicking(true)} style={styles.start} />
+            )}
+            <Field
+              label="Maker, as you’d write it"
+              value={fields.maker}
+              onChangeText={set('maker')}
+              placeholder="A glassworks, a potter, an edition"
+              maxLength={80}
+              hint="Shown when the maker has no page."
+              error={problem?.field === 'maker' ? problem.message : undefined}
+            />
+          </View>
+          <Field
+            label="Designer"
+            value={fields.designer}
+            onChangeText={set('designer')}
+            maxLength={80}
+            error={problem?.field === 'designer' ? problem.message : undefined}
+          />
+          <Field
+            label="Series"
+            value={fields.series}
+            onChangeText={set('series')}
+            maxLength={80}
+            error={problem?.field === 'series' ? problem.message : undefined}
+          />
+          <Field
+            label="What the shape is like"
+            value={fields.shape_note}
+            onChangeText={set('shape_note')}
+            placeholder="Tall, narrow V on a short stem"
+            minLines={2}
+            maxLength={500}
+            error={problem?.field === 'shape_note' ? problem.message : undefined}
+          />
+        </>
+      )}
       <View role="group" aria-label="Main glass">
         <Chip multi label={`The venue’s main ${GLASS_TYPE_LABEL[type].toLowerCase()}`} selected={isMain} onPress={() => setIsMain((m) => !m)} />
         <Caption tone="muted">{`Drinks served in a ${GLASS_TYPE_LABEL[type].toLowerCase()} are drawn in this one.`}</Caption>
@@ -165,4 +262,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   start: { alignSelf: 'flex-start' },
+  picked: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md },
+  flex: { flex: 1, minWidth: 0 },
 });
