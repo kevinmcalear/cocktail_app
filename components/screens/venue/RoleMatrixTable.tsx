@@ -117,7 +117,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
                   <View key={r.id} role="row" style={[styles.row, { borderBottomColor: ds.c.line }]}>
                     <View role="rowheader" style={[styles.label, styles.labelRow]}>
                       <View style={styles.labelText}>
-                        <Body numberOfLines={1}>{r.label}</Body>
+                        <Body numberOfLines={2}>{r.label}</Body>
                         {r.detail ? <Caption tone="muted">{r.detail}</Caption> : null}
                       </View>
                       {r.levelBound ? (
