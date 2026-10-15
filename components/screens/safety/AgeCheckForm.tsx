@@ -1,13 +1,13 @@
 import { getLocales } from 'expo-localization';
-import { useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, Field, Headline, PressableScale, useDs } from '@/components/ds';
 import { Choice } from '@/components/screens/menus/MenuSheet';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useConfirmAge } from '@/hooks/useAgeCheck';
 import { countryName, searchCountries } from '@/lib/countries';
-import { localeCountry, parseBirthDate } from '@/lib/safety';
+import { birthPartDone, localeCountry, parseBirthDate } from '@/lib/safety';
 
 /**
  * Birth date and country, checked against that country's drinking age. Only
@@ -21,6 +21,21 @@ export function AgeCheckForm() {
   const [country, setCountry] = useState<string | null>(() => localeCountry(getLocales()));
   const [error, setError] = useState<string | null>(null);
   const confirm = useConfirmAge();
+  // Each part moves on to the next once it's filled in; the year puts the keyboard away, so Continue shows.
+  const monthRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const yearRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const onDay = (v: string) => {
+    setDay(v);
+    if (birthPartDone('day', v)) monthRef.current?.focus();
+  };
+  const onMonth = (v: string) => {
+    setMonth(v);
+    if (birthPartDone('month', v)) yearRef.current?.focus();
+  };
+  const onYear = (v: string) => {
+    setYear(v);
+    if (birthPartDone('year', v)) yearRef.current?.blur();
+  };
 
   const submit = () => {
     const parsed = parseBirthDate(day, month, year);
@@ -37,13 +52,13 @@ export function AgeCheckForm() {
         <Caption tone="muted">Date of birth</Caption>
         <View style={styles.date}>
           <View style={styles.part}>
-            <Field label="Day" placeholder="DD" value={day} onChangeText={setDay} keyboardType="number-pad" maxLength={2} autoComplete="birthdate-day" />
+            <Field label="Day" placeholder="DD" value={day} onChangeText={onDay} keyboardType="number-pad" maxLength={2} autoComplete="birthdate-day" />
           </View>
           <View style={styles.part}>
-            <Field label="Month" placeholder="MM" value={month} onChangeText={setMonth} keyboardType="number-pad" maxLength={2} autoComplete="birthdate-month" />
+            <Field ref={monthRef} label="Month" placeholder="MM" value={month} onChangeText={onMonth} keyboardType="number-pad" maxLength={2} autoComplete="birthdate-month" />
           </View>
           <View style={styles.year}>
-            <Field label="Year" placeholder="YYYY" value={year} onChangeText={setYear} keyboardType="number-pad" maxLength={4} autoComplete="birthdate-year" />
+            <Field ref={yearRef} label="Year" placeholder="YYYY" value={year} onChangeText={onYear} keyboardType="number-pad" maxLength={4} autoComplete="birthdate-year" />
           </View>
         </View>
       </View>

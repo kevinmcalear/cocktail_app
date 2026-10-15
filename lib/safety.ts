@@ -159,6 +159,20 @@ export function parseBirthDate(day: string, month: string, year: string, today =
   return { date: iso };
 }
 
+/**
+ * Whether a birth date field is filled in, so the form moves on to the next
+ * one (Eddie, 14 Oct): a real day or month at two digits, or at one that
+ * can't start a longer one (a day of 4 to 9, a month of 2 to 9); the year at
+ * four. A day of 35 or a month of 18 stays put, to be fixed.
+ */
+export function birthPartDone(part: 'day' | 'month' | 'year', value: string): boolean {
+  if (!/^\d+$/.test(value)) return false;
+  if (part === 'year') return value.length === 4;
+  const n = Number(value);
+  const max = part === 'day' ? 31 : 12;
+  return n >= 1 && n <= max && (value.length === 2 || n * 10 > max);
+}
+
 /** The device's country, as a two-letter code, when it has one. */
 export function localeCountry(locales: { regionCode?: string | null }[]): string | null {
   const code = locales.find((l) => l.regionCode)?.regionCode?.toUpperCase();
