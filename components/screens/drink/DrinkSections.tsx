@@ -13,11 +13,13 @@ import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { ItemImageLink } from '@/lib/itemImages';
 import { withPastMenuTag } from '@/lib/menuEditions';
 import { pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
+import { ingredientsLine } from '@/lib/publicDrink';
 import type { SpecAccess, SpecLevels, SpecLine, PresentationRecipe } from '@/lib/spec';
 import type { SpecLock } from '@/hooks/useSpecLock';
 import type { DatabaseItem } from '@/types/types';
 
 import { PublishSection } from '../publishing/PublishSection';
+import { MyNote } from './MyNote';
 import { AllergensSection } from './AllergensSection';
 import { AtHomeSpec } from './AtHomeSpec';
 import { Backstory } from './Backstory';
@@ -103,6 +105,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
     <View style={styles.make}>
       <SpecLockPanel
         note={specLockNote(lock.bar.name, !lock.bar.isClaimed, true)}
+        ingredients={ingredientsLine(lock.names ?? [])}
         action={<Button label={lock.bar.isClaimed ? `See ${lock.bar.name}` : 'Work here? Claim this page'} variant="secondary" onPress={() => router.push(`/p/${lock.bar.handle}` as Href)} />}
       />
       {make}
@@ -146,6 +149,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
           <DrinkTags tags={tags} />
         </View>
       ) : null,
+    myNote: live && signedIn ? <MyNote itemId={item.id} name={item.name} /> : null,
     journey:
       home && signedIn && live ? (
         <JourneyStrip itemId={item.id} name={item.name} saved={p.toMake.saved} onToggleSaved={p.toMake.toggle} onRank={p.actions.rank} onMade={p.actions.made} madeTimes={p.actions.madeTimes} lines={lines} />

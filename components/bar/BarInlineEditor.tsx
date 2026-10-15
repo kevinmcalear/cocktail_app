@@ -96,6 +96,10 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
                 </Surface>
             )}
 
+            {/* First, as the canvas draws it (first-round-and-features), and where the first round's
+                last card sends an Admin. Only Admins see the switches: everyone else just sees the tabs they give. */}
+            {editor.canEdit ? <VenueFeatures barId={barId} venueName={editor.name || 'your venue'} /> : null}
+
             <VenueBasics editor={editor} barId={barId} />
             <VenueHoursEditor barId={barId} canEdit={editor.canEdit} />
             {editor.slug ? <StaffLinkCard slug={editor.slug} venueName={editor.name || 'your venue'} /> : null}
@@ -108,9 +112,6 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
                     </View>
                 ))}
             </SettingsSection>
-
-            {/* Only Admins see the switches: everyone else just sees the tabs they give. */}
-            {editor.canEdit ? <VenueFeatures barId={barId} /> : null}
 
             <VenueTeamLinks barId={barId} barName={editor.name || 'This venue'} role={editor.roleLevel} />
             <VenueKitLinks barId={barId} />

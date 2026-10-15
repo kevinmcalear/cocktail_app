@@ -122,7 +122,7 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
           <Button
             label="Approve"
             disabled={busy || !codeReady}
-            accessibilityHint={`Hands ${name} over, Locked`}
+            accessibilityHint={`Hands ${name} over, at Menu`}
             onPress={() => onReview({ claimId: claim.id, approve: true, code: method === 'phone' ? code : undefined })}
           />
           <Button label="Turn down" variant="secondary" disabled={busy} onPress={() => onReview({ claimId: claim.id, approve: false, reason })} />

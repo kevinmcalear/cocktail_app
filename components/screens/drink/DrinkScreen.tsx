@@ -87,7 +87,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   const home = useMode().mode === 'home';
   const signedIn = useSignedIn();
   const { access, amountsOpenAt } = useSpecAccess(item.id, item.bar_id, preview);
-  // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Locked page, no description).
+  // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Names page, no description).
   const lock = useSpecLock(preview ? null : item).data;
   // The bookmark: To make in Collection (collected_items).
   const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, item.name);

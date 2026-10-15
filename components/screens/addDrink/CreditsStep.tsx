@@ -7,9 +7,10 @@ import { useClosestClassic } from '@/hooks/useClosestClassic';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { usePublicPeople } from '@/hooks/useProfiles';
+import { usePublicBars } from '@/hooks/useRankings';
 import { suggestClassic } from '@/lib/classics';
 import { withArticle } from '@/lib/closestClassic';
-import { searchByName, type StepProps } from '@/lib/drinkWizard';
+import { parseYear, searchByName, type StepProps } from '@/lib/drinkWizard';
 
 import type { CatalogIngredient } from './IngredientSearch';
 import { Eyebrow, WizardChip } from './WizardChrome';
@@ -22,9 +23,9 @@ interface CreditsStepProps extends StepProps {
 
 /**
  * Who made it (you by default, someone with a profile, or nobody yet), who
- * made it with them, and the classic it's a riff on: the one the spec is
- * closest to (as on the ingredients step), else the one its name says. A
- * venue's drink is credited to the venue too.
+ * made it with them, where and when it was first made, and the classic it's
+ * a riff on: the one the spec is closest to (as on the ingredients step),
+ * else the one its name says. A venue's drink is credited to the venue too.
  */
 export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepProps) {
   const me = useMyProfile().data ?? null;
@@ -89,6 +90,8 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
         ) : null}
       </View>
 
+      <WhereWhen draft={draft} set={set} venueName={venueName} />
+
       <View style={styles.section}>
         <Eyebrow>Riff on a classic?</Eyebrow>
         <View role="radiogroup" accessibilityLabel="Riff on" style={styles.chips}>
@@ -116,6 +119,79 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
           </Caption>
         ) : null}
       </View>
+    </View>
+  );
+}
+
+/**
+ * Where it was first made (a venue's drink is the venue's; at home, at home
+ * or a bar with a page) and the year, this one in a tap.
+ */
+function WhereWhen({ draft, set, venueName }: StepProps & { venueName: string | null }) {
+  const thisYear = new Date().getFullYear();
+  const year = draft.originYear ?? null;
+  // What's typed in "Another year", kept while it isn't a year yet ("19").
+  const [typed, setTyped] = useState(year !== null && year !== thisYear ? String(year) : '');
+  const [where, setWhere] = useState('');
+  const bars = usePublicBars(where).data ?? [];
+  const place = draft.place ?? null;
+  const badYear = typed.trim().length === 4 && parseYear(typed, thisYear) === null;
+  return (
+    <View style={styles.section}>
+      <Eyebrow>Where and when</Eyebrow>
+      {venueName ? (
+        <Caption tone="muted">{`First made at ${venueName}.`}</Caption>
+      ) : (
+        <>
+          <View role="radiogroup" accessibilityLabel="First made at" style={styles.chips}>
+            <WizardChip label="At home" selected={!place} onPress={() => set({ place: null })} />
+            {place ? <WizardChip label={place.name} selected onPress={() => set({ place: null })} /> : null}
+          </View>
+          <Field label="First made at a bar" value={where} onChangeText={setWhere} placeholder="Search bars" autoCorrect={false} maxLength={60} />
+          {where.trim().length >= 2 ? (
+            <Results
+              rows={bars.map((b) => ({ id: b.id, label: [b.display_name, b.city].filter(Boolean).join(' · ') }))}
+              empty="No bar by that name has a page yet."
+              onPick={(id) => {
+                const b = bars.find((x) => x.id === id);
+                if (b) set({ place: { id: b.id, name: b.display_name } });
+                setWhere('');
+              }}
+            />
+          ) : null}
+        </>
+      )}
+      <View role="radiogroup" accessibilityLabel="When" style={styles.chips}>
+        <WizardChip
+          label={`This year (${thisYear})`}
+          selected={year === thisYear}
+          onPress={() => {
+            setTyped('');
+            set({ originYear: thisYear });
+          }}
+        />
+        <WizardChip
+          label="Not sure"
+          selected={year === null}
+          onPress={() => {
+            setTyped('');
+            set({ originYear: null });
+          }}
+        />
+      </View>
+      <Field
+        label="Another year"
+        value={typed}
+        onChangeText={(t) => {
+          const digits = t.replace(/\D/g, '');
+          setTyped(digits);
+          set({ originYear: parseYear(digits, thisYear) });
+        }}
+        placeholder="1998"
+        keyboardType="number-pad"
+        maxLength={4}
+        error={badYear ? `A year from 1600 to ${thisYear}.` : undefined}
+      />
     </View>
   );
 }

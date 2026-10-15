@@ -18,6 +18,9 @@ import { roleLabel } from '@/lib/roles';
 import { backBarLine, collectionLine, menusLine, shelfLine } from '@/lib/shellNav';
 import { weekLine } from '@/lib/week';
 
+import { RoundPlacesNote, RoundSheetBlock } from '@/components/screens/firstRound/RoundElsewhere';
+import { useFirstRound } from '@/hooks/useFirstRound';
+
 import { MENUS_PLACE, useNavPlaces, type Place } from './navPlaces';
 import { TeamCard, useOpenTeam } from './TeamCard';
 import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
@@ -96,7 +99,9 @@ function VenuePlaces({ venue, onGo }: { venue: Venue; onGo: (p: Place) => void }
   const { work, venuePlaces, week } = useNavPlaces();
   // My team leads the sheet as its own card (TeamCard), so it isn't listed again here.
   const rest = venuePlaces.filter((p) => p.key !== 'team');
-  return <Places places={[MENUS_PLACE, ...work, ...rest, ...(week ? [week] : []), SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
+  // Menus waits for its step in the first round, like its tab.
+  const menus = useFirstRound().hidden.includes('menus') ? [] : [MENUS_PLACE];
+  return <Places places={[...menus, ...work, ...rest, ...(week ? [week] : []), SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
 }
 
 function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
@@ -130,11 +135,12 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
   };
   const venue = home ? null : active;
   const openTeam = useOpenTeam(onClose);
+  const inRound = useFirstRound().active;
   return (
     <MenuSheet visible onClose={onClose} title={venue ? venue.name : 'Switch to'} subtitle={venue ? roleLabel(venue.roleLevel) : undefined} plain>
       {venue ? (
         <>
-          <TeamCard barId={venue.id} onGo={openTeam} />
+          {inRound ? <RoundSheetBlock onClose={onClose} /> : <TeamCard barId={venue.id} onGo={openTeam} />}
           <DsText variant="caption" tone="muted" role="heading" style={styles.heading}>
             Switch to
           </DsText>
@@ -152,6 +158,7 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
       <View role="navigation" accessibilityLabel={venue ? `More at ${venue.name}` : 'At home'}>
         {venue ? <VenuePlaces venue={venue} onGo={go} /> : <HomePlaces onGo={go} />}
       </View>
+      {venue ? <RoundPlacesNote /> : null}
     </MenuSheet>
   );
 }
