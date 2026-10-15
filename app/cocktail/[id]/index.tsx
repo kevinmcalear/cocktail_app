@@ -1,5 +1,6 @@
 import { Redirect, useLocalSearchParams } from "expo-router";
 import React, { lazy, Suspense, useState } from "react";
+import { View } from "react-native";
 
 import { useCocktail } from "@/hooks/useCocktails";
 import { useStudyPile } from "@/hooks/useStudyPile";
@@ -7,9 +8,10 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
 import { heroPicture } from "@/lib/itemImages";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
+import { ErrorState } from "@/components/ui/ErrorState";
 
-// The legacy editor only loads when someone edits (or the drink fails to load).
-const CocktailEditor = lazy(() => import("@/components/cocktail/CocktailEditor").then((m) => ({ default: m.CocktailEditor })));
+// Editing in place only loads when someone edits, which keeps its gesture code off the web's first load.
+const DrinkEditScreen = lazy(() => import("@/components/screens/drink/edit/DrinkEditScreen").then((m) => ({ default: m.DrinkEditScreen })));
 
 // For /dev/drink, which loads it through this route so the web build reuses this
 // route's chunk instead of putting the whole drink page in the shared one.
@@ -23,7 +25,7 @@ export default function CocktailDetailsScreen() {
 
     // A placeholder (the tapped row's name and picture) paints the hero only: the rest waits for the drink.
     const query = useCocktail(id as string, { seeded: true });
-    const { error } = query;
+    const { error, refetch } = query;
     const cocktail = query.isPlaceholderData ? undefined : query.data;
 
     useTrackRecent(
@@ -41,8 +43,15 @@ export default function CocktailDetailsScreen() {
 
     // Not yours to read (another bar's drink): its public page, if it's published.
     if ((error as { code?: string } | null)?.code === "PGRST116") return <Redirect href={`/d/${id}`} />;
-    // The drink page is the read view; editing still uses the legacy editor (CocktailEditor).
-    if (!isEditing && !error) {
+    if (error) {
+        return (
+            <View style={{ flex: 1, justifyContent: "center" }}>
+                <ErrorState title="Couldn't load this cocktail" onRetry={() => void refetch()} />
+            </View>
+        );
+    }
+    // The drink page reads it; Edit turns the same page into editing in place (DrinkEditScreen).
+    if (!isEditing) {
         return cocktail ? (
             <DrinkScreen
                 item={cocktail}
@@ -60,7 +69,7 @@ export default function CocktailDetailsScreen() {
 
     return (
         <Suspense fallback={null}>
-            <CocktailEditor id={id as string} isEditing={isEditing} setIsEditing={setIsEditing} />
+            <DrinkEditScreen id={id as string} onExit={() => setIsEditing(false)} />
         </Suspense>
     );
 }
