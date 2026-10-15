@@ -22,7 +22,7 @@ export interface BarGlass {
   series: string | null;
   shape_note: string | null;
   source_urls: string[];
-  /** The real glass it is, when the venue picked one (20261023100000). */
+  /** The real glass it is, when the venue picked one (20261026100000). */
   model_id: string | null;
   model: GlassModel | null;
   /** The glass of its type the bar's drinks are drawn in. */

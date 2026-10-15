@@ -4,7 +4,7 @@ import { glassSizeLabel } from '@/lib/glass';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
-// Real glasses you can buy (glass_models, supabase/migrations/20261023100000_glass_models.sql):
+// Real glasses you can buy (glass_models, supabase/migrations/20261026100000_glass_models.sql):
 // a maker's model and size, a kind of a catalog shape, drawn as one of our
 // glass variants. Row shapes are written by hand until types/ is regenerated.
 
