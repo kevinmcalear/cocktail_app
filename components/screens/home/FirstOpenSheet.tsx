@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, GlassButton, Headline, useDs } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
+import { GOOGLE_IMPORT_TITLE, GoogleImportBody, GoogleImportEntry, GoogleImportFooter, useGoogleImport } from '@/components/screens/home/GoogleImport';
 import { placeOf } from '@/components/screens/rankings/RankingLists';
 import { useAgeGate } from '@/components/screens/safety/AgeGate';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
@@ -72,6 +73,8 @@ function Ask({ userId, rows, where }: { userId: string; rows: DiscoverRow[]; whe
   const loves = chosen.filter(([, p]) => p === 'love').length;
   const hides = chosen.length - loves;
   const close = () => markAsked(userId);
+  const [google, setGoogle] = useState(false);
+  const g = useGoogleImport(close);
   const save = async () => {
     setSaving(true);
     setFailed(false);
@@ -87,37 +90,51 @@ function Ask({ userId, rows, where }: { userId: string; rows: DiscoverRow[]; whe
   const done = () => (loves ? age.gate(() => void save()) : void save());
   const summary = chosen.length ? [loves ? plural(loves, 'loved') : null, hides ? plural(hides, 'hidden') : null].filter(Boolean).join(' · ') : 'Nothing picked yet';
 
+  // One sheet whose contents change, so nothing opens over a closing sheet on iOS.
+  const footer = google ? (
+    <GoogleImportFooter g={g} onCancel={() => setGoogle(false)} />
+  ) : (
+    <View style={styles.footer}>
+      <Caption tone={failed ? 'accent' : 'muted'} role={failed ? 'alert' : undefined}>
+        {failed ? `Couldn’t save ${summary}. Check your connection and try again.` : summary}
+      </Caption>
+      <View style={styles.actions}>
+        <Button label="Skip for now" variant="secondary" onPress={close} />
+        <Button label={saving ? 'Saving…' : 'Done'} disabled={saving || !chosen.length} onPress={done} />
+      </View>
+    </View>
+  );
   return (
     <>
       <MenuSheet
         visible
         onClose={close}
-        eyebrow="Make Discover yours"
-        title={where === 'anywhere' ? 'Any favourites?' : `Any favourites ${where}?`}
-        footer={
-          <View style={styles.footer}>
-            <Caption tone={failed ? 'accent' : 'muted'} role={failed ? 'alert' : undefined}>
-              {failed ? `Couldn’t save ${summary}. Check your connection and try again.` : summary}
-            </Caption>
-            <View style={styles.actions}>
-              <Button label="Skip for now" variant="secondary" onPress={close} />
-              <Button label={saving ? 'Saving…' : 'Done'} disabled={saving || !chosen.length} onPress={done} />
-            </View>
-          </View>
-        }
+        eyebrow={google ? 'From Google Maps' : 'Make Discover yours'}
+        title={google ? GOOGLE_IMPORT_TITLE : where === 'anywhere' ? 'Any favourites?' : `Any favourites ${where}?`}
+        footer={footer}
       >
-        <Body tone="muted">Love the bars you go to and they lead Discover. Hide any you never want to see. You can change either later.</Body>
-        <Caption tone="muted" style={styles.lead}>
-          {`Top bars ${where}, best first`}
-        </Caption>
-        <View role="list" aria-label="Bars near you">
-          {rows.slice(0, shown).map((r) => (
-            <BarRow key={r.venue_profile_id} row={r} pick={picks[r.venue_profile_id]} onPick={(p) => toggle(r.venue_profile_id, p)} />
-          ))}
-        </View>
-        {rows.length > shown ? <Button label={`Show ${Math.min(MORE, rows.length - shown)} more`} variant="ghost" onPress={() => setShown((n) => n + MORE)} style={styles.more} /> : null}
+        {google ? (
+          <GoogleImportBody g={g} />
+        ) : (
+          <>
+            <Body tone="muted">Love the bars you go to and they lead Discover. Hide any you never want to see. You can change either later.</Body>
+            <View style={styles.google}>
+              <GoogleImportEntry onPress={() => setGoogle(true)} />
+            </View>
+            <Caption tone="muted" style={styles.lead}>
+              {`Top bars ${where}, best first`}
+            </Caption>
+            <View role="list" aria-label="Bars near you">
+              {rows.slice(0, shown).map((r) => (
+                <BarRow key={r.venue_profile_id} row={r} pick={picks[r.venue_profile_id]} onPick={(p) => toggle(r.venue_profile_id, p)} />
+              ))}
+            </View>
+            {rows.length > shown ? <Button label={`Show ${Math.min(MORE, rows.length - shown)} more`} variant="ghost" onPress={() => setShown((n) => n + MORE)} style={styles.more} /> : null}
+          </>
+        )}
       </MenuSheet>
       {age.sheet}
+      {g.ageSheet}
     </>
   );
 }
@@ -147,6 +164,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'flex-end', flexWrap: 'wrap', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
   lead: { marginTop: space.md },
+  google: { marginTop: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 64, paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
   bar: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md },
   dim: { opacity: 0.45 },

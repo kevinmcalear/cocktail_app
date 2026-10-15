@@ -12,7 +12,9 @@ let mockLoved: object[] | undefined = [];
 let mockHidden: object[] | undefined = [];
 const mockLove = jest.fn(() => Promise.resolve());
 const mockHide = jest.fn(() => Promise.resolve());
-jest.mock('@/hooks/useKept', () => ({ useLovedBars: () => ({ data: mockLoved }), useLoveBar: () => ({ mutateAsync: mockLove }) }));
+jest.mock('@/hooks/useKept', () => ({ useLovedBars: () => ({ data: mockLoved }), useLoveBar: () => ({ mutateAsync: mockLove, reset: jest.fn() }) }));
+jest.mock('@/hooks/useGoogleImport', () => ({ useMatchSavedPlaces: () => ({ reset: jest.fn(), mutate: jest.fn() }) }));
+jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/useHiddenBars', () => ({ useHiddenBars: () => ({ data: mockHidden }), useHideBar: () => ({ mutateAsync: mockHide }) }));
 jest.mock('@/components/screens/safety/AgeGate', () => ({ useAgeGate: () => ({ gate: (run: () => void) => run(), sheet: null }) }));
 jest.mock('@/components/screens/home/BarMark', () => ({ BarMark: () => null }));
@@ -47,6 +49,17 @@ test('asks once, at home, before any bar is loved or hidden; Done saves the pick
   expect(mockLove).toHaveBeenCalledWith({ profileId: 'rye', love: true });
   expect(mockHide).toHaveBeenCalledWith({ profileId: '1806', hide: true });
   expect(useFirstOpen.getState().asked).toEqual(['me']);
+});
+
+test('From Google Maps swaps the sheet for the import, and Cancel comes back', async () => {
+  await renderWithTamagui(<FirstOpenSheet area={area} />);
+  await settle();
+  await fireEvent.press(screen.getByLabelText('From Google Maps. Love the bars you saved there'));
+  expect(screen.getAllByText('Your Google Maps places').length).toBeGreaterThan(0);
+  expect(screen.getByText('Download your places')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+  expect(screen.getAllByText('Any favourites?').length).toBeGreaterThan(0);
+  expect(useFirstOpen.getState().asked).toEqual([]);
 });
 
 test('a second tap undoes a pick; Skip asks nothing again and saves nothing', async () => {
