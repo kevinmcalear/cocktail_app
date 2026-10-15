@@ -10,6 +10,7 @@ import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
+import { nextPageChange } from '@/lib/pageVisibility';
 
 import { PageVisibilityChoice } from './PageVisibilityChoice';
 
@@ -54,6 +55,8 @@ function Page({ barId }: { barId: string }) {
               heading={false}
               venueName={venueName}
               value={data.pageVisibility}
+              privateAllowed={data.privateAllowed}
+              note={changeNote(data.pageChangedAt)}
               disabled={!canPublish || set.isPending}
               error={set.error && set.variables?.level === 'page' ? set.error.message : null}
               onChange={(visibility) => set.mutate({ level: 'page', visibility })}
@@ -74,6 +77,13 @@ function Page({ barId }: { barId: string }) {
       )}
     </View>
   );
+}
+
+/** The line under the choice: the 30-day rule, and when the next change opens if it's waiting. */
+function changeNote(changedAt: string | null): string {
+  const next = nextPageChange(changedAt);
+  const when = next ? ` Your next change opens ${next.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}.` : '';
+  return `Any single drink can still be kept private from its own page. You can change this once every 30 days.${when}`;
 }
 
 const styles = StyleSheet.create({

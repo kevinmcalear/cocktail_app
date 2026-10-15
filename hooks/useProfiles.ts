@@ -400,7 +400,7 @@ export interface ProfileClaim {
 
 /** What save_claim_setup keeps on a waiting bar claim. */
 export interface ClaimSetup {
-  page_visibility?: 'locked' | 'description' | 'open';
+  page_visibility?: PageVisibility;
   hours?: Record<string, [string, string][]> | null;
   timezone?: string | null;
   phone?: string | null;
@@ -763,5 +763,29 @@ export function useSetPicks() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['profile-picks'] }),
     onError: () => {},
+  });
+}
+
+/** A drink credited to a person at a bar whose page is Names or Private: its name and the bar, nothing more. */
+export interface NameCredit {
+  item_id: string;
+  name: string;
+  bar_profile_id: string;
+  bar_handle: string;
+  bar_name: string;
+}
+
+/** A person's name-only credits (get_profile_name_credits), signed in or out. */
+export function useProfileNameCredits(profileId: string | null | undefined, enabled = true) {
+  const viewer = viewerScoped(useUserId());
+  return useQuery({
+    queryKey: ['profile-name-credits', profileId, viewer.key],
+    meta: viewer.meta,
+    enabled: !!profileId && enabled,
+    queryFn: async (): Promise<NameCredit[]> => {
+      const { data, error } = await supabase.rpc('get_profile_name_credits', { p_profile_id: profileId! });
+      if (error) throw error;
+      return (data ?? []) as NameCredit[];
+    },
   });
 }
