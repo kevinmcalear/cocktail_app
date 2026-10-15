@@ -45,23 +45,21 @@ export function RoundSheetBlock({ onClose }: { onClose: () => void }) {
         </View>
         <RoundBars done={round.doneCount} total={round.total} />
       </View>
-      <View style={styles.row}>
+      <View style={styles.stack}>
         <Button
           label="Keep going"
           onPress={() => {
             onClose();
             go(current);
           }}
-          style={styles.grow}
         />
         <Button
           label="Show me everything"
-          variant="secondary"
+          variant="ghost"
           onPress={() => {
             round.showEverything();
             onClose();
           }}
-          style={styles.grow}
         />
       </View>
     </Surface>
@@ -96,7 +94,7 @@ const styles = StyleSheet.create({
   strip: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: StyleSheet.hairlineWidth, paddingVertical: space.sm, paddingRight: space.sm },
   block: { gap: space.md, borderWidth: StyleSheet.hairlineWidth },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  row: { flexDirection: 'row', gap: space.sm },
+  stack: { gap: space.xs },
   grow: { flex: 1, gap: 2 },
   medium: { fontFamily: fontFamilies.bodyMedium },
   note: { marginTop: space.md },

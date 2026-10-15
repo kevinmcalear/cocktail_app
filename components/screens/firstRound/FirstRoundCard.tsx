@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, PressableScale, Surface, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, PressableScale, Surface, TextLink, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useFirstRound } from '@/hooks/useFirstRound';
@@ -55,7 +55,7 @@ export function FirstRoundCard() {
           <Body style={styles.strong}>That’s the round</Body>
           <Caption tone="muted">{`Menus and Discover are open. Anything else ${venue.name} turns on shows up here.`}</Caption>
         </View>
-        {venue.roleLevel >= ADMIN_LEVEL ? <Button label={`Turn on more for ${venue.name}`} variant="ghost" size="sm" onPress={() => router.push(`/settings/bar/${venue.id}`)} style={styles.left} /> : null}
+        {venue.roleLevel >= ADMIN_LEVEL ? <TextLink label={`Turn on more for ${venue.name}`} tone="ink" onPress={() => router.push(`/settings/bar/${venue.id}`)} /> : null}
       </Surface>
     );
   }
@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
   actions: { gap: space.xs },
   row: { flexDirection: 'row', gap: space.sm },
   grow: { flex: 1, gap: 2 },
-  left: { alignSelf: 'flex-start' },
   strong: { fontFamily: fontFamilies.bodySemiBold },
   medium: { fontFamily: fontFamilies.bodyMedium },
   floating: { position: 'absolute', left: space.md, right: space.md, ...(Platform.OS === 'web' ? { maxWidth: 560 } : null) },
