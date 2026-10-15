@@ -49,30 +49,32 @@ export function useAddMenuPhotos({ photos, onChange, onError }: MenuPhotosProps)
 /**
  * The pages of a printed menu to read, in order, on paper (venue-menus-new
  * P5): each page, then a dashed "+ Page" while there's room for more. On the
- * web the panel is also where photos can be dropped.
+ * web the panel is also where photos can be dropped. `small`: a strip of
+ * thumbnails (New menu on a wide screen, whose preview shows the page).
  */
-export function MenuPhotos({ photos, onChange, onError }: MenuPhotosProps) {
+export function MenuPhotos({ photos, onChange, onError, small }: MenuPhotosProps & { small?: boolean }) {
   const ds = useDs();
   const addPhotos = useAddMenuPhotos({ photos, onChange, onError });
   const zone = useRef<ComponentRef<typeof View>>(null);
   const dragging = useMenuPhotoDrop(zone, (more) => onChange([...photos, ...more].slice(0, MAX_MENU_PHOTOS)));
   const ink = ds.c.sketchInk;
   return (
-    <View ref={zone} style={[styles.desk, { backgroundColor: ds.c.paper }, dragging && { borderColor: ds.accentText }]}>
+    <View ref={zone} style={[small ? styles.strip : [styles.desk, { backgroundColor: ds.c.paper }], dragging && { borderColor: ds.accentText }]}>
       {photos.map((photo, i) => (
-        <View key={photo.uri} style={[styles.page, { backgroundColor: ds.c.surface }]}>
+        <View key={photo.uri} style={[small ? styles.thumb : styles.page, { backgroundColor: ds.c.surface }]}>
           <Image source={{ uri: photo.uri }} contentFit="cover" style={styles.fill} accessible accessibilityLabel={`Page ${i + 1} of the menu`} />
-          <View style={styles.remove}>
+          <View style={small ? styles.removeSmall : styles.remove}>
             <GlassButton icon="xmark" accessibilityLabel={`Remove page ${i + 1}`} onPress={() => onChange(photos.filter((p) => p !== photo))} onMedia />
           </View>
         </View>
       ))}
       {photos.length < MAX_MENU_PHOTOS ? (
-        <PressableScale role="button" accessibilityLabel="Add a page" onPress={() => addPhotos('ask')} style={[styles.add, photos.length ? styles.addNarrow : styles.addWide, { borderColor: withAlpha(ink, 0.4) }]}>
-          <IconSymbol name="plus" size={18} color={ink} />
-          <Caption color={ink} align="center">
-            {photos.length ? 'Page' : Platform.OS === 'web' ? 'Add a page, or drop it here' : 'Add a page'}
+        <PressableScale role="button" accessibilityLabel="Add a page" onPress={() => addPhotos('ask')} style={[styles.add, small ? styles.addStrip : photos.length ? styles.addNarrow : styles.addWide, { borderColor: small ? ds.c.lineStrong : withAlpha(ink, 0.4) }]}>
+          <IconSymbol name="plus" size={18} color={small ? ds.c.ink : ink} />
+          <Caption color={small ? ds.c.ink : ink} align="center">
+            {small ? 'Add a page' : photos.length ? 'Page' : Platform.OS === 'web' ? 'Add a page, or drop it here' : 'Add a page'}
           </Caption>
+          {small && Platform.OS === 'web' ? <Caption tone="muted">or drop it anywhere</Caption> : null}
         </PressableScale>
       ) : null}
     </View>
@@ -88,4 +90,8 @@ const styles = StyleSheet.create({
   add: { height: 160, borderRadius: radius.control, borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingHorizontal: space.sm },
   addNarrow: { width: 64 },
   addWide: { width: 180 },
+  strip: { flexDirection: 'row', alignItems: 'stretch', gap: space.sm, borderRadius: radius.control + 2, borderWidth: 1.5, borderColor: 'transparent' },
+  thumb: { width: 56, height: 74, borderRadius: radius.mark, overflow: 'hidden' },
+  removeSmall: { position: 'absolute', top: 0, right: 0, transform: [{ scale: 0.7 }] },
+  addStrip: { flex: 1, height: 74, gap: 0 },
 });

@@ -33,6 +33,8 @@ export function useMenuPhotoDrop(target: RefObject<ComponentRef<typeof View> | n
     };
     const drop = (e: DragEvent) => {
       e.preventDefault();
+      // A drop zone inside another (New menu's strip in its dialog) takes the photos once.
+      e.stopPropagation();
       setOver(false);
       const files = Array.from(e.dataTransfer?.files ?? []).filter((file) => allowed.current(file.type));
       if (files.length) latest.current(files.map((file) => ({ uri: URL.createObjectURL(file), mimeType: file.type })));

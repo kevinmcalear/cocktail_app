@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DateField, DrinkImage, DsText, PressableScale, Segmented, TimeField, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { displayFaces, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { dayLabel } from '@/lib/collection';
 import { nextMondays, type PlanDraft } from '@/lib/menus';
@@ -82,7 +82,7 @@ export function QuickPick({ label, selected, onPress, box, icon }: { label: stri
       style={[styles.pick, box ? styles.box : styles.pill, selected ? { backgroundColor: ds.c.ink } : { borderWidth: 1, borderColor: ds.c.lineStrong }]}
     >
       {icon ? <IconSymbol name={icon} size={16} color={ink} /> : null}
-      <DsText variant="body" color={ink} style={{ fontFamily: selected ? fontFamilies.bodySemiBold : fontFamilies.body }}>
+      <DsText variant="body" color={ink} style={[box ? null : type.label, { fontFamily: selected ? fontFamilies.bodySemiBold : fontFamilies.body }]}>
         {label}
       </DsText>
     </PressableScale>
@@ -138,7 +138,7 @@ export function VenueDatesFields({ value, onChange, now, quick = true }: { value
 const styles = StyleSheet.create({
   panel: { alignSelf: 'stretch', height: 184, alignItems: 'center', justifyContent: 'center', borderRadius: radius.card, borderCurve: 'continuous' },
   // 300 square at 0.5: a 150 card on the panel.
-  card: { width: 300, height: 300, margin: -75, transform: [{ scale: 0.5 }], borderRadius: radius.card + 6, paddingVertical: space.xl, paddingHorizontal: space.lg, alignItems: 'center', gap: space.sm, borderCurve: 'continuous' },
+  card: { width: 300, height: 300, margin: -75, transform: [{ scale: 0.5 }], borderRadius: radius.card + 6, paddingVertical: space.xl, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center', gap: space.sm, borderCurve: 'continuous' },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 2 },
   rule: { width: 44, height: 2, marginBottom: space.sm },
   drinks: { flexDirection: 'row', gap: space.xs, alignItems: 'flex-end' },

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { BackbarTheme, Body, Button, Caption, Field, GlassButton } from '@/components/ds';
 import { space } from '@/constants/tokens';
@@ -11,6 +11,7 @@ import { MenuPhotos, useAddMenuPhotos } from './MenuPhotos';
 import { Choice, MenuSheet } from './MenuSheet';
 import { DraftCard, NameIdeas, StepTrack, VenueDatesFields } from './NewMenuParts';
 import { StartTiles, WhichMenu, type StartKind } from './NewMenuStart';
+import { NewMenuDesk } from './NewMenuDesk';
 import { MonoLabel } from './ReviewParts';
 import { useNewMenu } from './useNewMenu';
 
@@ -24,13 +25,20 @@ interface NewMenuSheetProps {
   now: number;
 }
 
+/** New menu: one page on the web at 900 px and up (NewMenuDesk), steps on narrower screens and phones. */
+export function NewMenuSheet(props: NewMenuSheetProps) {
+  const { width } = useWindowDimensions();
+  const wide = Platform.OS === 'web' && width >= 900;
+  return wide ? <NewMenuDesk onClose={props.onClose} menus={props.menus} now={props.now} /> : <NewMenuSteps {...props} />;
+}
+
 /**
  * A new menu on a phone (venue-menus-new P1 to P5): how it starts (a tap goes
  * on), its name with ideas, then when it goes on. A photo skips the name, as
  * the printed title can give it: its pages, an optional name and the dates
  * share one step. The little guest card fills in as you answer.
  */
-export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps) {
+function NewMenuSteps({ visible, onClose, menus, now }: NewMenuSheetProps) {
   const m = useNewMenu({ menus, now, onClose });
   const [step, setStep] = useState<Step>('start');
   const addPhotos = useAddMenuPhotos({ photos: m.photos, onChange: m.setPhotos, onError: m.setError });
@@ -120,10 +128,10 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
 
       {step === 'name' || (photo && step === 'when') ? (
         <>
-          {photo ? null : <MonoLabel>What’s it called?</MonoLabel>}
+          <MonoLabel>{photo ? 'Name' : 'What’s it called?'}</MonoLabel>
           <Field
             label="Name"
-            hideLabel={!photo}
+            hideLabel
             value={m.name}
             onChangeText={m.setName}
             placeholder={photo ? 'From the photo' : m.home ? 'Friday at ours' : (m.ideas[0] ?? 'Winter menu')}

@@ -75,20 +75,33 @@ export function useNewMenu({ menus, now, onClose }: { menus: MenuSummary[]; now:
         ? cardWhen({ startsAt: null, endsAt: null, menuDate: null, ...shownPlan })
         : null;
 
+  /** What stops the draft being made (shown, and returned), or null. */
+  const problem = (): string | null => {
+    // From photos, the menu's printed title can name it.
+    const whenSaved = home ? homeNight(night, Date.now()) : null;
+    const planned = home ? null : venuePlan(plan);
+    const found =
+      !name.trim() && start.kind !== 'photo'
+        ? 'Give the menu a name.'
+        : whenSaved && 'error' in whenSaved
+          ? whenSaved.error
+          : planned && 'error' in planned
+            ? planned.error
+            : start.kind === 'photo' && !photos.length
+              ? 'Add a photo of the menu first.'
+              : null;
+    setError(found);
+    return found;
+  };
+
   /** Makes the draft (or sends photos to Bring in). False, with `error` set, when something's missing. */
   const submit = async (pasted?: MenuLayout['sections']): Promise<boolean> => {
-    // From photos, the menu's printed title can name it.
-    if (!name.trim() && start.kind !== 'photo') {
-      setError('Give the menu a name.');
-      return false;
-    }
+    if (problem()) return false;
     const whenSaved = home ? homeNight(night, Date.now()) : null;
-    if (whenSaved && 'error' in whenSaved) return (setError(whenSaved.error), false);
     const planned = home ? null : venuePlan(plan);
-    if (planned && 'error' in planned) return (setError(planned.error), false);
+    if ((whenSaved && 'error' in whenSaved) || (planned && 'error' in planned)) return false;
     let made: MenuLayout = { name, coverUrl: null, coverPosition: 50, sections: [blankSection()] };
     if (start.kind === 'photo') {
-      if (!photos.length) return (setError('Add a photo of the menu first.'), false);
       onClose();
       // Read and checked by Bring in, as a menu, then made with the drinks it needs.
       bringIn([{ files: photos, text: null, url: null }], { as: 'menu', barId, menu: { name: name.trim(), night: whenSaved ?? null } });
@@ -139,6 +152,7 @@ export function useNewMenu({ menus, now, onClose }: { menus: MenuSummary[]; now:
     when,
     error,
     setError,
+    problem,
     submit,
     pending: create.isPending,
   };
