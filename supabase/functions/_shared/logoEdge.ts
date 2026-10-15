@@ -9,7 +9,7 @@
 // upload-bar-logo puts the edge in the stored file's name (`logoFileTag`), so
 // the app knows it without reading pixels. Logos stored before that carry the
 // same tag as their URL's fragment (`logoUrlWithEdge`), set once by
-// scripts/backfill-logo-edges.ts.
+// supabase/functions/_scripts/backfill-logo-edges.ts.
 
 export type LogoEdge = { kind: "clear" } | { kind: "solid"; color: string } | { kind: "busy" };
 
