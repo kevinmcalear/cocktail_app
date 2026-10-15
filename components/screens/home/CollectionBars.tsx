@@ -91,25 +91,13 @@ export function CollectionBars() {
   const [importing, setImporting] = useState(false);
   if (error) return <Body tone="muted">Couldn’t load your bars. Try again in a moment.</Body>;
   if (isLoading) return null;
-  const fromGoogle = (
-    <>
-      <GoogleImportEntry onPress={() => setImporting(true)} />
-      <GoogleImportSheet visible={importing} onClose={() => setImporting(false)} />
-    </>
-  );
-  if (!bars.length)
-    return (
-      <View style={styles.wrap}>
-        <Body tone="muted">Tap the heart on a bar’s page to keep it here, with what it’s pouring now.</Body>
-        {fromGoogle}
-      </View>
-    );
-
   const hadAt = (id: string) => had.filter((h) => h.venue?.id === id);
   const been = bars.filter((b) => hadAt(b.id).length > 0);
   const want = bars.filter((b) => hadAt(b.id).length === 0);
+  // One tree whether or not there are bars yet: loving the first ones mustn't remount the open import.
   return (
     <View style={styles.wrap}>
+      {!bars.length ? <Body tone="muted">Tap the heart on a bar’s page to keep it here, with what it’s pouring now.</Body> : null}
       {been.length ? (
         <View style={styles.section}>
           <Headline role="heading">Bars you love</Headline>
@@ -136,7 +124,8 @@ export function CollectionBars() {
           </View>
         </View>
       ) : null}
-      {fromGoogle}
+      <GoogleImportEntry onPress={() => setImporting(true)} />
+      <GoogleImportSheet visible={importing} onClose={() => setImporting(false)} />
     </View>
   );
 }

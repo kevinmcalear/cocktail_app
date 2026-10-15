@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -34,8 +34,8 @@ jest.mock('@/hooks/useGoogleImport', () => {
   };
 });
 let mockLoved: { id: string }[] = [];
-const mockLove = jest.fn((_vars: unknown, opts: { onSuccess: () => void }) => opts.onSuccess());
-jest.mock('@/hooks/useKept', () => ({ useLovedBars: () => ({ data: mockLoved }), useLoveBar: () => ({ mutate: mockLove, reset: jest.fn(), isPending: false, isError: false }) }));
+const mockLove = jest.fn((_vars: unknown) => Promise.resolve());
+jest.mock('@/hooks/useKept', () => ({ useLovedBars: () => ({ data: mockLoved }), useLoveBar: () => ({ mutateAsync: mockLove, reset: jest.fn(), isPending: false, isError: false }) }));
 let mockHidden: { id: string }[] = [];
 jest.mock('@/hooks/useHiddenBars', () => ({ useHiddenBars: () => ({ data: mockHidden }) }));
 jest.mock('@/components/screens/safety/AgeGate', () => ({ useAgeGate: () => ({ gate: (run: () => void) => run(), sheet: null }) }));
@@ -65,8 +65,8 @@ test('reads the file, ticks the sure matches, and loves the ticked bars in one g
   expect(olo).not.toBeChecked();
   await fireEvent.press(olo);
   await fireEvent.press(screen.getByRole('button', { name: 'Love 3 bars' }));
-  expect(mockLove).toHaveBeenCalledWith({ profileId: ['margaux', 'pearl', 'olo'], love: true }, expect.anything());
-  expect(mockToast).toHaveBeenCalledWith('Loved 3 bars');
+  expect(mockLove).toHaveBeenCalledWith({ profileId: ['margaux', 'pearl', 'olo'], love: true });
+  await waitFor(() => expect(mockToast).toHaveBeenCalledWith('Loved 3 bars'));
   expect(onClose).toHaveBeenCalled();
 });
 

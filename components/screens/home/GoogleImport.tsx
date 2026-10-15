@@ -64,22 +64,21 @@ export function useGoogleImport(onDone: () => void) {
     match.mutate(read.places, { onSuccess: (r) => setTicked(Object.fromEntries(r.matches.map((m) => [m.bar.id, m.sure]))) });
   };
 
+  // mutateAsync, not mutate's callbacks: loving the first bars can unmount whoever opened this (Discover's first open).
   const save = () =>
     age.gate(() =>
-      love.mutate(
-        { profileId: chosen, love: true },
-        {
-          onSuccess: () => {
-            toastDone(`Loved ${bars(chosen.length)}`);
-            onDone();
-          },
-        },
-      ),
+      love
+        .mutateAsync({ profileId: chosen, love: true })
+        .then(() => {
+          toastDone(`Loved ${bars(chosen.length)}`);
+          onDone();
+        })
+        .catch(() => {}),
     );
 
   const toggle = (id: string) => setTicked((t) => ({ ...t, [id]: !t[id] }));
   const already = found.length - rows.length;
-  return { choose, save, toggle, rows, ticked, chosen, total, already, problem, matching: match.isPending || picking, matched: match.data?.count, failed: match.isError, saving: love.isPending, saveFailed: love.isError, ageSheet: age.sheet };
+  return { choose, save, toggle, rows, ticked, chosen, total, already, problem, matching: match.isPending || picking, looking: match.isPending, matched: match.data?.count, failed: match.isError, saving: love.isPending, saveFailed: love.isError, ageSheet: age.sheet };
 }
 
 type GoogleImport = ReturnType<typeof useGoogleImport>;
@@ -101,7 +100,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 
 export function GoogleImportBody({ g }: { g: GoogleImport }) {
   const ds = useDs();
-  const status = g.matching
+  const status = g.looking
     ? 'Looking for bars we know…'
     : g.failed
       ? 'Couldn’t check the file against our bars. Check your connection and pick it again.'
