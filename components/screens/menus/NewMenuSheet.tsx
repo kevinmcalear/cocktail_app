@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, Button, Caption, Field, GlassButton } from '@/components/ds';
 import { space } from '@/constants/tokens';
@@ -128,7 +128,8 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
             onChangeText={m.setName}
             placeholder={photo ? 'From the photo' : m.home ? 'Friday at ours' : (m.ideas[0] ?? 'Winter menu')}
             hint={photo ? 'Leave it empty to use the name printed on it.' : undefined}
-            autoFocus={!photo}
+            // On a phone the keyboard would cover the ideas, the quick way to name it.
+            autoFocus={!photo && Platform.OS === 'web'}
             onSubmitEditing={photo ? undefined : () => go('when')}
           />
           {photo ? null : <NameIdeas ideas={m.ideas} name={m.name} onPick={m.setName} />}

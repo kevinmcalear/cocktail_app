@@ -233,3 +233,4 @@ assert.equal(savedLine(['Autumn menu', 'Summer menu', 'Spring menu', 'Seasonal t
 assert.equal(savedLine(['Autumn menu', 'Summer menu', 'Spring menu', 'Seasonal three'], true), 'Autumn, Summer, 2 more');
 assert.equal(savedLine(['Autumn menu', 'Halloween']), 'Autumn and Halloween');
 assert.equal(savedLine(['Autumn menu']), 'Autumn');
+assert.equal(savedLine(['Test', 'Test', 'Autumn menu']), 'Test and Autumn', 'a name twice is named once');

@@ -378,7 +378,7 @@ export function nextMondays(now: number, count = 2): string[] {
 
 /** "Autumn, Summer and 2 more" (a phone's tile: "Autumn, Summer, 2 more"): the saved menus a New menu start names, without "menu". */
 export function savedLine(names: string[], phone = false): string {
-  const short = names.map((n) => n.replace(/\s+menu$/i, ''));
+  const short = [...new Set(names.map((n) => n.replace(/\s+menu$/i, '')))];
   const and = phone ? ', ' : ' and ';
   return short.length > 2 ? `${short[0]}, ${short[1]}${and}${short.length - 2} more` : short.join(and);
 }
