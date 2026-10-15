@@ -118,7 +118,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
             {menu.coverUrl ? (
               <DrinkHero name={menu.name} pictures={[{ url: menu.coverUrl, isSketch: false, isOutdated: false }]} glass={null} height={wide ? 360 : 320} fade />
             ) : hero ? (
-              <MenuVisual name={menu.name} coverUrl={null} pictures={pictures} height={wide ? 360 : 320} fade />
+              <MenuVisual name={menu.name} coverUrl={null} pictures={pictures} height={wide ? 360 : 320} fade scroll />
             ) : (
               <View style={{ height: sidebar ? space.xxl + space.sm : insets.top + 72 }} />
             )}
