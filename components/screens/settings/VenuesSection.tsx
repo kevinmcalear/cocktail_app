@@ -2,23 +2,46 @@ import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Body, LogoImage, useDisplayFaces, useDs } from '@/components/ds';
+import { useTeamCard } from '@/components/nav/TeamCard';
 import { logoFill } from '@/components/nav/VenueMarks';
 import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { ListRowsSkeleton } from '@/components/ui/Skeleton';
 import { backbar, radius, space, type, type DisplayFace } from '@/constants/tokens';
 import { accentFill } from '@/lib/color';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useHereVenue } from '@/hooks/useMode';
 import { roleLabel } from '@/lib/roles';
+import { teamLine } from '@/lib/shellNav';
 
 const LOGO = 32;
 
-/** The venues you belong to, each opening its own settings page, and setting up a new one (venue setup, b03). */
+/** My team for the venue you're in, first in Venues (tools-settings-team-row). Employee and up. */
+function TeamRow() {
+  const router = useRouter();
+  const here = useHereVenue();
+  const { see, members, invites } = useTeamCard(here?.id ?? null);
+  if (!here || !see) return null;
+  return (
+    <>
+      <SettingsRow
+        icon="person.2.fill"
+        label="My team"
+        detail={[here.name, members ? teamLine(members.length, invites.length) : null].filter(Boolean).join(' · ')}
+        onPress={() => router.push('/team' as Href)}
+      />
+      <RowDivider />
+    </>
+  );
+}
+
+/** My team where you are, the venues you belong to, each opening its own settings page, and setting up a new one (venue setup, b03). */
 export function VenuesSection() {
   const router = useRouter();
   const { venues, isLoading } = useActiveVenue();
 
   return (
     <SettingsSection title="Venues" note="Each venue has its own brand, roles and team.">
+      <TeamRow />
       {isLoading ? <ListRowsSkeleton rows={2} /> : null}
       {!isLoading && venues.length === 0 ? <Body tone="muted" style={styles.empty}>You’re not on a venue’s team yet.</Body> : null}
       {venues.map((v, i) => (

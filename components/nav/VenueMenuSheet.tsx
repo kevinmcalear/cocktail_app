@@ -8,21 +8,18 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useActiveVenue, type Venue } from '@/hooks/useActiveVenue';
 import { useItemLocations, useWaitingForSpot } from '@/hooks/useBackBar';
-import { useBarMembers } from '@/hooks/useBarDetail';
-import { useBarInvites } from '@/hooks/useBarInvites';
 import { useCollection } from '@/hooks/useCollection';
 import { useBarDrinks, useShelf } from '@/hooks/useHomeBar';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
-import { useEffectiveRole } from '@/hooks/useViewAs';
 import { useBarWeek, useWeekStart } from '@/hooks/useWeek';
 import { groupMenus } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
-import { backBarLine, collectionLine, menusLine, shelfLine, teamLine } from '@/lib/shellNav';
-import { canManageTeam } from '@/lib/team';
+import { backBarLine, collectionLine, menusLine, shelfLine } from '@/lib/shellNav';
 import { weekLine } from '@/lib/week';
 
 import { MENUS_PLACE, useNavPlaces, type Place } from './navPlaces';
+import { TeamCard, useOpenTeam } from './TeamCard';
 import { HomeMark, useSwitchTo, VenueMark } from './VenueMarks';
 
 function SwitchRow({ mark, name, detail, selected, onPress }: { mark: React.ReactNode; name: string; detail: string; selected: boolean; onPress: () => void }) {
@@ -61,19 +58,15 @@ const SHEET_ICON: Record<string, IconName> = { menus: 'doc' };
 
 /** The venue's own lines under each place: live counts where the app already has them. */
 function useVenueLines(venue: Venue): Record<string, string> {
-  const role = useEffectiveRole(venue.id);
   const [now] = useState(() => Date.now());
   const menus = groupMenus((useVenueMenus(venue.id).data ?? []).filter((m) => m.barId === venue.id), now);
   const placed = useItemLocations(venue.id).data?.length ?? 0;
   const { waiting } = useWaitingForSpot(venue.id);
-  const members = useBarMembers(venue.id).data;
-  const invites = useBarInvites(venue.id, canManageTeam(role)).data ?? [];
   const week = useBarWeek(venue.id).data;
   const from = useWeekStart();
   return {
     menus: menusLine(menus.on, menus.draft.length),
     'back-bar': backBarLine(placed, waiting.length),
-    team: members ? teamLine(members.length, invites.length) : 'Who’s on the team',
     brand: 'Logo, colours and type',
     roles: 'Who sees what, by role',
     'venue-settings': 'Hours, address, units',
@@ -101,7 +94,9 @@ function Places({ places, lines, onGo }: { places: Place[]; lines: Record<string
 
 function VenuePlaces({ venue, onGo }: { venue: Venue; onGo: (p: Place) => void }) {
   const { work, venuePlaces, week } = useNavPlaces();
-  return <Places places={[MENUS_PLACE, ...work, ...venuePlaces, ...(week ? [week] : []), SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
+  // My team leads the sheet as its own card (TeamCard), so it isn't listed again here.
+  const rest = venuePlaces.filter((p) => p.key !== 'team');
+  return <Places places={[MENUS_PLACE, ...work, ...rest, ...(week ? [week] : []), SETTINGS]} lines={useVenueLines(venue)} onGo={onGo} />;
 }
 
 function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
@@ -112,10 +107,12 @@ function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
 }
 
 /**
- * The venue menu, opened from the logo on phones and the tablet rail: switch
- * to home or another venue, then this venue's places (Menus, Back bar, My
- * team, Brand, Venue settings, This week, Settings), or at home My Bar,
- * Collection, You and Settings. Everything the desktop sidebar has, in one sheet.
+ * The venue menu, opened from the logo on phones and the tablet rail. At a
+ * venue it's titled with the venue and your role and opens on My team
+ * (nav-switcher-team: Eddie couldn't find it on iOS), then the switch rows,
+ * then the venue's other places (Menus, Back bar, Brand, Venue settings, This
+ * week, Settings). At home: the switch rows, then My Bar, Collection, You and
+ * Settings. Everything the desktop sidebar has, in one sheet.
  */
 export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
   const router = useRouter();
@@ -132,8 +129,17 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
     else router.push(p.path as Href);
   };
   const venue = home ? null : active;
+  const openTeam = useOpenTeam(onClose);
   return (
-    <MenuSheet visible onClose={onClose} title="Switch to" plain>
+    <MenuSheet visible onClose={onClose} title={venue ? venue.name : 'Switch to'} subtitle={venue ? roleLabel(venue.roleLevel) : undefined} plain>
+      {venue ? (
+        <>
+          <TeamCard barId={venue.id} onGo={openTeam} />
+          <DsText variant="caption" tone="muted" role="heading" style={styles.heading}>
+            Switch to
+          </DsText>
+        </>
+      ) : null}
       <View role="radiogroup" accessibilityLabel="Switch to">
         <SwitchRow mark={<HomeMark size={40} />} name="Home bar" detail="Your shelf and collection" selected={home} onPress={() => choose('home')} />
         {venues.map((v) => (
@@ -141,9 +147,9 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
         ))}
       </View>
       <DsText variant="caption" tone="muted" role="heading" style={styles.heading}>
-        {venue ? `At ${venue.name}` : 'At home'}
+        {venue ? `More at ${venue.name}` : 'At home'}
       </DsText>
-      <View role="navigation" accessibilityLabel={venue ? `At ${venue.name}` : 'At home'}>
+      <View role="navigation" accessibilityLabel={venue ? `More at ${venue.name}` : 'At home'}>
         {venue ? <VenuePlaces venue={venue} onGo={go} /> : <HomePlaces onGo={go} />}
       </View>
     </MenuSheet>

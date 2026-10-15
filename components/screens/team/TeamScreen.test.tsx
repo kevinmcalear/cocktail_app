@@ -13,7 +13,8 @@ let mockRole = 40;
 
 jest.mock('@/components/screens/profile/JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () => null }));
 jest.mock('@/components/maker/MakerCreditRequests', () => ({ MakerCreditRequests: () => null }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
+let mockParams: { invite?: string } = {};
+jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => mockParams }));
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'venue' }) }));
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => true, useWebNavWidth: () => 240 }));
 jest.mock('@/hooks/useActiveVenue', () => ({
@@ -110,6 +111,13 @@ test('an admin invites by name, email and role from the sheet, and the invite is
 
   await fireEvent.press(screen.getByRole('button', { name: 'Email the invite to new@example.test again' }));
   expect(mockSend).toHaveBeenLastCalledWith('new@example.test', expect.anything());
+});
+
+test('/team?invite=1 opens on the invite sheet (Invite your team, from the venue sheet or an empty Library)', async () => {
+  mockParams = { invite: '1' };
+  await renderWithTamagui(<TeamScreen />);
+  mockParams = {};
+  expect(screen.getByText('Invite to Caretakers')).toBeTruthy();
 });
 
 test('a saved invite whose email fails says so', async () => {

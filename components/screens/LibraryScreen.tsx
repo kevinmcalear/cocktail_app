@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Button, Caption, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { PageHeader } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { useWebNav } from '@/hooks/useIsWideWeb';
@@ -12,6 +12,7 @@ import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsN
 import { SearchPill } from '@/components/screens/home/DiscoverControls';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
 import { Filter, FilterRow } from '@/components/screens/library/LibraryChips';
+import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
 import { LibraryTile } from '@/components/screens/library/LibraryTile';
 import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
@@ -199,7 +200,7 @@ export function LibraryScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={venuesLoading || isLoading ? null : <Body tone="muted">Nothing here yet.</Body>} />
+        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={venuesLoading || isLoading ? null : <LibraryEmpty barId={activeId} noDrinks={!published.length} canAdd={canEdit} />} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />}>
@@ -231,7 +232,7 @@ export function LibraryScreen() {
               />
             );
           }}
-          ListEmptyComponent={venuesLoading || isLoading ? undefined : <Body tone="muted">Nothing here yet.</Body>}
+          ListEmptyComponent={venuesLoading || isLoading ? undefined : <LibraryEmpty barId={activeId} noDrinks={!published.length} canAdd={canEdit} />}
         />
       )}
       {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
