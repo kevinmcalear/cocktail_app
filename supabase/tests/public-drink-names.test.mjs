@@ -68,14 +68,14 @@ test('signed out, a description-only drink names its shared ingredients, with no
   const rows = await names('drink');
   assert.deepEqual(
     rows.map((r) => r.name),
-    [`Gin ${run}`, `Vermouth ${run}`],
-    "a bar's bottle is named by its generic, so the brand stays with the bar"
+    [`Gin ${run}`, 'House ingredient', `Vermouth ${run}`],
+    "a bar's bottle is named by its generic, so the brand stays with the bar; its house prep is a House ingredient line (20261024200000)"
   );
   assert.deepEqual(Object.keys(rows[0]).sort(), ['brand', 'item_id', 'name', 'sort_order']);
-  assert.deepEqual(rows.map((r) => r.brand), [false, false], 'neither is a product');
+  assert.deepEqual(rows.map((r) => r.brand), [false, false, false], 'none is a product');
 });
 
-test("a bar's house prep stays unnamed", async () => {
+test("a bar's house prep stays unnamed, as House ingredient", async () => {
   assert.ok(!(await names('drink')).some((r) => r.name.includes('Secret Cordial')));
 });
 
