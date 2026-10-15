@@ -4,6 +4,7 @@ import {
   logoEdge,
   logoEdgeFromUrl,
   logoFileTag,
+  logoUrlWithEdge,
   logoWithBackground,
   noBackgroundPath,
   removeLogoBackground,
@@ -115,6 +116,18 @@ for (const edge of [{ kind: 'clear' }, { kind: 'busy' }, { kind: 'solid', color:
 }
 assert.equal(logoEdgeFromUrl('https://x.supabase.co/storage/v1/object/public/drinks/bars/b/1700.png'), null, 'older uploads are unknown');
 assert.equal(logoEdgeFromUrl('https://example.com/logo.png?v=2'), null);
+// Older logos carry the same tag as their URL's fragment (scripts/backfill-logo-edges.ts).
+for (const edge of [{ kind: 'clear' }, { kind: 'busy' }, { kind: 'solid', color: '#0a1b2c' }] as const) {
+  const tagged = logoUrlWithEdge('https://x.supabase.co/storage/v1/object/public/avatars/venues/b.png', edge);
+  assert.equal(tagged, `https://x.supabase.co/storage/v1/object/public/avatars/venues/b.png#${logoFileTag(edge)}`);
+  assert.deepEqual(logoEdgeFromUrl(tagged), edge);
+}
+assert.equal(logoUrlWithEdge('https://example.com/logo.jpg?v=2#top', { kind: 'clear' }), 'https://example.com/logo.jpg?v=2#clear', 'replaces a fragment, keeps the query');
+assert.deepEqual(logoEdgeFromUrl('https://example.com/logo.jpg?v=2#effffff'), { kind: 'solid', color: '#ffffff' });
+assert.equal(logoEdgeFromUrl('https://example.com/logo.jpg#top'), null, 'any other fragment is not a tag');
+assert.equal(logoEdgeFromUrl('https://example.com/logo.jpg#eFFFFFF'), null, 'tags are lower case, as logoFileTag writes them');
+assert.deepEqual(logoEdgeFromUrl('https://h/drinks/bars/b/1700.effffff.png#clear'), { kind: 'clear' }, 'the fragment wins over the name');
+assert.deepEqual(logoEdgeFromUrl('https://h/drinks/bars/b/1700.effffff.png#top'), { kind: 'solid', color: '#ffffff' }, 'the name still counts');
 assert.equal(noBackgroundPath('bars/b/1700.effffff.png'), 'bars/b/1700.effffff.nobg.png');
 assert.deepEqual(logoEdgeFromUrl('https://h/drinks/bars/b/1700.effffff.nobg.png'), { kind: 'clear' });
 assert.equal(logoWithBackground('https://h/drinks/bars/b/1700.effffff.nobg.png'), 'https://h/drinks/bars/b/1700.effffff.png');

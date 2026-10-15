@@ -7,7 +7,9 @@
 // it as it is), `solid` (put it on a tile of that colour, so the edge blends),
 // or `busy` (a photo or a mark to the edge: fill the tile with it).
 // upload-bar-logo puts the edge in the stored file's name (`logoFileTag`), so
-// the app knows it without reading pixels.
+// the app knows it without reading pixels. Logos stored before that carry the
+// same tag as their URL's fragment (`logoUrlWithEdge`), set once by
+// scripts/backfill-logo-edges.ts.
 
 export type LogoEdge = { kind: "clear" } | { kind: "solid"; color: string } | { kind: "busy" };
 
@@ -190,17 +192,29 @@ export function logoFileTag(edge: LogoEdge): string {
 /** A logo with its background taken out ends in this (after its original's name). */
 const NO_BACKGROUND = ".nobg.png";
 
-/**
- * A logo's edge from its URL, when upload-bar-logo named it
- * ("<time>.e1a2b3c.png", "<time>.clear.png", "<time>.full.png", or any
- * "….nobg.png"); null for anything else (older uploads, other hosts).
- */
-export function logoEdgeFromUrl(url: string): LogoEdge | null {
-  const name = url.split(/[?#]/)[0].split("/").pop() ?? "";
-  if (name.endsWith(NO_BACKGROUND)) return { kind: "clear" };
-  const tag = name.match(/\.(clear|full|e[0-9a-f]{6})\.png$/)?.[1];
+function edgeFromTag(tag: string | undefined): LogoEdge | null {
   if (!tag) return null;
   return tag === "clear" ? { kind: "clear" } : tag === "full" ? { kind: "busy" } : { kind: "solid", color: `#${tag.slice(1)}` };
+}
+
+/**
+ * A logo's edge from its URL: its fragment when the backfill tagged it
+ * ("…/logo.jpg#e1a2b3c", "#clear", "#full"), or its name when upload-bar-logo
+ * named it ("<time>.e1a2b3c.png", "<time>.clear.png", "<time>.full.png", or
+ * any "….nobg.png"); null for anything else (untagged, other hosts).
+ */
+export function logoEdgeFromUrl(url: string): LogoEdge | null {
+  const hash = url.indexOf("#");
+  const fragment = hash < 0 ? null : edgeFromTag(url.slice(hash + 1).match(/^(clear|full|e[0-9a-f]{6})$/)?.[1]);
+  if (fragment) return fragment;
+  const name = url.split(/[?#]/)[0].split("/").pop() ?? "";
+  if (name.endsWith(NO_BACKGROUND)) return { kind: "clear" };
+  return edgeFromTag(name.match(/\.(clear|full|e[0-9a-f]{6})\.png$/)?.[1]);
+}
+
+/** A logo's URL with its edge as the fragment, replacing any fragment it had. A browser or image loader never sends the fragment, so the file loads as before. */
+export function logoUrlWithEdge(url: string, edge: LogoEdge): string {
+  return `${url.split("#")[0]}#${logoFileTag(edge)}`;
 }
 
 /** Where a logo with its background taken out is stored: beside its original. */

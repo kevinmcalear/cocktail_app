@@ -17,10 +17,10 @@ const looking = new Map<string, Promise<LogoEdge | null>>();
 
 /**
  * Logos uploaded since upload-bar-logo started naming them carry their edge in
- * their name. Older ones: the web reads the pixels (once a session per logo);
- * native can't, so it draws them as before.
- * ponytail: older logos stay unknown on phones until they're uploaded again;
- * a one-off script through upload-bar-logo's naming would fix them all.
+ * their name; older ones carry it as their URL's fragment once
+ * supabase/functions/_scripts/backfill-logo-edges.ts has run. A logo with
+ * neither (set since, or from another host): the web reads the pixels (once a
+ * session per logo); native can't, so it draws it as it is.
  */
 export function knownLogoEdge(url: string): KnownEdge {
   const named = logoEdgeFromUrl(url);

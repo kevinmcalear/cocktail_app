@@ -27,9 +27,9 @@ export interface LogoImageProps {
  * background. A logo on a flat colour (most JPEGs, a PNG with a white square)
  * sits inside a tile of that colour, so the edge blends instead of a halo
  * showing where the shape cuts it. A transparent logo, a photo, or one whose
- * edge isn't known (older uploads on phones) fills the tile as before; a
+ * edge isn't known (an untagged logo on a phone) fills the tile as before; a
  * transparent one is fitted inside it, never cropped.
- * On the web an older logo's edge is read first (lib/logoEdge), so it never
+ * On the web an untagged logo's edge is read first (lib/logoEdge), so it never
  * jumps from one look to the other.
  */
 export function LogoImage({ uri, size, radius, fill, clearBackground, style, onLoad, label }: LogoImageProps) {
