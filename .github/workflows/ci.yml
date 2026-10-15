@@ -69,12 +69,17 @@ jobs:
     # A skipped job passes the required check. Skip only on an explicit "no":
     # if the changes job fails, this still runs. Pushes to main always run it.
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
+    # One rebuild at a time. Two at once (a PR beside a merge to main) is
+    # what pushed runs into the timeout. Queued, not cancelled.
+    concurrency:
+      group: security-tests
+      cancel-in-progress: false
     runs-on: ubuntu-latest
-    # Rebuilding the database now replays several large catalog data
-    # migrations; busy runs passed 20 minutes and were cut off mid-suite.
-    # The Australian catalog loads (Oct 14) pushed busy runs past 30 too:
-    # quiet runs take 19 to 24 minutes, runs beside other PRs hit the limit.
-    timeout-minutes: 45
+    # A clean run of the whole suite on main took 32 minutes (15 Oct 2026).
+    # 60 leaves room for a slow image pull. A stuck file must not sit here:
+    # test:security passes --test-force-exit, so an open database handle
+    # fails the file instead of holding the job until this limit.
+    timeout-minutes: 60
     # Supabase's images come from public.ecr.aws by default, which rate limits
     # anonymous pulls ("toomanyrequests: Rate exceeded") when several PRs run
     # at once. The same images are on GitHub's registry, where this job's own
