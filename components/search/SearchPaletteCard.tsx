@@ -15,7 +15,8 @@ import { useSearchPalette } from '@/store/useSearchPalette';
 
 import { ResultGroup, ResultRow } from './ResultRows';
 import { KeyCap } from './SearchField';
-import { SearchNavProvider, useSearchNav } from './searchNav';
+import { SearchNavProvider, useSearchNav, useSearchPreviews } from './searchNav';
+import { SearchPreview } from './SearchPreview';
 import { SearchBody, SearchHead } from './SearchPanel';
 
 /** The view holding the palette's results, which the arrow keys walk. */
@@ -68,6 +69,8 @@ function Palette() {
   // ↑↓ move the highlight (the top row leads), Return opens it, Tab switches where it looks.
   const scopes = scopeOptions(mine.label, null).map((o) => o.value);
   const nav = useSearchNav(RESULTS, `${scope}|${query}`, () => setScope(scopes[(scopes.indexOf(scope) + 1) % scopes.length]));
+  // The highlighted drink's spec, beside the results (nav-search-desk-preview).
+  const previews = useSearchPreviews();
 
   return (
     <DiscoverOverlay
@@ -76,8 +79,9 @@ function Palette() {
       onClose={close}
       head={<SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus onDone={close} onSubmit={() => void nav.open()} keys />}
       footer={<KeyHints back={mine.venueId ? 'Back' : 'Close'} />}
+      aside={<SearchPreview item={previews.preview(nav.active)} onOpen={() => void nav.open()} />}
     >
-      <SearchNavProvider active={nav.active}>
+      <SearchNavProvider active={nav.active} previews={previews.map}>
         <View nativeID={RESULTS} style={styles.results}>
           <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} onJump={close} commands={pick} palette />
         </View>

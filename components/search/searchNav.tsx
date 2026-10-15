@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Platform } from 'react-native';
 
 /**
@@ -10,13 +10,39 @@ import { Platform } from 'react-native';
  */
 const Active = createContext<string | null>(null);
 
+/** What the palette's preview pane shows for a highlighted drink row. */
+export interface SearchPreviewItem {
+  itemId: string;
+  name: string;
+  imageUrl: string | null;
+  glass: string | null;
+  caption?: string;
+}
+
+/** The palette's rows by DOM id, with what each previews. Null outside the palette. */
+const Previews = createContext<Map<string, SearchPreviewItem> | null>(null);
+
 /** Every row's DOM id starts with this, so the palette can list them in screen order. */
 const PREFIX = 'search-row-';
 
-/** A row's part: the id to render (`nativeID`) and whether it's the highlighted one. */
-export function useSearchNavRow(): { nativeID: string | undefined; active: boolean } {
+/**
+ * A row's part: the id to render (`nativeID`) and whether it's the
+ * highlighted one. A drink row passes what the palette's preview shows.
+ */
+export function useSearchNavRow(preview?: SearchPreviewItem): { nativeID: string | undefined; active: boolean } {
   const id = PREFIX + useId();
   const active = useContext(Active);
+  const previews = useContext(Previews);
+  const key = preview ? `${preview.itemId}|${preview.name}|${preview.caption ?? ''}|${preview.imageUrl ?? ''}` : '';
+  useEffect(() => {
+    if (!previews || !preview) return;
+    previews.set(id, preview);
+    return () => {
+      previews.delete(id);
+    };
+    // The key stands for the preview, which is a new object every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previews, id, key]);
   return { nativeID: Platform.OS === 'web' ? id : undefined, active: active === id };
 }
 
@@ -69,6 +95,16 @@ export function useSearchNav(rootId: string, resultsKey: string, onTab: () => vo
   };
 }
 
-export function SearchNavProvider({ active, children }: { active: string | null; children: ReactNode }) {
-  return <Active.Provider value={active}>{children}</Active.Provider>;
+/** The palette's side of the previews: the rows register into it, and `preview(active)` reads the highlighted one. */
+export function useSearchPreviews() {
+  const map = useRef(new Map<string, SearchPreviewItem>()).current;
+  return { map, preview: (active: string | null) => (active ? (map.get(active) ?? null) : null) };
+}
+
+export function SearchNavProvider({ active, previews, children }: { active: string | null; previews?: Map<string, SearchPreviewItem>; children: ReactNode }) {
+  return (
+    <Previews.Provider value={previews ?? null}>
+      <Active.Provider value={active}>{children}</Active.Provider>
+    </Previews.Provider>
+  );
 }
