@@ -1,114 +1,75 @@
-import React, { useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
-import { Text, useTheme } from 'tamagui';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { SheetScrollView } from '@/components/ds';
-import { AdaptiveSheetModal } from '@/components/ui/AdaptiveSheetModal';
-import { RECIPE_UNITS, isKnownUnit, unitLabel } from '@/lib/units';
+import { Caption, Chip, DsText, PressableScale, useDs } from '@/components/ds';
+import { MenuSheet } from '@/components/screens/menus/MenuSheet';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { RECIPE_UNITS, isKnownUnit, unitLabel, type RecipeUnit } from '@/lib/units';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
-type UnitPickerProps = {
-  value: string;
-  onChange: (unit: string) => void;
-  /** Compact trigger for inline recipe rows. */
-  size?: 'sm' | 'md';
-  onOpenChange?: (open: boolean) => void;
-};
+const GROUPS: { group: RecipeUnit['group']; title: string }[] = [
+  { group: 'volume', title: 'Pour' },
+  { group: 'weight', title: 'Weight' },
+  { group: 'count', title: 'Count' },
+];
 
-export function UnitPicker({ value, onChange, size = 'sm', onOpenChange }: UnitPickerProps) {
-  const theme = useTheme();
+/**
+ * A recipe line's unit: a pill with the unit in mono (make-create-house-line),
+ * opening a sheet of every unit as chips, grouped.
+ */
+export function UnitPicker({ value, onChange }: { value: string; onChange: (unit: string) => void }) {
+  const ds = useDs();
   const defaultUnit = useSettingsStore((s) => s.defaultUnit);
   const [open, setOpen] = useState(false);
   const current = value || defaultUnit;
   // ponytail: keep legacy free-text units visible until user picks a known one
-  const options =
-    current && !isKnownUnit(current)
-      ? [{ value: current, label: current, group: 'volume' as const }, ...RECIPE_UNITS]
-      : RECIPE_UNITS;
-
-  const setVisible = (next: boolean) => {
-    setOpen(next);
-    onOpenChange?.(next);
-  };
+  const options: RecipeUnit[] = current && !isKnownUnit(current) ? [{ value: current, label: current, group: 'volume' }, ...RECIPE_UNITS] : RECIPE_UNITS;
 
   return (
     <>
-      <Pressable
-        onPressIn={() => onOpenChange?.(true)}
-        onPress={() => setVisible(true)}
-        style={[
-          styles.trigger,
-          size === 'md' && styles.triggerMd,
-          {
-            backgroundColor: theme.backgroundStrong?.get() as string,
-            borderColor: theme.borderColor?.get() as string,
-          },
-        ]}
+      <PressableScale
+        onPress={() => setOpen(true)}
         role="button"
-        aria-label={`Unit: ${unitLabel(current)}`}
+        aria-expanded={open}
+        accessibilityLabel={`Unit: ${unitLabel(current)}`}
+        style={[styles.trigger, { borderColor: ds.c.lineStrong }]}
       >
-        <Text color="$color" fontSize={size === 'md' ? 15 : 13} fontWeight="600">
+        <DsText variant="spec" numberOfLines={1} style={styles.mono}>
           {unitLabel(current)}
-        </Text>
-      </Pressable>
+        </DsText>
+        <IconSymbol name="chevron.down" size={12} color={ds.c.muted} />
+      </PressableScale>
 
-      <AdaptiveSheetModal visible={open} onClose={() => setVisible(false)} title="Unit">
-        {/* Scrolls: the list outgrows the sheet's 70% cap on a phone. */}
-        <SheetScrollView style={styles.list}>
-          {options.map((u) => {
-            const selected = u.value === current;
-            return (
-              <Pressable
-                key={u.value}
-                onPress={() => {
-                  onChange(u.value);
-                  setVisible(false);
-                }}
-                style={[
-                  styles.option,
-                  { borderBottomColor: theme.borderColor?.get() as string },
-                ]}
-              >
-                <Text color="$color" fontSize={16} fontWeight={selected ? '700' : '500'}>
-                  {u.label}
-                </Text>
-                {selected ? (
-                  <Text color="$color8" fontSize={14} fontWeight="600">
-                    Selected
-                  </Text>
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </SheetScrollView>
-      </AdaptiveSheetModal>
+      <MenuSheet visible={open} onClose={() => setOpen(false)} title="Unit" plain>
+        {GROUPS.map(({ group, title }) => (
+          <View key={group} style={styles.group}>
+            <Caption tone="muted">{title}</Caption>
+            <View role="radiogroup" aria-label={title} style={styles.chips}>
+              {options
+                .filter((u) => u.group === group)
+                .map((u) => (
+                  <Chip
+                    key={u.value}
+                    label={u.label}
+                    selected={u.value === current}
+                    onPress={() => {
+                      onChange(u.value);
+                      setOpen(false);
+                    }}
+                  />
+                ))}
+            </View>
+          </View>
+        ))}
+      </MenuSheet>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  trigger: {
-    minWidth: 56,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  triggerMd: {
-    minWidth: 64,
-    paddingVertical: 10,
-  },
-  list: {
-    flexShrink: 1,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
+  trigger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, minWidth: 64, height: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
+  mono: { fontFamily: fontFamilies.monoMedium },
+  group: { gap: space.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

@@ -385,7 +385,6 @@ export default function EditIngredientScreen({
                             }}
                             onRemove={(index) => setRecipeItems(recipeItems.filter((_, i) => i !== index))}
                             onMerge={onMerge}
-                            variant="detail"
                             onNestedItemPress={onNestedItemPress}
                             onRenameIngredient={async (ingredientId, nextName) => {
                                 try {
