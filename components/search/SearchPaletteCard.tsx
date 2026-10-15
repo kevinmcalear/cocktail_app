@@ -81,7 +81,7 @@ function Palette() {
       footer={<KeyHints back={mine.venueId ? 'Back' : 'Close'} />}
       aside={<SearchPreview item={previews.preview(nav.active)} onOpen={() => void nav.open()} />}
     >
-      <SearchNavProvider active={nav.active} previews={previews.map}>
+      <SearchNavProvider active={nav.active} register={previews.register}>
         <View nativeID={RESULTS} style={styles.results}>
           <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} onJump={close} commands={pick} palette />
         </View>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useState, type ReactNode } from 'react';
 import { Platform } from 'react-native';
 
 /**
@@ -19,8 +19,9 @@ export interface SearchPreviewItem {
   caption?: string;
 }
 
-/** The palette's rows by DOM id, with what each previews. Null outside the palette. */
-const Previews = createContext<Map<string, SearchPreviewItem> | null>(null);
+/** Where the palette's rows say what they preview (null clears it). Null outside the palette. */
+type Register = (id: string, preview: SearchPreviewItem | null) => void;
+const Previews = createContext<Register | null>(null);
 
 /** Every row's DOM id starts with this, so the palette can list them in screen order. */
 const PREFIX = 'search-row-';
@@ -32,17 +33,13 @@ const PREFIX = 'search-row-';
 export function useSearchNavRow(preview?: SearchPreviewItem): { nativeID: string | undefined; active: boolean } {
   const id = PREFIX + useId();
   const active = useContext(Active);
-  const previews = useContext(Previews);
-  const key = preview ? `${preview.itemId}|${preview.name}|${preview.caption ?? ''}|${preview.imageUrl ?? ''}` : '';
+  const register = useContext(Previews);
+  const key = preview ? JSON.stringify(preview) : '';
   useEffect(() => {
-    if (!previews || !preview) return;
-    previews.set(id, preview);
-    return () => {
-      previews.delete(id);
-    };
-    // The key stands for the preview, which is a new object every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previews, id, key]);
+    if (!register || !key) return;
+    register(id, JSON.parse(key) as SearchPreviewItem);
+    return () => register(id, null);
+  }, [register, id, key]);
   return { nativeID: Platform.OS === 'web' ? id : undefined, active: active === id };
 }
 
@@ -97,13 +94,22 @@ export function useSearchNav(rootId: string, resultsKey: string, onTab: () => vo
 
 /** The palette's side of the previews: the rows register into it, and `preview(active)` reads the highlighted one. */
 export function useSearchPreviews() {
-  const map = useRef(new Map<string, SearchPreviewItem>()).current;
-  return { map, preview: (active: string | null) => (active ? (map.get(active) ?? null) : null) };
+  const [all, setAll] = useState<Record<string, SearchPreviewItem>>({});
+  const register = useCallback<Register>((id, preview) => {
+    setAll((was) => {
+      if (preview) return { ...was, [id]: preview };
+      if (!(id in was)) return was;
+      const next = { ...was };
+      delete next[id];
+      return next;
+    });
+  }, []);
+  return { register, preview: (active: string | null) => (active ? (all[active] ?? null) : null) };
 }
 
-export function SearchNavProvider({ active, previews, children }: { active: string | null; previews?: Map<string, SearchPreviewItem>; children: ReactNode }) {
+export function SearchNavProvider({ active, register, children }: { active: string | null; register?: Register; children: ReactNode }) {
   return (
-    <Previews.Provider value={previews ?? null}>
+    <Previews.Provider value={register ?? null}>
       <Active.Provider value={active}>{children}</Active.Provider>
     </Previews.Provider>
   );
