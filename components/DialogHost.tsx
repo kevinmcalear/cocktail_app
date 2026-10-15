@@ -1,17 +1,18 @@
 import { useEffect } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import type { AlertButton, PressableStateCallbackType } from 'react-native';
-import { Text, XStack, YStack } from 'tamagui';
+import type { AlertButton } from 'react-native';
 
+import { Body, Button, Headline, useDs } from '@/components/ds';
+import { Appear } from '@/components/ds/Appear';
+import { radius, space } from '@/constants/tokens';
 import { type Dialog, useDialogStore } from '@/store/useDialogStore';
-
-// Darker than STATUS.danger so white button text reaches 5.2:1.
-const DESTRUCTIVE = '#CE2C31';
 
 /**
  * Web-only renderer for Alert.alert (see installWebAlert). Shows the first
- * queued dialog as a modal card; Escape or a click outside cancels, Enter
- * confirms.
+ * queued dialog as a card in the middle of the window, dressed as the app's
+ * web sheets are (Sheet.web.tsx): the scrim fading in, the raised surface, ds
+ * Buttons. Escape or a click outside cancels, Enter confirms.
+ * Not built on Sheet: its Modal would take Escape as well, running Cancel twice.
  */
 export function DialogHost() {
   const dialog = useDialogStore((s) => s.queue[0]);
@@ -20,6 +21,7 @@ export function DialogHost() {
 }
 
 function DialogCard({ dialog }: { dialog: Dialog }) {
+  const ds = useDs();
   const close = useDialogStore((s) => s.close);
   const cancel = dialog.buttons.find((b) => b.style === 'cancel');
   const actions = dialog.buttons.filter((b) => b !== cancel);
@@ -45,86 +47,27 @@ function DialogCard({ dialog }: { dialog: Dialog }) {
 
   const ordered = cancel ? [cancel, ...actions] : actions;
   const stacked = ordered.length > 2;
+  // Destructive in status red, the main action in ink (the accent belongs to the venue's screens), the rest outlined.
+  const variant = (button: AlertButton) => (button.style === 'destructive' ? 'danger' : button === primary && button.style !== 'cancel' ? 'ink' : 'secondary');
 
   return (
-    <View style={styles.overlay}>
+    <Appear kind="fade" duration={200} style={[styles.overlay, { backgroundColor: ds.c.scrim }]}>
       <Pressable accessibilityLabel="Close dialog" style={StyleSheet.absoluteFill} onPress={dismiss} />
-      <YStack
+      <View
         role="alertdialog"
         aria-modal
         aria-label={dialog.title}
-        width="100%"
-        maxWidth={400}
-        backgroundColor="$backgroundStrong"
-        borderColor="$borderColor"
-        borderWidth={1}
-        borderRadius={16}
-        padding="$5"
-        gap="$3"
-        boxShadow="0 24px 64px rgba(0,0,0,0.35)"
+        style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}
       >
-        <Text fontSize={18} fontWeight="700" color="$color">
-          {dialog.title}
-        </Text>
-        {dialog.message ? (
-          <Text fontSize={15} lineHeight={22} color="$color11">
-            {dialog.message}
-          </Text>
-        ) : null}
-        <XStack
-          flexDirection={stacked ? 'column' : 'row'}
-          justifyContent="flex-end"
-          gap="$2"
-          marginTop="$2"
-        >
+        <Headline role="heading">{dialog.title}</Headline>
+        {dialog.message ? <Body tone="muted">{dialog.message}</Body> : null}
+        <View style={[styles.buttons, stacked && styles.stacked]}>
           {ordered.map((button, i) => (
-            <DialogButton
-              key={`${button.text}-${i}`}
-              button={button}
-              isPrimary={button === primary}
-              stacked={stacked}
-              onPress={() => press(button)}
-            />
+            <Button key={`${button.text}-${i}`} label={button.text ?? 'OK'} variant={variant(button)} onPress={() => press(button)} />
           ))}
-        </XStack>
-      </YStack>
-    </View>
-  );
-}
-
-function DialogButton({
-  button,
-  isPrimary,
-  stacked,
-  onPress,
-}: {
-  button: AlertButton;
-  isPrimary: boolean;
-  stacked: boolean;
-  onPress: () => void;
-}) {
-  const destructive = button.style === 'destructive';
-  const filled = destructive || (isPrimary && button.style !== 'cancel');
-  return (
-    <Pressable role="button" onPress={onPress} style={stacked ? styles.stackedButton : undefined}>
-      {/* `hovered` exists on web only; React Native's own types leave it out. */}
-      {({ hovered }: PressableStateCallbackType & { hovered?: boolean }) => (
-        <XStack
-          justifyContent="center"
-          paddingHorizontal="$4"
-          paddingVertical="$2.5"
-          borderRadius={10}
-          backgroundColor={filled ? (destructive ? DESTRUCTIVE : '$color') : hovered ? '$borderColor' : 'transparent'}
-          borderWidth={filled ? 0 : 1}
-          borderColor="$borderColor"
-          opacity={filled && hovered ? 0.9 : 1}
-        >
-          <Text fontSize={15} fontWeight="600" color={filled ? (destructive ? '#FFFFFF' : '$background') : '$color'}>
-            {button.text ?? 'OK'}
-          </Text>
-        </XStack>
-      )}
-    </Pressable>
+        </View>
+      </View>
+    </Appear>
   );
 }
 
@@ -139,8 +82,17 @@ const styles = StyleSheet.create({
     zIndex: 100000,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    padding: space.xl,
   },
-  stackedButton: { alignSelf: 'stretch' },
+  card: {
+    width: '100%',
+    maxWidth: 400,
+    padding: space.xl,
+    gap: space.md,
+    borderRadius: radius.card,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  buttons: { flexDirection: 'row', justifyContent: 'flex-end', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
+  stacked: { flexDirection: 'column', alignItems: 'stretch' },
 });
