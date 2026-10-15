@@ -1,31 +1,20 @@
-import { useRouter } from 'expo-router';
-import { useRef, useState, type ComponentRef } from 'react';
-import { StyleSheet, View, type TextInput } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Button, Caption, Field } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, Field, GlassButton } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useCreateMenu, useMenuLayouts } from '@/hooks/useMenuMutations';
-import { useMenu } from '@/hooks/useMenus';
-import { useMode } from '@/hooks/useMode';
-import { blankSection, copySections, type MenuLayout } from '@/lib/menuLayout';
-import { cardWhen, EMPTY_PLAN, groupMenus, homeMenuLine, homeNight, venuePlan } from '@/lib/menus';
-import { focusInModal, MODAL_AUTOFOCUS } from '@/lib/modalAutoFocus';
-import type { MenuPhoto } from '@/lib/readMenu';
+import { savedLine } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
-import { useStartBringIn } from '../bringin/useStartBringIn';
-import { EMPTY_NIGHT, HomeNightFields } from './HomeNight';
-import { MenuPhotos } from './MenuPhotos';
+import { HomeNightFields } from './HomeNight';
+import { MenuPhotos, useAddMenuPhotos } from './MenuPhotos';
 import { Choice, MenuSheet } from './MenuSheet';
-import { DraftCard, StepTrack, VenueDatesFields } from './NewMenuParts';
+import { DraftCard, NameIdeas, StepTrack, VenueDatesFields } from './NewMenuParts';
+import { StartTiles, WhichMenu, type StartKind } from './NewMenuStart';
 import { MonoLabel } from './ReviewParts';
+import { useNewMenu } from './useNewMenu';
 
-type Start = { kind: 'copy'; menuId: string } | { kind: 'layout'; layoutId: string } | { kind: 'photo' } | { kind: 'paste' } | { kind: 'blank' };
-type Step = 'name' | 'start' | 'night' | 'dates';
-
-const QUESTION: Record<Step, string> = { name: 'What’s it called?', start: 'What does it start from?', night: 'When is it?', dates: 'When does it go on?' };
-const SHORT: Record<Step, string> = { name: 'name', start: 'start from', night: 'night', dates: 'dates' };
+type Step = 'start' | 'which' | 'name' | 'when';
 
 interface NewMenuSheetProps {
   visible: boolean;
@@ -35,163 +24,120 @@ interface NewMenuSheetProps {
   now: number;
 }
 
-// Drink Creator and up build a venue's menus (private.can_write).
-const BUILDS_MENUS = 35;
-
 /**
- * A new menu, a short wizard like adding a drink: its name (and whose it is),
- * what it starts from (blank, a menu you saved or a saved layout, photos of a
- * printed menu, or a pasted list), then its dates: a venue's run or one night
- * (a plan; it stays a draft), or a home menu's night. A small paper menu fills
- * in as you answer. Photos go to Bring in, read as a menu and checked there,
- * which makes the menu; a pasted list opens the builder on Paste a list.
+ * A new menu on a phone (venue-menus-new P1 to P5): how it starts (a tap goes
+ * on), its name with ideas, then when it goes on. A photo skips the name, as
+ * the printed title can give it: its pages, an optional name and the dates
+ * share one step. The little guest card fills in as you answer.
  */
 export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps) {
-  const router = useRouter();
-  const bringIn = useStartBringIn();
-  const { venues, active } = useActiveVenue();
-  // Home mode is like another account: a menu made there is always your own.
-  const home = useMode().mode === 'home';
-  // The venue you're in always counts: its Menus page only opens this when the
-  // venue lets you build menus, which it can allow below Drink Creator.
-  const buildable = home ? [] : venues.filter((v) => v.id === active?.id || v.roleLevel >= BUILDS_MENUS);
-  const steps: Step[] = home ? ['name', 'start', 'night'] : ['name', 'start', 'dates'];
-  const [step, setStep] = useState<Step>('name');
-  const at = steps.indexOf(step);
-  const [name, setName] = useState('');
-  const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
-  const [barId, setBarId] = useState<string | null>(buildable.some((v) => v.id === active?.id) ? active!.id : (buildable[0]?.id ?? null));
-  const venueMenus = menus.filter((m) => m.barId === barId);
-  const groups = groupMenus(venueMenus, now);
-  const copyable = [...groups.on, ...groups.upcoming, ...groups.draft, ...groups.previous].slice(0, 3);
-  const [start, setStart] = useState<Start>({ kind: 'blank' });
-  const { data: layouts = [] } = useMenuLayouts(barId);
-  // "A menu you saved": the venue's latest menus, then its saved layouts, as pills.
-  const saved = [
-    ...copyable.map((m) => ({ key: m.id, name: m.name, start: { kind: 'copy', menuId: m.id } as Start })),
-    ...layouts.map((l) => ({ key: l.id, name: l.name, start: { kind: 'layout', layoutId: l.id } as Start })),
-  ];
-  const { data: source } = useMenu(start.kind === 'copy' ? start.menuId : null);
-  const create = useCreateMenu();
-  const [photos, setPhotos] = useState<MenuPhoto[]>([]);
-  const [night, setNight] = useState(EMPTY_NIGHT);
-  const [plan, setPlan] = useState(EMPTY_PLAN);
-  const [error, setError] = useState<string | null>(null);
+  const m = useNewMenu({ menus, now, onClose });
+  const [step, setStep] = useState<Step>('start');
+  const addPhotos = useAddMenuPhotos({ photos: m.photos, onChange: m.setPhotos, onError: m.setError });
+  const photo = m.start.kind === 'photo';
+  const of = photo ? 2 : 3;
+  const at = step === 'start' || step === 'which' ? 0 : step === 'name' ? 1 : of - 1;
+  const saved = [...m.copyable, ...m.layouts];
 
-  const pickVenue = (id: string | null) => {
-    setBarId(id);
-    if (start.kind === 'copy' || start.kind === 'layout') setStart({ kind: 'blank' });
+  const go = (next: Step) => {
+    m.setError(null);
+    setStep(next);
   };
-
-  const startLabel =
-    start.kind === 'copy'
-      ? `Copy of ${copyable.find((m) => m.id === start.menuId)?.name ?? 'another menu'}`
-      : start.kind === 'layout'
-        ? (layouts.find((l) => l.id === start.layoutId)?.name ?? 'A saved layout')
-        : start.kind === 'photo'
-          ? 'Read from a photo'
-          : start.kind === 'paste'
-            ? 'From a pasted list'
-            : 'One empty section';
-  // For the card only; the night that's saved is worked out when the menu is made.
-  const shownNight = home ? homeNight(night, now) : null;
-  const shownPlan = home ? null : venuePlan(plan);
-  const nightLine =
-    shownNight && !('error' in shownNight)
-      ? homeMenuLine(shownNight, now)
-      : shownPlan && !('error' in shownPlan)
-        ? cardWhen({ startsAt: null, endsAt: null, menuDate: null, ...shownPlan })
-        : null;
-
+  const pick = (kind: StartKind) => {
+    if (kind === 'saved') return go('which');
+    m.setStart({ kind });
+    go(kind === 'photo' ? 'when' : 'name');
+    // Snap the menu: the camera opens at once (the picker, without one).
+    if (kind === 'photo' && !m.photos.length) void addPhotos('snap');
+  };
   const submit = async () => {
-    // From photos, the menu's printed title can name it.
-    if (!name.trim() && start.kind !== 'photo') {
-      setStep('name');
-      return setError('Give the menu a name.');
-    }
-    const when = home ? homeNight(night, Date.now()) : null;
-    if (when && 'error' in when) return setError(when.error);
-    const planned = home ? null : venuePlan(plan);
-    if (planned && 'error' in planned) return setError(planned.error);
-    let layout: MenuLayout = { name, coverUrl: null, coverPosition: 50, sections: [blankSection()] };
-    if (start.kind === 'photo') {
-      if (!photos.length) {
-        setStep('start');
-        return setError('Add a photo of the menu first.');
-      }
-      onClose();
-      // Read and checked by Bring in, as a menu, then made with the drinks it needs.
-      return bringIn([{ files: photos, text: null, url: null }], { as: 'menu', barId, menu: { name: name.trim(), night: when ?? null } });
-    }
-    if (start.kind === 'copy') {
-      if (!source) return setError('Still loading that menu. Try again in a moment.');
-      layout = { name, coverUrl: source.coverUrl, coverPosition: source.coverPosition, sections: copySections(source.sections, true) };
-    } else if (start.kind === 'layout') {
-      const chosen = layouts.find((l) => l.id === start.layoutId);
-      if (chosen?.sections.length) layout = { ...layout, sections: copySections(chosen.sections, false) };
-    }
-    setError(null);
-    try {
-      const id = await create.mutateAsync({ barId, layout, night: when ?? undefined, plan: planned ?? undefined });
-      onClose();
-      router.push(`/menus/${id}/edit${start.kind === 'paste' ? '?paste=1' : ''}`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t make the menu. Try again.');
-    }
+    if (!(await m.submit()) && !m.name.trim() && !photo) setStep('name');
   };
+  const back = () => go(step === 'when' && !photo ? 'name' : 'start');
 
-  const last = at === steps.length - 1;
-  // An empty name can still go on: a photo can name the menu. It's checked when the menu is made.
-  const next = () => {
-    setError(null);
-    setStep(steps[at + 1]);
-  };
-  const doneLabel = create.isPending ? 'Making the draft…' : start.kind === 'photo' ? 'Read the menu' : 'Create draft';
+  const pictures = m.copied?.pictures ?? [];
+  const label = m.pending ? 'Making the draft…' : photo ? 'Read the menu' : 'Create draft';
 
   return (
     <MenuSheet
       visible={visible}
       onClose={onClose}
       title="New menu"
-      subtitle={home ? 'Only you see it. Share it with your guests when it’s ready.' : 'It starts as a draft. Nobody sees it until it goes on.'}
-      onShow={MODAL_AUTOFOCUS ? undefined : () => focusInModal(nameRef)}
       footer={
-        <View style={styles.footer}>
-          {at > 0 ? <Button label="Back" variant="secondary" size="lg" onPress={() => setStep(steps[at - 1])} /> : null}
-          <Button
-            label={last ? doneLabel : `Next: ${SHORT[steps[at + 1]]}`}
-            size="lg"
-            onPress={last ? submit : next}
-            disabled={create.isPending}
-            style={styles.flex}
-          />
-        </View>
+        step === 'start' || step === 'which' ? undefined : (
+          <View style={styles.foot}>
+            {photo ? (
+              <Caption tone="muted" align="center">
+                You check every drink before anything is made.
+              </Caption>
+            ) : null}
+            <View style={styles.footer}>
+              <Button label="Back" variant="secondary" size="lg" onPress={back} />
+              <Button label={step === 'name' ? 'Next: when' : label} size="lg" onPress={step === 'name' ? () => go('when') : submit} disabled={m.pending} style={styles.flex} />
+            </View>
+          </View>
+        )
       }
     >
-      <StepTrack at={at} of={steps.length} />
-      <BackbarTheme scheme="light">
-        <DraftCard name={name.trim() || (start.kind === 'photo' ? 'From the photo' : 'Your menu')} lines={[at > 0 ? startLabel : null, nightLine]} />
-      </BackbarTheme>
-      <MonoLabel>{QUESTION[step]}</MonoLabel>
+      <View style={styles.track}>
+        {step === 'which' ? <GlassButton icon="chevron.left" accessibilityLabel="Back" onPress={() => go('start')} /> : null}
+        <View style={styles.flex}>
+          <StepTrack at={at} of={of} />
+        </View>
+      </View>
+      {step === 'which' ? null : photo && step === 'when' ? (
+        <MenuPhotos photos={m.photos} onChange={m.setPhotos} onError={m.setError} />
+      ) : (
+        <BackbarTheme scheme="light">
+          <DraftCard name={m.name.trim() || null} when={m.when} pictures={pictures} />
+        </BackbarTheme>
+      )}
 
-      {step === 'name' ? (
+      {step === 'start' ? (
         <>
-          <Field
-            ref={nameRef}
-            label="Name"
-            value={name}
-            onChangeText={setName}
-            placeholder={home ? 'Friday at ours' : 'Winter menu'}
-            hint="Starting from a photo? You can use the name printed on it."
-            autoFocus={MODAL_AUTOFOCUS}
-            onSubmitEditing={next}
+          <MonoLabel>How does it start?</MonoLabel>
+          <StartTiles saved={saved.length ? savedLine(saved.map((s) => s.name), true) : null} onPick={pick} />
+          <Caption tone="muted" align="center">
+            Tap one to go on.
+          </Caption>
+        </>
+      ) : null}
+
+      {step === 'which' ? (
+        <>
+          <MonoLabel>Which menu?</MonoLabel>
+          <WhichMenu
+            menus={m.copyable.slice(0, 6)}
+            layouts={m.layouts}
+            now={now}
+            onPick={(start) => {
+              m.setStart(start);
+              go('name');
+            }}
           />
-          {buildable.length > 1 ? (
+        </>
+      ) : null}
+
+      {step === 'name' || (photo && step === 'when') ? (
+        <>
+          {photo ? null : <MonoLabel>What’s it called?</MonoLabel>}
+          <Field
+            label="Name"
+            hideLabel={!photo}
+            value={m.name}
+            onChangeText={m.setName}
+            placeholder={photo ? 'From the photo' : m.home ? 'Friday at ours' : (m.ideas[0] ?? 'Winter menu')}
+            hint={photo ? 'Leave it empty to use the name printed on it.' : undefined}
+            autoFocus={!photo}
+            onSubmitEditing={photo ? undefined : () => go('when')}
+          />
+          {photo ? null : <NameIdeas ideas={m.ideas} name={m.name} onPick={m.setName} />}
+          {!photo && m.buildable.length > 1 ? (
             <>
-              <Caption tone="muted">For</Caption>
+              <MonoLabel>For</MonoLabel>
               <View role="radiogroup" accessibilityLabel="Who the menu is for" style={styles.wrap}>
-                {buildable.map((v) => (
-                  <Choice key={v.id} label={v.name} selected={barId === v.id} onPress={() => pickVenue(v.id)} />
+                {m.buildable.map((v) => (
+                  <Choice key={v.id} label={v.name} selected={m.barId === v.id} onPress={() => m.pickVenue(v.id)} />
                 ))}
               </View>
             </>
@@ -199,46 +145,21 @@ export function NewMenuSheet({ visible, onClose, menus, now }: NewMenuSheetProps
         </>
       ) : null}
 
-      {step === 'start' ? (
+      {step === 'when' ? (
         <>
-          <View role="radiogroup" accessibilityLabel="Start from" style={styles.list}>
-            {/* No radios: the picked card's border and tint say it (venue-menus-new). */}
-            <Choice label="Blank" detail="One section. Add more as you go." icon="plus" noMark selected={start.kind === 'blank'} onPress={() => setStart({ kind: 'blank' })} />
-            {saved.length ? (
-              <Choice
-                label="A menu you saved"
-                detail="Its sections and drinks, ready to change."
-                icon="doc.on.doc"
-                noMark
-                selected={start.kind === 'copy' || start.kind === 'layout'}
-                onPress={() => (start.kind === 'copy' || start.kind === 'layout' ? null : setStart(saved[0].start))}
-              >
-                {start.kind === 'copy' || start.kind === 'layout' ? (
-                  <View role="radiogroup" accessibilityLabel="Which menu" style={styles.wrap}>
-                    {saved.map((m) => (
-                      <Choice key={m.key} label={m.name} pill="outline" selected={m.key === (start.kind === 'copy' ? start.menuId : start.layoutId)} onPress={() => setStart(m.start)} />
-                    ))}
-                  </View>
-                ) : null}
-              </Choice>
-            ) : null}
-            <Choice label="From a photo" detail="Read a printed menu: its sections, drinks and prices." icon="camera.fill" noMark selected={start.kind === 'photo'} onPress={() => setStart({ kind: 'photo' })} />
-            <Choice label="Paste a list" detail="Drink names, one a line. We match your drinks." icon="list.bullet" noMark selected={start.kind === 'paste'} onPress={() => setStart({ kind: 'paste' })} />
-          </View>
-          {start.kind === 'photo' ? <MenuPhotos photos={photos} onChange={setPhotos} onError={setError} /> : null}
+          <MonoLabel>{m.home ? 'When is it?' : 'When does it go on?'}</MonoLabel>
+          {m.home ? <HomeNightFields value={m.night} onChange={m.setNight} /> : <VenueDatesFields value={m.plan} onChange={m.setPlan} now={now} />}
         </>
       ) : null}
-
-      {step === 'night' ? <HomeNightFields value={night} onChange={setNight} /> : null}
-      {step === 'dates' ? <VenueDatesFields value={plan} onChange={setPlan} min={new Date(now).toISOString().slice(0, 10)} /> : null}
-      {error ? <Body tone="accent">{error}</Body> : null}
+      {m.error ? <Body tone="accent">{m.error}</Body> : null}
     </MenuSheet>
   );
 }
 
 const styles = StyleSheet.create({
+  track: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  list: { gap: space.sm },
+  foot: { gap: space.sm + 2 },
   footer: { flexDirection: 'row', gap: space.md },
   flex: { flex: 1 },
 });
