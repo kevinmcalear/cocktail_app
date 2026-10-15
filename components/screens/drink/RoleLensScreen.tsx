@@ -1,127 +1,87 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Caption, DsText, GlassButton, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { Body, Button, Caption, useDs, useGutter } from '@/components/ds';
+import { SubPageHead, usePageFrame } from '@/components/nav/PageFrame';
+import { useTabBarInset } from '@/components/nav/WebTabBar';
+import { RoleMatrixTable, type MatrixLegend, type MatrixRowSpec } from '@/components/screens/venue/RoleMatrixTable';
+import { WebHead } from '@/components/WebHead';
+import { space } from '@/constants/tokens';
+import { useUserId } from '@/ctx/AuthContext';
+import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useBarMembers } from '@/hooks/useBarDetail';
+import { useRoleMatrix, type RoleMatrixRow } from '@/hooks/useVenueRoles';
 import { useEffectiveRole } from '@/hooks/useViewAs';
-import { withAlpha } from '@/lib/color';
-import { DRINK_SECTIONS, lensCell } from '@/lib/roleLens';
-import { ROLE_LEVELS } from '@/lib/roles';
+import { defaultColumns, LENS_GROUPS, lensValue, type LensRow } from '@/lib/roleLens';
+import { canManageTeam } from '@/lib/team';
 
-import { Choice } from '../menus/MenuSheet';
-
-const NAME_W = 220;
-const CELL_W = 92;
-const NAME_W_PHONE = 150;
-const CELL_W_PHONE = 72;
+const LEGEND: MatrixLegend = {
+  yes: 'Opens',
+  no: 'Locked: stays on the page, collapsed, and says who opens it',
+  lock: 'Set by the base level',
+};
 
 /**
- * What each role opens on a venue drink (board drink-role-lens): a role
- * picker and every section by role, the first role to open each marked.
- * Default levels; a venue can move specs to another role and its own roles
- * can grant more, so the drink page itself always asks the server.
+ * Who sees what on a venue drink (board drink-role-lens), in the Roles and
+ * access layout (Eddie, 13 Oct): the venue's roles as columns, the drink's
+ * sections as rows, from the venue's own role matrix, so a venue that moved
+ * specs or a role that grants more shows here. Your column says You. Before
+ * the matrix loads, or for a drink with no venue, the base levels' defaults.
  */
-export function RoleLensScreen({ itemId, barId }: { itemId: string; barId: string | null }) {
-  return (
-    <BackbarTheme>
-      <Lens itemId={itemId} barId={barId} />
-    </BackbarTheme>
-  );
-}
-
-function Lens({ itemId, barId }: { itemId: string; barId: string | null }) {
+export function RoleLensScreen({ itemId, barId, name }: { itemId: string; barId: string | null; name: string | null }) {
   const ds = useDs();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const gutter = useGutter();
+  const frame = usePageFrame('wide');
+  const tabBarInset = useTabBarInset();
+  const venue = useActiveVenue().venues.find((v) => v.id === barId);
+  const barName = venue?.name ?? 'this venue';
   const mine = useEffectiveRole(barId);
-  const phone = useBreakpoint() === 'phone';
-  const nameW = phone ? NAME_W_PHONE : NAME_W;
-  const cellW = phone ? CELL_W_PHONE : CELL_W;
-  // Your own view until you pick one (the drink, and so its venue, may still be loading).
-  const [picked, setRole] = useState<number | null>(null);
-  const role = picked ?? (ROLE_LEVELS.some((r) => r.level === mine) ? mine : 30);
+  const matrix = useRoleMatrix(barId);
+  const columns: RoleMatrixRow[] = matrix.data?.length ? matrix.data : defaultColumns();
+  const drink = name ?? 'this drink';
   const back = () => (router.canGoBack() ? router.back() : router.replace(`/cocktail/${itemId}` as Href));
+  // Your column: your venue role if you hold one, else your level; viewing as another level marks that one.
+  const userId = useUserId();
+  const myRoleId = (useBarMembers(barId).data ?? []).find((m) => m.user_id === userId)?.venue_role_id ?? null;
+  const viewingAs = !!venue && mine !== venue.roleLevel;
+  const isYou = (c: RoleMatrixRow) => (myRoleId && !viewingAs ? c.role_id === myRoleId : c.role_id === null && c.base_level === mine);
+  const rowOf = (r: MatrixRowSpec) => r as LensRow;
 
   return (
-    <View style={[styles.flex, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingTop: (Platform.OS === 'ios' ? space.sm : insets.top) + (phone ? layout.minTapTarget : 0) + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter, gap: space.lg }}>
-        <View style={styles.page}>
-          <Caption tone="muted" style={styles.eyebrow}>
-            ONE DRINK, FIVE VIEWS
-          </Caption>
-          <Title>What each role opens on a venue drink</Title>
-          <Body tone="muted">Locked sections stay on the page, collapsed, and say which role opens them. Default levels shown; a venue can move specs to another role. Pick a role to see its column.</Body>
-          <View role="radiogroup" accessibilityLabel="View the drink as" style={styles.roles}>
-            {ROLE_LEVELS.map((r) => (
-              <Choice key={r.level} label={r.label} selected={r.level === role} onPress={() => setRole(r.level)} />
-            ))}
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.grow}>
-            {/* The table spans the page; section names take what the role columns leave (board drink-role-lens). */}
-            <View role="table" accessibilityLabel="Sections by role" style={styles.grow}>
-              <View role="row" style={[styles.row, { borderBottomColor: ds.c.lineStrong }]}>
-                <Caption tone="muted" role="columnheader" style={[styles.name, { minWidth: nameW }]}>
-                  Section
-                </Caption>
-                {ROLE_LEVELS.map((r) => (
-                  <View key={r.level} role="columnheader" style={[styles.cell, { width: cellW }]}>
-                    <Caption color={r.level === role ? ds.accentText : ds.c.muted} style={r.level === role ? styles.on : undefined}>
-                      {r.label === 'Drink Creator' ? 'Creator' : r.label}
-                    </Caption>
-                    <Caption tone="muted">{String(r.level)}</Caption>
-                  </View>
-                ))}
-              </View>
-              {DRINK_SECTIONS.map((sec) => (
-                <View key={sec.name} role="row" style={[styles.row, { borderBottomColor: ds.c.line }]}>
-                  <DsText variant="body" role="rowheader" style={[styles.name, styles.sectionName, { minWidth: nameW }]}>
-                    {sec.name}
-                  </DsText>
-                  {ROLE_LEVELS.map((r) => {
-                    const cell = lensCell(sec.opensAt, r.level);
-                    const column = r.level === role;
-                    return (
-                      <View
-                        key={r.level}
-                        role="cell"
-                        accessibilityLabel={`${sec.name}, ${r.label}: ${cell === 'lock' ? 'locked' : 'open'}`}
-                        style={[styles.cell, { width: cellW }, styles.mark, cell !== 'lock' && { backgroundColor: column ? withAlpha(ds.accentText, 0.22) : ds.c.raised }]}
-                      >
-                        <Caption tone={cell === 'lock' ? 'muted' : 'ink'}>{cell === 'first' ? '● Open' : cell === 'open' ? 'Open' : 'Lock'}</Caption>
-                      </View>
-                    );
-                  })}
-                </View>
-              ))}
-            </View>
-          </ScrollView>
-          <Caption tone="muted">Open: shown in full. Lock: a collapsed row that says &quot;Opens at&quot; the first role with a dot. Batch needs the amounts, so it follows the spec.</Caption>
+    <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
+      <WebHead>
+        <title>Who sees what</title>
+      </WebHead>
+      <ScrollView style={styles.screen} contentContainerStyle={{ paddingTop: frame.top, paddingBottom: tabBarInset + space.xxxl, paddingHorizontal: gutter }}>
+        <View style={[frame.column, styles.page]}>
+          <SubPageHead
+            title="Who sees what"
+            crumbs={[{ label: drink, href: `/cocktail/${itemId}` as Href }]}
+            onBack={back}
+            subtitle={
+              <Body tone="muted">{`Every section of ${drink} and who opens it at ${barName}: the base levels and the venue’s own roles. It follows Roles and access, so changing a role there changes this.`}</Body>
+            }
+            trailing={barId && canManageTeam(mine) ? <Button label="Roles and access" variant="secondary" onPress={() => router.push(`/settings/bar/${barId}/roles` as Href)} /> : null}
+          />
+          {matrix.error ? <Caption tone="muted">Couldn’t load this venue’s roles, so these are the default levels.</Caption> : null}
+          <RoleMatrixTable
+            matrix={columns}
+            barName={barName}
+            groups={LENS_GROUPS}
+            cellOf={(c, r) => lensValue(columns, c, rowOf(r))}
+            label={`Who sees each section of ${drink} at ${barName}`}
+            heading="What they see"
+            legend={LEGEND}
+            isYou={isYou}
+          />
         </View>
       </ScrollView>
-      {/* Wider screens go back through the sidebar; phones keep a back button. */}
-      {phone ? (
-        <View style={[styles.controls, { top: (Platform.OS === 'ios' ? space.sm : insets.top) + space.sm, left: gutter }]}>
-          <GlassButton accessibilityLabel="Back" icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'} onPress={back} />
-        </View>
-      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  page: { gap: space.lg, maxWidth: layout.page.text, width: '100%' },
-  eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
-  roles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, minHeight: layout.minTapTarget - space.xs },
-  grow: { flexGrow: 1 },
-  name: { flex: 1, paddingRight: space.md },
-  sectionName: { fontSize: type.caption.fontSize + 2, lineHeight: type.caption.lineHeight + 2 },
-  cell: { alignItems: 'center', marginLeft: 2 },
-  mark: { marginVertical: space.xs, paddingVertical: space.xs, borderRadius: radius.mark },
-  on: { fontFamily: fontFamilies.bodySemiBold },
-  controls: { position: 'absolute' },
+  screen: { flex: 1 },
+  page: { gap: space.xl },
 });
