@@ -33,7 +33,7 @@ beforeEach(() => {
 
 test('asks once, at home, before any bar is loved or hidden; Done saves the picks', async () => {
   await renderWithTamagui(<FirstOpenSheet area={area} />);
-  expect(screen.getByText('Any favourites near you?')).toBeTruthy();
+  expect(screen.getByText('Any favourites?')).toBeTruthy();
   await fireEvent.press(screen.getByLabelText('Love Little Rye'));
   await fireEvent.press(screen.getByLabelText('Hide 1806 from Discover'));
   expect(screen.getByText('1 loved · 1 hidden')).toBeTruthy();
@@ -63,7 +63,7 @@ test('says nothing once asked, at a venue, with a bar already loved, or with too
   ]) {
     setup();
     const view = await renderWithTamagui(<FirstOpenSheet area={area} />);
-    expect(screen.queryByText('Any favourites near you?')).toBeNull();
+    expect(screen.queryByText('Any favourites?')).toBeNull();
     await view.unmount();
     mockMode = 'home';
     mockLoved = [];

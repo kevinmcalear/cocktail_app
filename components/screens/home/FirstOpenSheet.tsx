@@ -71,14 +71,14 @@ function Ask({ userId, rows, where }: { userId: string; rows: DiscoverRow[]; whe
         visible
         onClose={close}
         eyebrow="Make Discover yours"
-        title="Any favourites near you?"
+        title={where === 'anywhere' ? 'Any favourites?' : `Any favourites ${where}?`}
         footer={
           <View style={styles.footer}>
-            <Caption tone="muted" style={styles.flex}>
-              {summary}
-            </Caption>
-            <Button label="Skip for now" variant="secondary" onPress={close} />
-            <Button label={saving ? 'Saving…' : 'Done'} disabled={saving || !chosen.length} onPress={done} />
+            <Caption tone="muted">{summary}</Caption>
+            <View style={styles.actions}>
+              <Button label="Skip for now" variant="secondary" onPress={close} />
+              <Button label={saving ? 'Saving…' : 'Done'} disabled={saving || !chosen.length} onPress={done} />
+            </View>
           </View>
         }
       >
@@ -119,7 +119,8 @@ function BarRow({ row, pick, onPick }: { row: DiscoverRow; pick: Pick | undefine
 }
 
 const styles = StyleSheet.create({
-  footer: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
+  footer: { gap: space.sm },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', flexWrap: 'wrap', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
   lead: { marginTop: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 64, paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
