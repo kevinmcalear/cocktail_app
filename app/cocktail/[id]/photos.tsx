@@ -1,8 +1,8 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
-import { ErrorState } from '@/components/ui/ErrorState';
 import { DrinkLoading } from '@/components/screens/drink/DrinkLoading';
 import { PhotosScreen } from '@/components/screens/drink/PhotosScreen';
+import { CouldNotLoad } from '@/components/screens/safety/NotAvailable';
 import { useCocktail } from '@/hooks/useCocktails';
 
 /** The full-screen photos and shot list (from the service view). */
@@ -13,7 +13,7 @@ export default function PhotosRoute() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false, title: item ? `${item.name} photos` : 'Photos' }} />
-      {query.error ? <ErrorState title="Couldn't load this drink" onRetry={() => void query.refetch()} /> : item ? <PhotosScreen item={item} angle={angle} /> : <DrinkLoading />}
+      {query.error ? <CouldNotLoad what="drink" failed={{ retry: () => void query.refetch() }} /> : item ? <PhotosScreen item={item} angle={angle} /> : <DrinkLoading />}
     </>
   );
 }

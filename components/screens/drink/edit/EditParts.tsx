@@ -119,7 +119,7 @@ export function IngredientSheet({ editor, swapping, onPick, onNew, onClose }: { 
 
 /**
  * The drink's photos in order, from More (the hero shows the first).
- * ponytail: the legacy SortableImageList inside a ds Sheet; redraw it in ds when photos get their own board.
+ * ponytail: SortableImageList's row of tiles inside a ds Sheet; redraw it when photos get their own board.
  */
 export function PhotosSheet({ editor, onClose }: { editor: Editor; onClose: () => void }) {
   return (

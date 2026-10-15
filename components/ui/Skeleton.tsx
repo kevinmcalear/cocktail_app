@@ -1,7 +1,8 @@
 import { StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
-import { useTheme } from 'tamagui';
 
+import { useDs } from '@/components/ds';
 import { Pulse } from '@/components/ds/Pulse';
+import { radius as RADIUS, space } from '@/constants/tokens';
 
 /**
  * A placeholder block in the shape of content that is still loading. Pulses
@@ -10,7 +11,7 @@ import { Pulse } from '@/components/ds/Pulse';
 export function Skeleton({
   width = '100%',
   height,
-  radius = 8,
+  radius = RADIUS.control,
   style,
 }: {
   width?: DimensionValue;
@@ -18,16 +19,16 @@ export function Skeleton({
   radius?: number;
   style?: StyleProp<ViewStyle>;
 }) {
-  const theme = useTheme();
-  return <Pulse style={[{ width, height, borderRadius: radius, backgroundColor: theme.color4?.get() as string }, style]} />;
+  const ds = useDs();
+  return <Pulse style={[{ width, height, borderRadius: radius, borderCurve: 'continuous', backgroundColor: ds.c.raised }, style]} />;
 }
 
 /** Lines of text still loading; the last line is shorter, like a paragraph. */
-export function SkeletonLines({ lines = 3, lineHeight = 14, gap = 10 }: { lines?: number; lineHeight?: number; gap?: number }) {
+export function SkeletonLines({ lines = 3, lineHeight = 14, gap = space.sm + 2 }: { lines?: number; lineHeight?: number; gap?: number }) {
   return (
     <View style={{ gap }}>
       {Array.from({ length: lines }, (_, i) => (
-        <Skeleton key={i} height={lineHeight} width={i === lines - 1 && lines > 1 ? '60%' : '100%'} radius={4} />
+        <Skeleton key={i} height={lineHeight} width={i === lines - 1 && lines > 1 ? '60%' : '100%'} radius={RADIUS.mark} />
       ))}
     </View>
   );
@@ -39,11 +40,11 @@ export function DetailSkeleton({ imageHeight }: { imageHeight: number }) {
     <View aria-label="Loading" role="progressbar" style={styles.detail}>
       <Skeleton height={imageHeight} radius={0} />
       <View style={styles.detailBody}>
-        <Skeleton height={34} width="70%" radius={6} />
+        <Skeleton height={34} width="70%" radius={RADIUS.mark} />
         <View style={styles.pills}>
-          <Skeleton height={28} width={88} radius={14} />
-          <Skeleton height={28} width={72} radius={14} />
-          <Skeleton height={28} width={96} radius={14} />
+          <Skeleton height={28} width={88} radius={RADIUS.pill} />
+          <Skeleton height={28} width={72} radius={RADIUS.pill} />
+          <Skeleton height={28} width={96} radius={RADIUS.pill} />
         </View>
         <SkeletonLines lines={4} />
         <SkeletonLines lines={3} />
@@ -52,28 +53,14 @@ export function DetailSkeleton({ imageHeight }: { imageHeight: number }) {
   );
 }
 
-/** A grid of item cards (image over a caption) still loading. */
-export function CardRowSkeleton({ cards = 3, cardWidth = 120 }: { cards?: number; cardWidth?: number }) {
-  return (
-    <View aria-label="Loading" role="progressbar" style={styles.cardRow}>
-      {Array.from({ length: cards }, (_, i) => (
-        <View key={i} style={{ width: cardWidth, gap: 8 }}>
-          <Skeleton height={cardWidth} radius={12} />
-          <Skeleton height={12} width="70%" radius={4} />
-        </View>
-      ))}
-    </View>
-  );
-}
-
 /** Rows in a list still loading: an icon and a label each. */
 export function ListRowsSkeleton({ rows = 4 }: { rows?: number }) {
   return (
-    <View aria-label="Loading" role="progressbar" style={{ gap: 14 }}>
+    <View aria-label="Loading" role="progressbar" style={styles.rows}>
       {Array.from({ length: rows }, (_, i) => (
         <View key={i} style={styles.listRow}>
-          <Skeleton height={24} width={24} radius={6} />
-          <Skeleton height={14} width={`${55 - (i % 3) * 10}%`} radius={4} />
+          <Skeleton height={24} width={24} radius={RADIUS.mark} />
+          <Skeleton height={14} width={`${55 - (i % 3) * 10}%`} radius={RADIUS.mark} />
         </View>
       ))}
     </View>
@@ -82,8 +69,8 @@ export function ListRowsSkeleton({ rows = 4 }: { rows?: number }) {
 
 const styles = StyleSheet.create({
   detail: { flex: 1 },
-  detailBody: { padding: 24, gap: 24 },
-  pills: { flexDirection: 'row', gap: 8 },
-  cardRow: { flexDirection: 'row', gap: 12 },
-  listRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  detailBody: { padding: space.xl, gap: space.xl },
+  pills: { flexDirection: 'row', gap: space.sm },
+  rows: { gap: space.md + 2 },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 });
