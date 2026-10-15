@@ -104,7 +104,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
     <View style={styles.make}>
       <SpecLockPanel
         note={specLockNote(lock.bar.name, !lock.bar.isClaimed, true)}
-        ingredients={ingredientsLine(lock.names)}
+        ingredients={ingredientsLine(lock.names ?? [])}
         action={<Button label={lock.bar.isClaimed ? `See ${lock.bar.name}` : 'Work here? Claim this page'} variant="secondary" onPress={() => router.push(`/p/${lock.bar.handle}` as Href)} />}
       />
       {make}

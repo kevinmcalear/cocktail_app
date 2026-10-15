@@ -9,8 +9,8 @@ import { supabase } from '@/lib/supabase';
 export interface SpecLock {
   /** The bar whose page keeps the spec back, to name it and link to it. */
   bar: { id: string; handle: string; name: string; isClaimed: boolean; visibility: PageVisibility | null };
-  /** Its ingredient names without amounts, as the signed-out page shows them (public_drink_ingredients); none on a Names page. */
-  names: IngredientName[];
+  /** Its ingredient names without amounts, as the signed-out page shows them (public_drink_ingredients); none on a Names page. Optional: a cache from before it lacks it. */
+  names?: IngredientName[];
 }
 
 /**
