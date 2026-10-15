@@ -9,15 +9,13 @@ import { useWebNav } from '@/hooks/useIsWideWeb';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
-import { SearchPill } from '@/components/screens/home/DiscoverControls';
-import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { Filter, FilterRow } from '@/components/screens/library/LibraryChips';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
 import { LibraryTile } from '@/components/screens/library/LibraryTile';
-import { SearchBody, SearchHead } from '@/components/search/SearchPanel';
+import { SearchField } from '@/components/search/SearchField';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -26,12 +24,11 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { usePricedItemIds } from '@/hooks/usePricing';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
-import { useSearchMine } from '@/hooks/useSearchMine';
 import { useStaffList } from '@/hooks/useStaffList';
 import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { venueContextIds } from '@/lib/barContextFilter';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
-import type { SearchScope } from '@/lib/searchScope';
+import { matchesQuery } from '@/lib/publicDrinks';
 import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, methodWord, parseShow, PREP_GROUPS, tileLine, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
 import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
 import type { SearchItem } from '@/types/search';
@@ -75,11 +72,9 @@ export function LibraryScreen() {
   const canOrder = !!capabilities?.includes('menus');
   const [swap, setSwap] = useState(false);
   const [snapping, setSnapping] = useState(false);
-  // Library browses; finding by name is the one search, opened on this venue.
-  const mine = useSearchMine();
-  const [searching, setSearching] = useState(false);
-  const [query, setQuery] = useState('');
-  const [scope, setScope] = useState<SearchScope>('mine');
+  // Find in Library narrows the list in place; anything further is the one search (nav-one-search).
+  const [find, setFind] = useState('');
+  const q = find.trim().toLowerCase();
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
   const { data: menus } = useVenueMenus(activeId);
   const staff = useStaffList(activeId);
@@ -126,7 +121,8 @@ export function LibraryScreen() {
   // Preps by what was done to them (Syrups, Cordials...): the groups this venue has.
   const prepKinds = PREP_GROUPS.map((g) => ({ ...g, count: lists.preps.filter((p) => prepFacts[p.id]?.group === g.group).length })).filter((g) => g.count);
   const kind = show === 'preps' ? prepKinds.find((g) => g.value === params.kind) : undefined;
-  const shown = [...lists[show]].filter((i) => !kind || prepFacts[i.id]?.group === kind.group).sort((a, b) => a.name.localeCompare(b.name));
+  const inView = lists[show].filter((i) => !kind || prepFacts[i.id]?.group === kind.group);
+  const shown = inView.filter((i) => !q || matchesQuery(i, q)).sort((a, b) => a.name.localeCompare(b.name));
   // "Stirred · Coupe"; R&D adds the collection; beer and wine say what they are; preps what was done, yield and keeps.
   const glassName = (i: SearchItem) => (i.glassware_id ? (specs?.glassware.find((g) => g.id === i.glassware_id)?.name ?? null) : null);
   const rndOf = useMemo(() => new Map(byMenu.rndMenus.flatMap((m) => m.itemIds.map((id) => [id, m.name] as const))), [byMenu]);
@@ -146,7 +142,8 @@ export function LibraryScreen() {
     <View style={styles.header}>
       <PageHeader title="Library" width="full" display />
       <FirstRoundCard />
-      <SearchPill query="" placeholder={`Search ${active?.name ?? 'your drinks'}`} onOpen={() => setSearching(true)} onClear={() => setQuery('')} />
+      {/* The staff list is dragged into order, so it isn't narrowed. */}
+      {staffView ? null : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />}
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
       <FilterRow
         label="Show"
@@ -199,13 +196,23 @@ export function LibraryScreen() {
           <Caption tone="muted">Swapping a bottle opens at Drink Creator.</Caption>
         )
       ) : null}
+      {q && !staffView && shown.length ? <Caption tone="muted">{`${shown.length} of ${inView.length}`}</Caption> : null}
     </View>
   );
+
+  const found = find.trim();
+  const empty = venuesLoading || isLoading ? null : q ? <Caption tone="muted">{`Nothing here called “${found}”.`}</Caption> : <LibraryEmpty barId={activeId} noDrinks={!published.length} canAdd={canEdit} />;
+  // Past this list: the one search, everywhere, with what was typed.
+  const foot = q ? (
+    <View style={styles.foot}>
+      <Button label={`Search everywhere for “${found}”`} icon="magnifyingglass" variant="secondary" onPress={() => router.push(`/search?scope=everywhere&q=${encodeURIComponent(found)}` as never)} />
+    </View>
+  ) : null;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       {panes && !staffView ? (
-        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={venuesLoading || isLoading ? null : <LibraryEmpty barId={activeId} noDrinks={!published.length} canAdd={canEdit} />} />
+        <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={empty} footer={foot} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />}>
@@ -238,22 +245,13 @@ export function LibraryScreen() {
               />
             );
           }}
-          ListEmptyComponent={venuesLoading || isLoading ? undefined : <LibraryEmpty barId={activeId} noDrinks={!published.length} canAdd={canEdit} />}
+          ListEmptyComponent={empty ?? undefined}
+          ListFooterComponent={foot ?? undefined}
         />
       )}
       <RoundOpened />
       {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
       {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}
-      {searching ? (
-        <DiscoverOverlay
-          label="Search"
-          full
-          onClose={() => setSearching(false)}
-          head={<SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus onDone={() => setSearching(false)} />}
-        >
-          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} onJump={() => setSearching(false)} />
-        </DiscoverOverlay>
-      ) : null}
     </View>
   );
 }
@@ -262,4 +260,5 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { gap: space.md, paddingBottom: space.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  foot: { paddingTop: space.md, alignItems: 'flex-start' },
 });

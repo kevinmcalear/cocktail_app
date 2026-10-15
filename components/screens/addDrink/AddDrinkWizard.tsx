@@ -9,6 +9,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useShelf } from '@/hooks/useHomeBar';
 import { useMyProfile } from '@/hooks/useMyProfile';
+import { useHoldUpdates } from '@/hooks/useOtaUpdates';
 import { suggestClassic } from '@/lib/classics';
 import { plainDbMessage } from '@/lib/dbError';
 import {
@@ -71,6 +72,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const patch = useDrinkWizardStore((s) => s.patch);
   const setStoredStep = useDrinkWizardStore((s) => s.setStep);
   const clear = useDrinkWizardStore((s) => s.clear);
+  useHoldUpdates();
   // Filled out with today's fields: a draft kept by an older version of the app may lack some.
   const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
   const step: WizardStep = kept?.step ?? 'name';

@@ -1,12 +1,16 @@
+import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
+import * as Updates from 'expo-updates';
 import { useState, useSyncExternalStore } from 'react';
-import { View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
+import { Caption } from '@/components/ds';
 import { SafetyLinks, type LinkRowProps } from '@/components/screens/safety/SafetyLinks';
 import { ReportProblemSheet } from '@/components/screens/settings/ReportProblemSheet';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { analyticsAvailable, analyticsOptedOut, subscribeAnalytics } from '@/lib/analytics';
+import { space } from '@/constants/tokens';
 import { saveAnalyticsChoice } from '@/lib/analyticsChoice';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
 import { invokeFunction } from '@/lib/invokeFunction';
@@ -105,3 +109,25 @@ export function SignOutSection({ onLogOut }: { onLogOut: () => void }) {
     </SettingsSection>
   );
 }
+
+/**
+ * Which build and over-the-air update this phone runs, so "is the new version
+ * on my phone?" has an answer. Quiet, at the foot of Settings. Native only:
+ * the web always loads the latest.
+ */
+export function AppVersion() {
+  if (Platform.OS === 'web') return null;
+  const build = Application.nativeBuildVersion ? ` (${Application.nativeBuildVersion})` : '';
+  const runtime = Updates.runtimeVersion ? ` · runtime ${Updates.runtimeVersion}` : '';
+  const created = Updates.createdAt?.toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const update = Updates.isEmbeddedLaunch || !Updates.updateId ? 'built in' : [Updates.updateId.slice(0, 8), created].filter(Boolean).join(', ');
+  return (
+    <Caption tone="muted" selectable style={styles.version}>
+      {`Version ${Application.nativeApplicationVersion ?? '?'}${build}${runtime}\nUpdate ${update}`}
+    </Caption>
+  );
+}
+
+const styles = StyleSheet.create({
+  version: { paddingHorizontal: space.lg },
+});

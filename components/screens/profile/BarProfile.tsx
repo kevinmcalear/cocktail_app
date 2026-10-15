@@ -11,7 +11,7 @@ import { useBarFacts } from '@/hooks/useBarFacts';
 import { isUnclaimed, useMenuCredits, useMenuEditions, useProfileOriginals, type Profile } from '@/hooks/useProfiles';
 import { drinkRunTags } from '@/lib/menuEditions';
 import { plural } from '@/lib/menus';
-import { pageLocksSpecs, pageShowsDescriptions, specLockNote } from '@/lib/pageVisibility';
+import { pageLocksSpecs, pageShowsDescriptions, pageShowsDrinks, privatePageNote, specLockNote } from '@/lib/pageVisibility';
 
 import { barPlace } from '../bar/BarFactLines';
 import { OnTheMenu } from '../bar/OnTheMenu';
@@ -39,6 +39,7 @@ const TABS = [
   { value: 'rankings', label: 'Top drinks' },
   { value: 'people', label: 'People' },
 ] as const;
+const PEOPLE_ONLY = TABS.filter((t) => t.value === 'people');
 
 /**
  * A bar's page on a phone, signed in (ppl-bar-top, -menus, -originals,
@@ -63,6 +64,9 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
   const unclaimed = isUnclaimed(profile);
   const onTeam = useActiveVenue().venues.some((v) => v.id === profile.bar_id);
   const specsLocked = pageLocksSpecs(profile.page_visibility, onTeam);
+  // Private: facts, hours, people and awards; no drinks, menus or scores (ppl-bar-private).
+  const drinksShown = pageShowsDrinks(profile.page_visibility, onTeam);
+  const shownTab: Tab = drinksShown ? tab : 'people';
   // The neighbourhood, else the city: "Cocktail bar · Fitzroy" (ppl-bar-top).
   const place = profile.locality || profile.city;
   const searched = !!useLocalSearchParams<{ q?: string }>().q;
@@ -95,7 +99,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       {/* Opened from a search, the menu it's pouring follows the matches (disc-search-bar); the plain page has it under Menus (ppl-bar-menus). */}
       {searched ? <OnTheMenu profileId={profile.id} /> : null}
 
-      <BarStats profile={profile} originals={own.length} onAwards={() => setAwardsOpen((v) => !v)} />
+      <BarStats profile={profile} originals={drinksShown ? own.length : null} onAwards={() => setAwardsOpen((v) => !v)} />
 
       {awardsOpen ? <Awards profileId={profile.id} /> : null}
 
@@ -105,10 +109,10 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
 
       <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />
 
-      <Segmented accessibilityLabel="Bar sections" stretch accent options={TABS} value={tab} onChange={setTab} />
-      {tab === 'menus' ? (
+      <Segmented accessibilityLabel="Bar sections" stretch accent options={drinksShown ? TABS : PEOPLE_ONLY} value={shownTab} onChange={setTab} />
+      {shownTab === 'menus' ? (
         <MenuHistory profileId={profile.id} name={profile.display_name} />
-      ) : tab === 'originals' ? (
+      ) : shownTab === 'originals' ? (
         isLoading ? (
           <Caption tone="muted">Loading drinks…</Caption>
         ) : specsLocked ? (
@@ -132,7 +136,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
             <MenuCredits credits={credits} names={names} />
           </View>
         )
-      ) : tab === 'rankings' ? (
+      ) : shownTab === 'rankings' ? (
         <View style={styles.tab}>
           <BarYours profileId={profile.id} drinkIds={originals.map((d) => d.id)} />
           <BarRankings bar={profile} />
@@ -140,7 +144,9 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       ) : (
         <Positions profile={profile} emptyText={`Nobody is listed at ${profile.display_name} yet.`} />
       )}
-      {specsLocked ? (
+      {!drinksShown ? (
+        <SpecLockPanel title="Drinks stay with the bar" note={privatePageNote(profile.display_name, true)} />
+      ) : specsLocked ? (
         <SpecLockPanel
           note={specLockNote(profile.display_name, unclaimed, false)}
           action={unclaimed ? <ClaimProfile profile={profile} label="Work here? Claim this page" /> : null}
