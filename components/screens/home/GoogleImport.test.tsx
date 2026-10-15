@@ -36,6 +36,8 @@ jest.mock('@/hooks/useGoogleImport', () => {
 let mockLoved: { id: string }[] = [];
 const mockLove = jest.fn((_vars: unknown, opts: { onSuccess: () => void }) => opts.onSuccess());
 jest.mock('@/hooks/useKept', () => ({ useLovedBars: () => ({ data: mockLoved }), useLoveBar: () => ({ mutate: mockLove, reset: jest.fn(), isPending: false, isError: false }) }));
+let mockHidden: { id: string }[] = [];
+jest.mock('@/hooks/useHiddenBars', () => ({ useHiddenBars: () => ({ data: mockHidden }) }));
 jest.mock('@/components/screens/safety/AgeGate', () => ({ useAgeGate: () => ({ gate: (run: () => void) => run(), sheet: null }) }));
 jest.mock('@/components/screens/home/BarMark', () => ({ BarMark: () => null }));
 const mockToast = jest.fn();
@@ -46,6 +48,7 @@ const sample = readFileSync(join(__dirname, '../../../lib/fixtures/google-takeou
 beforeEach(() => {
   jest.clearAllMocks();
   mockLoved = [];
+  mockHidden = [];
   mockFile.current = { name: 'Saved Places.json', text: sample };
 });
 
@@ -74,6 +77,14 @@ test('bars already loved are left out and counted', async () => {
   expect(await screen.findByText('3 of 6 places are bars we know · 1 you already love')).toBeTruthy();
   expect(screen.queryByRole('checkbox', { name: /Bar Margaux/ })).toBeNull();
   expect(screen.getByRole('button', { name: 'Love 1 bar' })).toBeTruthy();
+});
+
+test('a bar they hid is not offered', async () => {
+  mockHidden = [{ id: 'olo' }];
+  await renderWithTamagui(<GoogleImportSheet visible onClose={jest.fn()} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Choose the file' }));
+  expect(await screen.findByRole('button', { name: 'Love 2 bars' })).toBeTruthy();
+  expect(screen.queryByRole('checkbox', { name: /Bar Olo/ })).toBeNull();
 });
 
 test('a file that is not from Google Maps says so and saves nothing', async () => {

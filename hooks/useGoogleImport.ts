@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { allRowsById } from '@/lib/allRows';
 import { matchPlaces, type BarCandidate, type SavedPlace } from '@/lib/googleTakeout';
@@ -15,12 +15,20 @@ export type ImportBar = BarCandidate & { avatar_url: string | null };
  * Upgrade path: an RPC that takes rounded map squares and returns the bars in them.
  */
 export function useMatchSavedPlaces() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: async (places: SavedPlace[]) => {
-      const bars = await allRowsById<ImportBar>((after, size) => {
-        let query = supabase.from('profiles').select('id, display_name, avatar_url, latitude, longitude, locality, city').eq('kind', 'bar').eq('is_public', true).eq('is_closed', false);
-        if (after) query = query.gt('id', after);
-        return query.order('id').limit(size);
+      // Kept a few minutes in memory (never saved), so a second file doesn't read every bar again.
+      const bars = await qc.fetchQuery({
+        queryKey: ['import-bars'],
+        staleTime: 5 * 60_000,
+        meta: { persist: false },
+        queryFn: () =>
+          allRowsById<ImportBar>((after, size) => {
+            let query = supabase.from('profiles').select('id, display_name, avatar_url, latitude, longitude, locality, city').eq('kind', 'bar').eq('is_public', true).eq('is_closed', false);
+            if (after) query = query.gt('id', after);
+            return query.order('id').limit(size);
+          }),
       });
       return matchPlaces(places, bars);
     },

@@ -33,7 +33,8 @@ export async function pickTakeoutFile(): Promise<{ name: string; text: string } 
     return { name: file.name, text: await file.text() };
   }
   if (!documents) return null;
-  const result = await documents.getDocumentAsync({ type: ['application/json', 'text/csv', 'text/comma-separated-values', 'text/plain'], copyToCacheDirectory: true });
+  // Android's Files often calls an unzipped .json octet-stream; readTakeout turns away anything else.
+  const result = await documents.getDocumentAsync({ type: ['application/json', 'text/csv', 'text/comma-separated-values', 'text/plain', ...(Platform.OS === 'android' ? ['application/octet-stream'] : [])], copyToCacheDirectory: true });
   if (result.canceled || !result.assets[0]) return null;
   const file = result.assets[0];
   if ((file.size ?? 0) > MAX_BYTES) throw new Error(TOO_BIG);

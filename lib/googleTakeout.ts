@@ -209,10 +209,12 @@ export function matchPlaces<B extends BarCandidate>(places: SavedPlace[], bars: 
   for (const b of bars) {
     if (b.latitude != null && b.longitude != null) {
       const k = cell(b.latitude, b.longitude);
-      grid.set(k, [...(grid.get(k) ?? []), b]);
+      if (!grid.has(k)) grid.set(k, []);
+      grid.get(k)!.push(b);
     }
     const k = core(b.display_name).join(' ');
-    byName.set(k, [...(byName.get(k) ?? []), b]);
+    if (!byName.has(k)) byName.set(k, []);
+    byName.get(k)!.push(b);
   }
 
   const best = new Map<string, PlaceMatch<B> & { m: number }>();

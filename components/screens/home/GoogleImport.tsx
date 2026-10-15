@@ -8,6 +8,7 @@ import { useAgeGate } from '@/components/screens/safety/AgeGate';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useMatchSavedPlaces, type ImportBar } from '@/hooks/useGoogleImport';
+import { useHiddenBars } from '@/hooks/useHiddenBars';
 import { useLoveBar, useLovedBars } from '@/hooks/useKept';
 import { readTakeout, type PlaceMatch } from '@/lib/googleTakeout';
 import { canPickFiles, pickTakeoutFile, TOO_BIG } from '@/lib/pickTakeoutFile';
@@ -30,23 +31,30 @@ export function useGoogleImport(onDone: () => void) {
   const love = useLoveBar();
   const age = useAgeGate();
   const lovedIds = new Set((useLovedBars().data ?? []).map((b) => b.id));
+  // A bar they hid stays hidden: it isn't offered (#659, a bar is loved or hidden, not both).
+  const hiddenIds = new Set((useHiddenBars().data ?? []).map((b) => b.id));
+  const [picking, setPicking] = useState(false);
   const [total, setTotal] = useState(0);
   const [problem, setProblem] = useState<string | null>(null);
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
 
-  const found = match.data?.matches ?? [];
+  const found = (match.data?.matches ?? []).filter((m) => !hiddenIds.has(m.bar.id));
   const rows = found.filter((m) => !lovedIds.has(m.bar.id));
   const chosen = rows.filter((m) => ticked[m.bar.id]).map((m) => m.bar.id);
 
   const choose = async () => {
+    if (picking) return;
     setProblem(null);
     love.reset();
     let picked: Awaited<ReturnType<typeof pickTakeoutFile>>;
+    setPicking(true);
     try {
       picked = await pickTakeoutFile();
     } catch (e) {
       setProblem(e instanceof Error && e.message === TOO_BIG ? TOO_BIG : 'Couldn’t open that file. Try again.');
       return;
+    } finally {
+      setPicking(false);
     }
     if (!picked) return;
     const read = readTakeout(picked.text);
@@ -71,7 +79,7 @@ export function useGoogleImport(onDone: () => void) {
 
   const toggle = (id: string) => setTicked((t) => ({ ...t, [id]: !t[id] }));
   const already = found.length - rows.length;
-  return { choose, save, toggle, rows, ticked, chosen, total, already, problem, matching: match.isPending, matched: match.data?.count, failed: match.isError, saving: love.isPending, saveFailed: love.isError, ageSheet: age.sheet };
+  return { choose, save, toggle, rows, ticked, chosen, total, already, problem, matching: match.isPending || picking, matched: match.data?.count, failed: match.isError, saving: love.isPending, saveFailed: love.isError, ageSheet: age.sheet };
 }
 
 type GoogleImport = ReturnType<typeof useGoogleImport>;
