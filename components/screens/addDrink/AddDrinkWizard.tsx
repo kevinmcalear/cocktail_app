@@ -130,7 +130,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       {
         onSuccess: ({ id, warnings, later = [] }) => {
           clear(place);
-          if (firstRound) roundDone('house_spec');
+          if (firstRound) roundDone('house_spec', id);
           toastDone('Drink saved', draft.name.trim());
           // The reminder "Just add the name" promised: the preps whose recipes are still to write.
           const one = later.length === 1;

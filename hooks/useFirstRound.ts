@@ -66,7 +66,7 @@ export function useFirstRound() {
     ...view,
     kind,
     venue,
-    done: useCallback((key: StepKey) => write((r) => markDone(r, key)), [write]),
+    done: useCallback((key: StepKey, drinkId?: string) => write((r) => markDone(r, key, drinkId)), [write]),
     showEverything: useCallback(() => write((r) => skipAll(r, new Date().toISOString())), [write]),
     seeOpened: useCallback((tab: RoundTab) => write((r) => seeOpened(r, tab)), [write]),
     seeDone: useCallback(() => write(seeDone), [write]),

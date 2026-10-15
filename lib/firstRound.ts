@@ -47,6 +47,8 @@ export interface FirstRound {
   done_seen?: boolean;
   /** Tabs whose "is open" card was seen or dismissed. */
   seen: RoundTab[];
+  /** The house spec saved in the first step: the menu step looks for it on a menu. */
+  drink_id?: string | null;
 }
 
 /** Drink Creator is role level 35. */
@@ -95,15 +97,28 @@ export function readRound(metadata: unknown): FirstRound | null {
     skipped_at: typeof r.skipped_at === 'string' ? r.skipped_at : null,
     done_seen: r.done_seen === true,
     seen: Array.isArray(r.seen) ? r.seen.filter((t): t is RoundTab => TABS.includes(t as RoundTab)) : [],
+    drink_id: typeof r.drink_id === 'string' ? r.drink_id : null,
   };
 }
 
-export const markDone = (round: FirstRound, key: StepKey): FirstRound => (round.done.includes(key) ? round : { ...round, done: [...round.done, key] });
+export const markDone = (round: FirstRound, key: StepKey, drinkId?: string): FirstRound =>
+  round.done.includes(key) ? round : { ...round, done: [...round.done, key], ...(drinkId ? { drink_id: drinkId } : {}) };
+
+/**
+ * Whether the menu step is done: the house spec from the first step is on one
+ * of the venue's menus, or, when that step was skipped, any menu has a drink.
+ */
+export function onAMenu(round: FirstRound | null, menus: { kind: string; itemIds: string[] }[]): boolean {
+  const real = menus.filter((m) => m.kind === 'menu');
+  return round?.drink_id ? real.some((m) => m.itemIds.includes(round.drink_id as string)) : real.some((m) => m.itemIds.length > 0);
+}
 export const skipAll = (round: FirstRound, now: string): FirstRound => ({ ...round, skipped_at: now });
 export const seeOpened = (round: FirstRound, tab: RoundTab): FirstRound => (round.seen.includes(tab) ? round : { ...round, seen: [...round.seen, tab] });
 export const seeDone = (round: FirstRound): FirstRound => ({ ...round, done_seen: true });
 
 export interface RoundView {
+  /** The stored round, for checks that need more than the view (onAMenu). */
+  round: FirstRound | null;
   /** Steps are showing and tabs are held back. */
   active: boolean;
   steps: (RoundStep & { done: boolean })[];
@@ -118,7 +133,7 @@ export interface RoundView {
   showDone: boolean;
 }
 
-const NONE: RoundView = { active: false, steps: [], doneCount: 0, total: 0, current: null, hidden: [], opened: null, showDone: false };
+const NONE: RoundView = { round: null, active: false, steps: [], doneCount: 0, total: 0, current: null, hidden: [], opened: null, showDone: false };
 
 /**
  * Where a round stands. A step's tab opens when the step comes up (after the
@@ -126,14 +141,14 @@ const NONE: RoundView = { active: false, steps: [], doneCount: 0, total: 0, curr
  * it's done, so a new person starts with the Library alone.
  */
 export function roundView(round: FirstRound | null, kind: RoundKind): RoundView {
-  if (!round || round.skipped_at) return NONE;
+  if (!round || round.skipped_at) return { ...NONE, round };
   const steps = STEPS[kind].map((s) => ({ ...s, done: round.done.includes(s.key) }));
   const at = steps.findIndex((s) => !s.done);
   const doneCount = steps.filter((s) => s.done).length;
-  if (at === -1) return { ...NONE, steps, doneCount, total: steps.length, showDone: !round.done_seen };
+  if (at === -1) return { ...NONE, round, steps, doneCount, total: steps.length, showDone: !round.done_seen };
   const open = (i: number) => steps[i].done || (i === at && i > 0);
   const hidden = steps.flatMap((s, i) => (s.opens && !open(i) ? [s.opens] : []));
   const current = steps[at];
   const opened = current.opens && open(at) && !round.seen.includes(current.opens) ? current.opens : null;
-  return { active: true, steps, doneCount, total: steps.length, current, hidden, opened, showDone: false };
+  return { round, active: true, steps, doneCount, total: steps.length, current, hidden, opened, showDone: false };
 }

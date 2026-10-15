@@ -8,7 +8,7 @@ import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { OPENED_COPY } from '@/lib/firstRound';
+import { onAMenu, OPENED_COPY } from '@/lib/firstRound';
 
 import { nextLine, progressLine, RoundBars, RoundStepList, useRoundGo } from './RoundParts';
 
@@ -37,8 +37,7 @@ export function FirstRoundCard() {
   const go = useRoundGo();
   const [open, setOpen] = useState<boolean | null>(null);
   const menus = useVenueMenus(round.active && round.current?.key === 'menu' ? (round.venue?.id ?? null) : null).data;
-  const onAMenu = !!menus?.some((m) => m.barId === round.venue?.id && m.kind === 'menu' && m.itemIds.length > 0);
-  const markMenu = onAMenu && round.current?.key === 'menu';
+  const markMenu = !!menus && round.current?.key === 'menu' && onAMenu(round.round, menus.filter((m) => m.barId === round.venue?.id));
   const { done } = round;
   useEffect(() => {
     if (markMenu) done('menu');

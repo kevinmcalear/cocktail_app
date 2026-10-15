@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { markDone, readRound, roundKind, roundView, seeDone, seeOpened, skipAll, startRound } from './firstRound';
+import { markDone, onAMenu, readRound, roundKind, roundView, seeDone, seeOpened, skipAll, startRound } from './firstRound';
 
 const NOW = '2026-10-15T09:00:00Z';
 const fresh = startRound(NOW);
@@ -22,6 +22,7 @@ assert.deepEqual(readRound({ first_round: { v: 1, started_at: NOW, done: ['menu'
   skipped_at: null,
   done_seen: false,
   seen: ['menus'],
+  drink_id: null,
 });
 assert.equal(roundView(null, 'make').active, false, 'no round: every tab, no card');
 
@@ -72,5 +73,17 @@ assert.equal(v.showDone, false, 'skipping everything ends it without the done ca
 v = roundView(markDone(fresh, 'menu'), 'make');
 assert.equal(v.current?.key, 'house_spec');
 assert.deepEqual(v.hidden, ['discover'], 'Menus stays open once its step is done');
+
+// --- the menu step looks for the house spec ---
+const menus = [
+  { kind: 'menu', itemIds: ['negroni'] },
+  { kind: 'rnd', itemIds: ['trial'] },
+];
+const made = markDone(fresh, 'house_spec', 'of-1');
+assert.equal(made.drink_id, 'of-1');
+assert.equal(onAMenu(made, menus), false, 'an old menu with other drinks is not the step');
+assert.equal(onAMenu(made, [...menus, { kind: 'menu', itemIds: ['of-1'] }]), true, 'the Old Fashioned on a menu');
+assert.equal(onAMenu(made, [{ kind: 'rnd', itemIds: ['of-1'] }]), false, 'an R&D collection is not a menu');
+assert.equal(onAMenu(markDone(fresh, 'house_spec'), menus), true, 'skipped the first step: any menu with a drink');
 
 console.log('firstRound.check: ok');
