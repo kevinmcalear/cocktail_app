@@ -78,18 +78,21 @@ export function AddDrinkSheet({ section, barId, onClose, library, elsewhere, onA
       title={`Add to ${section.name}`}
       subtitle={`${sectionRule(section)} · ${section.drinks.length} in`}
       footer={
-        <>
-          <Button
-            label={`Create a new ${kind === 'cocktail' ? 'drink' : kind}`}
-            icon="plus"
-            variant="secondary"
-            // The editor puts it in this section once it's saved (useLayoutEditor).
-            onPress={() => makeIt(null)}
-          />
-          <Caption tone="muted" align="center">
-            Once it’s saved, it goes in {section.name}.
-          </Caption>
-        </>
+        // A typed name has its own Make in the list.
+        missing ? undefined : (
+          <>
+            <Button
+              label={`Create a new ${kind === 'cocktail' ? 'drink' : kind}`}
+              icon="plus"
+              variant="secondary"
+              // The editor puts it in this section once it's saved (useLayoutEditor).
+              onPress={() => makeIt(null)}
+            />
+            <Caption tone="muted" align="center">
+              Once it’s saved, it goes in {section.name}.
+            </Caption>
+          </>
+        )
       }
     >
       {/* Only the rows in view are drawn: a venue's library can be hundreds of sketched drinks. */}
