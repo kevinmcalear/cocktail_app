@@ -4,6 +4,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
 import { track } from '@/lib/analytics';
 import { viewerScoped } from '@/lib/authCache';
+import { allRowsById } from '@/lib/allRows';
 import { toTopDrink, type BarTopDrink } from '@/lib/barTopDrinks';
 import { fromSharedBarRow, fromSharedRow, toHadDrink, type BarTally, type HadDrink, type HadRow, type SharedBarRow, type SharedHadRow } from '@/lib/hadDrinks';
 import type { ItemImageLink } from '@/lib/itemImages';
@@ -49,17 +50,26 @@ const ENTRY_COLUMNS = `
 /**
  * A bar's published drink you ranked as a guest: `items` hides it from you,
  * so the embedded drink comes back empty. Fill its name and picture from
- * published_items. One the bar has since unpublished stays empty.
+ * published_items. One whose bar went Private (or stopped publishing it)
+ * keeps just its name in your list (my_ranked_drink_names).
  */
 export async function withPublishedItems<T extends { item_id: string; item: { name: string; item_images: ItemImageLink[] | null } | null }>(rows: T[]): Promise<T[]> {
   const missing = [...new Set(rows.filter((r) => !r.item).map((r) => r.item_id))];
   if (!missing.length) return rows;
   const published = await fetchPublished(missing);
+  const unlisted = missing.filter((id) => !published.some((p) => p.id === id));
+  const named = unlisted.length ? await supabase.rpc('my_ranked_drink_names', { p_item_ids: unlisted }) : { data: [], error: null };
+  if (named.error) throw named.error;
+  const names = new Map(((named.data ?? []) as { item_id: string; name: string }[]).map((n) => [n.item_id, n.name]));
   return rows.map((r) => {
-    const d = r.item ? null : published.find((p) => p.id === r.item_id);
-    if (!d) return r;
-    const item_images: ItemImageLink[] = d.imageUrl ? [{ angle: 'hero', is_generated: d.imageIsGenerated, images: { url: d.imageUrl } }] : [];
-    return { ...r, item: { name: d.name, item_images } };
+    if (r.item) return r;
+    const d = published.find((p) => p.id === r.item_id);
+    if (d) {
+      const item_images: ItemImageLink[] = d.imageUrl ? [{ angle: 'hero', is_generated: d.imageIsGenerated, images: { url: d.imageUrl } }] : [];
+      return { ...r, item: { name: d.name, item_images } };
+    }
+    const name = names.get(r.item_id);
+    return name ? { ...r, item: { name, item_images: [] } } : r;
   });
 }
 
@@ -109,6 +119,27 @@ export function useMyHadDrinks() {
       const { data, error } = await supabase.from('rank_entry_scores').select(HAD_COLUMNS).eq('user_id', userId!);
       if (error) throw error;
       return (await withPublishedItems((data ?? []) as unknown as HadRow[])).map(toHadDrink);
+    },
+  });
+}
+
+/**
+ * The drinks I've had or ranked, by id: Discover's "Not had yet". A rank
+ * entry is a drink had (at a bar, or made at home). Read only when asked
+ * (`enabled`), and kept fresh by ranking (it's under 'my-had').
+ */
+export function useMyHadIds(enabled = true) {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['my-had', userId, 'ids'],
+    enabled: enabled && !!userId,
+    queryFn: async (): Promise<string[]> => {
+      const rows = await allRowsById<{ id: string; item_id: string }>((after, size) => {
+        let query = supabase.from('rank_entries').select('id, item_id').eq('user_id', userId!);
+        if (after) query = query.gt('id', after);
+        return query.order('id').limit(size);
+      });
+      return [...new Set(rows.map((r) => r.item_id))];
     },
   });
 }

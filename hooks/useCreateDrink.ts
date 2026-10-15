@@ -4,6 +4,7 @@ import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
 import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
+import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
@@ -184,13 +185,15 @@ export function useCreateDrink() {
       const glassId = draft.glass ? await ensure(draft.glass, 'glassware') : null;
       const iceId = draft.ice ? await ensure(draft.ice, 'ice') : null;
 
-      // A venue's drink is credited to the venue too.
-      let originBar: string | null = null;
+      // A venue's drink is credited to the venue too; one added at home, to the bar it was first made at.
+      let originBar: string | null = barId ? null : (draft.place?.id ?? null);
       if (barId) {
         const { data } = await supabase.from('profiles').select('id').eq('bar_id', barId).eq('kind', 'bar').limit(1).maybeSingle();
         originBar = data?.id ?? null;
       }
       const creatorId = creatorProfileId(draft, myProfileId);
+      // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
+      const otherBar = !barId && !!originBar;
 
       const row = {
         id: undefined as string | undefined,
@@ -198,15 +201,17 @@ export function useCreateDrink() {
         item_type: 'cocktail',
         bar_id: barId,
         description: draft.description.trim() || null,
-        notes: draft.notes.trim() || null,
+        // "Just me" notes are kept apart, as yours (below).
+        notes: draft.notesPrivate ? null : draft.notes.trim() || null,
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
         ice_id: iceId,
         riff_of_id: draft.riffOf?.id ?? null,
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
+        origin_year: draft.originYear ?? null,
         // You can claim your own credit; anyone else's starts as suggested.
-        credit_status: creatorId && creatorId === myProfileId ? 'claimed' : null,
+        credit_status: creatorId && creatorId === myProfileId && !otherBar ? 'claimed' : null,
       };
       // Under the draft's id, so it's drawn with the wizard's seed. A clash
       // (an earlier try that saved but never answered) gets an id of its own.
@@ -245,6 +250,15 @@ export function useCreateDrink() {
       if (coIds.length) {
         const { error } = await supabase.from('item_co_creators').insert(coIds.map((profile_id) => ({ item_id: id, profile_id })));
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
+      }
+
+      // "Just me": the notes are yours alone, never the drink's.
+      if (draft.notesPrivate && draft.notes.trim()) {
+        try {
+          await savePrivateNote(id, draft.notes);
+        } catch {
+          warnings.push(`Your note wasn’t saved: “${draft.notes.trim().slice(0, 80)}”. Add it again on the drink’s page.`);
+        }
       }
 
       // Photos picked on the review: the hero and the service angles. One that
@@ -295,6 +309,7 @@ export function useCreateDrink() {
       if (newSpecs) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);
       if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
+      if (draft.notesPrivate) void qc.invalidateQueries({ queryKey: ['private-note', id] });
       return { id, warnings, created, later };
     },
     onSuccess: (_, { barId, menuSectionId }) => track('drink_created', { at_bar: !!barId, on_menu: !!menuSectionId }),

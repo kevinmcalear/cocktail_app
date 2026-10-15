@@ -1,6 +1,6 @@
 // Bar claim verification: a bar proves it's theirs by its own email domain,
 // a code in its Instagram bio, or a code read out on a call, and approval
-// makes a venue with the claimant as Admin and the page Locked
+// makes a venue with the claimant as Admin and the page at Menu (20261024200000)
 // (supabase/migrations/20261007220000_bar_claim_verification.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
@@ -81,7 +81,7 @@ after(async () => {
 });
 
 describe('bar claim verification', () => {
-  test('an email at the bar\'s own website domain claims the page on the spot, Locked, with the claimant as Admin', async () => {
+  test('an email at the bar\'s own website domain claims the page on the spot, at Menu, with the claimant as Admin', async () => {
     const { data, error } = await claim('owner', 'Moth', 'email', { p_note: 'Jo, bar manager' });
     assert.ifError(error);
     assert.equal(data.status, 'approved');
@@ -93,10 +93,10 @@ describe('bar claim verification', () => {
 
     const page = await pageRow('Moth');
     assert.ok(page.bar_id, 'the page has a venue');
-    assert.equal(page.page_visibility, 'locked', 'and starts Locked');
+    assert.equal(page.page_visibility, 'description', 'and starts at Menu');
     const bar = (await db.query('SELECT name, page_visibility FROM public.bars WHERE id = $1', [page.bar_id])).rows[0];
     assert.equal(bar.name, `Moth ${run}`);
-    assert.equal(bar.page_visibility, 'locked');
+    assert.equal(bar.page_visibility, 'description');
     const role = (await db.query('SELECT role_level FROM public.user_bars WHERE bar_id = $1 AND user_id = $2', [page.bar_id, users.owner.id])).rows[0];
     assert.equal(role?.role_level, 40, 'the claimant is its Admin');
   });
@@ -181,10 +181,10 @@ describe('bar claim verification', () => {
     const spoken = `${data.code.slice(0, 3)} ${data.code.slice(3)}`;
     const right = await users.moderator.client.rpc('approve_profile_claim', { p_claim_id: data.id, p_code: spoken });
     assert.ifError(right.error);
-    assert.equal((await pageRow('Ring')).page_visibility, 'locked');
+    assert.equal((await pageRow('Ring')).page_visibility, 'description');
     const { data: mine } = await users.caller.client.from('bars').select('id, page_visibility');
     assert.equal(mine.length, 1, 'the claimant now has the venue');
-    assert.equal(mine[0].page_visibility, 'locked');
+    assert.equal(mine[0].page_visibility, 'description');
   });
 
   test('a moderator turns a claim down with a reason the claimant sees', async () => {
@@ -211,7 +211,7 @@ describe('bar claim verification', () => {
     assert.match(data.decline_reason, /claimed this page first/);
   });
 
-  test('an Admin can link the venue they already run, which then starts Locked', async () => {
+  test('an Admin can link the venue they already run, which then starts at Menu', async () => {
     const bar = (await db.query("INSERT INTO public.bars (name) VALUES ($1) RETURNING id, page_visibility", [`Existing ${run}`])).rows[0];
     assert.equal(bar.page_visibility, 'open');
     await db.query('INSERT INTO public.user_bars (bar_id, user_id, role_level) VALUES ($1, $2, 40), ($1, $3, 30)', [bar.id, users.venueAdmin.id, users.busy.id]);
@@ -223,7 +223,7 @@ describe('bar claim verification', () => {
     assert.ifError(approved.error);
     assert.equal(approved.data.bar_id, bar.id);
     const after = (await db.query('SELECT page_visibility FROM public.bars WHERE id = $1', [bar.id])).rows[0];
-    assert.equal(after.page_visibility, 'locked');
+    assert.equal(after.page_visibility, 'description');
     await db.query('DELETE FROM public.profiles WHERE bar_id = $1', [bar.id]);
     await db.query('DELETE FROM public.bars WHERE id = $1', [bar.id]);
   });

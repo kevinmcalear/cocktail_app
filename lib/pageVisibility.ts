@@ -1,25 +1,34 @@
 /**
  * Who sees a bar's page (bars.page_visibility, copied to the bar's profile).
- * An unclaimed bar is 'description'. The database keeps the specs back
+ * An unclaimed bar is 'description' (Menu). The database keeps the specs back
  * (public.is_spec_locked, app_recipe_presentation); this is the copy and the
  * page-level rule the app shows.
  */
 
-export type PageVisibility = 'locked' | 'description' | 'open';
+export type PageVisibility = 'private' | 'locked' | 'description' | 'open';
 
-export const PAGE_VISIBILITIES: PageVisibility[] = ['locked', 'description', 'open'];
+export const PAGE_VISIBILITIES: PageVisibility[] = ['private', 'locked', 'description', 'open'];
 
-/** What each setting shows people outside the venue, and what a guest will see. */
+/**
+ * What each setting shows people outside the venue, and what a guest will see.
+ * The labels are the ladder's names (Private, Names, Menu, Open); the stored values keep
+ * their old names so nothing in the database moves.
+ */
 export const PAGE_COPY: Record<PageVisibility, { label: string; detail: string; preview: string }> = {
+  private: {
+    label: 'Private',
+    detail: 'Your bar’s facts, hours, people and awards. No drinks, menus or scores. For verified bars.',
+    preview: 'Your bar, hours, awards and team. Your drinks stay off your page, out of Discover and Best lists, and no scores show. Guests can still rank them in their own lists.',
+  },
   locked: {
-    label: 'Locked',
-    detail: 'Name, address, awards, people and drink names. Like a private account.',
-    preview: 'Your bar, awards and team, and the names of your drinks. No descriptions or specs.',
+    label: 'Names',
+    detail: 'Your bar, awards, people, menus and drink names. No photos, descriptions or specs.',
+    preview: 'Your bar, awards and team, your menus, and the names of your drinks. No photos, descriptions or specs.',
   },
   description: {
-    label: 'Names and descriptions',
-    detail: 'Adds what each drink is like, its photo and who made it. Specs stay private.',
-    preview: 'Every drink with its photo, a line on what it tastes like, and who made it. Specs stay with you.',
+    label: 'Menu',
+    detail: 'Adds each drink’s photo, description and ingredients, without amounts. Amounts and methods stay private.',
+    preview: 'Every drink with its photo, what it tastes like, who made it and what goes in it, without amounts. House-made ingredients just say House ingredient. Amounts and methods stay with you.',
   },
   open: {
     label: 'Open',
@@ -36,8 +45,26 @@ export function pageLocksSpecs(visibility: PageVisibility | null | undefined, on
   return !!visibility && visibility !== 'open' && !onTeam;
 }
 
-/** Whether descriptions show: only a locked page hides them. */
-export const pageShowsDescriptions = (visibility: PageVisibility | null | undefined) => visibility !== 'locked';
+/** Whether descriptions show: Names and Private hide them. */
+export const pageShowsDescriptions = (visibility: PageVisibility | null | undefined) => visibility !== 'locked' && visibility !== 'private';
+
+/** Whether a bar's page lists its drinks, menus and scores at all: Private keeps them to its team. */
+export const pageShowsDrinks = (visibility: PageVisibility | null | undefined, onTeam: boolean) => onTeam || visibility !== 'private';
+
+/** How often a venue can change who sees its page (private.guard_bar_page_visibility). */
+export const PAGE_CHANGE_DAYS = 30;
+
+/** When the next change is allowed, or null when it is now. */
+export function nextPageChange(changedAt: string | null | undefined, now = Date.now()): Date | null {
+  if (!changedAt) return null;
+  const next = new Date(Date.parse(changedAt) + PAGE_CHANGE_DAYS * 86_400_000);
+  return next.getTime() > now ? next : null;
+}
+
+/** Why a Private bar's page has no drinks (ppl-bar-private); a signed-in guest's rankings stay theirs. */
+export function privatePageNote(bar: string, signedIn: boolean): string {
+  return `${bar} keeps its drinks and menus to its team.${signedIn ? ' Drinks you have ranked here stay in your own lists.' : ''}`;
+}
 
 /** The note under a locked spec, for one drink or a bar's page of them. */
 export function specLockNote(bar: string, unclaimed: boolean, one: boolean): string {

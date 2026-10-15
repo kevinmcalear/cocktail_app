@@ -1,11 +1,16 @@
+import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
+import * as Updates from 'expo-updates';
 import { useState, useSyncExternalStore } from 'react';
-import { View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
+import { Caption } from '@/components/ds';
 import { SafetyLinks, type LinkRowProps } from '@/components/screens/safety/SafetyLinks';
 import { ReportProblemSheet } from '@/components/screens/settings/ReportProblemSheet';
+import { useFirstRound } from '@/hooks/useFirstRound';
 import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { analyticsAvailable, analyticsOptedOut, subscribeAnalytics } from '@/lib/analytics';
+import { space } from '@/constants/tokens';
 import { saveAnalyticsChoice } from '@/lib/analyticsChoice';
 import { confirmAsync, showMessage } from '@/lib/dialogs';
 import { invokeFunction } from '@/lib/invokeFunction';
@@ -35,6 +40,12 @@ function AnalyticsSwitch() {
 export function AccountSection() {
   const router = useRouter();
   const [reporting, setReporting] = useState(false);
+  const { replay: restart, venue } = useFirstRound();
+  const replay = () => {
+    restart();
+    if (venue) router.navigate('/library');
+    else showMessage('First round', 'It starts the next time you open a venue.');
+  };
   const linkRow = ({ label, detail, icon, onPress }: LinkRowProps) => (
     <View key={label}>
       <RowDivider />
@@ -44,6 +55,7 @@ export function AccountSection() {
   return (
     <SettingsSection title="Privacy and support">
       <SettingsRow label="Help and support" detail="Questions people ask, and how to reach a person" icon="questionmark" onPress={() => router.push('/support')} />
+      {linkRow({ label: 'Replay the first round', detail: 'The short intro at a venue that opens the app a bit at a time', icon: 'arrow.clockwise', onPress: replay })}
       {linkRow({ label: 'Report a problem', detail: 'Something broken or wrong in the app', icon: 'exclamationmark.triangle', onPress: () => setReporting(true) })}
       <SafetyLinks row={linkRow} />
       {linkRow({ label: 'Privacy policy', icon: 'lock.fill', onPress: () => router.push('/legal/privacy') })}
@@ -97,3 +109,25 @@ export function SignOutSection({ onLogOut }: { onLogOut: () => void }) {
     </SettingsSection>
   );
 }
+
+/**
+ * Which build and over-the-air update this phone runs, so "is the new version
+ * on my phone?" has an answer. Quiet, at the foot of Settings. Native only:
+ * the web always loads the latest.
+ */
+export function AppVersion() {
+  if (Platform.OS === 'web') return null;
+  const build = Application.nativeBuildVersion ? ` (${Application.nativeBuildVersion})` : '';
+  const runtime = Updates.runtimeVersion ? ` · runtime ${Updates.runtimeVersion}` : '';
+  const created = Updates.createdAt?.toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const update = Updates.isEmbeddedLaunch || !Updates.updateId ? 'built in' : [Updates.updateId.slice(0, 8), created].filter(Boolean).join(', ');
+  return (
+    <Caption tone="muted" selectable style={styles.version}>
+      {`Version ${Application.nativeApplicationVersion ?? '?'}${build}${runtime}\nUpdate ${update}`}
+    </Caption>
+  );
+}
+
+const styles = StyleSheet.create({
+  version: { paddingHorizontal: space.lg },
+});

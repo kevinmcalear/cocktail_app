@@ -40,15 +40,18 @@ function SearchTab() {
 
 function useSearchTabState(): SearchTabState {
   const mine = useSearchMine();
-  // ?q= carries a search in from elsewhere (My Bar's "Search every drink for “rye”").
-  const { q } = useLocalSearchParams<{ q?: string }>();
+  // ?q= carries a search in from elsewhere (My Bar's "Search every drink for “rye”"),
+  // and ?scope=everywhere where it starts (Library's "Search everywhere for “neg”").
+  const { q, scope: carriedScope } = useLocalSearchParams<{ q?: string; scope?: string }>();
+  const everywhere = carriedScope === 'everywhere' ? 'everywhere' : null;
   const [query, setQuery] = useState(q ?? '');
   const [carried, setCarried] = useState(q);
+  const [picked, pickScope] = useState<SearchScope | null>(everywhere);
   if (q !== carried) {
     setCarried(q);
     if (q) setQuery(q);
+    if (everywhere) pickScope(everywhere);
   }
-  const [picked, pickScope] = useState<SearchScope | null>(null);
   const scope = picked ?? mine.defaultScope;
   // The type chips: All, Drinks 4, Ingredients 2. A new place starts back on All.
   const [show, setShow] = useState<SearchShow>('all');

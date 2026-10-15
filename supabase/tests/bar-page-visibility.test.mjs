@@ -1,6 +1,6 @@
 // Bar page visibility: an unclaimed bar's drinks show names, credits and
-// descriptions but not their specs, and a claimed bar's Admins choose Locked,
-// Names + descriptions or Open
+// descriptions but not their specs, and a claimed bar's Admins choose Private,
+// Names ('locked'), Menu ('description') or Open (20261024200000)
 // (supabase/migrations/20261007130000_bar_page_visibility.sql). Signed out
 // sees the same card, never a spec (20261009300000_signed_out_drink_cards.sql).
 // Runs against the local stack only: `npm run test:security`.
@@ -109,6 +109,8 @@ before(async () => {
 
 after(async () => {
   const like = `%${run}%`;
+  await db.query('DELETE FROM public.rank_entries WHERE user_id = $1', [users.stranger?.id]);
+  await db.query('DELETE FROM public.menus WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.profiles WHERE handle LIKE $1', [like]);
   await db.query('DELETE FROM public.bars WHERE name LIKE $1', [like]);
@@ -240,6 +242,121 @@ describe('a claimed bar chooses who sees its page', () => {
     assert.ok(sketch.error || sketch.data.length === 0, 'anon reads no drawing');
     assert.deepEqual(await specRows(users.stranger.client, 'ryeSour'), []);
     await setPage(ids.bar, 'open');
+  });
+});
+
+describe('Private (the 15 Oct ladder, 20261024200000)', () => {
+  const rpc = async (client, fn, args) => {
+    const { data, error } = await client.rpc(fn, args);
+    assert.ifError(error);
+    return data;
+  };
+
+  before(async () => {
+    // A started menu with the venue drink, and a private house prep in its spec.
+    const menu = await serviceInsert('menus', { bar_id: ids.bar, name: `Autumn ${run}`, kind: 'menu', starts_at: new Date(Date.now() - 86_400_000).toISOString() });
+    await serviceInsert('menu_drinks', { menu_id: menu.id, item_id: ids.items.house, sort_order: 0 });
+    // Kept private: the bar's default would otherwise publish it, and a published prep is named (#502).
+    ids.items.prep = (await serviceInsert('items', { name: `Pear cordial ${run}`, item_type: 'ingredient', bar_id: ids.bar, publish_mode: 'private' })).id;
+    await serviceInsert('recipes', { recipe_item_id: ids.items.house, ingredient_item_id: ids.items.prep, amount: 15, unit: 'ml', sort_order: 1 });
+    await db.query('UPDATE public.bars SET page_visibility_changed_at = NULL WHERE id = $1', [ids.bar]);
+  });
+
+  test('Menu names a house prep "House ingredient" and the shared gin by name, never amounts', async () => {
+    await setPage(ids.bar, 'description');
+    const lines = await rpc(anon, 'public_drink_ingredients', { p_item_ids: [ids.items.house] });
+    assert.deepEqual(lines.map((l) => l.name), [`Gin ${run}`, 'House ingredient']);
+    assert.ok(lines.every((l) => !('amount' in l)));
+  });
+
+  test("Private: the bar's drinks leave the listing, its menus and top drinks; its page facts stay", async () => {
+    await setPage(ids.bar, 'locked');
+    assert.equal((await rpc(users.stranger.client, 'get_menu_editions', { p_profile_id: ids.claimed })).length, 1, 'Names still shows its menus');
+    await setPage(ids.bar, 'private');
+    const page = await anon.from('profiles').select('display_name, page_visibility').eq('id', ids.claimed).single();
+    assert.equal(page.data.page_visibility, 'private');
+    assert.equal(await published(anon, 'house'), null);
+    assert.equal(await published(anon, 'ryeSour'), null);
+    assert.equal(await published(users.stranger.client, 'house'), null);
+    const { data: items } = await users.stranger.client.from('items').select('id').in('id', [ids.items.ryeSour, ids.items.house]);
+    assert.deepEqual(items, []);
+    assert.deepEqual(await rpc(anon, 'public_drink_ingredients', { p_item_ids: [ids.items.house, ids.items.ryeSour] }), []);
+    assert.deepEqual(await rpc(users.stranger.client, 'get_menu_editions', { p_profile_id: ids.claimed }), []);
+    assert.deepEqual(await rpc(users.stranger.client, 'get_bar_top_drinks', { p_profile_id: ids.claimed }), []);
+    // Discover's facts drop the credited drink; Open brings it back.
+    await db.query('SELECT private.refresh_discover_facts($1)', [[ids.items.ryeSour]]);
+    assert.equal((await db.query('SELECT 1 FROM public.discover_drink_facts WHERE item_id = $1', [ids.items.ryeSour])).rowCount, 0);
+    await setPage(ids.bar, 'open');
+    await db.query('SELECT private.refresh_discover_facts($1)', [[ids.items.ryeSour]]);
+    assert.equal((await db.query('SELECT 1 FROM public.discover_drink_facts WHERE item_id = $1', [ids.items.ryeSour])).rowCount, 1);
+    await setPage(ids.bar, 'private');
+  });
+
+  test('a classic credited to a Private bar stays open', async () => {
+    await setPage(ids.bar, 'private');
+    const classic = await serviceInsert('items', { item_type: 'cocktail', name: `Rye Classic ${run}`, origin_bar_profile_id: ids.claimed });
+    await db.query('UPDATE public.items SET is_catalog = true WHERE id = $1', [classic.id]);
+    const { data } = await users.stranger.client.from('items').select('id').eq('id', classic.id);
+    assert.equal(data.length, 1);
+  });
+
+  test("the bar's own team still sees everything", async () => {
+    await setPage(ids.bar, 'private');
+    assert.equal((await specRows(users.maker.client, 'house')).length, 2);
+    assert.equal((await rpc(users.maker.client, 'get_menu_editions', { p_profile_id: ids.claimed })).length, 1);
+  });
+
+  test("a guest can still rank a Private bar's drink, and keeps its name in their own list", async () => {
+    await setPage(ids.bar, 'private');
+    const rank = await users.stranger.client
+      .from('rank_entries')
+      .insert({ item_id: ids.items.house, ranked_as_item_id: ids.items.house, venue_profile_id: ids.claimed, sentiment: 'fine', rank_key: 0, had_on: '2026-10-15' })
+      .select('id')
+      .single();
+    assert.ifError(rank.error);
+    const reorder = await users.stranger.client.from('rank_entries').update({ rank_key: 1 }).eq('id', rank.data.id).select('id');
+    assert.ifError(reorder.error);
+    assert.equal(reorder.data.length, 1);
+    const mine = await rpc(users.stranger.client, 'my_ranked_drink_names', { p_item_ids: [ids.items.house, ids.items.ryeSour] });
+    assert.deepEqual(mine, [{ item_id: ids.items.house, name: `House Fizz ${run}` }]);
+    // Someone who never ranked it learns nothing, and signed out can't ask.
+    assert.deepEqual(await rpc(users.catalogAdmin.client, 'my_ranked_drink_names', { p_item_ids: [ids.items.house] }), []);
+    assert.ok((await anon.rpc('my_ranked_drink_names', { p_item_ids: [ids.items.house] })).error);
+  });
+
+  test('at Names and Private the maker keeps name-only credit on their own profile; at Menu the drink page credits them', async () => {
+    for (const page of ['private', 'locked']) {
+      await setPage(ids.bar, page);
+      const credits = await rpc(anon, 'get_profile_name_credits', { p_profile_id: ids.person });
+      assert.deepEqual(credits.map((c) => [c.name, c.bar_name]), [[`House Fizz ${run}`, `Little Rye ${run}`]], page);
+      assert.deepEqual(Object.keys(credits[0]).sort(), ['bar_handle', 'bar_name', 'bar_profile_id', 'item_id', 'name']);
+    }
+    await setPage(ids.bar, 'description');
+    assert.deepEqual(await rpc(anon, 'get_profile_name_credits', { p_profile_id: ids.person }), []);
+    assert.equal((await published(anon, 'house')).creator_profile_id, ids.person);
+  });
+
+  test('only a verified claim may pick Private, and a bar changes its level once every 30 days', async () => {
+    await setPage(ids.bar, 'open');
+    await db.query('UPDATE public.bars SET page_visibility_changed_at = NULL WHERE id = $1', [ids.bar]);
+    const unverified = await users.admin.client.from('bars').update({ page_visibility: 'private' }).eq('id', ids.bar).select('id');
+    assert.match(unverified.error?.message ?? '', /claim on this page is verified/);
+    await db.query("INSERT INTO public.profile_claims (profile_id, user_id, status, method) VALUES ($1, $2, 'approved', 'email')", [ids.claimed, users.admin.id]);
+    const verified = await users.admin.client.from('bars').update({ page_visibility: 'private' }).eq('id', ids.bar).select('page_visibility, page_visibility_changed_at');
+    assert.ifError(verified.error);
+    assert.equal(verified.data[0].page_visibility, 'private');
+    assert.ok(verified.data[0].page_visibility_changed_at);
+    const again = await users.admin.client.from('bars').update({ page_visibility: 'open' }).eq('id', ids.bar).select('id');
+    assert.match(again.error?.message ?? '', /once every 30 days/);
+    // Clearing the date by hand doesn't get round it.
+    const cleared = await users.admin.client.from('bars').update({ page_visibility_changed_at: null, page_visibility: 'open' }).eq('id', ids.bar).select('id');
+    assert.match(cleared.error?.message ?? '', /once every 30 days/);
+    await db.query("UPDATE public.bars SET page_visibility_changed_at = now() - interval '31 days' WHERE id = $1", [ids.bar]);
+    const later = await users.admin.client.from('bars').update({ page_visibility: 'open' }).eq('id', ids.bar).select('page_visibility');
+    assert.ifError(later.error);
+    assert.equal(later.data[0].page_visibility, 'open');
+    await db.query('DELETE FROM public.profile_claims WHERE profile_id = $1', [ids.claimed]);
+    await db.query('UPDATE public.bars SET page_visibility_changed_at = NULL WHERE id = $1', [ids.bar]);
   });
 });
 
