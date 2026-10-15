@@ -8,6 +8,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useBottomBar, useBottomSearchFocus } from '@/hooks/useBottomBar';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
+import { useFirstRound } from '@/hooks/useFirstRound';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
@@ -45,7 +46,9 @@ const TABS: Record<Exclude<PhoneTab, 'new'>, WebTab> = { ...VENUE_TABS, ...HOME_
 export function useModeTabs(): WebTab[] {
   const { mode } = useMode();
   const { has } = useVenueFeatures();
-  return mode === 'home' ? [DISCOVER, ...Object.values(HOME_TABS)] : venueTabs(has).map((name) => VENUE_TABS[name]);
+  // The first round holds Menus and Discover back until their steps come up (lib/firstRound.ts).
+  const { hidden } = useFirstRound();
+  return mode === 'home' ? [DISCOVER, ...Object.values(HOME_TABS)] : venueTabs(has).flatMap((name) => ((hidden as readonly string[]).includes(name) ? [] : [VENUE_TABS[name]]));
 }
 
 /** A tab's icon. 'calendar' is Tonight's page with the date on it; the rest are symbols. */
@@ -108,7 +111,8 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
   const [creating, setCreating] = useState(false);
   // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
   const dots = useFeatureNewsDots();
-  const tabs = phoneTabs(mode === 'home', has, bottomBar).flatMap((name) => (name === 'new' ? [] : [TABS[name]]));
+  const { hidden } = useFirstRound();
+  const tabs = phoneTabs(mode === 'home', has, bottomBar).flatMap((name) => (name === 'new' || (hidden as readonly string[]).includes(name) ? [] : [TABS[name]]));
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;

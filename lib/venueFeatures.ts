@@ -7,17 +7,21 @@
  *
  * Not behind a switch, on purpose: Batch (a sheet on every drink page), the
  * drink page's Service section, and prep cards on ingredient pages.
+ *
+ * In the order Venue settings lists them (canvas first-round-and-features).
+ * `tryIt`: the feature has a sample to try before switching it on
+ * (components/bar/TryItSheet.tsx), and about how long that takes.
  */
 export const VENUE_FEATURES = [
-  { key: 'tonight', label: 'Tonight', detail: 'A Tonight tab for the shift, and This week: events, menus going on, new drinks', atHome: true },
+  { key: 'tonight', label: 'Tonight', detail: 'A Tonight tab for the shift, and This week: events, menus going on, new drinks', atHome: true, tryIt: '1 min' },
+  { key: 'backBar', label: 'Back bar', detail: 'A map of where every bottle lives, with labels to print', atHome: true, tryIt: '2 min' },
   { key: 'prep', label: 'Prep', detail: 'A Prep tab with the prep list and orders, and Prep on menus', atHome: false },
   { key: 'study', label: 'Study', detail: 'A Study tab with flash cards for the menu, and a study pile on drinks', atHome: false },
-  { key: 'backBar', label: 'Back bar', detail: 'A map of where every bottle lives, with labels to print', atHome: true },
   { key: 'history', label: 'History', detail: 'Every classic’s family tree, in the menu and search', atHome: true },
   { key: 'flavorMap', label: 'Flavor map', detail: 'What goes with what, from search', atHome: true },
   { key: 'techniques', label: 'Techniques', detail: 'Foams, clarifying, infusions and their kit, from search', atHome: true },
   { key: 'libraryExtras', label: 'More library filters', detail: 'R&D, Batched, Preps, Garnishes, Bottles, Cocktails and Needs a price in Library', atHome: true },
-] as const satisfies readonly { key: string; label: string; detail: string; atHome: boolean }[];
+] as const satisfies readonly { key: string; label: string; detail: string; atHome: boolean; tryIt?: string }[];
 
 export type VenueFeatureKey = (typeof VENUE_FEATURES)[number]['key'];
 

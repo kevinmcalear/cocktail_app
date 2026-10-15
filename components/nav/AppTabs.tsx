@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import { useDs } from '@/components/ds';
 import { useBottomBar } from '@/hooks/useBottomBar';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
+import { useFirstRound } from '@/hooks/useFirstRound';
 import { useMode } from '@/hooks/useMode';
 import { useServiceDay } from '@/hooks/useServiceDay';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
@@ -46,12 +47,14 @@ function Tabs() {
   const dots = useFeatureNewsDots();
   const isNew = (name: VenueTab) => dots.includes(name);
   const dot = (name: VenueTab) => <NativeTabs.Trigger.Badge hidden={!isNew(name)} />;
+  // The first round holds Menus and Discover back until their steps come up (lib/firstRound.ts).
+  const { hidden } = useFirstRound();
   // Venue and home have different tabs, and switching remounts them all:
   // wait for the mode (a moment, on a first launch) and the venue's switches
   // rather than open the wrong set.
   if (!ready || !features.ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
   const shown = phoneTabs(home, features.has, bottomBar);
-  const off = (name: PhoneTab) => !shown.includes(name);
+  const off = (name: PhoneTab) => !shown.includes(name) || (hidden as readonly string[]).includes(name);
   // Discover is in both modes. The rest swap, the way an account switch swaps
   // an app's tabs; home mode's index redirects to Discover. Android's Material
   // bar hides unselected labels past three tabs; "labeled" keeps every tab named.
@@ -86,7 +89,7 @@ function Tabs() {
           <NativeTabs.Trigger.Label>Study</NativeTabs.Trigger.Label>
           {dot('test')}
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="discover">
+        <NativeTabs.Trigger name="discover" hidden={off('discover')}>
           <NativeTabs.Trigger.Icon sf={{ default: 'safari', selected: 'safari.fill' }} md="explore" />
           <NativeTabs.Trigger.Label>Discover</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>

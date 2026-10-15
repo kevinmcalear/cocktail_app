@@ -23,6 +23,7 @@ export function DrinkBody({ sections: s, home }: { sections: DrinkSections; home
       </View>
       {s.intro}
       {s.journey}
+      {s.myNote}
       {s.floor}
       {s.moreHeading}
       {s.standing}

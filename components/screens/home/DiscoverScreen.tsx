@@ -68,6 +68,7 @@ export function DiscoverScreen() {
   const [kinds, setKinds] = useState<string[]>(() => (typeof kind === 'string' && kind ? [kind] : []));
   const [showClosed, setShowClosed] = useState(false);
   const [showPast, setShowPast] = useState(false); // Past menus' drinks: left out unless asked for; search finds them.
+  const [notHad, setNotHad] = useState(false); // "Not had yet": your had and ranked drinks left out.
   const [search, setSearch] = useState('');
   const [scope, setScope] = useState<SearchScope>('area');
   const mine = useSearchMine();
@@ -101,12 +102,12 @@ export function DiscoverScreen() {
   };
   const searching = search.trim().length > 0;
   const shownArea = searching && scope === 'everywhere' ? ANYWHERE : area;
-  const filter = { kinds, search, area: shownArea };
+  const filter = { kinds, search, area: shownArea, notHad: signedIn && notHad };
   const results = useDiscoverResults(filter, !locating || searching, !searching && !showPast);
   const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${locating && !searching ? 'near you' : areaLabel(shownArea)}`;
   const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
   const drink = pick ? { id: pick.id, name: pick.name } : null;
-  const closed = { count: results.closed.length, shown: showClosed, onShow: setShowClosed }, past = { shown: showPast, onShow: setShowPast };
+  const closed = { count: results.closed.length, shown: showClosed, onShow: setShowClosed }, past = { shown: showPast, onShow: setShowPast }, unhad = signedIn ? { shown: notHad, onShow: setNotHad } : undefined;
   const mapResults = { ...results, title, closed: showClosed ? results.closed : [] };
   // Nearest counts from the person, else the middle of the area.
   const from = near.status === 'ready' ? near : area.kind === 'point' ? area : null;
@@ -148,12 +149,9 @@ export function DiscoverScreen() {
   // "This area" with no area left (it went back to Anywhere) searches everywhere.
   const searchScope = scope === 'area' && !searchArea.label ? 'everywhere' : scope;
   const searchProps = { query: search, onQuery: setSearch, scope: searchScope, onScope: setScope, mine, area: searchArea, onClearKinds: () => setKinds([]), onClose: close };
-  const openBar = (ref: string) => {
-    setSheet(null);
-    router.push(`/p/${ref}`);
-  };
+  const openBar = (ref: string) => (setSheet(null), router.push(`/p/${ref}`));
 
-  const filtersOn = kinds.length + (showClosed ? 1 : 0) + (showPast ? 1 : 0);
+  const filtersOn = kinds.length + (showClosed ? 1 : 0) + (showPast ? 1 : 0) + (filter.notHad ? 1 : 0);
   const header = <DiscoverHeader query={search} onMap={phoneMap} onSearch={openSearch} onClear={() => setSearch('')} filters={filtersOn} onOptions={() => setSheet('options')} />;
   // Wide screens search in the list pane itself, so the map beside it stays live; the scopes stay while searching (disc-desk-search).
   const controls = split && (sheet === 'search' || searching) ? (
@@ -165,7 +163,7 @@ export function DiscoverScreen() {
     </View>
   );
 
-  const filterProps = { kinds, onChange: setKinds, bars: signedIn && results.totals ? results.totals.bars : null, closed, past, onClose: close };
+  const filterProps = { kinds, onChange: setKinds, bars: signedIn && results.totals ? results.totals.bars : null, closed, past, notHad: unhad, onClose: close };
   const where = { area, near, access, preferNear, onArea, onNearMe, onThisArea };
   let overlay = null;
   if (sheet === 'search' && !split) {
@@ -251,7 +249,7 @@ export function DiscoverScreen() {
             isLoading={results.isLoading}
             signedIn={signedIn}
             area={area}
-            empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
+            empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'}${filter.notHad ? ' you haven’t had' : ''} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
           />
         )}
         {searching ? null : <ClosedBars bars={results.closed} shown={showClosed} where={areaLabel(area)} onShow={setShowClosed} />}

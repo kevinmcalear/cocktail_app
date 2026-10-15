@@ -15,6 +15,7 @@ import { navCurrent } from '@/lib/shellNav';
 
 import { WeekNav } from '@/components/screens/week/WeekNav';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
+import { RoundNav } from '@/components/screens/firstRound/RoundElsewhere';
 
 import { CreateSheet } from './CreateSheet';
 import { useNavPlaces, type Place } from './navPlaces';
@@ -121,6 +122,7 @@ function Sidebar({ current, go, searching, onSearch, onNew, dots }: SideNavProps
       {nav.map(row)}
       {work.map(row)}
       <NavRow label="New" icon="plus" role="button" look="outlined" hint="N" current={false} onPress={onNew} />
+      {venue ? <RoundNav /> : null}
       {week ? <WeekNav /> : null}
       {venuePlaces.length ? (
         <>

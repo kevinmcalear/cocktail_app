@@ -14,6 +14,8 @@ jest.mock('@/hooks/useVenueFeatures', () => ({ useVenueFeatures: () => ({ ready:
 jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => false }));
 let mockDots: string[] = [];
 jest.mock('@/hooks/useFeatureNews', () => ({ useFeatureNewsDots: () => mockDots }));
+let mockHidden: string[] = [];
+jest.mock('@/hooks/useFirstRound', () => ({ useFirstRound: () => ({ hidden: mockHidden }) }));
 jest.mock('./CreateSheet', () => {
   const { Text } = jest.requireActual('react-native');
   return { CreateSheet: () => <Text>New sheet</Text> };
@@ -30,6 +32,7 @@ afterEach(() => {
   mockMode = 'home';
   mockFeatures = [];
   mockDots = [];
+  mockHidden = [];
   useSettingsStore.setState({ bottomBar: false });
   useBottomSearchFocus.setState({ focused: false });
 });
@@ -71,4 +74,12 @@ test('a tab the venue just switched on says it’s new until it’s opened', asy
   mockDots = ['index'];
   await renderWithTamagui(<WebTabBar {...props} />);
   expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(['Tonight, new', 'Library', 'Menus', 'Discover']);
+});
+
+test('the first round holds Menus and Discover back until their steps come up', async () => {
+  mockMode = 'venue';
+  mockHidden = ['menus', 'discover'];
+  await renderWithTamagui(<WebTabBar {...props} />);
+  expect(screen.getAllByRole('tab').map((t) => t.props.accessibilityLabel)).toEqual(['Library']);
+  expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
 });
