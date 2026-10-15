@@ -69,7 +69,7 @@ export function DrinkMoreMenu({ itemId, name, canEdit, onEdit, wide, onShare, te
           {edit ? <Row icon="pencil" label="Edit drink" onPick={() => (then.current = onEdit)} /> : null}
           {viewAs ? <ViewAs realRole={teamRole!} /> : null}
           {viewAs ? (
-            <Row icon="info.circle" label="What each role opens" onPick={() => (then.current = () => router.push({ pathname: '/cocktail/[id]/roles', params: { id: itemId } } as unknown as Href))} />
+            <Row icon="info.circle" label="Who sees what" onPick={() => (then.current = () => router.push({ pathname: '/cocktail/[id]/roles', params: { id: itemId } } as unknown as Href))} />
           ) : null}
           {report ? <Row icon="flag" label={`Report ${name}`} onPick={() => (then.current = () => setReporting(true))} /> : null}
         </ScrollView>
