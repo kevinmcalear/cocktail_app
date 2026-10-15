@@ -104,11 +104,11 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   };
   const back = () => (at > 0 ? go(WIZARD_STEPS[at - 1]) : onClose());
 
-  // A name passed in ("Add 'Paloma'" from search) starts a fresh draft.
+  // A name passed in ("Add 'Paloma'" from search) starts a fresh draft. With a drink to start from, it names that draft (below).
   useEffect(() => {
     const kept = useDrinkWizardStore.getState().kept[place]?.draft;
-    if (initialName?.trim() && !(kept && hasContent(kept))) patch(place, { name: initialName.trim() });
-  }, [initialName, place, patch]);
+    if (!startFrom && initialName?.trim() && !(kept && hasContent(kept))) patch(place, { name: initialName.trim() });
+  }, [initialName, startFrom, place, patch]);
 
   // Riff on this: the drink's spec fills a fresh draft; one already in progress is never overwritten.
   const startFromSpec = useStartFromClassic();
@@ -118,11 +118,11 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
     if (!startFrom || (kept && hasContent(kept))) return;
     startSpec(startFrom, {
       onSuccess: (change) => {
-        patch(place, change);
+        patch(place, initialName?.trim() ? { ...change, name: initialName.trim() } : change);
         if (firstRound) setStoredStep(place, 'review');
       },
     });
-  }, [startFrom, place, patch, startSpec, firstRound, setStoredStep]);
+  }, [startFrom, initialName, place, patch, startSpec, firstRound, setStoredStep]);
 
   const save = () =>
     create.mutate(

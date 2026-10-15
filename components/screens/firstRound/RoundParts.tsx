@@ -74,15 +74,18 @@ const isOldFashioned = (name: string) => name.trim().toLowerCase() === 'old fash
  */
 export function useRoundGo() {
   const router = useRouter();
-  const { venue } = useFirstRound();
+  const { venue, done } = useFirstRound();
   const classics = useDrinkLists().data ?? [];
   return (step: RoundStep | null) => {
     if (!step || !venue) return;
     if (step.key === 'house_spec') {
       const from = classics.find((c) => isOldFashioned(c.name))?.id;
-      router.push({ pathname: '/add-cocktail', params: from ? { barId: venue.id, from, round: '1' } : { barId: venue.id, name: 'Old Fashioned', round: '1' } });
-    } else if (step.opens === 'menus') router.navigate('/menus');
-    else if (step.opens === 'discover') router.navigate('/discover');
+      router.push({ pathname: '/add-cocktail', params: { barId: venue.id, name: 'Old Fashioned', round: '1', ...(from ? { from } : {}) } });
+    } else if (step.opens === 'menus') {
+      // A staff member's step is opening Menus: done first, so its tab is there to open (a hidden native tab may not be).
+      if (step.key === 'open_menu') done('open_menu');
+      router.navigate('/menus');
+    }    else if (step.opens === 'discover') router.navigate('/discover');
   };
 }
 
