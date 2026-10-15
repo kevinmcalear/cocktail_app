@@ -175,7 +175,7 @@ export function EditDrinkScreen({ kind: kindName, isInline, idProp, onClose, onS
             onRemove={(index) => setLocalImages(localImages.filter((_, i) => i !== index))}
             onAdd={async () => addImages(await pickDrinkPhotos())}
             onAddUris={addImages}
-            generateComponent={<GenerateImageButton type={kind.kind} id={safeId} variant="tile" />}
+            generateComponent={<GenerateImageButton type={kind.kind} id={safeId} />}
           />
           <DrinkFormFields kind={kind} form={form} />
         </ScrollView>
