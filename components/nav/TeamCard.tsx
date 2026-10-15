@@ -23,8 +23,10 @@ export function useTeamCard(barId: string | null) {
   const see = !!barId && canSeeTeam(role);
   const manage = canManageTeam(role);
   const members = useBarMembers(see ? barId : null).data;
-  const invites = useBarInvites(barId ?? '', see && manage).data ?? [];
-  const alone = manage && !!members && members.length <= 1 && invites.length === 0;
+  const invited = useBarInvites(barId ?? '', see && manage);
+  const invites = invited.data ?? [];
+  // Decided only once both have loaded, so a team with invites out never flashes Invite your team.
+  const alone = manage && !!members && members.length <= 1 && invited.isSuccess && invites.length === 0;
   return { see, manage, members, invites, alone };
 }
 

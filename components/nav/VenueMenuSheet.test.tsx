@@ -30,7 +30,7 @@ jest.mock('@/hooks/useBackBar', () => ({ useItemLocations: () => ({ data: new Ar
 let mockMembers: { user_id: string }[] = [];
 let mockInvites: object[] = [];
 jest.mock('@/hooks/useBarDetail', () => ({ useBarMembers: () => ({ data: mockMembers }) }));
-jest.mock('@/hooks/useBarInvites', () => ({ useBarInvites: () => ({ data: mockInvites }) }));
+jest.mock('@/hooks/useBarInvites', () => ({ useBarInvites: () => ({ data: mockInvites, isSuccess: true }) }));
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: ['a', 'b', 'c', 'd'] }), useBarDrinks: () => ({ canMake: new Array(7).fill({}) }) }));
 jest.mock('@/hooks/useWeek', () => ({ useBarWeek: () => ({ data: [] }), useMyWeek: () => ({ data: undefined }), useWeekStart: () => new Date(2026, 9, 10) }));
 jest.mock('@/hooks/useCollection', () => ({ useCollection: () => ({ data: { drinks: new Array(12).fill({}) } }) }));
