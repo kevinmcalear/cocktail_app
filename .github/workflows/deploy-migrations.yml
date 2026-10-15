@@ -1,8 +1,9 @@
 name: Deploy migrations
 
 # Applies supabase/migrations to the production project after a migration
-# lands on main. Merging a migration already needs Kevin's human-approved
-# label (change-policy), so that label is the production OK. Run it by hand
+# lands on main. Merging a migration already needs the human-approved label
+# (change-policy), applied by Kevin or for him on his explicit approval, so
+# that label is the production OK. Run it by hand
 # (workflow_dispatch) to catch production up when it is behind.
 #
 # Talks to the database directly through Supabase's session pooler, so it

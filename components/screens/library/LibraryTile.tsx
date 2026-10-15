@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DrinkImage, Headline, PressableScale, useDs } from '@/components/ds';
-import { displayFaces, space } from '@/constants/tokens';
+import { Caption, DrinkImage, DsText, Headline, PressableScale, useDs } from '@/components/ds';
+import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, type ItemCategory } from '@/lib/itemRoutes';
 import { pourSketch } from '@/lib/sketch/pour';
@@ -12,8 +12,10 @@ import type { SearchItem } from '@/types/search';
  * drawing; beer and wine are drawn poured), its name in the venue's display
  * face, and a line under it ("Stirred · Coupe", "Cordial · 1 L · keeps 2 weeks").
  */
-export function LibraryTile({ item, line, glassName, width, onPress, onPressIn }: {
+export function LibraryTile({ item, line, glassName, width, mark, onPress, onPressIn }: {
   item: SearchItem;
+  /** A short word over the picture: the first round's "Start here". */
+  mark?: string | null;
   line: string | null;
   /** Beer and wine: the glass it's drawn in. */
   glassName?: string | null;
@@ -25,7 +27,7 @@ export function LibraryTile({ item, line, glassName, width, onPress, onPressIn }
   const category = item.category as ItemCategory;
   const poured = category === 'Beer' || category === 'Wine' ? pourSketch(category, item.name, glassName) : null;
   return (
-    <PressableScale accessibilityLabel={`${[item.name, line].filter(Boolean).join(', ')}, open`} onPressIn={onPressIn} onPress={onPress} style={[styles.tile, { maxWidth: width }]}>
+    <PressableScale accessibilityLabel={`${[item.name, line, mark].filter(Boolean).join(', ')}, open`} onPressIn={onPressIn} onPress={onPress} style={[styles.tile, { maxWidth: width }]}>
       <DrinkImage
         thumb
         itemId={item.id}
@@ -35,6 +37,13 @@ export function LibraryTile({ item, line, glassName, width, onPress, onPressIn }
         sketch={poured}
         accessibilityLabel={item.name}
       />
+      {mark ? (
+        <View style={[styles.mark, { backgroundColor: ds.c.ground }]}>
+          <DsText variant="caption" style={styles.markText}>
+            {mark}
+          </DsText>
+        </View>
+      ) : null}
       <View style={styles.text}>
         <Headline numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
           {item.name}
@@ -52,4 +61,6 @@ export function LibraryTile({ item, line, glassName, width, onPress, onPressIn }
 const styles = StyleSheet.create({
   tile: { flex: 1, gap: space.sm },
   text: { gap: 2 },
+  mark: { position: 'absolute', top: space.sm, left: space.sm, paddingHorizontal: space.sm + 2, paddingVertical: space.xs, borderRadius: radius.pill },
+  markText: { fontFamily: fontFamilies.bodyMedium },
 });

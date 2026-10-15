@@ -9,6 +9,8 @@ import { useWebNav } from '@/hooks/useIsWideWeb';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
+import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
+import { useFirstRound } from '@/hooks/useFirstRound';
 import { Filter, FilterRow } from '@/components/screens/library/LibraryChips';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
@@ -78,6 +80,8 @@ export function LibraryScreen() {
   const staff = useStaffList(activeId);
   const { data: specs } = useDropdowns();
   const [now] = useState(() => Date.now());
+  // The first round's first step points at the Old Fashioned.
+  const startHere = useFirstRound().current?.key === 'house_spec';
 
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
   const shelves = useVenueShelves(activeId, published);
@@ -137,6 +141,7 @@ export function LibraryScreen() {
   const header = (
     <View style={styles.header}>
       <PageHeader title="Library" width="full" display />
+      <FirstRoundCard />
       {/* The staff list is dragged into order, so it isn't narrowed. */}
       {staffView ? null : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />}
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
@@ -234,6 +239,7 @@ export function LibraryScreen() {
                 line={lineOf(item)}
                 glassName={glassName(item)}
                 width={`${100 / columns}%`}
+                mark={startHere && item.name.trim().toLowerCase() === 'old fashioned' ? 'Start here' : null}
                 onPressIn={category === 'Cocktail' ? () => prefetch(item.id, { name: item.name, item_images: item.item_images }) : undefined}
                 onPress={() => router.push(itemHref(category, item.id) as never)}
               />
@@ -243,6 +249,7 @@ export function LibraryScreen() {
           ListFooterComponent={foot ?? undefined}
         />
       )}
+      <RoundOpened />
       {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
       {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}
     </View>

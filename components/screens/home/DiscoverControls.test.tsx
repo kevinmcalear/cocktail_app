@@ -41,6 +41,19 @@ test('filters pick several at once and clear together', async () => {
   expect(screen.getByRole('button', { name: 'Show 3 bars' })).toBeTruthy();
 });
 
+test('"Not had yet" shows only when signed in, and clears with the rest', async () => {
+  const props = { kinds: [], onChange: jest.fn(), bars: 3, closed: { count: 0, shown: false, onShow: jest.fn() }, past: { shown: false, onShow: jest.fn() }, onClose: () => {} };
+  const { rerender } = await renderWithTamagui(<FiltersSheet {...props} />);
+  expect(screen.queryByRole('checkbox', { name: 'Not had yet' })).toBeNull();
+
+  const onNotHad = jest.fn();
+  await rerender(<FiltersSheet {...props} notHad={{ shown: false, onShow: onNotHad }} />);
+  await fireEvent.press(screen.getByRole('checkbox', { name: 'Not had yet', checked: false }));
+  expect(onNotHad).toHaveBeenLastCalledWith(true);
+  await fireEvent.press(screen.getByRole('button', { name: 'Clear' }));
+  expect(onNotHad).toHaveBeenLastCalledWith(false);
+});
+
 test('options: list or map closes the sheet; where and filters keep it open', async () => {
   const onClose = jest.fn();
   const onView = jest.fn();

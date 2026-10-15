@@ -14,7 +14,7 @@
 
 ## Reference
 
-- [docs/change_policy.md](docs/change_policy.md): what CI classifies as blast-radius (migrations, RLS, auth, `lib/roles.ts`) and needs Kevin's `human-approved` label
+- [docs/change_policy.md](docs/change_policy.md): what CI classifies as blast-radius (migrations, RLS, auth, `lib/roles.ts`) and needs the `human-approved` label on Kevin's approval
 - [docs/store-submission.md](docs/store-submission.md): App Store and Play submission notes
 - [lib/roles.ts](lib/roles.ts): role levels and what each can see
 - [constants/tokens.ts](constants/tokens.ts): Back Bar colours, type, radius. New screens use these via `components/ds`

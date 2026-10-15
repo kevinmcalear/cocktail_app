@@ -27,6 +27,8 @@ interface EditorSectionProps {
   onSettings: () => void;
   /** A home menu: no prices on the rows. */
   home?: boolean;
+  /** Drinks made from this menu just now, marked New. */
+  made?: string[];
   onRemove: (drinkId: string) => void;
   onReorder: (drinks: MenuDrink[]) => void;
   onMove: (from: number, to: number) => void;
@@ -43,7 +45,7 @@ const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : Draggab
  * reorder), and adding more. No box of its own: on desktop the section the
  * library adds to sits on a raised ground, tagged "Adding here".
  */
-export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, onRemove, onReorder, onMove, onMoveTo, drag: web }: EditorSectionProps) {
+export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, made, onRemove, onReorder, onMove, onMoveTo, drag: web }: EditorSectionProps) {
   const ds = useDs();
   const count = section.drinks.length;
   const line = sectionLine(section);
@@ -55,6 +57,7 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
       index={getIndex() ?? 0}
       count={count}
       home={home}
+      isNew={!!made?.includes(item.id)}
       active={isActive}
       drag={web ? noDrag : drag}
       web={web ? { from: section.key, slot: web.at === getIndex() ? 'before' : web.at === count && getIndex() === count - 1 ? 'after' : null, dragging: web.dragging === item.id } : undefined}
