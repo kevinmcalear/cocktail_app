@@ -1,3 +1,4 @@
+import { foldName } from '@/lib/discover';
 import { compareSearchItems, matchesQuery } from '@/lib/publicDrinks';
 import type { SearchItem } from '@/types/search';
 
@@ -9,8 +10,8 @@ import type { SearchItem } from '@/types/search';
  */
 export type SearchScope = 'mine' | 'area' | 'everywhere';
 
-/** How many rows each group shows before "All 12". */
-export const PER_GROUP = 4;
+/** How many rows each group shows before "All 12" (three, as the search boards draw it). */
+export const PER_GROUP = 3;
 /**
  * Rows each tap on "Show more" adds. Results sit in scroll views (and
  * Discover's sheet) that don't virtualize, so a long group grows a page at a time.
@@ -59,4 +60,42 @@ export function groupCatalog(items: readonly SearchItem[], query: string): Catal
 /** "Drinks · 3": a group's heading, with how many there are. */
 export function groupLabel(label: string, count: number): string {
   return count ? `${label} · ${count}` : label;
+}
+
+/** The type chips over the results: everything, or one kind. */
+export type SearchShow = 'all' | 'drinks' | 'bars' | 'people' | 'ingredients' | 'menus';
+
+/** How many of each kind the results found, for the type chips' counts. */
+export type ShowCounts = Partial<Record<Exclude<SearchShow, 'all'>, number>>;
+
+const SHOW_LABEL: Record<Exclude<SearchShow, 'all'>, string> = { drinks: 'Drinks', bars: 'Bars', people: 'People', ingredients: 'Ingredients', menus: 'Menus' };
+
+/** The chips: All, then each kind that found something, in this order. None when only one kind found anything. */
+export function showOptions(counts: ShowCounts): { value: SearchShow; label: string; count?: number }[] {
+  const kinds = (Object.keys(SHOW_LABEL) as Exclude<SearchShow, 'all'>[]).filter((k) => (counts[k] ?? 0) > 0);
+  if (kinds.length < 2) return [];
+  return [{ value: 'all', label: 'All' }, ...kinds.map((k) => ({ value: k, label: SHOW_LABEL[k], count: counts[k] }))];
+}
+
+/** Whether a group of this kind shows under the picked chip. */
+export function shows(show: SearchShow | undefined, kind: Exclude<SearchShow, 'all'>): boolean {
+  return !show || show === 'all' || show === kind;
+}
+
+/**
+ * What the typed word could finish as ("negr" to "negroni"): names among the
+ * results that start with it, lower-cased, shortest first, at most `max`.
+ * None for one letter, or once the query is a whole name.
+ */
+export function completions(names: readonly string[], query: string, max = 2): string[] {
+  const q = foldName(query);
+  if (q.length < 2) return [];
+  const out: string[] = [];
+  for (const name of names) {
+    const n = foldName(name);
+    if (n === q) return [];
+    if (!n.startsWith(q) || out.includes(n)) continue;
+    out.push(n);
+  }
+  return out.sort((a, b) => a.length - b.length).slice(0, max);
 }

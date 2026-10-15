@@ -1,0 +1,172 @@
+import { useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, View } from 'react-native';
+
+import { Caption, Chip, DrinkImage, DsText, Headline, MatchText, PressableScale, RowScore, scoreWords, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { useDrinkLists } from '@/hooks/useDiscover';
+import { withAlpha } from '@/lib/color';
+import { foldName } from '@/lib/discover';
+import { STYLES } from '@/lib/drinkStyles';
+import { showOptions, type SearchShow, type ShowCounts } from '@/lib/searchScope';
+
+/**
+ * "Little Rye ⌄" inside the search field: where the search looks. A tap
+ * switches to the other place (the search tab only has two).
+ */
+export function ScopeToken({ label, onPress }: { label: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale
+      role="button"
+      accessibilityLabel={`Searching ${label}. Change where to search`}
+      onPress={onPress}
+      style={[styles.token, { backgroundColor: withAlpha(ds.accentText, 0.2) }]}
+    >
+      <DsText variant="label" color={ds.accentText} numberOfLines={1} style={styles.tokenText}>
+        {label}
+      </DsText>
+      <IconSymbol name="chevron.down" size={12} color={ds.accentText} />
+    </PressableScale>
+  );
+}
+
+/** All, Drinks 4, Ingredients 2, Menus 1: what the results show. Nothing when only one kind found anything. */
+export function ShowChips({ show, onShow, counts }: { show: SearchShow; onShow: (show: SearchShow) => void; counts: ShowCounts }) {
+  const options = showOptions(counts);
+  if (!options.length) return null;
+  const picked = options.some((o) => o.value === show) ? show : 'all';
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.chips} role="radiogroup" accessibilityLabel="Show">
+      {options.map((o) => (
+        <Chip key={o.value} label={o.label} count={o.count} selected={picked === o.value} onPress={() => onShow(o.value)} />
+      ))}
+    </ScrollView>
+  );
+}
+
+/** The typed word finished ("negr" + "oni"): a tap searches the whole name. */
+export function Completions({ query, names, onPick }: { query: string; names: readonly string[]; onPick: (name: string) => void }) {
+  const ds = useDs();
+  if (!names.length) return null;
+  const typed = foldName(query).length;
+  return (
+    <View role="list" accessibilityLabel="Suggestions">
+      {names.map((n) => (
+        <PressableScale key={n} role="button" accessibilityLabel={`Search ${n}`} onPress={() => onPick(n)} style={styles.completion}>
+          <IconSymbol name="magnifyingglass" size={18} color={ds.c.muted} />
+          <DsText variant="body" color={ds.c.muted} style={styles.flex} numberOfLines={1}>
+            {n.slice(0, typed)}
+            <DsText variant="body" style={styles.strong}>
+              {n.slice(typed)}
+            </DsText>
+          </DsText>
+          <IconSymbol name="arrow.up.right" size={16} color={ds.c.muted} />
+        </PressableScale>
+      ))}
+    </View>
+  );
+}
+
+interface TopHitProps {
+  name: string;
+  itemId: string;
+  imageUrl: string | null;
+  glass: string | null;
+  caption?: string;
+  /** Its ingredients, in spec order. */
+  line?: string;
+  score?: number;
+  query: string;
+  onPress: () => void;
+}
+
+/** The best match, first and bigger: its drawing, why it's here, its spec line and its score (search-typing). */
+export function TopHit({ name, itemId, imageUrl, glass, caption, line, score, query, onPress }: TopHitProps) {
+  const ds = useDs();
+  const said = scoreWords(score);
+  return (
+    <View style={styles.group}>
+      <Caption tone="muted" role="heading" style={styles.cap}>
+        Top hit
+      </Caption>
+      <PressableScale
+        role="link"
+        accessibilityLabel={[name, caption, line, said].filter(Boolean).join('. ')}
+        onPress={onPress}
+        style={[styles.hit, { backgroundColor: ds.c.raised }]}
+      >
+        <View style={styles.hitThumb}>
+          <DrinkImage thumb sketchDetail="thumb" source={imageUrl} glass={glass} itemId={itemId} accessibilityLabel={name} radius="control" />
+        </View>
+        <View style={styles.flex}>
+          <Headline numberOfLines={2}>
+            <MatchText text={name} query={query} />
+          </Headline>
+          {caption ? <Caption tone="muted">{caption}</Caption> : null}
+          {line ? (
+            <Caption tone="muted" numberOfLines={1}>
+              {line}
+            </Caption>
+          ) : null}
+        </View>
+        <RowScore score={score} />
+      </PressableScale>
+    </View>
+  );
+}
+
+const TILES = ['negroni', 'sour', 'martini', 'highball'];
+
+/** Browse by style: four drawn tiles, each opening Discover on that style (search-start). */
+export function StyleTiles() {
+  const ds = useDs();
+  const router = useRouter();
+  const { data: classics } = useDrinkLists();
+  const tiles = TILES.flatMap((id) => STYLES.filter((s) => s.id === id)).map((s) => ({
+    ...s,
+    drawing: classics?.find((c) => foldName(c.name) === foldName(s.classics[0] ?? '')),
+  }));
+  return (
+    <View style={styles.group}>
+      <Caption tone="muted" role="heading" style={styles.cap}>
+        Browse by style
+      </Caption>
+      <View style={styles.tiles}>
+        {tiles.map((t) => (
+          <PressableScale
+            key={t.id}
+            role="link"
+            accessibilityLabel={`${t.label}, browse the style`}
+            onPress={() => router.push(`/discover?kind=${encodeURIComponent(t.id)}` as never)}
+            style={[styles.tile, { backgroundColor: ds.c.paper }]}
+          >
+            <View style={styles.tileArt}>
+              <DrinkImage thumb sketchDetail="thumb" source={t.drawing?.imageUrl ?? null} glass={null} itemId={t.drawing?.id} accessibilityLabel="" radius={0} />
+            </View>
+            <DsText variant="body" color={ds.c.sketchInk} style={styles.tileLabel}>
+              {t.label}
+            </DsText>
+          </PressableScale>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1, minWidth: 0, gap: 2 },
+  token: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 36, maxWidth: 160, paddingHorizontal: space.sm + 2, borderRadius: radius.pill },
+  tokenText: { flexShrink: 1, fontFamily: fontFamilies.bodyMedium },
+  chips: { gap: space.sm - 2, paddingRight: space.lg },
+  completion: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
+  group: { gap: space.sm },
+  cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
+  hit: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
+  hitThumb: { width: 72 },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  tile: { flexGrow: 1, flexBasis: '45%', height: 104, borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden', justifyContent: 'flex-end', padding: space.md },
+  tileArt: { position: 'absolute', right: -6, top: 4, width: 96, pointerEvents: 'none' },
+  tileLabel: { fontFamily: fontFamilies.bodySemiBold },
+});

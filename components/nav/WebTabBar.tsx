@@ -100,8 +100,8 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
   const { mode } = useMode();
   const { has } = useVenueFeatures();
   const current = state.routes[state.index]?.name;
-  // Settings › Try it: New joins the tabs and takes a tab's room (phoneTabs),
-  // and while the bottom search field has focus it takes the bar's place.
+  // Settings › Try it: New joins the tabs and takes a tab's room (phoneTabs).
+  // While the bottom search field has focus it takes the bar's place.
   const bottomBar = useBottomBar();
   const searching = useBottomSearchFocus((s) => s.focused);
   const [creating, setCreating] = useState(false);
@@ -112,7 +112,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
     const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
     if (current !== name && !event.defaultPrevented) navigateToTab(route.key);
   };
-  if (bottomBar && searching) return null;
+  if (searching) return null;
   return (
     <View style={[styles.wrap, { bottom: insets.bottom + space.md }]}>
       <GlassSurface style={styles.tabs}>
