@@ -1,4 +1,4 @@
-// Glass models (20261023100000_glass_models.sql): the real glasses a maker
+// Glass models (20261026100000_glass_models.sql): the real glasses a maker
 // sells, a venue's glass naming one, a drink served in one, and the drawing
 // following it. Runs against the local stack.
 //

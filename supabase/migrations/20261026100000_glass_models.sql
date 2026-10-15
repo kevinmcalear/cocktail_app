@@ -1,5 +1,5 @@
 -- Glass models: the real glasses you can buy, one row per model and size
--- ("Nude Savage Coupe, 190 ml"), after 20261021100000. Kevin, 15 Oct 2026:
+-- ("Nude Savage Coupe, 190 ml"), after 20261025100000. Kevin, 15 Oct 2026:
 -- "let's definitely do" a model-level glass catalog (7 Oct jam: "every coupe
 -- in existence that you can buy").
 --
