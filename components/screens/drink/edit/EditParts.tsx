@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { BarAssignmentAccordion } from '@/components/BarAssignmentAccordion';
-import { SortableImageList } from '@/components/cocktail/SortableImageList';
+import { SortableImageList, type ImageItem } from '@/components/cocktail/SortableImageList';
 import { Caption, DsText, GlassSurface, Headline, PressableScale, Sheet, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IngredientSearch } from '@/components/screens/addDrink/IngredientSearch';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -16,6 +16,30 @@ import type { WizardPick } from '@/lib/drinkWizard';
 /** What editing in place drives: a saved drink's editor, or a draft's (which saves to drafts until it's published). */
 export type DrinkEditor = ReturnType<typeof useCocktailEditor> | ReturnType<typeof useCocktailDraftEditor>;
 type Editor = DrinkEditor;
+
+type Level = string | null;
+/** What the photos sheet edits: any editor's photos (a drink's, or a beer's or wine's). */
+interface PhotosEditor {
+  localImages: ImageItem[];
+  setLocalImages: (images: ImageItem[]) => void;
+  pickImage: () => void;
+  addImages: (uris: string[]) => void;
+}
+/** What the access sheet edits: the venue it belongs to and its visibility levels. */
+interface AccessEditor {
+  barId: string | null;
+  setBarId: (v: string | null) => void;
+  overrideVisibility: Level;
+  setOverrideVisibility: (v: Level) => void;
+  overrideGeneric: Level;
+  setOverrideGeneric: (v: Level) => void;
+  overrideSpecific: Level;
+  setOverrideSpecific: (v: Level) => void;
+  overrideMeasurement: Level;
+  setOverrideMeasurement: (v: Level) => void;
+  overridePrep: Level;
+  setOverridePrep: (v: Level) => void;
+}
 
 const SHEET_PAD = { paddingHorizontal: space.xl, paddingBottom: space.xxl };
 
@@ -32,15 +56,18 @@ function Tool({ icon, label, hint, onPress }: { icon: IconName; label: string; h
   );
 }
 
-/** The tools along the bottom while editing on a phone (drink-edit-phone): a line, a photo, the calculator, More. */
-export function EditBottomBar({ onLine, onPhoto, onCalc, onMore }: { onLine: () => void; onPhoto: () => void; onCalc: () => void; onMore: () => void }) {
+/**
+ * The tools along the bottom while editing on a phone (drink-edit-phone): a line, a photo, the calculator, More.
+ * A beer or wine has no spec, so no Line or Calculator.
+ */
+export function EditBottomBar({ onLine, onPhoto, onCalc, onMore, moreHint = 'More: photos, who can see the spec, discard, delete' }: { onLine?: () => void; onPhoto: () => void; onCalc?: () => void; onMore: () => void; moreHint?: string }) {
   return (
     <GlassSurface style={styles.bar}>
       <View role="toolbar" accessibilityLabel="Edit tools" style={styles.barRow}>
-        <Tool icon="plus" label="Line" hint="Add a line to the spec" onPress={onLine} />
+        {onLine ? <Tool icon="plus" label="Line" hint="Add a line to the spec" onPress={onLine} /> : null}
         <Tool icon="camera" label="Photo" hint="Add a photo" onPress={onPhoto} />
-        <Tool icon="percent" label="Calculator" hint="Ingredient calculator: amounts for a syrup, foam, juice or soda" onPress={onCalc} />
-        <Tool icon="ellipsis" label="More" hint="More: photos, who can see the spec, discard, delete" onPress={onMore} />
+        {onCalc ? <Tool icon="percent" label="Calculator" hint="Ingredient calculator: amounts for a syrup, foam, juice or soda" onPress={onCalc} /> : null}
+        <Tool icon="ellipsis" label="More" hint={moreHint} onPress={onMore} />
       </View>
     </GlassSurface>
   );
@@ -49,7 +76,7 @@ export function EditBottomBar({ onLine, onPhoto, onCalc, onMore }: { onLine: () 
 export type MoreChoice = 'publish' | 'photos' | 'access' | 'discard' | 'delete';
 
 /** Editing's More: photos in order, who can see the spec, discard the changes, delete the drink. A draft can also be published. */
-export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; draft?: boolean; onPick: (c: MoreChoice) => void }) {
+export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick, noun = 'drink' }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; draft?: boolean; onPick: (c: MoreChoice) => void; /** What's edited: "drink", or "beer" or "wine". */ noun?: string }) {
   // What to open once the menu has gone: two sheets never stack.
   const then = useRef<MoreChoice | null>(null);
   const run = () => {
@@ -68,11 +95,11 @@ export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick }:
       accessibilityLabel="More"
       header={<Headline role="heading">More</Headline>}
     >
-      {draft ? <MoreRow icon="paperplane.fill" label="Publish drink" onPick={() => (then.current = 'publish')} /> : null}
+      {draft ? <MoreRow icon="paperplane.fill" label={`Publish ${noun}`} onPick={() => (then.current = 'publish')} /> : null}
       <MoreRow icon="photo" label="Photos" onPick={() => (then.current = 'photos')} />
-      <MoreRow icon="lock.shield.fill" label="Who can see the spec" onPick={() => (then.current = 'access')} />
+      <MoreRow icon="lock.shield.fill" label={accessTitle(noun)} onPick={() => (then.current = 'access')} />
       {dirty ? <MoreRow icon="arrow.uturn.backward" label="Discard changes" onPick={() => (then.current = 'discard')} /> : null}
-      {canDelete ? <MoreRow icon="trash" label={draft ? 'Delete draft' : 'Delete drink'} danger onPick={() => (then.current = 'delete')} /> : null}
+      {canDelete ? <MoreRow icon="trash" label={draft ? 'Delete draft' : `Delete ${noun}`} danger onPick={() => (then.current = 'delete')} /> : null}
     </Sheet>
   );
 }
@@ -121,7 +148,7 @@ export function IngredientSheet({ editor, swapping, onPick, onNew, onClose }: { 
  * The drink's photos in order, from More (the hero shows the first).
  * ponytail: SortableImageList's row of tiles inside a ds Sheet; redraw it when photos get their own board.
  */
-export function PhotosSheet({ editor, onClose }: { editor: Editor; onClose: () => void }) {
+export function PhotosSheet({ editor, onClose, generate }: { editor: PhotosEditor; onClose: () => void; /** A tile that draws one (a beer or wine's Generate). */ generate?: ReactNode }) {
   return (
     <Sheet style={SHEET_PAD} visible onClose={onClose} accessibilityLabel="Photos" header={<Headline role="heading">Photos</Headline>}>
       <SortableImageList
@@ -130,6 +157,7 @@ export function PhotosSheet({ editor, onClose }: { editor: Editor; onClose: () =
         onRemove={(index) => editor.setLocalImages(editor.localImages.filter((_, i) => i !== index))}
         onAdd={editor.pickImage}
         onAddUris={editor.addImages}
+        generateComponent={generate}
       />
       <Caption tone="muted">The first one leads the page. Saved with Done.</Caption>
     </Sheet>
@@ -140,9 +168,9 @@ export function PhotosSheet({ editor, onClose }: { editor: Editor; onClose: () =
  * Who can see the spec: the venue it belongs to and its visibility levels (the old editor's Advanced).
  * ponytail: the legacy BarAssignmentAccordion inside a ds Sheet; move it onto ds controls when the role lens board covers it.
  */
-export function AccessSheet({ editor, onClose }: { editor: Editor; onClose: () => void }) {
+export function AccessSheet({ editor, onClose, noun = 'drink' }: { editor: AccessEditor; onClose: () => void; noun?: string }) {
   return (
-    <Sheet style={SHEET_PAD} visible onClose={onClose} accessibilityLabel="Who can see the spec" header={<Headline role="heading">Who can see the spec</Headline>}>
+    <Sheet style={SHEET_PAD} visible onClose={onClose} accessibilityLabel={accessTitle(noun)} header={<Headline role="heading">{accessTitle(noun)}</Headline>}>
       <ScrollView style={styles.access}>
         <BarAssignmentAccordion
           barId={editor.barId}
@@ -162,6 +190,9 @@ export function AccessSheet({ editor, onClose }: { editor: Editor; onClose: () =
     </Sheet>
   );
 }
+
+/** A drink keeps its spec back; a beer or wine has none, so it's the page itself. */
+const accessTitle = (noun: string) => (noun === 'drink' ? 'Who can see the spec' : `Who can see this ${noun}`);
 
 const styles = StyleSheet.create({
   bar: { borderRadius: radius.pill, padding: space.xs },

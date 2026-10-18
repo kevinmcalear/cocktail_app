@@ -18,12 +18,11 @@ export interface DrinkKindConfig {
   /** Loads one item, with its images and tags. */
   useItem: typeof useBeer;
   maker: {
+    /** "Brewery" / "Producer", as the add wizard asks for it. */
     label: string;
     placeholder: string;
     /** Key used in saved drafts (older drafts depend on it). */
     draftKey: 'brewery' | 'vintner';
-    /** SF Symbol for the maker pill on the detail page. */
-    icon: 'building.2.fill' | 'map.fill';
   };
   placeholders: { name: string; abv: string; price: string };
 }
@@ -35,7 +34,7 @@ export const DRINK_KINDS: Record<DrinkKind, DrinkKindConfig> = {
     listQueryKey: 'beers',
     storageFolder: 'beers',
     useItem: useBeer,
-    maker: { label: 'Brewery / Brand', placeholder: 'e.g. Bellwoods', draftKey: 'brewery', icon: 'building.2.fill' },
+    maker: { label: 'Brewery', placeholder: 'e.g. Bellwoods', draftKey: 'brewery' },
     placeholders: { name: 'e.g. Cottage Lager', abv: 'e.g. 5.0', price: 'e.g. 8.00' },
   },
   wine: {
@@ -44,7 +43,7 @@ export const DRINK_KINDS: Record<DrinkKind, DrinkKindConfig> = {
     listQueryKey: 'wines',
     storageFolder: 'wines',
     useItem: useWine,
-    maker: { label: 'Vintner / Brand', placeholder: 'e.g. Napa Valley Wine', draftKey: 'vintner', icon: 'map.fill' },
+    maker: { label: 'Producer', placeholder: 'e.g. Domaine Tempier', draftKey: 'vintner' },
     placeholders: { name: 'e.g. Cabernet Sauvignon', abv: 'e.g. 13.5', price: 'e.g. 60.00' },
   },
 };

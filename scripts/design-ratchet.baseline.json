@@ -6,12 +6,7 @@
     "components/ErrorScreen.tsx": 14,
     "components/ImageCarousel.tsx": 5,
     "components/IngredientPickerSheet.tsx": 7,
-    "components/ItemDetailLayout.tsx": 34,
     "components/auth/EmailLinkGate.tsx": 1,
-    "components/drink/AddDrinkScreen.tsx": 6,
-    "components/drink/DrinkDetailScreen.tsx": 7,
-    "components/drink/DrinkFormFields.tsx": 2,
-    "components/drink/EditDrinkScreen.tsx": 8,
     "components/drink/drinkImages.ts": 9,
     "components/ui/AdaptiveSheetModal.tsx": 1,
     "components/ui/CustomIcons.tsx": 1,
@@ -24,17 +19,13 @@
     "hooks/useCocktails.ts": 1,
     "hooks/useDrafts.ts": 1,
     "hooks/useIngredients.ts": 7,
-    "hooks/useRecipeMergeHandler.ts": 4,
     "hooks/useSearchCatalog.ts": 14,
     "lib/draftProgress.ts": 28,
     "lib/drafts.ts": 16,
-    "lib/executeRecipeMerge.ts": 6,
     "lib/platformKeys.ts": 1,
     "lib/recipeUtils.ts": 2
   },
   "longFiles": {
-    "components/ItemDetailLayout.tsx": 725,
-    "components/drink/AddDrinkScreen.tsx": 353,
     "components/ui/CustomIcons.tsx": 500
   }
 }

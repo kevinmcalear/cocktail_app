@@ -1,5 +1,5 @@
-import { DrinkDetailScreen } from '@/components/drink/DrinkDetailScreen';
+import { BeerWineScreen } from '@/components/screens/drink/BeerWineScreen';
 
 export default function BeerDetailsScreen() {
-  return <DrinkDetailScreen kind="beer" />;
+  return <BeerWineScreen kind="beer" />;
 }

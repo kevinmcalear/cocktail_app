@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "react-native";
 
-import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
+import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { useDrafts } from "@/hooks/useDrafts";
 import { refreshIngredients, useDropdowns } from "@/hooks/useDropdowns";
 import { useIngredient } from "@/hooks/useIngredients";
