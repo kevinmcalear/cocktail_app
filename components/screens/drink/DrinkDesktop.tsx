@@ -9,13 +9,16 @@ import type { DrinkSections } from './DrinkSections';
 type Tab = 'spec' | 'service' | 'more';
 
 interface DrinkDesktopProps {
-  sections: DrinkSections;
+  /** A cocktail's sections, in Spec | Service | More tabs. */
+  sections?: DrinkSections;
+  /** In place of the tabs: a beer's or wine's page, which has no spec. */
+  children?: ReactNode;
   /** The drink's pictures, drawn to fit the card. */
   hero: (height: number) => ReactNode;
   /** To make, Share, Edit, More: over the hero card. */
   heroActions: ReactNode;
   /** Batch, Rank it, I made it, in a row under the method. */
-  actions: ReactNode;
+  actions?: ReactNode;
   /** The venue's team: a Service tab. */
   staff: boolean;
   top: number;
@@ -32,7 +35,7 @@ const HERO_H = 640;
  * (13 Oct), the Spec tab is just what you need to make it; strength,
  * allergens, flavor, the backstory and the rest are under More.
  */
-export function DrinkDesktop({ sections: s, hero, heroActions, actions, staff, top }: DrinkDesktopProps) {
+export function DrinkDesktop({ sections: s, children, hero, heroActions, actions, staff, top }: DrinkDesktopProps) {
   const ds = useDs();
   const gutter = useGutter();
   const desktop = useBreakpoint() === 'desktop';
@@ -51,6 +54,7 @@ export function DrinkDesktop({ sections: s, hero, heroActions, actions, staff, t
           {hero(HERO_H)}
           <View style={styles.heroActions}>{heroActions}</View>
         </View>
+        {s ? (
         <View style={styles.body}>
           {s.header}
           {s.intro}
@@ -84,6 +88,9 @@ export function DrinkDesktop({ sections: s, hero, heroActions, actions, staff, t
             </View>
           ) : null}
         </View>
+        ) : (
+          <View style={styles.body}>{children}</View>
+        )}
       </View>
     </ScrollView>
   );
