@@ -92,6 +92,9 @@ after(async () => {
   const { rows } = await db.query('SELECT id FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM private.item_flavor_jobs WHERE item_id = ANY($1)', [rows.map((r) => r.id)]);
+  // The bar's glasses first: deleting the maker in the same statement as the bar
+  // nulls their maker and trips the bar-glassware screen in whichever order rows go.
+  await db.query('DELETE FROM public.bar_glassware WHERE profile_id = $1', [ids.barProfile]);
   await db.query('DELETE FROM public.profiles WHERE display_name LIKE $1', [like]);
   await db.query('DELETE FROM public.bars WHERE name LIKE $1', [like]);
   for (const user of Object.values(users)) await service.auth.admin.deleteUser(user.id);
