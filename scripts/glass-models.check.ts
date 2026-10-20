@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { drawingFor, LOADS, problemWith, render, rowsOf, readSeed, type SeedModel } from './glass-models';
+import { drawingFor, fillProblem, LOADS, problemWith, readFills, render, rowsOf, readSeed, type SeedModel } from './glass-models';
 
 // The migrations are what the seeds generate.
 for (const load of LOADS) {
@@ -47,5 +47,18 @@ assert.match(problemWith(row({ name: 'Coupe \u2014 tall' }))!, /dash/);
 // One row per maker, name and size: a repeat is dropped, another size stays.
 const twice = rowsOf([{ maker: 'm', models: [row({ name: 'A', capacity_ml: 200 }), row({ name: 'a', capacity_ml: 200 }), row({ name: 'A', capacity_ml: 300 })] }]);
 assert.equal(twice.length, 2);
+
+// A fill names one row of its maker that has no capacity yet; one that has
+// a capacity, or a code that matches nothing, is refused.
+for (const load of LOADS) {
+  if (!load.fills) continue;
+  const { maker, fills } = readFills(load.fills);
+  for (const f of fills) assert.equal(fillProblem(f, readSeed(maker)), null, `${load.fills} ${f.model_code}`);
+}
+const fill = { model_code: 'A1', capacity_ml: 200, capacity_as_stated: '200 ml', source_url: 'https://example.com/a1.png' };
+const seedOf = (m: Partial<SeedModel>) => ({ maker: 'm', models: [row({ model_code: 'A1', ...m })] });
+assert.equal(fillProblem(fill, seedOf({})), null);
+assert.match(fillProblem(fill, seedOf({ capacity_ml: 180 }))!, /already/);
+assert.match(fillProblem({ ...fill, model_code: 'B2' }, seedOf({}))!, /0 rows/);
 
 console.log('glass models: ok');

@@ -35,11 +35,23 @@ export interface Seed {
   models: SeedModel[];
 }
 
+/**
+ * Capacities found after a maker's rows loaded, keyed by its model code. They
+ * fill an empty capacity in place: a new capacity in the seed would be a new
+ * row, because the size is part of a model's key.
+ */
+export interface Fills {
+  maker: string;
+  fills: { model_code: string; capacity_ml: number; capacity_as_stated: string; source_url: string }[];
+}
+
 /** One migration: which makers' files it loads, and what its header says. */
 interface Load {
   file: string;
   makers: string[];
   header: string;
+  /** A supabase/seeds/glass-models/<name>.json of Fills to apply. */
+  fills?: string;
 }
 
 export const LOADS: Load[] = [
@@ -167,6 +179,39 @@ export function readSeed(handle: string): Seed {
   return JSON.parse(readFileSync(join(DIR, `${handle}.json`), 'utf8')) as Seed;
 }
 
+export function readFills(name: string): Fills {
+  return JSON.parse(readFileSync(join(DIR, `${name}.json`), 'utf8')) as Fills;
+}
+
+/** Why a fill can't apply to its maker's seed, or null. */
+export function fillProblem(f: Fills['fills'][number], seed: Seed): string | null {
+  const m = seed.models.filter((x) => x.model_code === f.model_code);
+  if (m.length !== 1) return `${m.length} rows with code ${f.model_code}`;
+  if (m[0].capacity_ml !== null) return `${f.model_code} already has a capacity`;
+  if (!(f.capacity_ml > 0 && f.capacity_ml < 5000) || !f.capacity_as_stated) return `${f.model_code} capacity`;
+  if (!/^https:\/\/[^\s]+$/.test(f.source_url)) return `${f.model_code} source`;
+  return null;
+}
+
+/** An empty capacity filled in place; a second run finds none empty and changes nothing. */
+function renderFills(name: string): string {
+  const { maker, fills } = readFills(name);
+  for (const f of fills) {
+    const problem = fillProblem(f, readSeed(maker));
+    if (problem) throw new Error(`${name}: ${problem}`);
+  }
+  const values = fills.map((f) => `(${[q(f.model_code), n(f.capacity_ml), q(f.capacity_as_stated), q(f.source_url)].join(', ')})`).join(',\n');
+  return `
+-- ${maker}: capacities read since its rows loaded (${fills.length}), each citing where.
+UPDATE public.glass_models m
+   SET capacity_ml = f.capacity_ml, capacity_as_stated = f.capacity_as_stated, source_urls = m.source_urls || f.source_url
+  FROM (VALUES
+${values}) f(model_code, capacity_ml, capacity_as_stated, source_url)
+ WHERE m.maker_profile_id = (SELECT p.id FROM public.profiles p WHERE p.kind = 'maker' AND p.handle = ${q(maker)})
+   AND m.model_code = f.model_code AND m.capacity_ml IS NULL;
+`;
+}
+
 /** The rows a load writes: valid, one per maker, name and size (the first wins). */
 export function rowsOf(seeds: Seed[]) {
   const seen = new Set<string>();
@@ -248,7 +293,7 @@ UPDATE public.bar_glassware b SET model_id = m.id
           AND public.ingredient_key(x.name) = public.ingredient_key(m.name)) = 1;
 
 DROP TABLE glass_in;
-`;
+${load.fills ? renderFills(load.fills) : ''}`;
 }
 
 function main() {
