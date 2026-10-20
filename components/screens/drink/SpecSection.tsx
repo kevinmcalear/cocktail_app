@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, LockedSection, SpecRow, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, LockedSection, SpecRow, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { Choice } from '@/components/screens/batch/BatchParts';
@@ -38,6 +38,8 @@ interface SpecSectionProps {
   missing?: readonly string[];
   /** Right under the lines: method, glass, ice and garnish (MakeLine). Shown even when the lines are locked. */
   make?: ReactNode;
+  /** Someone else's drink: one Make a riff button under the spec, with what it does (Eddie, 16 Oct). */
+  riff?: { onPress: () => void; note: string } | null;
   /** Under that, inside the section: the method's steps, what to do about a missing bottle. */
   children?: ReactNode;
 }
@@ -60,7 +62,7 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
  * line's strength is in the strength sheet (ABV, under More). Anything the server
  * withheld stays on the page as a locked section that says who can open it.
  */
-export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], make, children }: SpecSectionProps) {
+export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], make, riff, children }: SpecSectionProps) {
   const ds = useDs();
   const router = useRouter();
   const realRole = useEffectiveRole(barId);
@@ -157,6 +159,13 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
           </Caption>
         ) : null}
       </View>
+      {/* Not yours to fix: one way to change it, as your own riff (board create-eddie-oct16). */}
+      {riff && !canEdit && !preview ? (
+        <View style={styles.riff}>
+          <Button label="Make a riff" icon="arrow.turn.down.right" variant="secondary" onPress={riff.onPress} />
+          <Caption tone="muted">{riff.note}</Caption>
+        </View>
+      ) : null}
       {make}
       {children}
       {houseLine ? <HouseMadeSheet line={houseLine} onClose={() => setHouseLine(null)} /> : null}
@@ -195,4 +204,5 @@ const styles = StyleSheet.create({
   ratio: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden', gap: 2 },
   lockNote: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   fixHint: { paddingTop: space.sm },
+  riff: { gap: space.sm },
 });

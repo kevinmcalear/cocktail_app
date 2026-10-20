@@ -1,9 +1,10 @@
-import { usePathname } from 'expo-router';
+import { useLocalSearchParams, usePathname } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { areaStatus } from '@/components/screens/home/DiscoverArea';
 import { useLocationAccess } from '@/hooks/useLocationAccess';
 import { useNearMe, type NearMe } from '@/hooks/useNearMe';
+import type { City } from '@/lib/discover';
 import { distanceKm } from '@/lib/discoverDrinks';
 import { nearMeArea, type Area } from '@/lib/nearMe';
 import { useLastPlace } from '@/store/useLastPlace';
@@ -53,6 +54,17 @@ export function useDiscoverArea() {
     setPreferNear(next.kind === 'point' && next.source === 'me');
     setArea(next);
   };
+  /** A city search named (its Places row): Discover goes there, as a map search would. */
+  const onCity = (c: Pick<City, 'city' | 'country_code' | 'label'>) => onArea({ kind: 'city', city: c.city, country_code: c.country_code, label: c.label });
+  // Search's Places rows elsewhere open Discover on the city (/discover?city=New%20York&cc=US), each new one once.
+  const { city, cc } = useLocalSearchParams<{ city?: string; cc?: string }>();
+  const linked = city && cc ? `${city}|${cc}` : null;
+  const [opened, setOpened] = useState<string | null>(null);
+  if (linked && linked !== opened && city && cc) {
+    setOpened(linked);
+    setPreferNear(false);
+    setArea({ kind: 'city', city, country_code: cc, label: city });
+  }
   const onNearMe = () => {
     touched.current = true;
     setPreferNear(true);
@@ -79,9 +91,10 @@ export function useDiscoverArea() {
     if (!onScreen || asked.current) return;
     asked.current = true;
     void locate().then((found) => {
-      if (!touched.current) place(found);
+      // A city link counts as a pick: the first answer doesn't move off it.
+      if (!touched.current && !opened) place(found);
     });
-  }, [onScreen, locate, place]);
+  }, [onScreen, locate, place, opened]);
 
   // Whether location is allowed, checked again after each answer and when the app comes back
   // to the front. Turned on in Settings after a no: find the person now, no restart.
@@ -99,5 +112,5 @@ export function useDiscoverArea() {
   // "Finding where you are" only while there's nothing to show yet; a refresh near the last place is quiet.
   const usingLast = near.status === 'unavailable' && area.kind === 'point' && area.source === 'me';
   const note = near.status === 'locating' && !locating ? null : areaStatus(near, usingLast);
-  return { area, onArea, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note };
+  return { area, onArea, onCity, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note };
 }

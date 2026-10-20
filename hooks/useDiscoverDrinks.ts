@@ -10,6 +10,7 @@ import { closedBars, cursorAfter, kindParams, toDiscoverBar, toDiscoverDrink, wi
 import type { Viewport } from '@/lib/discoverMap';
 import { inBox, parentTiles, tileBox, tilesFor, type Tile } from '@/lib/discoverTiles';
 import { areaParams, roundCoord, type Area } from '@/lib/nearMe';
+import { allRowsById } from '@/lib/allRows';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -111,14 +112,22 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
 }
 
 async function readBars(params: Record<string, unknown>, signal: AbortSignal): Promise<DiscoverBar[]> {
-  let { data, error } = await supabase.rpc('discover_bars', params).abortSignal(signal);
-  // ponytail: a database without 20261016200000 doesn't know p_on_now; ask without it (no "on now" then). Drop once it's in production.
-  if (error?.code === 'PGRST202' && 'p_on_now' in params) {
+  // Anywhere is every public bar, past the 1,000-row cap (Black Pearl was bar 1,131 and search never saw it): a page at a time.
+  // ponytail: each page reruns discover_bars over every bar in the area. Upgrade path: a p_after argument, which is a migration.
+  const read = (p: Record<string, unknown>) =>
+    allRowsById<BarRow>((after, size) => {
+      let q = supabase.rpc('discover_bars', p);
+      if (after) q = q.gt('id', after);
+      return q.order('id').limit(size).abortSignal(signal);
+    });
+  try {
+    return (await read(params)).map(toDiscoverBar);
+  } catch (error) {
+    // ponytail: a database without 20261016200000 doesn't know p_on_now; ask without it (no "on now" then). Drop once it's in production.
+    if ((error as { code?: string } | null)?.code !== 'PGRST202' || !('p_on_now' in params)) throw error;
     const { p_on_now: _, ...rest } = params;
-    ({ data, error } = await supabase.rpc('discover_bars', rest).abortSignal(signal));
+    return (await read(rest)).map(toDiscoverBar);
   }
-  if (error) throw error;
-  return ((data ?? []) as BarRow[]).map(toDiscoverBar);
 }
 
 /**

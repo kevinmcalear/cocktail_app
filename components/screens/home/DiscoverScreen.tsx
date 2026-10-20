@@ -62,7 +62,7 @@ export function DiscoverScreen() {
   const signedIn = !!useAuth().user;
   const home = useMode().mode === 'home';
   const breakpoint = useBreakpoint();
-  const { area, onArea, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
+  const { area, onArea, onCity, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
   // Search's Browse chips open Discover on a style (/discover?kind=negroni).
   const { kind } = useLocalSearchParams<{ kind?: string }>();
   const [kinds, setKinds] = useState<string[]>(() => (typeof kind === 'string' && kind ? [kind] : []));
@@ -145,7 +145,9 @@ export function DiscoverScreen() {
   };
   // Discover's part in the one search: its filters, and its area when it isn't everywhere.
   // The scope always reads "This area" (disc-search-typing), whatever the area chip says.
-  const searchArea: SearchArea = { label: onMap || area.kind !== 'anywhere' ? 'This area' : null, area, kinds, onKind: addKind };
+  // A city the search names: Discover goes there, as a map search would (Kevin, 16 Oct: "copy Google Maps").
+  const onPlace: SearchArea['onPlace'] = (c) => (setScope('area'), onCity(c), setSearch(''), close());
+  const searchArea: SearchArea = { label: onMap || area.kind !== 'anywhere' ? 'This area' : null, area, kinds, onKind: addKind, onPlace };
   // "This area" with no area left (it went back to Anywhere) searches everywhere.
   const searchScope = scope === 'area' && !searchArea.label ? 'everywhere' : scope;
   const searchProps = { query: search, onQuery: setSearch, scope: searchScope, onScope: setScope, mine, area: searchArea, onClearKinds: () => setKinds([]), onClose: close };
