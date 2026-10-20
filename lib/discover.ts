@@ -71,3 +71,17 @@ export function citiesFrom(rows: readonly { city: string | null; country_code: s
   for (const c of cities) if (names.get(foldName(c.city))! > 1) c.label = `${c.city}, ${c.country_code}`;
   return cities.sort((a, b) => b.bars - a.bars || a.label.localeCompare(b.label));
 }
+
+/**
+ * The cities a search names, the way a map search reads it: "new york" is
+ * the city before any bar called New York. Names that start with it first,
+ * then a later word ("york"), each in the busiest-first order given; at
+ * most `limit`.
+ */
+export function findCities(cities: readonly City[], search: string, limit = 3): City[] {
+  const q = foldName(search);
+  if (q.length < 2) return [];
+  const starts = cities.filter((c) => foldName(c.city).startsWith(q));
+  const words = q.length < 3 ? [] : cities.filter((c) => !starts.includes(c) && foldName(c.city).split(' ').some((w) => w.startsWith(q)));
+  return [...starts, ...words].slice(0, limit);
+}
