@@ -409,6 +409,17 @@ export function drinkCount(n: number): string {
   return `${n} ${n === 1 ? 'drink' : 'drinks'}`;
 }
 
+/**
+ * The results head's count: "14 drinks at 9 bars near you" while searching, else on the phone
+ * sheet how many bars the map shows. Wide screens have no sheet to swipe, so with no search
+ * count they show no caption (disc-desk-search draws only the search count).
+ */
+export function resultsCaption(searching: boolean, totals: { drinks: number; bars: number } | null | undefined, where: string, pins: number, sheet = true): string {
+  if (searching && totals?.drinks) return `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'} ${where}`;
+  if (!sheet) return '';
+  return `${pins} ${pins === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`;
+}
+
 /** A bar row's drinks in search: "14 drinks on now" when some are on, else how many match ("3 drinks"), else nothing. */
 export function barDrinksLine(bar: Pick<DiscoverBar, 'drinks' | 'onNow'>): string | null {
   if (bar.onNow) return `${drinkCount(bar.onNow)} on now`;

@@ -10,7 +10,7 @@ import { useBestDrink, useRowScores } from '@/hooks/useBestDrink';
 import { useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
 import { useMapMoves } from '@/hooks/useMapMoves';
-import { barPins, byScore, closedPins, scorePins, venueScores, withBarOrder, withBarScores, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { barPins, byScore, closedPins, resultsCaption, scorePins, venueScores, withBarOrder, withBarScores, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { namePins, searchTitle } from '@/lib/discoverMatch';
 import { areaLabel, areaParams, earlyNote, type Area } from '@/lib/nearMe';
@@ -20,7 +20,7 @@ import { MapLayers, SearchHere, type MapLayer } from './DiscoverControls';
 import { DiscoverMap } from './DiscoverMap';
 import { MapCredit } from './MapCredit';
 import { SHEET_HANDLE, useMapSheetChrome } from './mapSheetChrome';
-import { ClassicLine, resultsCaption, ResultsHead } from './ResultsHead';
+import { ClassicLine, ResultsHead } from './ResultsHead';
 import { SelectedBar } from './SelectedBar';
 
 interface DiscoverMapPaneProps {

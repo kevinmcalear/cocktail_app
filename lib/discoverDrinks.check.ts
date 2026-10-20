@@ -19,6 +19,7 @@ import {
   kindParams,
   kindsTitle,
   pickFilter,
+  resultsCaption,
   scorePins,
   toDiscoverBar,
   toDiscoverDrink,
@@ -186,4 +187,15 @@ console.log('discoverDrinks: ok');
   assert.deepEqual(withoutHad(loaded, { drinks: 3, bars: 2 }, ['a', 'b', 'c']).totals, { drinks: 0, bars: 2 });
   assert.equal(withoutHad(loaded, null, ['a']).totals, null, 'no totals on a later page');
   assert.equal(withoutHad(loaded, { drinks: 3, bars: 2 }, []).drinks, loaded, 'nothing had: the same list');
+}
+
+// The results caption: the search count, else the phone sheet's line; wide screens have no sheet, so no line.
+{
+  const totals = { drinks: 14, bars: 9 };
+  assert.equal(resultsCaption(true, totals, 'near you', 0, false), '14 drinks at 9 bars near you');
+  assert.equal(resultsCaption(true, { drinks: 1, bars: 1 }, 'near you', 0), '1 drink at 1 bar near you');
+  assert.equal(resultsCaption(false, null, 'near you', 3), '3 bars in view · tap or swipe up for the list', 'phone sheet unchanged');
+  assert.equal(resultsCaption(true, { drinks: 0, bars: 0 }, 'near you', 1), '1 bar in view · tap or swipe up for the list', 'phone sheet, nothing found');
+  assert.equal(resultsCaption(true, { drinks: 0, bars: 0 }, 'near you', 0, false), '', 'wide: no "0 bars in view" over an empty search');
+  assert.equal(resultsCaption(true, null, 'near you', 0, false), '', 'wide: nothing while totals load');
 }
