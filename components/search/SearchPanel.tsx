@@ -14,6 +14,7 @@ import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { belongsHere, inSelectedContext } from '@/lib/barContextFilter';
 import { fallbackGlass } from '@/lib/itemRoutes';
+import type { City } from '@/lib/discover';
 import type { Area } from '@/lib/nearMe';
 import { friendlyWhen, menuFacts } from '@/lib/searchCaptions';
 import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
@@ -36,6 +37,8 @@ export interface SearchArea {
   area: Area;
   kinds: readonly string[];
   onKind: (kind: string) => void;
+  /** A city the search names: Discover moves there. */
+  onPlace: (city: City) => void;
 }
 
 interface HeadProps {
@@ -124,6 +127,7 @@ export function SearchBody({ query, scope, onScope, mine, area, onJump, commands
         area={scope === 'area' && area ? area.area : null}
         kinds={area?.kinds}
         onKind={area?.onKind}
+        onPlace={area?.onPlace}
         onEverywhere={() => onScope('everywhere')}
         mine={mine}
         show={show}

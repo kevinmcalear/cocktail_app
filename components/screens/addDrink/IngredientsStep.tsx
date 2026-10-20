@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, IngredientThumb, Spec, useDs } from '@/components/ds';
-import { layout, radius, space } from '@/constants/tokens';
-import { amountLabel, COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { Body, Button, useDs } from '@/components/ds';
+import { radius, space } from '@/constants/tokens';
+import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { houseNudge, houseWays } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { PREP_KINDS, type PrepDraft } from '@/lib/prepKinds';
@@ -128,16 +128,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       {draft.lines.length ? (
         <View role="list" aria-label="In the drink">
           {draft.lines.map((l) =>
-            // While searching, the lines fold to what they are and how much, so the results fit.
-            typing && l.key !== swapKey ? (
-              <View key={l.key} role="listitem" style={[styles.compact, { borderBottomColor: ds.c.line }]}>
-                <IngredientThumb id={l.id} name={l.name} size={32} />
-                <Body numberOfLines={1} style={styles.flex}>
-                  {l.name}
-                </Body>
-                <Spec>{amountLabel(l)}</Spec>
-              </View>
-            ) : l.key === swapKey ? (
+            // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
+            l.key === swapKey ? (
               <View key={l.key} style={[styles.swap, { borderBottomColor: ds.c.line }]}>
                 <IngredientSearch
                   {...search}
@@ -272,6 +264,5 @@ const styles = StyleSheet.create({
   nudgeButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs },
   flex: { flex: 1 },
-  compact: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, borderBottomWidth: StyleSheet.hairlineWidth },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

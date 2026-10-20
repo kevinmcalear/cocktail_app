@@ -47,8 +47,8 @@ const ANYWHERE: Area = { kind: 'anywhere' };
  * search pill for bars and the drinks bars pour, options for list or map,
  * where and filters, and you) that scrolls away over the list (Eddie and
  * Kevin, 13 Oct). Wide screens: the pill, then where and Filters. Below: the
- * drinks that match and the top bars. Phones switch
- * between this list and a full-screen map (the map first once location has
+ * drinks that match and the top bars. Phones switch between this list and a
+ * full-screen map (the map first once location has
  * been on; the last choice is remembered); wide screens show both. It opens
  * near the last place this device was found (store/useLastPlace.ts).
  */
@@ -60,7 +60,7 @@ export function DiscoverScreen() {
   const signedIn = !!useAuth().user;
   const home = useMode().mode === 'home';
   const breakpoint = useBreakpoint();
-  const { area, onArea, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
+  const { area, onArea, onCity, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
   // Search's Browse chips open Discover on a style (/discover?kind=negroni).
   const { kind } = useLocalSearchParams<{ kind?: string }>();
   const [kinds, setKinds] = useState<string[]>(() => (typeof kind === 'string' && kind ? [kind] : []));
@@ -153,7 +153,8 @@ export function DiscoverScreen() {
   };
   // Discover's part in the one search: its filters, and its area when it isn't everywhere.
   // The scope always reads "This area" (disc-search-typing), whatever the area chip says.
-  const searchArea: SearchArea = { label: onMap || area.kind !== 'anywhere' ? 'This area' : null, area, kinds, onKind: addKind };
+  // A city the search names goes there, as a map search would (Kevin, 16 Oct: "copy Google Maps").
+  const searchArea: SearchArea = { label: onMap || area.kind !== 'anywhere' ? 'This area' : null, area, kinds, onKind: addKind, onPlace: (c) => (setScope('area'), onCity(c), setSearch(''), close()) };
   // "This area" with no area left (it went back to Anywhere) searches everywhere.
   const searchScope = scope === 'area' && !searchArea.label ? 'everywhere' : scope;
   const searchProps = { query: search, onQuery: setSearch, scope: searchScope, onScope: setScope, mine, area: searchArea, onClearKinds: () => setKinds([]), onClose: close };
