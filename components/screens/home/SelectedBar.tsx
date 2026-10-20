@@ -1,12 +1,12 @@
 import { getLocales } from 'expo-localization';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useContext, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Headline, PressableScale, RowScore, Surface, Tag, useDs } from '@/components/ds';
 import { AddressLine, barPlace, directionsTarget, HoursLine } from '@/components/screens/bar/BarFactLines';
 import { DirectionsButton } from '@/components/screens/bar/Directions';
-import { type DrinkScores } from '@/components/screens/home/DrinksAtBars';
+import { BarAway, type DrinkScores } from '@/components/screens/home/DrinksAtBars';
 import { HideBarButton } from '@/components/screens/kept/HideBarButton';
 import { LoveBarButton } from '@/components/screens/kept/LoveBarButton';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -23,6 +23,7 @@ import { formatScore } from '@/lib/ranking';
 
 import { BarMark } from './BarMark';
 import { BarTopDrinks } from './BarTopDrinks';
+import { ShelfTile } from './DiscoverShelves';
 import { DrinkHero } from './DrinkHero';
 import { NextMatch } from './NextMatch';
 
@@ -65,6 +66,8 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   const openBar = () => router.push(barSearchHref(pin.handle || pin.id, query) as never);
   const place = barPlace(facts?.bar_type, pin.place);
   const away = facts ? awayFrom(me, facts, usesMiles(getLocales()[0])) : null;
+  const near = useContext(BarAway)(pin.id);
+  const where = variant === 'card' ? near || place || 'Bar' : place || 'Bar';
   const target = directionsTarget(facts, me);
   const count = pin.drinks ?? drinks.length;
   // A score or Closed sits at the right; an early bar says so under the place, and an unranked one says nothing.
@@ -103,12 +106,12 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
 
   const bar = (
     <View style={styles.cardRow}>
-      <View style={styles.cardRow} accessible accessibilityLabel={[`${pin.name}, ${place || 'Bar'}`, said].filter(Boolean).join('. ')}>
+      <View style={[styles.cardRow, styles.barHead]} accessible accessibilityLabel={[`${pin.name}, ${where}`, said].filter(Boolean).join('. ')}>
         <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={48} />
-        <View style={styles.flex}>
+        <View style={[styles.flex, styles.barName]}>
           <Headline numberOfLines={2}>{pin.name}</Headline>
           <Caption tone="muted" numberOfLines={1}>
-            {place || 'Bar'}
+            {where}
           </Caption>
           {early ? <Caption tone="muted">{early}</Caption> : null}
         </View>
@@ -147,11 +150,18 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
     );
   }
 
-  // Wide screens: the bar's drinks stay in the list below; the card says how many (g048).
+  // Wide screens: the bar's drinks, as the shelves draw them, inside the panel.
   return (
     <Surface style={[styles.card, styles.picked, { borderColor: ds.c.lineStrong }]}>
       {bar}
-      {facts$}
+      {facts?.hours ? <HoursLine facts={facts} /> : null}
+      {drinks.length ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.drinkBleed} contentContainerStyle={styles.drinkRow}>
+          {drinks.map((d) => (
+            <ShelfTile key={d.id} drink={d} atBar />
+          ))}
+        </ScrollView>
+      ) : null}
       <BarTopDrinks barId={pin.id} />
       <View style={[styles.cardActions, { borderTopColor: ds.c.line }]}>
         {!pin.closed && count ? <Caption tone="muted" style={styles.count}>{`${drinkCount(count)} here`}</Caption> : <View style={styles.count} />}
@@ -193,11 +203,17 @@ const styles = StyleSheet.create({
   // disc-desk-browse: the surface with a stronger edge, 14 by 16 inside.
   picked: { borderWidth: 1, paddingVertical: space.md + 2, paddingHorizontal: space.lg, gap: space.sm + 2 },
   cardRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
+  // A wrapped name is taller than the mark. Top-align them, and keep the gap under the distance, not under the logo.
+  barHead: { alignItems: 'flex-start' },
+  barName: { paddingBottom: space.lg },
   facts: { gap: space.xs },
   // The count beside the buttons, as drawn; in a narrow column the buttons drop under it together rather than leaving Open bar alone.
   count: { flexGrow: 1 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, marginLeft: 'auto' },
   cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm + 2 },
+  // The row was tight under the distance and loose above the divider. The same amount of space, moved up.
+  drinkBleed: { marginHorizontal: -space.lg, marginTop: space.xl, marginBottom: -space.xl, flexGrow: 0 },
+  drinkRow: { gap: space.md, paddingHorizontal: space.lg },
   // Wraps on a narrow phone: Directions and Open bar drop under All results rather than off the edge.
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   right: { flexDirection: 'row', gap: space.sm },

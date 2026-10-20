@@ -107,10 +107,14 @@ interface BodyProps {
   onCounts?: (counts: ShowCounts) => void;
   /** The search tab: suggestions finish the typed word, a Top hit leads, and Browse by style waits before typing. */
   typeAhead?: (query: string) => void;
+  /** Discover: add a bar when this search finds nothing. */
+  onAddBar?: () => void;
+  /** Discover: hovering a result opens its bar on the map. */
+  onShowBar?: (barId: string | null) => void;
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query, scope, onScope, mine, area, onJump, commands, palette, show, onCounts, typeAhead }: BodyProps) {
+export function SearchBody({ query, scope, onScope, mine, area, onJump, commands, palette, show, onCounts, typeAhead, onAddBar, onShowBar }: BodyProps) {
   if (!query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} browse={!!typeAhead} />;
   if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} commands={commands} palette={palette} show={show} onCounts={onCounts} typeAhead={typeAhead} />;
   return (
@@ -125,6 +129,8 @@ export function SearchBody({ query, scope, onScope, mine, area, onJump, commands
         show={show}
         onCounts={onCounts}
         typeAhead={typeAhead}
+        onAddBar={onAddBar}
+        onShowBar={onShowBar}
       />
       {commands}
     </>

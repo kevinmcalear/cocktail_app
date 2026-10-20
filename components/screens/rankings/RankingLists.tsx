@@ -31,12 +31,15 @@ interface RowProps {
   drinkId?: string;
   /** Makes the row a link, e.g. to the bar's profile. */
   onPress?: () => void;
+  /** Discover: resting on the row shows this bar on the map. Leaving cancels that. */
+  onHoverIn?: () => void;
+  onHoverOut?: () => void;
   /** Beside the row, outside its link: the bar's heart. */
   end?: ReactNode;
 }
 
 /** A numbered row with a score at the end: a bar in an area list, a drink in your own. */
-export function RankRow({ position, title, detail, score, scoreDetail, logo, barId, drinkId, onPress, end }: RowProps) {
+export function RankRow({ position, title, detail, score, scoreDetail, logo, barId, drinkId, onPress, onHoverIn, onHoverOut, end }: RowProps) {
   const ds = useDs();
   const label = `Number ${position}: ${title}, ${detail}. Score ${formatScore(score)}${scoreDetail ? `, ${scoreDetail}` : ''}`;
   const body = (
@@ -58,7 +61,7 @@ export function RankRow({ position, title, detail, score, scoreDetail, logo, bar
     </>
   );
   const row = onPress ? (
-    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={styles.link}>
+    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} onHoverIn={onHoverIn} onHoverOut={onHoverOut} style={styles.link}>
       {body}
     </PressableScale>
   ) : (
@@ -115,7 +118,7 @@ type AreaRow = AreaRanking & { distance_km?: number | null; avatar_url?: string 
  * classic spec" or what its variation changes; other lists lead with the logo.
  * `love`: each bar's heart at the end of its row (signed in).
  */
-export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked`, love = false }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string; love?: boolean }) {
+export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.rankers} ranked`, love = false, onShowBar }: { rows: AreaRow[]; classicId?: string; scoreDetail?: (r: AreaRow) => string; love?: boolean; /** Hovering a row opens that bar on the map. */ onShowBar?: (barId: string | null) => void }) {
   const router = useRouter();
   const pours = useBarVersions(classicId, rows.map((r) => r.venue_profile_id));
   return (
@@ -134,6 +137,8 @@ export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.ranker
             barId={r.venue_profile_id}
             drinkId={classicId ? (pour?.itemId ?? classicId) : undefined}
             onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
+            onHoverIn={onShowBar ? () => onShowBar(r.venue_profile_id) : undefined}
+            onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
             end={love ? <LoveBarButton profileId={r.venue_profile_id} name={r.display_name} /> : undefined}
           />
         );
@@ -147,7 +152,7 @@ export function AreaRankList({ rows, classicId, scoreDetail = (r) => `${r.ranker
  * and no score, only how many people, so nothing reads as a verdict (or
  * gives away a few people's private rankings). `love`: each bar's heart.
  */
-export function EarlyList({ rows, love = false }: { rows: DiscoverRow[]; love?: boolean }) {
+export function EarlyList({ rows, love = false, onShowBar }: { rows: DiscoverRow[]; love?: boolean; /** Hovering a row opens that bar on the map. */ onShowBar?: (barId: string | null) => void }) {
   const ds = useDs();
   const router = useRouter();
   return (
@@ -158,6 +163,8 @@ export function EarlyList({ rows, love = false }: { rows: DiscoverRow[]; love?: 
             role="link"
             accessibilityLabel={[`${r.display_name}, ${placeOf(r)}`, rankedCount(r.rankers)].filter(Boolean).join('. ')}
             onPress={() => router.push(`/p/${r.handle || r.venue_profile_id}`)}
+            onHoverIn={onShowBar ? () => onShowBar(r.venue_profile_id) : undefined}
+            onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
             style={styles.link}
           >
             <BarMark logoUrl={r.avatar_url} name={r.display_name} profileId={r.venue_profile_id} size={LOGO} />

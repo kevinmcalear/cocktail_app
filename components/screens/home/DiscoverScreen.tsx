@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Caption, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Caption, GlassSurface, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { AddBarSheet } from '@/components/screens/home/AddBar';
@@ -21,7 +21,6 @@ import { DeskSearchResults } from '@/components/screens/home/DeskSearchResults';
 import { AllowLocation } from '@/components/screens/home/DiscoverArea';
 import { BarAway, DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { PickedBar } from '@/components/screens/home/SelectedBar';
-import { ForYou } from '@/components/screens/home/FlavorRails';
 import { TopBars } from '@/components/screens/home/TopBars';
 import { SearchBody, type SearchArea } from '@/components/search/SearchPanel';
 import { HomeWeekStrip } from '@/components/screens/week/HomeWeekStrip';
@@ -32,8 +31,8 @@ import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useDiscoverArea } from '@/hooks/useDiscoverArea';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { useMode } from '@/hooks/useMode';
-import { kindsTitle } from '@/lib/discoverDrinks';
-import { areaFromViewport, type MapPin, type Viewport } from '@/lib/discoverMap';
+import { kindsTitle, pinOf } from '@/lib/discoverDrinks';
+import { areaFromViewport, armBarHover, cameraOn, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { awayFrom } from '@/lib/directions';
 import { STYLES } from '@/lib/drinkStyles';
 import { areaLabel, usesMiles, type Area } from '@/lib/nearMe';
@@ -43,13 +42,12 @@ import { useDiscoverView } from '@/store/useDiscoverView';
 import { useLastPlace } from '@/store/useLastPlace';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
-
 /**
  * Discover, the first tab in home mode. Phones: one header row (the logo, a
  * search pill for bars and the drinks bars pour, options for list or map,
  * where and filters, and you) that scrolls away over the list (Eddie and
  * Kevin, 13 Oct). Wide screens: the pill, then where and Filters. Below: the
- * drinks that match, the top bars, and drinks for your taste. Phones switch
+ * drinks that match and the top bars. Phones switch
  * between this list and a full-screen map (the map first once location has
  * been on; the last choice is remembered); wide screens show both. It opens
  * near the last place this device was found (store/useLastPlace.ts).
@@ -77,10 +75,12 @@ export function DiscoverScreen() {
   const away = useScrollAway();
   // Wide screens: the tapped pin, shown at the top of the list.
   const [picked, setPicked] = useState<MapPin | null>(null);
+  const [hover, setHover] = useState<{ id: string; cam: ReturnType<typeof cameraOn>; area: Area } | null>(null);
   // Which layer the wide map shows, so its tapped bar's card shows the same scores.
   const [mapLayer, setMapLayer] = useState<MapLayer>('drinks');
   const listRef = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
   const onPick = (pin: MapPin | null) => {
+    setHover(null);
     setPicked(pin);
     if (pin) listRef.current?.scrollTo({ y: 0, animated: true });
   };
@@ -104,6 +104,14 @@ export function DiscoverScreen() {
   const shownArea = searching && scope === 'everywhere' ? ANYWHERE : area;
   const filter = { kinds, search, area: shownArea, notHad: signedIn && notHad };
   const results = useDiscoverResults(filter, !locating || searching, !searching && !showPast, !searching);
+  const showBar = (barId: string | null) => {
+    armBarHover(barId, (id) => {
+      const bar = results.barsById.get(id);
+      const pin = bar ? pinOf(bar, bar.drinks) : null;
+      if (pin) setHover((cur) => (cur?.id === pin.id && cur.area === area && cur.cam.latitude === pin.latitude && cur.cam.longitude === pin.longitude ? cur : { id: pin.id, cam: cameraOn(pin), area }));
+    });
+  };
+  const openHover = hover?.area === area ? hover : null;
   const title = `${searching ? `"${search.trim()}"` : kindsTitle(kinds)} ${locating && !searching ? 'near you' : areaLabel(shownArea)}`;
   const pick = useDrinkPick(search.trim() || STYLES.find((s) => kinds.includes(s.id))?.classics[0] || '');
   const drink = pick ? { id: pick.id, name: pick.name } : null;
@@ -167,7 +175,7 @@ export function DiscoverScreen() {
   const where = { area, near, access, preferNear, onArea, onNearMe, onThisArea };
   let overlay = null;
   if (sheet === 'search' && !split) {
-    overlay = <DiscoverSearchSheet {...searchProps} filters={filtersOn} onFilters={() => setSheet('filters')} />;
+    overlay = <DiscoverSearchSheet {...searchProps} filters={filtersOn} onFilters={() => setSheet('filters')} onAddBar={signedIn ? () => setSheet('add') : undefined} onShowBar={showBar} />;
   } else if (sheet === 'filters') {
     overlay = <FiltersSheet {...filterProps} />;
   } else if (sheet === 'options') {
@@ -194,7 +202,8 @@ export function DiscoverScreen() {
           topInset={headerHeight}
           from={from}
           me={me}
-          top={
+          opened={openHover?.id} focus={openHover?.cam}
+          onShowBar={showBar} top={
             note ? (
               // On glass: bare text over the map is lost under the pins.
               <GlassSurface style={styles.mapNote}>
@@ -237,30 +246,22 @@ export function DiscoverScreen() {
         {note ? <AllowLocation near={near} access={access} onAsk={onNearMe} /> : null}
         {signedIn && home && !searching && !split ? <HomeWeekStrip /> : null}
         {deskSearch ? (
-          <DeskSearchResults filter={filter} drink={drink} results={results} layer={mapLayer} onLayer={setMapLayer} from={from} picked={picked} />
+          <DeskSearchResults filter={filter} drink={drink} results={results} layer={mapLayer} onLayer={setMapLayer} from={from} picked={picked} onAddBar={signedIn ? () => setSheet('add') : undefined} onShowBar={showBar} />
         ) : searching ? (
-          <SearchBody query={search} scope={searchScope} onScope={setScope} mine={mine} area={searchArea} />
+          <SearchBody query={search} scope={searchScope} onScope={setScope} mine={mine} area={searchArea} onAddBar={signedIn ? () => setSheet('add') : undefined} onShowBar={showBar} />
         ) : (
           <DrinksHere
             title={title}
             drinks={results.drinks}
-            totals={results.totals}
             more={results.more}
             isLoading={results.isLoading}
             signedIn={signedIn}
-            area={area} near={{ filter, from, onNow: !showPast }} onKind={addKind}
+            area={area} near={{ filter, from, onNow: !showPast }} onKind={addKind} onShowBar={showBar}
             empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'}${filter.notHad ? ' you haven’t had' : ''} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
           />
         )}
-        {searching ? null : <ClosedBars bars={results.closed} shown={showClosed} where={areaLabel(area)} onShow={setShowClosed} />}
-        <TopBars area={area} />
-        <ForYou />
-        {signedIn ? (
-          <View style={styles.add}>
-            <Caption tone="muted">{"Been to a bar that isn't here?"}</Caption>
-            <Button label="Add a bar" icon="plus" variant="secondary" onPress={() => setSheet('add')} />
-          </View>
-        ) : null}
+        {searching ? null : <ClosedBars bars={results.closed} shown={showClosed} where={areaLabel(area)} onShowBar={showBar} />}
+        <TopBars area={shownArea} search={search} kinds={kinds} onShowBar={showBar} />
       </View>
     </Animated.ScrollView>
   );
@@ -272,7 +273,7 @@ export function DiscoverScreen() {
       {split ? null : <ScrollAwayHeader away={away} onHeight={setHeaderHeight}>{header}</ScrollAwayHeader>}
       {split ? (
         <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} from={from} me={me} pick={{ id: picked?.id ?? null, onPick, layer: mapLayer, onLayer: setMapLayer }} />
+          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} from={from} me={me} opened={openHover?.id} focus={openHover?.cam} onShowBar={showBar} pick={{ id: picked?.id ?? null, onPick, layer: mapLayer, onLayer: setMapLayer }} />
         </View>
       ) : null}
       {overlay}
@@ -293,5 +294,4 @@ const styles = StyleSheet.create({
   controls: { gap: space.sm },
   sticky: { paddingVertical: space.md },
   body: { gap: space.xl, paddingTop: space.sm },
-  add: { gap: space.sm, alignItems: 'flex-start' },
 });

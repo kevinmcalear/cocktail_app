@@ -28,7 +28,7 @@ export interface DrinkRowProps {
   mark?: ReactNode;
   /** A list of many short rows (What to make): the name a size down, as the canvas draws those. */
   compact?: boolean;
-  /** Discover's rows (disc-list, disc-desk-browse): compact's name, a 44-point picture, 64 tall. */
+  /** Discover's rows (disc-list, disc-desk-browse): compact's name, a 72-point picture. */
   dense?: boolean;
   /** A small pill after the caption: "Past · Mar 2024 to Jan 2025", or in the accent, a mixed list's "New". */
   tag?: string;
@@ -47,13 +47,16 @@ export interface DrinkRowProps {
   displayName?: boolean;
   /** What a screen reader hears, when it should say more than the name, caption and note. */
   label?: string;
+  /** Discover: resting on the row shows its bar on the map. Leaving cancels that. */
+  onHoverIn?: () => void;
+  onHoverOut?: () => void;
 }
 
 /** The caption's bar logo: one line of caption text tall. */
 const LOGO = 18;
 
 /** A drink in a list: thumbnail and name, opening the drink page. */
-export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, mark, compact: small, dense, tag, tagTone, note, below, trailing, label, query, matchLook, displayName }: DrinkRowProps) {
+export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption, logo, mark, compact: small, dense, tag, tagTone, note, below, trailing, label, query, matchLook, displayName, onHoverIn, onHoverOut }: DrinkRowProps) {
   const ds = useDs();
   const router = useRouter();
   const compact = small || dense;
@@ -80,6 +83,8 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
       accessibilityLabel={`${label ?? [name, caption, tag, note].filter(Boolean).join('. ')}, open`}
       onPressIn={drinkId ? () => prefetch(drinkId, { name, imageUrl }) : undefined}
       onPress={onPress ?? (() => href && router.push(href as never))}
+      onHoverIn={onHoverIn}
+      onHoverOut={onHoverOut}
       nativeID={nav.nativeID}
       style={[styles.row, dense ? styles.dense : null, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
     >
@@ -122,7 +127,7 @@ const styles = StyleSheet.create({
   active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
   thumb: { width: 56 },
   dense: { minHeight: 64, paddingVertical: space.sm },
-  denseThumb: { width: 44 },
+  denseThumb: { width: 72 },
   text: { flex: 1, gap: 2 },
   byline: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xs, flexShrink: 1 },
   shrink: { flexShrink: 1 },

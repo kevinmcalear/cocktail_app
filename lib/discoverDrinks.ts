@@ -275,7 +275,7 @@ export function findBars(bars: readonly DiscoverBar[], search: string): Discover
     .map((x) => x.b);
 }
 
-function pinOf(b: DiscoverBar, drinks: number): MapPin | null {
+export function pinOf(b: DiscoverBar, drinks: number): MapPin | null {
   if (b.latitude === null || b.longitude === null) return null;
   return {
     id: b.id,

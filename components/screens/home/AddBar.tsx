@@ -139,4 +139,15 @@ const styles = StyleSheet.create({
   sheet: { maxWidth: 640 },
   body: { padding: space.xl, paddingTop: space.sm, gap: space.md },
   close: { alignSelf: 'flex-end', marginBottom: -space.xxl },
+  prompt: { gap: space.sm, alignItems: 'flex-start' },
 });
+
+/** The way to add a bar when a search found nothing. */
+export function AddBarPrompt({ onPress }: { onPress: () => void }) {
+  return (
+    <View style={styles.prompt}>
+      <Caption tone="muted">{"Been to a bar that isn't here?"}</Caption>
+      <Button label="Add a bar" icon="plus" variant="secondary" onPress={onPress} />
+    </View>
+  );
+}

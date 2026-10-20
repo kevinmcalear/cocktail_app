@@ -5,6 +5,7 @@
  */
 import type { DiscoverDrink } from './discoverDrinks';
 import { kindLabel, STYLES } from './drinkStyles';
+import { distance, type Profile, type Taste } from './flavor';
 
 /** A shelf with fewer drinks than this is left out. */
 export const SHELF_MIN = 3;
@@ -36,6 +37,18 @@ export function onePerBar(drinks: readonly DiscoverDrink[], max = SHELF_MAX): Di
     out.push(d);
   }
   return out;
+}
+
+/**
+ * The closest drink at each bar, nearest your taste first. A drink with no
+ * profile sorts after the ones that have one, in the order given.
+ */
+export function byTaste(drinks: readonly DiscoverDrink[], taste: Taste, profiles: Readonly<Record<string, Profile>>): DiscoverDrink[] {
+  const ranked = drinks
+    .map((d, i) => ({ d, i, gap: profiles[d.id] ? distance(taste, profiles[d.id]) : 2 }))
+    .sort((a, b) => a.gap - b.gap || a.i - b.i)
+    .map((row) => row.d);
+  return onePerBar(ranked);
 }
 
 /**
@@ -76,7 +89,7 @@ export function pickShelves({ where, around, style, styled, zero }: { where: str
   const near = where === 'near you';
   const ways = style ? onePerBar(styled) : [];
   const shelves: Shelf[] = [
-    { key: 'around', title: `On menus ${near ? 'around you' : where}`, note: 'One from each bar', kind: null, drinks: onePerBar(around) },
+    { key: 'around', title: `On menus ${near ? 'around you' : where}`, note: 'Based on your taste', kind: null, drinks: onePerBar(around) },
     { key: 'style', title: style ? waysTitle(style, ways.length) : '', note: `The style poured most ${near ? 'around here' : where}`, kind: style, drinks: ways },
     { key: 'zero', title: `Zero-proof ${where}`, note: 'From bars here that pour one', kind: ZERO, drinks: onePerBar(zero) },
   ];

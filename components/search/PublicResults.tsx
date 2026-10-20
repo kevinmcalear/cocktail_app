@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Caption, RowScore } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { DrinkAtBarRow } from '@/components/screens/home/DrinksAtBars';
+import { AddBarPrompt } from '@/components/screens/home/AddBar';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
@@ -57,6 +58,10 @@ interface PublicResultsProps {
   onCounts?: (counts: ShowCounts) => void;
   /** The search tab: finishes the typed word, and puts a classic named that first as a Top hit. */
   typeAhead?: (query: string) => void;
+  /** Discover: shown when this search finds nothing. */
+  onAddBar?: () => void;
+  /** Discover: hovering a bar or its drink opens that bar on the map. */
+  onShowBar?: (barId: string | null) => void;
 }
 
 /**
@@ -66,7 +71,7 @@ interface PublicResultsProps {
  * ends with its score (b02) and lights the searched word. Bars' drinks need
  * an account; the rest is public.
  */
-export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, onCounts, typeAhead }: PublicResultsProps) {
+export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, onCounts, typeAhead, onAddBar, onShowBar }: PublicResultsProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const q = query.trim();
@@ -135,14 +140,14 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const away = (b: DiscoverBar) => (area?.kind === 'point' && b.latitude !== null && b.longitude !== null ? formatDistance(distanceKm(area, { latitude: b.latitude, longitude: b.longitude }), miles) : null);
 
   const drinkGroup = (label: string, list: typeof drinks) => (
-    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} />} />
+    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} onShowBar={onShowBar} />} />
   );
   const barGroup = (
     <ResultGroup
       key="bars"
       label={`Bars ${area ? where : ''}`.trim()}
       items={bars}
-      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} query={q} matchLook={look} />}
+      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} query={q} matchLook={look} onShowBar={onShowBar} />}
     />
   );
   const peopleGroup = (
@@ -158,7 +163,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       key="classics"
       label="Classics"
       items={top ? classics.filter((c) => c !== top) : classics}
-      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} />}
+      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} onShowBar={onShowBar} />}
     />
   );
   const yoursGroup = (
@@ -233,6 +238,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
       {shown}
       {!found && signedIn ? <Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption> : null}
+      {!found && signedIn && !results.isLoading && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}
       {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
     </View>
   );

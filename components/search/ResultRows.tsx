@@ -35,10 +35,13 @@ interface ResultRowProps {
   /** What a screen reader hears, when it should say more than the title, caption and tag. */
   label?: string;
   onPress: () => void;
+  /** Discover: resting on the row shows this bar on the map. Leaving cancels that. */
+  onHoverIn?: () => void;
+  onHoverOut?: () => void;
 }
 
 /** A search result that isn't a drink: the same row as DrinkRow, with an icon or avatar. */
-export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient, tag, trailing, query, matchLook, label, onPress }: ResultRowProps) {
+export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient, tag, trailing, query, matchLook, label, onPress, onHoverIn, onHoverOut }: ResultRowProps) {
   const ds = useDs();
   // In the ⌘K palette: the row the arrow keys are on, which Return opens.
   const nav = useSearchNavRow();
@@ -47,6 +50,8 @@ export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient
       role="link"
       accessibilityLabel={label ?? [title, caption, tag].filter(Boolean).join('. ')}
       onPress={onPress}
+      onHoverIn={onHoverIn}
+      onHoverOut={onHoverOut}
       nativeID={nav.nativeID}
       style={[styles.row, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
     >
@@ -87,7 +92,7 @@ const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', '
  * of its drinks match, and its bar score at the end (b02). A closed one says
  * when it shut, so nobody plans a night around it.
  */
-export function BarResultRow({ bar, score, away, query, matchLook }: { bar: DiscoverBar; score?: number; away?: string | null; query?: string; matchLook?: MatchTextProps['look'] }) {
+export function BarResultRow({ bar, score, away, query, matchLook, onShowBar }: { bar: DiscoverBar; score?: number; away?: string | null; query?: string; matchLook?: MatchTextProps['look']; /** Hovering opens this bar on the map. */ onShowBar?: (barId: string | null) => void }) {
   const router = useRouter();
   // "Fitzroy · 14 drinks on now" (nav-search-home).
   const caption = [bar.locality || bar.city, away, barDrinksLine(bar)].filter(Boolean).join(' · ') || place(bar) || undefined;
@@ -103,6 +108,8 @@ export function BarResultRow({ bar, score, away, query, matchLook }: { bar: Disc
       matchLook={matchLook}
       label={said ? [bar.name, caption, said].filter(Boolean).join('. ') : undefined}
       onPress={() => router.push(`/p/${bar.handle || bar.id}`)}
+      onHoverIn={onShowBar ? () => onShowBar(bar.id) : undefined}
+      onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
     />
   );
 }
