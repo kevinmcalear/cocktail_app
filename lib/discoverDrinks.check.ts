@@ -14,6 +14,7 @@ import {
   cursorAfter,
   drinkReason,
   distanceKm,
+  barsMatching,
   findBars,
   kindParams,
   kindsTitle,
@@ -114,6 +115,11 @@ assert.deepEqual(ids(findBars([nomad, dante, attaboy], 'west vil')), ['dante'], 
 assert.deepEqual(ids(findBars([nomad, dante, attaboy], 'new york')), ['attaboy', 'dante'], 'by city, A to Z');
 assert.deepEqual(findBars([dante], 'd'), [], 'one letter finds nothing');
 assert.deepEqual(ids(findBars([bar('o', 'Origin Bar', null, null, null), bar('g', 'Bar Orchard Ginza', null, null, null)], 'gin')), ['g'], 'a word must start with it');
+assert.deepEqual(
+  ids(barsMatching([bar('p', 'Pourer', null, null, null, null, 2), bar('m', 'Martini Room', null, null, null), bar('q', 'Quiet', null, null, null), bar('b', 'Big Pourer', null, null, null, null, 5)], 'martini')),
+  ['m', 'b', 'p'],
+  'searching: the bar named for it, then the bars pouring the most matches; none that pour nothing',
+);
 
 // --- pins: one per open bar with matching drinks and coordinates, most first, each once ---
 const none = bar('none', 'Dry Bar', 'New York', 40.7, -74, null, 0);

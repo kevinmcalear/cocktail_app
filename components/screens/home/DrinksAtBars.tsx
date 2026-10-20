@@ -187,7 +187,7 @@ export function DrinksHere({ title, drinks: mixed, more: mixedMore, isLoading: m
   if (!signedIn) body = <ListNote>Sign in to see the drinks bars pour.</ListNote>;
   else if (isLoading) body = <ListNote>Loading…</ListNote>;
   else if (!drinks.length) body = <ListNote>{empty}</ListNote>;
-      else body = <DrinkAtBarList drinks={drinks} more={more} scores={scores} onShowBar={onShowBar} />;
+  else body = <DrinkAtBarList drinks={drinks} more={more} scores={scores} onShowBar={onShowBar} />;
   return (
     <>
       <DiscoverShelves shelves={shelves} onKind={onKind} onShowBar={onShowBar} />

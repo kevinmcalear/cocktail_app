@@ -23,7 +23,7 @@ function TasteLine({ note }: { note: string }) {
   const { data: me } = useMyTaste();
   const taste = me?.taste;
   return (
-    <PressableScale accessibilityLabel="Your taste" hitSlop={12} onPress={() => router.push('/taste' as never)} style={styles.note}>
+    <PressableScale role="link" accessibilityLabel={`${note}. Open your taste`} hitSlop={12} onPress={() => router.push('/taste' as never)} style={styles.note}>
       {taste && Object.keys(taste).length ? <PalateFlower values={taste} size={28} rings={false} /> : null}
       <Caption tone="muted">{note}</Caption>
     </PressableScale>
@@ -45,6 +45,8 @@ export function ShelfTile({ drink: d, onShowBar, atBar = false }: { drink: Disco
       onPress={() => router.push(itemHref('Cocktail', d.id) as never)}
       onHoverIn={onShowBar ? () => onShowBar(d.barId) : undefined}
       onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
+      onFocus={onShowBar ? () => onShowBar(d.barId) : undefined}
+      onBlur={onShowBar ? () => onShowBar(null) : undefined}
       style={styles.tile}
     >
       <View style={[styles.picture, { backgroundColor: ds.c.paper }]}>
@@ -93,7 +95,7 @@ export function DiscoverShelves({ shelves, onKind, onShowBar }: { shelves: Shelf
             </PressableScale>
           ) : null}
         </View>
-        {s.key === 'around' ? <TasteLine note={s.note} /> : <Caption tone="muted">{s.note}</Caption>}
+        {s.taste ? <TasteLine note={s.note} /> : <Caption tone="muted">{s.note}</Caption>}
       </View>
       {/* Runs to the screen's edges, so a cut-off tile says there's more. */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -gutter }} contentContainerStyle={{ paddingHorizontal: gutter }}>

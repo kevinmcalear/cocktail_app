@@ -24,6 +24,8 @@ export interface Shelf {
   /** See all: the filter that lists all of them; none for the first shelf (the list below is that). */
   kind: string | null;
   drinks: DiscoverDrink[];
+  /** Picked for the viewer's taste: the note shows their palate and opens the taste page. */
+  taste?: boolean;
 }
 
 /** The first drink from each bar, in the order given, up to `max`. */
@@ -89,7 +91,7 @@ export function pickShelves({ where, around, style, styled, zero }: { where: str
   const near = where === 'near you';
   const ways = style ? onePerBar(styled) : [];
   const shelves: Shelf[] = [
-    { key: 'around', title: `On menus ${near ? 'around you' : where}`, note: 'Based on your taste', kind: null, drinks: onePerBar(around) },
+    { key: 'around', title: `On menus ${near ? 'around you' : where}`, note: 'One from each bar', kind: null, drinks: onePerBar(around) },
     { key: 'style', title: style ? waysTitle(style, ways.length) : '', note: `The style poured most ${near ? 'around here' : where}`, kind: style, drinks: ways },
     { key: 'zero', title: `Zero-proof ${where}`, note: 'From bars here that pour one', kind: ZERO, drinks: onePerBar(zero) },
   ];

@@ -31,7 +31,7 @@ interface RowProps {
   drinkId?: string;
   /** Makes the row a link, e.g. to the bar's profile. */
   onPress?: () => void;
-  /** Discover: resting on the row shows this bar on the map. Leaving cancels that. */
+  /** Discover: resting the pointer or keyboard focus on the row shows this bar on the map. Leaving cancels that. */
   onHoverIn?: () => void;
   onHoverOut?: () => void;
   /** Beside the row, outside its link: the bar's heart. */
@@ -61,7 +61,7 @@ export function RankRow({ position, title, detail, score, scoreDetail, logo, bar
     </>
   );
   const row = onPress ? (
-    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} onHoverIn={onHoverIn} onHoverOut={onHoverOut} style={styles.link}>
+    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} onHoverIn={onHoverIn} onHoverOut={onHoverOut} onFocus={onHoverIn} onBlur={onHoverOut} style={styles.link}>
       {body}
     </PressableScale>
   ) : (

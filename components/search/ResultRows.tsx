@@ -35,7 +35,7 @@ interface ResultRowProps {
   /** What a screen reader hears, when it should say more than the title, caption and tag. */
   label?: string;
   onPress: () => void;
-  /** Discover: resting on the row shows this bar on the map. Leaving cancels that. */
+  /** Discover: resting the pointer or keyboard focus on the row shows this bar on the map. Leaving cancels that. */
   onHoverIn?: () => void;
   onHoverOut?: () => void;
 }
@@ -52,6 +52,8 @@ export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient
       onPress={onPress}
       onHoverIn={onHoverIn}
       onHoverOut={onHoverOut}
+      onFocus={onHoverIn}
+      onBlur={onHoverOut}
       nativeID={nav.nativeID}
       style={[styles.row, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
     >

@@ -6,7 +6,7 @@ import { areaLabel } from '@/lib/nearMe';
 
 /**
  * Discover's shelves over the mixed list (lib/discoverShelves.ts): menus
- * around you, closest to your taste, then the style most bars here pour, and
+ * around you (closest to your taste once you have one), then the style most bars here pour, and
  * zero-proof. The two extra lists are discover_list mixed and on now, asked
  * once the main list has painted (`around` has drinks), and saved like it.
  */
@@ -28,5 +28,5 @@ export function useDiscoverShelves(filter: DrinkFilter, around: DiscoverDrink[],
   if (!ready) return [];
   const shelves = pickShelves({ where: areaLabel(filter.area), around, style, styled: styled.drinks, zero: zero.drinks });
   if (!hasTaste || !taste || !flavors.data) return shelves;
-  return shelves.map((s) => (s.key === 'around' ? { ...s, drinks: byTaste(page, taste, flavors.data) } : s));
+  return shelves.map((s) => (s.key === 'around' ? { ...s, note: 'Based on your taste', taste: true, drinks: byTaste(page, taste, flavors.data) } : s));
 }

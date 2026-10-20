@@ -47,7 +47,7 @@ export interface DrinkRowProps {
   displayName?: boolean;
   /** What a screen reader hears, when it should say more than the name, caption and note. */
   label?: string;
-  /** Discover: resting on the row shows its bar on the map. Leaving cancels that. */
+  /** Discover: resting the pointer or keyboard focus on the row shows its bar on the map. Leaving cancels that. */
   onHoverIn?: () => void;
   onHoverOut?: () => void;
 }
@@ -85,6 +85,8 @@ export function DrinkRow({ name, href, onPress, imageUrl, glass, itemId, caption
       onPress={onPress ?? (() => href && router.push(href as never))}
       onHoverIn={onHoverIn}
       onHoverOut={onHoverOut}
+      onFocus={onHoverIn}
+      onBlur={onHoverOut}
       nativeID={nav.nativeID}
       style={[styles.row, dense ? styles.dense : null, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
     >

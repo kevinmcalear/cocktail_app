@@ -56,7 +56,7 @@ assert.deepEqual(
   ],
 );
 assert.equal(all[1].note, 'The style poured most around here');
-assert.equal(all[0].note, 'Based on your taste');
+assert.equal(all[0].note, 'One from each bar', 'until a taste orders it (hooks/useDiscoverShelves)');
 const thin = pickShelves({ where: 'in Brooklyn', around, style: 'martini', styled: [drink('m1', 'a'), drink('m2', 'a'), drink('m3', 'b')], zero: [] });
 assert.deepEqual(
   thin.map((s) => s.title),

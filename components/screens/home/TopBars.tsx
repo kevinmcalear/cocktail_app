@@ -7,16 +7,11 @@ import { BarResultRow } from '@/components/search/ResultRows';
 import { space } from '@/constants/tokens';
 import { useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars } from '@/hooks/useDiscoverDrinks';
-import type { DiscoverBar } from '@/lib/discoverDrinks';
+import { barsMatching } from '@/lib/discoverDrinks';
 import { areaLabel, earlyNote, type Area } from '@/lib/nearMe';
 import { MIN_RANKERS } from '@/lib/ranking';
 
 const TOP = 5;
-
-/** Bars the search actually hits, most matches first. */
-function matching(bars: readonly DiscoverBar[]): DiscoverBar[] {
-  return bars.filter((b) => b.drinks > 0 && !b.closed).sort((a, b) => b.drinks - a.drinks || a.name.localeCompare(b.name));
-}
 
 /**
  * "Top bars near you", by bar score: the average of a bar's drink scores,
@@ -24,7 +19,8 @@ function matching(bars: readonly DiscoverBar[]): DiscoverBar[] {
  * Early bars (fewer than MIN_RANKERS people, or nobody yet) are listed
  * without a score when no bar has one yet: the viewer's loved bars first,
  * then the most relevant (discover_top_bars). Each row has its heart.
- * While a search is typed, this section is the bars that match it instead.
+ * Wide screens' search swaps it for the bars that match (phones' search
+ * lists its own bars, so Discover leaves it out there).
  */
 export function TopBars({ area, search = '', kinds = [], onShowBar }: { area: Area; search?: string; kinds?: readonly string[]; /** Hovering a row opens that bar on the map. */ onShowBar?: (barId: string | null) => void }) {
   const q = search.trim();
@@ -32,7 +28,7 @@ export function TopBars({ area, search = '', kinds = [], onShowBar }: { area: Ar
   const { data, isLoading, error } = useTopBars(area, !q);
   const found = useDiscoverBars(area, { search: q, kinds }, !!q);
   if (q) {
-    const bars = matching(found.data ?? []);
+    const bars = barsMatching(found.data ?? [], q);
     return (
       <View style={styles.section}>
         <Caption tone="muted">{`Matching “${q}”`}</Caption>

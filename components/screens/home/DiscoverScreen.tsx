@@ -105,7 +105,7 @@ export function DiscoverScreen() {
   const filter = { kinds, search, area: shownArea, notHad: signedIn && notHad };
   const results = useDiscoverResults(filter, !locating || searching, !searching && !showPast, !searching);
   const showBar = (barId: string | null) => {
-    armBarHover(barId, (id) => {
+    armBarHover(split || phoneMap ? barId : null, (id) => {
       const bar = results.barsById.get(id);
       const pin = bar ? pinOf(bar, bar.drinks) : null;
       if (pin) setHover((cur) => (cur?.id === pin.id && cur.area === area && cur.cam.latitude === pin.latitude && cur.cam.longitude === pin.longitude ? cur : { id: pin.id, cam: cameraOn(pin), area }));
@@ -202,8 +202,10 @@ export function DiscoverScreen() {
           topInset={headerHeight}
           from={from}
           me={me}
-          opened={openHover?.id} focus={openHover?.cam}
-          onShowBar={showBar} top={
+          opened={openHover?.id}
+          focus={openHover?.cam}
+          onShowBar={showBar}
+          top={
             note ? (
               // On glass: bare text over the map is lost under the pins.
               <GlassSurface style={styles.mapNote}>
@@ -261,7 +263,7 @@ export function DiscoverScreen() {
           />
         )}
         {searching ? null : <ClosedBars bars={results.closed} shown={showClosed} where={areaLabel(area)} onShowBar={showBar} />}
-        <TopBars area={shownArea} search={search} kinds={kinds} onShowBar={showBar} />
+        {searching && !deskSearch ? null : <TopBars area={shownArea} search={search} kinds={kinds} onShowBar={showBar} />}
       </View>
     </Animated.ScrollView>
   );

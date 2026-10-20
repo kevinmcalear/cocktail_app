@@ -32,7 +32,10 @@ const drink = (id: string, barId: string): DiscoverDrink => ({
 test('only shelves with three drinks show, and See all sets that filter', async () => {
   const around = [drink('1', 'a'), drink('2', 'b'), drink('3', 'c')];
   // Two zero-proof drinks: too few, so no zero-proof shelf.
-  const shelves = pickShelves({ where: 'near you', around, style: 'martini', styled: around, zero: around.slice(0, 2) });
+  const picked = pickShelves({ where: 'near you', around, style: 'martini', styled: around, zero: around.slice(0, 2) });
+  // As hooks/useDiscoverShelves marks the first shelf once a taste orders it.
+  const shelves = picked.map((s) => (s.key === 'around' ? { ...s, note: 'Based on your taste', taste: true } : s));
+  expect(picked[0].note).toBe('One from each bar');
   const onKind = jest.fn();
   const onShowBar = jest.fn();
   await renderWithTamagui(<DiscoverShelves shelves={shelves} onKind={onKind} onShowBar={onShowBar} />);
@@ -44,8 +47,7 @@ test('only shelves with three drinks show, and See all sets that filter', async 
   await fireEvent(screen.getAllByRole('link', { name: 'Drink 1. Bar a. Nolita' })[0], 'hoverIn');
   expect(onShowBar).toHaveBeenCalledWith('a');
 
-  expect(screen.getByText('Based on your taste')).toBeTruthy();
-  await fireEvent.press(screen.getByText('Based on your taste'));
+  await fireEvent.press(screen.getByRole('link', { name: 'Based on your taste. Open your taste' }));
   expect(mockPush).toHaveBeenCalledWith('/taste');
 
   // The first shelf is the list below, so it has no See all.
@@ -64,6 +66,9 @@ test('how far sits on the picture, in miles or kilometres as the device measures
   );
   expect(screen.getByRole('link', { name: 'Drink 1. Bar a. 0.2 mi' })).toBeTruthy();
   expect(screen.getAllByText('0.2 mi')).toHaveLength(3);
+  // No taste behind it: the plain note, not a link to the taste page.
+  expect(screen.getByText('One from each bar')).toBeTruthy();
+  expect(screen.queryByRole('link', { name: /Open your taste/ })).toBeNull();
 });
 
 test('no shelves, nothing at all', async () => {
