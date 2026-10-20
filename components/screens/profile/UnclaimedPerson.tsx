@@ -1,19 +1,22 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, Tag, Title, useBreakpoint } from '@/components/ds';
+import { Body, Caption, Tag, Title, useBreakpoint } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import type { Profile } from '@/hooks/useProfiles';
 
 import { MadeByList, useMadeBy, WorkedAt } from './MadeBy';
+import { PersonAwards } from './PersonAwards';
+import { ProfileLinks } from './ProfileLinks';
 import { Stat, Stats } from './ProfileSections';
 import { ThisIsMe } from './ThisIsMe';
 
 /**
  * Someone's page nobody has claimed yet (find-yourself step 3): who they are
  * and where, "5 drinks credited · 2 bars · 2 menus", where they worked and
- * when, then everything credited to them, grouped by bar and menu. On a wide
+ * when, then everything credited to them, grouped by bar and menu, and
+ * their awards. Their bio and links stay, as on any profile. On a wide
  * screen "Are you Ash?" sits under the numbers and Made by beside them; on a
  * phone This is me and Not me are pinned to the bottom (ProfileScreen).
  */
@@ -38,6 +41,8 @@ export function UnclaimedPerson({ profile }: { profile: Profile }) {
         <Stat value={bars} label={bars === 1 ? 'bar' : 'bars'} ruled />
         <Stat value={menus} label={menus === 1 ? 'menu' : 'menus'} ruled />
       </Stats>
+      {profile.bio ? <Body>{profile.bio}</Body> : null}
+      <ProfileLinks profile={profile} align="start" />
       {wide ? <WorkedAt made={made} /> : null}
       {wide ? <ThisIsMe profile={profile} /> : null}
     </View>
@@ -50,6 +55,7 @@ export function UnclaimedPerson({ profile }: { profile: Profile }) {
       {about}
       <View style={wide ? styles.main : styles.body}>
         <MadeByList name={profile.display_name} made={made} />
+        <PersonAwards profileId={profile.id} />
       </View>
     </View>
   );

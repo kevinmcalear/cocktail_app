@@ -1,9 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, useDs } from '@/components/ds';
-import { DrinkRow } from '@/components/screens/DrinkRow';
+import { Body, Caption, DrinkImage, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
+import { heroPicture } from '@/lib/itemImages';
 import { useProfile, type MyPersonClaim, type Profile } from '@/hooks/useProfiles';
 
 import { useMadeBy } from '../profile/MadeBy';
@@ -41,6 +41,7 @@ export function ClaimSent({ claim, onNext }: { claim: MyPersonClaim; onNext: () 
 
 /** "Waiting for you": each drink credited to the page, and its bar. */
 function Waiting({ profile }: { profile: Profile }) {
+  const ds = useDs();
   const made = useMadeBy(profile);
   const rows = made.groups.flatMap((g) => g.rows.map((r) => ({ ...r, bar: g.barName })));
   if (!rows.length) return null;
@@ -52,7 +53,18 @@ function Waiting({ profile }: { profile: Profile }) {
       <View role="list">
         {rows.map((r) => {
           const d = made.pictures.get(r.id);
-          return <DrinkRow key={r.id} name={r.name} itemId={r.id} imageUrl={null} glass={d?.glass?.icon_key ?? null} trailing={r.bar ? <Caption tone="muted">{r.bar}</Caption> : null} />;
+          const hero = d ? heroPicture(d.item_images) : null;
+          return (
+            <View key={r.id} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
+              <View style={styles.thumb}>
+                <DrinkImage thumb sketchDetail="thumb" source={hero?.url} generated={hero?.isSketch} glass={d?.glass?.icon_key} itemId={r.id} accessibilityLabel={r.name} radius="control" />
+              </View>
+              <Body style={styles.flex} numberOfLines={1}>
+                {r.name}
+              </Body>
+              {r.bar ? <Caption tone="muted">{r.bar}</Caption> : null}
+            </View>
+          );
         })}
       </View>
     </View>
@@ -71,5 +83,8 @@ function Clock() {
 const styles = StyleSheet.create({
   list: { gap: space.xs },
   cap: { letterSpacing: 0.8, textTransform: 'uppercase' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  thumb: { width: 36 },
+  flex: { flex: 1, minWidth: 0 },
   clock: { width: 48, height: 48, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
 });
