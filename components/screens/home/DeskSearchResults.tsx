@@ -7,7 +7,7 @@ import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { radius, space } from '@/constants/tokens';
 import { useBestDrink, useDrinkRank, useRowScores } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
-import { byScore, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { byScore, resultsCaption, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import type { MapPin } from '@/lib/discoverMap';
 import { barSearchHref, searchTitle } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
@@ -15,7 +15,7 @@ import { areaLabel } from '@/lib/nearMe';
 
 import { MapLayers, type MapLayer } from './DiscoverControls';
 import { BarAway, DrinkAtBarList, type MoreDrinks } from './DrinksAtBars';
-import { ClassicLine, resultsCaption, ResultsHead } from './ResultsHead';
+import { ClassicLine, ResultsHead } from './ResultsHead';
 
 interface DeskSearchResultsProps {
   filter: DrinkFilter;
@@ -59,7 +59,7 @@ export function DeskSearchResults({ filter, drink, results, layer, onLayer, from
   return (
     <View style={styles.pane}>
       <ResultsHead
-        caption={resultsCaption(true, results.totals, where, 0)}
+        caption={resultsCaption(true, results.totals, where, 0, false)}
         title={searchTitle(filter.search)}
         chips={<MapLayers layer={nearest ? 'nearest' : best ? 'best' : 'drinks'} onLayer={onLayer} drinkName={drink?.name ?? null} searching nearest={!!from} />}
         below={<ClassicLine drinks={results.drinks} search={filter.search} where={where} />}

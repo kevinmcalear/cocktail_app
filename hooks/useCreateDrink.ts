@@ -186,15 +186,16 @@ export function useCreateDrink() {
       const iceId = draft.ice ? await ensure(draft.ice, 'ice') : null;
       const methodIceId = draft.methodIce ? await ensure(draft.methodIce, 'ice') : null;
 
-      // A venue's drink is credited to the venue too; one added at home, to the bar it was first made at.
-      let originBar: string | null = barId ? null : (draft.place?.id ?? null);
-      if (barId) {
+      // A venue's drink is credited to the venue too, unless it's from somewhere else; one added at home, to the bar it was first made at.
+      const fromElsewhere = !barId || !!draft.elsewhere;
+      let originBar: string | null = fromElsewhere ? (draft.place?.id ?? null) : null;
+      if (!fromElsewhere) {
         const { data } = await supabase.from('profiles').select('id').eq('bar_id', barId).eq('kind', 'bar').limit(1).maybeSingle();
         originBar = data?.id ?? null;
       }
       const creatorId = creatorProfileId(draft, myProfileId);
       // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
-      const otherBar = !barId && !!originBar;
+      const otherBar = fromElsewhere && !!originBar;
 
       const row = {
         id: undefined as string | undefined,

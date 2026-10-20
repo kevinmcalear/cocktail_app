@@ -42,8 +42,27 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
   const other = typeof draft.creator === 'object' ? draft.creator : null;
   const mine = !!me && (draft.creator === 'me' || draft.creator === null);
 
+  // Added at a venue: whether it's theirs, else where it's from (board create-eddie-oct16).
+  const elsewhere = !!venueName && !!draft.elsewhere;
   return (
     <View style={styles.stack}>
+      {venueName ? (
+        <View style={styles.section}>
+          <Eyebrow>{`Is this a ${venueName} drink?`}</Eyebrow>
+          <View role="radiogroup" accessibilityLabel={`Is this a ${venueName} drink?`} style={styles.chips}>
+            <WizardChip label="Yes, it’s ours" selected={!elsewhere} onPress={() => set({ elsewhere: false, place: null })} />
+            <WizardChip label="No, from somewhere else" selected={elsewhere} onPress={() => set({ elsewhere: true })} />
+          </View>
+          {elsewhere ? (
+            <>
+              <PlacePick draft={draft} set={set} label="Where’s it from?" />
+              <Caption tone="muted">{`It’s saved to ${venueName}’s library, credited to the bar it came from.`}</Caption>
+            </>
+          ) : (
+            <Caption tone="muted">{`Yes is picked for you when you add a drink as ${venueName}.`}</Caption>
+          )}
+        </View>
+      ) : null}
       <View style={styles.section}>
         <Eyebrow>Made by</Eyebrow>
         <View role="radiogroup" accessibilityLabel="Made by" style={styles.chips}>
@@ -64,7 +83,7 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
             }}
           />
         ) : null}
-        {venueName ? <Caption tone="muted">{`It’s credited to ${venueName} too.`}</Caption> : null}
+        {venueName && !elsewhere ? <Caption tone="muted">{`It’s credited to ${venueName} too.`}</Caption> : null}
       </View>
 
       <View style={styles.section}>
@@ -90,7 +109,7 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
         ) : null}
       </View>
 
-      <WhereWhen draft={draft} set={set} venueName={venueName} />
+      <WhereWhen draft={draft} set={set} venueName={elsewhere ? null : venueName} asked={elsewhere} />
 
       <View style={styles.section}>
         <Eyebrow>Riff on a classic?</Eyebrow>
@@ -127,40 +146,16 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
  * Where it was first made (a venue's drink is the venue's; at home, at home
  * or a bar with a page) and the year, this one in a tap.
  */
-function WhereWhen({ draft, set, venueName }: StepProps & { venueName: string | null }) {
+function WhereWhen({ draft, set, venueName, asked }: StepProps & { venueName: string | null; asked: boolean }) {
   const thisYear = new Date().getFullYear();
   const year = draft.originYear ?? null;
   // What's typed in "Another year", kept while it isn't a year yet ("19").
   const [typed, setTyped] = useState(year !== null && year !== thisYear ? String(year) : '');
-  const [where, setWhere] = useState('');
-  const bars = usePublicBars(where).data ?? [];
-  const place = draft.place ?? null;
   const badYear = typed.trim().length === 4 && parseYear(typed, thisYear) === null;
   return (
     <View style={styles.section}>
-      <Eyebrow>Where and when</Eyebrow>
-      {venueName ? (
-        <Caption tone="muted">{`First made at ${venueName}.`}</Caption>
-      ) : (
-        <>
-          <View role="radiogroup" accessibilityLabel="First made at" style={styles.chips}>
-            <WizardChip label="At home" selected={!place} onPress={() => set({ place: null })} />
-            {place ? <WizardChip label={place.name} selected onPress={() => set({ place: null })} /> : null}
-          </View>
-          <Field label="First made at a bar" value={where} onChangeText={setWhere} placeholder="Search bars" autoCorrect={false} maxLength={60} />
-          {where.trim().length >= 2 ? (
-            <Results
-              rows={bars.map((b) => ({ id: b.id, label: [b.display_name, b.city].filter(Boolean).join(' · ') }))}
-              empty="No bar by that name has a page yet."
-              onPick={(id) => {
-                const b = bars.find((x) => x.id === id);
-                if (b) set({ place: { id: b.id, name: b.display_name } });
-                setWhere('');
-              }}
-            />
-          ) : null}
-        </>
-      )}
+      <Eyebrow>{asked ? 'When' : 'Where and when'}</Eyebrow>
+      {venueName ? <Caption tone="muted">{`First made at ${venueName}.`}</Caption> : asked ? null : <PlacePick draft={draft} set={set} label="First made at a bar" />}
       <View role="radiogroup" accessibilityLabel="When" style={styles.chips}>
         <WizardChip
           label={`This year (${thisYear})`}
@@ -193,6 +188,33 @@ function WhereWhen({ draft, set, venueName }: StepProps & { venueName: string | 
         error={badYear ? `A year from 1600 to ${thisYear}.` : undefined}
       />
     </View>
+  );
+}
+
+/** At home, or a bar with a page: where the drink was first made. */
+function PlacePick({ draft, set, label }: StepProps & { label: string }) {
+  const [where, setWhere] = useState('');
+  const bars = usePublicBars(where).data ?? [];
+  const place = draft.place ?? null;
+  return (
+    <>
+      <View role="radiogroup" accessibilityLabel="First made at" style={styles.chips}>
+        <WizardChip label="At home" selected={!place} onPress={() => set({ place: null })} />
+        {place ? <WizardChip label={place.name} selected onPress={() => set({ place: null })} /> : null}
+      </View>
+      <Field label={label} value={where} onChangeText={setWhere} placeholder="Search bars" autoCorrect={false} maxLength={60} />
+      {where.trim().length >= 2 ? (
+        <Results
+          rows={bars.map((b) => ({ id: b.id, label: [b.display_name, b.city].filter(Boolean).join(' · ') }))}
+          empty="No bar by that name has a page yet."
+          onPick={(id) => {
+            const b = bars.find((x) => x.id === id);
+            if (b) set({ place: { id: b.id, name: b.display_name } });
+            setWhere('');
+          }}
+        />
+      ) : null}
+    </>
   );
 }
 

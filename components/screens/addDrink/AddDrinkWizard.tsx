@@ -34,6 +34,7 @@ import { MethodStep } from './MethodStep';
 import { PublishStep } from './PublishStep';
 import { ReviewStep } from './ReviewStep';
 import { IceStep } from './IceStep';
+import { StartPhotos } from './ReviewPhotos';
 import { NameStep, NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
@@ -198,6 +199,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         return (
           <>
             <NameStep draft={draft} set={set} onDone={() => canSave(draft) && next()} resumed={resumed} onStartOver={startOver} />
+            <StartPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} barId={barId} />
             {classic ? <StartFromClassic set={set} match={classic} onStarted={() => go('ingredients')} /> : null}
           </>
         );

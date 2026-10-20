@@ -78,11 +78,13 @@ export interface WizardDraft {
   /** The year it was first made (items.origin_year); null is not sure. */
   originYear?: number | null;
   /**
-   * Where it was first made, for a drink added at home: a bar's public
-   * profile (items.origin_bar_profile_id); null is at home. A venue's drink
-   * is always the venue's.
+   * Where it was first made: a bar's public profile
+   * (items.origin_bar_profile_id); null is at home. A venue's drink is the
+   * venue's unless `elsewhere`.
    */
   place?: WizardPick | null;
+  /** Added at a venue, but "No, from somewhere else": credited to `place`, still saved in the venue's library (Eddie, 16 Oct). */
+  elsewhere?: boolean;
   description: string;
   notes: string;
   /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink. */
@@ -296,12 +298,16 @@ const g = (label: string, name: string, unit: string, amount = '1'): GarnishChip
 export const GARNISH_CHIPS: readonly GarnishChip[] = [
   g('Orange peel', 'Orange', 'peel'),
   g('Lemon twist', 'Lemon', 'twist'),
-  g('Grapefruit peel', 'Grapefruit', 'peel'),
+  // A discard: the peel is expressed over the drink and thrown away (Ian at Bar Snack, 16 Oct).
+  g('Lemon discard', 'Lemon', 'discard'),
+  g('Orange discard', 'Orange', 'discard'),
+  g('Grapefruit discard', 'Grapefruit', 'discard'),
   g('Lime wheel', 'Lime', 'wheel'),
+  g('Cherry', 'Cocktail cherry', 'each'),
+  g('Grapefruit peel', 'Grapefruit', 'peel'),
   g('Lime wedge', 'Lime', 'wedge'),
   g('Lemon wheel', 'Lemon', 'wheel'),
   g('Orange wheel', 'Orange', 'wheel'),
-  g('Cherry', 'Cocktail cherry', 'each'),
   g('Olive', 'Olive', 'each'),
   g('Mint sprig', 'Mint', 'sprig'),
   g('Grated nutmeg', 'Nutmeg', 'pinch'),
@@ -334,7 +340,7 @@ export const FINISH_CHIPS: readonly FinishChip[] = [
 ];
 
 /** The units a finish line offers: on top first, then on the glass. */
-export const FINISH_UNITS = ['drop', 'dash', 'spray', 'rinse', 'float', 'each', 'peel', 'twist', 'wheel', 'sprig', 'leaf', 'slice', 'wedge', 'rim', 'pinch'] as const;
+export const FINISH_UNITS = ['drop', 'dash', 'spray', 'rinse', 'float', 'each', 'peel', 'twist', 'discard', 'wheel', 'sprig', 'leaf', 'slice', 'wedge', 'rim', 'pinch'] as const;
 
 /**
  * How a finish line starts, from its name: oils in drops (three), saline and

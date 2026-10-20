@@ -1,7 +1,7 @@
 // Checks for lib/discover.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { citiesFrom, findDrinks, foldName, orderDrinks } from './discover';
+import { citiesFrom, findCities, findDrinks, foldName, orderDrinks } from './discover';
 
 const names = (xs: { name: string }[]) => xs.map((x) => x.name);
 
@@ -40,3 +40,17 @@ assert.deepEqual(
 );
 
 console.log('discover: ok');
+
+// --- findCities: the city a search names, starts before later words, busiest order kept ---
+const places = citiesFrom([
+  ...Array(5).fill({ city: 'New York', country_code: 'US' }),
+  ...Array(3).fill({ city: 'Melbourne', country_code: 'AU' }),
+  { city: 'York', country_code: 'GB' },
+  { city: 'Newcastle', country_code: 'AU' },
+]);
+assert.deepEqual(findCities(places, 'New York').map((c) => c.city), ['New York']);
+assert.deepEqual(findCities(places, 'new').map((c) => c.city), ['New York', 'Newcastle']);
+assert.deepEqual(findCities(places, 'york').map((c) => c.city), ['York', 'New York']);
+assert.deepEqual(findCities(places, 'mélb').map((c) => c.city), ['Melbourne']);
+assert.deepEqual(findCities(places, 'n'), []);
+assert.deepEqual(findCities(places, 'black pearl'), []);
