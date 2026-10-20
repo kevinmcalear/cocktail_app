@@ -15,7 +15,7 @@ import { useDiscoverBars, useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useDrinkLines } from '@/hooks/useDrinkSources';
 import { useItemScores } from '@/hooks/useFlavor';
 import { usePublicIngredientSearch } from '@/hooks/useIngredients';
-import { usePublicPeople } from '@/hooks/useProfiles';
+import { usePublicPeople, useWaiting } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import type { SearchMine } from '@/hooks/useSearchMine';
@@ -34,7 +34,7 @@ import { foldIntoClassics, gatherVariations } from '@/lib/servedAt';
 import { capitalize } from '@/lib/stringUtils';
 
 import { BrowseChips, ClassicRow, StyleCard } from './ClassicRow';
-import { BarResultRow, ResultGroup, ResultRow } from './ResultRows';
+import { BarResultRow, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
@@ -63,8 +63,9 @@ interface PublicResultsProps {
 }
 
 /**
- * Bars and the drinks they pour, here or everywhere. Everywhere adds the
- * bartenders, the classics (each with its bars' variations gathered under
+ * Bars, bartenders and the drinks bars pour, here or everywhere; bar and
+ * person rows say what is credited there and whether it's claimed
+ * (find-yourself). Everywhere adds the classics (each with its bars' variations gathered under
  * it), your own drinks at home, and the ingredients. Every drink and bar row
  * ends with its score (b02) and lights the searched word. Bars' drinks need
  * an account; the rest is public.
@@ -82,7 +83,8 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   // The search page's bar rows count what the search matched and what's on now ("Fitzroy · 14 drinks on now").
   const { data: searchedBars } = useDiscoverBars(area ?? ANYWHERE, { kinds, search: q, onNow: true }, signedIn && !onKind && q.length > 1);
   const { data: publicBars } = usePublicBars(everywhere && !signedIn ? q : '');
-  const { data: people } = usePublicPeople(everywhere ? q : '');
+  // People show in every scope: a bartender is found by name, wherever you search (find-yourself).
+  const { data: people } = usePublicPeople(q);
   const { data: classicList } = useDrinkLists();
   const { data: ingredientHits } = usePublicIngredientSearch(everywhere ? q : '');
   const pick = useDrinkPick(q);
@@ -113,6 +115,11 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       drinks: 0,
     }));
   }, [signedIn, area, searchedBars, results.bars, publicBars, q]);
+  // ponytail: past 100 bars (four pages of rows) the tags stop; a longer list would page these too.
+  const { data: waiting } = useWaiting(
+    bars.slice(0, 100).map((b) => b.id),
+    (people ?? []).map((p) => p.id)
+  );
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
   const ingredients = useMemo(() => (everywhere && ingredientHits ? findDrinks(ingredientHits, q) : []), [everywhere, ingredientHits, q]);
   // A bar's copy of a classic in these results folds into it ("served at 7 bars"); its variations gather under it.
@@ -149,7 +156,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       key="bars"
       label={`Bars ${area ? where : ''}`.trim()}
       items={bars}
-      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} query={q} matchLook={look} />}
+      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} waiting={waiting?.[b.id]} query={q} matchLook={look} />}
     />
   );
   const placeGroup = (
@@ -174,8 +181,8 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     <ResultGroup
       key="people"
       label="People"
-      items={everywhere ? (people ?? []) : []}
-      render={(p) => <ResultRow key={p.id} title={p.display_name} caption={p.job ?? p.city ?? undefined} avatar={{ uri: null }} query={q} matchLook={look} onPress={() => router.push(`/p/${p.handle || p.id}`)} />}
+      items={people ?? []}
+      render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={q} matchLook={look} />}
     />
   );
   const classicGroup = (
@@ -218,9 +225,9 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   // Each door's order, as its board draws it.
   let groups: ReactNode[];
   if (onKind && area) {
-    // Discover: named, then riffs, then the weaker matches, then the bars (disc-search-typing).
+    // Discover: named, then riffs, then the weaker matches, then the bars (disc-search-typing), then people (find-yourself).
     const word = capitalize(q.toLowerCase());
-    groups = [drinkGroup(`Named ${word}`, strong.filter((d) => d.match?.kind !== 'riff')), drinkGroup(`Riffs on a ${word}`, strong.filter((d) => d.match?.kind === 'riff')), alsoGroup, barGroup];
+    groups = [drinkGroup(`Named ${word}`, strong.filter((d) => d.match?.kind !== 'riff')), drinkGroup(`Riffs on a ${word}`, strong.filter((d) => d.match?.kind === 'riff')), alsoGroup, barGroup, peopleGroup];
   } else if (atHome) {
     groups = [barGroup, peopleGroup, drinkGroup(`Drinks ${area ? where : 'at bars'}`, strong), classicGroup, yoursGroup, alsoGroup, ingredientGroup];
   } else {

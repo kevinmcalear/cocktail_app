@@ -6,6 +6,7 @@ import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMe
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
 import type { ClaimEvidence, ClaimMethod } from '@/lib/claimVerification';
+import { countWaiting, workedBars, type CreditRow, type JobRow, type Waiting } from '@/lib/findYourself';
 import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink, type MenuRunRow } from '@/lib/menuEditions';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { CreditProfile, CreditStatus, LineageDrink, ProfileKind } from '@/lib/lineage';
@@ -596,9 +597,13 @@ export interface PublicPerson {
   current_bar: string | null;
   /** Their current job, when they show it: "Head bartender, Little Rye". */
   job: string | null;
+  /** Where they work and have worked, no titles: "Pale Moth · Little Rye". */
+  worked: string | null;
 }
 
-type PersonRow = Omit<PublicPerson, 'job' | 'current_bar'> & { jobs: { title: string | null; is_current: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } | null }[] | null };
+type PersonRow = Omit<PublicPerson, 'job' | 'current_bar' | 'worked'> & {
+  jobs: { title: string | null; is_current: boolean; is_shown: boolean; is_hidden: boolean; person_accepted: boolean; bar_accepted: boolean; bar: { display_name: string } | null }[] | null;
+};
 
 /** Public people by name, so someone can find a profile we already have. */
 export function usePublicPeople(search: string) {
@@ -609,7 +614,7 @@ export function usePublicPeople(search: string) {
     queryFn: async (): Promise<PublicPerson[]> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(title, is_current, person_accepted, bar_accepted, bar:profiles!bar_profile_id(display_name))')
+        .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(title, is_current, is_shown, is_hidden, person_accepted, bar_accepted, bar:profiles!bar_profile_id(display_name))')
         .eq('kind', 'person')
         .eq('is_public', true)
         .ilike('display_name', `%${term}%`)
@@ -617,10 +622,65 @@ export function usePublicPeople(search: string) {
         .limit(8);
       if (error) throw error;
       return ((data ?? []) as unknown as PersonRow[]).map(({ jobs, ...p }) => {
-        // A current job both sides confirmed, as the profile shows it.
-        const now = (jobs ?? []).find((j) => j.is_current && j.person_accepted && j.bar_accepted && j.bar);
-        return { ...p, current_bar: now?.bar?.display_name ?? null, job: now ? [now.title, now.bar!.display_name].filter(Boolean).join(', ') : null };
+        // Jobs both sides confirmed, as the profile shows them.
+        const confirmed = (jobs ?? []).filter((j) => j.person_accepted && j.bar_accepted && j.bar);
+        const now = confirmed.find((j) => j.is_current);
+        return {
+          ...p,
+          current_bar: now?.bar?.display_name ?? null,
+          job: now ? [now.title, now.bar!.display_name].filter(Boolean).join(', ') : null,
+          worked: workedBars(confirmed.filter((j) => !j.is_hidden && (j.is_current || j.is_shown))),
+        };
       });
+    },
+  });
+}
+
+/** Bars counted per search: the first ones each shows (a count each). */
+export const WAITING_BARS = 10;
+const WAITING_ROWS = 1000;
+
+/**
+ * What waits on bar and person pages a search found (find-yourself): drinks
+ * credited to each (made there, made by them, or co-made), each bar's
+ * people, and whether a bar's page is claimed yet. Reads what the profile
+ * pages read: items signed in (RLS keeps what you can see), published cards
+ * signed out.
+ * ponytail: a bar's count includes classics it pours as copies (its page's
+ * "originals" leaves them out), and a person's leaves out name-only credits
+ * at Names and Private bars (get_profile_name_credits is one call each).
+ * A count RPC would match the pages exactly.
+ */
+export function useWaiting(barIds: readonly string[], personIds: readonly string[]) {
+  const userId = useUserId();
+  const viewer = viewerScoped(userId);
+  const ids = [...barIds, ...personIds];
+  return useQuery({
+    queryKey: ['waiting', barIds, personIds, viewer.key],
+    meta: viewer.meta,
+    enabled: ids.length > 0,
+    queryFn: async (): Promise<Record<string, Waiting>> => {
+      // Signed in, the items you can see; signed out, published cards (not the reference rows).
+      const drinksOf = (columns: string, head = false) =>
+        userId ? supabase.from('items').select(columns, { count: head ? 'exact' : undefined, head }) : supabase.from('published_items').select(columns, { count: head ? 'exact' : undefined, head }).eq('is_reference', false);
+      const none = Promise.resolve({ data: [], error: null });
+      // A bar can have hundreds: the server counts each, so a big one never crowds the rest out.
+      const counted = barIds.slice(0, WAITING_BARS);
+      const [barCounts, mine, co, jobs, pages] = await Promise.all([
+        Promise.all(counted.map((id) => drinksOf('id', true).eq('origin_bar_profile_id', id))),
+        personIds.length ? drinksOf('id, creator_profile_id').in('creator_profile_id', [...personIds]).limit(WAITING_ROWS) : none,
+        userId && personIds.length ? supabase.from('item_co_creators').select('item_id, profile_id').in('profile_id', [...personIds]).limit(WAITING_ROWS) : none,
+        barIds.length ? supabase.from('profile_positions').select('bar_profile_id, person_profile_id, is_current, is_shown, is_hidden').in('bar_profile_id', [...barIds]).limit(WAITING_ROWS) : none,
+        // Discover's bar rows don't say whether the page is claimed (people's rows do).
+        barIds.length ? supabase.from('profiles').select('id, is_claimed').in('id', [...barIds]) : none,
+      ]);
+      for (const r of [...barCounts, mine, co, jobs, pages]) if (r.error) throw r.error;
+      const claimed = new Set(((pages.data ?? []) as { id: string; is_claimed: boolean }[]).filter((r) => r.is_claimed).map((r) => r.id));
+      const barDrinks = Object.fromEntries(counted.map((id, i) => [id, barCounts[i].count ?? 0]));
+      const waiting = countWaiting(ids, (mine.data ?? []) as unknown as CreditRow[], (co.data ?? []) as { item_id: string; profile_id: string }[], (jobs.data ?? []) as JobRow[], claimed, barDrinks);
+      // Bars past the counted ones keep their claimed tag but say no numbers, rather than a wrong one.
+      for (const id of barIds.slice(WAITING_BARS)) waiting[id] = { ...waiting[id], drinks: 0, people: 0 };
+      return waiting;
     },
   });
 }
