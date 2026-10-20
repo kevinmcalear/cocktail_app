@@ -13,6 +13,7 @@ import { useDilutionDefaults } from '@/hooks/useDrinkMath';
 import { useDrinkPhotos } from '@/hooks/useDrinkPhotos';
 import { useDrinkMakerCredits } from '@/hooks/useMakers';
 import { useMode } from '@/hooks/useMode';
+import { useSearchMine } from '@/hooks/useSearchMine';
 import { useShareSlug } from '@/hooks/useShareSlug';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
 import { useSpecLock } from '@/hooks/useSpecLock';
@@ -135,7 +136,10 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   // A public drink shares its readable link (/d/penicillin); any other its id link, which asks the rest to sign in.
   const slug = useShareSlug('d', preview ? null : item.id).data;
   const share = () => void shareOrCopy(drinkUrl(slug ?? item.id), item.name);
-  const onRiff = signedIn && !preview ? () => router.push({ pathname: '/add-cocktail', params: { from: item.id, ...(item.bar_id ? { barId: item.bar_id } : {}) } } as unknown as Href) : null;
+  // A riff starts where you are: your venue in venue mode, your own at home. Never in the drink's own bar (Kevin, 20 Oct).
+  const mine = useSearchMine();
+  const onRiff = signedIn && !preview ? () => router.push({ pathname: '/add-cocktail', params: { from: item.id, ...(mine.venueId ? { barId: mine.venueId } : {}) } } as unknown as Href) : null;
+  const riffNote = `Starts a new drink ${mine.venueId ? `at ${mine.label}` : 'of your own'} from this spec, credited as a riff on ${item.name}. This one stays as it is.`;
 
   // Pinned on phones (board drink-phone-venue): Batch, the accent in venue mode; at home the journey strip has I made it.
   const barActions = (
@@ -166,6 +170,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
     toMake,
     actions,
     onRiff,
+    riffNote,
     venueName: teamRole !== null ? (venue?.name ?? null) : null,
   };
   const sections = useDrinkSections(bodyProps);
