@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { countWaiting, waitingLine, workedBars } from './findYourself';
+import { countWaiting, madeByGroups, madeByStats, waitingLine, workedBars, type DrinkRun } from './findYourself';
 
 const job = (bar: string, person: string, o: Partial<{ is_current: boolean; is_shown: boolean; is_hidden: boolean }> = {}) => ({ bar_profile_id: bar, person_profile_id: person, is_current: true, is_shown: false, is_hidden: false, ...o });
 
@@ -32,5 +32,30 @@ const bar = (display_name: string) => ({ display_name });
 assert.equal(workedBars([{ is_current: false, bar: bar('Little Rye') }, { is_current: true, bar: bar('Pale Moth') }]), 'Pale Moth · Little Rye');
 assert.equal(workedBars([{ is_current: true, bar: bar('A') }, { is_current: true, bar: bar('A') }, { is_current: false, bar: null }]), 'A');
 assert.equal(workedBars([]), null);
+
+// Made by Ash: the bar with a menu on now first, then the bar they left, then drinks with no bar.
+const run = (itemId: string, barId: string, editionId: string, editionName: string, startYear: number, endYear: number | null, isCurrent = false): DrinkRun => ({ itemId, barId, editionId, editionName, startYear, endYear, isCurrent });
+const runs = [run('martini', 'pm', 'ng', 'Night Garden', 2026, null, true), run('spritz', 'pm', 'ng', 'Night Garden', 2026, null, true), run('smoke', 'lr', 'fn', 'Field Notes', 2023, 2023), run('honey', 'lr', 'au', 'Autumn', 2022, 2022)];
+const groups = madeByGroups(
+  [
+    { id: 'honey', name: 'Burnt Honey Sour', barId: 'lr', barName: 'Little Rye', others: ['Sam Ortiz'] },
+    { id: 'smoke', name: 'Smoke Signal', barId: 'lr', barName: 'Little Rye', others: [] },
+    { id: 'spritz', name: 'Moth Spritz', barId: 'pm', barName: 'Pale Moth', others: [] },
+    { id: 'martini', name: 'Moth Light Martini', barId: 'pm', barName: 'Pale Moth', others: [] },
+    { id: 'home', name: 'Kitchen Sour', barId: null, barName: null, others: [] },
+  ],
+  runs,
+  { lr: '2022 to 2024' }
+);
+assert.deepEqual(
+  groups.map((g) => g.label),
+  ['Pale Moth · Night Garden, on now', 'Little Rye · 2022 to 2024', 'Other drinks']
+);
+assert.deepEqual(groups[0].rows.map((r) => [r.name, r.caption]), [['Moth Light Martini', 'On now'], ['Moth Spritz', 'On now']]);
+assert.deepEqual(groups[1].rows.map((r) => r.caption), ['with Sam Ortiz · Autumn menu · 2022', 'Field Notes menu · 2023']);
+assert.equal(groups[2].rows[0].caption, null);
+assert.deepEqual(madeByStats(groups, runs), { drinks: 5, bars: 2, menus: 3 });
+// With no job, a bar's label is the years its menus ran.
+assert.equal(madeByGroups([{ id: 'smoke', name: 'Smoke Signal', barId: 'lr', barName: 'Little Rye', others: [] }, { id: 'honey', name: 'Burnt Honey Sour', barId: 'lr', barName: 'Little Rye', others: [] }], runs)[0].label, 'Little Rye · 2022 to 2023');
 
 console.log('findYourself checks passed');

@@ -10,21 +10,20 @@ const paleMoth = { id: 'pm', handle: 'palemoth', display_name: 'Pale Moth', bar_
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/components/screens/home/BarMark', () => ({ BarMark: () => null }));
-jest.mock('@/components/screens/profile/PastJobs', () => ({ CLAIM_PAST_JOBS: 'Past jobs stay hidden' }));
 jest.mock('@/hooks/useRankings', () => ({ usePublicBars: (term: string) => ({ data: term.trim().length >= 2 ? [paleMoth] : [] }) }));
 jest.mock('@/hooks/useProfiles', () => ({
   usePublicPeople: (term: string) => ({ data: term.trim().length >= 2 ? [ash] : [] }),
   useWaiting: () => ({ data: { pm: { drinks: 12, people: 4, claimed: false }, ash: { drinks: 5, people: 0, claimed: false } } }),
-  useClaimProfile: () => ({ mutate: jest.fn(), isPending: false, error: null }),
+  useMyPersonClaim: () => ({ data: null }),
 }));
 
-test('one field finds bars and people, each saying what is waiting, and a bar opens its page', async () => {
+test('one field finds bars and people, each saying what is waiting, and each opens its page', async () => {
   await renderWithTamagui(<FindStep name="pale" pending={false} onClaimed={jest.fn()} onNew={jest.fn()} onSkip={jest.fn()} />);
   expect(screen.getByLabelText('Search bars and people')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Pale Moth. Not claimed yet. Cocktail bar · Collingwood. 12 drinks · 4 people' })).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: /^Pale Moth/ }));
   expect(mockPush).toHaveBeenCalledWith('/p/palemoth');
-  // A person opens the claim, here in Setup.
+  // A person opens their page, where "This is me" claims it.
   await fireEvent.press(screen.getByRole('link', { name: 'Ash Okafor. Not claimed yet. Pale Moth · Little Rye. 5 drinks credited' }));
-  expect(screen.getByText('Past jobs stay hidden')).toBeTruthy();
+  expect(mockPush).toHaveBeenCalledWith('/p/ash.okafor');
 });

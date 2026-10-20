@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
@@ -73,7 +74,6 @@ export function ClaimMethods({
   disabled?: boolean;
   onPick: (m: BarClaimMethod) => void;
 }) {
-  const ds = useDs();
   const handle = pageInstagram(profile);
   // ponytail: copying needs expo-clipboard on phones (a store build); the web copies, phones select the digits.
   const canCopy = Platform.OS === 'web' && typeof navigator !== 'undefined' && !!navigator.clipboard;
@@ -86,36 +86,18 @@ export function ClaimMethods({
           const pill = speed(m, d);
           const label = m === 'phone' ? `A call to the ${claimPlace(profile.kind)}` : METHOD_COPY[m].label;
           return (
-            <View key={m} style={[styles.card, { borderColor: on ? ds.accentText : ds.c.line, backgroundColor: on ? ds.c.raised : ds.c.surface }, !d.available && styles.off]}>
-              <PressableScale role="radio" aria-checked={on} aria-disabled={!d.available || disabled} disabled={!d.available || disabled} accessibilityLabel={`${label}. ${d.detail}`} onPress={() => onPick(m)} style={styles.choice}>
-                <View style={[styles.dot, { borderColor: on ? ds.accentText : ds.c.lineStrong, borderWidth: on ? 7 : 2 }]} />
-                <View style={styles.flex}>
-                  <View style={styles.titleRow}>
-                    <IconSymbol name={ICONS[m]} size={16} color={ds.c.muted} />
-                    <DsText variant="body" style={[styles.shrink, styles.strong]}>
-                      {label}
-                      {pill ? <Caption tone="muted" style={styles.medium}>{`  ${pill}`}</Caption> : null}
-                    </DsText>
-                  </View>
-                  <Caption tone="muted">{d.detail}</Caption>
-                </View>
-              </PressableScale>
+            <MethodCard key={m} icon={ICONS[m]} label={label} pill={pill} detail={d.detail} on={on} available={d.available} disabled={disabled} onPress={() => onPick(m)}>
               {on && m !== 'email' ? (
-                <View style={[styles.code, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]}>
-                  <Caption tone="muted" style={styles.eyebrow}>
-                    YOUR CODE
-                  </Caption>
-                  <DsText variant="title" selectable style={styles.digits} accessibilityLabel={`Your code: ${code.split('').join(' ')}`}>
-                    {spacedCode(code)}
-                  </DsText>
-                  <Caption tone="muted">
-                    {m === 'instagram'
+                <ClaimCode
+                  code={code}
+                  note={
+                    m === 'instagram'
                       ? `Send it from the bar’s own account, not a personal one. Whoever runs @${handle} can send it. Nothing to edit or take down after.`
-                      : 'Whoever answers reads us this code, so leave it with the team.'}
-                  </Caption>
-                </View>
+                      : 'Whoever answers reads us this code, so leave it with the team.'
+                  }
+                />
               ) : null}
-            </View>
+            </MethodCard>
           );
         })}
       </View>
@@ -126,6 +108,69 @@ export function ClaimMethods({
         </View>
       ) : null}
     </>
+  );
+}
+
+/**
+ * One way of checking a claim, as a radio card (canvas make-venue-claim):
+ * a dot, its icon, its name and how fast it is, what it means, and anything
+ * it shows once picked (the code) under it. A way that can't be used is greyed.
+ */
+export function MethodCard({
+  icon,
+  label,
+  pill,
+  detail,
+  on,
+  available,
+  disabled,
+  onPress,
+  children,
+}: {
+  icon: IconName;
+  label: string;
+  pill: string | null;
+  detail: string;
+  on: boolean;
+  available: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+  children?: ReactNode;
+}) {
+  const ds = useDs();
+  return (
+    <View style={[styles.card, { borderColor: on ? ds.accentText : ds.c.line, backgroundColor: on ? ds.c.raised : ds.c.surface }, !available && styles.off]}>
+      <PressableScale role="radio" aria-checked={on} aria-disabled={!available || disabled} disabled={!available || disabled} accessibilityLabel={`${label}. ${detail}`} onPress={onPress} style={styles.choice}>
+        <View style={[styles.dot, { borderColor: on ? ds.accentText : ds.c.lineStrong, borderWidth: on ? 7 : 2 }]} />
+        <View style={styles.flex}>
+          <View style={styles.titleRow}>
+            <IconSymbol name={icon} size={16} color={ds.c.muted} />
+            <DsText variant="body" style={[styles.shrink, styles.strong]}>
+              {label}
+              {pill ? <Caption tone="muted" style={styles.medium}>{`  ${pill}`}</Caption> : null}
+            </DsText>
+          </View>
+          <Caption tone="muted">{detail}</Caption>
+        </View>
+      </PressableScale>
+      {children}
+    </View>
+  );
+}
+
+/** "YOUR CODE 615 204" in mono, under the way it goes with, and what to do with it. */
+export function ClaimCode({ code, note }: { code: string; note: string }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.code, { borderColor: ds.c.lineStrong, backgroundColor: ds.c.surface }]}>
+      <Caption tone="muted" style={styles.eyebrow}>
+        YOUR CODE
+      </Caption>
+      <DsText variant="title" selectable style={styles.digits} accessibilityLabel={`Your code: ${code.split('').join(' ')}`}>
+        {spacedCode(code)}
+      </DsText>
+      <Caption tone="muted">{note}</Caption>
+    </View>
   );
 }
 

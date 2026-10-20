@@ -6,7 +6,7 @@ import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMe
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
 import type { ClaimEvidence, ClaimMethod } from '@/lib/claimVerification';
-import { countWaiting, workedBars, type CreditRow, type JobRow, type Waiting } from '@/lib/findYourself';
+import { countWaiting, workedBars, type CreditRow, type DrinkRun, type JobRow, type Waiting } from '@/lib/findYourself';
 import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink, type MenuRunRow } from '@/lib/menuEditions';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { CreditProfile, CreditStatus, LineageDrink, ProfileKind } from '@/lib/lineage';
@@ -326,6 +326,34 @@ export function useDrinkMenuRuns(itemId: string | null) {
   });
 }
 
+/** Every bar menu these drinks were on, and when (menu_drink_runs): a person's "Made by" (find-yourself). */
+export function useMenuRuns(itemIds: readonly string[]) {
+  const viewer = viewerScoped(useUserId());
+  const ids = [...new Set(itemIds)].sort();
+  return useQuery({
+    queryKey: ['menu-runs', ids, viewer.key],
+    meta: viewer.meta,
+    enabled: ids.length > 0,
+    queryFn: async (): Promise<DrinkRun[]> => {
+      const { data, error } = await supabase
+        .from('menu_drink_runs')
+        .select('item_id, profile_id, edition_id, edition_name, start_year, end_year, is_current')
+        .in('item_id', ids)
+        .limit(1000);
+      if (error) throw error;
+      return ((data ?? []) as { item_id: string; profile_id: string; edition_id: string; edition_name: string; start_year: number; end_year: number | null; is_current: boolean }[]).map((r) => ({
+        itemId: r.item_id,
+        barId: r.profile_id,
+        editionId: r.edition_id,
+        editionName: r.edition_name,
+        startYear: r.start_year,
+        endYear: r.end_year,
+        isCurrent: r.is_current,
+      }));
+    },
+  });
+}
+
 /**
  * The drinks on a menu edition with their ingredients and pictures, for
  * signed-in readers. Signed out, a bar's own drinks aren't readable, so the
@@ -435,6 +463,35 @@ export interface NewClaim {
   message: string;
   /** Claiming a bar's profile on behalf of this venue. */
   bar_id: string | null;
+}
+
+/** A claim of mine on someone's page (a person, not a bar), waiting or approved: the newest, or null. */
+export interface MyPersonClaim {
+  id: string;
+  status: 'pending' | 'approved';
+  profile: { id: string; handle: string; display_name: string };
+}
+
+/** Whether I've claimed a person's page yet (find-yourself): the bar page's "See your name?" card, and Setup's "Claim sent". */
+export function useMyPersonClaim() {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: ['profile-claims', 'person', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<MyPersonClaim | null> => {
+      const { data, error } = await supabase
+        .from('profile_claims')
+        .select('id, status, created_at, profile:profiles!inner(id, handle, display_name, kind)')
+        .eq('user_id', userId!)
+        .eq('profile.kind', 'person')
+        .in('status', ['pending', 'approved'])
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const row = (data ?? [])[0] as unknown as { id: string; status: 'pending' | 'approved'; profile: { id: string; handle: string; display_name: string } } | undefined;
+      return row ? { id: row.id, status: row.status, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
+    },
+  });
 }
 
 /** Asks to take over an unclaimed profile. A moderator approves it. */
