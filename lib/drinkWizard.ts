@@ -76,11 +76,13 @@ export interface WizardDraft {
   /** The year it was first made (items.origin_year); null is not sure. */
   originYear?: number | null;
   /**
-   * Where it was first made, for a drink added at home: a bar's public
-   * profile (items.origin_bar_profile_id); null is at home. A venue's drink
-   * is always the venue's.
+   * Where it was first made: a bar's public profile
+   * (items.origin_bar_profile_id); null is at home. A venue's drink is the
+   * venue's unless `elsewhere`.
    */
   place?: WizardPick | null;
+  /** Added at a venue, but "No, from somewhere else": credited to `place`, still saved in the venue's library (Eddie, 16 Oct). */
+  elsewhere?: boolean;
   description: string;
   notes: string;
   /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink. */
