@@ -70,16 +70,17 @@ jobs:
     # if the changes job fails, this still runs. Pushes to main always run it.
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
     # One rebuild at a time. Two at once (a PR beside a merge to main) is
-    # what pushed runs into the timeout. Queued, not cancelled.
-    concurrency:
-      group: security-tests
-      cancel-in-progress: false
+    # what pushed runs into the timeout. A concurrency group is not used: it
+    # keeps one pending run and cancels every older one, so several PRs
+    # pushing together lost their required check. Each job instead waits its
+    # turn in the first step (scripts/wait-for-turn.mjs).
     runs-on: ubuntu-latest
     # A clean run of the whole suite on main took 32 minutes (15 Oct 2026).
-    # 60 leaves room for a slow image pull. A stuck file must not sit here:
-    # test:security passes --test-force-exit, so an open database handle
-    # fails the file instead of holding the job until this limit.
-    timeout-minutes: 60
+    # The job limit covers the wait (up to 120 minutes) plus a rebuild; the
+    # steps below carry their own limits, so a stuck file still fails in under
+    # an hour. test:security passes --test-force-exit, so an open database
+    # handle fails the file instead of holding the job.
+    timeout-minutes: 200
     # Supabase's images come from public.ecr.aws by default, which rate limits
     # anonymous pulls ("toomanyrequests: Rate exceeded") when several PRs run
     # at once. The same images are on GitHub's registry, where this job's own
@@ -87,6 +88,7 @@ jobs:
     permissions:
       contents: read
       packages: read
+      actions: read
     env:
       SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
     steps:
@@ -95,6 +97,13 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      # Keep the step name: the script finds the job holding the slot by it.
+      - name: Wait for turn
+        timeout-minutes: 125
+        run: node scripts/wait-for-turn.mjs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JOB_ID: ${{ job.check_run_id }}
       - uses: supabase/setup-cli@v3
         with:
           version: latest
@@ -111,6 +120,7 @@ jobs:
       - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
       - run: supabase db lint --level warning --fail-on error
       - run: npm run test:security
+        timeout-minutes: 55
 
   edge-functions:
     name: Edge functions typecheck
