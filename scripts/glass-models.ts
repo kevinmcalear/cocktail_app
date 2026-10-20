@@ -95,6 +95,32 @@ export const LOADS: Load[] = [
 --     0 of 100 wrong. Spiegelau states no capacity in its page text, so most
 --     of its rows have none.`,
   },
+  {
+    file: 'supabase/migrations/20261030100000_glass_models_wave2.sql',
+    makers: ['luigi.bormioli', 'cocktail.kingdom'],
+    fills: 'spiegelau.capacities',
+    header: `
+-- Glass models, wave 2, after 20261026300000 (wave 1, live).
+--
+--   * Luigi Bormioli 159, from its own product pages (capacity, height and
+--     material as each page states them; SON.hyx is the maker's "crystal
+--     glass", its Ultra Clear lines are glass). Four straight-sided stemmed
+--     cocktail glasses match none of our types and wait.
+--   * Cocktail Kingdom 40, its own lines only (Hard Strong is Toyo-Sasaki's),
+--     from its store and its Spring 26 glassware catalog. Where the two
+--     disagree, or a figure contradicts itself, the height is left empty.
+--   * Spiegelau: 4 capacities read off the maker's own dimension drawings
+--     (Kevin's OK, as for Riedel) fill rows wave 1 loaded without one.
+--   * Cocktail and spirits glasses only; facts only, each row citing the
+--     maker's pages; no copied text or photos. rim_mm stays empty: makers
+--     publish the widest diameter, not the rim.
+--   * Audit: an independent re-check of 100 rows (60 random Luigi Bormioli,
+--     all 40 Cocktail Kingdom) found 1 wrong (a size taken from a
+--     neighbouring product; that page states none, so it is now empty), and
+--     a second read of the 4 Spiegelau drawings agreed on all 4.
+--   * Held: Nude (its pages put up a Cloudflare check), Krosno (9% wrong at
+--     audit, mostly materials stated below the text that was read).`,
+  },
 ];
 
 // The catalog shape each type of glass is a kind of (a shared glassware item).

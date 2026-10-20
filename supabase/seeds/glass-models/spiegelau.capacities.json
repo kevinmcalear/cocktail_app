@@ -1,0 +1,29 @@
+{
+ "maker": "spiegelau",
+ "fills": [
+  {
+   "model_code": "4090187",
+   "capacity_ml": 190,
+   "capacity_as_stated": "190 ml",
+   "source_url": "https://cdn.spiegelau.com/media/50/72/33/1790784757/media_4090187_dimension.ecca257b.png"
+  },
+  {
+   "model_code": "4098012",
+   "capacity_ml": 413,
+   "capacity_as_stated": "413 ml",
+   "source_url": "https://cdn.spiegelau.com/media/0d/d0/26/1792080760/media_4098012_dimension.b28e8b0e.png"
+  },
+  {
+   "model_code": "4098025",
+   "capacity_ml": 190,
+   "capacity_as_stated": "190 ml",
+   "source_url": "https://cdn.spiegelau.com/media/64/b0/65/1791907999/media_4098025_dimension.15e7d988.png"
+  },
+  {
+   "model_code": "4918001",
+   "capacity_ml": 650,
+   "capacity_as_stated": "650 ml",
+   "source_url": "https://cdn.spiegelau.com/media/77/f5/79/1789618397/media_4918001_dimension.a469bb73.png"
+  }
+ ]
+}
