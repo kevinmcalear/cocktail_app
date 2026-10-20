@@ -16,7 +16,7 @@ import { PrepBuilder } from './prep/PrepBuilder';
 import { WizardChip } from './WizardChrome';
 
 /** Garnish chips shown before More. */
-const SHOWN = 8;
+const SHOWN = 7;
 
 interface FinishStepProps extends StepProps {
   ingredients: readonly CatalogIngredient[];
@@ -145,6 +145,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
               {garnishes.length < GARNISH_CHIPS.length ? <WizardChip label="More" kind="button" dashed onPress={() => setAll(true)} /> : null}
             </View>
           </View>
+          <Caption tone="muted">A discard is a peel expressed over the drink and thrown away: the oils stay, the peel doesn’t, so the drawing shows none.</Caption>
           <Caption tone="muted">The finish goes at the end of the spec.</Caption>
         </>
       )}

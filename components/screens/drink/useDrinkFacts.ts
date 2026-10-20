@@ -88,7 +88,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
       methods.length ? { label: 'Method', value: methods.join(', ') } : null,
       glass && { label: 'Glass', value: glass.name, sub: glassSub(glass, glassBy),  onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
       ice && { label: 'Ice', value: ice.name, sub: iceBy ? `cut by ${iceBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
-      garnish ? { label: 'Garnish', value: garnish.ingredient! } : null,
+      garnish ? { label: 'Garnish', value: garnishLabel(garnish.ingredient!, garnish.unit) } : null,
     ] as (Fact | null | undefined)[]
   ).filter((f): f is Fact => !!f);
   // Under More: strength and serve; family only where the serve isn't shown.
@@ -116,4 +116,9 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
 function glassSub(glass: GlassSheetGlass, by: string | undefined) {
   const size = glass.model ? glassModelSize(glass.model) : null;
   return [by ? `by ${by}` : null, size].filter(Boolean).join(' · ') || undefined;
+}
+
+/** The garnish fact: a discard says what happened to the peel ("Lemon peel, expressed and discarded"). */
+export function garnishLabel(name: string, unit: string | null | undefined): string {
+  return (unit ?? '').toLowerCase() === 'discard' ? `${name} peel, expressed and discarded` : name;
 }
