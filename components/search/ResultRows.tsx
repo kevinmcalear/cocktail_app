@@ -68,8 +68,9 @@ export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient
         )}
       </View>
       <View style={styles.text}>
-        <View style={styles.captionRow}>
-          <Headline numberOfLines={1} style={styles.shrink}>
+        {/* The name wins: a tag that doesn't fit beside it goes under it. */}
+        <View style={styles.titleRow}>
+          <Headline numberOfLines={1} style={styles.title}>
             <MatchText text={title} query={query} look={matchLook} />
           </Headline>
           {badge ? <Tag label={badge} /> : null}
@@ -127,7 +128,22 @@ export function BarResultRow({ bar, score, away, waiting, query, matchLook }: { 
 }
 
 /** A bartender, opening their page: where they work and worked, what is credited to them, and "Not claimed yet" (find-yourself). */
-export function PersonResultRow({ person, waiting, query, matchLook }: { person: PublicPerson; waiting?: Waiting; query?: string; matchLook?: MatchTextProps['look'] }) {
+export function PersonResultRow({
+  person,
+  waiting,
+  query,
+  matchLook,
+  trailing,
+  onPress,
+}: {
+  person: PublicPerson;
+  waiting?: Waiting;
+  query?: string;
+  matchLook?: MatchTextProps['look'];
+  trailing?: ReactNode;
+  /** Instead of opening their page: Setup's claim. */
+  onPress?: () => void;
+}) {
   const router = useRouter();
   return (
     <ResultRow
@@ -136,9 +152,10 @@ export function PersonResultRow({ person, waiting, query, matchLook }: { person:
       avatar={{ uri: null }}
       badge={person.is_claimed ? undefined : 'Not claimed yet'}
       waiting={waitingLine('person', waiting)}
+      trailing={trailing}
       query={query}
       matchLook={matchLook}
-      onPress={() => router.push(`/p/${person.handle || person.id}`)}
+      onPress={onPress ?? (() => router.push(`/p/${person.handle || person.id}`))}
     />
   );
 }
@@ -245,6 +262,8 @@ const styles = StyleSheet.create({
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, minWidth: 0, gap: 2 },
   captionRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  titleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.sm, rowGap: 2 },
+  title: { maxWidth: '100%' },
   shrink: { flexShrink: 1 },
   faded: { opacity: 0.5 },
   active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
