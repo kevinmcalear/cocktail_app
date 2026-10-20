@@ -111,6 +111,8 @@ export interface DatabaseItem {
     glassware_id: string | null;
     family_id: string | null;
     ice_id: string | null;
+    /** Cocktails: the ice it's made with (blended with pebble); ice_id is the ice it's served over. */
+    method_ice_id?: string | null;
     notes: string | null;
     origin: string | null;
     /** ISO 3166-1 alpha-2 country it comes from ("GB"); origin keeps the free text. */

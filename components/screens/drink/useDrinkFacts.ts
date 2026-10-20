@@ -2,6 +2,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { glassModelSize, useDrinkGlassModel } from '@/hooks/useGlassModels';
 import { classifyMethod, isGarnishUnit, type BatchMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
+import { iceLine } from '@/lib/drinkWizard';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
@@ -55,6 +56,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
     ? { ...(shape ?? { id: model.id, icon_key: null, bar_id: null }), name: model.name, capacity_ml: model.capacity_ml ?? shape?.capacity_ml ?? null, iced_capacity_ml: model.capacity_ml ? null : (shape?.iced_capacity_ml ?? null), model }
     : shape;
   const ice = find(dropdowns?.iceTypes as Named[], item.ice_id) ?? null;
+  const methodIce = find(dropdowns?.iceTypes as Named[], item.method_ice_id) ?? null;
   const family = find(dropdowns?.families as Named[], item.family_id);
   const methods = orderedMethodIds(item.item_methods).map((id) => find(dropdowns?.methods as Named[], id)?.name).filter((n): n is string => !!n);
   const method: BatchMethod = classifyMethod(methods);
@@ -87,7 +89,7 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
     [
       methods.length ? { label: 'Method', value: methods.join(', ') } : null,
       glass && { label: 'Glass', value: glass.name, sub: glassSub(glass, glassBy),  onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
-      ice && { label: 'Ice', value: ice.name, sub: iceBy ? `cut by ${iceBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
+      (ice || methodIce) && { label: 'Ice', value: iceLine(ice?.name ?? null, methodIce?.name ?? null, methods)!, sub: iceBy ? `cut by ${iceBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
       garnish ? { label: 'Garnish', value: garnish.ingredient! } : null,
     ] as (Fact | null | undefined)[]
   ).filter((f): f is Fact => !!f);

@@ -16,7 +16,6 @@ import type { IngredientAlias } from '@/lib/ingredientNames';
 import { formatMoney } from '@/lib/money';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { suggestAmount } from '@/lib/specDefaults';
-import { isVenueIce } from '@/lib/venueKit';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { CreditsStep } from './CreditsStep';
@@ -25,6 +24,7 @@ import { FinishStep } from './FinishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
 import type { CatalogIngredient } from './IngredientSearch';
+import { IceStep } from './IceStep';
 import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
 import { ReviewPhotos } from './ReviewPhotos';
@@ -164,16 +164,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             <GlassStep compact draft={draft} set={set} options={p.glasses} barId={barId} barGlasses={p.barGlasses} barVariants={p.barVariants} suggested={p.guess.glass} />
           </Row>
           <Row label="Ice">
-            <PickStep
-              label="Ice"
-              ownLabel="Other ice"
-              compact
-              options={p.ices}
-              selected={draft.ice ? [draft.ice] : []}
-              onChange={([ice]) => set({ ice: ice ?? null })}
-              suggested={p.guess.ice}
-              mine={p.barIce.length ? { has: (x) => isVenueIce(p.barIce, x.name), label: 'Your ice', restLabel: 'Other ice' } : undefined}
-            />
+            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} />
           </Row>
           <Row label="Finish">
             {finishing ? (

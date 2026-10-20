@@ -184,6 +184,7 @@ export function useCreateDrink() {
       for (const m of draft.methods) methodIds.push(await ensure(m, 'method'));
       const glassId = draft.glass ? await ensure(draft.glass, 'glassware') : null;
       const iceId = draft.ice ? await ensure(draft.ice, 'ice') : null;
+      const methodIceId = draft.methodIce ? await ensure(draft.methodIce, 'ice') : null;
 
       // A venue's drink is credited to the venue too; one added at home, to the bar it was first made at.
       let originBar: string | null = barId ? null : (draft.place?.id ?? null);
@@ -206,6 +207,7 @@ export function useCreateDrink() {
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
         ice_id: iceId,
+        method_ice_id: methodIceId,
         riff_of_id: draft.riffOf?.id ?? null,
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
