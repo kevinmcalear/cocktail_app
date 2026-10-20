@@ -69,6 +69,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
               style={styles.name}
             >
               <Body numberOfLines={2}>{line.name}</Body>
+              {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
               {detail ? (
                 <Caption tone="muted" numberOfLines={1}>
                   {detail}

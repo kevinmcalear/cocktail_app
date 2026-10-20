@@ -269,12 +269,16 @@ const g = (label: string, name: string, unit: string, amount = '1'): GarnishChip
 export const GARNISH_CHIPS: readonly GarnishChip[] = [
   g('Orange peel', 'Orange', 'peel'),
   g('Lemon twist', 'Lemon', 'twist'),
-  g('Grapefruit peel', 'Grapefruit', 'peel'),
+  // A discard: the peel is expressed over the drink and thrown away (Ian at Bar Snack, 16 Oct).
+  g('Lemon discard', 'Lemon', 'discard'),
+  g('Orange discard', 'Orange', 'discard'),
+  g('Grapefruit discard', 'Grapefruit', 'discard'),
   g('Lime wheel', 'Lime', 'wheel'),
+  g('Cherry', 'Cocktail cherry', 'each'),
+  g('Grapefruit peel', 'Grapefruit', 'peel'),
   g('Lime wedge', 'Lime', 'wedge'),
   g('Lemon wheel', 'Lemon', 'wheel'),
   g('Orange wheel', 'Orange', 'wheel'),
-  g('Cherry', 'Cocktail cherry', 'each'),
   g('Olive', 'Olive', 'each'),
   g('Mint sprig', 'Mint', 'sprig'),
   g('Grated nutmeg', 'Nutmeg', 'pinch'),
@@ -307,7 +311,7 @@ export const FINISH_CHIPS: readonly FinishChip[] = [
 ];
 
 /** The units a finish line offers: on top first, then on the glass. */
-export const FINISH_UNITS = ['drop', 'dash', 'spray', 'rinse', 'float', 'each', 'peel', 'twist', 'wheel', 'sprig', 'leaf', 'slice', 'wedge', 'rim', 'pinch'] as const;
+export const FINISH_UNITS = ['drop', 'dash', 'spray', 'rinse', 'float', 'each', 'peel', 'twist', 'discard', 'wheel', 'sprig', 'leaf', 'slice', 'wedge', 'rim', 'pinch'] as const;
 
 /**
  * How a finish line starts, from its name: oils in drops (three), saline and
