@@ -118,7 +118,7 @@ function LibraryPanel({ editor, drag }: { editor: LayoutEditor; drag: MenuDrag }
         ListEmptyComponent={target && !missing ? <Body tone="muted">No drinks that fit {target.name}.</Body> : undefined}
         renderItem={({ item: d }) =>
           target ? (
-            <View {...(drag.on ? dragSource(d.id) : {})} style={drag.on && styles.grab}>
+            <View {...(drag.on ? dragSource(d.id) : {})} style={drag.on && grab}>
               <LibraryRow drink={d} note={libraryNote(d, target, editor.elsewhere)} added={!!cannotAdd(target, d)} onAdd={() => editor.addWithUndo(target.key, d)} />
             </View>
           ) : null
@@ -228,6 +228,8 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, minWidth: 0, paddingVertical: space.sm },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
-  // Web only: React Native's cursor type stops at pointer.
-  grab: { cursor: 'grab' } as unknown as ViewStyle,
 });
+
+// Web only: React Native's cursor type stops at pointer. Kept out of StyleSheet.create, whose
+// narrower type rejects the cast once expo-env.d.ts (expo/types) is present.
+const grab = { cursor: 'grab' } as unknown as ViewStyle;
