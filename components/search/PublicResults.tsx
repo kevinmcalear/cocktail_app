@@ -126,7 +126,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const { data: lines } = useDrinkLines(shownClassics);
   const { data: ownScores } = useItemScores([...shownClassics, ...yours.slice(0, 20).map((i) => i.id)]);
 
-  const found = places.length + drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length + yours.length;
+  const found = (shows(show, 'bars') ? places.length : 0) + drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length + yours.length;
   const countKey = JSON.stringify({ drinks: drinks.length + classics.length + yours.length, bars: bars.length, people: people?.length ?? 0, ingredients: ingredients.length });
   useEffect(() => {
     onCounts?.(JSON.parse(countKey) as ShowCounts);
