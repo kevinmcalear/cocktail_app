@@ -259,6 +259,23 @@ export function cameraOn(at: { latitude: number; longitude: number }): Camera {
   return { latitude: at.latitude, longitude: at.longitude, zoom: CLOSE_ZOOM };
 }
 
+/** What the map shows: the last refit (`fit`), the bar a list row is resting on (`focus`), and the camera given (`at`). */
+export interface MapAim {
+  fit: Camera | null;
+  focus: Camera | null;
+  at: Camera | null;
+}
+
+/**
+ * The camera is whichever came last, a refit or a new hover, so a hover ending
+ * never snaps the map back. `fresh`: a new hover moved it (the map's moves
+ * start again from there, so the fly isn't taken for the person panning).
+ */
+export function aimAfter(prev: MapAim, fit: Camera | null, focus: Camera | null): MapAim & { fresh: boolean } {
+  const fresh = !!focus && focus !== prev.focus;
+  return { fit, focus, at: fresh ? focus : prev.fit !== fit ? fit : prev.at, fresh };
+}
+
 let barHover: ReturnType<typeof setTimeout> | undefined;
 /** Rest the pointer before a list row moves the map. Leaving cancels it. ponytail: one timer, one Discover screen. */
 export function armBarHover(barId: string | null, go: (id: string) => void, ms = 400): void {

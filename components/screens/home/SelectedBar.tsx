@@ -1,12 +1,12 @@
 import { getLocales } from 'expo-localization';
 import { useRouter } from 'expo-router';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Headline, PressableScale, RowScore, Surface, Tag, useDs } from '@/components/ds';
 import { AddressLine, barPlace, directionsTarget, HoursLine } from '@/components/screens/bar/BarFactLines';
 import { DirectionsButton } from '@/components/screens/bar/Directions';
-import { BarAway, type DrinkScores } from '@/components/screens/home/DrinksAtBars';
+import { type DrinkScores } from '@/components/screens/home/DrinksAtBars';
 import { HideBarButton } from '@/components/screens/kept/HideBarButton';
 import { LoveBarButton } from '@/components/screens/kept/LoveBarButton';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -17,6 +17,7 @@ import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
 import { byScore, drinkCount, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import type { MapPin } from '@/lib/discoverMap';
 import { barSearchHref } from '@/lib/discoverMatch';
+import { SHELF_MAX } from '@/lib/discoverShelves';
 import { awayFrom } from '@/lib/directions';
 import { peopleCount, usesMiles, type Area } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
@@ -66,8 +67,8 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   const openBar = () => router.push(barSearchHref(pin.handle || pin.id, query) as never);
   const place = barPlace(facts?.bar_type, pin.place);
   const away = facts ? awayFrom(me, facts, usesMiles(getLocales()[0])) : null;
-  const near = useContext(BarAway)(pin.id);
-  const where = variant === 'card' ? near || place || 'Bar' : place || 'Bar';
+  // Wide card: how far, in place of the neighbourhood (Directions has the address).
+  const where = (variant === 'card' ? awayFrom(me, pin, usesMiles(getLocales()[0])) : null) || place || 'Bar';
   const target = directionsTarget(facts, me);
   const count = pin.drinks ?? drinks.length;
   // A score or Closed sits at the right; an early bar says so under the place, and an unranked one says nothing.
@@ -157,7 +158,7 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
       {facts?.hours ? <HoursLine facts={facts} /> : null}
       {drinks.length ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.drinkBleed} contentContainerStyle={styles.drinkRow}>
-          {drinks.map((d) => (
+          {drinks.slice(0, SHELF_MAX).map((d) => (
             <ShelfTile key={d.id} drink={d} atBar />
           ))}
         </ScrollView>

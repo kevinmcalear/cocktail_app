@@ -106,7 +106,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   const [fit, setFit] = useState<{ key: string; camera: Camera | null } | null>(null);
   // Browsing, the list follows the map (a tapped bar stays open); a search, or anywhere, waits for "Search this area".
   const follow = !searching && area.kind !== 'anywhere';
-  const moves = useMapMoves(fit?.camera ?? null, follow, (v: Viewport) => onArea(areaFromViewport(v)));
+  const moves = useMapMoves(fit?.camera ?? null, follow, (v: Viewport) => onArea(areaFromViewport(v)), focus);
   // Drinks layer pins: the area's bars with matches, then the bars in view a tile at a time once the map moves.
   const areaBars = useDiscoverBars(area, filter, byDrinks);
   const tileBars = useTileBars(area.kind === 'anywhere' ? null : moves.settled, filter, byDrinks);
@@ -126,9 +126,9 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
     ...closedPins(results.closed ?? []),
   ];
   const [ownId, setOwnId] = useState<string | null>(null);
-  // Hover opens the pin on the map; a tap is what narrows the list.
+  // A tap is what narrows the list; a hovered row lights its pin while nothing is tapped.
   const sheetId = pick ? pick.id : ownId;
-  const selectedId = opened ?? sheetId;
+  const selectedId = sheetId ?? opened;
   const setSelectedId = (id: string | null) => (pick ? pick.onPick(pins.find((p) => p.id === id) ?? null) : setOwnId(id));
   const selected = pins.find((p) => p.id === sheetId) ?? null;
   // A tapped bar's own drinks, from the server on the drinks layer (its pin may be outside the area).
@@ -137,7 +137,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   // Refit when what's shown changes, not after "Search this area"; near me stays on the person.
   const nearMe = area.kind === 'point' && area.source === 'me';
   const fitting = rows.isLoading || (byDrinks && areaBars.isPlaceholderData);
-  const nearCamera = nearMe && !areaBars.isPlaceholderData ? cameraForArea(area, areaBars.data ?? []) : null;
+  const nearCamera = nearMe && !areaBars.isPlaceholderData ? cameraForArea(area, (areaBars.data ?? []).filter((b) => !b.closed)) : null;
   const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, nearMe ? nearCamera?.zoom : fitting]);
   if (fitKey !== null && fit?.key !== fitKey) {
     setFit({ key: fitKey, camera: (fitting || nearMe ? null : cameraFor(byDrinks ? barPins(areaBars.data ?? []) : pins)) ?? nearCamera ?? cameraForArea(area) ?? fit?.camera ?? null });
@@ -167,7 +167,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   ) : drinkLayer ? (
     // Wide screens list a selected bar's drinks in its card; the phone sheet's list has them (its first in the head).
     selected && (mode === 'side' || barDrinks.length > 0) ? null : barDrinks.length ? (
-      <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} limit={20} scores={shown} more={more} onShowBar={onShowBar} />
+      <DrinkAtBarList key={sheetId ?? 'all'} drinks={barDrinks} limit={20} scores={shown} more={more} onShowBar={onShowBar} />
     ) : (
       <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map${follow ? '' : ' and search this area'}, or pick another style.`}</ListNote>
     )
@@ -193,7 +193,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
         if (id && mode === 'sheet') sheetRef.current?.snapToIndex(1);
       }}
       onViewportChange={moves.onMove}
-      camera={focus ?? fit?.camera ?? null}
+      camera={moves.camera}
       scheme={ds.scheme}
       accent={ds.accentFill}
       compact={mode === 'sheet'}

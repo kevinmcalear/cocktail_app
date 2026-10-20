@@ -1,7 +1,7 @@
 // Checks for lib/discoverMap.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { AREA_ZOOM, CLOSE_ZOOM, readableLabels, areaFromViewport, areaLabel, areasFrom, armBarHover, BEST_PINS, cameraFor, cameraForArea, cameraOn, dotsOf, MAX_AREAS, pinLabel, pinLook, pinsFrom, pinsToDraw, movedFrom, viewportFrom, type MapView } from './discoverMap';
+import { AREA_ZOOM, CLOSE_ZOOM, readableLabels, areaFromViewport, areaLabel, areasFrom, aimAfter, armBarHover, BEST_PINS, cameraFor, cameraForArea, cameraOn, dotsOf, MAX_AREAS, pinLabel, pinLook, pinsFrom, pinsToDraw, movedFrom, viewportFrom, type MapView } from './discoverMap';
 import type { DiscoverRow } from './nearMe';
 
 const row = (over: Partial<DiscoverRow>): DiscoverRow => ({
@@ -183,6 +183,19 @@ assert.equal(areasFrom(Array.from({ length: 100 }, (_, i) => cluster(i, 5, 2)), 
 assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [5, 5, 6, 6], zoom: 9 }), [], 'out of view');
 assert.deepEqual(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM }), [], 'up close there are no areas');
 assert.equal(areasFrom([cluster(1, 9, 2)], { bounds: [0, 0, 3, 3], zoom: AREA_ZOOM - 1 }).length, 1);
+
+// --- the camera: the last of a refit and a hovered bar; a hover ending never snaps back ---
+const fitA = cameraOn({ latitude: 1, longitude: 1 });
+const barB = cameraOn({ latitude: 2, longitude: 2 });
+const fitC = cameraOn({ latitude: 3, longitude: 3 });
+const hoverB = aimAfter({ fit: fitA, focus: null, at: fitA }, fitA, barB);
+assert.equal(hoverB.at, barB, 'resting on a row flies to its bar');
+assert.ok(hoverB.fresh, 'and the map moves start again from there');
+const left = aimAfter(hoverB, fitA, null);
+assert.equal(left.at, barB, 'the hover ending leaves the map where it is');
+assert.ok(!left.fresh);
+assert.equal(aimAfter(hoverB, fitC, barB).at, fitC, 'a refit after the hover wins');
+assert.equal(aimAfter(left, fitA, barB).at, barB, 'the same bar again, after leaving, is a new hover');
 
 const hovered: string[] = [];
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
