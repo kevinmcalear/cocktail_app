@@ -48,6 +48,8 @@ assert.equal(iceFromName('Up, no ice'), 'none');
 assert.equal(iceFromName('None'), 'none');
 assert.equal(iceFromName('Pebble ice'), 'pebble');
 assert.equal(iceFromName('Ice'), 'cubes');
+assert.equal(iceFromName('Cubes, topped up'), 'cubes', '"up" only as a serve');
+assert.equal(iceFromName('Neat'), 'none');
 assert.equal(methodFromNames(['Stir']), 'stir');
 assert.equal(methodFromNames(['dry shake and shake']), 'shake');
 assert.equal(methodFromNames(['Build', 'Shake']), 'shake');

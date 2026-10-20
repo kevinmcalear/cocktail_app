@@ -113,7 +113,7 @@ CREATE FUNCTION "private"."ice_kind"("p_name" "text") RETURNS "text"
     SET "search_path" TO ''
     AS $$
   SELECT CASE
-    WHEN n ~ '(\mno ice\M|^none|\mneat\M|\mup\M)' THEN 'none'
+    WHEN n ~ '(\mno ice\M|^none\M|^neat\M|^up\M|\mserved up\M)' THEN 'none'
     WHEN n ~ '(crush|cracked|frapp)' THEN 'crushed'
     WHEN n ~ '(pebble|nugget|pellet|sonic)' THEN 'pebble'
     WHEN n ~ '(shaved|snow|kakig[oō]ri)' THEN 'shaved'

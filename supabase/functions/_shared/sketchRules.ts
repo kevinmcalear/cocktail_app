@@ -161,7 +161,7 @@ const GLASS_NAMES: readonly [RegExp, Glass][] = [
 ];
 const ICE_NAMES: readonly [RegExp, Ice][] = [
   // First: "No ice" has "ice" in it, which would read as cubes.
-  [/\bno ice\b|^none|\bneat\b|\bup\b/, 'none'],
+  [/\bno ice\b|^none\b|^neat\b|^up\b|\bserved up\b/, 'none'],
   [/crush|cracked|frapp/, 'crushed'],
   [/pebble|nugget|pellet|sonic/, 'pebble'],
   [/shaved|snow|kakig[oō]ri/, 'shaved'],

@@ -5,7 +5,7 @@ import { IceThumb } from '@/components/ds/IceThumb';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import type { WizardPick } from '@/lib/drinkWizard';
-import { ICE_TO, ICE_TO_LABEL, iceKind, isLoose, MAX_LAYERS, MAX_PIECES, type IceLayer, type IceTo } from '@/lib/iceBuild';
+import { ICE_TO, ICE_TO_LABEL, iceKind, isLoose, MAX_LAYERS, MAX_PIECES, singular, type IceLayer, type IceTo } from '@/lib/iceBuild';
 
 // Narrow icons that still take a 44 point tap.
 const HIT = { left: 6, right: 6 };
@@ -98,7 +98,7 @@ export function IceLayers({ layers, onChange, onAdd, sourceOf }: IceLayersProps)
               ) : several && (kind === 'cubes' || (l.n ?? 1) > 1) ? (
                 <View style={[styles.control, styles.between]}>
                   <Caption tone="muted">How many</Caption>
-                  <CountStepper value={l.n ?? 1} noun={l.ice.name.toLowerCase().replace(/([^s])s$/, '$1')} onChange={(n) => put(i, { n })} />
+                  <CountStepper value={l.n ?? 1} noun={singular(l.ice.name)} onChange={(n) => put(i, { n })} />
                 </View>
               ) : null}
             </View>

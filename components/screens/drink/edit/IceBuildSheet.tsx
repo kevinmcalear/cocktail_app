@@ -10,7 +10,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarKit } from '@/hooks/useBarKit';
 import { samePick, type WizardPick } from '@/lib/drinkWizard';
 import { iceBuildLine, QUICK_BUILDS, QUICK_LABEL, quickBuild, saysMore, whichQuick, type IceLayer } from '@/lib/iceBuild';
-import { ICE_LABEL, kitSourceLine, type IceKind } from '@/lib/venueKit';
+import { ICE_LABEL, kitIceRow, kitSourceLine, type IceKind } from '@/lib/venueKit';
 
 type Option = { id: string; name: string };
 
@@ -33,22 +33,32 @@ interface IceBuildSheetProps {
  */
 export function IceBuildSheet({ options, layers, onChange, addIce, barId, madeWithId, onClose }: IceBuildSheetProps) {
   const [adding, setAdding] = useState(false);
+  const [failed, setFailed] = useState(false);
   const venue = useActiveVenue().venues.find((v) => v.id === barId) ?? null;
   const kitIce = (useBarKit(barId).data ?? []).filter((r) => r.kind === 'ice' && r.key in ICE_LABEL);
-  const byId = (id: string): WizardPick => options.find((o) => o.id === id) ?? { id, name: 'Ice' };
+  const byId = (id: string): WizardPick | null => options.find((o) => o.id === id) ?? null;
   const pickOf = (name: string): WizardPick => options.find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
-  const picks = layers.map((l) => ({ ...l, ice: byId(l.ice) }));
+  // A layer whose ice is gone (merged, or not this person's to see) drops out, and is saved without it.
+  const picks = layers.flatMap((l) => {
+    const ice = byId(l.ice);
+    return ice ? [{ ...l, ice }] : [];
+  });
   // New ice is made by name before the layers change, so every layer has an id.
   const save = async (next: IceLayer<WizardPick>[]) => {
-    const ids: string[] = [];
-    for (const l of next) ids.push(l.ice.id ?? (await addIce(l.ice.name)));
-    onChange(next.map((l, i) => ({ ...l, ice: ids[i] })));
+    try {
+      const ids: string[] = [];
+      for (const l of next) ids.push(l.ice.id ?? (await addIce(l.ice.name)));
+      setFailed(false);
+      onChange(next.map((l, i) => ({ ...l, ice: ids[i] })));
+    } catch {
+      setFailed(true);
+    }
   };
   const named = picks.map((l) => ({ ...l, ice: l.ice.name }));
   const quick = layers.length ? whichQuick(named) : null;
   const top = named[named.length - 1];
   const sourceOf = (name: string) => {
-    const r = kitIce.find((k) => ICE_LABEL[k.key as IceKind].toLowerCase() === name.trim().toLowerCase());
+    const r = kitIceRow(kitIce, name);
     return r ? kitSourceLine(r) || null : null;
   };
   const choosing = adding || !layers.length;
@@ -85,6 +95,7 @@ export function IceBuildSheet({ options, layers, onChange, addIce, barId, madeWi
             ))}
           </View>
           <IceLayers layers={picks} onChange={(next) => void save(next)} onAdd={() => setAdding(true)} sourceOf={sourceOf} />
+          {failed ? <Caption tone="accent">Couldn’t add that ice. Check your connection and try again.</Caption> : null}
           <Caption tone="muted">Clear every layer for no ice.</Caption>
         </SheetScrollView>
       )}

@@ -51,6 +51,10 @@ export function venueIceNames(rows: readonly { kind: string; key: string }[]): s
 /** Whether a wizard pick is one of the venue's ice, by name ("large cube" is "Large cube"). */
 export const isVenueIce = (names: readonly string[], name: string) => names.some((n) => n.toLowerCase() === name.trim().toLowerCase());
 
+/** The venue's Kit row for an ice, by the wizard's name for it ("Spear"), or null. */
+export const kitIceRow = <T extends { kind: string; key: string }>(rows: readonly T[], name: string): T | null =>
+  rows.find((r) => r.kind === 'ice' && r.key in ICE_LABEL && isVenueIce([ICE_LABEL[r.key as IceKind]], name)) ?? null;
+
 /** The prep kitchen's tools shown before "All tools": the ones bars reach for first. */
 const PREP_FIRST = ['scale-fine', 'sous-vide', 'whipper', 'superbag', 'chamber-vac', 'centrifuge', 'rotovap'];
 

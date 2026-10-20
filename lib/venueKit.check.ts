@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { EQUIPMENT } from './techniques/equipment';
-import { houseIce, ICE_KINDS, isVenueIce, kitSourceLine, supplierLine, toolGroups, venueIceNames } from './venueKit';
+import { houseIce, ICE_KINDS, isVenueIce, kitIceRow, kitSourceLine, supplierLine, toolGroups, venueIceNames } from './venueKit';
 
 // The database's bar_kit_key_check list, less nothing: keep them in step.
 assert.deepEqual([...ICE_KINDS], ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere']);
@@ -37,3 +37,8 @@ assert.equal(houseIce('spear', ['crushed']), null, 'nothing near');
 assert.equal(houseIce('cubes', ['cubes', 'large']), null, 'the venue has it');
 assert.equal(houseIce('none', ['cubes']), null, 'no ice stays no ice');
 assert.equal(houseIce('cubes', []), null, 'no ice listed');
+
+// A Kit row by the wizard's name for its ice.
+assert.equal(kitIceRow([{ kind: 'tool', key: 'spear' }, { kind: 'ice', key: 'spear' }], 'spear')?.kind, 'ice');
+assert.equal(kitIceRow([{ kind: 'ice', key: 'large' }], 'Large Cube')?.key, 'large');
+assert.equal(kitIceRow([{ kind: 'ice', key: 'large' }], 'Pebble'), null);

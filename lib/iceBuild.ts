@@ -43,7 +43,8 @@ export const saysMore = <T>(layers: readonly IceLayer<T>[] | null | undefined): 
 
 // --- the spec line ---
 
-const singular = (name: string) => {
+/** "cubes" to "cube", for one piece and for counting words. */
+export const singular = (name: string) => {
   const n = name.trim().toLowerCase();
   return /[^s]s$/.test(n) ? n.slice(0, -1) : n;
 };

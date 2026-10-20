@@ -8,7 +8,7 @@ import type { KitRow } from '@/hooks/useBarKit';
 import { methodIceLabel, samePick, sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
 import { iceBuildLine, iceKind, iceTip, QUICK_BUILDS, QUICK_LABEL, quickBuild, saysMore, whichQuick, type IceLayer } from '@/lib/iceBuild';
 import { draftSketchInputs } from '@/lib/sketch/draft';
-import { ICE_LABEL, isVenueIce, kitSourceLine, type IceKind } from '@/lib/venueKit';
+import { ICE_LABEL, isVenueIce, kitIceRow, kitSourceLine, type IceKind } from '@/lib/venueKit';
 
 import { AddLayerSheet } from './AddLayerSheet';
 import { IceLayers } from './IceLayers';
@@ -31,7 +31,6 @@ interface IceStepProps extends StepProps {
   venueName?: string | null;
 }
 
-const same = (a: string | null | undefined, b: string | null | undefined) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
  * The ice it's made with, named for the method ("Blended with"; #697), then
@@ -53,17 +52,17 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
 
   // The venue's ice, where each comes from, and how long its spears are.
   const kitIce = kit.filter((r) => r.kind === 'ice' && r.key in ICE_LABEL);
-  const kitRow = (name: string) => kitIce.find((r) => same(ICE_LABEL[r.key as IceKind], name));
   const sourceOf = (name: string) => {
-    const r = kitRow(name);
+    const r = kitIceRow(kitIce, name);
     return r ? kitSourceLine(r) || null : null;
   };
   const spearMm = kitIce.find((r) => r.key === 'spear')?.length_mm ?? null;
 
   // The glass as drawn, and its height when the venue's glass of that kind says.
-  const lookKey = JSON.stringify(sketchLook(draft, barVariants));
+  const look = sketchLook(draft, barVariants);
+  const lookKey = JSON.stringify(look);
   const glassKind = useMemo(() => draftSketchInputs(JSON.parse(lookKey)).glass, [lookKey]);
-  const glass = barGlasses?.find((g) => same(g.name, draft.glass?.name)) ?? barGlasses?.find((g) => g.glass === glassKind && g.is_default);
+  const glass = barGlasses?.find((g) => !!g.name && !!draft.glass && isVenueIce([g.name], draft.glass.name)) ?? barGlasses?.find((g) => g.glass === glassKind && g.is_default);
   const tip = layers.length
     ? iceTip({
         layers: named,
@@ -104,7 +103,7 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
           <IceTipCard
             tip={tip}
             now={named}
-            look={sketchLook(draft, barVariants)}
+            look={look}
             seed={draft.id ?? 'new-drink'}
             onUse={() => setLayers(tip.layers.map((l) => ({ ...l, ice: pickOf(l.ice) })))}
             onNo={() => set({ iceTipsOff: [...(draft.iceTipsOff ?? []), tip.id] })}

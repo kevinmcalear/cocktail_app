@@ -6,7 +6,7 @@ import { IceThumb } from '@/components/ds/IceThumb';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { samePick, type WizardPick } from '@/lib/drinkWizard';
-import { iceKind, isLoose, type IceLayer, type IceTo } from '@/lib/iceBuild';
+import { iceKind, isLoose, singular, type IceLayer, type IceTo } from '@/lib/iceBuild';
 
 import { CountStepper, HeightPicker } from './IceLayers';
 import { OwnField } from './PickStep';
@@ -120,7 +120,7 @@ export function LayerChoices({ onClose, onAdd, options, venue, below }: Omit<Add
       ) : picked ? (
         <View style={[styles.between, styles.group]}>
           <Body>How many</Body>
-          <CountStepper value={n} noun={picked.name.toLowerCase().replace(/([^s])s$/, '$1')} onChange={setN} />
+          <CountStepper value={n} noun={singular(picked.name)} onChange={setN} />
         </View>
       ) : null}
       <Button label="Add on top" size="lg" disabled={!picked} onPress={add} />

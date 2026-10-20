@@ -117,11 +117,11 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const r = rng(hashString(key));
   const g = { ...glassShape(inputs.glass, inputs.variant) };
   const build = inputs.build?.length ? inputs.build : null;
-  // A build's surface is its top layer's, unless that only goes halfway.
-  const top = build?.[build.length - 1];
-  const ice = top && top.to !== 'half' ? top.kind : inputs.ice;
-  if (ice === 'crushed' || ice === 'shaved') g.top = g.rim + 3;
-  if (ice === 'pebble') g.top = g.rim + 5;
+  const ice = build ? build[build.length - 1].kind : inputs.ice;
+  // Loose ice to the top lifts the surface; a build's top layer at Half doesn't.
+  const surface0 = build?.[build.length - 1].to === 'half' ? 'none' : ice;
+  if (surface0 === 'crushed' || surface0 === 'shaved') g.top = g.rim + 3;
+  if (surface0 === 'pebble') g.top = g.rim + 5;
   // A hot drink in the copper mug's place is a home mug; the glass mugs stay glass.
   if (inputs.glass === 'mug' && g.opaque && ice !== 'cubes') g.opaque = SKETCH.homeMug;
 
