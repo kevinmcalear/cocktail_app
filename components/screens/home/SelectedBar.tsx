@@ -109,7 +109,7 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
     <View style={styles.cardRow}>
       <View style={[styles.cardRow, styles.barHead]} accessible accessibilityLabel={[`${pin.name}, ${where}`, said].filter(Boolean).join('. ')}>
         <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={48} />
-        <View style={[styles.flex, styles.barName]}>
+        <View style={styles.flex}>
           <Headline numberOfLines={2}>{pin.name}</Headline>
           <Caption tone="muted" numberOfLines={1}>
             {where}
@@ -204,16 +204,15 @@ const styles = StyleSheet.create({
   // disc-desk-browse: the surface with a stronger edge, 14 by 16 inside.
   picked: { borderWidth: 1, paddingVertical: space.md + 2, paddingHorizontal: space.lg, gap: space.sm + 2 },
   cardRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
-  // A wrapped name is taller than the mark. Top-align them, and keep the gap under the distance, not under the logo.
+  // A wrapped name is taller than the mark: top-align them.
   barHead: { alignItems: 'flex-start' },
-  barName: { paddingBottom: space.lg },
   facts: { gap: space.xs },
   // The count beside the buttons, as drawn; in a narrow column the buttons drop under it together rather than leaving Open bar alone.
   count: { flexGrow: 1 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, marginLeft: 'auto' },
   cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm + 2 },
-  // The row was tight under the distance and loose above the divider. The same amount of space, moved up.
-  drinkBleed: { marginHorizontal: -space.lg, marginTop: space.xl, marginBottom: -space.xl, flexGrow: 0 },
+  // Edge to edge, with the same room above the drinks as below them.
+  drinkBleed: { marginHorizontal: -space.lg, marginVertical: space.sm, flexGrow: 0 },
   drinkRow: { gap: space.md, paddingHorizontal: space.lg },
   // Wraps on a narrow phone: Directions and Open bar drop under All results rather than off the edge.
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },

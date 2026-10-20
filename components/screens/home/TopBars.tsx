@@ -29,11 +29,13 @@ export function TopBars({ area, search = '', kinds = [], onShowBar }: { area: Ar
   const found = useDiscoverBars(area, { search: q, kinds }, !!q);
   if (q) {
     const bars = barsMatching(found.data ?? [], q);
+    // Nothing at all: the results above already say so, with Add a bar.
+    if (!found.isLoading && !bars.length) return null;
     return (
       <View style={styles.section}>
         <Caption tone="muted">{`Matching “${q}”`}</Caption>
         <Headline role="heading">{`Bars ${where}`}</Headline>
-        {found.isLoading ? <ListNote>Loading…</ListNote> : bars.length ? bars.map((b) => <BarResultRow key={b.id} bar={b} query={q} onShowBar={onShowBar} />) : <ListNote>{`No bars ${where} match “${q}”.`}</ListNote>}
+        {found.isLoading ? <ListNote>Loading…</ListNote> : bars.map((b) => <BarResultRow key={b.id} bar={b} query={q} onShowBar={onShowBar} />)}
       </View>
     );
   }
