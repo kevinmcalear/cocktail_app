@@ -31,7 +31,7 @@ interface AddLayerSheetProps {
  */
 export function AddLayerSheet({ visible, onClose, onAdd, options, venue, below }: AddLayerSheetProps) {
   return (
-    <Sheet visible={visible} onClose={onClose} accessibilityLabel="Add a layer" header={<Headline role="heading">Add a layer</Headline>} keyboard>
+    <Sheet style={styles.sheet} visible={visible} onClose={onClose} accessibilityLabel="Add a layer" header={<Headline role="heading">Add a layer</Headline>} keyboard>
       {visible ? <LayerChoices {...{ onClose, onAdd, options, venue, below }} /> : null}
     </Sheet>
   );
@@ -120,7 +120,7 @@ export function LayerChoices({ onClose, onAdd, options, venue, below }: Omit<Add
       ) : picked ? (
         <View style={[styles.between, styles.group]}>
           <Body>How many</Body>
-          <CountStepper value={n} noun={picked.name.toLowerCase()} onChange={setN} />
+          <CountStepper value={n} noun={picked.name.toLowerCase().replace(/([^s])s$/, '$1')} onChange={setN} />
         </View>
       ) : null}
       <Button label="Add on top" size="lg" disabled={!picked} onPress={add} />
@@ -129,7 +129,8 @@ export function LayerChoices({ onClose, onAdd, options, venue, below }: Omit<Add
 }
 
 const styles = StyleSheet.create({
-  body: { gap: space.lg, paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  sheet: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  body: { gap: space.lg, paddingBottom: space.lg },
   group: { gap: space.sm },
   card: { borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.lg },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.sm },

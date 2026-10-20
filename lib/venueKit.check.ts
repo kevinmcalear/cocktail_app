@@ -22,6 +22,7 @@ assert.equal(supplierLine({ supplies: [], order_by: null, delivers: null }), '')
 assert.equal(kitSourceLine({ made_here: true, note: 'Hoshizaki under the well', supplier_name: null }), 'Made here · Hoshizaki under the well');
 assert.equal(kitSourceLine({ made_here: false, note: null, supplier_name: 'Coldwater Ice Co.' }), 'Coldwater Ice Co.');
 assert.equal(kitSourceLine({ made_here: false, note: null, supplier_name: null }), '');
+assert.equal(kitSourceLine({ made_here: false, note: 'Collins spears', supplier_name: 'Coldwater Ice Co.', length_mm: 130 }), 'Coldwater Ice Co. · Collins spears · 130 mm');
 
 // The wizard's Ice step: the venue's ice by the wizard's names, tools left out.
 const names = venueIceNames([{ kind: 'ice', key: 'large' }, { kind: 'tool', key: 'shaker' }, { kind: 'ice', key: 'cubes' }]);

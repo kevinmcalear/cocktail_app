@@ -7,6 +7,8 @@ import { layout, radius, space } from '@/constants/tokens';
 import type { WizardPick } from '@/lib/drinkWizard';
 import { ICE_TO, ICE_TO_LABEL, iceKind, isLoose, MAX_LAYERS, MAX_PIECES, type IceLayer, type IceTo } from '@/lib/iceBuild';
 
+// Narrow icons that still take a 44 point tap.
+const HIT = { left: 6, right: 6 };
 const HEIGHTS = ICE_TO.map((value) => ({ value, label: ICE_TO_LABEL[value] }));
 
 /** − n +, for how many pieces. */
@@ -51,7 +53,7 @@ interface IceLayersProps {
 /**
  * The ice in the glass, bottom to top (canvas "Ice builds", row 1): each
  * layer's ice, how many pieces or how high loose ice goes, and Add a layer on
- * top. One layer alone needs no count.
+ * top. Only cubes are counted (a spear, a large cube are one), and one layer alone needs no count.
  */
 export function IceLayers({ layers, onChange, onAdd, sourceOf }: IceLayersProps) {
   const ds = useDs();
@@ -78,23 +80,25 @@ export function IceLayers({ layers, onChange, onAdd, sourceOf }: IceLayersProps)
                 <View style={styles.flex}>
                   <Body numberOfLines={1}>{name}</Body>
                   {sub ? (
-                    <Caption tone="muted" numberOfLines={1}>
+                    <Caption tone="muted" numberOfLines={2}>
                       {sub}
                     </Caption>
                   ) : null}
                 </View>
-                {several ? <Icon name="chevron.up" label={`Move ${l.ice.name} up the list, lower in the glass`} onPress={() => move(i, -1)} disabled={i === 0} /> : null}
-                {several ? <Icon name="chevron.down" label={`Move ${l.ice.name} down the list, higher in the glass`} onPress={() => move(i, 1)} disabled={i === layers.length - 1} /> : null}
-                <Icon name="xmark" label={`Remove ${l.ice.name}`} onPress={() => onChange(layers.filter((_, j) => j !== i))} />
+                <View style={styles.icons}>
+                  {several ? <Icon name="chevron.up" label={`Move ${l.ice.name} up the list, lower in the glass`} onPress={() => move(i, -1)} disabled={i === 0} /> : null}
+                  {several ? <Icon name="chevron.down" label={`Move ${l.ice.name} down the list, higher in the glass`} onPress={() => move(i, 1)} disabled={i === layers.length - 1} /> : null}
+                  <Icon name="xmark" label={`Remove ${l.ice.name}`} onPress={() => onChange(layers.filter((_, j) => j !== i))} />
+                </View>
               </View>
               {l.tin ? null : loose ? (
-                <View style={styles.control}>
+                <View>
                   <HeightPicker value={l.to ?? 'rim'} onChange={(to) => put(i, { to })} />
                 </View>
-              ) : several ? (
+              ) : several && (kind === 'cubes' || (l.n ?? 1) > 1) ? (
                 <View style={[styles.control, styles.between]}>
                   <Caption tone="muted">How many</Caption>
-                  <CountStepper value={l.n ?? 1} noun={l.ice.name.toLowerCase()} onChange={(n) => put(i, { n })} />
+                  <CountStepper value={l.n ?? 1} noun={l.ice.name.toLowerCase().replace(/([^s])s$/, '$1')} onChange={(n) => put(i, { n })} />
                 </View>
               ) : null}
             </View>
@@ -114,7 +118,7 @@ export function IceLayers({ layers, onChange, onAdd, sourceOf }: IceLayersProps)
 function Icon({ name, label, onPress, disabled }: { name: 'chevron.up' | 'chevron.down' | 'xmark'; label: string; onPress: () => void; disabled?: boolean }) {
   const ds = useDs();
   return (
-    <PressableScale role="button" accessibilityLabel={label} onPress={onPress} disabled={disabled} style={[styles.icon, disabled && styles.off]}>
+    <PressableScale role="button" accessibilityLabel={label} onPress={onPress} disabled={disabled} hitSlop={HIT} style={[styles.icon, disabled && styles.off]}>
       <IconSymbol name={name} size={14} color={ds.c.muted} />
     </PressableScale>
   );
@@ -131,7 +135,8 @@ const styles = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   step: { width: 36, height: 36, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   count: { minWidth: 22, textAlign: 'center' },
-  icon: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  icons: { flexDirection: 'row' },
+  icon: { width: 32, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   off: { opacity: 0.3 },
   add: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 48, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1.5, borderStyle: 'dashed' },
 });

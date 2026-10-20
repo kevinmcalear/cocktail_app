@@ -91,7 +91,7 @@ export function supplierLine(s: { supplies: readonly string[]; order_by: string 
     .join(' · ');
 }
 
-/** Where a kit row comes from: "Made here · Hoshizaki under the well", "Coldwater Ice Co.", or just its note. */
-export function kitSourceLine(row: { made_here: boolean; note: string | null; supplier_name: string | null }): string {
-  return [row.made_here ? 'Made here' : row.supplier_name, row.note].filter(Boolean).join(' · ');
+/** Where a kit row comes from: "Made here · Hoshizaki under the well", "Coldwater Ice Co. · 130 mm", or just its note. */
+export function kitSourceLine(row: { made_here: boolean; note: string | null; supplier_name: string | null; length_mm?: number | null }): string {
+  return [row.made_here ? 'Made here' : row.supplier_name, row.note, row.length_mm ? `${row.length_mm} mm` : null].filter(Boolean).join(' · ');
 }

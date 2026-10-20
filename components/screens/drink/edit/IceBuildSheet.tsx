@@ -54,6 +54,7 @@ export function IceBuildSheet({ options, layers, onChange, addIce, barId, madeWi
   const choosing = adding || !layers.length;
   return (
     <Sheet
+      style={styles.sheet}
       visible
       onClose={onClose}
       accessibilityLabel="Ice in the glass"
@@ -94,6 +95,7 @@ export function IceBuildSheet({ options, layers, onChange, addIce, barId, madeWi
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center' },
   flex: { flex: 1 },
-  body: { gap: space.lg, paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  sheet: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  body: { gap: space.lg, paddingBottom: space.lg },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });
