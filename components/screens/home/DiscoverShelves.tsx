@@ -2,37 +2,72 @@ import { useRouter } from 'expo-router';
 import { useContext } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DrinkImage, DsText, Headline, PressableScale, useGutter } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Headline, PalateFlower, PressableScale, useDs, useGutter } from '@/components/ds';
+import { BarMark } from '@/components/screens/home/BarMark';
 import { BarAway } from '@/components/screens/home/DrinksAtBars';
-import { space, type } from '@/constants/tokens';
+import { fontFamilies, radius, space, type } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
+import { useMyTaste } from '@/hooks/useFlavor';
 import type { DiscoverDrink } from '@/lib/discoverDrinks';
 import type { Shelf } from '@/lib/discoverShelves';
 import { itemHref } from '@/lib/itemRoutes';
 
 const TILE = 112;
+/** A small mark, bottom left of the picture, with the bar's name beside it. */
+const MARK = 20;
 
-/** One drink on a shelf: its picture, name (two lines), and its bar and how far. */
-function ShelfTile({ drink: d }: { drink: DiscoverDrink }) {
+/** The palate, then "Based on your taste". The whole line opens the taste page. */
+function TasteLine({ note }: { note: string }) {
   const router = useRouter();
+  const { data: me } = useMyTaste();
+  const taste = me?.taste;
+  return (
+    <PressableScale role="link" accessibilityLabel={`${note}. Open your taste`} hitSlop={12} onPress={() => router.push('/taste' as never)} style={styles.note}>
+      {taste && Object.keys(taste).length ? <PalateFlower values={taste} size={28} rings={false} /> : null}
+      <Caption tone="muted">{note}</Caption>
+    </PressableScale>
+  );
+}
+
+/** One drink on a shelf. `atBar`: already inside that bar's panel, so just the drawing and the drink. */
+export function ShelfTile({ drink: d, onShowBar, atBar = false }: { drink: DiscoverDrink; onShowBar?: (barId: string | null) => void; atBar?: boolean }) {
+  const router = useRouter();
+  const ds = useDs();
   const prefetch = usePrefetchCocktail();
   const away = useContext(BarAway)(d.barId);
-  const where = [d.bar.name, away ?? d.bar.locality].filter(Boolean).join(' · ');
+  const place = away ?? d.bar.locality;
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={`${d.name}. ${where}`}
+      accessibilityLabel={[d.name, d.bar.name, place].filter(Boolean).join('. ')}
       onPressIn={() => prefetch(d.id, { name: d.name, imageUrl: d.imageUrl })}
       onPress={() => router.push(itemHref('Cocktail', d.id) as never)}
+      onHoverIn={onShowBar ? () => onShowBar(d.barId) : undefined}
+      onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
+      onFocus={onShowBar ? () => onShowBar(d.barId) : undefined}
+      onBlur={onShowBar ? () => onShowBar(null) : undefined}
       style={styles.tile}
     >
-      <DrinkImage thumb source={d.imageUrl} itemId={d.id} radius="control" accessibilityLabel={d.name} style={styles.picture} />
-      <DsText variant="label" numberOfLines={2} style={styles.name}>
+      <View style={[styles.picture, { backgroundColor: ds.c.paper }]}>
+        {place && !atBar ? (
+          <Caption numberOfLines={1} color={withAlpha(ds.c.sketchInk, 0.55)} style={styles.away}>
+            {place}
+          </Caption>
+        ) : null}
+        <DrinkImage thumb source={d.imageUrl} itemId={d.id} radius={0} accessibilityLabel={d.name} style={styles.fill} />
+        {atBar ? null : (
+          <View style={styles.barRow}>
+            <BarMark name={d.bar.name} logoUrl={d.bar.logo} profileId={d.barId} size={MARK} />
+            <Caption numberOfLines={1} color={ds.c.sketchInk} style={styles.bar}>
+              {d.bar.name}
+            </Caption>
+          </View>
+        )}
+      </View>
+      <DsText variant="label" numberOfLines={2}>
         {d.name}
       </DsText>
-      <Caption tone="muted" numberOfLines={1}>
-        {where}
-      </Caption>
     </PressableScale>
   );
 }
@@ -42,23 +77,32 @@ function ShelfTile({ drink: d }: { drink: DiscoverDrink }) {
  * titled row that scrolls sideways, one drink per bar, with See all setting
  * its filter on the list below. Empty shelves never reach here.
  */
-export function DiscoverShelves({ shelves, onKind }: { shelves: Shelf[]; onKind?: (kind: string) => void }) {
+export function DiscoverShelves({ shelves, onKind, onShowBar }: { shelves: Shelf[]; onKind?: (kind: string) => void; /** Hovering a card opens its bar on the map. */ onShowBar?: (barId: string | null) => void }) {
   const gutter = useGutter();
+  const ds = useDs();
   return shelves.map((s) => (
     <View key={s.key} role="region" aria-label={s.title} style={styles.shelf}>
-      <View style={styles.head}>
-        <View style={styles.titles}>
-          <Headline role="heading">{s.title}</Headline>
-          <Caption tone="muted">{s.note}</Caption>
+      <View>
+        <View style={styles.head}>
+          <Headline role="heading" style={styles.flex}>
+            {s.title}
+          </Headline>
+          {s.kind && onKind ? (
+            <PressableScale accessibilityLabel={`See all: ${s.title}`} hitSlop={12} onPress={() => onKind(s.kind!)}>
+              <DsText variant="caption" color={ds.accentText}>
+                See all
+              </DsText>
+            </PressableScale>
+          ) : null}
         </View>
-        {s.kind && onKind ? <Button label="See all" accessibilityLabel={`See all: ${s.title}`} variant="ghost" onPress={() => onKind(s.kind!)} /> : null}
+        {s.taste ? <TasteLine note={s.note} /> : <Caption tone="muted">{s.note}</Caption>}
       </View>
       {/* Runs to the screen's edges, so a cut-off tile says there's more. */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -gutter }} contentContainerStyle={{ paddingHorizontal: gutter }}>
         <View role="list" style={styles.row}>
           {s.drinks.map((d) => (
             <View role="listitem" key={d.id}>
-              <ShelfTile drink={d} />
+              <ShelfTile drink={d} onShowBar={onShowBar} />
             </View>
           ))}
         </View>
@@ -69,11 +113,24 @@ export function DiscoverShelves({ shelves, onKind }: { shelves: Shelf[]; onKind?
 
 const styles = StyleSheet.create({
   shelf: { gap: space.sm },
-  head: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.md },
-  titles: { flexShrink: 1 },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
+  note: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space.xs },
+  flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', gap: space.md },
   tile: { width: TILE, gap: space.xs },
-  picture: { width: TILE, height: TILE },
-  // Two lines' room always, so the captions line up across the row.
-  name: { minHeight: type.label.lineHeight * 2 },
+  picture: { width: TILE, borderRadius: radius.control, overflow: 'hidden' },
+  fill: { width: TILE, height: TILE },
+  // ponytail: 11pt, under the 13 caption floor, so the strip stays quieter than the bar name. A micro style if a second place needs it.
+  away: {
+    alignSelf: 'flex-end',
+    maxWidth: TILE - space.md,
+    marginTop: space.xs,
+    marginRight: space.sm,
+    marginBottom: space.xs,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: type.caption.fontSize - 2,
+    lineHeight: type.caption.lineHeight - 4,
+  },
+  barRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, padding: space.xs, paddingBottom: space.sm },
+  bar: { flex: 1, minWidth: 0, fontFamily: fontFamilies.bodySemiBold },
 });
