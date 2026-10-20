@@ -36,6 +36,8 @@ export const RECIPE_UNITS: RecipeUnit[] = [
   { value: 'leaf', label: 'leaf', group: 'count' },
   { value: 'peel', label: 'peel', group: 'count' },
   { value: 'twist', label: 'twist', group: 'count' },
+  // A peel expressed over the drink, then thrown away: its oils, not the peel.
+  { value: 'discard', label: 'discard', group: 'count' },
   { value: 'wheel', label: 'wheel', group: 'count' },
   { value: 'slice', label: 'slice', group: 'count' },
   { value: 'cube', label: 'cube', group: 'count' },

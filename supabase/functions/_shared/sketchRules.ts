@@ -539,6 +539,8 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
     if (!rule && look) usedAi = true;
     const unit = (line.unit ?? '').trim().toLowerCase();
     const lname = line.name.toLowerCase();
+    // A discarded peel leaves its oils, not itself: no garnish, no colour.
+    if (unit === 'discard') continue;
 
     const isGarnish = isGarnishLine(line);
     if (!garnish && isGarnish) garnish = first(GARNISH_RULES, `${line.name} ${unit}`);
