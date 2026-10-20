@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, DsText, IngredientThumb, PressableScale, useDs } from '@/components/ds';
+import { Body, Caption, DsText, IngredientThumb, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
@@ -36,6 +36,8 @@ interface LineRowProps {
  */
 export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail }: LineRowProps) {
   const ds = useDs();
+  // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
+  const stacked = useBreakpoint() === 'phone';
   const [units, setUnits] = useState(false);
   const [noting, setNoting] = useState(!!line.note);
   const [open, setOpen] = useState(false);
@@ -56,8 +58,8 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
     <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line }]}>
       <View style={styles.row}>
         <IngredientThumb id={line.id} name={line.name} size={40} />
-        <View style={styles.main}>
-          <View style={styles.head}>
+        <View style={stacked ? styles.mainStacked : styles.main}>
+          <View style={stacked ? null : styles.head}>
             {/* The name opens what else the line can do; closed, the row is the ingredient and its pour (board make-create-ingredients). */}
             <PressableScale
               onPress={() => setOpen(!open)}
@@ -207,9 +209,10 @@ const styles = StyleSheet.create({
   note: { minHeight: layout.minTapTarget, marginLeft: 40 + space.md, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.md },
   wrap: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
-  // The name (with its links) and the controls wrap: two lines on a phone, one on a wide screen.
-  main: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md, rowGap: space.xs },
-  head: { flexGrow: 1, flexShrink: 1, flexBasis: 150 },
+  // The name and the controls: two lines on a phone, one on a wider screen.
+  main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
+  mainStacked: { flex: 1, gap: space.xs },
+  head: { flex: 1 },
   name: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, height: layout.minTapTarget },
