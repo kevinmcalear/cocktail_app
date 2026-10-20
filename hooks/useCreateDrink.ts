@@ -207,7 +207,8 @@ export function useCreateDrink() {
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
         ice_id: iceId,
-        method_ice_id: methodIceId,
+        // Only when there is one: a database without 20261029100000 refuses an unknown column, so every other save keeps working whichever lands first.
+        ...(methodIceId ? { method_ice_id: methodIceId } : {}),
         riff_of_id: draft.riffOf?.id ?? null,
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
