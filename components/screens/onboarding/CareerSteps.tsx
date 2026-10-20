@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, DsText, Field, Headline, PressableScale, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { layout, radius, space } from '@/constants/tokens';
 import { useSaveWorkplace, useCreateOnboardingBar } from '@/hooks/useOnboarding';
 import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
 import { barNameError, roleError, venueLabel, type JobMonth } from '@/lib/onboarding';
@@ -170,10 +170,6 @@ export function BarPick({ bar, onPick, label = 'Search bars' }: { bar: RankVenue
 /** "Jo Park · Bar Bianca, Melbourne": name, where they work now, city. */
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  rows: { gap: space.sm },
-  // A match as a pill with a small initial (canvas make-onboarding-find).
-  person: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', maxWidth: '100%', gap: space.sm, minHeight: layout.minTapTarget, paddingLeft: space.sm, paddingRight: space.lg, borderRadius: radius.pill, borderWidth: 1 },
-  shrink: { flexShrink: 1 },
   picked: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   card: { gap: space.md },
   compact: { alignSelf: 'flex-start' },
@@ -183,5 +179,4 @@ const styles = StyleSheet.create({
   check: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   box: { width: 22, height: 22, borderRadius: radius.mark, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
-  strong: { fontFamily: fontFamilies.bodySemiBold },
 });
