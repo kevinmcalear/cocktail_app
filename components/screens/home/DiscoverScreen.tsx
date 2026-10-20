@@ -43,14 +43,12 @@ import { useLastPlace } from '@/store/useLastPlace';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
 /**
- * Discover, the first tab in home mode. Phones: one header row (the logo, a
- * search pill for bars and the drinks bars pour, options for list or map,
- * where and filters, and you) that scrolls away over the list (Eddie and
- * Kevin, 13 Oct). Wide screens: the pill, then where and Filters. Below: the
- * drinks that match and the top bars. Phones switch between this list and a
- * full-screen map (the map first once location has
- * been on; the last choice is remembered); wide screens show both. It opens
- * near the last place this device was found (store/useLastPlace.ts).
+ * Discover, the first tab in home mode. Phones: one header row (the logo, a search pill for
+ * bars and the drinks bars pour, options for list or map, where and filters, and you) that
+ * scrolls away over the list (Eddie and Kevin, 13 Oct). Wide screens: the pill, then where and
+ * Filters. Below: the drinks that match and the top bars. Phones switch between this list and
+ * a full-screen map (the map first once location has been on; the last choice is remembered);
+ * wide screens show both. It opens near the last place this device was found (store/useLastPlace.ts).
  */
 export function DiscoverScreen() {
   const ds = useDs();
