@@ -4,7 +4,7 @@ import { renderWithTamagui } from '@/jest.setup';
 import { useAppMode } from '@/store/useAppMode';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
-import { OnboardingScreen } from './OnboardingScreen';
+import { forgetSetupProgress, OnboardingScreen } from './OnboardingScreen';
 
 const [mockReplace, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockClaim] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
 const [mockSaveMenu, mockSaveDrink, mockAccept, mockDecline, mockSaveTaste] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
@@ -61,10 +61,10 @@ beforeEach(() => {
   mockMeta = { onboarded: false };
   mockInvitedAt = undefined;
   mockInvites = [];
-  for (const m of [mockAccept, mockDecline, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockClaim, mockSaveMenu, mockSaveDrink, mockSaveTaste]) m.mockReset();
+  for (const m of [mockReplace, mockAccept, mockDecline, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockClaim, mockSaveMenu, mockSaveDrink, mockSaveTaste]) m.mockReset();
   mockPeople = [];
   mockBars = [attaboy];
-  mockReplace.mockClear();
+  forgetSetupProgress();
   mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSuccess?.());
   mockSaveName.mockImplementation((_input, opts) => opts?.onSuccess?.('p1'));
   useSettingsStore.setState({ specUnit: 'ml', defaultUnit: 'ml' });
