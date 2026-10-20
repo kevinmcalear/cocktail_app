@@ -531,11 +531,12 @@ export function useReviewClaim() {
   const qc = useQueryClient();
   const userId = useUserId();
   return useMutation({
-    mutationFn: async ({ claimId, approve, code, reason }: ClaimReview) => {
+    mutationFn: async ({ claimId, approve, code, reason }: ClaimReview): Promise<{ id: string } | null> => {
       if (approve) {
-        const { error } = await supabase.rpc('approve_profile_claim', { p_claim_id: claimId, p_code: code ?? null });
+        // The profile it went to: the page itself, or the claimant's own one it merged into.
+        const { data, error } = await supabase.rpc('approve_profile_claim', { p_claim_id: claimId, p_code: code ?? null });
         if (error) throw error;
-        return;
+        return data as { id: string };
       }
       const { data, error } = await supabase
         .from('profile_claims')
@@ -551,11 +552,14 @@ export function useReviewClaim() {
       if (error) throw error;
       // RLS turns a non-moderator's update into a silent no-op; say so.
       if (!data?.length) throw new Error('Only moderators can turn down claims, and only pending ones.');
+      return null;
     },
-    onSuccess: (_data, { approve }) => {
+    onSuccess: (profile, { approve }) => {
       qc.invalidateQueries({ queryKey: ['profile-claims'] });
-      // An approval claims an unclaimed page; turning one down changes no page.
+      // An approval claims an unclaimed page, or merges it into the claimant's
+      // profile; turning one down changes no page.
       if (approve) qc.invalidateQueries(changedProfiles({ unclaimed: true }));
+      if (profile) qc.invalidateQueries(changedProfiles({ id: profile.id }));
     },
     // Shown inline by ClaimsReview, not as the global toast.
     onError: () => {},

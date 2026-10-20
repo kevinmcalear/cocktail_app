@@ -255,6 +255,8 @@ function claimMessage(error: unknown): string {
   const code = (error as { code?: string } | null)?.code;
   if (code === '23505') return 'You already have a claim waiting on this profile.';
   if (code === '42501') return "You can't claim this profile. It may have been claimed already.";
+  // start_person_claim's own refusals are written for people.
+  if (code === 'P0001') return (error as { message: string }).message;
   const message = error instanceof Error ? error.message : '';
   if (message.startsWith('You already')) return message;
   return "Couldn't send your claim. Check your connection and try again.";

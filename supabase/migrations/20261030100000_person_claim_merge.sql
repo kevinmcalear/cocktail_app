@@ -410,13 +410,17 @@ BEGIN
         RAISE EXCEPTION 'The code should be six digits.' USING ERRCODE = '22023';
     END IF;
 
-    SELECT * INTO v_profile FROM public.profiles WHERE id = p_profile_id AND kind = 'person';
+    -- Only a page people can see: a hidden or taken-down one isn't claimable.
+    SELECT * INTO v_profile FROM public.profiles
+    WHERE id = p_profile_id AND kind = 'person' AND is_public AND moderated_at IS NULL;
     IF v_profile.id IS NULL THEN
         RAISE EXCEPTION 'There''s no person''s page with that id.' USING ERRCODE = 'P0001';
     END IF;
     IF v_profile.user_id IS NOT NULL OR v_profile.bar_id IS NOT NULL THEN
         RAISE EXCEPTION 'This page has already been claimed.' USING ERRCODE = 'P0001';
     END IF;
+    -- One claimant at a time, so two taps can't both pass the checks below.
+    PERFORM pg_advisory_xact_lock(hashtextextended('start_person_claim:' || v_user::text, 0));
     IF EXISTS (SELECT 1 FROM public.profile_claims WHERE profile_id = p_profile_id AND user_id = v_user AND status = 'pending') THEN
         RAISE EXCEPTION 'You already have a claim waiting on this page.' USING ERRCODE = '23505';
     END IF;

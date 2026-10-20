@@ -83,6 +83,7 @@ before(async () => {
   await page('NoGram', 'person');
   await page('Spare', 'person', { instagram: `spare${run}` });
   await page('Taken', 'person', { user_id: users.stranger.id });
+  await page('Hidden', 'person', { moderated_at: new Date().toISOString() });
   for (const n of [1, 2, 3, 4]) await page(`Busy${n}`, 'person');
 
   // Their drinks: one of their own on the page, one Ash already credits with
@@ -187,6 +188,8 @@ describe('starting a person claim', () => {
     assert.match(own.error?.message ?? '', /already been claimed/);
     const bar = await claim('rival', 'Moth');
     assert.match(bar.error?.message ?? '', /no person's page/);
+    const hidden = await claim('rival', 'Hidden');
+    assert.match(hidden.error?.message ?? '', /no person's page/, 'a taken-down page is not claimable');
   });
 
   test('nobody claims the same page twice, or two pages at once', async () => {
