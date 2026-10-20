@@ -24,7 +24,7 @@ const strOrNull = (v: unknown) => (typeof v === 'string' && v ? v : null);
 export function useBeerWineDraftEditor({ kind: kindName, draftId, barId: barParam, initialName }: { kind: DrinkKind; draftId: string; barId?: string | null; initialName?: string | null }) {
   const kind = DRINK_KINDS[kindName];
   const queryClient = useQueryClient();
-  const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
+  const { drafts, saveDraft, deleteDraft, isFetching, loaded: draftsLoaded, failed } = useDrafts();
   const form = useBeerWineFields({ ...EMPTY_BEER_WINE_FIELDS, name: initialName ? capitalize(initialName) : '', barId: barParam || null });
   const [saving, setSaving] = useState(false);
   const draft = drafts.find((d) => d.id === draftId);
@@ -154,9 +154,10 @@ export function useBeerWineDraftEditor({ kind: kindName, draftId, barId: barPara
     ...form,
     kind: kindName,
     draftId,
-    isLoading: !loaded && isFetching,
+    isLoading: !loaded && (isFetching || !draftsLoaded),
+    failed: loaded ? null : failed,
     /** Filled from the draft (or there's none to fill from): undo starts here. */
-    ready: loaded || (!isFetching && !draft),
+    ready: loaded || (draftsLoaded && !isFetching && !draft),
     saving,
     addImages,
     pickImage: async () => addImages(await pickDrinkPhotos()),

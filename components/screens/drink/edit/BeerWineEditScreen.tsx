@@ -7,6 +7,7 @@ import { CategoryPickerModal, type CategoryPickerHandle } from '@/components/Cat
 import { Button, Caption, Chip, Field, GlassButton, Headline, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { GenerateImageButton } from '@/components/GenerateImageButton';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
+import { CouldNotLoad } from '@/components/screens/safety/NotAvailable';
 import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tokens';
 import { useBeerWineDraftEditor } from '@/hooks/useBeerWineDraftEditor';
 import { useBeerWineEditor, type BeerWineFields } from '@/hooks/useBeerWineEditor';
@@ -50,6 +51,7 @@ export function BeerWineEditScreen({ kind, id, onExit }: { kind: DrinkKind; id: 
 /** A beer or wine draft saved by the older editor (New > Drafts): Done keeps it a draft, More > Publish makes it one. */
 export function BeerWineDraftEditScreen(props: { kind: DrinkKind; draftId: string; barId?: string | null; initialName?: string | null; onExit: () => void }) {
   const editor = useBeerWineDraftEditor(props);
+  if (editor.failed) return <CouldNotLoad what="draft" failed={editor.failed} />;
   return (
     <EditBrand barId={editor.barId}>
       <BeerWineEditPage editor={editor} onExit={props.onExit} />

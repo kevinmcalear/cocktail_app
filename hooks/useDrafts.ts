@@ -105,6 +105,12 @@ export function useDrafts() {
         drafts: draftsQuery.data || [],
         isLoading: draftsQuery.isLoading,
         isFetching: draftsQuery.isFetching,
+        // The signed-in user's drafts are in. Not fetching isn't enough: the
+        // query sits idle (and empty) until auth has the user.
+        loaded: draftsQuery.isSuccess,
+        // They couldn't be fetched: a draft page says so rather than opening
+        // empty, where saving would wipe the draft.
+        failed: draftsQuery.isError ? { retry: () => void draftsQuery.refetch() } : null,
         saveDraft: saveDraftMutation.mutateAsync,
         deleteDraft: deleteDraftMutation.mutateAsync,
     };

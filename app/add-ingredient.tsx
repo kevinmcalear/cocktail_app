@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { AddIngredientRoute } from "@/components/screens/addIngredient/AddIngredientRoute";
+import { CouldNotLoad } from "@/components/screens/safety/NotAvailable";
 import { IngredientEditPage, useLeaveGuard } from "@/components/screens/ingredient/IngredientEditPage";
 import { useIngredientDraftEditor } from "@/hooks/useIngredientEditor";
 import { confirmAsync } from "@/lib/dialogs";
@@ -29,6 +30,6 @@ function IngredientDraft({ draftId }: { draftId: string }) {
         close();
     };
 
-    if (editor.loading) return null;
+    if (editor.loading) return editor.draftsFailed ? <CouldNotLoad what="draft" failed={editor.draftsFailed} /> : null;
     return <IngredientEditPage editor={editor} eyebrow="DRAFT" onBack={close} onSave={() => void editor.saveAsDraft()} saveLabel="Save draft" onPublish={() => void publish()} />;
 }

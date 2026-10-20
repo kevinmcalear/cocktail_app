@@ -88,7 +88,7 @@ function useForm(selfId: string | null) {
     }, [selfId]);
 
     const { data: dropdowns } = useDropdowns({ ingredients: true });
-    const { drafts, saveDraft, deleteDraft, isFetching } = useDrafts();
+    const { drafts, saveDraft, deleteDraft, isFetching, loaded: draftsLoaded, failed: draftsFailed } = useDrafts();
     // What a line can be: the published ingredients and the drafted ones, drafts first.
     const catalog = useMemo(() => {
         const draftRows = drafts
@@ -114,6 +114,8 @@ function useForm(selfId: string | null) {
         saveDraft,
         deleteDraft,
         draftsFetching: isFetching,
+        draftsLoaded,
+        draftsFailed,
     };
 }
 
@@ -249,7 +251,7 @@ export function useIngredientEditor(id: string) {
 export function useIngredientDraftEditor({ draftId, barId: initialBarId, initialName, attachTo }: { draftId: string; barId?: string | null; initialName?: string | null; attachTo?: string | null }) {
     const queryClient = useQueryClient();
     const editor = useForm(draftId);
-    const { drafts, saveDraft, deleteDraft, draftsFetching, load, form } = editor;
+    const { drafts, saveDraft, deleteDraft, draftsFetching, draftsLoaded, load, form } = editor;
     const [saving, setSaving] = useState(false);
     const setRecentlyCreatedItem = useAppStore((s) => s.setRecentlyCreatedItem);
     const loadedFor = useRef<string | null>(null);
@@ -261,7 +263,7 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
     );
 
     useEffect(() => {
-        if (loadedFor.current === draftId || draftsFetching) return;
+        if (loadedFor.current === draftId || !draftsLoaded || draftsFetching) return;
         loadedFor.current = draftId;
         const data = (drafts.find((d) => d.id === draftId)?.draft_data ?? null) as Partial<IngredientForm> | null;
         load({
@@ -273,7 +275,7 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
             barId: data?.barId || initialBarId || null,
             hideFromSearch: data?.hideFromSearch === true,
         });
-    }, [draftId, drafts, draftsFetching, load, initialName, initialBarId]);
+    }, [draftId, drafts, draftsFetching, draftsLoaded, load, initialName, initialBarId]);
 
     /** Saves the draft; quietly (no toast) when it's on the way somewhere else. */
     const saveAsDraft = async (silent = false): Promise<boolean> => {

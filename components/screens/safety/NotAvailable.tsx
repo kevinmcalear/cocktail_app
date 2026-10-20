@@ -49,7 +49,7 @@ export interface LoadFailure {
  * would wrongly suggest the owner or a moderator hid it. Signed-in pages
  * (a drink, its service view, rankings) land here too.
  */
-export function CouldNotLoad({ what, failed }: { what: keyof typeof WHY | 'rankings'; failed: LoadFailure }) {
+export function CouldNotLoad({ what, failed }: { what: keyof typeof WHY | 'rankings' | 'draft'; failed: LoadFailure }) {
   const thing = what === 'rankings' ? 'these rankings' : `this ${what}`;
   const offline = useNetInfo().isConnected === false;
   const intro = offline ? 'You’re offline. Check your connection and try again.' : 'Something went wrong on our side. Try again in a moment.';
