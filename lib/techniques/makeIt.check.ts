@@ -36,7 +36,7 @@ const NAMES: Record<string, string[]> = {
   'preserved-lemons': ['Preserved lemon', 'Preserved lemon brine'], 'house-vinegar': ['House wine vinegar'], 'tomato-water': ['Tomato water', 'Cucumber water'],
   'microwave-infusion': ['Microwaved cherry rye', 'Nuked Negroni'], 'pressure-cooker': ['Sprite syrup', 'Husk syrup'], 'caramel-syrup': ['Burnt sugar syrup', 'Caramel syrup'],
   'charred-fruit': ['Charred pineapple syrup', 'Grilled lemon juice'], reduction: ['Port reduction', 'Boiled cider'], nixtamal: ['Nixtamalized corn'],
-  'candied-peel': ['Candied orange peel', 'Candied ginger'], 'pate-de-fruit': ['Raspberry pâte de fruit'], 'isomalt-glass': ['Sugar glass'], 'fruit-leather': ['Mango fruit leather'],
+  'candied-peel': ['Candied orange peel', 'House candied ginger'], 'pate-de-fruit': ['Raspberry pâte de fruit'], 'isomalt-glass': ['Sugar glass'], 'fruit-leather': ['Mango fruit leather'],
   'fruit-powder': ['Raspberry powder'], 'flavoured-salt': ['Lime salt', 'Chile sugar'], 'barrel-aged': ['Barrel-aged Negroni'], 'oak-infusion': ['Oaked rye'],
   liqueur: ['Nocino', 'House limoncello'], 'nut-milk': ['Pistachio milk'], 'super-juice': ['Lime super juice'], falernum: ['House falernum'], 'ginger-syrup': ['Ginger syrup'],
   'tea-infusion': ['Jasmine tea syrup', 'Cold brew tea'], 'cold-brew-coffee': ['Cold brew concentrate'],
@@ -50,6 +50,7 @@ for (const t of TECHNIQUES) {
   assert.ok(NAMES[t.id]?.length, `${t.id} has a natural name`);
   for (const n of NAMES[t.id]) assert.ok(ids(n).includes(t.id), `"${n}" reaches ${t.id}: got ${ids(n).join(', ')}`);
 }
+for (const n of ['Celery salt', 'Oaked chardonnay', 'Candied ginger', 'Grape jelly']) assert.deepEqual(ids(n), [], `${n} is bought, not made`);
 for (const n of ['Reverse dry shake', 'Freezer martini', 'Pacojet sorbet', 'Liquid nitrogen', 'Clear ice', 'Dry ice', 'Pasteurised eggs', 'Brûléed orange wheel']) assert.deepEqual(ids(n), [], `${n} is a method, never made in house`);
 assert.equal(techniqueById('rotovap')!.gate, 'legal', 'rotovap keeps its legal gate');
 

@@ -42,10 +42,10 @@ const RULES: { test: RegExp; ids?: string[]; group?: TechniqueGroup; mod?: true 
   { test: /smok/, ids: ['smoke'], mod: true },
   { test: /microwav|nuked/, ids: ['microwave-infusion'], mod: true },
   { test: /barrel[- ]?aged|cask[- ]?aged/, ids: ['barrel-aged'], mod: true },
-  { test: /\boak(ed)?\b/, ids: ['oak-infusion', 'barrel-aged'], mod: true },
+  { test: new RegExp(`\\boak(ed|[- ]infused)? (${SPIRIT})\\b`), ids: ['oak-infusion', 'barrel-aged'], mod: true },
   { test: /charred|grilled|burnt lemon|roasted (lemon|lime|pineapple|citrus)/, ids: ['charred-fruit'], mod: true },
   { test: /nixtamal/, ids: ['nixtamal'], mod: true },
-  { test: /candied|crystalli[sz]ed ginger/, ids: ['candied-peel'], mod: true },
+  { test: /candied (\w+ )?peel|(house|homemade)[- ]?(made )?candied/, ids: ['candied-peel'], mod: true },
   { test: /preserved (lemon|lime|citrus|meyer)|salted lemon|salt lemon/, ids: ['preserved-lemons'], mod: true },
   { test: /(carbonated|sparkling|fizzy) (grapes?|fruit|apples?|berries|strawberr|melon)/, ids: ['fizzy-fruit'], mod: true },
   { test: /carbonated|sparkling|fizzy/, ids: ['force-carbonate'], mod: true },
@@ -74,11 +74,11 @@ const RULES: { test: RegExp; ids?: string[]; group?: TechniqueGroup; mod?: true 
   { test: /reduction|boiled cider|cider syrup/, ids: ['reduction'] },
   { test: /pressure[- ]?cook|instant pot|husk syrup|sprite syrup/, ids: ['pressure-cooker'] },
   { test: /\bcaviar\b|alginate pearls/, ids: ['direct-spheres', 'reverse-spheres'] },
-  { test: /jell(y|ies|o)\b|gummies|gummy/, ids: ['cocktail-jelly', 'pate-de-fruit'] },
+  { test: /\bjello\b|jelly shots?|cocktail jell|(negroni|gin|wine|campari|martini|spritz|punch) jelly|gummies|gummy/, ids: ['cocktail-jelly', 'pate-de-fruit'] },
   { test: /p[aâ]te de fruit/, ids: ['pate-de-fruit'] },
   { test: /sugar glass|isomalt/, ids: ['isomalt-glass'] },
   { test: /fruit leather/, ids: ['fruit-leather'] },
-  { test: /\b(salt|sugar) rim\b|(lime|chile|chili|herb|citrus|celery|smoked|vanilla) (salt|sugar)\b/, ids: ['flavoured-salt'] },
+  { test: /\b(salt|sugar) rim\b|(lime|chile|chili|herb|citrus) (salt|sugar)\b|(house|homemade) (\w+ )?(salt|sugar)\b/, ids: ['flavoured-salt'] },
   { test: /(cashew|pistachio|hazelnut|walnut|macadamia) milk|(house|homemade|fresh) (almond |oat |nut )?milk/, ids: ['nut-milk'] },
   { test: /super ?juice|oleo citrate/, ids: ['super-juice'] },
   { test: /falernum/, ids: ['falernum'] },
@@ -169,11 +169,11 @@ export function looksMadeInHouse(name: string): boolean {
 const BY_ID: Record<string, PrepAction> = {
   centrifuge: 'Centrifuge', 'milk-wash': 'Milk wash', 'vegan-wash': 'Milk wash', 'fat-wash': 'Fat wash',
   'sous-vide-infusion': 'Sous vide', 'dehydrated-citrus': 'Dehydrate', 'quick-pickle': 'Mix', 'blender-syrup': 'Blend',
-  smoke: 'Smoke', tincture: 'Tincture', 'infused-oil': 'Oil',
+  smoke: 'Smoke', tincture: 'Tincture', 'infused-oil': 'Oil', 'microwave-infusion': 'Infuse', 'fruit-leather': 'Dehydrate',
 };
 const BY_GROUP: Record<TechniqueGroup, PrepAction> = {
   foam: 'Foam', clarify: 'Clarify', wash: 'Fat wash', infuse: 'Infuse', syrup: 'Syrup', texture: 'Mix',
-  carbonate: 'Carbonate', cold: 'Freeze', preserve: 'Ferment', distil: 'Distil', cook: 'Infuse', garnish: 'Mix', age: 'Age',
+  carbonate: 'Carbonate', cold: 'Freeze', preserve: 'Ferment', distil: 'Distil', cook: 'Cook', garnish: 'Mix', age: 'Age',
 };
 
 /** The prep card tag for a technique, so the card links back to it. */

@@ -118,7 +118,7 @@ export const COOK: Technique[] = [
     nameAs: 'Charred {base}',
     // The syrup: about a week cold, best in 4 to 5 days. Grilled citrus juice: use it the same day.
     keepsHours: 7 * 24,
-    variants: [{ words: /juice|lemon|lime|grapefruit|orange|citrus/, on: 'name', keepsHours: 24 }],
+    variants: [{ words: /juice/, on: 'name', keepsHours: 24 }],
     storage: 'fridge',
     also: ['grilled lemon', 'grilled citrus', 'charred pineapple', 'burnt lemonade', 'grilled fruit syrup', 'charred lemon'],
     summary: 'Grilled lemons for a smoky juice, charred pineapple for a deep syrup.',

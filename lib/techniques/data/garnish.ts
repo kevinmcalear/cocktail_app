@@ -14,7 +14,7 @@ export const GARNISH: Technique[] = [
     keepsHours: 7 * 24,
     storage: 'fridge',
     keeps: 'A week airtight in the fridge (some bakers keep it months)',
-    also: ['candied citrus peel', 'candied orange peel', 'candied ginger', 'crystallised ginger', 'citrus confit'],
+    also: ['candied citrus peel', 'candied orange peel', 'house candied ginger', 'citrus confit'],
     summary: 'Sweet, translucent strips of peel or ginger for a garnish, and a flavoured syrup as a bonus.',
     why: 'Blanching pulls the bitterness out of the pith; a slow simmer in syrup swaps the water in the peel for sugar.',
     time: '1.5 to 2 hours, then drying',
@@ -190,10 +190,11 @@ export const GARNISH: Technique[] = [
     id: 'flavoured-salt',
     name: 'Flavoured salts and sugars',
     group: 'garnish',
-    starts: 'none',
+    starts: 'sugar',
     withWhat: 'flavour',
     word: 'salt',
-    nameAs: '{with} salt',
+    // The base is the salt or the sugar, so a chile sugar is named "Chile sugar".
+    nameAs: '{with} {base}',
     // Fresh zest or herbs: a week. Dried and ground fine, the salts last for weeks.
     keepsHours: 7 * 24,
     storage: 'airtight',
@@ -203,7 +204,7 @@ export const GARNISH: Technique[] = [
     why: 'Salt and sugar pull the oils out of zest, herbs and spices and hold them; drying the mix makes it keep.',
     time: '10 min, or 2 days to dry herbs',
     totalMinutes: 10,
-    base: { name: 'Kosher salt or sugar', unit: 'g', amounts: [100, 250] },
+    base: { name: 'Salt or sugar', unit: 'g', amounts: [100, 250], slot: true },
     steps: [
       { text: 'Lime salt: rub 1 tbsp lime zest into ½ cup salt, spread it on a lined tray and dry at about 105 °C for 30 to 70 minutes, until the zest crumbles. Grind it fine.' },
       { text: 'Herb salt: rub ½ cup minced herbs into ½ cup kosher salt and air-dry 36 to 48 hours, stirring every 12.' },
