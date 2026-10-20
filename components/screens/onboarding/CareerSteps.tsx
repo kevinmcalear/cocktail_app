@@ -5,89 +5,12 @@ import { Body, Button, Caption, Chip, DsText, Field, Headline, PressableScale, S
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useSaveWorkplace, useCreateOnboardingBar } from '@/hooks/useOnboarding';
-import { useClaimProfile, usePublicPeople, type PublicPerson } from '@/hooks/useProfiles';
 import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
 import { barNameError, roleError, venueLabel, type JobMonth } from '@/lib/onboarding';
 
-import { CLAIM_PAST_JOBS, PastJobs } from '../profile/PastJobs';
+import { PastJobs } from '../profile/PastJobs';
 import { MonthField } from './MonthField';
 import { SetupFooter, SetupPage } from './SetupPage';
-import { Monogram } from './SetupParts';
-
-/** Search for a profile we already have. Claiming it does not make a second one. */
-export function FindStep({
-  name,
-  pending,
-  onClaimed,
-  onNew,
-  onSkip,
-}: {
-  name: string;
-  pending: boolean;
-  onClaimed: () => void;
-  onNew: () => void;
-  onSkip: () => void;
-}) {
-  const ds = useDs();
-  const [search, setSearch] = useState(name);
-  const [picked, setPicked] = useState<PublicPerson | null>(null);
-  const [message, setMessage] = useState('');
-  const { data: found } = usePublicPeople(picked ? '' : search);
-  const claim = useClaimProfile();
-
-  if (picked) {
-    const send = () => claim.mutate({ profile_id: picked.id, message, bar_id: null }, { onSuccess: onClaimed });
-    return (
-      <SetupPage
-        footer={
-          picked.is_claimed ? (
-            <Button label="Back to the list" size="lg" onPress={() => setPicked(null)} />
-          ) : (
-            <SetupFooter label={claim.isPending ? 'Sending…' : 'Send claim'} disabled={claim.isPending} onPress={send} skipLabel="Back to the list" onSkip={() => setPicked(null)} />
-          )
-        }
-      >
-        {picked.is_claimed ? (
-          <Body>That profile is already claimed. Pick another, or add your own.</Body>
-        ) : (
-          <>
-            <Body>{`Claim ${picked.display_name} as you. A moderator checks it, and it stays your only profile.`}</Body>
-            <Field
-              label="How can a moderator check it's you?"
-              value={message}
-              onChangeText={setMessage}
-              hint="A link to your Instagram or a press piece helps."
-              multiline
-              maxLength={1000}
-            />
-            <Caption tone="muted">{CLAIM_PAST_JOBS}</Caption>
-            {claim.error ? <Caption tone="accent">{claimMessage(claim.error)}</Caption> : null}
-          </>
-        )}
-      </SetupPage>
-    );
-  }
-
-  return (
-    <SetupPage footer={<SetupFooter label={pending ? 'Saving…' : 'None of these'} disabled={pending} onPress={onNew} onSkip={onSkip} />}>
-      <Field label="Search people" value={search} onChangeText={setSearch} autoCorrect={false} />
-      {found?.length ? (
-        <View role="list" style={styles.rows}>
-          {found.map((p) => (
-            <PressableScale key={p.id} role="button" accessibilityLabel={personLabel(p)} onPress={() => setPicked(p)} style={[styles.person, { borderColor: ds.c.lineStrong }]}>
-              <Monogram name={p.display_name.charAt(0)} size={28} quiet plain />
-              <Caption style={[styles.shrink, styles.strong]} numberOfLines={1}>
-                {personLabel(p)}
-              </Caption>
-            </PressableScale>
-          ))}
-        </View>
-      ) : null}
-      {search.trim().length >= 2 && found?.length === 0 ? <Caption tone="muted">No one by that name.</Caption> : null}
-      <Caption tone="muted">Claiming one sends it to a moderator. It stays your only profile.</Caption>
-    </SetupPage>
-  );
-}
 
 /** The bar they picked, with Change. */
 function PickedBar({ bar, onChange, flat }: { bar: RankVenue; onChange: () => void; flat?: boolean }) {
@@ -245,21 +168,6 @@ export function BarPick({ bar, onPick, label = 'Search bars' }: { bar: RankVenue
 }
 
 /** "Jo Park · Bar Bianca, Melbourne": name, where they work now, city. */
-function personLabel(person: PublicPerson): string {
-  const place = [person.current_bar, person.city].filter(Boolean).join(', ');
-  const label = place ? `${person.display_name} · ${place}` : person.display_name;
-  return person.is_claimed ? `${label} · claimed` : label;
-}
-
-function claimMessage(error: unknown): string {
-  const code = (error as { code?: string } | null)?.code;
-  if (code === '23505') return 'You already have a claim waiting on this profile.';
-  if (code === '42501') return "You can't claim this profile. It may have been claimed already.";
-  const message = error instanceof Error ? error.message : '';
-  if (message.startsWith('You already')) return message;
-  return "Couldn't send your claim. Check your connection and try again.";
-}
-
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   rows: { gap: space.sm },

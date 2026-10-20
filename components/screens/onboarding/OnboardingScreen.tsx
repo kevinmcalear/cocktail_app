@@ -14,7 +14,8 @@ import { inviteJobTitle, needsOnboarding, nextStep, stepProgress, type Onboardin
 import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
-import { FindStep, PlaceStep } from './CareerSteps';
+import { PlaceStep } from './CareerSteps';
+import { FindStep } from './FindStep';
 import { InviteBrand, InviteWelcome } from './InviteWelcome';
 import { NameStep, TasteStep, UnitsStep } from './ProfileSteps';
 import { SetupChromeProvider, SetupFooter, SetupPage } from './SetupPage';

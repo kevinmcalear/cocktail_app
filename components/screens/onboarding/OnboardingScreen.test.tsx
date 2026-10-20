@@ -14,7 +14,7 @@ type Invite = { id: string; bar_id: string; bar_name: string; bar_slug: string; 
 let mockInvites: Invite[] = [];
 const caretakers: Invite = { id: 'i1', bar_id: 'venue', bar_name: 'Caretakers', bar_slug: 'caretakers', bar_logo_url: null, bar_color: '#D0643B', bar_display_face: null, bar_ground_tint: null, bar_profile_id: 'bp', role_level: 30, name: 'Sam Rivera', invited_by_name: 'Ada' };
 let mockPeople: { id: string; handle: string; display_name: string; city: string | null; is_claimed: boolean }[] = [];
-let mockBars: { id: string; display_name: string; locality: string | null; postcode: null; city: string; country_code: string; is_closed?: boolean }[] = [];
+let mockBars: { id: string; display_name: string; locality: string | null; postcode: null; city: string; country_code: string; is_closed?: boolean; is_claimed?: boolean }[] = [];
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/ctx/AuthContext', () => ({
@@ -43,17 +43,19 @@ jest.mock('@/hooks/useFlavor', () => ({
 jest.mock('@/hooks/useProfiles', () => ({
   usePublicPeople: (term: string) => ({ data: term.trim().length >= 2 ? mockPeople : [] }),
   useClaimProfile: () => ({ mutate: mockClaim, isPending: false, error: null }),
+  useWaiting: () => ({ data: {} }),
   useWorkedMenus: () => ({ data: [] }),
 }));
 jest.mock('@/components/screens/profile/PastJobs', () => {
   const { Text } = jest.requireActual('react-native');
   return { CLAIM_PAST_JOBS: 'Past jobs stay hidden', PastJobs: ({ personId }: { personId: string }) => <Text>{`Jobs of ${personId}`}</Text> };
 });
+jest.mock('@/components/screens/home/BarMark', () => ({ BarMark: () => null }));
 jest.mock('@/hooks/useRankings', () => ({
   usePublicBars: (term: string) => ({ data: term.trim().length >= 2 ? mockBars : [] }),
 }));
 
-const attaboy = { id: 'b1', display_name: 'Attaboy', locality: 'New York', postcode: null, city: 'New York', country_code: 'US' };
+const attaboy = { id: 'b1', display_name: 'Attaboy', locality: 'New York', postcode: null, city: 'New York', country_code: 'US', is_claimed: false };
 
 beforeEach(() => {
   mockMeta = { onboarded: false };
@@ -158,10 +160,8 @@ describe('OnboardingScreen', () => {
     mockClaim.mockImplementation((_input, opts) => opts?.onSuccess?.());
     await named();
     await fireEvent.press(screen.getByRole('button', { name: 'Yes, I work in hospitality' }));
-    expect(screen.getByText('Do we already have you?')).toBeTruthy();
-
-    expect(screen.getByText('Claiming one sends it to a moderator. It stays your only profile.')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Jo Juniper · London' }));
+    expect(screen.getByText('Find your bar or your name')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('link', { name: /^Jo Juniper\. Not claimed yet\. London/ }));
     expect(screen.getByText('Past jobs stay hidden')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
     expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'existing', message: '', bar_id: null }, expect.anything());
