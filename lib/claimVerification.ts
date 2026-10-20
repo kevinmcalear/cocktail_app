@@ -1,5 +1,7 @@
-// How a bar proves it's theirs before it claims its page. The database has
-// the final say (start_bar_claim in 20261007220000_bar_claim_verification);
+// How a bar, or a person, proves a page is theirs before claiming it. The
+// database has the final say (start_bar_claim in
+// 20261007220000_bar_claim_verification, start_person_claim in
+// 20261030100000_person_claim_merge);
 // these mirror its rules so the claim screen can say up front which ways
 // will work, and hold the words for each.
 
@@ -7,6 +9,12 @@ export type ClaimMethod = 'note' | 'email' | 'instagram' | 'phone';
 export type BarClaimMethod = Exclude<ClaimMethod, 'note'>;
 /** In the order they're offered: a message from the bar's Instagram first (b19), then a work email, then a call. */
 export const BAR_CLAIM_METHODS: BarClaimMethod[] = ['instagram', 'email', 'phone'];
+/** A person proves it with a message from the page's Instagram, or a note ("Something else"). */
+export type PersonClaimMethod = Extract<ClaimMethod, 'instagram' | 'note'>;
+
+/** The ways a person can claim this page, in the order offered: Instagram only when the page has one. */
+export const personClaimMethods = (page: Parameters<typeof pageInstagram>[0]): PersonClaimMethod[] =>
+  pageInstagram(page) ? ['instagram', 'note'] : ['note'];
 
 /** What a claim recorded about the page and the claimant when it was made. */
 export interface ClaimEvidence {

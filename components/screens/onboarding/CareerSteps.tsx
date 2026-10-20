@@ -36,7 +36,7 @@ export function FindStep({
   const claim = useClaimProfile();
 
   if (picked) {
-    const send = () => claim.mutate({ profile_id: picked.id, message, bar_id: null }, { onSuccess: onClaimed });
+    const send = () => claim.mutate({ profile_id: picked.id, message }, { onSuccess: onClaimed });
     return (
       <SetupPage
         footer={

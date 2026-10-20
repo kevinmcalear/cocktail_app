@@ -5,7 +5,7 @@ import { LINEAGE_COLUMNS, PROFILE_COLUMNS } from '@/hooks/useLineage';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
-import type { ClaimEvidence, ClaimMethod } from '@/lib/claimVerification';
+import type { ClaimEvidence, ClaimMethod, PersonClaimMethod } from '@/lib/claimVerification';
 import { runDates, sortEditions, type MenuDates, type MenuEdition, type MenuEditionDrink, type MenuRunRow } from '@/lib/menuEditions';
 import type { ItemImageLink } from '@/lib/itemImages';
 import type { CreditProfile, CreditStatus, LineageDrink, ProfileKind } from '@/lib/lineage';
@@ -432,21 +432,28 @@ export interface NewClaim {
   profile_id: string;
   /** How a moderator can check it: "I'm Jo, here's my Instagram". */
   message: string;
-  /** Claiming a bar's profile on behalf of this venue. */
-  bar_id: string | null;
+  /** 'instagram': a code messaged from the page's Instagram. 'note' (default): "Something else". */
+  method?: PersonClaimMethod;
+  /** The six digits the app showed before sending (lib/claimVerification newClaimCode). */
+  code?: string | null;
 }
 
-/** Asks to take over an unclaimed profile. A moderator approves it. */
+/**
+ * Asks to take over an unclaimed person's page, with or without a profile of
+ * your own (start_person_claim). A moderator approves it; if you have a
+ * profile, the page merges into it.
+ */
 export function useClaimProfile() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (claim: NewClaim): Promise<ProfileClaim> => {
-      const message = claim.message.trim().slice(0, 1000) || null;
-      const { data, error } = await supabase
-        .from('profile_claims')
-        .insert({ profile_id: claim.profile_id, message, bar_id: claim.bar_id })
-        .select(CLAIM_COLUMNS)
-        .single();
+      const method = claim.method ?? 'note';
+      const { data, error } = await supabase.rpc('start_person_claim', {
+        p_profile_id: claim.profile_id,
+        p_method: method,
+        p_note: claim.message.trim().slice(0, 1000) || null,
+        p_code: method === 'instagram' ? (claim.code ?? null) : null,
+      });
       if (error) throw error;
       return data as ProfileClaim;
     },

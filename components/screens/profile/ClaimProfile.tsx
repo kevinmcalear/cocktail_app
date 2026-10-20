@@ -123,7 +123,7 @@ function ClaimPerson({ profile, label }: { profile: Profile; label: string }) {
         <Button
           label={claim.isPending ? 'Sending…' : 'Send claim'}
           disabled={claim.isPending}
-          onPress={() => claim.mutate({ profile_id: profile.id, message, bar_id: null })}
+          onPress={() => claim.mutate({ profile_id: profile.id, message })}
         />
         <Button label="Cancel" variant="ghost" onPress={() => setOpen(false)} />
       </View>

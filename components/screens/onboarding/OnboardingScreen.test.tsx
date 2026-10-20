@@ -164,7 +164,7 @@ describe('OnboardingScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Jo Juniper · London' }));
     expect(screen.getByText('Past jobs stay hidden')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
-    expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'existing', message: '', bar_id: null }, expect.anything());
+    expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'existing', message: '' }, expect.anything());
     expect(mockSaveName).not.toHaveBeenCalled();
     expect(screen.getByText('What do you like to drink?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
