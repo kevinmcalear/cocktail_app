@@ -77,6 +77,31 @@ for (const [glass, list] of Object.entries(GLASS_VARIANTS)) for (const x of list
 }
 assert.notEqual(JSON.stringify(paintSketch({ ...base, variant: 'rocks_heavy' }, { seed: 'v' })), JSON.stringify(paintSketch(base, { seed: 'v' })));
 
+// Ice builds (lib/iceBuild.ts): every build on the canvas draws in every glass, finite and within budget, and differs from its one ice.
+const BUILDS: NonNullable<SketchInputs['build']>[] = [
+  [{ kind: 'cubes', n: 2 }, { kind: 'spear', n: 1 }],
+  [{ kind: 'cubes', n: 4 }, { kind: 'pebble', to: 'mound' }],
+  [{ kind: 'crushed', to: 'mound' }],
+  [{ kind: 'crushed', to: 'rim' }, { kind: 'crushed', to: 'mound' }],
+  [{ kind: 'cubes' }, { kind: 'crushed', to: 'mound' }],
+  [{ kind: 'large', n: 1 }, { kind: 'crushed', to: 'rim' }],
+  [{ kind: 'sphere' }, { kind: 'shaved', to: 'half' }],
+];
+for (const glass of SKETCH_GLASSES) for (const build of BUILDS) for (const detail of ['full', 'thumb'] as const) {
+  const scene = paintSketch({ ...base, glass, ice: build[build.length - 1].kind, build, fizz: true }, { seed: `${glass}-build`, detail });
+  walk(scene.els, (e) => assert.doesNotMatch(JSON.stringify(e), /NaN|Infinity|undefined/, `${glass}/${JSON.stringify(build)}/${detail}: ${e.k}`));
+  const { n, bytes } = weight(scene.els);
+  const cap = detail === 'thumb' ? { n: 400, bytes: 160_000 } : { n: 700, bytes: 260_000 };
+  assert.ok(n <= cap.n && bytes <= cap.bytes, `${glass}/${JSON.stringify(build)}/${detail}: ${n} shapes, ${bytes} bytes`);
+}
+assert.notEqual(
+  JSON.stringify(paintSketch({ ...base, glass: 'highball', ice: 'pebble', build: BUILDS[1] }, { seed: 'b' })),
+  JSON.stringify(paintSketch({ ...base, glass: 'highball', ice: 'pebble' }, { seed: 'b' })),
+);
+// A stored build reads back as far as it can be painted.
+assert.deepEqual(readSketchInputs({ ...base, build: [{ kind: 'cubes', n: 4 }, { kind: 'pebble', to: 'mound' }, { kind: 'lava' }] })?.build, [{ kind: 'cubes', n: 4 }, { kind: 'pebble', to: 'mound' }]);
+assert.equal(readSketchInputs({ ...base, build: 'lots' })?.build, undefined);
+
 // A tile and the drink's page place everything alike: the same frost, rim and
 // spice dots, wherever they fall after the ice, foam, bubbles and garnish.
 const placed = (detail: 'full' | 'thumb') => {

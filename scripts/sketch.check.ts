@@ -42,6 +42,12 @@ assert.equal(iceFromName('Crushed'), 'crushed');
 assert.equal(iceFromName('Spear'), 'spear');
 assert.equal(iceFromName('Shaved'), 'shaved');
 assert.equal(iceFromName('Sphere'), 'sphere');
+// "No ice" has "ice" in it: it's none, not cubes.
+assert.equal(iceFromName('No ice'), 'none');
+assert.equal(iceFromName('Up, no ice'), 'none');
+assert.equal(iceFromName('None'), 'none');
+assert.equal(iceFromName('Pebble ice'), 'pebble');
+assert.equal(iceFromName('Ice'), 'cubes');
 assert.equal(methodFromNames(['Stir']), 'stir');
 assert.equal(methodFromNames(['dry shake and shake']), 'shake');
 assert.equal(methodFromNames(['Build', 'Shake']), 'shake');

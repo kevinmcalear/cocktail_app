@@ -4,7 +4,7 @@
 // AI fill, so a drink looks the same before and after it's saved unless the
 // AI knows something the rules don't.
 import { partWeight } from '../../supabase/functions/_shared/flavor';
-import { sketchFromDrink } from '../../supabase/functions/_shared/sketchRules';
+import { sketchBuild, sketchFromDrink } from '../../supabase/functions/_shared/sketchRules';
 
 import { houseIce } from '../venueKit';
 
@@ -32,6 +32,8 @@ export interface DraftLook {
   barVariants?: readonly string[];
   /** The venue's ice kinds ('cubes', 'large'), for when the ice is only guessed (bar_kit). */
   barIce?: readonly string[];
+  /** How the ice sits, bottom first, by name (lib/iceBuild.ts); `ice` is its top layer. */
+  build?: readonly { name: string; n?: number | null; to?: string | null }[] | null;
 }
 
 export function draftSketchInputs(draft: DraftLook): SketchInputs {
@@ -55,5 +57,6 @@ export function draftSketchInputs(draft: DraftLook): SketchInputs {
   const variant = forGlass(draft.variant) ?? (draft.barVariants ?? []).map(forGlass).find(Boolean) ?? null;
   // And its ice: a guessed one gives way to the venue's nearest kind.
   const ice = inputs.from.ice === 'data' ? null : houseIce(inputs.ice, draft.barIce ?? []);
-  return { ...inputs, ice: ice ?? inputs.ice, variant };
+  const build = sketchBuild(draft.build);
+  return { ...inputs, ice: ice ?? inputs.ice, variant, ...(build ? { build } : {}) };
 }

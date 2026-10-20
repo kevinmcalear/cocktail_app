@@ -10,6 +10,7 @@ import { saveDrinkSpec } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
+import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { PrepDraft } from '@/lib/prepKinds';
@@ -73,6 +74,8 @@ export function useCreateDrink() {
         ...draft.methods.map((m) => m.id),
         draft.glass?.id,
         draft.ice?.id,
+        draft.methodIce?.id,
+        ...(draft.iceBuild ?? []).map((l) => l.ice.id),
       ].filter((v): v is string => !!v);
       const live = new Set<string>();
       if (pickedIds.length) {
@@ -185,6 +188,13 @@ export function useCreateDrink() {
       const glassId = draft.glass ? await ensure(draft.glass, 'glassware') : null;
       const iceId = draft.ice ? await ensure(draft.ice, 'ice') : null;
       const methodIceId = draft.methodIce ? await ensure(draft.methodIce, 'ice') : null;
+      // How the ice sits, when it says more than its one ice (the top layer, ice_id).
+      let iceBuild: IceLayer<string>[] | null = null;
+      if (saysMore(draft.iceBuild)) {
+        const ids: string[] = [];
+        for (const l of draft.iceBuild) ids.push(await ensure(l.ice, 'ice'));
+        iceBuild = toStored(draft.iceBuild.map((l, i) => ({ ...l, ice: ids[i] })), (x) => x);
+      }
 
       // A venue's drink is credited to the venue too; one added at home, to the bar it was first made at.
       let originBar: string | null = barId ? null : (draft.place?.id ?? null);
@@ -209,6 +219,8 @@ export function useCreateDrink() {
         ice_id: iceId,
         // Only when there is one: a database without 20261029100000 refuses an unknown column, so every other save keeps working whichever lands first.
         ...(methodIceId ? { method_ice_id: methodIceId } : {}),
+        // The same for the build (20261029500000).
+        ...(iceBuild ? { ice_build: iceBuild } : {}),
         riff_of_id: draft.riffOf?.id ?? null,
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
@@ -240,8 +252,9 @@ export function useCreateDrink() {
       // No glass drawing picked goes without "variant": the database stores
       // the default drawing that way and refuses a null one.
       if (sketch) {
-        const { variant, ...rest } = sketch;
-        await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: variant ? sketch : rest });
+        // The database adds the build from the drink's own (20261029500000), and an older one refuses the key.
+        const { variant, build: _build, ...rest } = sketch;
+        await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: variant ? { ...rest, variant } : rest });
       }
 
       if (draft.publish) {

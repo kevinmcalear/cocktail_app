@@ -113,6 +113,8 @@ export interface DatabaseItem {
     ice_id: string | null;
     /** Cocktails: the ice it's made with (blended with pebble); ice_id is the ice it's served over. */
     method_ice_id?: string | null;
+    /** Cocktails: how the ice sits in the glass, bottom first (lib/iceBuild.ts readIceBuild); null is one plain ice. */
+    ice_build?: unknown;
     notes: string | null;
     origin: string | null;
     /** ISO 3166-1 alpha-2 country it comes from ("GB"); origin keeps the free text. */

@@ -16,9 +16,11 @@ export interface KitRow {
   supplier_id: string | null;
   /** Null when the supplier isn't said, or this person can't see the venue's suppliers. */
   supplier_name: string | null;
+  /** Ice: how long a piece is (a spear), in mm (20261029500000_ice_builds). */
+  length_mm?: number | null;
 }
 
-export type KitChange = Pick<KitRow, 'kind' | 'key'> & Partial<Pick<KitRow, 'id' | 'note' | 'made_here' | 'supplier_id'>>;
+export type KitChange = Pick<KitRow, 'kind' | 'key'> & Partial<Pick<KitRow, 'id' | 'note' | 'made_here' | 'supplier_id' | 'length_mm'>>;
 
 export const barKitKey = (barId: string | null | undefined) => ['bar-kit', barId] as const;
 
@@ -31,7 +33,8 @@ export function useBarKit(barId: string | null | undefined) {
     queryFn: async (): Promise<KitRow[]> => {
       const { data, error } = await supabase
         .from('bar_kit')
-        .select('id, kind, key, note, made_here, supplier_id, supplier:suppliers(name)')
+        // Every column (length_mm since 20261029500000), so a database without it still answers.
+        .select('*, supplier:suppliers(name)')
         .eq('bar_id', barId!)
         .order('sort_order')
         .order('created_at');
@@ -48,7 +51,11 @@ export function useSaveKit(barId: string) {
   return useMutation({
     mutationFn: async ({ id, ...row }: KitChange) => {
       const { error } = id
-        ? await supabase.from('bar_kit').update({ note: row.note ?? null, made_here: !!row.made_here, supplier_id: row.supplier_id ?? null }).eq('id', id)
+        ? await supabase
+            .from('bar_kit')
+            // length_mm only when it's said (spears), so other rows save on a database without it.
+            .update({ note: row.note ?? null, made_here: !!row.made_here, supplier_id: row.supplier_id ?? null, ...(row.length_mm !== undefined ? { length_mm: row.length_mm } : {}) })
+            .eq('id', id)
         : await supabase.from('bar_kit').insert({ bar_id: barId, ...row });
       if (error) throw error;
     },

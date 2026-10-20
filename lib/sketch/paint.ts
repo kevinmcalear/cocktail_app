@@ -11,7 +11,7 @@
 import { SKETCH } from '../../constants/sketch';
 import { band, ell, glassShape, hw, type Pt } from './geometry';
 import { paintGarnish } from './garnish';
-import { paintIce } from './ice';
+import { paintBuild, paintIce } from './ice';
 import { makePainter, type LineOpts, type Painter } from './painter';
 import { gauss, hashString, mixHex, rng, type Rng } from './random';
 import { GLASS_BANDS, SceneBuilder, type Scene, type StageName } from './scene';
@@ -116,7 +116,10 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const key = `${seed}|${style}`;
   const r = rng(hashString(key));
   const g = { ...glassShape(inputs.glass, inputs.variant) };
-  const ice = inputs.ice;
+  const build = inputs.build?.length ? inputs.build : null;
+  // A build's surface is its top layer's, unless that only goes halfway.
+  const top = build?.[build.length - 1];
+  const ice = top && top.to !== 'half' ? top.kind : inputs.ice;
   if (ice === 'crushed' || ice === 'shaved') g.top = g.rim + 3;
   if (ice === 'pebble') g.top = g.rim + 5;
   // A hot drink in the copper mug's place is a home mug; the glass mugs stay glass.
@@ -191,7 +194,7 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   stage('ice', g.rim);
   const Rt0 = hw(g, g.top);
   P.line(ell(50, g.top, Rt0, Rt0 * e, Math.PI + 0.3, Math.PI * 2 - 0.4, 24), { weight: 0.5, alpha: 0.5, gaps: 1.5 });
-  const iced = paintIce(P, ice, inputs.glass);
+  const iced = build ? paintBuild(P, build, inputs.glass) : paintIce(P, ice, inputs.glass);
   if (inputs.fizz && !g.opaque) {
     stage('fizz', floor);
     const n = P.clipInner();

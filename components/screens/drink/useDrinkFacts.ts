@@ -3,6 +3,7 @@ import { glassModelSize, useDrinkGlassModel } from '@/hooks/useGlassModels';
 import { classifyMethod, isGarnishUnit, type BatchMethod } from '@/lib/batch';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { iceLine } from '@/lib/drinkWizard';
+import { iceBuildLine, readIceBuild, saysMore } from '@/lib/iceBuild';
 import { drinkStrength, formatAbv, formatAmount, type DilutionDefaults, type Strength } from '@/lib/drinkMath';
 import type { SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
@@ -57,6 +58,8 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
     : shape;
   const ice = find(dropdowns?.iceTypes as Named[], item.ice_id) ?? null;
   const methodIce = find(dropdowns?.iceTypes as Named[], item.method_ice_id) ?? null;
+  // How the ice sits (20261029500000), by each layer's name; a layer whose ice is gone drops out.
+  const build = (readIceBuild(item.ice_build) ?? []).map((l) => ({ ...l, ice: find(dropdowns?.iceTypes as Named[], l.ice)?.name ?? '' })).filter((l) => l.ice);
   const family = find(dropdowns?.families as Named[], item.family_id);
   const methods = orderedMethodIds(item.item_methods).map((id) => find(dropdowns?.methods as Named[], id)?.name).filter((n): n is string => !!n);
   const method: BatchMethod = classifyMethod(methods);
@@ -89,7 +92,9 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
     [
       methods.length ? { label: 'Method', value: methods.join(', ') } : null,
       glass && { label: 'Glass', value: glass.name, sub: glassSub(glass, glassBy),  onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
-      (ice || methodIce) && { label: 'Ice', value: iceLine(ice?.name ?? null, methodIce?.name ?? null, methods)!, sub: iceBy ? `cut by ${iceBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
+      saysMore(build)
+        ? { label: 'Ice', value: iceBuildLine(build), sub: [methodIce ? iceLine(null, methodIce.name, methods) : null, iceBy ? `cut by ${iceBy}` : null].filter(Boolean).join(' · ') || undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint }
+        : (ice || methodIce) && { label: 'Ice', value: iceLine(ice?.name ?? null, methodIce?.name ?? null, methods)!, sub: iceBy ? `cut by ${iceBy}` : undefined, onPress: measures ? openGlass : undefined, accessibilityHint: glassHint },
       garnish ? { label: 'Garnish', value: garnish.ingredient! } : null,
     ] as (Fact | null | undefined)[]
   ).filter((f): f is Fact => !!f);

@@ -5,7 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useBarPublishing } from '@/hooks/usePublishing';
-import { amountLabel, finishLabel, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
+import { amountLabel, draftIceLine, finishLabel, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -43,7 +43,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
     ['ingredients', draft.lines.map((l) => `${amountLabel(l)} ${l.name}`.trim()).join('\n')],
     ['method', draft.methods.map((m) => m.name).join(', then ')],
     ['glass', draft.glass?.name ?? ''],
-    ['ice', draft.ice?.name ?? ''],
+    ['ice', draftIceLine(draft)],
     ['garnish', draft.garnishes.map(finishLabel).join(', ')],
     ['credits', credits(draft, hasProfile)],
     ['notes', [draft.description.trim(), draft.notes.trim() && draft.notesPrivate ? `Just me: ${draft.notes.trim()}` : draft.notes.trim()].filter(Boolean).join('\n\n')],

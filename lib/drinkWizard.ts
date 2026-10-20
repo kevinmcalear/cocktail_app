@@ -4,6 +4,7 @@
  * quick choices each step offers. The screens are in
  * components/screens/addDrink; saving is hooks/useCreateDrink.ts.
  */
+import { iceBuildLine, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
@@ -68,6 +69,14 @@ export interface WizardDraft {
   ice: WizardPick | null;
   /** The ice it's made with ("blended with pebble"), when it isn't the one it's served over (items.method_ice_id). */
   methodIce?: WizardPick | null;
+  /**
+   * How the ice sits in the glass, bottom first (lib/iceBuild.ts): cubes under
+   * pebble, a spear on a cube. `ice` is kept as its top layer. Unset is one
+   * plain ice. Saved as items.ice_build when it says more than `ice` does.
+   */
+  iceBuild?: IceLayer<WizardPick>[] | null;
+  /** Ice suggestions the maker said No thanks to (lib/iceBuild.ts iceTip ids). */
+  iceTipsOff?: string[];
   /** The finish: garnishes and what goes on top (3 drops mint oil, an absinthe rinse), saved as spec lines after the ingredients. */
   garnishes: WizardLine[];
   /** Your own profile ('me'), someone else's, or 'nobody'. Not chosen yet (null) means you, when you have a profile. */
@@ -282,8 +291,22 @@ export function iceLine(served: string | null, made: string | null, methods: rea
   if (!label || !made) return served;
   const withIce = `${label} ${made.toLowerCase()}`;
   if (!served) return withIce;
-  return /^(no ice|up)/i.test(served) ? `${withIce}, served up` : `${withIce}, over a ${served.toLowerCase()}`;
+  return /^(no ice|up)/i.test(served) ? `${withIce}, served up` : `${withIce}, over ${overIce(served)}`;
 }
+
+/** The review's Ice: the build bottom to top, or the one ice, after what it's made with. */
+export function draftIceLine(d: WizardDraft): string {
+  const methods = d.methods.map((m) => m.name);
+  if (!saysMore(d.iceBuild)) return iceLine(d.ice?.name ?? null, d.methodIce?.name ?? null, methods) ?? '';
+  const made = d.methodIce ? `${methodIceLabel(methods) ?? 'Made with'} ${d.methodIce.name.toLowerCase()}. ` : '';
+  return made + iceBuildLine(d.iceBuild.map((l) => ({ ...l, ice: l.ice.name })));
+}
+
+/** "a large cube", "a spear", but "cubes" and "crushed": a lone piece takes "a", plurals and loose ice don't. */
+const overIce = (name: string) => {
+  const n = name.trim().toLowerCase();
+  return /^(large cube|big cube|cube|spear|sphere|block|ball)$/.test(n) ? `a ${n}` : n;
+};
 
 /** A garnish chip: the spec line it adds. */
 export interface GarnishChip {
@@ -422,6 +445,7 @@ export function sketchLook(d: WizardDraft, barVariants: readonly string[] = [], 
     variant: d.glassVariant ?? null,
     barVariants,
     barIce,
+    build: d.iceBuild?.length ? d.iceBuild.map((l) => ({ name: l.ice.name, n: l.n, to: l.to })) : null,
   };
 }
 
