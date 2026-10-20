@@ -636,17 +636,20 @@ export function usePublicPeople(search: string) {
   });
 }
 
-/** Rows counted per search: the first page of each group (RESULT_PAGE). */
+/** Bars counted per search: the first ones each shows (a count each). */
+export const WAITING_BARS = 10;
 const WAITING_ROWS = 1000;
 
 /**
  * What waits on bar and person pages a search found (find-yourself): drinks
- * credited to each (made there, made by them, or co-made), and each bar's
- * people. Reads what the profile pages read: items signed in (RLS keeps what
- * you can see), published cards signed out.
- * ponytail: counts come from at most 1000 drink rows per search, and leave
- * out name-only credits at Names and Private bars (get_profile_name_credits
- * is one call per person). A count RPC would lift both.
+ * credited to each (made there, made by them, or co-made), each bar's
+ * people, and whether a bar's page is claimed yet. Reads what the profile
+ * pages read: items signed in (RLS keeps what you can see), published cards
+ * signed out.
+ * ponytail: a bar's count includes classics it pours as copies (its page's
+ * "originals" leaves them out), and a person's leaves out name-only credits
+ * at Names and Private bars (get_profile_name_credits is one call each).
+ * A count RPC would match the pages exactly.
  */
 export function useWaiting(barIds: readonly string[], personIds: readonly string[]) {
   const userId = useUserId();
@@ -657,21 +660,27 @@ export function useWaiting(barIds: readonly string[], personIds: readonly string
     meta: viewer.meta,
     enabled: ids.length > 0,
     queryFn: async (): Promise<Record<string, Waiting>> => {
-      const list = `(${ids.join(',')})`;
-      const credited = `creator_profile_id.in.${list},origin_bar_profile_id.in.${list}`;
+      // Signed in, the items you can see; signed out, published cards (not the reference rows).
+      const drinksOf = (columns: string, head = false) =>
+        userId ? supabase.from('items').select(columns, { count: head ? 'exact' : undefined, head }) : supabase.from('published_items').select(columns, { count: head ? 'exact' : undefined, head }).eq('is_reference', false);
       const none = Promise.resolve({ data: [], error: null });
-      const [drinks, co, jobs, pages] = await Promise.all([
-        userId
-          ? supabase.from('items').select('id, creator_profile_id, origin_bar_profile_id').or(credited).limit(WAITING_ROWS)
-          : supabase.from('published_items').select('id, creator_profile_id, origin_bar_profile_id').eq('is_reference', false).or(credited).limit(WAITING_ROWS),
+      // A bar can have hundreds: the server counts each, so a big one never crowds the rest out.
+      const counted = barIds.slice(0, WAITING_BARS);
+      const [barCounts, mine, co, jobs, pages] = await Promise.all([
+        Promise.all(counted.map((id) => drinksOf('id', true).eq('origin_bar_profile_id', id))),
+        personIds.length ? drinksOf('id, creator_profile_id').in('creator_profile_id', [...personIds]).limit(WAITING_ROWS) : none,
         userId && personIds.length ? supabase.from('item_co_creators').select('item_id, profile_id').in('profile_id', [...personIds]).limit(WAITING_ROWS) : none,
         barIds.length ? supabase.from('profile_positions').select('bar_profile_id, person_profile_id, is_current, is_shown, is_hidden').in('bar_profile_id', [...barIds]).limit(WAITING_ROWS) : none,
-        // Discover's bar rows don't say whether the page is claimed.
-        supabase.from('profiles').select('id, is_claimed').in('id', ids),
+        // Discover's bar rows don't say whether the page is claimed (people's rows do).
+        barIds.length ? supabase.from('profiles').select('id, is_claimed').in('id', [...barIds]) : none,
       ]);
-      for (const r of [drinks, co, jobs, pages]) if (r.error) throw r.error;
-      const claimed = new Set((pages.data ?? []).filter((r) => r.is_claimed).map((r) => r.id as string));
-      return countWaiting(ids, (drinks.data ?? []) as CreditRow[], (co.data ?? []) as { item_id: string; profile_id: string }[], (jobs.data ?? []) as JobRow[], claimed);
+      for (const r of [...barCounts, mine, co, jobs, pages]) if (r.error) throw r.error;
+      const claimed = new Set(((pages.data ?? []) as { id: string; is_claimed: boolean }[]).filter((r) => r.is_claimed).map((r) => r.id));
+      const barDrinks = Object.fromEntries(counted.map((id, i) => [id, barCounts[i].count ?? 0]));
+      const waiting = countWaiting(ids, (mine.data ?? []) as unknown as CreditRow[], (co.data ?? []) as { item_id: string; profile_id: string }[], (jobs.data ?? []) as JobRow[], claimed, barDrinks);
+      // Bars past the counted ones keep their claimed tag but say no numbers, rather than a wrong one.
+      for (const id of barIds.slice(WAITING_BARS)) waiting[id] = { ...waiting[id], drinks: 0, people: 0 };
+      return waiting;
     },
   });
 }

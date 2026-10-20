@@ -17,7 +17,6 @@ export interface Waiting {
 export interface CreditRow {
   id: string;
   creator_profile_id: string | null;
-  origin_bar_profile_id: string | null;
 }
 
 export interface JobRow {
@@ -29,20 +28,25 @@ export interface JobRow {
 }
 
 /**
- * Counts per profile id: each drink once per profile that made it (alone or
- * with others) or where it was first made, and a bar's people the way its
- * page counts them (current, or a past job they show). Plain JSON for the
- * persisted cache.
+ * Counts per profile id: a person's drinks once each, made alone or with
+ * others; a bar's drinks first made there (counted by the server, in
+ * barDrinks); a bar's people the way its page counts them (current, or a
+ * past job they show). Plain JSON for the persisted cache.
  */
-export function countWaiting(ids: readonly string[], drinks: readonly CreditRow[], coCreators: readonly { item_id: string; profile_id: string }[], jobs: readonly JobRow[], claimed: ReadonlySet<string>): Record<string, Waiting> {
+export function countWaiting(
+  ids: readonly string[],
+  personDrinks: readonly CreditRow[],
+  coCreators: readonly { item_id: string; profile_id: string }[],
+  jobs: readonly JobRow[],
+  claimed: ReadonlySet<string>,
+  barDrinks: Readonly<Record<string, number>> = {}
+): Record<string, Waiting> {
   const drinkSets = new Map(ids.map((id) => [id, new Set<string>()]));
   const peopleSets = new Map(ids.map((id) => [id, new Set<string>()]));
-  for (const d of drinks) {
-    for (const p of [d.creator_profile_id, d.origin_bar_profile_id]) if (p) drinkSets.get(p)?.add(d.id);
-  }
+  for (const d of personDrinks) if (d.creator_profile_id) drinkSets.get(d.creator_profile_id)?.add(d.id);
   for (const c of coCreators) drinkSets.get(c.profile_id)?.add(c.item_id);
   for (const j of jobs) if (!j.is_hidden && (j.is_current || j.is_shown)) peopleSets.get(j.bar_profile_id)?.add(j.person_profile_id);
-  return Object.fromEntries(ids.map((id) => [id, { drinks: drinkSets.get(id)!.size, people: peopleSets.get(id)!.size, claimed: claimed.has(id) }]));
+  return Object.fromEntries(ids.map((id) => [id, { drinks: barDrinks[id] ?? drinkSets.get(id)!.size, people: peopleSets.get(id)!.size, claimed: claimed.has(id) }]));
 }
 
 /** "12 drinks · 4 people" for a bar, "5 drinks credited" for a person; null when nothing waits. */

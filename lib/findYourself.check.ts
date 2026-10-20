@@ -7,15 +7,17 @@ const job = (bar: string, person: string, o: Partial<{ is_current: boolean; is_s
 const w = countWaiting(
   ['bar', 'ash', 'jo'],
   [
-    { id: 'd1', creator_profile_id: 'ash', origin_bar_profile_id: 'bar' },
-    { id: 'd2', creator_profile_id: 'ash', origin_bar_profile_id: 'bar' },
-    { id: 'd3', creator_profile_id: 'jo', origin_bar_profile_id: 'other' },
+    { id: 'd1', creator_profile_id: 'ash' },
+    { id: 'd2', creator_profile_id: 'ash' },
+    { id: 'd3', creator_profile_id: 'jo' },
   ],
   // Ash also co-made d3; d1 twice counts once.
   [{ item_id: 'd3', profile_id: 'ash' }, { item_id: 'd1', profile_id: 'ash' }],
   // A past job counts when shown, never when hidden; one person once.
   [job('bar', 'ash'), job('bar', 'ash'), job('bar', 'jo', { is_current: false, is_shown: true }), job('bar', 'sam', { is_current: false }), job('bar', 'kim', { is_hidden: true })],
-  new Set(['jo'])
+  new Set(['jo']),
+  // The server counts a bar's own drinks.
+  { bar: 2 }
 );
 assert.deepEqual(w, { bar: { drinks: 2, people: 2, claimed: false }, ash: { drinks: 3, people: 0, claimed: false }, jo: { drinks: 1, people: 0, claimed: true } });
 

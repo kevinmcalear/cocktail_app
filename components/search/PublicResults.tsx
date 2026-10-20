@@ -28,7 +28,7 @@ import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { areaLabel, formatDistance, usesMiles, type Area } from '@/lib/nearMe';
 import { openSearchItem } from '@/lib/openSearchItem';
-import { completions, groupCatalog, RESULT_PAGE, shows, type SearchShow, type ShowCounts } from '@/lib/searchScope';
+import { completions, groupCatalog, shows, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 import { foldIntoClassics, gatherVariations } from '@/lib/servedAt';
 import { capitalize } from '@/lib/stringUtils';
 
@@ -108,8 +108,9 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       drinks: 0,
     }));
   }, [signedIn, area, searchedBars, results.bars, publicBars, q]);
+  // ponytail: past 100 bars (four pages of rows) the tags stop; a longer list would page these too.
   const { data: waiting } = useWaiting(
-    bars.slice(0, RESULT_PAGE).map((b) => b.id),
+    bars.slice(0, 100).map((b) => b.id),
     (people ?? []).map((p) => p.id)
   );
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
