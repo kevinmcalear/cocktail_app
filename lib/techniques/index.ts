@@ -8,9 +8,14 @@
  */
 import type { IconName } from '@/components/ds';
 
+import { AGE, KITCHEN } from './data/age';
 import { CLARIFY, WASH } from './data/clarify';
+import { COOK } from './data/cook';
+import { FERMENT } from './data/ferment';
 import { FOAM } from './data/foam';
+import { GARNISH } from './data/garnish';
 import { INFUSE } from './data/infuse';
+import { LAB } from './data/lab';
 import { CARBONATE, COLD, DISTIL, PRESERVE } from './data/more';
 import { SYRUP } from './data/syrup';
 import { TEXTURE } from './data/texture';
@@ -26,15 +31,21 @@ export const GROUPS: { id: TechniqueGroup; name: string; blurb: string; icon: Ic
   { id: 'clarify', name: 'Clarify', blurb: 'Agar, gelatin, centrifuge', icon: 'drop.fill' },
   { id: 'wash', name: 'Wash', blurb: 'Milk punch, fat washing', icon: 'mug.fill' },
   { id: 'infuse', name: 'Infuse', blurb: 'Nitrous, sous vide, cold, tinctures', icon: 'leaf.fill' },
-  { id: 'syrup', name: 'Syrups, cordials and acids', blurb: 'By weight, oleo, acid adjusting, saline', icon: 'flask' },
-  { id: 'texture', name: 'Texture and body', blurb: 'Body, suspension, spheres, powders', icon: 'circle.lefthalf.filled' },
+  { id: 'syrup', name: 'Syrups, cordials and acids', blurb: 'By weight, oleo, super juice, falernum, nut milks', icon: 'flask' },
+  { id: 'texture', name: 'Texture and body', blurb: 'Body, suspension, spheres, jellies, powders', icon: 'circle.lefthalf.filled' },
   { id: 'carbonate', name: 'Carbonate', blurb: 'CO2 rig and siphon', icon: 'arrow.up' },
-  { id: 'cold', name: 'Cold, ice and batching', blurb: 'Clear ice, freezer batches, frozen drinks', icon: 'snowflake' },
-  { id: 'preserve', name: 'Ferment, pickle and dry', blurb: 'Ferments, pickles, dried garnish, smoke', icon: 'sun.max.fill' },
+  { id: 'cold', name: 'Cold, ice and batching', blurb: 'Clear ice, freezer batches, slush machines, dry ice', icon: 'snowflake' },
+  { id: 'preserve', name: 'Ferment, pickle and dry', blurb: 'Koji, ginger bug, preserved lemons, vinegar, smoke', icon: 'sun.max.fill' },
+  { id: 'cook', name: 'Heat and cook', blurb: 'Microwave, pressure cooker, caramel, char, nixtamal', icon: 'thermometer.medium' },
+  { id: 'garnish', name: 'Garnish', blurb: 'Candied peel, sugar glass, pâte de fruit, rims', icon: 'scissors' },
+  { id: 'age', name: 'Age and wood', blurb: 'Barrels, oak, house liqueurs', icon: 'clock' },
   { id: 'distil', name: 'Distil', blurb: 'Rotary evaporation', icon: 'hammer.fill' },
 ];
 
-export const TECHNIQUES: Technique[] = [...FOAM, ...CLARIFY, ...WASH, ...INFUSE, ...SYRUP, ...TEXTURE, ...CARBONATE, ...COLD, ...PRESERVE, ...DISTIL];
+export const TECHNIQUES: Technique[] = [
+  ...FOAM, ...CLARIFY, ...WASH, ...INFUSE, ...SYRUP, ...TEXTURE, ...CARBONATE, ...COLD, ...PRESERVE, ...DISTIL,
+  ...LAB, ...FERMENT, ...COOK, ...GARNISH, ...AGE, ...KITCHEN,
+];
 
 const BY_ID = new Map(TECHNIQUES.map((t) => [t.id, t]));
 
@@ -50,7 +61,7 @@ export function groupById(id: string | null | undefined) {
 const ACTION_GROUP: Record<string, TechniqueGroup> = {
   Blend: 'syrup', Infuse: 'infuse', Clarify: 'clarify', Syrup: 'syrup', 'Sous vide': 'infuse', Centrifuge: 'clarify',
   Distil: 'distil', Ferment: 'preserve', Freeze: 'cold', Carbonate: 'carbonate', 'Fat wash': 'wash', 'Milk wash': 'wash',
-  Dehydrate: 'preserve', Foam: 'foam', Smoke: 'preserve', Tincture: 'infuse', Oil: 'infuse',
+  Dehydrate: 'preserve', Foam: 'foam', Smoke: 'preserve', Tincture: 'infuse', Oil: 'infuse', Age: 'age',
 };
 
 export function groupForAction(action: string): TechniqueGroup | undefined {
