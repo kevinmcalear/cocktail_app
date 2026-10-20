@@ -6,6 +6,9 @@
  * on a cube when the glass is taller than the spear, crushed mounded over the
  * rim, the shaking ice dumped in. A drink with one plain ice has no build;
  * items.ice_id stays the top layer, so everything that reads one ice still does.
+ *
+ * ponytail: public pages, published snapshots and the run sheet read their own
+ * SQL and still show only the top ice; give them ice_build when a guest asks.
  */
 import { iceFromName } from '@/supabase/functions/_shared/sketchRules';
 

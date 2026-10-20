@@ -58,6 +58,7 @@ interface IceLayersProps {
 export function IceLayers({ layers, onChange, onAdd, sourceOf }: IceLayersProps) {
   const ds = useDs();
   const put = (i: number, patch: Partial<IceLayer<WizardPick>>) => onChange(layers.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  // ponytail: up and down arrows, not the board's drag grip (drag lists are fragile on the web); a grip if bartenders ask.
   const move = (i: number, by: number) => {
     const next = [...layers];
     [next[i], next[i + by]] = [next[i + by], next[i]];
