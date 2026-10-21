@@ -20,6 +20,8 @@ interface ClassicRowProps {
   served?: ServedBar[];
   /** The bars' variations of it in the results, gathered under it. */
   variations?: DiscoverDrink[];
+  /** Hovering a variation opens its bar on the map. */
+  onShowBar?: (barId: string | null) => void;
   matches?: Record<string, SpecMatchRow>;
   score?: number;
   scores?: DrinkScores;
@@ -33,7 +35,7 @@ interface ClassicRowProps {
  * ("4 variations: The Lantern Room uses mezcal, Ferro adds cold brew, Pale
  * Moth +1") that Show opens (nav-search-everywhere).
  */
-export function ClassicRow({ classic, line, served, variations = [], matches, score, scores, query, matchLook }: ClassicRowProps) {
+export function ClassicRow({ classic, line, served, variations = [], matches, score, scores, query, matchLook, onShowBar }: ClassicRowProps) {
   const [open, setOpen] = useState(false);
   const n = served?.length ?? 0;
   const caption = ['Classic', line || null, n ? `served at ${n} ${n === 1 ? 'bar' : 'bars'}` : null].filter(Boolean).join(' · ');
@@ -64,7 +66,7 @@ export function ClassicRow({ classic, line, served, variations = [], matches, sc
           <Button label={open ? 'Hide' : 'Show'} variant="secondary" accessibilityLabel={`${open ? 'Hide' : 'Show'} the ${variations.length} variations of the ${classic.name}`} onPress={() => setOpen(!open)} />
         </View>
       ) : null}
-      {open ? variations.map((v) => <DrinkAtBarRow key={v.id} drink={v} scores={scores} query={query} matchLook={matchLook} />) : null}
+      {open ? variations.map((v) => <DrinkAtBarRow key={v.id} drink={v} scores={scores} query={query} matchLook={matchLook} onShowBar={onShowBar} />) : null}
     </View>
   );
 }

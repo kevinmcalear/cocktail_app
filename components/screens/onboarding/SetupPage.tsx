@@ -13,6 +13,9 @@ const Chrome = createContext<SetupChrome | null>(null);
 /** The screen running a setup (onboarding, venue setup) wraps the current step in this. */
 export const SetupChromeProvider = Chrome.Provider;
 
+/** The chrome the current step was given, for a step that shows a page of its own ("Claim sent"). */
+export const useSetupChrome = () => useContext(Chrome);
+
 /**
  * A setup step's page: the screen's chrome around the step's own fields, with
  * the step's buttons pinned at the bottom (b28). Outside a setup (a step

@@ -6,9 +6,11 @@ import { Body, Caption, DsText, Headline, IngredientThumb, MatchText, PressableS
 import { BarMark, type BarBrand } from '@/components/screens/home/BarMark';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import type { PublicPerson } from '@/hooks/useProfiles';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { barDrinksLine, closedLabel, type DiscoverBar } from '@/lib/discoverDrinks';
+import { waitingLine, type Waiting } from '@/lib/findYourself';
 import { groupLabel, moreCount, moreLabel, PER_GROUP } from '@/lib/searchScope';
 
 import { useSearchNavRow } from './searchNav';
@@ -27,6 +29,10 @@ interface ResultRowProps {
   ingredient?: { id: string | null };
   /** A short label after the caption ("Closed 2019"); the avatar fades with it. */
   tag?: string;
+  /** A label beside the title that doesn't fade the row: "Not claimed yet". */
+  badge?: string;
+  /** What waits on the page, in the accent under the caption: "12 drinks · 4 people" (find-yourself). */
+  waiting?: string | null;
   /** At the end: a score (RowScore). Say it in `label` too. */
   trailing?: ReactNode;
   /** What was searched: its words are lit in the title. */
@@ -35,18 +41,22 @@ interface ResultRowProps {
   /** What a screen reader hears, when it should say more than the title, caption and tag. */
   label?: string;
   onPress: () => void;
+  /** Discover: resting the pointer or keyboard focus on the row shows this bar on the map. Leaving cancels that. */
+  onHoverIn?: () => void;
+  onHoverOut?: () => void;
 }
 
 /** A search result that isn't a drink: the same row as DrinkRow, with an icon or avatar. */
-export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient, tag, trailing, query, matchLook, label, onPress }: ResultRowProps) {
+export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient, tag, badge, waiting, trailing, query, matchLook, label, onPress, onHoverIn, onHoverOut }: ResultRowProps) {
   const ds = useDs();
   // In the ⌘K palette: the row the arrow keys are on, which Return opens.
   const nav = useSearchNavRow();
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={label ?? [title, caption, tag].filter(Boolean).join('. ')}
+      accessibilityLabel={label ?? [title, badge, caption, waiting, tag].filter(Boolean).join('. ')}
       onPress={onPress}
+      onHoverIn={onHoverIn} onHoverOut={onHoverOut} onFocus={onHoverIn} onBlur={onHoverOut}
       nativeID={nav.nativeID}
       style={[styles.row, { borderBottomColor: ds.c.line }, nav.active && [styles.active, { backgroundColor: withAlpha(ds.accentText, 0.14) }]]}
     >
@@ -62,9 +72,13 @@ export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient
         )}
       </View>
       <View style={styles.text}>
-        <Headline numberOfLines={1}>
-          <MatchText text={title} query={query} look={matchLook} />
-        </Headline>
+        {/* The name wins: a tag that doesn't fit beside it goes under it. */}
+        <View style={styles.titleRow}>
+          <Headline numberOfLines={1} style={styles.title}>
+            <MatchText text={title} query={query} look={matchLook} />
+          </Headline>
+          {badge ? <Tag label={badge} /> : null}
+        </View>
         <View style={styles.captionRow}>
           {caption ? (
             <Caption tone="muted" numberOfLines={2} style={styles.shrink}>
@@ -73,6 +87,11 @@ export function ResultRow({ title, caption, icon, accentIcon, avatar, ingredient
           ) : null}
           {tag ? <Tag label={tag} /> : null}
         </View>
+        {waiting ? (
+          <Caption tone="accent" numberOfLines={1}>
+            {waiting}
+          </Caption>
+        ) : null}
       </View>
       {trailing}
       {nav.active ? <Caption tone="muted">Open ↵</Caption> : null}
@@ -85,24 +104,64 @@ const place = (b: DiscoverBar) => [b.locality, b.city].filter(Boolean).join(', '
 /**
  * A bar, opening its page: where it is (and how far, in an area), how many
  * of its drinks match, and its bar score at the end (b02). A closed one says
- * when it shut, so nobody plans a night around it.
+ * when it shut, so nobody plans a night around it. With `waiting`, what is
+ * credited there and "Not claimed yet" (find-yourself).
  */
-export function BarResultRow({ bar, score, away, query, matchLook }: { bar: DiscoverBar; score?: number; away?: string | null; query?: string; matchLook?: MatchTextProps['look'] }) {
+export function BarResultRow({ bar, score, away, waiting, query, matchLook, onShowBar }: { bar: DiscoverBar; score?: number; away?: string | null; waiting?: Waiting; query?: string; matchLook?: MatchTextProps['look']; /** Hovering opens this bar on the map. */ onShowBar?: (barId: string | null) => void }) {
   const router = useRouter();
   // "Fitzroy · 14 drinks on now" (nav-search-home).
   const caption = [bar.locality || bar.city, away, barDrinksLine(bar)].filter(Boolean).join(' · ') || place(bar) || undefined;
   const said = scoreWords(score, score !== undefined ? 'bar score' : null);
+  const badge = waiting && !waiting.claimed ? 'Not claimed yet' : undefined;
+  const line = waitingLine('bar', waiting);
   return (
     <ResultRow
       title={bar.name}
       caption={caption}
       avatar={{ uri: bar.logo, bar: { profileId: bar.id, brand: bar.brand } }}
       tag={bar.closed ? closedLabel(bar.closedYear) : undefined}
+      badge={badge}
+      waiting={line}
       trailing={bar.closed ? null : <RowScore score={score} detail={score !== undefined ? 'bar' : null} />}
       query={query}
       matchLook={matchLook}
-      label={said ? [bar.name, caption, said].filter(Boolean).join('. ') : undefined}
+      label={said ? [bar.name, badge, caption, line, said].filter(Boolean).join('. ') : undefined}
       onPress={() => router.push(`/p/${bar.handle || bar.id}`)}
+      onHoverIn={onShowBar ? () => onShowBar(bar.id) : undefined}
+      onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
+    />
+  );
+}
+
+/** A bartender, opening their page: where they work and worked, what is credited to them, and "Not claimed yet" (find-yourself). */
+export function PersonResultRow({
+  person,
+  waiting,
+  query,
+  matchLook,
+  trailing,
+  onPress,
+}: {
+  person: PublicPerson;
+  waiting?: Waiting;
+  query?: string;
+  matchLook?: MatchTextProps['look'];
+  trailing?: ReactNode;
+  /** Instead of opening their page: Setup's claim. */
+  onPress?: () => void;
+}) {
+  const router = useRouter();
+  return (
+    <ResultRow
+      title={person.display_name}
+      caption={person.worked ?? person.city ?? undefined}
+      avatar={{ uri: null }}
+      badge={person.is_claimed ? undefined : 'Not claimed yet'}
+      waiting={waitingLine('person', waiting)}
+      trailing={trailing}
+      query={query}
+      matchLook={matchLook}
+      onPress={onPress ?? (() => router.push(`/p/${person.handle || person.id}`))}
     />
   );
 }
@@ -209,6 +268,8 @@ const styles = StyleSheet.create({
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, minWidth: 0, gap: 2 },
   captionRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  titleRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.sm, rowGap: 2 },
+  title: { maxWidth: '100%' },
   shrink: { flexShrink: 1 },
   faded: { opacity: 0.5 },
   active: { borderRadius: radius.control, paddingHorizontal: space.sm, marginHorizontal: -space.sm, borderBottomColor: 'transparent' },
