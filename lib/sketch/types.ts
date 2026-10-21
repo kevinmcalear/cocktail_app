@@ -2,7 +2,9 @@
 // and as the add-drink wizard works them out live (lib/sketch/draft.ts). The
 // lists come from the rules both run (supabase/functions/_shared/sketchRules.ts).
 import { SKETCH_CLEAR_TINT } from '../../constants/sketch';
-import { FOAMS, GARNISHES, GLASSES, ICES, METHODS } from '../../supabase/functions/_shared/sketchRules';
+import { FOAMS, GARNISHES, GLASSES, ICES, METHODS, sketchBuild, type SketchLayer } from '../../supabase/functions/_shared/sketchRules';
+
+export type { SketchLayer };
 
 export const SKETCH_GLASSES = GLASSES;
 export const SKETCH_ICES = ICES;
@@ -47,6 +49,11 @@ export interface SketchInputs {
    * with it in "ice".
    */
   houseIce?: SketchIce | null;
+  /**
+   * How the ice sits, bottom first (lib/iceBuild.ts), painted layer by layer
+   * over "ice". Set by the database from items.ice_build; missing is one ice.
+   */
+  build?: SketchLayer[] | null;
 }
 
 const has = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
@@ -75,7 +82,15 @@ export function readSketchInputs(raw: unknown): SketchInputs | null {
     variant: typeof x.variant === 'string' && x.variant.startsWith(`${x.glass}_`) ? x.variant : null,
     // Only when there is one: Auto rows read back as they were stored.
     ...(isHex(x.tint) ? { tint: x.tint.toLowerCase() } : {}),
+    ...(readBuild(x.build) ? { build: readBuild(x.build) } : {}),
   };
+}
+
+/** A stored build, kept only as far as this app can paint it. */
+function readBuild(raw: unknown): SketchLayer[] | null {
+  if (!Array.isArray(raw)) return null;
+  const named = raw.filter((l) => l && typeof l === 'object' && has(SKETCH_ICES, l.kind) && l.kind !== 'none').map((l) => ({ name: String(l.kind), n: l.n, to: l.to }));
+  return sketchBuild(named);
 }
 
 /**

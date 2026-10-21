@@ -180,7 +180,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   if (desk) {
     return (
       <DrinkDesk
-        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, classic, resumed }}
+        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, barKit, classic, resumed }}
         loading={!dropdowns?.ingredients}
         aliases={dropdowns?.ingredientAliases}
         shelf={barId ? undefined : new Set(shelfIds ?? [])}
@@ -233,7 +233,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
         return (
-          <IceStep draft={draft} set={set} ices={ices} barIce={barIce} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} />
+          <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={barKit} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} />
         );
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;

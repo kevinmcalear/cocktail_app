@@ -204,3 +204,6 @@ assert.equal(iceLine('Large cube', 'Pebble', ['Blend']), 'Blended with pebble, o
 assert.equal(iceLine('Large cube', null, ['Blend']), 'Large cube', 'one ice reads as before');
 assert.equal(iceLine(null, 'Cubes', ['Shake']), 'Shaken with cubes');
 assert.equal(iceLine('No ice', 'Cubes', ['Shake']), 'Shaken with cubes, served up');
+assert.equal(iceLine('Cubes', 'Crushed', ['Shake']), 'Shaken with crushed, over cubes', 'no "a" before plurals');
+assert.equal(iceLine('Crushed', 'Pebble', ['Blend']), 'Blended with pebble, over crushed');
+assert.equal(iceLine('Spear', 'Cubes', ['Shake']), 'Shaken with cubes, over a spear');

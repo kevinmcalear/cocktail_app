@@ -58,6 +58,31 @@ export interface SketchInputs {
   coverage: number;
 }
 
+/** One layer of ice in the glass, bottom first, as the drawing paints it (lib/iceBuild.ts). */
+export interface SketchLayer {
+  kind: Exclude<Ice, 'none'>;
+  /** Pieces: how many. */
+  n?: number;
+  /** Loose ice: how high. */
+  to?: 'half' | 'rim' | 'mound';
+}
+
+/**
+ * A drink's ice build in the drawing's words, from each layer's ice name; a
+ * layer it can't name is left out. Null when nothing's left. The database
+ * does the same for saved drinks (private.ice_build_kinds,
+ * 20261029500000_ice_builds.sql).
+ */
+export function sketchBuild(layers: readonly { name: string; n?: number | null; to?: string | null }[] | null | undefined): SketchLayer[] | null {
+  const out: SketchLayer[] = [];
+  for (const l of layers ?? []) {
+    const kind = iceFromName(l.name);
+    if (!kind || kind === 'none') continue;
+    out.push({ kind, ...(l.n ? { n: Math.min(12, Math.max(1, Math.round(l.n))) } : {}), ...(l.to === 'half' || l.to === 'rim' || l.to === 'mound' ? { to: l.to } : {}) });
+  }
+  return out.length ? out.slice(0, 6) : null;
+}
+
 /** What the AI fill says an ingredient looks like. */
 export interface IngredientLook {
   /** The liquid's colour as poured, '#rrggbb'. */
@@ -135,6 +160,8 @@ const GLASS_NAMES: readonly [RegExp, Glass][] = [
   [/rocks|old fashioned|lowball|tumbler|\bdof\b|double|butcher/, 'rocks'],
 ];
 const ICE_NAMES: readonly [RegExp, Ice][] = [
+  // First: "No ice" has "ice" in it, which would read as cubes.
+  [/\bno ice\b|^none\b|^neat\b|^up\b|\bserved up\b/, 'none'],
   [/crush|cracked|frapp/, 'crushed'],
   [/pebble|nugget|pellet|sonic/, 'pebble'],
   [/shaved|snow|kakig[oō]ri/, 'shaved'],
@@ -142,7 +169,7 @@ const ICE_NAMES: readonly [RegExp, Ice][] = [
   [/sphere|ball/, 'sphere'],
   [/large|big|king|block|single|clear cube|rock\b/, 'large'],
   [/cube|ice/, 'cubes'],
-  [/none|neat|\bup\b/, 'none'],
+  [/none/, 'none'],
 ];
 const METHOD_NAMES: readonly [RegExp, Method][] = [
   [/blend|blitz|frozen|whizz?/, 'blend'],

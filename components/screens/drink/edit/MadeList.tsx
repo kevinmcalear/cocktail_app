@@ -5,26 +5,41 @@ import { Body, Button, Caption, Headline, PressableScale, Sheet, useDs } from '@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { SpecCategory } from '@/hooks/useCocktailEditor';
+import { iceLine } from '@/lib/drinkWizard';
+import { iceBuildLine, saysMore } from '@/lib/iceBuild';
 
 import type { DrinkEditor as Editor } from './EditParts';
 import { GlassPickSheet } from './GlassPickSheet';
+import { IceBuildSheet } from './IceBuildSheet';
 type Option = { id: string; name: string };
 
 const SHEET_PAD = { paddingHorizontal: space.xl, paddingBottom: space.xxl };
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
-const ROWS: { category: SpecCategory; label: string; empty: string }[] = [
+type Category = SpecCategory | 'methodIce';
+type IceEditor = Extract<Editor, { setIceBuild: unknown }>;
+const iceEditor = (editor: Editor): IceEditor | null => ('setIceBuild' in editor ? editor : null);
+
+const ROWS: { category: Category; label: string; empty: string }[] = [
   { category: 'glassware', label: 'Glass', empty: 'Pick a glass' },
+  // The ice it's made with (#697): this editor only.
+  { category: 'methodIce', label: 'Made with', empty: 'Shaken with, stirred over…' },
   { category: 'ice', label: 'Ice', empty: 'No ice set' },
   { category: 'method', label: 'Method', empty: 'Shake, stir, build…' },
   { category: 'family', label: 'Family', empty: 'Sour, highball…' },
 ];
 
-const optionsOf = (editor: Editor, category: SpecCategory): Option[] =>
-  ({ glassware: editor.glassware, ice: editor.iceTypes, method: editor.methods, family: editor.families })[category] as Option[];
+const optionsOf = (editor: Editor, category: Category): Option[] =>
+  ({ glassware: editor.glassware, ice: editor.iceTypes, methodIce: editor.iceTypes, method: editor.methods, family: editor.families })[category] as Option[];
 
-const valueOf = (editor: Editor, category: SpecCategory, options: Option[]) => {
+const methodNames = (editor: Editor) => editor.methodIds.map((id) => (editor.methods as Option[]).find((m) => m.id === id)?.name).filter((n): n is string => !!n);
+
+const valueOf = (editor: Editor, category: Category, options: Option[]) => {
   if (category === 'glassware' && 'glassModel' in editor && editor.glassModel) return editor.glassModel.name;
+  const ice = iceEditor(editor);
+  const nameOf = (id: string) => options.find((o) => o.id === id)?.name ?? '';
+  if (category === 'methodIce') return ice?.methodIceId ? (iceLine(null, nameOf(ice.methodIceId), methodNames(editor)) ?? '') : '';
+  if (category === 'ice' && ice && saysMore(ice.iceBuild)) return iceBuildLine(ice.iceBuild.map((l) => ({ ...l, ice: nameOf(l.ice) })));
   const ids = category === 'method' ? editor.methodIds : [editor.getSpecId(category)].filter(Boolean);
   return ids.map((id) => options.find((o) => o.id === id)?.name).filter(Boolean).join(', ');
 };
@@ -36,12 +51,14 @@ const valueOf = (editor: Editor, category: SpecCategory, options: Option[]) => {
  */
 export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | null }) {
   const ds = useDs();
-  const [open, setOpen] = useState<SpecCategory | null>(null);
+  const [open, setOpen] = useState<Category | null>(null);
+  const ice = iceEditor(editor);
+  const rows = ROWS.filter((r) => r.category !== 'methodIce' || ice);
   return (
     <View style={styles.section}>
       <Headline role="heading">How it’s made</Headline>
       <View style={[styles.group, { backgroundColor: ds.c.surface }]}>
-        {ROWS.map((r, i) => {
+        {rows.map((r, i) => {
           const value = valueOf(editor, r.category, optionsOf(editor, r.category));
           return (
             <PressableScale
@@ -49,7 +66,7 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
               role="button"
               accessibilityLabel={`${r.label}: ${value || 'not set'}. Change it`}
               onPress={() => setOpen(r.category)}
-              style={[styles.row, i < ROWS.length - 1 && { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth }]}
+              style={[styles.row, i < rows.length - 1 && { borderBottomColor: ds.c.line, borderBottomWidth: StyleSheet.hairlineWidth }]}
             >
               <Body tone="muted" style={styles.label}>
                 {r.label}
@@ -62,30 +79,48 @@ export function MadeList({ editor, itemId }: { editor: Editor; itemId: string | 
           );
         })}
       </View>
-      {open === 'glassware' ? <GlassPickSheet editor={editor} itemId={itemId} onClose={() => setOpen(null)} /> : open ? <PickSheet editor={editor} category={open} label={ROWS.find((r) => r.category === open)?.label ?? ''} onClose={() => setOpen(null)} /> : null}
+      {open === 'glassware' ? (
+        <GlassPickSheet editor={editor} itemId={itemId} onClose={() => setOpen(null)} />
+      ) : open === 'ice' && ice ? (
+        <IceBuildSheet
+          options={ice.iceTypes as Option[]}
+          layers={ice.iceBuild ?? (ice.iceId ? [{ ice: ice.iceId }] : [])}
+          onChange={ice.setIceBuild}
+          addIce={(name) => ice.handleAddPill('ice', name)}
+          barId={ice.barId}
+          madeWithId={ice.methodIceId}
+          onClose={() => setOpen(null)}
+        />
+      ) : open ? (
+        <PickSheet editor={editor} category={open} label={ROWS.find((r) => r.category === open)?.label ?? ''} onClose={() => setOpen(null)} />
+      ) : null}
     </View>
   );
 }
 
 /** Ice, method and family's sheets (the glass has its own): tap to pick (methods take several), or add a new one by name. */
-function PickSheet({ editor, category, label, onClose }: { editor: Editor; category: SpecCategory; label: string; onClose: () => void }) {
+function PickSheet({ editor, category, label, onClose }: { editor: Editor; category: Category; label: string; onClose: () => void }) {
   const ds = useDs();
   const [adding, setAdding] = useState('');
   const options = optionsOf(editor, category);
   const multi = category === 'method';
-  const picked = (id: string) => (multi ? editor.methodIds.includes(id) : editor.getSpecId(category) === id);
+  const ice = category === 'methodIce' ? iceEditor(editor) : null;
+  const spec: SpecCategory = category === 'methodIce' ? 'ice' : category;
+  const current = ice ? ice.methodIceId : editor.getSpecId(spec);
+  const setOne = (id: string | null) => (ice ? ice.setMethodIceId(id) : editor.setSpecId(spec, id));
+  const picked = (id: string) => (multi ? editor.methodIds.includes(id) : current === id);
   const choose = (id: string) => {
     if (multi) return editor.toggleMethod(id);
-    editor.setSpecId(category, picked(id) ? null : id);
+    setOne(picked(id) ? null : id);
     onClose();
   };
   const add = async () => {
     const name = adding.trim();
     if (!name) return;
-    const id = await editor.handleAddPill(category, name);
+    const id = await editor.handleAddPill(spec, name);
     if (multi) {
       if (!editor.methodIds.includes(id)) editor.toggleMethod(id);
-    } else editor.setSpecId(category, id);
+    } else setOne(id);
     setAdding('');
   };
   return (
@@ -125,9 +160,9 @@ function PickSheet({ editor, category, label, onClose }: { editor: Editor; categ
           value={adding}
           onChangeText={setAdding}
           onSubmitEditing={() => void add()}
-          placeholder={`Add a ${label.toLowerCase()}`}
+          placeholder={`Add ${ice ? 'an ice' : `a ${label.toLowerCase()}`}`}
           placeholderTextColor={ds.c.muted}
-          accessibilityLabel={`Add a ${label.toLowerCase()}`}
+          accessibilityLabel={`Add ${ice ? 'an ice' : `a ${label.toLowerCase()}`}`}
           style={[styles.input, NO_OUTLINE, { color: ds.c.ink, backgroundColor: ds.c.surface }]}
         />
         <Button label="Add" size="sm" variant="secondary" disabled={!adding.trim()} onPress={() => void add()} />

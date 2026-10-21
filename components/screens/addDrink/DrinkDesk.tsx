@@ -5,6 +5,7 @@ import { Button, Caption, useDs } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
+import type { KitRow } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDraftPacks, useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { usePricingSettings } from '@/hooks/usePricing';
@@ -53,6 +54,7 @@ export interface DrinkDeskProps {
   barVariants: string[];
   barIce: string[];
   barIceKinds: string[];
+  barKit: readonly KitRow[];
   classic: ClassicMatch | null;
   resumed: boolean;
   onStartOver: () => void;
@@ -164,7 +166,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             <GlassStep compact draft={draft} set={set} options={p.glasses} barId={barId} barGlasses={p.barGlasses} barVariants={p.barVariants} suggested={p.guess.glass} />
           </Row>
           <Row label="Ice">
-            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} />
+            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.barKit} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} />
           </Row>
           <Row label="Finish">
             {finishing ? (

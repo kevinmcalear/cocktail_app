@@ -5,7 +5,7 @@ import { box, ell, hull, hw, restOn, type IceBox, type Pt } from './geometry';
 import type { LineOpts, Painter } from './painter';
 import { gauss } from './random';
 import { SKETCH_PAPER } from './styles';
-import type { SketchGlass, SketchIce } from './types';
+import type { SketchGlass, SketchIce, SketchLayer } from './types';
 
 export interface IceResult {
   /** The highest point of the drink or its ice, for garnish to sit on. */
@@ -194,6 +194,117 @@ export function paintIce(P: Painter, ice: SketchIce, glass: SketchGlass): IceRes
       if (r() < 0.8) late.push([c.slice(st).concat(c.slice(0, st)).slice(0, round ? 5 : 3), { weight: 0.45, alpha: 0.8, passes: 1, over: 1.2, gaps: 0.35, wob: 1 }]);
     }
     late.push([top, { weight: 0.75, alpha: 0.9, wob: 2, gaps: 0.4 }]);
+  }
+  return { crown, late, lateIn };
+}
+
+// --- an ice build (lib/iceBuild.ts), layer by layer, bottom to top ---
+
+function cubeBlocks(P: Painter, glass: SketchGlass, floor: number, count: number): IceBox[] {
+  const { r, g } = P;
+  const list: IceBox[] = [];
+  const tall = TALL.includes(glass) || glass === 'julep' || glass === 'tiki';
+  const s = tall ? 14.5 : 13.2;
+  const w = hw(g, floor) - s / 2 - 1;
+  let row = 0;
+  let placed = 0;
+  for (let y = floor - 0.4; placed < count && y > g.rim - s; y -= s * 0.78, row++) {
+    const xs = row % 2 ? [50 + gauss(r) * 1.2, 50 - Math.min(14.5, w) + gauss(r) * 0.6, 50 + Math.min(14.5, w) + gauss(r) * 0.6] : [50 - Math.min(7.2, w) + gauss(r), 50 + Math.min(7.2, w) + gauss(r)];
+    for (const x of xs) if (placed++ < count) list.push(restOn(box(x, 0, s, s * 0.95, s, r() * 1.5, gauss(r) * 0.12, 0.32), y + gauss(r) * 0.6));
+  }
+  return list;
+}
+
+/**
+ * Pieces stack from the base (a spear rests on what's under it), loose ice
+ * fills from the top of the pieces to its height (around a single block, from
+ * the base), and Mounded rises over the rim.
+ */
+export function paintBuild(P: Painter, layers: readonly SketchLayer[], glass: SketchGlass): IceResult {
+  const { r, g, e, Rr } = P;
+  const late: IceResult['late'] = [];
+  const lateIn: IceResult['lateIn'] = [];
+  let crown = g.top;
+  const base = g.base ?? P.bot;
+  let floor = base;
+  let looseFrom = base;
+  const topOf = (b: IceBox) => Math.min(...b.V.map((v) => v[1]));
+  for (const L of layers) {
+    if (L.kind === 'cubes') {
+      const n = P.clipInner();
+      const list = cubeBlocks(P, glass, floor, L.n ?? 3).sort((a, b) => topOf(a) - topOf(b));
+      const blocks = list.map((bx) => jitter(P, bx));
+      for (const bx of blocks) liftBox(P, bx);
+      for (const bx of blocks) drawBox(P, bx, 'cubes');
+      P.end(n);
+      const t = Math.min(...blocks.map(topOf));
+      floor = t + 2.5;
+      looseFrom = t + 4;
+    } else if (L.kind === 'spear') {
+      const n = P.clipInner();
+      const len = Math.min(floor - (g.top - 6.5), (base - g.top) * 0.82);
+      const spear = jitter(P, restOn(box(50 + gauss(r) * 0.8, 0, 13, len, 10.5, 0.55 + gauss(r) * 0.1, gauss(r) * 0.025, 0.3), floor - 0.4));
+      liftBox(P, spear);
+      drawBox(P, spear, 'spear');
+      P.end(n);
+      floor = topOf(spear);
+    } else if (L.kind === 'large') {
+      const n = P.clipInner();
+      const s = Math.min(24, hw(g, floor) * 2 - 8) + gauss(r);
+      const block = jitter(P, restOn(box(50 + gauss(r), 0, s, s * 0.96, s, 0.5 + gauss(r) * 0.15, gauss(r) * 0.05, 0.3), floor - 0.4));
+      liftBox(P, block);
+      drawBox(P, block, 'large');
+      P.end(n);
+      floor = topOf(block);
+    } else if (L.kind === 'crushed' || L.kind === 'pebble' || L.kind === 'shaved') {
+      const round = L.kind === 'pebble';
+      const fine = L.kind === 'shaved';
+      const to = L.to ?? 'rim';
+      const level = to === 'half' ? base - (base - g.top) * 0.5 : g.top + 1;
+      const n = P.clipInner();
+      const span = Math.max(4, looseFrom - level);
+      const count = Math.round((round ? 70 : 80) * Math.min(1, span / Math.max(1, base - g.top)) + 10);
+      for (let i = 0; i < 4; i++) {
+        const y = level + 1 + r() * (span - 2);
+        const w = hw(g, y) - 5;
+        const rad = 4 + r() * 4;
+        P.glaze(ell(50 + (r() * 2 - 1) * w, y, rad, rad * 0.7, 0, Math.PI * 2, 7, r() * 3).slice(0, 7), SKETCH_PAPER, 0.16, 3, 0.2);
+      }
+      for (let i = 0; i < count; i++) {
+        const y = level + Math.pow(r(), 1.3) * span;
+        const w = hw(g, y) - 2;
+        const c = chunk(P, 50 + (r() * 2 - 1) * w, y, 1.5 + r() * (round ? 1.6 : 1.5), round);
+        if (r() < 0.85) {
+          const st = Math.floor(r() * c.length);
+          const m = round ? 3 + Math.floor(r() * 3) : 2 + Math.floor(r() * 2);
+          lateIn.push([c.slice(st).concat(c.slice(0, st)).slice(0, m), { weight: 0.55, alpha: 0.85, passes: 1, over: 1.2, gaps: 0.35, wob: 1 }]);
+        }
+      }
+      P.end(n);
+      looseFrom = level;
+      if (to === 'mound') {
+        const moundH = round ? 6.5 : fine ? 13 : 10;
+        crown = g.rim - moundH;
+        const Rm = Rr * 0.96;
+        const top: Pt[] = [];
+        for (let t = 0; t <= 1.0001; t += 0.04) {
+          const u = 2 * t - 1;
+          top.push([50 + u * Rm, g.rim - moundH * Math.sqrt(Math.max(0, 1 - u * u)) - r() * 1.2]);
+        }
+        const dome = [...top, ...ell(50, g.rim, Rm, Rm * e, 0, Math.PI, 16).reverse()].reverse();
+        P.glaze(dome, SKETCH_PAPER, 0.8, 3, 0.1);
+        for (let i = 0; i < (round ? 30 : fine ? 70 : 44); i++) {
+          const u = r() * 2 - 1;
+          const yMax = g.rim + Rm * e * Math.sqrt(1 - u * u) * 0.8;
+          const yMin = g.rim - moundH * Math.sqrt(Math.max(0, 1 - u * u)) + 1;
+          const rad0 = (round ? 1.8 : 1.3) + r() * (round ? 1.2 : 1.4);
+          const c = chunk(P, 50 + u * (Rm - 2), yMin + r() * (yMax - yMin), fine ? rad0 * 0.6 : rad0, round);
+          const st = Math.floor(r() * c.length);
+          if (r() < 0.8) late.push([c.slice(st).concat(c.slice(0, st)).slice(0, round ? 5 : 3), { weight: 0.45, alpha: 0.8, passes: 1, over: 1.2, gaps: 0.35, wob: 1 }]);
+        }
+        late.push([top, { weight: 0.75, alpha: 0.9, wob: 2, gaps: 0.4 }]);
+      }
+    }
   }
   return { crown, late, lateIn };
 }
