@@ -44,6 +44,12 @@ assert.ok(techniqueById('lecithin-air')!.keepsHours! < 1);
 assert.equal(techniqueById('tincture')!.keepsHours, 365 * 24);
 assert.equal(techniqueById('dehydrated-citrus')!.storage, 'airtight');
 assert.ok(techniqueById('centrifuge')!.allergens?.some((a) => /shellfish/i.test(a)), 'chitosan is shellfish');
+// Chef and lab additions keep their safety lines: dry ice is gated, eggs are pasteurised at 57 °C, vinegar is titrated.
+assert.equal(techniqueById('dry-ice')!.gate, 'safety');
+assert.ok(techniqueById('pasteurised-eggs')!.steps.some((s) => s.text.includes('57 °C')));
+assert.ok(techniqueById('house-vinegar')!.equipment.includes('acid-kit'));
+assert.ok(techniqueById('nixtamal')!.watch?.some((w) => /food-grade/i.test(w)));
+assert.ok(techniqueById('ginger-bug')!.watch?.some((w) => /0\.5%/.test(w)), 'wild ferments say they may not be zero-proof');
 for (const t of TECHNIQUES) for (const v of t.variants ?? []) if (v.keepsHours && t.keepsHours && !v.parts) assert.ok(v.keepsHours <= t.keepsHours, `${t.id}: a "with what" only ever shortens the keep`);
 for (const g of GROUPS) assert.ok(TECHNIQUES.some((t) => t.group === g.id), `${g.id} has techniques`);
 for (const i of TECHNICAL_INGREDIENTS) for (const t of i.techniques) assert.ok(techniqueById(t), `${i.id} links to unknown ${t}`);

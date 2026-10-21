@@ -17,7 +17,7 @@ export interface Source {
   grade: Grade;
 }
 
-export type TechniqueGroup = 'foam' | 'clarify' | 'wash' | 'infuse' | 'syrup' | 'texture' | 'carbonate' | 'cold' | 'preserve' | 'distil';
+export type TechniqueGroup = 'foam' | 'clarify' | 'wash' | 'infuse' | 'syrup' | 'texture' | 'carbonate' | 'cold' | 'preserve' | 'distil' | 'cook' | 'garnish' | 'age';
 
 /**
  * What a technique starts from, the thing it changes: a spirit to wash or
@@ -123,7 +123,7 @@ export interface Technique {
   sources: Source[];
 }
 
-export type EquipmentKind = 'bar' | 'measure' | 'mix' | 'pressure' | 'temperature' | 'separate' | 'specialist';
+export type EquipmentKind = 'bar' | 'kitchen' | 'measure' | 'mix' | 'pressure' | 'temperature' | 'separate' | 'specialist';
 
 export interface Equipment {
   id: string;
