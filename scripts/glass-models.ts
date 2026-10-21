@@ -96,7 +96,7 @@ export const LOADS: Load[] = [
 --     of its rows have none.`,
   },
   {
-    file: 'supabase/migrations/20261030100000_glass_models_wave2.sql',
+    file: 'supabase/migrations/20261030200000_glass_models_wave2.sql',
     makers: ['luigi.bormioli', 'cocktail.kingdom'],
     fills: 'spiegelau.capacities',
     header: `
