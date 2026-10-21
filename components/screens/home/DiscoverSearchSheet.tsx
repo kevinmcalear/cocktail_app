@@ -23,6 +23,10 @@ interface DiscoverSearchProps {
   /** How many filters are on, and the way to them, beside the scope (disc-desk-search). */
   filters?: number;
   onFilters?: () => void;
+  /** When a search finds nothing: add the bar they were looking for. */
+  onAddBar?: () => void;
+  /** Hovering a result opens its bar on the map. */
+  onShowBar?: (barId: string | null) => void;
 }
 
 /** The field and scope, plus a line for Discover's filters, which narrow the search too. */
@@ -50,7 +54,7 @@ export function DiscoverSearchHead({ query, onQuery, scope, onScope, mine, area,
 export function DiscoverSearchSheet(props: DiscoverSearchProps) {
   return (
     <DiscoverOverlay label="Search" full onClose={props.onClose} head={<DiscoverSearchHead {...props} />}>
-      <SearchBody query={props.query} scope={props.scope} onScope={props.onScope} mine={props.mine} area={props.area} />
+      <SearchBody query={props.query} scope={props.scope} onScope={props.onScope} mine={props.mine} area={props.area} onAddBar={props.onAddBar} onShowBar={props.onShowBar} />
     </DiscoverOverlay>
   );
 }

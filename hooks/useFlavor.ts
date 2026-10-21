@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 
 import { useUserId } from '@/ctx/AuthContext';
 import { chunk } from '@/lib/commandSearchGrid';
-import { blendTaste, DIMENSIONS, MIN_COVERAGE, type FlavorDrink, type Profile, type Taste, type TasteBasis } from '@/lib/flavor';
+import { blendTaste, DIMENSIONS, MIN_COVERAGE, type Profile, type Taste, type TasteBasis } from '@/lib/flavor';
 import { tasteFromRankings, type RankedFlavor } from '@/lib/palate';
 import { supabase } from '@/lib/supabase';
 
@@ -124,35 +124,6 @@ export function useFlavorBaseline() {
       if (error) throw error;
       const row = ((data ?? []) as (Partial<FlavorRow> & { drinks: number })[])[0];
       return row?.drinks ? profileOf(row) : null;
-    },
-  });
-}
-
-interface ForYouRow extends Record<(typeof DIMENSIONS)[number], number> {
-  id: string;
-  name: string;
-  image_url: string | null;
-  is_classic: boolean;
-  riff_of_id: string | null;
-}
-
-/** The drinks nearest your taste, nearest first, leaving out ones you've ranked (flavor_for_you). */
-export function useForYouDrinks(taste: Taste | null | undefined, limit = 10) {
-  const userId = useUserId();
-  return useQuery({
-    queryKey: ['flavor-for-you', userId, taste, limit],
-    enabled: !!userId && !!taste,
-    queryFn: async (): Promise<FlavorDrink[]> => {
-      const { data, error } = await supabase.rpc('flavor_for_you', { p_taste: taste, p_limit: limit });
-      if (error) throw error;
-      return ((data ?? []) as ForYouRow[]).map((r) => ({
-        id: r.id,
-        name: r.name,
-        imageUrl: r.image_url,
-        isClassic: r.is_classic,
-        riffOfId: r.riff_of_id,
-        profile: profileOf(r),
-      }));
     },
   });
 }

@@ -7,6 +7,7 @@ import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useMineFacts } from '@/hooks/useMineFacts';
+import { usePublicPeople, useWaiting } from '@/hooks/useProfiles';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { foldName } from '@/lib/discover';
@@ -20,7 +21,7 @@ import { capitalize } from '@/lib/stringUtils';
 import type { SearchItem } from '@/types/search';
 
 import { PublicResults } from './PublicResults';
-import { EverywhereRow, MissCard, ResultGroup, ResultRow } from './ResultRows';
+import { EverywhereRow, MissCard, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
 
 interface MineResultsProps {
@@ -67,6 +68,9 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
   const { data: scores } = useItemScores(drinkIds.slice(0, 50));
   const open = (item: SearchItem) => openSearchItem(item, (href) => router.push(href as never));
   const found = groups.drinks.length + groups.ingredients.length + groups.menus.length;
+  // Bartenders show in this scope too (find-yourself); Everywhere's results bring their own when nothing is here.
+  const { data: people = [] } = usePublicPeople(found ? q : '');
+  const { data: waiting } = useWaiting([], people.map((p) => p.id));
 
   // The best match leads, bigger, when its name starts with what's typed (or it's the only drink).
   const top = typeAhead && shows(show, 'drinks') ? (groups.drinks.find((i) => foldName(i.name).startsWith(foldName(q))) ?? (groups.drinks.length === 1 ? groups.drinks[0] : undefined)) : undefined;
@@ -74,7 +78,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
   const finish = typeAhead ? completions([...groups.drinks, ...groups.ingredients, ...groups.menus].map((i) => i.name), q) : [];
 
   // Nothing here: Everywhere's results below report their own.
-  const countKey = found ? JSON.stringify({ drinks: groups.drinks.length, ingredients: groups.ingredients.length, menus: groups.menus.length }) : null;
+  const countKey = found ? JSON.stringify({ drinks: groups.drinks.length, ingredients: groups.ingredients.length, menus: groups.menus.length, people: people.length }) : null;
   useEffect(() => {
     if (countKey) onCounts?.(JSON.parse(countKey) as ShowCounts);
   }, [countKey, onCounts]);
@@ -150,6 +154,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
           render={(i) => <ResultRow key={i.id} title={i.name} caption={i.isDraft ? 'Draft' : menuFacts(i.id.replace(/^menu-/, ''), drinkIds, facts)} icon="list.bullet" query={q} onPress={() => open(i)} />}
         />
       ) : null}
+      {shows(show, 'people') ? <ResultGroup label="People" items={people} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={q} />} /> : null}
       {commands}
       {everywhere}
     </View>

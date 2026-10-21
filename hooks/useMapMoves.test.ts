@@ -72,3 +72,20 @@ test('a move still settling when the map goes away does not search', async () =>
   await settle();
   expect(onSearch).not.toHaveBeenCalled();
 });
+
+test('browsing, the fly to a hovered bar is not a move, and leaving the row keeps the map there', async () => {
+  const onSearch = jest.fn();
+  const bar = { latitude: -37.8, longitude: 144.97, zoom: 16 };
+  type Props = { focus: typeof bar | null };
+  const hook = await renderHook(({ focus }: Props) => useMapMoves(fit, true, onSearch, focus), { initialProps: { focus: null } as Props });
+  expect(hook.result.current.camera).toBe(fit);
+
+  await hook.rerender({ focus: bar });
+  expect(hook.result.current.camera).toBe(bar);
+  await act(() => hook.result.current.onMove({ ...bar, latitudeDelta: 0.002, longitudeDelta: 0.002 }));
+  await act(() => jest.advanceTimersByTime(400));
+  expect(onSearch).not.toHaveBeenCalled();
+
+  await hook.rerender({ focus: null });
+  expect(hook.result.current.camera).toBe(bar);
+});
