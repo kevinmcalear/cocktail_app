@@ -6,8 +6,8 @@ export const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
   name: { title: 'Your name', intro: 'How you show up on your profile and on drinks.' },
   hospitality: { title: 'Do you work in hospitality?' },
   find: {
-    title: 'Do we already have you?',
-    intro: 'If this is your profile, claim it. If not, you’ll add where you’ve worked, the menus, and the cocktails.',
+    title: 'Find your bar or your name',
+    intro: 'Most bars and bartenders are already here, with their menus and who made each drink.',
   },
   work: { title: 'Where do you work?', intro: 'Pick a bar, even one that has closed.' },
   past: { title: 'Where you’ve worked', intro: 'Your profile shows where you work now. Past jobs stay hidden unless you choose to show them.' },

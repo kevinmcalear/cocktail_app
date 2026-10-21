@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 
 import {
+  iceLine,
+  methodIceLabel,
   amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
   newDraftId, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY, parseYear,
@@ -191,3 +193,17 @@ assert.equal(amountOf(''), null);
 assert.equal(amountLabel({ amount: '22,5', unit: 'ml' }), '22.5 ml', 'labels read tidied');
 assert.deepEqual(convertPour(0.75, 'ml', 'oz'), { amount: '0.03', unit: 'oz' }, 'a tiny amount is not snapped up to a pour');
 assert.deepEqual(convertPour(22, 'ml', 'oz'), { amount: '0.75', unit: 'oz' });
+
+// --- two ices: the one it's made with is named for the method; the drink page reads both ---
+assert.equal(methodIceLabel(['Blend']), 'Blended with');
+assert.equal(methodIceLabel(['Dry shake', 'Shake']), 'Shaken with');
+assert.equal(methodIceLabel(['Stir']), 'Stirred over');
+assert.equal(methodIceLabel(['Build']), null, 'built in the glass: its ice is the one it is served over');
+assert.equal(methodIceLabel([]), 'Made with');
+assert.equal(iceLine('Large cube', 'Pebble', ['Blend']), 'Blended with pebble, over a large cube');
+assert.equal(iceLine('Large cube', null, ['Blend']), 'Large cube', 'one ice reads as before');
+assert.equal(iceLine(null, 'Cubes', ['Shake']), 'Shaken with cubes');
+assert.equal(iceLine('No ice', 'Cubes', ['Shake']), 'Shaken with cubes, served up');
+assert.equal(iceLine('Cubes', 'Crushed', ['Shake']), 'Shaken with crushed, over cubes', 'no "a" before plurals');
+assert.equal(iceLine('Crushed', 'Pebble', ['Blend']), 'Blended with pebble, over crushed');
+assert.equal(iceLine('Spear', 'Cubes', ['Shake']), 'Shaken with cubes, over a spear');

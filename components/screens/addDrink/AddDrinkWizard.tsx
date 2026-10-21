@@ -21,7 +21,7 @@ import {
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { iceWhy, serveGuess } from '@/lib/specDefaults';
 import { toastDone } from '@/lib/toast';
-import { isVenueIce, venueIceNames } from '@/lib/venueKit';
+import { venueIceNames } from '@/lib/venueKit';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { CreditsStep } from './CreditsStep';
@@ -31,9 +31,9 @@ import { IngredientsStep } from './IngredientsStep';
 import { FinishStep } from './FinishStep';
 import { FoamerHint } from './FoamerHint';
 import { MethodStep } from './MethodStep';
-import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
 import { ReviewStep } from './ReviewStep';
+import { IceStep } from './IceStep';
 import { StartPhotos } from './ReviewPhotos';
 import { NameStep, NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
@@ -180,7 +180,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   if (desk) {
     return (
       <DrinkDesk
-        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, classic, resumed }}
+        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, barKit, classic, resumed }}
         loading={!dropdowns?.ingredients}
         aliases={dropdowns?.ingredientAliases}
         shelf={barId ? undefined : new Set(shelfIds ?? [])}
@@ -233,16 +233,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
         return (
-          <PickStep
-            label="Ice"
-            ownLabel="Other ice"
-            options={ices}
-            selected={draft.ice ? [draft.ice] : []}
-            onChange={([ice]) => set({ ice: ice ?? null })}
-            suggested={guess.ice}
-            why={iceWhy(sketchLook(draft, barVariants))}
-            mine={barIce.length ? { has: (p) => isVenueIce(barIce, p.name), label: 'Your ice', restLabel: 'Other ice' } : undefined}
-          />
+          <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={barKit} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} />
         );
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;

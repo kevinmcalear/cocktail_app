@@ -144,6 +144,8 @@ const MAPPING = {
   'square.and.arrow.down': 'svg:tray',
   'text.alignleft': 'svg:lines',
   'sun.min': 'svg:sun',
+  'thermometer.medium': 'thermometer',
+  'scissors': 'scissors',
 } satisfies IconMapping;
 
 /**

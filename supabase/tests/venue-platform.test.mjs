@@ -642,11 +642,7 @@ describe('profiles and credit', () => {
   test('someone claims a historic profile and a moderator approves it', async () => {
     const claimant = await makeUser('claimant');
     extraUserIds.push(claimant.id);
-    const { data: claim, error } = await claimant.client
-      .from('profile_claims')
-      .insert({ profile_id: ids.samProfile, message: 'It me' })
-      .select('id')
-      .single();
+    const { data: claim, error } = await claimant.client.rpc('start_person_claim', { p_profile_id: ids.samProfile, p_note: 'It me' });
     assert.ifError(error);
 
     assert.ok((await claimant.client.rpc('approve_profile_claim', { p_claim_id: claim.id })).error);
@@ -657,8 +653,8 @@ describe('profiles and credit', () => {
     assert.equal(profile.user_id, claimant.id);
 
     // A claimed profile can't be claimed again.
-    const again = await users.outsider.client.from('profile_claims').insert({ profile_id: ids.samProfile });
-    assert.ok(again.error);
+    const again = await users.outsider.client.rpc('start_person_claim', { p_profile_id: ids.samProfile });
+    assert.match(again.error?.message ?? '', /already been claimed/);
   });
 
   test('a bar claims an unclaimed venue profile only for itself, with publish rights', async () => {
@@ -683,23 +679,26 @@ describe('profiles and credit', () => {
     assert.ok(otherBar.error, 'nobody claims for a bar they cannot run');
     const direct = await users.outsider.client.from('profile_claims').insert({ profile_id: venue });
     assert.ok(direct.error, 'bar claims go through start_bar_claim');
-    const personWithBar = await users.admin.client.from('profile_claims').insert({ profile_id: historic, bar_id: ids.barOne });
-    assert.ok(personWithBar.error, 'a person claim carries no bar');
+    const personDirect = await users.admin.client.from('profile_claims').insert({ profile_id: historic });
+    assert.ok(personDirect.error, 'person claims go through start_person_claim');
   });
 
-  test('someone who already has a profile cannot claim another, and a pending claim blocks a second profile', async () => {
+  test('someone who already has a profile can claim a seeded one, and a pending claim blocks a second profile', async () => {
     const historic = (await serviceInsert('profiles', { kind: 'person', handle: `great${run}`, display_name: 'Great', is_public: true })).id;
 
     const withProfile = await makeUser('hasprofile');
     extraUserIds.push(withProfile.id);
     await serviceInsert('profiles', { kind: 'person', handle: `has${run}`, display_name: 'Has one', user_id: withProfile.id });
-    assert.ok((await withProfile.client.from('profile_claims').insert({ profile_id: historic })).error);
+    // Approval merges the page into theirs (20261030100000; person-claims.test.mjs).
+    const { data: pending, error: pendingError } = await withProfile.client.rpc('start_person_claim', { p_profile_id: historic });
+    assert.ifError(pendingError);
+    assert.equal(pending.status, 'pending');
 
     // A claim comes first. A second profile is refused, so approval can still
     // hand the existing one over. profiles.user_id is unique.
     const late = await makeUser('late');
     extraUserIds.push(late.id);
-    const { error: claimError } = await late.client.from('profile_claims').insert({ profile_id: historic }).select('id').single();
+    const { error: claimError } = await late.client.rpc('start_person_claim', { p_profile_id: historic });
     assert.ifError(claimError);
     const second = await service.from('profiles').insert({ kind: 'person', handle: `late${run}`, display_name: 'Late', user_id: late.id });
     assert.match(second.error?.message ?? '', /claim waiting/);

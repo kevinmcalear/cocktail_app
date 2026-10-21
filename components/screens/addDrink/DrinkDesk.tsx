@@ -5,6 +5,7 @@ import { Button, Caption, useDs } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
+import type { KitRow } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDraftPacks, useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { usePricingSettings } from '@/hooks/usePricing';
@@ -16,7 +17,6 @@ import type { IngredientAlias } from '@/lib/ingredientNames';
 import { formatMoney } from '@/lib/money';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { suggestAmount } from '@/lib/specDefaults';
-import { isVenueIce } from '@/lib/venueKit';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { CreditsStep } from './CreditsStep';
@@ -25,6 +25,7 @@ import { FinishStep } from './FinishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
 import type { CatalogIngredient } from './IngredientSearch';
+import { IceStep } from './IceStep';
 import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
 import { ReviewPhotos } from './ReviewPhotos';
@@ -53,6 +54,7 @@ export interface DrinkDeskProps {
   barVariants: string[];
   barIce: string[];
   barIceKinds: string[];
+  barKit: readonly KitRow[];
   classic: ClassicMatch | null;
   resumed: boolean;
   onStartOver: () => void;
@@ -164,16 +166,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             <GlassStep compact draft={draft} set={set} options={p.glasses} barId={barId} barGlasses={p.barGlasses} barVariants={p.barVariants} suggested={p.guess.glass} />
           </Row>
           <Row label="Ice">
-            <PickStep
-              label="Ice"
-              ownLabel="Other ice"
-              compact
-              options={p.ices}
-              selected={draft.ice ? [draft.ice] : []}
-              onChange={([ice]) => set({ ice: ice ?? null })}
-              suggested={p.guess.ice}
-              mine={p.barIce.length ? { has: (x) => isVenueIce(p.barIce, x.name), label: 'Your ice', restLabel: 'Other ice' } : undefined}
-            />
+            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.barKit} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} />
           </Row>
           <Row label="Finish">
             {finishing ? (

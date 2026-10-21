@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Caption, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
-import { useProfile, type Profile } from '@/hooks/useProfiles';
+import { isUnclaimed, useProfile, type Profile } from '@/hooks/useProfiles';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { siteOrigin } from '@/lib/venueLink';
 
@@ -18,6 +18,8 @@ import { MakerProfile } from './MakerProfile';
 import { PersonProfile } from './PersonProfile';
 import { PublicBarPage } from './PublicBarPage';
 import { SupplierProfile } from './SupplierProfile';
+import { ThisIsMe } from './ThisIsMe';
+import { UnclaimedPerson } from './UnclaimedPerson';
 import { useShareLink } from './useShareLink';
 
 /**
@@ -52,6 +54,9 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
   if (profile?.kind === 'bar' && !signedIn) return <PublicBarPage profile={profile} />; // signed out: the public web's one bar page (ppl-pub-bar-*)
   // Signed in on a tablet or desktop, a bar's page is the drawn desktop one (ppl-pub-bar-desktop): its actions sit under the name.
   const wideBar = profile?.kind === 'bar' && breakpoint !== 'phone';
+  // Someone's page nobody has claimed: This is me and Not me pinned to the bottom of a phone (find-yourself).
+  const unclaimedPerson = !!profile && profile.kind === 'person' && isUnclaimed(profile) && !gated;
+  const pinned = unclaimedPerson && breakpoint === 'phone';
 
   const controls = (
     <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
@@ -82,6 +87,8 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
         <MakerProfile profile={profile} columns={columns} />
       ) : profile.kind === 'supplier' ? (
         <SupplierProfile profile={profile} />
+      ) : unclaimedPerson ? (
+        <UnclaimedPerson profile={profile} />
       ) : profile.kind === 'person' ? (
         <PersonProfile profile={profile} columns={columns} />
       ) : wideBar ? (
@@ -100,10 +107,11 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl + (pinned ? PINNED_ROOM : 0), paddingHorizontal: gutter }}>
         <View style={[styles.readable, wideBar ? styles.wide : null]}>{body}</View>
       </ScrollView>
       {controls}
+      {pinned && profile ? <ThisIsMe profile={profile} pinned /> : null}
     </View>
   );
 }
@@ -113,6 +121,9 @@ function ShareProfile({ profile }: { profile: Profile }) {
   const share = useShareLink(`${siteOrigin()}/p/${profile.handle}`, profile.display_name);
   return <GlassButton accessibilityLabel={profile.kind === 'person' ? 'Share profile' : 'Share'} icon="square.and.arrow.up" onPress={() => void share()} />;
 }
+
+/** Room under the page for the pinned This is me and Not me. */
+const PINNED_ROOM = 120;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },

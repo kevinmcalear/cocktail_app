@@ -14,6 +14,7 @@ import { itemHref } from '@/lib/itemRoutes';
 import { areaLabel } from '@/lib/nearMe';
 
 import { MapLayers, type MapLayer } from './DiscoverControls';
+import { AddBarPrompt } from './AddBar';
 import { BarAway, DrinkAtBarList, type MoreDrinks } from './DrinksAtBars';
 import { ClassicLine, ResultsHead } from './ResultsHead';
 
@@ -29,6 +30,10 @@ interface DeskSearchResultsProps {
   from: { latitude: number; longitude: number } | null;
   /** The pin tapped on the map: its best match opens in place at the top. */
   picked: MapPin | null;
+  /** When the search matches nothing: add the bar they were looking for. */
+  onAddBar?: () => void;
+  /** Hovering a row opens its bar on the map. */
+  onShowBar?: (barId: string | null) => void;
 }
 
 /**
@@ -37,7 +42,7 @@ interface DeskSearchResultsProps {
  * "Martinis and more", Best match / Top rated / Nearest, the classic line,
  * the picked bar's match opened in place, then the scored rows.
  */
-export function DeskSearchResults({ filter, drink, results, layer, onLayer, from, picked }: DeskSearchResultsProps) {
+export function DeskSearchResults({ filter, drink, results, layer, onLayer, from, picked, onAddBar, onShowBar }: DeskSearchResultsProps) {
   const nearest = layer === 'nearest' && !!from;
   const best = layer === 'best' && !!drink;
   const ranked = useBestDrink(drink, filter, { load: best, active: best });
@@ -68,9 +73,12 @@ export function DeskSearchResults({ filter, drink, results, layer, onLayer, from
       {loading ? (
         <ListNote>Loading…</ListNote>
       ) : rest.length ? (
-        <DrinkAtBarList key={layer} drinks={rest} limit={20} scores={scores} more={more} query={filter.search} onOpen={(d) => setOpened({ drink: d, pin: picked?.id ?? null })} />
+        <DrinkAtBarList key={layer} drinks={rest} limit={20} scores={scores} more={more} query={filter.search} onOpen={(d) => setOpened({ drink: d, pin: picked?.id ?? null })} onShowBar={onShowBar} />
       ) : (
-        <ListNote>{`Nothing ${where} matches. Try Everywhere.`}</ListNote>
+        <>
+          <ListNote>{`Nothing ${where} matches. Try Everywhere.`}</ListNote>
+          {!top && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}
+        </>
       )}
     </View>
   );

@@ -109,7 +109,7 @@ export function timelineDates(d: MenuDates): string {
 }
 
 /** "Night Garden menu"; a name that already says menu stays as it is. */
-function menuName(name: string): string {
+export function menuName(name: string): string {
   return /\bmenu$/i.test(name.trim()) ? name.trim() : `${name.trim()} menu`;
 }
 

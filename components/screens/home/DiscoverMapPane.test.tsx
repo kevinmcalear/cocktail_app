@@ -64,10 +64,9 @@ jest.mock('@gorhom/bottom-sheet', () => {
   });
   return { __esModule: true, default: BottomSheet, BottomSheetScrollView: ScrollView, BottomSheetFlatList: FlatList };
 });
-// The camera the map was last given.
-let mockCamera: { latitude: number; longitude: number; zoom: number } | null = null;
+let mockCamera: { latitude: number; longitude: number; zoom: number } | null = null; // the camera the map was last given
 jest.mock('./DiscoverMap', () => {
-  const { Pressable } = require('react-native');
+  const { Pressable } = jest.requireActual<typeof import('react-native')>('react-native');
   return {
     mapAvailable: true,
     DiscoverMap: ({ pins, onSelect, camera }: { pins: { id: string; name: string; top?: string }[]; onSelect: (id: string) => void; camera: typeof mockCamera }) => (
@@ -129,7 +128,8 @@ test("a drinks pin's card says how many drinks are there, beside its actions (g0
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
 
   expect(screen.getByText('4 drinks here')).toBeTruthy();
-  expect(screen.queryByText('House Martini')).toBeNull();
+  expect(screen.getByText('House Martini')).toBeTruthy();
+  expect(screen.getByText('Martini No. 4')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Open bar' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy();
 });

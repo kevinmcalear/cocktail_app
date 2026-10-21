@@ -14,12 +14,23 @@ import { inviteJobTitle, needsOnboarding, nextStep, stepProgress, type Onboardin
 import { useAppMode } from '@/store/useAppMode';
 
 import { BringStep } from './BringStep';
-import { FindStep, PlaceStep } from './CareerSteps';
+import { PlaceStep } from './CareerSteps';
+import { FindStep } from './FindStep';
 import { InviteBrand, InviteWelcome } from './InviteWelcome';
 import { NameStep, TasteStep, UnitsStep } from './ProfileSteps';
 import { SetupChromeProvider, SetupFooter, SetupPage } from './SetupPage';
 import { DrinkStep, MenuStep } from './WorkedSteps';
 import { COPY, HOME_BRING } from './onboardingCopy';
+
+type Resume = { chosen: OnboardingStep | null; trail: OnboardingStep[]; draft: { name: string; handle: string } | null; createdId: string | null; home: boolean };
+/**
+ * Where setup was, by account. A page opened from Setup that Setup's guard
+ * sends back (a drink on a bar page from "Find your bar or your name")
+ * mounts a new Setup, which picks up here. In memory only.
+ */
+const resumed = new Map<string, Resume>();
+/** Starts the next setup on this device from the top (tests, and once setup is done). */
+export const forgetSetupProgress = () => resumed.clear();
 
 /**
  * After the age check, once, for a new account: name, work, taste and units. A
@@ -35,16 +46,17 @@ export function OnboardingScreen() {
   const saveProfile = useSaveOnboardingName();
   const saveJob = useSaveWorkplace();
   const enterVenue = useAppMode((s) => s.enterVenue);
-  const [chosen, setChosen] = useState<OnboardingStep | null>(null);
+  const saved = user ? resumed.get(user.id) : undefined;
+  const [chosen, setChosen] = useState<OnboardingStep | null>(saved?.chosen ?? null);
   // The steps they came through, for Back.
-  const [trail, setTrail] = useState<OnboardingStep[]>([]);
+  const [trail, setTrail] = useState<OnboardingStep[]>(saved?.trail ?? []);
   const [joined, setJoined] = useState<MyInvite | null>(null);
   const invite = invites.data?.[0] ?? null;
   const step: OnboardingStep = chosen ?? (invite ? 'invite' : 'name');
-  const [createdId, setCreatedId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<{ name: string; handle: string } | null>(null);
+  const [createdId, setCreatedId] = useState<string | null>(saved?.createdId ?? null);
+  const [draft, setDraft] = useState<{ name: string; handle: string } | null>(saved?.draft ?? null);
   const [handleTaken, setHandleTaken] = useState(false);
-  const [home, setHome] = useState(false);
+  const [home, setHome] = useState(saved?.home ?? false);
   // The bar from "Where do you work?", for "Bring Little Rye in".
   const [barName, setBarName] = useState<string | null>(null);
   // Handed something to read on the last step: setup ends in Bring in, where it's being read.
@@ -55,8 +67,14 @@ export function OnboardingScreen() {
 
   useEffect(() => {
     if (loading || !user) return;
-    if (!needsOnboarding(user.user_metadata)) router.replace(landing);
+    if (needsOnboarding(user.user_metadata)) return;
+    forgetSetupProgress();
+    router.replace(landing);
   }, [loading, user, router, landing]);
+  const userId = user?.id;
+  useEffect(() => {
+    if (userId && needsOnboarding(user?.user_metadata)) resumed.set(userId, { chosen, trail, draft, createdId, home });
+  }, [userId, user?.user_metadata, chosen, trail, draft, createdId, home]);
 
   const setStep = (next: OnboardingStep) => {
     setTrail((t) => [...t, step]);

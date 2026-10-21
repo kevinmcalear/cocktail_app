@@ -17,6 +17,9 @@ interface EditSnapshot {
   glassModel: unknown;
   familyId: string | null;
   iceId: string | null;
+  /** How the ice sits and the ice it's made with, where the editor has them (a draft doesn't). */
+  iceBuild: unknown;
+  methodIceId: string | null;
   recipeItems: SortableRecipeItem[];
 }
 
@@ -33,6 +36,8 @@ const snapshotOf = (e: Editor): EditSnapshot => ({
   glassModel: 'glassModel' in e ? e.glassModel : null,
   familyId: e.familyId,
   iceId: e.iceId,
+  iceBuild: 'iceBuild' in e ? e.iceBuild : null,
+  methodIceId: 'methodIceId' in e ? e.methodIceId : null,
   recipeItems: e.recipeItems,
 });
 
@@ -52,6 +57,11 @@ export function useEditHistory(editor: Editor) {
     if ('setGlassModel' in editor) editor.setGlassModel(s.glassModel as typeof editor.glassModel);
     editor.setSpecId('family', s.familyId);
     editor.setSpecId('ice', s.iceId);
+    // The build after the ice: its top layer is the ice, so it wins when there is one.
+    if ('setIceBuild' in editor) {
+      editor.setIceBuild((s.iceBuild as typeof editor.iceBuild) ?? (s.iceId ? [{ ice: s.iceId }] : []));
+      if (s.methodIceId !== editor.methodIceId) editor.setMethodIceId(s.methodIceId);
+    }
     editor.setRecipeItems(s.recipeItems);
   });
 }
