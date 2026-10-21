@@ -236,10 +236,12 @@ describe('bar claim verification', () => {
     assert.match(fourth.error?.message ?? '', /three claims today/);
   });
 
-  test('person claims still work by direct insert, as a note', async () => {
+  test('person claims go through start_person_claim, not a direct insert', async () => {
     const person = (await service.from('profiles').insert({ kind: 'person', handle: `legend${run}`, display_name: 'Legend', is_public: true }).select('id').single()).data.id;
     pages.person = person;
-    const { error } = await users.stranger.client.from('profile_claims').insert({ profile_id: person, message: 'This is me' });
+    const direct = await users.stranger.client.from('profile_claims').insert({ profile_id: person, message: 'This is me' });
+    assert.ok(direct.error, 'no direct person claim (20261030100000)');
+    const { error } = await users.stranger.client.rpc('start_person_claim', { p_profile_id: person, p_method: 'note', p_note: 'This is me' });
     assert.ifError(error);
   });
 });

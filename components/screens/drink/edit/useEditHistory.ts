@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { SortableRecipeItem } from '@/components/recipe/SortableRecipeList';
+import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { record, redo, startHistory, undo, type History } from '@/lib/editHistory';
 
 import type { DrinkEditor as Editor } from './EditParts';
@@ -17,6 +17,9 @@ interface EditSnapshot {
   glassModel: unknown;
   familyId: string | null;
   iceId: string | null;
+  /** How the ice sits and the ice it's made with, where the editor has them (a draft doesn't). */
+  iceBuild: unknown;
+  methodIceId: string | null;
   recipeItems: SortableRecipeItem[];
 }
 
@@ -33,6 +36,8 @@ const snapshotOf = (e: Editor): EditSnapshot => ({
   glassModel: 'glassModel' in e ? e.glassModel : null,
   familyId: e.familyId,
   iceId: e.iceId,
+  iceBuild: 'iceBuild' in e ? e.iceBuild : null,
+  methodIceId: 'methodIceId' in e ? e.methodIceId : null,
   recipeItems: e.recipeItems,
 });
 
@@ -42,8 +47,31 @@ const snapshotOf = (e: Editor): EditSnapshot => ({
  * is one step (lib/editHistory.ts).
  */
 export function useEditHistory(editor: Editor) {
-  const ready = editor.specLoaded;
-  const snap = ready ? snapshotOf(editor) : null;
+  return useSnapshotHistory(editor.specLoaded ? snapshotOf(editor) : null, (s: EditSnapshot) => {
+    editor.setName(s.name);
+    editor.setOrigin(s.origin);
+    editor.setDescription(s.description);
+    editor.setNotes(s.notes);
+    editor.setMethodIds(s.methodIds);
+    editor.setSpecId('glassware', s.glasswareId);
+    if ('setGlassModel' in editor) editor.setGlassModel(s.glassModel as typeof editor.glassModel);
+    editor.setSpecId('family', s.familyId);
+    editor.setSpecId('ice', s.iceId);
+    // The build after the ice: its top layer is the ice, so it wins when there is one.
+    if ('setIceBuild' in editor) {
+      editor.setIceBuild((s.iceBuild as typeof editor.iceBuild) ?? (s.iceId ? [{ ice: s.iceId }] : []));
+      if (s.methodIceId !== editor.methodIceId) editor.setMethodIceId(s.methodIceId);
+    }
+    editor.setRecipeItems(s.recipeItems);
+  });
+}
+
+/**
+ * Undo and redo over any editor's words: `snap` is what undo puts back (null
+ * until it has loaded), `put` puts one back into the editor. The beer and
+ * wine editor uses it too.
+ */
+export function useSnapshotHistory<S>(snap: S | null, put: (s: S) => void) {
   const key = snap ? JSON.stringify(snap) : null;
   const [history, setHistory] = useState<History<string> | null>(null);
   const burst = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,19 +91,6 @@ export function useEditHistory(editor: Editor) {
     }, BURST_MS);
   }, [key]);
 
-  const put = (raw: string) => {
-    const s = JSON.parse(raw) as EditSnapshot;
-    editor.setName(s.name);
-    editor.setOrigin(s.origin);
-    editor.setDescription(s.description);
-    editor.setNotes(s.notes);
-    editor.setMethodIds(s.methodIds);
-    editor.setSpecId('glassware', s.glasswareId);
-    if ('setGlassModel' in editor) editor.setGlassModel(s.glassModel as typeof editor.glassModel);
-    editor.setSpecId('family', s.familyId);
-    editor.setSpecId('ice', s.iceId);
-    editor.setRecipeItems(s.recipeItems);
-  };
   const move = (step: typeof undo) => {
     if (!history) return;
     const next = step(history);
@@ -83,7 +98,7 @@ export function useEditHistory(editor: Editor) {
     if (burst.current) clearTimeout(burst.current);
     burst.current = null;
     setHistory(next);
-    put(next.present);
+    put(JSON.parse(next.present) as S);
   };
   return {
     canUndo: !!history?.past.length,

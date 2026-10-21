@@ -275,7 +275,19 @@ export function findBars(bars: readonly DiscoverBar[], search: string): Discover
     .map((x) => x.b);
 }
 
-function pinOf(b: DiscoverBar, drinks: number): MapPin | null {
+/**
+ * Bars a search hits, for Discover's "Bars near you" while searching: by name
+ * first (findBars' order), then the open bars pouring the most matching
+ * drinks. `bars` is discover_bars with the search, so `drinks` counts matches.
+ */
+export function barsMatching(bars: readonly DiscoverBar[], search: string, max = 10): DiscoverBar[] {
+  const open = bars.filter((b) => !b.closed);
+  const named = findBars(open, search);
+  const pour = open.filter((b) => b.drinks > 0 && !named.includes(b)).sort((a, b) => b.drinks - a.drinks || a.name.localeCompare(b.name));
+  return [...named, ...pour].slice(0, max);
+}
+
+export function pinOf(b: DiscoverBar, drinks: number): MapPin | null {
   if (b.latitude === null || b.longitude === null) return null;
   return {
     id: b.id,
@@ -395,6 +407,17 @@ export function closedPins(bars: readonly DiscoverBar[]): MapPin[] {
 /** "3 drinks", "1 drink". */
 export function drinkCount(n: number): string {
   return `${n} ${n === 1 ? 'drink' : 'drinks'}`;
+}
+
+/**
+ * The results head's count: "14 drinks at 9 bars near you" while searching, else on the phone
+ * sheet how many bars the map shows. Wide screens have no sheet to swipe, so with no search
+ * count they show no caption (disc-desk-search draws only the search count).
+ */
+export function resultsCaption(searching: boolean, totals: { drinks: number; bars: number } | null | undefined, where: string, pins: number, sheet = true): string {
+  if (searching && totals?.drinks) return `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'} ${where}`;
+  if (!sheet) return '';
+  return `${pins} ${pins === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`;
 }
 
 /** A bar row's drinks in search: "14 drinks on now" when some are on, else how many match ("3 drinks"), else nothing. */

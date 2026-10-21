@@ -1,14 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { SketchDrawing } from '@/components/ds/SketchDrawing';
+import { IceThumb } from '@/components/ds/IceThumb';
 import { Body, Button, Caption, Chip, Field, PressableScale, Sheet, SheetScrollView, Surface, Title, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarKit, useRemoveKit, useSaveKit, type KitRow } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
-import { draftSketchInputs } from '@/lib/sketch/draft';
 import { ICE_KINDS, ICE_LABEL, kitSourceLine, type IceKind } from '@/lib/venueKit';
 
 import { VenueSubPage } from './VenueSubPage';
@@ -57,26 +56,13 @@ export function KitIceScreen({ barId }: { barId: string }) {
   );
 }
 
-const EMPTY = draftSketchInputs({ name: '', lines: [] });
-
-/** The ice, drawn in an empty glass: a spear in a highball, the rest in a rocks glass. */
-function IceDrawing({ kind }: { kind: IceKind }) {
-  const ds = useDs();
-  const inputs = useMemo(() => ({ ...EMPTY, glass: kind === 'spear' ? ('highball' as const) : ('rocks' as const), variant: null, ice: kind }), [kind]);
-  return (
-    <View style={[styles.paper, { backgroundColor: ds.c.paper }]} aria-hidden>
-      <SketchDrawing inputs={inputs} seed={`bar-ice-${kind}`} detail="thumb" />
-    </View>
-  );
-}
-
 function IceRow({ row, first, onOpen }: { row: KitRow; first: boolean; onOpen?: () => void }) {
   const ds = useDs();
   const label = ICE_LABEL[row.key as IceKind] ?? row.key;
   const source = kitSourceLine(row);
   const body = (
     <>
-      <IceDrawing kind={row.key as IceKind} />
+      <IceThumb kind={row.key as IceKind} />
       <View style={styles.flex}>
         <Body numberOfLines={1}>{label}</Body>
         {source ? (
@@ -118,12 +104,22 @@ function IceForm({ barId, row, onDone }: { barId: string; row: KitRow; onDone: (
   const remove = useRemoveKit(barId);
   const [note, setNote] = useState(row.note ?? '');
   const [source, setSource] = useState<Source>(row.made_here ? 'here' : (row.supplier_id ?? 'none'));
+  // A spear's length, so the drink wizard can tell when it's shorter than the glass.
+  const [length, setLength] = useState(row.length_mm ? String(row.length_mm) : '');
+  const mm = Number(length.trim());
+  const lengthOk = !length.trim() || (Number.isInteger(mm) && mm >= 20 && mm <= 400);
   const options = [{ id: 'here', label: 'Made here' }, ...suppliers.map((s) => ({ id: s.id, label: s.name })), { id: 'none', label: 'Not said' }];
   const done = { onSuccess: onDone };
   return (
     <SheetScrollView contentContainerStyle={styles.sheet}>
       <Title>{ICE_LABEL[row.key as IceKind] ?? row.key}</Title>
       <Field label="Note" value={note} onChangeText={setNote} placeholder="Hoshizaki under the well" maxLength={120} />
+      {row.key === 'spear' ? (
+        <View style={styles.group}>
+          <Field label="Length (mm)" value={length} onChangeText={setLength} placeholder="130" keyboardType="number-pad" maxLength={3} />
+          <Caption tone={lengthOk ? 'muted' : 'accent'}>{lengthOk ? 'The drink wizard checks it against your glasses’ heights.' : 'A length between 20 and 400 mm.'}</Caption>
+        </View>
+      ) : null}
       <View style={styles.group}>
         <Caption tone="muted">Where it comes from</Caption>
         <View role="radiogroup" accessibilityLabel="Where it comes from" style={styles.chips}>
@@ -136,8 +132,13 @@ function IceForm({ barId, row, onDone }: { barId: string; row: KitRow; onDone: (
       <View style={styles.actions}>
         <Button
           label={save.isPending ? 'Saving…' : 'Save'}
-          disabled={save.isPending || remove.isPending}
-          onPress={() => save.mutate({ id: row.id, kind: 'ice', key: row.key, note: note.trim() || null, made_here: source === 'here', supplier_id: source === 'here' || source === 'none' ? null : source }, done)}
+          disabled={save.isPending || remove.isPending || !lengthOk}
+          onPress={() =>
+            save.mutate(
+              { id: row.id, kind: 'ice', key: row.key, note: note.trim() || null, made_here: source === 'here', supplier_id: source === 'here' || source === 'none' ? null : source, ...(row.key === 'spear' ? { length_mm: length.trim() ? mm : null } : {}) },
+              done,
+            )
+          }
         />
         <Button label="Remove" variant="ghost" disabled={save.isPending || remove.isPending} onPress={() => remove.mutate(row.id, done)} />
       </View>
@@ -149,7 +150,6 @@ const styles = StyleSheet.create({
   list: { paddingVertical: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm },
   flex: { flex: 1, minWidth: 0 },
-  paper: { width: 48, height: 48, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
   group: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   sheet: { gap: space.lg, padding: space.lg },

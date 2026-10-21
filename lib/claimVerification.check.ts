@@ -2,7 +2,7 @@
 // The same cases run against the database in supabase/tests/bar-claims.test.mjs.
 import assert from 'node:assert/strict';
 
-import { claimPlace, claimProblem, emailCheck, isSharedHost, newClaimCode, pageInstagram, siteHost, siteIsRoot, spacedCode } from './claimVerification';
+import { claimPlace, claimProblem, emailCheck, isSharedHost, newClaimCode, pageInstagram, personClaimMethods, siteHost, siteIsRoot, spacedCode } from './claimVerification';
 
 // Hosts lose the scheme, www., port, path and case.
 assert.equal(siteHost('https://www.PaleMoth.com/en?x=1'), 'palemoth.com');
@@ -28,6 +28,11 @@ assert.equal(pageInstagram({ instagram: 'PaleMoth', website: null }), 'palemoth'
 assert.equal(pageInstagram({ instagram: null, website: 'https://www.instagram.com/pale.moth/' }), 'pale.moth');
 assert.equal(pageInstagram({ instagram: null, website: 'https://palemoth.com', social_links: ['https://tiktok.com/@x', 'https://instagram.com/moth_bar'] }), 'moth_bar');
 assert.equal(pageInstagram({ instagram: '', website: 'https://palemoth.com' }), null);
+
+// A person is offered the Instagram code only when the page has an Instagram (start_person_claim).
+assert.deepEqual(personClaimMethods({ instagram: 'ash.okafor', website: null }), ['instagram', 'note']);
+assert.deepEqual(personClaimMethods({ instagram: null, website: null, social_links: ['https://instagram.com/ash'] }), ['instagram', 'note']);
+assert.deepEqual(personClaimMethods({ instagram: ' ', website: 'https://ash.example' }), ['note']);
 
 // Email: instant on the bar's own home page; a moderator for weaker matches; nothing for other domains.
 assert.deepEqual(emailCheck('jo@palemoth.com', 'https://www.palemoth.com/', false), { ok: 'instant', domain: 'palemoth.com' });

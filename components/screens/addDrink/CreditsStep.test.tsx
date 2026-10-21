@@ -48,9 +48,20 @@ describe('CreditsStep, where and when', () => {
     expect(latest().place).toBeNull();
   });
 
-  test("at a venue, it's the venue's: no bar to pick", async () => {
+  test("at a venue, it's the venue's unless it's from somewhere else", async () => {
     await renderWithTamagui(<Harness venueName="Little Rye" />);
+    expect(screen.getByRole('radio', { name: 'Yes, it’s ours', checked: true })).toBeTruthy();
     expect(screen.getByText('First made at Little Rye.')).toBeTruthy();
-    expect(screen.queryByLabelText('First made at a bar')).toBeNull();
+    expect(screen.queryByLabelText('Where’s it from?')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'No, from somewhere else' }));
+    expect(latest().elsewhere).toBe(true);
+    expect(screen.queryByText('First made at Little Rye.')).toBeNull();
+    await fireEvent.changeText(screen.getByLabelText('Where’s it from?'), 'Atta');
+    await fireEvent.press(screen.getByRole('button', { name: 'Attaboy · New York' }));
+    expect(latest().place).toEqual({ id: 'bar-p-attaboy', name: 'Attaboy' });
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Yes, it’s ours' }));
+    expect(latest()).toMatchObject({ elsewhere: false, place: null });
   });
 });

@@ -42,6 +42,14 @@ assert.equal(iceFromName('Crushed'), 'crushed');
 assert.equal(iceFromName('Spear'), 'spear');
 assert.equal(iceFromName('Shaved'), 'shaved');
 assert.equal(iceFromName('Sphere'), 'sphere');
+// "No ice" has "ice" in it: it's none, not cubes.
+assert.equal(iceFromName('No ice'), 'none');
+assert.equal(iceFromName('Up, no ice'), 'none');
+assert.equal(iceFromName('None'), 'none');
+assert.equal(iceFromName('Pebble ice'), 'pebble');
+assert.equal(iceFromName('Ice'), 'cubes');
+assert.equal(iceFromName('Cubes, topped up'), 'cubes', '"up" only as a serve');
+assert.equal(iceFromName('Neat'), 'none');
 assert.equal(methodFromNames(['Stir']), 'stir');
 assert.equal(methodFromNames(['dry shake and shake']), 'shake');
 assert.equal(methodFromNames(['Build', 'Shake']), 'shake');
@@ -60,6 +68,13 @@ assert.equal(negroni.inputs.method, 'stir');
 assert.equal(negroni.inputs.foam, null, 'stirred drinks never foam');
 assert.equal(negroni.inputs.garnish, 'orange_peel');
 assert.equal(negroni.inputs.coverage, 1);
+
+// --- a discarded peel: its oils, not the peel, so no garnish and no colour ---
+const sour = [[60, 'ml', 'Rye whiskey'], [22.5, 'ml', 'Lemon juice'], [22.5, 'ml', 'Simple syrup']] as Line[];
+const discarded = drink('Ash Garden', [...sour, [1, 'discard', 'Lemon']]);
+assert.equal(discarded.inputs.garnish, null, 'a discarded peel is not drawn');
+assert.deepEqual(discarded.inputs.liquid, drink('Ash Garden', sour).inputs.liquid, 'nor does it tint the drink');
+assert.equal(drink('Ash Garden', [...sour, [1, 'twist', 'Lemon']]).inputs.garnish, 'lemon_peel');
 assert.ok(redness(negroni.inputs.liquid.hex) > 60 && negroni.inputs.liquid.alpha > 0.8, `Negroni is a deep red: ${JSON.stringify(negroni.inputs.liquid)}`);
 
 const espresso = drink('Espresso Martini', [[50, 'ml', 'Vodka'], [25, 'ml', 'Coffee Liqueur'], [30, 'ml', 'Espresso'], [10, 'ml', 'Simple Syrup']]);

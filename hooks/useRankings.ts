@@ -16,7 +16,11 @@ import { supabase } from '@/lib/supabase';
 
 export interface RankVenue {
   id: string;
+  handle?: string;
   display_name: string;
+  /** "Cocktail bar", as its page says it. */
+  bar_type?: string | null;
+  is_claimed?: boolean;
   locality: string | null;
   postcode: string | null;
   city: string | null;
@@ -337,7 +341,7 @@ export function useRankTarget(itemId: string | null | undefined) {
   });
 }
 
-const VENUE_COLUMNS = 'id, display_name, locality, postcode, city, country_code, is_closed, closed_year';
+const VENUE_COLUMNS = 'id, handle, display_name, bar_type, is_claimed, locality, postcode, city, country_code, is_closed, closed_year';
 
 /**
  * A bar's public profile: where its drinks can be ranked, and its area. Null

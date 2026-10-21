@@ -4,7 +4,7 @@ import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { Body, Caption, DsText, Headline, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { dragGripStyle, gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
-import type { SortableRecipeItem } from '@/components/recipe/SortableRecipeList';
+import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { backbar, fontFamilies, layout, radius, space } from '@/constants/tokens';

@@ -11,7 +11,7 @@
 import { SKETCH } from '../../constants/sketch';
 import { band, ell, glassShape, hw, type Pt } from './geometry';
 import { paintGarnish } from './garnish';
-import { paintIce } from './ice';
+import { paintBuild, paintIce } from './ice';
 import { makePainter, type LineOpts, type Painter } from './painter';
 import { gauss, hashString, mixHex, rng, type Rng } from './random';
 import { GLASS_BANDS, SceneBuilder, type Scene, type StageName } from './scene';
@@ -116,9 +116,12 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   const key = `${seed}|${style}`;
   const r = rng(hashString(key));
   const g = { ...glassShape(inputs.glass, inputs.variant) };
-  const ice = inputs.ice;
-  if (ice === 'crushed' || ice === 'shaved') g.top = g.rim + 3;
-  if (ice === 'pebble') g.top = g.rim + 5;
+  const build = inputs.build?.length ? inputs.build : null;
+  const ice = build ? build[build.length - 1].kind : inputs.ice;
+  // Loose ice to the top lifts the surface; a build's top layer at Half doesn't.
+  const surface0 = build?.[build.length - 1].to === 'half' ? 'none' : ice;
+  if (surface0 === 'crushed' || surface0 === 'shaved') g.top = g.rim + 3;
+  if (surface0 === 'pebble') g.top = g.rim + 5;
   // A hot drink in the copper mug's place is a home mug; the glass mugs stay glass.
   if (inputs.glass === 'mug' && g.opaque && ice !== 'cubes') g.opaque = SKETCH.homeMug;
 
@@ -191,7 +194,7 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   stage('ice', g.rim);
   const Rt0 = hw(g, g.top);
   P.line(ell(50, g.top, Rt0, Rt0 * e, Math.PI + 0.3, Math.PI * 2 - 0.4, 24), { weight: 0.5, alpha: 0.5, gaps: 1.5 });
-  const iced = paintIce(P, ice, inputs.glass);
+  const iced = build ? paintBuild(P, build, inputs.glass) : paintIce(P, ice, inputs.glass);
   if (inputs.fizz && !g.opaque) {
     stage('fizz', floor);
     const n = P.clipInner();

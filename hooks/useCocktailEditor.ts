@@ -8,6 +8,7 @@ import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { GLASS_MODEL_SELECT, type GlassModel } from "@/hooks/useGlassModels";
 import { identifyGlasswareFromPhoto } from "@/lib/identifyGlassware";
 import { imageExtFromUri, uriToBase64 } from "@/lib/imageBase64";
+import { readIceBuild, saysMore, type IceLayer } from "@/lib/iceBuild";
 import { isHeroLink } from "@/lib/itemImages";
 import { plainDbMessage } from "@/lib/dbError";
 import { findByName, orderedMethodIds, toggleId } from "@/lib/drinkMethods";
@@ -21,7 +22,7 @@ import { pickDrinkPhotos, setItemImages } from "@/components/drink/drinkImages";
 
 export type SpecCategory = "method" | "glassware" | "family" | "ice";
 
-import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
+import type { SortableRecipeItem } from '@/lib/recipeItem';
 
 export function useCocktailEditor(id: string, { enabled = true }: { enabled?: boolean } = {}) {
     const queryClient = useQueryClient();
@@ -42,6 +43,10 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const [glasswareId, setGlasswareId] = useState<string | null>(null);
     const [familyId, setFamilyId] = useState<string | null>(null);
     const [iceId, setIceId] = useState<string | null>(null);
+    // The ice it's made with, and how the ice sits (20261029100000, 20261029500000). Saved only once changed here, so a database without them still saves.
+    const [methodIceId, setMethodIceIdState] = useState<string | null>(null);
+    const [iceBuild, setIceBuildState] = useState<IceLayer<string>[] | null>(null);
+    const iceTouched = useRef(false);
     // How its glass is drawn (lib/sketch/geometry.ts GLASS_VARIANTS); null is the bar's glass or the default.
     const [sketchVariant, setSketchVariant] = useState<string | null>(null);
     // The real glass it's served in (items.glass_model_id); glasswareId stays its shape.
@@ -123,7 +128,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             supabase
                 .from("items")
                 .select(
-                    `bar_id, sketch_variant, override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level, glass_model:glass_models!items_glass_model_id_fkey(${GLASS_MODEL_SELECT})`
+                    // Every column: method_ice_id and ice_build only exist once their migrations are in.
+                    `*, glass_model:glass_models!items_glass_model_id_fkey(${GLASS_MODEL_SELECT})`
                 )
                 .eq("id", id)
                 .single(),
@@ -138,6 +144,10 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 setBarId(data.bar_id);
                 setSketchVariant(data.sketch_variant ?? null);
                 setGlassModelState((data as unknown as { glass_model: GlassModel | null }).glass_model ?? null);
+                const ices = data as unknown as { method_ice_id?: string | null; ice_build?: unknown };
+                setMethodIceIdState(ices.method_ice_id ?? null);
+                setIceBuildState(readIceBuild(ices.ice_build));
+                iceTouched.current = false;
                 setOverrideVisibility(data.override_visibility_level?.toString() || null);
                 setOverrideGeneric(data.override_generic_ingredient_level?.toString() || null);
                 setOverrideSpecific(data.override_specific_brand_level?.toString() || null);
@@ -265,6 +275,18 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         markDirty();
     };
 
+    const setMethodIceId = (value: string | null) => {
+        iceTouched.current = true;
+        setMethodIceIdState(value);
+        markDirty();
+    };
+    /** How the ice sits, bottom first; its top layer is the drink's one ice. Empty clears both. */
+    const setIceBuild = (layers: IceLayer<string>[]) => {
+        iceTouched.current = true;
+        setIceBuildState(layers.length ? layers : null);
+        setIceIdDirty(layers.length ? layers[layers.length - 1].ice : null);
+    };
+
     /** Adds a method to this drink, or takes it off. Never touches the method itself. */
     const toggleMethod = (methodItemId: string) => setMethodIdsDirty((prev) => toggleId(prev, methodItemId));
 
@@ -304,6 +326,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     glassware_id: glasswareId,
                     family_id: familyId,
                     ice_id: iceId,
+                    ...(iceTouched.current ? { method_ice_id: methodIceId, ice_build: saysMore(iceBuild) ? iceBuild : null } : {}),
                     sketch_variant: sketchVariant,
                     glass_model_id: glassModel?.id ?? null,
                     bar_id: barId || null,
@@ -374,6 +397,10 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         glasswareId,
         familyId,
         iceId,
+        methodIceId,
+        setMethodIceId,
+        iceBuild,
+        setIceBuild,
         sketchVariant,
         setSketchVariant: setSketchVariantDirty,
         glassModel,

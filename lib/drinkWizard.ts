@@ -4,6 +4,7 @@
  * quick choices each step offers. The screens are in
  * components/screens/addDrink; saving is hooks/useCreateDrink.ts.
  */
+import { iceBuildLine, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
@@ -66,6 +67,16 @@ export interface WizardDraft {
   /** How the glass is drawn ('martini_pony', lib/sketch/geometry.ts); null is the bar's glass or the default. Saved as items.sketch_variant. */
   glassVariant?: string | null;
   ice: WizardPick | null;
+  /** The ice it's made with ("blended with pebble"), when it isn't the one it's served over (items.method_ice_id). */
+  methodIce?: WizardPick | null;
+  /**
+   * How the ice sits in the glass, bottom first (lib/iceBuild.ts): cubes under
+   * pebble, a spear on a cube. `ice` is kept as its top layer. Unset is one
+   * plain ice. Saved as items.ice_build when it says more than `ice` does.
+   */
+  iceBuild?: IceLayer<WizardPick>[] | null;
+  /** Ice suggestions the maker said No thanks to (lib/iceBuild.ts iceTip ids). */
+  iceTipsOff?: string[];
   /** The finish: garnishes and what goes on top (3 drops mint oil, an absinthe rinse), saved as spec lines after the ingredients. */
   garnishes: WizardLine[];
   /** Your own profile ('me'), someone else's, or 'nobody'. Not chosen yet (null) means you, when you have a profile. */
@@ -76,11 +87,13 @@ export interface WizardDraft {
   /** The year it was first made (items.origin_year); null is not sure. */
   originYear?: number | null;
   /**
-   * Where it was first made, for a drink added at home: a bar's public
-   * profile (items.origin_bar_profile_id); null is at home. A venue's drink
-   * is always the venue's.
+   * Where it was first made: a bar's public profile
+   * (items.origin_bar_profile_id); null is at home. A venue's drink is the
+   * venue's unless `elsewhere`.
    */
   place?: WizardPick | null;
+  /** Added at a venue, but "No, from somewhere else": credited to `place`, still saved in the venue's library (Eddie, 16 Oct). */
+  elsewhere?: boolean;
   description: string;
   notes: string;
   /** "Just me": the notes are yours alone (item_private_notes), not the drink's. Unset is with the drink. */
@@ -258,6 +271,45 @@ export const methodDetail = (name: string): string | null => METHOD_DETAIL[norm(
 export const COMMON_GLASSES = ['Coupe', 'Nick & Nora', 'Martini', 'Rocks', 'Highball', 'Collins', 'Flute', 'Wine', 'Julep cup', 'Mug', 'Tiki'] as const;
 export const COMMON_ICE = ['No ice', 'Cubes', 'Large cube', 'Crushed', 'Pebble', 'Spear', 'Sphere'] as const;
 
+/**
+ * What the ice it's made with is called, from the method: "Blended with",
+ * "Shaken with", "Stirred over". A drink built in the glass has none (its ice
+ * is the one it's served over); no method yet is "Made with".
+ */
+export function methodIceLabel(methods: readonly string[]): string | null {
+  const all = methods.join(' ').toLowerCase();
+  if (/blend/.test(all)) return 'Blended with';
+  if (/shak|whip/.test(all)) return 'Shaken with';
+  if (/stir/.test(all)) return 'Stirred over';
+  if (/swizzl/.test(all)) return 'Swizzled with';
+  if (/throw/.test(all)) return 'Thrown over';
+  if (/build|built/.test(all)) return null;
+  return 'Made with';
+}
+
+/** The drink page's Ice: "Blended with pebble, over a large cube", or just the ice it's served over. */
+export function iceLine(served: string | null, made: string | null, methods: readonly string[]): string | null {
+  const label = made ? (methodIceLabel(methods) ?? 'Made with') : null;
+  if (!label || !made) return served;
+  const withIce = `${label} ${made.toLowerCase()}`;
+  if (!served) return withIce;
+  return /^(no ice|up)/i.test(served) ? `${withIce}, served up` : `${withIce}, over ${overIce(served)}`;
+}
+
+/** The review's Ice: the build bottom to top, or the one ice, after what it's made with. */
+export function draftIceLine(d: WizardDraft): string {
+  const methods = d.methods.map((m) => m.name);
+  if (!saysMore(d.iceBuild)) return iceLine(d.ice?.name ?? null, d.methodIce?.name ?? null, methods) ?? '';
+  const made = d.methodIce ? `${methodIceLabel(methods) ?? 'Made with'} ${d.methodIce.name.toLowerCase()}. ` : '';
+  return made + iceBuildLine(d.iceBuild.map((l) => ({ ...l, ice: l.ice.name })));
+}
+
+/** "a large cube", "a spear", but "cubes" and "crushed": a lone piece takes "a", plurals and loose ice don't. */
+const overIce = (name: string) => {
+  const n = name.trim().toLowerCase();
+  return /^(large cube|big cube|cube|spear|sphere|block|ball)$/.test(n) ? `a ${n}` : n;
+};
+
 /** A garnish chip: the spec line it adds. */
 export interface GarnishChip {
   label: string;
@@ -269,12 +321,16 @@ const g = (label: string, name: string, unit: string, amount = '1'): GarnishChip
 export const GARNISH_CHIPS: readonly GarnishChip[] = [
   g('Orange peel', 'Orange', 'peel'),
   g('Lemon twist', 'Lemon', 'twist'),
-  g('Grapefruit peel', 'Grapefruit', 'peel'),
+  // A discard: the peel is expressed over the drink and thrown away (Ian at Bar Snack, 16 Oct).
+  g('Lemon discard', 'Lemon', 'discard'),
+  g('Orange discard', 'Orange', 'discard'),
+  g('Grapefruit discard', 'Grapefruit', 'discard'),
   g('Lime wheel', 'Lime', 'wheel'),
+  g('Cherry', 'Cocktail cherry', 'each'),
+  g('Grapefruit peel', 'Grapefruit', 'peel'),
   g('Lime wedge', 'Lime', 'wedge'),
   g('Lemon wheel', 'Lemon', 'wheel'),
   g('Orange wheel', 'Orange', 'wheel'),
-  g('Cherry', 'Cocktail cherry', 'each'),
   g('Olive', 'Olive', 'each'),
   g('Mint sprig', 'Mint', 'sprig'),
   g('Grated nutmeg', 'Nutmeg', 'pinch'),
@@ -307,7 +363,7 @@ export const FINISH_CHIPS: readonly FinishChip[] = [
 ];
 
 /** The units a finish line offers: on top first, then on the glass. */
-export const FINISH_UNITS = ['drop', 'dash', 'spray', 'rinse', 'float', 'each', 'peel', 'twist', 'wheel', 'sprig', 'leaf', 'slice', 'wedge', 'rim', 'pinch'] as const;
+export const FINISH_UNITS = ['drop', 'dash', 'spray', 'rinse', 'float', 'each', 'peel', 'twist', 'discard', 'wheel', 'sprig', 'leaf', 'slice', 'wedge', 'rim', 'pinch'] as const;
 
 /**
  * How a finish line starts, from its name: oils in drops (three), saline and
@@ -395,6 +451,7 @@ export function sketchLook(d: WizardDraft, barVariants: readonly string[] = [], 
     variant: d.glassVariant ?? null,
     barVariants,
     barIce,
+    build: d.iceBuild?.length ? d.iceBuild.map((l) => ({ name: l.ice.name, n: l.n, to: l.to })) : null,
   };
 }
 

@@ -10,7 +10,7 @@ import { useBestDrink, useRowScores } from '@/hooks/useBestDrink';
 import { useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
 import { useMapMoves } from '@/hooks/useMapMoves';
-import { barPins, byScore, closedPins, scorePins, venueScores, withBarOrder, withBarScores, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { barPins, byScore, closedPins, resultsCaption, scorePins, venueScores, withBarOrder, withBarScores, type DiscoverBar, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { areaFromViewport, cameraFor, cameraForArea, pinsFrom, type Camera, type MapPin, type Viewport } from '@/lib/discoverMap';
 import { namePins, searchTitle } from '@/lib/discoverMatch';
 import { areaLabel, areaParams, earlyNote, type Area } from '@/lib/nearMe';
@@ -20,7 +20,7 @@ import { MapLayers, SearchHere, type MapLayer } from './DiscoverControls';
 import { DiscoverMap } from './DiscoverMap';
 import { MapCredit } from './MapCredit';
 import { SHEET_HANDLE, useMapSheetChrome } from './mapSheetChrome';
-import { ClassicLine, resultsCaption, ResultsHead } from './ResultsHead';
+import { ClassicLine, ResultsHead } from './ResultsHead';
 import { SelectedBar } from './SelectedBar';
 
 interface DiscoverMapPaneProps {
@@ -50,6 +50,10 @@ interface DiscoverMapPaneProps {
   me?: { latitude: number; longitude: number } | null;
   /** Wide screens: the tapped pin and the layer are the screen's; the pin shows in its list rather than over the map, and searching, the sort chips sit in the list (disc-desk-search). */
   pick?: { id: string | null; onPick: (pin: MapPin | null) => void; layer?: MapLayer; onLayer: (layer: MapLayer) => void };
+  /** A bar the list is showing: its pin stays open, and the camera sits on it. */
+  opened?: string | null;
+  focus?: Camera | null;
+  onShowBar?: (barId: string | null) => void;
 }
 
 /** Stand-ins for "nothing yet" that keep the same identity between renders, so the pins aren't rebuilt. */
@@ -70,7 +74,7 @@ const SHEET_PEEK = 136;
  * asks. The camera fits the results whenever the area, drink or layer
  * changes, but never after a search of the map, so the person's view stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink: given, filter, results, onViewport, mode, top, topInset = 0, from = null, me = null, pick }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink: given, filter, results, onViewport, mode, top, topInset = 0, from = null, me = null, pick, opened = null, focus = null, onShowBar }: DiscoverMapPaneProps) {
   const ds = useDs();
   const sheetRef = useRef<BottomSheet>(null);
   const chrome = useMapSheetChrome();
@@ -102,7 +106,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   const [fit, setFit] = useState<{ key: string; camera: Camera | null } | null>(null);
   // Browsing, the list follows the map (a tapped bar stays open); a search, or anywhere, waits for "Search this area".
   const follow = !searching && area.kind !== 'anywhere';
-  const moves = useMapMoves(fit?.camera ?? null, follow, (v: Viewport) => onArea(areaFromViewport(v)));
+  const moves = useMapMoves(fit?.camera ?? null, follow, (v: Viewport) => onArea(areaFromViewport(v)), focus);
   // Drinks layer pins: the area's bars with matches, then the bars in view a tile at a time once the map moves.
   const areaBars = useDiscoverBars(area, filter, byDrinks);
   const tileBars = useTileBars(area.kind === 'anywhere' ? null : moves.settled, filter, byDrinks);
@@ -122,18 +126,21 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
     ...closedPins(results.closed ?? []),
   ];
   const [ownId, setOwnId] = useState<string | null>(null);
-  const selectedId = pick ? pick.id : ownId;
+  // A tap is what narrows the list; a hovered row lights its pin while nothing is tapped.
+  const sheetId = pick ? pick.id : ownId;
+  const selectedId = sheetId ?? opened;
   const setSelectedId = (id: string | null) => (pick ? pick.onPick(pins.find((p) => p.id === id) ?? null) : setOwnId(id));
-  const selected = pins.find((p) => p.id === selectedId) ?? null;
+  const selected = pins.find((p) => p.id === sheetId) ?? null;
   // A tapped bar's own drinks, from the server on the drinks layer (its pin may be outside the area).
   const atBar = useDiscoverList({ ...filter, area }, { barId: selected?.id, enabled: !!selected && byDrinks && !selected.closed, pageSize: 100 });
 
   // Refit when what's shown changes, not after "Search this area"; near me stays on the person.
   const nearMe = area.kind === 'point' && area.source === 'me';
   const fitting = rows.isLoading || (byDrinks && areaBars.isPlaceholderData);
-  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, !nearMe && fitting]);
+  const nearCamera = nearMe && !areaBars.isPlaceholderData ? cameraForArea(area, (areaBars.data ?? []).filter((b) => !b.closed)) : null;
+  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, nearMe ? nearCamera?.zoom : fitting]);
   if (fitKey !== null && fit?.key !== fitKey) {
-    setFit({ key: fitKey, camera: (fitting || nearMe ? null : cameraFor(byDrinks ? barPins(areaBars.data ?? []) : pins)) ?? cameraForArea(area) ?? fit?.camera ?? null });
+    setFit({ key: fitKey, camera: (fitting || nearMe ? null : cameraFor(byDrinks ? barPins(areaBars.data ?? []) : pins)) ?? nearCamera ?? cameraForArea(area) ?? fit?.camera ?? null });
     moves.reset();
   }
   useEffect(() => onViewport?.(moves.settled), [moves.settled, onViewport]);
@@ -160,16 +167,16 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   ) : drinkLayer ? (
     // Wide screens list a selected bar's drinks in its card; the phone sheet's list has them (its first in the head).
     selected && (mode === 'side' || barDrinks.length > 0) ? null : barDrinks.length ? (
-      <DrinkAtBarList key={selectedId ?? 'all'} drinks={barDrinks} limit={20} scores={shown} more={more} />
+      <DrinkAtBarList key={sheetId ?? 'all'} drinks={barDrinks} limit={20} scores={shown} more={more} onShowBar={onShowBar} />
     ) : (
       <ListNote>{`No ${byDrink ? plural(drink.name) : 'drinks'} ${areaLabel(area)} match. Move the map${follow ? '' : ' and search this area'}, or pick another style.`}</ListNote>
     )
   ) : ranked.length ? (
-    <AreaRankList rows={ranked} scoreDetail={(r) => `${r.rankers} ranked`} love />
+    <AreaRankList rows={ranked} scoreDetail={(r) => `${r.rankers} ranked`} love onShowBar={onShowBar} />
   ) : early.length ? (
     <>
       <ListNote>{earlyNote(early, MIN_RANKERS)}</ListNote>
-      <EarlyList rows={early} love />
+      <EarlyList rows={early} love onShowBar={onShowBar} />
     </>
   ) : (
     <ListNote>{`Nobody has ranked a drink at a bar ${areaLabel(area)} yet. Move the map${follow ? '' : ' and search this area'}.`}</ListNote>
@@ -186,7 +193,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
         if (id && mode === 'sheet') sheetRef.current?.snapToIndex(1);
       }}
       onViewportChange={moves.onMove}
-      camera={fit?.camera ?? null}
+      camera={moves.camera}
       scheme={ds.scheme}
       accent={ds.accentFill}
       compact={mode === 'sheet'}
@@ -227,7 +234,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
             renderItem={({ item, index }: { item: DiscoverDrink; index: number }) => (
               <>
                 {searching ? <AlsoMentions drinks={sheetDrinks} index={index} search={filter.search} /> : null}
-                <DrinkAtBarRow drink={item} scores={shown} query={filter.search} atBar={!!selected} />
+                <DrinkAtBarRow drink={item} scores={shown} query={filter.search} atBar={!!selected} onShowBar={onShowBar} />
               </>
             )}
             extraData={shown}

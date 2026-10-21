@@ -1,9 +1,11 @@
 import { useState, type ComponentRef } from 'react';
-import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
+
+import { MenuSheet } from './MenuSheet';
 
 export interface RowMenuItem {
   label: string;
@@ -24,14 +26,19 @@ export interface Anchor {
 const WIDTH = 300;
 
 /**
- * A builder row's ... menu as the canvas draws it (venue-menus-builder-desktop):
- * a small floating panel under the button, its right edge on the button's,
- * that closes on a pick, a tap outside or Escape.
+ * A builder row's ... menu. On the web, as the canvas draws it
+ * (venue-menus-builder-desktop): a small floating panel under the button, its
+ * right edge on the button's, that closes on a pick, a click outside or Escape.
+ * On phones, the same choices in a sheet (MenuSheet), as the app's other phone menus are.
  */
 export function RowMenu({ anchor, label, items, onClose }: { anchor: Anchor | null; label: string; items: RowMenuItem[]; onClose: () => void }) {
+  if (Platform.OS !== 'web') return <RowMenuSheet open={!!anchor} label={label} items={items} onClose={onClose} />;
+  return anchor ? <RowMenuPopover anchor={anchor} label={label} items={items} onClose={onClose} /> : null;
+}
+
+function RowMenuPopover({ anchor, label, items, onClose }: { anchor: Anchor; label: string; items: RowMenuItem[]; onClose: () => void }) {
   const ds = useDs();
   const { width: windowWidth } = useWindowDimensions();
-  if (!anchor) return null;
   const right = Math.max(space.sm, windowWidth - (anchor.x + anchor.width));
   const left = Math.max(space.sm, windowWidth - right - WIDTH);
   return (
@@ -48,16 +55,37 @@ export function RowMenu({ anchor, label, items, onClose }: { anchor: Anchor | nu
         ]}
       >
         {items.map((it) => (
-          <PressableScale key={it.label} role="menuitem" accessibilityLabel={it.label} onPress={it.onPress} style={styles.item}>
-            <IconSymbol name={it.icon} size={16} color={ds.c.muted} />
-            <Body style={styles.flex}>
-              {it.label}
-            </Body>
-            {it.more ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
-          </PressableScale>
+          <Item key={it.label} item={it} />
         ))}
       </View>
     </Modal>
+  );
+}
+
+function RowMenuSheet({ open, label, items, onClose }: { open: boolean; label: string; items: RowMenuItem[]; onClose: () => void }) {
+  // Mounted from its first open on, so it can slide away when closed; a row never opened carries no sheet.
+  const [used, setUsed] = useState(false);
+  if (open && !used) setUsed(true);
+  if (!used) return null;
+  return (
+    <MenuSheet visible={open} onClose={onClose} title={label} plain>
+      <View role="menu" aria-label={label}>
+        {items.map((it) => (
+          <Item key={it.label} item={it} inSheet />
+        ))}
+      </View>
+    </MenuSheet>
+  );
+}
+
+function Item({ item, inSheet }: { item: RowMenuItem; inSheet?: boolean }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="menuitem" accessibilityLabel={item.label} onPress={item.onPress} style={[styles.item, inSheet && [styles.sheetItem, { borderBottomColor: ds.c.line }]]}>
+      <IconSymbol name={item.icon} size={inSheet ? 20 : 16} color={ds.c.muted} />
+      <Body style={styles.flex}>{item.label}</Body>
+      {item.more ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
+    </PressableScale>
   );
 }
 
@@ -84,6 +112,8 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
   },
   item: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget, paddingHorizontal: space.md + 2, borderRadius: radius.control - 2 },
+  // In a sheet: full-width rows with a hairline between, as the app's other phone menus (CreateSheet).
+  sheetItem: { minHeight: 56, paddingHorizontal: 0, borderRadius: 0, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
   unplaced: { opacity: 0 },
 });

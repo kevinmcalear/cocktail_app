@@ -254,31 +254,65 @@ export function pinDescription(pin: MapPin): string {
  */
 export const CLOSE_ZOOM = 16;
 
+/** A camera on one bar, close enough that its pin writes the name. */
+export function cameraOn(at: { latitude: number; longitude: number }): Camera {
+  return { latitude: at.latitude, longitude: at.longitude, zoom: CLOSE_ZOOM };
+}
+
+/** What the map shows: the last refit (`fit`), the bar a list row is resting on (`focus`), and the camera given (`at`). */
+export interface MapAim {
+  fit: Camera | null;
+  focus: Camera | null;
+  at: Camera | null;
+}
+
+/**
+ * The camera is whichever came last, a refit or a new hover, so a hover ending
+ * never snaps the map back. `fresh`: a new hover moved it (the map's moves
+ * start again from there, so the fly isn't taken for the person panning).
+ */
+export function aimAfter(prev: MapAim, fit: Camera | null, focus: Camera | null): MapAim & { fresh: boolean } {
+  const fresh = !!focus && focus !== prev.focus;
+  return { fit, focus, at: fresh ? focus : prev.fit !== fit ? fit : prev.at, fresh };
+}
+
+let barHover: ReturnType<typeof setTimeout> | undefined;
+/** Rest the pointer before a list row moves the map. Leaving cancels it. ponytail: one timer, one Discover screen. */
+export function armBarHover(barId: string | null, go: (id: string) => void, ms = 400): void {
+  clearTimeout(barHover);
+  barHover = barId ? setTimeout(() => go(barId), ms) : undefined;
+}
+
 /**
  * How a pin looks on either map (disc-map, disc-map-opt-c): the score in mono
  * on a dark pill with a soft ring and shadow, or a dot while early; while
  * searching, its best match's picture too. The accent when selected. A closed
  * bar is muted and faded, so it reads as history, not a plan. Up close
- * (CLOSE_ZOOM, `zoom` is the map's), the bar's logo and name.
+ * (CLOSE_ZOOM, `zoom` is the map's), logos get bigger. The bar's name is only
+ * on the pin under the pointer (`selected`, or `hover` for the map itself).
  */
-export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }, zoom?: number) {
+export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; text: string }, zoom?: number, hover = false) {
   const close = !pin.top && !pin.closed && zoom !== undefined && zoom >= CLOSE_ZOOM;
-  // A pin that writes a name: a searched drink's, or up close the bar's (after its score, when it has one).
-  const named = !!pin.top || close;
+  // A pin that writes a name: a searched drink's, or the one bar being hovered.
+  const showName = close && (selected || hover);
+  const named = !!pin.top || showName;
   const label = pin.top
     ? pinName(pin.top, pin.drinks ?? 1)
-    : close
+    : showName
       ? [pin.score !== null ? formatScore(pin.score) : '', pinName(pin.name, 1)].filter(Boolean).join(' · ')
       : pinLabel(pin);
-  // Picked, a pin is a size up: a score 36 tall at 15 (disc-desk-browse), a named one 40 (disc-desk-search).
+  // Picked, a pin is a size up: a score 36 tall at 15 (disc-desk-browse), a named one 48 (disc-desk-search).
   const big = selected && !!label;
   // A searched pin (it names a drink) keeps its bar's logo when the drink has no picture; a bar with no score yet shows
   // its logo alone (pinsToDraw), and up close beside its name; score pins have none, as drawn.
   const logo = pin.image ?? (named || !label ? pin.logo : null) ?? null;
   // A named pin's picture sits 5 in from its edge (7 picked); a lone logo needs room for its 2px ring; up close, 4 in.
-  const logoSize = close ? (big ? 36 : 32) : pin.top && !big ? 22 : 26;
+  // Ten points up on the old marks (22 / 26 / 32 / 36): they were hard to tell apart on the map.
+  // Up close the logo stays the larger size even when this pin isn't the one writing its name.
+  const marked = close && (showName || !label);
+  const logoSize = marked ? (big ? 46 : 42) : pin.top && !big ? 32 : 36;
   const edge = named ? (big ? space.md + 2 : space.md) : big ? space.md : space.sm + 2;
-  const height = close ? logoSize + 2 * space.xs : pin.top ? (big ? 40 : 32) : big ? 36 : label ? 30 : logo ? logoSize + 4 : 18;
+  const height = marked ? logoSize + 2 * space.xs : pin.top ? (big ? 48 : 40) : big ? 36 : label ? 30 : logo ? logoSize + 4 : 18;
   // Scores in mono, names in Geist (disc-desk-search).
   const font: keyof typeof fontFamilies = named ? (big ? 'bodySemiBold' : 'bodyMedium') : 'monoMedium';
   return {
@@ -289,7 +323,7 @@ export function pinLook(pin: MapPin, selected: boolean, accent: { fill: string; 
     fontSize: big ? type.label.fontSize : type.caption.fontSize,
     minWidth: big && !named ? 56 : label ? 44 : height,
     height,
-    paddingLeft: label ? (logo ? (close ? space.xs - 1 : big ? space.xs + 3 : space.xs + 1) : edge) : 0,
+    paddingLeft: label ? (logo ? (showName ? space.xs - 1 : big ? space.xs + 3 : space.xs + 1) : edge) : 0,
     paddingRight: label ? edge : 0,
     gap: label && named ? space.xs + 2 : space.xs,
     borderWidth: selected && !label ? 2 : 1,
@@ -358,13 +392,30 @@ export function cameraFor(pins: readonly Pick<MapPin, 'latitude' | 'longitude'>[
 /**
  * Near me opens on the person's own neighbourhood (about 2 km across a
  * phone), not the whole 10 km the list covers; they zoom out for more.
+ * Several bars within a short walk opens at street level instead, on them.
  */
 const NEAR_ME_ZOOM = 13.5;
+const CROWD_KM = 1;
+const CROWD_BARS = 6;
 
-/** A camera for an area: near me, the person's neighbourhood; a map area, its whole circle; null for a city or anywhere. */
-export function cameraForArea(area: Area): Camera | null {
+/** True when enough bars sit within a kilometre to open near-me at street level. ponytail: a walking-radius count, not a density grid; raise CROWD_BARS if a small town opens too tight. */
+function crowded(area: { latitude: number; longitude: number }, bars: readonly { latitude: number | null; longitude: number | null }[]): boolean {
+  const cos = Math.cos((area.latitude * Math.PI) / 180);
+  const limit = CROWD_KM * CROWD_KM;
+  let n = 0;
+  for (const b of bars) {
+    if (b.latitude === null || b.longitude === null) continue;
+    const dLat = (b.latitude - area.latitude) * KM_PER_DEG;
+    const dLng = (b.longitude - area.longitude) * KM_PER_DEG * cos;
+    if (dLat * dLat + dLng * dLng <= limit && ++n >= CROWD_BARS) return true;
+  }
+  return false;
+}
+
+/** A camera for an area: near me, the person's neighbourhood (street level when it's crowded); a map area, its whole circle; null for a city or anywhere. */
+export function cameraForArea(area: Area, around: readonly { latitude: number | null; longitude: number | null }[] = []): Camera | null {
   if (area.kind !== 'point') return null;
-  if (area.source === 'me') return { latitude: area.latitude, longitude: area.longitude, zoom: NEAR_ME_ZOOM };
+  if (area.source === 'me') return { latitude: area.latitude, longitude: area.longitude, zoom: crowded(area, around) ? CLOSE_ZOOM : NEAR_ME_ZOOM };
   const dLat = area.radiusKm / KM_PER_DEG;
   return cameraFor([
     { latitude: area.latitude - dLat, longitude: area.longitude },

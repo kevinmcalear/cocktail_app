@@ -31,6 +31,15 @@ const NAMES: Record<string, string[]> = {
   'acid-adjust': ['Acid-adjusted orange juice'], saline: ['Saline', 'Salt solution'], cordial: ['Lime cordial'], shrub: ['Drinking vinegar', 'Plum shrub'], orgeat: ['Almond syrup'],
   grenadine: ['Pomegranate syrup'], 'body-syrup': ['Body syrup'], suspension: ['Suspended mint'], 'reverse-spheres': ['Campari spheres'], 'fat-powder': ['Brown butter powder'],
   'force-carbonate': ['Carbonated negroni'], 'freeze-concentrate': ['Cryo lime', 'Pineapple concentrate'], 'lacto-ferment': ['Lacto-fermented plum'], tepache: ['Tepache'],
+  'direct-spheres': ['Passion fruit caviar'], 'cocktail-jelly': ['Negroni jelly', 'Jello shots'], 'hot-foam': ['Hot cider foam'], 'fizzy-fruit': ['Fizzy grapes', 'Carbonated grapes'],
+  amazake: ['Amazake', 'Koji syrup'], 'ginger-bug': ['House ginger beer', 'Ginger bug'], 'water-kefir': ['Water kefir', 'Hibiscus water kefir'],
+  'preserved-lemons': ['Preserved lemon', 'Preserved lemon brine'], 'house-vinegar': ['House wine vinegar'], 'tomato-water': ['Tomato water', 'Cucumber water'],
+  'microwave-infusion': ['Microwaved cherry rye', 'Nuked Negroni'], 'pressure-cooker': ['Sprite syrup', 'Husk syrup'], 'caramel-syrup': ['Burnt sugar syrup', 'Caramel syrup'],
+  'charred-fruit': ['Charred pineapple syrup', 'Grilled lemon juice'], reduction: ['Port reduction', 'Boiled cider'], nixtamal: ['Nixtamalized corn'],
+  'candied-peel': ['Candied orange peel', 'House candied ginger'], 'pate-de-fruit': ['Raspberry pâte de fruit'], 'isomalt-glass': ['Sugar glass'], 'fruit-leather': ['Mango fruit leather'],
+  'fruit-powder': ['Raspberry powder'], 'flavoured-salt': ['Lime salt', 'Chile sugar'], 'barrel-aged': ['Barrel-aged Negroni'], 'oak-infusion': ['Oaked rye'],
+  liqueur: ['Nocino', 'House limoncello'], 'nut-milk': ['Pistachio milk'], 'super-juice': ['Lime super juice'], falernum: ['House falernum'], 'ginger-syrup': ['Ginger syrup'],
+  'tea-infusion': ['Jasmine tea syrup', 'Cold brew tea'], 'cold-brew-coffee': ['Cold brew concentrate'],
   kombucha: ['Ginger kombucha', 'Scoby'], 'quick-pickle': ['Cocktail onions'], 'dehydrated-citrus': ['Dried orange wheel'], smoke: ['Smoked syrup', 'Smoked maple'], rotovap: ['Hydrosol', 'Redistilled gin'],
 };
 for (const t of TECHNIQUES) {
@@ -41,7 +50,8 @@ for (const t of TECHNIQUES) {
   assert.ok(NAMES[t.id]?.length, `${t.id} has a natural name`);
   for (const n of NAMES[t.id]) assert.ok(ids(n).includes(t.id), `"${n}" reaches ${t.id}: got ${ids(n).join(', ')}`);
 }
-for (const n of ['Reverse dry shake', 'Freezer martini', 'Pacojet sorbet', 'Liquid nitrogen', 'Clear ice']) assert.deepEqual(ids(n), [], `${n} is a method, never made in house`);
+for (const n of ['Celery salt', 'Oaked chardonnay', 'Candied ginger', 'Grape jelly']) assert.deepEqual(ids(n), [], `${n} is bought, not made`);
+for (const n of ['Reverse dry shake', 'Freezer martini', 'Pacojet sorbet', 'Liquid nitrogen', 'Clear ice', 'Dry ice', 'Pasteurised eggs', 'Brûléed orange wheel']) assert.deepEqual(ids(n), [], `${n} is a method, never made in house`);
 assert.equal(techniqueById('rotovap')!.gate, 'legal', 'rotovap keeps its legal gate');
 
 // Aliases and spelling.
@@ -50,7 +60,7 @@ assert.equal(ids('Nitro coffee rum')[0], 'nitrous-infusion');
 assert.equal(ids('Coconut milk washed rum')[0], 'vegan-wash');
 assert.equal(ids('Coconut-washed rum')[0], 'fat-wash');
 assert.equal(ids('Yogurt washed gin')[0], 'milk-wash');
-assert.deepEqual(ids('Lime super juice'), [], 'super juice is a kind of prep, not acid-adjusted juice');
+assert.deepEqual(ids('Lime super juice'), ['super-juice'], 'super juice is its own technique, not acid-adjusted juice');
 assert.equal(looksMadeInHouse('Lime super juice'), true);
 
 // Ranking knows what it starts from, and what changes it.
@@ -61,7 +71,7 @@ assert.equal(ids('Grapefruit air')[0], 'lecithin-air');
 assert.ok(!ids('Grapefruit air').includes('reverse-dry-shake'));
 
 // Bought things are never preps.
-for (const n of ['Sparkling wine', 'Sparkling water', 'Angostura bitters', 'Peychaud’s bitters', 'Maple syrup', 'Monin vanilla syrup', 'Rose’s lime cordial', "Rose's cordial", 'Olive brine', 'Smoked salt', 'Olive oil']) {
+for (const n of ['Sparkling wine', 'Sparkling water', 'Angostura bitters', 'Peychaud’s bitters', 'Maple syrup', 'Monin vanilla syrup', 'Rose’s lime cordial', "Rose's cordial", 'Olive brine', 'Smoked salt', 'Olive oil', 'Velvet falernum', 'Fever-Tree ginger beer', 'Nixta']) {
   assert.deepEqual(ids(n), [], `${n} is bought`);
   assert.equal(isBoughtName(n), true, n);
   assert.equal(looksMadeInHouse(n), false, n);

@@ -22,6 +22,7 @@ assert.equal(ratioTile({ base: undefined, parts: undefined }), null);
 
 assert.equal(membersLine(['Dry shake', 'Siphon foam', 'Lecithin air']), 'Dry shake, siphon foam, lecithin air');
 assert.equal(membersLine(['A', 'B', 'C', 'D', 'E'], 2), 'A, B');
+assert.equal(membersLine(['Brûléed citrus', 'Pâte de fruit', 'CO2 rig']), 'Brûléed citrus, pâte de fruit, CO2 rig', 'accented names lower too; acronyms stay');
 // Proper names and acronyms keep their capitals.
 assert.equal(membersLine(['Clear ice', 'CO2 rig', 'iSi infusion']), 'Clear ice, CO2 rig, iSi infusion');
 

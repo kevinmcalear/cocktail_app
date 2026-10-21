@@ -122,7 +122,7 @@ describe('career history', () => {
   });
 
   test('a pending claim blocks making a second profile', async () => {
-    const claim = await users.claimant.client.from('profile_claims').insert({ profile_id: ids.unclaimed, message: 'This is me' }).select('id').single();
+    const claim = await users.claimant.client.rpc('start_person_claim', { p_profile_id: ids.unclaimed, p_note: 'This is me' });
     assert.ifError(claim.error);
     const { error } = await users.claimant.client.from('profiles').insert({
       kind: 'person',

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-nativ
 import { Caption, Title } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useSpecMatches } from '@/hooks/useSpecMatches';
-import { drinkCount, type DiscoverDrink } from '@/lib/discoverDrinks';
+import type { DiscoverDrink } from '@/lib/discoverDrinks';
 import { classicSummary } from '@/lib/discoverMatch';
 
 /** "5 bars near you pour the classic, 2 pour a variation", from the results' spec verdicts; nothing when none is a version of a classic. */
@@ -15,13 +15,8 @@ export function ClassicLine({ drinks, search, where }: { drinks: readonly Discov
   return line ? <Caption>{line}</Caption> : null;
 }
 
-/** "14 drinks at 9 bars near you" while searching, else how many bars the map shows. */
-export function resultsCaption(searching: boolean, totals: { drinks: number; bars: number } | null | undefined, where: string, pins: number): string {
-  if (searching && totals?.drinks) return `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'} ${where}`;
-  return `${pins} ${pins === 1 ? 'bar' : 'bars'} in view · tap or swipe up for the list`;
-}
-
 interface ResultsHeadProps {
+  /** Empty on wide screens with no search count: nothing is drawn. */
   caption: string;
   title: string;
   /** The layer (browsing) or sort (searching) chips. */
@@ -35,14 +30,14 @@ interface ResultsHeadProps {
 
 /** The results' head (disc-map, disc-search-map): the count, the title, the chips, then the classic line. */
 export function ResultsHead({ caption, title, chips, below, onOpen, onLayout }: ResultsHeadProps) {
-  const cap = (
+  const cap = caption ? (
     <Caption tone="muted" numberOfLines={1}>
       {caption}
     </Caption>
-  );
+  ) : null;
   return (
     <View style={styles.head} onLayout={onLayout}>
-      {onOpen ? (
+      {onOpen && cap ? (
         <Pressable role="button" accessibilityLabel={`${caption}. Show the list`} onPress={onOpen}>
           {cap}
         </Pressable>
