@@ -6,7 +6,6 @@ import {
   COLD_START_DRINKS,
   DIMENSIONS,
   distance,
-  forYou,
   level,
   matchPercent,
   matchReasons,
@@ -92,14 +91,6 @@ const drink = (id: string, profile: Profile, extra: Partial<FlavorDrink> = {}): 
   profile,
   ...extra,
 });
-
-// For you: best fit first, ranked drinks left out, no percentage in the cold start.
-const menu = [drink('Negroni', negroni), drink('Daiquiri', daiquiri), drink('Boulevardier', boulevardier), drink('Colada', colada)];
-const picks = forYou(menu, negroni, 'ranked', ['Negroni']);
-assert.deepEqual(picks.map((x) => x.id), ['Boulevardier', 'Daiquiri', 'Colada']);
-assert.ok(picks[0].match! > 80 && picks[0].reason.startsWith('Bitter and strong'));
-assert.equal(forYou(menu, { bitter: 0.8 }, 'answers', [])[0].match, null);
-assert.deepEqual(forYou(menu, {}, 'ranked', []), []);
 
 // Most creative: well-ranked drinks furthest from their classic; classics and low scores left out.
 const classics = [drink('Negroni', negroni, { isClassic: true }), drink('Daiquiri', daiquiri, { isClassic: true })];

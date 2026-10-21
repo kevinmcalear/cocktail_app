@@ -30,6 +30,8 @@ import { LockedOriginals } from './LockedOriginals';
 import { Positions } from './Positions';
 import { PublicBarActions, PublicBarHeader } from './PublicBarHeader';
 import { PublicBarFacts } from './PublicBarFacts';
+import { MenuNow } from './MenuNow';
+import { SeeYourName } from './SeeYourName';
 import { PublicMenus } from './PublicMenus';
 import { MenuCredits, OriginalsGrid } from './ProfileSections';
 
@@ -120,12 +122,15 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
         {wide ? null : facts_}
         <PublicBarActions profile={profile} signedIn={signedIn} />
       </View>
+      {signedIn ? <SeeYourName profile={profile} /> : null}
       {signedIn ? <BarMatches barProfileId={profile.id} /> : null}
       {/* Opened from a search: the menu it's pouring follows the matches (disc-search-bar). */}
       {signedIn && searched ? <OnTheMenu profileId={profile.id} /> : null}
       {wide ? (
         <View style={styles.columns}>
           <View style={styles.main}>
+            {/* Signed in, the menu on now leads, each drink with who made it (find-yourself). */}
+            {signedIn && specsLocked && drinksShown ? <MenuNow profileId={profile.id} originals={originals} details={pageShowsDescriptions(profile.page_visibility)} /> : null}
             {top}
             {theirDrinks}
             {classics}

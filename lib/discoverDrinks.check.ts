@@ -14,10 +14,12 @@ import {
   cursorAfter,
   drinkReason,
   distanceKm,
+  barsMatching,
   findBars,
   kindParams,
   kindsTitle,
   pickFilter,
+  resultsCaption,
   scorePins,
   toDiscoverBar,
   toDiscoverDrink,
@@ -114,6 +116,11 @@ assert.deepEqual(ids(findBars([nomad, dante, attaboy], 'west vil')), ['dante'], 
 assert.deepEqual(ids(findBars([nomad, dante, attaboy], 'new york')), ['attaboy', 'dante'], 'by city, A to Z');
 assert.deepEqual(findBars([dante], 'd'), [], 'one letter finds nothing');
 assert.deepEqual(ids(findBars([bar('o', 'Origin Bar', null, null, null), bar('g', 'Bar Orchard Ginza', null, null, null)], 'gin')), ['g'], 'a word must start with it');
+assert.deepEqual(
+  ids(barsMatching([bar('p', 'Pourer', null, null, null, null, 2), bar('m', 'Martini Room', null, null, null), bar('q', 'Quiet', null, null, null), bar('b', 'Big Pourer', null, null, null, null, 5)], 'martini')),
+  ['m', 'b', 'p'],
+  'searching: the bar named for it, then the bars pouring the most matches; none that pour nothing',
+);
 
 // --- pins: one per open bar with matching drinks and coordinates, most first, each once ---
 const none = bar('none', 'Dry Bar', 'New York', 40.7, -74, null, 0);
@@ -180,4 +187,15 @@ console.log('discoverDrinks: ok');
   assert.deepEqual(withoutHad(loaded, { drinks: 3, bars: 2 }, ['a', 'b', 'c']).totals, { drinks: 0, bars: 2 });
   assert.equal(withoutHad(loaded, null, ['a']).totals, null, 'no totals on a later page');
   assert.equal(withoutHad(loaded, { drinks: 3, bars: 2 }, []).drinks, loaded, 'nothing had: the same list');
+}
+
+// The results caption: the search count, else the phone sheet's line; wide screens have no sheet, so no line.
+{
+  const totals = { drinks: 14, bars: 9 };
+  assert.equal(resultsCaption(true, totals, 'near you', 0, false), '14 drinks at 9 bars near you');
+  assert.equal(resultsCaption(true, { drinks: 1, bars: 1 }, 'near you', 0), '1 drink at 1 bar near you');
+  assert.equal(resultsCaption(false, null, 'near you', 3), '3 bars in view · tap or swipe up for the list', 'phone sheet unchanged');
+  assert.equal(resultsCaption(true, { drinks: 0, bars: 0 }, 'near you', 1), '1 bar in view · tap or swipe up for the list', 'phone sheet, nothing found');
+  assert.equal(resultsCaption(true, { drinks: 0, bars: 0 }, 'near you', 0, false), '', 'wide: no "0 bars in view" over an empty search');
+  assert.equal(resultsCaption(true, null, 'near you', 0, false), '', 'wide: nothing while totals load');
 }

@@ -43,7 +43,7 @@ export function factTiles(t: Pick<Technique, 'time' | 'base' | 'parts' | 'keeps'
 export function membersLine(names: readonly string[], max = 4): string {
   return names
     .slice(0, max)
-    .map((n, i) => (i === 0 || /^[A-Z][a-z]/.test(n) === false ? n : n[0].toLowerCase() + n.slice(1)))
+    .map((n, i) => (i === 0 || /^[A-Z]\p{Ll}/u.test(n) === false ? n : n[0].toLowerCase() + n.slice(1)))
     .join(', ');
 }
 

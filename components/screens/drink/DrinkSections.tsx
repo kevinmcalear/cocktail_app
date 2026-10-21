@@ -66,6 +66,8 @@ export interface DrinkBodyProps {
   toMake: { saved: boolean; toggle: () => void };
   actions: DrinkActions;
   onRiff: (() => void) | null;
+  /** Under Make a riff: where the riff starts and what it's credited as. */
+  riffNote: string;
   /** The drink's venue, when you're on its team: "Autumn menu at Little Rye". */
   venueName: string | null;
 }
@@ -113,7 +115,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
   ) : home && signedIn && live ? (
     <AtHomeSpec item={item} lines={lines} recipes={recipes} method={method} make={make} onSwap={p.actions.made} />
   ) : (
-    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} preview={preview} caption={copy?.barName ? `With ${copy.barName}'s bottles` : null} make={make}>
+    <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} preview={preview} caption={copy?.barName ? `With ${copy.barName}'s bottles` : null} make={make} riff={p.onRiff ? { onPress: p.onRiff, note: p.riffNote } : null}>
       {method ? <Body>{method}</Body> : null}
     </SpecSection>
   );

@@ -6,21 +6,23 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Caption, RowScore } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { DrinkAtBarRow } from '@/components/screens/home/DrinksAtBars';
+import { AddBarPrompt } from '@/components/screens/home/AddBar';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useRowScores } from '@/hooks/useBestDrink';
-import { useDrinkLists, useDrinkPick } from '@/hooks/useDiscover';
+import { useBarCities, useDrinkLists, useDrinkPick } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useDrinkLines } from '@/hooks/useDrinkSources';
 import { useItemScores } from '@/hooks/useFlavor';
 import { usePublicIngredientSearch } from '@/hooks/useIngredients';
-import { usePublicPeople } from '@/hooks/useProfiles';
+import { usePublicPeople, useWaiting } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { useSpecMatches } from '@/hooks/useSpecMatches';
-import { findDrinks, foldName } from '@/lib/discover';
+import { countryName } from '@/lib/countries';
+import { findCities, findDrinks, foldName, type City } from '@/lib/discover';
 import { barInArea, distanceKm, findBars, type DiscoverBar } from '@/lib/discoverDrinks';
 import { isStrong } from '@/lib/discoverMatch';
 import { findKinds, kindCaption, STYLES } from '@/lib/drinkStyles';
@@ -33,7 +35,7 @@ import { foldIntoClassics, gatherVariations } from '@/lib/servedAt';
 import { capitalize } from '@/lib/stringUtils';
 
 import { BrowseChips, ClassicRow, StyleCard } from './ClassicRow';
-import { BarResultRow, ResultGroup, ResultRow } from './ResultRows';
+import { BarResultRow, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
@@ -57,16 +59,23 @@ interface PublicResultsProps {
   onCounts?: (counts: ShowCounts) => void;
   /** The search tab: finishes the typed word, and puts a classic named that first as a Top hit. */
   typeAhead?: (query: string) => void;
+  /** Discover: shown when this search finds nothing. */
+  onAddBar?: () => void;
+  /** Discover: hovering a bar or its drink opens that bar on the map. */
+  onShowBar?: (barId: string | null) => void;
+  /** Discover: a city the search names moves the area there. Elsewhere it opens Discover on it. */
+  onPlace?: (city: City) => void;
 }
 
 /**
- * Bars and the drinks they pour, here or everywhere. Everywhere adds the
- * bartenders, the classics (each with its bars' variations gathered under
+ * Bars, bartenders and the drinks bars pour, here or everywhere; bar and
+ * person rows say what is credited there and whether it's claimed
+ * (find-yourself). Everywhere adds the classics (each with its bars' variations gathered under
  * it), your own drinks at home, and the ingredients. Every drink and bar row
  * ends with its score (b02) and lights the searched word. Bars' drinks need
  * an account; the rest is public.
  */
-export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, onCounts, typeAhead }: PublicResultsProps) {
+export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, onCounts, typeAhead, onAddBar, onShowBar, onPlace }: PublicResultsProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const q = query.trim();
@@ -79,10 +88,15 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   // The search page's bar rows count what the search matched and what's on now ("Fitzroy · 14 drinks on now").
   const { data: searchedBars } = useDiscoverBars(area ?? ANYWHERE, { kinds, search: q, onNow: true }, signedIn && !onKind && q.length > 1);
   const { data: publicBars } = usePublicBars(everywhere && !signedIn ? q : '');
-  const { data: people } = usePublicPeople(everywhere ? q : '');
+  // People show in every scope: a bartender is found by name, wherever you search (find-yourself).
+  const { data: people } = usePublicPeople(q);
   const { data: classicList } = useDrinkLists();
   const { data: ingredientHits } = usePublicIngredientSearch(everywhere ? q : '');
   const pick = useDrinkPick(q);
+  // Places first, as a map search reads them: "New York" is the city before any bar called New York (Kevin, 16 Oct).
+  const { data: cities } = useBarCities();
+  const places = useMemo(() => (cities ? findCities(cities, q) : []), [cities, q]);
+  const openPlace = (c: City) => (onPlace ? onPlace(c) : router.push({ pathname: '/discover', params: { city: c.city, cc: c.country_code } }));
   const scores = useRowScores(results.drinks, area ?? ANYWHERE, signedIn);
   // At home, Everywhere also finds your own drinks.
   const catalog = useSearchCatalog(everywhere && atHome && signedIn && mine ? mine.contextIds : NO_IDS);
@@ -106,6 +120,11 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       drinks: 0,
     }));
   }, [signedIn, area, searchedBars, results.bars, publicBars, q]);
+  // ponytail: past 100 bars (four pages of rows) the tags stop; a longer list would page these too.
+  const { data: waiting } = useWaiting(
+    bars.slice(0, 100).map((b) => b.id),
+    (people ?? []).map((p) => p.id)
+  );
   const classics = useMemo(() => (everywhere && classicList ? findDrinks(classicList, q) : []), [everywhere, classicList, q]);
   const ingredients = useMemo(() => (everywhere && ingredientHits ? findDrinks(ingredientHits, q) : []), [everywhere, ingredientHits, q]);
   // A bar's copy of a classic in these results folds into it ("served at 7 bars"); its variations gather under it.
@@ -119,7 +138,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const { data: lines } = useDrinkLines(shownClassics);
   const { data: ownScores } = useItemScores([...shownClassics, ...yours.slice(0, 20).map((i) => i.id)]);
 
-  const found = drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length + yours.length;
+  const found = (shows(show, 'bars') ? places.length : 0) + drinks.length + bars.length + (people?.length ?? 0) + classics.length + ingredients.length + yours.length;
   const countKey = JSON.stringify({ drinks: drinks.length + classics.length + yours.length, bars: bars.length, people: people?.length ?? 0, ingredients: ingredients.length });
   useEffect(() => {
     onCounts?.(JSON.parse(countKey) as ShowCounts);
@@ -135,22 +154,40 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   const away = (b: DiscoverBar) => (area?.kind === 'point' && b.latitude !== null && b.longitude !== null ? formatDistance(distanceKm(area, { latitude: b.latitude, longitude: b.longitude }), miles) : null);
 
   const drinkGroup = (label: string, list: typeof drinks) => (
-    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} />} />
+    <ResultGroup key={label} label={label} items={list} render={(d) => <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={q} matchLook={look} everywhere={everywhere && !onKind} onShowBar={onShowBar} />} />
   );
   const barGroup = (
     <ResultGroup
       key="bars"
       label={`Bars ${area ? where : ''}`.trim()}
       items={bars}
-      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} query={q} matchLook={look} />}
+      render={(b) => <BarResultRow key={b.id} bar={b} score={scores.bars[b.id]?.score} away={away(b)} waiting={waiting?.[b.id]} query={q} matchLook={look} onShowBar={onShowBar} />}
+    />
+  );
+  const placeGroup = (
+    <ResultGroup
+      key="places"
+      label="Places"
+      items={places}
+      render={(c) => (
+        <ResultRow
+          key={`${c.city}|${c.country_code}`}
+          title={c.label}
+          caption={`${countryName(c.country_code)} · ${c.bars} ${c.bars === 1 ? 'bar' : 'bars'}`}
+          icon="mappin.and.ellipse"
+          query={q}
+          matchLook={look}
+          onPress={() => openPlace(c)}
+        />
+      )}
     />
   );
   const peopleGroup = (
     <ResultGroup
       key="people"
       label="People"
-      items={everywhere ? (people ?? []) : []}
-      render={(p) => <ResultRow key={p.id} title={p.display_name} caption={p.job ?? p.city ?? undefined} avatar={{ uri: null }} query={q} matchLook={look} onPress={() => router.push(`/p/${p.handle || p.id}`)} />}
+      items={people ?? []}
+      render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={q} matchLook={look} />}
     />
   );
   const classicGroup = (
@@ -158,7 +195,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       key="classics"
       label="Classics"
       items={top ? classics.filter((c) => c !== top) : classics}
-      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} />}
+      render={(d) => <ClassicRow key={d.id} classic={d} line={lines?.[d.id]} served={servedBy[d.id]} variations={variations[d.id]} matches={matches} score={ownScores?.[d.id]} scores={scores} query={q} matchLook={look} onShowBar={onShowBar} />}
     />
   );
   const yoursGroup = (
@@ -193,14 +230,17 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   // Each door's order, as its board draws it.
   let groups: ReactNode[];
   if (onKind && area) {
-    // Discover: named, then riffs, then the weaker matches, then the bars (disc-search-typing).
+    // Discover: named, then riffs, then the weaker matches, then the bars (disc-search-typing), then people (find-yourself).
     const word = capitalize(q.toLowerCase());
-    groups = [drinkGroup(`Named ${word}`, strong.filter((d) => d.match?.kind !== 'riff')), drinkGroup(`Riffs on a ${word}`, strong.filter((d) => d.match?.kind === 'riff')), alsoGroup, barGroup];
+    groups = [drinkGroup(`Named ${word}`, strong.filter((d) => d.match?.kind !== 'riff')), drinkGroup(`Riffs on a ${word}`, strong.filter((d) => d.match?.kind === 'riff')), alsoGroup, barGroup, peopleGroup];
   } else if (atHome) {
     groups = [barGroup, peopleGroup, drinkGroup(`Drinks ${area ? where : 'at bars'}`, strong), classicGroup, yoursGroup, alsoGroup, ingredientGroup];
   } else {
     groups = [classicGroup, drinkGroup(`Drinks ${area ? where : 'at bars'}`, strong), alsoGroup, barGroup, peopleGroup, ingredientGroup];
   }
+
+  // A bar named what's typed ("Black Pearl") leads, ahead of drinks that only mention it.
+  if (bars[0] && foldName(bars[0].name).startsWith(foldName(q))) groups = [barGroup, ...groups.filter((g) => g !== barGroup)];
 
   // The type chips narrow the groups to one kind.
   const kindOf: Record<string, 'bars' | 'people' | 'ingredients'> = { bars: 'bars', people: 'people', ingredients: 'ingredients' };
@@ -209,6 +249,8 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   return (
     <View style={styles.results}>
       {typeAhead ? <Completions query={q} names={finish} onPick={typeAhead} /> : null}
+      {/* A place the search names leads everything, as a map search reads it. */}
+      {shows(show, 'bars') ? placeGroup : null}
       {top ? (
         <TopHit
           name={top.name}
@@ -233,6 +275,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
       {shown}
       {!found && signedIn ? <Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption> : null}
+      {!found && signedIn && !results.isLoading && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}
       {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
     </View>
   );

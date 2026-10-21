@@ -259,39 +259,6 @@ export interface FlavorDrink {
   profile: Profile;
 }
 
-export interface Pick extends FlavorDrink {
-  /** 0 to 100; null in the cold start. */
-  match: number | null;
-  reason: string;
-}
-
-/**
- * "For you": the drinks that fit your taste best, leaving out ones you've
- * ranked. `baseline` is the average drink (flavor_baseline); without one, the
- * average of `drinks`.
- */
-export function forYou(
-  drinks: readonly FlavorDrink[],
-  taste: Taste,
-  basis: TasteBasis,
-  ranked: readonly string[],
-  limit = 10,
-  baseline: Profile | null = meanProfile(drinks.map((d) => d.profile))
-): Pick[] {
-  if (!dimsIn(taste).length) return [];
-  const skip = new Set(ranked);
-  return drinks
-    .filter((d) => !skip.has(d.id))
-    .map((d) => ({ d, gap: distance(taste, d.profile) }))
-    .sort((a, b) => a.gap - b.gap || a.d.name.localeCompare(b.d.name))
-    .slice(0, limit)
-    .map(({ d }) => ({
-      ...d,
-      match: basis === 'ranked' ? matchPercent(taste, d.profile) : null,
-      reason: matchReasons(taste, d.profile, basis, baseline),
-    }));
-}
-
 /** The lowest public score a drink needs to count as "well ranked" for Most creative. */
 export const CREATIVE_MIN_SCORE = 7;
 

@@ -1,35 +1,18 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Field, Tag } from '@/components/ds';
+import { Button, Caption, Tag } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
-import { useClaimProfile, useMyClaims, type Profile } from '@/hooks/useProfiles';
-
-import { CLAIM_PAST_JOBS } from './PastJobs';
-
-/** Postgres errors from the claim insert, in words. */
-function claimError(error: unknown): string {
-  const code = (error as { code?: string } | null)?.code;
-  if (code === '23505') return 'You already have a claim waiting on this profile.';
-  if (code === '42501') return "You can't claim this profile. It may have been claimed already.";
-  if (code === 'P0001') return (error as { message: string }).message;
-  return "Couldn't send your claim. Check your connection and try again.";
-}
+import { useMyClaims, type Profile } from '@/hooks/useProfiles';
 
 /**
- * "Claim this profile". A bar's or maker's page goes to its own claim screen
- * (/p/<id>/claim), where the venue team proves it's theirs. A person asks to take
- * over an unclaimed profile with a note a moderator checks on
- * /p/review-claims.
+ * "Claim this page" on a bar's, maker's or supplier's page, or where its
+ * claim stands. It goes to its own claim screen (/p/<id>/claim), or for a
+ * bar to step 2 of venue setup, where the team proves it's theirs. A person's
+ * page has This is me instead (ThisIsMe).
  */
 export function ClaimProfile({ profile, label = 'Claim this profile' }: { profile: Profile; label?: string }) {
-  return profile.kind === 'person' ? <ClaimPerson profile={profile} label={label} /> : <ClaimBar profile={profile} label={label} />;
-}
-
-/** Where a bar's claim stands, and the way into the claim screen. */
-function ClaimBar({ profile, label }: { profile: Profile; label: string }) {
   const router = useRouter();
   const userId = useUserId();
   const { data: claims } = useMyClaims(profile.id);
@@ -65,75 +48,6 @@ function ClaimBar({ profile, label }: { profile: Profile; label: string }) {
   );
 }
 
-function ClaimPerson({ profile, label }: { profile: Profile; label: string }) {
-  const userId = useUserId();
-  const { data: claims } = useMyClaims(profile.id);
-  const claim = useClaimProfile();
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState('');
-
-  if (!userId) return null;
-  const latest = claims?.[0];
-  if (latest?.status === 'pending') {
-    return (
-      <View style={styles.box} role="status">
-        <Tag label="Claim sent" />
-        <Caption tone="muted">A moderator will check it and hand the profile over once it’s approved.</Caption>
-      </View>
-    );
-  }
-
-  if (!open) {
-    return (
-      <View style={styles.box}>
-        {latest?.status === 'rejected' ? (
-          <Caption tone="muted">{latest.decline_reason ?? 'Your last claim wasn’t approved. You can try again with more detail.'}</Caption>
-        ) : null}
-        <Button
-          label={label}
-          variant="secondary"
-          icon="checkmark"
-          accessibilityHint="Ask to take over this profile as yours"
-          onPress={() => setOpen(true)}
-          style={styles.hug}
-        />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.box}>
-      <Body>{`Is this you? Claim ${profile.display_name} as your profile.`}</Body>
-      <Field
-        label="How can a moderator check it's you?"
-        hint="A link to your Instagram, website or a press piece helps."
-        value={message}
-        onChangeText={setMessage}
-        multiline
-        numberOfLines={3}
-        maxLength={1000}
-      />
-      <Caption tone="muted">{CLAIM_PAST_JOBS}</Caption>
-      {claim.error ? (
-        <Caption tone="accent" role="alert">
-          {claimError(claim.error)}
-        </Caption>
-      ) : null}
-      <View style={styles.actions}>
-        <Button
-          label={claim.isPending ? 'Sending…' : 'Send claim'}
-          disabled={claim.isPending}
-          onPress={() => claim.mutate({ profile_id: profile.id, message })}
-        />
-        <Button label="Cancel" variant="ghost" onPress={() => setOpen(false)} />
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  box: { gap: space.sm },
   centered: { gap: space.sm, alignItems: 'center' },
-  hug: { alignSelf: 'flex-start' },
-  actions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
 });

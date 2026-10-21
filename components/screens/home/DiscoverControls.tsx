@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, space } from '@/constants/tokens';
+import { layout, radius, space } from '@/constants/tokens';
 import type { Area } from '@/lib/nearMe';
 
 /** What the area chip says: "Near me", "London", "This area", "Anywhere". */
@@ -47,14 +47,18 @@ export function SearchPill({ query, placeholder, label = placeholder, onOpen, on
 function RowButton({ icon, label, a11y, active, onPress }: { icon: IconName; label: string; a11y: string; active: boolean; onPress: () => void }) {
   const ds = useDs();
   const ink = active ? ds.c.ground : ds.c.ink;
+  const face = (
+    <>
+      <IconSymbol name={icon} size={16} color={ink} />
+      <Caption numberOfLines={1} color={ink} style={styles.shrink}>
+        {label}
+      </Caption>
+    </>
+  );
+  // On, a solid ink pill. Glass tint leaves the dark scheme's blur under the text, so the label goes dark on dark.
   return (
     <PressableScale accessibilityLabel={a11y} onPress={onPress} style={styles.buttonWrap}>
-      <GlassSurface interactive tint={active ? ds.c.ink : undefined} style={styles.button}>
-        <IconSymbol name={icon} size={16} color={ink} />
-        <Caption numberOfLines={1} color={ink} style={styles.shrink}>
-          {label}
-        </Caption>
-      </GlassSurface>
+      {active ? <View style={[styles.button, { backgroundColor: ds.c.ink }]}>{face}</View> : <GlassSurface interactive style={styles.button}>{face}</GlassSurface>}
     </PressableScale>
   );
 }
@@ -143,5 +147,5 @@ const styles = StyleSheet.create({
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   buttonWrap: { maxWidth: 200 },
-  button: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: layout.minTapTarget, paddingHorizontal: space.md + 2 },
+  button: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: layout.minTapTarget, paddingHorizontal: space.md + 2, borderRadius: radius.pill, borderCurve: 'continuous' },
 });

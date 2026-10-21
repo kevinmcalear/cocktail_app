@@ -9,13 +9,12 @@ import { fontFamilies, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useProfileMade, useSetMadeShown } from '@/hooks/useMade';
 import { useMyProfile } from '@/hooks/useMyProfile';
-import { isUnclaimed, useMenuCredits, useProfileAwards, useProfileNameCredits, useProfileOriginals, useProfilePicks, useProfilePositions, useWorkedMenus, type Profile } from '@/hooks/useProfiles';
+import { useMenuCredits, useProfileAwards, useProfileNameCredits, useProfileOriginals, useProfilePicks, useProfilePositions, useWorkedMenus, type Profile } from '@/hooks/useProfiles';
 import { useProfileBars, useProfileDrinks } from '@/hooks/useRankings';
 import { hadStats, topFour } from '@/lib/hadDrinks';
 import { plural } from '@/lib/menus';
 import { barsCrediting, personTabs, pickedShown, profileLine } from '@/lib/profiles';
 
-import { ClaimProfile } from './ClaimProfile';
 import { SharedDrinks } from './HadDrinks';
 import { PersonAwards } from './PersonAwards';
 import { Positions } from './Positions';
@@ -45,7 +44,7 @@ function AwardsChip({ count }: { count: number }) {
 }
 
 /**
- * Someone else's profile (ppl-person): who they are, their numbers, top four,
+ * Someone else's claimed profile (ppl-person; an unclaimed one is UnclaimedPerson): who they are, their numbers, top four,
  * where they work and worked, their awards, the menus their drinks are on,
  * then what they've had, their bars and their originals, each only as they
  * show it (or, to them, everything with a note).
@@ -96,7 +95,6 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
           {originals.length > 0 && showsMade ? <Tag label="Creator" /> : null}
           {onMenus && showsMade ? <Tag label={`Credited on ${onMenus} bar ${onMenus === 1 ? 'menu' : 'menus'}`} /> : null}
           {awards.length ? <AwardsChip count={awards.length} /> : null}
-          {isUnclaimed(profile) ? <Tag label="Not claimed yet" /> : null}
           {profile.is_public ? null : <Tag label="Private" />}
         </View>
         {profile.bio ? <Body align="center">{profile.bio}</Body> : null}
@@ -110,8 +108,6 @@ export function PersonProfile({ profile, columns }: { profile: Profile; columns:
       </Stats>
 
       {had.data ? <TopFour slots={fourSlots(topFour(had.data))} /> : null}
-
-      {isUnclaimed(profile) ? <ClaimProfile profile={profile} /> : null}
 
       <Positions profile={profile} />
 
