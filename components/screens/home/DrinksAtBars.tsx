@@ -2,7 +2,7 @@ import { getLocales } from 'expo-localization';
 import { createContext, useContext, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, RowScore, Segmented, scoreWords as rowScoreWords, type MatchTextProps } from '@/components/ds';
+import { Caption, DsText, Headline, PressableScale, RowScore, Segmented, scoreWords as rowScoreWords, useDs, type MatchTextProps } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { DiscoverShelves } from '@/components/screens/home/DiscoverShelves';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
@@ -11,7 +11,7 @@ import { useRowScores } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
 import { useDiscoverShelves } from '@/hooks/useDiscoverShelves';
 import { useVersionLabel } from '@/hooks/useSpecMatches';
-import { drinkCount, drinkReason, type BarScore, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { drinkReason, type BarScore, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { isStrong } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
 import { formatDistance, usesMiles, type Area } from '@/lib/nearMe';
@@ -65,7 +65,7 @@ export const BarAway = createContext<(barId: string) => string | null>(() => nul
  * aren't repeated. `everywhere`: search's Everywhere, which puts why it
  * matched ("Riff on a Negroni") on its own line, the word lit (nav-search-everywhere).
  */
-export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false, everywhere = false, onPress }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean; everywhere?: boolean; onPress?: () => void }) {
+export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atBar = false, everywhere = false, onPress, onShowBar }: { drink: DiscoverDrink; scores?: DrinkScores; query?: string; matchLook?: MatchTextProps['look']; atBar?: boolean; everywhere?: boolean; onPress?: () => void; /** Hovering opens this bar on the map. */ onShowBar?: (barId: string | null) => void }) {
   const bar = d.bar;
   const version = useVersionLabel(d.id);
   const near = useContext(BarAway)(d.barId);
@@ -95,6 +95,8 @@ export function DrinkAtBarRow({ drink: d, scores, query, matchLook = 'tint', atB
       query={query}
       matchLook={matchLook}
       label={said ? [d.name, caption, everywhere ? d.why : null, d.menu.past, said].filter(Boolean).join('. ') : undefined}
+      onHoverIn={onShowBar ? () => onShowBar(d.barId) : undefined}
+      onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
     />
   );
 }
@@ -116,7 +118,8 @@ export function AlsoMentions({ drinks, index, search }: { drinks: readonly Disco
  * the server's next page (`more`). Phones' Discover sheet virtualizes its
  * rows instead (DiscoverMapPane, with DrinkAtBarRow).
  */
-export function DrinkAtBarList({ drinks, limit = 8, scores, more, query, onOpen }: { drinks: DiscoverDrink[]; limit?: number; scores?: DrinkScores; more?: MoreDrinks; /** The searched words, lit in each row. */ query?: string; /** A row opens here instead of its page (wide Discover's search). */ onOpen?: (d: DiscoverDrink) => void }) {
+export function DrinkAtBarList({ drinks, limit = 8, scores, more, query, onOpen, onShowBar }: { drinks: DiscoverDrink[]; limit?: number; scores?: DrinkScores; more?: MoreDrinks; /** The searched words, lit in each row. */ query?: string; /** A row opens here instead of its page (wide Discover's search). */ onOpen?: (d: DiscoverDrink) => void; /** Hovering a row opens its bar on the map. */ onShowBar?: (barId: string | null) => void }) {
+  const ds = useDs();
   const [count, setCount] = useState(limit);
   const shown = drinks.slice(0, count);
   const total = Math.max(more?.total ?? drinks.length, drinks.length);
@@ -129,12 +132,14 @@ export function DrinkAtBarList({ drinks, limit = 8, scores, more, query, onOpen 
   return (
     <View role="list">
       {shown.map((d) => (
-        <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={query} onPress={onOpen ? () => onOpen(d) : undefined} />
+        <DrinkAtBarRow key={d.id} drink={d} scores={scores} query={query} onPress={onOpen ? () => onOpen(d) : undefined} onShowBar={onShowBar} />
       ))}
       {next > 0 ? (
-        <View style={styles.more}>
-          <Button label={more?.loading && shown.length >= drinks.length ? 'Loading…' : `Show ${next} more of ${total}`} variant="ghost" onPress={showMore} />
-        </View>
+        <PressableScale hitSlop={12} onPress={showMore} style={styles.more}>
+          <DsText variant="caption" color={ds.accentText}>
+            {more?.loading && shown.length >= drinks.length ? 'Loading…' : `Show ${next} more of ${total}`}
+          </DsText>
+        </PressableScale>
       ) : null}
     </View>
   );
@@ -143,8 +148,6 @@ export function DrinkAtBarList({ drinks, limit = 8, scores, more, query, onOpen 
 interface DrinksHereProps {
   title: string;
   drinks: DiscoverDrink[];
-  /** How many in all, at how many bars (the first page says). */
-  totals: { drinks: number; bars: number } | null;
   more: MoreDrinks;
   isLoading: boolean;
   signedIn: boolean;
@@ -156,6 +159,8 @@ interface DrinksHereProps {
   near?: { filter: DrinkFilter; from: { latitude: number; longitude: number } | null; onNow: boolean };
   /** A shelf's See all: list just that kind. */
   onKind?: (kind: string) => void;
+  /** A shelf card under the pointer: open that bar on the map. */
+  onShowBar?: (barId: string | null) => void;
 }
 
 const SORTS = [
@@ -164,12 +169,11 @@ const SORTS = [
 ] as const;
 
 /**
- * "Martinis near you": the drinks at bars that match, with how many bars pour
- * them; mixed a bar at a time, or Nearest (option A, Kevin 15 Oct). Browsing
- * on now with no filter, shelves come first and this reads "All drinks near
- * you" (option B, Kevin 15 Oct).
+ * "Martinis near you": the drinks at bars that match, mixed a bar at a time,
+ * or Nearest (option A, Kevin 15 Oct). Browsing on now with no filter, shelves
+ * come first and this reads "All drinks near you" (option B, Kevin 15 Oct).
  */
-export function DrinksHere({ title, drinks: mixed, totals, more: mixedMore, isLoading: mixedLoading, signedIn, empty, area, near, onKind }: DrinksHereProps) {
+export function DrinksHere({ title, drinks: mixed, more: mixedMore, isLoading: mixedLoading, signedIn, empty, area, near, onKind, onShowBar }: DrinksHereProps) {
   const [sort, setSort] = useState<'mixed' | 'nearest'>('mixed');
   const nearest = sort === 'nearest' && !!near?.from;
   const closest = useDiscoverList(near?.filter ?? { kinds: [], search: '', area }, { from: near?.from ?? null, onNow: near?.onNow, enabled: nearest });
@@ -183,12 +187,11 @@ export function DrinksHere({ title, drinks: mixed, totals, more: mixedMore, isLo
   if (!signedIn) body = <ListNote>Sign in to see the drinks bars pour.</ListNote>;
   else if (isLoading) body = <ListNote>Loading…</ListNote>;
   else if (!drinks.length) body = <ListNote>{empty}</ListNote>;
-  else body = <DrinkAtBarList drinks={drinks} more={more} scores={scores} />;
+  else body = <DrinkAtBarList drinks={drinks} more={more} scores={scores} onShowBar={onShowBar} />;
   return (
     <>
-      <DiscoverShelves shelves={shelves} onKind={onKind} />
+      <DiscoverShelves shelves={shelves} onKind={onKind} onShowBar={onShowBar} />
       <View style={styles.section}>
-        <Caption tone="muted">{totals?.drinks ? `${drinkCount(totals.drinks)} at ${totals.bars} ${totals.bars === 1 ? 'bar' : 'bars'}` : 'At bars'}</Caption>
         <View style={styles.head}>
           <Headline role="heading" style={styles.title}>
             {shelves.length ? title.replace(/^Drinks/, 'All drinks') : title}

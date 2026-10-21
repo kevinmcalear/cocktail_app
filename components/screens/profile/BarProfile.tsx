@@ -24,9 +24,11 @@ import { BarFactsList, BarYours, useYouHere } from './BarYours';
 import { Awards, MenuHistory } from './BarRecord';
 import { ClaimProfile } from './ClaimProfile';
 import { LockedOriginals } from './LockedOriginals';
+import { MenuNow } from './MenuNow';
 import { Positions } from './Positions';
 import { BarHeader, BarStats, MenuCredits, OriginalsGrid } from './ProfileSections';
 import { PublicBarFacts } from './PublicBarFacts';
+import { SeeYourName } from './SeeYourName';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'people';
 /** A bar's page leads with its menus. */
@@ -91,6 +93,8 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
           )
         }
       />
+      {/* Your name may be on its drinks: the credits below open your page (find-yourself). */}
+      <SeeYourName profile={profile} />
       {/* Hours, the address and Instagram, then Directions, Call and Website three across (b32: claimed or not), and where the hours came from. */}
       <PublicBarFacts profileId={profile.id} instagram={profile.instagram} />
 
@@ -111,7 +115,11 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
 
       <Segmented accessibilityLabel="Bar sections" stretch accent options={drinksShown ? TABS : PEOPLE_ONLY} value={shownTab} onChange={setTab} />
       {shownTab === 'menus' ? (
-        <MenuHistory profileId={profile.id} name={profile.display_name} />
+        <View style={styles.tab}>
+          {/* The menu on now, each drink with who made it, while the specs stay with the bar (find-yourself). */}
+          {specsLocked ? <MenuNow profileId={profile.id} originals={originals} details={pageShowsDescriptions(profile.page_visibility)} /> : null}
+          <MenuHistory profileId={profile.id} name={profile.display_name} />
+        </View>
       ) : shownTab === 'originals' ? (
         isLoading ? (
           <Caption tone="muted">Loading drinks…</Caption>
