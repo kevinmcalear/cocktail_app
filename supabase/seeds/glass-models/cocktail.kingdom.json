@@ -1,0 +1,718 @@
+{
+ "maker": "cocktail.kingdom",
+ "models": [
+  {
+   "name": "Leopold Mini Coupe",
+   "series": "Leopold",
+   "designer": null,
+   "model_code": "GLA-LEOCP375",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 113,
+   "capacity_as_stated": "3.75oz (112.5ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/leopold-tasting-coupe-375oz-1125ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/leopold-tasting-coupe-375oz-1125ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Leopold Coupe Glass 6oz",
+   "series": "Leopold",
+   "designer": null,
+   "model_code": "GLA-LEOCP6",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 180,
+   "capacity_as_stated": "6oz (180ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/leopold-coupe-glass-gold-trim-6oz-180ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/leopold-coupe-glass-gold-trim-6oz-180ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Leopold Coupe Glass 7.5oz",
+   "series": "Leopold",
+   "designer": null,
+   "model_code": "GLA-LEOCP75",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 225,
+   "capacity_as_stated": "7.5oz (225ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/leopold-coupe-glass-75oz-225ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/leopold-coupe-glass-75oz-225ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Leopold Acrylic Coupe",
+   "series": "Leopold",
+   "designer": null,
+   "model_code": "GLA-LEOCP7ACR",
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 207,
+   "capacity_as_stated": "7oz (207ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://cocktailkingdom.com/products/leopold-acrylic-coupe-7oz-207ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/leopold-acrylic-coupe-7oz-207ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Acrylic Beatrice Coupe",
+   "series": "Beatrice",
+   "designer": null,
+   "model_code": "GLA-BEACP7ACR",
+   "glass": "coupe",
+   "variant": "coupe_deep",
+   "capacity_ml": 207,
+   "capacity_as_stated": "7oz (207ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://cocktailkingdom.com/products/acrylic-beatrice-coupe-7oz-207oz-acrylic-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/acrylic-beatrice-coupe-7oz-207oz-acrylic-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Nick and Nora Glass",
+   "series": "Nick and Nora",
+   "designer": null,
+   "model_code": "GLA-NCK5",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 150,
+   "capacity_as_stated": "5oz (150ml)",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/nick-and-nora-glass-5oz-150ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/nick-and-nora-glass-5oz-150ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Acrylic Nick and Nora Glass",
+   "series": "Nick and Nora",
+   "designer": null,
+   "model_code": "GLA-NCK5ACR",
+   "glass": "nick",
+   "variant": "nick_bell",
+   "capacity_ml": 150,
+   "capacity_as_stated": "5oz (150ml)",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://cocktailkingdom.com/products/acrylic-nick-and-nora-glass-5oz-150ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/acrylic-nick-and-nora-glass-5oz-150ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Sterling Slim Glass",
+   "series": "Sterling Slim",
+   "designer": null,
+   "model_code": "GLA-SMAR5",
+   "glass": "martini",
+   "variant": "martini_classic",
+   "capacity_ml": 150,
+   "capacity_as_stated": "5oz (150ml)",
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/sterling-slim-glass-5oz-150ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/sterling-slim-glass-5oz-150ml-6-pack"
+   ]
+  },
+  {
+   "name": "Cordial Cocktail Glass",
+   "series": "David Wondrich",
+   "designer": null,
+   "model_code": "WON-GLA-GRG03",
+   "glass": "martini",
+   "variant": "martini_pony",
+   "capacity_ml": 90,
+   "capacity_as_stated": "3oz (90ml)",
+   "height_mm": 132,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/georgian-punch-glasses-3oz-90ml-4-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/georgian-punch-glasses-3oz-90ml-4-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Yarai Rocks Glass",
+   "series": "Yarai",
+   "designer": null,
+   "model_code": "GLA-YARRCK75",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 225,
+   "capacity_as_stated": "7.5oz (225ml)",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/yarai-rocks-glass-75oz-225ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/yarai-rocks-glass-75oz-225ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Kiruto Rocks Glass",
+   "series": "Kiruto",
+   "designer": null,
+   "model_code": "GLA-KIRRCK75",
+   "glass": "rocks",
+   "variant": "rocks_straight",
+   "capacity_ml": 225,
+   "capacity_as_stated": "7.5oz (225ml)",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/kiruto-rocks-glass-75oz-225ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/kiruto-rocks-glass-75oz-225ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Yarai Nesting Rocks Glass",
+   "series": "Yarai",
+   "designer": null,
+   "model_code": "GLA-YARRCK-STK6",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 180,
+   "capacity_as_stated": "6oz (180ml)",
+   "height_mm": 76,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/yarai-stackable-rocks-glass-6oz-180ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/yarai-stackable-rocks-glass-6oz-180ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Kiruto Nesting Rocks Glass",
+   "series": "Kiruto",
+   "designer": null,
+   "model_code": "GLA-KIRRCK-STK6",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 180,
+   "capacity_as_stated": "6oz (180ml)",
+   "height_mm": 76,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/kiruto-stackable-rocks-glass-6oz-180ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/kiruto-stackable-rocks-glass-6oz-180ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Yarai Nesting Double Rocks Glass",
+   "series": "Yarai",
+   "designer": null,
+   "model_code": "GLA-YARRCK10",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 295,
+   "capacity_as_stated": "10oz (295ml)",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/yarai-stackable-double-rocks-glass-10oz-295ml-stackable-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/yarai-stackable-double-rocks-glass-10oz-295ml-stackable-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Kiruto Nesting Double Rocks Glass",
+   "series": "Kiruto",
+   "designer": null,
+   "model_code": "GLA-KIRRCK10",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 295,
+   "capacity_as_stated": "10oz (295ml)",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/kiruto-stackable-double-rocks-glass-10oz-295ml-stackable-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/kiruto-stackable-double-rocks-glass-10oz-295ml-stackable-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Yarai Acrylic Nesting Double Rocks Glass",
+   "series": "Yarai",
+   "designer": null,
+   "model_code": "GLA-YARRCK10ACR",
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 295,
+   "capacity_as_stated": "10oz (295ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://cocktailkingdom.com/products/acrylic-yarai-stackable-double-rocks-glass-10oz-295ml-acrylic-stackable-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/acrylic-yarai-stackable-double-rocks-glass-10oz-295ml-acrylic-stackable-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Danuta Double Rocks Glass",
+   "series": "Danuta",
+   "designer": null,
+   "model_code": "GLA-DANRCK15",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 450,
+   "capacity_as_stated": "15oz (450ml)",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/danuta-double-rocks-glass-15oz-450ml-4-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/danuta-double-rocks-glass-15oz-450ml-4-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Fineline Glass",
+   "series": "Fineline",
+   "designer": null,
+   "model_code": "GLA-FINRCK14",
+   "glass": "rocks",
+   "variant": "rocks_double",
+   "capacity_ml": 450,
+   "capacity_as_stated": "15oz (450ml)",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/fineline-double-rocks-glass-15oz-450ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/fineline-double-rocks-glass-15oz-450ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Sazerac Glass",
+   "series": "David Wondrich",
+   "designer": null,
+   "model_code": "WON-GLA-SAZ7",
+   "glass": "rocks",
+   "variant": "rocks_heavy",
+   "capacity_ml": 207,
+   "capacity_as_stated": "7oz (207ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://cocktailkingdom.com/products/sazerac-glass-7oz-207ml-pack-of-4",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/sazerac-glass-7oz-207ml-pack-of-4"
+   ]
+  },
+  {
+   "name": "Buswell Stackable Shot Glass",
+   "series": "Buswell",
+   "designer": null,
+   "model_code": "GLA-BUSSHOT01",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 30,
+   "capacity_as_stated": "1oz (30ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/buswell-stackable-shot-glasses-1oz-30ml-pack-of-24",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/buswell-stackable-shot-glasses-1oz-30ml-pack-of-24",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Veladora Mezcal Glass",
+   "series": "Veladora",
+   "designer": null,
+   "model_code": "GLA-VEL28",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 80,
+   "capacity_as_stated": "2.7oz (80ml)",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/veladora-mezcal-glass-27oz-80ml-pack-of-6",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/veladora-mezcal-glass-27oz-80ml-pack-of-6",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Acrylic Veladora Mezcal Glass",
+   "series": "Veladora",
+   "designer": null,
+   "model_code": "GLA-VEL28-ACR",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 80,
+   "capacity_as_stated": "2.7oz (80ml)",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://cocktailkingdom.com/products/acrylic-veladora-mezcal-glass-2-7oz-80ml-acrylic-6-pack-1",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/acrylic-veladora-mezcal-glass-2-7oz-80ml-acrylic-6-pack-1",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Agave Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-SHOT-AGAVE",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 44,
+   "capacity_as_stated": "1.5oz (44ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://cocktailkingdom.com/products/agave-shot-glass-glazed-ceramic-1-5oz-44ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/agave-shot-glass-glazed-ceramic-1-5oz-44ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Artichoke Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-SHOT-ARTI",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 44,
+   "capacity_as_stated": "1.5oz (44ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://cocktailkingdom.com/products/copy-of-artichoke-shot-glass-glazed-ceramic-1-5oz-44ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/copy-of-artichoke-shot-glass-glazed-ceramic-1-5oz-44ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Bamboo Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-SHOT-BAMB15",
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 44,
+   "capacity_as_stated": "1.5oz (44ml)",
+   "height_mm": 56,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://cocktailkingdom.com/products/bamboo-shot-glass-ceramic-1-5oz-44ml-set-of-4",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/bamboo-shot-glass-ceramic-1-5oz-44ml-set-of-4"
+   ]
+  },
+  {
+   "name": "Buswell Collins Glass",
+   "series": "Buswell",
+   "designer": null,
+   "model_code": "GLA-BUSCOL12",
+   "glass": "collins",
+   "variant": "collins_straight",
+   "capacity_ml": 360,
+   "capacity_as_stated": "12oz (360ml)",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/buswell-collins-glass-12oz-360ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/buswell-collins-glass-12oz-360ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Buswell Acrylic Collins Glass",
+   "series": "Buswell",
+   "designer": null,
+   "model_code": "GLA-BUSCOL12-ACR",
+   "glass": "collins",
+   "variant": "collins_straight",
+   "capacity_ml": 360,
+   "capacity_as_stated": "12oz (360ml)",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://cocktailkingdom.com/products/acrylic-buswell-collins-glass-12oz-360ml-6-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/acrylic-buswell-collins-glass-12oz-360ml-6-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Mustipher Zombie Glass",
+   "series": "Mustipher",
+   "designer": "Shannon Mustipher",
+   "model_code": "SMU-GLA-ZMB16",
+   "glass": "collins",
+   "variant": "collins_straight",
+   "capacity_ml": 450,
+   "capacity_as_stated": "16oz (450ml)",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/mustipher-zombie-glass-16oz-450ml-2-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/mustipher-zombie-glass-16oz-450ml-2-pack"
+   ]
+  },
+  {
+   "name": "Pearl Diver Glass",
+   "series": "Beachbum Berry",
+   "designer": "Jeff \"Beachbum\" Berry",
+   "model_code": "BBB-GLA-PRL12",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "12oz (360ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/pearl-diver-glass-12oz-360ml-4-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/pearl-diver-glass-12oz-360ml-4-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Acrylic Pearl Diver Glass",
+   "series": "Beachbum Berry",
+   "designer": "Jeff \"Beachbum\" Berry",
+   "model_code": "BBB-GLA-PRL12ACR",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "12oz (360ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://cocktailkingdom.com/products/acrylic-pearl-diver-12oz-360ml-4-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/acrylic-pearl-diver-12oz-360ml-4-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Patino Tasting Glass",
+   "series": "Patino",
+   "designer": "Chris Patino",
+   "model_code": "CHP-GLA-TSL7B",
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 207,
+   "capacity_as_stated": "7oz (207ml)",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://cocktailkingdom.com/products/patino-tasting-glass-7oz-207ml-4-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/patino-tasting-glass-7oz-207ml-4-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Julep Cup",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-JUL12ST-MIR",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "12oz (360ml)",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://cocktailkingdom.com/products/julep-cup-stainless-steel-12oz-360ml",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/julep-cup-stainless-steel-12oz-360ml",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Swizzle Cup",
+   "series": "Beachbum Berry",
+   "designer": "Jeff \"Beachbum\" Berry",
+   "model_code": "BBB-GLA-SWZ14",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14oz (414ml)",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://cocktailkingdom.com/products/swizzle-cup-stainless-steel-14oz-414ml",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/swizzle-cup-stainless-steel-14oz-414ml"
+   ]
+  },
+  {
+   "name": "Moscow Mule Mug",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-MUL12C",
+   "glass": "mug",
+   "variant": "mug_copper",
+   "capacity_ml": 360,
+   "capacity_as_stated": "12oz (360ml)",
+   "height_mm": 114,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://cocktailkingdom.com/products/moscow-mule-mug-copper-unengraved-12oz-360ml",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/moscow-mule-mug-copper-unengraved-12oz-360ml",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Mini Mule Shots",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-MUL05C",
+   "glass": "mug",
+   "variant": "mug_copper",
+   "capacity_ml": 148,
+   "capacity_as_stated": "5oz (148ml)",
+   "height_mm": 70,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://cocktailkingdom.com/products/mini-moscow-mule-mugs-unengraved-5oz-148ml-4-pack",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/mini-moscow-mule-mugs-unengraved-5oz-148ml-4-pack",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Agave Mug",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-MUG-AGAVE",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 310,
+   "capacity_as_stated": "10.5oz (310ml)",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://cocktailkingdom.com/products/agave-mug-glazed-ceramic-10-5oz-310ml",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/agave-mug-glazed-ceramic-10-5oz-310ml",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Bamboo Mug",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-MUG-BAMB14",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 415,
+   "capacity_as_stated": "14oz (415ml)",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://cocktailkingdom.com/products/bamboo-mug-ceramic-14oz-415ml",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/bamboo-mug-ceramic-14oz-415ml",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Lantern Mug",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-MUG-LANT15",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 440,
+   "capacity_as_stated": "15oz (440ml)",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://cocktailkingdom.com/products/lantern-mug-ceramic-15oz-440ml",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/lantern-mug-ceramic-15oz-440ml",
+    "https://cdn.shopify.com/s/files/1/0280/4429/6252/files/CK-Catalog_Glassware-SPRING26.pdf"
+   ]
+  },
+  {
+   "name": "Clown Mug",
+   "series": null,
+   "designer": null,
+   "model_code": "GLA-MUG-CLWN14",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 415,
+   "capacity_as_stated": "14oz (415ml)",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://cocktailkingdom.com/products/clown-mug-glazed-ceramic-14oz-415ml",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/clown-mug-glazed-ceramic-14oz-415ml"
+   ]
+  },
+  {
+   "name": "Volcano Mug",
+   "series": "Mustipher",
+   "designer": "Shannon Mustipher",
+   "model_code": "SMU-MUG-VOL16",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "16oz (480ml)",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://cocktailkingdom.com/products/volcano-mug-glazed-ceramic-16oz-480ml",
+   "source_urls": [
+    "https://cocktailkingdom.com/products/volcano-mug-glazed-ceramic-16oz-480ml"
+   ]
+  }
+ ]
+}

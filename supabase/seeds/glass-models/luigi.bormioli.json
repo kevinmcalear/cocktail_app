@@ -1,0 +1,2867 @@
+{
+ "maker": "luigi.bormioli",
+ "models": [
+  {
+   "name": "Backdoor '20s Bramble",
+   "series": "Backdoor '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": "rocks_tapered",
+   "capacity_ml": 500,
+   "capacity_as_stated": "50 cl",
+   "height_mm": 145,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400816/bramble-backdoor-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400816/bramble-backdoor-20s",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Backdoor '20s Whisky",
+   "series": "Backdoor '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400817/whisky-backdoor-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400817/whisky-backdoor-20s",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Backdoor '20s Gin & Tonic",
+   "series": "Backdoor '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 800,
+   "capacity_as_stated": "80 cl",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400591/gin-amp-tonic-backdoor-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400591/gin-amp-tonic-backdoor-20s",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Backdoor '20s Great Gatsby",
+   "series": "Backdoor '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 161.5,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400594/great-gatsby-backdoor-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400594/great-gatsby-backdoor-20s",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Backdoor '20s Hemingway Special",
+   "series": "Backdoor '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "25 cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400595/hemingway-special-backdoor-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400595/hemingway-special-backdoor-20s",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Backdoor '20s Nick & Nora",
+   "series": "Backdoor '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "17 cl",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400596/nick-amp-nora-backdoor-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400596/nick-amp-nora-backdoor-20s",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Backdoor '20s Tequila Sunrise",
+   "series": "Backdoor '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": "highball_tapered",
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl",
+   "height_mm": 198,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400592/tequila-sunrise-backdoor-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400592/tequila-sunrise-backdoor-20s",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Top Class Square Bibita",
+   "series": "Top Class Square",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 410,
+   "capacity_as_stated": "41 cl",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400838/bibita-top-class-square",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400838/bibita-top-class-square",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Top Class Square D.O.F.",
+   "series": "Top Class Square",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 425,
+   "capacity_as_stated": "42.5 cl",
+   "height_mm": 98,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400837/d-o-f-top-class-square",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400837/d-o-f-top-class-square",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Top Class Square Rocks",
+   "series": "Top Class Square",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "35 cl",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400835/rocks-top-class-square",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400835/rocks-top-class-square",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Aero Flute",
+   "series": "Aero",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 235,
+   "capacity_as_stated": "23.5 cl",
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400222/flute-aero",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400222/flute-aero",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Ametista Beverage",
+   "series": "Ametista",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "46 cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400251/beverage-ametista",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400251/beverage-ametista",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Ametista D.O.F.",
+   "series": "Ametista",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "34 cl",
+   "height_mm": 91,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400252/d-o-f-ametista",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400252/d-o-f-ametista",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Atelier Cocktail",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": "coupe_wide",
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 164,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400186/cocktail-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400186/cocktail-atelier",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Atelier Grappa",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 80,
+   "capacity_as_stated": "8 cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400185/grappa-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400185/grappa-atelier",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Atelier Prosecco/Champagne",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "27 cl",
+   "height_mm": 254,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400182/prosecco-champagne-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400182/prosecco-champagne-atelier",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Atelier Sparkling wine",
+   "series": "Atelier",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "20 cl",
+   "height_mm": 222,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400184/sparkling-wine-atelier",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400184/sparkling-wine-atelier",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Bach Beverage",
+   "series": "Bach",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "36 cl",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400209/beverage-bach",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400209/beverage-bach",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Bach Beverage",
+   "series": "Bach",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "48 cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400207/beverage-bach",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400207/beverage-bach",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Bach Champagne",
+   "series": "Bach",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "21 cl",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400204/champagne-bach",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400204/champagne-bach",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Bach D.O.F.",
+   "series": "Bach",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 335,
+   "capacity_as_stated": "33.5 cl",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400210/d-o-f-bach",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400210/d-o-f-bach",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Bach Gin Glass",
+   "series": "Bach",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 600,
+   "capacity_as_stated": "60 cl",
+   "height_mm": 201,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400215/gin-glass-bach",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400215/gin-glass-bach",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Bach Liqueur",
+   "series": "Bach",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 70,
+   "capacity_as_stated": "7 cl",
+   "height_mm": 66,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400218/liqueur-bach",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400218/liqueur-bach",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Bach Martini",
+   "series": "Bach",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "26 cl",
+   "height_mm": 185,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400205/martini-bach",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400205/martini-bach",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Bach Retro Fizz",
+   "series": "Bach",
+   "designer": null,
+   "model_code": null,
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "26 cl",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400216/retro-fizz-bach",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400216/retro-fizz-bach",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Canaletto Beverage",
+   "series": "Canaletto",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 440,
+   "capacity_as_stated": "44 cl",
+   "height_mm": 166,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400249/beverage-canaletto",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400249/beverage-canaletto",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Canaletto Champagne",
+   "series": "Canaletto",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 195,
+   "capacity_as_stated": "19.5 cl",
+   "height_mm": 231,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400248/champagne-canaletto",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400248/champagne-canaletto",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Canaletto D.O.F.",
+   "series": "Canaletto",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "35 cl",
+   "height_mm": 109,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400250/d-o-f-canaletto",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400250/d-o-f-canaletto",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Classico Beverage",
+   "series": "Classico",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "48 cl",
+   "height_mm": 161,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400254/beverage-classico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400254/beverage-classico",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Classico D.O.F.",
+   "series": "Classico",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl",
+   "height_mm": 98,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400257/d-o-f-classico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400257/d-o-f-classico",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Classico Liqueur",
+   "series": "Classico",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 70,
+   "capacity_as_stated": "7 cl",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400259/liqueur-classico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400259/liqueur-classico",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Classico Long drink",
+   "series": "Classico",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "34 cl",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400256/long-drink-classico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400256/long-drink-classico",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Crescendo Beverage",
+   "series": "Crescendo",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 590,
+   "capacity_as_stated": "59 cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400266/beverage-crescendo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400266/beverage-crescendo",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Crescendo D.O.F.",
+   "series": "Crescendo",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "46 cl",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400265/d-o-f-crescendo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400265/d-o-f-crescendo",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Crescendo Flute",
+   "series": "Crescendo",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 235,
+   "capacity_as_stated": "23.5 cl",
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400263/flute-crescendo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400263/flute-crescendo",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Crescendo Martini",
+   "series": "Crescendo",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400264/martini-crescendo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400264/martini-crescendo",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Diamante Beverage",
+   "series": "Diamante",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "48 cl",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400640/beverage-diamante",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400640/beverage-diamante",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Diamante D.O.F.",
+   "series": "Diamante",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "38 cl",
+   "height_mm": 96,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400641/d-o-f-diamante",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400641/d-o-f-diamante",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Diamante Gin Glass",
+   "series": "Diamante",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 650,
+   "capacity_as_stated": "65 cl",
+   "height_mm": 222,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400639/gin-glass-diamante",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400639/gin-glass-diamante",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Diamante Prosecco",
+   "series": "Diamante",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "22 cl",
+   "height_mm": 236,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400638/prosecco-diamante",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400638/prosecco-diamante",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Drink&Design Irish Coffee",
+   "series": "Drink&Design",
+   "designer": null,
+   "model_code": null,
+   "glass": "mug",
+   "variant": "mug_irish",
+   "capacity_ml": 250,
+   "capacity_as_stated": "25 cl",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400798/irish-coffee-drink-amp-design",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400798/irish-coffee-drink-amp-design",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Gin & Tonic Jenever Gin Glass",
+   "series": "Gin & Tonic",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 750,
+   "capacity_as_stated": "75 cl",
+   "height_mm": 232,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400603/jenever-gin-glass-gin-amp-tonic",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400603/jenever-gin-glass-gin-amp-tonic",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Gin & Tonic London Dry Gin Glass",
+   "series": "Gin & Tonic",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 650,
+   "capacity_as_stated": "65 cl",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400605/london-dry-gin-glass-gin-amp-tonic",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400605/london-dry-gin-glass-gin-amp-tonic",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Gin & Tonic New American Gin Glass",
+   "series": "Gin & Tonic",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 800,
+   "capacity_as_stated": "80 cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400597/new-american-gin-glass-gin-amp-tonic",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400597/new-american-gin-glass-gin-amp-tonic",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Gin & Tonic Old Tom Gin Glass",
+   "series": "Gin & Tonic",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 805,
+   "capacity_as_stated": "80.5 cl",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400599/old-tom-gin-glass-gin-amp-tonic",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400599/old-tom-gin-glass-gin-amp-tonic",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Gin & Tonic Plymouth Gin Glass",
+   "series": "Gin & Tonic",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 650,
+   "capacity_as_stated": "65 cl",
+   "height_mm": 222,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400601/plymouth-gin-glass-gin-amp-tonic",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400601/plymouth-gin-glass-gin-amp-tonic",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Gin & Tonic Sloe Gin Glass",
+   "series": "Gin & Tonic",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 600,
+   "capacity_as_stated": "60 cl",
+   "height_mm": 201,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400607/sloe-gin-glass-gin-amp-tonic",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400607/sloe-gin-glass-gin-amp-tonic",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "I Meravigliosi Beverage",
+   "series": "I Meravigliosi",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 570,
+   "capacity_as_stated": "57 cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400316/beverage-i-meravigliosi",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400316/beverage-i-meravigliosi",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "I Meravigliosi Champagne - Prosecco",
+   "series": "I Meravigliosi",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl",
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400312/champagne-prosecco-i-meravigliosi",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400312/champagne-prosecco-i-meravigliosi",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "I Meravigliosi Flute",
+   "series": "I Meravigliosi",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "21 cl",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400313/flute-i-meravigliosi",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400313/flute-i-meravigliosi",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Incanto Beverage",
+   "series": "Incanto",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 435,
+   "capacity_as_stated": "43.5 cl",
+   "height_mm": 166,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400298/beverage-incanto",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400298/beverage-incanto",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Incanto D.O.F.",
+   "series": "Incanto",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 345,
+   "capacity_as_stated": "34.5 cl",
+   "height_mm": 109,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400297/d-o-f-incanto",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400297/d-o-f-incanto",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Incanto Flute",
+   "series": "Incanto",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "20 cl",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400296/flute-incanto",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400296/flute-incanto",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Jazz Cocktail",
+   "series": "Jazz",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 142,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400300/cocktail-jazz",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400300/cocktail-jazz",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Jazz Flute",
+   "series": "Jazz",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "21 cl",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400299/flute-jazz",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400299/flute-jazz",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Jazz Long drink",
+   "series": "Jazz",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400301/long-drink-jazz",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400301/long-drink-jazz",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Jazz Rocks Whisky",
+   "series": "Jazz",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "35 cl",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400302/rocks-whisky-jazz",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400302/rocks-whisky-jazz",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Jazz Rum Cocktail",
+   "series": "Jazz",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 500,
+   "capacity_as_stated": "50 cl",
+   "height_mm": 116,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400305/rum-cocktail-jazz",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400305/rum-cocktail-jazz",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Jazz Spritz",
+   "series": "Jazz",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "55 cl",
+   "height_mm": 220,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400303/spritz-jazz",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400303/spritz-jazz",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Magnifico D.O.F.",
+   "series": "Magnifico",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "50 cl",
+   "height_mm": 104,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400457/d-o-f-magnifico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400457/d-o-f-magnifico",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Magnifico Flute",
+   "series": "Magnifico",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": "32 cl",
+   "height_mm": 260,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400454/flute-magnifico",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400454/flute-magnifico",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Masterpiece Beverage",
+   "series": "Michelangelo Masterpiece",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 435,
+   "capacity_as_stated": "43.5 cl",
+   "height_mm": 166,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400278/beverage-michelangelo-masterpiece",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400278/beverage-michelangelo-masterpiece",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Masterpiece Champagne",
+   "series": "Michelangelo Masterpiece",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "20 cl",
+   "height_mm": 231,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400270/champagne-michelangelo-masterpiece",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400270/champagne-michelangelo-masterpiece",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Masterpiece Cognac",
+   "series": "Michelangelo Masterpiece",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 395,
+   "capacity_as_stated": "39.5 cl",
+   "height_mm": 136,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400272/cognac-michelangelo-masterpiece",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400272/cognac-michelangelo-masterpiece",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Masterpiece Cooler Iced Tea",
+   "series": "Michelangelo Masterpiece",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 595,
+   "capacity_as_stated": "59.5 cl",
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400277/cooler-iced-tea-michelangelo-masterpiece",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400277/cooler-iced-tea-michelangelo-masterpiece",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Masterpiece D.O.F.",
+   "series": "Michelangelo Masterpiece",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 345,
+   "capacity_as_stated": "34.5 cl",
+   "height_mm": 109,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400280/d-o-f-michelangelo-masterpiece",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400280/d-o-f-michelangelo-masterpiece",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Masterpiece D.O.F.",
+   "series": "Michelangelo Masterpiece",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 465,
+   "capacity_as_stated": "46.5 cl",
+   "height_mm": 117,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400279/d-o-f-michelangelo-masterpiece",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400279/d-o-f-michelangelo-masterpiece",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Masterpiece Spirits",
+   "series": "Michelangelo Masterpiece",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 95,
+   "capacity_as_stated": "9.5 cl",
+   "height_mm": 180,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400273/spirits-michelangelo-masterpiece",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400273/spirits-michelangelo-masterpiece",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Masterpiece Whisky-Rocks",
+   "series": "Michelangelo Masterpiece",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 265,
+   "capacity_as_stated": "26.5 cl",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400276/whisky-rocks-michelangelo-masterpiece",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400276/whisky-rocks-michelangelo-masterpiece",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line Beverage",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 435,
+   "capacity_as_stated": "43.5 cl",
+   "height_mm": 166,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400358/beverage-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400358/beverage-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line Champagne",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 160,
+   "capacity_as_stated": "16 cl",
+   "height_mm": 185,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400350/champagne-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400350/champagne-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line Champagne",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 190,
+   "capacity_as_stated": "19 cl",
+   "height_mm": 205,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400352/champagne-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400352/champagne-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line Champagne",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 225,
+   "capacity_as_stated": "22.5 cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400354/champagne-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400354/champagne-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line Cooler Iced Tea",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 595,
+   "capacity_as_stated": "59.5 cl",
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400357/cooler-iced-tea-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400357/cooler-iced-tea-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line D.O.F.",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 345,
+   "capacity_as_stated": "34.5 cl",
+   "height_mm": 109,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400355/d-o-f-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400355/d-o-f-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line D.O.F.",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 465,
+   "capacity_as_stated": "46.5 cl",
+   "height_mm": 117,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400360/d-o-f-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400360/d-o-f-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line Hi-Ball",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 310,
+   "capacity_as_stated": "31 cl",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400359/hi-ball-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400359/hi-ball-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line Martini",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 95,
+   "capacity_as_stated": "9.5 cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400353/martini-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400353/martini-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Michelangelo Professional Line Whisky-Rocks",
+   "series": "Michelangelo Professional Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 265,
+   "capacity_as_stated": "26.5 cl",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400356/whisky-rocks-michelangelo-professional-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400356/whisky-rocks-michelangelo-professional-line",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Charme D.O.F.",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "38 cl",
+   "height_mm": 96,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400375/charme-d-o-f-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400375/charme-d-o-f-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Charme Hi-Ball",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "48 cl",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400381/charme-hi-ball-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400381/charme-hi-ball-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Classic Club D.O.F.",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400408/classic-club-d-o-f-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400408/classic-club-d-o-f-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Cocktail",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 225,
+   "capacity_as_stated": "22.5 cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400391/cocktail-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400391/cocktail-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Cocktail Club D.O.F.",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400411/cocktail-club-d-o-f-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400411/cocktail-club-d-o-f-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Cocktail Ice",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "50 cl",
+   "height_mm": 104,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400400/cocktail-ice-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400400/cocktail-ice-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Cognac",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 465,
+   "capacity_as_stated": "46.5 cl",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400404/cognac-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400404/cognac-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Elixir D.O.F.",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "38 cl",
+   "height_mm": 96,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400377/elixir-d-o-f-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400377/elixir-d-o-f-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Elixir Hi-Ball",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "48 cl",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400383/elixir-hi-ball-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400383/elixir-hi-ball-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Martini",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 225,
+   "capacity_as_stated": "22.5 cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400389/martini-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400389/martini-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Nick&Nora",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 150,
+   "capacity_as_stated": "15 cl",
+   "height_mm": 147,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400401/nick-amp-nora-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400401/nick-amp-nora-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Shot",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 70,
+   "capacity_as_stated": "7 cl",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400402/shot-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400402/shot-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Spanish Gin & Tonic",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 800,
+   "capacity_as_stated": "80 cl",
+   "height_mm": 205,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400393/spanish-gin-amp-tonic-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400393/spanish-gin-amp-tonic-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Spirits",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400403/spirits-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400403/spirits-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Spritz",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 570,
+   "capacity_as_stated": "57 cl",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400387/spritz-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400387/spritz-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Texture D.O.F.",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "38 cl",
+   "height_mm": 96,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400379/texture-d-o-f-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400379/texture-d-o-f-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Mixology Texture Hi Ball",
+   "series": "Mixology",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "48 cl",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400385/texture-hi-ball-mixology",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400385/texture-hi-ball-mixology",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "On The Rocks Beverage",
+   "series": "On The Rocks",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 440,
+   "capacity_as_stated": "44 cl",
+   "height_mm": 169,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400420/beverage-on-the-rocks",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400420/beverage-on-the-rocks",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "On The Rocks D.O.F.",
+   "series": "On The Rocks",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400421/d-o-f-on-the-rocks",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400421/d-o-f-on-the-rocks",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Optica Burgundy Gin Glass",
+   "series": "Optica",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 750,
+   "capacity_as_stated": "75 cl",
+   "height_mm": 232,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400436/burgundy-gin-glass-optica",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400436/burgundy-gin-glass-optica",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Optica Champagne",
+   "series": "Optica",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400433/champagne-optica",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400433/champagne-optica",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Optica Cognac",
+   "series": "Optica",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 465,
+   "capacity_as_stated": "46.5 cl",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400435/cognac-optica",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400435/cognac-optica",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Optica Martini",
+   "series": "Optica",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "22 cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400437/martini-optica",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400437/martini-optica",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Optica Sparkling Wine",
+   "series": "Optica",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "21 cl",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400434/sparkling-wine-optica",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400434/sparkling-wine-optica",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Palace Flute - Champagne",
+   "series": "Palace",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 235,
+   "capacity_as_stated": "23.5 cl",
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400490/flute-champagne-palace",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400490/flute-champagne-palace",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Beverage",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl",
+   "height_mm": 142,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400627/beverage-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400627/beverage-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Coppa",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400632/coppa-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400632/coppa-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 D.O.F.",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "38 cl",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400628/d-o-f-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400628/d-o-f-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Fizz",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "26 cl",
+   "height_mm": 157,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400633/fizz-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400633/fizz-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Flute",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "24 cl",
+   "height_mm": 244,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400634/flute-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400634/flute-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Gin Glass",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 805,
+   "capacity_as_stated": "80.5 cl",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400630/gin-glass-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400630/gin-glass-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Hi-Ball",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "48 cl",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400625/hi-ball-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400625/hi-ball-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Margarita",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl",
+   "height_mm": 184,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400620/margarita-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400620/margarita-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Martini",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "22 cl",
+   "height_mm": 172,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400622/martini-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400622/martini-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Rum",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400635/rum-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400635/rum-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Roma 1960 Wine Cocktail",
+   "series": "Roma 1960",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_goblet",
+   "capacity_ml": 550,
+   "capacity_as_stated": "55 cl",
+   "height_mm": 222,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400631/wine-cocktail-roma-1960",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400631/wine-cocktail-roma-1960",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Rubino D.O.F.",
+   "series": "Rubino",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 375,
+   "capacity_as_stated": "37.5 cl",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400467/d-o-f-rubino",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400467/d-o-f-rubino",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Rubino Flute",
+   "series": "Rubino",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "21 cl",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400466/flute-rubino",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400466/flute-rubino",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Speakeasies Swing Champagne Cocktail",
+   "series": "Speakeasies Swing",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400644/champagne-cocktail-speakeasies-swing",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400644/champagne-cocktail-speakeasies-swing",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Speakeasies Swing D.O.F.",
+   "series": "Speakeasies Swing",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl",
+   "height_mm": 99,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400653/d-o-f-speakeasies-swing",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400653/d-o-f-speakeasies-swing",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Speakeasies Swing Fizz",
+   "series": "Speakeasies Swing",
+   "designer": null,
+   "model_code": null,
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "27 cl",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400648/fizz-speakeasies-swing",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400648/fizz-speakeasies-swing",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Speakeasies Swing Gin Glass",
+   "series": "Speakeasies Swing",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": "spritz_balloon",
+   "capacity_ml": 750,
+   "capacity_as_stated": "75 cl",
+   "height_mm": 232,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400647/gin-glass-speakeasies-swing",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400647/gin-glass-speakeasies-swing",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Speakeasies Swing Hi-Ball",
+   "series": "Speakeasies Swing",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 570,
+   "capacity_as_stated": "57 cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400652/hi-ball-speakeasies-swing",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400652/hi-ball-speakeasies-swing",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Speakeasies Swing Martini",
+   "series": "Speakeasies Swing",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "22 cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400650/martini-speakeasies-swing",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400650/martini-speakeasies-swing",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Speakeasies Swing Prosecco Cocktail",
+   "series": "Speakeasies Swing",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "21 cl",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400645/prosecco-cocktail-speakeasies-swing",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400645/prosecco-cocktail-speakeasies-swing",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Speakeasies Swing Snifter",
+   "series": "Speakeasies Swing",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 465,
+   "capacity_as_stated": "46.5 cl",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400646/snifter-speakeasies-swing",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400646/snifter-speakeasies-swing",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Strauss D.O.F.",
+   "series": "Strauss",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "35 cl",
+   "height_mm": 98,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400511/d-o-f-strauss",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400511/d-o-f-strauss",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Strauss Liqueur",
+   "series": "Strauss",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": "rocks_shot",
+   "capacity_ml": 60,
+   "capacity_as_stated": "6 cl",
+   "height_mm": 62,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400512/liqueur-strauss",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400512/liqueur-strauss",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Strauss Long Drink",
+   "series": "Strauss",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400510/long-drink-strauss",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400510/long-drink-strauss",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Strauss Whisky-Rocks",
+   "series": "Strauss",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 285,
+   "capacity_as_stated": "28.5 cl",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400508/whisky-rocks-strauss",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400508/whisky-rocks-strauss",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Sublime Beverage",
+   "series": "Sublime",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 590,
+   "capacity_as_stated": "59 cl",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400521/beverage-sublime",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400521/beverage-sublime",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Sublime Champagne",
+   "series": "Sublime",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 142,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400520/champagne-sublime",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400520/champagne-sublime",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Sublime Champagne",
+   "series": "Sublime",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "21 cl",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400519/champagne-sublime",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400519/champagne-sublime",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Sublime D.O.F.",
+   "series": "Sublime",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400523/d-o-f-sublime",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400523/d-o-f-sublime",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Sublime Long Drink",
+   "series": "Sublime",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400522/long-drink-sublime",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400522/long-drink-sublime",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Sublime Whisky",
+   "series": "Sublime",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "35 cl",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400524/whisky-sublime",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400524/whisky-sublime",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Super Flute",
+   "series": "Super",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "20 cl",
+   "height_mm": 243,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400516/super-flute-super",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400516/super-flute-super",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Supremo Champagne",
+   "series": "Supremo",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "24 cl",
+   "height_mm": 250,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400499/champagne-supremo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400499/champagne-supremo",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Talismano Beverage",
+   "series": "Talismano",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 570,
+   "capacity_as_stated": "57 cl",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400662/beverage-talismano",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400662/beverage-talismano",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Talismano D.O.F.",
+   "series": "Talismano",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45 cl",
+   "height_mm": 99,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400661/d-o-f-talismano",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400661/d-o-f-talismano",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Talismano Flute",
+   "series": "Talismano",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "21 cl",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400659/flute-talismano",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400659/flute-talismano",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Talismano Old Martini",
+   "series": "Talismano",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400660/old-martini-talismano",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400660/old-martini-talismano",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Talismano Prosecco",
+   "series": "Talismano",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl",
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400658/prosecco-talismano",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400658/prosecco-talismano",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Top Class D.O.F.",
+   "series": "Top Class",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 365,
+   "capacity_as_stated": "36.5 cl",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400536/d-o-f-top-class",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400536/d-o-f-top-class",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Top Class Hi-Ball",
+   "series": "Top Class",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 375,
+   "capacity_as_stated": "37.5 cl",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400537/hi-ball-top-class",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400537/hi-ball-top-class",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Top Class Aperitivo",
+   "series": "Top Class",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "23 cl",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400818/aperitivo-top-class",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400818/aperitivo-top-class",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Veronese Beverage",
+   "series": "Veronese",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 430,
+   "capacity_as_stated": "43 cl",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400539/beverage-veronese",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400539/beverage-veronese",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Veronese D.O.F.",
+   "series": "Veronese",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 345,
+   "capacity_as_stated": "34.5 cl",
+   "height_mm": 98,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400541/d-o-f-veronese",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400541/d-o-f-veronese",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Veronese Hi-Ball",
+   "series": "Veronese",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 310,
+   "capacity_as_stated": "31 cl",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400540/hi-ball-veronese",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400540/hi-ball-veronese",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Veronese Whisky-Rocks",
+   "series": "Veronese",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "26 cl",
+   "height_mm": 91,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400542/whisky-rocks-veronese",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400542/whisky-rocks-veronese",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Vinalia Champagne",
+   "series": "Vinalia",
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl",
+   "height_mm": 142,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400589/champagne-vinalia",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400589/champagne-vinalia",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Vinalia Cognac Rum",
+   "series": "Vinalia",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 500,
+   "capacity_as_stated": "50 cl",
+   "height_mm": 116,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400590/cognac-rum-vinalia",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400590/cognac-rum-vinalia",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Vinalia Prosecco",
+   "series": "Vinalia",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "21 cl",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400588/prosecco-vinalia",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400588/prosecco-vinalia",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Vinea Prosecco/Coppa Spumante",
+   "series": "Vinea",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "20 cl",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400571/prosecco-coppa-spumante-vinea",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400571/prosecco-coppa-spumante-vinea",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Vinoteque Cognac",
+   "series": "Vinoteque",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_balloon",
+   "capacity_ml": 465,
+   "capacity_as_stated": "46.5 cl",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400559/cognac-vinoteque",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400559/cognac-vinoteque",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Vinoteque Grappa",
+   "series": "Vinoteque",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 105,
+   "capacity_as_stated": "10.5 cl",
+   "height_mm": 202,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400560/grappa-vinoteque",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400560/grappa-vinoteque",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Vinoteque Perlage",
+   "series": "Vinoteque",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 175,
+   "capacity_as_stated": "17.5 cl",
+   "height_mm": 250,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400554/perlage-vinoteque",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400554/perlage-vinoteque",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Vinoteque Spirits Snifter",
+   "series": "Vinoteque",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 170,
+   "capacity_as_stated": "17 cl",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400556/spirits-snifter-vinoteque",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400556/spirits-snifter-vinoteque",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Sapientia Spirits",
+   "series": "Sapientia",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": "snifter_tulip",
+   "capacity_ml": 140,
+   "capacity_as_stated": "14 cl",
+   "height_mm": 196,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400836/spirits-sapientia",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400836/spirits-sapientia",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  },
+  {
+   "name": "Sapientia Bollicine",
+   "series": "Sapientia",
+   "designer": null,
+   "model_code": null,
+   "glass": "flute",
+   "variant": "flute_tulip",
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl",
+   "height_mm": 250,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400851/bollicine-sapientia",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400851/bollicine-sapientia",
+    "https://bormioliluigi.com/glassware/en/products?show=all&cmpny=1"
+   ]
+  }
+ ]
+}
