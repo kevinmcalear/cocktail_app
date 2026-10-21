@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict';
 
 import type { DiscoverDrink } from './discoverDrinks';
-import { onePerBar, pickShelves, SHELF_MAX, topStyle, waysTitle } from './discoverShelves';
+import { byTaste, onePerBar, pickShelves, SHELF_MAX, topStyle, waysTitle } from './discoverShelves';
+import type { Profile } from './flavor';
 
 const drink = (id: string, barId: string, styles: string[] = []): DiscoverDrink => ({
   id,
@@ -55,6 +56,7 @@ assert.deepEqual(
   ],
 );
 assert.equal(all[1].note, 'The style poured most around here');
+assert.equal(all[0].note, 'One from each bar', 'until a taste orders it (hooks/useDiscoverShelves)');
 const thin = pickShelves({ where: 'in Brooklyn', around, style: 'martini', styled: [drink('m1', 'a'), drink('m2', 'a'), drink('m3', 'b')], zero: [] });
 assert.deepEqual(
   thin.map((s) => s.title),
@@ -62,3 +64,8 @@ assert.deepEqual(
   'three Martinis at two bars is two drinks after one per bar: hidden; no zero-proof: hidden',
 );
 assert.deepEqual(pickShelves({ where: 'near you', around: around.slice(0, 2), style: null, styled: [], zero: [] }), [], 'two bars: nothing');
+
+// --- closest to your taste, one bar each; a drink with no profile goes last ---
+const sweet = (n: number) => ({ sweet: n }) as Profile;
+const picks = byTaste([drink('far', 'a'), drink('none', 'b'), drink('near', 'c'), drink('closer', 'a')], { sweet: 1 }, { far: sweet(0), near: sweet(1), closer: sweet(0.9) });
+assert.deepEqual(ids(picks), ['near', 'closer', 'none']);

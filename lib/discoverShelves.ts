@@ -5,6 +5,7 @@
  */
 import type { DiscoverDrink } from './discoverDrinks';
 import { kindLabel, STYLES } from './drinkStyles';
+import { distance, type Profile, type Taste } from './flavor';
 
 /** A shelf with fewer drinks than this is left out. */
 export const SHELF_MIN = 3;
@@ -23,6 +24,8 @@ export interface Shelf {
   /** See all: the filter that lists all of them; none for the first shelf (the list below is that). */
   kind: string | null;
   drinks: DiscoverDrink[];
+  /** Picked for the viewer's taste: the note shows their palate and opens the taste page. */
+  taste?: boolean;
 }
 
 /** The first drink from each bar, in the order given, up to `max`. */
@@ -36,6 +39,18 @@ export function onePerBar(drinks: readonly DiscoverDrink[], max = SHELF_MAX): Di
     out.push(d);
   }
   return out;
+}
+
+/**
+ * The closest drink at each bar, nearest your taste first. A drink with no
+ * profile sorts after the ones that have one, in the order given.
+ */
+export function byTaste(drinks: readonly DiscoverDrink[], taste: Taste, profiles: Readonly<Record<string, Profile>>): DiscoverDrink[] {
+  const ranked = drinks
+    .map((d, i) => ({ d, i, gap: profiles[d.id] ? distance(taste, profiles[d.id]) : 2 }))
+    .sort((a, b) => a.gap - b.gap || a.i - b.i)
+    .map((row) => row.d);
+  return onePerBar(ranked);
 }
 
 /**

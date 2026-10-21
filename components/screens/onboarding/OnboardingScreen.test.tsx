@@ -4,17 +4,18 @@ import { renderWithTamagui } from '@/jest.setup';
 import { useAppMode } from '@/store/useAppMode';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
-import { OnboardingScreen } from './OnboardingScreen';
+import { forgetSetupProgress, OnboardingScreen } from './OnboardingScreen';
 
-const [mockReplace, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockClaim] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
+const [mockReplace, mockSaveName, mockSaveWork, mockCreateBar, mockFinish] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
 const [mockSaveMenu, mockSaveDrink, mockAccept, mockDecline, mockSaveTaste] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
 let mockMeta: { onboarded?: boolean } = { onboarded: false };
 let mockInvitedAt: string | undefined;
 type Invite = { id: string; bar_id: string; bar_name: string; bar_slug: string; bar_logo_url: null; bar_color: string | null; bar_display_face: null; bar_ground_tint: null; bar_profile_id: string | null; role_level: number; name: string | null; invited_by_name: string | null };
 let mockInvites: Invite[] = [];
 const caretakers: Invite = { id: 'i1', bar_id: 'venue', bar_name: 'Caretakers', bar_slug: 'caretakers', bar_logo_url: null, bar_color: '#D0643B', bar_display_face: null, bar_ground_tint: null, bar_profile_id: 'bp', role_level: 30, name: 'Sam Rivera', invited_by_name: 'Ada' };
+let mockPersonClaim: { id: string; status: 'pending'; profile: { id: string; handle: string; display_name: string } } | null = null;
 let mockPeople: { id: string; handle: string; display_name: string; city: string | null; is_claimed: boolean }[] = [];
-let mockBars: { id: string; display_name: string; locality: string | null; postcode: null; city: string; country_code: string; is_closed?: boolean }[] = [];
+let mockBars: { id: string; display_name: string; locality: string | null; postcode: null; city: string; country_code: string; is_closed?: boolean; is_claimed?: boolean }[] = [];
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/ctx/AuthContext', () => ({
@@ -42,27 +43,31 @@ jest.mock('@/hooks/useFlavor', () => ({
 }));
 jest.mock('@/hooks/useProfiles', () => ({
   usePublicPeople: (term: string) => ({ data: term.trim().length >= 2 ? mockPeople : [] }),
-  useClaimProfile: () => ({ mutate: mockClaim, isPending: false, error: null }),
+  useWaiting: () => ({ data: {} }),
+  useMyPersonClaim: () => ({ data: mockPersonClaim }),
+  useProfile: () => ({ data: null }),
   useWorkedMenus: () => ({ data: [] }),
 }));
 jest.mock('@/components/screens/profile/PastJobs', () => {
   const { Text } = jest.requireActual('react-native');
   return { CLAIM_PAST_JOBS: 'Past jobs stay hidden', PastJobs: ({ personId }: { personId: string }) => <Text>{`Jobs of ${personId}`}</Text> };
 });
+jest.mock('@/components/screens/home/BarMark', () => ({ BarMark: () => null }));
 jest.mock('@/hooks/useRankings', () => ({
   usePublicBars: (term: string) => ({ data: term.trim().length >= 2 ? mockBars : [] }),
 }));
 
-const attaboy = { id: 'b1', display_name: 'Attaboy', locality: 'New York', postcode: null, city: 'New York', country_code: 'US' };
+const attaboy = { id: 'b1', display_name: 'Attaboy', locality: 'New York', postcode: null, city: 'New York', country_code: 'US', is_claimed: false };
 
 beforeEach(() => {
   mockMeta = { onboarded: false };
   mockInvitedAt = undefined;
   mockInvites = [];
-  for (const m of [mockAccept, mockDecline, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockClaim, mockSaveMenu, mockSaveDrink, mockSaveTaste]) m.mockReset();
+  for (const m of [mockReplace, mockAccept, mockDecline, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockSaveMenu, mockSaveDrink, mockSaveTaste]) m.mockReset();
   mockPeople = [];
   mockBars = [attaboy];
-  mockReplace.mockClear();
+  forgetSetupProgress();
+  mockPersonClaim = null;
   mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSuccess?.());
   mockSaveName.mockImplementation((_input, opts) => opts?.onSuccess?.('p1'));
   useSettingsStore.setState({ specUnit: 'ml', defaultUnit: 'ml' });
@@ -154,17 +159,12 @@ describe('OnboardingScreen', () => {
   });
 
   test('hospitality claims an existing profile instead of making one', async () => {
-    mockPeople = [{ id: 'existing', handle: 'jo.juniper', display_name: 'Jo Juniper', city: 'London', is_claimed: false }];
-    mockClaim.mockImplementation((_input, opts) => opts?.onSuccess?.());
+    // "This is me" on their page sent it (PersonClaimSheet); the find step then says so (find-yourself).
+    mockPersonClaim = { id: 'c1', status: 'pending', profile: { id: 'existing', handle: 'jo.juniper', display_name: 'Jo Juniper' } };
     await named();
     await fireEvent.press(screen.getByRole('button', { name: 'Yes, I work in hospitality' }));
-    expect(screen.getByText('Do we already have you?')).toBeTruthy();
-
-    expect(screen.getByText('Claiming one sends it to a moderator. It stays your only profile.')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Jo Juniper · London' }));
-    expect(screen.getByText('Past jobs stay hidden')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
-    expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'existing', message: '', bar_id: null }, expect.anything());
+    expect(screen.getByText('Claim sent')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
     expect(mockSaveName).not.toHaveBeenCalled();
     expect(screen.getByText('What do you like to drink?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));

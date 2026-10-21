@@ -1,7 +1,7 @@
 // The web map's HTML bits (DiscoverMap.web.tsx): its stylesheet, the score
 // pins and the area labels. Plain DOM, since MapLibre GL markers take elements.
 import { backbar, fontFamilies, radius, space, type } from '@/constants/tokens';
-import { areaLook, pinDescription, pinLook, type MapArea, type MapPin } from '@/lib/discoverMap';
+import { areaLook, CLOSE_ZOOM, pinDescription, pinLook, type MapArea, type MapPin } from '@/lib/discoverMap';
 import { knownLogoEdge, lookAtLogoEdge, type KnownEdge } from '@/lib/logoEdge';
 
 import type { DiscoverMapProps } from './DiscoverMap';
@@ -41,9 +41,10 @@ function paintLogo(img: HTMLImageElement, edge: KnownEdge, size: number) {
   });
 }
 
-/** Paints a pin's HTML element with the look both maps share (lib/discoverMap pinLook). */
+/** Paints a pin's HTML element with the look both maps share (lib/discoverMap pinLook). Hover writes this pin's name and no other. */
 export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent: DiscoverMapProps['accent'], zoom?: number) {
-  const look = pinLook(pin, selected, accent, zoom);
+  const hovering = el.dataset.hover === '1';
+  const look = pinLook(pin, selected, accent, hovering ? CLOSE_ZOOM : zoom, hovering);
   // Only rebuild what's inside when it changes, so logos don't reload on every render.
   const key = `${look.logo ?? ''}|${look.logoSize}|${look.label}`;
   if (el.dataset.key !== key) {
@@ -87,8 +88,18 @@ export function paintPin(el: HTMLElement, pin: MapPin, selected: boolean, accent
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
-    zIndex: String(look.zIndex),
+    zIndex: el.dataset.hover === '1' ? '400' : String(look.zIndex),
   });
+  el.onmouseenter = () => {
+    if (pin.top || pin.closed || el.dataset.hover === '1') return;
+    el.dataset.hover = '1';
+    paintPin(el, pin, selected, accent, zoom);
+  };
+  el.onmouseleave = () => {
+    if (el.dataset.hover !== '1') return;
+    delete el.dataset.hover;
+    paintPin(el, pin, selected, accent, zoom);
+  };
 }
 
 /** An area's label (disc-map-opt-d): "9.1 · 24 bars" on the score pins' dark pill. */
