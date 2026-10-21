@@ -20,20 +20,33 @@ beforeEach(() => {
   mockMeta = {};
 });
 
-test('one sheet: Instagram and the bar wait, Something else sends a note, and Setup gets it back', async () => {
+test('one sheet: the Instagram code comes first, the bar waits, and Setup gets it back', async () => {
   const onClose = jest.fn();
   mockMeta = { onboarded: false };
   await renderWithTamagui(<PersonClaimSheet profile={ash} bar="Pale Moth" stats={{ drinks: 5, menus: 2 }} visible onClose={onClose} />);
   expect(screen.getByText('Your 5 drinks, 2 menus and where you have worked move to your account. Nothing new goes public.')).toBeTruthy();
-  expect(screen.getByRole('radio', { name: /^A message from your Instagram/ })).toBeDisabled();
+  expect(screen.getByRole('radio', { name: /^A message from your Instagram/ })).toBeChecked();
   expect(screen.getByRole('radio', { name: /^Pale Moth confirms you/ })).toBeDisabled();
-  expect(screen.getByRole('radio', { name: /^Something else/ })).toBeChecked();
+  const code = screen.getByLabelText(/^Your code: /).props.accessibilityLabel.replace(/\D/g, '');
+  expect(code).toMatch(/^\d{6}$/);
 
-  await fireEvent.changeText(screen.getByLabelText('The link, or how we can check'), 'https://palemoth.example/team');
   await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
-  expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'ash', message: 'https://palemoth.example/team', bar_id: null }, expect.anything());
+  expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'ash', message: '', method: 'instagram', code }, expect.anything());
   expect(onClose).toHaveBeenCalled();
   expect(mockDismissTo).toHaveBeenCalledWith('/onboarding');
+});
+
+test('Something else sends a note, and is the only way when the page has no Instagram', async () => {
+  await renderWithTamagui(<PersonClaimSheet profile={ash} bar={null} stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
+  await fireEvent.press(screen.getByRole('radio', { name: /^Something else/ }));
+  await fireEvent.changeText(screen.getByLabelText('The link, or how we can check'), 'https://palemoth.example/team');
+  await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
+  expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'ash', message: 'https://palemoth.example/team', method: 'note', code: null }, expect.anything());
+
+  const noGram = { ...ash, instagram: null } as unknown as Profile;
+  await renderWithTamagui(<PersonClaimSheet profile={noGram} bar={null} stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
+  expect(screen.getAllByRole('radio', { name: /^A message from your Instagram/ }).at(-1)).toBeDisabled();
+  expect(screen.getAllByRole('radio', { name: /^Something else/ }).at(-1)).toBeChecked();
 });
 
 test('past Setup, a sent claim stays on the page', async () => {
