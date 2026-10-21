@@ -86,6 +86,7 @@ const MAPPING = {
   '8.circle': 'svg:eightball',
   'list.bullet': 'list',
   'percent': 'percent',
+  'wifi.slash': 'wifi-off',
   'drop.fill': 'droplet',
   'sparkles': 'svg:sparkles',
   // The flavor map's target ring (prep-flavor-entry).

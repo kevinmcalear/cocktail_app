@@ -22,7 +22,7 @@ import { pickDrinkPhotos, setItemImages } from "@/components/drink/drinkImages";
 
 export type SpecCategory = "method" | "glassware" | "family" | "ice";
 
-import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
+import type { SortableRecipeItem } from '@/lib/recipeItem';
 
 export function useCocktailEditor(id: string, { enabled = true }: { enabled?: boolean } = {}) {
     const queryClient = useQueryClient();

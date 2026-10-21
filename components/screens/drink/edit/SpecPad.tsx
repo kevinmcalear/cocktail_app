@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, DsText, Headline, IngredientThumb, PressableScale, Sheet, useDs } from '@/components/ds';
-import type { SortableRecipeItem } from '@/components/recipe/SortableRecipeList';
+import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { QUICK_UNITS } from '@/lib/drinkWizard';
 import { pressKey, quickAmounts, settleAmount } from '@/lib/specPad';

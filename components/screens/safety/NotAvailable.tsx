@@ -46,13 +46,15 @@ export interface LoadFailure {
 /**
  * Where a public page lands when its request failed: offline, a timeout, a
  * server error. Says so and offers a retry, rather than Not available, which
- * would wrongly suggest the owner or a moderator hid it.
+ * would wrongly suggest the owner or a moderator hid it. Signed-in pages
+ * (a drink, its service view, rankings) land here too.
  */
-export function CouldNotLoad({ what, failed }: { what: keyof typeof WHY; failed: LoadFailure }) {
+export function CouldNotLoad({ what, failed }: { what: keyof typeof WHY | 'rankings' | 'draft'; failed: LoadFailure }) {
+  const thing = what === 'rankings' ? 'these rankings' : `this ${what}`;
   const offline = useNetInfo().isConnected === false;
   const intro = offline ? 'You’re offline. Check your connection and try again.' : 'Something went wrong on our side. Try again in a moment.';
   return (
-    <SafetyPage title={`Couldn’t load this ${what}`} intro={intro} backTo="/">
+    <SafetyPage title={`Couldn’t load ${thing}`} intro={intro} backTo="/">
       <View style={styles.actions}>
         <Button label="Try again" onPress={failed.retry} />
       </View>

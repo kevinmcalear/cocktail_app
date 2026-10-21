@@ -7,6 +7,7 @@ import { backbar, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
 import { pictureLabel, pictureTag } from '@/lib/itemImages';
+import type { SketchInputs } from '@/lib/sketch/types';
 
 import { PicturePager } from './PicturePager';
 import { PictureViewer, type ShownPicture } from './PictureViewer';
@@ -25,6 +26,8 @@ interface DrinkHeroProps {
   fade: boolean;
   /** The drink's editors: a Colour button on its drawing, to repaint it (SketchColourSheet). */
   onColour?: () => void;
+  /** With no pictures: draw from these instead of the stored drawing (a beer or wine, lib/beerWineWizard.ts). */
+  sketch?: SketchInputs | null;
 }
 
 /**
@@ -42,7 +45,7 @@ export function phoneHeroHeight(width: number, height: number, top: number) {
  * ground; with one, the drink's own colour glows through (docs/design_system.md,
  * "Drink field").
  */
-export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade, onColour }: DrinkHeroProps) {
+export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade, onColour, sketch }: DrinkHeroProps) {
   const ds = useDs();
   const [index, setIndex] = useState(0);
   const [viewing, setViewing] = useState(false);
@@ -58,7 +61,7 @@ export function DrinkHero({ name, pictures, glass, itemId, palette, height, fade
   return (
     <View style={{ height, backgroundColor: ds.c.paper }}>
       {total === 0 ? (
-        <DrinkImage source={null} glass={glass} itemId={itemId} accessibilityLabel={name} radius={0} animate style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height }])} />
+        <DrinkImage source={null} glass={glass} itemId={itemId} sketch={sketch} accessibilityLabel={name} radius={0} animate style={StyleSheet.flatten([styles.fill, { aspectRatio: undefined, height }])} />
       ) : (
         <PicturePager
           count={total}

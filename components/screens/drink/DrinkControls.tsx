@@ -29,8 +29,8 @@ interface DrinkControlsProps {
   editLabel?: string;
   /** The ingredient page's More (three dots) holds edit and the rest. */
   editIcon?: 'pencil' | 'ellipsis';
-  /** Ingredients save to your bar (My Bar); drinks go to To make. */
-  saveAs?: 'toMake' | 'bar';
+  /** Ingredients save to your bar (My Bar); drinks go to To make; a beer or wine is a favourite on this device. */
+  saveAs?: 'toMake' | 'bar' | 'favorite';
   /** The drink page: Share as its own button (left out while viewing as another role, when More holds it). */
   onShare?: () => void;
   /** The drink page's More button. On phones it holds Edit, so the pencil goes; wide screens show a labelled Edit beside it. */
@@ -85,8 +85,8 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, s
         {backOnly ? null : (
         <View style={styles.right}>
           <GlassButton
-            accessibilityLabel={saveAs === 'bar' ? (saved ? 'Take off your bar' : 'Save to your bar') : saved ? 'Remove from To make' : 'Add to To make'}
-            icon={saved ? 'bookmark.fill' : 'bookmark'}
+            accessibilityLabel={SAVE_LABELS[saveAs][saved ? 1 : 0]}
+            icon={saveAs === 'favorite' ? (saved ? 'heart.fill' : 'heart') : saved ? 'bookmark.fill' : 'bookmark'}
             scheme={right}
             onPress={onToggleSaved}
           />
@@ -104,6 +104,13 @@ export function DrinkControls({ media, top, heroHeight, scrollY, wide, noBack, s
     </>
   );
 }
+
+/** What the save button says, unsaved then saved. */
+const SAVE_LABELS = {
+  toMake: ['Add to To make', 'Remove from To make'],
+  bar: ['Save to your bar', 'Take off your bar'],
+  favorite: ['Add to favorites', 'Remove from favorites'],
+} as const;
 
 const styles = StyleSheet.create({
   bar: { position: 'absolute', top: 0, left: 0, right: 0, borderBottomWidth: StyleSheet.hairlineWidth, pointerEvents: 'none' },

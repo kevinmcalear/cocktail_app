@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Platform } from "react-native";
 
 import type { ImageItem } from "@/components/cocktail/SortableImageList";
-import type { SortableRecipeItem } from "@/components/recipe/SortableRecipeList";
+import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { useDrafts } from "@/hooks/useDrafts";
 import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";

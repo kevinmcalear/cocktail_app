@@ -1,5 +1,5 @@
-import { EditDrinkScreen, type EditDrinkProps } from '@/components/drink/EditDrinkScreen';
+import { BeerWineEditRoute } from '@/components/screens/drink/edit/BeerWineEditScreen';
 
-export default function EditBeerScreen(props: EditDrinkProps = {}) {
-  return <EditDrinkScreen kind="beer" {...props} />;
+export default function EditBeerScreen() {
+  return <BeerWineEditRoute kind="beer" />;
 }
