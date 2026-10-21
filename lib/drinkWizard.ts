@@ -66,6 +66,8 @@ export interface WizardDraft {
   /** How the glass is drawn ('martini_pony', lib/sketch/geometry.ts); null is the bar's glass or the default. Saved as items.sketch_variant. */
   glassVariant?: string | null;
   ice: WizardPick | null;
+  /** The ice it's made with ("blended with pebble"), when it isn't the one it's served over (items.method_ice_id). */
+  methodIce?: WizardPick | null;
   /** The finish: garnishes and what goes on top (3 drops mint oil, an absinthe rinse), saved as spec lines after the ingredients. */
   garnishes: WizardLine[];
   /** Your own profile ('me'), someone else's, or 'nobody'. Not chosen yet (null) means you, when you have a profile. */
@@ -259,6 +261,31 @@ const METHOD_DETAIL: Record<string, string> = {
 export const methodDetail = (name: string): string | null => METHOD_DETAIL[norm(name)] ?? null;
 export const COMMON_GLASSES = ['Coupe', 'Nick & Nora', 'Martini', 'Rocks', 'Highball', 'Collins', 'Flute', 'Wine', 'Julep cup', 'Mug', 'Tiki'] as const;
 export const COMMON_ICE = ['No ice', 'Cubes', 'Large cube', 'Crushed', 'Pebble', 'Spear', 'Sphere'] as const;
+
+/**
+ * What the ice it's made with is called, from the method: "Blended with",
+ * "Shaken with", "Stirred over". A drink built in the glass has none (its ice
+ * is the one it's served over); no method yet is "Made with".
+ */
+export function methodIceLabel(methods: readonly string[]): string | null {
+  const all = methods.join(' ').toLowerCase();
+  if (/blend/.test(all)) return 'Blended with';
+  if (/shak|whip/.test(all)) return 'Shaken with';
+  if (/stir/.test(all)) return 'Stirred over';
+  if (/swizzl/.test(all)) return 'Swizzled with';
+  if (/throw/.test(all)) return 'Thrown over';
+  if (/build|built/.test(all)) return null;
+  return 'Made with';
+}
+
+/** The drink page's Ice: "Blended with pebble, over a large cube", or just the ice it's served over. */
+export function iceLine(served: string | null, made: string | null, methods: readonly string[]): string | null {
+  const label = made ? (methodIceLabel(methods) ?? 'Made with') : null;
+  if (!label || !made) return served;
+  const withIce = `${label} ${made.toLowerCase()}`;
+  if (!served) return withIce;
+  return /^(no ice|up)/i.test(served) ? `${withIce}, served up` : `${withIce}, over a ${served.toLowerCase()}`;
+}
 
 /** A garnish chip: the spec line it adds. */
 export interface GarnishChip {
