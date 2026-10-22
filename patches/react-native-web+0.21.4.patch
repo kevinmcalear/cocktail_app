@@ -6,7 +6,7 @@ index 503513d..3f9338f 100644
  exports.default = useWindowDimensions;
  var _Dimensions = _interopRequireDefault(require("../Dimensions"));
  var _react = require("react");
-+// Patched (patches/react-native-web+0.21.2.patch): see the note in
++// Patched (patches/react-native-web+0.21.4.patch): see the note in
 +// dist/exports/useWindowDimensions/index.js.
 +var staticWindow = {
 +  fontScale: 1,
@@ -59,7 +59,7 @@ index f302870..2c88759 100644
  }
  function useElementLayout(ref, onLayout) {
    var observer = getResizeObserver();
-+  // Patched (patches/react-native-web+0.21.2.patch): upstream decided whether
++  // Patched (patches/react-native-web+0.21.4.patch): upstream decided whether
 +  // to observe only on mount, so a view that gained onLayout later (React
 +  // reusing a View that had none) kept the handler but never fired it.
 +  var hasOnLayout = typeof onLayout === 'function';
@@ -86,7 +86,7 @@ index 290ff81..6843e3c 100644
 -import { useEffect, useState } from 'react';
 +import { useSyncExternalStore } from 'react';
 +
-+// Patched (patches/react-native-web+0.21.2.patch). Upstream read the real
++// Patched (patches/react-native-web+0.21.4.patch). Upstream read the real
 +// window with useState on the first client render, so hydration never matched
 +// statically rendered HTML, which has no window (0 x 0). React then either
 +// threw the tree away (error #418) or kept the HTML's stale attributes.
@@ -142,7 +142,7 @@ index cd75e40..e614d89 100644
  }
  export default function useElementLayout(ref, onLayout) {
    var observer = getResizeObserver();
-+  // Patched (patches/react-native-web+0.21.2.patch): upstream decided whether
++  // Patched (patches/react-native-web+0.21.4.patch): upstream decided whether
 +  // to observe only on mount, so a view that gained onLayout later (React
 +  // reusing a View that had none) kept the handler but never fired it.
 +  var hasOnLayout = typeof onLayout === 'function';

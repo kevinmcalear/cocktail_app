@@ -1,12 +1,12 @@
 // @expo/metro-config's chunk splitting is patched
-// (patches/@expo+metro-config+58.0.7.patch): the common chunk every web page
+// (patches/@expo+metro-config+58.0.16.patch): the common chunk every web page
 // loads takes a module only when the root layout or at least 20 route chunks
 // use it (lazy chunks don't count). This fails if an upgrade drops the patch.
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
 // @ts-expect-error internal build file, no types
-import { extractCommonChunk } from '@expo/metro-config/build/serializer/serializeChunks';
+import { extractCommonChunk } from '@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy';
 
 type FakeModule = { path: string };
 type FakeChunk = { sealed: boolean; isAsync: boolean; entries: Set<FakeModule>; deps: Set<FakeModule> };

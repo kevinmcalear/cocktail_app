@@ -116,7 +116,13 @@ function Tabs() {
           <NativeTabs.Trigger.Icon sf="plus" md="add" />
           <NativeTabs.Trigger.Label>New</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="search" role="search">
+        {/* iOS 27 only moves the search field into the tab bar for a real
+            UISearchTab that activates search when picked (react-native-screens
+            4.29+). expo-router forwards role="search" only as the legacy system
+            item, so the screen props ask for the search tab directly.
+            ponytail: drop unstable_nativeProps once expo-router forwards them
+            (expo/expo#51876). */}
+        <NativeTabs.Trigger name="search" role="search" unstable_nativeProps={{ ios: { role: 'search', automaticallyActivatesSearch: true } }}>
           {/* iOS draws the system magnifying glass from role="search" and ignores
               md; Android has no search role, so without this the tab is blank. */}
           <NativeTabs.Trigger.Icon md="search" />
