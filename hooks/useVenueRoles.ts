@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { withToggle } from '@/lib/roleMatrix';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -16,6 +17,8 @@ export interface RoleMatrixRow {
   granted: string[];
   revoked: string[];
   capabilities: string[];
+  /** What it could do before anyone changed it: the built-in role at this venue. */
+  starts_with?: string[];
 }
 
 /** The five base levels and the venue's own roles, for members of the venue. */
@@ -57,8 +60,8 @@ function useInvalidateRoles(barId: string | null | undefined) {
 
 /**
  * Makes or changes one of the venue's roles. The venue_roles policies let
- * only its Admins; the database refuses overrides of level-bound capabilities
- * and Admin roles with an end date. Changing the base level moves everyone
+ * only people with staff; the database refuses Admin roles with an end date
+ * or without staff. Changing the base level moves everyone
  * holding the role (a trigger).
  */
 export function useSaveVenueRole(barId: string | null | undefined) {
@@ -69,6 +72,56 @@ export function useSaveVenueRole(barId: string | null | undefined) {
       const { error } = id
         ? await supabase.from('venue_roles').update(row).eq('id', id).eq('bar_id', barId!)
         : await supabase.from('venue_roles').insert({ ...row, bar_id: barId! });
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+    onError: () => {},
+  });
+}
+
+/** One dot on Roles and access: a permission for a venue role (roleId) or a built-in one (level). */
+export interface RoleToggle {
+  roleId: string | null;
+  level: number;
+  capability: string;
+  on: boolean;
+}
+
+/**
+ * Switches one permission for one role at the venue (set_role_capability),
+ * showing it at once and putting it back if the database refuses. Only people
+ * with staff may; an Admin always keeps staff; someone with staff who isn't
+ * an Admin can't touch Admin roles or hand out what they can't do.
+ */
+export function useSetRoleCapability(barId: string | null | undefined) {
+  const client = useQueryClient();
+  const invalidate = useInvalidateRoles(barId);
+  return useMutation({
+    mutationFn: async ({ roleId, level, capability, on }: RoleToggle) => {
+      const { error } = await supabase.rpc('set_role_capability', {
+        p_bar_id: barId!, p_role_id: roleId, p_level: roleId ? null : level, p_capability: capability, p_on: on,
+      });
+      if (error) throw error;
+    },
+    onMutate: async ({ roleId, level, capability, on }) => {
+      await client.cancelQueries({ queryKey: ['role-matrix', barId] });
+      const before = client.getQueryData<RoleMatrixRow[]>(['role-matrix', barId]);
+      if (before) client.setQueryData(['role-matrix', barId], withToggle(before, { role_id: roleId, base_level: level }, capability, on));
+      return { before };
+    },
+    onError: (_e, _v, context) => {
+      if (context?.before) client.setQueryData(['role-matrix', barId], context.before);
+    },
+    onSettled: invalidate,
+  });
+}
+
+/** Reset to built in: drops the venue's changes to a built-in role. */
+export function useResetBuiltInRole(barId: string | null | undefined) {
+  const invalidate = useInvalidateRoles(barId);
+  return useMutation({
+    mutationFn: async (level: number) => {
+      const { error } = await supabase.from('venue_level_overrides').delete().eq('bar_id', barId!).eq('base_level', level);
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -93,7 +146,7 @@ export function useDeleteVenueRole(barId: string | null | undefined) {
 export type MemberRoleChoice = { level: number } | { venueRoleId: string };
 
 /**
- * Gives a member a base level or a venue role. Admins only (user_bars_update);
+ * Gives a member a base level or a venue role. People with staff only (user_bars_update);
  * the database copies a venue role's base level onto the member, keeps the
  * venue's last Admin, and stamps role_since.
  */

@@ -1,6 +1,8 @@
 import { useBars } from '@/hooks/useBars';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { effectiveRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
+import { canManageTeam } from '@/lib/team';
 import { useUserId } from '@/ctx/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -72,8 +74,9 @@ export function useEffectiveRole(barId: string | null) {
  * Whether to offer editing an item, following the items RLS rule
  * (private.can_write).
  *
- * - Venue items: a Drink Creator (35) or above at the item's own venue, not
- *   the selected one. View-as caps the role.
+ * - Venue items: the create and edit drinks permission at the item's own
+ *   venue, not the selected one (any role the venue gives it). Under View as,
+ *   the previewed built-in role decides.
  * - Shared items (no venue): their creator, a Drink Creator or above at the
  *   bar a drink is credited to, or a catalog admin. The client can't see
  *   catalog admins or credits, so this asks the can_edit_item RPC. A view-as
@@ -85,6 +88,7 @@ export function useCanEditItem(item: { id: string; bar_id: string | null } | nul
   const venueRole = useEffectiveRole(barId);
   const { viewAsRoleLevel } = useViewAs();
   const shared = !!item && !barId;
+  const caps = useCapabilities(barId).data;
 
   const { data: canEditShared } = useQuery({
     queryKey: ['canEditItem', item?.id, userId],
@@ -97,8 +101,21 @@ export function useCanEditItem(item: { id: string; bar_id: string | null } | nul
   });
 
   if (!item) return false;
-  if (barId) return venueRole > 30;
+  if (barId) return viewAsRoleLevel == null && caps ? caps.includes('edit_drinks') : venueRole > 30;
   return canEditShared === true && (viewAsRoleLevel == null || viewAsRoleLevel > 30);
+}
+
+/**
+ * Whether to offer inviting, changing roles and removing people at a venue:
+ * the staff permission, which an Admin always has and a venue can give any
+ * role. Under View as, the previewed built-in role decides.
+ */
+export function useCanManageStaff(barId: string | null | undefined): boolean {
+  const caps = useCapabilities(barId).data;
+  const role = useEffectiveRole(barId ?? null);
+  const { viewAsRoleLevel } = useViewAs();
+  if (!barId) return false;
+  return viewAsRoleLevel == null && caps ? caps.includes('staff') : canManageTeam(role);
 }
 
 export function useMaxRealRole() {

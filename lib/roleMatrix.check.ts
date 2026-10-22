@@ -2,7 +2,10 @@
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { cell, columnCaption, dayOfEnd, endOfDay, endsLabel, overridesFor, roleSummary, type MatrixColumn } from './roleMatrix';
+import {
+  cell, columnCaption, dayOfEnd, endOfDay, endsLabel, isChangedBuiltIn, isLocked, overridesFor, ROLE_PRESETS, roleSummary, today, toggleLine,
+  withToggle, type MatrixColumn,
+} from './roleMatrix';
 import { agoLabel, memberRoleName, memberSinceLine } from './team';
 
 const base = (level: number, capabilities: string[]): MatrixColumn => ({
@@ -26,9 +29,38 @@ assert.equal(roleSummary(barback), 'From Employee, plus house-made recipes and p
 assert.equal(roleSummary({ base_level: 30, granted: [], revoked: ['photos'] }), 'From Bartender, no photos');
 assert.equal(roleSummary({ base_level: 35, granted: ['costs'], revoked: [] }), 'From Drink Creator, plus costs');
 
-// Overrides are what differs from the base level, and never level-bound ones.
-assert.deepEqual(overridesFor(employee.capabilities, ['menu', 'talking_points', 'locations', 'prep', 'specs']), { granted: ['prep'], revoked: [] });
+// Overrides are what differs from the built-in role, any permission at all.
+assert.deepEqual(overridesFor(employee.capabilities, ['menu', 'talking_points', 'locations', 'prep', 'specs']), { granted: ['specs', 'prep'], revoked: [] });
 assert.deepEqual(overridesFor(employee.capabilities, ['menu']), { granted: [], revoked: ['talking_points', 'locations'] });
+
+// A built-in role this venue changed: the dot is marked against where it started, and it can be reset.
+const changedEmployee: MatrixColumn = { ...employee, granted: ['specs'], capabilities: [...employee.capabilities, 'specs'], starts_with: employee.capabilities };
+assert.deepEqual(cell([changedEmployee], changedEmployee, 'specs'), { can: true, changed: true });
+assert.deepEqual(cell([changedEmployee], changedEmployee, 'menu'), { can: true, changed: false });
+assert.ok(isChangedBuiltIn(changedEmployee) && !isChangedBuiltIn(employee) && !isChangedBuiltIn(barback));
+
+// Tapping a dot switches that column only, and works out the overrides again.
+const admin = base(40, ['menu', 'staff', 'brand']);
+const tapped = withToggle([employee, barback, admin], employee, 'specs', true);
+assert.deepEqual(tapped[0].granted, ['specs']);
+assert.ok(tapped[0].capabilities.includes('specs'));
+assert.equal(tapped[1], barback);
+const untapped = withToggle(tapped, barback, 'prep', false);
+assert.deepEqual(untapped[1].granted, ['house_made']);
+assert.deepEqual(withToggle(tapped, employee, 'specs', false)[0].granted, []);
+
+// The Undo toast, and the one lock.
+assert.equal(toggleLine('Head bartender', 'staff', true), 'Head bartender can now invite and manage staff');
+assert.equal(toggleLine('Guest', 'menu', false), 'Guest can no longer see the menu and descriptions');
+assert.ok(isLocked(admin, 'staff') && !isLocked(admin, 'brand') && !isLocked(employee, 'staff'));
+
+// Ready-made roles, from the built-in role's permissions at this venue.
+const preset = (id: string) => ROLE_PRESETS.find((p) => p.id === id)!;
+assert.deepEqual(preset('apprentice').on(employee.capabilities).sort(), ['locations', 'menu', 'prep', 'specs', 'talking_points']);
+assert.ok(preset('head').on(['menu', 'edit_drinks']).includes('staff'));
+assert.deepEqual(preset('takeover').on(['menu', 'talking_points', 'photos']), ['menu', 'specs', 'locations']);
+assert.ok(preset('takeover').ends && !preset('apprentice').ends);
+assert.match(today(Date.parse('2026-10-12T12:00:00')), /^2026-10-12$/);
 
 // An end date covers the whole picked day, and reads back as that day.
 const end = endOfDay('2026-10-12')!;

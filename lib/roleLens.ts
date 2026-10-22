@@ -19,7 +19,7 @@ export const ROLE_ADDS: Record<number, string> = {
 /**
  * One section of a venue drink: the role it opens at by default and, where
  * one decides it, the venue capability (lib/roleMatrix.ts) that opens it at
- * this venue. `levelBound`: set by the base level, not by a role's overrides.
+ * this venue. `levelBound`: no permission decides it, so it follows the built-in role.
  */
 export interface LensRow {
   id: string;
@@ -35,7 +35,7 @@ export const LENS_GROUPS: { title: string; rows: LensRow[] }[] = [
   {
     title: 'The drink',
     rows: [
-      { id: 'about', label: 'Name, credit, description, score', opensAt: 10, capability: 'menu', levelBound: true },
+      { id: 'about', label: 'Name, credit, description, score', opensAt: 10, capability: 'menu' },
       { id: 'backstory', label: 'Backstory, riffs, flavor', opensAt: 10, levelBound: true },
       { id: 'journey', label: 'Rank it, I made it, To make', opensAt: 10, levelBound: true },
     ],
@@ -51,10 +51,10 @@ export const LENS_GROUPS: { title: string; rows: LensRow[] }[] = [
   {
     title: 'Making it',
     rows: [
-      { id: 'spec', label: 'Spec: names and amounts', opensAt: 30, capability: 'specs', levelBound: true },
-      { id: 'method', label: 'Method', opensAt: 30, capability: 'specs', levelBound: true },
-      { id: 'batch', label: 'Batch sheet and station split', detail: 'Needs the amounts, so it follows the spec', opensAt: 30, capability: 'specs', levelBound: true },
-      { id: 'changes', label: 'Spec changes and team notes', opensAt: 30, capability: 'specs', levelBound: true },
+      { id: 'spec', label: 'Spec: names and amounts', opensAt: 30, capability: 'specs' },
+      { id: 'method', label: 'Method', opensAt: 30, capability: 'specs' },
+      { id: 'batch', label: 'Batch sheet and station split', detail: 'Needs the amounts, so it follows the spec', opensAt: 30, capability: 'specs' },
+      { id: 'changes', label: 'Spec changes and team notes', opensAt: 30, capability: 'specs' },
       { id: 'photos', label: 'Add service photos', opensAt: 30, capability: 'photos' },
     ],
   },
@@ -62,7 +62,7 @@ export const LENS_GROUPS: { title: string; rows: LensRow[] }[] = [
     title: 'Behind the bar',
     rows: [
       { id: 'house', label: 'Prep notes, house-made recipes', opensAt: 35, capability: 'house_made' },
-      { id: 'edit', label: 'Edit the drink', opensAt: 35, capability: 'edit_drinks', levelBound: true },
+      { id: 'edit', label: 'Edit the drink', opensAt: 35, capability: 'edit_drinks' },
       { id: 'costs', label: 'Cost and margin', opensAt: 35, capability: 'costs' },
     ],
   },

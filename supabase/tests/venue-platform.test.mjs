@@ -250,13 +250,13 @@ describe('venue roles', () => {
     assert.deepEqual([...(await caps('outsider'))], []);
   });
 
-  test('overrides cannot touch what existing policies decide by level', async () => {
-    for (const cap of ['edit_drinks', 'specs', 'staff', 'brand', 'menus', 'menu']) {
-      const { error } = await users.admin.client
-        .from('venue_roles')
-        .insert({ bar_id: ids.barOne, name: `Sneaky ${cap}`, base_level: 20, granted: [cap] });
-      assert.ok(error, `granting ${cap} should fail`);
-    }
+  // Since 20261101200000 every permission is per role (role-permissions.test.mjs),
+  // except that an Admin role always keeps staff.
+  test('an Admin role cannot give up invite and manage staff', async () => {
+    const { error } = await users.admin.client
+      .from('venue_roles')
+      .insert({ bar_id: ids.barOne, name: 'Hands-off admin', base_level: 40, revoked: ['staff'] });
+    assert.ok(error);
   });
 
   test('admin roles cannot expire', async () => {

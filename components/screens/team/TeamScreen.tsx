@@ -9,8 +9,8 @@ import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
-import { useEffectiveRole } from '@/hooks/useViewAs';
-import { canManageTeam, canSeeTeam } from '@/lib/team';
+import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
+import { canSeeTeam } from '@/lib/team';
 
 import { TeamRoster } from './TeamRoster';
 
@@ -29,6 +29,7 @@ export function TeamScreen() {
   const { active } = useActiveVenue();
   const role = useEffectiveRole(active?.id ?? null);
   const visible = !home && !!active && canSeeTeam(role);
+  const manage = useCanManageStaff(active?.id);
   // /team?invite=1 (the venue sheet's and empty Library's Invite your team) opens the invite sheet.
   const { invite } = useLocalSearchParams<{ invite?: string }>();
   const [inviting, setInviting] = useState(invite === '1');
@@ -47,7 +48,7 @@ export function TeamScreen() {
         <PageHeader
           title="My team"
           onBack={() => (router.canGoBack() ? router.back() : router.navigate('/'))}
-          action={visible && canManageTeam(role) ? <Button label={wide ? 'Invite someone' : 'Invite'} accessibilityLabel="Invite someone" icon="person.badge.plus" onPress={() => setInviting(true)} /> : null}
+          action={visible && manage ? <Button label={wide ? 'Invite someone' : 'Invite'} accessibilityLabel="Invite someone" icon="person.badge.plus" onPress={() => setInviting(true)} /> : null}
         />
         {body}
       </ScrollView>

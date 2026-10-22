@@ -13,10 +13,11 @@ import { useUserId } from '@/ctx/AuthContext';
 import { useBarInvites, useRemoveInvite, useSendInviteEmail } from '@/hooks/useBarInvites';
 import { useBarMembers, useRemoveMember, type BarMember } from '@/hooks/useBarDetail';
 import { useRoleMatrix, useSetMemberRoleChoice, type MemberRoleChoice } from '@/hooks/useVenueRoles';
+import { useCanManageStaff } from '@/hooks/useViewAs';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
 import { roleLabel } from '@/lib/roles';
-import { agoLabel, canManageTeam, joinedLabel, memberRoleName, personName, rosterGroups, TEAM_MANAGE, TEAM_SORTS } from '@/lib/team';
+import { agoLabel, joinedLabel, memberRoleName, personName, rosterGroups, TEAM_MANAGE, TEAM_SORTS } from '@/lib/team';
 import { useTeamSort } from '@/store/useTeamSort';
 
 import { InviteSheet, type InviteNote } from './InviteSheet';
@@ -53,7 +54,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
   onCloseInvite: () => void;
 }) {
   const myId = useUserId();
-  const manage = canManageTeam(role);
+  const manage = useCanManageStaff(barId);
   const members = useBarMembers(barId);
   const venueRoles = (useRoleMatrix(manage ? barId : null).data ?? []).filter((r) => r.role_id);
   const change = useSetMemberRoleChoice(barId);

@@ -11,7 +11,7 @@ import { useBarPublishing } from '@/hooks/usePublishing';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { PAGE_COPY } from '@/lib/pageVisibility';
-import { canManageTeam } from '@/lib/team';
+import { useCanManageStaff } from '@/hooks/useViewAs';
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -26,10 +26,11 @@ function pricingValue(p: { currency: string | null; target_gp: number | null } |
  * Team and roles: links to My team and Roles and access with what's there
  * (decided on the canvas: link, don't repeat the roster here).
  */
-export function VenueTeamLinks({ barId, barName, role }: { barId: string; barName: string; role: number }) {
+export function VenueTeamLinks({ barId, barName }: { barId: string; barName: string; role: number }) {
   const router = useRouter();
+  const manage = useCanManageStaff(barId);
   const members = useBarMembers(barId).data;
-  const invites = useBarInvites(barId, canManageTeam(role)).data ?? [];
+  const invites = useBarInvites(barId, manage).data ?? [];
   const own = (useRoleMatrix(barId).data ?? []).filter((r) => r.role_id).length;
   const team = members ? [plural(members.length, 'person', 'people'), invites.length ? `${invites.length} invited` : null].filter(Boolean).join(' · ') : undefined;
   return (
