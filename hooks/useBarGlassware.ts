@@ -54,6 +54,9 @@ export function useBarGlassware(barId: string | null | undefined) {
 }
 
 /** The bar's default glass of a type, if it has one. */
+/** The bar's own glass drawings, as the sketch's barVariants. */
+export const barVariants = (rows: readonly BarGlass[] | undefined): string[] => (rows ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
+
 export const barGlassFor = (rows: readonly BarGlass[] | undefined, glass: SketchGlass) => rows?.find((r) => r.glass === glass && r.is_default) ?? null;
 
 /** The venue's public page (kind bar): glassware hangs off it. Null when the venue has none yet. */

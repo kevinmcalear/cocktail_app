@@ -11,7 +11,7 @@ import { RecipeCheck } from './RecipeCheck';
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('@/hooks/useBulk', () => ({ useSpecCatalog: () => ({ catalog: [], aliases: [], methods: [{ id: 'm1', name: 'Shaken' }], glasses: [], isLoading: false }) }));
 jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { iceTypes: [] } }) }));
-jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: [] }) }));
+jest.mock('@/hooks/useBarGlassware', () => ({ ...jest.requireActual('@/hooks/useBarGlassware'), useBarGlassware: () => ({ data: [] }) }));
 
 const item = (id: string, name: string, genericId: string | null = null, barId: string | null = null): CatalogItem => ({ id, name, genericId, barId });
 const data = (over: Partial<MatchData> = {}): MatchData => ({
@@ -106,6 +106,8 @@ test('a drink read from a photo starts as its drawing; the page stays small, to 
   const [[drinks]] = onSave.mock.calls;
   // Nothing from the file goes on the drink as a photo.
   expect(drinks.every((d: { draft: { photos?: object } }) => !Object.keys(d.draft.photos ?? {}).length)).toBe(true);
+  // Each keeps the drawing it was checked with.
+  expect(drinks.every((d: { sketch?: object }) => !!d.sketch)).toBe(true);
 });
 
 test('a drink read from a PDF names the file instead of offering a bigger look', async () => {

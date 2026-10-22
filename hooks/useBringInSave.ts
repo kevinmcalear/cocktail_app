@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { useBarGlassware } from '@/hooks/useBarGlassware';
+import { barVariants, useBarGlassware } from '@/hooks/useBarGlassware';
 import { useRecordBringIn } from '@/hooks/useBringInBatches';
 import { useSetMissingPrices, useVenueBottle, type VenueBottle } from '@/hooks/useBulk';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
@@ -13,13 +13,15 @@ import { sketchLook, type WizardDraft } from '@/lib/drinkWizard';
 import { blankSection } from '@/lib/menuLayout';
 import { applyMenuPaste, type PlacedGroup } from '@/lib/paste';
 import { draftSketchInputs } from '@/lib/sketch/draft';
+import type { SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 
-/** A drink to make: the wizard draft, and which of its new ingredients are house preps. */
+/** A drink to make: the wizard draft, which of its new ingredients are house preps, and the drawing it was checked with. */
 export interface DrinkToMake {
   draft: WizardDraft;
   prepNames: string[];
+  sketch?: SketchInputs;
 }
 
 export type MenuRowToSave = { section: string | null; drink: MenuDrink } | { section: string | null; make: DrinkToMake; price: string | null };
@@ -72,10 +74,9 @@ export function useBringInSave(barId: string | null) {
       let menuId: string | null = null;
       let title = '';
 
-      const make = async ({ draft, prepNames }: DrinkToMake): Promise<string> => {
-        // The bar's own glass drawings, as the recipe check drew it.
-        const variants = (glasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
-        const sketch = draftSketchInputs(sketchLook(draft, variants));
+      const make = async ({ draft, prepNames, sketch: drawn }: DrinkToMake): Promise<string> => {
+        // A drink off a menu wasn't drawn in its check: drawn here, with the bar's own glasses.
+        const sketch = drawn ?? draftSketchInputs(sketchLook(draft, barVariants(glasses)));
         const result = await createDrink.mutateAsync({ draft, barId: barId, myProfileId: me?.id ?? null, sketch });
         warnings.push(...result.warnings);
         itemIds.push(result.id);

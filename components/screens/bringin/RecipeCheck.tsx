@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Button, Caption, Field, ReviewRow, useDs, useGutter } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { radius, space, type as typeScale, fontFamilies } from '@/constants/tokens';
-import { useBarGlassware } from '@/hooks/useBarGlassware';
+import { barVariants, useBarGlassware } from '@/hooks/useBarGlassware';
 import { useSpecCatalog } from '@/hooks/useBulk';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { isPrepName, prepRatio } from '@/lib/bringIn';
@@ -88,12 +88,13 @@ export function RecipeCheck({ recipes, files, from, data, saving, error, onCance
     else delete lines[line];
     set({ lines });
   };
-  const toMake = (r: RecipeReading, c: RecipeChoices): DrinkToMake => ({
-    draft: recipeDraft(r, c, data, { methods, glasses, ice }, usual),
-    prepNames: r.lines.filter((l) => isPrepName(l.ingredient)).map((l) => l.ingredient),
-  });
-  // The bar's own glass drawings, as the wizard draws with; useBringInSave saves the same drawing.
-  const variants = (useBarGlassware(data.venueId).data ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
+  // The bar's own glass drawings, as the wizard draws with.
+  const variants = barVariants(useBarGlassware(data.venueId).data);
+  const toMake = (r: RecipeReading, c: RecipeChoices): DrinkToMake => {
+    const draft = recipeDraft(r, c, data, { methods, glasses, ice }, usual);
+    // Saved as drawn here, so the drink keeps the drawing the check showed.
+    return { draft, prepNames: r.lines.filter((l) => isPrepName(l.ingredient)).map((l) => l.ingredient), sketch: draftSketchInputs(sketchLook(draft, variants)) };
+  };
   const drawn = JSON.stringify(sketchLook(toMake(recipe, choices).draft, variants));
   // One inputs object per look: SketchDrawing keeps its painted scene by it.
   const sketch = useMemo(() => draftSketchInputs(JSON.parse(drawn)), [drawn]);
