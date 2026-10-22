@@ -48,8 +48,7 @@ interface IngredientsStepProps extends StepProps {
   balance?: boolean;
   /** Under each line's name on the desktop page: its supplier and cost. */
   lineDetail?: (line: WizardLine) => string | null;
-  /** Make it house's "Tell us": the bar a note would come from. */
-  tellUs?: TellUsAbout;
+  /** Make it house's "Tell us": the bar a note would come from. */ tellUs?: TellUsAbout;
 }
 
 /**
@@ -265,17 +264,14 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         ways={houseLine ? houseWays(houseLine.name, generic(houseLine.id)) : []}
         nudge={nudge && nudge.key === houseKey ? nudge : null}
         onPick={(t, adjunct) => houseLine && makeHouse(houseLine, t, adjunct)}
-        onClose={() => setHouseKey(null)}
-        tellUs={tellUs}
+        onClose={() => setHouseKey(null)} tellUs={tellUs}
       />
-
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
       {forDrink && balance && !typing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
       {typing || !forDrink ? null : (
         <>
           <GoesWith
-            lines={poured}
-            onAdd={add}
+            lines={poured} onAdd={add}
             fallback={
               <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
                 {quick.map((n) => (
