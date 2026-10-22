@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DrinkImage, DsText, Headline, MatchText, PressableScale, RowScore, scoreWords, useDs } from '@/components/ds';
+import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PressableScale, RowScore, scoreWords, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
@@ -32,15 +32,26 @@ export function ScopeToken({ label, onPress }: { label: string; onPress: () => v
 }
 
 /** All, Drinks 4, Ingredients 2, Menus 1: what the results show. Nothing when only one kind found anything. */
-export function ShowChips({ show, onShow, counts }: { show: SearchShow; onShow: (show: SearchShow) => void; counts: ShowCounts }) {
+export function ShowChips({ show, onShow, counts, glass }: { show: SearchShow; onShow: (show: SearchShow) => void; counts: ShowCounts; glass?: boolean }) {
   const options = showOptions(counts);
   if (!options.length) return null;
   const picked = options.some((o) => o.value === show) ? show : 'all';
+  const chips = options.map((o) => <Chip key={o.value} look={glass ? 'glass' : undefined} label={o.label} count={o.count} selected={picked === o.value} onPress={() => onShow(o.value)} />);
+  // Floating over the results: the chips sit in one glass track, as Discover's map layers do.
+  if (glass) {
+    return (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={styles.glassRow}>
+        <GlassSurface interactive style={styles.track}>
+          <View role="radiogroup" accessibilityLabel="Show" style={styles.trackChips}>
+            {chips}
+          </View>
+        </GlassSurface>
+      </ScrollView>
+    );
+  }
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.chips} role="radiogroup" accessibilityLabel="Show">
-      {options.map((o) => (
-        <Chip key={o.value} label={o.label} count={o.count} selected={picked === o.value} onPress={() => onShow(o.value)} />
-      ))}
+      {chips}
     </ScrollView>
   );
 }
@@ -159,6 +170,10 @@ const styles = StyleSheet.create({
   token: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 36, maxWidth: 160, paddingHorizontal: space.sm + 2, borderRadius: radius.pill },
   tokenText: { flexShrink: 1, fontFamily: fontFamilies.bodyMedium },
   chips: { gap: space.sm - 2, paddingRight: space.lg },
+  glassRow: { flexGrow: 0 },
+  // 36-point chips in a 4-point track: a 44-point target (disc-desk-browse).
+  track: { padding: space.xs },
+  trackChips: { flexDirection: 'row', gap: space.xs + 2 },
   completion: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget },
   strong: { fontFamily: fontFamilies.bodySemiBold },
   group: { gap: space.sm },

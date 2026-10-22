@@ -12,7 +12,8 @@ import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useRunSheet } from '@/hooks/useRunSheet';
 import { buildRunSheet, swappedRecipe } from '@/lib/runSheet';
 
-import { STEPS, StepNav, usePartyLooks, type Step } from './parts';
+import { STEPS, StepNav, usePartyLooks, type PartyLook, type Step } from './parts';
+import { SendLists } from './SendLists';
 import { ServesStep } from './ServesStep';
 import { SheetPaper } from './SheetPaper';
 import { SheetStep, useSheetActions } from './SheetStep';
@@ -61,7 +62,7 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
   ) : shownStep === 'who' ? (
     <WhoStep menuId={menuId} sheet={sheet} looks={looks} breakDown={breakDown} onBreakDown={setBreakDown} wide={desktop} />
   ) : (
-    <SheetStep sheet={sheet} menu={data.menu} breakDown={breakDown} />
+    <SheetStep sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} />
   );
 
   return (
@@ -94,15 +95,15 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
             {body}
             {nextStep && showNext && canEdit && desktop ? <Button label={nextStep.next} onPress={() => setStep(nextStep.value)} style={styles.nextInline} /> : null}
           </View>
-          {desktop && data && sheet && canEdit ? <LivePreview sheet={sheet} menu={data.menu} breakDown={breakDown} /> : null}
+          {desktop && data && sheet && canEdit ? <LivePreview sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} /> : null}
         </View>
       </ScrollView>
     </View>
   );
 }
 
-/** Desktop: the sheet beside the editor, updating as you go (board "Desktop"). */
-function LivePreview({ sheet, menu, breakDown }: { sheet: ReturnType<typeof buildRunSheet>; menu: { id: string; name: string; startsAt: string | null; endsAt: string | null }; breakDown: boolean }) {
+/** Desktop: the sheet beside the editor, updating as you go, and each bar's or brand's own list to send (boards "Desktop", R1). */
+function LivePreview({ sheet, menu, breakDown, looks }: { sheet: ReturnType<typeof buildRunSheet>; menu: { id: string; name: string; startsAt: string | null; endsAt: string | null }; breakDown: boolean; looks: PartyLook[] }) {
   const a = useSheetActions(sheet, menu, breakDown);
   return (
     <View role="complementary" aria-label="Live preview of the run sheet" style={styles.preview}>
@@ -112,6 +113,7 @@ function LivePreview({ sheet, menu, breakDown }: { sheet: ReturnType<typeof buil
         <Button label="Save PDF" size="sm" icon="printer" accessibilityHint="Opens the print dialog: pick Save as PDF" onPress={a.print} />
       </View>
       <SheetPaper sheet={sheet} menu={menu} variant="compact" />
+      <SendLists sheet={sheet} menu={menu} looks={looks} />
     </View>
   );
 }

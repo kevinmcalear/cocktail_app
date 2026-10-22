@@ -1,0 +1,32 @@
+diff --git a/node_modules/expo/types/react-native-web.d.ts b/node_modules/expo/types/react-native-web.d.ts
+index bbf8566..ee358f1 100644
+--- a/node_modules/expo/types/react-native-web.d.ts
++++ b/node_modules/expo/types/react-native-web.d.ts
+@@ -12,6 +12,9 @@ declare module 'react-native' {
+   }
+ 
+   interface ViewStyle {
++    // ponytail: RN 0.88 types `position` narrower than Expo's web augmentation,
++    // so redeclaring it makes ViewStyle unassignable to View style. Drop this
++    // patch when Expo's types match RN 0.88.
+     /** @platform web */
+     backdropFilter?: string;
+     /** @platform web */
+@@ -98,8 +101,6 @@ declare module 'react-native' {
+     visibility?: string;
+     /** @platform web */
+     willChange?: string;
+-    /** @platform web */
+-    position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
+   }
+ 
+   /**
+@@ -200,8 +201,6 @@ declare module 'react-native' {
+     /** @platform web */
+     willChange?: string;
+     /** @platform web */
+-    position?: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
+-    /** @platform web */
+     fontFeatureSettings?: string;
+     /** @platform web */
+     textIndent?: string;

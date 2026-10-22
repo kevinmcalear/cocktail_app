@@ -100,11 +100,21 @@ assert.deepEqual(row('Large cube'), ['320', null, 'ice']);
 assert.equal(sheet.groups.flatMap((g) => g.needs).some((n) => n.name === 'London dry gin'), false, 'swapped out everywhere');
 assert.deepEqual(sheet.groups.map((g) => g.title), ['Spirits and liqueurs', 'Juices and fresh', 'House preps', 'Mixers', 'Garnish', 'Glassware', 'Ice']);
 
-// Default owners: the brand that makes the bottle, the guest for their drink's house preps, the host for the rest.
+// Default owners: the brand that makes the bottle, the visiting bar for their drink's house preps, the bar it's at for the rest.
 const counts = sheet.parties.map((p) => [p.name, p.role, p.needs.length]);
-assert.deepEqual(counts, [["Caretaker's Cottage", 'Hosting', 16], ['Little Rye', 'Guest venue', 2], ['Mill & Ash Gin', 'Brand', 1], ['Harbour Scotch', 'Brand', 2]]);
+assert.deepEqual(counts, [["Caretaker's Cottage", 'Venue', 16], ['Little Rye', 'Visiting team', 2], ['Mill & Ash Gin', 'Brand', 1], ['Harbour Scotch', 'Brand', 2]]);
 assert.deepEqual(sheet.parties[1].needs.map((n) => n.name), ['Honey-ginger syrup', 'Candied ginger']);
 assert.equal(need('Sugar syrup').ownerId, null, "the host's drink, the host's syrup");
+
+// At their bar (we're visiting Little Rye): it comes first and has everything,
+// except the house preps for our own drinks, which we bring, and the brands' bottles.
+const theirBar = input.parties.map((p) => (p.kind === 'guest' ? { ...p, isVenue: true } : p));
+const away = buildRunSheet({ ...input, parties: theirBar });
+assert.deepEqual(away.parties.map((p) => [p.name, p.role, p.needs.length]), [['Little Rye', 'Venue', 17], ["Caretaker's Cottage", 'Visiting team', 1], ['Mill & Ash Gin', 'Brand', 1], ['Harbour Scotch', 'Brand', 2]]);
+assert.deepEqual(away.parties[1].needs.map((n) => n.name), ['Sugar syrup'], 'our Tokyo Collins, our syrup');
+const awayNeed = (name: string) => away.groups.flatMap((g) => g.needs).find((n) => n.name === name)!;
+assert.deepEqual([awayNeed('Honey-ginger syrup').ownerId, awayNeed('Campari').ownerId, awayNeed('Rocks glass').ownerId], ['rye', 'rye', 'rye']);
+assert.equal(buildRunSheet({ ...input, parties: theirBar, owners: { campari: null } }).groups.flatMap((g) => g.needs).find((n) => n.name === 'Campari')!.ownerId, null, 'a pick of us still means us');
 
 // The drinks, as swapped for this menu.
 const pen = sheet.drinks[0];

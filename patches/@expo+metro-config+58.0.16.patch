@@ -1,22 +1,25 @@
-diff --git a/node_modules/@expo/metro-config/build/serializer/serializeChunks.js b/node_modules/@expo/metro-config/build/serializer/serializeChunks.js
-index 088b0a8..341d802 100644
---- a/node_modules/@expo/metro-config/build/serializer/serializeChunks.js
-+++ b/node_modules/@expo/metro-config/build/serializer/serializeChunks.js
-@@ -27,6 +27,9 @@ _export(exports, {
-     },
-     get graphToSerialAssetsAsync () {
-         return graphToSerialAssetsAsync;
-+    },
-+    get extractCommonChunk () {
-+        return extractCommonChunk;
+diff --git a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
+index 2e3ff4b..bf495fd 100644
+--- a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
++++ b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
+@@ -8,6 +8,12 @@ Object.defineProperty(exports, "createLegacyChunkingStrategy", {
+         return createLegacyChunkingStrategy;
      }
  });
- function _bundleToString() {
-@@ -612,25 +615,42 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
++Object.defineProperty(exports, "extractCommonChunk", {
++    enumerable: true,
++    get: function() {
++        return extractCommonChunk;
++    }
++});
+ function _isResolvedDependency() {
+     const data = require("@expo/metro/metro/lib/isResolvedDependency");
+     _isResolvedDependency = function() {
+@@ -118,25 +124,43 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
          }
      }
  }
-+// Patched (patches/@expo+metro-config+58.0.7.patch): upstream moves every module
++// Patched (patches/@expo+metro-config+58.0.16.patch): upstream moves every module
 +// that two async chunks share into the common chunk, which every page loads, so
 +// each page carried code only other routes use. Now a module goes there when the
 +// root layout's chunk (also on every page) uses it, or at least
@@ -24,8 +27,9 @@ index 088b0a8..341d802 100644
 +// Metro's define() skips a module id it already has, so a copy loaded twice runs
 +// once. Checked by scripts/commonChunk.check.ts.
 +const COMMON_CHUNK_MIN_USERS = 20; // about a fifth of the routes: rarer modules ship with their routes, which are prefetched after the first screen's data (lib/prefetchRoutes.web.ts)
- function extractCommonChunk(chunks, graph, options) {
+ function extractCommonChunk(chunks, graph, options, strategy) {
 -    const toCompare = [
++    const path = require("path");
 +    const asyncChunks = [
          ...chunks.values()
 -    ].filter((chunk)=>!chunk.sealed);
@@ -44,13 +48,13 @@ index 088b0a8..341d802 100644
 -            }
 +    ].filter((chunk)=>!chunk.sealed && chunk.isAsync);
 +    const routerRoot = graph.transformOptions?.customTransformOptions?.routerRoot;
-+    const rootLayout = typeof routerRoot === 'string' ? _path().default.join(options.projectRoot, decodeURI(routerRoot), '_layout') : null;
++    const rootLayout = typeof routerRoot === 'string' ? path.join(options.projectRoot, decodeURI(routerRoot), '_layout') : null;
 +    const isRootLayout = (chunk)=>rootLayout != null && [
 +            ...chunk.entries
 +        ].some((m)=>m.path.replace(/\.[cm]?[jt]sx?$/, '') === rootLayout);
 +    const isRoute = (chunk)=>typeof routerRoot === 'string' && [
 +            ...chunk.entries
-+        ].some((m)=>m.path.startsWith(_path().default.join(options.projectRoot, decodeURI(routerRoot)) + _path().default.sep));
++        ].some((m)=>m.path.startsWith(path.join(options.projectRoot, decodeURI(routerRoot)) + path.sep));
 +    const users = new Map();
 +    const onEveryPage = new Set();
 +    for (const chunk of asyncChunks){
@@ -69,4 +73,4 @@ index 088b0a8..341d802 100644
 +    }
      // If common dependencies were found, extract them to the shared chunk.
      if (commonDependencies.size) {
-         return new Chunk('/__common.js', commonDependencies, graph, options, false, true);
+         return new _Chunk.Chunk('/__common.js', commonDependencies, graph, options, strategy, false, true);
