@@ -3,8 +3,11 @@
 // - Postgres reports every view column as nullable, so the columns a view
 //   passes straight through from a table take that table's types here
 //   (items.id is never null, nor is it in the view).
-// - Any function argument can be null in Postgres (the app sends null for
-//   "not set"), but the generator types each one as never null.
+// - The generator types every function argument as never null. The ones the
+//   app sends null for on purpose are listed in NullArgs below; each is
+//   DEFAULT NULL in SQL or read as "none" by the function. Every other
+//   argument stays non-null, so null can't stand in for a required argument
+//   or override a non-null default (a null p_limit would mean no limit).
 import type { Database as Generated } from '@/types/database';
 
 export type { Json } from '@/types/database';
@@ -25,12 +28,31 @@ type ItemView = PassThrough<'app_item_presentation', TableRow<'items'>, keyof Vi
 // nullable) and passes these through from recipes r.
 type RecipeView = PassThrough<'app_recipe_presentation', TableRow<'recipes'>, 'id' | 'created_at' | 'recipe_item_id' | 'is_optional' | 'sort_order'>;
 
-type NullArgs<F> = F extends { Args: infer A }
-  ? [A] extends [never]
-    ? F
-    : Omit<F, 'Args'> & { Args: { [P in keyof A]: A[P] | null } }
+type Fns = Public['Functions'];
+
+/** The arguments that take null, per function (checked against the SQL, 22 Oct). */
+type NullArgs = {
+  add_venue: 'p_postcode' | 'p_region' | 'p_locality';
+  approve_profile_claim: 'p_code';
+  discover_list: 'p_bar_id' | 'p_query' | 'p_styles' | 'p_spirits' | 'p_notes';
+  resolve_report: 'p_resolution';
+  // No cover is null; a null position falls back to 50.
+  save_menu: 'p_cover_url' | 'p_cover_position';
+  save_drink_spec: 'p_note';
+  schedule_menu: 'p_starts_at';
+  search_glass_models: 'p_glass';
+  // Null clears the match.
+  set_spec_match: 'p_spec_match';
+  start_bar_claim: 'p_bar_id' | 'p_note' | 'p_code' | 'p_instagram' | 'p_website' | 'p_phone';
+  start_person_claim: 'p_note' | 'p_code';
+  update_bar_settings: 'p_logo_url' | 'p_primary_color' | 'p_secondary_color';
+};
+
+/** Function `F` (each overload) with arguments `K` also taking null. */
+type WithNullArgs<F, K extends PropertyKey> = F extends { Args: infer A }
+  ? Omit<F, 'Args'> & { Args: { [P in keyof A]: P extends K ? A[P] | null : A[P] } }
   : F;
-type Functions = { [K in keyof Public['Functions']]: NullArgs<Public['Functions'][K]> };
+type Functions = { [N in keyof Fns]: N extends keyof NullArgs ? WithNullArgs<Fns[N], NullArgs[N]> : Fns[N] };
 
 export type Database = Omit<Generated, 'public'> & {
   public: Omit<Public, 'Views' | 'Functions'> & {

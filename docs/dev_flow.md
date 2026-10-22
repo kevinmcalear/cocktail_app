@@ -54,6 +54,8 @@ Migrations, RLS, auth, `lib/roles.ts`, edge function deploys, production data, s
 
 Once a migration is merged with the `human-approved` label, the Deploy migrations workflow (`.github/workflows/deploy-migrations.yml`) runs `supabase db push` against production, connecting to the database directly through the session pooler. The project ref is in the workflow file; the only secret it needs is `SUPABASE_DB_PASSWORD` (no access token). It can be run by hand from the Actions tab to catch production up.
 
+A migration also changes `types/database.ts`, which CI regenerates and compares. When migration PRs run in parallel, each one regenerates it after rebasing on the latest `main` (`supabase db reset` on a local stack, then `npm run gen:types`) and commits the result; resolve a conflict in that file by regenerating it, never by hand.
+
 ## The redesign roadmap
 
 The Back Bar brief (https://claude.ai/artifact/1ksBAgPLyVmLGKdm48x6sf) is the target. Each step ships on phone, tablet and web together.

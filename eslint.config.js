@@ -32,4 +32,16 @@ module.exports = defineConfig([
       'react-hooks/preserve-manual-memoization': 'warn',
     },
   },
+  {
+    // One database types API: types/db.ts corrects the generated file (view
+    // columns, nullable function arguments), so nothing reads the uncorrected
+    // Tables/TablesInsert helpers from types/database.ts directly.
+    ignores: ['types/db.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['@/types/database', '**/types/database'], message: 'Import Row, Insert, Update, Enum or Database from @/types/db instead.' }] },
+      ],
+    },
+  },
 ]);
