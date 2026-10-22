@@ -94,7 +94,7 @@ export function FeedbackSheet({ visible, onClose, mode, place }: FeedbackSheetPr
       )}
       <Field
         label={different ? 'What you do' : 'What happened (optional)'}
-        placeholder={different ? 'We cut graduated blocks that stack in a column to fit the glass.' : undefined}
+        placeholder={different ? 'What you do, and how' : undefined}
         value={body}
         onChangeText={setBody}
         multiline
