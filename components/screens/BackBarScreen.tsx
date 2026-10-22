@@ -125,6 +125,16 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
   else {
     const plan = (
       <View style={styles.stack}>
+        {/* What waits for a spot leads, over the plan it goes on (board fix 12). */}
+        <WaitingForSpot items={waiting} selectedId={placing?.id ?? null} onSelect={canPlace ? pick : undefined} />
+        {task ? (
+          <Surface raised style={styles.task}>
+            <Body aria-live="polite" style={styles.flex}>
+              {task}
+            </Body>
+            <Button label="Cancel" variant="ghost" onPress={cancelTask} />
+          </Surface>
+        ) : null}
         <BackBarPlan
           zones={zones}
           highlightIds={selected ? [selected.id] : []}
@@ -138,15 +148,6 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
         <ZoneKinds />
         {editing ? <AddZone barId={barId} zones={zones} onAdded={(z) => setSelectedId(z.id)} /> : null}
         {editing && selected ? <ZoneEditor key={selected.id} barId={barId} zone={selected} /> : null}
-        {task ? (
-          <Surface raised style={styles.task}>
-            <Body aria-live="polite" style={styles.flex}>
-              {task}
-            </Body>
-            <Button label="Cancel" variant="ghost" onPress={cancelTask} />
-          </Surface>
-        ) : null}
-        <WaitingForSpot items={waiting} selectedId={placing?.id ?? null} onSelect={canPlace ? pick : undefined} />
         {!canPlace ? <Caption tone="muted">You can see where everything lives. Drink Creators and up can change it.</Caption> : null}
       </View>
     );

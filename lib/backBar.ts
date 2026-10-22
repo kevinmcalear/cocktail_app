@@ -4,6 +4,9 @@
 
 import type { BarZoneKind } from '@/types/backBar';
 
+import { barSection } from './barSections';
+import { agoLabel } from './team';
+
 /**
  * Every plan is drawn 2:1. ponytail: one shape for every venue; a per-venue
  * aspect (a column on bars) if a long, thin bar ever needs it.
@@ -98,11 +101,11 @@ export function formatPar(amount: number | string | null | undefined, unit: stri
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-/** "12 zones · 84 items placed · 3 waiting for a spot" */
+/** "12 zones · 84 items placed · 4 waiting" */
 export function summaryLine(zoneCount: number, locations: { item_id: string }[], waitingCount: number): string {
   const placed = new Set(locations.map((l) => l.item_id)).size;
   const parts = [plural(zoneCount, 'zone', 'zones'), `${plural(placed, 'item', 'items')} placed`];
-  if (waitingCount) parts.push(`${waitingCount} waiting for a spot`);
+  if (waitingCount) parts.push(`${waitingCount} waiting`);
   return parts.join(' · ');
 }
 
@@ -111,14 +114,20 @@ export interface NamedItem {
   name: string;
 }
 
+/** An ingredient the menus use, with the drinks that pour it (through house-made ones too). */
+export interface UsedItem extends NamedItem {
+  drinks: string[];
+}
+
 /**
  * Every ingredient the drinks use, walking down through house-made ones (a
  * syrup's honey and ginger need a spot too). In spec order, each once, and
- * never the drinks themselves.
+ * never the drinks themselves. Each says which of the drinks pour it.
  */
-export function ingredientsUsed(drinkIds: string[], recipeOf: Record<string, NamedItem[]>): NamedItem[] {
+export function ingredientsUsed(drinkIds: string[], recipeOf: Record<string, NamedItem[]>): UsedItem[] {
+  const roots = new Set(drinkIds);
   const seen = new Set(drinkIds);
-  const out: NamedItem[] = [];
+  const out: UsedItem[] = [];
   let frontier = drinkIds;
   while (frontier.length) {
     const next: string[] = [];
@@ -126,19 +135,93 @@ export function ingredientsUsed(drinkIds: string[], recipeOf: Record<string, Nam
       for (const ing of recipeOf[id] ?? []) {
         if (seen.has(ing.id)) continue;
         seen.add(ing.id);
-        out.push(ing);
+        out.push({ ...ing, drinks: [] });
         next.push(ing.id);
       }
     }
     frontier = next;
   }
+  // Which drinks reach each one, each drink walked on its own.
+  const byId = new Map(out.map((i) => [i.id, i]));
+  for (const drink of drinkIds) {
+    const reached = new Set<string>();
+    const stack = [drink];
+    for (let id = stack.pop(); id !== undefined; id = stack.pop()) {
+      for (const ing of recipeOf[id] ?? []) {
+        if (reached.has(ing.id) || roots.has(ing.id)) continue;
+        reached.add(ing.id);
+        stack.push(ing.id);
+      }
+    }
+    for (const id of reached) byId.get(id)?.drinks.push(drink);
+  }
   return out;
 }
 
-/** The used items with no place at the venue yet. */
-export function waitingForSpot(used: NamedItem[], locations: { item_id: string }[]): NamedItem[] {
-  const placed = new Set(locations.map((l) => l.item_id));
-  return used.filter((i) => !placed.has(i.id));
+/** A row on the stock list, as the waiting list reads it. */
+export interface StockedItem {
+  item_id: string;
+  source: string;
+  from_name: string | null;
+  added_at: string;
+  item: NamedItem | null;
+}
+
+/** Waiting for a spot, with the line under its name. */
+export interface WaitingItem extends NamedItem {
+  detail: string;
+}
+
+/** "Added from Ash Garden, just now", "Added in setup, yesterday". */
+export function addedLine(row: Pick<StockedItem, 'source' | 'from_name' | 'added_at'>, now: number): string {
+  const ago = now - new Date(row.added_at).getTime();
+  const when = ago < 60 * 60 * 1000 ? 'just now' : (agoLabel(row.added_at, now) ?? 'just now');
+  const from = row.from_name?.trim();
+  if (row.source === 'drink' && from) return `Added from ${from}, ${when}`;
+  if (row.source === 'setup') return `Added in setup, ${when}`;
+  return `Added ${when}`;
+}
+
+/** "Poured in Low Tide", "Poured in 3 drinks". */
+export function pouredLine(drinks: string[], nameOf: (id: string) => string | undefined): string {
+  const only = drinks.length === 1 ? nameOf(drinks[0]) : undefined;
+  return only ? `Poured in ${only}` : `Poured in ${plural(drinks.length, 'drink', 'drinks')}`;
+}
+
+/**
+ * What has no place at the venue yet: bottles put on the back bar (newest
+ * first), then what the menus pour. Each once.
+ */
+export function waitingForSpot(
+  stock: StockedItem[],
+  used: UsedItem[],
+  locations: { item_id: string }[],
+  nameOf: (drinkId: string) => string | undefined,
+  now: number
+): WaitingItem[] {
+  const listed = new Set(locations.map((l) => l.item_id));
+  const out: WaitingItem[] = [];
+  for (const row of stock) {
+    if (!row.item || listed.has(row.item_id)) continue;
+    listed.add(row.item_id);
+    out.push({ id: row.item_id, name: row.item.name, detail: addedLine(row, now) });
+  }
+  for (const i of used) {
+    if (listed.has(i.id)) continue;
+    listed.add(i.id);
+    out.push({ id: i.id, name: i.name, detail: pouredLine(i.drinks, nameOf) });
+  }
+  return out;
+}
+
+/**
+ * Whether a line's ingredient is a bottle a bar stocks: spirits, liqueurs,
+ * vermouth, beer, wine, bitters and bought syrups. Not juice, garnish,
+ * water, mixers or a prep the bar makes itself.
+ */
+export function isStockable(item: { name: string; kind?: string | null; role?: string | null; ownPrep?: boolean }): boolean {
+  const section = barSection({ name: item.name, kind: item.kind, role: item.role });
+  return section === 'bottles' || (section === 'preps' && item.role !== 'prep' && !item.ownPrep);
 }
 
 const KIND_WORDS: [RegExp, BarZoneKind][] = [
