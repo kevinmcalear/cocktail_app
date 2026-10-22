@@ -75,12 +75,22 @@ describe('useIngredientEditor', () => {
     expect(result.current.form.overrideVisibility).toBe('20');
   });
 
-  it('saving without changes unlinks no tags', async () => {
+  it('saving without changes unlinks no tags and writes no columns', async () => {
     const { result } = await openGin();
     await act(async () => {
       expect(await result.current.save()).toBe(true);
     });
     expect(tagWrites()).toEqual([]);
+    expect(mockDb.calls.filter((c) => c.table === 'items' && c.op !== 'select')).toEqual([]);
+  });
+
+  it('a change writes only that column', async () => {
+    const { result } = await openGin();
+    await act(() => result.current.set({ brandMaker: 'tanqueray' }));
+    await act(async () => {
+      await result.current.save();
+    });
+    expect(mockDb.calls.filter((c) => c.table === 'items' && c.op === 'update')).toEqual([{ table: 'items', op: 'update', payload: { brand_maker: 'Tanqueray' }, filters: [['id', 'i1']] }]);
   });
 
   it('unticking a tag unlinks only that one, never a tag it did not load', async () => {

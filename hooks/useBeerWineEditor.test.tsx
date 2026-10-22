@@ -18,10 +18,10 @@ jest.mock('@/hooks/useWines', () => ({ useWine: () => ({ data: undefined, isLoad
 const LEVELS = { override_visibility_level: 20, override_generic_ingredient_level: 30, override_specific_brand_level: null, override_measurement_level: 40, override_prep_level: null };
 
 
-async function openBeer() {
+async function openBeer(levels: unknown = LEVELS) {
   mockDb.calls = [];
   // items answers the levels read; item_categories has a tag added elsewhere since the page loaded.
-  mockDb.rows = { items: LEVELS, item_categories: [{ category_id: 'lager' }, { category_id: 'added-elsewhere' }] };
+  mockDb.rows = { items: levels, item_categories: [{ category_id: 'lager' }, { category_id: 'added-elsewhere' }] };
   // gcTime Infinity: no garbage-collection timer left running to hold Jest open.
   const client = new QueryClient({ defaultOptions: { queries: { gcTime: Infinity, retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
@@ -70,4 +70,14 @@ test.each([
     await result.current.handleSave();
   });
   expect(writes()).toEqual([{ table: 'items', op: 'update', payload: { price: saved }, filters: [['id', 'b1']] }]);
+});
+
+test('when the levels can’t be read, it still opens, and Save leaves the levels alone', async () => {
+  const { result } = await openBeer(null);
+  expect(result.current.overrideVisibility).toBeNull();
+  await act(() => result.current.setDescription('Crisp and cold'));
+  await act(async () => {
+    await result.current.handleSave();
+  });
+  expect(writes()).toEqual([{ table: 'items', op: 'update', payload: { description: 'Crisp and cold' }, filters: [['id', 'b1']] }]);
 });

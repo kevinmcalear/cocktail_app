@@ -9,7 +9,7 @@ import { useIngredient } from "@/hooks/useIngredients";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
-import { saveItemTags } from "@/lib/itemSave";
+import { changedColumns, levelColumns, levelFields, OVERRIDE_LEVELS, saveItemTags } from "@/lib/itemSave";
 import { applyIngredientHandoff, withoutSelfRecipeRefs } from "@/lib/ingredientHandoff";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { capitalize, capitalizeFirst } from "@/lib/stringUtils";
@@ -58,25 +58,33 @@ const EMPTY: IngredientForm = {
 };
 
 type Lines = SortableRecipeItem[];
-const level = (v: string | null) => (v ? parseInt(v, 10) : null);
-const levelText = (v: number | null | undefined) => v?.toString() || null;
+/** The items columns the form edits (shared by Save and publishing a draft). */
+const ingredientColumns = (f: IngredientForm) => ({
+    name: capitalizeFirst(f.name),
+    description: f.description.trim() || null,
+    brand_maker: capitalize(f.brandMaker) || null,
+    generic_id: f.generic?.id ?? null,
+    abv: f.abv ? parseFloat(f.abv) : null,
+    bar_id: f.barId || null,
+    ...levelColumns(f),
+    hide_from_search: f.hideFromSearch,
+});
 const NEW_LINE = () => ({ amount: "", unit: getPreferredUnit(), preparation_notes: "", is_optional: false });
 
 /** The form and its dirty state, shared by the saved and the draft editor. */
 function useForm(selfId: string | null) {
     const [form, setForm] = useState<IngredientForm>(EMPTY);
-    const [clean, setClean] = useState<string | null>(null);
+    // What was last loaded or saved: isDirty compares against it, and Save writes only what differs.
+    const [saved, setSaved] = useState<IngredientForm | null>(null);
     const set = (patch: Partial<IngredientForm>) => setForm((f) => ({ ...f, ...patch }));
     const setRecipeItems = (next: Lines | ((prev: Lines) => Lines)) =>
         setForm((f) => ({ ...f, recipeItems: typeof next === "function" ? next(f.recipeItems) : next }));
     // Stable: the loaders below run it from effects.
     const load = useCallback((values: IngredientForm) => {
         setForm(values);
-        setClean(JSON.stringify(values));
+        setSaved(values);
     }, []);
-    const markClean = () => setClean(JSON.stringify(form));
-    // What was last loaded or saved: Save changes the tags against it.
-    const saved = useMemo(() => (clean === null ? null : (JSON.parse(clean) as IngredientForm)), [clean]);
+    const markClean = () => setSaved(form);
 
     // A new ingredient made from this recipe comes back onto it (only to the editor that asked).
     useEffect(() => {
@@ -108,9 +116,9 @@ function useForm(selfId: string | null) {
         setRecipeItems,
         load,
         markClean,
-        loaded: clean !== null,
+        loaded: saved !== null,
         saved,
-        isDirty: clean !== null && JSON.stringify(form) !== clean,
+        isDirty: saved !== null && JSON.stringify(form) !== JSON.stringify(saved),
         selfId,
         dropdowns,
         catalog,
@@ -143,7 +151,7 @@ export function useIngredientEditor(id: string) {
             fetchEditableRecipes(id),
             supabase
                 .from("items")
-                .select("override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level, item_categories(category_id)")
+                .select(`${OVERRIDE_LEVELS}, item_categories(category_id)` as const)
                 .eq("id", id)
                 .single(),
         ])
@@ -159,11 +167,7 @@ export function useIngredientEditor(id: string) {
                     // Someone who can't edit the recipe reads it as shown; Save then asks for their own version (useAskAtSave).
                     recipeItems: (recipes.length ? recipes : (data.recipe ?? [])).map((r) => mapPresentationRecipeToEditItem(r, { includeCocktailFields: true })),
                     barId: ingredient.bar_id || null,
-                    overrideVisibility: levelText(raw.override_visibility_level),
-                    overrideGeneric: levelText(raw.override_generic_ingredient_level),
-                    overrideSpecific: levelText(raw.override_specific_brand_level),
-                    overrideMeasurement: levelText(raw.override_measurement_level),
-                    overridePrep: levelText(raw.override_prep_level),
+                    ...levelFields(raw),
                     hideFromSearch: ingredient.hide_from_search === true,
                 });
             })
@@ -175,34 +179,22 @@ export function useIngredientEditor(id: string) {
 
     const save = async (): Promise<boolean> => {
         const f = editor.form;
-        if (!editor.saved) return false;
-        const loadedTags = editor.saved.selectedCategories;
+        const loaded = editor.saved;
+        if (!loaded) return false;
         if (!f.name.trim()) {
             Alert.alert("Missing Info", "Name is required.");
             return false;
         }
         setSaving(true);
         try {
-            const { error: updateError } = await supabase
-                .from("items")
-                .update({
-                    name: capitalizeFirst(f.name),
-                    description: f.description.trim() || null,
-                    brand_maker: capitalize(f.brandMaker) || null,
-                    generic_id: f.generic?.id ?? null,
-                    abv: f.abv ? parseFloat(f.abv) : null,
-                    bar_id: f.barId || null,
-                    override_visibility_level: level(f.overrideVisibility),
-                    override_generic_ingredient_level: level(f.overrideGeneric),
-                    override_specific_brand_level: level(f.overrideSpecific),
-                    override_measurement_level: level(f.overrideMeasurement),
-                    override_prep_level: level(f.overridePrep),
-                    hide_from_search: f.hideFromSearch,
-                })
-                .eq("id", id);
-            if (updateError) throw updateError;
+            // Only what changed since it loaded, so someone else's edit to another field isn't undone.
+            const changed = changedColumns(ingredientColumns(loaded), ingredientColumns(f));
+            if (Object.keys(changed).length) {
+                const { error: updateError } = await supabase.from("items").update(changed).eq("id", id);
+                if (updateError) throw updateError;
+            }
 
-            await saveItemTags(id, loadedTags, f.selectedCategories);
+            await saveItemTags(id, loaded.selectedCategories, f.selectedCategories);
 
             const { error: deleteError } = await supabase.from("recipes").delete().eq("recipe_item_id", id);
             if (deleteError) throw deleteError;
@@ -315,21 +307,7 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
             }
             const { data: ingredient, error } = await supabase
                 .from("items")
-                .insert({
-                    name: capitalizeFirst(form.name),
-                    description: form.description.trim() || null,
-                    item_type: "ingredient",
-                    brand_maker: capitalize(form.brandMaker) || null,
-                    generic_id: form.generic?.id ?? null,
-                    abv: form.abv ? parseFloat(form.abv) : null,
-                    bar_id: form.barId || null,
-                    override_visibility_level: level(form.overrideVisibility),
-                    override_generic_ingredient_level: level(form.overrideGeneric),
-                    override_specific_brand_level: level(form.overrideSpecific),
-                    override_measurement_level: level(form.overrideMeasurement),
-                    override_prep_level: level(form.overridePrep),
-                    hide_from_search: form.hideFromSearch,
-                })
+                .insert({ ...ingredientColumns(form), item_type: "ingredient" })
                 .select()
                 .single();
             if (error || !ingredient) throw error;

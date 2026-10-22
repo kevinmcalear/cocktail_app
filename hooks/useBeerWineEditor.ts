@@ -6,7 +6,7 @@ import type { ImageItem } from '@/components/cocktail/SortableImageList';
 import { imageIdFor, pickDrinkPhotos, setItemImages } from '@/components/drink/drinkImages';
 import { plainDbMessage } from '@/lib/dbError';
 import { DRINK_KINDS, type DrinkKind, type DrinkKindConfig } from '@/lib/drinkKinds';
-import { changedColumns, saveItemTags } from '@/lib/itemSave';
+import { changedColumns, levelColumns, levelFields, OVERRIDE_LEVELS, saveItemTags, type LevelRow } from '@/lib/itemSave';
 import { formatPrice } from '@/lib/menus';
 import { capitalize } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
@@ -89,7 +89,6 @@ export type BeerWineForm = ReturnType<typeof useBeerWineFields>;
 
 /** The item's columns, from the form (shared by publishing a draft and saving an edit). */
 export function beerWineColumns(f: BeerWineFields) {
-  const level = (value: string | null) => (value ? parseInt(value, 10) : null);
   return {
     name: capitalize(f.name),
     description: f.description,
@@ -98,11 +97,7 @@ export function beerWineColumns(f: BeerWineFields) {
     // Text as typed: "19.50" stays "19.50" and "MP" stays "MP".
     price: formatPrice(f.price),
     bar_id: f.barId || null,
-    override_visibility_level: level(f.overrideVisibility),
-    override_generic_ingredient_level: level(f.overrideGeneric),
-    override_specific_brand_level: level(f.overrideSpecific),
-    override_measurement_level: level(f.overrideMeasurement),
-    override_prep_level: level(f.overridePrep),
+    ...levelColumns(f),
   };
 }
 
@@ -123,14 +118,9 @@ export async function beerWineImageIds(images: ImageItem[], folder: string): Pro
 
 type Item = NonNullable<ReturnType<DrinkKindConfig['useItem']>['data']>;
 
-/** The spec-level overrides, read from items: app_item_presentation doesn't carry them. */
-const LEVELS = 'override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level';
-type Levels = Partial<Record<'override_visibility_level' | 'override_generic_ingredient_level' | 'override_specific_brand_level' | 'override_measurement_level' | 'override_prep_level', number | null>>;
-
 const text = (v: unknown) => (v == null ? '' : String(v));
-const levelOf = (v: number | null | undefined) => (v == null ? null : String(v));
 
-function fieldsOf(item: Item, levels: Levels | undefined): BeerWineFields {
+function fieldsOf(item: Item, levels: LevelRow | undefined): BeerWineFields {
   const links = (item.item_images ?? []) as { sort_order: number | null; images: { id: string; url: string } | null }[];
   return {
     name: text(item.name),
@@ -143,11 +133,7 @@ function fieldsOf(item: Item, levels: Levels | undefined): BeerWineFields {
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
       .flatMap((l) => (l.images ? [{ id: l.images.id, url: l.images.url, isNew: false }] : [])),
     barId: item.bar_id ?? null,
-    overrideVisibility: levelOf(levels?.override_visibility_level),
-    overrideGeneric: levelOf(levels?.override_generic_ingredient_level),
-    overrideSpecific: levelOf(levels?.override_specific_brand_level),
-    overrideMeasurement: levelOf(levels?.override_measurement_level),
-    overridePrep: levelOf(levels?.override_prep_level),
+    ...levelFields(levels),
   };
 }
 
@@ -156,12 +142,16 @@ export function useBeerWineEditor(kindName: DrinkKind, id: string) {
   const kind = DRINK_KINDS[kindName];
   const queryClient = useQueryClient();
   const { data: item, isLoading } = kind.useItem(id);
-  // Under the item's key, so the invalidation after Save refreshes it too.
+  // Read fresh each time the editor opens and kept only while it's open: an
+  // editor must start from what's saved now, not from another session's cache.
   const levels = useQuery({
-    queryKey: [kind.kind, id, 'levels'],
+    queryKey: ['item-levels', id],
     enabled: !!id,
-    queryFn: async (): Promise<Levels> => {
-      const { data, error } = await supabase.from('items').select(LEVELS).eq('id', id).single();
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+    queryFn: async (): Promise<LevelRow> => {
+      const { data, error } = await supabase.from('items').select(OVERRIDE_LEVELS).eq('id', id).single();
       if (error) throw error;
       return data;
     },
@@ -169,9 +159,10 @@ export function useBeerWineEditor(kindName: DrinkKind, id: string) {
   const form = useBeerWineFields(EMPTY_BEER_WINE_FIELDS);
   const [saving, setSaving] = useState(false);
   // Filled once: a refetch while editing mustn't throw away what's typed. A
-  // failed levels read fills them empty; Save then leaves them as they are.
+  // failed or offline (paused) levels read fills them empty; Save then leaves
+  // them as they are, since it writes only what changed.
   const [loadedId, setLoadedId] = useState<string | null>(null);
-  if (item && !levels.isPending && loadedId !== item.id) {
+  if (item && levels.fetchStatus !== 'fetching' && loadedId !== item.id) {
     setLoadedId(item.id);
     form.reset(fieldsOf(item, levels.data));
   }

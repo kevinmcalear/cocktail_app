@@ -40,7 +40,7 @@ module.exports = defineConfig([
     rules: {
       'no-restricted-imports': [
         'error',
-        { patterns: [{ group: ['@/types/database', '**/types/database'], message: 'Import Row, Insert, Update, Enum or Database from @/types/db instead.' }] },
+        { patterns: [{ group: ['@/types/database', '**/types/database', './database'], message: 'Import Row, Insert, Update, Enum or Database from @/types/db instead.' }] },
       ],
     },
   },
