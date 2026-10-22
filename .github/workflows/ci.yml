@@ -23,6 +23,9 @@ jobs:
       # production's deploy refuses it after merge.
       - run: git fetch --no-tags --depth=1 origin main
       - run: node scripts/migration-order.mjs origin/main
+      # The migrations this PR adds or changes: no DRAFT headers, no writes
+      # granted to anon or public, RLS on every new public table.
+      - run: node scripts/migration-rules.mjs origin/main
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
