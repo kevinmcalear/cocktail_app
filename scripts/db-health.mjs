@@ -9,14 +9,20 @@
 //   npm run db:health -- --workdir <dir>    use <dir>'s `supabase link`
 //                                           (a fresh checkout is not linked)
 //
-// Every query must start with SELECT or WITH and hold no write keyword; the
-// guard below refuses anything else before it reaches the CLI. The report
-// holds counts and the names of bars, drinks and tables only: never emails,
-// user ids or people's names.
+// Two locks keep it read-only. assertReadOnly refuses anything but one
+// SELECT or WITH statement with no write keyword in its code, before it
+// reaches the CLI. Then Postgres itself refuses writes: production queries
+// run inside BEGIN READ ONLY ... ROLLBACK, and local ones on a connection
+// with default_transaction_read_only on. The report holds counts and the
+// names of bars, drinks and tables only: never emails, user ids or people's
+// names.
 import { execFileSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+
+import { maskSql } from './sql-code.mjs';
+import { listMigrations, parseCliJson, supabaseJson, cliErrorMessage } from './supabase-cli.mjs';
 
 const TEST_NAME = String.raw`\m(test|testing|asdf|tmp|dummy)\M`;
 const DEMO = String.raw`\mdemo\M`;
@@ -28,28 +34,28 @@ const WRITE_WORDS = /\b(insert|into|update|delete|merge|truncate|drop|alter|crea
 
 /** Throws unless `sql` is a single read-only SELECT or WITH statement. */
 export function assertReadOnly(sql) {
-  // Judge the code only: string literals and comments can say anything.
-  const code = sql
-    .replace(/--[^\n]*/g, ' ')
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/'(?:[^']|'')*'/g, "''")
-    .trim()
-    .replace(/;\s*$/, '');
-  if (!/^(select|with)\b/i.test(code)) throw new Error(`db-health runs SELECT or WITH only, got: ${code.slice(0, 60)}`);
-  if (code.includes(';')) throw new Error('db-health runs one statement at a time.');
-  if (code.includes('$')) throw new Error('db-health does not run dollar-quoted SQL.');
-  const word = WRITE_WORDS.exec(code);
+  // Judge the code only: literals (found before comments, so '--' in a
+  // string is text) and comments can say anything.
+  const { code, unterminated } = maskSql(sql);
+  if (unterminated) throw new Error('db-health refuses SQL with an unclosed string, quoted name or comment.');
+  const statement = code.trim().replace(/;\s*$/, '');
+  if (statement.includes(';')) throw new Error('db-health runs one statement at a time.');
+  if (!/^(select|with)\b/i.test(statement)) throw new Error(`db-health runs SELECT or WITH only, got: ${statement.slice(0, 60)}`);
+  const word = WRITE_WORDS.exec(statement);
   if (word) throw new Error(`db-health refuses SQL containing "${word[1]}".`);
   return sql;
 }
 
-/** The rows from `supabase db query --output-format json` (it may log lines before the JSON). */
-export function parseRows(stdout) {
-  const start = stdout.indexOf('{');
-  if (start === -1) throw new Error(`No JSON in supabase output: ${stdout.slice(0, 200)}`);
-  const parsed = JSON.parse(stdout.slice(start));
-  if (!Array.isArray(parsed.rows)) throw new Error(`Unexpected supabase output: ${stdout.slice(0, 200)}`);
-  return parsed.rows;
+/**
+ * The SQL sent to production: one transaction that Postgres keeps read-only
+ * and rolls back. The Management API returns the SELECT's rows. The newlines
+ * end any trailing -- comment in `sql`.
+ */
+export const readOnlyTransaction = (sql) => `begin read only;\n${sql}\n;\nrollback;`;
+
+/** A local database URL whose sessions start read-only. */
+export function readOnlyUrl(dbUrl) {
+  return `${dbUrl}${dbUrl.includes('?') ? '&' : '?'}options=-c%20default_transaction_read_only%3Don`;
 }
 
 const CHECKS = {
@@ -109,7 +115,7 @@ const CHECKS = {
     select n.nspname || '.' || c.relname as "table"
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname in ('public', 'private') and c.relkind in ('r', 'p') and not c.relrowsecurity
-    order by 1`,
+    order by 1 limit ${LIST_CAP}`,
 
   // Table-level writes granted to anon or PUBLIC (grantee 0).
   anon_write_grants: String.raw`
@@ -120,7 +126,22 @@ const CHECKS = {
     where n.nspname in ('public', 'private') and c.relkind in ('r', 'p', 'v', 'm', 'f')
       and a.grantee in ((select oid from pg_roles where rolname = 'anon'), 0)
       and a.privilege_type in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
-    group by 1 order by 1`,
+    group by 1 order by 1 limit ${LIST_CAP}`,
+
+  // Default privileges that give anon or PUBLIC writes on tables created
+  // later (Supabase's setup grants ALL to anon by default). PR "second lock"
+  // (fix/db-second-lock, #740) revokes postgres's in public; this says
+  // whether any are still on.
+  anon_default_privileges: String.raw`
+    select pg_get_userbyid(d.defaclrole) as owner, coalesce(n.nspname, '(all schemas)') as schema,
+           string_agg(distinct a.privilege_type, ', ') as privileges
+    from pg_default_acl d
+    left join pg_namespace n on n.oid = d.defaclnamespace
+    cross join lateral aclexplode(d.defaclacl) a
+    where d.defaclobjtype = 'r' and (n.nspname is null or n.nspname in ('public', 'private'))
+      and a.grantee in ((select oid from pg_roles where rolname = 'anon'), 0)
+      and a.privilege_type in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
+    group by 1, 2 order by 1, 2 limit ${LIST_CAP}`,
 
   // Exact emptiness, one LIMIT 1 probe per table.
   empty_tables: String.raw`
@@ -130,30 +151,47 @@ const CHECKS = {
       and (xpath('/row/c/text()', query_to_xml(
             format('select count(*) as c from (select 1 from %I.%I limit 1) s', n.nspname, c.relname),
             false, true, '')))[1]::text = '0'
-    order by 1`,
+    order by 1 limit ${LIST_CAP}`,
 
   old_drafts: String.raw`
     select entity_type, count(*) as drafts, min(coalesce(updated_at, created_at))::date as oldest
     from public.drafts
     where coalesce(updated_at, created_at) < now() - interval '60 days'
-    group by 1 order by 2 desc`,
+    group by 1 order by 2 desc limit ${LIST_CAP}`,
 
-  migrations: String.raw`select version from supabase_migrations.schema_migrations order by 1`,
-
-  // Files in storage that none of the five picture URL columns point at.
+  // Files in storage that no column points at: every column that holds a
+  // storage URL (found with information_schema on 22 Oct 2026), the JSON that
+  // can carry one (drafts, drink versions, profile merges), and the list-size
+  // thumbnail each drink picture has at thumbs/<path>.jpg. A new column that
+  // stores pictures belongs here. The report says "check before deleting":
+  // code can also point at a file by its path.
   // ponytail: capped at the newest 20,000 files so it stays quick; past that,
   // page through by created_at.
   unreferenced_files: String.raw`
-    with refs as (
+    with urls as (
+      select url as u from public.images
+      union all select source_url from public.images
+      union all select avatar_url from public.profiles
+      union all select logo_url from public.bars
+      union all select icon_url from public.bars
+      union all select icon_url from public.items
+      union all select photo_url from public.bar_zones
+      union all select photo_url from public.item_locations
+      union all select image_url from public.collected_items
+      union all select cover_url from public.collected_releases
+      union all select cover_url from public.releases
+      union all select cover_url from public.menus
+      union all select (regexp_matches(draft_data::text, '/storage/v1/[^"\s]+', 'g'))[1] from public.drafts
+      union all select (regexp_matches(snapshot::text, '/storage/v1/[^"\s]+', 'g'))[1] from public.item_versions
+      union all select (regexp_matches(snapshot::text, '/storage/v1/[^"\s]+', 'g'))[1] from private.profile_merges
+    ), paths as (
       select substring(u from '/storage/v1/(?:object|render/image)/(?:public|sign|authenticated)/([^?#]+)') as path
-      from (
-        select url as u from public.images
-        union all select avatar_url from public.profiles
-        union all select logo_url from public.bars
-        union all select image_url from public.collected_items
-        union all select cover_url from public.menus
-      ) s
-      where u is not null
+      from urls where u is not null
+    ), refs as (
+      select path from paths
+      union all
+      select 'drinks/thumbs/' || regexp_replace(substr(path, 8), '\.[^./]+$', '') || '.jpg'
+      from paths where path like 'drinks/%'
     ), objs as (
       select bucket_id, name, (metadata->>'size')::bigint as size
       from storage.objects order by created_at desc limit 20000
@@ -166,41 +204,59 @@ const CHECKS = {
 };
 
 function makeRunner(args) {
-  const target = args.includes('--local') ? '--local' : '--linked';
+  const local = args.includes('--local');
   const w = args.indexOf('--workdir');
   const workdir = w === -1 ? [] : ['--workdir', args[w + 1]];
-  return (sql) => {
-    assertReadOnly(sql);
-    const out = execFileSync('supabase', ['db', 'query', target, ...workdir, '--output-format', 'json', sql], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-      maxBuffer: 64 * 1024 * 1024,
-    });
-    return parseRows(out);
+  let dbUrl;
+  if (local) {
+    try {
+      const status = execFileSync('supabase', ['status', '-o', 'json', ...workdir], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+      dbUrl = readOnlyUrl(parseCliJson(status).DB_URL);
+    } catch (e) {
+      throw new Error(`could not find the local database (is it running?): ${cliErrorMessage(e)}`);
+    }
+  }
+  return {
+    query(sql) {
+      assertReadOnly(sql);
+      const target = local ? ['--db-url', dbUrl] : ['--linked', ...workdir];
+      const rows = supabaseJson(['db', 'query', ...target, '--output-format', 'json', local ? sql : readOnlyTransaction(sql)]).rows;
+      if (!Array.isArray(rows)) throw new Error('supabase db query returned no rows array.');
+      return rows;
+    },
+    appliedMigrations: () => listMigrations(local ? '--local' : '--linked', workdir).map((m) => m.remote).filter(Boolean),
   };
 }
 
-const list = (rows) => ({ count: rows.length, capped: rows.length >= LIST_CAP, rows });
+// Every list query ends in LIMIT LIST_CAP, so a full page means there are
+// probably more.
+const list = (rows) => ({ count: rows.length, capped: rows.length === LIST_CAP, rows });
 
-export function buildReport(results, diskVersions) {
-  const prodVersions = results.migrations.map((r) => r.version);
+export function buildReport(results, diskVersions, prodVersions) {
   const prod = new Set(prodVersions);
   const disk = new Set(diskVersions);
   const report = {
     test_named_drinks: list(results.test_named_drinks),
     test_named_bars: list(results.test_named_bars),
     demo_bars: list(results.demo_bars),
-    duplicate_drinks: { groups: results.duplicate_drinks.length, rows: results.duplicate_drinks },
+    duplicate_drinks: { groups: results.duplicate_drinks.length, capped: results.duplicate_drinks.length === LIST_CAP, rows: results.duplicate_drinks },
     unlinked_workspaces: {
       count: results.unlinked_workspaces.length,
+      capped: results.unlinked_workspaces.length === LIST_CAP,
       with_same_name_page: results.unlinked_workspaces.filter((r) => Number(r.same_name_pages) > 0).length,
       rows: results.unlinked_workspaces,
     },
     rls_off: list(results.rls_off.map((r) => r.table)),
-    anon_write_grants: list(results.anon_write_grants),
+    anon_write_grants: {
+      ...list(results.anon_write_grants),
+      // Tables made later inherit these; #740 revokes postgres's in public.
+      default_privileges_on: results.anon_default_privileges.length > 0,
+      default_privileges: results.anon_default_privileges,
+    },
     empty_tables: list(results.empty_tables.map((r) => r.table)),
     drafts_older_than_60_days: {
       count: results.old_drafts.reduce((n, r) => n + Number(r.drafts), 0),
+      capped: results.old_drafts.length === LIST_CAP,
       rows: results.old_drafts,
     },
     migrations: {
@@ -212,6 +268,7 @@ export function buildReport(results, diskVersions) {
     unreferenced_files: {
       count: results.unreferenced_files.reduce((n, r) => n + Number(r.files), 0),
       bytes: results.unreferenced_files.reduce((n, r) => n + Number(r.bytes), 0),
+      note: 'May still be in use: code can point at a file by its path. Check before deleting.',
       by_bucket: results.unreferenced_files,
     },
   };
@@ -223,6 +280,7 @@ export function buildReport(results, diskVersions) {
     unlinked_workspaces: report.unlinked_workspaces.count,
     rls_off: report.rls_off.count,
     anon_write_grant_tables: report.anon_write_grants.count,
+    anon_default_write_privileges_on: report.anon_write_grants.default_privileges_on,
     empty_tables: report.empty_tables.count,
     drafts_older_than_60_days: report.drafts_older_than_60_days.count,
     migrations_production: report.migrations.production,
@@ -235,20 +293,34 @@ export function buildReport(results, diskVersions) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
-  const run = makeRunner(args);
+  const fail = (name, e) => {
+    console.error(`db-health: ${name} failed: ${e.message.slice(0, 500)}`);
+    process.exit(2);
+  };
+  let runner;
+  try {
+    runner = makeRunner(args);
+  } catch (e) {
+    fail('setup', e);
+  }
   const results = {};
   for (const [name, sql] of Object.entries(CHECKS)) {
     try {
-      results[name] = run(sql);
+      results[name] = runner.query(sql);
     } catch (e) {
-      console.error(`db-health: ${name} failed: ${(e.stderr || e.message || String(e)).toString().slice(0, 500)}`);
-      process.exit(2);
+      fail(name, e);
     }
+  }
+  let prodVersions;
+  try {
+    prodVersions = runner.appliedMigrations();
+  } catch (e) {
+    fail('migrations', e);
   }
   const diskVersions = readdirSync(join('supabase', 'migrations'))
     .map((f) => /^(\d{14})_.+\.sql$/.exec(f)?.[1])
     .filter(Boolean)
     .sort();
-  const report = buildReport(results, diskVersions);
+  const report = buildReport(results, diskVersions, prodVersions);
   console.log(JSON.stringify({ generated_at: new Date().toISOString(), target: args.includes('--local') ? 'local' : 'linked', ...report }, null, 2));
 }

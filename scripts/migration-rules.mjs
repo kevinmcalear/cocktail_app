@@ -1,24 +1,36 @@
 // Migration rules: checks the migrations a branch adds or changes (not the
 // ones main already has, which are applied and stay as they are).
 //
-//   1. The header says what the migration does. No "DRAFT", "not applied" or
-//      "Local stack only" lines: every merged migration is applied, so those
-//      lines mislead whoever reads them later (the 22 Oct audit found 71).
-//   2. No INSERT, UPDATE, DELETE, TRUNCATE or ALL granted to anon or public.
-//      RLS is the first lock; table grants are the second. A deliberate one
-//      carries `-- allow-anon-write: <reason>` on the statement's lines.
+//   1. The header says what the migration does. No "DRAFT", "Local stack
+//      only" or "Not applied to production" markers: every merged migration
+//      is applied, so they mislead whoever reads them later (the 22 Oct
+//      audit found 71).
+//   2. No INSERT, UPDATE, DELETE, TRUNCATE or ALL on a table granted to anon
+//      or public, including `ALTER DEFAULT PRIVILEGES ... GRANT` and the
+//      `GRANT ALL ON TABLE ... TO "anon"` lines `supabase db diff` writes
+//      (drop those, or grant SELECT). RLS is the first lock; table grants are
+//      the second. A deliberate one carries `-- allow-anon-write: <reason>`
+//      in its own statement (on its lines or the comment just above it).
+//      The default privileges Supabase sets up, which gave anon writes on
+//      every table, are not in any migration; PR "second lock"
+//      (fix/db-second-lock, #740) revokes them, and `npm run db:health`
+//      reports whether any are still on.
 //   3. A table created in public (or unqualified) has ENABLE ROW LEVEL
-//      SECURITY in the same file. The database's ensure_rls event trigger
-//      also does this; CI says it on the PR instead.
+//      SECURITY in the same file. Production also has Supabase's platform
+//      ensure_rls event trigger (rls_auto_enable), but no migration creates
+//      it, so local stacks and fresh projects don't; CI says it on the PR.
 //
 //   node scripts/migration-rules.mjs [base-ref]   (default origin/main)
 //
 // ponytail: a regex reader, not a SQL parser. It ignores comments and quoted
-// strings, but SQL built at run time (EXECUTE format(...)) slips past it; the
-// security tests and the ensure_rls trigger still cover those.
+// strings (scripts/sql-code.mjs), and reads function and DO bodies as code,
+// but SQL built at run time (EXECUTE format(...)) slips past it; the security
+// tests cover those.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+
+import { maskSql } from './sql-code.mjs';
 
 const DIR = 'supabase/migrations';
 
@@ -45,48 +57,19 @@ function headerText(sql) {
   return out;
 }
 
-/**
- * The SQL with comments and single-quoted strings blanked to spaces, so
- * regexes only see code and every index still lines up with the original.
- */
-function codeOnly(sql) {
-  const out = sql.split('');
-  let i = 0;
-  const blank = (from, to) => {
-    for (let k = from; k < to; k++) if (out[k] !== '\n') out[k] = ' ';
-  };
-  while (i < sql.length) {
-    if (sql.startsWith('--', i)) {
-      const end = sql.indexOf('\n', i);
-      const stop = end === -1 ? sql.length : end;
-      blank(i, stop);
-      i = stop;
-    } else if (sql.startsWith('/*', i)) {
-      const end = sql.indexOf('*/', i + 2);
-      const stop = end === -1 ? sql.length : end + 2;
-      blank(i, stop);
-      i = stop;
-    } else if (sql[i] === "'") {
-      let j = i + 1;
-      while (j < sql.length && sql[j] !== "'") j++;
-      blank(i, j + 1);
-      i = j + 1;
-    } else {
-      i++;
-    }
-  }
-  return out.join('');
-}
-
 const lineAt = (sql, index) => sql.slice(0, index).split('\n').length;
 
-// "draft" in lower case is often a feature (the drafts table), so only a
-// line that opens with it counts, or DRAFT in capitals anywhere.
+// The markers the repo's migrations used ("DRAFT. Local stack only until
+// Kevin's OK.", "Not applied to production; needs Kevin's review first.").
+// "Draft" opening a line is a marker only before ".", ":" or "(" ("Draft
+// menus can be shared." is about the feature), and "not applied" only when
+// "to production" follows ("not applied twice" is fine). The phrases are
+// matched across wrapped lines.
 const STALE_HEADER = [
-  { re: /\bDRAFT\b/, says: 'DRAFT' },
-  { re: /^draft\b/i, says: 'DRAFT', perLine: true },
-  { re: /\bnot applied\b/i, says: 'not applied' },
+  { re: /^DRAFT\b/, says: 'DRAFT', perLine: true },
+  { re: /^draft\s*[.:(]/i, says: 'DRAFT', perLine: true },
   { re: /\blocal stack only\b/i, says: 'Local stack only' },
+  { re: /\bnot applied to production\b/i, says: 'Not applied to production' },
 ];
 
 function headerProblems(file, sql) {
@@ -103,22 +86,29 @@ const QUALIFIED = String.raw`${NAME}(?:\s*\.\s*${NAME})?`;
 const WRITE_PRIVILEGE = /\b(insert|update|delete|truncate|all)\b/i;
 const OPEN_ROLE = /(^|[\s,])"?(anon|public)"?(?=$|[\s,])/i;
 const ALLOW = /allow-anon-write:\s*\S/i;
+// ALL on a function, procedure or routine is EXECUTE: not a write.
+const ROUTINE = /^\s*(?:all\s+)?(?:function|functions|procedure|procedures|routine|routines)\b/i;
 
 function grantProblems(file, sql, code) {
   const problems = [];
-  const lines = sql.split('\n');
   // [^;] keeps each match inside one statement (GRANT role TO role has no ON).
-  for (const m of code.matchAll(/\bgrant\b([^;]*?)\bon\b[^;]*?\bto\b([^;]*)/gi)) {
-    const [, privileges, grantees] = m;
+  for (const m of code.matchAll(/\bgrant\b([^;]*?)\bon\b([^;]*?)\bto\b([^;]*)/gi)) {
+    const [, privileges, object, grantees] = m;
     const roles = grantees.replace(/\bwith\s+grant\s+option\b/i, '').replace(/\bgranted\s+by\b[\s\S]*$/i, '');
-    if (!WRITE_PRIVILEGE.test(privileges) || !OPEN_ROLE.test(roles)) continue;
+    if (!WRITE_PRIVILEGE.test(privileges) || !OPEN_ROLE.test(roles) || ROUTINE.test(object)) continue;
     const first = lineAt(sql, m.index);
-    const last = lineAt(sql, m.index + m[0].length);
-    const span = lines.slice(Math.max(0, first - 2), last).join('\n');
-    if (ALLOW.test(span)) continue;
+    // The statement's own text: from the line after the previous statement
+    // ends (so a comment above it counts, but not the previous statement's
+    // trailing comment) to the end of the line where this one ends.
+    const prevEnd = code.lastIndexOf(';', m.index);
+    const afterPrev = prevEnd === -1 ? 0 : code.indexOf('\n', prevEnd);
+    const from = afterPrev === -1 || afterPrev > m.index ? prevEnd + 1 : afterPrev;
+    const lineEnd = sql.indexOf('\n', m.index + m[0].length);
+    const own = sql.slice(from, lineEnd === -1 ? sql.length : lineEnd);
+    if (ALLOW.test(own)) continue;
     const priv = WRITE_PRIVILEGE.exec(privileges)[1].toUpperCase();
     const role = OPEN_ROLE.exec(roles)[2].toLowerCase();
-    problems.push(`${file}:${first}: grants ${priv} to ${role}. Signed-out visitors must not get table writes: grant to authenticated instead, or add \`-- allow-anon-write: <reason>\` on that line if it is deliberate.`);
+    problems.push(`${file}:${first}: grants ${priv} to ${role}. Signed-out visitors must not get table writes: grant to authenticated instead, or add \`-- allow-anon-write: <reason>\` to that statement if it is deliberate.`);
   }
   return problems;
 }
@@ -146,13 +136,13 @@ function rlsProblems(file, sql, code) {
 
 /** What's wrong with one migration file's SQL. */
 export function migrationRuleProblems(file, sql) {
-  const code = codeOnly(sql);
+  const { code } = maskSql(sql, { dollar: 'code' });
   return [...headerProblems(file, sql), ...grantProblems(file, sql, code), ...rlsProblems(file, sql, code)];
 }
 
 /** Migration files the working tree adds or changes compared with `ref`. */
 export function changedMigrations(ref) {
-  return execFileSync('git', ['diff', '--name-only', '--diff-filter=AM', ref, '--', DIR], { encoding: 'utf8' })
+  return execFileSync('git', ['diff', '--name-only', '--no-renames', '--diff-filter=AM', ref, '--', DIR], { encoding: 'utf8' })
     .split('\n')
     .filter((f) => f.endsWith('.sql'));
 }

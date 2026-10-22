@@ -25,6 +25,14 @@ test('the same words below the header, or "draft" mid-sentence, pass', () => {
   assert.deepEqual(check('-- Fact-checked (draft: an artifact).\nselect 1;\n-- DRAFT. Local stack only.\n'), []);
 });
 
+test('headers about drafts or applying things are not stale markers', () => {
+  assert.deepEqual(check('-- Draft menus can be shared.\nselect 1;\n'), []);
+  assert.deepEqual(check('-- Drafts older than a year are cleared.\nselect 1;\n'), []);
+  assert.deepEqual(check('-- Each discount is not applied twice.\nselect 1;\n'), []);
+  assert.deepEqual(check('-- Menus in DRAFT state stay private.\nselect 1;\n'), []);
+  assert.equal(check('-- Venue switches.\n-- DRAFT (step 2). Local stack only.\nselect 1;\n').length, 1);
+});
+
 // --- grants to anon and public ---
 
 test('a write grant to anon or public is refused, with the line number', () => {
@@ -53,6 +61,45 @@ test('an allow-anon-write comment with a reason lets a write grant through', () 
   assert.deepEqual(check('-- Grants.\ngrant insert on public.page_views to anon; -- allow-anon-write: signed-out visits count\n'), []);
   assert.deepEqual(check('-- Grants.\n-- allow-anon-write: signed-out visits count\ngrant insert on public.page_views to anon;\n'), []);
   assert.equal(check('grant insert on public.page_views to anon; -- allow-anon-write:\n').length, 1, 'needs a reason');
+});
+
+test('an allow-anon-write comment covers its own statement only', () => {
+  const trailing = '-- Grants.\ngrant insert on public.page_views to anon; -- allow-anon-write: visits\ngrant insert on public.bars to anon;\n';
+  assert.deepEqual(check(trailing).map((p) => p.split(':')[1]), ['3']);
+  const above = '-- Grants.\n-- allow-anon-write: visits\ngrant insert on public.page_views to anon;\ngrant insert on public.bars to anon;\n';
+  assert.deepEqual(check(above).map((p) => p.split(':')[1]), ['4']);
+});
+
+test('grants of ALL on functions, as supabase db diff writes them, are EXECUTE and pass', () => {
+  assert.deepEqual(check('-- Grants.\nGRANT ALL ON FUNCTION "public"."x"() TO "anon";\ngrant all on all functions in schema public to anon;\n'), []);
+});
+
+// --- quoting ---
+
+test('an apostrophe in a dollar-quoted body or an E string does not hide the SQL after it', () => {
+  const sql = [
+    '-- Notes.',
+    "comment on table public.bars is $$Kevin's bars$$;",
+    "select E'it\\'s';",
+    'create table public.notes (id uuid);',
+  ].join('\n');
+  assert.deepEqual(check(sql).map((p) => p.split(':')[1]), ['4']);
+  const tagged = "-- Notes.\ncomment on table public.bars is $note$don't$note$;\ngrant insert on public.bars to anon;\n";
+  assert.equal(check(tagged).length, 1);
+});
+
+test('function and DO bodies are read as code, their strings and comments as text', () => {
+  const sql = [
+    '-- Notes.',
+    'do $$',
+    'begin',
+    "  raise notice 'grant insert on public.bars to anon';",
+    '  -- create table public.old (id uuid);',
+    '  create table public.notes (id uuid);',
+    'end',
+    '$$;',
+  ].join('\n');
+  assert.deepEqual(check(sql).map((p) => p.split(':')[1]), ['6']);
 });
 
 // --- RLS on new tables ---
