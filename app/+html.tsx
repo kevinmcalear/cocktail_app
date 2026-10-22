@@ -1,4 +1,4 @@
-import { ScrollViewStyleReset } from 'expo-router/html';
+import { ScrollViewStyleReset, useServerDocumentContext } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
 
 import { BRAND } from '@/constants/brand';
@@ -13,10 +13,16 @@ body { background-color: #F9F9FB; }
 @media (prefers-color-scheme: dark) { body { background-color: #161618; } }
 `;
 
-/** The HTML shell for every web page (static export only; not used on native). */
+/**
+ * The HTML shell for every web page (static export only; not used on native).
+ * Since SDK 58.0.17 the export hands the app's scripts and styles over as
+ * nodes for this shell to place: without headNodes and bodyNodes the pages
+ * ship with no JavaScript at all.
+ */
 export default function Root({ children }: PropsWithChildren) {
+  const { htmlAttributes, bodyAttributes, headNodes, bodyNodes } = useServerDocumentContext();
   return (
-    <html lang="en">
+    <html lang="en" {...htmlAttributes}>
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -43,8 +49,12 @@ export default function Root({ children }: PropsWithChildren) {
 
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: BACKGROUND_CSS }} />
+        {headNodes}
       </head>
-      <body>{children}</body>
+      <body {...bodyAttributes}>
+        {children}
+        {bodyNodes}
+      </body>
     </html>
   );
 }
