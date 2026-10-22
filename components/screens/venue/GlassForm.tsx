@@ -24,6 +24,8 @@ interface GlassFormProps {
   /** The venue's real glasses, listed first in the search. */
   venueModelIds?: readonly string[];
   venueName?: string;
+  /** A new glass described by hand from the start ("Not listed? Describe it"). */
+  describe?: boolean;
 }
 
 /**
@@ -34,9 +36,9 @@ interface GlassFormProps {
  * designer, series, what the shape is like, and whether it's the glass of
  * its type the venue's drinks are drawn in.
  */
-export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, onDelete, venueModelIds, venueName }: GlassFormProps) {
+export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, onDelete, venueModelIds, venueName, describe }: GlassFormProps) {
   const [model, setModel] = useState<GlassModel | null>(glass?.model ?? null);
-  const [finding, setFinding] = useState(!glass);
+  const [finding, setFinding] = useState(!glass && !describe);
   const [type, setType] = useState<SketchGlass>(glass?.glass ?? 'coupe');
   const [variant, setVariant] = useState<string | null>(glass?.variant ?? null);
   const [fields, setFields] = useState<GlassFields>({
