@@ -30,7 +30,7 @@ const FIRST_PAINT = 12;
  * header above it: nested in another scroll view, its drag gesture takes
  * every vertical swipe on Android and the page stops scrolling.
  */
-export function StaffList({ barId, canEdit, onNow, past, header, contentContainerStyle }: {
+export function StaffList({ barId, canEdit, onNow, past, header, contentContainerStyle, onScrollOffset }: {
   barId: string;
   canEdit: boolean;
   onNow: ReadonlySet<string>;
@@ -38,6 +38,8 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
   /** The screen above the list (Library's title and filters). */
   header?: ReactElement;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  /** How far the list has scrolled: Library pins its filters past them. */
+  onScrollOffset?: (y: number) => void;
 }) {
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
@@ -148,6 +150,7 @@ export function StaffList({ barId, canEdit, onNow, past, header, contentContaine
       ListHeaderComponent={top}
       ListFooterComponent={bottom}
       contentContainerStyle={contentContainerStyle}
+      onScrollOffsetChange={onScrollOffset}
       // The list's wrapper must fill the screen, or on web it grows to its
       // content and the screen clips it, so it never scrolls.
       containerStyle={styles.fill}
