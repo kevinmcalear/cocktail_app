@@ -559,6 +559,7 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
   const foams: Foam[] = [];
   const unknown: SketchLine[] = [];
   let garnish: Garnish | null = null;
+  let discarded = false;
 
   for (const line of drink.lines) {
     const rule = colorRuleFor(line);
@@ -567,7 +568,7 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
     const unit = (line.unit ?? '').trim().toLowerCase();
     const lname = line.name.toLowerCase();
     // A discarded peel leaves its oils, not itself: no garnish, no colour.
-    if (unit === 'discard') continue;
+    if (unit === 'discard') { discarded = true; continue; }
 
     const isGarnish = isGarnishLine(line);
     if (!garnish && isGarnish) garnish = first(GARNISH_RULES, `${line.name} ${unit}`);
@@ -684,8 +685,9 @@ export function sketchFromDrink(drink: SketchDrink): SketchResult {
     const said = /garnish(?:ed)? with ([^.;]+)/.exec(drink.description ?? '');
     if (said) garnish = first(GARNISH_RULES, said[1]);
   }
-  if (!garnish) garnish = hint('garnish') ?? null;
-  if (!garnish && ai?.garnish) { garnish = ai.garnish; garnishFrom = 'ai'; usedAi = true; }
+  // A discard is how the spec says it's finished, so no guess draws a garnish over it.
+  if (!garnish && !discarded) garnish = hint('garnish') ?? null;
+  if (!garnish && !discarded && ai?.garnish) { garnish = ai.garnish; garnishFrom = 'ai'; usedAi = true; }
 
   const askDrink = !glassFromName(drink.glass) && (!drink.lines.length || coverage < 0.5 || !hint('glass'));
 
