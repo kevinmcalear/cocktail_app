@@ -113,8 +113,7 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, foc
 }
 
 /**
- * Android, phone web, iOS before 26, and iOS 27 until react-native-screens
- * 4.29 (hooks/useBottomBar.ts): the field floats at the bottom in glass, with
+ * Android, phone web and iOS before 26: the field floats at the bottom in glass, with
  * where it searches inside it and the type chips over it; recents and results
  * scroll above and under it (search-start, search-typing). While you type it rides on the
  * keyboard and takes the tab bar's place (Android's keyboard covers the bar;
