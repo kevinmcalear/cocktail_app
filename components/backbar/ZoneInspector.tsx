@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, GlassButton, PressableScale, Title, useDs } from '@/components/ds';
@@ -8,7 +9,9 @@ import { formatPar } from '@/lib/backBar';
 import type { BarZone, BarZoneKind, ItemLocation } from '@/types/backBar';
 
 import { selectedProps } from './BackBarPlan';
+import { BottleSheet } from './BottleSheet';
 import { LocationEditor } from './LocationEditor';
+import type { BottleDone } from './useBottleToast';
 
 /** "Add a photo of this fridge": what each kind of zone is called in a sentence. */
 const KIND_NOUN: Partial<Record<BarZoneKind, string>> = {
@@ -47,12 +50,18 @@ interface ZoneInspectorProps {
   onMove: (location: ItemLocation) => void;
   /** Someone who can draw the plan can photograph the zone. */
   canPhoto?: boolean;
+  /** `edit_drinks`: a Replace or Take it off can swap the drinks that pour the bottle too. */
+  canEditDrinks?: boolean;
+  /** After a Replace or Take it off: the screen's toast, with Undo. */
+  onBottleDone: (done: BottleDone) => void;
 }
 
 /** The selected zone: its photo, where it is, and what lives in it, shelf by shelf. */
-export function ZoneInspector({ barId, zone, contents, canPlace, openLocationId, onOpenLocation, onMove, canPhoto }: ZoneInspectorProps) {
+export function ZoneInspector({ barId, zone, contents, canPlace, openLocationId, onOpenLocation, onMove, canPhoto, canEditDrinks = false, onBottleDone }: ZoneInspectorProps) {
   const ds = useDs();
   const photo = useZonePhoto(barId);
+  // The bottle whose sheet is open: replace, take off, move, or its shelf and par.
+  const [acting, setActing] = useState<ItemLocation | null>(null);
   return (
     <View style={styles.wrap}>
       <View style={[styles.photo, { backgroundColor: ds.c.paper }]}>
@@ -115,9 +124,9 @@ export function ZoneInspector({ barId, zone, contents, canPlace, openLocationId,
                   <View key={loc.id} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
                     {canPlace ? (
                       <PressableScale
-                        onPress={() => onOpenLocation(open ? null : loc.id)}
+                        onPress={() => (open ? onOpenLocation(null) : setActing(loc))}
                         accessibilityLabel={`${name}${loc.shelf ? `, ${loc.shelf}` : ''}`}
-                        accessibilityHint={open ? 'Closes its details' : 'Edit its shelf, container and par, or move it'}
+                        accessibilityHint={open ? 'Closes its details' : 'Replace it, take it off, move it, or edit its shelf and par'}
                         aria-expanded={open}
                         {...selectedProps(open)}
                       >
@@ -134,7 +143,18 @@ export function ZoneInspector({ barId, zone, contents, canPlace, openLocationId,
           </View>
         ))
       )}
-      {canPlace && contents.length ? <Caption tone="muted">Tap an item to change its shelf, container or par, or to move it.</Caption> : null}
+      {canPlace && contents.length ? <Caption tone="muted">Tap an item to replace it, take it off, move it, or change its shelf, container or par.</Caption> : null}
+      {acting ? (
+        <BottleSheet
+          barId={barId}
+          location={acting}
+          canEditDrinks={canEditDrinks}
+          onMove={() => onMove(acting)}
+          onEdit={() => onOpenLocation(acting.id)}
+          onDone={onBottleDone}
+          onClose={() => setActing(null)}
+        />
+      ) : null}
     </View>
   );
 }

@@ -1,21 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, Caption, Field, IngredientThumb, PressableScale, TextLink, useBreakpoint, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, TextLink, useBreakpoint, useDs } from '@/components/ds';
 import { useToast } from '@/components/ds/Toast';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { useBackBarIds } from '@/hooks/useBackBar';
 import { useSwapSpecLine, useUndoSwap } from '@/hooks/useBulk';
 import { useCocktail } from '@/hooks/useCocktails';
-import { useDropdowns } from '@/hooks/useDropdowns';
 import { plainDbMessage } from '@/lib/dbError';
-import { closestIngredients, searchIngredients } from '@/lib/ingredientNames';
 import type { SpecLine } from '@/lib/spec';
-import { amountBox, amountEdit, bottlesFor } from '@/lib/swapBottle';
+import { amountBox, amountEdit } from '@/lib/swapBottle';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
+import { BottleOptions, useBottleOptions } from './BottleOptions';
 import { ACTION_BAR_HEIGHT } from './DrinkActionBar';
 
 export interface LineSwapped {
@@ -38,8 +35,6 @@ interface SwapLineSheetProps {
   onOpen: () => void;
 }
 
-type Option = { id: string; name: string | null };
-
 // The box rings in the accent while it has focus, so the browser's own focus box is switched off (as IngredientSearch does).
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
@@ -51,7 +46,6 @@ const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) 
  */
 export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, onOpen }: SwapLineSheetProps) {
   const ds = useDs();
-  const { data } = useDropdowns({ ingredients: true });
   const drink = useCocktail(itemId).data?.name ?? 'this drink';
   const save = useSwapSpecLine();
   const [query, setQuery] = useState('');
@@ -65,22 +59,7 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
   const name = line.ingredient ?? 'this ingredient';
 
   // Shared ingredients and this venue's own: another venue's house bottles can't go in this drink.
-  const ingredients = useMemo(() => (data?.ingredients ?? []).filter((i) => !i.bar_id || i.bar_id === barId), [data?.ingredients, barId]);
-  const coreIds = useMemo(() => new Set(data?.coreIngredientIds ?? []), [data?.coreIngredientIds]);
-  const backBar = useBackBarIds(barId, ingredients);
-
-  const q = query.trim();
-  const found: Option[] = q
-    ? (() => {
-        const hits = searchIngredients(q, ingredients, { aliases: data?.ingredientAliases, coreIds, limit: 12 });
-        return hits.length ? hits : closestIngredients(q, ingredients, { coreIds });
-      })()
-    : line.ingredientId
-      ? bottlesFor(line.ingredientId, ingredients, barId, 12)
-      : [];
-  const options = found.filter((o) => o.id !== line.ingredientId);
-  const ours = barId ? options.filter((o) => backBar.has(o.id)) : options;
-  const rest = barId ? options.filter((o) => !backBar.has(o.id)) : [];
+  const options = useBottleOptions(line.ingredientId, barId, query);
 
   // Only an edited amount is saved, in the unit the box reads in; a bottle-only swap leaves the stored amount alone.
   const edit = amountEdit(box, amount);
@@ -106,27 +85,6 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
           onSaved({ itemId, lineKey: line.key, version: done.version, title: picked ? `${drink} now uses ${picked.name}` : `${drink} now takes ${howMuch} of ${name}` }),
         onError: (e) => setError(plainDbMessage(e) ?? 'Couldn’t save that. Try again.'),
       }
-    );
-  };
-
-  const row = (o: Option, away: boolean) => {
-    const on = picked?.id === o.id;
-    return (
-      <PressableScale
-        key={o.id}
-        role="radio"
-        aria-checked={on}
-        accessibilityLabel={away ? `${o.name}, not on your back bar` : (o.name ?? '')}
-        onPress={() => setPicked(on ? null : { id: o.id, name: o.name ?? '' })}
-        style={[styles.option, { borderBottomColor: ds.c.line }]}
-      >
-        <IngredientThumb id={o.id} name={o.name ?? ''} size={40} />
-        <View style={styles.flex}>
-          <Body numberOfLines={1}>{o.name}</Body>
-          {away ? <Caption tone="muted">Not on your back bar</Caption> : null}
-        </View>
-        {on ? <IconSymbol name="checkmark" size={18} color={ds.accentText} /> : null}
-      </PressableScale>
     );
   };
 
@@ -171,13 +129,8 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
         </View>
       </View>
       {badAmount ? <Caption tone="accent">The amount is a number, like 22.5 or 3/4.</Caption> : null}
-      <View role="radiogroup" accessibilityLabel={`What replaces ${name}`}>
-        {ours.length && barId ? <Caption tone="muted">On your back bar</Caption> : null}
-        {ours.map((o) => row(o, false))}
-        {rest.length ? <Caption tone="muted" style={styles.group}>Everything else</Caption> : null}
-        {rest.map((o) => row(o, true))}
-        {q && !options.length && data?.ingredients ? <Body tone="muted">{`Nothing called “${q}”. Add it to the library first, then come back.`}</Body> : null}
-      </View>
+      <BottleOptions label={`What replaces ${name}`} barId={barId} options={options} pickedId={picked?.id ?? null} onPick={setPicked} />
+      {options.none ? <Body tone="muted">{`Nothing called “${query.trim()}”. Add it to the library first, then come back.`}</Body> : null}
       {error ? <Caption tone="accent">{error}</Caption> : null}
       {line.ingredientId ? <TextLink label={`Open ${name}`} tone="ink" onPress={onOpen} /> : null}
     </MenuSheet>
@@ -212,8 +165,6 @@ const styles = StyleSheet.create({
   inputs: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   amount: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, borderRadius: radius.control, borderWidth: 1, paddingHorizontal: space.md },
   amountInput: { width: 56, minHeight: layout.minTapTarget, padding: 0 },
-  option: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth },
-  group: { paddingTop: space.md },
   flex: { flex: 1 },
   footer: { gap: space.sm },
   center: { textAlign: 'center' },
