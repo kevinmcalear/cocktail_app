@@ -54,7 +54,8 @@ export function MakeItHouseSheet({ bottle, ways, nudge, onPick, onClose, tellUs 
           </PressableScale>
         ))}
       </View>
-      {tellUs ? <TellUs screen="Adding a drink › Make it house" line="We’ll add your technique to the app." {...tellUs} /> : null}
+      {/* Sent with the bottle it's about, and kept per bottle. */}
+      {tellUs ? <TellUs screen={bottle ? `Adding a drink › Make it house › ${bottle}`.slice(0, 120) : 'Adding a drink › Make it house'} line="We’ll add your technique to the app." {...tellUs} /> : null}
     </TechniqueSheet>
   );
 }

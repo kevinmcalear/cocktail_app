@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { useUserId } from '@/ctx/AuthContext';
-import { uriToBase64 } from '@/lib/imageBase64';
+import { imageExtFromUri, uriToBase64 } from '@/lib/imageBase64';
 import { supabase } from '@/lib/supabase';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
 
@@ -44,8 +44,9 @@ const PHOTO_TYPES: Record<string, string> = { jpg: 'image/jpeg', png: 'image/png
  */
 export function photoType(photo: Pick<NotePhoto, 'uri' | 'type'>): { ext: string; contentType: string } {
   const fromType = Object.keys(PHOTO_TYPES).find((k) => PHOTO_TYPES[k] === photo.type?.toLowerCase());
-  const fromName = photo.uri.startsWith('blob:') || photo.uri.startsWith('data:') ? '' : (photo.uri.split('?')[0].split('.').pop() ?? '').toLowerCase().replace(/^jpeg$/, 'jpg');
-  const ext = fromType ?? (fromName in PHOTO_TYPES ? fromName : 'jpg');
+  // imageExtFromUri knows the rest; HEIC isn't one the other buckets take, so it's read here.
+  const heic = /\.(heic|heif)$/i.exec(photo.uri.split('?')[0])?.[1].toLowerCase();
+  const ext = fromType ?? heic ?? imageExtFromUri(photo.uri).replace('jpeg', 'jpg');
   return { ext, contentType: PHOTO_TYPES[ext] };
 }
 
@@ -54,6 +55,7 @@ export function sendFailure(error: unknown): string {
   const e = error as { code?: string; hint?: string; message?: string } | null;
   if (e?.hint === 'notes_daily_limit') return 'Couldn’t send it: that’s a lot of notes for one day. What you wrote is kept here, so try again tomorrow.';
   if (e?.message === 'Sign in to send this.') return 'Sign in to send this. What you wrote is kept here.';
+  if (e?.code === 'photo_refused') return 'That photo couldn’t be sent (too big, or too many today). Remove it and send the words, or try another.';
   // The server answered and said no (a code), so being online won't fix it.
   if (e?.code) return 'Couldn’t send it. What you wrote is kept here. If it keeps happening, tell us from Settings › Report a problem.';
   return 'Couldn’t send it. What you wrote is kept here, so try again when you’re online.';
@@ -95,7 +97,10 @@ export function useSendNote() {
           .from('feedback')
           .upload(photoPath, decode(await uriToBase64(note.photo.uri)), { contentType, upsert: false });
         // Already there: an earlier try uploaded it before the note failed.
-        if (error && !/exists|duplicate/i.test(error.message)) throw error;
+        if (error && !/exists|duplicate/i.test(error.message)) {
+          // The server said no (too big, too many today): say it's the photo. No status: offline, as it is.
+          throw (error as { status?: number }).status ? Object.assign(new Error(error.message), { code: 'photo_refused' }) : error;
+        }
       }
       const { error } = await supabase.from('feedback_notes').insert({
         user_id: userId,
@@ -108,10 +113,11 @@ export function useSendNote() {
         ...appAndDevice(),
       });
       if (error) {
-        // The note didn't go in: take its photo back out rather than leave it with no note. The
+        // Refused (a code: the daily limit, a bar they've left): take the photo back out rather than
+        // leave it with no note. Offline or timed out, keep it: a retry reuses it (same path). The
         // database won't remove one a note points at, so a send that did land keeps its photo.
-        // ponytail: offline, this fails too and the photo waits for a retry (same path) or stays.
-        if (photoPath) await supabase.storage.from('feedback').remove([photoPath]).catch(() => {});
+        // ponytail: a photo from a send given up offline stays; a sweep of unreferenced files would catch it.
+        if (photoPath && error.code) await supabase.storage.from('feedback').remove([photoPath]).catch(() => {});
         throw error;
       }
     },

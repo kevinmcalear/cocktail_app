@@ -85,11 +85,17 @@ function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
   const update = (change: { body?: string; kind?: ReportKind }) => saveDraft(key, { body, kind: report ? kind : null, ...change });
   const canSend = (report ? true : body.trim().length > 0) && !send.isPending;
 
-  const close = () => {
-    if (sent) {
+  // Opened again after a thank-you: a fresh sheet. Here, not in close(), so the thanks stays put while it slides away.
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
+    if (visible && sent) {
       setSent(false);
       setPhoto(null);
     }
+  }
+
+  const close = () => {
     // A send still going keeps going: it clears the words and thanks them when it lands.
     if (!send.isPending) send.reset();
     setProblem(null);
@@ -144,8 +150,9 @@ function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
       {report ? <TextLink label="Email us instead" tone="ink" disabled={send.isPending} onPress={() => void email()} /> : null}
     </View>
   );
-  // Nothing typed while it's sending, so nothing new is cleared with the sent words.
-  const editable = !send.isPending;
+  // Nothing typed while it's sending, so nothing new is cleared with the sent words; nor
+  // before auth knows who this is, when the words would be kept under no one.
+  const editable = !send.isPending && !!userId;
 
   if (report) {
     return (

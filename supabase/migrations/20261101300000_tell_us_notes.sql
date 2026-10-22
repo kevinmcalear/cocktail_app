@@ -37,10 +37,11 @@ CREATE TABLE "public"."feedback_notes" (
     "kind" "text" NOT NULL CHECK ("kind" IN ('tell_us', 'broken', 'wrong', 'slow', 'data', 'other')),
     -- What they wrote. Optional for a problem report; a Tell us note needs words.
     "body" "text" DEFAULT '' NOT NULL CHECK (char_length("body") <= 2000),
-    -- In the feedback bucket, always under the sender's own folder.
+    -- In the feedback bucket, always "<sender id>/<file>.<image type>", spelled one
+    -- way only, so the delete policy's match on it can't be dodged ("x/./y").
     "photo_path" "text" CHECK (
         "photo_path" IS NULL
-        OR (char_length("photo_path") <= 200 AND "photo_path" LIKE "user_id"::"text" || '/%' AND "photo_path" NOT LIKE '%..%')
+        OR "photo_path" ~ ('^' || "user_id"::"text" || '/[0-9A-Za-z_-]{1,64}\.(jpg|png|webp|heic|heif|gif)$')
     ),
     "app_version" "text" CHECK (char_length("app_version") <= 40),
     "device" "text" CHECK (char_length("device") <= 300),

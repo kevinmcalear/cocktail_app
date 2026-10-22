@@ -106,6 +106,11 @@ describe('feedback notes', () => {
     assert.ok(theirs.error, 'a path in someone else\'s folder is refused');
     const sneaky = await send('sender', { photo_path: `${users.sender.id}/../${users.other.id}/x.jpg` });
     assert.ok(sneaky.error, 'a path that climbs out is refused');
+    // One spelling only, so "a photo with a note stays" can't be dodged with another.
+    for (const odd of [`${users.sender.id}/./x.png`, `${users.sender.id}//x.png`, `${users.sender.id}/x.exe`]) {
+      const { error } = await send('sender', { photo_path: odd });
+      assert.ok(error, `${odd.slice(37)} is refused`);
+    }
   });
 
   test('the database caps the length of the words', async () => {

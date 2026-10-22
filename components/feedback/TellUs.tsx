@@ -27,16 +27,19 @@ export function TellUs({ line, ...about }: TellUsProps) {
   // The sheet mounts on the first tap, then stays (so it can animate away and keep a picked photo).
   const [seen, setSeen] = useState(false);
   return (
-    <BrandProvider accent={DEFAULT_ACCENT} accentText="ink">
-      <Row
-        line={line}
-        onPress={() => {
-          setSeen(true);
-          setOpen(true);
-        }}
-      />
+    <>
+      {/* The sheet brands itself; the row needs it here. */}
+      <BrandProvider accent={DEFAULT_ACCENT} accentText="ink">
+        <Row
+          line={line}
+          onPress={() => {
+            setSeen(true);
+            setOpen(true);
+          }}
+        />
+      </BrandProvider>
       {seen ? <NoteSheet visible={open} onClose={() => setOpen(false)} about={about} /> : null}
-    </BrandProvider>
+    </>
   );
 }
 

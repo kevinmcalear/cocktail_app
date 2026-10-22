@@ -98,6 +98,7 @@ test('only the daily limit says "a lot of notes"; other refusals and offline say
   expect(sendFailure({ code: '42501', message: 'new row violates row-level security policy' })).not.toMatch(/a lot of notes/);
   expect(sendFailure({ code: '42501', message: 'new row violates row-level security policy' })).toMatch(/Report a problem/);
   expect(sendFailure(new Error('Network request failed'))).toMatch(/when you’re online/);
+  expect(sendFailure({ code: 'photo_refused', message: 'The object exceeded the maximum allowed size' })).toMatch(/That photo couldn’t be sent/);
 });
 
 test('a HEIC photo stays HEIC; an unknown one goes as a JPEG', () => {
@@ -105,4 +106,26 @@ test('a HEIC photo stays HEIC; an unknown one goes as a JPEG', () => {
   expect(photoType({ uri: 'blob:x', type: 'image/heif' })).toEqual({ ext: 'heif', contentType: 'image/heif' });
   expect(photoType({ uri: 'file:///p/a.jpeg', type: null })).toEqual({ ext: 'jpg', contentType: 'image/jpeg' });
   expect(photoType({ uri: 'blob:x', type: null })).toEqual({ ext: 'jpg', contentType: 'image/jpeg' });
+});
+
+test('the thanks stays while the sheet closes; opened again, it is a fresh sheet', async () => {
+  const onClose = jest.fn();
+  const view = (visible: boolean) => (
+    <QueryClientProvider client={client}>
+      <NoteSheet visible={visible} onClose={onClose} about={about} />
+    </QueryClientProvider>
+  );
+  const client = new QueryClient();
+  const { rerender } = await renderWithTamagui(view(true));
+  await fireEvent.changeText(screen.getByLabelText('What you do'), 'Graduated blocks.');
+  mockInsert.mockResolvedValueOnce({ error: null });
+  await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+  await fireEvent.press(await screen.findByRole('button', { name: 'Done' }));
+  expect(onClose).toHaveBeenCalled();
+  // Still the thanks while it slides away.
+  expect(screen.getByText('Thanks. It’s with us.')).toBeTruthy();
+  await rerender(view(false));
+  await rerender(view(true));
+  expect(screen.getByText('What do you do differently?')).toBeTruthy();
+  expect(screen.getByLabelText('What you do').props.value).toBe('');
 });
