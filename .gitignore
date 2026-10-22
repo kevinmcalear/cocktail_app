@@ -55,3 +55,6 @@ supabase/.gitignore
 
 # deno check output
 deno.lock
+
+# smoke check output (npm run smoke)
+smoke/results/

@@ -10,6 +10,7 @@ import type { LineBatch } from '@/lib/batchLines';
 import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
 import type { PublishMode } from '@/lib/publishing';
+import type { SameAs } from '@/lib/sameName';
 import { tidyAmount } from '@/lib/specDefaults';
 import { amountText } from '@/lib/units';
 
@@ -89,6 +90,12 @@ export interface WizardDraft {
   /** Everyone else who made it with them (person profiles). */
   coCreators: WizardPick[];
   riffOf: WizardPick | null;
+  /**
+   * The bar (or the bar it's credited to) already has a drink by this name
+   * (lib/sameName.ts): this one is a version of it, or a different drink.
+   * Unset until one is picked.
+   */
+  sameAs?: SameAs | null;
   /** The year it was first made (items.origin_year); null is not sure. */
   originYear?: number | null;
   /**
