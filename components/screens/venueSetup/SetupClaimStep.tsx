@@ -35,6 +35,8 @@ interface Props {
   ensureVenue: () => Promise<string>;
   /** Typed in step 3: fills the ways that need the bar's Instagram, website or phone (#714). */
   held: HeldSetup | undefined;
+  /** Making the venue failed (Keep it private makes it too). */
+  venueError: string | null;
   /** Puts what setup held onto the claim once it exists. */
   afterSend: (claim: ProfileClaim) => Promise<void>;
   onDone: () => void;
@@ -49,11 +51,13 @@ interface Props {
  * code shows before anything is sent. Keeping it private is a real choice:
  * the venue works for the team, and the page stays as it was.
  */
-export function SetupClaimStep({ profileId, ensureVenue, held, afterSend, onDone, onKeepPrivate }: Props) {
+export function SetupClaimStep({ profileId, ensureVenue, held, venueError, afterSend, onDone, onKeepPrivate }: Props) {
   const { user } = useAuth();
   const profile = useProfile(profileId).data;
   const claims = useMyClaims(profileId).data;
-  const waiting = claims?.find((c) => c.status === 'pending') ?? null;
+  // Sent here: kept so a claim approved on the spot still moves on if keeping the setup on it failed.
+  const [sent, setSent] = useState<ProfileClaim | null>(null);
+  const waiting = claims?.find((c) => c.status === 'pending') ?? sent;
   const [code] = useState(() => newClaimCode());
   const [method, setMethod] = useState<BarClaimMethod | null>(null);
   const [typed, setTyped] = useState<TypedDetails>(() => ({ instagram: held?.instagram ?? undefined, website: held?.website ?? undefined, phone: held?.phone ?? undefined }));
@@ -73,7 +77,7 @@ export function SetupClaimStep({ profileId, ensureVenue, held, afterSend, onDone
     return (
       <SetupPage footer={<SetupFooter label="Keep going" pending={busy} onPress={onDone} />}>
         <Body>{waiting.code ? `Your claim is in. Your code is ${spacedCode(waiting.code)}.` : 'Your claim is in.'}</Body>
-        <WhileYouWait name={name} />
+        {waiting.status === 'pending' ? <WhileYouWait name={name} /> : null}
         {problem ? (
           <Caption tone="accent" role="alert">
             {problem}
@@ -89,6 +93,7 @@ export function SetupClaimStep({ profileId, ensureVenue, held, afterSend, onDone
     try {
       const barId = await ensureVenue();
       const claim = await start.mutateAsync({ profileId, method: chosen, barId, note: '', code, typed });
+      setSent(claim);
       try {
         await afterSend(claim);
       } catch (e) {
@@ -130,9 +135,9 @@ export function SetupClaimStep({ profileId, ensureVenue, held, afterSend, onDone
         }}
       />
       <Caption tone="muted">{CLAIM_LIMIT_NOTE}</Caption>
-      {problem ? (
+      {problem || venueError ? (
         <Caption tone="accent" role="alert">
-          {problem}
+          {problem ?? venueError}
         </Caption>
       ) : null}
     </SetupPage>

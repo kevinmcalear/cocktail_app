@@ -31,8 +31,10 @@ function deviceZone(): string | null {
  */
 export function VenueHoursEditor({ barId, canEdit }: { barId: string; canEdit: boolean }) {
   const router = useRouter();
-  const profileId = useVenueProfileId(barId).data;
+  const profileQuery = useVenueProfileId(barId);
+  const profileId = profileQuery.data;
   const facts = useBarFacts(profileId).data;
+  if (profileQuery.isLoading) return null;
   if (!profileId) {
     // No page yet: set up and kept private, so this is where to prove it's yours later (eddie-oct22-wave1).
     return (

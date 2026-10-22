@@ -50,10 +50,12 @@ export function TonightSetupBanner({ barId }: { barId: string }) {
   const router = useRouter();
   const run = useVenueSetup((s) => s.runs[barId]);
   const open = !!run && !run.finished;
-  const claim = useVenueClaim(run ? barId : null);
-  const page = useVenuePage(run?.finished ? barId : null);
+  // Finished with the claim sent: nothing left to offer, so nothing to look up.
+  const proving = !!run?.finished && !run.done.includes('claim');
+  const claim = useVenueClaim(open || proving ? barId : null);
+  const page = useVenuePage(proving ? barId : null);
   const invites = useBarInvites(barId, open).data ?? [];
-  if (!run) return null;
+  if (!run || (!open && !proving)) return null;
   if (!open) {
     const status = claim.data?.status;
     const unproved = claim.isSuccess && page.isSuccess && !page.data && status !== 'pending' && status !== 'approved';

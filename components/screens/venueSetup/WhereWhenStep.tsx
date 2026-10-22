@@ -134,9 +134,10 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
   const pending = !writable && claim?.status === 'pending';
   const holding = !writable && !pending;
   const held: HeldSetup = pending ? (claim?.setup ?? {}) : holding ? (kept ?? {}) : {};
-  const hours = (held.hours as WeekHours | undefined) ?? facts?.hours ?? null;
-  const phone = held.phone ?? facts?.phone ?? null;
-  const website = held.website ?? facts?.website ?? null;
+  // A held null is a cleared field, not a missing one.
+  const hours = held.hours !== undefined ? (held.hours as WeekHours | null) : (facts?.hours ?? null);
+  const phone = held.phone !== undefined ? held.phone : (facts?.phone ?? null);
+  const website = held.website !== undefined ? held.website : (facts?.website ?? null);
   // A waiting claim can't keep an Instagram (usePushHeldSetup), so it shows what the claim brought.
   const instagram = ig ?? (holding ? kept?.instagram : pending ? claim?.evidence?.typed?.instagram : null) ?? (profile ? pageInstagram(profile) : null) ?? '';
   const igProblem = instagramProblem(instagram);
@@ -157,7 +158,8 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
   };
   const looksRight = () => {
     if (ig === null || pending) return onDone();
-    if (igProblem) return setProblem(igProblem);
+    // The field shows what's wrong.
+    if (igProblem) return;
     if (writable && profileId) return saveInstagram.mutate({ id: profileId, raw: ig }, { onSuccess: onDone });
     onHold({ instagram: normalizeInstagram(ig) || null });
     onDone();

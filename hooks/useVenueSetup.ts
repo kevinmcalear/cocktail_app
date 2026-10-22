@@ -163,12 +163,14 @@ export function usePushHeldSetup() {
       const { page_visibility, ...facts } = setup;
       const page = { ...facts, ...(instagram ? { instagram } : {}) };
       if (Object.keys(page).length) {
-        const { error } = await supabase.from('profiles').update(page).eq('id', claim.profile_id);
+        const { data, error } = await supabase.from('profiles').update(page).eq('id', claim.profile_id).select('id');
         if (error) throw error;
+        if (!data?.length) throw new Error('You can’t edit this bar’s details yet.');
       }
       if (page_visibility && claim.bar_id) {
-        const { error } = await supabase.from('bars').update({ page_visibility }).eq('id', claim.bar_id);
+        const { data, error } = await supabase.from('bars').update({ page_visibility }).eq('id', claim.bar_id).select('id');
         if (error) throw error;
+        if (!data?.length) throw new Error('You can’t change who sees this page yet.');
       }
     },
     onSuccess: (_data, { claim }) => {
