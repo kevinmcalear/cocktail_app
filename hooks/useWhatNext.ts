@@ -62,8 +62,8 @@ export function useBarClassics(barId: string | null | undefined, classics: reado
 /**
  * Adds classics to the venue's Library as its own copies: each one's spec
  * (amounts in its own units), glass, ice and methods, a version of the
- * classic, credited to nobody at the venue. One at a time, so `done` counts
- * up and a failure keeps the ones already in.
+ * classic, credited to nobody at the venue. A few at a time; `done` counts
+ * up, and a failure keeps the ones that went in.
  */
 export function useAddClassics(barId: string | null | undefined) {
   const client = useQueryClient();
@@ -73,13 +73,24 @@ export function useAddClassics(barId: string | null | undefined) {
   const mutation = useMutation({
     mutationFn: async (classics: readonly DrinkList[]) => {
       setDone(0);
-      for (const c of classics) {
-        const spec = await client.fetchQuery({ ...cocktailQuery(c.id, viewAsRoleLevel), staleTime: 60_000 });
-        if (!spec) throw new Error(`Couldn’t load the ${c.name}.`);
-        const draft = { ...EMPTY_DRAFT, ...draftFromSpec(spec as unknown as SourceSpec, ''), id: newDraftId(), name: c.name, creator: 'nobody' as const, elsewhere: true, place: null };
-        await create.mutateAsync({ draft, barId: barId!, myProfileId: null });
-        setDone((n) => n + 1);
-      }
+      const queue = [...classics];
+      const failed: unknown[] = [];
+      // Four at a time: each is a dozen small requests, one by one is a minute or more.
+      const worker = async () => {
+        for (let c = queue.shift(); c; c = queue.shift()) {
+          try {
+            const spec = await client.fetchQuery({ ...cocktailQuery(c.id, viewAsRoleLevel), staleTime: 60_000 });
+            if (!spec) throw new Error(`Couldn’t load the ${c.name}.`);
+            const draft = { ...EMPTY_DRAFT, ...draftFromSpec(spec as unknown as SourceSpec, ''), id: newDraftId(), name: c.name, creator: 'nobody' as const, elsewhere: true, place: null };
+            await create.mutateAsync({ draft, barId: barId!, myProfileId: null });
+            setDone((n) => n + 1);
+          } catch (e) {
+            failed.push(e);
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: 4 }, worker));
+      if (failed.length) throw failed[0];
     },
     onSettled: () => client.invalidateQueries({ queryKey: ['bar-classics', barId] }),
   });

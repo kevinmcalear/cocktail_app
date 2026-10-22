@@ -32,11 +32,17 @@ export function WhatNext({ barId, name, summary, openLabel, onOpen }: { barId: s
   const chrome = useSetupChrome();
   const router = useRouter();
   const enterVenue = useAppMode((s) => s.enterVenue);
-  const caps = useCapabilities(barId).data ?? [];
-  const pageId = useBarPageId(barId).data ?? null;
-  const glasses = useBarGlassware(barId).data ?? [];
-  const { classics } = useTopClassics();
-  const inLibrary = (useBarClassics(barId, classics).data ?? []).length;
+  const capsQuery = useCapabilities(barId);
+  const pageQuery = useBarPageId(barId);
+  const glassQuery = useBarGlassware(barId);
+  const top = useTopClassics();
+  const libraryQuery = useBarClassics(barId, top.classics);
+  const caps = capsQuery.data ?? [];
+  const pageId = pageQuery.data ?? null;
+  const glasses = glassQuery.data ?? [];
+  const inLibrary = (libraryQuery.data ?? []).length;
+  // What's there decides which steps show and whether it's filled in: wait for it, not a flash of the wrong one.
+  const loading = capsQuery.isLoading || pageQuery.isLoading || glassQuery.isLoading || top.isLoading || libraryQuery.isLoading;
   const [at, setAt] = useState<Step | null>(null);
   const [skipped, setSkipped] = useState<Step[]>([]);
   // Glassware hangs off the venue's page, so it waits for the claim.
@@ -48,9 +54,18 @@ export function WhatNext({ barId, name, summary, openLabel, onOpen }: { barId: s
   const filled = left.length === 0;
   const label = (s: Step) => `${steps.indexOf(s) + 1} of ${steps.length} · ${s === 'glasses' ? 'Glasses' : 'Menu'}`;
   const skip = (s: Step) => setSkipped((xs) => (xs.includes(s) ? xs : [...xs, s]));
-  // After a step: the next one still to do, else back here.
-  const next = (s: Step) => setAt(steps.slice(steps.indexOf(s) + 1).find((x) => left.includes(x) && x !== s) ?? null);
+  // After a step: the next one not skipped, else back here.
+  const next = (s: Step) => setAt(steps.slice(steps.indexOf(s) + 1).find((x) => !skipped.includes(x)) ?? null);
 
+  if (loading) {
+    return (
+      <SetupChromeProvider value={{ ...chrome, title: 'This is your bar. What next?', intro: undefined }}>
+        <SetupPage>
+          <Caption tone="muted">Loading…</Caption>
+        </SetupPage>
+      </SetupChromeProvider>
+    );
+  }
   if (at === 'glasses' && pageId) {
     return <GlassesStep barId={barId} pageId={pageId} step={label('glasses')} onBack={() => setAt(null)} onNext={() => next('glasses')} onSkip={() => (skip('glasses'), next('glasses'))} />;
   }

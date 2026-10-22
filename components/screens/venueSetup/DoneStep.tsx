@@ -139,7 +139,6 @@ function SetupSummary({ barId, profileId, name, claim, claimState, held, waiting
  */
 export function DoneStep(props: DoneProps) {
   const { barId, name, claimState, waitingFiles, onOpen, onProve } = props;
-  const ds = useDs();
   const invites = useBarInvites(barId).data ?? [];
   const [all, setAll] = useState(false);
   const bar = name || 'your bar';
@@ -160,7 +159,7 @@ export function DoneStep(props: DoneProps) {
         }
       />
       <Sheet visible={all} onClose={() => setAll(false)} accessibilityLabel="What’s set up">
-        <SheetScrollView contentContainerStyle={[styles.sheet, { backgroundColor: ds.c.surface }]}>
+        <SheetScrollView contentContainerStyle={styles.sheet}>
           <SetupSummary
             {...props}
             onProve={() => {

@@ -142,17 +142,19 @@ export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { b
         <Caption tone="muted">Or browse by shape</Caption>
         <View style={styles.wrap}>
           {(more ? [...FIRST_TYPES, ...MORE_TYPES] : FIRST_TYPES.slice(0, 5)).map((g) => (
-            <Chip
+            <Button
               key={g}
               label={GLASS_TYPE_LABEL[g]}
-              selected={false}
+              variant="secondary"
+              size="sm"
+              accessibilityLabel={`Every ${shapeWord(g)}`}
               onPress={() => {
                 setMaker(null);
                 setShape(g);
               }}
             />
           ))}
-          {more ? null : <Chip label="More" selected={false} onPress={() => setMore(true)} />}
+          {more ? null : <Button label="More" variant="secondary" size="sm" accessibilityLabel="More shapes" onPress={() => setMore(true)} />}
         </View>
       </View>
       {looking && results.length ? <GlassShelfRows models={results} by="range" onShelf={onShelf} onToggle={(m) => void toggle(m)} /> : null}

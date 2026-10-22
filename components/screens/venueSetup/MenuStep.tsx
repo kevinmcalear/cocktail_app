@@ -61,7 +61,7 @@ export function MenuStep({ barId, step, onBack, onDone, onSkip, onBringIn }: { b
       return next;
     });
   const label = add.isPending
-    ? `Adding ${Math.min(add.done + 1, add.variables?.length ?? 1)} of ${add.variables?.length ?? 1}…`
+    ? `Adding… ${add.done} of ${add.variables?.length ?? 0}`
     : adding.length
       ? `Add ${adding.length === 1 ? 'one classic' : `${adding.length} classics`}`
       : 'Next';
