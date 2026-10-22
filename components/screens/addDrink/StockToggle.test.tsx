@@ -61,7 +61,7 @@ describe('the bottle on the line', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Del Maguey Vida is not on the back bar. Add it' }));
     expect(mockAdd).toHaveBeenCalledWith({ item: { id: 'vida', name: 'Del Maguey Vida' }, source: 'drink', fromName: 'Ash Garden' });
     expect(screen.getByText('Del Maguey Vida is on Little Rye’s back bar')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo: Del Maguey Vida is on Little Rye’s back bar' }));
     expect(mockRemove).toHaveBeenCalledWith('vida');
   });
 

@@ -161,7 +161,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const ingredients = dropdowns?.ingredients ?? [];
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const backBar = useBackBarIds(barId, ingredients);
-  const stock = useLineStock({ barId, venueName, drinkName: draft.name.trim(), ingredients, lines: draft.lines });
+  const stock = useLineStock({ barId, venueName, drinkName: draft.name.trim(), ingredients, lines: draft.lines, pinned: !desk });
   const copy = STEP_COPY[step];
   const methods = choiceList(COMMON_METHODS, dropdowns?.methods ?? []);
   const glasses = choiceList(COMMON_GLASSES, dropdowns?.glassware ?? []);
@@ -288,6 +288,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
           saving={create.isPending}
           onSkip={next}
           onNext={next}
+          notice={step === 'ingredients' ? stock.note : null}
         />
       }
     >

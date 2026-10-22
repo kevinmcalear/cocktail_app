@@ -141,12 +141,15 @@ assert.equal(pouredLine(['x'], () => undefined), 'Poured in 1 drink');
 assert.equal(isStockable({ name: 'Del Maguey Vida', kind: 'Mezcal', role: 'product' }), true);
 assert.equal(isStockable({ name: 'Sweet vermouth', role: 'generic' }), true);
 assert.equal(isStockable({ name: 'Agave syrup', role: 'generic' }), true, 'a bought syrup');
+assert.equal(isStockable({ name: 'Agave syrup', role: 'prep' }), true, 'the catalog files syrups as preps; a bar can still buy one');
+assert.equal(isStockable({ name: 'Monin pandan', role: 'product' }), true, 'a branded bottle');
+assert.equal(isStockable({ name: 'Fever-Tree tonic', role: 'product' }), false, 'a mixer');
 assert.equal(isStockable({ name: 'Angostura bitters', role: 'product' }), true);
 assert.equal(isStockable({ name: 'Lime juice', role: 'generic' }), false);
 assert.equal(isStockable({ name: 'Mint', role: 'generic' }), false);
 assert.equal(isStockable({ name: 'Soda water', role: 'generic' }), false);
-assert.equal(isStockable({ name: 'Pandan cordial', role: 'prep' }), false, 'a house prep');
-assert.equal(isStockable({ name: 'Honey syrup', role: 'generic', ownPrep: true }), false, "the bar's own");
+assert.equal(isStockable({ name: 'Pandan cordial', role: 'prep', ownPrep: true }), false, "the bar's own house prep");
+assert.equal(isStockable({ name: 'Lime juice', role: 'prep' }), false, 'a juice, however the catalog files it');
 
 console.log('backBar checks passed');
 

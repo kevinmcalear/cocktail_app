@@ -2,15 +2,15 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
-import { layout, radius, space } from '@/constants/tokens';
+import { Body, Caption, PressableScale, useDs } from '@/components/ds';
+import { DEFAULT_ACCENT, fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useBackBarParts, useStockMutations, type BackBarReason } from '@/hooks/useBackBar';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useExpiring } from '@/hooks/useExpiring';
 import { useShelf, useShelfEdit } from '@/hooks/useHomeBar';
 import { pressedProps } from '@/lib/a11yState';
 import { isStockable } from '@/lib/backBar';
-import { withAlpha } from '@/lib/color';
+import { readableAccent, withAlpha } from '@/lib/color';
 import type { WizardLine } from '@/lib/drinkWizard';
 
 import type { CatalogIngredient } from './IngredientSearch';
@@ -22,8 +22,10 @@ const NOTE_MS = 10000;
 export interface LineStock {
   /** The bottle button for a line, or null for juice, garnish, water, a house prep or a batch. */
   toggle: (line: WizardLine) => ReactNode;
-  /** Under the lines: the hint, then the note with Undo after a tap. */
+  /** Under the lines: the hint, and the note with Undo unless it's pinned. */
   footer: ReactNode;
+  /** The note with Undo, for the wizard's pinned footer (`pinned`); null otherwise. */
+  note: ReactNode;
 }
 
 interface Note {
@@ -46,6 +48,8 @@ interface LineStockOptions {
   drinkName: string;
   ingredients: readonly CatalogIngredient[];
   lines: readonly WizardLine[];
+  /** The note goes just above the pinned Skip and Next (a phone), not under the lines (the desktop page). */
+  pinned?: boolean;
 }
 
 /**
@@ -54,7 +58,7 @@ interface LineStockOptions {
  * so, with Undo. Never a question or a step. People whose role can't place
  * items see the state, but it doesn't switch.
  */
-export function useLineStock({ barId, venueName, drinkName, ingredients, lines }: LineStockOptions): LineStock {
+export function useLineStock({ barId, venueName, drinkName, ingredients, lines, pinned }: LineStockOptions): LineStock {
   const ds = useDs();
   const [note, setNote] = useExpiring<Note>(NOTE_MS);
 
@@ -91,29 +95,31 @@ export function useLineStock({ barId, venueName, drinkName, ingredients, lines }
   };
 
   const yours = barId ? 'your back bar' : 'your shelf';
-  const hint = lines.some(stockable) ? `The bottle on the right: lit when it’s on ${yours}.${canChange ? ' Tap to change.' : ''}` : null;
-  const footer =
-    hint || note ? (
-      <>
-        {hint ? <Caption tone="muted">{hint}</Caption> : null}
-        {note ? (
-          <View role="status" style={[styles.note, { backgroundColor: ds.c.raised }]}>
-            <Body style={styles.flex}>{note.text}</Body>
-            {note.undo ? (
-              <Button
-                label="Undo"
-                variant="ghost"
-                onPress={() => {
-                  note.undo?.();
-                  setNote(null);
-                }}
-              />
-            ) : null}
-          </View>
-        ) : null}
-      </>
-    ) : null;
-  return { toggle, footer };
+  const hint = lines.some(stockable) ? <Caption tone="muted">{`The bottle on the right: lit when it’s on ${yours}.${canChange ? ' Tap to change.' : ''}`}</Caption> : null;
+  // A light pill on the dark page, as drawn: the note and an underlined Undo.
+  const bar = note ? (
+    <View role="status" style={[styles.note, { backgroundColor: ds.c.ink }]}>
+      <Body color={ds.c.ground} style={styles.flex}>
+        {note.text}
+      </Body>
+      {note.undo ? (
+        <PressableScale
+          onPress={() => {
+            note.undo?.();
+            setNote(null);
+          }}
+          role="button"
+          accessibilityLabel={`Undo: ${note.text}`}
+          style={styles.undo}
+        >
+          <Body color={ds.c.ground} style={styles.underline}>
+            Undo
+          </Body>
+        </PressableScale>
+      ) : null}
+    </View>
+  ) : null;
+  return pinned ? { toggle, footer: hint, note: bar } : { toggle, footer: hint || bar ? <>{hint}{bar}</> : null, note: null };
 }
 
 interface StockButtonProps {
@@ -135,7 +141,8 @@ function StockButton({ name, on, where, home, locked, onPress }: StockButtonProp
     : on
       ? `${name} is on ${where}`
       : `${name} is not on ${home ? 'your shelf' : 'the back bar'}. Add it`;
-  const ink = locked ? ds.c.muted : on ? ds.accentText : ds.c.faint;
+  // Gold as drawn, whatever the venue's accent, darkened on a light ground so it still reads.
+  const ink = locked ? ds.c.muted : on ? readableAccent(DEFAULT_ACCENT, ds.c.ground) : ds.c.faint;
   return (
     <PressableScale onPress={onPress} disabled={locked} role="button" accessibilityLabel={label} {...pressedProps(on)} style={[styles.button, locked ? styles.locked : null]}>
       <Svg width={20} height={20} viewBox="0 0 24 24" aria-hidden>
@@ -157,4 +164,6 @@ const styles = StyleSheet.create({
   locked: { opacity: 0.55 },
   note: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs, minHeight: 52 },
   flex: { flex: 1 },
+  undo: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md },
+  underline: { textDecorationLine: 'underline', fontFamily: fontFamilies.bodySemiBold },
 });

@@ -13,6 +13,9 @@ import { techniqueById } from '@/lib/techniques';
 import { LineGrip } from './DragRow';
 import { WizardChip } from './WizardChrome';
 
+/** Below this a row with the bottle stacks: grip, thumb, amount, unit, bottle and remove leave the name too little. */
+const NARROW = 580;
+
 interface LineRowProps {
   line: WizardLine;
   onChange: (change: Partial<WizardLine>) => void;
@@ -35,7 +38,7 @@ interface LineRowProps {
   lifted?: boolean;
   /** Another line is held over this one: let go to batch them (lib/batchLines). */
   dropTarget?: boolean;
-  /** Just before remove: the bottle that puts it on the back bar or your shelf (StockToggle). */
+  /** Just before remove: the bottle that puts it on the back bar or your shelf (StockToggle); null for a line without one. */
   stock?: ReactNode;
 }
 
@@ -49,7 +52,9 @@ interface LineRowProps {
 export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted, dropTarget, stock }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
-  const stacked = useBreakpoint() === 'phone';
+  // So does a narrow column (the desktop page's spec), where the bottle left the name a few letters.
+  const [narrow, setNarrow] = useState(false);
+  const stacked = useBreakpoint() === 'phone' || (stock !== undefined && narrow);
   const [units, setUnits] = useState(false);
   const [noting, setNoting] = useState(!!line.note);
   const [open, setOpen] = useState(false);
@@ -76,7 +81,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
     </>
   );
   return (
-    <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}>
+    <View role="listitem" onLayout={(e) => setNarrow(e.nativeEvent.layout.width < NARROW)} style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}>
       <View style={styles.row}>
         {grip?.(<LineGrip name={line.name} onMove={onMove} />)}
         <IngredientThumb id={line.id} name={line.name} size={40} />

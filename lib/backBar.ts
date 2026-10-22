@@ -217,11 +217,14 @@ export function waitingForSpot(
 /**
  * Whether a line's ingredient is a bottle a bar stocks: spirits, liqueurs,
  * vermouth, beer, wine, bitters and bought syrups. Not juice, garnish,
- * water, mixers or a prep the bar makes itself.
+ * water, mixers or something the bar makes itself. Read from the name, as
+ * My Bar sorts its shelves: the catalog files syrups as preps (one recipe
+ * among many), but a bar can buy them by the bottle.
  */
 export function isStockable(item: { name: string; kind?: string | null; role?: string | null; ownPrep?: boolean }): boolean {
-  const section = barSection({ name: item.name, kind: item.kind, role: item.role });
-  return section === 'bottles' || (section === 'preps' && item.role !== 'prep' && !item.ownPrep);
+  if (item.ownPrep) return false;
+  const section = barSection({ name: item.name, kind: item.kind, role: item.role === 'product' ? 'product' : null });
+  return section === 'bottles' || section === 'preps';
 }
 
 const KIND_WORDS: [RegExp, BarZoneKind][] = [
