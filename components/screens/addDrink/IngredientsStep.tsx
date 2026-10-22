@@ -136,10 +136,10 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   // Held over another line and let go, it's batched with it instead (useLineBatches).
   const batches = useLineBatches({ draft, set, enabled: forDrink, heights: () => draft.lines.map((l) => heights.current[l.key] ?? 0), onNotice: setMadePrep });
   const drop = (from: number, dy: number) => batches.drop(from) || move(from, dropIndex(from, dy, draft.lines.map((l) => heights.current[l.key] ?? 0)));
-  const has = (name: string) => draft.lines.some((l) => l.name.trim().toLowerCase() === name.toLowerCase());
-  const quick = COMMON_INGREDIENTS.filter((n) => !has(n)).slice(0, QUICK);
   // A batch tastes, pairs and matches classics as what's in it.
   const poured = perDrink(draft.lines);
+  const has = (name: string) => poured.some((l) => l.name.trim().toLowerCase() === name.toLowerCase());
+  const quick = COMMON_INGREDIENTS.filter((n) => !has(n)).slice(0, QUICK);
   const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
 
   return (

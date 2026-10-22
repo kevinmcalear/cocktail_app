@@ -9,6 +9,8 @@ import { radius } from '@/constants/tokens';
 
 /** On a touch screen a drag starts after a short hold, so a swipe over the grip still scrolls. */
 const HOLD_MS = Platform.OS === 'web' ? 0 : 200;
+/** The web's pan counts its translation from when it activates, a few points late: there it counts from the press. */
+const FROM_PRESS = Platform.OS === 'web';
 
 interface DragRowProps {
   index: number;
@@ -31,7 +33,7 @@ export function DragRow({ index, onDrop, onHeight, onOver, children }: DragRowPr
   const lifted = useSharedValue(0);
   // Where onOver last heard of it, so it hears every few points rather than every frame.
   const told = useSharedValue(0);
-  // Where the finger went down: on the web a pan's translation counts from when it activates, a few points late.
+  // Where the pointer went down (FROM_PRESS).
   const from = useSharedValue(0);
   const tracking = !!onOver;
   const [active, setActive] = useState(false);
@@ -47,15 +49,16 @@ export function DragRow({ index, onDrop, onHeight, onOver, children }: DragRowPr
       if (tracking) scheduleOnRN(onOver!, index, 0);
     })
     .onUpdate((e) => {
-      const dy = e.absoluteY - from.get();
+      const dy = FROM_PRESS ? e.absoluteY - from.get() : e.translationY;
       y.set(dy);
       if (tracking && Math.abs(dy - told.get()) >= 4) {
         told.set(dy);
         scheduleOnRN(onOver!, index, dy);
       }
     })
-    .onEnd((e) => {
-      scheduleOnRN(onDrop, index, e.absoluteY - from.get());
+    .onEnd((e, success) => {
+      // Cancelled (a call, the scroll took over): it goes back where it was.
+      if (success) scheduleOnRN(onDrop, index, FROM_PRESS ? e.absoluteY - from.get() : e.translationY);
     })
     .onFinalize(() => {
       y.set(0);

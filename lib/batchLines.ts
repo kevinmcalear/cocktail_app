@@ -9,23 +9,25 @@
  * eddie-oct22-wave2, fix 9.
  */
 import { density, toMl } from './drinkMath';
-import { amountOf, convertPour, newLine, perDrink, type WizardLine } from './drinkWizard';
+import { amountOf, newLine, perDrink, POUR_ML, type WizardLine } from './drinkWizard';
 import type { PrepDraft, PrepDraftLine } from './prepKinds';
 
 export const BATCH_BOTTLE_ML = 750;
 
 export const isBatch = (l: Pick<WizardLine, 'prep'>): boolean => l.prep?.kind === 'batch';
 
-/** A line's pour in ml (oz, cl, dashes, grams through the density); null for a top, a count or no amount. */
+/** A line's pour in ml (an oz is the bar's 30; dashes, grams through the density); null for a top, a count or no amount. */
 export function pourMl(l: Pick<WizardLine, 'name' | 'amount' | 'unit'>): number | null {
   const n = amountOf(l.amount);
-  const ml = n !== null && n > 0 ? toMl(n, l.unit, density(l.name, null)) : null;
+  const ml = n === null || n <= 0 ? null : POUR_ML[l.unit] ? n * POUR_ML[l.unit] : toMl(n, l.unit, density(l.name, null));
   return ml && ml > 0 ? ml : null;
 }
 
 /** Why a line can't go in the bottle, or null when it can. */
 export function cannotBatch(l: WizardLine): string | null {
-  if (isBatch(l) || pourMl(l) !== null) return null;
+  // A house prep made here keeps its own recipe: it goes in a batch once it's saved.
+  if (!isBatch(l) && (l.prep || l.later || l.technique)) return `${l.name} is a new house prep. Save the drink first, then batch it.`;
+  if (pourMl(l) !== null) return null;
   return l.unit === 'top' ? `${l.name} is a top, so it's added at the pass, not bottled.` : `${l.name} needs an amount to go in a batch.`;
 }
 
@@ -34,7 +36,7 @@ function pours(l: WizardLine): PrepDraftLine[] {
   const lines = isBatch(l) ? perDrink([l]) : [l];
   return lines.flatMap((p) => {
     const ml = pourMl(p);
-    return ml === null ? [] : [{ key: p.key, id: p.id, name: p.name, parts: ml, unit: 'ml', amount: '', ...(p.note ? { note: p.note } : null) }];
+    return ml === null ? [] : [{ key: p.key, id: p.id, name: p.name, parts: ml, unit: 'ml', amount: '', pourUnit: p.unit, ...(p.note ? { note: p.note } : null) }];
   });
 }
 
@@ -68,15 +70,18 @@ export function batchSummary(prep: PrepDraft): string {
  * after the drink, its pour the sum of theirs (in the first's unit when it's
  * ml, cl or oz), its bottle the size it had (else 750 ml).
  */
-export function batchOf(lines: readonly WizardLine[], drinkName: string, bottle?: number): WizardLine {
+export function batchOf(lines: readonly WizardLine[], drinkName: string, bottle?: number, taken: readonly string[] = []): WizardLine {
   const recipe = lines.flatMap(pours);
   const total = recipe.reduce((sum, l) => sum + (l.parts ?? 0), 0);
   const into = ['ml', 'cl', 'oz'].includes(lines[0].unit) ? lines[0].unit : 'ml';
   const prep: PrepDraft = { kind: 'batch', baseKey: recipe[0]?.key ?? '', baseAmount: 0, lines: recipe, steps: [], keepsHours: null, storage: '', leadMinutes: null, actions: [] };
   const was = lines.find(isBatch);
-  const pour = convertPour(total, 'ml', into);
+  // A second batch in the drink gets its own name: two of one name would save as one prep.
+  const base = `${drinkName.trim() || 'House'} batch`;
+  let name = was?.name ?? base;
+  for (let n = 2; !was && taken.some((t) => t.toLowerCase() === name.toLowerCase()); n++) name = `${base} ${n}`;
   return {
-    ...newLine({ id: null, name: was?.name ?? `${drinkName.trim() || 'House'} batch` }, pour.unit, pour.amount),
+    ...newLine({ id: null, name }, into, String(Math.round((total / POUR_ML[into]) * 100) / 100)),
     ...(was ? { key: was.key } : null),
     prep: withBottle(prep, bottle ?? (was?.prep ? bottleMl(was.prep) : BATCH_BOTTLE_ML)),
   };
@@ -91,7 +96,7 @@ export function dropInto(lines: readonly WizardLine[], from: string, onto: strin
   const b = lines.find((l) => l.key === onto);
   if (!a || !b || a === b) return [...lines];
   const stays = isBatch(a) && !isBatch(b) ? a : b;
-  const batch = batchOf(stays === a ? [a, b] : [b, a], drinkName);
+  const batch = batchOf(stays === a ? [a, b] : [b, a], drinkName, undefined, lines.filter(isBatch).map((l) => l.name));
   return lines.flatMap((l) => (l === stays ? [batch] : l === a || l === b ? [] : [l]));
 }
 

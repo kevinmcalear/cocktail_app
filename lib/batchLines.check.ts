@@ -65,3 +65,17 @@ assert.match(cannotBatch(line('s', 'Soda', '', 'top')) ?? '', /top/);
 assert.match(cannotBatch(line('x', 'Mezcal', '')) ?? '', /amount/);
 // No name yet: a house batch.
 assert.equal(batchOf([mezcal, agave], '  ').name, 'House batch');
+
+// An ounce is the bar's 30 ml both ways: 2 oz and 2 oz is 4 oz, and splits back to 2 and 2.
+const four = batchOf([line('g', 'Gin', '2', 'oz'), line('v', 'Dry vermouth', '2', 'oz')], 'Martini');
+assert.equal(four.amount, '4');
+assert.deepEqual(perDrink([four]).map((l) => [l.amount, l.unit]), [['2', 'oz'], ['2', 'oz']]);
+// Dashes and grams come back as they were poured.
+const bitters = dropInto([mezcal, line('b', 'Angostura bitters', '2', 'dash')], 'b', 'm', 'Ash Garden');
+assert.deepEqual(splitBatch(bitters, bitters[0].key).map((l) => [l.name, l.amount, l.unit]), [['Mezcal', '45', 'ml'], ['Angostura bitters', '2', 'dash']]);
+// A second batch in the drink gets its own name.
+const two = dropInto([...one, line('s', 'Soda', '30'), line('t', 'Tonic', '30')], 's', 't', 'Ash Garden');
+assert.deepEqual(two.map((l) => l.name), ['Ash Garden batch', 'Lime juice', 'Ash Garden batch 2']);
+// A new house prep keeps its recipe: it isn't batched until it's saved. A batch with no pour can't take more.
+assert.match(cannotBatch({ ...line('p', 'Pineapple shrub', '15'), id: null, later: true }) ?? '', /house prep/);
+assert.match(cannotBatch({ ...batch, amount: '' }) ?? '', /amount/);

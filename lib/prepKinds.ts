@@ -37,6 +37,8 @@ export interface PrepDraftLine {
   removed?: boolean;
   /** How it goes in ("Sliced, seeds in for more heat"): saved as the line's preparation note. */
   note?: string;
+  /** In a batch: the unit it was poured in (2 dash, 5 g), so splitting it gives it back that way. */
+  pourUnit?: string;
 }
 
 export interface PrepDraftStep {

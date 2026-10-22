@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
 /** Long enough to feel meant; a drag passing through to reorder never waits this long over one row. */
@@ -24,6 +24,9 @@ export function useDragMergeDwell(enabled: boolean) {
             timerRef.current = null;
         }
     };
+
+    // Gone mid-dwell: the timer goes too.
+    useEffect(() => clearTimer, []);
 
     const disarm = useCallback(() => {
         clearTimer();

@@ -4,6 +4,7 @@
  * quick choices each step offers. The screens are in
  * components/screens/addDrink; saving is hooks/useCreateDrink.ts.
  */
+import { density, toMl } from '@/lib/drinkMath';
 import { iceBuildLine, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { PrepDraft } from '@/lib/prepKinds';
@@ -452,7 +453,15 @@ export function perDrink(lines: readonly WizardLine[]): WizardLine[] {
     if (l.prep?.kind !== 'batch') return [l];
     const total = l.prep.lines.reduce((sum, p) => sum + (p.parts ?? 0), 0);
     const n = amountOf(l.amount);
-    return l.prep.lines.map((p) => ({ key: p.key, id: p.id, name: p.name, unit: l.unit, amount: n === null || !total ? '' : fmt((n * (p.parts ?? 0)) / total), ...(p.note ? { note: p.note } : null) }));
+    return l.prep.lines.map((p) => {
+      const share = n === null || !total ? null : (n * (p.parts ?? 0)) / total;
+      // Back in the unit it was poured in: oz and cl through convertPour, a dash or a gram through its ml.
+      const ml = share === null ? null : share * (POUR_ML[l.unit] ?? 1);
+      const u = p.pourUnit ?? l.unit;
+      const per = ml === null || POUR_ML[u] || !POUR_ML[l.unit] ? null : toMl(1, u, density(p.name, null));
+      const pour = per ? { amount: fmt(ml! / per), unit: u } : POUR_ML[u] ? convertPour(share, l.unit, u) : { amount: share === null ? '' : fmt(share), unit: l.unit };
+      return { key: p.key, id: p.id, name: p.name, ...pour, ...(p.note ? { note: p.note } : null) };
+    });
   });
 }
 
@@ -515,7 +524,7 @@ export interface SourceSpec {
 
 const GARNISH_UNIT = /^(peel|twist|wheel|slice|sprig|leaf|leaves|wedge|zest|garnish|spray|rinse|float|rim|pinch)s?$/;
 const GARNISH_EACH = /cherr|olive|coffee bean|flower|petal|nutmeg|onion|mint|berry|berries/;
-const POUR_ML: Record<string, number> = { ml: 1, cl: 10, oz: 30 };
+export const POUR_ML: Record<string, number> = { ml: 1, cl: 10, oz: 30 };
 const OZ_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
 
 /** A pour in another of ml, cl and oz ("22.5" ml is "0.75" oz); other units stay as they are. */
