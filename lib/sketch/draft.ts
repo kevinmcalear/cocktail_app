@@ -34,6 +34,8 @@ export interface DraftLook {
   barIce?: readonly string[];
   /** How the ice sits, bottom first, by name (lib/iceBuild.ts); `ice` is its top layer. */
   build?: readonly { name: string; n?: number | null; to?: string | null }[] | null;
+  /** The colour picked for the drawing, or Auto (null): painted over the spec's own (types.ts liquidOf). */
+  tint?: string | null;
 }
 
 export function draftSketchInputs(draft: DraftLook): SketchInputs {
@@ -58,5 +60,5 @@ export function draftSketchInputs(draft: DraftLook): SketchInputs {
   // And its ice: a guessed one gives way to the venue's nearest kind.
   const ice = inputs.from.ice === 'data' ? null : houseIce(inputs.ice, draft.barIce ?? []);
   const build = sketchBuild(draft.build);
-  return { ...inputs, ice: ice ?? inputs.ice, variant, ...(build ? { build } : {}) };
+  return { ...inputs, ice: ice ?? inputs.ice, variant, ...(build ? { build } : {}), ...(draft.tint ? { tint: draft.tint } : {}) };
 }

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, Field, Headline, Spec, Surface, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Caption, DsText, Field, Headline, SketchTintPicker, Spec, Surface, Title, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { radius, space } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { balanceOf, fixesFor, tasteWord } from '@/lib/balance';
 import { formatPct, margin } from '@/lib/costing';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
@@ -15,24 +16,37 @@ import { inputsFor } from './SketchHeader';
 import { Eyebrow, WizardChip } from './WizardChrome';
 import type { CatalogIngredient } from './IngredientSearch';
 
-/** The drink as it's written: its drawing, name and what's in it (make-create-desktop, "The drink, as you go"). */
-export function DeskDrinkCard({ draft, look, seed }: { draft: WizardDraft; look: DraftLook; seed: string }) {
+/**
+ * The drink as it's written: its drawing, name and what's in it
+ * (make-create-desktop, "The drink, as you go"), and the drawing's colour
+ * under it: Auto, or a house watercolour that holds while the spec changes.
+ */
+export function DeskDrinkCard({ draft, look, seed, onTint }: { draft: WizardDraft; look: DraftLook; seed: string; onTint: (tint: string | null) => void }) {
   const ds = useDs();
   const empty = !look.glass && !look.lines.length && !look.methods?.length;
   const inputs = inputsFor(empty ? { ...look, glass: 'Coupe' } : look);
   const name = draft.name.trim() || 'New drink';
   const what = [...draft.lines, ...draft.garnishes].map((l) => l.name.toLowerCase()).join(', ');
   return (
-    <View style={[styles.drink, { backgroundColor: ds.c.paper }]}>
-      <View style={styles.sketch} role="img" aria-label={`Sketch of ${name}`}>
-        <SketchDrawing inputs={inputs} seed={seed} detail="full" />
+    <View style={[styles.card, styles.paper, { backgroundColor: ds.c.paper }]}>
+      <View style={styles.drink}>
+        <View style={styles.sketch} role="img" aria-label={`Sketch of ${name}`}>
+          <SketchDrawing inputs={inputs} seed={seed} detail="full" />
+        </View>
+        <View style={styles.flex}>
+          <Title color={ds.c.sketchInk} numberOfLines={2}>
+            {name}
+          </Title>
+          {what ? <Body color={ds.c.sketchInk}>{what.charAt(0).toUpperCase() + what.slice(1)}</Body> : <Caption color={ds.c.sketchInk}>Draws itself as you write the spec.</Caption>}
+        </View>
       </View>
-      <View style={styles.flex}>
-        <Title color={ds.c.sketchInk} numberOfLines={2}>
-          {name}
-        </Title>
-        {what ? <Body color={ds.c.sketchInk}>{what.charAt(0).toUpperCase() + what.slice(1)}</Body> : <Caption color={ds.c.sketchInk}>Draws itself as you write the spec.</Caption>}
-      </View>
+      {/* On paper: the light scheme's ink, so the picked swatch's ring shows. */}
+      <BackbarTheme scheme="light">
+        <View style={[styles.colour, { borderTopColor: withAlpha(ds.c.sketchInk, 0.16) }]}>
+          <Eyebrow>Colour</Eyebrow>
+          <SketchTintPicker inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} frame={false} />
+        </View>
+      </BackbarTheme>
     </View>
   );
 }
@@ -156,7 +170,9 @@ export function DeskCost({ lines, pricing, priceMinor, onPrice }: { lines: DeskC
 }
 
 const styles = StyleSheet.create({
-  drink: { flexDirection: 'row', alignItems: 'center', gap: space.lg, padding: space.lg, borderRadius: radius.card + 6 },
+  paper: { padding: space.lg, borderRadius: radius.card + 6 },
+  drink: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  colour: { gap: space.xs, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
   sketch: { width: 130, height: 160 },
   flex: { flex: 1 },
   card: { gap: space.sm },

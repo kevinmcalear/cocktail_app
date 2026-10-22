@@ -37,13 +37,15 @@ export interface PaperBandProps {
    */
   tag?: string;
   note?: string;
+  /** Under the drawing, before the tag: a control for it (the drink's Colour). */
+  action?: ReactNode;
 }
 
 /**
  * The paper band at the top of every add wizard: back, progress, and a
  * drawing of the thing being added that redraws as it's filled in.
  */
-export function PaperBand({ progress, first, backTo, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go' }: PaperBandProps) {
+export function PaperBand({ progress, first, backTo, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go', action }: PaperBandProps) {
   const ds = useDs();
   const ink = ds.c.sketchInk;
   const reduceMotion = useReducedMotion();
@@ -111,6 +113,7 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
             </Layer>
           </Animated.View>
           <View style={styles.foot}>
+            {action}
             {tag ? <Tag label={tag} tone="paper" /> : null}
             <Caption color={ink} style={styles.mono}>
               {note}

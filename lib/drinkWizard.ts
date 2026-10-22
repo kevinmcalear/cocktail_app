@@ -77,6 +77,8 @@ export interface WizardDraft {
   iceBuild?: IceLayer<WizardPick>[] | null;
   /** Ice suggestions the maker said No thanks to (lib/iceBuild.ts iceTip ids). */
   iceTipsOff?: string[];
+  /** The drawing's watercolour picked as it's made (a SKETCH_TINTS hex), or Auto (unset): saved as items.sketch_liquid. */
+  tint?: string | null;
   /** The finish: garnishes and what goes on top (3 drops mint oil, an absinthe rinse), saved as spec lines after the ingredients. */
   garnishes: WizardLine[];
   /** Your own profile ('me'), someone else's, or 'nobody'. Not chosen yet (null) means you, when you have a profile. */
@@ -452,6 +454,7 @@ export function sketchLook(d: WizardDraft, barVariants: readonly string[] = [], 
     barVariants,
     barIce,
     build: d.iceBuild?.length ? d.iceBuild.map((l) => ({ name: l.ice.name, n: l.n, to: l.to })) : null,
+    tint: d.tint ?? null,
   };
 }
 
