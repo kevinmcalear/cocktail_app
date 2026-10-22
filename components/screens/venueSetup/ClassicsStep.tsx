@@ -17,8 +17,9 @@ const SHOWN = 6;
 
 /**
  * "What are you pouring now?" (What next, last step): bring in the menu
- * that's on now (Bring in reads it while setup carries on), or start from 20
- * classics as the venue's own copies, unticking any it doesn't make.
+ * that's on now (Bring in reads it while setup carries on), or start from the
+ * starter classics (lib/whatNext.ts) as the venue's own copies, unticking any
+ * it doesn't make.
  */
 export function ClassicsStep({
   barId,
@@ -65,7 +66,7 @@ export function ClassicsStep({
         onSkip={onSkip}
       />
     ) : (
-      <SetupFooter label="Next" onPress={picked ? onDone : onSkip} skipLabel="Skip" onSkip={onSkip} />
+      <SetupFooter label="Next" onPress={onDone} skipLabel="Skip" onSkip={onSkip} />
     );
 
   return (

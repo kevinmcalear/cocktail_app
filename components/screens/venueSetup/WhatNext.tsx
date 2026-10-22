@@ -10,8 +10,9 @@ import { useItemLocations } from '@/hooks/useBackBar';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useVenueClassicCopies } from '@/hooks/useClassics';
+import { useDrinkLists } from '@/hooks/useDiscover';
 import type { ReadFile } from '@/lib/readAnything';
-import { makersLine, nextStep, setupLine, STEP_LABEL, type WhatNextStep } from '@/lib/whatNext';
+import { makersLine, nextStep, setupLine, starterClassics, STEP_LABEL, type WhatNextStep } from '@/lib/whatNext';
 
 import { ClassicsStep } from './ClassicsStep';
 import { DoneStep } from './DoneStep';
@@ -48,8 +49,13 @@ export function WhatNext(props: Props) {
   // Done or skipped here.
   const [passed, setPassed] = useState<WhatNextStep[]>([]);
   const glasses = useBarGlassware(barId).data ?? [];
-  const bottles = (useItemLocations(barId).data ?? []).flatMap((l) => (l.item ? [l.item] : []));
-  const copies = useVenueClassicCopies(barId).data ?? [];
+  // An item can sit in more than one spot: each bottle once.
+  const bottles = [...new Map((useItemLocations(barId).data ?? []).flatMap((l) => (l.item ? [[l.item.id, l.item] as const] : []))).values()];
+  // The starter classics the venue has a copy of (a house riff of a Negroni counts too).
+  const starters = starterClassics(useDrinkLists().data ?? []);
+  const had = new Set(useVenueClassicCopies(barId).data ?? []);
+  const copies = starters.filter((c) => had.has(c.id));
+  const offered = starters.length - copies.length;
   const invites = useBarInvites(barId).data ?? [];
   const filled: WhatNextStep[] = [...passed, ...(glasses.length ? (['glasses'] as const) : []), ...(copies.length ? (['menu'] as const) : [])];
   const next = nextStep(filled);
@@ -76,7 +82,7 @@ export function WhatNext(props: Props) {
     glasses: { title: 'Your glasses', line: (glasses.length && makersLine(glasses)) || 'What you pour into', done: glasses.length ? String(glasses.length) : null },
     menu: {
       title: 'Your menu',
-      line: copies.length ? 'In your Library' : waitingFiles ? 'Being read, ready to check soon' : 'What’s on now, or 20 classics',
+      line: copies.length ? 'In your Library' : waitingFiles ? 'Being read, ready to check soon' : offered ? `What’s on now, or ${offered} classics` : 'What’s on now',
       done: copies.length ? `${copies.length} ${copies.length === 1 ? 'classic' : 'classics'}` : null,
     },
   };

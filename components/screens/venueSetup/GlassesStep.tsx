@@ -19,13 +19,14 @@ import { StepChrome } from './WhatNextParts';
 // The shapes a bar mostly looks for first; the rest wait behind More.
 const FIRST_SHAPES: SketchGlass[] = ['coupe', 'nick', 'martini', 'rocks', 'highball'];
 const MORE_SHAPES: SketchGlass[] = ['collins', 'flute', 'fizz', 'spritz', 'snifter', 'julep', 'tiki', 'mug'];
-// The search's most. A shape with more than this asks for a maker.
+// The search's most. ponytail: the maker chips come from these, so a shape with more
+// than this misses the makers late in the alphabet; a makers-per-shape read is the upgrade.
 const SHAPE_LIMIT = 100;
 
 const every = (g: SketchGlass) => `Every ${g === 'nick' ? GLASS_TYPE_LABEL[g] : GLASS_TYPE_LABEL[g].toLowerCase()}`;
 
 /** A maker's glass with a + to put it on the shelf, or a check to take it off. */
-function ShelfRow({ model, sub, on, first, onToggle }: { model: GlassModel; sub: string; on: boolean; first: boolean; onToggle: () => void }) {
+function ShelfRow({ model, sub, on, first, busy, onToggle }: { model: GlassModel; sub: string; on: boolean; first: boolean; busy: boolean; onToggle: () => void }) {
   const ds = useDs();
   const size = glassModelSize(model);
   return (
@@ -41,6 +42,8 @@ function ShelfRow({ model, sub, on, first, onToggle }: { model: GlassModel; sub:
       <PressableScale
         role="button"
         accessibilityLabel={on ? `${model.name} is on your shelf. Remove` : `Add ${model.name}`}
+        aria-disabled={busy}
+        disabled={busy}
         onPress={onToggle}
         style={[styles.toggle, on ? { backgroundColor: ds.accentFill.fill } : { borderColor: ds.c.lineStrong, borderWidth: 1 }]}
       >
@@ -64,27 +67,34 @@ export function GlassesStep({ barId, venueName, onNext, onSkip, onBack }: { barI
   const [more, setMore] = useState(false);
   const shape = view === 'search' || view === 'describe' ? null : view;
   const search = useDeferredValue(shape ? (maker ?? '') : term);
-  const { data: pageId, isLoading: pageLoading } = useBarPageId(barId);
+  const { data: pageId, isLoading: pageLoading, error: pageError } = useBarPageId(barId);
   const { data: glasses = [] } = useBarGlassware(barId);
   const found = useGlassModelSearch(search, shape, { enabled: view !== 'describe', limit: shape ? SHAPE_LIMIT : undefined });
   const all = useGlassModelSearch('', shape, { enabled: !!shape && !!maker, limit: SHAPE_LIMIT });
   const save = useSaveBarGlass(barId, pageId);
   const remove = useDeleteBarGlass(barId);
+  // One change at a time: the shelf (and which glass is main) is read from the list, which refreshes after each.
+  const busy = save.isPending || remove.isPending;
   const shelf = new Map(glasses.flatMap((g) => (g.model_id ? [[g.model_id, g.id] as const] : [])));
   const toggle = (m: GlassModel) => {
     const had = shelf.get(m.id);
     if (had) remove.mutate(had);
     else save.mutate(glassFromModel(m, !glasses.some((g) => g.glass === m.glass && g.is_default)));
   };
-  const models = found.data ?? [];
+  // A maker's name is searched like any words, so keep only that maker's glasses.
+  const models = (found.data ?? []).filter((m) => !shape || !maker || m.maker?.display_name === maker);
   const makers = [...new Set((maker ? all.data : models)?.map((m) => m.maker?.display_name).filter((n): n is string => !!n) ?? [])];
-  const failure = save.error || remove.error ? 'Couldn’t change your shelf. Check your connection and try again.' : null;
+  const failure = pageError
+    ? 'Couldn’t load your glasses. Check your connection and try again.'
+    : save.error || remove.error
+      ? 'Couldn’t change your shelf. Check your connection and try again.'
+      : null;
   const back = () => {
     setMaker(null);
     setView('search');
   };
 
-  if (!pageLoading && !pageId) {
+  if (!pageLoading && !pageId && !pageError) {
     return (
       <StepChrome title="Which glasses do you pour into?" step="glasses" onBack={onBack}>
         <SetupPage footer={<SetupFooter label="Next" onPress={onSkip} />}>
@@ -123,6 +133,7 @@ export function GlassesStep({ barId, venueName, onNext, onSkip, onBack }: { barI
               model={m}
               first={i === 0}
               on={shelf.has(m.id)}
+              busy={busy}
               sub={by === 'range' ? [GLASS_TYPE_LABEL[m.glass], glassModelMaterial(m)?.toLowerCase()].filter(Boolean).join(' · ') : (m.series ?? GLASS_TYPE_LABEL[m.glass])}
               onToggle={() => toggle(m)}
             />
@@ -147,7 +158,7 @@ export function GlassesStep({ barId, venueName, onNext, onSkip, onBack }: { barI
           {error}
           {list('maker')}
           {found.isFetching && !models.length ? <Caption tone="muted">Loading…</Caption> : null}
-          {!maker && models.length >= SHAPE_LIMIT ? <Caption tone="muted">{`The first ${SHAPE_LIMIT}. Pick a maker to see all of theirs.`}</Caption> : null}
+          {!maker && models.length >= SHAPE_LIMIT ? <Caption tone="muted">{`The first ${SHAPE_LIMIT}. Search a maker or a range to find the rest.`}</Caption> : null}
           <Button label="Not listed? Describe it" variant="ghost" onPress={() => setView('describe')} style={styles.start} />
         </SetupPage>
       </StepChrome>
