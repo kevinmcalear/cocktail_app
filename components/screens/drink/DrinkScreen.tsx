@@ -46,7 +46,10 @@ export interface DrinkScreenProps {
   item: DatabaseItem;
   inStudyPile: boolean;
   onToggleStudyPile: () => void;
+  /** The drink's own people (its venue's team, its creator): Edit, the spec's pencils and Colour. */
   canEdit: boolean;
+  /** A catalog admin on someone else's drink: a visitor's page with one Fix as admin in More. */
+  adminFix?: boolean;
   onEdit: () => void;
   /** Shown as a modal. An iOS page sheet starts below the status bar, but the insets still count it. */
   sheet?: boolean;
@@ -76,7 +79,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
 
 export { DrinkLoading } from './DrinkLoading';
 
-function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, sheet, pane, openBatch, preview }: DrinkScreenProps) {
+function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, sheet, pane, openBatch, preview }: DrinkScreenProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -175,7 +178,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, onEdit, shee
   };
   const sections = useDrinkSections(bodyProps);
   const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} onColour={canEdit && !preview ? () => setColourOpen(true) : undefined} />;
-  const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />;
+  const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix && !preview} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />;
   const heroScheme = glassOver(pictures[0]);
 
   return (

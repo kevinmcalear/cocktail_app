@@ -14,7 +14,8 @@ import type { Allergen } from './allergens';
 import { asLike, keepFor, nameParts, partsFor, prepFacts, slotIngredient, splitName } from './techniques/template';
 import type { Technique } from './techniques/types';
 
-export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other';
+/** 'batch' is a drink's lines in a bottle (lib/batchLines), made by dropping lines together, never picked here. */
+export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other' | 'batch';
 
 export interface PrepDraftLine {
   key: string;
@@ -287,6 +288,7 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
         s('Strain through a fine cloth, bottle and keep cold.'),
       ], 3 * DAY, fridge, 90, ['Blend', 'Strain']);
     case 'other':
+    case 'batch':
       return draft([flavour ? line(flavour, 1, 'g') : slotLine('Main ingredient', 'main ingredient', 1, 'g'), ...extras], 100, [], null, fridge, null, []);
   }
 }
@@ -309,6 +311,8 @@ export function prepYield(d: PrepDraft): number | null {
     if (amount === null || l.removed) continue;
     ml += amount * (l.yieldPer ?? (l.unit === 'ml' ? 1 : 0));
   }
+  // A batch fills its bottle exactly, so 60 ml of it costs what the drink's own pours do.
+  if (ml > 0 && d.kind === 'batch') return Math.round(ml);
   return ml > 0 ? Math.round(ml / 10) * 10 : null;
 }
 

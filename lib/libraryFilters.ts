@@ -181,6 +181,29 @@ export function filterGroups(atVenue: boolean, canCost: boolean, extras = true):
   return all.map((g) => g.filter((f) => !EXTRA_FILTERS.has(f.value))).filter((g) => g.length);
 }
 
+/** The four out front on a phone, in this order (lib-filters-proposal, decided 22 Oct 2026). */
+const FRONT: Show[] = ['all', 'on-menu', 'staff', 'preps'];
+/** The rest, in the filter button's menu. */
+const MORE: { title: string; values: Show[] }[] = [
+  { title: 'Drinks', values: ['past', 'rnd', 'batched'] },
+  { title: 'Shelves', values: ['garnishes', 'bottles'] },
+  { title: 'Kind', values: ['cocktails', 'ingredients', 'beer', 'wine'] },
+  { title: 'Costs', values: ['needs-price'] },
+];
+
+/**
+ * A phone's chip row: All, On menu, Classics and Preps out front (those the
+ * venue has), every other view in the filter button's menu by section.
+ * Without a venue there's no All, so each type stays out front and there's no menu.
+ */
+export function splitFilters(groups: { value: Show; label: string }[][]) {
+  const all = groups.flat();
+  const pick = (values: Show[]) => values.flatMap((v) => all.filter((f) => f.value === v));
+  const front = pick(FRONT);
+  if (!front.some((f) => f.value === 'all')) return { front: all, more: [] };
+  return { front, more: MORE.map((s) => ({ title: s.title, filters: pick(s.values) })).filter((s) => s.filters.length) };
+}
+
 /** "Stirred · Coupe", "Stirred · Martini · Martini flight", "Beer · Pint": a tile's second line. */
 export function tileLine(...parts: (string | null | undefined)[]): string | null {
   const shown = parts.filter((p): p is string => !!p && !!p.trim());

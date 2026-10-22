@@ -1,8 +1,8 @@
 import { Fragment, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { useDs } from '@/components/ds';
+import { space } from '@/constants/tokens';
 
 /**
  * A row of filters. On a phone it's one line that scrolls sideways, edge to
@@ -39,36 +39,9 @@ export function FilterRow({ label, gutter, whole, groups }: { label: string; gut
   );
 }
 
-/** One filter chip: its name and, in mono, how many. */
-export function Filter({ label, count, selected, onPress }: { label: string; count?: number; selected: boolean; onPress: () => void }) {
-  const ds = useDs();
-  const ink = selected ? ds.accentFill.text : ds.c.ink;
-  return (
-    <PressableScale
-      role="radio"
-      aria-checked={selected}
-      accessibilityLabel={count == null ? label : `${label}, ${count}`}
-      onPress={onPress}
-      style={[styles.filter, selected ? { backgroundColor: ds.accentFill.fill, borderColor: ds.accentFill.fill } : { borderColor: ds.c.lineStrong }]}
-    >
-      <Body color={ink} style={selected ? styles.picked : undefined}>
-        {label}
-      </Body>
-      {count == null ? null : (
-        <Caption color={selected ? ds.accentFill.text : ds.c.muted} style={styles.count}>
-          {count}
-        </Caption>
-      )}
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
   filters: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   wrap: { flexWrap: 'wrap' },
   divider: { width: StyleSheet.hairlineWidth, height: 24, marginHorizontal: space.xs },
   gap: { width: 0, height: 0 },
-  filter: { minHeight: 38, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  picked: { fontFamily: fontFamilies.bodySemiBold },
-  count: { fontFamily: fontFamilies.mono },
 });

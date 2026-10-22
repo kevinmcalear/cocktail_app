@@ -41,11 +41,13 @@ function useColumnRightPad(width: ColumnWidth): number {
  * A subtitle is only for something the page doesn't already say: "2 on now",
  * not the venue's name, which the sidebar and the chip show.
  */
-export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', crumbs, above, display }: {
+export function PageHeader({ title, subtitle, action, tools, onBack, backLabel = 'Back', backText, actionOnTop, width = 'text', crumbs, above, display }: {
   title: string;
   width?: ColumnWidth;
   subtitle?: string | null;
   action?: ReactNode;
+  /** Round buttons in a phone's top row, before New (Library's filter button). */
+  tools?: ReactNode;
   /** Set on pages opened from another page; phones get a back button instead of the venue row. */
   onBack?: () => void;
   backLabel?: string;
@@ -85,7 +87,7 @@ export function PageHeader({ title, subtitle, action, onBack, backLabel = 'Back'
       ) : (
         // ScreenHeader brings its own gutter, and runs to the page's right edge.
         <View style={{ marginLeft: -gutter, marginRight: -rightPad }}>
-          <ScreenHeader title={inLogoRow ? title : undefined} />
+          <ScreenHeader title={inLogoRow ? title : undefined} actions={tools} />
         </View>
       )}
       {inLogoRow && !above && !subtitle && !showAction ? null : (

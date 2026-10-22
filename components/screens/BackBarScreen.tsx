@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackBarPlan } from '@/components/backbar/BackBarPlan';
 import { AddZone, ZoneEditor } from '@/components/backbar/PlanEditor';
+import { useBottleToast } from '@/components/backbar/useBottleToast';
 import { WaitingForSpot } from '@/components/backbar/WaitingForSpot';
 import { ZoneKinds } from '@/components/backbar/ZoneKinds';
 import { ZoneInspector } from '@/components/backbar/ZoneInspector';
@@ -50,6 +51,8 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
   const locations = locationsQuery.data ?? [];
   const { updateZone } = useZoneMutations(barId);
   const { placeItem: place, updateLocation } = useLocationMutations(barId);
+  // Here, not in the sheet or the zone, so Undo still works after either goes.
+  const showBottleDone = useBottleToast(barId);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -160,6 +163,8 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
         onOpenLocation={setOpenLocationId}
         onMove={startMove}
         canPhoto={canDraw}
+        canEditDrinks={canDraw}
+        onBottleDone={showBottleDone}
       />
     ) : null;
     body = wide ? (

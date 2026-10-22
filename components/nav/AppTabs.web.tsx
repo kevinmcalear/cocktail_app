@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useTrackTab } from '@/hooks/useSearchFrom';
 
 import { VenueBrandProvider } from './VenueBrandProvider';
 import { WebTabBar } from './WebTabBar';
@@ -11,6 +12,8 @@ import { WebTabBar } from './WebTabBar';
  */
 export function AppTabs() {
   const isWideWeb = useIsWideWeb();
+  // The search starts on the tab it was opened from (hooks/useSearchFrom.ts).
+  useTrackTab();
   return (
     <VenueBrandProvider>
       <Tabs tabBar={isWideWeb ? () => null : (props) => <WebTabBar {...props} />} screenOptions={{ headerShown: false }}>
