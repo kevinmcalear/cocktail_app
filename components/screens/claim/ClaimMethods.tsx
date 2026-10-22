@@ -1,46 +1,85 @@
 import type { ReactNode } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
+import { Button, Caption, DsText, Field, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { Profile } from '@/hooks/useProfiles';
-import { BAR_CLAIM_METHODS, METHOD_COPY, OUR_INSTAGRAM, REVIEW_REASON, claimPlace, emailCheck, emailUnavailable, pageInstagram, spacedCode, type BarClaimMethod } from '@/lib/claimVerification';
+import {
+  BAR_CLAIM_METHODS,
+  METHOD_COPY,
+  OUR_INSTAGRAM,
+  REVIEW_REASON,
+  claimPlace,
+  emailCheck,
+  emailUnavailable,
+  pageInstagram,
+  spacedCode,
+  typedHandle,
+  typedPhone,
+  typedWebsite,
+  type BarClaimMethod,
+  type TypedDetails,
+} from '@/lib/claimVerification';
 import { instagramUrl } from '@/lib/profiles';
 
 export interface MethodDetail {
+  /** Ready to send: the page has what this way needs, or a good one was typed. */
   available: boolean;
   detail: string;
   instant: boolean;
+  /** What the page is missing for this way, so the card asks for it (canvas make-venue-claim, states 2 to 4). */
+  ask: { field: keyof TypedDetails; label: string; placeholder: string; hint: string; keyboard: 'default' | 'url' | 'phone-pad' } | null;
 }
 
-/** Each way of checking, with whether it works for this page and this person, in words. */
-export function methodDetails(profile: Profile, email: string | null | undefined): Record<BarClaimMethod, MethodDetail> {
-  const check = emailCheck(email, profile.website, profile.is_closed);
+/**
+ * Each way of checking, with whether it works for this page and this person,
+ * in words. Where the page has no Instagram, website or phone, the way asks
+ * for it; anything typed is checked by a person, never instant (20261031200000).
+ */
+export function methodDetails(profile: Profile, email: string | null | undefined, typed: TypedDetails = {}, pagePhone: string | null = null): Record<BarClaimMethod, MethodDetail> {
   const place = claimPlace(profile.kind);
-  const handle = pageInstagram(profile);
+  const name = profile.display_name;
+  const pageHandle = pageInstagram(profile);
+  const handle = pageHandle ?? typedHandle(typed.instagram);
+  const site = profile.website || typedWebsite(typed.website);
+  const check = emailCheck(email, site, profile.is_closed);
+  const phone = pagePhone || typedPhone(typed.phone);
+  const to = OUR_INSTAGRAM ? `@${OUR_INSTAGRAM}` : 'us';
   return {
     email: {
       available: check.ok !== false,
-      detail:
-        check.ok === 'instant'
-          ? `You signed in with an address at ${check.domain}, the ${place}’s own website.`
-          : check.ok === 'review'
-            ? `You signed in at ${check.domain}. A moderator checks it, because ${REVIEW_REASON[check.reason]}.`
-            : emailUnavailable(check),
-      instant: check.ok === 'instant',
+      detail: !site
+        ? `Add the ${place}’s website to use this.`
+        : check.ok === false
+          ? emailUnavailable(check)
+          : !profile.website
+            ? `Your sign-in email is at ${check.domain}. A person checks the site is the ${place}’s, because you added it.`
+            : check.ok === 'instant'
+              ? `You signed in with an address at ${check.domain}, the ${place}’s own website.`
+              : `You signed in at ${check.domain}. A moderator checks it, because ${REVIEW_REASON[check.reason]}.`,
+      instant: check.ok === 'instant' && !!profile.website,
+      ask: profile.website ? null : { field: 'website', label: `The ${place}’s website`, placeholder: 'harbourroom.com', hint: 'Only a website already on the page is instant.', keyboard: 'url' },
     },
     instagram: {
       available: !!handle,
-      detail: handle
-        ? `Send this code to ${OUR_INSTAGRAM ? `@${OUR_INSTAGRAM}` : 'us'} in a message from @${handle}. A person checks, usually within a day.`
-        : 'This page has no Instagram to check.',
+      detail: !handle
+        ? `Add the ${place}’s Instagram to use this.`
+        : pageHandle
+          ? `Send this code to ${to} in a message from @${handle}. A person checks, usually within a day.`
+          : `Send this code to ${to} in a message from @${handle}. A person checks it’s ${name}’s own account, usually within a day.`,
       instant: false,
+      ask: pageHandle ? null : { field: 'instagram', label: `The ${place}’s Instagram`, placeholder: '@harbourroom', hint: 'Its own account, not a personal one.', keyboard: 'default' },
     },
     phone: {
-      available: true,
-      detail: `We ring the number on ${profile.display_name}’s page, not one you give us, and ask for a six-digit code.`,
+      available: !!phone,
+      detail: pagePhone
+        ? `We ring the number on ${name}’s page, not one you give us, and ask for a six-digit code.`
+        : phone
+          ? `A person checks this is the ${place}’s listed number, then rings it and asks for a six-digit code.`
+          : `Add the ${place}’s phone number to use this.`,
       instant: false,
+      ask: pagePhone ? null : { field: 'phone', label: `The ${place}’s phone number`, placeholder: '(555) 010-8823', hint: `The ${place}’s own line, not your mobile.`, keyboard: 'phone-pad' },
     },
   };
 }
@@ -49,7 +88,7 @@ const ICONS: Record<BarClaimMethod, IconName> = { email: 'envelope', instagram: 
 
 /** How fast each way is, as the pill on its card. */
 function speed(method: BarClaimMethod, d: MethodDetail): string | null {
-  if (method === 'email') return d.instant ? 'Instant' : null;
+  if (method === 'email') return d.instant ? 'Instant' : 'About a day';
   if (method === 'instagram') return 'About a day';
   return 'Slowest';
 }
@@ -64,17 +103,23 @@ export function ClaimMethods({
   details,
   method,
   code,
+  typed,
   disabled,
   onPick,
+  onType,
 }: {
   profile: Profile;
   details: Record<BarClaimMethod, MethodDetail>;
   method: BarClaimMethod;
   code: string;
+  /** What they typed where the page has nothing. */
+  typed: TypedDetails;
   disabled?: boolean;
   onPick: (m: BarClaimMethod) => void;
+  onType: (typed: TypedDetails) => void;
 }) {
-  const handle = pageInstagram(profile);
+  const pageHandle = pageInstagram(profile);
+  const handle = pageHandle ?? typedHandle(typed.instagram);
   // ponytail: copying needs expo-clipboard on phones (a store build); the web copies, phones select the digits.
   const canCopy = Platform.OS === 'web' && typeof navigator !== 'undefined' && !!navigator.clipboard;
   return (
@@ -86,14 +131,33 @@ export function ClaimMethods({
           const pill = speed(m, d);
           const label = m === 'phone' ? `A call to the ${claimPlace(profile.kind)}` : METHOD_COPY[m].label;
           return (
-            <MethodCard key={m} icon={ICONS[m]} label={label} pill={pill} detail={d.detail} on={on} available={d.available} disabled={disabled} onPress={() => onPick(m)}>
-              {on && m !== 'email' ? (
+            <MethodCard key={m} icon={ICONS[m]} label={label} pill={pill} detail={d.detail} on={on} available={d.available || !!d.ask} disabled={disabled} onPress={() => onPick(m)}>
+              {on && d.ask ? (
+                <View style={styles.ask}>
+                  <Field
+                    label={d.ask.label}
+                    value={typed[d.ask.field] ?? ''}
+                    onChangeText={(t) => onType({ ...typed, [d.ask!.field]: t })}
+                    placeholder={d.ask.placeholder}
+                    hint={d.ask.hint}
+                    keyboardType={d.ask.keyboard}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="off"
+                    maxLength={300}
+                    editable={!disabled}
+                  />
+                </View>
+              ) : null}
+              {on && m !== 'email' && d.available ? (
                 <ClaimCode
                   code={code}
                   note={
-                    m === 'instagram'
-                      ? `Send it from the bar’s own account, not a personal one. Whoever runs @${handle} can send it. Nothing to edit or take down after.`
-                      : 'Whoever answers reads us this code, so leave it with the team.'
+                    m === 'phone'
+                      ? 'Whoever answers reads us this code, so leave it with the team.'
+                      : pageHandle
+                        ? `Send it from the bar’s own account, not a personal one. Whoever runs @${handle} can send it. Nothing to edit or take down after.`
+                        : `Send it from @${handle}. Nothing to edit or take down after.`
                   }
                 />
               ) : null}
@@ -185,6 +249,8 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   strong: { fontFamily: fontFamilies.bodySemiBold },
   medium: { fontFamily: fontFamilies.bodyMedium },
+  // What the page is missing, typed under the way that needs it, lined up with the code.
+  ask: { marginLeft: space.lg + 22 + space.md, marginRight: space.lg, marginBottom: space.lg },
   // The code in mono, left under the way it goes with (canvas make-venue-claim).
   code: { marginLeft: space.lg + 22 + space.md, marginRight: space.lg, marginBottom: space.lg, padding: space.md, gap: space.sm, borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.control },
   eyebrow: { letterSpacing: 1.2, fontFamily: fontFamilies.bodyMedium },

@@ -73,3 +73,12 @@ test('turning one down sends the reason', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Turn down' }));
   expect(onReview).toHaveBeenCalledWith({ claimId: 'c1', approve: false, reason: 'That address is the hotel group’s.' });
 });
+
+test('a handle the claimant typed shows as theirs, not the page’s, and is checked first', async () => {
+  const page = { ...claim({}).profile!, instagram: null, website: null };
+  const typed = claim({ profile: page, evidence: { instagram: 'harbourroom', instagram_dm: true, typed: { instagram: 'harbourroom' } } });
+  await renderWithTamagui(<BarClaimCard claim={typed} busy={false} onOpen={jest.fn()} onReview={onReview} />);
+  expect(screen.getAllByText('None')).toHaveLength(2);
+  expect(screen.getByText('Instagram they typed')).toBeTruthy();
+  expect(screen.getByText(/They typed @harbourroom, so first check it’s the bar’s own account/)).toBeTruthy();
+});

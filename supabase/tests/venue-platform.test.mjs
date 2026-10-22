@@ -664,7 +664,7 @@ describe('profiles and credit', () => {
     // A bar that isn't on the app as a profile yet.
     const barFive = (await serviceInsert('bars', { name: `Fifth Bar ${run}` })).id;
     await serviceInsert('user_bars', { user_id: users.admin.id, bar_id: barFive, role_level: 40 });
-    const claimBar = (who, profileId, barId) => who.client.rpc('start_bar_claim', { p_profile_id: profileId, p_method: 'phone', p_bar_id: barId });
+    const claimBar = (who, profileId, barId) => who.client.rpc('start_bar_claim', { p_profile_id: profileId, p_method: 'phone', p_bar_id: barId, p_phone: '(555) 010-4417' });
     const own = await claimBar(users.admin, venue, barFive);
     assert.ifError(own.error);
     assert.equal(own.data.status, 'pending');

@@ -28,9 +28,40 @@ export interface ClaimEvidence {
   review_reason?: ReviewReason | null;
   /** An Instagram claim checked by a message from the bar's account, not its bio (20261014900000). */
   instagram_dm?: boolean;
+  /** What the claimant typed because the page had none (20261031200000). A person checks it. */
+  typed?: TypedDetails;
 }
 
-export type ReviewReason = 'shared_site' | 'page_on_larger_site' | 'closed_bar';
+export type ReviewReason = 'shared_site' | 'page_on_larger_site' | 'closed_bar' | 'site_typed';
+
+/** The bar's Instagram, website or phone, typed into a claim when its page has none. */
+export interface TypedDetails {
+  instagram?: string;
+  website?: string;
+  phone?: string;
+}
+
+const TYPED_HANDLE = /^[a-z0-9._]{1,30}$/;
+
+/** '@Harbour', ' harbour ' or 'instagram.com/harbour' -> 'harbour'; null when it isn't a handle. Same as start_bar_claim. */
+export function typedHandle(typed: string | null | undefined): string | null {
+  const t = typed?.trim() ?? '';
+  const handle = (t.match(INSTAGRAM)?.[1] ?? t.replace(/^@+/, '')).toLowerCase();
+  return TYPED_HANDLE.test(handle) ? handle : null;
+}
+
+/** 'harbourroom.com' -> 'https://harbourroom.com'; null when it isn't a website. Same as start_bar_claim. */
+export function typedWebsite(typed: string | null | undefined): string | null {
+  const t = typed?.trim() ?? '';
+  if (t.length > 300 || !/^(https?:\/\/)?[^\s/]+\.[^\s]+$/i.test(t)) return null;
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
+
+/** A phone number the way profiles_phone_shape takes it, or null. */
+export function typedPhone(typed: string | null | undefined): string | null {
+  const t = typed?.trim() ?? '';
+  return /^\+?[0-9 ().-]{5,29}$/.test(t) && t.replace(/\D/g, '').length >= 6 ? t : null;
+}
 
 /** Hosts where anyone can have a page. Same list as private.is_shared_host. */
 export const SHARED_HOSTS = [
@@ -91,6 +122,7 @@ export const REVIEW_REASON: Record<ReviewReason, string> = {
   shared_site: 'the page’s website is on a shared host, so an address there doesn’t prove much',
   page_on_larger_site: 'the page’s website is a page on a bigger site, like a hotel group’s',
   closed_bar: 'the bar is marked closed, and an old domain can change hands',
+  site_typed: 'the website was typed in with the claim, not already on the page',
 };
 
 /** The method picker's words. */

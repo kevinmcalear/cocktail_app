@@ -68,6 +68,8 @@ before(async () => {
   await barPage('Ring', {});
   await barPage('Linked', { instagram: `linked${run}` });
   for (const n of [1, 2, 3, 4]) await barPage(`Busy${n}`, { instagram: `busy${n}${run}` });
+  users.typer = await makeUser('typer', `ana-${run}@harbour${run}.test`);
+  for (const key of ['BareGram', 'BareSite', 'BareRing']) await barPage(key, {});
 });
 
 after(async () => {
@@ -140,7 +142,7 @@ describe('bar claim verification', () => {
   });
 
   test('one pending claim per bar per person', async () => {
-    const { error } = await claim('staff', 'Linked', 'phone');
+    const { error } = await claim('staff', 'Linked', 'phone', { p_phone: '(555) 010-4417' });
     assert.match(error?.message ?? '', /already have a claim waiting/);
   });
 
@@ -171,7 +173,7 @@ describe('bar claim verification', () => {
   });
 
   test('a phone claim is approved only with the code the bar read out', async () => {
-    const { data, error } = await claim('caller', 'Ring', 'phone', { p_note: 'Call after 4pm' });
+    const { data, error } = await claim('caller', 'Ring', 'phone', { p_note: 'Call after 4pm', p_phone: '(555) 010-4417' });
     assert.ifError(error);
     assert.match(data.code, /^\d{6}$/);
     const without = await users.moderator.client.rpc('approve_profile_claim', { p_claim_id: data.id });
@@ -201,7 +203,7 @@ describe('bar claim verification', () => {
   });
 
   test('approving one claim turns down the others on that page, saying why', async () => {
-    const other = await claim('stranger', 'Linked', 'phone');
+    const other = await claim('stranger', 'Linked', 'phone', { p_phone: '(555) 010-4417' });
     assert.ifError(other.error);
     const staffClaim = (await db.query("SELECT id FROM public.profile_claims WHERE profile_id = $1 AND user_id = $2", [pages.Linked, users.staff.id])).rows[0].id;
     const { error } = await users.moderator.client.rpc('approve_profile_claim', { p_claim_id: staffClaim });
@@ -243,5 +245,66 @@ describe('bar claim verification', () => {
     assert.ok(direct.error, 'no direct person claim (20261030100000)');
     const { error } = await users.stranger.client.rpc('start_person_claim', { p_profile_id: person, p_method: 'note', p_note: 'This is me' });
     assert.ifError(error);
+  });
+});
+
+// A page with no Instagram, website or phone: the claimant types the one
+// their way needs, and a person always checks it (20261031200000).
+describe('details typed into a claim', () => {
+  const approve = (claimId, code) => users.moderator.client.rpc('approve_profile_claim', { p_claim_id: claimId, p_code: code });
+  const pageDetails = async (page) => (await db.query('SELECT instagram, website, phone, bar_id FROM public.profiles WHERE id = $1', [pages[page]])).rows[0];
+
+  test('a typed Instagram handle is cleaned up, waits for a person, and goes on the page once approved', async () => {
+    const bad = await claim('typer', 'BareGram', 'instagram', { p_instagram: 'not a handle!' });
+    assert.match(bad.error?.message ?? '', /doesn't look like an Instagram handle/);
+    const { data, error } = await claim('typer', 'BareGram', 'instagram', { p_instagram: ` @Harbour${run} ` });
+    assert.ifError(error);
+    assert.equal(data.status, 'pending');
+    assert.equal(data.evidence.instagram, `harbour${run}`);
+    assert.deepEqual(data.evidence.typed, { instagram: `harbour${run}` });
+    assert.equal((await pageDetails('BareGram')).instagram, null, 'nothing on the page before approval');
+
+    assert.ifError((await approve(data.id)).error);
+    assert.equal((await pageDetails('BareGram')).instagram, `harbour${run}`);
+  });
+
+  test('a typed website that matches the sign-in email still waits for a person', async () => {
+    const other = await claim('typer', 'BareSite', 'email', { p_website: 'someoneelse.test' });
+    assert.match(other.error?.message ?? '', /isn't at this bar's website domain/);
+    const { data, error } = await claim('typer', 'BareSite', 'email', { p_website: `harbour${run}.test` });
+    assert.ifError(error);
+    assert.equal(data.status, 'pending', 'never instant');
+    assert.equal(data.evidence.auto, false);
+    assert.equal(data.evidence.review_reason, 'site_typed');
+    assert.equal(data.evidence.typed.website, `https://harbour${run}.test`);
+    assert.equal(data.setup.website, `https://harbour${run}.test`, 'Where and when shows it');
+    assert.equal((await pageDetails('BareSite')).bar_id, null);
+
+    assert.ifError((await approve(data.id)).error);
+    const page = await pageDetails('BareSite');
+    assert.ok(page.bar_id);
+    assert.equal(page.website, `https://harbour${run}.test`);
+  });
+
+  test('a call needs a number: the page\'s, or one typed in', async () => {
+    const none = await claim('caller', 'BareRing', 'phone');
+    assert.match(none.error?.message ?? '', /no phone number to ring/);
+    const bad = await claim('caller', 'BareRing', 'phone', { p_phone: 'call me' });
+    assert.match(bad.error?.message ?? '', /phone number doesn't look right/);
+    const { data, error } = await claim('caller', 'BareRing', 'phone', { p_phone: '(555) 010-8823' });
+    assert.ifError(error);
+    assert.equal(data.status, 'pending');
+    assert.equal(data.evidence.typed.phone, '(555) 010-8823');
+    assert.equal(data.setup.phone, '(555) 010-8823');
+
+    assert.ifError((await approve(data.id, data.code)).error);
+    assert.equal((await pageDetails('BareRing')).phone, '(555) 010-8823');
+  });
+
+  test('what the page already says wins over anything typed', async () => {
+    const { data, error } = await claim('typer', 'Busy4', 'instagram', { p_instagram: 'imposter' });
+    assert.ifError(error);
+    assert.equal(data.evidence.instagram, `busy4${run}`);
+    assert.equal(data.evidence.typed, undefined);
   });
 });
