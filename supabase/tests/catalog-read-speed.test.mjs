@@ -73,7 +73,8 @@ describe('recipe ingredient embeds', () => {
   for (const [fn, role] of [['display_ingredient', 'authenticated'], ['published_ingredient', 'authenticated'], ['published_ingredient', 'anon']]) {
     test(`${fn} folds into the query for ${role}`, async () => {
       const plan = await planAs(role, embed(fn));
-      assert.doesNotMatch(plan, /Function Scan/, plan);
+      // The ingredient function itself; items_select scans my_bar_item_access once per query, on purpose.
+      assert.doesNotMatch(plan, new RegExp(`Function Scan on ${fn}`), plan);
     });
   }
 

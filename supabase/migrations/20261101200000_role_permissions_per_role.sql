@@ -250,14 +250,16 @@ BEGIN
     END IF;
     -- A role that ends on its own keeps ending for the people on it: only an
     -- Admin moves its end date or deletes it from under them.
-    IF TG_TABLE_NAME = 'venue_roles' AND TG_OP <> 'INSERT'
-       AND EXISTS (SELECT 1 FROM public.user_bars WHERE user_id = auth.uid() AND venue_role_id = OLD.id) THEN
-        IF TG_OP = 'DELETE' THEN
-            IF OLD.ends_at IS NOT NULL THEN
+    -- (Nested: venue_level_overrides has no id or ends_at to read.)
+    IF TG_TABLE_NAME = 'venue_roles' AND TG_OP <> 'INSERT' THEN
+        IF EXISTS (SELECT 1 FROM public.user_bars WHERE user_id = auth.uid() AND venue_role_id = OLD.id) THEN
+            IF TG_OP = 'DELETE' THEN
+                IF OLD.ends_at IS NOT NULL THEN
+                    RAISE EXCEPTION 'Only an Admin can change when your own role ends.';
+                END IF;
+            ELSIF NEW.ends_at IS DISTINCT FROM OLD.ends_at THEN
                 RAISE EXCEPTION 'Only an Admin can change when your own role ends.';
             END IF;
-        ELSIF NEW.ends_at IS DISTINCT FROM OLD.ends_at THEN
-            RAISE EXCEPTION 'Only an Admin can change when your own role ends.';
         END IF;
     END IF;
 
