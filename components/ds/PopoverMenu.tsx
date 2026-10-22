@@ -6,7 +6,6 @@ import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 import { Appear } from './Appear';
-import { GlassSurface } from './Glass';
 import { PressableScale } from './PressableScale';
 import { Body, Caption } from './Text';
 import { useDs } from './theme';
@@ -38,7 +37,7 @@ export interface PopoverSection {
 const WIDTH = 280;
 
 /**
- * A pull-down menu in glass, hung from the button that opened it with its
+ * A pull-down menu, hung from the button that opened it with its
  * right edge on the button's, as iOS draws a toolbar menu (lib-filters-proposal,
  * search-starts-here, 22 Oct 2026). It opens downward, or upward from a button
  * in the bottom half (the search field's place). A pick, a tap outside or
@@ -59,7 +58,6 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
       <Pressable accessibilityLabel="Close the menu" style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(ds.c.ground, 0.3) }]} onPress={onClose} />
       {/* Unseen until the button's place is known, so it never flashes in the corner. */}
       <Appear kind="fade" duration={140} style={[styles.panel, place, { left, shadowColor: ds.c.ground, maxHeight: room }, anchor.height ? null : styles.unplaced]}>
-        {/* The web's blur keeps its own thin fill, so the web gets a solid panel the rows stay readable on. */}
         <Panel>
           <ScrollView role="menu" aria-label={label} style={{ maxHeight: room }} bounces={false}>
             {sections.map((s, i) => (
@@ -81,9 +79,13 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
   );
 }
 
+/**
+ * The menu's surface: solid, raised. Glass can't frost here: the menu sits in
+ * a Modal, its own layer, so iOS's glass has nothing behind it and draws
+ * clear, and the web's blur keeps its own thin fill.
+ */
 function Panel({ children }: { children: ReactNode }) {
   const ds = useDs();
-  if (Platform.OS !== 'web') return <GlassSurface style={styles.glass}>{children}</GlassSurface>;
   return <View style={[styles.glass, styles.solid, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>{children}</View>;
 }
 
@@ -138,7 +140,7 @@ export function usePopover() {
 
 const styles = StyleSheet.create({
   panel: { position: 'absolute', width: WIDTH, shadowOffset: { width: 0, height: 18 }, shadowOpacity: Platform.OS === 'ios' ? 0.35 : 0.5, shadowRadius: 24 },
-  glass: { borderRadius: radius.card, paddingVertical: space.xs },
+  glass: { borderRadius: radius.card, paddingVertical: space.xs, overflow: 'hidden' },
   solid: { borderWidth: 1 },
   section: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: space.xs, paddingTop: space.xs },
   // Lines up with the labels, past the check's column.
