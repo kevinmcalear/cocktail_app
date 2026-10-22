@@ -17,12 +17,12 @@ const WHAT_ADMIN_DOES = [
 
 /** The role ladder's lines: the invite sheet's words, and Guest, which nobody is invited as. */
 function roleLine(level: number): string {
-  if (level === 10) return 'Your public page, as you set it in step 6';
+  if (level === 10) return 'Your public page, as you set it in step 5';
   return INVITE_ROLES.find((r) => r.level === level)?.detail ?? '';
 }
 
-/** Step 3: whoever sets the venue up is its Admin, and what that means, beside every role. */
-export function RoleStep({ name, pending, onDone }: { name: string; pending: boolean; onDone: () => void }) {
+/** Step 2: whoever sets the venue up is its Admin, and what that means, beside every role. */
+export function RoleStep({ name, pending, error, onDone }: { name: string; pending: boolean; error?: string | null; onDone: () => void }) {
   const ds = useDs();
   return (
     <SetupPage footer={<SetupFooter onPress={onDone} onSkip={onDone} />}>
@@ -53,6 +53,11 @@ export function RoleStep({ name, pending, onDone }: { name: string; pending: boo
           );
         })}
       </View>
+      {error ? (
+        <Caption tone="accent" role="alert">
+          {error}
+        </Caption>
+      ) : null}
       {pending ? (
         <View role="status" style={[styles.status, { borderColor: ds.c.lineStrong }]}>
           <IconSymbol name="lock.shield.fill" size={18} color={ds.c.muted} />

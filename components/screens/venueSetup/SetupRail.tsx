@@ -10,7 +10,8 @@ import { STEP_NAMES, VENUE_STEPS, type VenueScreen, type VenueStep } from '@/lib
 const WIDTH = 300;
 
 /**
- * Wide web: the eight steps down the left (canvas make-venue-desktop), done
+ * Wide web: the eight steps down the left (canvas make-venue-desktop, in
+ * eddie-oct22-wave1's order: proving it's yours last), done
  * ones ticked with what they settled, the current one marked. Any step can
  * be picked; nothing has to go in order.
  */
@@ -39,6 +40,8 @@ export function SetupRail({ name, logoUrl, at, done, status, onPick, onLeave }: 
                 <DsText variant="body" style={current ? styles.strong : null}>{STEP_NAMES[s]}</DsText>
                 {ticked && status[s] ? <Caption tone="muted" numberOfLines={1}>{status[s]}</Caption> : null}
               </View>
+              {/* Proving it's yours comes last (eddie-oct22-wave1). */}
+              {s === 'claim' && !ticked ? <Caption tone="muted">Last</Caption> : null}
             </PressableScale>
           );
         })}

@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
-import { CLAIM_COLUMNS, type ProfileClaim } from '@/hooks/useProfiles';
+import { CLAIM_COLUMNS, changedProfiles, type ProfileClaim } from '@/hooks/useProfiles';
 import { supabase } from '@/lib/supabase';
+import type { HeldSetup } from '@/store/useVenueSetup';
 
 /** A bar page on the Find your bar step, with what the card shows. */
 export interface ClaimableBar {
@@ -128,6 +129,55 @@ export function useCreateSetupVenue() {
       return (data as { id: string }).id;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bars'] }),
+    onError: () => {},
+  });
+}
+
+/**
+ * What setup held before the claim (store/useVenueSetup), put where it goes
+ * once the claim is sent: kept on the waiting claim (save_claim_setup), the
+ * way step 3 keeps edits while a claim waits, or straight
+ * onto the page when the claim came back approved. A detail the claim itself
+ * brought (typed into its card) wins over the held one.
+ *
+ * ponytail: a waiting claim can't keep an Instagram (save_claim_setup takes
+ * hours, phone, website and who sees the page), so a held handle reaches the
+ * page only through an Instagram claim, which brings it. An `instagram` key
+ * on save_claim_setup and hand_over_claim (a migration) is the upgrade.
+ */
+export function usePushHeldSetup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ claim, held }: { claim: ProfileClaim; held: HeldSetup }) => {
+      const { instagram, ...setup } = held;
+      const typed = claim.evidence?.typed ?? {};
+      if (typed.website) delete setup.website;
+      if (typed.phone) delete setup.phone;
+      if (claim.status === 'pending') {
+        if (!Object.keys(setup).length) return;
+        const { error } = await supabase.rpc('save_claim_setup', { p_claim_id: claim.id, p_setup: setup });
+        if (error) throw error;
+        return;
+      }
+      if (claim.status !== 'approved') return;
+      const { page_visibility, ...facts } = setup;
+      const page = { ...facts, ...(instagram ? { instagram } : {}) };
+      if (Object.keys(page).length) {
+        const { error } = await supabase.from('profiles').update(page).eq('id', claim.profile_id);
+        if (error) throw error;
+      }
+      if (page_visibility && claim.bar_id) {
+        const { error } = await supabase.from('bars').update({ page_visibility }).eq('id', claim.bar_id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_data, { claim }) => {
+      qc.invalidateQueries({ queryKey: ['profile-claims'] });
+      qc.invalidateQueries({ queryKey: ['bar-facts', claim.profile_id] });
+      qc.invalidateQueries({ queryKey: ['bar-publishing'] });
+      qc.invalidateQueries(changedProfiles({ id: claim.profile_id }));
+    },
+    // Shown inline on the claim step.
     onError: () => {},
   });
 }

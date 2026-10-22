@@ -7,9 +7,13 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useSaveClaimSetup } from '@/hooks/useBarClaims';
 import { useBarFacts, useSaveBarFacts, type BarFactsChange } from '@/hooks/useBarFacts';
-import type { ProfileClaim } from '@/hooks/useProfiles';
+import { useSaveProfileInstagram } from '@/hooks/useMyProfile';
+import { useProfile, type ProfileClaim } from '@/hooks/useProfiles';
 import { WEEK_DAYS, weekRows, type WeekDay, type WeekHours } from '@/lib/barHours';
+import { pageInstagram, typedPhone, typedWebsite } from '@/lib/claimVerification';
+import { instagramProblem, normalizeInstagram } from '@/lib/profiles';
 import { normalizeWebsite } from '@/lib/venueSetup';
+import type { HeldSetup } from '@/store/useVenueSetup';
 
 const DAY: Record<WeekDay, string> = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
 
@@ -91,42 +95,83 @@ function TextEditor({ label, initial, keyboard, onSave, onCancel }: { label: str
   );
 }
 
+/** A change to keep with the setup: checked here, since nothing else checks it until the claim goes. */
+function heldProblem(change: BarFactsChange): string | null {
+  if (change.phone && !typedPhone(change.phone)) return 'That phone number doesn’t look right.';
+  if (change.website && !typedWebsite(change.website)) return 'That website doesn’t look right.';
+  return null;
+}
+
+interface Props {
+  profileId: string | null;
+  name: string;
+  claim: ProfileClaim | null;
+  writable: boolean;
+  /** Typed before there's a claim, kept with the setup. */
+  held: HeldSetup | undefined;
+  onHold: (change: HeldSetup) => void;
+  onDone: () => void;
+}
+
 /**
- * Step 4: address, hours, phone and website, typed by the venue (b22: no
- * Google). Once the page is the venue's, edits go straight onto it; while the
- * claim waits they wait on the claim (save_claim_setup) and go on at approval.
+ * Step 3: address, hours, phone, website and Instagram, typed by the venue
+ * (b22: no Google). Once the page is the venue's, edits go straight onto it;
+ * while a claim waits they wait on the claim (save_claim_setup); before
+ * there's a claim they're kept with the setup and go onto the claim when it's
+ * sent (the last step).
  */
-export function WhereWhenStep({ profileId, claim, writable, onDone }: { profileId: string | null; claim: ProfileClaim | null; writable: boolean; onDone: () => void }) {
+export function WhereWhenStep({ profileId, name, claim, writable, held: kept, onHold, onDone }: Props) {
   const ds = useDs();
   const facts = useBarFacts(profileId).data;
+  const profile = useProfile(profileId).data;
   const saveFacts = useSaveBarFacts(profileId ?? '');
   const saveSetup = useSaveClaimSetup();
+  const saveInstagram = useSaveProfileInstagram();
   const [editing, setEditing] = useState<'hours' | 'phone' | 'website' | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [ig, setIg] = useState<string | null>(null);
   const [now] = useState(() => new Date());
   const pending = !writable && claim?.status === 'pending';
-  const held = pending ? (claim?.setup ?? {}) : {};
+  const holding = !writable && !pending;
+  const held: HeldSetup = pending ? (claim?.setup ?? {}) : holding ? (kept ?? {}) : {};
   const hours = (held.hours as WeekHours | undefined) ?? facts?.hours ?? null;
   const phone = held.phone ?? facts?.phone ?? null;
   const website = held.website ?? facts?.website ?? null;
-  const canEdit = writable || pending;
-  const error = saveFacts.error ?? saveSetup.error;
+  // A waiting claim can't keep an Instagram (usePushHeldSetup), so it shows what the claim brought.
+  const instagram = ig ?? (holding ? kept?.instagram : pending ? claim?.evidence?.typed?.instagram : null) ?? (profile ? pageInstagram(profile) : null) ?? '';
+  const igProblem = instagramProblem(instagram);
+  const error = problem ?? (saveFacts.error ?? saveSetup.error ?? saveInstagram.error)?.message ?? null;
 
   const save = (change: BarFactsChange) => {
     const withZone = change.hours && !facts?.timezone ? { ...change, timezone: deviceZone() } : change;
     const done = { onSuccess: () => setEditing(null) };
+    setProblem(null);
     if (writable) saveFacts.mutate(withZone, done);
     else if (pending && claim) saveSetup.mutate({ claimId: claim.id, setup: withZone as Parameters<typeof saveSetup.mutate>[0]['setup'] }, done);
+    else {
+      const wrong = heldProblem(withZone);
+      if (wrong) return setProblem(wrong);
+      onHold(withZone as HeldSetup);
+      setEditing(null);
+    }
+  };
+  const looksRight = () => {
+    if (ig === null || pending) return onDone();
+    if (igProblem) return setProblem(igProblem);
+    if (writable && profileId) return saveInstagram.mutate({ id: profileId, raw: ig }, { onSuccess: onDone });
+    onHold({ instagram: normalizeInstagram(ig) || null });
+    onDone();
   };
   const address = facts ? [facts.address_line, facts.locality ?? facts.city].filter(Boolean).join(', ') : '';
 
   return (
-    <SetupPage footer={<SetupFooter label="Looks right" onPress={onDone} onSkip={onDone} />}>
-      {/* The four facts in one card (canvas make-venue-place). */}
+    <SetupPage footer={<SetupFooter label="Looks right" pending={saveInstagram.isPending} onPress={looksRight} skipLabel="Skip" onSkip={onDone} />}>
+      {/* The facts in one card (canvas make-venue-place, and the Instagram row from eddie-oct22-wave1). */}
       <View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
       <FactRow icon="mappin.and.ellipse" label="Address" canEdit={false} editing={false} onEdit={() => {}} editor={null}>
         <Body>{address || 'No address yet'}</Body>
       </FactRow>
-      <FactRow icon="clock" label="Hours" canEdit={canEdit} editing={editing === 'hours'} onEdit={() => setEditing('hours')} editor={<HoursEditor initial={hours ?? {}} onSave={(h) => save({ hours: h })} onCancel={() => setEditing(null)} />}>
+      <FactRow icon="clock" label="Hours" canEdit editing={editing === 'hours'} onEdit={() => setEditing('hours')} editor={<HoursEditor initial={hours ?? {}} onSave={(h) => save({ hours: h })} onCancel={() => setEditing(null)} />}>
         {hours ? (
           <View role="list">
             {weekRows(hours, now, facts?.timezone).map((r) => (
@@ -140,16 +185,31 @@ export function WhereWhenStep({ profileId, claim, writable, onDone }: { profileI
           <Body tone="muted">Not added yet</Body>
         )}
       </FactRow>
-      <FactRow icon="phone" label="Phone" canEdit={canEdit} editing={editing === 'phone'} onEdit={() => setEditing('phone')} editor={<TextEditor label="Phone" initial={phone ?? ''} keyboard="phone-pad" onSave={(v) => save({ phone: v.trim() || null })} onCancel={() => setEditing(null)} />}>
+      <FactRow icon="phone" label="Phone" canEdit editing={editing === 'phone'} onEdit={() => setEditing('phone')} editor={<TextEditor label="Phone" initial={phone ?? ''} keyboard="phone-pad" onSave={(v) => save({ phone: v.trim() || null })} onCancel={() => setEditing(null)} />}>
         <Body tone={phone ? 'ink' : 'muted'}>{phone ?? 'Not added yet'}</Body>
       </FactRow>
-      <FactRow last icon="globe" label="Website" canEdit={canEdit} editing={editing === 'website'} onEdit={() => setEditing('website')} editor={<TextEditor label="Website" initial={website ?? ''} keyboard="url" onSave={(v) => save({ website: normalizeWebsite(v) })} onCancel={() => setEditing(null)} />}>
+      <FactRow icon="globe" label="Website" canEdit editing={editing === 'website'} onEdit={() => setEditing('website')} editor={<TextEditor label="Website" initial={website ?? ''} keyboard="url" onSave={(v) => save({ website: normalizeWebsite(v) })} onCancel={() => setEditing(null)} />}>
         <Body tone={website ? 'ink' : 'muted'}>{website ?? 'Not added yet'}</Body>
       </FactRow>
+      <View style={styles.fact}>
+        <View style={styles.factTop}>
+          <IconSymbol name="camera" size={18} color={ds.c.muted} />
+          <View style={styles.flex}>
+            {pending ? (
+              <>
+                <Caption tone="muted">Instagram</Caption>
+                <Body tone={instagram ? 'ink' : 'muted'}>{instagram ? `@${instagram}` : 'Not added yet'}</Body>
+              </>
+            ) : (
+              <Field label="Instagram" value={instagram} onChangeText={(t) => { setIg(t); setProblem(null); }} placeholder="@littlerye" autoCapitalize="none" autoCorrect={false} autoComplete="off" maxLength={60} error={ig !== null ? igProblem : undefined} />
+            )}
+          </View>
+        </View>
+      </View>
       </View>
       {error ? (
         <Caption tone="accent" role="alert">
-          {error.message}
+          {error}
         </Caption>
       ) : null}
       <Caption tone="muted">
@@ -157,7 +217,7 @@ export function WhereWhenStep({ profileId, claim, writable, onDone }: { profileI
           ? 'These wait on your claim and go on your page when it’s approved. The address stays as it is; tell us in the claim if it’s wrong.'
           : writable
             ? 'Change any of it later in Venue settings.'
-            : 'Claim your bar’s page to add these. Everything else here still works.'}
+            : `Kept with your setup. They go on ${name}’s page once we’ve checked it’s yours (the last step).`}
       </Caption>
     </SetupPage>
   );

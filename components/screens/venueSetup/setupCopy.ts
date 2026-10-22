@@ -1,19 +1,19 @@
 import { BRAND } from '@/constants/brand';
-import type { VenueScreen } from '@/lib/venueSetup';
+import type { ClaimState, VenueScreen } from '@/lib/venueSetup';
 
-/** Each venue setup screen's title and the line under it (canvas make-venue-*). */
-export function setupCopy(screen: VenueScreen, bar: string): { title: string; intro: string } {
+/** Each venue setup screen's title and the line under it (canvas make-venue-*, and eddie-oct22-wave1 for place, claim and done). */
+export function setupCopy(screen: VenueScreen, bar: string, claim: ClaimState = 'none'): { title: string; intro: string } {
   switch (screen) {
     case 'intro':
       return { title: `Bring your bar to ${BRAND.productName}`, intro: 'Set up your venue in about ten minutes. Stop at any step and pick it up later from Tonight.' };
     case 'find':
       return { title: 'Find your bar', intro: 'Most bars are already here. Claim yours and keep its awards, drinks and rankings.' };
     case 'claim':
-      return { title: 'Prove it’s yours', intro: `Show us you work at ${bar} and the page is yours: its drinks, its team, and who sees its specs.` };
+      return { title: 'Last step: prove it’s yours', intro: `${bar} is set up for your team. To put your hours, drinks and look on its public page, we check you work there.` };
     case 'role':
       return { title: 'You’ll be Admin', intro: `Whoever sets up ${bar} runs it. You can add more Admins, or hand it on, from My team.` };
     case 'place':
-      return { title: 'Where and when', intro: 'Where people find you and when you’re open. It shows on your bar page, in Discover and on the map.' };
+      return { title: 'Where, when and how to reach you', intro: 'It shows on your bar page, in Discover and on the map.' };
     case 'look':
       return { title: `Make it look like ${bar}`, intro: 'Your logo, colour and type on every phone and screen at the bar. Change any of it later in Brand.' };
     case 'visibility':
@@ -26,7 +26,13 @@ export function setupCopy(screen: VenueScreen, bar: string): { title: string; in
     case 'team':
       return { title: 'Invite your team', intro: `Each person gets an email from ${bar} and lands in the app with your menus and specs already there.` };
     case 'done':
-      return { title: `${bar} is set up`, intro: 'Here’s what’s done and what’s still on its way. Tonight shows a small banner until it’s all in.' };
+      return {
+        title: `${bar} is set up`,
+        intro:
+          claim === 'none'
+            ? 'Your team can use everything now. When you’re ready, prove it’s yours from Tonight’s banner or Venue settings.'
+            : 'Here’s what’s done and what’s still on its way. Tonight shows a small banner until it’s all in.',
+      };
   }
 }
 

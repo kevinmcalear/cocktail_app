@@ -1,7 +1,8 @@
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, TimeField } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, TextLink, TimeField } from '@/components/ds';
 import { RowDivider, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { STATUS } from '@/constants/palette';
 import { space } from '@/constants/tokens';
@@ -29,12 +30,17 @@ function deviceZone(): string | null {
  * map read.
  */
 export function VenueHoursEditor({ barId, canEdit }: { barId: string; canEdit: boolean }) {
+  const router = useRouter();
   const profileId = useVenueProfileId(barId).data;
   const facts = useBarFacts(profileId).data;
   if (!profileId) {
+    // No page yet: set up and kept private, so this is where to prove it's yours later (eddie-oct22-wave1).
     return (
       <SettingsSection title="Location and hours">
-        <Body tone="muted" style={styles.pad}>Hours, phone and website go on your bar page. Set it up under Publishing first.</Body>
+        <View style={styles.pad}>
+          <Body tone="muted">Hours, phone and website go on your bar page once we’ve checked it’s yours.</Body>
+          {canEdit ? <TextLink label="Prove it’s yours" onPress={() => router.push(`/venue-setup?bar=${barId}&step=claim` as Href)} /> : null}
+        </View>
       </SettingsSection>
     );
   }
