@@ -54,12 +54,13 @@ export function WizardChip({ label, selected = false, add, kind = 'radio', sugge
 }
 
 /** A short confirmation over the footer, with a tick: "Shrub saved to your preps when you save the drink." */
-export function WizardNotice({ children }: { children: string }) {
+export function WizardNotice({ children, action }: { children: string; action?: { label: string; onPress: () => void } }) {
   const ds = useDs();
   return (
     <View role="status" style={[styles.notice, { backgroundColor: ds.c.raised }]}>
       <IconSymbol name="checkmark" size={16} color={ds.accentText} />
       <Caption style={styles.flex}>{children}</Caption>
+      {action ? <Button label={action.label} variant="ghost" size="sm" onPress={action.onPress} /> : null}
     </View>
   );
 }

@@ -219,3 +219,56 @@ export function useLocationMutations(barId: string | null | undefined) {
 
   return { placeItem, updateLocation, removeLocation };
 }
+
+const SPOT_COLUMNS = 'id, bar_id, item_id, zone_id, shelf, container, photo_url, par_amount, par_unit, sort_order';
+type Spot = Omit<ItemLocation, 'item'>;
+
+/**
+ * A bottle's every spot at the venue at once, for the back bar's Replace and
+ * Take it off: point them all at another bottle (a new brand deal), take them
+ * off, and put either back for Undo. Same policies as placing an item.
+ */
+export function useBottleSpots(barId: string | null | undefined) {
+  const qc = useQueryClient();
+  const refresh = () => qc.invalidateQueries({ queryKey: locationsKey(barId) });
+
+  /** Resolves the spots it changed, so Undo points just those back. */
+  const replace = useMutation({
+    mutationFn: async ({ fromId, toId }: { fromId: string; toId: string }): Promise<string[]> => {
+      const { data, error } = await supabase.from('item_locations').update({ item_id: toId }).eq('bar_id', barId!).eq('item_id', fromId).select('id');
+      if (error) throw error;
+      return (data ?? []).map((row) => row.id);
+    },
+    onSettled: refresh,
+  });
+
+  const pointBack = useMutation({
+    mutationFn: async ({ ids, itemId }: { ids: string[]; itemId: string }) => {
+      if (!ids.length) return;
+      const { error } = await supabase.from('item_locations').update({ item_id: itemId }).eq('bar_id', barId!).in('id', ids);
+      if (error) throw error;
+    },
+    onSettled: refresh,
+  });
+
+  /** Resolves the spots it took off, whole, so Undo can put them back as they were. */
+  const takeOff = useMutation({
+    mutationFn: async (itemId: string): Promise<Spot[]> => {
+      const { data, error } = await supabase.from('item_locations').delete().eq('bar_id', barId!).eq('item_id', itemId).select(SPOT_COLUMNS);
+      if (error) throw error;
+      return (data ?? []) as Spot[];
+    },
+    onSettled: refresh,
+  });
+
+  const putBack = useMutation({
+    mutationFn: async (spots: Spot[]) => {
+      if (!spots.length) return;
+      const { error } = await supabase.from('item_locations').insert(spots);
+      if (error) throw error;
+    },
+    onSettled: refresh,
+  });
+
+  return { replace, pointBack, takeOff, putBack };
+}

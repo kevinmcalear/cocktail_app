@@ -81,28 +81,50 @@ export function useEffectiveRole(barId: string | null) {
  *   bar a drink is credited to, or a catalog admin. The client can't see
  *   catalog admins or credits, so this asks the can_edit_item RPC. A view-as
  *   role of Bartender (30) or lower hides editing here too.
+ *
+ * 'edit' is the drink's own people: its page shows Edit and its pencils.
+ * 'admin' is a catalog admin on someone else's drink: the page stays a
+ * visitor's, with one Fix as admin in More (Kevin, 22 Oct).
  */
-export function useCanEditItem(item: { id: string; bar_id: string | null } | null | undefined) {
+export function useItemEditAccess(item: { id: string; bar_id: string | null } | null | undefined): 'edit' | 'admin' | null {
   const userId = useUserId();
+  const { data: bars } = useBars();
   const barId = item?.bar_id ?? null;
   const venueRole = useEffectiveRole(barId);
   const { viewAsRoleLevel } = useViewAs();
   const shared = !!item && !barId;
   const caps = useCapabilities(barId).data;
 
-  const { data: canEditShared } = useQuery({
-    queryKey: ['canEditItem', item?.id, userId],
+  const { data: sharedAccess } = useQuery({
+    queryKey: ['itemEditAccess', item?.id, userId],
     enabled: shared && !!userId,
-    queryFn: async () => {
+    queryFn: async (): Promise<{ creator: boolean; creditedBarId: string | null } | null> => {
       const { data, error } = await supabase.rpc('can_edit_item', { p_item_id: item!.id });
       if (error) throw error;
-      return data === true;
+      if (data !== true) return null;
+      // The RPC can't say why, so read who it belongs to: its creator, or the bar it's credited to.
+      const { data: row, error: rowError } = await supabase
+        .from('items')
+        .select('created_by, origin_bar:profiles!items_origin_bar_profile_id_fkey(bar_id)')
+        .eq('id', item!.id)
+        .maybeSingle();
+      if (rowError) throw rowError;
+      const origin = row?.origin_bar as unknown as { bar_id: string | null } | null;
+      return { creator: !!row && row.created_by === userId, creditedBarId: origin?.bar_id ?? null };
     },
   });
 
-  if (!item) return false;
-  if (barId) return viewAsRoleLevel == null && caps ? caps.includes('edit_drinks') : venueRole > 30;
-  return canEditShared === true && (viewAsRoleLevel == null || viewAsRoleLevel > 30);
+  if (!item) return null;
+  // At a venue the edit_drinks permission decides (a role the bar made can have it); under View as, the previewed built-in role does.
+  if (barId) return (viewAsRoleLevel == null && caps ? caps.includes('edit_drinks') : venueRole > 30) ? 'edit' : null;
+  if (!sharedAccess || (viewAsRoleLevel != null && viewAsRoleLevel <= 30)) return null;
+  const creditedRole = bars?.find((b) => b.bar_id === sharedAccess.creditedBarId)?.role_level ?? 10;
+  return sharedAccess.creator || creditedRole >= 35 ? 'edit' : 'admin';
+}
+
+/** Whether the viewer may edit the item at all, as its own people or as a catalog admin. */
+export function useCanEditItem(item: { id: string; bar_id: string | null } | null | undefined) {
+  return useItemEditAccess(item) !== null;
 }
 
 /**

@@ -4,6 +4,9 @@ import React from "react";
 import { VenueBrandProvider } from "@/components/nav/VenueBrandProvider";
 import { AddDrinkWizard } from "@/components/screens/addDrink/AddDrinkWizard";
 import { DraftEditScreen } from "@/components/screens/drink/edit/DraftEditScreen";
+import { emptySummary } from "@/lib/bringInBatch";
+import { approved, canCheck } from "@/lib/importReview";
+import { useBringIn } from "@/store/useBringIn";
 
 /**
  * A new drink is added with the step-by-step wizard. A draft saved by the
@@ -11,8 +14,11 @@ import { DraftEditScreen } from "@/components/screens/drink/edit/DraftEditScreen
  */
 export default function AddCocktailScreen() {
     const router = useRouter();
-    const { barId, draftId, name, menuSectionId, from, round } = useLocalSearchParams<{
+    const { barId, draftId, name, menuSectionId, from, round, review, drink } = useLocalSearchParams<{
         barId?: string;
+        /** "Edit this drink" in a big import's review: saving here approves that drink there. */
+        review?: string;
+        drink?: string;
         from?: string;
         /** "1" from the first round: the Old Fashioned, straight to Review, then back to the Library. */
         round?: string;
@@ -38,8 +44,13 @@ export default function AddCocktailScreen() {
                     embedded={false}
                     onClose={goBack}
                     onSaved={(id) => {
-                        // From a menu, back to the menu; otherwise to the new drink.
-                        if (menuSectionId) goBack();
+                        // From a menu, back to the menu; from a review, back to it, approved; otherwise to the new drink.
+                        if (review && drink) {
+                            goBack();
+                            const made = { drinkId: id, summary: { ...emptySummary("recipes"), drinksNew: 1 }, warnings: [] };
+                            // Only if it's still to check there: a drink is never counted twice.
+                            useBringIn.getState().editReview(review, (r) => (canCheck(r, Number(drink)) ? approved(r, Number(drink), made, new Date().toISOString()) : r));
+                        } else if (menuSectionId) goBack();
                         else if (round === "1") router.replace("/library");
                         else router.replace(`/cocktail/${id}`);
                     }}

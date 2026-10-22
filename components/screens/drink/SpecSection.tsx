@@ -11,7 +11,7 @@ import { SwapLineSheet, useSwapToast } from './SwapLineSheet';
 import { ToolsSheet, type ToolsSheetProps } from '@/components/tools/ToolsSheet';
 import { useMode } from '@/hooks/useMode';
 import { useSpecLevels } from '@/hooks/useSpecLevels';
-import { useCanEditItem, useEffectiveRole } from '@/hooks/useViewAs';
+import { useEffectiveRole, useItemEditAccess } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { lineAmount } from '@/lib/drinkMath';
@@ -78,9 +78,9 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
   const [convert, setConvert] = useState<ToolsSheetProps['amount']>(null);
   // A house-made line opens in place (board drink-sheet-housemade); anything else goes to its page.
   const [houseLine, setHouseLine] = useState<(typeof lines)[number] | null>(null);
-  // Someone who can edit the drink taps a line to fix it (Kitty's "we pour Y, not X"). A venue's drink is fixed in venue mode, not from home.
+  // The drink's own people tap a line to fix it (Kitty's "we pour Y, not X"); a catalog admin fixes from More. A venue's drink is fixed in venue mode, not from home.
   const homeVenueDrink = useMode().mode === 'home' && !!barId;
-  const canEdit = useCanEditItem(!preview && !homeVenueDrink ? { id: itemId, bar_id: barId } : null);
+  const canEdit = useItemEditAccess(!preview && !homeVenueDrink ? { id: itemId, bar_id: barId } : null) === 'edit';
   const [swapLine, setSwapLine] = useState<(typeof lines)[number] | null>(null);
   // After a fix: a toast with Undo (board KittyDone).
   const swapped = useSwapToast();

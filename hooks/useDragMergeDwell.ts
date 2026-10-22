@@ -1,104 +1,57 @@
 import * as Haptics from 'expo-haptics';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
-/** Confirm dialog is the accident net; dwell only needs to feel intentional. */
+/** Long enough to feel meant, short enough not to wait: then the row lights up "Drop to batch". */
 export const MERGE_DWELL_MS = 700;
 
 /**
- * iOS-home-screen-style merge arming for react-native-draggable-flatlist:
- * hold a stable placeholder index → arm merge; onDragEnd uses merge instead of reorder.
+ * iOS-home-screen-style drop-to-merge for a dragged row: hold it over another
+ * (`hover` with that row's index, lib/dropIndex overIndex) for the dwell and
+ * the merge arms; moving off (`hover(null)`) disarms it. `release` says
+ * which row it was dropped on, or null for a plain reorder.
  */
 export function useDragMergeDwell(enabled: boolean) {
-    const fromRef = useRef<number | null>(null);
-    const hoverRef = useRef<number | null>(null);
-    const pendingRef = useRef<number | null>(null);
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const armedTargetRef = useRef<number | null>(null);
-    const [mergeTargetIndex, setMergeTargetIndex] = useState<number | null>(null);
-    const [pendingTargetIndex, setPendingTargetIndex] = useState<number | null>(null);
+  const hoverRef = useRef<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const armedRef = useRef<number | null>(null);
+  const [mergeTargetIndex, setMergeTargetIndex] = useState<number | null>(null);
 
-    const clearTimer = () => {
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-            timerRef.current = null;
-        }
-    };
+  const clearTimer = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
+  };
+  useEffect(() => clearTimer, []);
 
-    const disarm = useCallback(() => {
-        clearTimer();
-        armedTargetRef.current = null;
-        pendingRef.current = null;
+  const hover = useCallback(
+    (index: number | null) => {
+      if (!enabled || index === hoverRef.current) return;
+      hoverRef.current = index;
+      clearTimer();
+      if (armedRef.current !== null) {
+        armedRef.current = null;
         setMergeTargetIndex(null);
-        setPendingTargetIndex(null);
-    }, []);
+      }
+      if (index === null) return;
+      timerRef.current = setTimeout(() => {
+        if (hoverRef.current !== index) return;
+        armedRef.current = index;
+        setMergeTargetIndex(index);
+        if (Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }, MERGE_DWELL_MS);
+    },
+    [enabled]
+  );
 
-    const onDragBegin = useCallback(
-        (index: number) => {
-            if (!enabled) return;
-            fromRef.current = index;
-            hoverRef.current = index;
-            disarm();
-        },
-        [enabled, disarm]
-    );
+  /** The drag is over: the armed row to drop on, or null. Always disarms. */
+  const release = useCallback((): number | null => {
+    const target = armedRef.current;
+    clearTimer();
+    hoverRef.current = null;
+    armedRef.current = null;
+    setMergeTargetIndex(null);
+    return enabled ? target : null;
+  }, [enabled]);
 
-    const onPlaceholderIndexChange = useCallback(
-        (placeholderIndex: number) => {
-            if (!enabled || fromRef.current === null) return;
-
-            // Live reorder flickers placeholder back to `from` at row edges —
-            // ignore those so the dwell can finish (and stay armed).
-            if (placeholderIndex === fromRef.current) return;
-
-            hoverRef.current = placeholderIndex;
-
-            if (armedTargetRef.current === placeholderIndex) return;
-            // Same hover target — keep the in-flight timer.
-            if (pendingRef.current === placeholderIndex) return;
-
-            if (armedTargetRef.current !== null) {
-                armedTargetRef.current = null;
-                setMergeTargetIndex(null);
-            }
-            clearTimer();
-            pendingRef.current = placeholderIndex;
-            setPendingTargetIndex(placeholderIndex);
-            timerRef.current = setTimeout(() => {
-                if (hoverRef.current !== placeholderIndex) return;
-                if (fromRef.current === null || placeholderIndex === fromRef.current) return;
-                armedTargetRef.current = placeholderIndex;
-                setMergeTargetIndex(placeholderIndex);
-                if (Platform.OS !== 'web') {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                }
-            }, MERGE_DWELL_MS);
-        },
-        [enabled]
-    );
-
-    const consumeMergeOnDragEnd = useCallback(
-        (from: number): { from: number; target: number } | null => {
-            if (!enabled) {
-                disarm();
-                fromRef.current = null;
-                return null;
-            }
-            const target = armedTargetRef.current;
-            disarm();
-            fromRef.current = null;
-            // Trust armed dwell target over release index (`to` can drift)
-            if (target === null || target === from) return null;
-            return { from, target };
-        },
-        [enabled, disarm]
-    );
-
-    return {
-        mergeTargetIndex,
-        pendingTargetIndex,
-        onDragBegin,
-        onPlaceholderIndexChange,
-        consumeMergeOnDragEnd,
-    };
+  return { mergeTargetIndex, hover, release };
 }

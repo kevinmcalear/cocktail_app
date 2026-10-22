@@ -6,6 +6,7 @@
  */
 import { iceBuildLine, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
+import type { LineBatch } from '@/lib/batchLines';
 import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
 import type { PublishMode } from '@/lib/publishing';
@@ -50,6 +51,8 @@ export interface WizardLine extends WizardPick {
   note?: string;
   /** A house prep added by name only ("Just add the name", or Later in the prep builder): its recipe is to write, and the save reminds you. */
   later?: boolean;
+  /** A batch made by dropping one line on another (lib/batchLines): the drink's own lines and the bottle, saved as a Batch prep. */
+  batch?: LineBatch;
 }
 
 export interface WizardDraft {
@@ -449,7 +452,8 @@ export function sketchLook(d: WizardDraft, barVariants: readonly string[] = [], 
     glass: d.glass?.name ?? null,
     ice: d.ice?.name ?? null,
     methods: d.methods.map((m) => m.name),
-    lines: [...d.lines, ...d.garnishes].map((l) => ({ name: l.name, amount: amountOf(l.amount), unit: l.unit || null })),
+    // A batch is drawn as what's in it, one drink's worth.
+    lines: [...d.lines.flatMap((l) => l.batch?.lines ?? [l]), ...d.garnishes].map((l) => ({ name: l.name, amount: amountOf(l.amount), unit: l.unit || null })),
     variant: d.glassVariant ?? null,
     barVariants,
     barIce,
