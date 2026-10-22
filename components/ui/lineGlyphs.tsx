@@ -21,8 +21,9 @@ const GLYPHS = {
     'M9 12l2 2 4-4',
   ],
   updown: ['M8 4v16M4.5 7.5L8 4l3.5 3.5', 'M16 20V4M12.5 16.5L16 20l3.5-3.5'],
-  // The one filled glyph: a bar you love (ppl-bar-top's Loved pill).
-  heartFill: ['M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z'],
+  // The one filled glyph: a bar you love (ppl-bar-top's Loved pill). Feather's own heart path, so the
+  // filled heart is the same size and shape as the outline one it swaps with.
+  heartFill: ['M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'],
   // Menus, drafts, Bring in, a menu document and Settings, as the shell boards draw them (nav-new-venue, nav-switcher).
   lines: ['M5 6h14M5 12h14M5 18h9'],
   draft: ['M6 3h8l4 4v14H6z', 'M14 3v4h4M9 12h6M9 16h6'],
