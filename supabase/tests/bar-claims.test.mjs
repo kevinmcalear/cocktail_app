@@ -257,6 +257,10 @@ describe('details typed into a claim', () => {
   test('a typed Instagram handle is cleaned up, waits for a person, and goes on the page once approved', async () => {
     const bad = await claim('typer', 'BareGram', 'instagram', { p_instagram: 'not a handle!' });
     assert.match(bad.error?.message ?? '', /doesn't look like an Instagram handle/);
+    for (const handle of ['.harbour', 'harbour.', 'har..bour']) {
+      const dots = await claim('typer', 'BareGram', 'instagram', { p_instagram: handle });
+      assert.match(dots.error?.message ?? '', /doesn't look like an Instagram handle/, `${handle} breaks the page's handle rule`);
+    }
     const { data, error } = await claim('typer', 'BareGram', 'instagram', { p_instagram: ` @Harbour${run} ` });
     assert.ifError(error);
     assert.equal(data.status, 'pending');

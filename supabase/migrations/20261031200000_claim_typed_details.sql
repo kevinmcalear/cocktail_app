@@ -74,7 +74,8 @@ BEGIN
     IF p_method = 'instagram' AND v_instagram IS NULL AND nullif(btrim(p_instagram), '') IS NOT NULL THEN
         -- '@harbourroom' or an instagram.com link -> 'harbourroom'.
         v_instagram := lower(coalesce(substring(btrim(p_instagram) FROM '(?i)instagram\.com/([a-z0-9._]+)'), ltrim(btrim(p_instagram), '@')));
-        IF v_instagram !~ '^[a-z0-9._]{1,30}$' THEN
+        -- Same as profiles_instagram_format, or approving would fail to put it on the page.
+        IF v_instagram !~ '^[a-z0-9._]{1,30}$' OR v_instagram ~ '^\.|\.$|\.\.' THEN
             RAISE EXCEPTION 'That doesn''t look like an Instagram handle.' USING ERRCODE = '22023';
         END IF;
         v_typed := v_typed || jsonb_build_object('instagram', v_instagram);
