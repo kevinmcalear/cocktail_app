@@ -13,6 +13,7 @@ assert.equal(sentWithLine({ screen: 'Settings › Report a problem' }, true), 'S
 
 assert.equal(deviceLine('1.5.0', 'ios', '26.1'), 'App 1.5.0 on ios 26.1');
 assert.equal(deviceLine(null, 'web', undefined), 'App unknown on web');
+assert.equal(deviceLine('1.5.0', 'web', '0.0.0'), 'App 1.5.0 on web');
 
 // The row: trimmed, cut to the table's limits, the bar's id only.
 const row = feedbackRow('different', `  ${'x'.repeat(FEEDBACK_MAX + 5)} `, ice, '/add-drink', 'App 1.5.0 on web');

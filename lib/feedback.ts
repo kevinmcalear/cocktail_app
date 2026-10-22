@@ -38,9 +38,10 @@ export function sentWithLine(place: FeedbackPlace, device = false): string {
   return parts.filter(Boolean).join(' · ');
 }
 
-/** "App 1.5.0 on ios 26.1". */
+/** "App 1.5.0 on ios 26.1". The web reports no real version ("0.0.0"), so none is shown. */
 export function deviceLine(version: string | null | undefined, os: string, osVersion: string | number | null | undefined): string {
-  return `App ${version || 'unknown'} on ${os} ${String(osVersion ?? '')}`.trim();
+  const v = osVersion == null || String(osVersion) === '0.0.0' ? '' : String(osVersion);
+  return `App ${version || 'unknown'} on ${os} ${v}`.trim();
 }
 
 export interface FeedbackRow {
