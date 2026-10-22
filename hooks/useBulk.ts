@@ -23,6 +23,8 @@ function useRefreshSpecs() {
       queryClient.invalidateQueries({ queryKey: ['ingredient'] }),
       queryClient.invalidateQueries({ queryKey: ['menu-library'] }),
       queryClient.invalidateQueries({ queryKey: ['swap-source'] }),
+      // The back bar's Waiting for a spot reads what the menus pour.
+      queryClient.invalidateQueries({ queryKey: ['menu-ingredients'] }),
       queryClient.invalidateQueries({ queryKey: ['item-versions'] }),
       refreshIngredients(queryClient, ingredientIds),
     ]);
