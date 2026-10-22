@@ -16,7 +16,7 @@ jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me' }, loading: false }), useUserId: () => 'me' }));
 let mockClosest: { id: string; name: string } | null = null;
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: mockClosest }) }));
-jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: [] }) }));
+jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: [] }), useShelfEdit: () => ({ add: { mutate: jest.fn() }, remove: { mutate: jest.fn() } }) }));
 jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: () => ({ data: 0 }) }));
 jest.mock('@/hooks/usePublishing', () => ({ useBarPublishing: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [], isPending: false }) }));
@@ -40,7 +40,11 @@ jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 // "Is this one of your glasses?" (components/screens/venue/GlasswarePrompt.test.tsx) asks no one here: nobody has brand.
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }), useBarPageId: () => ({ data: 'page-1' }), useSaveBarGlass: () => ({ mutate: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: mockBarKit }) }));
-jest.mock('@/hooks/useBackBar', () => ({ useBackBarIds: () => new Set() }));
+jest.mock('@/hooks/useBackBar', () => ({
+  useBackBarIds: () => new Set(),
+  useBackBarParts: () => ({ fixed: new Map(), stocked: new Map(), ids: new Set() }),
+  useStockMutations: () => ({ add: { mutate: jest.fn() }, remove: { mutate: jest.fn() } }),
+}));
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));
 const mockStart = jest.fn();
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: mockStart, isPending: false }), useClassicPreview: () => ({ data: null }) }));

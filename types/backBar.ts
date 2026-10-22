@@ -1,4 +1,4 @@
-// The back bar tables (supabase/migrations/20260926000200_back_bar.sql).
+// The back bar tables (supabase/migrations/20260926150200_back_bar.sql and 20261101100000_back_bar_stock.sql).
 
 export type BarZoneKind =
   | 'shelf'
@@ -44,6 +44,22 @@ export interface ItemLocation {
   par_amount: number | null;
   par_unit: string | null;
   sort_order: number;
+  /** Embedded; null when the item isn't visible to the reader. */
+  item: { id: string; name: string } | null;
+}
+
+/** Where a bottle on the stock list came from: a drink's line, venue setup, or the back bar page. */
+export type BackBarSource = 'drink' | 'setup' | 'back_bar';
+
+/** One bottle a venue says it stocks (20261101100000_back_bar_stock.sql), with or without a spot. */
+export interface BackBarItem {
+  id: string;
+  bar_id: string;
+  item_id: string;
+  source: BackBarSource;
+  /** The drink it was added from, as it was named then. */
+  from_name: string | null;
+  added_at: string;
   /** Embedded; null when the item isn't visible to the reader. */
   item: { id: string; name: string } | null;
 }
