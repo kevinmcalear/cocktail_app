@@ -16,3 +16,16 @@ export function dropIndex(from: number, dy: number, heights: readonly number[]):
   }
   return at;
 }
+
+/**
+ * The row a dragged one is held over, to drop it on (a batch): its middle
+ * within the middle half of another row. Null between rows, so a drag that
+ * passes through to reorder never lands on one.
+ */
+export function overIndex(from: number, dy: number, heights: readonly number[]): number | null {
+  let top = 0;
+  const tops = heights.map((h) => (top += h) - h);
+  const middle = (tops[from] ?? 0) + (heights[from] ?? 0) / 2 + dy;
+  const i = heights.findIndex((h, k) => k !== from && h > 0 && middle >= tops[k] + h / 4 && middle <= tops[k] + (h * 3) / 4);
+  return i < 0 ? null : i;
+}

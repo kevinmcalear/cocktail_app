@@ -5,11 +5,14 @@ import { Body, Caption, DsText, IngredientThumb, PressableScale, useBreakpoint, 
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { batchSummary } from '@/lib/batchLines';
+import { withAlpha } from '@/lib/color';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
 import { leadText } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
+import { BatchMark } from './BatchSheet';
 import { GripDots } from './DragRow';
 import { WizardChip } from './WizardChrome';
 
@@ -33,6 +36,10 @@ interface LineRowProps {
   onMove?: (by: -1 | 1) => void;
   /** Being dragged: lifted over the lines under it. */
   lifted?: boolean;
+  /** Another line is held over this one: let go to batch them. */
+  dropTarget?: boolean;
+  /** This line is held over that one: said on it too, as it covers the other's name. */
+  dropOn?: string | null;
 }
 
 /**
@@ -42,7 +49,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name; on a wider screen they share
  * its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted, dropTarget, dropOn }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   const stacked = useBreakpoint() === 'phone';
@@ -53,7 +60,8 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
   const top = line.unit === 'top';
   const amountLabel = top ? 'Top' : line.amount ? `${line.amount} ${line.unit}` : `no amount, ${line.unit}`;
   // What the line is, when it isn't a bottle that already exists: shown with its actions, not under every row.
-  const status = line.id
+  const batch = line.prep?.kind === 'batch';
+  const status = line.id || batch
     ? null
     : line.prep
       ? { text: ['House-made', from ? `from ${from.name}` : null, leadText(line.prep.leadMinutes) ?? 'your recipe'].filter(Boolean).join(', '), accent: false }
@@ -63,7 +71,15 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
           ? { text: `House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`, accent: true }
           : { text: 'New, added when you save', accent: false };
   return (
-    <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }]}>
+    <View
+      role="listitem"
+      style={[
+        styles.wrap,
+        { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined },
+        // Lit while a line is held over it (board eddie-oct22-wave2, fix 9).
+        dropTarget ? [styles.target, { borderColor: ds.accentFill.fill, backgroundColor: withAlpha(ds.accentFill.fill, 0.1) }] : null,
+      ]}
+    >
       <View style={styles.row}>
         {grip?.(
           <PressableScale
@@ -87,7 +103,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
             <GripDots />
           </PressableScale>
         )}
-        <IngredientThumb id={line.id} name={line.name} size={40} />
+        {batch ? <BatchMark /> : <IngredientThumb id={line.id} name={line.name} size={40} />}
         <View style={stacked ? styles.mainStacked : styles.main}>
           <View style={stacked ? null : styles.head}>
             {/* The name opens what else the line can do; closed, the row is the ingredient and its pour (board make-create-ingredients). */}
@@ -101,6 +117,8 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
               style={styles.name}
             >
               <Body numberOfLines={2}>{line.name}</Body>
+              {dropTarget || dropOn ? <Caption tone="accent">{dropOn ? `Drop to batch with ${dropOn}` : 'Drop to batch'}</Caption> : null}
+              {batch && line.prep && !dropTarget && !dropOn ? <Caption tone="muted">{batchSummary(line.prep)}</Caption> : null}
               {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
               {detail ? (
                 <Caption tone="muted" numberOfLines={1}>
@@ -161,7 +179,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
           {status ? <Caption tone={status.accent ? 'accent' : 'muted'}>{status.text}</Caption> : null}
           {/* The recipe links lead in the accent; the rest stay quiet (the accent is for the one primary action). */}
           <View style={styles.links}>
-            {line.prep && onEditPrep ? <TextAction label="Edit the recipe" a11y={`Edit the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
+            {line.prep && onEditPrep ? <TextAction label={batch ? 'Open the batch' : 'Edit the recipe'} a11y={`${batch ? 'Open' : 'Edit the recipe for'} ${line.name}`} onPress={onEditPrep} accent /> : null}
             {line.later && !line.prep && onEditPrep ? <TextAction label="Write the recipe" a11y={`Write the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
             <TextAction label="Swap" a11y={`Swap ${line.name} for another ingredient`} onPress={onSwap} />
             {from ? (
@@ -244,6 +262,7 @@ const styles = StyleSheet.create({
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   note: { minHeight: layout.minTapTarget, marginLeft: 40 + space.md, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.md },
   wrap: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  target: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: radius.control },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   // The name and the controls: two lines on a phone, one on a wider screen.
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },

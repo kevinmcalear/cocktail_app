@@ -14,7 +14,8 @@ import type { Allergen } from './allergens';
 import { asLike, keepFor, nameParts, partsFor, prepFacts, slotIngredient, splitName } from './techniques/template';
 import type { Technique } from './techniques/types';
 
-export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other';
+/** batch: lines of a drink bottled together (lib/batchLines); made by dropping one line on another, never picked here. */
+export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other' | 'batch';
 
 export interface PrepDraftLine {
   key: string;
@@ -287,6 +288,7 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
         s('Strain through a fine cloth, bottle and keep cold.'),
       ], 3 * DAY, fridge, 90, ['Blend', 'Strain']);
     case 'other':
+    case 'batch':
       return draft([flavour ? line(flavour, 1, 'g') : slotLine('Main ingredient', 'main ingredient', 1, 'g'), ...extras], 100, [], null, fridge, null, []);
   }
 }

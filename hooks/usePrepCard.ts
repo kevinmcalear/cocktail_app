@@ -163,9 +163,9 @@ export async function savePrepRecipe(
     const added = await supabase.from('recipes').insert(rows);
     if (added.error) throw added.error;
   }
-  // Made it house from a bottle in the drink, or a base line that's a bottle.
+  // Made it house from a bottle in the drink, or a base line that's a bottle. A batch is a mix, not one bottle changed.
   const madeFrom = prep.madeFrom?.id ?? null;
-  const fromBase = !madeFrom && baseId ? (await supabase.from('items').select('ingredient_role').eq('id', baseId).maybeSingle()).data?.ingredient_role === 'product' : false;
+  const fromBase = !madeFrom && baseId && prep.kind !== 'batch' ? (await supabase.from('items').select('ingredient_role').eq('id', baseId).maybeSingle()).data?.ingredient_role === 'product' : false;
   if (madeFrom || fromBase) {
     const from = await supabase.from('items').update({ made_from_id: madeFrom ?? baseId }).eq('id', itemId);
     if (from.error) throw from.error;

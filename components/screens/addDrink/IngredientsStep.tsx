@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
-import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { COMMON_INGREDIENTS, guessUnit, newLine, perDrink, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { dropIndex } from '@/lib/dropIndex';
 import { houseNudge, houseWays } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
@@ -15,6 +15,7 @@ import { startsFrom } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
+import { BatchSheet } from './BatchSheet';
 import { DragRow } from './DragRow';
 import { BalanceCard, CloseToClassic, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
@@ -22,6 +23,7 @@ import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { StartFromClassic } from './StartFromClassic';
+import { useLineBatches } from './useLineBatches';
 import { WizardChip, WizardNotice } from './WizardChrome';
 
 /** How many quick adds show under the field. */
@@ -131,9 +133,13 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     lines.splice(to, 0, ...lines.splice(from, 1));
     set({ lines });
   };
-  const drop = (from: number, dy: number) => move(from, dropIndex(from, dy, draft.lines.map((l) => heights.current[l.key] ?? 0)));
+  // Held over another line and let go, it's batched with it instead (useLineBatches).
+  const batches = useLineBatches({ draft, set, enabled: forDrink, heights: () => draft.lines.map((l) => heights.current[l.key] ?? 0), onNotice: setMadePrep });
+  const drop = (from: number, dy: number) => batches.drop(from) || move(from, dropIndex(from, dy, draft.lines.map((l) => heights.current[l.key] ?? 0)));
   const has = (name: string) => draft.lines.some((l) => l.name.trim().toLowerCase() === name.toLowerCase());
   const quick = COMMON_INGREDIENTS.filter((n) => !has(n)).slice(0, QUICK);
+  // A batch tastes, pairs and matches classics as what's in it.
+  const poured = perDrink(draft.lines);
   const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
 
   return (
@@ -141,7 +147,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       {draft.lines.length ? (
         <View role="list" aria-label="In the drink">
           {draft.lines.map((l, i) => (
-            <DragRow key={l.key} index={i} onDrop={drop} onHeight={(h) => (heights.current[l.key] = h)}>
+            <DragRow key={l.key} index={i} onDrop={drop} onOver={forDrink ? batches.over : undefined} onHeight={(h) => (heights.current[l.key] = h)}>
               {(grip, lifted) =>
                 // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
                 l.key === swapKey ? (
@@ -171,11 +177,13 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                     line={l}
                     grip={grip}
                     lifted={lifted}
+                    dropTarget={batches.target === i}
+                    dropOn={lifted && batches.target !== null ? draft.lines[batches.target]?.name : null}
                     onMove={(by) => move(i, i + by)}
                     onChange={(c) => change(l.key, c)}
                     onRemove={() => remove(l)}
                     onSwap={() => setSwapKey(l.key)}
-                    onEditPrep={() => setMaking({ name: l.name, key: l.key })}
+                    onEditPrep={() => (l.prep?.kind === 'batch' ? batches.edit(l.key) : setMaking({ name: l.name, key: l.key }))}
                     onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
                     detail={lineDetail?.(l)}
                   />
@@ -185,7 +193,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
           ))}
         </View>
       ) : null}
-      {draft.lines.length > 1 ? <Caption tone="muted">{Platform.OS === 'web' ? 'Drag a grip to reorder.' : 'Hold a grip to reorder.'}</Caption> : null}
+      {draft.lines.length > 1 ? <Caption tone="muted">{batches.hint}</Caption> : null}
 
       {nudge ? (
         <View style={[styles.nudge, { backgroundColor: ds.c.surface }]}>
@@ -252,13 +260,14 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         onPick={(t, adjunct) => houseLine && makeHouse(houseLine, t, adjunct)}
         onClose={() => setHouseKey(null)}
       />
+      <BatchSheet {...batches.sheet} />
 
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
-      {forDrink && balance && !typing ? <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
+      {forDrink && balance && !typing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
       {typing || !forDrink ? null : (
         <>
           <GoesWith
-            lines={draft.lines}
+            lines={poured}
             onAdd={add}
             fallback={
               <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
@@ -267,7 +276,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 ))}
               </View>
             }
-            after={<CloseToClassic ingredients={draft.lines.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
+            after={<CloseToClassic ingredients={poured.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
           />
           {draft.lines.length ? null : <StartFromClassic set={set} />}
         </>

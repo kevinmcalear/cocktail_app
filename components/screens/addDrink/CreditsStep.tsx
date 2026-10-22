@@ -10,7 +10,7 @@ import { usePublicPeople } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
 import { suggestClassic } from '@/lib/classics';
 import { withArticle } from '@/lib/closestClassic';
-import { parseYear, searchByName, type StepProps } from '@/lib/drinkWizard';
+import { parseYear, perDrink, searchByName, type StepProps } from '@/lib/drinkWizard';
 
 import type { CatalogIngredient } from './IngredientSearch';
 import { Eyebrow, WizardChip } from './WizardChrome';
@@ -36,7 +36,7 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
   const alsoPeople = usePublicPeople(also).data ?? [];
   const [riff, setRiff] = useState('');
   const generic = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? null;
-  const close = useClosestClassic(draft.lines.flatMap((l) => (l.id ? [{ id: l.id, generic: generic(l.id) }] : []))).data ?? null;
+  const close = useClosestClassic(perDrink(draft.lines).flatMap((l) => (l.id ? [{ id: l.id, generic: generic(l.id) }] : []))).data ?? null;
   const suggested = close ?? (draft.name.trim() ? suggestClassic(draft.name, classics)?.classic : undefined);
   const riffResults = searchByName(riff, classics, 5);
   const other = typeof draft.creator === 'object' ? draft.creator : null;

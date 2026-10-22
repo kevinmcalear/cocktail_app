@@ -11,7 +11,7 @@ import { useDraftPacks, useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { usePricingSettings } from '@/hooks/usePricing';
 import type { ClassicMatch } from '@/lib/classics';
 import { lineCostMinor } from '@/lib/costing';
-import { amountOf, guessUnit, hasContent, newLine, pickByName, sketchLook, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { amountOf, guessUnit, hasContent, newLine, perDrink, pickByName, sketchLook, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { density } from '@/lib/drinkMath';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { formatMoney } from '@/lib/money';
@@ -80,7 +80,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const canCost = !!barId && !!caps?.includes('costs');
   const pricing = usePricingSettings(canCost ? barId : null).data ?? null;
   const costed = [...draft.lines, ...draft.garnishes];
-  const ids = costed.flatMap((l) => (l.id ? [l.id] : []));
+  const ids = perDrink(costed).flatMap((l) => (l.id ? [l.id] : []));
   const packs = useDraftPacks(barId, ids, canCost).data ?? [];
   const currency = pricing?.currency ?? 'GBP';
   const [finishOpen, setFinishOpen] = useState(false);
@@ -88,7 +88,12 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const finishing = finishOpen || draft.garnishes.length > 0;
 
   const pack = (l: WizardLine) => packs.find((k) => k.itemId === l.id) ?? null;
-  const cost = (l: WizardLine) => {
+  const cost = (l: WizardLine): number | null => {
+    // A batch costs what's in its pour (lib/batchLines).
+    if (l.prep?.kind === 'batch') {
+      const parts = perDrink([l]).map(cost);
+      return parts.every((m) => m != null) ? parts.reduce<number>((sum, m) => sum + (m ?? 0), 0) : null;
+    }
     const k = pack(l);
     return k?.costMinor != null && k.amount && k.unit ? lineCostMinor(amountOf(l.amount), l.unit, { amount: k.amount, unit: k.unit, costMinor: k.costMinor }, density(l.name, null)) : null;
   };
@@ -191,7 +196,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
         <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
           <Eyebrow>The drink, as you go</Eyebrow>
           <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
-          <DeskTaste lines={draft.lines} ingredients={p.ingredients} onAdd={addByName} />
+          <DeskTaste lines={perDrink(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
           {canCost ? <DeskCost lines={costLines} pricing={pricing} priceMinor={draft.priceMinor ?? null} onPrice={(priceMinor) => set({ priceMinor })} /> : null}
         </ScrollView>
       </View>

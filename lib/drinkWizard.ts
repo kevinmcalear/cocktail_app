@@ -441,6 +441,21 @@ export const amountOf = (s: string): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+/**
+ * The lines as poured into one drink: a batch line (lib/batchLines) becomes
+ * what's in its bottle, each its share of the line's pour by the bottle's
+ * ratio ("60 ml Ash Garden batch" is 45 ml mezcal and 15 ml agave syrup).
+ * The taste, the cost and the drawing use these; splitting a batch too.
+ */
+export function perDrink(lines: readonly WizardLine[]): WizardLine[] {
+  return lines.flatMap((l) => {
+    if (l.prep?.kind !== 'batch') return [l];
+    const total = l.prep.lines.reduce((sum, p) => sum + (p.parts ?? 0), 0);
+    const n = amountOf(l.amount);
+    return l.prep.lines.map((p) => ({ key: p.key, id: p.id, name: p.name, unit: l.unit, amount: n === null || !total ? '' : fmt((n * (p.parts ?? 0)) / total), ...(p.note ? { note: p.note } : null) }));
+  });
+}
+
 /** What the live sketch is drawn from. */
 export function sketchLook(d: WizardDraft, barVariants: readonly string[] = [], barIce: readonly string[] = []): DraftLook {
   return {
@@ -449,7 +464,8 @@ export function sketchLook(d: WizardDraft, barVariants: readonly string[] = [], 
     glass: d.glass?.name ?? null,
     ice: d.ice?.name ?? null,
     methods: d.methods.map((m) => m.name),
-    lines: [...d.lines, ...d.garnishes].map((l) => ({ name: l.name, amount: amountOf(l.amount), unit: l.unit || null })),
+    // A batch draws (and colours, and weighs) as what's in it.
+    lines: [...perDrink(d.lines), ...d.garnishes].map((l) => ({ name: l.name, amount: amountOf(l.amount), unit: l.unit || null })),
     variant: d.glassVariant ?? null,
     barVariants,
     barIce,

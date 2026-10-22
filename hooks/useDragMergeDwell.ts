@@ -2,21 +2,21 @@ import * as Haptics from 'expo-haptics';
 import { useCallback, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
-/** Confirm dialog is the accident net; dwell only needs to feel intentional. */
+/** Long enough to feel meant; a drag passing through to reorder never waits this long over one row. */
 export const MERGE_DWELL_MS = 700;
 
 /**
- * iOS-home-screen-style merge arming for react-native-draggable-flatlist:
- * hold a stable placeholder index → arm merge; onDragEnd uses merge instead of reorder.
+ * iOS-home-screen-style merge arming: hold a dragged row over another for a
+ * moment and that row is armed, so letting go merges instead of reordering
+ * (the add-drink lines: drop one on another to batch them). Feed it the row
+ * the drag is over (lib/dropIndex overIndex), null between rows.
  */
 export function useDragMergeDwell(enabled: boolean) {
     const fromRef = useRef<number | null>(null);
     const hoverRef = useRef<number | null>(null);
-    const pendingRef = useRef<number | null>(null);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const armedTargetRef = useRef<number | null>(null);
     const [mergeTargetIndex, setMergeTargetIndex] = useState<number | null>(null);
-    const [pendingTargetIndex, setPendingTargetIndex] = useState<number | null>(null);
 
     const clearTimer = () => {
         if (timerRef.current) {
@@ -27,78 +27,51 @@ export function useDragMergeDwell(enabled: boolean) {
 
     const disarm = useCallback(() => {
         clearTimer();
+        hoverRef.current = null;
         armedTargetRef.current = null;
-        pendingRef.current = null;
         setMergeTargetIndex(null);
-        setPendingTargetIndex(null);
     }, []);
 
     const onDragBegin = useCallback(
         (index: number) => {
             if (!enabled) return;
             fromRef.current = index;
-            hoverRef.current = index;
             disarm();
         },
         [enabled, disarm]
     );
 
-    const onPlaceholderIndexChange = useCallback(
-        (placeholderIndex: number) => {
+    const onHover = useCallback(
+        (index: number | null) => {
             if (!enabled || fromRef.current === null) return;
-
-            // Live reorder flickers placeholder back to `from` at row edges —
-            // ignore those so the dwell can finish (and stay armed).
-            if (placeholderIndex === fromRef.current) return;
-
-            hoverRef.current = placeholderIndex;
-
-            if (armedTargetRef.current === placeholderIndex) return;
-            // Same hover target — keep the in-flight timer.
-            if (pendingRef.current === placeholderIndex) return;
-
-            if (armedTargetRef.current !== null) {
-                armedTargetRef.current = null;
-                setMergeTargetIndex(null);
-            }
-            clearTimer();
-            pendingRef.current = placeholderIndex;
-            setPendingTargetIndex(placeholderIndex);
+            const target = index === fromRef.current ? null : index;
+            // Same row: keep the timer running (or stay armed).
+            if (target === hoverRef.current) return;
+            disarm();
+            if (target === null) return;
+            hoverRef.current = target;
             timerRef.current = setTimeout(() => {
-                if (hoverRef.current !== placeholderIndex) return;
-                if (fromRef.current === null || placeholderIndex === fromRef.current) return;
-                armedTargetRef.current = placeholderIndex;
-                setMergeTargetIndex(placeholderIndex);
+                if (hoverRef.current !== target) return;
+                armedTargetRef.current = target;
+                setMergeTargetIndex(target);
                 if (Platform.OS !== 'web') {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 }
             }, MERGE_DWELL_MS);
         },
-        [enabled]
+        [enabled, disarm]
     );
 
     const consumeMergeOnDragEnd = useCallback(
         (from: number): { from: number; target: number } | null => {
-            if (!enabled) {
-                disarm();
-                fromRef.current = null;
-                return null;
-            }
-            const target = armedTargetRef.current;
+            const target = enabled ? armedTargetRef.current : null;
             disarm();
             fromRef.current = null;
-            // Trust armed dwell target over release index (`to` can drift)
             if (target === null || target === from) return null;
             return { from, target };
         },
         [enabled, disarm]
     );
 
-    return {
-        mergeTargetIndex,
-        pendingTargetIndex,
-        onDragBegin,
-        onPlaceholderIndexChange,
-        consumeMergeOnDragEnd,
-    };
+    return { mergeTargetIndex, onDragBegin, onHover, consumeMergeOnDragEnd };
 }
