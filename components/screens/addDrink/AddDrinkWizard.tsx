@@ -42,6 +42,7 @@ import { SketchHeader } from './SketchHeader';
 import { StartFromClassic } from './StartFromClassic';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
+import { TellUs } from '@/components/feedback/TellUs';
 import { WizardFrame } from './WizardFrame';
 import { RoundStrip } from '@/components/screens/firstRound/RoundElsewhere';
 import { useFirstRound } from '@/hooks/useFirstRound';
@@ -158,6 +159,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   };
 
   const ingredients = dropdowns?.ingredients ?? [];
+  const tellUsAbout = { drinkName: draft.name, barId };
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const backBar = useBackBarIds(barId, ingredients);
   const copy = STEP_COPY[step];
@@ -210,7 +212,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         return (
           <IngredientsStep
             draft={draft}
-            set={set}
+            set={set} tellUs={tellUsAbout}
             ingredients={ingredients}
             loading={!dropdowns?.ingredients}
             aliases={dropdowns?.ingredientAliases}
@@ -231,13 +233,17 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
               why={serveCard ? null : guess.why}
               hint={<FoamerHint draft={draft} set={set} ingredients={ingredients} />}
             />
+            <TellUs screen="Adding a drink › Method" line="We’ll add your method to the app." {...tellUsAbout} />
           </>
         );
       case 'glass':
         return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
         return (
-          <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={barKit} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} />
+          <>
+            <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={barKit} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} />
+            <TellUs screen="Adding a drink › Ice" line="We’ll add your ice to the app." {...tellUsAbout} />
+          </>
         );
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;

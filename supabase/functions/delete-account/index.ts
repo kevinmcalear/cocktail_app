@@ -16,13 +16,15 @@ serveJson("delete-account", async (req) => {
     throw prepareError;
   }
 
-  // Avatars live under avatars/<user id>/.
-  const avatars = caller.admin.storage.from("avatars");
-  const { data: files, error: listError } = await avatars.list(userId);
-  if (listError) throw listError;
-  if (files.length > 0) {
-    const { error: removeError } = await avatars.remove(files.map((file) => `${userId}/${file.name}`));
-    if (removeError) throw removeError;
+  // Avatars and Tell us photos live under <bucket>/<user id>/.
+  for (const bucket of ["avatars", "feedback"]) {
+    const files = caller.admin.storage.from(bucket);
+    const { data, error: listError } = await files.list(userId);
+    if (listError) throw listError;
+    if (data.length > 0) {
+      const { error: removeError } = await files.remove(data.map((file) => `${userId}/${file.name}`));
+      if (removeError) throw removeError;
+    }
   }
 
   const { error: deleteError } = await caller.admin.auth.admin.deleteUser(userId);

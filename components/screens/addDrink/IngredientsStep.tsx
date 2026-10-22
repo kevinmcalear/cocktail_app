@@ -20,6 +20,7 @@ import { BalanceCard, CloseToClassic, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
+import type { TellUsAbout } from '@/components/feedback/TellUs';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { StartFromClassic } from './StartFromClassic';
 import { WizardChip, WizardNotice } from './WizardChrome';
@@ -44,6 +45,8 @@ interface IngredientsStepProps extends StepProps {
   balance?: boolean;
   /** Under each line's name on the desktop page: its supplier and cost. */
   lineDetail?: (line: WizardLine) => string | null;
+  /** Make it house's "Tell us": the bar a note would come from. */
+  tellUs?: TellUsAbout;
 }
 
 /**
@@ -52,7 +55,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, tellUs }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -251,6 +254,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         nudge={nudge && nudge.key === houseKey ? nudge : null}
         onPick={(t, adjunct) => houseLine && makeHouse(houseLine, t, adjunct)}
         onClose={() => setHouseKey(null)}
+        tellUs={tellUs}
       />
 
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
