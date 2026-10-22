@@ -10,7 +10,7 @@ import { withAlpha } from '@/lib/color';
 import { CAPABILITY_GROUPS, cell, columnCaption, isChangedBuiltIn, isLocked, type Cell } from '@/lib/roleMatrix';
 import { roleLabel } from '@/lib/roles';
 
-const LABEL_WIDTH = 240;
+const LABEL_WIDTH = 200;
 /** Phones keep room for two or three role columns beside the names (drink-role-lens-phone). */
 const LABEL_WIDTH_PHONE = 150;
 const COLUMN = 92;
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   column: { flexGrow: 1, flexBasis: COLUMN, minWidth: COLUMN, maxWidth: COLUMN_MAX, alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs, paddingHorizontal: space.xs },
   center: { textAlign: 'center' },
   you: { marginTop: 2, paddingHorizontal: space.sm, borderRadius: radius.pill },
-  edit: { alignItems: 'center', gap: 2, paddingVertical: space.xs, paddingHorizontal: space.sm, borderRadius: radius.control, borderWidth: 1 },
+  edit: { alignItems: 'center', gap: 2, paddingVertical: space.xs, paddingHorizontal: space.xs, borderRadius: radius.control, borderWidth: 1 },
   reset: { marginTop: 2, paddingVertical: 2, paddingHorizontal: space.xs },
   cell: { width: 40, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   mark: { width: MARK, height: MARK, borderRadius: radius.pill },

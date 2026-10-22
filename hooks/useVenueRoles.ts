@@ -112,7 +112,8 @@ export function useSetRoleCapability(barId: string | null | undefined) {
     onError: (_e, _v, context) => {
       if (context?.before) client.setQueryData(['role-matrix', barId], context.before);
     },
-    onSettled: invalidate,
+    // Not awaited: the toast and its Undo show as soon as the database says yes.
+    onSettled: () => void invalidate(),
   });
 }
 
