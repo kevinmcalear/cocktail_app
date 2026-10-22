@@ -46,7 +46,7 @@ export function Chip({ label, selected, onPress, quiet, multi, disabled, accessi
         {label}
       </DsText>
       {count ? (
-        <DsText variant="label" color={selected ? ds.c.ground : ds.c.muted} style={selected ? styles.quietCount : null}>
+        <DsText variant="label" color={selected ? text : ds.c.muted} style={selected ? styles.quietCount : null}>
           {count}
         </DsText>
       ) : null}

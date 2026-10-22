@@ -113,9 +113,10 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, foc
 }
 
 /**
- * Android, phone web and iOS before 26: the field docked at the bottom, with
+ * Android, phone web, iOS before 26, and iOS 27 until react-native-screens
+ * 4.29 (hooks/useBottomBar.ts): the field floats at the bottom in glass, with
  * where it searches inside it and the type chips over it; recents and results
- * scroll above (search-start, search-typing). While you type it rides on the
+ * scroll above and under it (search-start, search-typing). While you type it rides on the
  * keyboard and takes the tab bar's place (Android's keyboard covers the bar;
  * phone web hides its bar); with the keyboard down it sits just above the
  * tabs. The round x empties it and puts the keyboard away.
@@ -127,6 +128,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, focused, 
   const typing = useKeyboardHeight() > 0;
   const webKeyboard = useWebKeyboardInset();
   const [fieldFocused, setFieldFocused] = useState(false);
+  const [dockHeight, setDockHeight] = useState(layout.minTapTarget + space.lg);
   const dock = useRef<ComponentRef<typeof View>>(null);
   useKeepFieldFocus(dock);
   // Phone web: while the field has focus, it takes the tab bar's place.
@@ -146,29 +148,38 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, focused, 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm }]}>
       <Stack.Screen options={{ headerShown: false, headerSearchBarOptions: undefined }} />
-      <ScrollView
-        style={styles.screen}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={DISMISS}
-        // The web has no drag dismissal: blur the field when the results move.
-        onScrollBeginDrag={Platform.OS === 'web' ? Keyboard.dismiss : undefined}
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: space.sm, paddingBottom: space.lg, gap: space.lg }}
-      >
-        {query ? null : <Title role="heading">Search</Title>}
-        <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} show={show} onCounts={setCounts} typeAhead={setQuery} />
-      </ScrollView>
-      <View ref={dock} style={[styles.dock, { paddingHorizontal: gutter, paddingBottom: under + space.sm, backgroundColor: ds.c.ground }]}>
-        {query ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
-        <SearchField
-          query={query}
-          onQuery={setQuery}
-          // Short, so the place token beside it fits.
-          placeholder={scope === 'mine' ? 'Drinks, menus' : 'Bars, drinks'}
-          autoFocus={focused}
-          cancel
-          token={<Token scope={scope} setScope={setScope} mine={mine} />}
-          onFocusChange={setFieldFocused}
-        />
+      {/* Its own box above the keyboard's padding, so the dock pins to the results' bottom edge. */}
+      <View style={styles.screen}>
+        <ScrollView
+          style={styles.screen}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={DISMISS}
+          // The web has no drag dismissal: blur the field when the results move.
+          onScrollBeginDrag={Platform.OS === 'web' ? Keyboard.dismiss : undefined}
+          // The last rows scroll clear of the dock floating over them.
+          contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: space.sm, paddingBottom: dockHeight + space.lg, gap: space.lg }}
+        >
+          {query ? null : <Title role="heading">Search</Title>}
+          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} show={show} onCounts={setCounts} typeAhead={setQuery} />
+        </ScrollView>
+        <View
+          ref={dock}
+          onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
+          style={[styles.dock, { paddingHorizontal: gutter, paddingBottom: under + space.sm }]}
+        >
+          {query ? <ShowChips show={show} onShow={setShow} counts={counts} glass /> : null}
+          <SearchField
+            query={query}
+            onQuery={setQuery}
+            // Short, so the place token beside it fits.
+            placeholder={scope === 'mine' ? 'Drinks, menus' : 'Bars, drinks'}
+            autoFocus={focused}
+            cancel
+            glass
+            token={<Token scope={scope} setScope={setScope} mine={mine} />}
+            onFocusChange={setFieldFocused}
+          />
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -232,6 +243,7 @@ function useWebKeyboardInset() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  dock: { paddingTop: space.sm, gap: space.sm },
+  // Floats over the results' bottom edge: the field and chips are glass, and the rows show through around them.
+  dock: { position: 'absolute', left: 0, right: 0, bottom: 0, pointerEvents: 'box-none', paddingTop: space.sm, gap: space.sm },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
