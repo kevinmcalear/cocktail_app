@@ -11,10 +11,10 @@ const mockRemove = jest.fn();
 const mockShelfAdd = jest.fn();
 let mockCaps: string[] = ['edit_drinks'];
 let mockFixed = new Map<string, string>();
-let mockStocked = new Set<string>();
+let mockStocked = new Map<string, { item_id: string; source: string; from_name: string | null; added_at: string }>();
 
 jest.mock('@/hooks/useBackBar', () => ({
-  useBackBarParts: () => ({ fixed: mockFixed, stocked: mockStocked }),
+  useBackBarParts: () => ({ fixed: mockFixed, stocked: mockStocked, ids: new Set([...mockFixed.keys(), ...mockStocked.keys()]) }),
   useStockMutations: () => ({ add: { mutate: mockAdd }, remove: { mutate: mockRemove } }),
 }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: mockCaps }) }));
@@ -49,7 +49,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockCaps = ['edit_drinks'];
   mockFixed = new Map([['campari', 'pour']]);
-  mockStocked = new Set();
+  mockStocked = new Map();
 });
 
 describe('the bottle on the line', () => {
@@ -63,6 +63,15 @@ describe('the bottle on the line', () => {
     expect(screen.getByText('Del Maguey Vida is on Little Rye’s back bar')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Undo: Del Maguey Vida is on Little Rye’s back bar' }));
     expect(mockRemove).toHaveBeenCalledWith('vida');
+  });
+
+  test('switched off, Undo puts its row back as it was, not as added from this drink', async () => {
+    mockStocked = new Map([['vida', { item_id: 'vida', source: 'setup', from_name: null, added_at: '2026-10-01T12:00:00.000Z' }]]);
+    await renderWithTamagui(<Lines />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Del Maguey Vida is on Little Rye’s back bar' }));
+    expect(mockRemove).toHaveBeenCalledWith('vida');
+    await fireEvent.press(screen.getByRole('button', { name: 'Undo: Del Maguey Vida is off Little Rye’s back bar' }));
+    expect(mockAdd).toHaveBeenCalledWith({ item: { id: 'vida', name: 'Del Maguey Vida' }, source: 'setup', fromName: null, addedAt: '2026-10-01T12:00:00.000Z' });
   });
 
   test('a bottle another drink pours stays on, and the tap says why', async () => {

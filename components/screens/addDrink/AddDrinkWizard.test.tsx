@@ -42,7 +42,7 @@ jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mo
 jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: mockBarKit }) }));
 jest.mock('@/hooks/useBackBar', () => ({
   useBackBarIds: () => new Set(),
-  useBackBarParts: () => ({ fixed: new Map(), stocked: new Set() }),
+  useBackBarParts: () => ({ fixed: new Map(), stocked: new Map(), ids: new Set() }),
   useStockMutations: () => ({ add: { mutate: jest.fn() }, remove: { mutate: jest.fn() } }),
 }));
 jest.mock('@/hooks/useCreateDrink', () => ({ useCreateDrink: () => ({ mutate: mockCreate, isPending: false }) }));

@@ -1,5 +1,5 @@
 import { useToast } from '@/components/ds';
-import { useBottleSpots } from '@/hooks/useBackBar';
+import { useBottleSpots, type StockRow } from '@/hooks/useBackBar';
 import { useUndoSwap } from '@/hooks/useBulk';
 import { plainDbMessage } from '@/lib/dbError';
 import type { ItemLocation } from '@/types/backBar';
@@ -15,6 +15,8 @@ export interface BottleDone {
   moved: string[];
   /** Spots taken off, whole. */
   removed: Omit<ItemLocation, 'item'>[];
+  /** The old bottle's stock list row, taken off with its spots. */
+  stock: StockRow | null;
 }
 
 /**
@@ -36,14 +38,24 @@ export function useBottleToast(barId: string | null) {
         onPress: () => {
           if (used) return;
           used = true;
+          // Each part goes back on its own: spots that can't return still leave the bottle on the stock list, under Waiting for a spot.
+          const { stock } = done;
+          const steps = [
+            done.undone.length ? () => undo.mutateAsync(done.undone) : null,
+            done.moved.length ? () => spots.pointBack.mutateAsync({ ids: done.moved, itemId: done.bottle.id }) : null,
+            done.removed.length ? () => spots.putBack.mutateAsync(done.removed) : null,
+            stock ? () => spots.restock.mutateAsync(stock) : null,
+          ];
           void (async () => {
-            try {
-              if (done.undone.length) await undo.mutateAsync(done.undone);
-              if (done.moved.length) await spots.pointBack.mutateAsync({ ids: done.moved, itemId: done.bottle.id });
-              if (done.removed.length) await spots.putBack.mutateAsync(done.removed);
-            } catch (e) {
-              toast.show({ title: 'Couldn’t undo all of it', detail: plainDbMessage(e) ?? 'Check your connection. Old specs stay in each drink’s history.' });
+            let failed: unknown = null;
+            for (const step of steps) {
+              try {
+                await step?.();
+              } catch (e) {
+                failed ??= e;
+              }
             }
+            if (failed) toast.show({ title: 'Couldn’t undo all of it', detail: plainDbMessage(failed) ?? 'Check your connection. Old specs stay in each drink’s history.' });
           })();
         },
       },
