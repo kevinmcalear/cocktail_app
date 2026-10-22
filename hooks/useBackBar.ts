@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { useSwapSource } from '@/hooks/useBulk';
+import { useBarStock } from '@/hooks/useBarStock';
 import { useTonight } from '@/hooks/useTonight';
-import { ingredientsUsed, waitingForSpot, type NamedItem } from '@/lib/backBar';
+import { ingredientsUsed, waitingForSpot, type NamedItem, type UsedItem } from '@/lib/backBar';
 import { showMessage } from '@/lib/dialogs';
 import { supabase } from '@/lib/supabase';
 import type { BarZone, BarZoneKind, ItemLocation } from '@/types/backBar';
@@ -41,20 +41,31 @@ export function useItemLocations(barId: string | null | undefined) {
 }
 
 /**
- * The venue's back bar as item ids: its own bottles, what its specs already
- * pour, and what has a spot on its map. Empty at home (no venue).
+ * The venue's back bar as item ids: the bottles it stocks (its stock list, or
+ * a spot on its map) and its own house-made things. Empty at home (no venue).
+ * What a spec pours doesn't count on its own: a bottle a menu drink pours
+ * with neither is waiting for a spot.
  */
 export function useBackBarIds(barId: string | null | undefined, catalog: readonly { id: string; bar_id?: string | null }[]): Set<string> {
-  const pours = useSwapSource(barId ?? null);
+  const stocked = useStockedIds(barId);
+  return useMemo(() => {
+    const ids = new Set(stocked);
+    if (!barId) return ids;
+    for (const i of catalog) if (i.bar_id === barId) ids.add(i.id);
+    return ids;
+  }, [barId, stocked, catalog]);
+}
+
+/** What the venue stocks, as item ids: its stock list and everything with a spot. The bottle on a spec line reads this. */
+export function useStockedIds(barId: string | null | undefined): Set<string> {
+  const stock = useBarStock(barId);
   const spots = useItemLocations(barId);
   return useMemo(() => {
     const ids = new Set<string>();
-    if (!barId) return ids;
-    for (const d of pours.data?.drinks ?? []) for (const l of d.lines) if (l.ingredientId) ids.add(l.ingredientId);
+    for (const s of stock.data ?? []) ids.add(s.item_id);
     for (const s of spots.data ?? []) ids.add(s.item_id);
-    for (const i of catalog) if (i.bar_id === barId) ids.add(i.id);
     return ids;
-  }, [barId, pours.data, spots.data, catalog]);
+  }, [stock.data, spots.data]);
 }
 
 interface RecipeRow {
@@ -75,9 +86,10 @@ function useMenuIngredients(barId: string | null | undefined) {
   // Menu order, so the waiting list reads like the menu; sorted only for the cache key.
   const drinkIds = useMemo(() => [...new Set(drinks.map((d) => d.id))], [drinks]);
   const query = useQuery({
-    queryKey: ['menu-ingredients', barId, [...drinkIds].sort()],
+    // 'by-drink': each ingredient now says which drinks pour it, so a cache persisted before that isn't read back.
+    queryKey: ['menu-ingredients', barId, [...drinkIds].sort(), 'by-drink'],
     enabled: !!barId && drinkIds.length > 0,
-    queryFn: async (): Promise<NamedItem[]> => {
+    queryFn: async (): Promise<UsedItem[]> => {
       const recipeOf: Record<string, NamedItem[]> = {};
       const fetched = new Set<string>();
       let frontier = drinkIds;
@@ -100,15 +112,23 @@ function useMenuIngredients(barId: string | null | undefined) {
       return ingredientsUsed(drinkIds, recipeOf);
     },
   });
-  return { data: query.data ?? [], isLoading: menusLoading || query.isLoading, error: query.error };
+  return { data: query.data ?? [], drinks, isLoading: menusLoading || query.isLoading, error: query.error };
 }
 
-/** Ingredients the current menus need that have no place at the venue yet. */
+/**
+ * What has no place at the venue yet: the bottles it stocks (put on the back
+ * bar from a spec line) and the ingredients its current menus need.
+ */
 export function useWaitingForSpot(barId: string | null | undefined) {
   const used = useMenuIngredients(barId);
   const locations = useItemLocations(barId);
-  const waiting = useMemo(() => waitingForSpot(used.data, locations.data ?? []), [used.data, locations.data]);
-  return { waiting, isLoading: used.isLoading || locations.isLoading };
+  const stock = useBarStock(barId);
+  const waiting = useMemo(() => {
+    const names = new Map(used.drinks.map((d) => [d.id, d.name]));
+    const stocked = (stock.data ?? []).flatMap((s) => (s.item ? [{ id: s.item_id, name: s.item.name, added_from: s.added_from, added_at: s.added_at }] : []));
+    return waitingForSpot(used.data, locations.data ?? [], stocked, (id) => names.get(id));
+  }, [used.data, used.drinks, locations.data, stock.data]);
+  return { waiting, isLoading: used.isLoading || locations.isLoading || stock.isLoading };
 }
 
 function onWriteError(error: Error) {

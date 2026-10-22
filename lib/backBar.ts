@@ -4,6 +4,9 @@
 
 import type { BarZoneKind } from '@/types/backBar';
 
+import { barSection } from './barSections';
+import { friendlyWhen } from './searchCaptions';
+
 /**
  * Every plan is drawn 2:1. ponytail: one shape for every venue; a per-venue
  * aspect (a column on bars) if a long, thin bar ever needs it.
@@ -111,34 +114,97 @@ export interface NamedItem {
   name: string;
 }
 
+/** An ingredient the drinks use, and which of them pour it (down through house-made ones). */
+export interface UsedItem extends NamedItem {
+  drinkIds: string[];
+}
+
 /**
  * Every ingredient the drinks use, walking down through house-made ones (a
- * syrup's honey and ginger need a spot too). In spec order, each once, and
- * never the drinks themselves.
+ * syrup's honey and ginger need a spot too). Drink by drink in menu order,
+ * each ingredient once, and never the drinks themselves.
  */
-export function ingredientsUsed(drinkIds: string[], recipeOf: Record<string, NamedItem[]>): NamedItem[] {
-  const seen = new Set(drinkIds);
-  const out: NamedItem[] = [];
-  let frontier = drinkIds;
-  while (frontier.length) {
-    const next: string[] = [];
-    for (const id of frontier) {
-      for (const ing of recipeOf[id] ?? []) {
-        if (seen.has(ing.id)) continue;
-        seen.add(ing.id);
-        out.push(ing);
-        next.push(ing.id);
+export function ingredientsUsed(drinkIds: string[], recipeOf: Record<string, NamedItem[]>): UsedItem[] {
+  const drinks = new Set(drinkIds);
+  const used = new Map<string, UsedItem>();
+  for (const drink of drinkIds) {
+    const seen = new Set([drink]);
+    let frontier = [drink];
+    while (frontier.length) {
+      const next: string[] = [];
+      for (const id of frontier) {
+        for (const ing of recipeOf[id] ?? []) {
+          if (seen.has(ing.id) || drinks.has(ing.id)) continue;
+          seen.add(ing.id);
+          const item = used.get(ing.id) ?? { ...ing, drinkIds: [] };
+          item.drinkIds.push(drink);
+          used.set(ing.id, item);
+          next.push(ing.id);
+        }
       }
+      frontier = next;
     }
-    frontier = next;
+  }
+  return [...used.values()];
+}
+
+/** A bottle on the venue's stock list (types/backBar BarStock), as the waiting list reads it. */
+export interface StockedItem extends NamedItem {
+  added_from: string | null;
+  added_at: string;
+}
+
+/** Waiting for a spot: what it is, and why it's waiting ("Added from Ash Garden, just now", "Poured in Low Tide"). */
+export interface WaitingItem extends NamedItem {
+  line: string;
+}
+
+/**
+ * The bottles the venue stocks and the ingredients its menus use, with no
+ * place yet. Stocked ones first, newest first; then the menus', in menu order.
+ */
+export function waitingForSpot(
+  used: UsedItem[],
+  locations: { item_id: string }[],
+  stock: StockedItem[] = [],
+  drinkName: (id: string) => string | undefined = () => undefined,
+  now = Date.now()
+): WaitingItem[] {
+  const placed = new Set(locations.map((l) => l.item_id));
+  const out: WaitingItem[] = [];
+  const newest = [...stock].sort((a, b) => b.added_at.localeCompare(a.added_at));
+  for (const s of newest) {
+    if (placed.has(s.id)) continue;
+    placed.add(s.id);
+    const when = friendlyWhen(new Date(s.added_at).getTime(), now);
+    out.push({ id: s.id, name: s.name, line: s.added_from ? `Added from ${s.added_from}, ${when}` : `Added ${when}` });
+  }
+  for (const u of used) {
+    if (placed.has(u.id)) continue;
+    const one = u.drinkIds.length === 1 ? drinkName(u.drinkIds[0]) : undefined;
+    out.push({ id: u.id, name: u.name, line: one ? `Poured in ${one}` : `Poured in ${plural(u.drinkIds.length, 'drink', 'drinks')}` });
   }
   return out;
 }
 
-/** The used items with no place at the venue yet. */
-export function waitingForSpot(used: NamedItem[], locations: { item_id: string }[]): NamedItem[] {
-  const placed = new Set(locations.map((l) => l.item_id));
-  return used.filter((i) => !placed.has(i.id));
+interface LineIngredient {
+  name: string | null;
+  bar_id?: string | null;
+  ingredient_role?: string | null;
+}
+
+/**
+ * Whether a spec line's ingredient can go on a back bar or a shelf: bottles
+ * (spirits, liqueurs, vermouth, beer, wine, bitters, syrups). Not juice,
+ * garnish, water or a mixer, not lab powders, and not the bar's own house
+ * preps (a drink's own batch). The catalogue's preps (agave syrup,
+ * grenadine) are bought as often as made, so they count. `generic` is its
+ * kind's name, if any.
+ */
+export function isShelfBottle(item: LineIngredient, generic: string | null = null): boolean {
+  if (item.bar_id && item.ingredient_role !== 'product') return false;
+  const section = barSection({ name: item.name ?? '', kind: generic, role: item.ingredient_role });
+  return section !== 'fridge' && section !== 'lab';
 }
 
 const KIND_WORDS: [RegExp, BarZoneKind][] = [

@@ -187,6 +187,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         aliases={dropdowns?.ingredientAliases}
         shelf={barId ? undefined : new Set(shelfIds ?? [])}
         backBar={barId ? backBar : undefined}
+        bottles={{ barId, venueName }}
         onStartOver={startOver}
         saving={create.isPending}
         canSave={canSave(draft)}
@@ -217,6 +218,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
             coreIds={coreIds}
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
             backBar={barId ? backBar : undefined}
+            bottles={{ barId, venueName }}
           />
         );
       case 'method':

@@ -18,6 +18,7 @@ import { getPreferredUnit } from '@/store/useSettingsStore';
 import { DragRow } from './DragRow';
 import { BalanceCard, CloseToClassic, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
+import { LineBottle, LineBottles, type LineBottlePlace } from './LineBottle';
 import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
 import { PrepBuilder } from './prep/PrepBuilder';
@@ -44,6 +45,8 @@ interface IngredientsStepProps extends StepProps {
   balance?: boolean;
   /** Under each line's name on the desktop page: its supplier and cost. */
   lineDetail?: (line: WizardLine) => string | null;
+  /** A bottle on each line that puts it on this venue's back bar, or your shelf at home. */
+  bottles?: LineBottlePlace;
 }
 
 /**
@@ -52,7 +55,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, bottles }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -139,51 +142,54 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   return (
     <View style={styles.stack}>
       {draft.lines.length ? (
-        <View role="list" aria-label="In the drink">
-          {draft.lines.map((l, i) => (
-            <DragRow key={l.key} index={i} onDrop={drop} onHeight={(h) => (heights.current[l.key] = h)}>
-              {(grip, lifted) =>
-                // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
-                l.key === swapKey ? (
-                  <View style={[styles.swap, { borderBottomColor: ds.c.line }]}>
-                    <IngredientSearch
-                      {...search}
-                      label={`Swap ${l.name} for…`}
-                      autoFocus
-                      onCancel={() => setSwapKey(null)}
-                      onPick={(p) => {
-                        // A different ingredient isn't the house prep that was here.
-                        change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined });
-                        setSwapKey(null);
-                      }}
-                      onMake={
-                        forDrink
-                          ? (name) => {
-                              make(name, l.key);
-                              setSwapKey(null);
-                            }
-                          : undefined
-                      }
+        <LineBottles place={bottles} drinkName={draft.name} ingredients={ingredients}>
+          <View role="list" aria-label="In the drink">
+            {draft.lines.map((l, i) => (
+              <DragRow key={l.key} index={i} onDrop={drop} onHeight={(h) => (heights.current[l.key] = h)}>
+                {(grip, lifted) =>
+                  // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
+                  l.key === swapKey ? (
+                    <View style={[styles.swap, { borderBottomColor: ds.c.line }]}>
+                      <IngredientSearch
+                        {...search}
+                        label={`Swap ${l.name} for…`}
+                        autoFocus
+                        onCancel={() => setSwapKey(null)}
+                        onPick={(p) => {
+                          // A different ingredient isn't the house prep that was here.
+                          change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined });
+                          setSwapKey(null);
+                        }}
+                        onMake={
+                          forDrink
+                            ? (name) => {
+                                make(name, l.key);
+                                setSwapKey(null);
+                              }
+                            : undefined
+                        }
+                      />
+                    </View>
+                  ) : (
+                    <LineRow
+                      line={l}
+                      grip={grip}
+                      lifted={lifted}
+                      onMove={(by) => move(i, i + by)}
+                      onChange={(c) => change(l.key, c)}
+                      onRemove={() => remove(l)}
+                      onSwap={() => setSwapKey(l.key)}
+                      onEditPrep={() => setMaking({ name: l.name, key: l.key })}
+                      onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
+                      detail={lineDetail?.(l)}
+                      bottle={<LineBottle line={l} />}
                     />
-                  </View>
-                ) : (
-                  <LineRow
-                    line={l}
-                    grip={grip}
-                    lifted={lifted}
-                    onMove={(by) => move(i, i + by)}
-                    onChange={(c) => change(l.key, c)}
-                    onRemove={() => remove(l)}
-                    onSwap={() => setSwapKey(l.key)}
-                    onEditPrep={() => setMaking({ name: l.name, key: l.key })}
-                    onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
-                    detail={lineDetail?.(l)}
-                  />
-                )
-              }
-            </DragRow>
-          ))}
-        </View>
+                  )
+                }
+              </DragRow>
+            ))}
+          </View>
+        </LineBottles>
       ) : null}
       {draft.lines.length > 1 ? <Caption tone="muted">{Platform.OS === 'web' ? 'Drag a grip to reorder.' : 'Hold a grip to reorder.'}</Caption> : null}
 

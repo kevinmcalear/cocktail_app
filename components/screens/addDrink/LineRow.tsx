@@ -33,6 +33,8 @@ interface LineRowProps {
   onMove?: (by: -1 | 1) => void;
   /** Being dragged: lifted over the lines under it. */
   lifted?: boolean;
+  /** Just before remove: the bottle that says it's on the back bar or your shelf (LineBottle). */
+  bottle?: ReactNode;
 }
 
 /**
@@ -42,7 +44,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name; on a wider screen they share
  * its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted, bottle }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   const stacked = useBreakpoint() === 'phone';
@@ -152,6 +154,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
             </PressableScale>
           </View>
         </View>
+        {bottle}
         <PressableScale onPress={onRemove} role="button" accessibilityLabel={`Remove ${line.name}`} style={styles.remove}>
           <IconSymbol name="xmark" size={16} color={ds.c.muted} />
         </PressableScale>

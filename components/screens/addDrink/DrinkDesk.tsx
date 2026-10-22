@@ -25,6 +25,7 @@ import { FinishStep } from './FinishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
 import type { CatalogIngredient } from './IngredientSearch';
+import type { LineBottlePlace } from './LineBottle';
 import { IceStep } from './IceStep';
 import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
@@ -47,6 +48,7 @@ export interface DrinkDeskProps {
   coreIds: ReadonlySet<string>;
   shelf?: ReadonlySet<string>;
   backBar?: ReadonlySet<string>;
+  bottles?: LineBottlePlace;
   methods: WizardPick[];
   glasses: WizardPick[];
   ices: WizardPick[];
@@ -158,6 +160,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             coreIds={p.coreIds}
             shelf={p.shelf}
             backBar={p.backBar}
+            bottles={p.bottles}
             balance={false}
             lineDetail={lineDetail}
           />

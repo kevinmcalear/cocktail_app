@@ -47,3 +47,13 @@ export interface ItemLocation {
   /** Embedded; null when the item isn't visible to the reader. */
   item: { id: string; name: string } | null;
 }
+
+/** A bottle the venue stocks, with or without a spot (supabase/migrations/20261101100000_bar_stock.sql). */
+export interface BarStock {
+  item_id: string;
+  /** The drink it was put on the back bar from, by name ("Ash Garden"). */
+  added_from: string | null;
+  added_at: string;
+  /** Embedded; null when the item isn't visible to the reader. */
+  item: { id: string; name: string } | null;
+}

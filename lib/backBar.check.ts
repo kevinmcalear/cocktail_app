@@ -6,6 +6,7 @@ import {
   kindFromName,
   freeSpot,
   ingredientsUsed,
+  isShelfBottle,
   locationLine,
   moveRectTo,
   nudgeRect,
@@ -89,9 +90,10 @@ const recipeOf = {
 const used = ingredientsUsed(['penicillin', 'martini'], recipeOf);
 assert.deepEqual(
   used.map((i) => i.id),
-  ['scotch', 'lemon', 'syrup', 'gin', 'honey', 'ginger'],
-  'every ingredient once, house-made ones walked down, in spec order'
+  ['scotch', 'lemon', 'syrup', 'honey', 'ginger', 'gin'],
+  'every ingredient once, house-made ones walked down, drink by drink in menu order'
 );
+assert.deepEqual(used.find((i) => i.id === 'honey')?.drinkIds, ['penicillin'], 'a syrup’s honey is poured in the drink the syrup is in');
 assert.deepEqual(ingredientsUsed([], recipeOf), []);
 assert.deepEqual(
   ingredientsUsed(['penicillin', 'syrup'], recipeOf).map((i) => i.id),
@@ -99,9 +101,56 @@ assert.deepEqual(
   'a drink never counts as its own ingredient'
 );
 assert.deepEqual(
-  waitingForSpot(used, [{ item_id: 'scotch' }, { item_id: 'syrup' }, { item_id: 'unrelated' }]).map((i) => i.id),
-  ['lemon', 'gin', 'honey', 'ginger']
+  ingredientsUsed(['penicillin', 'gold-rush'], { ...recipeOf, 'gold-rush': [{ id: 'syrup', name: 'Honey-ginger syrup' }] }).find((i) => i.id === 'syrup')?.drinkIds,
+  ['penicillin', 'gold-rush'],
+  'each drink that pours it'
 );
+assert.deepEqual(
+  waitingForSpot(used, [{ item_id: 'scotch' }, { item_id: 'syrup' }, { item_id: 'unrelated' }]).map((i) => i.id),
+  ['lemon', 'honey', 'ginger', 'gin']
+);
+
+// --- waiting for a spot: the stock list first, newest first, then the menus ---
+const now = new Date(2026, 9, 22, 18, 0).getTime();
+const names: Record<string, string> = { penicillin: 'Penicillin', martini: 'Martini' };
+const waiting = waitingForSpot(
+  ingredientsUsed(['penicillin', 'gold-rush'], { ...recipeOf, 'gold-rush': [{ id: 'syrup', name: 'Honey-ginger syrup' }] }),
+  [{ item_id: 'scotch' }, { item_id: 'vida-placed' }],
+  [
+    { id: 'campari', name: 'Campari', added_from: null, added_at: new Date(now - 3 * 3600_000).toISOString() },
+    { id: 'vida', name: 'Del Maguey Vida', added_from: 'Ash Garden', added_at: new Date(now - 10_000).toISOString() },
+    { id: 'vida-placed', name: 'Placed already', added_from: null, added_at: new Date(now).toISOString() },
+    { id: 'lemon', name: 'Lemon juice', added_from: 'Penicillin', added_at: new Date(now - 60_000).toISOString() },
+  ],
+  (id) => names[id],
+  now
+);
+assert.deepEqual(
+  waiting.map((w) => [w.name, w.line]),
+  [
+    ['Del Maguey Vida', 'Added from Ash Garden, just now'],
+    ['Lemon juice', 'Added from Penicillin, 1 minute ago'],
+    ['Campari', 'Added 3 hours ago'],
+    ['Honey-ginger syrup', 'Poured in 2 drinks'],
+    ['Honey', 'Poured in 2 drinks'],
+    ['Ginger', 'Poured in 2 drinks'],
+  ],
+  'a stocked bottle with a spot is placed; stocked and poured shows once, as stocked'
+);
+assert.equal(waitingForSpot([{ id: 'x', name: 'X', drinkIds: ['gone'] }], []).at(0)?.line, 'Poured in 1 drink', 'a drink with no name known is counted');
+
+// --- which lines get the back bar bottle ---
+assert.equal(isShelfBottle({ name: 'Del Maguey Vida', ingredient_role: 'product' }, 'Mezcal'), true);
+assert.equal(isShelfBottle({ name: 'Mezcal', ingredient_role: 'generic' }), true, 'a plain kind of spirit');
+assert.equal(isShelfBottle({ name: 'Agave syrup', ingredient_role: 'prep' }), true, 'the catalogue’s syrup, bought as often as made');
+assert.equal(isShelfBottle({ name: 'Campari', ingredient_role: null }), true);
+assert.equal(isShelfBottle({ name: 'Lime juice', ingredient_role: 'generic' }), false, 'juice');
+assert.equal(isShelfBottle({ name: 'Orange peel', ingredient_role: 'generic' }), false, 'garnish');
+assert.equal(isShelfBottle({ name: 'Water', ingredient_role: null }), false, 'water');
+assert.equal(isShelfBottle({ name: 'Citric acid', ingredient_role: 'generic' }), false, 'lab powder');
+assert.equal(isShelfBottle({ name: 'Smoke Signal batch', ingredient_role: 'prep', bar_id: 'rye' }), false, 'the drink’s own batch');
+assert.equal(isShelfBottle({ name: 'Honey-ginger syrup', bar_id: 'rye' }), false, 'a house prep');
+assert.equal(isShelfBottle({ name: 'Rye house gin', bar_id: 'rye', ingredient_role: 'product' }), true, 'a bottle the bar added itself');
 
 console.log('backBar checks passed');
 
