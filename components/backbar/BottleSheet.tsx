@@ -82,25 +82,29 @@ export function BottleSheet({ barId, location, canEditDrinks, onMove, onEdit, on
         if (result.error) {
           // What finished can still be undone; the spots stay as they were. Closed, so a retry starts from fresh specs.
           if (undone.length) {
-            onDone({ title: result.error, bottle, replaceWith, undone, moved: [], removed: [] });
+            onDone({ title: result.error, bottle, replaceWith, undone, moved: [], removed: [], stock: null });
             onClose();
           } else setError(result.error);
           return;
         }
       }
-      const moved = goal === 'replace' && replaceWith ? await spots.replace.mutateAsync({ fromId: bottle.id, toId: replaceWith.id }) : [];
-      const removed = goal === 'off' ? await spots.takeOff.mutateAsync(bottle.id) : [];
+      const changed =
+        goal === 'off'
+          ? { moved: [], ...(await spots.takeOff.mutateAsync(bottle.id)) }
+          : replaceWith
+            ? { removed: [], ...(await spots.replace.mutateAsync({ fromId: bottle.id, toId: replaceWith.id })) }
+            : { moved: [], removed: [], stock: null };
       const poured = undone.length ? `${pourCount(chosen)} now ${chosen.length === 1 ? 'pours' : 'pour'} ${replaceWith?.name}` : null;
       const title =
         goal === 'off'
           ? `${bottle.name} is off the back bar`
           : (poured ?? `${replaceWith?.name} replaced ${bottle.name} on the back bar`);
-      onDone({ title, detail: goal === 'off' ? (poured ?? undefined) : undefined, bottle, replaceWith, undone, moved, removed });
+      onDone({ title, detail: goal === 'off' ? (poured ?? undefined) : undefined, bottle, replaceWith, undone, ...changed });
       onClose();
     } catch (e) {
       const message = plainDbMessage(e) ?? 'That didn’t save. Check your connection and try again.';
       // The drinks changed but the spots didn't: still offer Undo for the drinks.
-      if (undone.length) onDone({ title: `The drinks changed, the back bar didn’t. ${message}`, bottle, replaceWith, undone, moved: [], removed: [] });
+      if (undone.length) onDone({ title: `The drinks changed, the back bar didn’t. ${message}`, bottle, replaceWith, undone, moved: [], removed: [], stock: null });
       setError(message);
     } finally {
       setBusy(false);

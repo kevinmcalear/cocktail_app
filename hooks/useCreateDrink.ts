@@ -6,11 +6,14 @@ import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
 import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
-import { saveDrinkSpec } from '@/hooks/useVersions';
+import { useRefreshSpecs } from '@/hooks/useBulk';
+import { saveDrinkSpec, type SpecLineInput } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
 import { batchPrep } from '@/lib/batchLines';
 import { plainDbMessage } from '@/lib/dbError';
+import { orderedMethodIds } from '@/lib/drinkMethods';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
+import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import type { ImageAngle } from '@/lib/itemImages';
@@ -18,6 +21,7 @@ import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
 import { prepCardFor } from '@/lib/techniques/makeIt';
+import { ontoBarLines } from '@/lib/sameName';
 import type { SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
@@ -33,6 +37,12 @@ export interface CreateDrinkInput {
   menuSectionId?: string | null;
   /** The drawing the wizard showed (draftSketchInputs): the new drink shows it at once, not its glass icon. */
   sketch?: SketchInputs | null;
+  /**
+   * Bring in's "Update it" (board dup-drink-warning): this existing drink
+   * takes the draft's spec as a new version (save_drink_spec, the editor's
+   * save), and nothing else about it changes. No drink is made.
+   */
+  updateId?: string | null;
 }
 
 export interface CreateDrinkResult {
@@ -58,9 +68,10 @@ type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
 export function useCreateDrink() {
   const qc = useQueryClient();
   const userId = useUserId();
+  const refreshSpecs = useRefreshSpecs();
 
   return useMutation({
-    mutationFn: async ({ draft, barId, myProfileId, menuSectionId, sketch }: CreateDrinkInput): Promise<CreateDrinkResult> => {
+    mutationFn: async ({ draft, barId, myProfileId, menuSectionId, sketch, updateId }: CreateDrinkInput): Promise<CreateDrinkResult> => {
       if (!userId) throw new Error('Sign in to save drinks.');
       const warnings: string[] = [];
       // New rows the pickers' lists don't have yet: ingredients by id, spec items (glass, method, ice) at all.
@@ -160,7 +171,7 @@ export function useCreateDrink() {
         return data.id;
       };
 
-      const lines = [];
+      const lines: SpecLineInput[] = [];
       // New house preps made by a technique, to get their prep card once the drink is in.
       const preps: { id: string; technique: string }[] = [];
       // New house preps with their own recipe (made in the wizard), saved once the drink is in.
@@ -188,6 +199,17 @@ export function useCreateDrink() {
       }
       const methodIds: string[] = [];
       for (const m of draft.methods) methodIds.push(await ensure(m, 'method'));
+      if (updateId) {
+        // Its ranks, photos and menus stay; the spec it had is the version before, so it can be put back.
+        // ponytail: a house prep's own recipe made with the sheet isn't written here (Bring in reads none); write it on the drink's page.
+        const [had, hadMethods] = await Promise.all([fetchEditableRecipes(updateId), supabase.from('item_methods').select('method_item_id, sort_order').eq('item_id', updateId)]);
+        if (hadMethods.error) throw hadMethods.error;
+        // Its own rows keep their notes and service decisions, and a sheet that names no method we know (it went to notes) keeps the drink's.
+        await saveDrinkSpec(updateId, ontoBarLines(lines, had), methodIds.length ? methodIds : orderedMethodIds(hadMethods.data), 'Updated from Bring in');
+        void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
+        void refreshSpecs({ drinkIds: [updateId], ingredientIds: newIngredients });
+        return { id: updateId, warnings, created, later };
+      }
       const glassId = draft.glass ? await ensure(draft.glass, 'glassware') : null;
       const iceId = draft.ice ? await ensure(draft.ice, 'ice') : null;
       const methodIceId = draft.methodIce ? await ensure(draft.methodIce, 'ice') : null;
@@ -328,6 +350,8 @@ export function useCreateDrink() {
       if (sketch) qc.setQueryData(['item-sketch', id], sketch);
       useRecentActivityStore.getState().push(recentEntry('cocktail', id, capitalize(draft.name), { barId }));
       void qc.invalidateQueries({ queryKey: ['cocktails'] });
+      // The next drink by this name is told the bar has one now (useSameNameDrink).
+      void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
       if (newSpecs) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);

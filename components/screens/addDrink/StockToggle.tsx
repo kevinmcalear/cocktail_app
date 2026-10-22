@@ -26,6 +26,8 @@ export interface LineStock {
   footer: ReactNode;
   /** The note with Undo, for the wizard's pinned footer (`pinned`); null otherwise. */
   note: ReactNode;
+  /** The venue's back bar as item ids, for the ingredient search (hooks/useBackBar useBackBarIds). */
+  backBar: ReadonlySet<string>;
 }
 
 interface Note {
@@ -62,7 +64,7 @@ export function useLineStock({ barId, venueName, drinkName, ingredients, lines, 
   const ds = useDs();
   const [note, setNote] = useExpiring<Note>(NOTE_MS);
 
-  const { fixed, stocked } = useBackBarParts(barId, ingredients);
+  const { fixed, stocked, ids } = useBackBarParts(barId, ingredients);
   const caps = useCapabilities(barId).data;
   const stock = useStockMutations(barId);
   const shelf = useShelf().data;
@@ -80,7 +82,10 @@ export function useLineStock({ barId, venueName, drinkName, ingredients, lines, 
   const tap = (item: { id: string; name: string }, on: boolean) => {
     const reason = barId ? fixed.get(item.id) : undefined;
     if (on && reason) return setNote({ text: STAYS[reason](item.name, venueName) });
-    const put = barId ? () => stock.add.mutate({ item, source: 'drink', fromName: drinkName }) : () => shelfEdit.add.mutate(item.id);
+    // Undo after switching one off puts its row back as it was: where it came from, and when.
+    const was = stocked.get(item.id);
+    const row = was ? { source: was.source, fromName: was.from_name, addedAt: was.added_at } : { source: 'drink' as const, fromName: drinkName };
+    const put = barId ? () => stock.add.mutate({ item, ...row }) : () => shelfEdit.add.mutate(item.id);
     const take = barId ? () => stock.remove.mutate(item.id) : () => shelfEdit.remove.mutate(item.id);
     const where = barId ? `${venueName}’s back bar` : 'your shelf';
     (on ? take : put)();
@@ -119,7 +124,7 @@ export function useLineStock({ barId, venueName, drinkName, ingredients, lines, 
       ) : null}
     </View>
   ) : null;
-  return pinned ? { toggle, footer: hint, note: bar } : { toggle, footer: hint || bar ? <>{hint}{bar}</> : null, note: null };
+  return pinned ? { toggle, footer: hint, note: bar, backBar: ids } : { toggle, footer: hint || bar ? <>{hint}{bar}</> : null, note: null, backBar: ids };
 }
 
 interface StockButtonProps {
