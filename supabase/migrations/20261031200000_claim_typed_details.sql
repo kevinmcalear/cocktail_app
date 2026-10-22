@@ -81,7 +81,7 @@ BEGIN
     ELSIF p_method = 'email' AND v_website IS NULL AND nullif(btrim(p_website), '') IS NOT NULL THEN
         -- Same shape as save_claim_setup's website (20261014900000).
         v_website := btrim(p_website);
-        IF char_length(v_website) > 300 OR v_website !~ '^(https?://)?[^\s/]+\.[^\s]+$' THEN
+        IF char_length(v_website) > 300 OR v_website !~* '^(https?://)?[^\s/]+\.[^\s]+$' THEN
             RAISE EXCEPTION 'That website doesn''t look right.' USING ERRCODE = '22023';
         END IF;
         IF v_website !~* '^https?://' THEN
@@ -111,8 +111,9 @@ BEGIN
             RAISE EXCEPTION 'Your sign-in email isn''t at this %''s website domain. Pick another way.', v_noun USING ERRCODE = 'P0001';
         END IF;
         -- A website they typed is checked by a person, however well it matches.
+        -- A stronger reason (a shared host, a page on a bigger site) stays.
         IF v_typed ? 'website' THEN
-            v_evidence := v_evidence || jsonb_build_object('auto', false, 'review_reason', 'site_typed');
+            v_evidence := v_evidence || jsonb_build_object('auto', false, 'review_reason', coalesce(v_evidence ->> 'review_reason', 'site_typed'));
         END IF;
     ELSIF p_method = 'instagram' THEN
         IF v_instagram IS NULL THEN

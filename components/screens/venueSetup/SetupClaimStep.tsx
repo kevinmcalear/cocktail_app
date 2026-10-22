@@ -90,7 +90,20 @@ export function SetupClaimStep({ profileId, ensureVenue, onDone, onSkip }: { pro
         />
       }
     >
-      <ClaimMethods profile={profile} details={details} method={chosen} code={code} typed={typed} disabled={busy} onPick={setMethod} onType={setTyped} />
+      <ClaimMethods
+        profile={profile}
+        details={details}
+        method={chosen}
+        code={code}
+        typed={typed}
+        disabled={busy}
+        onPick={setMethod}
+        onType={(t) => {
+          // Typing settles the way, so it can't move once the page's phone loads.
+          setMethod(chosen);
+          setTyped(t);
+        }}
+      />
       <WhileYouWait name={name} typed={!!details[chosen].ask && details[chosen].available} />
       <Caption tone="muted">{CLAIM_LIMIT_NOTE}</Caption>
       {problem ? (
