@@ -1,5 +1,5 @@
 // Discover's reads in SQL (supabase/migrations/20261008330000_discover_drinks_rpc.sql):
-// discover_drinks, flavor_baseline and flavor_for_you run as the caller, so
+// discover_drinks and flavor_baseline run as the caller, so
 // they must return nothing the caller couldn't already select. Runs through
 // the real API. Local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
@@ -64,7 +64,7 @@ const mine = (rows) => rows.filter((r) => r.name.endsWith(run));
 
 before(async () => {
   await db.connect();
-  for (const label of ['viewer', 'creator', 'ranker']) users[label] = await makeUser(label);
+  for (const label of ['viewer', 'creator']) users[label] = await makeUser(label);
 
   // An open bar page (claimed, specs shown), an unclaimed bar (specs hidden), a closed one, one far away.
   ids.bar = (await serviceInsert('bars', { name: `Discover Bar ${run}` })).id;
@@ -108,27 +108,14 @@ before(async () => {
   const edition = await serviceInsert('profile_menu_editions', { profile_id: ids.open, name: `Now ${run}`, year: 2026, is_current: true });
   await serviceInsert('profile_menu_edition_drinks', { edition_id: edition.id, item_id: ids.gimlet, sort_order: 0 });
 
-  // Two drinks with one odd profile, for For you; the ranker has ranked the first.
-  const odd = { sweet: 0.111, sour: 0.222, bitter: 0.333, strong: 0.444, botanical: 0.123, herbal: 0.555, fruity: 0.666, spiced: 0.234, spicy: 0.888, smoky: 0.777, savory: 0.345, creamy: 0.999 };
-  ids.twinA = await item({ name: 'Twin A', item_type: 'cocktail' });
-  ids.twinB = await item({ name: 'Twin B', item_type: 'cocktail' });
-  ids.twinHidden = await item({ name: 'Twin Staff', item_type: 'cocktail', bar_id: ids.bar, override_visibility_level: 30 });
-  for (const id of [ids.twinA, ids.twinB, ids.twinHidden]) await profile(id, odd);
-  ids.odd = odd;
-  await db.query(
-    `INSERT INTO private.age_checks (user_id, country_code, minimum_age, confirmed_at) VALUES ($1, 'AU', 18, now()) ON CONFLICT (user_id) DO NOTHING`,
-    [users.ranker.id]
-  );
-  await db.query(
-    `INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key) VALUES ($1, $2, $2, $3, 'loved', 1)`,
-    [users.ranker.id, ids.twinA, ids.open]
-  );
+  // A drink the bar's staff keep to themselves, with a profile the viewer can't read.
+  ids.staffOnly = await item({ name: 'Staff Only', item_type: 'cocktail', bar_id: ids.bar, override_visibility_level: 30 });
+  await profile(ids.staffOnly, { sweet: 0.2, herbal: 0.6, smoky: 0.8 });
 });
 
 after(async () => {
   const like = `%${run}%`;
   const { rows } = await db.query('SELECT id FROM public.items WHERE name LIKE $1', [like]);
-  await db.query('DELETE FROM public.rank_entries WHERE user_id = $1', [users.ranker.id]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM private.item_flavor_jobs WHERE item_id = ANY($1)', [rows.map((r) => r.id)]);
   await db.query('DELETE FROM public.images WHERE url LIKE $1', [like]);
@@ -205,26 +192,9 @@ describe('discover_drinks', () => {
   });
 });
 
-describe('flavor_for_you and flavor_baseline', () => {
-  test('signed out can call neither', async () => {
+describe('flavor_baseline', () => {
+  test('signed out cannot call it', async () => {
     assert.ok((await anon.rpc('flavor_baseline')).error);
-    assert.ok((await anon.rpc('flavor_for_you', { p_taste: { sweet: 0.5 } })).error);
-  });
-
-  test('nearest first, leaving out what you ranked and what you cannot read', async () => {
-    const top = async (user) => (await users[user].client.rpc('flavor_for_you', { p_taste: ids.odd, p_limit: 3 })).data.map((r) => r.id);
-    const viewer = await top('viewer');
-    assert.deepEqual(viewer.slice(0, 2).sort(), [ids.twinA, ids.twinB].sort());
-    assert.ok(!viewer.includes(ids.twinHidden), 'a bar drink staff keep to themselves stays out');
-    const ranker = await top('ranker');
-    assert.equal(ranker[0], ids.twinB);
-    assert.ok(!ranker.includes(ids.twinA), 'a ranked drink is left out');
-  });
-
-  test('a taste with no dimensions finds nothing', async () => {
-    const { data, error } = await users.viewer.client.rpc('flavor_for_you', { p_taste: { colour: 1, sweet: 'very' } });
-    assert.ifError(error);
-    assert.deepEqual(data, []);
   });
 
   test('the baseline averages the profiles the caller can read', async () => {
@@ -232,7 +202,7 @@ describe('flavor_for_you and flavor_baseline', () => {
     assert.ifError(error);
     assert.ok(data[0].drinks > 0);
     for (const d of DIMS) assert.ok(data[0][d] >= 0 && data[0][d] <= 1, d);
-    // Every usable profile, including the staff-only twin the viewer can't read (other tests may add more meanwhile).
+    // Every usable profile, including the staff-only drink the viewer can't read (other tests may add more meanwhile).
     const { rows } = await db.query('SELECT count(*)::int AS n FROM public.item_flavors WHERE coverage >= 0.5');
     assert.ok(data[0].drinks < rows[0].n, 'counts only readable profiles');
   });

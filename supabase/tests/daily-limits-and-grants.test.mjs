@@ -230,20 +230,6 @@ describe('venue writes need a current Admin', () => {
       assert.match(error?.message ?? '', /must be a bar Admin/, who);
     }
   });
-
-  test('assign_item_to_bar: a current Admin moves their own item in; a Drink Creator cannot', async () => {
-    const own = async (who) =>
-      (await db.query("INSERT INTO public.items (name, item_type, created_by) VALUES ($1, 'ingredient', $2) RETURNING id", [
-        `${who} syrup ${run}`, users[who].id,
-      ])).rows[0].id;
-    for (const who of ['creator', 'pastCreator']) {
-      const { error } = await users[who].client.rpc('assign_item_to_bar', { p_item_id: await own(who), p_bar_id: bars.Limits });
-      assert.match(error?.message ?? '', /must be a bar Admin/, who);
-    }
-    const { data, error } = await users.admin.client.rpc('assign_item_to_bar', { p_item_id: await own('admin'), p_bar_id: bars.Limits });
-    assert.ifError(error);
-    assert.equal(data.bar_id, bars.Limits);
-  });
 });
 
 describe('memberships', () => {

@@ -1,6 +1,5 @@
 export type ItemDomain = 'beer' | 'wine' | 'spirit' | 'ingredient' | 'cocktail_family' | 'glassware_style';
 export type EntityType = 'cocktail' | 'ingredient' | 'beer' | 'wine' | 'glassware' | 'method' | 'ice' | 'family';
-export type AttributeType = 'tasting_note' | 'physical_trait';
 
 export interface DatabaseCategory {
     id: string;
@@ -33,12 +32,6 @@ export interface DatabaseUserBar {
     bar_id: string;
     role_level: number;
     created_at: string;
-}
-
-export interface DatabaseAttribute {
-    id: string;
-    name: string;
-    type: AttributeType;
 }
 
 export interface DatabaseDraft {

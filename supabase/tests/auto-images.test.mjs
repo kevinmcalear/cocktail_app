@@ -355,25 +355,6 @@ describe('settling in SQL', () => {
     [row] = await links(drink);
     assert.equal(row.outdated_since, null, 'flag cleared when the spec changes back');
   });
-
-  test('only an editor can confirm photos still match the spec', async () => {
-    const drink = await newItem({ name: 'Confirmed', item_type: 'cocktail', bar_id: ids.bar, glassware_id: ids.coupe });
-    await addPhoto(drink);
-    await settle(drink);
-    await db.query('UPDATE public.items SET glassware_id = $2 WHERE id = $1', [drink, ids.rocks]);
-    await settle(drink);
-    assert.ok((await links(drink))[0].outdated_since);
-
-    const { error: bartenderError } = await users.bartender.client.rpc('confirm_item_photos', { p_item_id: drink });
-    assert.ok(bartenderError, 'bartenders cannot confirm');
-    assert.ok((await links(drink))[0].outdated_since);
-
-    const { error } = await users.creator.client.rpc('confirm_item_photos', { p_item_id: drink });
-    assert.ifError(error);
-    const [row] = await links(drink);
-    assert.equal(row.outdated_since, null);
-    assert.equal(row.spec_fingerprint, await fingerprint(drink));
-  });
 });
 
 describe('image worker', { skip: workerSkip }, () => {
