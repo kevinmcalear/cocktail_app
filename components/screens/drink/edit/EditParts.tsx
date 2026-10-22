@@ -3,7 +3,7 @@ import { Platform, ScrollView, StyleSheet, TextInput, View, type TextInputProps 
 
 import { BarAssignmentAccordion } from '@/components/BarAssignmentAccordion';
 import { SortableImageList, type ImageItem } from '@/components/cocktail/SortableImageList';
-import { Caption, DsText, GlassSurface, Headline, PressableScale, Sheet, useDs, useSheetClose, type IconName } from '@/components/ds';
+import { Caption, DsText, GlassSurface, Headline, MULTILINE_MAX, PressableScale, Sheet, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { layout, radius, space } from '@/constants/tokens';
@@ -182,15 +182,20 @@ const styles = StyleSheet.create({
   access: { maxHeight: 480 },
 });
 
-/** A multiline field that grows with its words (the web's textarea doesn't on its own). */
+/**
+ * A multiline field that grows with its words (the web's textarea doesn't on
+ * its own) up to about six lines, then scrolls inside, so the page under it
+ * stays in reach on a phone.
+ */
 export function GrowingField(props: TextInputProps & { minHeight: number }) {
   const [height, setHeight] = useState(props.minHeight);
   return (
     <TextInput
       multiline
-      scrollEnabled={false}
+      // Off until it's full, so a swipe over a short box scrolls the page.
+      scrollEnabled={height >= MULTILINE_MAX}
       {...props}
-      onContentSizeChange={(e) => setHeight(Math.max(props.minHeight, Math.ceil(e.nativeEvent.contentSize.height) + space.lg))}
+      onContentSizeChange={(e) => setHeight(Math.min(MULTILINE_MAX, Math.max(props.minHeight, Math.ceil(e.nativeEvent.contentSize.height) + space.lg)))}
       style={[props.style, { height }]}
     />
   );

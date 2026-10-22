@@ -50,6 +50,9 @@ assert.equal(iceFromName('Pebble ice'), 'pebble');
 assert.equal(iceFromName('Ice'), 'cubes');
 assert.equal(iceFromName('Cubes, topped up'), 'cubes', '"up" only as a serve');
 assert.equal(iceFromName('Neat'), 'none');
+// Typed in the ice field (Eddie, 22 Oct): every way of saying none draws none.
+for (const said of ['no-ice', 'No-Ice', 'noice', 'No ice please', 'without ice', 'Without any ice', 'w/o ice', 'ice-free', 'Served up, no ice']) assert.equal(iceFromName(said), 'none', said);
+assert.equal(iceFromName('Nice big cube'), 'large', '"nice" is not "no ice"');
 assert.equal(methodFromNames(['Stir']), 'stir');
 assert.equal(methodFromNames(['dry shake and shake']), 'shake');
 assert.equal(methodFromNames(['Build', 'Shake']), 'shake');

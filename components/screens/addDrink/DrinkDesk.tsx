@@ -46,6 +46,7 @@ export interface DrinkDeskProps {
   aliases?: readonly IngredientAlias[];
   coreIds: ReadonlySet<string>;
   shelf?: ReadonlySet<string>;
+  backBar?: ReadonlySet<string>;
   methods: WizardPick[];
   glasses: WizardPick[];
   ices: WizardPick[];
@@ -156,6 +157,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             aliases={p.aliases}
             coreIds={p.coreIds}
             shelf={p.shelf}
+            backBar={p.backBar}
             balance={false}
             lineDetail={lineDetail}
           />

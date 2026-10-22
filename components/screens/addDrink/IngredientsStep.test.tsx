@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
-import { EMPTY_DRAFT } from '@/lib/drinkWizard';
+import { EMPTY_DRAFT, newLine } from '@/lib/drinkWizard';
 import { startPrep } from '@/lib/prepKinds';
 
 import { IngredientsStep } from './IngredientsStep';
@@ -180,5 +180,37 @@ describe('IngredientsStep', () => {
     expect(screen.getByRole('button', { name: 'Swap Simple syrup for another ingredient' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Make Simple syrup house/ })).toBeNull();
   });
-});
 
+  test('a line moves up by its grip, and the new order is what saves', async () => {
+    const set = jest.fn();
+    const lines = [newLine({ id: 'mezcal', name: 'Mezcal' }, 'ml', '45'), newLine({ id: 'lime', name: 'Lime juice' }, 'ml', '22.5'), newLine({ id: 'agave', name: 'Agave syrup' }, 'ml', '15')];
+    await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines }} set={set} ingredients={[]} />);
+
+    expect(screen.getByText('Hold a grip to reorder.')).toBeTruthy();
+    await fireEvent(screen.getByRole('button', { name: 'Reorder Agave syrup' }), 'accessibilityAction', { nativeEvent: { actionName: 'up' } });
+    expect(set.mock.calls[0][0].lines.map((l: { name: string }) => l.name)).toEqual(['Mezcal', 'Agave syrup', 'Lime juice']);
+  });
+
+  test('a kind typed in full comes first, then its brands, the back bar ones leading', async () => {
+    const set = jest.fn();
+    const ingredients = [
+      { id: 'mezcal', name: 'Mezcal', ingredient_role: 'generic' },
+      { id: 'negroni', name: 'Mezcal negroni batch', ingredient_role: 'prep' },
+      { id: 'vida', name: 'Del Maguey Vida', generic_id: 'mezcal', ingredient_role: 'product', brand_maker: 'Del Maguey' },
+      ...['Banhez Ensamble', 'Ilegal Joven', 'Montelobos Espadín', 'Bozal Cuishe'].map((name, i) => ({ id: `b${i}`, name, generic_id: 'mezcal', ingredient_role: 'product', brand_maker: name.split(' ')[0] })),
+    ];
+    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={ingredients} backBar={new Set(['vida'])} />);
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'mezcal');
+
+    expect(screen.getByText('Any mezcal · add it as it is')).toBeTruthy();
+    expect(screen.getByText('PICK A BRAND · OPTIONAL')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Del Maguey Vida, on your back bar' })).toBeTruthy();
+    // Four brands, then the rest behind See all; what only mentions mezcal comes after.
+    expect(screen.queryByRole('button', { name: 'Montelobos Espadín' })).toBeNull();
+    expect(screen.getByText('More with “mezcal” in the name')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'See all 5 mezcals' }));
+    expect(screen.getByRole('button', { name: 'Montelobos Espadín' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Mezcal' }));
+    expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: 'mezcal', name: 'Mezcal' });
+  });
+});

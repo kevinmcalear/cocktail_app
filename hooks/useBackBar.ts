@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { useSwapSource } from '@/hooks/useBulk';
 import { useTonight } from '@/hooks/useTonight';
 import { ingredientsUsed, waitingForSpot, type NamedItem } from '@/lib/backBar';
 import { showMessage } from '@/lib/dialogs';
@@ -37,6 +38,23 @@ export function useItemLocations(barId: string | null | undefined) {
       return (data ?? []) as unknown as ItemLocation[];
     },
   });
+}
+
+/**
+ * The venue's back bar as item ids: its own bottles, what its specs already
+ * pour, and what has a spot on its map. Empty at home (no venue).
+ */
+export function useBackBarIds(barId: string | null | undefined, catalog: readonly { id: string; bar_id?: string | null }[]): Set<string> {
+  const pours = useSwapSource(barId ?? null);
+  const spots = useItemLocations(barId);
+  return useMemo(() => {
+    const ids = new Set<string>();
+    if (!barId) return ids;
+    for (const d of pours.data?.drinks ?? []) for (const l of d.lines) if (l.ingredientId) ids.add(l.ingredientId);
+    for (const s of spots.data ?? []) ids.add(s.item_id);
+    for (const i of catalog) if (i.bar_id === barId) ids.add(i.id);
+    return ids;
+  }, [barId, pours.data, spots.data, catalog]);
 }
 
 interface RecipeRow {
