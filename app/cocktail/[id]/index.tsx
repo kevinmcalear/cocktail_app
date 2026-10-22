@@ -4,7 +4,7 @@ import React, { lazy, Suspense, useState } from "react";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
-import { useCanEditItem } from "@/hooks/useViewAs";
+import { useItemEditAccess } from "@/hooks/useViewAs";
 import { heroPicture } from "@/lib/itemImages";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
 import { CouldNotLoad } from "@/components/screens/safety/NotAvailable";
@@ -37,7 +37,7 @@ export default function CocktailDetailsScreen() {
             : null
     );
 
-    const canEdit = useCanEditItem(cocktail);
+    const editAccess = useItemEditAccess(cocktail);
     const [isEditing, setIsEditing] = useState(false);
 
     // Not yours to read (another bar's drink): its public page, if it's published.
@@ -50,7 +50,8 @@ export default function CocktailDetailsScreen() {
                 item={cocktail}
                 inStudyPile={isInStudyPile(cocktail.id)}
                 onToggleStudyPile={() => toggleStudyPile(cocktail.id)}
-                canEdit={canEdit}
+                canEdit={editAccess === "edit"}
+                adminFix={editAccess === "admin"}
                 onEdit={() => setIsEditing(true)}
                 openBatch={batch === "1"}
                 sheet

@@ -10,7 +10,7 @@ import { useCocktail } from '@/hooks/useCocktails';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { useStudyPile } from '@/hooks/useStudyPile';
-import { useCanEditItem } from '@/hooks/useViewAs';
+import { useItemEditAccess } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
@@ -31,7 +31,7 @@ function DrinkPane({ id }: { id: string }) {
   const { toggleStudyPile, isInStudyPile } = useStudyPile();
   const query = useCocktail(id, { seeded: true });
   const drink = query.isPlaceholderData ? undefined : query.data;
-  const canEdit = useCanEditItem(drink);
+  const editAccess = useItemEditAccess(drink);
   if (!drink) return <DrinkLoading seed={query.isPlaceholderData ? query.data : null} />;
   return (
     <Suspense fallback={<DrinkLoading seed={drink} />}>
@@ -40,7 +40,8 @@ function DrinkPane({ id }: { id: string }) {
         item={drink}
         inStudyPile={isInStudyPile(drink.id)}
         onToggleStudyPile={() => toggleStudyPile(drink.id)}
-        canEdit={canEdit}
+        canEdit={editAccess === 'edit'}
+        adminFix={editAccess === 'admin'}
         onEdit={() => router.push(`/cocktail/${drink.id}/edit` as Href)}
       />
     </Suspense>
