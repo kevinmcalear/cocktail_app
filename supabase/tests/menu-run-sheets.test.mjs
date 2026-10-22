@@ -130,6 +130,18 @@ describe('a menu editor builds the run sheet', () => {
     assert.match(wrong.error?.message ?? '', /maker's page/);
   });
 
+  test('only the guest can be the bar the night is at', async () => {
+    const brand = await users.maker.client.from('menu_run_parties').update({ is_venue: true }).eq('id', ids.brand);
+    assert.equal(brand.error?.code, '23514');
+    const theirs = await users.maker.client.from('menu_run_parties').update({ is_venue: true }).eq('id', ids.guest).select('is_venue');
+    assert.ifError(theirs.error);
+    assert.deepEqual(theirs.data, [{ is_venue: true }]);
+    const floor = await users.floor.client.from('menu_run_parties').update({ is_venue: false }).eq('id', ids.guest).select('id');
+    assert.equal(floor.data?.length ?? 0, 0);
+    const back = await users.maker.client.from('menu_run_parties').update({ is_venue: false }).eq('id', ids.guest);
+    assert.ifError(back.error);
+  });
+
   test("an owner is one of this menu's parties", async () => {
     const res = await users.maker.client.from('menu_run_owners').upsert({ menu_id: ids.menu, item_id: ids.gin, party_id: ids.otherParty });
     assert.equal(res.error?.code, '23503');

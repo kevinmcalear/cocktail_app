@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Button, Caption, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
+import { Body, Button, Caption, DsText, Headline, PressableScale, Segmented, Spec, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { useSetServes, type RunSheetData } from '@/hooks/useRunSheet';
+import { useSetServes, useSetVenue, type RunSheetData } from '@/hooks/useRunSheet';
 import { MAX_SERVES } from '@/lib/batch';
 import { clampServes, type RunDrink, type RunParty } from '@/lib/runSheet';
 import { nightLine } from '@/lib/runSheetText';
@@ -55,13 +55,41 @@ function Stepper({ drink, onSet }: { drink: RunDrink; onSet: (n: number | null) 
   );
 }
 
-/** Step 1: the night (who's in it) and how many of each drink (board "1. Serves per drink"). */
+const WHERE = [
+  { value: 'ours', label: 'At our bar' },
+  { value: 'theirs', label: 'At their bar' },
+] as const;
+
+/** One bar on the night card: what it is to us, its name, and maybe a button. */
+function BarRow({ label, name, action }: { label: string; name: string | null; action?: { label: string; a11y: string; onPress: () => void } }) {
+  return (
+    <View style={[styles.between, styles.party]}>
+      <View style={{ flex: 1 }}>
+        <Caption tone="muted">{label}</Caption>
+        <Body tone={name ? 'ink' : 'muted'}>{name ?? 'Nobody yet'}</Body>
+      </View>
+      {action ? <Button label={action.label} size="sm" variant="secondary" accessibilityLabel={action.a11y} onPress={action.onPress} /> : null}
+    </View>
+  );
+}
+
+/** Step 1: the night (whose bar, who's in it) and how many of each drink (boards "1. Serves per drink", A1, A2). */
 export function ServesStep({ data, total, summaries }: { data: RunSheetData; total: number; summaries: Record<string, string> }) {
   const ds = useDs();
   const setServes = useSetServes(data.menu.id);
   const [same, setSame] = useState('100');
-  const [editing, setEditing] = useState<{ kind: 'guest' | 'brand'; party: RunParty | null } | null>(null);
+  const setVenue = useSetVenue(data.menu.id);
+  const [editing, setEditing] = useState<{ kind: 'guest' | 'brand'; party: RunParty | null; venue?: boolean } | null>(null);
   const guest = data.parties.find((p) => p.kind === 'guest') ?? null;
+  const atTheirs = !!guest?.isVenue;
+  const host = data.menu.hostName;
+  // Their bar needs a guest to be at: with none yet, name them first.
+  const pickWhere = (where: 'ours' | 'theirs') => {
+    if ((where === 'theirs') === atTheirs) return;
+    if (guest) setVenue.mutate({ guestId: guest.id, isVenue: where === 'theirs' });
+    else setEditing({ kind: 'guest', party: null, venue: true });
+  };
+  const changeGuest = { label: guest ? 'Change' : 'Add', onPress: () => setEditing({ kind: 'guest', party: guest, venue: atTheirs }) };
   const brands = data.parties.filter((p) => p.kind === 'brand');
   const night = nightLine(data.menu.startsAt, data.menu.endsAt);
   const [day, hours] = night ? night.split(' · ') : [null, null];
@@ -78,17 +106,30 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
           <Caption tone="muted">No date yet. Set it from the menu.</Caption>
         )}
         <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
-        <View style={styles.party}>
-          <Caption tone="muted">Our bar</Caption>
-          <Body>{data.menu.hostName}</Body>
+        <View style={{ gap: space.sm }}>
+          <Caption tone="muted">Where’s the night?</Caption>
+          <Segmented variant="ink" stretch choice onSurface accessibilityLabel="Where’s the night?" options={WHERE} value={atTheirs ? 'theirs' : 'ours'} onChange={pickWhere} />
         </View>
-        <View style={[styles.between, styles.party]}>
-          <View style={{ flex: 1 }}>
-            <Caption tone="muted">Coming to us</Caption>
-            <Body tone={guest ? 'ink' : 'muted'}>{guest?.name ?? 'Nobody yet'}</Body>
-          </View>
-          <Button label={guest ? 'Change' : 'Add'} size="sm" variant="secondary" accessibilityLabel={guest ? 'Change the bar coming to us' : 'Add the bar coming to us'} onPress={() => setEditing({ kind: 'guest', party: guest })} />
-        </View>
+        {atTheirs && guest ? (
+          <>
+            <BarRow label="Their bar" name={guest.name} action={{ ...changeGuest, a11y: 'Change the bar we’re going to' }} />
+            <BarRow label="Going there" name={`${host} (us)`} />
+          </>
+        ) : (
+          <>
+            <BarRow label="Our bar" name={host} />
+            <BarRow label="Coming to us" name={guest?.name ?? null} action={{ ...changeGuest, a11y: guest ? 'Change the bar coming to us' : 'Add the bar coming to us' }} />
+          </>
+        )}
+        {guest ? (
+          <Caption tone="muted">
+            {atTheirs
+              ? `Everything starts with ${guest.name} except the house preps for your drinks and a brand’s own bottles. Change any of it on Who.`
+              : data.drinks.some((d) => d.byGuest)
+                ? `Everything starts with you except ${guest.name}’s house preps and a brand’s own bottles. Change any of it on Who.`
+                : `Everything starts with you. Give ${guest.name} what they bring on Who.`}
+          </Caption>
+        ) : null}
         <View style={{ gap: space.sm }}>
           <Caption tone="muted">Brands</Caption>
           <View style={styles.wrap}>
@@ -133,7 +174,7 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
         ))}
         <Caption tone="muted">Up to 6,969 a drink. Type a number or use − and +.</Caption>
       </View>
-      {editing ? <PartySheet menuId={data.menu.id} kind={editing.kind} party={editing.party} sortOrder={data.parties.length} onClose={() => setEditing(null)} /> : null}
+      {editing ? <PartySheet menuId={data.menu.id} kind={editing.kind} party={editing.party} venue={editing.venue} sortOrder={data.parties.length} onClose={() => setEditing(null)} /> : null}
     </View>
   );
 }

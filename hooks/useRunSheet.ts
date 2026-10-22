@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 /**
  * A menu's run sheet (lib/runSheet.ts builds it from this): the menu's drinks
  * with their serves and specs (masked by role, like every recipe read), this
- * menu's swaps, its guest venue and brands, the owners someone picked, the
+ * menu's swaps, its guest bar (and whether the night is at theirs) and brands, the owners someone picked, the
  * house preps under the drinks, pack sizes, and the brands' own bottles for
  * the "pour it everywhere" suggestion. Plain JSON, for the persisted cache.
  */
@@ -77,14 +77,14 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
       .select('id, serves, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, bar_id, origin_bar_profile_id)')
       .eq('menu_id', menuId)
       .order('sort_order'),
-    supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, profile:profiles!profile_id(bar_id)').eq('menu_id', menuId).order('sort_order'),
+    supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, is_venue, profile:profiles!profile_id(bar_id)').eq('menu_id', menuId).order('sort_order'),
     supabase.from('menu_run_owners').select('item_id, party_id').eq('menu_id', menuId),
   ]);
   for (const res of [menuRes, drinkRes, partyRes, ownerRes]) if (res.error) throw res.error;
   const menu = menuRes.data as unknown as MenuRow;
   // A home menu's collected drinks come through published_items, not items: they have no spec to total here.
   const rows = ((drinkRes.data ?? []) as unknown as DrinkRow[]).filter((r) => r.item);
-  type PartyRow = { id: string; kind: 'guest' | 'brand'; name: string; profile_id: string | null; sort_order: number; profile: { bar_id: string | null } | null };
+  type PartyRow = { id: string; kind: 'guest' | 'brand'; name: string; profile_id: string | null; sort_order: number; is_venue: boolean; profile: { bar_id: string | null } | null };
   const partyRows = (partyRes.data ?? []) as unknown as PartyRow[];
   const guest = partyRows.find((p) => p.kind === 'guest');
 
@@ -144,7 +144,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
     },
     drinks,
     swaps: swapRows.map((s) => ({ menuDrinkId: s.menu_drink_id, fromItemId: s.from_item_id, toItemId: s.to_item_id, toName: items[s.to_item_id]?.name ?? 'Another bottle' })),
-    parties: partyRows.map((p) => ({ id: p.id, kind: p.kind, name: p.name, profileId: p.profile_id, sortOrder: p.sort_order })),
+    parties: partyRows.map((p) => ({ id: p.id, kind: p.kind, name: p.name, profileId: p.profile_id, sortOrder: p.sort_order, isVenue: p.is_venue })),
     owners: Object.fromEntries(((ownerRes.data ?? []) as { item_id: string; party_id: string | null }[]).map((o) => [o.item_id, o.party_id])),
     houseMade,
     purchasing,
@@ -232,6 +232,8 @@ export interface PartyInput {
   profileId: string | null;
   /** Where a new one goes in the list: after the others. */
   sortOrder?: number;
+  /** A new guest bar the night is at. */
+  isVenue?: boolean;
 }
 
 /** Adds or changes the guest venue or a brand. */
@@ -241,14 +243,23 @@ export function useSaveParty(menuId: string) {
     async (p) => {
       const row = { kind: p.kind, name: p.name.trim(), profile_id: p.profileId };
       if (p.id) check(await supabase.from('menu_run_parties').update(row).eq('id', p.id));
-      else check(await supabase.from('menu_run_parties').insert({ ...row, menu_id: menuId, sort_order: p.sortOrder ?? 0 }));
+      else check(await supabase.from('menu_run_parties').insert({ ...row, menu_id: menuId, sort_order: p.sortOrder ?? 0, is_venue: !!p.isVenue }));
     },
     (data, p) =>
       p.id ? { ...data, parties: data.parties.map((x) => (x.id === p.id ? { ...x, name: p.name, kind: p.kind, profileId: p.profileId } : x)) } : data,
   );
 }
 
-/** Takes a guest venue or a brand off the sheet; what it brought goes back to the host. */
+/** Whether the night is at the guest's bar (we visit) or ours (they visit us). */
+export function useSetVenue(menuId: string) {
+  return useRunSheetWrite<{ guestId: string; isVenue: boolean }>(
+    menuId,
+    async ({ guestId, isVenue }) => check(await supabase.from('menu_run_parties').update({ is_venue: isVenue }).eq('id', guestId)),
+    (data, { guestId, isVenue }) => ({ ...data, parties: data.parties.map((p) => (p.id === guestId ? { ...p, isVenue } : p)) }),
+  );
+}
+
+/** Takes a guest bar or a brand off the sheet; what it brought goes back to us. */
 export function useRemoveParty(menuId: string) {
   return useRunSheetWrite<string>(
     menuId,
