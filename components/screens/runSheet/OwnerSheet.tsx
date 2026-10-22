@@ -8,8 +8,8 @@ import type { PartyLook } from './parts';
 
 /**
  * Who brings one thing, or a whole group ("Assign all spirits to..."): the
- * hosting venue, the guest venue or a brand. "The sheet's pick" goes back to
- * the default (a brand's own bottles, the guest's house preps).
+ * us, the bar visiting or a brand. "The sheet's pick" goes back to the
+ * default (a brand's own bottles, the visiting bar's house preps, the rest to the bar it's at).
  */
 export function OwnerSheet({ menuId, title, itemIds, current, picked, looks, onClose }: {
   menuId: string;
@@ -38,7 +38,7 @@ export function OwnerSheet({ menuId, title, itemIds, current, picked, looks, onC
             onPress={() => pick(look.id)}
           />
         ))}
-        {picked || itemIds.length > 1 ? <Choice label="The sheet’s pick" detail="A brand’s own bottles go to it, the guest’s house preps to the guest" selected={false} onPress={() => pick('default')} /> : null}
+        {picked || itemIds.length > 1 ? <Choice label="The sheet’s pick" detail="A brand’s own bottles go to the brand, the visiting bar’s house preps to them, the rest to the bar it’s at" selected={false} onPress={() => pick('default')} /> : null}
       </View>
     </MenuSheet>
   );

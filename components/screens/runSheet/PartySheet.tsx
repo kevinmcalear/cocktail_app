@@ -8,7 +8,7 @@ import { usePartySearch, useRemoveParty, useSaveParty } from '@/hooks/useRunShee
 import { plainDbMessage } from '@/lib/dbError';
 import type { RunParty } from '@/lib/runSheet';
 
-/** Add or change the guest venue or a brand, by name, linked to their page when they have one. */
+/** Add or change the bar coming to us or a brand, by name, linked to their page when they have one. */
 export function PartySheet({ menuId, kind, party, sortOrder, onClose }: { menuId: string; kind: 'guest' | 'brand'; party: RunParty | null; sortOrder: number; onClose: () => void }) {
   const [name, setName] = useState(party?.name ?? '');
   const [profileId, setProfileId] = useState<string | null>(party?.profileId ?? null);
@@ -16,7 +16,6 @@ export function PartySheet({ menuId, kind, party, sortOrder, onClose }: { menuId
   const search = usePartySearch(profileId ? '' : name, kind);
   const save = useSaveParty(menuId);
   const remove = useRemoveParty(menuId);
-  const noun = kind === 'guest' ? 'guest venue' : 'brand';
   const done = { onSuccess: onClose, onError: (e: unknown) => setError(plainDbMessage(e) ?? 'That didn’t save. Try again.') };
 
   return (
@@ -24,15 +23,15 @@ export function PartySheet({ menuId, kind, party, sortOrder, onClose }: { menuId
       visible
       onClose={onClose}
       form
-      title={party ? (kind === 'guest' ? 'Guest venue' : party.name) : `Add a ${noun}`}
-      subtitle={kind === 'guest' ? 'The bar behind the bar tonight. Their house preps come to them.' : 'A bottle this brand makes goes to them on the sheet.'}
+      title={kind === 'guest' ? 'Who’s coming to us?' : party ? party.name : 'Add a brand'}
+      subtitle={kind === 'guest' ? 'The bar taking over for the night. Their house preps start with them.' : 'A bottle this brand makes goes to them on the sheet.'}
       save={{ label: 'Save', disabled: !name.trim() || save.isPending, onPress: () => save.mutate({ id: party?.id, kind, name, profileId, sortOrder }, done) }}
       footer={
         party ? (
           <Button
-            label={kind === 'guest' ? 'No guest venue' : 'Take off the sheet'}
+            label="Take off the sheet"
             variant="ghost"
-            accessibilityHint="What they were bringing goes back to the hosting venue"
+            accessibilityHint="What they were bringing goes back to us"
             onPress={() => remove.mutate(party.id, done)}
           />
         ) : undefined

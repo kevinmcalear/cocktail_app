@@ -55,7 +55,7 @@ export function WhoStep({ menuId, sheet, looks, breakDown, onBreakDown, wide }: 
               <Dot colour={l.colour} size={10} />
               <Caption numberOfLines={1} style={{ fontFamily: fontFamilies.bodySemiBold, flex: 1 }}>{l.name}</Caption>
             </View>
-            <Caption tone="muted">{`${l.role === 'Hosting' ? 'Hosting' : l.role === 'Guest venue' ? 'Guest' : 'Brand'} · ${thingCount(counts.get(l.id) ?? 0)}`}</Caption>
+            <Caption tone="muted">{`${l.role} · ${thingCount(counts.get(l.id) ?? 0)}`}</Caption>
           </View>
         ))}
       </View>

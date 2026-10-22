@@ -22,25 +22,26 @@ export function StepNav({ step, onChange, desktop }: { step: Step; onChange: (s:
 }
 
 export interface PartyLook {
-  /** null: the hosting venue. */
+  /** null: the menu's own bar, us. */
   id: string | null;
   name: string;
   /** The chip's short name: "Caretaker's", "Mill & Ash". */
   short: string;
-  role: 'Hosting' | 'Guest venue' | 'Brand';
+  /** In our words: "Our bar", "Coming to us", "Brand". */
+  role: string;
   colour: string;
 }
 
-/** Each party's name and dot: the host in the accent, the others from partyHues in their order. */
+/** Each party's name and dot: us in the accent, the others from partyHues in their order. */
 export function usePartyLooks(hostName: string, parties: RunParty[]): PartyLook[] {
   const ds = useDs();
   // "Caretaker's Cottage" is "Caretaker's" on a chip, "Mill & Ash Gin" is "Mill & Ash".
   const short = (name: string) => name.replace(/\s+(Gin|Scotch|Rum|Vodka|Whisky|Whiskey|Tequila|Spirits|Distillery|Bar|Cottage|Co\.?)$/i, '') || name;
   return [
-    { id: null, name: hostName, short: short(hostName), role: 'Hosting' as const, colour: ds.accentText },
+    { id: null, name: hostName, short: short(hostName), role: 'Our bar', colour: ds.accentText },
     ...[...parties]
       .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'guest' ? -1 : 1))
-      .map((p, i) => ({ id: p.id, name: p.name, short: short(p.name), role: p.kind === 'guest' ? ('Guest venue' as const) : ('Brand' as const), colour: partyHues[i % partyHues.length] })),
+      .map((p, i) => ({ id: p.id, name: p.name, short: short(p.name), role: p.kind === 'guest' ? 'Coming to us' : 'Brand', colour: partyHues[i % partyHues.length] })),
   ];
 }
 
