@@ -25,7 +25,7 @@ const db = new pg.Client({ connectionString: status.DB_URL });
 
 // Tables signed-out pages read, or that would hurt most if written.
 const SAMPLE = ['items', 'recipes', 'bars', 'menus', 'menu_drinks', 'profiles', 'user_bars', 'rank_entries', 'images'];
-const WRITES = ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'TRIGGER', 'REFERENCES'];
+const WRITES = ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'TRIGGER', 'REFERENCES', 'MAINTAIN'];
 const ids = {};
 
 /** Runs fn inside a transaction that is always rolled back. */
@@ -75,32 +75,54 @@ after(async () => {
 });
 
 describe('signed-out writes', () => {
-  test('anon holds no write privilege on any public table or view', async () => {
+  test('anon holds no write privilege on any public table or view, whoever owns it', async () => {
+    // has_any_column_privilege also sees a grant on a single column, and the
+    // catalog sees MAINTAIN, which information_schema leaves out.
     const { rows } = await db.query(
-      `SELECT table_name, privilege_type FROM information_schema.role_table_grants
-       WHERE table_schema = 'public' AND grantee = 'anon' AND privilege_type = ANY($1)`,
+      `SELECT c.relname, p.privilege FROM pg_class c
+       CROSS JOIN unnest($1::text[]) AS p(privilege)
+       WHERE c.relnamespace = 'public'::regnamespace AND c.relkind IN ('r', 'p', 'v', 'm', 'f')
+         AND CASE WHEN p.privilege IN ('INSERT', 'UPDATE', 'REFERENCES')
+                  THEN has_any_column_privilege('anon', c.oid, p.privilege)
+                  ELSE has_table_privilege('anon', c.oid, p.privilege) END
+       ORDER BY 1, 2`,
       [WRITES]
     );
     assert.deepEqual(rows, []);
   });
 
-  test('a table made by a later migration gives anon reads only, and signed-in people keep writes', async () => {
+  test('anon cannot draw from or set any public sequence', async () => {
+    const { rows } = await db.query(
+      `SELECT c.relname FROM pg_class c
+       WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'S'
+         AND (has_sequence_privilege('anon', c.oid, 'USAGE') OR has_sequence_privilege('anon', c.oid, 'UPDATE'))`
+    );
+    assert.deepEqual(rows, []);
+  });
+
+  test('a table (and its sequence) made by a later migration gives anon reads only, and signed-in people keep writes', async () => {
     await rolledBack(async () => {
-      await db.query(`CREATE TABLE public.write_lock_probe_${run} (id int)`);
+      await db.query(`CREATE TABLE public.write_lock_probe_${run} (id serial)`);
       const { rows } = await db.query(
         `SELECT has_table_privilege('anon', $1, 'SELECT') AS anon_select,
                 has_table_privilege('anon', $1, 'INSERT') AS anon_insert,
                 has_table_privilege('anon', $1, 'UPDATE') AS anon_update,
                 has_table_privilege('anon', $1, 'DELETE') AS anon_delete,
-                has_table_privilege('authenticated', $1, 'INSERT') AS signed_in_insert`,
-        [`public.write_lock_probe_${run}`]
+                has_table_privilege('anon', $1, 'MAINTAIN') AS anon_maintain,
+                has_sequence_privilege('anon', $2, 'USAGE') AS anon_sequence,
+                has_table_privilege('authenticated', $1, 'INSERT') AS signed_in_insert,
+                has_sequence_privilege('authenticated', $2, 'USAGE') AS signed_in_sequence`,
+        [`public.write_lock_probe_${run}`, `public.write_lock_probe_${run}_id_seq`]
       );
       assert.deepEqual(rows[0], {
         anon_select: true,
         anon_insert: false,
         anon_update: false,
         anon_delete: false,
+        anon_maintain: false,
+        anon_sequence: false,
         signed_in_insert: true,
+        signed_in_sequence: true,
       });
     });
   });

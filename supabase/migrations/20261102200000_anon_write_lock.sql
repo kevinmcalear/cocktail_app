@@ -1,12 +1,20 @@
 -- A second lock behind the access rules (database audit, 22 Oct, 4.1 and 4.2).
 --
 -- 1. Signed-out visitors (the anon role) lose INSERT, UPDATE and DELETE on
---    every table and view in public, and tables made by later migrations no
---    longer grant them either. Until now Supabase's default grants gave anon
---    those privileges and row-level security was the only thing refusing the
---    writes, so one mistaken policy would have let anyone write. TRUNCATE,
---    TRIGGER and REFERENCES went in 20261008750000; they are revoked again
---    here so this file states the whole rule.
+--    every table and view in public, and tables made by later migrations
+--    (they run as postgres) no longer grant them either. Until now
+--    Supabase's default grants gave anon those privileges and row-level
+--    security was the only thing refusing the writes, so one mistaken policy
+--    would have let anyone write. TRUNCATE, TRIGGER and REFERENCES went in
+--    20261008750000; they are revoked again here so this file states the
+--    whole rule. MAINTAIN (Postgres 17: LOCK TABLE, VACUUM, REFRESH
+--    MATERIALIZED VIEW) goes too, and so do USAGE and UPDATE on sequences
+--    (nextval and setval), which only an insert would need.
+--
+--    Tables that supabase_admin creates in public (the platform, not our
+--    migrations; none today) still get Supabase's default grants: postgres
+--    cannot change supabase_admin's defaults. The test below checks every
+--    table in public, whoever made it.
 --
 --    SELECT stays: signed-out pages read published drinks, bar pages, shared
 --    menus, releases and venue branding through it, and RLS still decides
@@ -36,9 +44,12 @@
 
 -- --- Signed-out writes ---
 
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES ON ALL TABLES IN SCHEMA "public" FROM "anon";
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES, MAINTAIN ON ALL TABLES IN SCHEMA "public" FROM "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
-    REVOKE INSERT, UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES ON TABLES FROM "anon";
+    REVOKE INSERT, UPDATE, DELETE, TRUNCATE, TRIGGER, REFERENCES, MAINTAIN ON TABLES FROM "anon";
+REVOKE USAGE, UPDATE ON ALL SEQUENCES IN SCHEMA "public" FROM "anon";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
+    REVOKE USAGE, UPDATE ON SEQUENCES FROM "anon";
 
 -- --- Private tables ---
 
