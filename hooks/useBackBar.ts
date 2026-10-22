@@ -323,13 +323,24 @@ type Spot = Omit<ItemLocation, 'item'>;
  */
 export function useBottleSpots(barId: string | null | undefined) {
   const qc = useQueryClient();
-  const refresh = () => qc.invalidateQueries({ queryKey: locationsKey(barId) });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: locationsKey(barId) });
+    qc.invalidateQueries({ queryKey: stockKey(barId) });
+  };
+  // The stock list follows the spots: a bottle replaced or taken off leaves it,
+  // or it would come back under Waiting for a spot. The new bottle needs no row,
+  // its spots put it on the back bar.
+  const leaveStock = async (itemId: string) => {
+    const { error } = await supabase.from('back_bar_items').delete().eq('bar_id', barId!).eq('item_id', itemId);
+    if (error) throw error;
+  };
 
   /** Resolves the spots it changed, so Undo points just those back. */
   const replace = useMutation({
     mutationFn: async ({ fromId, toId }: { fromId: string; toId: string }): Promise<string[]> => {
       const { data, error } = await supabase.from('item_locations').update({ item_id: toId }).eq('bar_id', barId!).eq('item_id', fromId).select('id');
       if (error) throw error;
+      await leaveStock(fromId);
       return (data ?? []).map((row) => row.id);
     },
     onSettled: refresh,
@@ -349,6 +360,7 @@ export function useBottleSpots(barId: string | null | undefined) {
     mutationFn: async (itemId: string): Promise<Spot[]> => {
       const { data, error } = await supabase.from('item_locations').delete().eq('bar_id', barId!).eq('item_id', itemId).select(SPOT_COLUMNS);
       if (error) throw error;
+      await leaveStock(itemId);
       return (data ?? []) as Spot[];
     },
     onSettled: refresh,
