@@ -7,7 +7,7 @@ import { beerWineSketch, fullDescription, type BeerWineDraft, type CatalogBottle
 import { plainDbMessage } from '@/lib/dbError';
 import { DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { likeExactly } from '@/lib/drinkWizard';
-import { numericPrice } from '@/lib/menus';
+import { formatPrice } from '@/lib/menus';
 import { capitalizeFirsts } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
@@ -43,7 +43,7 @@ export function useCreateBeerWine() {
           name: capitalizeFirsts(draft.name),
           brand_maker: capitalizeFirsts(draft.maker) || null,
           abv: number(draft.abv),
-          price: barId ? numericPrice(number(draft.price)) : null,
+          price: barId ? formatPrice(draft.price) : null,
           description: fullDescription(draft) || null,
           origin: draft.origin,
           bar_id: barId,

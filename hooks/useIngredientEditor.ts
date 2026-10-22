@@ -9,6 +9,7 @@ import { useIngredient } from "@/hooks/useIngredients";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
+import { saveItemTags } from "@/lib/itemSave";
 import { applyIngredientHandoff, withoutSelfRecipeRefs } from "@/lib/ingredientHandoff";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { capitalize, capitalizeFirst } from "@/lib/stringUtils";
@@ -74,6 +75,8 @@ function useForm(selfId: string | null) {
         setClean(JSON.stringify(values));
     }, []);
     const markClean = () => setClean(JSON.stringify(form));
+    // What was last loaded or saved: Save changes the tags against it.
+    const saved = useMemo(() => (clean === null ? null : (JSON.parse(clean) as IngredientForm)), [clean]);
 
     // A new ingredient made from this recipe comes back onto it (only to the editor that asked).
     useEffect(() => {
@@ -106,6 +109,7 @@ function useForm(selfId: string | null) {
         load,
         markClean,
         loaded: clean !== null,
+        saved,
         isDirty: clean !== null && JSON.stringify(form) !== clean,
         selfId,
         dropdowns,
@@ -132,14 +136,14 @@ export function useIngredientEditor(id: string) {
         const ingredient = data?.ingredient;
         if (!ingredient || loadedFor.current === id) return;
         loadedFor.current = id;
-        // Recipe rows and visibility overrides come from the raw tables: the
+        // Recipe rows, visibility overrides and tags come from the raw tables: the
         // presentation views mask or omit them, and a save writes them all back.
         // Once per ingredient: a refetch of the page's data mustn't undo what's typed.
         Promise.all([
             fetchEditableRecipes(id),
             supabase
                 .from("items")
-                .select("override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level")
+                .select("override_visibility_level, override_generic_ingredient_level, override_specific_brand_level, override_measurement_level, override_prep_level, item_categories(category_id)")
                 .eq("id", id)
                 .single(),
         ])
@@ -151,10 +155,7 @@ export function useIngredientEditor(id: string) {
                     brandMaker: ingredient.brand_maker || "",
                     generic: ingredient.generic ?? null,
                     abv: ingredient.abv?.toString() || "",
-                    // ponytail: useIngredient doesn't select item_categories, so this has
-                    // always loaded empty, and Save then unlinks every tag left unticked.
-                    // Selecting them there is its own fix; this keeps today's behaviour.
-                    selectedCategories: [],
+                    selectedCategories: raw.item_categories.map((ic) => ic.category_id),
                     // Someone who can't edit the recipe reads it as shown; Save then asks for their own version (useAskAtSave).
                     recipeItems: (recipes.length ? recipes : (data.recipe ?? [])).map((r) => mapPresentationRecipeToEditItem(r, { includeCocktailFields: true })),
                     barId: ingredient.bar_id || null,
@@ -174,7 +175,8 @@ export function useIngredientEditor(id: string) {
 
     const save = async (): Promise<boolean> => {
         const f = editor.form;
-        if (!editor.loaded) return false;
+        if (!editor.saved) return false;
+        const loadedTags = editor.saved.selectedCategories;
         if (!f.name.trim()) {
             Alert.alert("Missing Info", "Name is required.");
             return false;
@@ -200,14 +202,7 @@ export function useIngredientEditor(id: string) {
                 .eq("id", id);
             if (updateError) throw updateError;
 
-            const { data: existingCatLinks } = await supabase.from("item_categories").select("category_id").eq("item_id", id);
-            const existing = existingCatLinks?.map((l) => l.category_id) || [];
-            const toDelete = existing.filter((c) => !f.selectedCategories.includes(c));
-            const toAdd = f.selectedCategories.filter((c) => !existing.includes(c));
-            if (toDelete.length > 0) await supabase.from("item_categories").delete().eq("item_id", id).in("category_id", toDelete);
-            for (const catId of toAdd) {
-                await supabase.from("item_categories").upsert({ item_id: id, category_id: catId, is_primary: true }, { onConflict: "item_id,category_id" });
-            }
+            await saveItemTags(id, loadedTags, f.selectedCategories);
 
             const { error: deleteError } = await supabase.from("recipes").delete().eq("recipe_item_id", id);
             if (deleteError) throw deleteError;
