@@ -92,6 +92,13 @@ export function roleSummary(role: Pick<MatrixColumn, 'base_level' | 'granted' | 
   return parts.join(', ');
 }
 
+/** The words under a column's name: "Built in", "Yours · from Employee", "Yours · ends Mon 12 Oct". Never a level number. */
+export function columnCaption(column: Pick<MatrixColumn, 'role_id' | 'base_level' | 'ends_at'>): string {
+  if (!column.role_id) return 'Built in';
+  const ends = endsLabel(column.ends_at);
+  return `Yours · ${ends ? `ends ${ends}` : `from ${roleLabel(column.base_level)}`}`;
+}
+
 /**
  * The overrides to save for a role on `level` with these capabilities switched
  * on: granted is what the base level lacks, revoked what it has and the role

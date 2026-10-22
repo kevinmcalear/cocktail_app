@@ -2,7 +2,7 @@
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { cell, dayOfEnd, endOfDay, endsLabel, overridesFor, roleSummary, type MatrixColumn } from './roleMatrix';
+import { cell, columnCaption, dayOfEnd, endOfDay, endsLabel, overridesFor, roleSummary, type MatrixColumn } from './roleMatrix';
 import { agoLabel, memberRoleName, memberSinceLine } from './team';
 
 const base = (level: number, capabilities: string[]): MatrixColumn => ({
@@ -36,6 +36,12 @@ assert.equal(dayOfEnd(end), '2026-10-12');
 assert.equal(endsLabel(end), 'Mon 12 Oct');
 assert.equal(endsLabel(endOfDay('2026-10-11')!), 'Sun 11 Oct');
 assert.equal(endOfDay('12 Oct'), null);
+
+// Column captions name the role, never its level number.
+assert.equal(columnCaption(employee), 'Built in');
+assert.equal(columnCaption(barback), 'Yours · from Employee');
+assert.equal(columnCaption({ ...barback, ends_at: end }), 'Yours · ends Mon 12 Oct');
+for (const c of [employee, barback, base(35, [])]) assert.doesNotMatch(columnCaption(c), /\d/);
 
 // Roster lines.
 assert.equal(memberRoleName({ role_level: 35, venue_role_name: 'Head bartender' }), 'Head bartender');
