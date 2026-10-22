@@ -17,6 +17,7 @@
     "db:check": "node scripts/check-local-migrations.mjs",
     "test:security": "node scripts/check-local-migrations.mjs && node --test --test-concurrency=1 --test-force-exit \"supabase/tests/*.test.mjs\"",
     "test:policy": "npm ci --prefix scripts/change-policy --ignore-scripts --no-audit --no-fund --silent && node --test \"scripts/change-policy/*.test.mjs\"",
+    "smoke": "npm install --prefix smoke --no-audit --no-fund --silent && smoke/node_modules/.bin/playwright install --only-shell chromium && node smoke/smoke.mjs",
     "postinstall": "patch-package",
     "desktop:dev": "npm --prefix desktop run dev",
     "desktop:build": "npm --prefix desktop run build"

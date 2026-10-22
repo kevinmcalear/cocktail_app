@@ -21,6 +21,11 @@ module.exports = defineConfig([
     ],
   },
   {
+    // smoke/ has its own package.json (Playwright), which CI's lint job doesn't install.
+    files: ['smoke/**'],
+    rules: { 'import/no-unresolved': 'off' },
+  },
+  {
     // React Compiler rules that eslint-plugin-react-hooks 7 (Expo SDK 57) turns
     // on as errors. The compiler skips components that break them rather than
     // miscompiling, so they are warnings until the existing violations are
