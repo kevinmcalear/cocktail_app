@@ -4,7 +4,6 @@ import { Alert, Platform } from 'react-native';
 import { useBreakpoint } from '@/components/ds';
 
 import { useBarGlassware } from '@/hooks/useBarGlassware';
-import { useBackBarIds } from '@/hooks/useBackBar';
 import { useBarKit } from '@/hooks/useBarKit';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
@@ -40,6 +39,7 @@ import { NameStep, NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
 import { StartFromClassic } from './StartFromClassic';
+import { useLineStock } from './StockToggle';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
 import { WizardFrame } from './WizardFrame';
@@ -159,7 +159,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
 
   const ingredients = dropdowns?.ingredients ?? [];
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
-  const backBar = useBackBarIds(barId, ingredients);
+  const stock = useLineStock({ barId, venueName, drinkName: draft.name.trim(), ingredients, lines: draft.lines, pinned: !desk });
   const copy = STEP_COPY[step];
   const methods = choiceList(COMMON_METHODS, dropdowns?.methods ?? []);
   const glasses = choiceList(COMMON_GLASSES, dropdowns?.glassware ?? []);
@@ -186,7 +186,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         loading={!dropdowns?.ingredients}
         aliases={dropdowns?.ingredientAliases}
         shelf={barId ? undefined : new Set(shelfIds ?? [])}
-        backBar={barId ? backBar : undefined}
+        backBar={barId ? stock.backBar : undefined}
+        stock={stock}
         onStartOver={startOver}
         saving={create.isPending}
         canSave={canSave(draft)}
@@ -216,7 +217,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
             aliases={dropdowns?.ingredientAliases}
             coreIds={coreIds}
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
-            backBar={barId ? backBar : undefined}
+            backBar={barId ? stock.backBar : undefined}
+            stock={stock}
           />
         );
       case 'method':
@@ -284,6 +286,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
           saving={create.isPending}
           onSkip={next}
           onNext={next}
+          notice={step === 'ingredients' ? stock.note : null}
         />
       }
     >

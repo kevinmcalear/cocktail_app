@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 
 import {
+  addedLine,
   clampRect,
+  isStockable,
+  pouredLine,
   formatPar,
   kindFromName,
   freeSpot,
@@ -65,7 +68,7 @@ assert.equal(formatPar(1, 'bottles'), '1 bottle');
 assert.equal(formatPar(2, 'bottles'), '2 bottles');
 assert.equal(formatPar(null, 'L'), null);
 assert.equal(formatPar(2, null), null);
-assert.equal(summaryLine(12, [{ item_id: 'a' }, { item_id: 'a' }, { item_id: 'b' }], 3), '12 zones · 2 items placed · 3 waiting for a spot');
+assert.equal(summaryLine(12, [{ item_id: 'a' }, { item_id: 'a' }, { item_id: 'b' }], 4), '12 zones · 2 items placed · 4 waiting');
 assert.equal(summaryLine(1, [{ item_id: 'a' }], 0), '1 zone · 1 item placed');
 
 // --- waiting for a spot ---
@@ -99,9 +102,54 @@ assert.deepEqual(
   'a drink never counts as its own ingredient'
 );
 assert.deepEqual(
-  waitingForSpot(used, [{ item_id: 'scotch' }, { item_id: 'syrup' }, { item_id: 'unrelated' }]).map((i) => i.id),
-  ['lemon', 'gin', 'honey', 'ginger']
+  used.map((i) => [i.id, i.drinks]),
+  [
+    ['scotch', ['penicillin']],
+    ['lemon', ['penicillin', 'martini']],
+    ['syrup', ['penicillin']],
+    ['gin', ['martini']],
+    ['honey', ['penicillin']],
+    ['ginger', ['penicillin']],
+  ],
+  'each says which drinks pour it, through a house-made syrup too'
 );
+
+// Bottles put on the back bar wait first, newest first; then what the menus pour. Each once.
+const NOW = Date.parse('2026-10-22T12:00:00Z');
+const names: Record<string, string> = { penicillin: 'Penicillin', martini: 'Martini' };
+const stockRows = [
+  { item_id: 'mezcal', source: 'drink', from_name: 'Ash Garden', added_at: '2026-10-22T11:58:00Z', item: { id: 'mezcal', name: 'Del Maguey Vida' } },
+  { item_id: 'gin', source: 'setup', from_name: null, added_at: '2026-10-21T09:00:00Z', item: { id: 'gin', name: 'Gin' } },
+  { item_id: 'placed', source: 'drink', from_name: 'Low Tide', added_at: '2026-10-20T09:00:00Z', item: { id: 'placed', name: 'Campari' } },
+  { item_id: 'hidden', source: 'drink', from_name: null, added_at: '2026-10-20T09:00:00Z', item: null },
+];
+assert.deepEqual(
+  waitingForSpot(stockRows, used, [{ item_id: 'scotch' }, { item_id: 'syrup' }, { item_id: 'placed' }], (id) => names[id], NOW),
+  [
+    { id: 'mezcal', name: 'Del Maguey Vida', detail: 'Added from Ash Garden, just now' },
+    { id: 'gin', name: 'Gin', detail: 'Added in setup, yesterday' },
+    { id: 'lemon', name: 'Lemon juice', detail: 'Poured in 2 drinks' },
+    { id: 'honey', name: 'Honey', detail: 'Poured in Penicillin' },
+    { id: 'ginger', name: 'Ginger', detail: 'Poured in Penicillin' },
+  ]
+);
+assert.equal(addedLine({ source: 'back_bar', from_name: null, added_at: '2026-10-19T09:00:00Z' }, NOW), 'Added 3 days ago');
+assert.equal(addedLine({ source: 'drink', from_name: '  ', added_at: '2026-10-22T11:00:00Z' }, NOW), 'Added today');
+assert.equal(pouredLine(['x'], () => undefined), 'Poured in 1 drink');
+
+// --- which lines get the bottle ---
+assert.equal(isStockable({ name: 'Del Maguey Vida', kind: 'Mezcal', role: 'product' }), true);
+assert.equal(isStockable({ name: 'Sweet vermouth', role: 'generic' }), true);
+assert.equal(isStockable({ name: 'Agave syrup', role: 'generic' }), true, 'a bought syrup');
+assert.equal(isStockable({ name: 'Agave syrup', role: 'prep' }), true, 'the catalog files syrups as preps; a bar can still buy one');
+assert.equal(isStockable({ name: 'Monin pandan', role: 'product' }), true, 'a branded bottle');
+assert.equal(isStockable({ name: 'Fever-Tree tonic', role: 'product' }), false, 'a mixer');
+assert.equal(isStockable({ name: 'Angostura bitters', role: 'product' }), true);
+assert.equal(isStockable({ name: 'Lime juice', role: 'generic' }), false);
+assert.equal(isStockable({ name: 'Mint', role: 'generic' }), false);
+assert.equal(isStockable({ name: 'Soda water', role: 'generic' }), false);
+assert.equal(isStockable({ name: 'Pandan cordial', role: 'prep', ownPrep: true }), false, "the bar's own house prep");
+assert.equal(isStockable({ name: 'Lime juice', role: 'prep' }), false, 'a juice, however the catalog files it');
 
 console.log('backBar checks passed');
 

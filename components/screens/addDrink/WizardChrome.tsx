@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
@@ -85,6 +85,8 @@ interface FooterProps {
   saving: boolean;
   onSkip: () => void;
   onNext: () => void;
+  /** Just above the buttons: a short note with Undo ("Del Maguey Vida is on Little Rye's back bar"). */
+  notice?: ReactNode;
 }
 
 /**
@@ -92,13 +94,16 @@ interface FooterProps {
  * on the review). On a desktop browser it ends the step instead, Next a
  * compact pill.
  */
-export function WizardFooter({ nextLabel, optional, skipLabel = 'Skip', canNext, saving, onSkip, onNext }: FooterProps) {
+export function WizardFooter({ nextLabel, optional, skipLabel = 'Skip', canNext, saving, onSkip, onNext, notice }: FooterProps) {
   const ds = useDs();
   const inline = useContext(FooterInline);
   return (
     <View style={[styles.footer, !inline && { backgroundColor: ds.c.ground }]}>
-      {optional ? <Button label={skipLabel} variant="secondary" size="lg" onPress={onSkip} /> : null}
-      <Button label={nextLabel} size="lg" disabled={!canNext || saving} onPress={onNext} style={inline ? styles.compact : styles.flex} />
+      {notice}
+      <View style={styles.buttons}>
+        {optional ? <Button label={skipLabel} variant="secondary" size="lg" onPress={onSkip} /> : null}
+        <Button label={nextLabel} size="lg" disabled={!canNext || saving} onPress={onNext} style={inline ? styles.compact : styles.flex} />
+      </View>
     </View>
   );
 }
@@ -109,7 +114,8 @@ const styles = StyleSheet.create({
   notice: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.sm, paddingVertical: space.md, paddingHorizontal: space.lg, borderRadius: radius.control },
   on: { fontFamily: fontFamilies.bodySemiBold },
   eyebrow: { letterSpacing: 0.6 },
-  footer: { flexDirection: 'row', gap: space.md, paddingTop: space.md },
+  footer: { gap: space.sm, paddingTop: space.md },
+  buttons: { flexDirection: 'row', gap: space.md },
   flex: { flex: 1 },
   compact: { minWidth: 220 },
 });

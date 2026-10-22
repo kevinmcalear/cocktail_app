@@ -27,6 +27,58 @@ export type Database = {
         }
         Relationships: []
       }
+      back_bar_items: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          bar_id: string
+          from_name: string | null
+          id: string
+          item_id: string
+          source: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          bar_id: string
+          from_name?: string | null
+          id?: string
+          item_id: string
+          source: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          bar_id?: string
+          from_name?: string | null
+          id?: string
+          item_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "back_bar_items_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "back_bar_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "back_bar_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bar_glassware: {
         Row: {
           created_at: string
