@@ -30,12 +30,23 @@ export function moreLabel(total: number, shown: number): string | null {
 }
 
 /** The scope switch's options, in order. `area` only when an area label is given. */
-export function scopeOptions(mineLabel: string, areaLabel: string | null): { value: SearchScope; label: string }[] {
+export function scopeOptions(mineLabel: string, areaLabel: string | null): { value: SearchScope; label: string; detail: string }[] {
   return [
-    { value: 'mine' as const, label: mineLabel },
-    ...(areaLabel ? [{ value: 'area' as const, label: areaLabel }] : []),
-    { value: 'everywhere' as const, label: 'Everywhere' },
+    { value: 'mine' as const, label: mineLabel, detail: mineLabel === 'Your drinks' ? 'What you’ve made and saved' : 'Drinks, preps, menus and bottles' },
+    ...(areaLabel ? [{ value: 'area' as const, label: areaLabel, detail: 'Bars and drinks on the map' }] : []),
+    { value: 'everywhere' as const, label: 'Everywhere', detail: 'Every bar, bartender and classic' },
   ];
+}
+
+/**
+ * Where the search circle starts: the place you came from (search-starts-here,
+ * decided 22 Oct 2026). Discover starts on This area, or Everywhere when its
+ * area is everywhere; every other tab starts on the venue in venue mode and on
+ * Everywhere at home (`mine`, from useSearchMine).
+ */
+export function startScope(fromTab: string | null, mine: SearchScope, hasArea: boolean): SearchScope {
+  if (fromTab === 'discover') return hasArea ? 'area' : 'everywhere';
+  return mine;
 }
 
 export interface CatalogGroups {
