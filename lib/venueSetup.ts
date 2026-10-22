@@ -1,24 +1,24 @@
 /**
  * Venue setup (decision b03): an intro, eight steps and a summary. Someone
- * finds their bar's page (or adds a new one), proves it's theirs, and sets
- * the venue up while a person checks the claim (b19). Checked by
- * lib/venueSetup.check.ts.
+ * finds their bar's page (or adds a new one), sets the venue up, and proves
+ * it's theirs last (Eddie call, 22 Oct): every step before the claim works
+ * without one. Checked by lib/venueSetup.check.ts.
  */
 
-export const VENUE_STEPS = ['find', 'claim', 'role', 'place', 'look', 'visibility', 'bring', 'team'] as const;
+export const VENUE_STEPS = ['find', 'role', 'place', 'look', 'visibility', 'bring', 'team', 'claim'] as const;
 export type VenueStep = (typeof VENUE_STEPS)[number];
 export type VenueScreen = 'intro' | VenueStep | 'done';
 
 /** The rail's name for each step (canvas make-venue-desktop). */
 export const STEP_NAMES: Record<VenueStep, string> = {
   find: 'Find your bar',
-  claim: 'Prove it’s yours',
   role: 'Your role',
-  place: 'Location and hours',
+  place: 'Location, hours and contact',
   look: 'Look',
   visibility: 'Who sees what',
   bring: 'Spec book and menu',
   team: 'Invite your team',
+  claim: 'Prove it’s yours',
 };
 
 /** The screen after this one: intro, the eight steps in order, then the summary. */
@@ -32,7 +32,7 @@ export function nextScreen(at: VenueScreen): VenueScreen {
 /** The screen before, for Back. The summary goes back to the last step. */
 export function previousScreen(at: VenueScreen): VenueScreen {
   if (at === 'intro' || at === 'find') return 'intro';
-  if (at === 'done') return 'team';
+  if (at === 'done') return VENUE_STEPS[VENUE_STEPS.length - 1];
   return VENUE_STEPS[VENUE_STEPS.indexOf(at) - 1];
 }
 
@@ -47,11 +47,20 @@ export function venueProgress(at: VenueScreen): { at: number; of: number; label:
 export type ClaimState = 'none' | 'pending' | 'approved';
 
 /**
- * The first step not done yet, to pick setup up from Tonight. A claim that's
- * waiting doesn't hold the rest up: that's the point of b19.
+ * The first step not done yet, to pick setup up from Tonight. Kept private
+ * for now, everything but the claim is done, so it opens the claim.
  */
 export function resumeScreen(done: readonly VenueStep[]): VenueScreen {
   return VENUE_STEPS.find((s) => !done.includes(s)) ?? 'done';
+}
+
+/**
+ * Where the claim step leads, sent or kept private. It's the last step, so
+ * the summary; but opened straight from a bar page's Claim, setup carries on
+ * from the first step not done.
+ */
+export function afterClaim(done: readonly VenueStep[], fromPage: boolean): VenueScreen {
+  return fromPage ? resumeScreen([...done, 'find', 'claim']) : 'done';
 }
 
 /** What's still on its way, for Tonight's banner: the claim, invites nobody's taken up yet, a spec book to read. */

@@ -6,24 +6,30 @@ import { useSaveClaimSetup } from '@/hooks/useBarClaims';
 import { useBarPublishing, useSetPublish } from '@/hooks/usePublishing';
 import type { ProfileClaim } from '@/hooks/useProfiles';
 import type { PageVisibility } from '@/lib/pageVisibility';
+import type { HeldSetup } from '@/store/useVenueSetup';
 
 interface Props {
   barId: string | null;
   name: string;
   claim: ProfileClaim | null;
   writable: boolean;
+  /** Kept with the setup before there's a claim. */
+  held: HeldSetup | undefined;
+  onHold: (change: HeldSetup) => void;
   onDone: () => void;
 }
 
 /**
- * Step 6: who outside the venue sees its page (the Publishing choice). Picked
- * before approval it waits on the claim and takes over when it's approved
- * (b19); once the page is the venue's it saves straight away.
+ * Step 5: who outside the venue sees its page (the Publishing choice). Picked
+ * before there's a claim it's kept with the setup and goes onto the claim
+ * when it's sent; while the claim waits it waits on the claim and takes over
+ * when it's approved (b19); once the page is the venue's it saves straight away.
  */
 export function VisibilityStep(props: Props) {
   if (props.writable && props.barId) return <FromVenue {...props} barId={props.barId} />;
-  // A claim still waiting isn't verified yet, so Private stays closed.
-  return <Choose {...props} current={props.claim?.setup?.page_visibility ?? 'description'} privateAllowed={false} />;
+  // A claim not sent or still waiting isn't verified yet, so Private stays closed.
+  const pending = props.claim?.status === 'pending';
+  return <Choose {...props} current={(pending ? props.claim?.setup?.page_visibility : props.held?.page_visibility) ?? 'description'} privateAllowed={false} />;
 }
 
 /** The venue's own page: start from what it has now. */
@@ -33,7 +39,7 @@ function FromVenue(props: Props & { barId: string }) {
   return <Choose {...props} current={publishing.data.pageVisibility} privateAllowed={publishing.data.privateAllowed} />;
 }
 
-function Choose({ barId, name, claim, writable, onDone, current, privateAllowed }: Props & { current: PageVisibility; privateAllowed: boolean }) {
+function Choose({ barId, name, claim, writable, onHold, onDone, current, privateAllowed }: Props & { current: PageVisibility; privateAllowed: boolean }) {
   const setPublish = useSetPublish(barId);
   const saveSetup = useSaveClaimSetup();
   const pending = !writable && claim?.status === 'pending';
@@ -44,15 +50,19 @@ function Choose({ barId, name, claim, writable, onDone, current, privateAllowed 
   const save = () => {
     // While the claim waits the choice is always kept, even the default: approving otherwise starts the page at Menu.
     if (pending && claim) return saveSetup.mutate({ claimId: claim.id, setup: { page_visibility: shown } }, { onSuccess: onDone });
+    // Before a claim it's kept the same way, and goes onto the claim when it's sent.
+    if (!writable) {
+      onHold({ page_visibility: shown });
+      return onDone();
+    }
     if (!value || value === current) return onDone();
-    if (writable) setPublish.mutate({ level: 'page', visibility: value }, { onSuccess: onDone });
-    else onDone();
+    setPublish.mutate({ level: 'page', visibility: value }, { onSuccess: onDone });
   };
   const note = pending
     ? `Today ${name}’s page is unclaimed, so it shows its menu: photos, descriptions and ingredients without amounts. This takes over once your claim is approved. Any single drink can still be kept private from its own page, and you can change this in Publishing once every 30 days.`
     : writable
       ? 'Any single drink can still be kept private from its own page, and you can change this in Publishing.'
-      : 'This applies once your bar’s page is claimed. Any single drink can still be kept private from its own page.';
+      : `Kept with your setup. It takes over once we’ve checked ${name} is yours (the last step); until then its page stays as it is. Any single drink can still be kept private from its own page.`;
 
   return (
     <SetupPage footer={<SetupFooter pending={busy} onPress={save} onSkip={onDone} />}>

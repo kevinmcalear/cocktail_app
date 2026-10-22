@@ -5,14 +5,21 @@ import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useBarInvites } from '@/hooks/useBarInvites';
-import { useVenueClaim } from '@/hooks/useVenueSetup';
+import { useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { onItsWay } from '@/lib/venueSetup';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
-/** "Setup: 3 things on their way · See": Tonight's banner until venue setup is finished (b03). */
-export function SetupBanner({ count, onPress }: { count: number; onPress?: () => void }) {
+/**
+ * "Setup: 3 things on their way · See": Tonight's banner until venue setup is
+ * finished (b03). Kept private, it stays to offer proving it's yours (prove).
+ */
+export function SetupBanner({ count, prove, onPress }: { count: number; prove?: boolean; onPress?: () => void }) {
   const ds = useDs();
-  const what = count === 0 ? 'pick up where you left off' : `${count} ${count === 1 ? 'thing' : 'things'} on ${count === 1 ? 'its' : 'their'} way`;
+  const what = prove
+    ? 'prove it’s yours when you’re ready'
+    : count === 0
+      ? 'pick up where you left off'
+      : `${count} ${count === 1 ? 'thing' : 'things'} on ${count === 1 ? 'its' : 'their'} way`;
   const body = (
     <>
       <IconSymbol name="clock" size={16} color={ds.c.muted} />
@@ -34,15 +41,27 @@ export function SetupBanner({ count, onPress }: { count: number; onPress?: () =>
   );
 }
 
-/** Tonight's banner for a venue whose setup on this device isn't finished; opens setup where it left off. */
+/**
+ * Tonight's banner for a venue set up on this device: while setup isn't
+ * finished it opens where it left off; finished but kept private (no claim,
+ * no page), it opens the claim.
+ */
 export function TonightSetupBanner({ barId }: { barId: string }) {
   const router = useRouter();
   const run = useVenueSetup((s) => s.runs[barId]);
   const open = !!run && !run.finished;
-  const claim = useVenueClaim(open ? barId : null).data;
+  // Finished with the claim sent: nothing left to offer, so nothing to look up.
+  const proving = !!run?.finished && !run.done.includes('claim');
+  const claim = useVenueClaim(open || proving ? barId : null);
+  const page = useVenuePage(proving ? barId : null);
   const invites = useBarInvites(barId, open).data ?? [];
-  if (!open) return null;
-  const count = onItsWay({ claim: claim?.status === 'pending' ? 'pending' : 'none', invites: invites.length, waitingFiles: 0 });
+  if (!run || (!open && !proving)) return null;
+  if (!open) {
+    const status = claim.data?.status;
+    const unproved = claim.isSuccess && page.isSuccess && !page.data && status !== 'pending' && status !== 'approved';
+    return unproved ? <SetupBanner count={0} prove onPress={() => router.push(`/venue-setup?bar=${barId}&step=claim` as Href)} /> : null;
+  }
+  const count = onItsWay({ claim: claim.data?.status === 'pending' ? 'pending' : 'none', invites: invites.length, waitingFiles: 0 });
   return <SetupBanner count={count} onPress={() => router.push(`/venue-setup?bar=${barId}` as Href)} />;
 }
 

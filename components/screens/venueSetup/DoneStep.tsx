@@ -18,6 +18,7 @@ import { colourName } from '@/lib/brandColours';
 import { withAlpha } from '@/lib/color';
 import { PAGE_COPY, type PageVisibility } from '@/lib/pageVisibility';
 import { namesLine, onItsWay, type ClaimState } from '@/lib/venueSetup';
+import type { HeldSetup } from '@/store/useVenueSetup';
 
 import { SetupBanner } from './SetupBanner';
 
@@ -57,6 +58,8 @@ function Line({ icon, title, line, end, waiting }: { icon: IconName; title: stri
 /**
  * The summary (canvas make-venue-done): what's on its way (the claim, the
  * invites nobody's taken up, what's waiting to be read) and what's done.
+ * Kept private, the public page says so, with a way to prove it's yours now
+ * (eddie-oct22-wave1).
  */
 export function DoneStep({
   barId,
@@ -64,25 +67,30 @@ export function DoneStep({
   name,
   claim,
   claimState,
+  held,
   waitingFiles,
   onOpen,
+  onProve,
 }: {
   barId: string;
   profileId: string | null;
   name: string;
   claim: ProfileClaim | null;
   claimState: ClaimState;
+  /** Kept with the setup before a claim: who sees the page once it's checked. */
+  held: HeldSetup | undefined;
   waitingFiles: number;
   onOpen: () => void;
+  onProve: () => void;
 }) {
   const invites = useBarInvites(barId).data ?? [];
   const resend = useSendInviteEmail(barId);
   const brand = useVenueBrand(barId).data;
   const facts = useBarFacts(profileId).data;
   const visibility = (useBarPublishing(barId).data?.pageVisibility ?? null) as PageVisibility | null;
-  const held = claimState === 'pending' ? claim?.setup?.page_visibility : null;
-  // Approval starts the page at Menu unless setup kept a choice on the claim.
-  const shown = claimState === 'pending' ? (held ?? 'description') : (visibility ?? 'description');
+  const kept = claimState === 'pending' ? claim?.setup?.page_visibility : held?.page_visibility;
+  // Approval starts the page at Menu unless setup kept a choice on the claim (or with the setup, before one).
+  const shown = claimState === 'approved' ? (visibility ?? 'description') : (kept ?? 'description');
   const names = invites.map((i) => i.name?.trim().split(/\s+/)[0] || i.email);
   const count = onItsWay({ claim: claimState, invites: invites.length, waitingFiles });
   const tint = `${GROUND_TINTS.find((t) => normalizeHex(t.hex) === normalizeHex(brand?.ground_tint ?? ''))?.label ?? 'Standard'} ground`;
@@ -91,7 +99,7 @@ export function DoneStep({
   const look = brand ? [accent ? colourName(accent) : 'App colours', displayFaces[faceFromDb(brand.display_face)].label, tint].join(', ') : '';
 
   return (
-    <SetupPage footer={<SetupFooter label="Open Tonight" onPress={onOpen} />}>
+    <SetupPage footer={<SetupFooter label={`Open ${name || 'your bar'}`} onPress={onOpen} skipLabel="Prove it’s yours now" onSkip={claimState === 'none' ? onProve : undefined} />}>
       {count ? (
         <>
           <SetupHead>On its way</SetupHead>
@@ -115,9 +123,14 @@ export function DoneStep({
       <SetupHead>Done</SetupHead>
       <View role="list" style={styles.list}>
         <Line icon="checkmark" title="You’re Admin" line={name} />
-        {facts ? <Line icon="checkmark" title="Location and hours" line={[facts.address_line, facts.locality ?? facts.city].filter(Boolean).join(', ') || 'Typed by you'} /> : null}
+        {facts ? <Line icon="checkmark" title="Hours and contact" line={[facts.address_line, facts.locality ?? facts.city].filter(Boolean).join(', ') || 'Typed by you'} /> : null}
         {brand ? <Line icon="checkmark" title="Look" line={look} /> : null}
-        <Line icon="checkmark" title="Who sees your page" line={claimState === 'pending' ? `${PAGE_COPY[shown].label}, once the claim is approved` : PAGE_COPY[shown].label} />
+        <Line
+          icon="checkmark"
+          title="Who sees your page"
+          line={claimState === 'pending' ? `${PAGE_COPY[shown].label}, once the claim is approved` : claimState === 'none' ? `${PAGE_COPY[shown].label}, once it’s checked` : PAGE_COPY[shown].label}
+        />
+        {claimState === 'none' ? <Line waiting icon="lock.shield.fill" title="Public page" line="Private until it’s checked" /> : null}
       </View>
       {count ? (
         <>

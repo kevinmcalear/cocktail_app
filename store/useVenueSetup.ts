@@ -2,7 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import type { ClaimSetup } from '@/hooks/useProfiles';
 import type { VenueStep } from '@/lib/venueSetup';
+
+/**
+ * Page details typed before there's a claim (hours, phone, website, who sees
+ * the page) and the bar's Instagram. They go onto the claim when it's sent,
+ * and onto the page once it's checked.
+ */
+export type HeldSetup = ClaimSetup & { instagram?: string | null };
 
 /** One venue's setup on this device: what's done, so Tonight can pick it up. */
 export interface SetupRun {
@@ -14,6 +22,8 @@ export interface SetupRun {
   done: VenueStep[];
   /** Saw the summary and opened Tonight. Tonight stops showing the banner. */
   finished: boolean;
+  /** Typed before the claim, waiting for it (cleared once it's sent). */
+  held?: HeldSetup;
 }
 
 interface VenueSetupState {
@@ -21,6 +31,8 @@ interface VenueSetupState {
   runs: Record<string, SetupRun>;
   save: (key: string, run: Partial<SetupRun>) => void;
   markDone: (key: string, step: VenueStep) => void;
+  /** Keeps page details on the run until the claim is sent; null clears them. */
+  hold: (key: string, change: HeldSetup | null) => void;
   /** Moves the 'new' run under its venue once it's made. */
   rekey: (from: string, to: string) => void;
 }
@@ -42,6 +54,11 @@ export const useVenueSetup = create<VenueSetupState>()(
         set((s) => {
           const run = { ...BLANK, ...s.runs[key] };
           return run.done.includes(step) ? s : { runs: { ...s.runs, [key]: { ...run, done: [...run.done, step] } } };
+        }),
+      hold: (key, change) =>
+        set((s) => {
+          const run = { ...BLANK, ...s.runs[key] };
+          return { runs: { ...s.runs, [key]: { ...run, held: change ? { ...run.held, ...change } : undefined } } };
         }),
       rekey: (from, to) =>
         set((s) => {

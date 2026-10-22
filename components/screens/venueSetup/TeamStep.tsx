@@ -39,7 +39,7 @@ function RoleButton({ role, onPress }: { role: number; onPress: () => void }) {
 }
 
 /**
- * Step 8: invite several people at once (name, email, role each). Each one is
+ * Step 7: invite several people at once (name, email, role each). Each one is
  * saved (add_user_to_bar_by_email) and emailed (send-bar-invite), like the
  * invite sheet on My team. While the claim waits they're held: they join once
  * it's approved.
