@@ -13,7 +13,7 @@ import { readAnything } from '@/lib/readAnything';
 import { supabase } from '@/lib/supabase';
 
 /** After a bulk write: the lists it touches, the pages of the drinks it changed, and the ingredients it added or removed. */
-function useRefreshSpecs() {
+export function useRefreshSpecs() {
   const queryClient = useQueryClient();
   return ({ drinkIds = [], ingredientIds = [] }: { drinkIds?: string[]; ingredientIds?: string[] } = {}) =>
     Promise.all([

@@ -71,6 +71,8 @@ test('the name step says the bar has one, and a version starts from its spec wit
 
   await fireEvent.press(screen.getByRole('button', { name: 'Not a version' }));
   expect(latest().sameAs).toBeNull();
+  // No link to Little Rye's (or its classic) is left for a different drink to carry.
+  expect(latest().riffOf).toBeNull();
   expect(screen.getByText('Little Rye already has a Negroni')).toBeTruthy();
 });
 

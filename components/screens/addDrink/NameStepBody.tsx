@@ -5,6 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import type { ClassicMatch } from '@/lib/classics';
+import { withArticle } from '@/lib/closestClassic';
 import type { WizardDraft } from '@/lib/drinkWizard';
 import { sameName, theirs, versionName } from '@/lib/sameName';
 
@@ -101,7 +102,7 @@ function VersionWord({ draft, taken, onWord, onUndo }: { draft: WizardDraft; tak
 
 /** The word makes a name the bar has too ("Negroni (summer)" is there already): Next waits for another. */
 export function TakenWord({ bar, name }: { bar: string; name: string }) {
-  return <Caption tone="accent">{`${bar} already has ${/^[aeiou]/i.test(name.trim()) ? 'an' : 'a'} ${name.trim()}. Try another word.`}</Caption>;
+  return <Caption tone="accent">{`${bar} already has ${withArticle(name.trim())}. Try another word.`}</Caption>;
 }
 
 const styles = StyleSheet.create({

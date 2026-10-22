@@ -5,7 +5,7 @@ import { useSpecCatalog } from '@/hooks/useBulk';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import type { DrinkToMake } from '@/hooks/useBringInSave';
 import { isPrepName } from '@/lib/bringIn';
-import { recipeDraft, type RecipeChoices } from '@/lib/bringInDraft';
+import { livePick, recipeDraft, type RecipeChoices } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
 import { sketchLook } from '@/lib/drinkWizard';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -23,7 +23,8 @@ export function useRecipeMaker(data: MatchData) {
   const toMake = (r: RecipeReading, c: RecipeChoices): DrinkToMake => {
     const draft = recipeDraft(r, c, data, { methods, glasses, ice }, usual);
     // Saved as drawn here, so the drink keeps the drawing the check showed.
-    const updateId = c.same?.as === 'update' ? c.same.id : null;
+    const picked = livePick(c);
+    const updateId = picked?.as === 'update' ? picked.id : null;
     return { draft, prepNames: r.lines.filter((l) => isPrepName(l.ingredient)).map((l) => l.ingredient), sketch: draftSketchInputs(sketchLook(draft, variants)), updateId };
   };
   return { usual, toMake };

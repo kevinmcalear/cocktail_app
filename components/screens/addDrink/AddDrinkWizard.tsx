@@ -181,9 +181,13 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const preview = useClassicPreview(classic?.classic.id ?? null).data;
   const drawn = preview ? { ...draft, ...preview, name: draft.name } : draft;
   // The bar already has a drink by this name, or the bar it's credited to does (board dup-drink-warning): Next waits on a pick.
-  const atBar = useSameNameDrink({ barId, name: draft.name }).data ?? null;
-  const atPlace = useSameNameDrink({ creditedTo: !barId || draft.elsewhere ? draft.place?.id : null, name: draft.name }).data ?? null;
-  const waits = desk ? stepWaits('name', draft, atBar, null) || stepWaits('credits', draft, null, atPlace) : stepWaits(step, draft, atBar, atPlace);
+  const onBar = useSameNameDrink({ barId, name: draft.name });
+  const onPlace = useSameNameDrink({ creditedTo: !barId || draft.elsewhere ? draft.place?.id : null, name: draft.name });
+  const atBar = onBar.data ?? null;
+  const atPlace = onPlace.data ?? null;
+  // Still asking about the name as typed (a failed or offline ask doesn't hold anything up).
+  const checking = !!onBar.checking || !!onPlace.checking;
+  const waits = desk ? stepWaits('name', draft, atBar, null, checking) || stepWaits('credits', draft, null, atPlace) : stepWaits(step, draft, atBar, atPlace, checking);
   if (desk) {
     return (
       <DrinkDesk

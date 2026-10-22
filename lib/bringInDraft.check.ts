@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { openPickLine, prepFromRatio, recipeDraft, startChoices } from './bringInDraft';
+import { livePick, openPickLine, prepFromRatio, recipeDraft, startChoices } from './bringInDraft';
 import type { CatalogItem } from './match';
 
 // A recipe read by Bring in saves through the add-drink wizard's own save.
@@ -54,10 +54,16 @@ assert.ok(withPicks.lines[0].name);
 assert.equal(prepFromRatio('Fig syrup'), null);
 
 // Keep both: the sheet's is saved as a version of the bar's, with its word in brackets; Update it and Skip keep the name.
-const keep = { id: 'lr-1', name: 'Rye & Fig Old Fashioned', bar: 'Little Rye', as: 'keep' as const, word: 'stronger', riff: { id: 'lr-1', name: 'Rye & Fig Old Fashioned' } };
+const keep = { id: 'lr-1', name: 'Orchard Fizz', bar: 'Little Rye', as: 'keep' as const, word: 'stronger', riff: { id: 'lr-1', name: 'Orchard Fizz' } };
 const kept = recipeDraft(recipe, { ...choices, same: keep }, data, lists, 'ml');
-assert.equal(kept.name, 'Rye & Fig Old Fashioned (stronger)');
+assert.equal(kept.name, 'Orchard Fizz (stronger)');
 assert.deepEqual(kept.riffOf, keep.riff);
 assert.equal(kept.sameAs?.as, 'version');
 assert.equal(recipeDraft(recipe, { ...choices, same: { ...keep, as: 'update' } }, data, lists, 'ml').name, draft.name);
+// Renamed after a pick: the pick was for the bar's drink by the old name, so it no longer counts.
+assert.equal(livePick({ name: 'Orchard Fizz', same: keep }), keep);
+assert.equal(livePick({ name: 'Orchard Sour', same: { ...keep, as: 'update' } }), null);
+const renamed = recipeDraft(recipe, { ...choices, name: 'Orchard Sour', same: keep }, data, lists, 'ml');
+assert.equal(renamed.name, 'Orchard Sour');
+assert.equal(renamed.sameAs, undefined);
 console.log('bringInDraft checks passed');

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import { EMPTY_DRAFT } from './drinkWizard';
-import { creditWaits, nameKey, nameLike, nameWaits, sameName, sheetWaits, specDifferences, stepWaits, storedLine, versionHeading, versionName } from './sameName';
+import { creditWaits, nameKey, nameLike, nameWaits, ontoBarLines, sameName, sheetWaits, specDifferences, stepWaits, storedLine, versionHeading, versionName } from './sameName';
 
 // --- names ---
 assert.equal(nameKey('  Vieux Carré (Ours) '), 'vieux carre ours');
@@ -15,11 +15,16 @@ assert.ok(!sameName('Negroni (summer)', 'Negroni'));
 assert.ok(!sameName('', ''));
 
 // The pattern lets every spelling through; sameName sorts out the rest.
-assert.equal(nameLike('Paper Plane'), '%p_p_r%pl___%');
+assert.equal(nameLike('Paper Plane'), '%p%_%p%_%r%p%l%_%_%_%');
 assert.equal(nameLike('  '), null);
 const like = (pattern: string, name: string) => new RegExp(`^${pattern.replace(/%/g, '.*').replace(/_/g, '.')}$`, 'i').test(name);
 for (const name of ['Vieux Carré', 'VIEUX CARRE', 'Vieux-Carre']) assert.ok(like(nameLike('Vieux Carre')!, name), name);
 assert.ok(like(nameLike('Négroni')!, 'Negroni'));
+// An apostrophe on either side: the stored one sits where the typed name has none, and the other way round.
+for (const [typed, stored] of [["Tommy's Margarita", "Tommy's Margarita"], ['Tommys Margarita', "Tommy's Margarita"], ["Bee's Knees", 'Bees Knees'], ['Planters Punch', 'Planter’s Punch']]) {
+  assert.ok(like(nameLike(typed)!, stored), `${typed} finds ${stored}`);
+  assert.ok(sameName(typed, stored), `${typed} is ${stored}`);
+}
 
 assert.equal(versionName('Negroni', ' summer '), 'Negroni (summer)');
 assert.equal(versionName('Negroni', ''), 'Negroni');
@@ -42,6 +47,11 @@ assert.ok(creditWaits(draft, { id: 'v1' }));
 assert.ok(!creditWaits({ sameAs: { ...version, id: 'v1' } }, { id: 'v1' }));
 assert.ok(stepWaits('credits', draft, null, { id: 'v1' }));
 assert.ok(!stepWaits('method', draft, bar, { id: 'v1' }));
+// Still looking the name up: the name, credits and review steps wait (not the ones between).
+assert.ok(stepWaits('name', { ...draft, name: 'Negroni Bianco' }, null, null, true));
+assert.ok(stepWaits('review', draft, null, null, true));
+assert.ok(!stepWaits('method', draft, null, null, true));
+assert.ok(!stepWaits('review', draft, null, null, false));
 
 assert.deepEqual(versionHeading({ sameAs: version }), { eyebrow: 'Version of Little Rye’s Negroni', title: 'What’s different about this one?' });
 assert.equal(versionHeading({ sameAs: different }), null);
@@ -71,5 +81,24 @@ assert.equal(sheetWaits(bar, differs, { id: 'b1', as: 'update' }), false);
 assert.equal(sheetWaits(bar, differs, { id: 'b1', as: 'keep', word: ' ' }), true, 'Keep both waits for its word');
 assert.equal(sheetWaits(bar, differs, { id: 'b1', as: 'keep', word: 'stronger' }), false);
 assert.equal(sheetWaits(bar, differs, { id: 'other', as: 'update' }), true);
+
+// --- Update it: the sheet's lines onto the bar's rows ---
+const sheetLines = [
+  { id: null, ingredient_item_id: 'rye', amount: 60, unit: 'ml', preparation_notes: null, is_optional: false },
+  { id: null, ingredient_item_id: 'fig', amount: 15, unit: 'ml', preparation_notes: 'warm', is_optional: false },
+  { id: null, ingredient_item_id: 'new', amount: 2, unit: 'dash', preparation_notes: null, is_optional: false },
+];
+const barRows = [
+  { id: 'r1', ingredient_item_id: 'rye', preparation_notes: 'chilled', is_optional: false },
+  { id: 'r2', ingredient_item_id: 'fig', preparation_notes: 'house', is_optional: true },
+  { id: 'r3', ingredient_item_id: 'orange', preparation_notes: null, is_optional: false },
+];
+assert.deepEqual(ontoBarLines(sheetLines, barRows), [
+  { id: 'r1', ingredient_item_id: 'rye', amount: 60, unit: 'ml', preparation_notes: 'chilled', is_optional: false },
+  { id: 'r2', ingredient_item_id: 'fig', amount: 15, unit: 'ml', preparation_notes: 'warm', is_optional: true },
+  { id: null, ingredient_item_id: 'new', amount: 2, unit: 'dash', preparation_notes: null, is_optional: false },
+]);
+// One bar row is kept once, even when the sheet has the ingredient twice.
+assert.deepEqual(ontoBarLines([sheetLines[0], sheetLines[0]], barRows).map((l) => l.id), ['r1', null]);
 
 console.log('sameName checks passed');

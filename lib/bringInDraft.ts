@@ -7,7 +7,7 @@ import { ingredientState, plainKind, type MatchData } from '@/lib/bringInMatch';
 import { convertPour, EMPTY_DRAFT, newLine, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { normName } from '@/lib/paste';
 import { startPrep, type PrepDraft } from '@/lib/prepKinds';
-import { versionName } from '@/lib/sameName';
+import { sameName, versionName } from '@/lib/sameName';
 import type { RecipeReadLine, RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
 /** What the person decided on a line: a pick, or "make it new" instead of the match. */
@@ -39,6 +39,9 @@ export interface SheetPick {
   /** What Keep both links to: the classic the bar's drink is a version of, else the bar's drink. */
   riff: WizardPick;
 }
+
+/** The pick, while the name is still the bar's drink's: renamed, it was for a drink the sheet isn't any more. */
+export const livePick = (c: Pick<RecipeChoices, 'name' | 'same'>): SheetPick | null => (c.same && sameName(c.name, c.same.name) ? c.same : null);
 
 export const startChoices = (recipe: RecipeReading): RecipeChoices => ({ name: recipe.name, madeBy: '', source: recipe.by ?? '', notes: recipe.notes ?? '', lines: {} });
 
@@ -109,7 +112,8 @@ export function recipeDraft(
     !ice && recipe.ice ? `Ice: ${recipe.ice}` : null,
     choices.notes.trim() || null,
   ].filter(Boolean);
-  const same = choices.same?.as === 'keep' ? choices.same : null;
+  const picked = livePick(choices);
+  const same = picked?.as === 'keep' ? picked : null;
   return {
     ...EMPTY_DRAFT,
     name: same ? versionName(same.name, same.word) : choices.name.trim() || recipe.name,

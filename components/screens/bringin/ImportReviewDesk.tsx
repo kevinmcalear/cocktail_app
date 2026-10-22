@@ -44,8 +44,8 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
   const made = recipe && choices ? toMake(recipe, choices) : null;
   const sketch = useSteadySketch(made?.sketch);
   // The venue already has one by this name (board dup-drink-warning): Approve waits on what to do with it.
-  const there = useAlreadyThere(review?.barId ?? null, choices?.name ?? '', made?.draft ?? EMPTY_DRAFT, usual, choices?.same);
-  const waits = !!there?.waits;
+  const { there, checking } = useAlreadyThere(review?.barId ?? null, choices?.name ?? '', made?.draft ?? EMPTY_DRAFT, usual, choices?.same);
+  const waits = !!there?.waits || checking;
 
   // A approves, S skips, the arrows move: not while typing, with a sheet open over the page, or
   // with another screen on top (Edit this drink's editor).

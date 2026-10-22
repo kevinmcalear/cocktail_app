@@ -63,7 +63,7 @@ export function RecipeCheck({ recipe, files, from, data, saving, error, onCancel
   const made = toMake(recipe, choices);
   const sketch = useSteadySketch(made.sketch);
   // The venue already has one by this name (board dup-drink-warning): Save waits on what to do with it, and Skip leaves.
-  const there = useAlreadyThere(data.venueId, choices.name, made.draft, usual, choices.same);
+  const { there, checking } = useAlreadyThere(data.venueId, choices.name, made.draft, usual, choices.same);
   const skipped = !!there && choices.same?.id === there.drink.id && choices.same.as === 'skip';
   const file = (x: { at?: ReadPlace | null } | null) => (x?.at ? (files[x.at.page] ?? null) : null);
   const page = file(recipe);
@@ -113,7 +113,7 @@ export function RecipeCheck({ recipe, files, from, data, saving, error, onCancel
           {skipped ? (
             <Button label="Done" size="lg" onPress={onCancel} style={styles.wide} />
           ) : (
-            <Button label={saving ? 'Saving…' : 'Save drink'} size="lg" disabled={saving || !choices.name.trim() || !!there?.waits} onPress={() => onSave(made)} style={styles.wide} />
+            <Button label={saving ? 'Saving…' : 'Save drink'} size="lg" disabled={saving || !choices.name.trim() || !!there?.waits || checking} onPress={() => onSave(made)} style={styles.wide} />
           )}
         </View>
       </CheckFooter>

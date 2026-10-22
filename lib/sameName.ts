@@ -34,14 +34,16 @@ export function nameKey(name: string): string {
 export const sameName = (a: string, b: string) => !!nameKey(a) && nameKey(a) === nameKey(b);
 
 /**
- * An ILIKE pattern that every spelling of the name matches (and a few more,
- * which sameName then sets aside): its words in order, with the letters an
- * accent can sit on left open. Null for a name with no letters.
+ * An ILIKE pattern that every spelling of the name matches (and more, which
+ * sameName then sets aside): its letters in order with anything between
+ * them, since a stored name may have an apostrophe, a space or a hyphen
+ * anywhere ("Tommy's" for "Tommys"), and the letters an accent can sit on
+ * left open. Null for a name with no letters.
  */
 export function nameLike(name: string): string | null {
-  const key = nameKey(name);
+  const key = nameKey(name).replace(/ /g, '');
   if (!key) return null;
-  return `%${key.split(' ').map((w) => w.replace(/[aceinouy]/g, '_')).join('%')}%`;
+  return `%${[...key].map((c) => c.replace(/[aceinouy]/, '_')).join('%')}%`;
 }
 
 /** "Negroni" and "summer" make "Negroni (summer)"; no word yet is the name alone. */
@@ -65,8 +67,13 @@ export function nameWaits(draft: Pick<WizardDraft, 'name' | 'sameAs'>, match: { 
 /** Whether the credits step waits: the bar it's credited to has a drink by this name and nothing's picked for it. */
 export const creditWaits = (draft: Pick<WizardDraft, 'sameAs'>, match: { id: string } | null | undefined) => !!match && draft.sameAs?.id !== match.id;
 
-/** Whether a step's Next waits on a pick (the name step and the credits step). */
-export function stepWaits(step: WizardStep, draft: WizardDraft, atBar: { id: string } | null | undefined, atPlace: { id: string } | null | undefined): boolean {
+/**
+ * Whether a step's Next waits on a pick (the name step and the credits
+ * step), or on the lookup itself while it's `checking` the name as typed
+ * (those steps and the review's Save).
+ */
+export function stepWaits(step: WizardStep, draft: WizardDraft, atBar: { id: string } | null | undefined, atPlace: { id: string } | null | undefined, checking = false): boolean {
+  if (checking && (step === 'name' || step === 'credits' || step === 'review')) return true;
   if (step === 'name') return nameWaits(draft, atBar);
   if (step === 'credits') return creditWaits(draft, atPlace);
   return false;
@@ -123,6 +130,30 @@ export function storedLine(l: { id: string | null; name: string; amount: number 
   if (l.amount === null) return { id: l.id, name: l.name, amount: '', unit };
   const p = convertPour(l.amount, unit || usual, usual);
   return { id: l.id, name: l.name, amount: p.amount, unit: p.unit };
+}
+
+/** A stored spec line (recipes), as Update it finds it before writing the sheet's over it. */
+export interface BarLine {
+  id: string;
+  ingredient_item_id: string;
+  preparation_notes: string | null;
+  is_optional: boolean | null;
+}
+
+/**
+ * The sheet's lines written onto the bar's drink (Update it): a line with an
+ * ingredient the drink already has keeps that row (and so its service
+ * decision), its note when the sheet has none, and whether it's optional.
+ * Lines only on the sheet are new rows; lines only on the bar's go.
+ */
+export function ontoBarLines<L extends { id?: string | null; ingredient_item_id: string; preparation_notes: string | null; is_optional: boolean }>(sheet: readonly L[], bar: readonly BarLine[]): L[] {
+  const left = [...bar];
+  return sheet.map((l) => {
+    const at = left.findIndex((b) => b.ingredient_item_id === l.ingredient_item_id);
+    if (at < 0) return l;
+    const [b] = left.splice(at, 1);
+    return { ...l, id: b.id, preparation_notes: l.preparation_notes ?? b.preparation_notes, is_optional: b.is_optional ?? l.is_optional };
+  });
 }
 
 /**

@@ -44,7 +44,7 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
   const made = recipe && choices ? toMake(recipe, choices) : null;
   const sketch = useSteadySketch(made?.sketch);
   // The venue already has one by this name (board dup-drink-warning): Approve waits on what to do with it.
-  const there = useAlreadyThere(review?.barId ?? null, choices?.name ?? '', made?.draft ?? EMPTY_DRAFT, usual, choices?.same);
+  const { there, checking } = useAlreadyThere(review?.barId ?? null, choices?.name ?? '', made?.draft ?? EMPTY_DRAFT, usual, choices?.same);
   if (!review || !recipe || !choices) return null;
 
   const t = tally(review);
@@ -86,7 +86,7 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
       <CheckFooter note={open ? (there?.note ?? openPickLine(recipe, choices, data)) : null}>
         <View style={styles.row}>
           <Button label="Skip" size="lg" variant="secondary" disabled={!open} onPress={() => skip(at)} />
-          <Button label="Approve" size="lg" disabled={!open || !choices.name.trim() || !!there?.waits} onPress={() => approve(at)} style={styles.flex} />
+          <Button label="Approve" size="lg" disabled={!open || !choices.name.trim() || !!there?.waits || checking} onPress={() => approve(at)} style={styles.flex} />
         </View>
       </CheckFooter>
       <PageLook file={file(look)} at={look?.at ?? null} title={look?.title ?? ''} onClose={() => setLook(null)} />

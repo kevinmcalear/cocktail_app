@@ -28,18 +28,21 @@ export interface AlreadyThere {
 
 /**
  * A Bring in drink the venue already has by name (board dup-drink-warning):
- * the venue's drink and where the sheet's spec differs from it. Null when the
- * venue hasn't got one (or it's brought in at home).
+ * the venue's drink and where the sheet's spec differs from it. `there` is
+ * null when the venue hasn't got one (or it's brought in at home);
+ * `checking` while that's still being asked, so Save and Approve wait for it.
  */
-export function useAlreadyThere(barId: string | null, name: string, draft: WizardDraft, usual: string, pick: SheetPick | null | undefined): AlreadyThere | null {
+export function useAlreadyThere(barId: string | null, name: string, draft: WizardDraft, usual: string, pick: SheetPick | null | undefined): { there: AlreadyThere | null; checking: boolean } {
   const bar = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'the venue';
-  const drink = useSameNameDrink({ barId, name }).data ?? null;
-  if (!barId || !drink) return null;
+  const lookup = useSameNameDrink({ barId, name });
+  const drink = lookup.data ?? null;
+  const checking = !!barId && !!lookup.checking;
+  if (!barId || !drink) return { there: null, checking };
   const sheet = [...draft.lines, ...draft.garnishes].map((l) => ({ id: l.id, name: l.name, amount: l.amount, unit: l.unit }));
   const differences = specDifferences(sheet, drink.spec.map((l) => storedLine(l, usual)));
   const waits = sheetWaits(drink, differences, pick);
   const note = waits === 'same' ? `Already at ${bar} with the same spec, so there’s nothing to save` : waits ? `Pick what to do with the ${drink.name}` : null;
-  return { bar, drink, differences, waits, note };
+  return { there: { bar, drink, differences, waits, note }, checking };
 }
 
 interface Props {

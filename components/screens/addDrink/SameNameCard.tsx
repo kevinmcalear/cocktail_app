@@ -6,6 +6,7 @@ import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tok
 import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import { useStartFromClassic } from '@/hooks/useStartFromClassic';
 import type { WizardDraft } from '@/lib/drinkWizard';
+import { withArticle } from '@/lib/closestClassic';
 import { versionName } from '@/lib/sameName';
 
 // The box is the field: no browser focus ring on the word (as BigName).
@@ -32,7 +33,7 @@ interface CardProps {
  */
 export function SameNameCard({ bar, drink, caption, wide, busy, onOpen, onVersion, onDifferent }: CardProps) {
   const ds = useDs();
-  const title = `${bar} already has ${/^[aeiou]/i.test(drink.name) ? 'an' : 'a'} ${drink.name}`;
+  const title = `${bar} already has ${withArticle(drink.name)}`;
   const line = [drink.line, drink.menu].filter(Boolean).join(' · ');
   const thumb = <DrinkImage source={drink.imageUrl} itemId={drink.id} glass={drink.glass} thumb sketchDetail="thumb" radius="control" accessibilityLabel={drink.name} style={wide ? styles.thumbWide : styles.thumb} />;
   return (
@@ -137,8 +138,8 @@ export function useSameNamePicks(set: (change: Partial<WizardDraft>) => void) {
   };
   /** The word typed: the name follows it ("Negroni (summer)"). */
   const word = (draft: WizardDraft, typed: string) => draft.sameAs && set({ sameAs: { ...draft.sameAs, word: typed }, name: versionName(draft.sameAs.name, typed) });
-  /** Not a version after all: back to the bar's drink and its three choices. */
-  const undo = (draft: WizardDraft) => draft.sameAs && set({ sameAs: null, name: draft.sameAs.name });
+  /** Not a version after all: back to the bar's drink and its three choices, with no link to it (or its classic) left behind. */
+  const undo = (draft: WizardDraft) => draft.sameAs && set({ sameAs: null, name: draft.sameAs.name, riffOf: null });
   return { open, version, different, word, undo, busy: start.isPending };
 }
 
