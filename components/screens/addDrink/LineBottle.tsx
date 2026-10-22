@@ -144,7 +144,7 @@ function Bottles({ place, drinkName, ingredients, children }: BottlesProps) {
           {note.undo ? <Button label="Undo" variant="ghost" onPress={note.undo} accessibilityLabel={`Undo: ${note.text}`} /> : null}
         </View>
       ) : null}
-      <Caption tone="muted">{`The bottle on the right: lit when it’s on ${home ? 'your shelf' : 'your back bar'}. Tap to change.`}</Caption>
+      <Caption tone="muted">{`The bottle on the right: lit when it’s on ${home ? 'your shelf' : 'your back bar'}. ${canChange ? 'Tap to change.' : 'Your role can’t change it.'}`}</Caption>
     </BottleContext>
   );
 }

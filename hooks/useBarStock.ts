@@ -61,6 +61,9 @@ export function useStockToggle(barId: string | null | undefined) {
       qc.setQueryData(key, ctx?.before);
       showMessage('That didn’t save', `${error.message}. Check your connection and try again.`);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: key }),
+    // Not awaited: the next tap (or Undo) waits only for this write, not for the list to come back.
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: key });
+    },
   });
 }
