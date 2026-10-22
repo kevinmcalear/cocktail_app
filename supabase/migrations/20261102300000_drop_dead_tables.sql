@@ -12,13 +12,18 @@
 --    could be undone. Drawn sketches have stayed; nothing reads the table.
 --    The 190 images rows it pointed at, and their files in the drinks
 --    bucket, are left alone here (the PR lists them for a later clean-up).
--- 3. assign_item_to_bar, confirm_item_photos, flavor_for_you and get_my_bars
---    have no caller: not the app, edge functions, scripts, cron, other
---    functions or policies. Dropping them shrinks what a signed-in person can
---    call. merge_ingredients stays: it is an admin tool run by hand.
+-- 3. assign_item_to_bar, flavor_for_you and get_my_bars have no caller: not
+--    the app, edge functions, scripts, cron, other functions or policies.
+--    Dropping them shrinks what a signed-in person can call. Two stay:
+--    merge_ingredients, an admin tool run by hand, and confirm_item_photos,
+--    which nothing calls yet but is how an editor clears "May be out of
+--    date" on a photo, as the Photos screen promises.
 -- 4. Drafts nobody has saved for 60 days are deleted every night at 03:53
---    (saving a draft sets updated_at). Like purge-cron-history, the job is a
---    single statement; cron.schedule replaces a job of the same name.
+--    UTC. Saving a draft now stamps updated_at with the server's clock (the
+--    app sent the phone's, so a phone set weeks behind could have its draft
+--    swept the night it was saved). Like purge-cron-history, the job is a
+--    single statement; cron.schedule replaces a job of the same name, so
+--    running this again is safe.
 
 -- --- Old tables ---
 
@@ -33,10 +38,12 @@ DROP TABLE "private"."retired_drink_sketches";
 -- --- Functions with no caller ---
 
 DROP FUNCTION "public"."assign_item_to_bar"("uuid", "uuid");
-DROP FUNCTION "public"."confirm_item_photos"("uuid");
 DROP FUNCTION "public"."flavor_for_you"("jsonb", integer);
 DROP FUNCTION "public"."get_my_bars"();
 
 -- --- Old drafts ---
+
+CREATE TRIGGER "drafts_updated_at" BEFORE INSERT OR UPDATE ON "public"."drafts"
+    FOR EACH ROW EXECUTE FUNCTION "public"."update_modified_column"();
 
 SELECT cron.schedule('sweep-old-drafts', '53 3 * * *', $$DELETE FROM public.drafts WHERE updated_at < now() - interval '60 days'$$);
