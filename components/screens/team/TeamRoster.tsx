@@ -68,6 +68,8 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
   const [now] = useState(Date.now);
   const [note, setNote] = useState<InviteNote | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  // Someone with staff who isn't an Admin can't change, remove or cancel an Admin (the database refuses), so it isn't offered.
+  const admin = role >= TEAM_MANAGE;
   const busy = change.isPending || remove.isPending || cancel.isPending || send.isPending;
 
   if (members.isLoading) return <Caption tone="muted">Loading the team…</Caption>;
@@ -146,14 +148,14 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
                     showEmail={manage}
                     showRole={!g.title}
                     lineUp={manage}
-                    onPress={manage && m.user_id !== myId ? () => setOpenId(m.user_id) : undefined}
+                    onPress={manage && m.user_id !== myId && (admin || m.role_level < TEAM_MANAGE) ? () => setOpenId(m.user_id) : undefined}
                   />
                 </View>
               ))}
             </Surface>
           </View>
         ))}
-        {manage ? null : <Caption tone="muted">Only Admins can invite people or change roles.</Caption>}
+        {manage ? null : <Caption tone="muted">Only people who can invite and manage staff change roles here.</Caption>}
       </View>
 
       {invites.length > 0 ? (
@@ -170,7 +172,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
                   ago={agoLabel(inv.created_at, now)}
                   busy={busy}
                   onResend={() => emailInvite(inv.email)}
-                  onCancel={() => cancel.mutate(inv.id)}
+                  onCancel={admin || inv.role_level < TEAM_MANAGE ? () => cancel.mutate(inv.id) : undefined}
                 />
               </View>
             ))}
@@ -237,7 +239,7 @@ function InviteRow({ name, email, roleLevel, ago, busy, onResend, onCancel }: {
   ago: string | null;
   busy: boolean;
   onResend: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 }) {
   const ds = useDs();
   return (
@@ -253,7 +255,7 @@ function InviteRow({ name, email, roleLevel, ago, busy, onResend, onCancel }: {
       </View>
       <View style={styles.inviteActions}>
         <Button label="Resend" variant="ghost" accessibilityLabel={`Email the invite to ${email} again`} disabled={busy} onPress={onResend} size="sm" />
-        <Button label="Cancel" variant="ghost" accessibilityLabel={`Cancel the invite for ${email}`} disabled={busy} onPress={onCancel} size="sm" />
+        {onCancel ? <Button label="Cancel" variant="ghost" accessibilityLabel={`Cancel the invite for ${email}`} disabled={busy} onPress={onCancel} size="sm" /> : null}
       </View>
     </View>
   );

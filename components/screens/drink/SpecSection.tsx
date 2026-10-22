@@ -10,12 +10,12 @@ import { HouseMadeSheet } from './HouseMadeSheet';
 import { SwapLineSheet, useSwapToast } from './SwapLineSheet';
 import { ToolsSheet, type ToolsSheetProps } from '@/components/tools/ToolsSheet';
 import { useMode } from '@/hooks/useMode';
-import { useSpecLevels } from '@/hooks/useSpecLevels';
-import { useEffectiveRole, useItemEditAccess } from '@/hooks/useViewAs';
+import { useSpecAccess } from '@/hooks/useSpecAccess';
+import { useItemEditAccess } from '@/hooks/useViewAs';
 import { withAlpha } from '@/lib/color';
 import { roleLabel } from '@/lib/roles';
 import { lineAmount } from '@/lib/drinkMath';
-import { ratio, specAccess, specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
+import { ratio, specLines, type PresentationRecipe, type SpecLevels } from '@/lib/spec';
 import { useSettingsStore, type SpecUnit } from '@/store/useSettingsStore';
 
 const UNITS = [
@@ -65,12 +65,9 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
 export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], make, riff, children }: SpecSectionProps) {
   const ds = useDs();
   const router = useRouter();
-  const realRole = useEffectiveRole(barId);
-  const { data: realLevels } = useSpecLevels(preview ? null : itemId, barId);
-  const role = preview?.role ?? realRole;
-  const levels = preview?.levels ?? realLevels;
+  // The same rule as the drink page's Batch and the server's view: levels, moved by the role's specs grant or revoke.
+  const { access, levels } = useSpecAccess(itemId, barId, preview);
   const lines = specLines(recipes);
-  const access = specAccess(role, levels ?? null, !!barId);
   // Remembered per person: the unit the amounts read in.
   const specUnit = useSettingsStore((s) => s.specUnit);
   const setSpecUnit = useSettingsStore((s) => s.setSpecUnit);

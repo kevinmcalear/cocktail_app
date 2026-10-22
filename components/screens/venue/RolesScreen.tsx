@@ -15,7 +15,7 @@ import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import {
   useDeleteVenueRole, useResetBuiltInRole, useRoleMatrix, useSaveVenueRole, useSetRoleCapability, type RoleMatrixRow,
 } from '@/hooks/useVenueRoles';
-import { useCanManageStaff } from '@/hooks/useViewAs';
+import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
 import { endsLabel, toggleLine } from '@/lib/roleMatrix';
@@ -24,6 +24,8 @@ import { memberRoleName, personName } from '@/lib/team';
 
 import { RoleMatrixTable } from './RoleMatrixTable';
 import { RoleSheet } from './RoleSheet';
+
+const ADMIN = 40;
 
 /** The sheet that's open: a new role, or one to edit. */
 type Editing = { role: RoleMatrixRow | null } | null;
@@ -54,6 +56,7 @@ export function RolesScreen({ barId }: { barId: string }) {
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const barName = venue?.name ?? 'This venue';
   const manage = useCanManageStaff(barId);
+  const admin = useEffectiveRole(barId) >= ADMIN;
   const wide = useIsWideWeb();
   const toast = useToast();
   const matrix = useRoleMatrix(barId);
@@ -76,22 +79,22 @@ export function RolesScreen({ barId }: { barId: string }) {
   };
 
   const roleName = (c: RoleMatrixRow) => (c.role_id ? (c.name ?? 'This role') : roleLabel(c.base_level));
+  // mutateAsync, not mutate: quick taps queue, and mutate's own callbacks would only fire for the last one.
   const flip = (c: RoleMatrixRow, capability: string, on: boolean, undo = true) =>
-    toggle.mutate(
-      { roleId: c.role_id, level: c.base_level, capability, on },
-      {
-        onSuccess: () =>
-          undo
-            ? toast.show({ title: toggleLine(roleName(c), capability, on), action: { label: 'Undo', onPress: () => flip(c, capability, !on, false) } })
-            : undefined,
-        onError: (e) => toast.show({ title: problem(e) ?? 'Couldn’t change that.' }),
-      },
+    toggle.mutateAsync({ roleId: c.role_id, level: c.base_level, capability, on }).then(
+      () =>
+        undo
+          ? toast.show({ title: toggleLine(roleName(c), capability, on), action: { label: 'Undo', onPress: () => void flip(c, capability, !on, false) } })
+          : undefined,
+      (e: unknown) => toast.show({ title: problem(e) ?? 'Couldn’t change that.' }),
     );
   const resetRole = (c: RoleMatrixRow) =>
     reset.mutate(c.base_level, {
-      onSuccess: () => toast.show({ title: `${roleName(c)} is back to built in` }),
+      onSuccess: (done) => toast.show({ title: done ? `${roleName(c)} is back to built in` : `Nothing to reset: ${roleName(c)} is already built in` }),
       onError: (e) => toast.show({ title: problem(e) ?? 'Couldn’t reset that.' }),
     });
+  // Someone with staff who isn't an Admin can't change Admin roles (the database refuses), so they aren't offered.
+  const canChange = (c: RoleMatrixRow) => admin || c.base_level < ADMIN;
 
   const deleteRole = async (role: RoleMatrixRow) => {
     const ok = await confirmAsync({
@@ -127,7 +130,10 @@ export function RolesScreen({ barId }: { barId: string }) {
                   : `What each role can do at ${barName}. People who invite and manage staff change them here.`}
               </Body>
             }
-            trailing={manage ? <Button label="New role" icon="plus" onPress={() => setEditing({ role: null })} /> : null}
+            trailing={
+              // Off until the matrix is in: the ready-made roles start from the built-in roles' permissions here.
+              manage ? <Button label="New role" icon="plus" disabled={!matrix.data} onPress={() => setEditing({ role: null })} /> : null
+            }
           />
 
           {matrix.isLoading ? <Caption tone="muted">Loading the roles…</Caption> : null}
@@ -137,8 +143,9 @@ export function RolesScreen({ barId }: { barId: string }) {
               matrix={columns}
               barName={barName}
               onEdit={manage ? (role) => setEditing({ role }) : undefined}
-              onToggle={manage ? flip : undefined}
+              onToggle={manage ? (c, capability, on) => void flip(c, capability, on) : undefined}
               onReset={manage ? resetRole : undefined}
+              canChange={canChange}
               busy={reset.isPending}
             />
           ) : null}
@@ -147,7 +154,7 @@ export function RolesScreen({ barId }: { barId: string }) {
             <View style={styles.section}>
               <View style={styles.sectionHead}>
                 <Headline role="heading">Guest staff</Headline>
-                {manage && firstGuestRole ? (
+                {manage && firstGuestRole && canChange(firstGuestRole) ? (
                   <Button label="Change end date" variant="ghost" onPress={() => setEditing({ role: firstGuestRole })} />
                 ) : null}
               </View>
@@ -179,6 +186,7 @@ export function RolesScreen({ barId }: { barId: string }) {
           visible
           role={editing.role}
           matrix={columns}
+          allowAdmin={admin}
           busy={save.isPending || remove.isPending}
           error={problem(save.error) ?? problem(remove.error)}
           onClose={close}

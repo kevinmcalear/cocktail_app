@@ -29,7 +29,9 @@
 --                everything else still needs an Admin)
 --   edit_drinks: can_write (items insert/update/delete, can_edit_item and
 --                every policy that uses it), can_edit_credited,
---                guard_item_credit, items_select, can_view_bar_item,
+--                guard_item_credit, items_select (now through
+--                my_bar_item_access, once per query), can_view_bar_item,
+--                can_view_item, app_item_presentation,
 --                drafts select/update/delete
 --   menus:       menus insert/update/delete, can_edit_menu (menu_drinks,
 --                menu_sections, menu_run_* policies)
@@ -398,12 +400,15 @@ ALTER POLICY "user_bars_delete" ON "public"."user_bars"
 ALTER POLICY "bar_invites_select" ON "public"."bar_invites"
     USING ("bar_id" IN (SELECT "private"."bars_with_capability"('staff'))
            OR "email" = lower((SELECT "auth"."jwt"()) ->> 'email'));
+-- Only an Admin cancels an invite to Admin (add_user_to_bar_by_email has the same rule).
 ALTER POLICY "bar_invites_delete" ON "public"."bar_invites"
-    USING ("bar_id" IN (SELECT "private"."bars_with_capability"('staff'))
+    USING (("bar_id" IN (SELECT "private"."bars_with_capability"('staff'))
+            AND ("role_level" < 40 OR "bar_id" IN (SELECT "private"."my_bar_ids"(40))))
            OR "email" = lower((SELECT "auth"."jwt"()) ->> 'email'));
 
 -- As 20261008740000_daily_limits_and_venue_roles.sql, with staff in place of Admin, and
--- someone with staff who isn't an Admin inviting only to roles no bigger than theirs.
+-- someone with staff who isn't an Admin inviting only to roles no bigger than theirs,
+-- and never changing a pending invite to Admin (which only an Admin makes or cancels).
 CREATE OR REPLACE FUNCTION "public"."add_user_to_bar_by_email"("p_email" "text", "p_bar_id" "uuid", "p_role_level" integer, "p_name" "text" DEFAULT NULL::"text") RETURNS "public"."user_bars"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
@@ -412,6 +417,8 @@ DECLARE
     v_email TEXT := lower(btrim(p_email));
     v_name TEXT := nullif(btrim(p_name), '');
     v_member public.user_bars;
+    v_admin boolean;
+    v_rows integer;
 BEGIN
     IF p_bar_id IS NULL OR p_bar_id NOT IN (SELECT private.bars_with_capability('staff')) THEN
         RAISE EXCEPTION 'You need the invite and manage staff permission to add members.';
@@ -421,7 +428,8 @@ BEGIN
         RAISE EXCEPTION 'Invalid role level.';
     END IF;
 
-    IF p_bar_id NOT IN (SELECT private.my_bar_ids(40)) AND NOT private.is_app_admin() THEN
+    v_admin := p_bar_id IN (SELECT private.my_bar_ids(40)) OR private.is_app_admin();
+    IF NOT v_admin THEN
         IF p_role_level >= 40 THEN
             RAISE EXCEPTION 'Only an Admin can invite an Admin.';
         END IF;
@@ -467,12 +475,19 @@ BEGIN
     END IF;
     INSERT INTO private.rate_events (kind, user_id, bar_id) VALUES ('invite', auth.uid(), p_bar_id);
 
-    -- The same whether or not the email has an account.
+    -- The same whether or not the email has an account. A pending invite to
+    -- Admin stays as it is unless an Admin changes it (the whole call,
+    -- rate count included, is undone).
     INSERT INTO public.bar_invites (bar_id, email, role_level, invited_by, name)
     VALUES (p_bar_id, v_email, p_role_level, auth.uid(), v_name)
     ON CONFLICT (bar_id, email)
     DO UPDATE SET role_level = EXCLUDED.role_level, invited_by = EXCLUDED.invited_by, created_at = now(),
-        name = COALESCE(EXCLUDED.name, public.bar_invites.name);
+        name = COALESCE(EXCLUDED.name, public.bar_invites.name)
+    WHERE v_admin OR public.bar_invites.role_level < 40;
+    GET DIAGNOSTICS v_rows = ROW_COUNT;
+    IF v_rows = 0 THEN
+        RAISE EXCEPTION 'They''re already invited as an Admin. Only an Admin can change that invite.';
+    END IF;
 
     RETURN NULL;
 END;
@@ -716,7 +731,8 @@ CREATE OR REPLACE FUNCTION "private"."can_view_bar_item"("p_bar_id" "uuid", "p_o
 $$;
 
 -- Same rule under View as: a previewed lower role leaves the person's own
--- grants and revokes out, so it shows the built-in role.
+-- grants and revokes out, so it shows the built-in role. People who edit
+-- drinks see every bar item, as items_select lets them.
 CREATE OR REPLACE FUNCTION "private"."can_view_item"("p_item_id" "uuid") RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
@@ -738,19 +754,51 @@ CREATE OR REPLACE FUNCTION "private"."can_view_item"("p_item_id" "uuid") RETURNS
               OR c.created_by = auth.uid()
               OR private.is_app_admin()))
         OR (ub.user_id IS NOT NULL
-            AND private.cap_open('menu', er.role >= COALESCE(c.override_visibility_level, b.default_visibility_level),
-                                 CASE WHEN er.role = ub.role_level THEN COALESCE(vr.granted, lo.granted) END,
-                                 CASE WHEN er.role = ub.role_level THEN COALESCE(vr.revoked, lo.revoked) END))
+            AND (private.cap_open('menu', er.role >= COALESCE(c.override_visibility_level, b.default_visibility_level),
+                                  CASE WHEN er.role = ub.role_level THEN COALESCE(vr.granted, lo.granted) END,
+                                  CASE WHEN er.role = ub.role_level THEN COALESCE(vr.revoked, lo.revoked) END)
+                 OR private.cap_open('edit_drinks', 'edit_drinks' = ANY (private.base_capabilities(er.role)),
+                                     CASE WHEN er.role = ub.role_level THEN COALESCE(vr.granted, lo.granted) END,
+                                     CASE WHEN er.role = ub.role_level THEN COALESCE(vr.revoked, lo.revoked) END)))
         OR EXISTS (SELECT 1 FROM public.published_items pi WHERE pi.id = c.id)
       )
   );
 $$;
 
+-- The same rule as can_view_bar_item, for every bar the caller is on at
+-- once, so items_select works it out once per query instead of once per row
+-- (a bar's 5,000 drinks: about 2 ms, against 240 ms calling it per row).
+--   sees_all: edits drinks there, or the role is given menu (every drink).
+--   sees_by_level: menu isn't taken away, so the Who sees what level decides.
+CREATE FUNCTION "private"."my_bar_item_access"()
+    RETURNS TABLE("bar_id" "uuid", "sees_all" boolean, "sees_by_level" boolean, "role_level" integer, "default_level" integer)
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT ub.bar_id,
+         private.cap_open('edit_drinks', 'edit_drinks' = ANY (private.base_capabilities(ub.role_level)),
+                          COALESCE(vr.granted, lo.granted), COALESCE(vr.revoked, lo.revoked))
+           OR private.cap_open('menu', false, COALESCE(vr.granted, lo.granted), COALESCE(vr.revoked, lo.revoked)),
+         private.cap_open('menu', true, COALESCE(vr.granted, lo.granted), COALESCE(vr.revoked, lo.revoked)),
+         ub.role_level,
+         b.default_visibility_level
+  FROM public.user_bars ub
+  JOIN public.bars b ON b.id = ub.bar_id
+  LEFT JOIN public.venue_roles vr ON vr.id = ub.venue_role_id
+  LEFT JOIN public.venue_level_overrides lo ON ub.venue_role_id IS NULL AND lo.bar_id = ub.bar_id AND lo.base_level = ub.role_level
+  WHERE ub.user_id = auth.uid()
+    AND (vr.ends_at IS NULL OR vr.ends_at > now());
+$$;
+
 ALTER POLICY "items_select" ON "public"."items" USING (
   CASE
     WHEN "bar_id" IS NOT NULL THEN (
-      "bar_id" IN (SELECT "private"."bars_with_capability"('edit_drinks'))
-      OR ("bar_id" IN (SELECT "private"."my_bar_ids"(0)) AND "private"."can_view_bar_item"("bar_id", "override_visibility_level"))
+      "bar_id" IN (SELECT "a"."bar_id" FROM "private"."my_bar_item_access"() "a" WHERE "a"."sees_all")
+      OR EXISTS (
+        SELECT 1 FROM "private"."my_bar_item_access"() "a"
+        WHERE "a"."bar_id" = "items"."bar_id" AND "a"."sees_by_level"
+          AND "a"."role_level" >= COALESCE("items"."override_visibility_level", "a"."default_level")
+      )
     )
     WHEN "created_by" IS NULL THEN (
       "origin_bar_profile_id" IS NULL OR "is_catalog"
@@ -772,7 +820,9 @@ ALTER POLICY "items_select" ON "public"."items" USING (
 );
 
 -- As 20261029500000_ice_builds.sql, with the role's grant or revoke of menu
--- moving the Who sees what level (not under View as).
+-- moving the Who sees what level, and people who edit drinks seeing every
+-- bar item, as items_select lets them (grants and revokes not under View as;
+-- a previewed role decides by its built-in permissions).
 CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker" = true) AS
  SELECT c.id,
     c.name,
@@ -820,7 +870,11 @@ CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker"
   WHERE c.bar_id IS NULL
      OR private.cap_open('menu', er.role >= COALESCE(c.override_visibility_level, b.default_visibility_level),
                          CASE WHEN er.role = ub.role_level THEN COALESCE(vr.granted, lo.granted) END,
-                         CASE WHEN er.role = ub.role_level THEN COALESCE(vr.revoked, lo.revoked) END);
+                         CASE WHEN er.role = ub.role_level THEN COALESCE(vr.revoked, lo.revoked) END)
+     OR (ub.user_id IS NOT NULL
+         AND private.cap_open('edit_drinks', 'edit_drinks' = ANY (private.base_capabilities(er.role)),
+                              CASE WHEN er.role = ub.role_level THEN COALESCE(vr.granted, lo.granted) END,
+                              CASE WHEN er.role = ub.role_level THEN COALESCE(vr.revoked, lo.revoked) END));
 
 -- As 20261010200000_catalog_read_speed.sql, with the role's grant or revoke
 -- of menu moving the Who sees what level, and of specs the measurement level
@@ -938,6 +992,8 @@ REVOKE EXECUTE ON FUNCTION "private"."cap_open"("public"."venue_capability", boo
 GRANT EXECUTE ON FUNCTION "private"."cap_open"("public"."venue_capability", boolean, "public"."venue_capability"[], "public"."venue_capability"[]) TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."member_capabilities"("uuid", integer, "uuid") FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "private"."member_capabilities"("uuid", integer, "uuid") TO "authenticated", "service_role";
+REVOKE EXECUTE ON FUNCTION "private"."my_bar_item_access"() FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "private"."my_bar_item_access"() TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."can_build_menu"("uuid", "uuid") FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "private"."can_build_menu"("uuid", "uuid") TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."guard_role_change"() FROM PUBLIC, "anon", "authenticated";

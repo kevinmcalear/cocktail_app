@@ -77,10 +77,11 @@ export function useEffectiveRole(barId: string | null) {
  * - Venue items: the create and edit drinks permission at the item's own
  *   venue, not the selected one (any role the venue gives it). Under View as,
  *   the previewed built-in role decides.
- * - Shared items (no venue): their creator, a Drink Creator or above at the
- *   bar a drink is credited to, or a catalog admin. The client can't see
- *   catalog admins or credits, so this asks the can_edit_item RPC. A view-as
- *   role of Bartender (30) or lower hides editing here too.
+ * - Shared items (no venue): their creator, someone with the create and edit
+ *   drinks permission at the bar a drink is credited to, or a catalog admin.
+ *   The client can't see catalog admins or credits, so this asks the
+ *   can_edit_item RPC. A view-as role of Bartender (30) or lower hides
+ *   editing here too.
  *
  * 'edit' is the drink's own people: its page shows Edit and its pencils.
  * 'admin' is a catalog admin on someone else's drink: the page stays a
@@ -88,12 +89,9 @@ export function useEffectiveRole(barId: string | null) {
  */
 export function useItemEditAccess(item: { id: string; bar_id: string | null } | null | undefined): 'edit' | 'admin' | null {
   const userId = useUserId();
-  const { data: bars } = useBars();
   const barId = item?.bar_id ?? null;
-  const venueRole = useEffectiveRole(barId);
   const { viewAsRoleLevel } = useViewAs();
   const shared = !!item && !barId;
-  const caps = useCapabilities(barId).data;
 
   const { data: sharedAccess } = useQuery({
     queryKey: ['itemEditAccess', item?.id, userId],
@@ -114,12 +112,17 @@ export function useItemEditAccess(item: { id: string; bar_id: string | null } | 
     },
   });
 
+  // The venue that decides: the drink's own, or the bar a shared drink is credited to.
+  const decidingBarId = barId ?? sharedAccess?.creditedBarId ?? null;
+  const decidingRole = useEffectiveRole(decidingBarId);
+  const caps = useCapabilities(decidingBarId).data;
+  // The edit_drinks permission there (a role the bar made can have it); under View as, the previewed built-in role.
+  const editsThere = !!decidingBarId && (viewAsRoleLevel == null && caps ? caps.includes('edit_drinks') : decidingRole > 30);
+
   if (!item) return null;
-  // At a venue the edit_drinks permission decides (a role the bar made can have it); under View as, the previewed built-in role does.
-  if (barId) return (viewAsRoleLevel == null && caps ? caps.includes('edit_drinks') : venueRole > 30) ? 'edit' : null;
+  if (barId) return editsThere ? 'edit' : null;
   if (!sharedAccess || (viewAsRoleLevel != null && viewAsRoleLevel <= 30)) return null;
-  const creditedRole = bars?.find((b) => b.bar_id === sharedAccess.creditedBarId)?.role_level ?? 10;
-  return sharedAccess.creator || creditedRole >= 35 ? 'edit' : 'admin';
+  return sharedAccess.creator || editsThere ? 'edit' : 'admin';
 }
 
 /** Whether the viewer may edit the item at all, as its own people or as a catalog admin. */

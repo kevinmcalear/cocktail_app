@@ -396,3 +396,87 @@ describe('only people who can manage staff change roles', () => {
     }
   });
 });
+
+describe('a pending invite to Admin is for Admins to change', () => {
+  test('someone with staff who isn\'t an Admin can\'t lower or cancel it, but can cancel other invites', async () => {
+    const other = `other-${run}@security-test.local`;
+    try {
+      assert.ifError((await users.admin.client
+        .rpc('add_user_to_bar_by_email', { p_email: users.newcomer.email, p_bar_id: ids.bar, p_role_level: 40 })).error);
+      const lower = await users.head.client
+        .rpc('add_user_to_bar_by_email', { p_email: users.newcomer.email, p_bar_id: ids.bar, p_role_level: 20 });
+      assert.match(lower.error?.message ?? '', /Only an Admin can change that invite/);
+      const { data: cancelled, error: cancelError } = await users.head.client
+        .from('bar_invites').delete().eq('bar_id', ids.bar).eq('email', users.newcomer.email).select('id');
+      assert.ifError(cancelError);
+      assert.equal(cancelled.length, 0, 'the Admin invite is out of their reach');
+      const { rows } = await db.query('SELECT role_level FROM public.bar_invites WHERE bar_id = $1 AND email = $2', [ids.bar, users.newcomer.email]);
+      assert.equal(rows[0]?.role_level, 40, 'still an invite to Admin');
+
+      // Their own kind of invite they make, change and cancel.
+      assert.ifError((await users.head.client
+        .rpc('add_user_to_bar_by_email', { p_email: other, p_bar_id: ids.bar, p_role_level: 20 })).error);
+      assert.ifError((await users.head.client
+        .rpc('add_user_to_bar_by_email', { p_email: other, p_bar_id: ids.bar, p_role_level: 30 })).error);
+      const { data: gone, error: goneError } = await users.head.client
+        .from('bar_invites').delete().eq('bar_id', ids.bar).eq('email', other).select('id');
+      assert.ifError(goneError);
+      assert.equal(gone.length, 1);
+
+      // An Admin changes and cancels the Admin invite.
+      assert.ifError((await users.admin.client
+        .rpc('add_user_to_bar_by_email', { p_email: users.newcomer.email, p_bar_id: ids.bar, p_role_level: 20 })).error);
+      const { rows: changed } = await db.query('SELECT role_level FROM public.bar_invites WHERE bar_id = $1 AND email = $2', [ids.bar, users.newcomer.email]);
+      assert.equal(changed[0]?.role_level, 20);
+      await db.query('UPDATE public.bar_invites SET role_level = 40 WHERE bar_id = $1 AND email = $2', [ids.bar, users.newcomer.email]);
+      const { data: adminCancel, error: adminCancelError } = await users.admin.client
+        .from('bar_invites').delete().eq('bar_id', ids.bar).eq('email', users.newcomer.email).select('id');
+      assert.ifError(adminCancelError);
+      assert.equal(adminCancel.length, 1);
+    } finally {
+      await db.query('DELETE FROM public.bar_invites WHERE bar_id = $1', [ids.bar]);
+    }
+  });
+});
+
+describe('people who edit drinks see every bar drink, in the lists too', () => {
+  const listed = async (label, id) => {
+    const { data, error } = await users[label].client.from('app_item_presentation').select('id').eq('id', id);
+    assert.ifError(error);
+    return data.length === 1;
+  };
+  const readable = async (label, id) => {
+    const { data, error } = await users[label].client.from('items').select('id').eq('id', id);
+    assert.ifError(error);
+    return data.length === 1;
+  };
+
+  test('an Admins-only drink: listed for a Drink Creator, not under View as Employee, and gone with edit drinks', async () => {
+    const secret = (await serviceInsert('items', {
+      name: `Admins only ${run}`, item_type: 'cocktail', bar_id: ids.bar, override_visibility_level: 40,
+    })).id;
+    try {
+      assert.ok(await readable('maker', secret));
+      assert.ok(await listed('maker', secret), 'the view agrees with items_select');
+      assert.ok(!(await listed('floor', secret)));
+
+      // View as Employee shows the built-in Employee: no edit drinks, so not listed.
+      assert.ifError((await users.maker.client.from('user_prefs').upsert({ user_id: users.maker.id, view_as_role_level: 20 })).error);
+      assert.ok(!(await listed('maker', secret)));
+      assert.ifError((await users.maker.client.from('user_prefs').upsert({ user_id: users.maker.id, view_as_role_level: null })).error);
+
+      // Edit drinks given to Employee: listed for them too.
+      assert.ifError((await setCap('admin', { level: 20 }, 'edit_drinks', true)).error);
+      assert.ok(await readable('floor', secret));
+      assert.ok(await listed('floor', secret));
+
+      // Taken from Drink Creator: neither.
+      assert.ifError((await setCap('admin', { level: 35 }, 'edit_drinks', false)).error);
+      assert.ok(!(await readable('maker', secret)));
+      assert.ok(!(await listed('maker', secret)));
+    } finally {
+      await resetLevels();
+      await db.query('DELETE FROM public.user_prefs WHERE user_id = $1', [users.maker.id]);
+    }
+  });
+});

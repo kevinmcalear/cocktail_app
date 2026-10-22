@@ -113,7 +113,7 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
                 ))}
             </SettingsSection>
 
-            <VenueTeamLinks barId={barId} barName={editor.name || 'This venue'} role={editor.roleLevel} />
+            <VenueTeamLinks barId={barId} barName={editor.name || 'This venue'} />
             <VenueKitLinks barId={barId} />
             <VenueBuyingLinks barId={barId} />
             <VenueSettingsLinks barId={barId} />

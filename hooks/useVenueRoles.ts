@@ -89,41 +89,54 @@ export interface RoleToggle {
 
 /**
  * Switches one permission for one role at the venue (set_role_capability),
- * showing it at once and putting it back if the database refuses. Only people
- * with staff may; an Admin always keeps staff; someone with staff who isn't
- * an Admin can't touch Admin roles or hand out what they can't do.
+ * showing it at once and putting that dot back if the database refuses. Only
+ * people with staff may; an Admin always keeps staff; someone with staff who
+ * isn't an Admin can't touch Admin roles or hand out what they can't do.
+ * Quick taps save one at a time, in order (one scope per venue), and the
+ * matrix is read again only after the last one, so a refetch never lands
+ * between two taps and undoes the second.
  */
 export function useSetRoleCapability(barId: string | null | undefined) {
   const client = useQueryClient();
   const invalidate = useInvalidateRoles(barId);
+  const key = ['role-matrix', barId];
+  const mutationKey = ['set-role-capability', barId];
+  const flip = (column: Pick<RoleMatrixRow, 'role_id' | 'base_level'>, capability: string, on: boolean) =>
+    client.setQueryData<RoleMatrixRow[]>(key, (rows) => (rows ? withToggle(rows, column, capability, on) : rows));
   return useMutation({
+    mutationKey,
+    scope: { id: `set-role-capability-${barId}` },
     mutationFn: async ({ roleId, level, capability, on }: RoleToggle) => {
       const { error } = await supabase.rpc('set_role_capability', {
         p_bar_id: barId!, p_role_id: roleId, p_level: roleId ? null : level, p_capability: capability, p_on: on,
       });
       if (error) throw error;
     },
+    // Runs at the tap, before the save waits its turn.
     onMutate: async ({ roleId, level, capability, on }) => {
-      await client.cancelQueries({ queryKey: ['role-matrix', barId] });
-      const before = client.getQueryData<RoleMatrixRow[]>(['role-matrix', barId]);
-      if (before) client.setQueryData(['role-matrix', barId], withToggle(before, { role_id: roleId, base_level: level }, capability, on));
-      return { before };
+      await client.cancelQueries({ queryKey: key });
+      flip({ role_id: roleId, base_level: level }, capability, on);
     },
-    onError: (_e, _v, context) => {
-      if (context?.before) client.setQueryData(['role-matrix', barId], context.before);
-    },
+    // Only this dot goes back: the taps after it stay as they are.
+    onError: (_e, { roleId, level, capability, on }) => flip({ role_id: roleId, base_level: level }, capability, !on),
     // Not awaited: the toast and its Undo show as soon as the database says yes.
-    onSettled: () => void invalidate(),
+    onSettled: () => {
+      if (client.isMutating({ mutationKey }) <= 1) void invalidate();
+    },
   });
 }
 
-/** Reset to built in: drops the venue's changes to a built-in role. */
+/**
+ * Reset to built in: drops the venue's changes to a built-in role. Resolves
+ * false when there was nothing to drop (already reset, or not yours to reset).
+ */
 export function useResetBuiltInRole(barId: string | null | undefined) {
   const invalidate = useInvalidateRoles(barId);
   return useMutation({
-    mutationFn: async (level: number) => {
-      const { error } = await supabase.from('venue_level_overrides').delete().eq('bar_id', barId!).eq('base_level', level);
+    mutationFn: async (level: number): Promise<boolean> => {
+      const { data, error } = await supabase.from('venue_level_overrides').delete().eq('bar_id', barId!).eq('base_level', level).select('base_level');
       if (error) throw error;
+      return (data?.length ?? 0) > 0;
     },
     onSuccess: invalidate,
     onError: () => {},

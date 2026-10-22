@@ -74,12 +74,14 @@ const ROLES_LEGEND: MatrixLegend = { yes: 'Can', no: 'Can’t', lock: 'An Admin 
  * built in. Who sees what on a drink (drink-role-lens) passes its own rows,
  * cells and words, and marks the viewer's column You.
  */
-export function RoleMatrixTable({ matrix, barName, onEdit, onToggle, onReset, busy, groups = CAPABILITY_GROUPS, cellOf, label, heading = 'What they can do', legend = ROLES_LEGEND, isYou }: {
+export function RoleMatrixTable({ matrix, barName, onEdit, onToggle, onReset, canChange = () => true, busy, groups = CAPABILITY_GROUPS, cellOf, label, heading = 'What they can do', legend = ROLES_LEGEND, isYou }: {
   matrix: RoleMatrixRow[];
   barName: string;
   onEdit?: (role: RoleMatrixRow) => void;
   onToggle?: (role: RoleMatrixRow, capability: string, on: boolean) => void;
   onReset?: (role: RoleMatrixRow) => void;
+  /** Whether this viewer may change a column at all (only an Admin changes Admin roles); the others show as they are. */
+  canChange?: (role: RoleMatrixRow) => boolean;
   busy?: boolean;
   groups?: { title: string; rows: MatrixRowSpec[] }[];
   cellOf?: (column: RoleMatrixRow, row: MatrixRowSpec) => Cell;
@@ -105,6 +107,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, onToggle, onReset, bu
               </View>
               {matrix.map((c) => {
                 const name = columnName(c);
+                const mine = canChange(c);
                 const head = (
                   <>
                     <Body style={[styles.center, styles.head]} numberOfLines={2}>{name}</Body>
@@ -118,7 +121,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, onToggle, onReset, bu
                 );
                 return (
                   <View key={c.role_id ?? c.base_level} role="columnheader" style={styles.column}>
-                    {c.role_id && onEdit ? (
+                    {c.role_id && onEdit && mine ? (
                       <PressableScale role="button" accessibilityLabel={`Edit ${name}`} onPress={() => onEdit(c)} style={[styles.edit, { borderColor: ds.c.line }]}>
                         {head}
                         <IconSymbol name="pencil" size={14} color={ds.c.muted} />
@@ -126,7 +129,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, onToggle, onReset, bu
                     ) : (
                       head
                     )}
-                    {onReset && isChangedBuiltIn(c) ? (
+                    {onReset && mine && isChangedBuiltIn(c) ? (
                       <PressableScale role="button" accessibilityLabel={`Reset ${name} to built in`} disabled={busy} onPress={() => onReset(c)} style={styles.reset}>
                         <Caption color={ds.accentText} style={styles.center}>Reset to built in</Caption>
                       </PressableScale>
@@ -155,12 +158,13 @@ export function RoleMatrixTable({ matrix, barName, onEdit, onToggle, onReset, bu
                     </View>
                     {matrix.map((c) => {
                       const v = value(c, r);
+                      const toggle = onToggle && canChange(c) ? onToggle : undefined;
                       const locked = lockable && isLocked(c, r.id);
                       // Roles and access reads Yes and No, as the board labels them; Who sees what uses its legend's words.
                       const [yes, no] = lockable ? ['Yes', 'No'] : [legend.yes, legend.no];
                       const words = locked
                         ? `${yes}, always`
-                        : `${v.can ? yes : no}${v.changed ? ', changed from where it started' : ''}${onToggle ? '. Tap to change' : ''}`;
+                        : `${v.can ? yes : no}${v.changed ? ', changed from where it started' : ''}${toggle ? '. Tap to change' : ''}`;
                       return (
                         <View key={c.role_id ?? c.base_level} role="cell" style={styles.column}>
                           <Mark
@@ -168,7 +172,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, onToggle, onReset, bu
                             label={`${columnName(c)}: ${r.label}: ${words}`}
                             locked={locked}
                             disabled={busy}
-                            onPress={onToggle ? () => onToggle(c, r.id, !v.can) : undefined}
+                            onPress={toggle ? () => toggle(c, r.id, !v.can) : undefined}
                           />
                         </View>
                       );

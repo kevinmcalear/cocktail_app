@@ -135,7 +135,7 @@ test('an employee sees the team and cannot manage it', async () => {
   await renderWithTamagui(<TeamScreen />);
   expect(screen.getByText('Ada (you)')).toBeTruthy();
   expect(screen.getByText('Jo')).toBeTruthy();
-  expect(screen.getByText('Only Admins can invite people or change roles.')).toBeTruthy();
+  expect(screen.getByText('Only people who can invite and manage staff change roles here.')).toBeTruthy();
   expect(screen.queryByRole('button', { name: /Manage$/ })).toBeNull();
   expect(screen.queryByLabelText('Search the team')).toBeNull();
   expect(screen.getByText('Team · 2')).toBeTruthy();

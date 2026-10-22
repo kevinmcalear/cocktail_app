@@ -26,7 +26,7 @@ function pricingValue(p: { currency: string | null; target_gp: number | null } |
  * Team and roles: links to My team and Roles and access with what's there
  * (decided on the canvas: link, don't repeat the roster here).
  */
-export function VenueTeamLinks({ barId, barName }: { barId: string; barName: string; role: number }) {
+export function VenueTeamLinks({ barId, barName }: { barId: string; barName: string }) {
   const router = useRouter();
   const manage = useCanManageStaff(barId);
   const members = useBarMembers(barId).data;

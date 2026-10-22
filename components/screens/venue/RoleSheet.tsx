@@ -21,10 +21,12 @@ const BUILT_IN = 'built-in';
  * it ends. Edit role: the same without the ready-made roles. An Admin role
  * always keeps staff. The parent saves; errors come back as `error`.
  */
-export function RoleSheet({ role, matrix, visible, busy, error, onClose, onSave, onDelete }: {
+export function RoleSheet({ role, matrix, allowAdmin = true, visible, busy, error, onClose, onSave, onDelete }: {
   /** The role to edit, or null for a new one. */
   role: RoleMatrixRow | null;
   matrix: RoleMatrixRow[];
+  /** Off for someone with staff who isn't an Admin: the database refuses Admin roles from them. */
+  allowAdmin?: boolean;
   visible: boolean;
   busy: boolean;
   error: string | null;
@@ -109,7 +111,7 @@ export function RoleSheet({ role, matrix, visible, busy, error, onClose, onSave,
       {start === BUILT_IN ? (
         <View role="radiogroup" accessibilityLabel="Starts from" style={styles.list}>
           <Caption tone="muted" role="heading">STARTS FROM</Caption>
-          {ROLE_LEVELS.map((r) => (
+          {ROLE_LEVELS.filter((r) => allowAdmin || r.level < ADMIN).map((r) => (
             <Choice key={r.level} label={roleLabel(r.level)} selected={level === r.level} disabled={busy} onPress={() => pickLevel(r.level)} />
           ))}
         </View>
