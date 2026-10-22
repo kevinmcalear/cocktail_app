@@ -22,6 +22,7 @@ const canShareOnWeb = () => typeof navigator !== 'undefined' && typeof navigator
  */
 export function SendLists({ sheet, menu, looks }: { sheet: RunSheet; menu: Menu; looks: PartyLook[] }) {
   const ds = useDs();
+  // What was copied, so the button says Copied only while the list is still the same.
   const [copied, setCopied] = useState<string | null>(null);
   const others = sheet.parties.filter((p) => p.id !== null && p.needs.length);
   if (!others.length) return null;
@@ -32,7 +33,7 @@ export function SendLists({ sheet, menu, looks }: { sheet: RunSheet; menu: Menu;
     const text = partyListText(list);
     if (copies) {
       await Clipboard.setStringAsync(text);
-      setCopied(party.id);
+      setCopied(text);
       return;
     }
     const title = `${party.name}: ${menu.name}`;
@@ -56,7 +57,7 @@ export function SendLists({ sheet, menu, looks }: { sheet: RunSheet; menu: Menu;
                 <Caption tone="muted">{`${look?.role ?? p.role} · ${thingCount(p.needs.length)}`}</Caption>
               </View>
               <Button
-                label={copied === p.id ? 'Copied' : copies ? 'Copy their list' : 'Send their list'}
+                label={copies && copied === partyListText(partyList(sheet, menu, p)) ? 'Copied' : copies ? 'Copy their list' : 'Send their list'}
                 size="sm"
                 variant="secondary"
                 icon={copies ? 'doc.on.doc' : 'square.and.arrow.up'}
