@@ -3,8 +3,8 @@
 import assert from 'node:assert/strict';
 
 import {
-  cell, columnCaption, dayOfEnd, endOfDay, endsLabel, isChangedBuiltIn, isLocked, overridesFor, ROLE_PRESETS, roleSummary, today, toggleLine,
-  withToggle, type MatrixColumn,
+  cell, columnCaption, dayOfEnd, endOfDay, endsLabel, isChangedBuiltIn, isLocked, limitTo, overridesFor, reachCeiling, ROLE_PRESETS, roleSummary,
+  today, toggleLine, withinReach, withToggle, type MatrixColumn,
 } from './roleMatrix';
 import { agoLabel, memberRoleName, memberSinceLine } from './team';
 
@@ -93,5 +93,19 @@ assert.equal(agoLabel('2026-10-11T08:00:00Z', now), 'today');
 assert.equal(agoLabel('2026-10-10T08:00:00Z', now), 'yesterday');
 assert.equal(agoLabel('2026-10-09T08:00:00Z', now), '2 days ago');
 assert.equal(agoLabel('2026-09-20T08:00:00Z', now), '3 weeks ago');
+
+// Handing out roles: an Admin anything; someone else only what they can do.
+{
+  const m = [10, 20, 30, 35, 40].map((l) => ({
+    role_id: null, name: null, base_level: l, ends_at: null, granted: [], revoked: [],
+    capabilities: l >= 30 ? ['menu', 'specs', 'photos'] : l >= 20 ? ['menu', 'specs'] : ['menu'],
+  }));
+  assert.equal(withinReach(['menu', 'costs'], null), true, 'an Admin is not limited');
+  assert.equal(withinReach(['menu', 'costs'], ['menu', 'staff']), false);
+  assert.equal(withinReach(['menu', 'costs'], ['menu'], ['costs']), true, 'what the role already has may stay');
+  assert.deepEqual(limitTo(['menu', 'specs', 'staff'], ['menu', 'staff']), ['menu', 'staff']);
+  assert.equal(reachCeiling(m, ['menu', 'specs', 'staff'], 30), 20, 'Bartender adds photos they lack');
+  assert.equal(reachCeiling(m, null, 40), 40);
+}
 
 console.log('roleMatrix checks passed');

@@ -235,6 +235,11 @@ DECLARE
     v_before public.venue_capability[] := '{}';
     v_after public.venue_capability[];
 BEGIN
+    -- Who changed a built-in role is the caller, whatever they sent.
+    IF TG_TABLE_NAME = 'venue_level_overrides' AND TG_OP <> 'DELETE' THEN
+        NEW.updated_by := auth.uid();
+        NEW.updated_at := now();
+    END IF;
     -- A venue that's being deleted is already gone: nothing to guard.
     IF auth.uid() IS NULL OR private.is_app_admin() OR v_bar IN (SELECT private.my_bar_ids(40))
        OR NOT EXISTS (SELECT 1 FROM public.bars WHERE id = v_bar) THEN
@@ -242,6 +247,18 @@ BEGIN
     END IF;
     IF (TG_OP <> 'INSERT' AND OLD.base_level >= 40) OR (TG_OP <> 'DELETE' AND NEW.base_level >= 40) THEN
         RAISE EXCEPTION 'Only an Admin can change what an Admin role can do.';
+    END IF;
+    -- A role that ends on its own keeps ending for the people on it: only an
+    -- Admin moves its end date or deletes it from under them.
+    IF TG_TABLE_NAME = 'venue_roles' AND TG_OP <> 'INSERT'
+       AND EXISTS (SELECT 1 FROM public.user_bars WHERE user_id = auth.uid() AND venue_role_id = OLD.id) THEN
+        IF TG_OP = 'DELETE' THEN
+            IF OLD.ends_at IS NOT NULL THEN
+                RAISE EXCEPTION 'Only an Admin can change when your own role ends.';
+            END IF;
+        ELSIF NEW.ends_at IS DISTINCT FROM OLD.ends_at THEN
+            RAISE EXCEPTION 'Only an Admin can change when your own role ends.';
+        END IF;
     END IF;
 
     SELECT default_visibility_level, default_measurement_level INTO v_vis, v_meas FROM public.bars WHERE id = v_bar;
@@ -276,7 +293,8 @@ CREATE TRIGGER "guard_role_change" BEFORE INSERT OR UPDATE OR DELETE ON "public"
 
 -- The same rule for members: someone with staff who isn't an Admin can't
 -- change or remove an Admin, make anyone an Admin, or give someone more than
--- they can do themselves (nor themselves more than they had). After the row
+-- they can do themselves (nor themselves more than they had, nor leave a
+-- role that ends on its own for one that doesn't). After the row
 -- is final (sync_member_role_level has copied a venue role's level), so the
 -- caller's own standing is read from OLD when it's their own row.
 -- accept_bar_invite sets cocktail.accepting_invite: there the invite, which
@@ -303,6 +321,11 @@ BEGIN
     END IF;
     IF OLD.role_level >= 40 OR (TG_OP = 'UPDATE' AND NEW.role_level >= 40) THEN
         RAISE EXCEPTION 'Only an Admin can change an Admin, or make someone one.';
+    END IF;
+    -- Nor step off a role that ends on its own onto one that doesn't.
+    IF TG_OP = 'UPDATE' AND v_self AND NEW.venue_role_id IS DISTINCT FROM OLD.venue_role_id
+       AND EXISTS (SELECT 1 FROM public.venue_roles WHERE id = OLD.venue_role_id AND ends_at IS NOT NULL) THEN
+        RAISE EXCEPTION 'Only an Admin can change when your own role ends.';
     END IF;
     IF TG_OP = 'UPDATE' THEN
         v_mine := CASE WHEN v_self
@@ -988,8 +1011,11 @@ WHERE (
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "public"."venue_level_overrides" TO "authenticated";
 GRANT ALL ON TABLE "public"."venue_level_overrides" TO "service_role";
 
-REVOKE EXECUTE ON FUNCTION "private"."cap_open"("public"."venue_capability", boolean, "public"."venue_capability"[], "public"."venue_capability"[]) FROM PUBLIC, "anon";
-GRANT EXECUTE ON FUNCTION "private"."cap_open"("public"."venue_capability", boolean, "public"."venue_capability"[], "public"."venue_capability"[]) TO "authenticated", "service_role";
+-- anon too: app_recipe_presentation calls it for signed-out readers of a
+-- published spec (a function in a view runs with the reader's EXECUTE). It
+-- only compares its arguments and reads nothing.
+REVOKE EXECUTE ON FUNCTION "private"."cap_open"("public"."venue_capability", boolean, "public"."venue_capability"[], "public"."venue_capability"[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION "private"."cap_open"("public"."venue_capability", boolean, "public"."venue_capability"[], "public"."venue_capability"[]) TO "anon", "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."member_capabilities"("uuid", integer, "uuid") FROM PUBLIC, "anon";
 GRANT EXECUTE ON FUNCTION "private"."member_capabilities"("uuid", integer, "uuid") TO "authenticated", "service_role";
 REVOKE EXECUTE ON FUNCTION "private"."my_bar_item_access"() FROM PUBLIC, "anon";

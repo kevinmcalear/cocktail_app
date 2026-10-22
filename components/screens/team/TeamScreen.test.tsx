@@ -21,6 +21,8 @@ jest.mock('@/hooks/useActiveVenue', () => ({
   useActiveVenue: () => ({ active: { id: 'bar', name: 'Caretakers' }, isLoading: false }),
 }));
 jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole, useCanManageStaff: () => mockRole >= 40 }));
+// An Admin isn't limited to their own permissions, so these only matter below Admin.
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['menu'] }) }));
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'me' } })));
 jest.mock('@/lib/dialogs', () => ({ confirmAsync: jest.fn(async () => true) }));
 jest.mock('@/hooks/useBarDetail', () => ({

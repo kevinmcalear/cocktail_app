@@ -7,7 +7,9 @@ import { RowDivider, SwitchRow } from '@/components/screens/settings/SettingsPar
 import { STATUS } from '@/constants/palette';
 import { space } from '@/constants/tokens';
 import type { RoleMatrixRow, VenueRoleDraft } from '@/hooks/useVenueRoles';
-import { baseCapabilities, CAPABILITY_GROUPS, dayOfEnd, endOfDay, isLocked, overridesFor, ROLE_PRESETS, today, type RolePreset } from '@/lib/roleMatrix';
+import {
+  baseCapabilities, CAPABILITY_GROUPS, dayOfEnd, endOfDay, isLocked, limitTo, overridesFor, ROLE_PRESETS, today, withinReach, type RolePreset,
+} from '@/lib/roleMatrix';
 import { ROLE_LEVELS, roleLabel } from '@/lib/roles';
 
 const ADMIN = 40;
@@ -21,12 +23,14 @@ const BUILT_IN = 'built-in';
  * it ends. Edit role: the same without the ready-made roles. An Admin role
  * always keeps staff. The parent saves; errors come back as `error`.
  */
-export function RoleSheet({ role, matrix, allowAdmin = true, visible, busy, error, onClose, onSave, onDelete }: {
+export function RoleSheet({ role, matrix, allowAdmin = true, canGive = null, visible, busy, error, onClose, onSave, onDelete }: {
   /** The role to edit, or null for a new one. */
   role: RoleMatrixRow | null;
   matrix: RoleMatrixRow[];
   /** Off for someone with staff who isn't an Admin: the database refuses Admin roles from them. */
   allowAdmin?: boolean;
+  /** What they may hand out (their own permissions), or null for an Admin: nothing more is offered. */
+  canGive?: string[] | null;
   visible: boolean;
   busy: boolean;
   error: string | null;
@@ -38,7 +42,10 @@ export function RoleSheet({ role, matrix, allowAdmin = true, visible, busy, erro
   const [start, setStart] = useState<string>(role ? BUILT_IN : first.id);
   const [name, setName] = useState(role?.name ?? first.name);
   const [level, setLevel] = useState(role?.base_level ?? first.base_level);
-  const [on, setOn] = useState<string[]>(role?.capabilities ?? first.on(baseCapabilities(matrix, first.base_level)));
+  // What the role already has may stay; anything new must be something they can do (the database's rule).
+  const had = role?.capabilities ?? [];
+  const reach = (caps: string[]) => limitTo(caps, canGive, had);
+  const [on, setOn] = useState<string[]>(role?.capabilities ?? reach(first.on(baseCapabilities(matrix, first.base_level))));
   const [lastDay, setLastDay] = useState(dayOfEnd(role?.ends_at));
   const baseCaps = baseCapabilities(matrix, level);
   const missingName = !name.trim();
@@ -50,14 +57,14 @@ export function RoleSheet({ role, matrix, allowAdmin = true, visible, busy, erro
     setStart(p.id);
     if (!name.trim() || presetNames.includes(name.trim())) setName(p.name);
     setLevel(p.base_level);
-    setOn(p.on(baseCapabilities(matrix, p.base_level)));
+    setOn(reach(p.on(baseCapabilities(matrix, p.base_level))));
     setLastDay(p.ends ? today(now) : '');
   };
 
   const pickBuiltIn = () => {
     setStart(BUILT_IN);
     if (presetNames.includes(name.trim())) setName('');
-    setOn(baseCapabilities(matrix, level));
+    setOn(reach(baseCapabilities(matrix, level)));
     setLastDay('');
   };
 
@@ -65,7 +72,7 @@ export function RoleSheet({ role, matrix, allowAdmin = true, visible, busy, erro
     // Keep the role's changes from its old built-in role on top of the new one.
     const { granted, revoked } = overridesFor(baseCapabilities(matrix, level), on);
     const kept = [...baseCapabilities(matrix, next).filter((c) => !revoked.includes(c)), ...granted];
-    setOn(next >= ADMIN ? [...new Set([...kept, 'staff'])] : kept);
+    setOn(next >= ADMIN ? [...new Set([...kept, 'staff'])] : reach(kept));
     setLevel(next);
     if (next >= ADMIN) setLastDay('');
   };
@@ -133,14 +140,15 @@ export function RoleSheet({ role, matrix, allowAdmin = true, visible, busy, erro
             const locked = isLocked({ base_level: level }, r.id);
             const value = locked || on.includes(r.id);
             const changed = value !== baseCaps.includes(r.id);
+            const outOfReach = !value && !withinReach([r.id], canGive, had);
             return (
               <View key={r.id}>
                 {i > 0 ? <RowDivider /> : null}
                 <SwitchRow
                   label={r.label}
-                  detail={locked ? 'An Admin always keeps this' : changed ? `Changed from ${roleLabel(level)}` : r.detail}
+                  detail={locked ? 'An Admin always keeps this' : outOfReach ? 'You can only give what you can do' : changed ? `Changed from ${roleLabel(level)}` : r.detail}
                   value={value}
-                  disabled={busy || locked}
+                  disabled={busy || locked || outOfReach}
                   onValueChange={(next) => setOn((list) => (next ? [...list, r.id] : list.filter((c) => c !== r.id)))}
                 />
               </View>

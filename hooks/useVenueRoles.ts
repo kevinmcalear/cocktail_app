@@ -87,6 +87,12 @@ export interface RoleToggle {
   on: boolean;
 }
 
+/** Dot taps and Reset share one queue per venue, so a reset can't land between taps. */
+const roleWrites = (barId: string | null | undefined) => ({
+  mutationKey: ['role-write', barId],
+  scope: { id: `role-write-${barId}` },
+});
+
 /**
  * Switches one permission for one role at the venue (set_role_capability),
  * showing it at once and putting that dot back if the database refuses. Only
@@ -100,12 +106,12 @@ export function useSetRoleCapability(barId: string | null | undefined) {
   const client = useQueryClient();
   const invalidate = useInvalidateRoles(barId);
   const key = ['role-matrix', barId];
-  const mutationKey = ['set-role-capability', barId];
+  const { mutationKey, scope } = roleWrites(barId);
   const flip = (column: Pick<RoleMatrixRow, 'role_id' | 'base_level'>, capability: string, on: boolean) =>
     client.setQueryData<RoleMatrixRow[]>(key, (rows) => (rows ? withToggle(rows, column, capability, on) : rows));
   return useMutation({
     mutationKey,
-    scope: { id: `set-role-capability-${barId}` },
+    scope,
     mutationFn: async ({ roleId, level, capability, on }: RoleToggle) => {
       const { error } = await supabase.rpc('set_role_capability', {
         p_bar_id: barId!, p_role_id: roleId, p_level: roleId ? null : level, p_capability: capability, p_on: on,
@@ -131,14 +137,19 @@ export function useSetRoleCapability(barId: string | null | undefined) {
  * false when there was nothing to drop (already reset, or not yours to reset).
  */
 export function useResetBuiltInRole(barId: string | null | undefined) {
+  const client = useQueryClient();
   const invalidate = useInvalidateRoles(barId);
+  const writes = roleWrites(barId);
   return useMutation({
+    ...writes,
     mutationFn: async (level: number): Promise<boolean> => {
       const { data, error } = await supabase.from('venue_level_overrides').delete().eq('bar_id', barId!).eq('base_level', level).select('base_level');
       if (error) throw error;
       return (data?.length ?? 0) > 0;
     },
-    onSuccess: invalidate,
+    onSettled: () => {
+      if (client.isMutating({ mutationKey: writes.mutationKey }) <= 1) void invalidate();
+    },
     onError: () => {},
   });
 }

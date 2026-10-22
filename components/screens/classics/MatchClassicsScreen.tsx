@@ -50,6 +50,7 @@ function MatchClassicsPage() {
   let note: string | null = null;
   if (!active) note = 'Choose a venue first.';
   else if (caps.isLoading) note = 'Loading…';
+  else if (caps.error) note = 'Couldn’t check what you can do here. Check your connection and try again.';
   else if (!editor) note = `Only editors at ${active.name} can link drinks to classics.`;
   else if (error) note = `Couldn't load your drinks: ${error.message}`;
   else if (!isLoading && !suggestions.length) note = 'Every drink that looks like a classic is linked.';

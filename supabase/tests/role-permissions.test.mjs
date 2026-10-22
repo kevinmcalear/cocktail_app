@@ -480,3 +480,50 @@ describe('people who edit drinks see every bar drink, in the lists too', () => {
     }
   });
 });
+
+describe('a role that ends keeps ending for the people on it', () => {
+  test('a takeover with staff can\'t move its own end date, delete its role or step off it; others with staff can', async () => {
+    const holder = await makeUser('tonight');
+    users.tonight = holder;
+    const role = (await serviceInsert('venue_roles', {
+      bar_id: ids.bar, name: `Tonight ${run}`, base_level: 20, granted: ['staff'],
+      ends_at: new Date(Date.now() + hour).toISOString(),
+    })).id;
+    await serviceInsert('user_bars', { user_id: holder.id, bar_id: ids.bar, role_level: 20, venue_role_id: role });
+    try {
+      assert.ok((await caps('tonight')).has('staff'));
+      const { error: keep } = await holder.client.from('venue_roles').update({ ends_at: null }).eq('id', role);
+      assert.match(keep?.message ?? '', /when your own role ends/);
+      const { error: later } = await holder.client
+        .from('venue_roles').update({ ends_at: new Date(Date.now() + 48 * hour).toISOString() }).eq('id', role);
+      assert.match(later?.message ?? '', /when your own role ends/);
+      const { error: off } = await holder.client
+        .from('user_bars').update({ venue_role_id: null }).eq('bar_id', ids.bar).eq('user_id', holder.id);
+      assert.match(off?.message ?? '', /when your own role ends/);
+      const { error: gone } = await holder.client.from('venue_roles').delete().eq('id', role);
+      assert.match(gone?.message ?? '', /when your own role ends/);
+      const { rows } = await db.query('SELECT ends_at FROM public.venue_roles WHERE id = $1', [role]);
+      assert.ok(rows[0]?.ends_at, 'still ends');
+
+      // Someone else with staff, and an Admin, move it.
+      assert.ifError((await users.head.client
+        .from('venue_roles').update({ ends_at: new Date(Date.now() + 2 * hour).toISOString() }).eq('id', role)).error);
+      assert.ifError((await users.admin.client.from('venue_roles').update({ ends_at: null }).eq('id', role)).error);
+    } finally {
+      await db.query('DELETE FROM public.user_bars WHERE user_id = $1', [holder.id]);
+      await db.query('DELETE FROM public.venue_roles WHERE id = $1', [role]);
+    }
+  });
+
+  test('a change to a built-in role is stamped with whoever made it', async () => {
+    try {
+      const { error } = await users.head.client
+        .from('venue_level_overrides').insert({ bar_id: ids.bar, base_level: 20, granted: ['specs'], updated_by: users.admin.id });
+      assert.ifError(error);
+      const { rows } = await db.query('SELECT updated_by FROM public.venue_level_overrides WHERE bar_id = $1 AND base_level = 20', [ids.bar]);
+      assert.equal(rows[0]?.updated_by, users.head.id);
+    } finally {
+      await resetLevels();
+    }
+  });
+});

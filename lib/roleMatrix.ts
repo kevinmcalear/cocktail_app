@@ -161,6 +161,35 @@ export function overridesFor(baseCaps: string[], on: string[]): { granted: strin
   return { granted, revoked };
 }
 
+/**
+ * Someone with staff who isn't an Admin hands out only what they can do
+ * themselves (the database's guards). `mine`: their permissions, or null for
+ * an Admin, who isn't limited. `keep`: what the role already has, which may
+ * stay.
+ */
+export function withinReach(caps: string[], mine: string[] | null, keep: string[] = []): boolean {
+  return !mine || caps.every((c) => mine.includes(c) || keep.includes(c));
+}
+
+/** `caps` cut down to what they may hand out (see withinReach). */
+export function limitTo(caps: string[], mine: string[] | null, keep: string[] = []): string[] {
+  return mine ? caps.filter((c) => withinReach([c], mine, keep)) : caps;
+}
+
+/**
+ * The highest built-in role (at or under `ceiling`) they may give someone:
+ * every built-in role up to it does no more than they can.
+ */
+export function reachCeiling(matrix: MatrixColumn[], mine: string[] | null, ceiling: number): number {
+  if (!mine) return ceiling;
+  let reach = 0;
+  for (const level of [10, 20, 30, 35, 40]) {
+    if (level > ceiling || !withinReach(baseCapabilities(matrix, level), mine)) break;
+    reach = level;
+  }
+  return reach;
+}
+
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

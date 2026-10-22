@@ -11,6 +11,7 @@ import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarMembers } from '@/hooks/useBarDetail';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import {
   useDeleteVenueRole, useResetBuiltInRole, useRoleMatrix, useSaveVenueRole, useSetRoleCapability, type RoleMatrixRow,
@@ -57,6 +58,7 @@ export function RolesScreen({ barId }: { barId: string }) {
   const barName = venue?.name ?? 'This venue';
   const manage = useCanManageStaff(barId);
   const admin = useEffectiveRole(barId) >= ADMIN;
+  const myCaps = useCapabilities(barId).data;
   const wide = useIsWideWeb();
   const toast = useToast();
   const matrix = useRoleMatrix(barId);
@@ -187,6 +189,7 @@ export function RolesScreen({ barId }: { barId: string }) {
           role={editing.role}
           matrix={columns}
           allowAdmin={admin}
+          canGive={admin ? null : (myCaps ?? [])}
           busy={save.isPending || remove.isPending}
           error={problem(save.error) ?? problem(remove.error)}
           onClose={close}

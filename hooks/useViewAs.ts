@@ -64,10 +64,21 @@ export function useViewAs({ fresh = false }: { fresh?: boolean } = {}) {
 
 /** Effective role at this venue under view-as (no venue: a guest's). */
 export function useEffectiveRole(barId: string | null) {
+  return useRoleAt(barId).role;
+}
+
+/**
+ * The role at this venue and whether View as is previewing a lower one there.
+ * View as is one setting across venues, so a venue where the person's real
+ * role is at or under it isn't previewed: the server applies their own
+ * grants and revokes there, and so should the app.
+ */
+export function useRoleAt(barId: string | null | undefined): { role: number; previewing: boolean } {
   const { data: bars } = useBars();
   const { viewAsRoleLevel } = useViewAs();
   const real = (barId ? bars?.find((b) => b.bar_id === barId)?.role_level : undefined) ?? 10;
-  return effectiveRole(real, viewAsRoleLevel);
+  const role = effectiveRole(real, viewAsRoleLevel);
+  return { role, previewing: role < real };
 }
 
 /**
@@ -114,10 +125,10 @@ export function useItemEditAccess(item: { id: string; bar_id: string | null } | 
 
   // The venue that decides: the drink's own, or the bar a shared drink is credited to.
   const decidingBarId = barId ?? sharedAccess?.creditedBarId ?? null;
-  const decidingRole = useEffectiveRole(decidingBarId);
+  const deciding = useRoleAt(decidingBarId);
   const caps = useCapabilities(decidingBarId).data;
   // The edit_drinks permission there (a role the bar made can have it); under View as, the previewed built-in role.
-  const editsThere = !!decidingBarId && (viewAsRoleLevel == null && caps ? caps.includes('edit_drinks') : decidingRole > 30);
+  const editsThere = !!decidingBarId && (!deciding.previewing && caps ? caps.includes('edit_drinks') : deciding.role > 30);
 
   if (!item) return null;
   if (barId) return editsThere ? 'edit' : null;
@@ -137,10 +148,9 @@ export function useCanEditItem(item: { id: string; bar_id: string | null } | nul
  */
 export function useCanManageStaff(barId: string | null | undefined): boolean {
   const caps = useCapabilities(barId).data;
-  const role = useEffectiveRole(barId ?? null);
-  const { viewAsRoleLevel } = useViewAs();
+  const { role, previewing } = useRoleAt(barId);
   if (!barId) return false;
-  return viewAsRoleLevel == null && caps ? caps.includes('staff') : canManageTeam(role);
+  return !previewing && caps ? caps.includes('staff') : canManageTeam(role);
 }
 
 export function useMaxRealRole() {
