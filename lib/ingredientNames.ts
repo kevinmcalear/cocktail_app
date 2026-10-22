@@ -111,6 +111,52 @@ export function searchIngredients<T extends IngredientRow>(
   return [...(same ? [same] : []), ...scored.map((x) => x.r)].slice(0, limit);
 }
 
+/** A row that can say what kind it is: a bottle (`product`) under a style (`generic_id`). */
+export interface KindRow extends IngredientRow {
+  generic_id?: string | null;
+  ingredient_role?: string | null;
+  brand_maker?: string | null;
+}
+
+/** A bottle you can buy: a product, or an unsorted row with a maker on it. */
+const isBottle = (r: KindRow) => r.ingredient_role === 'product' || (!r.ingredient_role && !!r.brand_maker);
+
+/**
+ * The bottles of a kind, for "Pick a brand": every bottle under it, through
+ * its styles too (Mezcal's Espadín and Tobalá), the ones you have first
+ * (`have`: the back bar or the shelf), then by name. Hidden one-offs are left
+ * out. A bottle typed is not a kind, so it has none.
+ */
+export function bottlesOfKind<T extends KindRow>(kind: T, rows: readonly T[], have: ReadonlySet<string> = new Set()): T[] {
+  if (isBottle(kind)) return [];
+  const under = new Map<string, T[]>();
+  for (const r of rows) {
+    if (!r.generic_id) continue;
+    const list = under.get(r.generic_id);
+    if (list) list.push(r);
+    else under.set(r.generic_id, [r]);
+  }
+  const seen = new Set([kind.id]);
+  const queue = [kind.id];
+  const out: T[] = [];
+  while (queue.length) {
+    for (const r of under.get(queue.shift() as string) ?? []) {
+      if (seen.has(r.id)) continue;
+      seen.add(r.id);
+      queue.push(r.id);
+      if (isBottle(r) && !r.hide_from_search && r.name) out.push(r);
+    }
+  }
+  return out.sort((a, b) => Number(have.has(b.id)) - Number(have.has(a.id)) || (a.name ?? '').localeCompare(b.name ?? ''));
+}
+
+/** A kind as a sentence says it: "mezcal", "mezcals". Longer names stay as they are ("Irish whiskey", "London Dry Gin"). */
+export function kindWords(name: string, many = false): string {
+  const n = /^[A-Z][a-z]+$/.test(name) ? name.toLowerCase() : name;
+  if (!many || /s$/i.test(n)) return n;
+  return /[^aeiou]y$/i.test(n) ? `${n.slice(0, -1)}ies` : `${n}s`;
+}
+
 // Words a made thing's name ends on: they say what it is, not what's in it.
 const KIND_WORD = /^(shrub|syrup|cordial|oleo|infusion|infused|tincture|bitters|foam|oil|juice|soda|water|batch|mix|cream|liqueur|of|and|with|the|house)$/;
 

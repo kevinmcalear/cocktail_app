@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { closestIngredients, existingIngredientId, ingredientKey, nearIngredient, sameIngredient, searchIngredients } from './ingredientNames';
+import { bottlesOfKind, closestIngredients, existingIngredientId, ingredientKey, kindWords, nearIngredient, sameIngredient, searchIngredients } from './ingredientNames';
 
 // The same keys public.ingredient_key() gives (checked against Postgres in supabase/tests/one-of-each-ingredient.test.mjs).
 assert.equal(ingredientKey('Simple Syrup, 1:1'), 'simple syrup 1:1');
@@ -69,3 +69,26 @@ assert.deepEqual(closestIngredients('pineapple shrub', pantry, { coreIds: new Se
 assert.deepEqual(closestIngredients('shrub', pantry), []);
 
 console.log('ingredientNames checks passed');
+
+// Pick a brand: every bottle of the kind, through its styles; what you have first, then by name.
+const kinds = [
+  { id: 'mezcal', name: 'Mezcal', ingredient_role: 'generic' },
+  { id: 'espadin', name: 'Espadín mezcal', generic_id: 'mezcal', ingredient_role: 'generic' },
+  { id: 'vida', name: 'Del Maguey Vida', generic_id: 'espadin', ingredient_role: 'product', brand_maker: 'Del Maguey' },
+  { id: 'banhez', name: 'Banhez Ensamble', generic_id: 'mezcal', ingredient_role: 'product', brand_maker: 'Banhez' },
+  { id: 'ilegal', name: 'Ilegal Joven', generic_id: 'mezcal', brand_maker: 'Ilegal' },
+  { id: 'oneoff', name: 'Chorizo mezcal', generic_id: 'mezcal', ingredient_role: 'prep', hide_from_search: true },
+  { id: 'hidden', name: 'Agua Magica', generic_id: 'mezcal', ingredient_role: 'product', hide_from_search: true },
+  { id: 'negroni', name: 'Mezcal negroni batch', ingredient_role: 'prep' },
+];
+assert.deepEqual(bottlesOfKind(kinds[0], kinds).map((r) => r.id), ['banhez', 'vida', 'ilegal']);
+assert.deepEqual(bottlesOfKind(kinds[0], kinds, new Set(['vida'])).map((r) => r.id), ['vida', 'banhez', 'ilegal'], 'on the back bar first');
+assert.deepEqual(bottlesOfKind(kinds[1], kinds).map((r) => r.id), ['vida'], 'a style has its own bottles');
+assert.deepEqual(bottlesOfKind(kinds[2], kinds), [], 'a bottle is not a kind');
+assert.equal(kindWords('Mezcal'), 'mezcal');
+assert.equal(kindWords('Mezcal', true), 'mezcals');
+assert.equal(kindWords('Scotch whisky', true), 'Scotch whiskies');
+assert.equal(kindWords('Brandy', true), 'brandies');
+assert.equal(kindWords('Rye whiskey', true), 'Rye whiskeys');
+assert.equal(kindWords('Bitters', true), 'bitters');
+assert.equal(kindWords('London Dry Gin', true), 'London Dry Gins');

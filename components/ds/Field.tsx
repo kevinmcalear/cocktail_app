@@ -28,6 +28,13 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'ref'> {
   bare?: boolean;
 }
 
+/**
+ * A box of several lines grows to about six of them, then scrolls inside, so
+ * what's under it on the page stays in reach (Eddie, 22 Oct: drink notes on a
+ * phone grew past the service photos).
+ */
+export const MULTILINE_MAX = 6 * type.body.lineHeight + 2 * space.md;
+
 /** A labelled text input in the Back Bar style. */
 export function Field({ label, hideLabel, hint, error, minLines, trailing, icon, bare, ...input }: FieldProps) {
   const ds = useDs();
@@ -41,6 +48,7 @@ export function Field({ label, hideLabel, hint, error, minLines, trailing, icon,
         styles.input,
         type.body,
         minLines ? { minHeight: layout.minTapTarget * minLines, paddingVertical: space.md, textAlignVertical: 'top' } : null,
+        minLines || input.multiline ? { maxHeight: Math.max(MULTILINE_MAX, layout.minTapTarget * (minLines ?? 0)) } : null,
         { fontFamily: fontFamilies.body, color: ds.c.ink, backgroundColor: ds.c.raised, borderColor: error ? ds.accentText : ds.c.line },
         trailing ? styles.withTrailing : null,
         icon ? styles.withIcon : null,

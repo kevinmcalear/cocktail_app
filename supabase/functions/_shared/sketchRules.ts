@@ -160,8 +160,8 @@ const GLASS_NAMES: readonly [RegExp, Glass][] = [
   [/rocks|old fashioned|lowball|tumbler|\bdof\b|double|butcher/, 'rocks'],
 ];
 const ICE_NAMES: readonly [RegExp, Ice][] = [
-  // First: "No ice" has "ice" in it, which would read as cubes.
-  [/\bno ice\b|^none\b|^neat\b|^up\b|\bserved up\b/, 'none'],
+  // First: "No ice" has "ice" in it, which would read as cubes. So do "no-ice", "without ice" and "ice-free".
+  [/\bno[\s-]*ice\b|\bwithout (?:any )?ice\b|\bw\/o ice\b|\bice[\s-]?free\b|^none\b|^neat\b|^up\b|\bserved up\b/, 'none'],
   [/crush|cracked|frapp/, 'crushed'],
   [/pebble|nugget|pellet|sonic/, 'pebble'],
   [/shaved|snow|kakig[oō]ri/, 'shaved'],

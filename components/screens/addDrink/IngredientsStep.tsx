@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import { Body, Button, useDs } from '@/components/ds';
+import { Body, Button, Caption, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { dropIndex } from '@/lib/dropIndex';
 import { houseNudge, houseWays } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { PREP_KINDS, type PrepDraft } from '@/lib/prepKinds';
@@ -14,6 +15,7 @@ import { startsFrom } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
+import { DragRow } from './DragRow';
 import { BalanceCard, CloseToClassic, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
@@ -36,6 +38,8 @@ interface IngredientsStepProps extends StepProps {
   forDrink?: boolean;
   /** At home: the bottles on your shelf, so search says "On your shelf". */
   shelf?: ReadonlySet<string>;
+  /** At a venue: what's on its back bar, so its bottles lead "Pick a brand". */
+  backBar?: ReadonlySet<string>;
   /** Off on the desktop page, where the taste sits beside the spec. */
   balance?: boolean;
   /** Under each line's name on the desktop page: its supplier and cost. */
@@ -48,7 +52,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, balance = true, lineDetail }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -119,53 +123,69 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     set({ lines });
     setRemoved(null);
   };
+  // The order is the spec's: what saves and what the drawing pours. Each line's height says where a dragged one lands.
+  const heights = useRef<Record<string, number>>({});
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= draft.lines.length || to === from) return;
+    const lines = [...draft.lines];
+    lines.splice(to, 0, ...lines.splice(from, 1));
+    set({ lines });
+  };
+  const drop = (from: number, dy: number) => move(from, dropIndex(from, dy, draft.lines.map((l) => heights.current[l.key] ?? 0)));
   const has = (name: string) => draft.lines.some((l) => l.name.trim().toLowerCase() === name.toLowerCase());
   const quick = COMMON_INGREDIENTS.filter((n) => !has(n)).slice(0, QUICK);
-  const search = { ingredients, aliases, coreIds, loading };
+  const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
 
   return (
     <View style={styles.stack}>
       {draft.lines.length ? (
         <View role="list" aria-label="In the drink">
-          {draft.lines.map((l) =>
-            // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
-            l.key === swapKey ? (
-              <View key={l.key} style={[styles.swap, { borderBottomColor: ds.c.line }]}>
-                <IngredientSearch
-                  {...search}
-                  label={`Swap ${l.name} for…`}
-                  autoFocus
-                  onCancel={() => setSwapKey(null)}
-                  onPick={(p) => {
-                    // A different ingredient isn't the house prep that was here.
-                    change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined });
-                    setSwapKey(null);
-                  }}
-                  onMake={
-                    forDrink
-                      ? (name) => {
-                          make(name, l.key);
-                          setSwapKey(null);
-                        }
-                      : undefined
-                  }
-                />
-              </View>
-            ) : (
-              <LineRow
-                key={l.key}
-                line={l}
-                onChange={(c) => change(l.key, c)}
-                onRemove={() => remove(l)}
-                onSwap={() => setSwapKey(l.key)}
-                onEditPrep={() => setMaking({ name: l.name, key: l.key })}
-                onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
-                detail={lineDetail?.(l)}
-              />
-            )
-          )}
+          {draft.lines.map((l, i) => (
+            <DragRow key={l.key} index={i} onDrop={drop} onHeight={(h) => (heights.current[l.key] = h)}>
+              {(grip, lifted) =>
+                // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
+                l.key === swapKey ? (
+                  <View style={[styles.swap, { borderBottomColor: ds.c.line }]}>
+                    <IngredientSearch
+                      {...search}
+                      label={`Swap ${l.name} for…`}
+                      autoFocus
+                      onCancel={() => setSwapKey(null)}
+                      onPick={(p) => {
+                        // A different ingredient isn't the house prep that was here.
+                        change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined });
+                        setSwapKey(null);
+                      }}
+                      onMake={
+                        forDrink
+                          ? (name) => {
+                              make(name, l.key);
+                              setSwapKey(null);
+                            }
+                          : undefined
+                      }
+                    />
+                  </View>
+                ) : (
+                  <LineRow
+                    line={l}
+                    grip={grip}
+                    lifted={lifted}
+                    onMove={(by) => move(i, i + by)}
+                    onChange={(c) => change(l.key, c)}
+                    onRemove={() => remove(l)}
+                    onSwap={() => setSwapKey(l.key)}
+                    onEditPrep={() => setMaking({ name: l.name, key: l.key })}
+                    onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
+                    detail={lineDetail?.(l)}
+                  />
+                )
+              }
+            </DragRow>
+          ))}
         </View>
       ) : null}
+      {draft.lines.length > 1 ? <Caption tone="muted">{Platform.OS === 'web' ? 'Drag a grip to reorder.' : 'Hold a grip to reorder.'}</Caption> : null}
 
       {nudge ? (
         <View style={[styles.nudge, { backgroundColor: ds.c.surface }]}>
@@ -198,7 +218,6 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         onMake={forDrink ? (name) => make(name) : undefined}
         onLater={forDrink ? (name) => add({ id: null, name: capitalizeFirst(name) }, undefined, true) : undefined}
         captions={forDrink}
-        shelf={shelf}
       />
       {/* In the flow under the field, so it never covers the balance or Goes with (canvas make-create-prep-back). */}
       {madePrep ? <WizardNotice>{madePrep}</WizardNotice> : null}

@@ -6,15 +6,26 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useIngredientUse } from '@/hooks/useIngredientUse';
 import type { WizardPick } from '@/lib/drinkWizard';
-import { closestIngredients, nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
+import { bottlesOfKind, closestIngredients, nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
 import { guessKind, PREP_KINDS } from '@/lib/prepKinds';
 import { looksMadeInHouse } from '@/lib/techniques/makeIt';
+
+import { KindResults } from './KindResults';
 
 // The pill's accent border shows focus. Chrome draws `outline-style: auto` at any width, so it's switched off (as SearchField does).
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
 // The generated view types call `images` a list; it's one row per link.
-export type CatalogIngredient = { id: string; name: string | null; bar_id?: string | null; hide_from_search?: boolean | null; generic_id?: string | null; item_images?: unknown };
+export type CatalogIngredient = {
+  id: string;
+  name: string | null;
+  bar_id?: string | null;
+  hide_from_search?: boolean | null;
+  generic_id?: string | null;
+  ingredient_role?: string | null;
+  brand_maker?: string | null;
+  item_images?: unknown;
+};
 
 export interface IngredientSearchProps {
   ingredients: readonly CatalogIngredient[];
@@ -40,6 +51,10 @@ export interface IngredientSearchProps {
   /** Under each found ingredient: "On your shelf" (these ids), else "In 14 drinks". Off by default (it asks the server). */
   captions?: boolean;
   shelf?: ReadonlySet<string>;
+  /** At a venue: what's on its back bar (hooks/useBackBar useBackBarIds). Its bottles lead "Pick a brand" and say so. */
+  backBar?: ReadonlySet<string>;
+  /** A kind typed in full (mezcal) shows the plain one first, then its bottles under "Pick a brand". For a drink's lines. */
+  brands?: boolean;
 }
 
 /**
@@ -50,7 +65,7 @@ export interface IngredientSearchProps {
  * (your own version when the name exists). Return takes the top hit.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping, allowNew = true, onMake, onLater, makeFirst, captions, shelf } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping, allowNew = true, onMake, onLater, makeFirst, captions, shelf, backBar, brands } = props;
   const ds = useDs();
   const [query, setQueryState] = useState('');
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
@@ -64,6 +79,12 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const exact = !!sameIngredient(query, ingredients, aliases) || results.some((r) => (r.name ?? '').trim().toLowerCase() === q.toLowerCase());
   const near = exact ? null : nearIngredient(query, ingredients, aliases);
   const closest = results.length || near || exact || loading ? [] : closestIngredients(query, ingredients, { coreIds });
+  // A kind with bottles (mezcal): the plain one, then its brands; other names with the word in them come after both.
+  const have = backBar ?? shelf;
+  const typed = brands && q ? sameIngredient(query, ingredients, aliases) : null;
+  const bottles = typed ? bottlesOfKind(typed, ingredients, have) : [];
+  const kindView = typed && bottles.length ? typed : null;
+  const listed = kindView ? results.filter((r) => r.id !== kindView.id && !bottles.includes(r)) : results;
 
   // Any new name can be made in house; one that sounds like a prep (a shrub, a cordial, a clarified juice), not a bought bottle, offers it first.
   const prepLike = looksMadeInHouse(query);
@@ -102,7 +123,13 @@ export function IngredientSearch(props: IngredientSearchProps) {
     done();
   };
   const found = (r: CatalogIngredient, text?: string) => (
-    <ResultRow key={r.id} id={r.id} label={text ?? r.name ?? ''} caption={captions ? <UseCaption id={r.id} onShelf={!!shelf?.has(r.id)} /> : null} onPress={() => pick({ id: r.id, name: r.name ?? query })} />
+    <ResultRow
+      key={r.id}
+      id={r.id}
+      label={text ?? r.name ?? ''}
+      caption={captions ? <UseCaption id={r.id} have={have?.has(r.id) ? (backBar ? 'On your back bar' : 'On your shelf') : null} /> : null}
+      onPress={() => pick({ id: r.id, name: r.name ?? query })}
+    />
   );
 
   return (
@@ -134,8 +161,14 @@ export function IngredientSearch(props: IngredientSearchProps) {
         ) : null}
       </View>
 
-      {q ? (
+      {q && kindView ? <KindResults key={kindView.id} kind={kindView} bottles={bottles} have={have} haveLabel={backBar ? 'On your back bar' : 'On your shelf'} onPick={pick} /> : null}
+      {q && (!kindView || listed.length || loading || makeRow) ? (
         <View role="list" style={[styles.results, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+          {kindView && listed.length ? (
+            <Caption tone="muted" style={styles.label}>
+              {`More with “${q}” in the name`}
+            </Caption>
+          ) : null}
           {closest.length ? (
             <Caption tone="muted" style={styles.label}>
               Nothing called that yet. Closest:
@@ -144,7 +177,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
           {closest.map((r) => found(r))}
           {lead ? makeRow : null}
           {near && !results.includes(near) ? found(near, `Did you mean ${near.name}?`) : null}
-          {results.map((r) => found(r))}
+          {listed.map((r) => found(r))}
           {loading ? (
             <Body tone="muted" style={styles.loading}>
               Loading ingredients…
@@ -167,10 +200,10 @@ export function IngredientSearch(props: IngredientSearchProps) {
   );
 }
 
-/** "On your shelf", else how many drinks use it. */
-function UseCaption({ id, onShelf }: { id: string; onShelf: boolean }) {
-  const { data: n } = useIngredientUse(onShelf ? null : id);
-  if (onShelf) return <Caption tone="muted">On your shelf</Caption>;
+/** "On your shelf" (or back bar), else how many drinks use it. */
+function UseCaption({ id, have }: { id: string; have: string | null }) {
+  const { data: n } = useIngredientUse(have ? null : id);
+  if (have) return <Caption tone="muted">{have}</Caption>;
   return n ? <Caption tone="muted">{`In ${n} ${n === 1 ? 'drink' : 'drinks'}`}</Caption> : null;
 }
 

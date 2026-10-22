@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, DsText, IngredientThumb, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
@@ -9,6 +10,7 @@ import { leadText } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
+import { GripDots } from './DragRow';
 import { WizardChip } from './WizardChrome';
 
 interface LineRowProps {
@@ -25,6 +27,12 @@ interface LineRowProps {
   units?: readonly string[];
   /** Under the name on the desktop page: who brings it and what this pour costs ("Bluestone Trade · $1.28"). */
   detail?: string | null;
+  /** Its grip, from DragRow: hold it and drag to move the line. */
+  grip?: (node: ReactNode) => ReactNode;
+  /** Moves the line one place up or down: the arrow keys on the web, a screen reader's actions. */
+  onMove?: (by: -1 | 1) => void;
+  /** Being dragged: lifted over the lines under it. */
+  lifted?: boolean;
 }
 
 /**
@@ -34,7 +42,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name; on a wider screen they share
  * its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   const stacked = useBreakpoint() === 'phone';
@@ -55,8 +63,30 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
           ? { text: `House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`, accent: true }
           : { text: 'New, added when you save', accent: false };
   return (
-    <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line }]}>
+    <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }]}>
       <View style={styles.row}>
+        {grip?.(
+          <PressableScale
+            role="button"
+            accessibilityLabel={`Reorder ${line.name}`}
+            accessibilityHint={Platform.OS === 'web' ? 'Drag, or use the arrow keys' : 'Hold and drag'}
+            accessibilityActions={[
+              { name: 'up', label: 'Move up' },
+              { name: 'down', label: 'Move down' },
+            ]}
+            onAccessibilityAction={(e) => onMove?.(e.nativeEvent.actionName === 'up' ? -1 : 1)}
+            // @ts-expect-error onKeyDown is web-only (react-native-web)
+            onKeyDown={(e: { key: string; preventDefault: () => void }) => {
+              if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+              e.preventDefault();
+              onMove?.(e.key === 'ArrowUp' ? -1 : 1);
+            }}
+            haptic={false}
+            style={[styles.grip, dragGripStyle]}
+          >
+            <GripDots />
+          </PressableScale>
+        )}
         <IngredientThumb id={line.id} name={line.name} size={40} />
         <View style={stacked ? styles.mainStacked : styles.main}>
           <View style={stacked ? null : styles.head}>
@@ -127,7 +157,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
         </PressableScale>
       </View>
       {open ? (
-        <View style={styles.more}>
+        <View style={[styles.more, grip ? styles.gripped : null]}>
           {status ? <Caption tone={status.accent ? 'accent' : 'muted'}>{status.text}</Caption> : null}
           {/* The recipe links lead in the accent; the rest stay quiet (the accent is for the one primary action). */}
           <View style={styles.links}>
@@ -160,11 +190,11 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
           aria-label={`Note on ${line.name}`}
           autoFocus={!line.note}
           maxLength={120}
-          style={[styles.note, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink, borderColor: ds.c.lineStrong }]}
+          style={[styles.note, grip ? styles.notedGripped : null, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink, borderColor: ds.c.lineStrong }]}
         />
       ) : null}
       {units ? (
-        <View role="radiogroup" accessibilityLabel={`Unit for ${line.name}`} style={styles.units}>
+        <View role="radiogroup" accessibilityLabel={`Unit for ${line.name}`} style={[styles.units, grip ? styles.gripped : null]}>
           {unitList.map((u) => (
             <WizardChip
               key={u}
@@ -204,7 +234,12 @@ function Round({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: string
 }
 
 const styles = StyleSheet.create({
+  // Narrow, so the name keeps its room on a phone; the hold, not its size, keeps a swipe over it scrolling.
+  grip: { width: space.xl, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.xs },
   more: { paddingLeft: 40 + space.md, gap: space.xs },
+  // Under the name when the line has a grip: past the grip, then the thumb.
+  gripped: { paddingLeft: space.xl + space.sm + 40 + space.md },
+  notedGripped: { marginLeft: space.xl + space.sm + 40 + space.md },
   links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.lg },
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   note: { minHeight: layout.minTapTarget, marginLeft: 40 + space.md, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.md },

@@ -15,6 +15,7 @@ import {
 import { MenuSheet } from "@/components/screens/menus/MenuSheet";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { layout, space } from "@/constants/tokens";
+import { useBackBarIds } from "@/hooks/useBackBar";
 import type { WizardPick } from "@/lib/drinkWizard";
 import { bottlesFor } from "@/lib/swapBottle";
 
@@ -56,6 +57,7 @@ export function IngredientPickSheet({
   const ingredients = (editor.allIngredients ?? []) as CatalogIngredient[];
   const barId = editor.barId || null;
   const coreIds = editor.dropdowns?.coreIngredientIds;
+  const backBar = useBackBarIds(barId, ingredients);
 
   // The React Compiler memoizes these.
   const kin = swapping?.id
@@ -114,6 +116,8 @@ export function IngredientPickSheet({
         }
         autoFocus
         onTyping={setTyping}
+        brands
+        backBar={barId ? backBar : undefined}
         onPick={(p) => (p.id ? onPick(p) : onNew(p.name))}
       />
       {typing ? null : loading ? (

@@ -6,8 +6,8 @@ import { useToast } from '@/components/ds/Toast';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { useItemLocations } from '@/hooks/useBackBar';
-import { useSwapSource, useSwapSpecLine, useUndoSwap } from '@/hooks/useBulk';
+import { useBackBarIds } from '@/hooks/useBackBar';
+import { useSwapSpecLine, useUndoSwap } from '@/hooks/useBulk';
 import { useCocktail } from '@/hooks/useCocktails';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { plainDbMessage } from '@/lib/dbError';
@@ -53,8 +53,6 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
   const ds = useDs();
   const { data } = useDropdowns({ ingredients: true });
   const drink = useCocktail(itemId).data?.name ?? 'this drink';
-  const pours = useSwapSource(barId);
-  const spots = useItemLocations(barId);
   const save = useSwapSpecLine();
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<{ id: string; name: string } | null>(null);
@@ -69,14 +67,7 @@ export function SwapLineSheet({ itemId, barId, line, amounts, onClose, onSaved, 
   // Shared ingredients and this venue's own: another venue's house bottles can't go in this drink.
   const ingredients = useMemo(() => (data?.ingredients ?? []).filter((i) => !i.bar_id || i.bar_id === barId), [data?.ingredients, barId]);
   const coreIds = useMemo(() => new Set(data?.coreIngredientIds ?? []), [data?.coreIngredientIds]);
-  // The back bar: the venue's own bottles, what its specs already pour, and what has a spot on its map.
-  const backBar = useMemo(() => {
-    const ids = new Set<string>();
-    for (const d of pours.data?.drinks ?? []) for (const l of d.lines) if (l.ingredientId) ids.add(l.ingredientId);
-    for (const s of spots.data ?? []) ids.add(s.item_id);
-    for (const i of ingredients) if (i.bar_id) ids.add(i.id);
-    return ids;
-  }, [pours.data, spots.data, ingredients]);
+  const backBar = useBackBarIds(barId, ingredients);
 
   const q = query.trim();
   const found: Option[] = q
