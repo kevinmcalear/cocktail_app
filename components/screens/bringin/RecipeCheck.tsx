@@ -1,23 +1,26 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, Field, ReviewRow, useDs, useGutter } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { radius, space, type as typeScale, fontFamilies } from '@/constants/tokens';
+import { barVariants, useBarGlassware } from '@/hooks/useBarGlassware';
 import { useSpecCatalog } from '@/hooks/useBulk';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { isPrepName, prepRatio } from '@/lib/bringIn';
 import { openPickLine, recipeDraft, startChoices, type RecipeChoices } from '@/lib/bringInDraft';
 import { ingredientState, plainKind, type MatchData } from '@/lib/bringInMatch';
-import { convertPour } from '@/lib/drinkWizard';
+import { convertPour, sketchLook } from '@/lib/drinkWizard';
 import type { ReadFile } from '@/lib/readAnything';
-import type { RecipeReading, RecipeReadLine } from '@/supabase/functions/_shared/anythingRead';
+import { draftSketchInputs } from '@/lib/sketch/draft';
+import type { ReadPlace, RecipeReading, RecipeReadLine } from '@/supabase/functions/_shared/anythingRead';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import type { DrinkToMake } from '@/hooks/useBringInSave';
 
 import { BoxField, CheckFooter, CheckTop, MonoLabel, PageLook } from './CheckParts';
 import { SourceCrop } from './PagePicture';
+import { DrawnFromSpec, FromYourFile } from './RecipeSource';
 
 /** "calvados" reads "Calvados", as the canvas sets a spec line; a bottle's own capitals stay. */
 const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -57,8 +60,9 @@ interface RecipeCheckProps {
 }
 
 /**
- * The recipe check (canvas make-bringin-recipe): one drink at a time, its
- * source beside its name, who made it and where it's from, every spec line
+ * The recipe check (canvas make-bringin-recipe): one drink at a time, drawn
+ * from its spec, with the bit of the file it was read from small underneath
+ * (canvas eddie-oct22-wave1), who made it and where it's from, every spec line
  * matched to your bar with amounts in your unit, the method, glass, ice and
  * garnish as chips. An open pick doesn't hold the save: it saves as the
  * plain kind.
@@ -72,7 +76,7 @@ export function RecipeCheck({ recipes, files, from, data, saving, error, onCance
   const ice = (useDropdowns().data?.iceTypes ?? []).flatMap((i: { id: string; name: string | null }) => (i.name ? [{ id: i.id, name: i.name }] : []));
   const [at, setAt] = useState(0);
   const [all, setAll] = useState<RecipeChoices[]>(() => recipes.map(startChoices));
-  const [look, setLook] = useState<RecipeReadLine | null>(null);
+  const [look, setLook] = useState<{ at?: ReadPlace | null; title: string } | null>(null);
   const [matchOf, setMatchOf] = useState<number | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
   const recipe = recipes[at];
@@ -84,29 +88,44 @@ export function RecipeCheck({ recipes, files, from, data, saving, error, onCance
     else delete lines[line];
     set({ lines });
   };
-  const toMake = (r: RecipeReading, c: RecipeChoices): DrinkToMake => ({
-    draft: recipeDraft(r, c, data, { methods, glasses, ice }, usual),
-    prepNames: r.lines.filter((l) => isPrepName(l.ingredient)).map((l) => l.ingredient),
-  });
+  // The bar's own glass drawings, as the wizard draws with.
+  const variants = barVariants(useBarGlassware(data.venueId).data);
+  const toMake = (r: RecipeReading, c: RecipeChoices): DrinkToMake => {
+    const draft = recipeDraft(r, c, data, { methods, glasses, ice }, usual);
+    // Saved as drawn here, so the drink keeps the drawing the check showed.
+    return { draft, prepNames: r.lines.filter((l) => isPrepName(l.ingredient)).map((l) => l.ingredient), sketch: draftSketchInputs(sketchLook(draft, variants)) };
+  };
+  const drawn = JSON.stringify(sketchLook(toMake(recipe, choices).draft, variants));
+  // One inputs object per look: SketchDrawing keeps its painted scene by it.
+  const sketch = useMemo(() => draftSketchInputs(JSON.parse(drawn)), [drawn]);
   const pageUnit = recipe.lines.find((l) => l.unit && ['oz', 'ml', 'cl'].includes(l.unit))?.unit;
   const last = at === recipes.length - 1;
-  const file = (line: RecipeReadLine | RecipeReading | null) => (line?.at ? (files[line.at.page] ?? null) : null);
+  const file = (x: { at?: ReadPlace | null } | null) => (x?.at ? (files[x.at.page] ?? null) : null);
+  const page = file(recipe);
+  const eyebrow = [page ? null : from, recipes.length > 1 ? `Drink ${at + 1} of ${recipes.length}` : null].filter(Boolean).join(' · ');
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView contentContainerStyle={[styles.body, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]} keyboardShouldPersistTaps="handled">
         <CheckTop kind="recipes" onCancel={onCancel} />
-        <View style={styles.head}>
-          <View style={styles.tilt}>
-            <SourceCrop file={file(recipe)} box={recipe.at?.box} words={[recipe.name, ...recipe.lines.slice(0, 3).map((l) => `${amountShown(l, l.unit ?? usual)} ${l.ingredient}`)].join('\n')} width={68} height={88} />
-          </View>
-          <View style={styles.flex}>
+        <DrawnFromSpec inputs={sketch} seed={recipe.name} name={choices.name} />
+        <View>
+          {eyebrow ? (
             <Caption tone="muted" style={styles.eyebrow}>
-              {recipes.length > 1 ? `${from} · ${at + 1} of ${recipes.length}` : from}
+              {eyebrow}
             </Caption>
-            <TextInput accessibilityLabel="Drink name" value={choices.name} onChangeText={(name) => set({ name })} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
-          </View>
+          ) : null}
+          <TextInput accessibilityLabel="Drink name" value={choices.name} onChangeText={(name) => set({ name })} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
         </View>
+        {page && recipe.at ? (
+          <FromYourFile
+            file={page}
+            box={recipe.at.box}
+            words={recipe.lines.slice(0, 3).map((l) => `${amountShown(l, l.unit ?? usual)} ${l.ingredient}`).join('\n')}
+            page={files.length > 1 ? recipe.at.page + 1 : null}
+            onLook={() => setLook({ at: recipe.at, title: choices.name })}
+          />
+        ) : null}
         <View style={styles.made}>
           <View style={styles.row}>
             <BoxField label="MADE BY">
@@ -129,7 +148,7 @@ export function RecipeCheck({ recipes, files, from, data, saving, error, onCance
               const fresh = !!choice && 'fresh' in choice;
               const state = fresh ? null : ingredientState(line.ingredient, data, choice && 'pick' in choice ? choice.pick : null);
               const amount = amountShown(line, usual);
-              const onAmount = line.at && file(line) ? () => setLook(line) : undefined;
+              const onAmount = line.at && file(line) ? () => setLook({ at: line.at, title: line.ingredient }) : undefined;
               const flag = line.unsure ? `Check this: ${line.doubt ? `${line.doubt} ` : ''}${onAmount ? 'Tap to see the page' : 'Look at the page'}` : null;
               const crop = line.unsure && line.at ? <SourceCrop file={file(line)} box={line.at.box} words={line.ingredient} width={58} height={32} /> : null;
               if (state?.state === 'have') {
@@ -163,7 +182,7 @@ export function RecipeCheck({ recipes, files, from, data, saving, error, onCance
           />
         </View>
       </CheckFooter>
-      <PageLook file={file(look)} at={look?.at ?? null} title={look?.ingredient ?? ''} onClose={() => setLook(null)} />
+      <PageLook file={file(look)} at={look?.at ?? null} title={look?.title ?? ''} onClose={() => setLook(null)} />
       {matchOf !== null ? (
         <MenuSheet visible onClose={() => setMatchOf(null)} title={recipe.lines[matchOf].ingredient} subtitle="Matched to what’s in your bar.">
           <View style={styles.sheet}>
@@ -179,8 +198,6 @@ export function RecipeCheck({ recipes, files, from, data, saving, error, onCance
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { width: '100%', maxWidth: 640, alignSelf: 'center', gap: space.lg, paddingBottom: space.xxl },
-  head: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md + 2 },
-  tilt: { transform: [{ rotate: '-3deg' }] },
   eyebrow: { letterSpacing: 0.6, textTransform: 'uppercase' },
   name: { ...typeScale.title, paddingVertical: 0 },
   row: { flexDirection: 'row', gap: space.sm + 2 },

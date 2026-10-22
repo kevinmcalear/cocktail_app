@@ -1,30 +1,34 @@
 import { useMutation } from '@tanstack/react-query';
 
+import { barVariants, useBarGlassware } from '@/hooks/useBarGlassware';
 import { useRecordBringIn } from '@/hooks/useBringInBatches';
 import { useSetMissingPrices, useVenueBottle, type VenueBottle } from '@/hooks/useBulk';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useShelfEdit } from '@/hooks/useHomeBar';
-import { useCreateMenu, useUploadMenuCover, type HomeNight } from '@/hooks/useMenuMutations';
+import { useCreateMenu, type HomeNight } from '@/hooks/useMenuMutations';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { emptySummary, type BatchKind, type BatchSummary } from '@/lib/bringInBatch';
 import { plainDbMessage } from '@/lib/dbError';
-import type { WizardDraft } from '@/lib/drinkWizard';
+import { sketchLook, type WizardDraft } from '@/lib/drinkWizard';
 import { blankSection } from '@/lib/menuLayout';
 import { applyMenuPaste, type PlacedGroup } from '@/lib/paste';
+import { draftSketchInputs } from '@/lib/sketch/draft';
+import type { SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 
-/** A drink to make: the wizard draft, and which of its new ingredients are house preps. */
+/** A drink to make: the wizard draft, which of its new ingredients are house preps, and the drawing it was checked with. */
 export interface DrinkToMake {
   draft: WizardDraft;
   prepNames: string[];
+  sketch?: SketchInputs;
 }
 
 export type MenuRowToSave = { section: string | null; drink: MenuDrink } | { section: string | null; make: DrinkToMake; price: string | null };
 
 export type BringInSaveInput = { source: string } & (
   | { kind: 'recipes'; drinks: DrinkToMake[] }
-  | { kind: 'menu'; name: string; night: HomeNight | null; coverUri: string | null; rows: MenuRowToSave[]; prices: { id: string; price: string }[] }
+  | { kind: 'menu'; name: string; night: HomeNight | null; rows: MenuRowToSave[]; prices: { id: string; price: string }[] }
   | { kind: 'bottles'; shelf: string[]; venue: VenueBottle[]; had: number }
 );
 
@@ -46,12 +50,15 @@ const newDrinkItem = (id: string, name: string, price: string | null): MenuDrink
 /**
  * Saves a checked bring-in in one go (a menu with the drinks it needs, the
  * recipes, or the bottles) through the app's own saves, then records it as
- * one batch so Brought in can undo it all until tomorrow.
+ * one batch so Brought in can undo it all until tomorrow. Nothing from the
+ * file becomes a picture: each new drink keeps the drawing of its spec (as
+ * the wizard saves it), and a menu gets the bar's own cover, drawn from its
+ * drinks, until someone picks a cover photo in the menu builder.
  */
 export function useBringInSave(barId: string | null) {
   const createDrink = useCreateDrink();
   const createMenu = useCreateMenu();
-  const cover = useUploadMenuCover();
+  const glasses = useBarGlassware(barId).data;
   const prices = useSetMissingPrices();
   const shelf = useShelfEdit();
   const record = useRecordBringIn();
@@ -67,8 +74,10 @@ export function useBringInSave(barId: string | null) {
       let menuId: string | null = null;
       let title = '';
 
-      const make = async ({ draft, prepNames }: DrinkToMake): Promise<string> => {
-        const result = await createDrink.mutateAsync({ draft, barId: barId, myProfileId: me?.id ?? null });
+      const make = async ({ draft, prepNames, sketch: drawn }: DrinkToMake): Promise<string> => {
+        // A drink off a menu wasn't drawn in its check: drawn here, with the bar's own glasses.
+        const sketch = drawn ?? draftSketchInputs(sketchLook(draft, barVariants(glasses)));
+        const result = await createDrink.mutateAsync({ draft, barId: barId, myProfileId: me?.id ?? null, sketch });
         warnings.push(...result.warnings);
         itemIds.push(result.id);
         drinkIds.push(result.id);
@@ -113,8 +122,7 @@ export function useBringInSave(barId: string | null) {
             else groups.push({ name: row.section, drinks: [drink] });
           }
           if (input.prices.length || newPrices.length) await prices.mutateAsync([...input.prices, ...newPrices]);
-          const coverUrl = input.coverUri ? await cover.mutateAsync(input.coverUri) : null;
-          const layout = applyMenuPaste({ name: input.name, coverUrl, coverPosition: 50, sections: [blankSection()] }, null, groups);
+          const layout = applyMenuPaste({ name: input.name, coverUrl: null, coverPosition: 50, sections: [blankSection()] }, null, groups);
           menuId = await createMenu.mutateAsync({ barId: barId, layout, night: input.night ?? undefined });
           title = input.name;
         }
