@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ComponentRef, type Ref } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, Caption, Field, useDs } from '@/components/ds';
@@ -17,13 +17,14 @@ export function NameStep({ draft, set, onDone, resumed, onStartOver }: StepProps
 }
 
 /** A wizard's first step: the name, big, in the venue's display face, with "Start over" for a kept draft. */
-export function BigName({ value, onChange, onDone, resumed, onStartOver, placeholder = 'Name' }: { value: string; onChange: (name: string) => void; onDone: () => void; resumed: boolean; onStartOver: () => void; placeholder?: string }) {
+export function BigName({ value, onChange, onDone, resumed, onStartOver, placeholder = 'Name', inputRef }: { value: string; onChange: (name: string) => void; onDone: () => void; resumed: boolean; onStartOver: () => void; placeholder?: string; inputRef?: Ref<ComponentRef<typeof TextInput>> }) {
   const ds = useDs();
   // The underline is the field (no box, no browser focus ring); it darkens to ink while typing.
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.stack}>
       <TextInput
+        ref={inputRef}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         value={value}

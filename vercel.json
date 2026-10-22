@@ -1,7 +1,7 @@
 {
   "installCommand": "npm ci",
-  "buildCommand": "npm run build:web",
-  "ignoreCommand": "[ \"$VERCEL_ENV\" != production ] || git diff --quiet HEAD^ HEAD -- . \":!supabase\" \":!docs\" \":!.github\" \":!desktop\" \":!*.md\"",
+  "buildCommand": "npm run build:web && printf '%s' \"$VERCEL_GIT_COMMIT_SHA\" > dist/commit.txt",
+  "ignoreCommand": "[ \"$VERCEL_ENV\" != production ] || git diff --quiet HEAD^ HEAD -- . \":!supabase\" \":!docs\" \":!.github\" \":!desktop\" \":!smoke\" \":!*.md\"",
   "outputDirectory": "dist",
   "framework": null,
   "cleanUrls": true,

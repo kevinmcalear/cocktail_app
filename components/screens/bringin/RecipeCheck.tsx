@@ -10,6 +10,7 @@ import type { ReadFile } from '@/lib/readAnything';
 import type { ReadPlace, RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 import type { DrinkToMake } from '@/hooks/useBringInSave';
 
+import { AlreadyThereCard, useAlreadyThere } from './AlreadyThere';
 import { BoxField, CheckFooter, CheckTop, PageLook } from './CheckParts';
 import { DrawnFromSpec, FromYourFile } from './RecipeSource';
 import { amountShown, chooseLine, RecipeSpec, sentence } from './RecipeSpec';
@@ -61,6 +62,9 @@ export function RecipeCheck({ recipe, files, from, data, saving, error, onCancel
   const set = (change: Partial<RecipeChoices>) => setChoices((c) => ({ ...c, ...change }));
   const made = toMake(recipe, choices);
   const sketch = useSteadySketch(made.sketch);
+  // The venue already has one by this name (board dup-drink-warning): Save waits on what to do with it, and Skip leaves.
+  const { there, checking } = useAlreadyThere(data.venueId, choices.name, made.draft, usual, choices.same);
+  const skipped = !!there && choices.same?.id === there.drink.id && choices.same.as === 'skip';
   const file = (x: { at?: ReadPlace | null } | null) => (x?.at ? (files[x.at.page] ?? null) : null);
   const page = file(recipe);
 
@@ -77,6 +81,7 @@ export function RecipeCheck({ recipe, files, from, data, saving, error, onCancel
           )}
           <TextInput accessibilityLabel="Drink name" value={choices.name} onChangeText={(name) => set({ name })} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
         </View>
+        {there ? <AlreadyThereCard there={there} pick={choices.same} onPick={(same) => set({ same })} /> : null}
         {page && recipe.at ? (
           <FromYourFile
             file={page}
@@ -102,10 +107,14 @@ export function RecipeCheck({ recipe, files, from, data, saving, error, onCancel
         {notesOpen || choices.notes ? <Field label="Notes" value={choices.notes} onChangeText={(notes) => set({ notes })} minLines={3} /> : null}
         {error ? <Caption tone="accent">{error}</Caption> : null}
       </ScrollView>
-      <CheckFooter note={openPickLine(recipe, choices, data)}>
+      <CheckFooter note={there?.note ?? openPickLine(recipe, choices, data)}>
         <View style={styles.row}>
           <Button label="Edit all" size="lg" variant="secondary" onPress={() => onEditAll(made)} style={styles.flex} />
-          <Button label={saving ? 'Saving…' : 'Save drink'} size="lg" disabled={saving || !choices.name.trim()} onPress={() => onSave(made)} style={styles.wide} />
+          {skipped ? (
+            <Button label="Done" size="lg" onPress={onCancel} style={styles.wide} />
+          ) : (
+            <Button label={saving ? 'Saving…' : 'Save drink'} size="lg" disabled={saving || !choices.name.trim() || !!there?.waits || checking} onPress={() => onSave(made)} style={styles.wide} />
+          )}
         </View>
       </CheckFooter>
       <PageLook file={file(look)} at={look?.at ?? null} title={look?.title ?? ''} onClose={() => setLook(null)} />

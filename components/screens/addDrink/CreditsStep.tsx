@@ -8,17 +8,23 @@ import { useDrinkLists } from '@/hooks/useDiscover';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { usePublicPeople } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
+import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import { suggestClassic } from '@/lib/classics';
 import { withArticle } from '@/lib/closestClassic';
 import { parseYear, searchByName, type StepProps } from '@/lib/drinkWizard';
 
 import type { CatalogIngredient } from './IngredientSearch';
+import { SameNameCard, useSameNamePicks } from './SameNameCard';
 import { Eyebrow, WizardChip } from './WizardChrome';
 
 interface CreditsStepProps extends StepProps {
   /** The venue it's added at ("Little Rye"), credited too; null at home. */
   venueName: string | null;
   ingredients: readonly CatalogIngredient[];
+  /** The bar it's credited to already has a drink by this name (useSameNameDrink): its card shows under the bar. */
+  match?: SameNameDrink | null;
+  /** Make this a version or It's a different drink: back to the name (on desktop, it's on the same page). */
+  onRename?: () => void;
 }
 
 /**
@@ -27,7 +33,7 @@ interface CreditsStepProps extends StepProps {
  * a riff on: the one the spec is closest to (as on the ingredients step),
  * else the one its name says. A venue's drink is credited to the venue too.
  */
-export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepProps) {
+export function CreditsStep({ draft, set, venueName, ingredients, match, onRename }: CreditsStepProps) {
   const me = useMyProfile().data ?? null;
   const [who, setWho] = useState('');
   const people = usePublicPeople(who).data ?? [];
@@ -55,7 +61,7 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
           </View>
           {elsewhere ? (
             <>
-              <PlacePick draft={draft} set={set} label="Where’s it from?" />
+              <PlacePick draft={draft} set={set} label="Where’s it from?" match={match} onRename={onRename} />
               <Caption tone="muted">{`It’s saved to ${venueName}’s library, credited to the bar it came from.`}</Caption>
             </>
           ) : (
@@ -109,7 +115,7 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
         ) : null}
       </View>
 
-      <WhereWhen draft={draft} set={set} venueName={elsewhere ? null : venueName} asked={elsewhere} />
+      <WhereWhen draft={draft} set={set} venueName={elsewhere ? null : venueName} asked={elsewhere} match={match} onRename={onRename} />
 
       <View style={styles.section}>
         <Eyebrow>Riff on a classic?</Eyebrow>
@@ -146,7 +152,7 @@ export function CreditsStep({ draft, set, venueName, ingredients }: CreditsStepP
  * Where it was first made (a venue's drink is the venue's; at home, at home
  * or a bar with a page) and the year, this one in a tap.
  */
-function WhereWhen({ draft, set, venueName, asked }: StepProps & { venueName: string | null; asked: boolean }) {
+function WhereWhen({ draft, set, venueName, asked, match, onRename }: StepProps & Pick<CreditsStepProps, 'match' | 'onRename'> & { venueName: string | null; asked: boolean }) {
   const thisYear = new Date().getFullYear();
   const year = draft.originYear ?? null;
   // What's typed in "Another year", kept while it isn't a year yet ("19").
@@ -155,7 +161,7 @@ function WhereWhen({ draft, set, venueName, asked }: StepProps & { venueName: st
   return (
     <View style={styles.section}>
       <Eyebrow>{asked ? 'When' : 'Where and when'}</Eyebrow>
-      {venueName ? <Caption tone="muted">{`First made at ${venueName}.`}</Caption> : asked ? null : <PlacePick draft={draft} set={set} label="First made at a bar" />}
+      {venueName ? <Caption tone="muted">{`First made at ${venueName}.`}</Caption> : asked ? null : <PlacePick draft={draft} set={set} label="First made at a bar" match={match} onRename={onRename} />}
       <View role="radiogroup" accessibilityLabel="When" style={styles.chips}>
         <WizardChip
           label={`This year (${thisYear})`}
@@ -191,8 +197,8 @@ function WhereWhen({ draft, set, venueName, asked }: StepProps & { venueName: st
   );
 }
 
-/** At home, or a bar with a page: where the drink was first made. */
-function PlacePick({ draft, set, label }: StepProps & { label: string }) {
+/** At home, or a bar with a page: where the drink was first made, and that bar's drink by the same name. */
+function PlacePick({ draft, set, label, match, onRename }: StepProps & Pick<CreditsStepProps, 'match' | 'onRename'> & { label: string }) {
   const [where, setWhere] = useState('');
   const bars = usePublicBars(where).data ?? [];
   const place = draft.place ?? null;
@@ -202,6 +208,7 @@ function PlacePick({ draft, set, label }: StepProps & { label: string }) {
         <WizardChip label="At home" selected={!place} onPress={() => set({ place: null })} />
         {place ? <WizardChip label={place.name} selected onPress={() => set({ place: null })} /> : null}
       </View>
+      {place && match && draft.sameAs?.id !== match.id ? <PlaceHasOne bar={place.name} drink={match} set={set} onRename={onRename} /> : null}
       <Field label={label} value={where} onChangeText={setWhere} placeholder="Search bars" autoCorrect={false} maxLength={60} />
       {where.trim().length >= 2 ? (
         <Results
@@ -215,6 +222,21 @@ function PlacePick({ draft, set, label }: StepProps & { label: string }) {
         />
       ) : null}
     </>
+  );
+}
+
+/** "The Violet Hour already has a Paper Plane": a version keeps your spec, linked to theirs; either way the name is asked again. */
+function PlaceHasOne({ bar, drink, set, onRename }: Pick<StepProps, 'set'> & { bar: string; drink: SameNameDrink; onRename?: () => void }) {
+  const picks = useSameNamePicks(set);
+  return (
+    <SameNameCard
+      bar={bar}
+      drink={drink}
+      caption="Open it to save it, rank it or say you made it."
+      onOpen={() => picks.open(drink)}
+      onVersion={() => picks.version(drink, bar, false, onRename)}
+      onDifferent={() => picks.different(drink, bar, onRename)}
+    />
   );
 }
 

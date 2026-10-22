@@ -12,7 +12,9 @@ import { useDrinkLists } from '@/hooks/useDiscover';
 import { useShelf } from '@/hooks/useHomeBar';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useHoldUpdates } from '@/hooks/useOtaUpdates';
+import { useSameNameDrink } from '@/hooks/useSameNameDrink';
 import { suggestClassic } from '@/lib/classics';
+import { stepWaits, versionHeading } from '@/lib/sameName';
 import { plainDbMessage } from '@/lib/dbError';
 import {
   canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, sketchLook, STEP_COPY, WIZARD_STEPS,
@@ -34,11 +36,10 @@ import { MethodStep } from './MethodStep';
 import { PublishStep } from './PublishStep';
 import { ReviewStep } from './ReviewStep';
 import { IceStep } from './IceStep';
-import { StartPhotos } from './ReviewPhotos';
-import { NameStep, NotesStep } from './TextSteps';
+import { NameStepBody } from './NameStepBody';
+import { NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
-import { StartFromClassic } from './StartFromClassic';
 import { useLineStock } from './StockToggle';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
@@ -121,8 +122,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   }, [initialName, startFrom, place, patch]);
 
   // Riff on this: the drink's spec fills a fresh draft; one already in progress is never overwritten.
-  const startFromSpec = useStartFromClassic();
-  const startSpec = startFromSpec.mutate;
+  const { mutate: startSpec } = useStartFromClassic();
   useEffect(() => {
     const kept = useDrinkWizardStore.getState().kept[place]?.draft;
     if (!startFrom || (kept && hasContent(kept))) return;
@@ -179,10 +179,18 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Until its spec is used, the sketch already draws that classic (a Negroni's red).
   const preview = useClassicPreview(classic?.classic.id ?? null).data;
   const drawn = preview ? { ...draft, ...preview, name: draft.name } : draft;
+  // The bar already has a drink by this name, or the bar it's credited to does (board dup-drink-warning): Next waits on a pick.
+  const onBar = useSameNameDrink({ barId, name: draft.name });
+  const onPlace = useSameNameDrink({ creditedTo: !barId || draft.elsewhere ? draft.place?.id : null, name: draft.name });
+  const atBar = onBar.data ?? null;
+  const atPlace = onPlace.data ?? null;
+  // Still asking about the name as typed (a failed or offline ask doesn't hold anything up).
+  const checking = !!onBar.checking || !!onPlace.checking;
+  const waits = desk ? stepWaits('name', draft, atBar, null, checking) || stepWaits('credits', draft, null, atPlace) : stepWaits(step, draft, atBar, atPlace, checking);
   if (desk) {
     return (
       <DrinkDesk
-        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, barKit, classic, resumed }}
+        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, barKit, classic, resumed, atBar, atPlace }}
         loading={!dropdowns?.ingredients}
         aliases={dropdowns?.ingredientAliases}
         shelf={barId ? undefined : new Set(shelfIds ?? [])}
@@ -190,7 +198,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         stock={stock}
         onStartOver={startOver}
         saving={create.isPending}
-        canSave={canSave(draft)}
+        canSave={canSave(draft) && !waits}
         onSave={save}
         onClose={onClose}
       />
@@ -200,13 +208,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const body = (() => {
     switch (step) {
       case 'name':
-        return (
-          <>
-            <NameStep draft={draft} set={set} onDone={() => canSave(draft) && next()} resumed={resumed} onStartOver={startOver} />
-            <StartPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} barId={barId} />
-            {classic ? <StartFromClassic set={set} match={classic} onStarted={() => go('ingredients')} /> : null}
-          </>
-        );
+        return <NameStepBody {...{ draft, set, barId, venueName, classic, resumed }} match={atBar} onStartOver={startOver} onDone={() => canSave(draft) && !waits && next()} onStarted={() => go('ingredients')} />;
       case 'ingredients':
         return (
           <IngredientsStep
@@ -244,7 +246,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'credits':
-        return <CreditsStep draft={draft} set={set} venueName={barId ? venueName : null} ingredients={ingredients} />;
+        return <CreditsStep draft={draft} set={set} venueName={barId ? venueName : null} ingredients={ingredients} match={atPlace} onRename={() => go('name')} />;
       case 'notes':
         return <NotesStep draft={draft} set={set} />;
       case 'publish':
@@ -260,6 +262,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   })();
 
   const following = WIZARD_STEPS[at + 1];
+  const heading = step === 'name' ? versionHeading(draft) : null;
   return (
     <WizardFrame
       testID="add-drink"
@@ -269,8 +272,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       stepKey={step}
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.
-      eyebrow={(step !== 'name' || resumed ? draft.name.trim() : '') || 'New drink'}
-      title={firstRound && step === 'review' ? 'Make it yours' : copy.title}
+      eyebrow={heading?.eyebrow ?? ((step !== 'name' || resumed ? draft.name.trim() : '') || 'New drink')}
+      title={heading?.title ?? (firstRound && step === 'review' ? 'Make it yours' : copy.title)}
       intro={copy.intro}
       // Android's back button steps back through the wizard before leaving it.
       onHardwareBack={() => {
@@ -281,8 +284,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       footer={
         <WizardFooter
           nextLabel={step === 'review' ? (create.isPending ? 'Saving…' : firstRound ? 'Save as our house spec' : 'Save drink') : `Next: ${STEP_COPY[following].short.toLowerCase()}`}
-          optional={copy.optional}
-          canNext={step === 'name' || step === 'review' ? canSave(draft) : true}
+          optional={copy.optional && !waits}
+          canNext={(step === 'name' || step === 'review' ? canSave(draft) : true) && !waits}
           saving={create.isPending}
           onSkip={next}
           onNext={next}
