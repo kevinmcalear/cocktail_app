@@ -76,14 +76,15 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <Pressable accessibilityLabel="Close the menu" style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(ds.c.ground, 0.3) }]} onPress={onClose} />
-      {/* Drawn once the button's place is known, so it never flashes in the corner. iOS's glass
-          draws nothing under a parent that starts transparent, so there it comes in without the fade. */}
-      {!anchor.height ? null : Platform.OS === 'ios' ? (
-        <View style={frame}>{panel}</View>
-      ) : (
+      {/* Drawn once the button's place is known, so it never flashes in the corner. Glass sees
+          nothing through a parent that fades (iOS's draws clear, the web's blur stops there), so
+          only Android's solid panel fades in. */}
+      {!anchor.height ? null : Platform.OS === 'android' ? (
         <Appear kind="fade" duration={140} style={frame}>
           {panel}
         </Appear>
+      ) : (
+        <View style={frame}>{panel}</View>
       )}
     </Modal>
   );
@@ -98,7 +99,7 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
 function Panel({ children }: { children: ReactNode }) {
   const ds = useDs();
   if (Platform.OS === 'ios') return <GlassSurface style={styles.glass}>{children}</GlassSurface>;
-  const web = Platform.OS === 'web' ? [{ backgroundColor: withAlpha(ds.c.raised, 0.78) }, WEB_BLUR] : { backgroundColor: ds.c.raised };
+  const web = Platform.OS === 'web' ? [{ backgroundColor: withAlpha(ds.c.raised, 0.86) }, WEB_BLUR] : { backgroundColor: ds.c.raised };
   return <View style={[styles.glass, styles.solid, { borderColor: ds.c.lineStrong }, web]}>{children}</View>;
 }
 
