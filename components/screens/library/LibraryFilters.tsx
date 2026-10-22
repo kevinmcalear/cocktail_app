@@ -76,7 +76,7 @@ export function PinnedFilters({ set, gutter }: { set: FilterSet; gutter: number 
   const ds = useDs();
   return (
     <Appear kind="fade" duration={160} style={styles.pinned}>
-      <LinearGradient pointerEvents="none" colors={[ds.c.ground, withAlpha(ds.c.ground, 0.85), withAlpha(ds.c.ground, 0)]} locations={[0, 0.7, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient pointerEvents="none" colors={[ds.c.ground, ds.c.ground, withAlpha(ds.c.ground, 0)]} locations={[0, 0.72, 1]} style={StyleSheet.absoluteFill} />
       <ScreenHeader title="Library" actions={<FilterButton set={set} />} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: gutter }}>
         <GlassSurface interactive style={styles.track}>
