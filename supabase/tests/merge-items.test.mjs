@@ -1,7 +1,8 @@
 // Merging a copy of a drink into the one we keep
 // (20261102100000_tidy_test_and_duplicate_drinks.sql, private.merge_item):
 // everything that points at the copy ends up on the kept drink, the copy's
-// own spec goes, and the copy is recorded in private.item_merges.
+// own spec goes, and the copy is recorded in private.item_merges. Also runs
+// the migration's test-drink step on stand-ins with its ids.
 //
 // Runs in one transaction that is rolled back, so it leaves nothing behind.
 //
@@ -11,6 +12,7 @@
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { after, before, describe, test } from "node:test";
 
 import pg from "pg";
@@ -131,7 +133,123 @@ before(async () => {
     [`merge-plane-${run}`, ids.copy],
   );
 
+  // The copy was made by a bring-in: Undo deletes what its list names.
+  ids.batch = (
+    await one(
+      `INSERT INTO public.bring_in_batches (user_id, source, title, item_ids) VALUES ($1, 'a link', 'Merge test', ARRAY[$2]::uuid[]) RETURNING id`,
+      [ids.onlyCopy, ids.copy],
+    )
+  ).id;
+
+  // What hangs off the copy's ranking for someone who ranked both.
+  const entry = async (item) =>
+    (
+      await one(
+        "SELECT id FROM public.rank_entries WHERE user_id = $1 AND item_id = $2",
+        [ids.both, item],
+      )
+    ).id;
+  ids.copyEntry = await entry(ids.copy);
+  ids.keepEntry = await entry(ids.keep);
+  ids.otherEntry = (
+    await one(
+      `INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, sentiment, rank_key)
+       VALUES ($1, $2, $2, 'fine', 3) RETURNING id`,
+      [ids.both, ids.riff],
+    )
+  ).id;
+  ids.comparison = (
+    await one(
+      `INSERT INTO public.rank_comparisons (user_id, winner_entry_id, loser_entry_id) VALUES ($1, $2, $3) RETURNING id`,
+      [ids.both, ids.copyEntry, ids.otherEntry],
+    )
+  ).id;
+  ids.selfComparison = (
+    await one(
+      `INSERT INTO public.rank_comparisons (user_id, winner_entry_id, loser_entry_id) VALUES ($1, $2, $3) RETURNING id`,
+      [ids.both, ids.copyEntry, ids.keepEntry],
+    )
+  ).id;
+  const image = await one(
+    `INSERT INTO public.images (url) VALUES ($1) RETURNING id`,
+    [`https://example.test/${run}/photo.jpg`],
+  );
+  ids.photo = (
+    await one(
+      `INSERT INTO public.drink_photos (item_id, user_id, image_id, rank_entry_id) VALUES ($1, $2, $3, $4) RETURNING id`,
+      [ids.copy, ids.both, image.id, ids.copyEntry],
+    )
+  ).id;
+  ids.made = (
+    await one(
+      `INSERT INTO public.made_drinks (user_id, item_id, rank_entry_id) VALUES ($1, $2, $3) RETURNING id`,
+      [ids.both, ids.copy, ids.copyEntry],
+    )
+  ).id;
+
   await db.query("SELECT private.merge_item($1, $2)", [ids.copy, ids.keep]);
+
+  // A second pair where both are bar-credited, and the kept one was linked
+  // to the copy as its riff.
+  ids.keep2 = (
+    await one(
+      `INSERT INTO public.items (name, item_type, origin_bar_profile_id) VALUES ($1, 'cocktail', $2) RETURNING id`,
+      [`Merge Two ${run}`, ids.page],
+    )
+  ).id;
+  ids.copy2 = (
+    await one(
+      `INSERT INTO public.items (name, item_type, origin_bar_profile_id, notes) VALUES ($1, 'cocktail', $2, 'The copy''s bar note.') RETURNING id`,
+      [`Merge Two ${run}`, ids.page],
+    )
+  ).id;
+  await db.query("UPDATE public.items SET riff_of_id = $2 WHERE id = $1", [
+    ids.keep2,
+    ids.copy2,
+  ]);
+  await db.query("SELECT private.merge_item($1, $2)", [ids.copy2, ids.keep2]);
+
+  // The test-drink step of the migration, on stand-ins with its ids.
+  ids.cottage = "532e5250-161e-4439-b8d1-9dd4b403ef19";
+  ids.test = "cc7e22e2-907e-4aa1-bc05-a1be451cb9a9";
+  ids.testStuff = "5ec3ebce-0d1f-4523-a784-ae50103f0db0";
+  ids.testHi = "89a0d3d5-daaa-4d06-9789-0e374e376547";
+  await db.query(
+    `INSERT INTO public.bars (id, name, slug) VALUES ($1, 'Cottage stand-in', $2) ON CONFLICT (id) DO NOTHING`,
+    [ids.cottage, `cottage-${run}`],
+  );
+  await db.query(
+    `INSERT INTO public.items (id, name, item_type, bar_id) VALUES ($1, 'Test', 'cocktail', $4), ($2, 'Testing stuff', 'cocktail', $4), ($3, 'Testing hi', 'cocktail', $4)
+     ON CONFLICT (id) DO NOTHING`,
+    [ids.test, ids.testStuff, ids.testHi, ids.cottage],
+  );
+  // Worked out from the drink: goes with it.
+  await db.query(
+    `INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit, sort_order) VALUES ($1, $2, 1, 'oz', 0)`,
+    [ids.test, a],
+  );
+  // Real things pointing at the other two: they stay.
+  await db.query(
+    `INSERT INTO public.collected_items (user_id, item_id) VALUES ($1, $2)`,
+    [ids.onlyCopy, ids.testStuff],
+  );
+  await db.query(
+    `INSERT INTO public.bring_in_batches (user_id, source, title, item_ids) VALUES ($1, 'a link', 'Test drinks', ARRAY[$2]::uuid[])`,
+    [ids.onlyCopy, ids.testHi],
+  );
+  const migration = readFileSync(
+    new URL(
+      "../migrations/20261102100000_tidy_test_and_duplicate_drinks.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const step = migration.slice(
+    migration.indexOf("-- --- 1. The test drinks ---"),
+    migration.indexOf("-- --- 2 and 3. Duplicates ---"),
+  );
+  assert.ok(step.length > 100, "the test-drink step is in the migration");
+  await db.query(step);
 });
 
 after(async () => {
@@ -207,8 +325,8 @@ describe("merge_item", () => {
   test("rankings move, and someone who ranked both keeps one", async () => {
     const rows = (
       await db.query(
-        "SELECT user_id, item_id, ranked_as_item_id FROM public.rank_entries WHERE user_id = ANY($1)",
-        [[ids.onlyCopy, ids.both]],
+        "SELECT user_id, item_id, ranked_as_item_id FROM public.rank_entries WHERE user_id = ANY($1) AND item_id <> $2",
+        [[ids.onlyCopy, ids.both], ids.riff],
       )
     ).rows;
     assert.equal(rows.length, 2);
@@ -236,17 +354,115 @@ describe("merge_item", () => {
     );
   });
 
-  test("refuses ingredients and items of different kinds", async () => {
+  test("someone who ranked both keeps what hung off the copy's ranking", async () => {
+    assert.equal(
+      await count("SELECT count(*) n FROM public.rank_entries WHERE id = $1", [
+        ids.copyEntry,
+      ]),
+      0,
+    );
+    const moved = await one(
+      "SELECT winner_entry_id, loser_entry_id FROM public.rank_comparisons WHERE id = $1",
+      [ids.comparison],
+    );
+    assert.equal(moved.winner_entry_id, ids.keepEntry);
+    assert.equal(moved.loser_entry_id, ids.otherEntry);
+    // Copy against classic is the same drink now: that one goes.
+    assert.equal(
+      await count("SELECT count(*) n FROM public.rank_comparisons WHERE id = $1", [
+        ids.selfComparison,
+      ]),
+      0,
+    );
+    const photo = await one(
+      "SELECT item_id, rank_entry_id FROM public.drink_photos WHERE id = $1",
+      [ids.photo],
+    );
+    assert.equal(photo.item_id, ids.keep);
+    assert.equal(photo.rank_entry_id, ids.keepEntry);
+    const made = await one(
+      "SELECT item_id, rank_entry_id FROM public.made_drinks WHERE id = $1",
+      [ids.made],
+    );
+    assert.equal(made.item_id, ids.keep);
+    assert.equal(made.rank_entry_id, ids.keepEntry);
+  });
+
+  test("a bring-in's undo list drops the copy and never gains the kept drink", async () => {
+    const batch = await one(
+      "SELECT item_ids FROM public.bring_in_batches WHERE id = $1",
+      [ids.batch],
+    );
+    assert.deepEqual(batch.item_ids, []);
+  });
+
+  test("the kept drink survives a link to the copy on itself", async () => {
+    const keep2 = await one(
+      "SELECT id, riff_of_id FROM public.items WHERE id = $1",
+      [ids.keep2],
+    );
+    assert.equal(keep2?.id, ids.keep2);
+    assert.equal(keep2.riff_of_id, null);
+    const merge = await one(
+      "SELECT into_id FROM private.item_merges WHERE from_id = $1",
+      [ids.copy2],
+    );
+    assert.equal(merge.into_id, ids.keep2);
+  });
+
+  test("a bar-credited copy's notes follow onto a bar-credited drink", async () => {
+    const note = await one(
+      "SELECT notes FROM public.credited_drink_notes WHERE item_id = $1",
+      [ids.keep2],
+    );
+    assert.equal(note?.notes, "The copy's bar note.");
+  });
+
+  test("the merge record outlives the kept drink", async () => {
+    await db.query("SAVEPOINT gone");
+    await db.query("DELETE FROM public.items WHERE id = $1", [ids.keep2]);
+    const merge = await one(
+      "SELECT into_id, snapshot FROM private.item_merges WHERE from_id = $1",
+      [ids.copy2],
+    );
+    assert.equal(merge.into_id, null);
+    assert.equal(merge.snapshot.item.id, ids.copy2);
+    await db.query("ROLLBACK TO SAVEPOINT gone");
+  });
+
+  test("a test drink goes only while nothing real points at it", async () => {
+    const left = (
+      await db.query("SELECT id FROM public.items WHERE id = ANY($1)", [
+        [ids.test, ids.testStuff, ids.testHi],
+      ])
+    ).rows.map((r) => r.id);
+    assert.ok(!left.includes(ids.test), "the clean test drink is deleted");
+    assert.ok(left.includes(ids.testStuff), "a collected one stays");
+    assert.ok(left.includes(ids.testHi), "one a bring-in names stays");
+  });
+
+  test("refuses ingredients, different kinds, different venues and the same item", async () => {
     const ing = await one(
       `SELECT id FROM public.items WHERE item_type = 'ingredient' AND bar_id IS NULL LIMIT 1`,
     );
-    for (const [from, into] of [
-      [ing.id, ids.keep],
-      [ids.riff, ids.riff],
+    const method = await one(
+      `INSERT INTO public.items (name, item_type) VALUES ($1, 'method') RETURNING id`,
+      [`Merge Method ${run}`],
+    );
+    const venueDrink = await one(
+      `INSERT INTO public.items (name, item_type, bar_id) VALUES ($1, 'cocktail', (SELECT bar_id FROM public.menus WHERE id = $2)) RETURNING id`,
+      [`Merge Plane ${run}`, ids.menu],
+    );
+    for (const [from, into, message] of [
+      [ing.id, ids.keep, /same kind/],
+      [method.id, ids.keep, /same kind/],
+      [venueDrink.id, ids.keep, /same venue/],
+      [ids.riff, ids.riff, /two different/],
     ]) {
       await db.query("SAVEPOINT refused");
       await assert.rejects(
         db.query("SELECT private.merge_item($1, $2)", [from, into]),
+        message,
       );
       await db.query("ROLLBACK TO SAVEPOINT refused");
     }
