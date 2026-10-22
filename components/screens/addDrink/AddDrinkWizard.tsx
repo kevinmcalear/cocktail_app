@@ -2,7 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Alert, Platform } from 'react-native';
 
 import { useBreakpoint } from '@/components/ds';
-import { TellUs } from '@/components/feedback/TellUs';
+
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useBackBarIds } from '@/hooks/useBackBar';
 import { useBarKit } from '@/hooks/useBarKit';
@@ -16,7 +16,7 @@ import { useHoldUpdates } from '@/hooks/useOtaUpdates';
 import { suggestClassic } from '@/lib/classics';
 import { plainDbMessage } from '@/lib/dbError';
 import {
-  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, sketchLook, STEP_COPY, WIZARD_STEPS,
+  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, savedNotice, sketchLook, STEP_COPY, WIZARD_STEPS,
   type WizardDraft, type WizardPick, type WizardStep,
 } from '@/lib/drinkWizard';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -143,10 +143,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
           clear(place);
           if (firstRound) roundDone('house_spec', id);
           toastDone('Drink saved', draft.name.trim());
-          // The reminder "Just add the name" promised: the preps whose recipes are still to write.
-          const one = later.length === 1;
-          const remind = later.length ? `${later.join(', ')} ${one ? 'has' : 'have'} no recipe yet. Write ${one ? 'it on its page' : 'them on their pages'} when you’re ready.` : null;
-          if (warnings.length || remind) Alert.alert(warnings.length ? 'Saved, with one thing to fix' : 'A recipe to write', [...warnings, ...(remind ? [remind] : [])].join('\n\n'));
+          const notice = savedNotice(warnings, later);
+          if (notice) Alert.alert(notice.title, notice.body);
           onSaved(id);
         },
         onError: (e) => Alert.alert('Couldn’t save the drink', `${plainDbMessage(e) ?? e.message} Your draft is kept on this device.`),
@@ -236,18 +234,15 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
               suggested={guess.method}
               why={serveCard ? null : guess.why}
               hint={<FoamerHint draft={draft} set={set} ingredients={ingredients} />}
+              tellUs={tellUsAbout}
             />
-            <TellUs screen="Adding a drink › Method" line="We’ll add your method to the app." {...tellUsAbout} />
           </>
         );
       case 'glass':
         return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
         return (
-          <>
-            <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={barKit} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} />
-            <TellUs screen="Adding a drink › Ice" line="We’ll add your ice to the app." {...tellUsAbout} />
-          </>
+          <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={barKit} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />
         );
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;

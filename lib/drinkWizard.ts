@@ -550,3 +550,15 @@ export function draftFromSpec(spec: SourceSpec, usual: string): Partial<WizardDr
     riffOf: { id: spec.id, name: spec.name },
   };
 }
+
+/**
+ * What to say once a drink is saved, if anything: the save's warnings, and
+ * the reminder "Just add the name" promised (the preps whose recipes are
+ * still to write). Null when there's nothing to say.
+ */
+export function savedNotice(warnings: readonly string[], later: readonly string[]): { title: string; body: string } | null {
+  const one = later.length === 1;
+  const remind = later.length ? `${later.join(', ')} ${one ? 'has' : 'have'} no recipe yet. Write ${one ? 'it on its page' : 'them on their pages'} when you’re ready.` : null;
+  if (!warnings.length && !remind) return null;
+  return { title: warnings.length ? 'Saved, with one thing to fix' : 'A recipe to write', body: [...warnings, ...(remind ? [remind] : [])].join('\n\n') };
+}

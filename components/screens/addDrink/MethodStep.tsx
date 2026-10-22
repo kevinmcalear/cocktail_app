@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, useDs } from '@/components/ds';
+import { TellUs, type TellUsAbout } from '@/components/feedback/TellUs';
 import { radius, space } from '@/constants/tokens';
 import { METHOD_GROUPS, methodDetail, samePick, type WizardPick } from '@/lib/drinkWizard';
 
@@ -18,6 +19,8 @@ interface MethodStepProps {
   why?: string | null;
   /** Under the steps, above the chips: the foamer hint. */
   hint?: ReactNode;
+  /** Under the list: "Doing something different? Tell us", sent with the drink and bar. */
+  tellUs?: TellUsAbout;
 }
 
 /**
@@ -25,7 +28,7 @@ interface MethodStepProps {
  * ("1 Dry shake ... 15 s, no ice"), then every method in two groups (Mix,
  * Air and texture), and a field for your own.
  */
-export function MethodStep({ options, selected, onChange, suggested, why, hint }: MethodStepProps) {
+export function MethodStep({ options, selected, onChange, suggested, why, hint, tellUs }: MethodStepProps) {
   const ds = useDs();
   const find = (name: string) => options.find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
   const order = (p: WizardPick) => selected.findIndex((s) => samePick(s, p));
@@ -86,6 +89,7 @@ export function MethodStep({ options, selected, onChange, suggested, why, hint }
           if (order(pick) < 0) onChange([...selected, pick]);
         }}
       />
+      {tellUs ? <TellUs screen="Adding a drink › Method" line="We’ll add your method to the app." {...tellUs} /> : null}
     </View>
   );
 }
