@@ -44,6 +44,7 @@ import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClas
 import { WizardFooter } from './WizardChrome';
 import { WizardFrame } from './WizardFrame';
 import { RoundStrip } from '@/components/screens/firstRound/RoundElsewhere';
+import { TellUsPlace } from '@/components/screens/feedback/TellUs';
 import { useFirstRound } from '@/hooks/useFirstRound';
 
 export interface AddDrinkWizardProps {
@@ -179,20 +180,24 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Until its spec is used, the sketch already draws that classic (a Negroni's red).
   const preview = useClassicPreview(classic?.classic.id ?? null).data;
   const drawn = preview ? { ...draft, ...preview, name: draft.name } : draft;
+  // Every "Tell us" inside says it came from adding this drink, at this bar.
+  const tellUs = { flow: 'Adding a drink', subject: draft.name.trim() || null, barId, barName: barId ? venueName : null };
   if (desk) {
     return (
-      <DrinkDesk
-        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, barKit, classic, resumed }}
-        loading={!dropdowns?.ingredients}
-        aliases={dropdowns?.ingredientAliases}
-        shelf={barId ? undefined : new Set(shelfIds ?? [])}
-        backBar={barId ? backBar : undefined}
-        onStartOver={startOver}
-        saving={create.isPending}
-        canSave={canSave(draft)}
-        onSave={save}
-        onClose={onClose}
-      />
+      <TellUsPlace value={tellUs}>
+        <DrinkDesk
+          {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, barKit, classic, resumed }}
+          loading={!dropdowns?.ingredients}
+          aliases={dropdowns?.ingredientAliases}
+          shelf={barId ? undefined : new Set(shelfIds ?? [])}
+          backBar={barId ? backBar : undefined}
+          onStartOver={startOver}
+          saving={create.isPending}
+          canSave={canSave(draft)}
+          onSave={save}
+          onClose={onClose}
+        />
+      </TellUsPlace>
     );
   }
 
@@ -287,7 +292,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         />
       }
     >
-      {body}
+      <TellUsPlace value={tellUs}>{body}</TellUsPlace>
     </WizardFrame>
   );
 }

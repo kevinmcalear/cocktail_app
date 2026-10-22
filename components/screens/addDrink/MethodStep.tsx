@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, useDs } from '@/components/ds';
+import { TellUs } from '@/components/screens/feedback/TellUs';
 import { radius, space } from '@/constants/tokens';
 import { METHOD_GROUPS, methodDetail, samePick, type WizardPick } from '@/lib/drinkWizard';
 
@@ -86,6 +87,7 @@ export function MethodStep({ options, selected, onChange, suggested, why, hint }
           if (order(pick) < 0) onChange([...selected, pick]);
         }}
       />
+      <TellUs step="Method" what="method" />
     </View>
   );
 }

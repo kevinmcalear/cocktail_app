@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, useDs } from '@/components/ds';
+import { TellUs } from '@/components/screens/feedback/TellUs';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
@@ -163,6 +164,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           />
           <Row label="Method">
             <PickStep label="Method" ownLabel="Your own method" multi compact options={p.methods} selected={draft.methods} onChange={(methods) => set({ methods })} suggested={p.guess.method} />
+            <TellUs step="Method" what="method" />
           </Row>
           <Row label="Glass">
             <GlassStep compact draft={draft} set={set} options={p.glasses} barId={barId} barGlasses={p.barGlasses} barVariants={p.barVariants} suggested={p.guess.glass} />
@@ -206,7 +208,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
       <View style={styles.rowLabel}>
         <Eyebrow>{label}</Eyebrow>
       </View>
-      <View style={styles.flex}>{children}</View>
+      <View style={styles.rowBody}>{children}</View>
     </View>
   );
 }
@@ -220,6 +222,7 @@ const styles = StyleSheet.create({
   form: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.xxxl, gap: space.lg },
   row: { flexDirection: 'row', gap: space.md },
   rowLabel: { width: 100, paddingTop: space.sm },
+  rowBody: { flex: 1, gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   rail: { flex: 1, minWidth: 360, borderLeftWidth: StyleSheet.hairlineWidth },
   railBody: { padding: space.xl, gap: space.lg },

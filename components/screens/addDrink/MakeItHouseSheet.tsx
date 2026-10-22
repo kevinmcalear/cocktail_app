@@ -1,6 +1,9 @@
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
+import { FeedbackSheet } from '@/components/screens/feedback/FeedbackSheet';
+import { TellUsRow, useTellUsPlace } from '@/components/screens/feedback/TellUs';
 import { TechniqueSheet } from '@/components/techniques/TechniqueSheet';
 import { radius, space } from '@/constants/tokens';
 import type { HouseNudge } from '@/lib/makeItHouse';
@@ -21,37 +24,56 @@ interface MakeItHouseSheetProps {
  * "What did you do to it?" for a bottle already in the drink: a fat wash, an
  * infusion, a milk wash. The drink's name can answer first ("coconut
  * fat-washed"). Picking one opens the prep builder with the bottle as its base.
+ * Under the list, "Doing something different? Tell us" closes it and opens
+ * the Tell us sheet, about this bottle (two sheets never stack).
  */
 export function MakeItHouseSheet({ bottle, ways, nudge, onPick, onClose }: MakeItHouseSheetProps) {
   const ds = useDs();
+  // The bottle the Tell us sheet is about, once this one has gone.
+  const [telling, setTelling] = useState<string | null>(null);
+  const then = useRef<string | null>(null);
+  const place = useTellUsPlace('Make it house', telling);
+  const gone = () => {
+    if (then.current) setTelling(then.current);
+    then.current = null;
+  };
+  const tellUs = () => {
+    then.current = bottle;
+    onClose();
+    if (Platform.OS !== 'ios') gone();
+  };
   return (
-    <TechniqueSheet visible={!!bottle} onClose={onClose} eyebrow={`Make it house · ${bottle ?? ''}`} title="What did you do to it?">
-      <Body tone="muted">The bottle stays the base. The recipe, steps and keep time fill in.</Body>
-      {nudge ? (
-        <PressableScale
-          role="button"
-          accessibilityLabel={`From the drink’s name: ${nudge.phrase}`}
-          onPress={() => onPick(nudge.technique, nudge.adjunct)}
-          style={[styles.nudge, { borderColor: ds.accentFill.fill, backgroundColor: ds.c.surface }]}
-        >
-          <Caption tone="accent">FROM THE DRINK’S NAME</Caption>
-          <Body>{nudge.phrase[0].toUpperCase() + nudge.phrase.slice(1)}</Body>
-        </PressableScale>
-      ) : null}
-      <View role="list">
-        {ways.map((t) => (
-          <PressableScale key={t.id} role="button" accessibilityLabel={`${t.name}, ${t.time}`} onPress={() => onPick(t, null)} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-            <View style={styles.flex}>
-              <Body>{t.name}</Body>
-              <Caption tone="muted" numberOfLines={1}>
-                {t.summary}
-              </Caption>
-            </View>
-            <Caption tone="muted">{t.time}</Caption>
+    <>
+      <TechniqueSheet visible={!!bottle} onClose={onClose} onDismiss={gone} eyebrow={`Make it house · ${bottle ?? ''}`} title="What did you do to it?">
+        <Body tone="muted">The bottle stays the base. The recipe, steps and keep time fill in.</Body>
+        {nudge ? (
+          <PressableScale
+            role="button"
+            accessibilityLabel={`From the drink’s name: ${nudge.phrase}`}
+            onPress={() => onPick(nudge.technique, nudge.adjunct)}
+            style={[styles.nudge, { borderColor: ds.accentFill.fill, backgroundColor: ds.c.surface }]}
+          >
+            <Caption tone="accent">FROM THE DRINK’S NAME</Caption>
+            <Body>{nudge.phrase[0].toUpperCase() + nudge.phrase.slice(1)}</Body>
           </PressableScale>
-        ))}
-      </View>
-    </TechniqueSheet>
+        ) : null}
+        <View role="list">
+          {ways.map((t) => (
+            <PressableScale key={t.id} role="button" accessibilityLabel={`${t.name}, ${t.time}`} onPress={() => onPick(t, null)} style={[styles.row, { borderBottomColor: ds.c.line }]}>
+              <View style={styles.flex}>
+                <Body>{t.name}</Body>
+                <Caption tone="muted" numberOfLines={1}>
+                  {t.summary}
+                </Caption>
+              </View>
+              <Caption tone="muted">{t.time}</Caption>
+            </PressableScale>
+          ))}
+        </View>
+        <TellUsRow what="technique" onPress={tellUs} />
+      </TechniqueSheet>
+      <FeedbackSheet visible={!!telling} onClose={() => setTelling(null)} mode="different" place={place} />
+    </>
   );
 }
 

@@ -7,6 +7,7 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { AddDrinkWizard } from './AddDrinkWizard';
 
 const mockCreate = jest.fn();
+const mockFeedback = jest.fn();
 const mockSaved = jest.fn();
 let mockBarGlasses: unknown[] = [];
 let mockBarKit: unknown[] = [];
@@ -36,6 +37,7 @@ jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) 
 jest.mock('@/hooks/useRankings', () => ({ usePublicBars: (q: string) => ({ data: q.length >= 2 ? [{ id: 'bar-p-attaboy', display_name: 'Attaboy', city: 'New York' }] : [] }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [{ id: 'c-negroni', name: 'Negroni', imageUrl: null }] }) }));
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
+jest.mock('@/hooks/useFeedback', () => ({ useSendFeedback: () => ({ mutate: mockFeedback, reset: jest.fn(), isPending: false }) }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 // "Is this one of your glasses?" (components/screens/venue/GlasswarePrompt.test.tsx) asks no one here: nobody has brand.
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }), useBarPageId: () => ({ data: 'page-1' }), useSaveBarGlass: () => ({ mutate: jest.fn() }) }));
@@ -48,6 +50,7 @@ jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(),
 
 beforeEach(() => {
   mockCreate.mockReset();
+  mockFeedback.mockReset();
   mockStart.mockReset();
   mockSaved.mockReset();
   mockBarGlasses = [];
@@ -228,6 +231,20 @@ describe('AddDrinkWizard', () => {
     // Shaved isn't one of the common ones, but it's the venue's, so it's offered.
     await fireEvent.press(screen.getByRole('radio', { name: 'Shaved' }));
     expect(useDrinkWizardStore.getState().kept['bar-1'].draft.ice?.name).toBe('Shaved');
+  });
+
+  test('under the ice, Tell us sends a note that says the step, the drink and the bar', async () => {
+    useDrinkWizardStore.getState().patch('bar-1', { name: 'Ash Garden' });
+    useDrinkWizardStore.getState().setStep('bar-1', 'ice');
+    await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    await fireEvent.press(screen.getByRole('button', { name: /^Doing something different\? Tell us\. We’ll add your ice/ }));
+    expect(screen.getByText('Sent with: Adding a drink › Ice · Ash Garden · Little Rye')).toBeTruthy();
+    const send = screen.getByRole('button', { name: 'Send' });
+    expect(send.props['aria-disabled'] ?? send.props.accessibilityState?.disabled).toBe(true);
+    await fireEvent.changeText(screen.getByLabelText('What you do'), ' Graduated blocks, stacked ');
+    await fireEvent.press(screen.getByRole('button', { name: 'Send' }));
+    expect(mockFeedback.mock.calls[0][0]).toMatchObject({ kind: 'different', screen: 'Adding a drink › Ice', subject: 'Ash Garden', bar_id: 'bar-1', body: 'Graduated blocks, stacked' });
   });
 
   test('tapping a name, then Swap, swaps the ingredient and keeps its amount', async () => {

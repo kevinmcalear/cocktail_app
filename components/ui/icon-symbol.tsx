@@ -146,6 +146,7 @@ const MAPPING = {
   'sun.min': 'svg:sun',
   'thermometer.medium': 'thermometer',
   'scissors': 'scissors',
+  'bubble.left': 'message-square',
 } satisfies IconMapping;
 
 /**

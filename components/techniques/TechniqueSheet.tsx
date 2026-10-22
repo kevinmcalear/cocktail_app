@@ -10,13 +10,15 @@ interface Props {
   eyebrow: string;
   title: string;
   children: ReactNode;
+  /** iOS: once it has fully gone, to open another sheet after it. */
+  onDismiss?: () => void;
 }
 
 /** A bottom sheet over the add-drink wizard for a technique choice (how to make a prep, which foamer). */
 export function TechniqueSheet(props: Props) {
   return (
     <BackbarTheme>
-      <Sheet visible={props.visible} onClose={props.onClose} accessibilityLabel={props.title} ground>
+      <Sheet visible={props.visible} onClose={props.onClose} onDismiss={props.onDismiss} accessibilityLabel={props.title} ground>
         <Body {...props} />
       </Sheet>
     </BackbarTheme>

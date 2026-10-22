@@ -15,6 +15,7 @@ export default function PrivacyPolicy() {
             'Account details: your email address (we email you a code to sign in), your first and last name, and a profile photo if you add one. Accounts made before sign-in codes may also have a password, stored only as a secure hash by our sign-in provider.',
             'Content you create: drinks, ingredients, recipes, menus, drafts, photos you upload, and venue names, logos and colours.',
             'Venue membership: which venues you belong to and your role in each.',
+            'Notes you send us (Tell us, Report a problem): what you write, the screen and drink it came from, the venue you were working at, and your app version and device. Only you and our team can read them.',
             'Crash reports: what went wrong, the screen it happened on, and technical details such as your device model, operating system and app version. Email addresses and search terms are removed before a report is sent.',
             'Usage events: which screens you open and a few actions (signing up, confirming your age, ranking, collecting or creating a drink, sending an invite, claiming a bar, searching). They record that something happened, not what you wrote or searched for.',
             'Crash reports and usage events are linked to your account ID when you are signed in, never to your name or email, and we do not keep the IP address they came from. We do not use them for advertising. You can turn usage events off in Settings → Account → Share usage analytics.',

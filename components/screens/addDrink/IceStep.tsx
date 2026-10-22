@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption } from '@/components/ds';
+import { TellUs } from '@/components/screens/feedback/TellUs';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import type { KitRow } from '@/hooks/useBarKit';
@@ -118,6 +119,7 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
         venue={venueName && kitIce.length ? { name: venueName, ice: kitIce.map((r) => ({ pick: pickOf(ICE_LABEL[r.key as IceKind]), source: kitSourceLine(r) || null })) } : null}
         below={top ? iceBuildLine([top]).replace(/^Over /, '') : null}
       />
+      <TellUs step="Ice" what="ice" />
     </View>
   );
 }

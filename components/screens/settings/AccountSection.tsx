@@ -6,7 +6,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { Caption } from '@/components/ds';
 import { SafetyLinks, type LinkRowProps } from '@/components/screens/safety/SafetyLinks';
-import { ReportProblemSheet } from '@/components/screens/settings/ReportProblemSheet';
+import { FeedbackSheet } from '@/components/screens/feedback/FeedbackSheet';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { RowDivider, SettingsRow, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { analyticsAvailable, analyticsOptedOut, subscribeAnalytics } from '@/lib/analytics';
@@ -36,6 +36,8 @@ function AnalyticsSwitch() {
   );
 }
 
+const REPORT_PLACE = { screen: 'Settings › Report a problem' };
+
 /** Help, safety, privacy and terms, in the canvas's order, and the analytics switch. */
 export function AccountSection() {
   const router = useRouter();
@@ -61,7 +63,7 @@ export function AccountSection() {
       {linkRow({ label: 'Privacy policy', icon: 'lock.fill', onPress: () => router.push('/legal/privacy') })}
       {linkRow({ label: 'Terms of use', icon: 'doc.text', onPress: () => router.push('/legal/terms') })}
       <AnalyticsSwitch />
-      <ReportProblemSheet visible={reporting} onClose={() => setReporting(false)} />
+      <FeedbackSheet visible={reporting} onClose={() => setReporting(false)} mode="problem" place={REPORT_PLACE} />
     </SettingsSection>
   );
 }
