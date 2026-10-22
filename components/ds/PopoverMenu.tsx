@@ -6,6 +6,7 @@ import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
 import { Appear } from './Appear';
+import { GlassSurface } from './Glass';
 import { PressableScale } from './PressableScale';
 import { Body, Caption } from './Text';
 import { useDs } from './theme';
@@ -37,7 +38,7 @@ export interface PopoverSection {
 const WIDTH = 280;
 
 /**
- * A pull-down menu, hung from the button that opened it with its
+ * A pull-down menu in glass, hung from the button that opened it with its
  * right edge on the button's, as iOS draws a toolbar menu (lib-filters-proposal,
  * search-starts-here, 22 Oct 2026). It opens downward, or upward from a button
  * in the bottom half (the search field's place). A pick, a tap outside or
@@ -53,41 +54,56 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
   // As tall as the room on its side of the button; longer menus scroll.
   const room = (above ? anchor.y : windowHeight - anchor.y - anchor.height) - space.sm - space.xl;
   const place = above ? { bottom: windowHeight - anchor.y + space.sm } : { top: anchor.y + anchor.height + space.sm };
+  const panel = (
+    <Panel>
+      <ScrollView role="menu" aria-label={label} style={{ maxHeight: room }} bounces={false}>
+        {sections.map((s, i) => (
+          <View key={s.title ?? i} role="group" aria-label={s.title} style={i > 0 ? [styles.section, { borderTopColor: ds.c.lineStrong }] : null}>
+            {s.title ? (
+              <Caption tone="muted" style={styles.title}>
+                {s.title}
+              </Caption>
+            ) : null}
+            {s.items.map((item) => (
+              <Row key={item.label} item={item} onClose={onClose} />
+            ))}
+          </View>
+        ))}
+      </ScrollView>
+    </Panel>
+  );
+  const frame = [styles.panel, place, { left, shadowColor: ds.c.ground, maxHeight: room }];
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <Pressable accessibilityLabel="Close the menu" style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(ds.c.ground, 0.3) }]} onPress={onClose} />
-      {/* Unseen until the button's place is known, so it never flashes in the corner. */}
-      <Appear kind="fade" duration={140} style={[styles.panel, place, { left, shadowColor: ds.c.ground, maxHeight: room }, anchor.height ? null : styles.unplaced]}>
-        <Panel>
-          <ScrollView role="menu" aria-label={label} style={{ maxHeight: room }} bounces={false}>
-            {sections.map((s, i) => (
-              <View key={s.title ?? i} role="group" aria-label={s.title} style={i > 0 ? [styles.section, { borderTopColor: ds.c.lineStrong }] : null}>
-                {s.title ? (
-                  <Caption tone="muted" style={styles.title}>
-                    {s.title}
-                  </Caption>
-                ) : null}
-                {s.items.map((item) => (
-                  <Row key={item.label} item={item} onClose={onClose} />
-                ))}
-              </View>
-            ))}
-          </ScrollView>
-        </Panel>
-      </Appear>
+      {/* Drawn once the button's place is known, so it never flashes in the corner. iOS's glass
+          draws nothing under a parent that starts transparent, so there it comes in without the fade. */}
+      {!anchor.height ? null : Platform.OS === 'ios' ? (
+        <View style={frame}>{panel}</View>
+      ) : (
+        <Appear kind="fade" duration={140} style={frame}>
+          {panel}
+        </Appear>
+      )}
     </Modal>
   );
 }
 
 /**
- * The menu's surface: solid, raised. Glass can't frost here: the menu sits in
- * a Modal, its own layer, so iOS's glass has nothing behind it and draws
- * clear, and the web's blur keeps its own thin fill.
+ * The menu's surface: glass where it can be. iOS's real glass; on the web a
+ * tinted panel with the browser's backdrop blur (expo-blur's web view keeps
+ * its own thin fill, too faint for rows); a solid raised panel on Android,
+ * as all of the app's glass is there.
  */
 function Panel({ children }: { children: ReactNode }) {
   const ds = useDs();
-  return <View style={[styles.glass, styles.solid, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>{children}</View>;
+  if (Platform.OS === 'ios') return <GlassSurface style={styles.glass}>{children}</GlassSurface>;
+  const web = Platform.OS === 'web' ? [{ backgroundColor: withAlpha(ds.c.raised, 0.78) }, WEB_BLUR] : { backgroundColor: ds.c.raised };
+  return <View style={[styles.glass, styles.solid, { borderColor: ds.c.lineStrong }, web]}>{children}</View>;
 }
+
+// ponytail: React Native's types don't list backdropFilter; react-native-web passes it to CSS.
+const WEB_BLUR = { backdropFilter: 'blur(24px) saturate(1.6)' } as Record<never, never>;
 
 function Row({ item, onClose }: { item: PopoverItem; onClose: () => void }) {
   const ds = useDs();
@@ -149,5 +165,4 @@ const styles = StyleSheet.create({
   tick: { width: 20, alignItems: 'center' },
   flex: { flex: 1 },
   count: { fontFamily: fontFamilies.mono },
-  unplaced: { opacity: 0 },
 });
