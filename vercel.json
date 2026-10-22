@@ -1,7 +1,7 @@
 {
   "installCommand": "npm ci",
   "buildCommand": "npm run build:web",
-  "ignoreCommand": "[ \"$VERCEL_ENV\" != production ] || git diff --quiet HEAD^ HEAD -- . \":!supabase\" \":!docs\" \":!.github\" \":!desktop\" \":!*.md\"",
+  "ignoreCommand": "[ \"$VERCEL_ENV\" != production ] || git diff --quiet HEAD^ HEAD -- . \":!supabase\" \":!docs\" \":!.github\" \":!desktop\" \":!smoke\" \":!*.md\"",
   "outputDirectory": "dist",
   "framework": null,
   "cleanUrls": true,

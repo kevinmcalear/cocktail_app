@@ -42,11 +42,13 @@ Before asking for review, run `/code-review` on the branch and fix the findings 
 
 The template asks for: why, what changed, how it was verified (with screenshots at phone and desktop widths for UI), what CI covers, and how Kevin can check it directly (exact local steps for web, an EAS preview build for native). Link the issue with `Closes #N`.
 
-Vercel builds no PR previews: each build is billed by the CPU minute, and previews were most of the bill. `ignoreCommand` in `vercel.json` skips every non-production build, and production builds for merges that only touch `supabase/`, `docs/`, `.github/`, `desktop/` or Markdown. Preview deployments are also switched off in the Vercel project settings.
+Vercel builds no PR previews: each build is billed by the CPU minute, and previews were most of the bill. `ignoreCommand` in `vercel.json` skips every non-production build, and production builds for merges that only touch `supabase/`, `docs/`, `.github/`, `desktop/`, `smoke/` or Markdown. Preview deployments are also switched off in the Vercel project settings.
 
 ## 5. Merge
 
 Kevin merges when CI is green. There's no auto-merge. After merging a stack, retarget the next PR to `main` before merging it.
+
+After each production deploy, the After-deploy smoke workflow (`.github/workflows/after-deploy-smoke.yml`, also daily and by hand) opens babyvom.it signed out in headless Chromium at 390 and 1440 px: the app's scripts load, `/` lands on Sign in, `/d/negroni` shows the Negroni, and nothing logs an error. A failure opens an issue with screenshots in the run's artifact. Run it yourself with `npm run smoke` (or `npm run smoke -- --url <url>`).
 
 ## Changes that need Kevin
 
