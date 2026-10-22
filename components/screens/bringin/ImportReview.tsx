@@ -6,9 +6,11 @@ import { Button, Caption, DsText, PressableScale, useDs, useGutter } from '@/com
 import { fontFamilies, space, type as typeScale } from '@/constants/tokens';
 import { openPickLine } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
+import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 import { canCheck, nextOpen, tally } from '@/lib/importReview';
 import type { ReadPlace } from '@/supabase/functions/_shared/anythingRead';
 
+import { AlreadyThereCard, useAlreadyThere } from './AlreadyThere';
 import { CheckFooter, PageLook } from './CheckParts';
 import { DrawnFromSpec, FromYourFile } from './RecipeSource';
 import { amountShown, chooseLine, RecipeSpec } from './RecipeSpec';
@@ -39,7 +41,10 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
   const at = review ? (canCheck(review, review.at) ? review.at : (nextOpen(review.marks, review.at) ?? review.at)) : 0;
   const recipe = review?.recipes[at];
   const choices = review?.choices[at];
-  const sketch = useSteadySketch(recipe && choices ? toMake(recipe, choices).sketch : undefined);
+  const made = recipe && choices ? toMake(recipe, choices) : null;
+  const sketch = useSteadySketch(made?.sketch);
+  // The venue already has one by this name (board dup-drink-warning): Approve waits on what to do with it.
+  const { there, checking } = useAlreadyThere(review?.barId ?? null, choices?.name ?? '', made?.draft ?? EMPTY_DRAFT, usual, choices?.same);
   if (!review || !recipe || !choices) return null;
 
   const t = tally(review);
@@ -63,6 +68,7 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
         <ProgressLine t={t} words={`${t.checked} of ${t.total}`} />
         <DrawnFromSpec inputs={sketch} seed={recipe.name} name={choices.name} />
         <TextInput accessibilityLabel="Drink name" editable={open} value={choices.name} onChangeText={(name) => setChoices(at, (c) => ({ ...c, name }))} style={[styles.name, { color: ds.c.ink, fontFamily: fontFamilies.instrument }]} />
+        {there && open ? <AlreadyThereCard there={there} pick={choices.same} onPick={(same) => setChoices(at, (c) => ({ ...c, same }))} onSkip={() => skip(at)} /> : null}
         {page?.uri && recipe.at ? (
           <FromYourFile
             file={page}
@@ -77,10 +83,10 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
         {note ? <Caption tone="muted">{note}</Caption> : null}
         {error ? <Caption tone="accent">{error}</Caption> : null}
       </ScrollView>
-      <CheckFooter note={open ? openPickLine(recipe, choices, data) : null}>
+      <CheckFooter note={open ? (there?.note ?? openPickLine(recipe, choices, data)) : null}>
         <View style={styles.row}>
           <Button label="Skip" size="lg" variant="secondary" disabled={!open} onPress={() => skip(at)} />
-          <Button label="Approve" size="lg" disabled={!open || !choices.name.trim()} onPress={() => approve(at)} style={styles.flex} />
+          <Button label="Approve" size="lg" disabled={!open || !choices.name.trim() || !!there?.waits || checking} onPress={() => approve(at)} style={styles.flex} />
         </View>
       </CheckFooter>
       <PageLook file={file(look)} at={look?.at ?? null} title={look?.title ?? ''} onClose={() => setLook(null)} />

@@ -7,9 +7,11 @@ import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { fontFamilies, radius, space, type as typeScale } from '@/constants/tokens';
 import { openPickLine } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
+import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 import { canCheck, tally, tallyLine } from '@/lib/importReview';
 import type { ReadPlace } from '@/supabase/functions/_shared/anythingRead';
 
+import { AlreadyThereCard, useAlreadyThere } from './AlreadyThere';
 import { MonoLabel, PageLook } from './CheckParts';
 import { markNote } from './ImportReview';
 import { chooseLine, RecipeSpec } from './RecipeSpec';
@@ -39,14 +41,18 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
   const at = review?.at ?? 0;
   const recipe = review?.recipes[at];
   const choices = review?.choices[at];
-  const sketch = useSteadySketch(recipe && choices ? toMake(recipe, choices).sketch : undefined);
+  const made = recipe && choices ? toMake(recipe, choices) : null;
+  const sketch = useSteadySketch(made?.sketch);
+  // The venue already has one by this name (board dup-drink-warning): Approve waits on what to do with it.
+  const { there, checking } = useAlreadyThere(review?.barId ?? null, choices?.name ?? '', made?.draft ?? EMPTY_DRAFT, usual, choices?.same);
+  const waits = !!there?.waits || checking;
 
   // A approves, S skips, the arrows move: not while typing, with a sheet open over the page, or
   // with another screen on top (Edit this drink's editor).
   const focused = useIsFocused();
   const keys = useRef({ approve: () => {}, skip: () => {}, move: (_by: number) => {} });
   useEffect(() => {
-    keys.current = focused ? { approve: () => approve(at), skip: () => skip(at), move: (by) => go(at + by) } : { approve: () => {}, skip: () => {}, move: () => {} };
+    keys.current = focused ? { approve: () => !waits && approve(at), skip: () => skip(at), move: (by) => go(at + by) } : { approve: () => {}, skip: () => {}, move: () => {} };
   });
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -71,7 +77,7 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
   const file = (x: { at?: ReadPlace | null } | null) => (x?.at ? (files[x.at.page] ?? null) : null);
   const shown = all ? t.total : Math.min(t.total, Math.max(LIST_START, at + 4));
   const note = markNote(review.marks[at], review.unsure.includes(at));
-  const pickNote = open ? openPickLine(recipe, choices, data) : null;
+  const pickNote = open ? (there?.note ?? openPickLine(recipe, choices, data)) : null;
   const how = [recipe.method, recipe.glass?.toLowerCase(), 'drawn from the spec'].filter(Boolean).join(' · ');
 
   return (
@@ -115,6 +121,7 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
               <Caption tone="muted">{how}</Caption>
             </View>
           </View>
+          {there && open ? <AlreadyThereCard there={there} pick={choices.same} onPick={(same) => setChoices(at, (c) => ({ ...c, same }))} onSkip={() => skip(at)} /> : null}
           <RecipeSpec recipe={recipe} choices={choices} data={data} files={files} usual={usual} label={false} onChoose={(i, c) => setChoices(at, (prev) => chooseLine(prev, i, c))} onLook={(where, title) => setLook({ at: where, title })} />
           {open ? <EditLink onPress={() => editDrink(at)} /> : null}
           {pickNote ? <Caption tone="muted">{pickNote}</Caption> : null}
@@ -122,7 +129,7 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
           {error ? <Caption tone="accent">{error}</Caption> : null}
           <View style={styles.actions}>
             <Button label="Skip" size="lg" variant="secondary" disabled={!open} onPress={() => skip(at)} />
-            <Button label="Approve and next" size="lg" disabled={!open || !choices.name.trim()} onPress={() => approve(at)} />
+            <Button label="Approve and next" size="lg" disabled={!open || !choices.name.trim() || waits} onPress={() => approve(at)} />
             <Caption tone="muted" style={styles.hint}>
               A approves · S skips · arrow keys move
             </Caption>
