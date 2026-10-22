@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { cocktailQuery } from '@/hooks/useCocktails';
@@ -59,6 +59,7 @@ export function useBarClassics(barId: string | null | undefined, classics: reado
   return useQuery({
     queryKey: ['bar-classics', barId, ids],
     enabled: !!barId && ids.length > 0,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<string[]> => {
       const { data, error } = await supabase.from('items').select('name, riff_of_id').eq('bar_id', barId!).eq('item_type', 'cocktail');
       if (error) throw error;

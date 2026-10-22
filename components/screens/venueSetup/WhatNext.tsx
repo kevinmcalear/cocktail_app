@@ -57,7 +57,10 @@ export function WhatNext({
   const glasses = glassQuery.data ?? [];
   const inLibrary = (libraryQuery.data ?? []).length;
   // What's there decides which steps show and whether it's filled in: wait for it, not a flash of the wrong one.
-  const loading = capsQuery.isLoading || pageQuery.isLoading || glassQuery.isLoading || top.isLoading || libraryQuery.isLoading;
+  // Once shown, it stays: a later key change (the rankings arriving) never puts Loading back.
+  const [shown, setShown] = useState(false);
+  const loading = !shown && (capsQuery.isLoading || pageQuery.isLoading || glassQuery.isLoading || top.isLoading || libraryQuery.isLoading);
+  if (!loading && !shown) setShown(true);
   const [at, setAt] = useState<Step | null>(null);
   const [skipped, setSkipped] = useState<Step[]>([]);
   // Glassware hangs off the venue's page, so it waits for the claim.
