@@ -111,7 +111,6 @@ export function BringInFlow() {
   const error = save.error ? save.error.message : null;
 
   if (reading.kind === 'menu') {
-    const firstPhoto = files.find((f) => f.mimeType.startsWith('image/'));
     return (
       <MenuCheck
         reading={reading}
@@ -121,7 +120,7 @@ export function BringInFlow() {
         saving={save.isPending}
         error={error}
         onCancel={cancel}
-        onSave={({ name, rows, prices }) => run({ kind: 'menu', source, name, night: job.menu?.night ?? null, coverUri: firstPhoto?.uri ?? null, rows, prices })}
+        onSave={({ name, rows, prices }) => run({ kind: 'menu', source, name, night: job.menu?.night ?? null, rows, prices })}
       />
     );
   }

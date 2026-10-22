@@ -332,8 +332,3 @@ export function usePickMenuCover(menuId: string) {
     onError: () => {},
   });
 }
-
-/** Uploads a local photo as a new menu's cover; resolves its public URL. */
-export function useUploadMenuCover() {
-  return useMutation({ mutationFn: (uri: string) => uploadMenuCover(uri, null), onError: () => {} });
-}
