@@ -25,7 +25,8 @@ interface MakeItHouseSheetProps {
  * infusion, a milk wash. The drink's name can answer first ("coconut
  * fat-washed"). Picking one opens the prep builder with the bottle as its base.
  * Under the list, "Doing something different? Tell us" closes it and opens
- * the Tell us sheet, about this bottle (two sheets never stack).
+ * the Tell us sheet, about this bottle (on iOS once this one has gone: it
+ * drops a sheet opened while another is still closing).
  */
 export function MakeItHouseSheet({ bottle, ways, nudge, onPick, onClose }: MakeItHouseSheetProps) {
   const ds = useDs();

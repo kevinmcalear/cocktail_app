@@ -102,7 +102,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const barIceKinds = barKit.filter((r) => r.kind === 'ice').map((r) => r.key);
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
   const shelfIds = useShelf().data;
-  const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'the venue';
+  const venue = useActiveVenue().venues.find((v) => v.id === barId);
+  const venueName = venue?.name ?? 'the venue';
   // A desktop browser writes the drink on one page (DrinkDesk); the first round keeps its steps.
   const breakpoint = useBreakpoint();
   const desk = Platform.OS === 'web' && breakpoint === 'desktop' && !embedded && !firstRound;
@@ -181,7 +182,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const preview = useClassicPreview(classic?.classic.id ?? null).data;
   const drawn = preview ? { ...draft, ...preview, name: draft.name } : draft;
   // Every "Tell us" inside says it came from adding this drink, at this bar.
-  const tellUs = { flow: 'Adding a drink', subject: draft.name.trim() || null, barId, barName: barId ? venueName : null };
+  const tellUs = { flow: 'Adding a drink', subject: draft.name.trim() || null, barId: venue ? barId : null, barName: venue?.name ?? null };
   if (desk) {
     return (
       <TellUsPlace value={tellUs}>

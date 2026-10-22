@@ -11,6 +11,8 @@ import { supabase } from '@/lib/supabase';
 export function useSendFeedback() {
   const userId = useUserId();
   return useMutation({
+    // Fail at once offline (not pause), so the sheet can offer the email.
+    networkMode: 'always',
     mutationFn: async (row: FeedbackRow) => {
       if (!userId) throw new Error(feedbackError(null, null));
       const { error } = await supabase.from('feedback').insert(row);

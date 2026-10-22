@@ -44,6 +44,9 @@ CREATE INDEX "feedback_bar_id_idx" ON "public"."feedback" ("bar_id") WHERE "bar_
 
 -- Notes the caller sent in the last day, for the insert policy's daily limit.
 -- A helper because a policy can't query its own table.
+-- ponytail: count then insert, as reports does, so a burst of parallel
+-- inserts can pass 20. Upgrade path: a per-user advisory lock in a trigger,
+-- if anyone ever does.
 CREATE FUNCTION "private"."my_feedback_today"() RETURNS bigint
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO ''
