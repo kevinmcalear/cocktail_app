@@ -13,6 +13,9 @@ import { techniqueById } from '@/lib/techniques';
 import { LineGrip } from './DragRow';
 import { WizardChip } from './WizardChrome';
 
+/** Below this a row with the bottle stacks: grip, thumb, amount, unit, bottle and remove leave the name too little. */
+const NARROW = 580;
+
 interface LineRowProps {
   line: WizardLine;
   onChange: (change: Partial<WizardLine>) => void;
@@ -35,19 +38,23 @@ interface LineRowProps {
   lifted?: boolean;
   /** Another line is held over this one: let go to batch them (lib/batchLines). */
   dropTarget?: boolean;
+  /** Just before remove: the bottle that puts it on the back bar or your shelf (StockToggle); null for a line without one. */
+  stock?: ReactNode;
 }
 
 /**
  * One spec line, kept short: the ingredient, its amount (type it, or − and +
  * through the pours bartenders use), its unit (tap to change) and remove.
  * Tapping the name opens the rest: swap, a note, make it house, the recipe.
- * On a phone the controls sit under the name; on a wider screen they share
- * its line, on the right.
+ * On a phone the controls sit under the name, and the bottle and remove
+ * beside it; on a wider screen they all share its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted, dropTarget }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted, dropTarget, stock }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
-  const stacked = useBreakpoint() === 'phone';
+  // So does a narrow column (the desktop page's spec), where the bottle left the name a few letters.
+  const [narrow, setNarrow] = useState(false);
+  const stacked = useBreakpoint() === 'phone' || (stock !== undefined && narrow);
   const [units, setUnits] = useState(false);
   const [noting, setNoting] = useState(!!line.note);
   const [open, setOpen] = useState(false);
@@ -64,15 +71,22 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
         : line.technique
           ? { text: `House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`, accent: true }
           : { text: 'New, added when you save', accent: false };
+  // The bottle, then remove: beside the name on a phone, so the controls under it keep their width.
+  const ends = (
+    <>
+      {stock}
+      <PressableScale onPress={onRemove} role="button" accessibilityLabel={`Remove ${line.name}`} style={styles.remove}>
+        <IconSymbol name="xmark" size={16} color={ds.c.muted} />
+      </PressableScale>
+    </>
+  );
   return (
-    <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}>
+    <View role="listitem" onLayout={(e) => setNarrow(e.nativeEvent.layout.width < NARROW)} style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}>
       <View style={styles.row}>
-        {grip?.(
-          <LineGrip name={line.name} onMove={onMove} />
-        )}
+        {grip?.(<LineGrip name={line.name} onMove={onMove} />)}
         <IngredientThumb id={line.id} name={line.name} size={40} />
         <View style={stacked ? styles.mainStacked : styles.main}>
-          <View style={stacked ? null : styles.head}>
+          <View style={stacked ? styles.headStacked : styles.head}>
             {/* The name opens what else the line can do; closed, the row is the ingredient and its pour (board make-create-ingredients). */}
             <PressableScale
               onPress={() => setOpen(!open)}
@@ -81,24 +95,19 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
               aria-expanded={open}
               accessibilityLabel={`${line.name}, ${amountLabel}`}
               accessibilityHint="Shows swap, note and more"
-              style={styles.name}
+              style={stacked ? styles.nameStacked : styles.name}
             >
               <Body numberOfLines={2}>{line.name}</Body>
               {dropTarget ? <Caption tone="accent">Drop to batch</Caption> : null}
               {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
-              {detail ? (
-                <Caption tone="muted" numberOfLines={1}>
-                  {detail}
-                </Caption>
-              ) : null}
+              {detail ? <Caption tone="muted" numberOfLines={1}>{detail}</Caption> : null}
             </PressableScale>
+            {stacked ? ends : null}
           </View>
           <View style={styles.controls}>
             <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
               {top ? (
-                <DsText variant="spec" style={[styles.mono, styles.topLabel]}>
-                  Top
-                </DsText>
+                <DsText variant="spec" style={[styles.mono, styles.topLabel]}>Top</DsText>
               ) : (
                 <>
                   <Round icon="minus" label={`Less ${line.name}`} onPress={() => onChange({ amount: stepAmount(tidyAmount(line.amount), line.unit, -1) })} />
@@ -129,16 +138,12 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
               accessibilityHint="Shows the units to pick from"
               style={[styles.unit, { borderColor: units ? ds.c.ink : ds.c.lineStrong }]}
             >
-              <DsText variant="spec" style={styles.mono}>
-                {line.unit}
-              </DsText>
+              <DsText variant="spec" style={styles.mono}>{line.unit}</DsText>
               <IconSymbol name={units ? 'chevron.up' : 'chevron.down'} size={12} color={ds.c.muted} />
             </PressableScale>
           </View>
         </View>
-        <PressableScale onPress={onRemove} role="button" accessibilityLabel={`Remove ${line.name}`} style={styles.remove}>
-          <IconSymbol name="xmark" size={16} color={ds.c.muted} />
-        </PressableScale>
+        {stacked ? null : ends}
       </View>
       {open ? (
         <View style={[styles.more, grip ? styles.gripped : null]}>
@@ -148,19 +153,8 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
             {line.prep && onEditPrep ? <TextAction label="Edit the recipe" a11y={`Edit the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
             {line.later && !line.prep && onEditPrep ? <TextAction label="Write the recipe" a11y={`Write the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
             <TextAction label="Swap" a11y={`Swap ${line.name} for another ingredient`} onPress={onSwap} />
-            {from ? (
-              <TextAction label={`Back to ${from.name}`} a11y={`Back to plain ${from.name}`} onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })} />
-            ) : null}
-            {noting ? null : (
-              <TextAction
-                label="Note"
-                a11y={`Add a note to ${line.name}`}
-                onPress={() => {
-                  setNoting(true);
-                  setOpen(false);
-                }}
-              />
-            )}
+            {from ? <TextAction label={`Back to ${from.name}`} a11y={`Back to plain ${from.name}`} onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })} /> : null}
+            {noting ? null : <TextAction label="Note" a11y={`Add a note to ${line.name}`} onPress={() => { setNoting(true); setOpen(false); }} />}
             {!line.prep && !line.technique && line.id && onMakeHouse ? <TextAction label="Make it house" a11y={`Make ${line.name} house: wash, infuse, clarify`} onPress={onMakeHouse} /> : null}
           </View>
         </View>
@@ -233,7 +227,9 @@ const styles = StyleSheet.create({
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
   mainStacked: { flex: 1, gap: space.xs },
   head: { flex: 1 },
+  headStacked: { flexDirection: 'row', alignItems: 'flex-start' },
   name: { minHeight: layout.minTapTarget, justifyContent: 'center' },
+  nameStacked: { flex: 1, minHeight: layout.minTapTarget, justifyContent: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, height: layout.minTapTarget },
   step: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
