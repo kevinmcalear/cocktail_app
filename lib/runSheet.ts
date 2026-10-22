@@ -2,7 +2,9 @@
  * A menu's run sheet: each drink's serves, the bottles swapped for this menu
  * only, everything the drinks need totalled and grouped (spirits, juices,
  * house preps, mixers, garnish, glassware, ice), and who brings each thing:
- * our bar (the menu's), the bar visiting us or a brand. Pure; hooks/useRunSheet.ts
+ * the bar the night is at, the bar visiting it or a brand. The night is at
+ * the menu's own bar (us) unless the guest bar is marked as the venue, when
+ * we're the ones visiting. Pure; hooks/useRunSheet.ts
  * fetches the rows. Totals come from lib/prep.ts buildPrepList.
  * Design: https://claude.ai/artifact/7KusjjZLGZjbFd3B7oamZU
  */
@@ -48,7 +50,7 @@ export interface RunDrink {
   glass: { id: string; name: string } | null;
   ice: { id: string; name: string } | null;
   icePerServeG: number | null;
-  /** The guest venue's own drink: its house preps default to the guest. */
+  /** The guest bar's own drink, not ours: its house preps start with whoever made it. */
   byGuest: boolean;
 }
 
@@ -64,6 +66,8 @@ export interface RunParty {
   kind: 'guest' | 'brand';
   name: string;
   profileId: string | null;
+  /** The guest bar is where the night is, and we're visiting it. */
+  isVenue?: boolean;
 }
 
 /** What an ingredient (or glass, or ice) is, for grouping and default owners. */
@@ -129,6 +133,7 @@ export interface Need {
 }
 
 export type SheetRole = 'Venue' | 'Visiting team' | 'Brand';
+const ROLE_ORDER: SheetRole[] = ['Venue', 'Visiting team', 'Brand'];
 
 export interface PartySheet {
   id: string | null;
@@ -205,7 +210,11 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
   const counted = input.drinks.filter((d) => (d.serves ?? 0) > 0);
   const swapped = new Map(input.drinks.map((d) => [d.id, swappedRecipe(d, input.swaps)]));
   const guest = input.parties.find((p) => p.kind === 'guest') ?? null;
-  const guestDrinks = new Set(input.drinks.filter((d) => d.byGuest).map((d) => d.name));
+  const atTheirs = !!guest?.isVenue;
+  // The bar the night is at, and the one visiting it (null is us).
+  const venueId = atTheirs ? guest!.id : null;
+  const visitorId = atTheirs ? null : (guest?.id ?? null);
+  const visitorDrinks = new Set(input.drinks.filter((d) => d.byGuest !== atTheirs).map((d) => d.name));
   const partyIds = new Set(input.parties.map((p) => p.id));
 
   const drinks: SheetDrink[] = input.drinks.map((d) => {
@@ -240,8 +249,9 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
     const maker = itemId ? input.items[itemId]?.makerProfileId : null;
     const brand = maker ? input.parties.find((p) => p.kind === 'brand' && p.profileId === maker) : undefined;
     if (brand) return { ownerId: brand.id, picked: false };
-    const theirs = forDrinks.length > 0 && forDrinks.every((n) => guestDrinks.has(n));
-    return { ownerId: guest && made && theirs ? guest.id : null, picked: false };
+    // The visiting bar brings the house preps for its own drinks; the bar it's at has the rest.
+    const visitors = forDrinks.length > 0 && forDrinks.every((n) => visitorDrinks.has(n));
+    return { ownerId: guest && made && visitors ? visitorId : venueId, picked: false };
   };
 
   const needs: Need[] = [];
@@ -297,12 +307,11 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
   const byName = (a: Need, b: Need) => a.name.localeCompare(b.name);
   const groups = GROUPS.map((g) => ({ ...g, needs: needs.filter((n) => n.group === g.key).sort(byName) })).filter((g) => g.needs.length);
   const ordered = groups.flatMap((g) => g.needs);
-  const parties: PartySheet[] = [
-    { id: null, name: input.hostName, role: 'Venue', needs: ordered.filter((n) => n.ownerId === null) },
-    ...[...input.parties]
-      .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'guest' ? -1 : 1))
-      .map((p): PartySheet => ({ id: p.id, name: p.name, role: p.kind === 'guest' ? 'Visiting team' : 'Brand', needs: ordered.filter((n) => n.ownerId === p.id) })),
-  ];
+  const roleOf = (id: string | null): SheetRole => (id === venueId ? 'Venue' : id === null || id === guest?.id ? 'Visiting team' : 'Brand');
+  // The bar it's at first, then the visiting bar, then the brands.
+  const parties: PartySheet[] = [{ id: null, name: input.hostName }, ...input.parties]
+    .map((p) => ({ id: p.id, name: p.name, role: roleOf(p.id), needs: ordered.filter((n) => n.ownerId === p.id) }))
+    .sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role));
 
   return { totalServes: input.drinks.reduce((sum, d) => sum + (d.serves ?? 0), 0), drinks, groups, parties };
 }

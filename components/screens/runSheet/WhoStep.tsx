@@ -41,7 +41,7 @@ export function WhoStep({ menuId, sheet, looks, breakDown, onBreakDown, wide }: 
       {n.itemId ? (
         <OwnerChip look={lookOf(n.ownerId)} need={n.name} onPress={() => setOwning({ title: `Who brings ${n.name}?`, itemIds: [n.itemId!], current: n.ownerId, picked: n.picked })} />
       ) : (
-        <Caption tone="muted">{lookOf(null).short}</Caption>
+        <Caption tone="muted">{lookOf(n.ownerId).short}</Caption>
       )}
     </View>
   );

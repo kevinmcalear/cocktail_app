@@ -27,7 +27,7 @@ export interface PartyLook {
   name: string;
   /** The chip's short name: "Caretaker's", "Mill & Ash". */
   short: string;
-  /** In our words: "Our bar", "Coming to us", "Brand". */
+  /** In our words: "Our bar" and "Coming to us", or "Their bar" and "Us" when we visit them; "Brand". */
   role: string;
   colour: string;
 }
@@ -37,11 +37,12 @@ export function usePartyLooks(hostName: string, parties: RunParty[]): PartyLook[
   const ds = useDs();
   // "Caretaker's Cottage" is "Caretaker's" on a chip, "Mill & Ash Gin" is "Mill & Ash".
   const short = (name: string) => name.replace(/\s+(Gin|Scotch|Rum|Vodka|Whisky|Whiskey|Tequila|Spirits|Distillery|Bar|Cottage|Co\.?)$/i, '') || name;
+  const atTheirs = parties.some((p) => p.kind === 'guest' && p.isVenue);
   return [
-    { id: null, name: hostName, short: short(hostName), role: 'Our bar', colour: ds.accentText },
+    { id: null, name: hostName, short: short(hostName), role: atTheirs ? 'Us' : 'Our bar', colour: ds.accentText },
     ...[...parties]
       .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'guest' ? -1 : 1))
-      .map((p, i) => ({ id: p.id, name: p.name, short: short(p.name), role: p.kind === 'guest' ? 'Coming to us' : 'Brand', colour: partyHues[i % partyHues.length] })),
+      .map((p, i) => ({ id: p.id, name: p.name, short: short(p.name), role: p.kind === 'brand' ? 'Brand' : atTheirs ? 'Their bar' : 'Coming to us', colour: partyHues[i % partyHues.length] })),
   ];
 }
 
