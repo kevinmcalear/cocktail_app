@@ -48,4 +48,19 @@ describe('SketchHeader', () => {
     expect(screen.getAllByTestId('drawing')).toHaveLength(1);
     expect(screen.getByText('Tap to draw it again')).toBeTruthy();
   });
+
+  test('Colour on the band, from the first step, picks the drawing’s watercolour or Auto', async () => {
+    const onTint = jest.fn();
+    await renderWithTamagui(<SketchHeader draft={{ ...EMPTY_DRAFT, name: 'Fig Leaf Spritz' }} step="name" onBack={jest.fn()} top={0} side={0} rounded={false} onTint={onTint} />);
+    fireEvent.press(screen.getByLabelText('Sketch colour, Fig Leaf Spritz'));
+    fireEvent.press(await screen.findByLabelText('Blush'));
+    expect(onTint).toHaveBeenLastCalledWith('#efb7ae');
+    fireEvent.press(screen.getByLabelText('Auto, from the spec'));
+    expect(onTint).toHaveBeenLastCalledWith(null);
+  });
+
+  test('no Colour without a way to keep it', async () => {
+    await renderWithTamagui(header({ ...EMPTY_DRAFT, name: 'Negroni' }));
+    expect(screen.queryByLabelText('Sketch colour, Negroni')).toBeNull();
+  });
 });

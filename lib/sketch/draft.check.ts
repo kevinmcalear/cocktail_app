@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { draftSketchInputs } from './draft';
-import { readSketchInputs } from './types';
+import { liquidOf, readSketchInputs } from './types';
 
 // A drink with only a name still draws: a default glass and colour.
 const bare = draftSketchInputs({ name: 'Untitled', lines: [] });
@@ -44,5 +44,14 @@ const stored = readSketchInputs({ ...bare, ice: 'cubes', houseIce: 'large' });
 assert.equal(stored?.ice, 'large');
 assert.equal(readSketchInputs({ ...bare, ice: 'cubes', houseIce: 'none' })?.ice, 'cubes', 'never no ice');
 assert.equal(readSketchInputs({ ...bare, ice: 'cubes', houseIce: 'gravel' })?.ice, 'cubes', 'an unknown kind is ignored');
+
+// A colour picked as it's made paints over the spec's own, and stays when the spec changes; Auto leaves it to the spec.
+const blush = '#efb7ae';
+const tinted = draftSketchInputs({ ...negroni, tint: blush });
+assert.equal(tinted.tint, blush);
+assert.equal(liquidOf(tinted).hex, blush);
+assert.equal(draftSketchInputs({ ...negroni, lines: negroni.lines.slice(1), tint: blush }).tint, blush, 'holds while the spec changes');
+assert.equal(readSketchInputs(tinted)?.tint, blush, 'saved and read back with the drawing');
+assert.ok(!('tint' in draftSketchInputs({ ...negroni, tint: null })), 'Auto adds no tint');
 
 console.log('draft sketch: ok');

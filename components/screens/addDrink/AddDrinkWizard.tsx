@@ -259,7 +259,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       testID="add-drink"
       pageTitle="Add a drink"
       embedded={embedded}
-      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} {...place} />}
+      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} onTint={(tint) => set({ tint })} {...place} />}
       stepKey={step}
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.

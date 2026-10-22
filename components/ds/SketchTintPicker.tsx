@@ -20,6 +20,8 @@ interface SketchTintPickerProps {
   value: string | null;
   /** Without it the row is just a picture of the colours. */
   onChange?: (tint: string | null) => void;
+  /** The drink drawn in the pick beside the swatches; off where it's already drawn (the desktop drink card). */
+  frame?: boolean;
 }
 
 // A swatch shows the colour as the drawing paints it: muted a little by the graphite.
@@ -47,7 +49,7 @@ function Swatch({ label, color, selected, onPress }: { label: string; color: str
  * house watercolours, with the drink drawn in the one picked. The drink
  * editor's "Sketch colour", and the gallery's.
  */
-export function SketchTintPicker({ inputs, seed, value, onChange }: SketchTintPickerProps) {
+export function SketchTintPicker({ inputs, seed, value, onChange, frame = true }: SketchTintPickerProps) {
   const ds = useDs();
   const tint = SKETCH_TINTS.find((t) => t.hex === value) ?? null;
   // One object per pick, so each is painted once (SketchDrawing caches by inputs).
@@ -55,13 +57,15 @@ export function SketchTintPicker({ inputs, seed, value, onChange }: SketchTintPi
   const pick = onChange ? (hex: string | null) => () => onChange(hex) : () => undefined;
   return (
     <View style={styles.wrap}>
-      <View style={[styles.frame, { backgroundColor: ds.c.paper }]} aria-hidden>
-        <SketchDrawing inputs={shown} seed={seed} />
-      </View>
+      {frame ? (
+        <View style={[styles.frame, { backgroundColor: ds.c.paper }]} aria-hidden>
+          <SketchDrawing inputs={shown} seed={seed} />
+        </View>
+      ) : null}
       <View style={styles.side}>
         <Body>{tint ? tint.label : 'Auto'}</Body>
         <Caption tone="muted">{tint ? 'Picked for this drink.' : 'From the spec.'}</Caption>
-        <View role={onChange ? 'radiogroup' : undefined} accessibilityLabel="Sketch colour" style={styles.grid}>
+        <View role={onChange ? 'radiogroup' : undefined} accessibilityLabel="Sketch colour" style={[styles.grid, frame ? styles.beside : null]}>
           <Swatch label="Auto, from the spec" color={null} selected={!tint} onPress={onChange ? pick(null) : undefined} />
           {SKETCH_TINTS.map((t) => (
             <Swatch key={t.key} label={t.label} color={painted(t.hex)} selected={tint?.key === t.key} onPress={onChange ? pick(t.hex) : undefined} />
@@ -78,7 +82,9 @@ const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg, alignItems: 'flex-start' },
   frame: { width: 132, aspectRatio: 1, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
   side: { flex: 1, minWidth: 200, gap: space.xs },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: space.xs, maxWidth: layout.minTapTarget * 6 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: space.xs },
+  // Beside the drawing, six to a row; on their own (the desktop drink card) one row where it fits.
+  beside: { maxWidth: layout.minTapTarget * 6 },
   swatch: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   ring: { padding: 2, borderWidth: 2, borderRadius: radius.pill },
   dot: { width: DOT, height: DOT, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center' },

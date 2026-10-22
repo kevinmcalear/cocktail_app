@@ -217,6 +217,8 @@ export function useCreateDrink() {
         notes: draft.notesPrivate ? null : draft.notes.trim() || null,
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
+        // The colour picked as it was made; the database copies it into the drawing (20261017100000_sketch_liquid).
+        sketch_liquid: draft.tint ?? null,
         ice_id: iceId,
         // Only when there is one: a database without 20261029100000 refuses an unknown column, so every other save keeps working whichever lands first.
         ...(methodIceId ? { method_ice_id: methodIceId } : {}),

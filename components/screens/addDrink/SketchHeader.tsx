@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { Caption, PressableScale, useDs } from '@/components/ds';
 import { AnimatedSketch } from '@/components/ds/AnimatedSketch';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { backbar, fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { COUNTED_STEPS, sketchLook, WIZARD_STEPS, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { draftSketchInputs, type DraftLook } from '@/lib/sketch/draft';
 import type { SketchInputs } from '@/lib/sketch/types';
 
+import { DraftColourSheet } from './DraftColourSheet';
 import { PaperBand } from './PaperBand';
 
 /** The seed only moves the pencil's wobble; a fixed one keeps the drawing steady while the drink changes. */
@@ -41,6 +45,8 @@ interface SketchHeaderProps {
   barIce?: readonly string[];
   /** The drawing's side; by default 200 in a column and 152 in a phone's band. */
   size?: number;
+  /** Picks the drawing's colour (Auto is null): a Colour button on the band, from the first step. */
+  onTint?: (tint: string | null) => void;
 }
 
 /**
@@ -48,7 +54,7 @@ interface SketchHeaderProps {
  * added. Every step redraws it (glass, ice, method, colour, garnish) with the
  * rules the saved drink is drawn with.
  */
-export function SketchHeader({ draft, step, barVariants, barIce, ...band }: SketchHeaderProps) {
+export function SketchHeader({ draft, step, barVariants, barIce, onTint, ...band }: SketchHeaderProps) {
   const look = sketchLook(draft, barVariants, barIce);
   // Nothing in it yet: a coupe waiting to be filled, as the canvas draws the first step.
   const empty = !look.glass && !look.lines.length && !look.methods?.length;
@@ -58,29 +64,52 @@ export function SketchHeader({ draft, step, barVariants, barIce, ...band }: Sket
   // The review step draws the finished drink again from a blank page; a tap replays it.
   const reviewing = step === 'review';
   const [play, setPlay] = useState(0);
+  const [colouring, setColouring] = useState(false);
+  const name = draft.name.trim() || 'New drink';
   // The draft's id once it has one: the saved drink is drawn with its id, so it keeps this drawing.
   const seed = draft.id ?? SEED;
   return (
-    <PaperBand
-      {...band}
-      first={at === 0}
-      progress={{ now: counted, of: COUNTED_STEPS, label: step === 'review' ? 'Review' : `${counted} of ${COUNTED_STEPS}` }}
-      art={
-        reviewing ? (
-          // A toy, not a control: the band's label already names the drawing.
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setPlay((n) => n + 1)} accessible={false}>
-            <AnimatedSketch inputs={inputs} seed={seed} play={play} delay={FADE_FIRST_MS} />
-            {/* The finished drawing fades away first, then the pencil starts on blank paper. */}
-            <FadeAway key={`fade-${play}`} inputs={inputs} seed={seed} />
-          </Pressable>
-        ) : (
-          <SketchDrawing inputs={inputs} seed={seed} detail="full" />
-        )
-      }
-      artKey={`${reviewing ? 'review:' : ''}${JSON.stringify(inputs)}`}
-      note={reviewing ? 'Tap to draw it again' : 'Updates as you go'}
-      artLabel="Sketch of the drink so far"
-    />
+    <>
+      <PaperBand
+        {...band}
+        action={onTint ? <ColourButton name={name} onPress={() => setColouring(true)} /> : null}
+        first={at === 0}
+        progress={{ now: counted, of: COUNTED_STEPS, label: step === 'review' ? 'Review' : `${counted} of ${COUNTED_STEPS}` }}
+        art={
+          reviewing ? (
+            // A toy, not a control: the band's label already names the drawing.
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setPlay((n) => n + 1)} accessible={false}>
+              <AnimatedSketch inputs={inputs} seed={seed} play={play} delay={FADE_FIRST_MS} />
+              {/* The finished drawing fades away first, then the pencil starts on blank paper. */}
+              <FadeAway key={`fade-${play}`} inputs={inputs} seed={seed} />
+            </Pressable>
+          ) : (
+            <SketchDrawing inputs={inputs} seed={seed} detail="full" />
+          )
+        }
+        artKey={`${reviewing ? 'review:' : ''}${JSON.stringify(inputs)}`}
+        note={reviewing ? 'Tap to draw it again' : 'Updates as you go'}
+        artLabel="Sketch of the drink so far"
+      />
+      {onTint ? <DraftColourSheet visible={colouring} onClose={() => setColouring(false)} name={name} inputs={inputs} seed={seed} value={draft.tint ?? null} onChange={onTint} /> : null}
+    </>
+  );
+}
+
+/**
+ * The band's Colour pill, styled like its back button. Not a GlassButton: the
+ * band folds while the keyboard is up, and removing a glass view mid-fold
+ * tripped Reanimated's layout bookkeeping in iOS debug builds.
+ */
+function ColourButton({ name, onPress }: { name: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale onPress={onPress} accessibilityLabel={`Sketch colour, ${name}`} style={[styles.colour, { backgroundColor: backbar.light.glass }]}>
+      <IconSymbol name="paintpalette.fill" size={16} color={ds.c.sketchInk} />
+      <Caption color={ds.c.sketchInk} style={styles.colourLabel}>
+        Colour
+      </Caption>
+    </PressableScale>
   );
 }
 
@@ -100,4 +129,6 @@ function FadeAway({ inputs, seed }: { inputs: SketchInputs; seed: string }) {
 
 const styles = StyleSheet.create({
   passThrough: { pointerEvents: 'none' },
+  colour: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill },
+  colourLabel: { fontFamily: fontFamilies.bodySemiBold },
 });

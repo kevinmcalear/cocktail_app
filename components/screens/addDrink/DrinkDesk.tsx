@@ -188,7 +188,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
         </ScrollView>
         <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
           <Eyebrow>The drink, as you go</Eyebrow>
-          <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} />
+          <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
           <DeskTaste lines={draft.lines} ingredients={p.ingredients} onAdd={addByName} />
           {canCost ? <DeskCost lines={costLines} pricing={pricing} priceMinor={draft.priceMinor ?? null} onPrice={(priceMinor) => set({ priceMinor })} /> : null}
         </ScrollView>
