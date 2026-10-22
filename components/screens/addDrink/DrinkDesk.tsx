@@ -32,6 +32,7 @@ import { PickStep } from './PickStep';
 import { PublishStep } from './PublishStep';
 import { ReviewPhotos } from './ReviewPhotos';
 import { StartFromClassic } from './StartFromClassic';
+import type { LineStock } from './StockToggle';
 import { BigName, NotesStep } from './TextSteps';
 import { Eyebrow, WizardChip } from './WizardChrome';
 
@@ -49,6 +50,7 @@ export interface DrinkDeskProps {
   coreIds: ReadonlySet<string>;
   shelf?: ReadonlySet<string>;
   backBar?: ReadonlySet<string>;
+  stock?: LineStock;
   methods: WizardPick[];
   glasses: WizardPick[];
   ices: WizardPick[];
@@ -162,6 +164,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             coreIds={p.coreIds}
             shelf={p.shelf}
             backBar={p.backBar}
+            stock={p.stock}
             balance={false}
             lineDetail={lineDetail}
             tellUs={tellUsAbout}

@@ -1,14 +1,11 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { layout, radius, space } from '@/constants/tokens';
-import type { NamedItem } from '@/lib/backBar';
-import { withAlpha } from '@/lib/color';
-
-import { selectedProps } from './BackBarPlan';
+import { Body, Button, Caption, useDs } from '@/components/ds';
+import { space } from '@/constants/tokens';
+import type { NamedItem, WaitingItem } from '@/lib/backBar';
 
 interface WaitingForSpotProps {
-  items: NamedItem[];
+  items: WaitingItem[];
   /** The item picked up to place, if any. */
   selectedId: string | null;
   /** Without it the list is read-only. */
@@ -16,9 +13,10 @@ interface WaitingForSpotProps {
 }
 
 /**
- * Ingredients the current menus use that have no place yet. Placing one is
- * select, then tap a zone on the plan: no dragging, so it works with a
- * keyboard, a screen reader and wet hands.
+ * What has no place at the venue yet: bottles put on the back bar from a
+ * drink's line, then what the menus pour. Place it is pick up, then tap a
+ * zone on the plan: no dragging, so it works with a keyboard, a screen
+ * reader and wet hands.
  */
 export function WaitingForSpot({ items, selectedId, onSelect }: WaitingForSpotProps) {
   const ds = useDs();
@@ -28,37 +26,30 @@ export function WaitingForSpot({ items, selectedId, onSelect }: WaitingForSpotPr
       <Caption tone="muted" role="heading" style={styles.eyebrow}>
         {`WAITING FOR A SPOT · ${items.length}`}
       </Caption>
-      <View style={styles.chips}>
+      <View role="list" aria-label="Waiting for a spot">
         {items.map((item) => {
           const on = item.id === selectedId;
-          const look = [
-            styles.chip,
-            {
-              borderColor: on ? ds.accentText : ds.c.lineStrong,
-              backgroundColor: on ? withAlpha(ds.accentText, 0.16) : 'transparent',
-            },
-          ];
-          return onSelect ? (
-            <PressableScale
-              key={item.id}
-              onPress={() => onSelect(on ? null : item)}
-              accessibilityLabel={item.name}
-              accessibilityHint={on ? 'Tap a zone on the plan to place it there' : 'Picks it up to place on the plan'}
-              {...selectedProps(on)}
-              style={look}
-            >
-              <Body color={on ? ds.accentText : ds.c.ink}>{item.name}</Body>
-            </PressableScale>
-          ) : (
-            <View key={item.id} style={look}>
-              <Body>{item.name}</Body>
+          return (
+            <View key={item.id} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
+              <View style={styles.flex}>
+                <Body color={on ? ds.accentText : ds.c.ink}>{item.name}</Body>
+                <Caption tone="muted">{item.detail}</Caption>
+              </View>
+              {onSelect ? (
+                <Button
+                  label="Place it"
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => onSelect(on ? null : { id: item.id, name: item.name })}
+                  accessibilityLabel={`Place ${item.name}`}
+                  accessibilityHint={on ? 'Picked up: tap a zone on the plan to place it there' : 'Picks it up to place on the plan'}
+                />
+              ) : null}
             </View>
           );
         })}
       </View>
-      {onSelect ? (
-        <Caption tone="muted">{selectedId ? 'Now tap the zone where it lives.' : 'Pick one, then tap the zone where it lives.'}</Caption>
-      ) : null}
+      {onSelect && selectedId ? <Caption tone="muted">Now tap the zone where it lives.</Caption> : null}
     </View>
   );
 }
@@ -66,14 +57,6 @@ export function WaitingForSpot({ items, selectedId, onSelect }: WaitingForSpotPr
 const styles = StyleSheet.create({
   wrap: { gap: space.sm },
   eyebrow: { letterSpacing: 1.2 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  chip: {
-    minHeight: layout.minTapTarget,
-    justifyContent: 'center',
-    paddingHorizontal: space.md,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderCurve: 'continuous',
-  },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
+  flex: { flex: 1 },
 });

@@ -109,6 +109,8 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="More settings">
+      <SettingsRow icon="sparkles" label="What next" detail="Your glasses and your menu, a step at a time" onPress={go('what-next')} />
+      <RowDivider />
       <SettingsRow
         icon="globe"
         label="Publishing"

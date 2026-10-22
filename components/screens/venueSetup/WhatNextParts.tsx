@@ -1,0 +1,123 @@
+import { StyleSheet, View } from 'react-native';
+
+import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
+import { GlassThumb } from '@/components/glass/GlassModelPicker';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { STATUS } from '@/constants/palette';
+import { fontFamilies, radius, space } from '@/constants/tokens';
+import type { BarGlass } from '@/hooks/useBarGlassware';
+
+const SLOTS = 6;
+
+/**
+ * The bar's back bar, drawn: a shelf of empty spots that fill with the real
+ * drawing of each glass picked. Past six, the last spot counts the rest.
+ */
+export function BackBarShelf({ name, glasses }: { name: string; glasses: readonly BarGlass[] }) {
+  const ds = useDs();
+  const extra = glasses.length > SLOTS ? glasses.length - (SLOTS - 1) : 0;
+  const shown = glasses.slice(0, extra ? SLOTS - 1 : SLOTS);
+  return (
+    <View
+      role="img"
+      aria-label={`${name}’s back bar, drawn: ${glasses.length === 1 ? 'one glass' : `${glasses.length} glasses`} so far`}
+      style={[styles.shelf, { backgroundColor: ds.c.ground, borderColor: ds.c.line }]}
+    >
+      <View style={styles.slots}>
+        {Array.from({ length: SLOTS }, (_, i) => {
+          const g = shown[i];
+          if (g) {
+            return (
+              <View key={g.id} style={[styles.slot, { backgroundColor: ds.c.paper }]}>
+                <GlassThumb glass={g.glass} variant={g.variant} size={44} />
+              </View>
+            );
+          }
+          if (extra && i === SLOTS - 1) {
+            return (
+              <View key="more" style={[styles.slot, styles.centre, { backgroundColor: ds.c.raised }]}>
+                <Caption tone="muted">{`+${extra}`}</Caption>
+              </View>
+            );
+          }
+          return <View key={`empty-${i}`} style={[styles.slot, styles.empty, { borderColor: ds.c.lineStrong }]} />;
+        })}
+      </View>
+      <View style={[styles.board, { backgroundColor: ds.c.lineStrong }]} />
+    </View>
+  );
+}
+
+/**
+ * One step: its number, what it is, and Skip; once it has something, what's
+ * there and a green count instead. Without `onPress` it can't be done yet.
+ */
+export function StepRow({ n, title, line, count, skipped, onPress, onSkip }: { n: number; title: string; line: string; count?: string | null; skipped?: boolean; onPress?: () => void; onSkip?: () => void }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.step, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+      <PressableScale
+        role="button"
+        disabled={!onPress}
+        aria-disabled={!onPress}
+        accessibilityLabel={[`${n}. ${title}`, line, count, skipped ? 'Skipped' : null].filter(Boolean).join(', ')}
+        onPress={onPress}
+        style={styles.stepMain}
+      >
+        <View style={[styles.num, { backgroundColor: ds.c.raised }]}>
+          <Caption color={ds.accentText} style={styles.mono}>
+            {String(n)}
+          </Caption>
+        </View>
+        <View style={styles.flex}>
+          <Body style={styles.strong} tone={onPress ? undefined : 'muted'}>
+            {title}
+          </Body>
+          <Caption tone="muted">{line}</Caption>
+        </View>
+        {count ? (
+          <View style={styles.count}>
+            <IconSymbol name="checkmark" size={14} color={STATUS.success} />
+            <Caption color={STATUS.success}>{count}</Caption>
+          </View>
+        ) : skipped ? (
+          <Caption tone="muted">Skipped</Caption>
+        ) : onPress ? (
+          <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+        ) : null}
+      </PressableScale>
+      {onSkip && !count && !skipped ? <Button label="Skip" variant="ghost" size="sm" onPress={onSkip} accessibilityLabel={`Skip ${title.toLowerCase()}`} /> : null}
+    </View>
+  );
+}
+
+/** "Go deeper when you want": a plain link row to one of Venue settings' pages. */
+export function DeeperRow({ title, line, onPress }: { title: string; line: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="link" accessibilityLabel={`${title}. ${line}`} onPress={onPress} style={[styles.deeper, { borderBottomColor: ds.c.line }]}>
+      <View style={styles.flex}>
+        <Body>{title}</Body>
+        <Caption tone="muted">{line}</Caption>
+      </View>
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+    </PressableScale>
+  );
+}
+
+const styles = StyleSheet.create({
+  shelf: { gap: space.sm, paddingTop: space.md, paddingBottom: space.sm, paddingHorizontal: space.md, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
+  slots: { flexDirection: 'row', gap: space.sm, justifyContent: 'center', flexWrap: 'wrap' },
+  slot: { width: 44, height: 52, borderRadius: radius.control, borderCurve: 'continuous', overflow: 'hidden', justifyContent: 'flex-end' },
+  empty: { borderWidth: 1.5, borderStyle: 'dashed' },
+  centre: { alignItems: 'center', justifyContent: 'center' },
+  board: { height: 4, borderRadius: radius.mark },
+  step: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingRight: space.sm, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
+  stepMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingLeft: space.md, paddingRight: space.xs },
+  num: { width: 30, height: 30, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  mono: { fontFamily: fontFamilies.mono },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
+  flex: { flex: 1, minWidth: 0 },
+  count: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  deeper: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 52, borderBottomWidth: StyleSheet.hairlineWidth },
+});
