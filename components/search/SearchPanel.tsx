@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Chip, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Chip, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
@@ -114,10 +114,12 @@ interface BodyProps {
   onAddBar?: () => void;
   /** Discover: hovering a result opens its bar on the map. */
   onShowBar?: (barId: string | null) => void;
+  /** The search tab, searching Discover's area: "Show on the map" after the results (search-starts-here). */
+  onShowOnMap?: () => void;
 }
 
 /** What the search finds in its scope, or what was opened lately while nothing is typed. */
-export function SearchBody({ query, scope, onScope, mine, area, onJump, commands, palette, show, onCounts, typeAhead, onAddBar, onShowBar }: BodyProps) {
+export function SearchBody({ query, scope, onScope, mine, area, onJump, commands, palette, show, onCounts, typeAhead, onAddBar, onShowBar, onShowOnMap }: BodyProps) {
   if (!query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} browse={!!typeAhead} />;
   if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} commands={commands} palette={palette} show={show} onCounts={onCounts} typeAhead={typeAhead} />;
   return (
@@ -136,6 +138,11 @@ export function SearchBody({ query, scope, onScope, mine, area, onJump, commands
         onAddBar={onAddBar}
         onShowBar={onShowBar}
       />
+      {scope === 'area' && onShowOnMap ? (
+        <View style={styles.mapButton}>
+          <Button label="Show on the map" icon="map.fill" variant="secondary" onPress={onShowOnMap} />
+        </View>
+      ) : null}
       {commands}
     </>
   );
@@ -259,6 +266,7 @@ const styles = StyleSheet.create({
   scopeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   scope: { flexGrow: 0, flexShrink: 1, minWidth: 240 },
   hint: { flexDirection: 'row', alignItems: 'center', gap: space.xs, marginLeft: 'auto' },
+  mapButton: { alignSelf: 'flex-start' },
   empty: { gap: space.lg },
   jumps: { gap: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
