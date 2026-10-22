@@ -217,6 +217,7 @@ export function VenueSetupScreen() {
             setClaimBack('done');
             setScreen('claim');
           }}
+          onLeave={() => save(keyRef.current, { finished: true })}
           onOpen={() => {
             save(keyRef.current, { finished: true });
             enterVenue(barId);

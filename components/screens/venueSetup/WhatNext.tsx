@@ -28,7 +28,22 @@ type Step = 'glasses' | 'menu';
  * ponytail: brands (what's on your shelves) waits on fix 12's stock list;
  * it joins as step 2 then, with bottles on a second shelf.
  */
-export function WhatNext({ barId, name, summary, openLabel, onOpen }: { barId: string; name: string; summary?: ReactNode; openLabel: string; onOpen: () => void }) {
+export function WhatNext({
+  barId,
+  name,
+  summary,
+  openLabel,
+  onOpen,
+  onLeave,
+}: {
+  barId: string;
+  name: string;
+  summary?: ReactNode;
+  openLabel: string;
+  onOpen: () => void;
+  /** Before Bring in or a Venue settings page takes over (setup marks itself finished). */
+  onLeave?: () => void;
+}) {
   const chrome = useSetupChrome();
   const router = useRouter();
   const enterVenue = useAppMode((s) => s.enterVenue);
@@ -52,7 +67,8 @@ export function WhatNext({ barId, name, summary, openLabel, onOpen }: { barId: s
   const has = (s: Step) => (s === 'glasses' ? glasses.length : inLibrary) > 0;
   const left = steps.filter((s) => !has(s) && !skipped.includes(s));
   const filled = left.length === 0;
-  const label = (s: Step) => `${steps.indexOf(s) + 1} of ${steps.length} · ${s === 'glasses' ? 'Glasses' : 'Menu'}`;
+  // Numbered as the rows are, whether or not glasses can be done yet.
+  const label = (s: Step) => (s === 'glasses' ? '1 of 2 · Glasses' : '2 of 2 · Menu');
   const skip = (s: Step) => setSkipped((xs) => (xs.includes(s) ? xs : [...xs, s]));
   // After a step: the next one not skipped, else back here.
   const next = (s: Step) => setAt(steps.slice(steps.indexOf(s) + 1).find((x) => !skipped.includes(x)) ?? null);
@@ -78,6 +94,7 @@ export function WhatNext({ barId, name, summary, openLabel, onOpen }: { barId: s
         onDone={() => setAt(null)}
         onSkip={() => (skip('menu'), setAt(null))}
         onBringIn={() => {
+          onLeave?.();
           enterVenue(barId);
           router.push('/bring-in' as Href);
         }}
@@ -86,13 +103,16 @@ export function WhatNext({ barId, name, summary, openLabel, onOpen }: { barId: s
   }
 
   const first = left[0];
-  const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
+  const go = (page: string) => () => {
+    onLeave?.();
+    router.push(`/settings/bar/${barId}/${page}` as Href);
+  };
   return (
     <SetupChromeProvider value={{ ...chrome, title: filled ? 'This is your bar.' : 'This is your bar. What next?', intro: undefined }}>
       <SetupPage
         footer={
           <>
-            {first ? <Button label={first === 'glasses' ? 'Start with glasses' : steps.indexOf(first) ? 'Next: your menu' : 'Start with your menu'} size="lg" onPress={() => setAt(first)} /> : null}
+            {first ? <Button label={first === 'glasses' ? 'Start with glasses' : skipped.includes('glasses') || has('glasses') ? 'Next: your menu' : 'Start with your menu'} size="lg" onPress={() => setAt(first)} /> : null}
             <Button label={first ? `${openLabel}, do this later` : openLabel} size="lg" variant={first ? 'ghost' : 'primary'} onPress={onOpen} />
           </>
         }
@@ -119,7 +139,7 @@ export function WhatNext({ barId, name, summary, openLabel, onOpen }: { barId: s
             onSkip={canMenu ? () => skip('menu') : undefined}
           />
         </View>
-        {filled ? null : summary}
+        {summary}
         {filled ? (
           <View>
             <SetupHead>Go deeper when you want</SetupHead>

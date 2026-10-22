@@ -48,7 +48,8 @@ export function MenuStep({ barId, step, onBack, onDone, onSkip, onBringIn }: { b
   const ds = useDs();
   const chrome = useSetupChrome();
   const { classics, isLoading, error } = useTopClassics();
-  const have = new Set(useBarClassics(barId, classics).data ?? []);
+  const library = useBarClassics(barId, classics);
+  const have = new Set(library.data ?? []);
   const add = useAddClassics(barId);
   const [unticked, setUnticked] = useState<Set<string>>(() => new Set());
   const [all, setAll] = useState(false);
@@ -74,7 +75,7 @@ export function MenuStep({ barId, step, onBack, onDone, onSkip, onBringIn }: { b
             skip="Skip"
             onSkip={onSkip}
             label={label}
-            disabled={add.isPending || isLoading}
+            disabled={add.isPending || isLoading || library.isFetching}
             onPress={() => (adding.length ? add.mutate(adding, { onSuccess: onDone }) : onDone())}
           />
         }

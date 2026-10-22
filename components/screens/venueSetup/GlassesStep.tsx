@@ -73,6 +73,12 @@ export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { b
     }
   };
 
+  // A failed + leaves its error on the shared save: the form starts clean.
+  const describe = () => {
+    save.reset();
+    setDescribing(true);
+  };
+
   const count = glasses.length;
   const page = (title: string, back: () => void, footer: ReactNode, body: ReactNode) => (
     <SetupChromeProvider value={{ ...chrome, title, intro: undefined, mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack: back }}>
@@ -112,7 +118,7 @@ export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { b
     return page(
       `Every ${shapeWord(shape)}`,
       () => setShape(null),
-      <StepFooter skip="Not listed? Describe it" onSkip={() => setDescribing(true)} label="Done" onPress={() => setShape(null)} />,
+      <StepFooter skip="Not listed? Describe it" onSkip={describe} label="Done" onPress={() => setShape(null)} />,
       <>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View role="radiogroup" aria-label="Maker" style={styles.chips}>
@@ -164,7 +170,7 @@ export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { b
         ) : (
           <View style={styles.stack}>
             <Body tone="muted">{`No ${search} glasses in the catalogue yet. Describe yours and it’s yours straight away; we add the range when we can.`}</Body>
-            <Button label="Describe it yourself" variant="secondary" onPress={() => setDescribing(true)} style={styles.start} />
+            <Button label="Describe it yourself" variant="secondary" onPress={describe} style={styles.start} />
           </View>
         )
       ) : null}

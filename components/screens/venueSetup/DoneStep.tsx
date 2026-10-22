@@ -62,6 +62,8 @@ interface DoneProps {
   held: HeldSetup | undefined;
   waitingFiles: number;
   onOpen: () => void;
+  /** Leaving for Bring in or a Venue settings page: setup is finished. */
+  onLeave: () => void;
   onProve: () => void;
 }
 
@@ -138,7 +140,7 @@ function SetupSummary({ barId, profileId, name, claim, claimState, held, waiting
  * fix 15), with wave 1's summary shrunk to one line and See all.
  */
 export function DoneStep(props: DoneProps) {
-  const { barId, name, claimState, waitingFiles, onOpen, onProve } = props;
+  const { barId, name, claimState, waitingFiles, onOpen, onLeave, onProve } = props;
   const invites = useBarInvites(barId).data ?? [];
   const [all, setAll] = useState(false);
   const bar = name || 'your bar';
@@ -149,6 +151,7 @@ export function DoneStep(props: DoneProps) {
         name={bar}
         openLabel={`Open ${bar}`}
         onOpen={onOpen}
+        onLeave={onLeave}
         summary={
           <View style={styles.oneLine}>
             <Caption tone="muted" style={styles.flex}>
