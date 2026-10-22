@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, Spec, useDs } from '@/components/ds';
+import { Body, Caption, DsText, useDs } from '@/components/ds';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { SetupHead } from '@/components/screens/onboarding/SetupParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -48,7 +48,6 @@ export function RoleStep({ name, pending, onDone }: { name: string; pending: boo
                 </DsText>
                 <Caption tone="muted">{roleLine(r.level)}</Caption>
               </View>
-              <Spec tone="muted">{String(r.level)}</Spec>
             </View>
           );
         })}

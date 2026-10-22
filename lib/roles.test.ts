@@ -19,7 +19,8 @@ test.each([
   [30, 'Bartender'],
   [35, 'Drink Creator'],
   [40, 'Admin'],
-  [99, 'Level 99'],
+  [0, 'Custom role'],
+  [99, 'Custom role'],
 ])('roleLabel(%i) is %s', (level, label) => {
   expect(roleLabel(level)).toBe(label);
 });

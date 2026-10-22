@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { RoleMatrixRow } from '@/hooks/useVenueRoles';
 import { withAlpha } from '@/lib/color';
-import { CAPABILITY_GROUPS, cell, endsLabel, type Cell } from '@/lib/roleMatrix';
+import { CAPABILITY_GROUPS, cell, columnCaption, type Cell } from '@/lib/roleMatrix';
 import { roleLabel } from '@/lib/roles';
 
 const LABEL_WIDTH = 240;
@@ -85,11 +85,10 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
               </View>
               {matrix.map((c) => {
                 const name = columnName(c);
-                const sub = c.role_id ? (endsLabel(c.ends_at) ? `Ends ${endsLabel(c.ends_at)}` : `From ${roleLabel(c.base_level)}`) : `Base · ${c.base_level}`;
                 const head = (
                   <>
                     <Body style={[styles.center, styles.head]} numberOfLines={2}>{name}</Body>
-                    <Caption tone="muted" style={styles.center}>{sub}</Caption>
+                    <Caption tone="muted" style={styles.center}>{columnCaption(c)}</Caption>
                     {isYou?.(c) ? (
                       <View style={[styles.you, { backgroundColor: withAlpha(ds.accentText, 0.2) }]}>
                         <Caption color={ds.accentText} style={styles.head}>You</Caption>

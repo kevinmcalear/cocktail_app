@@ -8,8 +8,9 @@ export const ROLE_LEVELS = [
 
 export type RoleLevel = (typeof ROLE_LEVELS)[number]['level'];
 
+/** The role's name. People never see the level number, so anything else reads "Custom role". */
 export function roleLabel(level: number): string {
-  return ROLE_LEVELS.find((r) => r.level === level)?.label ?? `Level ${level}`;
+  return ROLE_LEVELS.find((r) => r.level === level)?.label ?? 'Custom role';
 }
 
 /** Cap real membership at an optional view-as ceiling (never elevates). */
