@@ -6,10 +6,15 @@ export interface NoteDraft {
   body: string;
   /** Report a problem's kind ("broken"), once picked. */
   kind?: string | null;
+  /** When it was last typed in (ms), so drafts nobody came back to are dropped. */
+  at?: number;
 }
 
+/** A draft nobody has touched in this long is dropped the next time any is saved. */
+const KEEP_MS = 30 * 24 * 60 * 60 * 1000;
+
 interface NoteDraftsState {
-  /** By person and screen ("<user id>:Adding a drink › Ice"). */
+  /** By person, screen, bar and drink draft ("<user id>:Adding a drink › Ice:<bar id>:<draft id>"). */
   drafts: Record<string, NoteDraft>;
   save: (key: string, draft: NoteDraft | null) => void;
 }
@@ -27,8 +32,10 @@ export const useNoteDrafts = create<NoteDraftsState>()(
       drafts: {},
       save: (key, draft) =>
         set((s) => {
-          const drafts = { ...s.drafts };
-          if (draft) drafts[key] = draft;
+          const now = Date.now();
+          // Drafts for drinks long since saved or given up (a draft id that never comes back) go.
+          const drafts = Object.fromEntries(Object.entries(s.drafts).filter(([, d]) => now - (d.at ?? 0) < KEEP_MS));
+          if (draft) drafts[key] = { ...draft, at: now };
           else delete drafts[key];
           return { drafts };
         }),

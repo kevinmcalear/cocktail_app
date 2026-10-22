@@ -76,7 +76,7 @@ export interface DrinkDeskProps {
 export function DrinkDesk(p: DrinkDeskProps) {
   const ds = useDs();
   const { draft, set, barId } = p;
-  const tellUsAbout = { drinkName: draft.name, barId };
+  const tellUsAbout = { drinkName: draft.name, barId, barName: barId ? p.venueName : null, draftId: draft.id ?? null };
   const place = useMenuSectionPlace(p.menuSectionId).data;
   const menu = place?.menu ?? null;
   const caps = useCapabilities(barId).data;

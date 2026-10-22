@@ -2,7 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Alert, Platform } from 'react-native';
 
 import { useBreakpoint } from '@/components/ds';
-
+import { TellUs } from '@/components/feedback/TellUs';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useBackBarIds } from '@/hooks/useBackBar';
 import { useBarKit } from '@/hooks/useBarKit';
@@ -42,7 +42,6 @@ import { SketchHeader } from './SketchHeader';
 import { StartFromClassic } from './StartFromClassic';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
-import { TellUs } from '@/components/feedback/TellUs';
 import { WizardFrame } from './WizardFrame';
 import { RoundStrip } from '@/components/screens/firstRound/RoundElsewhere';
 import { useFirstRound } from '@/hooks/useFirstRound';
@@ -159,7 +158,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   };
 
   const ingredients = dropdowns?.ingredients ?? [];
-  const tellUsAbout = { drinkName: draft.name, barId };
+  const tellUsAbout = { drinkName: draft.name, barId, barName: barId ? venueName : null, draftId: draft.id ?? null };
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const backBar = useBackBarIds(barId, ingredients);
   const copy = STEP_COPY[step];
@@ -212,7 +211,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         return (
           <IngredientsStep
             draft={draft}
-            set={set} tellUs={tellUsAbout}
+            set={set}
+            tellUs={tellUsAbout}
             ingredients={ingredients}
             loading={!dropdowns?.ingredients}
             aliases={dropdowns?.ingredientAliases}

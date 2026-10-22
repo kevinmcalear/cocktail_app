@@ -4,8 +4,9 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { useUserId } from '@/ctx/AuthContext';
-import { imageExtFromUri, uriToBase64 } from '@/lib/imageBase64';
+import { uriToBase64 } from '@/lib/imageBase64';
 import { supabase } from '@/lib/supabase';
+import { useNoteDrafts } from '@/store/useNoteDrafts';
 
 /** tell_us: "Doing something different?". The rest are Report a problem's kinds. */
 export type NoteKind = 'tell_us' | 'broken' | 'wrong' | 'slow' | 'data' | 'other';
@@ -18,6 +19,8 @@ export interface NoteInput {
   barId?: string | null;
   body: string;
   photo?: NotePhoto | null;
+  /** The kept words' key in useNoteDrafts, cleared once the note is in (even if the sheet has gone by then). */
+  draftKey?: string;
 }
 
 /**
@@ -32,13 +35,27 @@ export interface NotePhoto {
 }
 
 /** The file types the feedback bucket takes, by extension. */
-const PHOTO_TYPES: Record<string, string> = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic', gif: 'image/gif' };
+const PHOTO_TYPES: Record<string, string> = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif', gif: 'image/gif' };
 
-/** What the sheet says when a send fails: the daily limit (row-level security says no), else most likely offline. */
+/**
+ * The photo's extension and type: the picker's type when it gives one (a web
+ * pick has no file name), else the file name's. An iPhone photo can be HEIC
+ * and stays HEIC. Anything else unknown goes as a JPEG, as most picks are.
+ */
+export function photoType(photo: Pick<NotePhoto, 'uri' | 'type'>): { ext: string; contentType: string } {
+  const fromType = Object.keys(PHOTO_TYPES).find((k) => PHOTO_TYPES[k] === photo.type?.toLowerCase());
+  const fromName = photo.uri.startsWith('blob:') || photo.uri.startsWith('data:') ? '' : (photo.uri.split('?')[0].split('.').pop() ?? '').toLowerCase().replace(/^jpeg$/, 'jpg');
+  const ext = fromType ?? (fromName in PHOTO_TYPES ? fromName : 'jpg');
+  return { ext, contentType: PHOTO_TYPES[ext] };
+}
+
+/** What the sheet says when a send fails: the daily limit (the database's own hint), signed out, refused, or most likely offline. */
 export function sendFailure(error: unknown): string {
-  const e = error as { code?: string; message?: string } | null;
-  if (e?.code === '42501' || /row-level security/i.test(e?.message ?? '')) return 'Couldn’t send it: that’s a lot of notes for one day. What you wrote is kept here, so try again tomorrow.';
+  const e = error as { code?: string; hint?: string; message?: string } | null;
+  if (e?.hint === 'notes_daily_limit') return 'Couldn’t send it: that’s a lot of notes for one day. What you wrote is kept here, so try again tomorrow.';
   if (e?.message === 'Sign in to send this.') return 'Sign in to send this. What you wrote is kept here.';
+  // The server answered and said no (a code), so being online won't fix it.
+  if (e?.code) return 'Couldn’t send it. What you wrote is kept here. If it keeps happening, tell us from Settings › Report a problem.';
   return 'Couldn’t send it. What you wrote is kept here, so try again when you’re online.';
 }
 
@@ -64,15 +81,16 @@ export function useSendNote() {
     networkMode: 'always',
     // The sheet says what went wrong itself; no global error toast.
     onError: () => {},
+    // Here, not in the sheet's mutate(): a send that lands after the sheet has gone still clears the words.
+    onSuccess: (_data, note) => {
+      if (note.draftKey) useNoteDrafts.getState().save(note.draftKey, null);
+    },
     mutationFn: async (note: NoteInput): Promise<void> => {
       if (!userId) throw new Error('Sign in to send this.');
       let photoPath: string | null = null;
       if (note.photo) {
-        // The picker's type when it gives one (a web pick has no file name), else the name's.
-        const fromType = Object.keys(PHOTO_TYPES).find((k) => PHOTO_TYPES[k] === note.photo?.type);
-        const ext = fromType ?? (imageExtFromUri(note.photo.uri).replace('jpeg', 'jpg'));
-        const contentType = PHOTO_TYPES[ext] ?? 'image/jpeg';
-        photoPath = `${userId}/${note.photo.id}.${ext in PHOTO_TYPES ? ext : 'jpg'}`;
+        const { ext, contentType } = photoType(note.photo);
+        photoPath = `${userId}/${note.photo.id}.${ext}`;
         const { error } = await supabase.storage
           .from('feedback')
           .upload(photoPath, decode(await uriToBase64(note.photo.uri)), { contentType, upsert: false });
@@ -89,7 +107,13 @@ export function useSendNote() {
         photo_path: photoPath,
         ...appAndDevice(),
       });
-      if (error) throw error;
+      if (error) {
+        // The note didn't go in: take its photo back out rather than leave it with no note. The
+        // database won't remove one a note points at, so a send that did land keeps its photo.
+        // ponytail: offline, this fails too and the photo waits for a retry (same path) or stays.
+        if (photoPath) await supabase.storage.from('feedback').remove([photoPath]).catch(() => {});
+        throw error;
+      }
     },
   });
 }

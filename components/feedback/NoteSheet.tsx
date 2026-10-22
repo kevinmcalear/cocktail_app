@@ -17,6 +17,8 @@ export interface NoteAbout {
   /** "Adding a drink › Ice" */
   screen: string;
   drinkName?: string | null;
+  /** The drink's draft (WizardDraft.id): the kept words stay with it as its name changes. */
+  draftId?: string | null;
   barId?: string | null;
   barName?: string | null;
 }
@@ -67,8 +69,8 @@ export function NoteSheet(props: NoteSheetProps) {
 function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
   const ds = useDs();
   const userId = useUserId();
-  // Words typed for one drink at one bar stay with that drink and bar.
-  const key = [userId ?? 'signed-out', about.screen, about.barId ?? '', about.drinkName?.trim() ?? ''].join(':');
+  // Words typed for one drink at one bar stay with that draft and bar (not its name, which changes as it's typed).
+  const key = [userId ?? 'signed-out', about.screen, about.barId ?? '', about.draftId ?? ''].join(':');
   const draft = useNoteDrafts((s) => s.drafts[key]);
   const saveDraft = useNoteDrafts((s) => s.save);
   const send = useSendNote();
@@ -109,15 +111,8 @@ function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
 
   const submit = () => {
     setProblem(null);
-    send.mutate(
-      { kind, screen: about.screen, drinkName: about.drinkName, barId: about.barId, body, photo: report ? null : photo },
-      {
-        onSuccess: () => {
-          saveDraft(key, null);
-          setSent(true);
-        },
-      }
-    );
+    // The hook clears the kept words when it lands (draftKey), even if this sheet has gone by then.
+    send.mutate({ kind, screen: about.screen, drinkName: about.drinkName, barId: about.barId, body, photo: report ? null : photo, draftKey: key }, { onSuccess: () => setSent(true) });
   };
 
   const email = async () => {
@@ -146,7 +141,7 @@ function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
         </Caption>
       ) : null}
       <Button label={send.isPending ? 'Sending…' : 'Send'} size="lg" disabled={!canSend} onPress={submit} />
-      {report ? <TextLink label="Email us instead" tone="ink" onPress={() => void email()} /> : null}
+      {report ? <TextLink label="Email us instead" tone="ink" disabled={send.isPending} onPress={() => void email()} /> : null}
     </View>
   );
   // Nothing typed while it's sending, so nothing new is cleared with the sent words.

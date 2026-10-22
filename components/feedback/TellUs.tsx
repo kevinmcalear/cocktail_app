@@ -4,13 +4,12 @@ import { StyleSheet, View } from 'react-native';
 import { BrandProvider, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DEFAULT_ACCENT, fontFamilies, radius, space } from '@/constants/tokens';
-import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { withAlpha } from '@/lib/color';
 
 import { NoteSheet, type NoteAbout } from './NoteSheet';
 
-/** What a note is sent with, besides its screen: the drink and the bar (its name is looked up here). */
-export type TellUsAbout = Omit<NoteAbout, 'screen' | 'barName'>;
+/** What a note is sent with, besides its screen: the drink, its draft and the bar (with its name, for the sheet). */
+export type TellUsAbout = Omit<NoteAbout, 'screen'>;
 
 interface TellUsProps extends TellUsAbout {
   screen: string;
@@ -24,7 +23,6 @@ interface TellUsProps extends TellUsAbout {
  * drink and bar it came from. In the Cocktail accent, not the venue's.
  */
 export function TellUs({ line, ...about }: TellUsProps) {
-  const barName = useActiveVenue().venues.find((v) => v.id === about.barId)?.name ?? null;
   const [open, setOpen] = useState(false);
   // The sheet mounts on the first tap, then stays (so it can animate away and keep a picked photo).
   const [seen, setSeen] = useState(false);
@@ -37,7 +35,7 @@ export function TellUs({ line, ...about }: TellUsProps) {
           setOpen(true);
         }}
       />
-      {seen ? <NoteSheet visible={open} onClose={() => setOpen(false)} about={{ ...about, barName }} /> : null}
+      {seen ? <NoteSheet visible={open} onClose={() => setOpen(false)} about={about} /> : null}
     </BrandProvider>
   );
 }

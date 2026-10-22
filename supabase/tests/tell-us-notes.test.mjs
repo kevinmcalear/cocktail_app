@@ -43,7 +43,7 @@ const send = (who, extra) => users[who].client.from('feedback_notes').insert(not
 
 before(async () => {
   await db.connect();
-  for (const label of ['sender', 'other', 'team', 'busy']) users[label] = await makeUser(label);
+  for (const label of ['sender', 'other', 'team', 'busy', 'burst', 'racer']) users[label] = await makeUser(label);
   await db.query('INSERT INTO private.app_admins (user_id) VALUES ($1)', [users.team.id]);
   ids.bar = (await service.from('bars').insert({ name: `Tell us bar ${run}` }).select('id').single()).data.id;
   ids.otherBar = (await service.from('bars').insert({ name: `Not theirs ${run}` }).select('id').single()).data.id;
@@ -140,6 +140,37 @@ describe('feedback notes', () => {
     assert.ifError(filled.error);
     const { error } = await send('busy');
     assert.ok(error, 'the 21st note today is refused');
+    // Its own hint, so the app says "a lot for one day" only for this.
+    assert.equal(error.hint, 'notes_daily_limit');
+  });
+
+  test('one insert of many rows can\'t pass the daily limit', async () => {
+    const rows = (n, tag) => Array.from({ length: n }, (_, i) => note({ body: `${tag}${i}` }));
+    const many = await users.burst.client.from('feedback_notes').insert(rows(25, 'b'));
+    assert.ok(many.error, 'an insert of 25 at once is refused');
+    assert.equal(many.error.hint, 'notes_daily_limit');
+    const count = async () => (await service.from('feedback_notes').select('id', { count: 'exact', head: true }).eq('user_id', users.burst.id)).count;
+    assert.equal(await count(), 0, 'none of them went in');
+    const twenty = await users.burst.client.from('feedback_notes').insert(rows(20, 'c'));
+    assert.ifError(twenty.error);
+    const one = await users.burst.client.from('feedback_notes').insert(note());
+    assert.ok(one.error, 'the 21st is refused');
+    assert.equal(await count(), 20);
+  });
+
+  test('sends at the same time can\'t pass the daily limit', async () => {
+    const rows = Array.from({ length: 15 }, (_, i) => ({ ...note({ body: `r${i}` }), user_id: users.racer.id }));
+    assert.ifError((await service.from('feedback_notes').insert(rows)).error);
+    const results = await Promise.all(Array.from({ length: 10 }, (_, i) => users.racer.client.from('feedback_notes').insert(note({ body: `race${i}` }))));
+    assert.equal(results.filter((r) => !r.error).length, 5, 'only five more go in');
+    const { count } = await service.from('feedback_notes').select('id', { count: 'exact', head: true }).eq('user_id', users.racer.id);
+    assert.equal(count, 20);
+  });
+
+  test('a refusal that isn\'t the limit doesn\'t say it is', async () => {
+    const { error } = await send('sender', { bar_id: ids.otherBar });
+    assert.ok(error);
+    assert.notEqual(error.hint, 'notes_daily_limit');
   });
 });
 
@@ -167,11 +198,35 @@ describe('feedback photos', () => {
 
   test('the sender can\'t delete or replace a photo once sent', async () => {
     const path = photos[0];
+    const sent = await send('sender', { photo_path: path });
+    assert.ifError(sent.error);
     await users.sender.client.storage.from('feedback').remove([path]);
     const { data } = await service.storage.from('feedback').list(users.sender.id);
     assert.ok(data.some((f) => path.endsWith(f.name)));
     const again = await users.sender.client.storage.from('feedback').upload(path, png, { contentType: 'image/png', upsert: true });
     assert.ok(again.error, 'overwriting is refused');
+  });
+
+  test('a photo no note points at (a send that failed) can be removed by its sender, not by anyone else', async () => {
+    const path = `${users.sender.id}/unsent-${run}.png`;
+    assert.ifError((await users.sender.client.storage.from('feedback').upload(path, png, { contentType: 'image/png' })).error);
+    photos.push(path);
+    const listed = async () => (await service.storage.from('feedback').list(users.sender.id)).data.some((f) => path.endsWith(f.name));
+    await users.other.client.storage.from('feedback').remove([path]);
+    assert.equal(await listed(), true, 'another person can\'t remove it');
+    await users.team.client.storage.from('feedback').remove([path]);
+    assert.equal(await listed(), true, 'the team can\'t remove it either');
+    await users.sender.client.storage.from('feedback').remove([path]);
+    assert.equal(await listed(), false, 'the sender removes it');
+  });
+
+  test('an iPhone photo (HEIC or HEIF) goes in as itself', async () => {
+    for (const ext of ['heic', 'heif']) {
+      const path = `${users.sender.id}/iphone-${run}.${ext}`;
+      const { error } = await users.sender.client.storage.from('feedback').upload(path, png, { contentType: `image/${ext}` });
+      assert.ifError(error);
+      photos.push(path);
+    }
   });
 
   test('the bucket is private: no public URL serves it', async () => {
