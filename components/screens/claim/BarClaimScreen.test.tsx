@@ -9,6 +9,7 @@ const mockWithdraw = jest.fn();
 let mockEmail = 'jo@palemoth.com';
 let mockClaims: object[] = [];
 let mockVenues: { id: string; name: string; roleLevel: number }[] = [];
+let mockPhone: string | null = '(03) 9000 0000';
 
 const page = {
   id: 'p1',
@@ -23,14 +24,16 @@ const page = {
   is_claimed: false,
   is_closed: false,
 };
+let mockPage: typeof page = page;
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: jest.fn(), push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'me', email: mockEmail, email_confirmed_at: '2026-10-01' } })));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: mockVenues }) }));
 jest.mock('@/hooks/useProfiles', () => ({
-  useProfile: () => ({ data: page, isLoading: false, error: null }),
+  useProfile: () => ({ data: mockPage, isLoading: false, error: null }),
   useMyClaims: () => ({ data: mockClaims, isLoading: false }),
 }));
+jest.mock('@/hooks/useBarFacts', () => ({ useBarFacts: () => ({ data: { phone: mockPhone } }) }));
 jest.mock('@/hooks/useBarClaims', () => ({
   useStartBarClaim: () => ({ mutate: mockStart, reset: jest.fn(), isPending: false, error: null }),
   useWithdrawClaim: () => ({ mutate: mockWithdraw, isPending: false, error: null }),
@@ -42,6 +45,8 @@ beforeEach(() => {
   mockEmail = 'jo@palemoth.com';
   mockClaims = [];
   mockVenues = [];
+  mockPhone = '(03) 9000 0000';
+  mockPage = page;
   mockStart.mockReset();
   mockWithdraw.mockReset();
 });
@@ -68,7 +73,31 @@ test('an email elsewhere can’t be used, so Instagram is picked and shows the c
   await fireEvent.press(screen.getByRole('radio', { name: /A call to the bar/ }));
   expect(screen.getByText('Slowest')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
-  expect(mockStart).toHaveBeenCalledWith({ profileId: 'p1', method: 'phone', barId: null, note: '', code });
+  expect(mockStart).toHaveBeenCalledWith({ profileId: 'p1', method: 'phone', barId: null, note: '', code, typed: {} });
+});
+
+test('a page with no Instagram, website or phone asks for the one each way needs', async () => {
+  mockPage = { ...page, website: null as unknown as string, instagram: null as unknown as string };
+  mockPhone = null;
+  mockEmail = 'ana@harbourroom.com';
+  await renderWithTamagui(<BarClaimScreen profileRef="pale.moth" />);
+  expect(screen.getByRole('radio', { name: /message from the bar’s Instagram/ })).toBeChecked();
+  expect(screen.getByText('Add the bar’s phone number to use this.')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Send claim' })).toBeDisabled();
+  expect(screen.queryByLabelText(/^Your code: /)).toBeNull();
+
+  await fireEvent.changeText(screen.getByLabelText('The bar’s Instagram'), '@HarbourRoom');
+  expect(screen.getByText(/in a message from @harbourroom. A person checks it’s Pale Moth’s own account/)).toBeTruthy();
+  expect(screen.getByLabelText(/^Your code: /)).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
+  expect(mockStart).toHaveBeenCalledWith(expect.objectContaining({ method: 'instagram', typed: { instagram: '@HarbourRoom' } }));
+
+  // A website they type is never instant, even when it matches.
+  await fireEvent.press(screen.getByRole('radio', { name: /^Work email/ }));
+  await fireEvent.changeText(screen.getByLabelText('The bar’s website'), 'harbourroom.com');
+  expect(screen.getByText(/A person checks the site is the bar’s, because you added it/)).toBeTruthy();
+  expect(screen.queryByText('Instant')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Send claim' })).toBeEnabled();
 });
 
 test('an Admin can link a venue they run instead of making one', async () => {

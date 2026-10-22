@@ -42,12 +42,18 @@ function Column({ title, wide, children }: { title: string; wide: boolean; child
 function checkText(claim: ClaimForReview, handle: string | null): string {
   const e = claim.evidence;
   if (claim.method === 'instagram') {
+    if (e?.typed?.instagram) {
+      return `They typed @${handle}, so first check it’s the bar’s own account (its posts, its address). Then look in our Instagram messages for one from @${handle} with ${spacedCode(claim.code ?? '')}. Approve only if both hold.`;
+    }
     // Claims since venue setup (20261014900000) come as a message; older ones are in the bio.
     return e?.instagram_dm
       ? `Look in our Instagram messages for one from @${handle} with ${spacedCode(claim.code ?? '')}. Approve once it’s there, and only if it came from that account.`
       : `Open @${handle} and look for ${spacedCode(claim.code ?? '')} in the bio. Approve once it’s there.`;
   }
   if (claim.method === 'phone') {
+    if (e?.typed?.phone) {
+      return `They typed ${e.typed.phone}. Ring it only if it matches the bar’s number on its website or map listing, and have whoever answers read out the code.`;
+    }
     return 'Ring the bar on a number you find yourself (its website or map listing), never one they give you. Ask for whoever they named and have them read out the code.';
   }
   const reason = e?.review_reason ? REVIEW_REASON[e.review_reason] : 'it needs a second look';
@@ -65,7 +71,10 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
   const [reason, setReason] = useState('');
   const page = claim.profile;
   const method = claim.method as BarClaimMethod;
+  const typed = claim.evidence?.typed;
   const handle = (page && pageInstagram(page)) ?? claim.evidence?.instagram ?? null;
+  // A handle they typed is theirs, not the page's (20261031200000).
+  const pageHandle = (page && pageInstagram(page)) ?? (typed?.instagram ? null : handle);
   const host = siteHost(page?.website);
   const place = [page?.locality, page?.city, page?.country_code].filter(Boolean).join(', ');
   const name = page?.display_name ?? 'this bar';
@@ -91,7 +100,7 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
         <View style={[styles.columns, wide && styles.columnsWide]}>
           <Column title="On the page" wide={wide}>
             <Fact label="Website">{host ? <Link label={host} href={page!.website!} /> : 'None'}</Fact>
-            <Fact label="Instagram">{handle ? <Link label={`@${handle}`} href={instagramUrl(handle)} /> : 'None'}</Fact>
+            <Fact label="Instagram">{pageHandle ? <Link label={`@${pageHandle}`} href={instagramUrl(pageHandle)} /> : 'None'}</Fact>
             {place ? <Fact label="Where">{place}</Fact> : null}
             <Fact label="Phone">
               <Link label="Find its number" href={mapSearch} />
@@ -100,6 +109,17 @@ export function BarClaimCard({ claim, busy, onOpen, onReview }: { claim: ClaimFo
           <Column title="From them" wide={wide}>
             <Fact label="Who">{claim.claimant ? `${claim.claimant.display_name} (@${claim.claimant.handle})` : 'No profile of their own yet'}</Fact>
             <Fact label="Note">{claim.message ? `“${claim.message}”` : 'No note'}</Fact>
+            {typed?.instagram ? (
+              <Fact label="Instagram they typed">
+                <Link label={`@${typed.instagram}`} href={instagramUrl(typed.instagram)} />
+              </Fact>
+            ) : null}
+            {typed?.website ? (
+              <Fact label="Website they typed">
+                <Link label={siteHost(typed.website) ?? typed.website} href={typed.website} />
+              </Fact>
+            ) : null}
+            {typed?.phone ? <Fact label="Phone they typed">{typed.phone}</Fact> : null}
             {method === 'email' ? <Fact label="Sign-in email">{`At ${claim.evidence?.email_domain ?? 'an unknown domain'}`}</Fact> : null}
             {method === 'instagram' && claim.code ? (
               <Fact label="Their code">

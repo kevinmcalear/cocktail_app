@@ -185,6 +185,7 @@ describe('adding a bar', () => {
       p_method: 'phone',
       p_bar_id: ids.bar,
       p_note: 'Our bar',
+      p_phone: '(555) 010-4417',
     });
     assert.ifError(error);
     const { data: profile, error: approveError } = await users.catalogAdmin.client.rpc('approve_profile_claim', { p_claim_id: claim.id, p_code: claim.code });

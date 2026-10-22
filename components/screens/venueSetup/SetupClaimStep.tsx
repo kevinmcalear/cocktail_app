@@ -9,11 +9,12 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useStartBarClaim } from '@/hooks/useBarClaims';
+import { useBarFacts } from '@/hooks/useBarFacts';
 import { useMyClaims, useProfile } from '@/hooks/useProfiles';
-import { BAR_CLAIM_METHODS, claimProblem, newClaimCode, spacedCode, type BarClaimMethod } from '@/lib/claimVerification';
+import { BAR_CLAIM_METHODS, claimProblem, newClaimCode, spacedCode, type BarClaimMethod, type TypedDetails } from '@/lib/claimVerification';
 
 /** A person checks, setup carries on: the card under the ways to check. */
-function WhileYouWait({ name }: { name: string }) {
+function WhileYouWait({ name, typed }: { name: string; typed?: boolean }) {
   const ds = useDs();
   return (
     <View role="status">
@@ -21,7 +22,9 @@ function WhileYouWait({ name }: { name: string }) {
         <IconSymbol name="clock" size={20} color={ds.accentText} />
         <View style={styles.flex}>
           <Body style={styles.strong}>A person checks claims, usually within a day.</Body>
-          <Caption tone="muted">{`You can set up while you wait. Until it’s approved, ${name}’s public page stays as it is.`}</Caption>
+          <Caption tone="muted">
+            {typed ? `What you typed goes on ${name}’s page once it’s approved.` : `You can set up while you wait. Until it’s approved, ${name}’s public page stays as it is.`}
+          </Caption>
         </View>
       </Surface>
     </View>
@@ -40,14 +43,17 @@ export function SetupClaimStep({ profileId, ensureVenue, onDone, onSkip }: { pro
   const waiting = claims?.find((c) => c.status === 'pending') ?? null;
   const [code] = useState(() => newClaimCode());
   const [method, setMethod] = useState<BarClaimMethod | null>(null);
+  const [typed, setTyped] = useState<TypedDetails>({});
+  const pagePhone = useBarFacts(profileId).data?.phone ?? null;
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const start = useStartBarClaim();
   if (!profile) return <SetupPage><Caption tone="muted">Loading…</Caption></SetupPage>;
 
   const name = profile.display_name;
-  const details = methodDetails(profile, user?.email_confirmed_at ? user.email : null);
-  const chosen = method ?? BAR_CLAIM_METHODS.find((m) => details[m].available) ?? 'phone';
+  const details = methodDetails(profile, user?.email_confirmed_at ? user.email : null, typed, pagePhone);
+  // A page with nothing to check against leads with Instagram (b19), asking for its handle.
+  const chosen = method ?? BAR_CLAIM_METHODS.find((m) => details[m].available) ?? BAR_CLAIM_METHODS[0];
 
   // Already sent from here or the bar's page: where it stands, and on.
   if (waiting) {
@@ -64,7 +70,7 @@ export function SetupClaimStep({ profileId, ensureVenue, onDone, onSkip }: { pro
     setBusy(true);
     try {
       const barId = await ensureVenue();
-      await start.mutateAsync({ profileId, method: chosen, barId, note: '', code });
+      await start.mutateAsync({ profileId, method: chosen, barId, note: '', code, typed });
       onDone();
     } catch (e) {
       setProblem(claimProblem(e));
@@ -84,8 +90,21 @@ export function SetupClaimStep({ profileId, ensureVenue, onDone, onSkip }: { pro
         />
       }
     >
-      <ClaimMethods profile={profile} details={details} method={chosen} code={code} disabled={busy} onPick={setMethod} />
-      <WhileYouWait name={name} />
+      <ClaimMethods
+        profile={profile}
+        details={details}
+        method={chosen}
+        code={code}
+        typed={typed}
+        disabled={busy}
+        onPick={setMethod}
+        onType={(t) => {
+          // Typing settles the way, so it can't move once the page's phone loads.
+          setMethod(chosen);
+          setTyped(t);
+        }}
+      />
+      <WhileYouWait name={name} typed={!!details[chosen].ask && details[chosen].available} />
       <Caption tone="muted">{CLAIM_LIMIT_NOTE}</Caption>
       {problem ? (
         <Caption tone="accent" role="alert">

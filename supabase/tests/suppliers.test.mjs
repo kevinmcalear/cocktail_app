@@ -192,7 +192,7 @@ describe('claiming a supplier page', () => {
   test("a supplier's page is claimed like a maker's, in its own words", async () => {
     const { error } = await users.claimer.client.rpc('start_bar_claim', { p_profile_id: pages.Wholesale, p_method: 'email' });
     assert.match(error?.message ?? '', /this supplier's website domain/);
-    const { data, error: phoneError } = await users.claimer.client.rpc('start_bar_claim', { p_profile_id: pages.Wholesale, p_method: 'phone' });
+    const { data, error: phoneError } = await users.claimer.client.rpc('start_bar_claim', { p_profile_id: pages.Wholesale, p_method: 'phone', p_phone: '(555) 010-4417' });
     assert.equal(phoneError, null);
     assert.equal(data.status, 'pending');
   });

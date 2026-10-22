@@ -61,7 +61,7 @@ const bar = async (name) => (await db.query('INSERT INTO public.bars (name) VALU
 const page = async (name) =>
   (await db.query("INSERT INTO public.profiles (kind, handle, display_name, is_public) VALUES ('bar', $1, $2, true) RETURNING id", [`${name}${run}`, `${name} ${run}`])).rows[0].id;
 const claim = (who, profileId, barId) =>
-  users[who].client.rpc('start_bar_claim', { p_profile_id: profileId, p_method: 'phone', p_bar_id: barId });
+  users[who].client.rpc('start_bar_claim', { p_profile_id: profileId, p_method: 'phone', p_bar_id: barId, p_phone: '(555) 010-4417' });
 
 before(async () => {
   await db.connect();

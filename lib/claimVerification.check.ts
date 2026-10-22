@@ -2,7 +2,7 @@
 // The same cases run against the database in supabase/tests/bar-claims.test.mjs.
 import assert from 'node:assert/strict';
 
-import { claimPlace, claimProblem, emailCheck, isSharedHost, newClaimCode, pageInstagram, personClaimMethods, siteHost, siteIsRoot, spacedCode } from './claimVerification';
+import { claimPlace, claimProblem, emailCheck, isSharedHost, newClaimCode, pageInstagram, personClaimMethods, siteHost, siteIsRoot, spacedCode, typedHandle, typedPhone, typedWebsite } from './claimVerification';
 
 // Hosts lose the scheme, www., port, path and case.
 assert.equal(siteHost('https://www.PaleMoth.com/en?x=1'), 'palemoth.com');
@@ -62,3 +62,16 @@ assert.equal(newClaimCode(() => 0), '000000');
 assert.equal(newClaimCode(() => 0.4829131), '482913');
 assert.equal(newClaimCode(() => 0.9999999), '999999');
 assert.match(newClaimCode(), /^[0-9]{6}$/);
+
+// What a claimant types when the page has none, read the way start_bar_claim reads it (20261031200000).
+assert.equal(typedHandle(' @Harbour.Room '), 'harbour.room');
+assert.equal(typedHandle('https://www.instagram.com/harbourroom/'), 'harbourroom');
+assert.equal(typedHandle('not a handle!'), null);
+assert.equal(typedHandle(''), null);
+assert.equal(typedWebsite('harbourroom.com'), 'https://harbourroom.com');
+assert.equal(typedWebsite('http://harbourroom.com/'), 'http://harbourroom.com/');
+assert.equal(typedWebsite('harbour room'), null);
+assert.equal(typedPhone('(555) 010-8823'), '(555) 010-8823');
+assert.equal(typedPhone('+61 3 9000 0000'), '+61 3 9000 0000');
+assert.equal(typedPhone('call me'), null);
+assert.equal(typedPhone('12345'), null);

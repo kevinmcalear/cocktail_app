@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { changedProfiles, type ClaimSetup, type ProfileClaim } from '@/hooks/useProfiles';
 import { track } from '@/lib/analytics';
-import type { BarClaimMethod } from '@/lib/claimVerification';
+import type { BarClaimMethod, TypedDetails } from '@/lib/claimVerification';
 import { supabase } from '@/lib/supabase';
 
 export interface NewBarClaim {
@@ -14,6 +14,8 @@ export interface NewBarClaim {
   note: string;
   /** The six digits the app showed before sending (lib/claimVerification newClaimCode). */
   code?: string | null;
+  /** What they typed where the page has no Instagram, website or phone. Only the chosen way's goes; the page's own wins. */
+  typed?: TypedDetails;
 }
 
 /**
@@ -24,13 +26,16 @@ export interface NewBarClaim {
 export function useStartBarClaim() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ profileId, method, barId, note, code }: NewBarClaim): Promise<ProfileClaim> => {
+    mutationFn: async ({ profileId, method, barId, note, code, typed }: NewBarClaim): Promise<ProfileClaim> => {
       const { data, error } = await supabase.rpc('start_bar_claim', {
         p_profile_id: profileId,
         p_method: method,
         p_bar_id: barId,
         p_note: note.trim().slice(0, 1000) || null,
         p_code: method === 'email' ? null : (code ?? null),
+        p_instagram: method === 'instagram' ? typed?.instagram?.trim() || null : null,
+        p_website: method === 'email' ? typed?.website?.trim() || null : null,
+        p_phone: method === 'phone' ? typed?.phone?.trim() || null : null,
       });
       if (error) throw error;
       return data as ProfileClaim;

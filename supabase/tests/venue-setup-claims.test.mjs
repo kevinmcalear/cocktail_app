@@ -101,7 +101,7 @@ describe('starting a claim during setup', () => {
   });
 
   test('still makes a code when none is given', async () => {
-    const { data, error } = await users.other.client.rpc('start_bar_claim', { p_profile_id: await page('wick'), p_method: 'phone' });
+    const { data, error } = await users.other.client.rpc('start_bar_claim', { p_profile_id: await page('wick'), p_method: 'phone', p_phone: '(555) 010-4417' });
     assert.ifError(error);
     assert.match(data.code, /^[0-9]{6}$/);
   });
