@@ -86,5 +86,6 @@ describe('taking a bottle off the back bar', () => {
     await act(async () => {
       await result.current.restock.mutateAsync(done.stock!);
     });
+    expect(mockCalls.at(-1)).toEqual({ table: 'back_bar_items', op: 'insert', payload: { bar_id: 'rye', ...STOCK } });
   });
 });

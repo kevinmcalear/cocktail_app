@@ -202,7 +202,9 @@ export function useStockMutations(barId: string | null | undefined) {
     onMutate: async ({ item, source, fromName, addedAt }) => {
       const ctx = await before();
       const row: BackBarItem = { id: `pending-${item.id}`, bar_id: barId!, item_id: item.id, source, from_name: fromName ?? null, added_at: addedAt ?? new Date().toISOString(), item };
-      qc.setQueryData<BackBarItem[]>(key, (rows) => [row, ...(rows ?? []).filter((r) => r.item_id !== item.id)]);
+      // Newest first, as the list reads; an Undo's older row goes back in its place.
+      const newest = (x: BackBarItem, y: BackBarItem) => Date.parse(y.added_at) - Date.parse(x.added_at);
+      qc.setQueryData<BackBarItem[]>(key, (rows) => [row, ...(rows ?? []).filter((r) => r.item_id !== item.id)].sort(newest));
       return ctx;
     },
     onError: rollback,
