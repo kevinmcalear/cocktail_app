@@ -10,7 +10,7 @@
 //      `GRANT ALL ON TABLE ... TO "anon"` lines `supabase db diff` writes
 //      (drop those, or grant SELECT). RLS is the first lock; table grants are
 //      the second. A deliberate one carries `-- allow-anon-write: <reason>`
-//      in its own statement (on its lines or the comment just above it).
+//      in its own statement (on its lines or the -- lines directly above).
 //      The default privileges Supabase sets up, which gave anon writes on
 //      every table, are not in any migration; PR "second lock"
 //      (fix/db-second-lock, #740) revokes them, and `npm run db:health`
@@ -41,14 +41,14 @@ function headerText(sql) {
   for (const line of sql.split('\n')) {
     const t = line.trim();
     if (inBlock) {
-      out.push(t.replace(/\*\/.*$/, ''));
+      out.push(t.replace(/\*\/.*$/, '').replace(/^\*+\s*/, '').trim());
       if (t.includes('*/')) inBlock = false;
     } else if (t === '') {
       continue;
     } else if (t.startsWith('--')) {
       out.push(t.replace(/^-+\s?/, ''));
     } else if (t.startsWith('/*')) {
-      out.push(t.replace(/^\/\*+/, '').replace(/\*\/.*$/, ''));
+      out.push(t.replace(/^\/\*+/, '').replace(/\*\/.*$/, '').trim());
       inBlock = !t.includes('*/');
     } else {
       break;
@@ -86,26 +86,32 @@ const QUALIFIED = String.raw`${NAME}(?:\s*\.\s*${NAME})?`;
 const WRITE_PRIVILEGE = /\b(insert|update|delete|truncate|all)\b/i;
 const OPEN_ROLE = /(^|[\s,])"?(anon|public)"?(?=$|[\s,])/i;
 const ALLOW = /allow-anon-write:\s*\S/i;
-// ALL on a function, procedure or routine is EXECUTE: not a write.
-const ROUTINE = /^\s*(?:all\s+)?(?:function|functions|procedure|procedures|routine|routines)\b/i;
+// ALL on a function, procedure or routine is EXECUTE: not a write. (A table
+// called "functions" is still a table: `on functions to anon` does not match.)
+const ROUTINE = /^\s*(?:all\s+(?:functions|procedures|routines)\s+in\b|(?:function|procedure|routine)\s+(?!to\b)\S)/i;
 
 function grantProblems(file, sql, code) {
   const problems = [];
+  // Strings blanked but comments kept: where an allow comment can be.
+  const notes = maskSql(sql, { dollar: 'code', comments: 'keep' }).code;
+  const lines = sql.split('\n');
   // [^;] keeps each match inside one statement (GRANT role TO role has no ON).
+  // The comments that belong to one statement: the -- lines directly above
+  // it, those inside it, and one trailing its last line when no other
+  // statement follows on that line. Never text in a string.
+  const ownComments = (start, end, firstLine) => {
+    const above = [];
+    for (let k = firstLine - 2; k >= 0 && lines[k].trim().startsWith('--'); k--) above.push(lines[k]);
+    const lineEnd = sql.indexOf('\n', end) === -1 ? sql.length : sql.indexOf('\n', end);
+    const tail = code.slice(end + 1, lineEnd).trim() === '' ? notes.slice(end, lineEnd) : '';
+    return [...above, notes.slice(start, end), tail].join('\n');
+  };
   for (const m of code.matchAll(/\bgrant\b([^;]*?)\bon\b([^;]*?)\bto\b([^;]*)/gi)) {
     const [, privileges, object, grantees] = m;
     const roles = grantees.replace(/\bwith\s+grant\s+option\b/i, '').replace(/\bgranted\s+by\b[\s\S]*$/i, '');
     if (!WRITE_PRIVILEGE.test(privileges) || !OPEN_ROLE.test(roles) || ROUTINE.test(object)) continue;
     const first = lineAt(sql, m.index);
-    // The statement's own text: from the line after the previous statement
-    // ends (so a comment above it counts, but not the previous statement's
-    // trailing comment) to the end of the line where this one ends.
-    const prevEnd = code.lastIndexOf(';', m.index);
-    const afterPrev = prevEnd === -1 ? 0 : code.indexOf('\n', prevEnd);
-    const from = afterPrev === -1 || afterPrev > m.index ? prevEnd + 1 : afterPrev;
-    const lineEnd = sql.indexOf('\n', m.index + m[0].length);
-    const own = sql.slice(from, lineEnd === -1 ? sql.length : lineEnd);
-    if (ALLOW.test(own)) continue;
+    if (ALLOW.test(ownComments(m.index, m.index + m[0].length, first))) continue;
     const priv = WRITE_PRIVILEGE.exec(privileges)[1].toUpperCase();
     const role = OPEN_ROLE.exec(roles)[2].toLowerCase();
     problems.push(`${file}:${first}: grants ${priv} to ${role}. Signed-out visitors must not get table writes: grant to authenticated instead, or add \`-- allow-anon-write: <reason>\` to that statement if it is deliberate.`);
@@ -147,6 +153,30 @@ export function changedMigrations(ref) {
     .filter((f) => f.endsWith('.sql'));
 }
 
+/**
+ * The problems `after` adds to a migration that was `before` (null for a new
+ * file). Editing an applied migration, say to fix its stale header, is not
+ * blamed for the old lines it kept.
+ */
+export function newProblems(file, before, after) {
+  const key = (p) => p.replace(/^([^:]+):\d+:/, '$1:');
+  const old = before === null ? [] : migrationRuleProblems(file, before).map(key);
+  return migrationRuleProblems(file, after).filter((p) => {
+    const i = old.indexOf(key(p));
+    if (i === -1) return true;
+    old.splice(i, 1);
+    return false;
+  });
+}
+
+function baseVersion(ref, path) {
+  try {
+    return execFileSync('git', ['show', `${ref}:${path}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return null;
+  }
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const ref = process.argv[2] ?? 'origin/main';
   // On a PR, CI checks out GitHub's merge commit, so this diff is the PR's own
@@ -155,7 +185,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     .split('\n')
     .filter((f) => f.endsWith('.sql'));
   const files = [...new Set([...changedMigrations(ref), ...untracked])].sort();
-  const problems = files.flatMap((f) => migrationRuleProblems(f.replace(`${DIR}/`, ''), readFileSync(f, 'utf8')));
+  const problems = files.flatMap((f) => newProblems(f.replace(`${DIR}/`, ''), baseVersion(ref, f), readFileSync(f, 'utf8')));
   if (problems.length) {
     console.error(`Migration rules (files added or changed against ${ref}):`);
     for (const p of problems) console.error(`  ${p}`);

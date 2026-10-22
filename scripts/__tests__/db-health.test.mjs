@@ -8,7 +8,7 @@ test('SELECT and WITH reads pass, with write words allowed inside strings and co
   assert.doesNotThrow(() => assertReadOnly('select count(*) from public.items'));
   assert.doesNotThrow(() => assertReadOnly("with t as (select 1) select * from t where 'a' <> 'delete from x';"));
   assert.doesNotThrow(() => assertReadOnly("select privilege_type from x where privilege_type in ('INSERT', 'UPDATE') -- drop it\n"));
-  assert.doesNotThrow(() => assertReadOnly('select updated_at, relrowsecurity, set_config from x'));
+  assert.doesNotThrow(() => assertReadOnly('select updated_at, relrowsecurity, settings_reset_at from x'));
   assert.doesNotThrow(() => assertReadOnly("select $q$'; delete from x; --$q$, E'it\\'s; drop' from x"), 'literals, even dollar-quoted and E strings');
   assert.doesNotThrow(() => assertReadOnly('select 1 /* outer /* inner */ ; delete from x */'), 'nested comments');
 });
@@ -28,6 +28,8 @@ test('anything that could write is refused before it runs', () => {
     "select 1 where 'unclosed",
     'select 1 /* unclosed',
     'select $$unclosed',
+    "select set_config('transaction_read_only', 'off', true)",
+    'select pg_terminate_backend(1)',
     'insert into x values (1)',
     'truncate public.items',
   ]) {
@@ -60,8 +62,11 @@ test('the report counts each check and names migration mismatches', () => {
   assert.equal(report.rls_off.capped, false);
   assert.equal(buildReport({ ...empty, rls_off: Array.from({ length: 200 }, (_, i) => ({ table: `t${i}` })) }, [], []).rls_off.capped, true);
   assert.match(report.unreferenced_files.note, /Check before deleting/);
+  assert.equal(report.unreferenced_files.capped, false);
+  const big = buildReport({ ...empty, unreferenced_files: [{ bucket: 'drinks', files: '3', bytes: '9', bucket_files: '20001' }] }, [], []);
+  assert.deepEqual([big.unreferenced_files.count, big.unreferenced_files.capped], [3, true]);
   assert.equal(report.summary.rls_off, 1);
   assert.equal(report.summary.drafts_older_than_60_days, 3);
-  assert.deepEqual(report.migrations, { production: 2, on_disk: 2, not_in_production: ['3'], not_on_disk: ['1'] });
+  assert.deepEqual(report.migrations, { applied: 2, on_disk: 2, not_applied: ['3'], not_on_disk: ['1'] });
   assert.equal(report.summary.migrations_mismatched, 2);
 });

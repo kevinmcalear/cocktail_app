@@ -7,20 +7,21 @@
 // is on (Supabase's default), so a backslash in a plain '' string is just a
 // character.
 
-const IDENT_CHAR = /[\w$\u0080-￿]/;
-const DOLLAR_TAG = /\$(?:[A-Za-z_\u0080-￿][\w\u0080-￿]*)?\$/y;
+const IDENT_CHAR = /[\w$\u0080-\uffff]/;
+const DOLLAR_TAG = /\$(?:[A-Za-z_\u0080-\uffff][\w\u0080-\uffff]*)?\$/y;
 
 /**
  * The SQL with comments and string literals blanked to spaces (newlines
  * kept), so every index still lines up with the original. Quoted identifiers
- * stay as they are. `unterminated` says a literal, identifier or comment
- * never closed (everything after it is blanked).
+ * stay as they are, and so do comments with comments: 'keep'.
+ * `unterminated` says a literal, identifier or comment never closed
+ * (everything after it is blanked).
  *
  * dollar: 'text' blanks every dollar-quoted body. 'code' reads a body that
  * scans as complete SQL (a function or DO block) as code, masked the same
  * way, and blanks one that doesn't (prose with an apostrophe, say).
  */
-export function maskSql(sql, { dollar = 'text' } = {}) {
+export function maskSql(sql, { dollar = 'text', comments = 'blank' } = {}) {
   const out = sql.split('');
   const blank = (from, to) => {
     for (let k = from; k < to; k++) if (out[k] !== '\n') out[k] = ' ';
@@ -33,7 +34,7 @@ export function maskSql(sql, { dollar = 'text' } = {}) {
     if (sql.startsWith('--', i)) {
       const end = sql.indexOf('\n', i);
       const stop = end === -1 ? sql.length : end;
-      blank(i, stop);
+      if (comments !== 'keep') blank(i, stop);
       i = stop;
     } else if (sql.startsWith('/*', i)) {
       let depth = 1;
@@ -45,7 +46,7 @@ export function maskSql(sql, { dollar = 'text' } = {}) {
         } else j++;
       }
       if (depth) unterminated = true;
-      blank(i, j);
+      if (comments !== 'keep') blank(i, j);
       i = j;
     } else if (c === "'" || ((c === 'e' || c === 'E') && sql[i + 1] === "'" && !afterIdent(i))) {
       const escapes = c !== "'";
@@ -93,7 +94,7 @@ export function maskSql(sql, { dollar = 'text' } = {}) {
       }
       blank(i, start);
       blank(end, end + tag.length);
-      const inner = dollar === 'code' ? maskSql(sql.slice(start, end), { dollar }) : null;
+      const inner = dollar === 'code' ? maskSql(sql.slice(start, end), { dollar, comments }) : null;
       if (inner && !inner.unterminated) for (let k = 0; k < inner.code.length; k++) out[start + k] = inner.code[k];
       else blank(start, end);
       i = end + tag.length;

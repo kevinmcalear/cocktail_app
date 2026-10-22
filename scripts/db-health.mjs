@@ -16,21 +16,24 @@
 // with default_transaction_read_only on. The report holds counts and the
 // names of bars, drinks and tables only: never emails, user ids or people's
 // names.
-import { execFileSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { versionOf } from './migration-order.mjs';
 import { maskSql } from './sql-code.mjs';
-import { listMigrations, parseCliJson, supabaseJson, cliErrorMessage } from './supabase-cli.mjs';
+import { listMigrations, supabaseJson } from './supabase-cli.mjs';
 
 const TEST_NAME = String.raw`\m(test|testing|asdf|tmp|dummy)\M`;
 const DEMO = String.raw`\mdemo\M`;
 // Real drinks whose names trip TEST_NAME.
 const REAL_NAMES = `'test pilot'`;
 const LIST_CAP = 200;
+const FILE_SCAN_CAP = 20000;
 
 const WRITE_WORDS = /\b(insert|into|update|delete|merge|truncate|drop|alter|create|grant|revoke|copy|call|do|set|reset|lock|vacuum|analyze|refresh|comment|cluster|reindex|listen|notify|prepare|execute|begin|commit|rollback|savepoint|discard|load|import)\b/i;
+// Functions with side effects a read-only transaction still allows.
+const SIDE_EFFECTS = /\b(set_config|pg_terminate_backend|pg_cancel_backend|pg_reload_conf|pg_rotate_logfile|pg_notify|pg_sleep\w*|pg_advisory\w*|pg_try_advisory\w*|dblink\w*|http\w*|net\.\w+)\s*\(/i;
 
 /** Throws unless `sql` is a single read-only SELECT or WITH statement. */
 export function assertReadOnly(sql) {
@@ -41,7 +44,7 @@ export function assertReadOnly(sql) {
   const statement = code.trim().replace(/;\s*$/, '');
   if (statement.includes(';')) throw new Error('db-health runs one statement at a time.');
   if (!/^(select|with)\b/i.test(statement)) throw new Error(`db-health runs SELECT or WITH only, got: ${statement.slice(0, 60)}`);
-  const word = WRITE_WORDS.exec(statement);
+  const word = WRITE_WORDS.exec(statement) ?? SIDE_EFFECTS.exec(statement);
   if (word) throw new Error(`db-health refuses SQL containing "${word[1]}".`);
   return sql;
 }
@@ -117,15 +120,26 @@ const CHECKS = {
     where n.nspname in ('public', 'private') and c.relkind in ('r', 'p') and not c.relrowsecurity
     order by 1 limit ${LIST_CAP}`,
 
-  // Table-level writes granted to anon or PUBLIC (grantee 0).
+  // Writes granted to anon or PUBLIC (grantee 0), on whole tables or on
+  // columns (shown as "UPDATE (name)").
   anon_write_grants: String.raw`
-    select n.nspname || '.' || c.relname as "table", string_agg(distinct a.privilege_type, ', ') as privileges
-    from pg_class c
+    with g as (
+      select c.oid, a.privilege_type as privilege
+      from pg_class c cross join lateral aclexplode(c.relacl) a
+      where a.grantee in ((select oid from pg_roles where rolname = 'anon'), 0)
+      union all
+      select c.oid, a.privilege_type || ' (' || att.attname || ')'
+      from pg_class c
+      join pg_attribute att on att.attrelid = c.oid and att.attacl is not null and not att.attisdropped
+      cross join lateral aclexplode(att.attacl) a
+      where a.grantee in ((select oid from pg_roles where rolname = 'anon'), 0)
+    )
+    select n.nspname || '.' || c.relname as "table", string_agg(distinct g.privilege, ', ') as privileges
+    from g
+    join pg_class c on c.oid = g.oid
     join pg_namespace n on n.oid = c.relnamespace
-    cross join lateral aclexplode(c.relacl) a
     where n.nspname in ('public', 'private') and c.relkind in ('r', 'p', 'v', 'm', 'f')
-      and a.grantee in ((select oid from pg_roles where rolname = 'anon'), 0)
-      and a.privilege_type in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
+      and split_part(g.privilege, ' ', 1) in ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE')
     group by 1 order by 1 limit ${LIST_CAP}`,
 
   // Default privileges that give anon or PUBLIC writes on tables created
@@ -165,8 +179,9 @@ const CHECKS = {
   // thumbnail each drink picture has at thumbs/<path>.jpg. A new column that
   // stores pictures belongs here. The report says "check before deleting":
   // code can also point at a file by its path.
-  // ponytail: capped at the newest 20,000 files so it stays quick; past that,
-  // page through by created_at.
+  // ponytail: looks at the newest FILE_SCAN_CAP files so it stays quick; the
+  // report says "capped" when storage holds more. Past that, page through by
+  // created_at.
   unreferenced_files: String.raw`
     with urls as (
       select url as u from public.images
@@ -194,26 +209,27 @@ const CHECKS = {
       from paths where path like 'drinks/%'
     ), objs as (
       select bucket_id, name, (metadata->>'size')::bigint as size
-      from storage.objects order by created_at desc limit 20000
+      from storage.objects order by created_at desc limit ${FILE_SCAN_CAP}
     )
-    select o.bucket_id as bucket, count(*) as files, coalesce(sum(o.size), 0) as bytes,
-           (select count(*) from storage.objects so where so.bucket_id = o.bucket_id) as bucket_files
-    from objs o
-    where not exists (select 1 from refs r where r.path = o.bucket_id || '/' || o.name)
+    select b.id as bucket, count(o.name) as files, coalesce(sum(o.size), 0) as bytes,
+           (select count(*) from storage.objects so where so.bucket_id = b.id) as bucket_files
+    from storage.buckets b
+    left join objs o on o.bucket_id = b.id
+      and not exists (select 1 from refs r where r.path = o.bucket_id || '/' || o.name)
     group by 1 order by 1`,
 };
 
 function makeRunner(args) {
   const local = args.includes('--local');
   const w = args.indexOf('--workdir');
+  if (w !== -1 && (!args[w + 1] || args[w + 1].startsWith('--'))) throw new Error('--workdir needs a directory.');
   const workdir = w === -1 ? [] : ['--workdir', args[w + 1]];
   let dbUrl;
   if (local) {
     try {
-      const status = execFileSync('supabase', ['status', '-o', 'json', ...workdir], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-      dbUrl = readOnlyUrl(parseCliJson(status).DB_URL);
+      dbUrl = readOnlyUrl(supabaseJson(['status', '-o', 'json', ...workdir]).DB_URL);
     } catch (e) {
-      throw new Error(`could not find the local database (is it running?): ${cliErrorMessage(e)}`);
+      throw new Error(`could not find the local database (is it running?): ${e.message}`);
     }
   }
   return {
@@ -232,8 +248,9 @@ function makeRunner(args) {
 // probably more.
 const list = (rows) => ({ count: rows.length, capped: rows.length === LIST_CAP, rows });
 
-export function buildReport(results, diskVersions, prodVersions) {
-  const prod = new Set(prodVersions);
+/** `appliedVersions`: the migrations the checked database has applied. */
+export function buildReport(results, diskVersions, appliedVersions) {
+  const applied = new Set(appliedVersions);
   const disk = new Set(diskVersions);
   const report = {
     test_named_drinks: list(results.test_named_drinks),
@@ -260,14 +277,15 @@ export function buildReport(results, diskVersions, prodVersions) {
       rows: results.old_drafts,
     },
     migrations: {
-      production: prod.size,
+      applied: applied.size,
       on_disk: disk.size,
-      not_in_production: diskVersions.filter((v) => !prod.has(v)),
-      not_on_disk: prodVersions.filter((v) => !disk.has(v)),
+      not_applied: diskVersions.filter((v) => !applied.has(v)),
+      not_on_disk: appliedVersions.filter((v) => !disk.has(v)),
     },
     unreferenced_files: {
       count: results.unreferenced_files.reduce((n, r) => n + Number(r.files), 0),
       bytes: results.unreferenced_files.reduce((n, r) => n + Number(r.bytes), 0),
+      capped: results.unreferenced_files.reduce((n, r) => n + Number(r.bucket_files), 0) > FILE_SCAN_CAP,
       note: 'May still be in use: code can point at a file by its path. Check before deleting.',
       by_bucket: results.unreferenced_files,
     },
@@ -283,9 +301,9 @@ export function buildReport(results, diskVersions, prodVersions) {
     anon_default_write_privileges_on: report.anon_write_grants.default_privileges_on,
     empty_tables: report.empty_tables.count,
     drafts_older_than_60_days: report.drafts_older_than_60_days.count,
-    migrations_production: report.migrations.production,
+    migrations_applied: report.migrations.applied,
     migrations_on_disk: report.migrations.on_disk,
-    migrations_mismatched: report.migrations.not_in_production.length + report.migrations.not_on_disk.length,
+    migrations_mismatched: report.migrations.not_applied.length + report.migrations.not_on_disk.length,
     unreferenced_files: report.unreferenced_files.count,
   };
   return { summary, ...report };
@@ -311,16 +329,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       fail(name, e);
     }
   }
-  let prodVersions;
+  let appliedVersions;
   try {
-    prodVersions = runner.appliedMigrations();
+    appliedVersions = runner.appliedMigrations();
   } catch (e) {
     fail('migrations', e);
   }
-  const diskVersions = readdirSync(join('supabase', 'migrations'))
-    .map((f) => /^(\d{14})_.+\.sql$/.exec(f)?.[1])
-    .filter(Boolean)
-    .sort();
-  const report = buildReport(results, diskVersions, prodVersions);
+  const diskVersions = readdirSync(join('supabase', 'migrations')).map(versionOf).filter(Boolean).sort();
+  const report = buildReport(results, diskVersions, appliedVersions);
   console.log(JSON.stringify({ generated_at: new Date().toISOString(), target: args.includes('--local') ? 'local' : 'linked', ...report }, null, 2));
 }

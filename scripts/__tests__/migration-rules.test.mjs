@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { migrationRuleProblems } from '../migration-rules.mjs';
+import { migrationRuleProblems, newProblems } from '../migration-rules.mjs';
 
 const FILE = '20261102100000_example.sql';
 const check = (sql) => migrationRuleProblems(FILE, sql);
@@ -31,6 +31,20 @@ test('headers about drafts or applying things are not stale markers', () => {
   assert.deepEqual(check('-- Each discount is not applied twice.\nselect 1;\n'), []);
   assert.deepEqual(check('-- Menus in DRAFT state stay private.\nselect 1;\n'), []);
   assert.equal(check('-- Venue switches.\n-- DRAFT (step 2). Local stack only.\nselect 1;\n').length, 1);
+});
+
+test('a block-comment header is checked too', () => {
+  assert.equal(check('/* DRAFT */\nselect 1;\n').length, 1);
+  assert.equal(check('/*\n * DRAFT: step 2\n */\nselect 1;\n').length, 1);
+  assert.deepEqual(check('/*\n * Draft menus can be shared.\n */\nselect 1;\n'), []);
+});
+
+test('editing an applied migration is blamed only for what it adds', () => {
+  const before = '-- DRAFT. Local stack only.\nGRANT ALL ON TABLE "public"."bars" TO "anon";\n';
+  const fixed = '-- Bars.\n\nGRANT ALL ON TABLE "public"."bars" TO "anon";\n';
+  assert.deepEqual(newProblems(FILE, before, fixed), []);
+  assert.equal(newProblems(FILE, before, `${fixed}grant insert on public.menus to anon;\n`).length, 1);
+  assert.equal(newProblems(FILE, null, fixed).length, 1, 'a new file is checked in full');
 });
 
 // --- grants to anon and public ---
@@ -68,10 +82,14 @@ test('an allow-anon-write comment covers its own statement only', () => {
   assert.deepEqual(check(trailing).map((p) => p.split(':')[1]), ['3']);
   const above = '-- Grants.\n-- allow-anon-write: visits\ngrant insert on public.page_views to anon;\ngrant insert on public.bars to anon;\n';
   assert.deepEqual(check(above).map((p) => p.split(':')[1]), ['4']);
+  assert.equal(check('-- Page views (allow-anon-write: visits).\n\ngrant insert on public.bars to anon;\n').length, 1, 'not from the header');
+  assert.equal(check("-- Grants.\ngrant insert on public.bars to anon; select 'allow-anon-write: x';\n").length, 1, 'not from a string');
+  assert.equal(check('-- Grants.\ngrant insert on public.bars to anon; grant insert on public.v to anon; -- allow-anon-write: visits\n').length, 1, 'a trailing comment is the last statement\'s');
 });
 
 test('grants of ALL on functions, as supabase db diff writes them, are EXECUTE and pass', () => {
   assert.deepEqual(check('-- Grants.\nGRANT ALL ON FUNCTION "public"."x"() TO "anon";\ngrant all on all functions in schema public to anon;\n'), []);
+  assert.equal(check('-- Grants.\ngrant insert on functions to anon;\n').length, 1, 'a table called functions');
 });
 
 // --- quoting ---

@@ -20,7 +20,7 @@ import { pathToFileURL } from 'node:url';
 const DIR = 'supabase/migrations';
 const VERSION = /^(\d{14})_.+\.sql$/;
 
-const versionOf = (file) => VERSION.exec(file)?.[1] ?? null;
+export const versionOf = (file) => VERSION.exec(file)?.[1] ?? null;
 
 /** What's wrong with the branch's migration files, next to the base's. */
 export function migrationProblems(baseFiles, headFiles) {
