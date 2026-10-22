@@ -31,14 +31,14 @@ function chips({ front, more, show, count, onPick }: FilterSet, look: 'outline' 
       key={picked.value}
       look={look}
       label={picked.label}
-      count={count(picked.value)}
+      count={String(count(picked.value))}
       selected
       trailing={<IconSymbol name="xmark" size={11} color={ds.accentFill.text} />}
       accessibilityLabel={`${picked.label}, ${count(picked.value)}. Back to All`}
       onPress={() => onPick('all')}
     />
   ) : null;
-  return [back, ...front.map((f) => <Chip key={f.value} look={look} label={f.label} count={count(f.value)} selected={show === f.value} onPress={() => onPick(f.value)} />)].filter(Boolean);
+  return [back, ...front.map((f) => <Chip key={f.value} look={look} label={f.label} count={String(count(f.value))} selected={show === f.value} onPress={() => onPick(f.value)} />)].filter(Boolean);
 }
 
 /** The row in the page: outlined chips, scrolling sideways edge to edge. */
@@ -91,7 +91,8 @@ export function PinnedFilters({ set, gutter }: { set: FilterSet; gutter: number 
 
 const styles = StyleSheet.create({
   circle: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  pinned: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: space.xl },
+  // Taps pass through the fade to the tiles under it; only the header and chips catch them.
+  pinned: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: space.xl, pointerEvents: 'box-none' },
   // 36-point chips in a 4-point track: a 44-point target (disc-desk-browse).
   track: { padding: space.xs },
   trackChips: { flexDirection: 'row', gap: space.xs + 2 },

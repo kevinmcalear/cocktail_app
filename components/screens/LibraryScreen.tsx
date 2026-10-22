@@ -83,6 +83,12 @@ export function LibraryScreen() {
   const [rowY, setRowY] = useState(0);
   const [pinned, setPinned] = useState(false);
   const onScrollY = (y: number) => setPinned(phone && !!rowY && y > rowY - layout.minTapTarget * 2);
+  // A new view opens at its top (Classics is its own list), so the filters unpin.
+  const [pinnedShow, setPinnedShow] = useState(show);
+  if (pinnedShow !== show) {
+    setPinnedShow(show);
+    setPinned(false);
+  }
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
   const { data: menus } = useVenueMenus(activeId);
   const staff = useStaffList(activeId);
@@ -164,7 +170,7 @@ export function LibraryScreen() {
           <PhoneFilterRow set={filterSet} gutter={gutter} />
         </View>
       ) : (
-        <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={groups.map((g) => g.map((f) => <Chip key={f.value} look="outline" label={f.label} count={count(f.value)} selected={show === f.value} onPress={() => pick(f.value)} />))} />
+        <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={groups.map((g) => g.map((f) => <Chip key={f.value} look="outline" label={f.label} count={String(count(f.value))} selected={show === f.value} onPress={() => pick(f.value)} />))} />
       )}
       {show === 'on-menu' && byMenu.onMenus.length > 1 ? (
         <FilterRow
