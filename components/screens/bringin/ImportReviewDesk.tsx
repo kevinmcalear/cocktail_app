@@ -1,3 +1,4 @@
+import { useIsFocused } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
@@ -40,10 +41,12 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
   const choices = review?.choices[at];
   const sketch = useSteadySketch(recipe && choices ? toMake(recipe, choices).sketch : undefined);
 
-  // A approves, S skips, the arrows move: not while typing, or with a sheet open over the page.
+  // A approves, S skips, the arrows move: not while typing, with a sheet open over the page, or
+  // with another screen on top (Edit this drink's editor).
+  const focused = useIsFocused();
   const keys = useRef({ approve: () => {}, skip: () => {}, move: (_by: number) => {} });
   useEffect(() => {
-    keys.current = { approve: () => approve(at), skip: () => skip(at), move: (by) => go(at + by) };
+    keys.current = focused ? { approve: () => approve(at), skip: () => skip(at), move: (by) => go(at + by) } : { approve: () => {}, skip: () => {}, move: () => {} };
   });
   useEffect(() => {
     if (Platform.OS !== 'web') return;

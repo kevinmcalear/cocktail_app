@@ -14,7 +14,7 @@ import { ImportReview } from './ImportReview';
 import { ImportReviewDesk } from './ImportReviewDesk';
 
 const mockSave = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
+jest.mock('expo-router', () => ({ useIsFocused: () => true, useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), canGoBack: () => true }) }));
 jest.mock('@/hooks/useBringInSave', () => ({ useBringInSave: () => ({ mutateAsync: mockSave }) }));
 jest.mock('@/hooks/useBulk', () => ({ useSpecCatalog: () => ({ catalog: [], aliases: [], methods: [], glasses: [], isLoading: false }) }));
 jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { iceTypes: [] } }) }));

@@ -5,7 +5,7 @@ import { VenueBrandProvider } from "@/components/nav/VenueBrandProvider";
 import { AddDrinkWizard } from "@/components/screens/addDrink/AddDrinkWizard";
 import { DraftEditScreen } from "@/components/screens/drink/edit/DraftEditScreen";
 import { emptySummary } from "@/lib/bringInBatch";
-import { approved } from "@/lib/importReview";
+import { approved, canCheck } from "@/lib/importReview";
 import { useBringIn } from "@/store/useBringIn";
 
 /**
@@ -48,7 +48,8 @@ export default function AddCocktailScreen() {
                         if (review && drink) {
                             goBack();
                             const made = { drinkId: id, summary: { ...emptySummary("recipes"), drinksNew: 1 }, warnings: [] };
-                            useBringIn.getState().editReview(review, (r) => approved(r, Number(drink), made, new Date().toISOString()));
+                            // Only if it's still to check there: a drink is never counted twice.
+                            useBringIn.getState().editReview(review, (r) => (canCheck(r, Number(drink)) ? approved(r, Number(drink), made, new Date().toISOString()) : r));
                         } else if (menuSectionId) goBack();
                         else if (round === "1") router.replace("/library");
                         else router.replace(`/cocktail/${id}`);
