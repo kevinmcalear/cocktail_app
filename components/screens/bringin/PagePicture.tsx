@@ -25,16 +25,22 @@ const isImage = (file: ReadFile | null | undefined) => !!file && file.mimeType.s
  * was found boxed on it, or a card for a PDF or for text (which can't be
  * drawn here). `width` is the space it has.
  */
-export function PagePicture({ file, text, width, maxHeight, marks = [], style }: { file?: ReadFile | null; text?: string | null; width: number; maxHeight: number; marks?: PageMark[]; style?: StyleProp<ViewStyle> }) {
+export function PagePicture({ file, text, width, maxHeight, marks = [], style, onGone }: { file?: ReadFile | null; text?: string | null; width: number; maxHeight: number; marks?: PageMark[]; style?: StyleProp<ViewStyle>; onGone?: () => void }) {
   const ds = useDs();
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  if (isImage(file)) {
+  // A page kept from an earlier visit may be gone (the browser's or the phone's copy): the card stands in.
+  const [gone, setGone] = useState(false);
+  const lost = () => {
+    setGone(true);
+    onGone?.();
+  };
+  if (isImage(file) && !gone) {
     const ratio = size ? size.height / size.width : 1.3;
     const w = Math.min(width, maxHeight / ratio);
     const frame = { width: w, height: w * ratio };
     return (
       <View style={[styles.page, frame, { backgroundColor: ds.c.paper }, style]} role="img" aria-label="The page being read">
-        <Image source={{ uri: file!.uri }} contentFit="cover" style={StyleSheet.absoluteFill} onLoad={(e) => setSize({ width: e.source.width, height: e.source.height })} />
+        <Image source={{ uri: file!.uri }} contentFit="cover" style={StyleSheet.absoluteFill} onLoad={(e) => setSize({ width: e.source.width, height: e.source.height })} onError={lost} />
         {size
           ? marks.map((mark, i) => (
               <View key={i} aria-hidden style={[styles.mark, boxRect(mark.box, frame), { borderColor: ds.accentText, borderStyle: mark.dashed ? 'dashed' : 'solid', backgroundColor: withAlpha(ds.accentText, 0.14) }]}>
@@ -71,8 +77,10 @@ export function PagePicture({ file, text, width, maxHeight, marks = [], style }:
 export function SourceCrop({ file, box, words, width = 64, height = 44, children }: { file?: ReadFile | null; box?: ReadBox | null; words: string; width?: number; height?: number; children?: ReactNode }) {
   const ds = useDs();
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  // Gone since it was read (a page kept from an earlier visit): the words stand in.
+  const [gone, setGone] = useState(false);
   const frame = { width, height };
-  const crop = isImage(file) && box ? box : null;
+  const crop = isImage(file) && box && !gone ? box : null;
   return (
     <View aria-hidden style={[styles.crop, frame, { backgroundColor: ds.c.paper }]}>
       {crop ? (
@@ -81,6 +89,7 @@ export function SourceCrop({ file, box, words, width = 64, height = 44, children
           contentFit="fill"
           style={[styles.abs, size ? cropLayout(crop, size, frame) : { width: 0, height: 0 }]}
           onLoad={(e) => setSize({ width: e.source.width, height: e.source.height })}
+          onError={() => setGone(true)}
         />
       ) : (
         // Set like the printed menu (the venue's display face, which is narrow), so a name fits without breaking.

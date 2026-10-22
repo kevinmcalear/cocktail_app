@@ -14,16 +14,19 @@ import { SourceCrop } from './PagePicture';
  * Fix 8): what it starts as, not a picture of the page. The bar adds photos
  * on the drink's page when it wants them.
  */
-export function DrawnFromSpec({ inputs, seed, name }: { inputs: SketchInputs; seed: string; name: string }) {
+export function DrawnFromSpec({ inputs, seed, name, compact }: { inputs: SketchInputs; seed: string; name: string; compact?: boolean }) {
   const ds = useDs();
   return (
-    <View role="img" aria-label={`Drawing of ${name || 'the drink'}, drawn from the spec`} style={[styles.paper, { backgroundColor: ds.c.paper }]}>
-      <View style={styles.drawing}>
+    <View role="img" aria-label={`Drawing of ${name || 'the drink'}, drawn from the spec`} style={[styles.paper, compact && styles.small, { backgroundColor: ds.c.paper }]}>
+      <View style={compact ? styles.drawingSmall : styles.drawing}>
         <SketchDrawing inputs={inputs} seed={seed} detail="full" />
       </View>
-      <Caption color={ds.c.sketchInk} style={styles.label}>
-        Drawn from the spec
-      </Caption>
+      {/* Beside the name (the desktop review), the line under the name says it. */}
+      {compact ? null : (
+        <Caption color={ds.c.sketchInk} style={styles.label}>
+          Drawn from the spec
+        </Caption>
+      )}
     </View>
   );
 }
@@ -60,6 +63,8 @@ export function FromYourFile({ file, box, words, page, onLook }: { file: ReadFil
 const styles = StyleSheet.create({
   paper: { height: 210, paddingBottom: space.lg, borderRadius: radius.card, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   drawing: { width: 168, height: 168 },
+  small: { width: 150, height: 170, paddingBottom: 0, flexShrink: 0 },
+  drawingSmall: { width: 130, height: 130 },
   label: { position: 'absolute', left: space.md, bottom: space.md, fontFamily: fontFamilies.mono },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.sm + 2, borderRadius: radius.control },
   title: { fontFamily: fontFamilies.bodySemiBold },

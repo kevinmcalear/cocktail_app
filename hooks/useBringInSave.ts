@@ -8,6 +8,7 @@ import { useShelfEdit } from '@/hooks/useHomeBar';
 import { useCreateMenu, type HomeNight } from '@/hooks/useMenuMutations';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { emptySummary, type BatchKind, type BatchSummary } from '@/lib/bringInBatch';
+import { addMade, nothingMade, type MadeSoFar } from '@/lib/importReview';
 import { plainDbMessage } from '@/lib/dbError';
 import { sketchLook, type WizardDraft } from '@/lib/drinkWizard';
 import { blankSection } from '@/lib/menuLayout';
@@ -27,7 +28,8 @@ export interface DrinkToMake {
 export type MenuRowToSave = { section: string | null; drink: MenuDrink } | { section: string | null; make: DrinkToMake; price: string | null };
 
 export type BringInSaveInput = { source: string } & (
-  | { kind: 'recipes'; drinks: DrinkToMake[] }
+  /** `made`: what a review's approved drinks already made; `title` names it ("Little Rye spec book"). */
+  | { kind: 'recipes'; drinks: DrinkToMake[]; made?: MadeSoFar; title?: string }
   | { kind: 'menu'; name: string; night: HomeNight | null; rows: MenuRowToSave[]; prices: { id: string; price: string }[] }
   | { kind: 'bottles'; shelf: string[]; venue: VenueBottle[]; had: number }
 );
@@ -48,61 +50,93 @@ export interface SavedBringIn {
 const newDrinkItem = (id: string, name: string, price: string | null): MenuDrink => ({ id, name, kind: 'cocktail', line: '', price, imageUrl: null, isSketch: true, glass: null });
 
 /**
+ * Makes one checked drink through the wizard's own save, adding what it made
+ * (the drink, its new ingredients and preps) to `into`. Nothing from the file
+ * becomes a picture: the drink keeps the drawing of its spec, or one drawn
+ * here with the bar's own glasses (a drink off a menu wasn't drawn in its check).
+ */
+function useMakeDrink(barId: string | null) {
+  const createDrink = useCreateDrink();
+  const glasses = useBarGlassware(barId).data;
+  const me = useMyProfile().data ?? null;
+  return async ({ draft, prepNames, sketch: drawn }: DrinkToMake, into: MadeSoFar): Promise<string> => {
+    const { summary } = into;
+    const sketch = drawn ?? draftSketchInputs(sketchLook(draft, barVariants(glasses)));
+    const result = await createDrink.mutateAsync({ draft, barId: barId, myProfileId: me?.id ?? null, sketch });
+    into.warnings.push(...result.warnings);
+    into.itemIds.push(result.id);
+    into.drinkIds.push(result.id);
+    summary.drinksNew += 1;
+    const preps = new Set(prepNames.map((n) => n.toLowerCase()));
+    const withRecipe = new Set(draft.lines.filter((l) => l.prep).map((l) => l.name.toLowerCase()));
+    for (const made of result.created ?? []) {
+      into.itemIds.push(made.id);
+      const prep = preps.has(made.name.toLowerCase()) || withRecipe.has(made.name.toLowerCase());
+      if (prep) {
+        summary.preps.push(made.name);
+        if (!withRecipe.has(made.name.toLowerCase())) {
+          summary.prepsNoRecipe.push(made);
+          await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', made.id).is('ingredient_role', null);
+        }
+      } else summary.ingredients.push(made.name);
+    }
+    if (draft.lines.length && draft.lines.every((l) => !l.amount.trim() && l.unit !== 'top')) summary.noAmounts += 1;
+    return result.id;
+  };
+}
+
+/**
+ * Approve in a big import's review: saves that one drink straight away, so
+ * nothing approved is lost if the review is left. Resolves what it made; the
+ * review keeps it until the end, when it's recorded as one batch.
+ */
+export function useApproveDrink(barId: string | null) {
+  const make = useMakeDrink(barId);
+  return useMutation({
+    mutationFn: async (drink: DrinkToMake): Promise<MadeSoFar> => {
+      const into = nothingMade();
+      try {
+        await make(drink, into);
+      } catch (e) {
+        // A failure after the drink was made (a prep's role) still counts what was made.
+        if (!into.drinkIds.length) throw new Error(plainDbMessage(e) ?? (e instanceof Error ? e.message : 'Couldn’t save that drink.'));
+      }
+      return into;
+    },
+    onError: () => {},
+  });
+}
+
+/**
  * Saves a checked bring-in in one go (a menu with the drinks it needs, the
  * recipes, or the bottles) through the app's own saves, then records it as
- * one batch so Brought in can undo it all until tomorrow. Nothing from the
- * file becomes a picture: each new drink keeps the drawing of its spec (as
- * the wizard saves it), and a menu gets the bar's own cover, drawn from its
- * drinks, until someone picks a cover photo in the menu builder.
+ * one batch so Brought in can undo it all until tomorrow. A big import's
+ * review has saved its drinks already, as they were approved: it comes with
+ * no drinks and what they made, and is only recorded. A menu gets the bar's
+ * own cover, drawn from its drinks, until someone picks a cover photo in the
+ * menu builder.
  */
 export function useBringInSave(barId: string | null) {
-  const createDrink = useCreateDrink();
+  const make = useMakeDrink(barId);
   const createMenu = useCreateMenu();
-  const glasses = useBarGlassware(barId).data;
   const prices = useSetMissingPrices();
   const shelf = useShelfEdit();
   const record = useRecordBringIn();
-  const me = useMyProfile().data ?? null;
   const venueBottle = useVenueBottle(barId);
 
   return useMutation({
     mutationFn: async (input: BringInSaveInput): Promise<SavedBringIn> => {
-      const summary = emptySummary(input.kind);
-      const itemIds: string[] = [];
-      const drinkIds: string[] = [];
-      const warnings: string[] = [];
+      const before = input.kind === 'recipes' ? input.made : undefined;
+      const into: MadeSoFar = before ? addMade(nothingMade(), before) : { ...nothingMade(), summary: emptySummary(input.kind) };
+      const { summary, itemIds, drinkIds, warnings } = into;
       let menuId: string | null = null;
       let title = '';
 
-      const make = async ({ draft, prepNames, sketch: drawn }: DrinkToMake): Promise<string> => {
-        // A drink off a menu wasn't drawn in its check: drawn here, with the bar's own glasses.
-        const sketch = drawn ?? draftSketchInputs(sketchLook(draft, barVariants(glasses)));
-        const result = await createDrink.mutateAsync({ draft, barId: barId, myProfileId: me?.id ?? null, sketch });
-        warnings.push(...result.warnings);
-        itemIds.push(result.id);
-        drinkIds.push(result.id);
-        summary.drinksNew += 1;
-        const preps = new Set(prepNames.map((n) => n.toLowerCase()));
-        const withRecipe = new Set(draft.lines.filter((l) => l.prep).map((l) => l.name.toLowerCase()));
-        for (const made of result.created ?? []) {
-          itemIds.push(made.id);
-          const prep = preps.has(made.name.toLowerCase()) || withRecipe.has(made.name.toLowerCase());
-          if (prep) {
-            summary.preps.push(made.name);
-            if (!withRecipe.has(made.name.toLowerCase())) {
-              summary.prepsNoRecipe.push(made);
-              await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', made.id).is('ingredient_role', null);
-            }
-          } else summary.ingredients.push(made.name);
-        }
-        if (draft.lines.length && draft.lines.every((l) => !l.amount.trim() && l.unit !== 'top')) summary.noAmounts += 1;
-        return result.id;
-      };
-
       try {
         if (input.kind === 'recipes') {
-          for (const drink of input.drinks) await make(drink);
-          title = input.drinks.length === 1 ? input.drinks[0].draft.name : `${input.drinks.length} recipes`;
+          for (const drink of input.drinks) await make(drink, into);
+          const n = drinkIds.length;
+          title = n === 1 && input.drinks.length === 1 ? input.drinks[0].draft.name : (input.title ?? `${n} ${n === 1 ? 'recipe' : 'recipes'}`);
         }
         if (input.kind === 'menu') {
           const groups: PlacedGroup[] = [];
@@ -113,7 +147,7 @@ export function useBringInSave(barId: string | null) {
               drink = row.drink;
               summary.drinksHad += 1;
             } else {
-              const id = await make(row.make);
+              const id = await make(row.make, into);
               drink = newDrinkItem(id, row.make.draft.name, row.price);
               if (row.price) newPrices.push({ id, price: row.price });
             }

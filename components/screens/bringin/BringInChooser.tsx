@@ -15,6 +15,7 @@ import { withAlpha } from '@/lib/color';
 import { pickReadFiles, snapReadFiles, sourcesFromFiles, type ReadFile } from '@/lib/readAnything';
 import { useBringIn } from '@/store/useBringIn';
 
+import { WaitingImports } from './ImportReviewParts';
 import { useStartBringIn } from './useStartBringIn';
 
 /** "Looks like a recipe": what pasted text seems to be, said before it's read. */
@@ -118,6 +119,7 @@ export function BringInChooser({ onClose }: { onClose?: () => void }) {
         <Body tone="muted">A menu, a recipe, a spec sheet, a shelf of bottles. Give it to us and we’ll work out what it is.</Body>
         {place.heldBack ? <Caption tone="muted">{`It comes into your home bar. Adding to ${place.heldBack} opens at Drink Creator.`}</Caption> : null}
       </View>
+      <WaitingImports barId={place.barId} />
       <View style={styles.tiles}>
         {camera ? <Tile icon="camera" label="Snap" sub="Pages or a shelf" onPress={() => void fromFiles(snapReadFiles)} /> : null}
         <Tile icon="photo" label="Photos, files" sub="PDF, screenshots" onPress={() => void fromFiles(pickReadFiles)} />

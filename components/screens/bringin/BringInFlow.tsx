@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,14 +9,17 @@ import { useBringInMatchData } from '@/hooks/useBringInMatchData';
 import { useBringInSave, type BringInSaveInput } from '@/hooks/useBringInSave';
 import { useBringInPlace } from '@/hooks/useBringInPlace';
 import { sourceLabel } from '@/lib/bringInBatch';
+import { plainTitle } from '@/lib/importReview';
 import { listenBringIn, takeBringIn } from '@/lib/bringInHandoff';
 import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
 import { useBringIn, type BringInJob } from '@/store/useBringIn';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
+import { useImportReview, useReviewsLoaded } from '@/store/useImportReview';
 
 import { BottlesCheck } from './BottlesCheck';
 import { BringInChooser } from './BringInChooser';
+import { ImportReview } from './ImportReview';
 import { MenuCheck } from './MenuCheck';
 import { ReadingScreen } from './ReadingScreen';
 import { RecipeCheck } from './RecipeCheck';
@@ -49,6 +52,11 @@ export function BringInFlow() {
   const checking = !!job && (job.local || checkedId === job.id);
   const data = useBringInMatchData(job?.barId ?? null, !!job);
   const save = useBringInSave(job?.barId ?? null);
+  // A big import (more than one recipe) is checked as a review that's kept on this device.
+  const reviewId = useLocalSearchParams<{ review?: string }>().review ?? null;
+  const review = useImportReview((s) => (reviewId ? s.reviews[reviewId] : undefined));
+  const loaded = useReviewsLoaded();
+  const many = !!job && job.status === 'ready' && (job.local || checking) && job.reading?.kind === 'recipes' && job.reading.recipes.length > 1;
 
   // On screen: no tray. Gone: the tray takes over.
   useEffect(() => {
@@ -67,6 +75,22 @@ export function BringInFlow() {
   }, []);
 
   const leave = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as Href));
+
+  useEffect(() => {
+    if (!many || !job?.reading) return;
+    const files = job.source.files;
+    const id = useImportReview.getState().begin({
+      barId: job.barId,
+      title: files[0]?.name ? plainTitle(files[0].name) : job.source.name ? plainTitle(job.source.name) : `${job.reading.recipes.length} recipes`,
+      source: sourceLabel('recipes', { files: files.length, pdfs: files.filter((f) => f.mimeType === 'application/pdf').length, link: !!job.source.url }),
+      from: fromWords(job),
+      recipes: job.reading.recipes,
+      files,
+    });
+    useBringIn.getState().clear(true);
+    router.setParams({ review: id });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [many]);
   const cancel = () => {
     save.reset();
     if (useBringIn.getState().next(place.barId)) return;
@@ -74,6 +98,11 @@ export function BringInFlow() {
     leave();
   };
 
+  if (reviewId && !job) {
+    if (review) return <ImportReview review={review} onLeave={leave} />;
+    if (!loaded) return <Waiting />;
+  }
+  if (many) return <Waiting />;
   if (!job) {
     return (
       <ScrollView style={{ backgroundColor: ds.c.ground }} contentContainerStyle={[styles.page, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xl }]}>
@@ -89,13 +118,7 @@ export function BringInFlow() {
     };
     return <ReadingScreen job={job} onClose={cancel} onBackground={background} onReady={() => setCheckedId(job.id)} />;
   }
-  if (!data || !job.reading) {
-    return (
-      <View style={[styles.center, { backgroundColor: ds.c.ground }]}>
-        <ActivityIndicator color={ds.accentText} />
-      </View>
-    );
-  }
+  if (!data || !job.reading) return <Waiting />;
 
   const reading = job.reading;
   const files = job.source.files;
@@ -141,14 +164,14 @@ export function BringInFlow() {
   }
   return (
     <RecipeCheck
-      recipes={reading.recipes}
+      recipe={reading.recipes[0]}
       files={files}
       from={fromWords(job)}
       data={data}
       saving={save.isPending}
       error={error}
       onCancel={cancel}
-      onSave={(drinks) => run({ kind: 'recipes', source, drinks })}
+      onSave={(drink) => run({ kind: 'recipes', source, drinks: [drink] })}
       onEditAll={({ draft }) => {
         // The full editor: the add-drink wizard, filled in, at its review.
         const wizardAt = wizardPlace(job.barId);
@@ -160,6 +183,15 @@ export function BringInFlow() {
         router.replace((job.barId ? `/add-cocktail?barId=${job.barId}` : '/add-cocktail') as Href);
       }}
     />
+  );
+}
+
+function Waiting() {
+  const ds = useDs();
+  return (
+    <View style={[styles.center, { backgroundColor: ds.c.ground }]}>
+      <ActivityIndicator color={ds.accentText} />
+    </View>
   );
 }
 
