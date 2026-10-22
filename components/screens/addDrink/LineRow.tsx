@@ -2,15 +2,15 @@ import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, DsText, IngredientThumb, PressableScale, useBreakpoint, useDs } from '@/components/ds';
-import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { withAlpha } from '@/lib/color';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
 import { leadText } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
-import { GripDots } from './DragRow';
+import { LineGrip } from './DragRow';
 import { WizardChip } from './WizardChrome';
 
 interface LineRowProps {
@@ -33,6 +33,8 @@ interface LineRowProps {
   onMove?: (by: -1 | 1) => void;
   /** Being dragged: lifted over the lines under it. */
   lifted?: boolean;
+  /** Another line is held over this one: let go to batch them (lib/batchLines). */
+  dropTarget?: boolean;
 }
 
 /**
@@ -42,7 +44,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name; on a wider screen they share
  * its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted, dropTarget }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   const stacked = useBreakpoint() === 'phone';
@@ -63,29 +65,10 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
           ? { text: `House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`, accent: true }
           : { text: 'New, added when you save', accent: false };
   return (
-    <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }]}>
+    <View role="listitem" style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}>
       <View style={styles.row}>
         {grip?.(
-          <PressableScale
-            role="button"
-            accessibilityLabel={`Reorder ${line.name}`}
-            accessibilityHint={Platform.OS === 'web' ? 'Drag, or use the arrow keys' : 'Hold and drag'}
-            accessibilityActions={[
-              { name: 'up', label: 'Move up' },
-              { name: 'down', label: 'Move down' },
-            ]}
-            onAccessibilityAction={(e) => onMove?.(e.nativeEvent.actionName === 'up' ? -1 : 1)}
-            // @ts-expect-error onKeyDown is web-only (react-native-web)
-            onKeyDown={(e: { key: string; preventDefault: () => void }) => {
-              if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-              e.preventDefault();
-              onMove?.(e.key === 'ArrowUp' ? -1 : 1);
-            }}
-            haptic={false}
-            style={[styles.grip, dragGripStyle]}
-          >
-            <GripDots />
-          </PressableScale>
+          <LineGrip name={line.name} onMove={onMove} />
         )}
         <IngredientThumb id={line.id} name={line.name} size={40} />
         <View style={stacked ? styles.mainStacked : styles.main}>
@@ -101,6 +84,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
               style={styles.name}
             >
               <Body numberOfLines={2}>{line.name}</Body>
+              {dropTarget ? <Caption tone="accent">Drop to batch</Caption> : null}
               {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
               {detail ? (
                 <Caption tone="muted" numberOfLines={1}>
@@ -234,8 +218,6 @@ function Round({ icon, label, onPress }: { icon: 'minus' | 'plus'; label: string
 }
 
 const styles = StyleSheet.create({
-  // Narrow, so the name keeps its room on a phone; the hold, not its size, keeps a swipe over it scrolling.
-  grip: { width: space.xl, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center', marginRight: -space.xs },
   more: { paddingLeft: 40 + space.md, gap: space.xs },
   // Under the name when the line has a grip: past the grip, then the thumb.
   gripped: { paddingLeft: space.xl + space.sm + 40 + space.md },
@@ -244,6 +226,8 @@ const styles = StyleSheet.create({
   link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   note: { minHeight: layout.minTapTarget, marginLeft: 40 + space.md, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.md },
   wrap: { paddingVertical: space.md, gap: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
+  // Lit up to drop on, as drawn: a dashed accent edge a little wider than the row.
+  target: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: radius.control, marginHorizontal: -space.sm, paddingHorizontal: space.sm },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
   // The name and the controls: two lines on a phone, one on a wider screen.
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },

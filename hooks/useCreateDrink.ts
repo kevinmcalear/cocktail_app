@@ -8,6 +8,7 @@ import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { saveDrinkSpec } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
+import { batchPrep } from '@/lib/batchLines';
 import { plainDbMessage } from '@/lib/dbError';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
@@ -167,12 +168,14 @@ export function useCreateDrink() {
       const later: string[] = [];
       for (const { line, amount } of specLines(draft)) {
         const madeBefore = newIngredients.length;
+        // A batch made by dropping lines together is a house prep of the kind Batch: the bottle's recipe.
+        const prep = line.batch ? batchPrep(line.batch) : line.prep;
         // A prep added by name only is still a house prep of its own, its recipe to come.
-        const ownPrep = (!!line.prep || !!line.later) && !(line.id && live.has(line.id));
+        const ownPrep = (!!prep || !!line.later) && !(line.id && live.has(line.id));
         const ingredientId = ownPrep ? await own(line) : await ensure(line, 'ingredient');
         const isNew = newIngredients.length > madeBefore;
-        if (line.later && !line.prep && isNew) later.push(capitalize(line.name));
-        if (line.prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep: line.prep });
+        if (line.later && !prep && isNew) later.push(capitalize(line.name));
+        if (prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep });
         else if (line.technique && isNew) preps.push({ id: ingredientId, technique: line.technique });
         lines.push({
           id: null,
