@@ -16,7 +16,7 @@ import type { ReadFile } from '@/lib/readAnything';
 import { useAppMode } from '@/store/useAppMode';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
-import { DoneMark, DoneStep } from './DoneStep';
+import { DoneMark } from './DoneStep';
 import { FindBarStep } from './FindBarStep';
 import { RoleStep } from './RoleStep';
 import { SetupClaimStep } from './SetupClaimStep';
@@ -25,13 +25,14 @@ import { SetupRail } from './SetupRail';
 import { setupCopy } from './setupCopy';
 import { TeamStep } from './TeamStep';
 import { VisibilityStep } from './VisibilityStep';
+import { WhatNext } from './WhatNext';
 import { WhereWhenStep } from './WhereWhenStep';
 
 const BRANDED: VenueScreen[] = ['look', 'visibility', 'bring', 'team', 'done'];
 const VENUE_BRING = ['Spec book PDF', 'Printed menu', 'Google Doc', 'Airtable link', 'Back bar photo'];
 
 /**
- * Venue setup as a guided flow (b03): intro, eight steps, a summary. Opened
+ * Venue setup as a guided flow (b03): intro, eight steps, then "This is your bar. What next?". Opened
  * from Settings › Venues, a bar page's Claim, or Tonight's banner (?bar=, to
  * pick it up; &step=claim to prove it's yours). Each step is one of the app's
  * own pieces: the bar facts, the Brand editor, the Publishing choice, Bring
@@ -122,7 +123,7 @@ export function VenueSetupScreen() {
     eyebrow: screen === 'intro' ? 'For bars and venues' : screen === 'find' || screen === 'done' ? null : name || null,
     eyebrowTone: branded ? ('accent' as const) : ('muted' as const),
     topLabel: screen === 'intro' ? 'Venue setup' : undefined,
-    // The summary has no Back: its logo with a check sits over the title instead (canvas make-venue-done).
+    // What next has no Back: the venue's logo sits over the title instead (eddie-oct22-wave2).
     noBack: screen === 'done',
     mark: screen === 'done' ? <DoneMark venue={{ id: barId ?? key, name, logoUrl: logo, accent: brand?.primary_color ?? null, displayFace: faceFromDb(brand?.display_face), groundTint: null, roleLevel: 40 }} /> : undefined,
     progress: venueProgress(screen),
@@ -205,7 +206,7 @@ export function VenueSetupScreen() {
       ) : null}
       {screen === 'team' && barId ? <TeamStep barId={barId} name={name} pending={claimState === 'pending'} onDone={() => finish('team')} /> : null}
       {screen === 'done' && barId ? (
-        <DoneStep
+        <WhatNext
           barId={barId}
           profileId={page?.id ?? profileId}
           name={name}
@@ -213,6 +214,8 @@ export function VenueSetupScreen() {
           claimState={claimState}
           held={run?.held}
           waitingFiles={waitingFiles}
+          onFiles={(files) => setWaitingFiles((n) => n + files.length)}
+          onPaste={() => router.push('/bring-in' as Href)}
           onProve={() => {
             setClaimBack('done');
             setScreen('claim');

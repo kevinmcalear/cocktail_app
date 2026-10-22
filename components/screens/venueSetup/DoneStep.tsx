@@ -25,15 +25,11 @@ import { SetupBanner } from './SetupBanner';
 /** How the claim is being checked, in a few words. */
 const CLAIM_LINE = { email: 'Work email', instagram: 'A code sent from the bar’s Instagram', phone: 'A call to the bar', note: 'A call to the bar' } as const;
 
-/** The summary's mark: the venue's logo with a check in the accent beside it. */
+/** The end of setup's mark: the venue's logo over "This is your bar" (eddie-oct22-wave2). */
 export function DoneMark({ venue }: { venue: Venue }) {
-  const ds = useDs();
   return (
     <View style={styles.head} aria-hidden>
-      <VenueMark venue={venue} size={64} />
-      <View style={[styles.badge, { backgroundColor: ds.accentFill.fill }]}>
-        <IconSymbol name="checkmark" size={16} color={ds.accentFill.text} />
-      </View>
+      <VenueMark venue={venue} size={52} />
     </View>
   );
 }
@@ -56,7 +52,7 @@ function Line({ icon, title, line, end, waiting }: { icon: IconName; title: stri
 }
 
 /**
- * The summary (canvas make-venue-done): what's on its way (the claim, the
+ * The summary (canvas make-venue-done), What next's See all: what's on its way (the claim, the
  * invites nobody's taken up, what's waiting to be read) and what's done.
  * Kept private, the public page says so, with a way to prove it's yours now
  * (eddie-oct22-wave1).
@@ -147,6 +143,5 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   mark: { width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.md },
-  badge: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
 });

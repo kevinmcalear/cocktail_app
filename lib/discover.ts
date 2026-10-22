@@ -6,7 +6,7 @@
 // ponytail: a fixed "most asked for" order until rankings can say which lists
 // people actually open. Upgrade path: order by rankers per list from the
 // ranking refresh.
-const MOST_ASKED = [
+export const MOST_ASKED = [
   'Martini',
   'Negroni',
   'Old Fashioned',

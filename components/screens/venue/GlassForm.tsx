@@ -5,7 +5,7 @@ import { Body, Button, Caption, Chip, Field, GlassVariantPicker, Headline, Surfa
 import { GlassModelPicker, GlassThumb } from '@/components/glass/GlassModelPicker';
 import { MakerPicker } from '@/components/maker/MakerPicker';
 import { space } from '@/constants/tokens';
-import type { BarGlass, BarGlassInput } from '@/hooks/useBarGlassware';
+import { glassFromModel, type BarGlass, type BarGlassInput } from '@/hooks/useBarGlassware';
 import { glassModelFacts, type GlassModel } from '@/hooks/useGlassModels';
 import { GLASS_TYPE_LABEL, GLASS_TYPES, glassFieldProblem, textOrNull, type GlassFields } from '@/lib/glassware';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -24,6 +24,8 @@ interface GlassFormProps {
   /** The venue's real glasses, listed first in the search. */
   venueModelIds?: readonly string[];
   venueName?: string;
+  /** Start by describing it ("Not listed? Describe it"), not with the search. */
+  describe?: boolean;
 }
 
 /**
@@ -34,9 +36,9 @@ interface GlassFormProps {
  * designer, series, what the shape is like, and whether it's the glass of
  * its type the venue's drinks are drawn in.
  */
-export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, onDelete, venueModelIds, venueName }: GlassFormProps) {
+export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, onDelete, venueModelIds, venueName, describe }: GlassFormProps) {
   const [model, setModel] = useState<GlassModel | null>(glass?.model ?? null);
-  const [finding, setFinding] = useState(!glass);
+  const [finding, setFinding] = useState(!glass && !describe);
   const [type, setType] = useState<SketchGlass>(glass?.glass ?? 'coupe');
   const [variant, setVariant] = useState<string | null>(glass?.variant ?? null);
   const [fields, setFields] = useState<GlassFields>({
@@ -64,17 +66,10 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
     // A model brings its maker, series and designer; the venue's own name wins.
     if (model) {
       return onSave({
+        ...glassFromModel(model, isMain, textOrNull(fields.name)),
         id: glass?.id,
-        glass: model.glass,
         variant: shapes.some((s) => s.key === variant) ? variant : null,
-        name: textOrNull(fields.name) ?? model.name,
-        maker: model.maker?.display_name ?? null,
-        maker_profile_id: model.maker_profile_id,
-        designer: model.designer,
-        series: model.series,
         shape_note: textOrNull(fields.shape_note),
-        model_id: model.id,
-        is_default: isMain,
       });
     }
     onSave({

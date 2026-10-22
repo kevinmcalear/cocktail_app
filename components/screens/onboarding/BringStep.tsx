@@ -73,6 +73,29 @@ function Tray() {
 }
 
 /**
+ * Photos or files picked (or snapped) to Bring in: it starts reading them
+ * straight away, in the background, for `barId`. Says what went wrong, or null.
+ */
+export async function bringFiles(get: () => Promise<ReadFile[]>, barId: string | null, onFiles: (files: ReadFile[]) => void): Promise<string | null> {
+  try {
+    const files = await get();
+    if (!files.length) return null;
+    onFiles(files);
+    const [first, ...rest] = await sourcesFromFiles(files, true);
+    if (!first) return null;
+    const store = useBringIn.getState();
+    if (store.job && store.job.status !== 'failed') store.enqueue([first, ...rest]);
+    else {
+      store.start(first, { barId });
+      store.enqueue(rest);
+    }
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message : 'Couldn’t open your photos.';
+  }
+}
+
+/**
  * Hand over a spec book, a menu or a shelf: snap it, pick photos or files, or
  * paste. What's picked starts reading straight away (Bring in's background
  * reader, b25) and the tray shows it while setup carries on.
@@ -85,21 +108,7 @@ export function BringStep({ barId, onFiles, onPaste, footer, onLater, examples =
   const camera = web ? phone : Device.isDevice;
   const from = async (get: () => Promise<ReadFile[]>) => {
     setProblem(null);
-    try {
-      const files = await get();
-      if (!files.length) return;
-      onFiles(files);
-      const [first, ...rest] = await sourcesFromFiles(files, true);
-      if (!first) return;
-      const store = useBringIn.getState();
-      if (store.job && store.job.status !== 'failed') store.enqueue([first, ...rest]);
-      else {
-        store.start(first, { barId });
-        store.enqueue(rest);
-      }
-    } catch (e) {
-      setProblem(e instanceof Error ? e.message : 'Couldn’t open your photos.');
-    }
+    setProblem(await bringFiles(get, barId, onFiles));
   };
   return (
     <SetupPage

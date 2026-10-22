@@ -89,6 +89,25 @@ export interface BarGlassInput {
 }
 
 /**
+ * A maker's glass as one of the venue's: its type, drawing, maker, series and
+ * designer come with it. `name` is the venue's own name for it, if any.
+ */
+export function glassFromModel(model: GlassModel, isDefault: boolean, name: string | null = null): BarGlassInput {
+  return {
+    glass: model.glass,
+    variant: model.variant,
+    name: name ?? model.name,
+    maker: model.maker?.display_name ?? null,
+    maker_profile_id: model.maker_profile_id,
+    designer: model.designer,
+    series: model.series,
+    shape_note: null,
+    model_id: model.id,
+    is_default: isDefault,
+  };
+}
+
+/**
  * Add or change one of the venue's glasses. Only one glass of a type is the
  * main one (a unique index), so marking this one first unmarks the others.
  * The database checks the venue's Prep permission and the maker page.

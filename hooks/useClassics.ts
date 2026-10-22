@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDrinkLists, type DrinkList } from '@/hooks/useDiscover';
+import { useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { suggestClassic, type ClassicMatch } from '@/lib/classics';
+import { EMPTY_DRAFT } from '@/lib/drinkWizard';
 import { supabase } from '@/lib/supabase';
 
 export interface UnlinkedDrink {
@@ -83,4 +86,44 @@ export function useClassicSuggestions(barId: string | null | undefined) {
     return { suggestions, unmatched: (drinks.data?.length ?? 0) - suggestions.length };
   }, [catalog.data, drinks.data]);
   return { ...result, isLoading: catalog.isLoading || drinks.isLoading, error: catalog.error ?? drinks.error };
+}
+
+/** The classics a venue already has a drink of (its cocktails' riff_of_id), each once. */
+export function useVenueClassicCopies(barId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['venue-classic-copies', barId],
+    enabled: !!barId,
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase.from('items').select('riff_of_id').eq('bar_id', barId!).eq('item_type', 'cocktail').not('riff_of_id', 'is', null);
+      if (error) throw error;
+      return [...new Set((data ?? []).map((r) => r.riff_of_id as string))];
+    },
+  });
+}
+
+/**
+ * Classics as the venue's own copies ("Start with 20 classics"): each one's
+ * spec, method, glass, ice and garnish, credited as a version of it and to
+ * nobody at the bar, saved the way the add-drink wizard saves. One that
+ * fails is named, and the rest still go in.
+ */
+export function useAddClassicCopies(barId: string | null) {
+  const client = useQueryClient();
+  const start = useStartFromClassic();
+  const create = useCreateDrink();
+  return useMutation({
+    mutationFn: async (classics: readonly { id: string; name: string }[]): Promise<{ failed: string[] }> => {
+      const failed: string[] = [];
+      for (const c of classics) {
+        try {
+          const spec = await start.mutateAsync(c.id);
+          await create.mutateAsync({ draft: { ...EMPTY_DRAFT, ...spec, name: c.name, creator: 'nobody', elsewhere: true, place: null }, barId, myProfileId: null });
+        } catch {
+          failed.push(c.name);
+        }
+      }
+      return { failed };
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: ['venue-classic-copies', barId] }),
+  });
 }
