@@ -2,7 +2,7 @@ import { getLocales } from 'expo-localization';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useRef, useState, type ComponentRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -58,6 +58,7 @@ export function DiscoverScreen() {
   const signedIn = !!useAuth().user;
   const home = useMode().mode === 'home';
   const breakpoint = useBreakpoint();
+  const third = Math.min(640, Math.max(428, Math.round(useWindowDimensions().width / 3))); // Desktop's list: a third of the window, 428 to 640 (disc-desk-wide).
   const { area, onArea, onCity, preferNear, near, access, onNearMe, nearIfAnywhere, locating, note } = useDiscoverArea();
   // Search's Browse chips open Discover on a style (/discover?kind=negroni).
   const { kind } = useLocalSearchParams<{ kind?: string }>();
@@ -232,7 +233,7 @@ export function DiscoverScreen() {
       stickyHeaderIndices={split ? [1] : undefined}
       onScroll={split ? undefined : away.onScroll}
       scrollEventThrottle={16}
-      style={split ? { width: breakpoint === 'desktop' ? 428 : 420, flexGrow: 0 } : undefined}
+      style={split ? { width: breakpoint === 'desktop' ? third : 420, flexGrow: 0 } : undefined}
       contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom, paddingTop: split ? 0 : headerHeight, maxWidth: 760, width: '100%' }}
     >
       {split ? <ScreenHeaderSpacer title="Discover" /> : null}

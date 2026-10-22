@@ -1,7 +1,7 @@
 import { getLocales } from 'expo-localization';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Headline, PressableScale, RowScore, Surface, Tag, useDs } from '@/components/ds';
 import { AddressLine, barPlace, directionsTarget, HoursLine } from '@/components/screens/bar/BarFactLines';
@@ -17,14 +17,13 @@ import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
 import { byScore, drinkCount, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import type { MapPin } from '@/lib/discoverMap';
 import { barSearchHref } from '@/lib/discoverMatch';
-import { SHELF_MAX } from '@/lib/discoverShelves';
 import { awayFrom } from '@/lib/directions';
 import { peopleCount, usesMiles, type Area } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
 
 import { BarMark } from './BarMark';
 import { BarTopDrinks } from './BarTopDrinks';
-import { ShelfTile } from './DiscoverShelves';
+import { TileGrid } from './DiscoverShelves';
 import { DrinkHero } from './DrinkHero';
 import { NextMatch } from './NextMatch';
 
@@ -151,18 +150,12 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
     );
   }
 
-  // Wide screens: the bar's drinks, as the shelves draw them, inside the panel.
+  // Wide screens: the bar's drinks, two rows of the shelves' grid, the rest in place (disc-desk-wide).
   return (
     <Surface style={[styles.card, styles.picked, { borderColor: ds.c.lineStrong }]}>
       {bar}
       {facts?.hours ? <HoursLine facts={facts} /> : null}
-      {drinks.length ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.drinkBleed} contentContainerStyle={styles.drinkRow}>
-          {drinks.slice(0, SHELF_MAX).map((d) => (
-            <ShelfTile key={d.id} drink={d} atBar />
-          ))}
-        </ScrollView>
-      ) : null}
+      {drinks.length ? <TileGrid drinks={drinks} atBar showAll={`Show all ${drinkCount(drinks.length)}`} style={styles.drinks} /> : null}
       <BarTopDrinks barId={pin.id} />
       <View style={[styles.cardActions, { borderTopColor: ds.c.line }]}>
         {!pin.closed && count ? <Caption tone="muted" style={styles.count}>{`${drinkCount(count)} here`}</Caption> : <View style={styles.count} />}
@@ -207,13 +200,12 @@ const styles = StyleSheet.create({
   // A wrapped name is taller than the mark: top-align them.
   barHead: { alignItems: 'flex-start' },
   facts: { gap: space.xs },
+  // The same room above the drinks as below them.
+  drinks: { marginVertical: space.sm },
   // The count beside the buttons, as drawn; in a narrow column the buttons drop under it together rather than leaving Open bar alone.
   count: { flexGrow: 1 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, marginLeft: 'auto' },
   cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm + 2 },
-  // Edge to edge, with the same room above the drinks as below them.
-  drinkBleed: { marginHorizontal: -space.lg, marginVertical: space.sm, flexGrow: 0 },
-  drinkRow: { gap: space.md, paddingHorizontal: space.lg },
   // Wraps on a narrow phone: Directions and Open bar drop under All results rather than off the edge.
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   right: { flexDirection: 'row', gap: space.sm },

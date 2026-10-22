@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
-import { useContext } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useContext, useState } from 'react';
+import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Caption, DrinkImage, DsText, Headline, PalateFlower, PressableScale, useDs, useGutter } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Headline, PalateFlower, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { BarAway } from '@/components/screens/home/DrinksAtBars';
 import { fontFamilies, radius, space, type } from '@/constants/tokens';
@@ -14,6 +14,8 @@ import type { Shelf } from '@/lib/discoverShelves';
 import { itemHref } from '@/lib/itemRoutes';
 
 const TILE = 112;
+const GAP = space.md;
+const AT_BAR_MIN = 100;
 /** A small mark, bottom left of the picture, with the bar's name beside it. */
 const MARK = 20;
 
@@ -30,8 +32,8 @@ function TasteLine({ note }: { note: string }) {
   );
 }
 
-/** One drink on a shelf. `atBar`: already inside that bar's panel, so just the drawing and the drink. */
-export function ShelfTile({ drink: d, onShowBar, atBar = false }: { drink: DiscoverDrink; onShowBar?: (barId: string | null) => void; atBar?: boolean }) {
+/** One drink on a shelf. `atBar`: already inside that bar's panel, so just the drawing and the drink. `size`: a grid's tile width. */
+export function ShelfTile({ drink: d, onShowBar, atBar = false, size = TILE }: { drink: DiscoverDrink; onShowBar?: (barId: string | null) => void; atBar?: boolean; size?: number }) {
   const router = useRouter();
   const ds = useDs();
   const prefetch = usePrefetchCocktail();
@@ -47,15 +49,15 @@ export function ShelfTile({ drink: d, onShowBar, atBar = false }: { drink: Disco
       onHoverOut={onShowBar ? () => onShowBar(null) : undefined}
       onFocus={onShowBar ? () => onShowBar(d.barId) : undefined}
       onBlur={onShowBar ? () => onShowBar(null) : undefined}
-      style={styles.tile}
+      style={[styles.tile, { width: size }]}
     >
-      <View style={[styles.picture, { backgroundColor: ds.c.paper }]}>
+      <View style={[styles.picture, { width: size, backgroundColor: ds.c.paper }]}>
         {place && !atBar ? (
-          <Caption numberOfLines={1} color={withAlpha(ds.c.sketchInk, 0.55)} style={styles.away}>
+          <Caption numberOfLines={1} color={withAlpha(ds.c.sketchInk, 0.55)} style={[styles.away, { maxWidth: size - space.md }]}>
             {place}
           </Caption>
         ) : null}
-        <DrinkImage thumb source={d.imageUrl} itemId={d.id} radius={0} accessibilityLabel={d.name} style={styles.fill} />
+        <DrinkImage thumb source={d.imageUrl} itemId={d.id} radius={0} accessibilityLabel={d.name} style={{ width: size, height: size }} />
         {atBar ? null : (
           <View style={styles.barRow}>
             <BarMark name={d.bar.name} logoUrl={d.bar.logo} profileId={d.barId} size={MARK} />
@@ -72,14 +74,52 @@ export function ShelfTile({ drink: d, onShowBar, atBar = false }: { drink: Disco
   );
 }
 
+/** As many tiles across as fit at `min` or wider (3 in a 428 list, 4 in 640). A bar's own tiles carry no bar line, so they may be smaller. */
+export function gridColumns(width: number, min = TILE): number {
+  return Math.max(1, Math.floor((width + GAP) / (min + GAP)));
+}
+
 /**
- * Discover's shelves over the list (disc-list, disc-desk-browse): each a
- * titled row that scrolls sideways, one drink per bar, with See all setting
- * its filter on the list below. Empty shelves never reach here.
+ * Wide screens' shelves (disc-desk-wide): a grid, `rows` deep, never a row that
+ * scrolls sideways. `showAll` adds a button that opens the rest in place.
+ */
+export function TileGrid({ drinks, rows = 2, atBar, showAll, onShowBar, style }: { drinks: DiscoverDrink[]; rows?: number; atBar?: boolean; showAll?: string; onShowBar?: (barId: string | null) => void; style?: StyleProp<ViewStyle> }) {
+  const ds = useDs();
+  const [width, setWidth] = useState(0);
+  const [open, setOpen] = useState(false);
+  const cols = width ? gridColumns(width, atBar ? AT_BAR_MIN : TILE) : 3;
+  const size = width ? Math.floor((width - GAP * (cols - 1)) / cols) : TILE;
+  const shown = open ? drinks : drinks.slice(0, cols * rows);
+  return (
+    <View style={[styles.grid, style]}>
+      <View role="list" style={styles.wrap} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+        {shown.map((d) => (
+          <View role="listitem" key={d.id}>
+            <ShelfTile drink={d} atBar={atBar} size={size} onShowBar={onShowBar} />
+          </View>
+        ))}
+      </View>
+      {showAll && drinks.length > cols * rows ? (
+        <PressableScale role="button" aria-expanded={open} hitSlop={8} onPress={() => setOpen(!open)} style={styles.showAll}>
+          <DsText variant="label" color={ds.accentText}>
+            {open ? 'Show fewer' : showAll}
+          </DsText>
+        </PressableScale>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * Discover's shelves over the list (disc-list, disc-desk-wide): each a
+ * titled row that scrolls sideways on phones and a two-row grid on wide
+ * screens, one drink per bar, with See all setting its filter on the list
+ * below. Empty shelves never reach here.
  */
 export function DiscoverShelves({ shelves, onKind, onShowBar }: { shelves: Shelf[]; onKind?: (kind: string) => void; /** Hovering a card opens its bar on the map. */ onShowBar?: (barId: string | null) => void }) {
   const gutter = useGutter();
   const ds = useDs();
+  const wide = useBreakpoint() !== 'phone';
   return shelves.map((s) => (
     <View key={s.key} role="region" aria-label={s.title} style={styles.shelf}>
       <View>
@@ -97,7 +137,11 @@ export function DiscoverShelves({ shelves, onKind, onShowBar }: { shelves: Shelf
         </View>
         {s.taste ? <TasteLine note={s.note} /> : <Caption tone="muted">{s.note}</Caption>}
       </View>
-      {/* Runs to the screen's edges, so a cut-off tile says there's more. */}
+      {wide ? (
+        // A shelf with no See all opens its own rest in place.
+        <TileGrid drinks={s.drinks} showAll={s.kind && onKind ? undefined : 'Show all'} onShowBar={onShowBar} />
+      ) : (
+      // Runs to the screen's edges, so a cut-off tile says there's more.
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -gutter }} contentContainerStyle={{ paddingHorizontal: gutter }}>
         <View role="list" style={styles.row}>
           {s.drinks.map((d) => (
@@ -107,6 +151,7 @@ export function DiscoverShelves({ shelves, onKind, onShowBar }: { shelves: Shelf
           ))}
         </View>
       </ScrollView>
+      )}
     </View>
   ));
 }
@@ -117,13 +162,14 @@ const styles = StyleSheet.create({
   note: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space.xs },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', gap: space.md },
-  tile: { width: TILE, gap: space.xs },
-  picture: { width: TILE, borderRadius: radius.control, overflow: 'hidden' },
-  fill: { width: TILE, height: TILE },
+  grid: { gap: space.xs },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', columnGap: GAP, rowGap: space.lg },
+  showAll: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' },
+  tile: { gap: space.xs },
+  picture: { borderRadius: radius.control, overflow: 'hidden' },
   // ponytail: 11pt, under the 13 caption floor, so the strip stays quieter than the bar name. A micro style if a second place needs it.
   away: {
     alignSelf: 'flex-end',
-    maxWidth: TILE - space.md,
     marginTop: space.xs,
     marginRight: space.sm,
     marginBottom: space.xs,
