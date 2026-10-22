@@ -1,5 +1,5 @@
 import { useState, type ComponentRef, type ReactNode } from 'react';
-import { Keyboard, Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
@@ -51,15 +51,17 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
   // Its right edge on the button's, kept on screen.
   const left = Math.max(space.sm, Math.min(anchor.x + anchor.width - WIDTH, windowWidth - WIDTH - space.sm));
   const above = anchor.y > windowHeight / 2;
+  // As tall as the room on its side of the button; longer menus scroll.
+  const room = (above ? anchor.y : windowHeight - anchor.y - anchor.height) - space.sm - space.xl;
   const place = above ? { bottom: windowHeight - anchor.y + space.sm } : { top: anchor.y + anchor.height + space.sm };
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <Pressable accessibilityLabel="Close the menu" style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(ds.c.ground, 0.3) }]} onPress={onClose} />
       {/* Unseen until the button's place is known, so it never flashes in the corner. */}
-      <Appear kind="fade" duration={140} style={[styles.panel, place, { left, shadowColor: ds.c.ground, maxHeight: windowHeight - space.xxxl * 2 }, anchor.height ? null : styles.unplaced]}>
+      <Appear kind="fade" duration={140} style={[styles.panel, place, { left, shadowColor: ds.c.ground, maxHeight: room }, anchor.height ? null : styles.unplaced]}>
         {/* The web's blur keeps its own thin fill, so the web gets a solid panel the rows stay readable on. */}
         <Panel>
-          <View role="menu" aria-label={label}>
+          <ScrollView role="menu" aria-label={label} style={{ maxHeight: room }} bounces={false}>
             {sections.map((s, i) => (
               <View key={s.title ?? i} role="group" aria-label={s.title} style={i > 0 ? [styles.section, { borderTopColor: ds.c.lineStrong }] : null}>
                 {s.title ? (
@@ -72,7 +74,7 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
                 ))}
               </View>
             ))}
-          </View>
+          </ScrollView>
         </Panel>
       </Appear>
     </Modal>
@@ -91,7 +93,8 @@ function Row({ item, onClose }: { item: PopoverItem; onClose: () => void }) {
     <PressableScale
       role="menuitem"
       aria-checked={!!item.checked}
-      accessibilityLabel={item.count == null ? item.label : `${item.label}, ${item.count}`}
+      // RN has no menuitemradio role, so the label says which one is picked.
+      accessibilityLabel={[item.label, item.count, item.checked ? 'picked' : null].filter((w) => w != null).join(', ')}
       onPress={() => {
         onClose();
         item.onPress();
@@ -125,7 +128,8 @@ export function usePopover() {
     if (web && typing) (document.activeElement as HTMLElement).blur();
     else Keyboard.dismiss();
     setAnchor({ x: 0, y: 0, width: 0, height: 0 });
-    const measure = () => target?.measureInWindow((x: number, y: number, width: number, height: number) => setAnchor({ x, y, width, height }));
+    // Only while it's still open: a tap outside during the wait has closed it.
+    const measure = () => target?.measureInWindow((x: number, y: number, width: number, height: number) => setAnchor((was) => (was ? { x, y, width, height } : null)));
     if (typing) setTimeout(measure, 320);
     else measure();
   };
