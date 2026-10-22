@@ -1,5 +1,5 @@
 import { useToast } from '@/components/ds';
-import { useBottleSpots } from '@/hooks/useBackBar';
+import { useBottleSpots, type StockRow } from '@/hooks/useBackBar';
 import { useUndoSwap } from '@/hooks/useBulk';
 import { plainDbMessage } from '@/lib/dbError';
 import type { ItemLocation } from '@/types/backBar';
@@ -15,6 +15,8 @@ export interface BottleDone {
   moved: string[];
   /** Spots taken off, whole. */
   removed: Omit<ItemLocation, 'item'>[];
+  /** The old bottle's stock list row, taken off with its spots. */
+  stock: StockRow | null;
 }
 
 /**
@@ -41,6 +43,7 @@ export function useBottleToast(barId: string | null) {
               if (done.undone.length) await undo.mutateAsync(done.undone);
               if (done.moved.length) await spots.pointBack.mutateAsync({ ids: done.moved, itemId: done.bottle.id });
               if (done.removed.length) await spots.putBack.mutateAsync(done.removed);
+              if (done.stock) await spots.restock.mutateAsync(done.stock);
             } catch (e) {
               toast.show({ title: 'Couldn’t undo all of it', detail: plainDbMessage(e) ?? 'Check your connection. Old specs stay in each drink’s history.' });
             }
