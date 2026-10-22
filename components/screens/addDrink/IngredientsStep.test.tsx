@@ -1,6 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
+import { mergeLines } from '@/lib/batchLines';
 import { EMPTY_DRAFT, newLine } from '@/lib/drinkWizard';
 import { startPrep } from '@/lib/prepKinds';
 
@@ -189,9 +190,31 @@ describe('IngredientsStep', () => {
     const lines = [newLine({ id: 'mezcal', name: 'Mezcal' }, 'ml', '45'), newLine({ id: 'lime', name: 'Lime juice' }, 'ml', '22.5'), newLine({ id: 'agave', name: 'Agave syrup' }, 'ml', '15')];
     await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, lines }} set={set} ingredients={[]} />);
 
-    expect(screen.getByText('Hold a grip to reorder.')).toBeTruthy();
+    expect(screen.getByText('Hold a line over another to batch them. Hold a grip and move it to reorder.')).toBeTruthy();
     await fireEvent(screen.getByRole('button', { name: 'Reorder Agave syrup' }), 'accessibilityAction', { nativeEvent: { actionName: 'up' } });
     expect(set.mock.calls[0][0].lines.map((l: { name: string }) => l.name)).toEqual(['Mezcal', 'Agave syrup', 'Lime juice']);
+  });
+
+  test('a batch is one line in the drink; its sheet has the bottle, and splits back', async () => {
+    const set = jest.fn();
+    const spec = [newLine({ id: 'mezcal', name: 'Mezcal' }, 'ml', '45'), newLine({ id: 'agave', name: 'Agave syrup' }, 'ml', '15'), newLine({ id: 'lime', name: 'Lime juice' }, 'ml', '22.5')];
+    const lines = mergeLines(spec, 1, 0, 'Ash Garden')!;
+    await renderWithTamagui(<IngredientsStep draft={{ ...EMPTY_DRAFT, name: 'Ash Garden', lines }} set={set} ingredients={[]} />);
+
+    expect(screen.getByText('Batch · mezcal, agave syrup')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: /^Ash Garden batch, 60 ml/ }));
+    expect(screen.getByText('NEW BATCH · FROM ASH GARDEN')).toBeTruthy();
+    expect(screen.getByText('562.5 ml')).toBeTruthy();
+    expect(screen.getByText('187.5 ml')).toBeTruthy();
+    expect(screen.getByText('about 12 drinks')).toBeTruthy();
+    // The per-drink amounts stay folded until asked for.
+    expect(screen.queryByText('45 ml')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Per drink amounts' }));
+    expect(screen.getByText('45 ml')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('radio', { name: '1 L' }));
+    expect(set.mock.calls.at(-1)[0].lines[0].batch.bottleMl).toBe(1000);
+    await fireEvent.press(screen.getByRole('button', { name: 'Split back into lines' }));
+    expect(set.mock.calls.at(-1)[0].lines.map((l: { name: string }) => l.name)).toEqual(['Mezcal', 'Agave syrup', 'Lime juice']);
   });
 
   test('a kind typed in full comes first, then its brands, the back bar ones leading', async () => {

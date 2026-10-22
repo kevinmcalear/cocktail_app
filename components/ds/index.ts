@@ -13,6 +13,7 @@ export { SketchTintPicker } from './SketchTintPicker';
 export { LockedSection } from './LockedSection';
 export { LogoImage, type LogoImageProps } from './LogoImage';
 export { PalateFlower } from './PalateFlower';
+export { PopoverMenu, usePopover, type Anchor, type PopoverItem, type PopoverSection } from './PopoverMenu';
 export { PressableScale } from './PressableScale';
 export { ReviewMark, ReviewRow, TextLink, type ReviewChoice, type ReviewState } from './ReviewRow';
 export { Segmented } from './Segmented';

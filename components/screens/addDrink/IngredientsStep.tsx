@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
+import { perDrinkLines } from '@/lib/batchLines';
 import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { dropIndex } from '@/lib/dropIndex';
 import { houseNudge, houseWays } from '@/lib/makeItHouse';
@@ -15,6 +16,7 @@ import { startsFrom } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
+import { BatchLineRow } from './BatchLineRow';
 import { DragRow } from './DragRow';
 import { BalanceCard, CloseToClassic, GoesWith } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
@@ -23,6 +25,7 @@ import { MakeItHouseSheet } from './MakeItHouseSheet';
 import type { TellUsAbout } from '@/components/feedback/TellUs';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { StartFromClassic } from './StartFromClassic';
+import { useBatchDrop } from './useBatchDrop';
 import { WizardChip, WizardNotice } from './WizardChrome';
 
 /** How many quick adds show under the field. */
@@ -134,8 +137,13 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     lines.splice(to, 0, ...lines.splice(from, 1));
     set({ lines });
   };
-  const drop = (from: number, dy: number) => move(from, dropIndex(from, dy, draft.lines.map((l) => heights.current[l.key] ?? 0)));
-  const has = (name: string) => draft.lines.some((l) => l.name.trim().toLowerCase() === name.toLowerCase());
+  const rowHeights = () => draft.lines.map((l) => heights.current[l.key] ?? 0);
+  // Held over another line for the dwell, it batches with it (board fix 9); otherwise it lands where it's let go.
+  const batches = useBatchDrop({ draft, set, enabled: forDrink, heights: rowHeights });
+  const drop = (from: number, dy: number) => batches.onDrop(from) || move(from, dropIndex(from, dy, rowHeights()));
+  // The taste and what goes with it read one drink's own lines, not the batch.
+  const poured = perDrinkLines(draft.lines);
+  const has = (name: string) => poured.some((l) => l.name.trim().toLowerCase() === name.toLowerCase());
   const quick = COMMON_INGREDIENTS.filter((n) => !has(n)).slice(0, QUICK);
   const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
 
@@ -144,7 +152,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       {draft.lines.length ? (
         <View role="list" aria-label="In the drink">
           {draft.lines.map((l, i) => (
-            <DragRow key={l.key} index={i} onDrop={drop} onHeight={(h) => (heights.current[l.key] = h)}>
+            <DragRow key={l.key} index={i} onDrop={drop} onMove={forDrink ? batches.onMove : undefined} onHeight={(h) => (heights.current[l.key] = h)}>
               {(grip, lifted) =>
                 // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
                 l.key === swapKey ? (
@@ -169,11 +177,14 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                       }
                     />
                   </View>
+                ) : l.batch ? (
+                  <BatchLineRow line={l} grip={grip} lifted={lifted} dropTarget={batches.target === i} onMove={(by) => move(i, i + by)} onOpen={() => batches.open(l.key)} onRemove={() => remove(l)} />
                 ) : (
                   <LineRow
                     line={l}
                     grip={grip}
                     lifted={lifted}
+                    dropTarget={batches.target === i}
                     onMove={(by) => move(i, i + by)}
                     onChange={(c) => change(l.key, c)}
                     onRemove={() => remove(l)}
@@ -188,7 +199,8 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
           ))}
         </View>
       ) : null}
-      {draft.lines.length > 1 ? <Caption tone="muted">{Platform.OS === 'web' ? 'Drag a grip to reorder.' : 'Hold a grip to reorder.'}</Caption> : null}
+      {draft.lines.length > 1 ? <Caption tone="muted">{forDrink ? 'Hold a line over another to batch them. Hold a grip and move it to reorder.' : 'Hold a grip and move it to reorder.'}</Caption> : null}
+      {batches.sheets}
 
       {nudge ? (
         <View style={[styles.nudge, { backgroundColor: ds.c.surface }]}>
@@ -258,11 +270,11 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       />
 
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
-      {forDrink && balance && !typing ? <BalanceCard lines={draft.lines} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
+      {forDrink && balance && !typing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
       {typing || !forDrink ? null : (
         <>
           <GoesWith
-            lines={draft.lines}
+            lines={poured}
             onAdd={add}
             fallback={
               <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
@@ -271,7 +283,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 ))}
               </View>
             }
-            after={<CloseToClassic ingredients={draft.lines.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
+            after={<CloseToClassic ingredients={poured.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
           />
           {draft.lines.length ? null : <StartFromClassic set={set} />}
         </>

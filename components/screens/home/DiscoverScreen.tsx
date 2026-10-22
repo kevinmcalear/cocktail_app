@@ -30,6 +30,7 @@ import { useDrinkPick } from '@/hooks/useDiscover';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useDiscoverArea } from '@/hooks/useDiscoverArea';
 import { useSearchMine } from '@/hooks/useSearchMine';
+import { usePublishSearchArea } from '@/hooks/useSearchFrom';
 import { useMode } from '@/hooks/useMode';
 import { kindsTitle, pinOf } from '@/lib/discoverDrinks';
 import { areaFromViewport, armBarHover, cameraOn, type MapPin, type Viewport } from '@/lib/discoverMap';
@@ -87,8 +88,7 @@ export function DiscoverScreen() {
   const onViewport = useCallback((v: Viewport | null) => {
     viewport.current = v;
   }, []);
-  // Phones: the map when this device has been found before, unless it last picked the list.
-  // Decided as the screen opens, so a position landing later doesn't swap the whole screen.
+  // Phones: the map when this device was found before, unless it last picked the list; decided as the screen opens, so a late position doesn't swap it.
   const saved = useDiscoverView((s) => s.view);
   const saveView = useDiscoverView((s) => s.setView);
   const [firstView] = useState(() => (useLastPlace.getState().place ? 'map' : 'list'));
@@ -150,10 +150,10 @@ export function DiscoverScreen() {
     setSearch('');
     close();
   };
-  // Discover's part in the one search: its filters, and its area when it isn't everywhere.
-  // The scope always reads "This area" (disc-search-typing), whatever the area chip says.
-  // A city the search names goes there, as a map search would (Kevin, 16 Oct: "copy Google Maps").
+  // Discover's part in the one search (its filters, and its area unless everywhere), lent to the search tab too. It always reads
+  // "This area" (disc-search-typing); a city it names goes there, as a map search would (Kevin, 16 Oct: "copy Google Maps").
   const searchArea: SearchArea = { label: onMap || area.kind !== 'anywhere' ? 'This area' : null, area, kinds, onKind: addKind, onPlace: (c) => (setScope('area'), onCity(c), setSearch(''), close()) };
+  usePublishSearchArea(searchArea, (q) => { setScope('area'); setSearch(q); if (mapAvailable && !split) saveView('map'); });
   // "This area" with no area left (it went back to Anywhere) searches everywhere.
   const searchScope = scope === 'area' && !searchArea.label ? 'everywhere' : scope;
   const searchProps = { query: search, onQuery: setSearch, scope: searchScope, onScope: setScope, mine, area: searchArea, onClearKinds: () => setKinds([]), onClose: close };

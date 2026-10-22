@@ -10,6 +10,7 @@ import type { KitRow } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDraftPacks, useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { usePricingSettings } from '@/hooks/usePricing';
+import { perDrinkLines } from '@/lib/batchLines';
 import type { ClassicMatch } from '@/lib/classics';
 import { lineCostMinor } from '@/lib/costing';
 import { amountOf, guessUnit, hasContent, newLine, pickByName, sketchLook, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
@@ -81,7 +82,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const caps = useCapabilities(barId).data;
   const canCost = !!barId && !!caps?.includes('costs');
   const pricing = usePricingSettings(canCost ? barId : null).data ?? null;
-  const costed = [...draft.lines, ...draft.garnishes];
+  // A batch costs what one drink's own pours do.
+  const costed = [...perDrinkLines(draft.lines), ...draft.garnishes];
   const ids = costed.flatMap((l) => (l.id ? [l.id] : []));
   const packs = useDraftPacks(barId, ids, canCost).data ?? [];
   const currency = pricing?.currency ?? 'GBP';
@@ -196,7 +198,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
         <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
           <Eyebrow>The drink, as you go</Eyebrow>
           <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
-          <DeskTaste lines={draft.lines} ingredients={p.ingredients} onAdd={addByName} />
+          <DeskTaste lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
           {canCost ? <DeskCost lines={costLines} pricing={pricing} priceMinor={draft.priceMinor ?? null} onPrice={(priceMinor) => set({ priceMinor })} /> : null}
         </ScrollView>
       </View>

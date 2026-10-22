@@ -1,33 +1,43 @@
 import { useRouter } from 'expo-router';
+import { useRef, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PressableScale, RowScore, scoreWords, useDs } from '@/components/ds';
+import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PopoverMenu, PressableScale, RowScore, scoreWords, useDs, usePopover } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { withAlpha } from '@/lib/color';
 import { foldName } from '@/lib/discover';
 import { STYLES } from '@/lib/drinkStyles';
-import { showOptions, type SearchShow, type ShowCounts } from '@/lib/searchScope';
+import { showOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 /**
- * "Little Rye ⌄" inside the search field: where the search looks. A tap
- * switches to the other place (the search tab only has two).
+ * "Little Rye ⌄" inside the search field: where the search looks. A tap opens
+ * the places as a menu (search-starts-here):
+ * the venue or your drinks, This area from Discover, and Everywhere.
  */
-export function ScopeToken({ label, onPress }: { label: string; onPress: () => void }) {
+export function ScopeToken({ options, scope, onScope }: { options: { value: SearchScope; label: string; detail?: string }[]; scope: SearchScope; onScope: (scope: SearchScope) => void }) {
   const ds = useDs();
+  const menu = usePopover();
+  const token = useRef<ComponentRef<typeof View>>(null);
+  const label = options.find((o) => o.value === scope)?.label ?? 'Everywhere';
+  const items = options.map((o) => ({ label: o.label, detail: o.detail, checked: o.value === scope, onPress: () => onScope(o.value) }));
   return (
-    <PressableScale
-      role="button"
-      accessibilityLabel={`Searching ${label}. Change where to search`}
-      onPress={onPress}
-      style={[styles.token, { backgroundColor: withAlpha(ds.accentText, 0.2) }]}
-    >
-      <DsText variant="label" color={ds.accentText} numberOfLines={1} style={styles.tokenText}>
-        {label}
-      </DsText>
-      <IconSymbol name="chevron.down" size={12} color={ds.accentText} />
-    </PressableScale>
+    <View ref={token} collapsable={false}>
+      <PressableScale
+        role="button"
+        aria-expanded={!!menu.anchor}
+        accessibilityLabel={`Searching ${label}. Change where to search`}
+        onPress={() => menu.open(token.current)}
+        style={[styles.token, { backgroundColor: withAlpha(ds.accentText, menu.anchor ? 0.4 : 0.2) }]}
+      >
+        <DsText variant="label" color={ds.accentText} numberOfLines={1} style={styles.tokenText}>
+          {label}
+        </DsText>
+        <IconSymbol name="chevron.down" size={12} color={ds.accentText} />
+      </PressableScale>
+      <PopoverMenu anchor={menu.anchor} label="Where to search" onClose={menu.close} sections={[{ title: 'Search in', items }]} />
+    </View>
   );
 }
 

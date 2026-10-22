@@ -1,8 +1,11 @@
-import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create, type StateCreator } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { HomeNight } from '@/hooks/useMenuMutations';
 import type { SavedBringIn } from '@/hooks/useBringInSave';
 
+import { isFinished, settle, type ImportReview } from '@/lib/importReview';
 import { isCleanText, isLink, localReading, readingName, type ReadKind, type ReadSource } from '@/lib/bringIn';
 import { appendReading } from '@/lib/paste';
 import { nudgeWhenReady } from '@/lib/readyNudge';
@@ -52,6 +55,18 @@ interface BringInState {
   /** Starts the next queued source, if any. True when one started. */
   next: (barId: string | null) => boolean;
   setForeground: (on: boolean) => void;
+  /** Big recipe imports being reviewed, by id: kept on this device (persisted), per person and place. */
+  reviews: Record<string, ImportReview>;
+  /** The review on screen at /bring-in, if any. */
+  reviewing: string | null;
+  /** Reviews put off with Later on the Library's card, until the app next opens. */
+  later: string[];
+  openReview: (review: ImportReview) => void;
+  setReviewing: (id: string | null) => void;
+  /** Changes a review, if it's still there. */
+  editReview: (id: string, change: (review: ImportReview) => ImportReview) => void;
+  dropReview: (id: string) => void;
+  putOff: (id: string) => void;
 }
 
 let ids = 0;
@@ -90,12 +105,7 @@ async function readAll(source: ReadSource, hint: ReadKind | null, as: ReadKind |
   return out!;
 }
 
-/**
- * Bring in's reading, kept here rather than on a screen so it carries on
- * while you use the rest of the app (the tray shows it), and the sheet's open
- * state so any screen can open it.
- */
-export const useBringIn = create<BringInState>()((set, get) => {
+const bringIn: StateCreator<BringInState, [['zustand/persist', unknown]]> = (set, get) => {
   const patch = (id: number, change: Partial<BringInJob>) => {
     const job = get().job;
     if (job?.id === id) set({ job: { ...job, ...change } });
@@ -186,5 +196,44 @@ export const useBringIn = create<BringInState>()((set, get) => {
       return true;
     },
     setForeground: (on) => set({ foreground: on }),
+    reviews: {},
+    reviewing: null,
+    later: [],
+    openReview: (review) => set((s) => ({ reviews: { ...s.reviews, [review.id]: review }, reviewing: review.id })),
+    setReviewing: (id) => set({ reviewing: id }),
+    editReview: (id, change) =>
+      set((s) => {
+        const review = s.reviews[id];
+        return review ? { reviews: { ...s.reviews, [id]: change(review) } } : s;
+      }),
+    dropReview: (id) =>
+      set((s) => {
+        const { [id]: _gone, ...reviews } = s.reviews;
+        return { reviews, reviewing: s.reviewing === id ? null : s.reviewing };
+      }),
+    putOff: (id) => set((s) => ({ later: [...s.later, id] })),
   };
-});
+};
+
+/**
+ * Bring in's reading, kept here rather than on a screen so it carries on
+ * while you use the rest of the app (the tray shows it), and the sheet's open
+ * state so any screen can open it. Big recipe imports being reviewed are kept
+ * on this device (lib/importReview.ts); the reading in flight is not.
+ * Cleared on sign-out (lib/clearUserData.ts): bar iPads are shared.
+ */
+export const useBringIn = create<BringInState>()(
+  persist(bringIn, {
+    name: 'bring-in-reviews',
+    version: 1,
+    storage: createJSONStorage(() => AsyncStorage),
+    partialize: (s) => ({ reviews: s.reviews }),
+    // A drink that was saving when the app stopped is settled as approved,
+    // never saved again; a review with nothing left to check is let go.
+    merge: (kept, current) => {
+      const reviews = (kept as { reviews?: Record<string, ImportReview> } | undefined)?.reviews ?? {};
+      const settled = Object.entries(reviews).map(([id, r]) => [id, settle(r)] as const);
+      return { ...current, reviews: Object.fromEntries(settled.filter(([, r]) => !isFinished(r))) };
+    },
+  })
+);

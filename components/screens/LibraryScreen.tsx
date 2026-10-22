@@ -2,23 +2,25 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Button, Caption, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { Button, Caption, Chip, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { PageHeader } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { useWebNav } from '@/hooks/useIsWideWeb';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
+import { ResumeCard } from '@/components/screens/bringin/ResumeCard';
 import { FeatureNewsLine } from '@/components/screens/library/FeatureNewsLine';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { useFirstRound } from '@/hooks/useFirstRound';
-import { Filter, FilterRow } from '@/components/screens/library/LibraryChips';
+import { FilterRow } from '@/components/screens/library/LibraryChips';
+import { FilterButton, PhoneFilterRow, PinnedFilters, type FilterSet } from '@/components/screens/library/LibraryFilters';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
 import { LibraryTile } from '@/components/screens/library/LibraryTile';
 import { SearchField } from '@/components/search/SearchField';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
-import { space } from '@/constants/tokens';
+import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
@@ -30,7 +32,7 @@ import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { venueContextIds } from '@/lib/barContextFilter';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { matchesQuery } from '@/lib/publicDrinks';
-import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, methodWord, parseShow, PREP_GROUPS, tileLine, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, methodWord, parseShow, PREP_GROUPS, splitFilters, tileLine, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
 import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
 import type { SearchItem } from '@/types/search';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
@@ -73,9 +75,21 @@ export function LibraryScreen() {
   const canOrder = !!capabilities?.includes('menus');
   const [swap, setSwap] = useState(false);
   const [snapping, setSnapping] = useState(false);
-  // Find in Library narrows the list in place; anything further is the one search (nav-one-search).
+  // Phones: four filters and a filter button, no find field; the search circle opens on the venue.
+  // Wider screens keep Find in Library in the header, narrowing the list in place (lib-filters-proposal).
+  const phone = breakpoint === 'phone';
   const [find, setFind] = useState('');
-  const q = find.trim().toLowerCase();
+  const q = phone ? '' : find.trim().toLowerCase();
+  // Scrolled past the filters, a phone pins them to the top (rowY: where the row sits in the list).
+  const [rowY, setRowY] = useState(0);
+  const [pinned, setPinned] = useState(false);
+  const onScrollY = (y: number) => setPinned(phone && !!rowY && y > rowY - layout.minTapTarget * 2);
+  // A new view opens at its top (Classics is its own list), so the filters unpin.
+  const [pinnedShow, setPinnedShow] = useState(show);
+  if (pinnedShow !== show) {
+    setPinnedShow(show);
+    setPinned(false);
+  }
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
   const { data: menus } = useVenueMenus(activeId);
   const staff = useStaffList(activeId);
@@ -136,30 +150,37 @@ export function LibraryScreen() {
   const count = (value: Show) => (value === 'staff' ? (staff.data?.length ?? 0) : lists[value].length);
   const groups = filterGroups(!!activeId, canCost, extras);
   const pick = (value: Show) => router.setParams({ show: value, menu: undefined, kind: undefined });
+  const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick };
   const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
   const content = { paddingHorizontal: gutter, paddingBottom: bottom, gap: space.lg };
   const header = (
     <View style={styles.header}>
-      <PageHeader title="Library" width="full" display />
+      <PageHeader
+        title="Library"
+        width="full"
+        display
+        tools={phone ? <FilterButton set={filterSet} /> : undefined}
+        action={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />}
+      />
+      {activeId ? <ResumeCard barId={activeId} /> : null}
       <FeatureNewsLine />
       <FirstRoundCard />
-      {/* The staff list is dragged into order, so it isn't narrowed. */}
-      {staffView ? null : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />}
       {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
-      <FilterRow
-        label="Show"
-        gutter={gutter}
-        whole={breakpoint === 'desktop'}
-        groups={groups.map((g) => g.map((f) => <Filter key={f.value} label={f.label} count={count(f.value)} selected={show === f.value} onPress={() => pick(f.value)} />))}
-      />
+      {phone ? (
+        <View onLayout={(e) => setRowY(e.nativeEvent.layout.y)}>
+          <PhoneFilterRow set={filterSet} gutter={gutter} />
+        </View>
+      ) : (
+        <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={groups.map((g) => g.map((f) => <Chip key={f.value} look="outline" label={f.label} count={String(count(f.value))} selected={show === f.value} onPress={() => pick(f.value)} />))} />
+      )}
       {show === 'on-menu' && byMenu.onMenus.length > 1 ? (
         <FilterRow
           label="Which menu"
           gutter={gutter}
           groups={[[
-            <Filter key="all" label="Every menu on now" selected={!byMenu.onMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />,
-            ...byMenu.onMenus.map((m) => <Filter key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />),
+            <Chip look="outline" key="all" label="Every menu on now" selected={!byMenu.onMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />,
+            ...byMenu.onMenus.map((m) => <Chip look="outline" key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />),
           ]]}
         />
       ) : null}
@@ -170,8 +191,8 @@ export function LibraryScreen() {
           label="Which collection"
           gutter={gutter}
           groups={[[
-            <Filter key="all" label="Every R&D drink" selected={!byMenu.rndMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />,
-            ...byMenu.rndMenus.map((m) => <Filter key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />),
+            <Chip look="outline" key="all" label="Every R&D drink" selected={!byMenu.rndMenus.some((m) => m.id === params.menu)} onPress={() => router.setParams({ menu: undefined })} />,
+            ...byMenu.rndMenus.map((m) => <Chip look="outline" key={m.id} label={m.name} count={m.itemIds.length} selected={params.menu === m.id} onPress={() => router.setParams({ menu: m.id })} />),
           ]]}
         />
       ) : null}
@@ -181,8 +202,8 @@ export function LibraryScreen() {
           label="Which preps"
           gutter={gutter}
           groups={[[
-            <Filter key="all" label="All preps" count={lists.preps.length} selected={!kind} onPress={() => router.setParams({ kind: undefined })} />,
-            ...prepKinds.map((g) => <Filter key={g.value} label={g.label} count={g.count} selected={kind?.value === g.value} onPress={() => router.setParams({ kind: g.value })} />),
+            <Chip look="outline" key="all" label="All preps" count={lists.preps.length} selected={!kind} onPress={() => router.setParams({ kind: undefined })} />,
+            ...prepKinds.map((g) => <Chip look="outline" key={g.value} label={g.label} count={g.count} selected={kind?.value === g.value} onPress={() => router.setParams({ kind: g.value })} />),
           ]]}
         />
       ) : null}
@@ -218,7 +239,7 @@ export function LibraryScreen() {
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
         <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />}>
-          <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />
+          <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} onScrollOffset={onScrollY} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />
         </Suspense>
       ) : (
         <FlatList
@@ -233,6 +254,8 @@ export function LibraryScreen() {
           columnWrapperStyle={{ gap: space.md }}
           contentContainerStyle={content}
           ListHeaderComponent={header}
+          onScroll={(e) => onScrollY(e.nativeEvent.contentOffset.y)}
+          scrollEventThrottle={32}
           renderItem={({ item }) => {
             const category = item.category as ItemCategory;
             return (
@@ -251,6 +274,7 @@ export function LibraryScreen() {
           ListFooterComponent={foot ?? undefined}
         />
       )}
+      {pinned ? <PinnedFilters set={filterSet} gutter={gutter} /> : null}
       <RoundOpened />
       {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
       {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}

@@ -14,6 +14,8 @@ interface MenuSheetProps {
   subtitle?: string;
   /** Small mono caps over the title ("WHERE IT LIVES · LITTLE RYE"), in place of a subtitle under it. */
   eyebrow?: string;
+  /** A picture before the title: the bottle a back bar sheet is about. */
+  leading?: ReactNode;
   children: ReactNode;
   /** Pinned under the scrolling body: the sheet's main action. */
   footer?: ReactNode;
@@ -37,7 +39,7 @@ interface MenuSheetProps {
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children, footer, onShow, save, plain, form, list }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, children, footer, onShow, save, plain, form, list }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -55,6 +57,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, children
           <FormHeader title={title} save={save} />
         ) : (
           <View style={styles.header}>
+            {leading}
             <View style={styles.flex}>
               {eyebrow ? (
                 <Caption tone="muted" style={styles.eyebrow}>
