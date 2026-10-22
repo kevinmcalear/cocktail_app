@@ -7,6 +7,7 @@ import { ingredientState, plainKind, type MatchData } from '@/lib/bringInMatch';
 import { convertPour, EMPTY_DRAFT, newLine, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { normName } from '@/lib/paste';
 import { startPrep, type PrepDraft } from '@/lib/prepKinds';
+import { versionName } from '@/lib/sameName';
 import type { RecipeReadLine, RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
 /** What the person decided on a line: a pick, or "make it new" instead of the match. */
@@ -19,6 +20,24 @@ export interface RecipeChoices {
   notes: string;
   /** By line index. */
   lines: Record<number, LineChoice>;
+  /** The bar already has a drink by this name, with a different spec: what to do with the sheet's. */
+  same?: SheetPick | null;
+}
+
+/**
+ * Update it (the bar's drink takes the sheet's spec), Keep both (the sheet's
+ * is saved as a version of it, with a word in brackets) or Skip (board
+ * dup-drink-warning). Plain JSON: a review keeps it on the device.
+ */
+export interface SheetPick {
+  /** The bar's drink, its name and whose it is. */
+  id: string;
+  name: string;
+  bar: string;
+  as: 'update' | 'keep' | 'skip';
+  word?: string;
+  /** What Keep both links to: the classic the bar's drink is a version of, else the bar's drink. */
+  riff: WizardPick;
 }
 
 export const startChoices = (recipe: RecipeReading): RecipeChoices => ({ name: recipe.name, madeBy: '', source: recipe.by ?? '', notes: recipe.notes ?? '', lines: {} });
@@ -90,9 +109,10 @@ export function recipeDraft(
     !ice && recipe.ice ? `Ice: ${recipe.ice}` : null,
     choices.notes.trim() || null,
   ].filter(Boolean);
+  const same = choices.same?.as === 'keep' ? choices.same : null;
   return {
     ...EMPTY_DRAFT,
-    name: choices.name.trim() || recipe.name,
+    name: same ? versionName(same.name, same.word) : choices.name.trim() || recipe.name,
     lines,
     methods: method ? [method] : [],
     glass,
@@ -101,6 +121,7 @@ export function recipeDraft(
     // Someone else made it, so it isn't credited to you.
     creator: choices.madeBy.trim() || choices.source.trim() ? 'nobody' : null,
     notes: notes.join('\n'),
+    ...(same ? { riffOf: same.riff, sameAs: { id: same.id, name: same.name, bar: same.bar, as: 'version' as const, word: same.word } } : {}),
   };
 }
 

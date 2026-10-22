@@ -33,6 +33,12 @@ export interface CreateDrinkInput {
   menuSectionId?: string | null;
   /** The drawing the wizard showed (draftSketchInputs): the new drink shows it at once, not its glass icon. */
   sketch?: SketchInputs | null;
+  /**
+   * Bring in's "Update it" (board dup-drink-warning): this existing drink
+   * takes the draft's spec as a new version (save_drink_spec, the editor's
+   * save), and nothing else about it changes. No drink is made.
+   */
+  updateId?: string | null;
 }
 
 export interface CreateDrinkResult {
@@ -60,7 +66,7 @@ export function useCreateDrink() {
   const userId = useUserId();
 
   return useMutation({
-    mutationFn: async ({ draft, barId, myProfileId, menuSectionId, sketch }: CreateDrinkInput): Promise<CreateDrinkResult> => {
+    mutationFn: async ({ draft, barId, myProfileId, menuSectionId, sketch, updateId }: CreateDrinkInput): Promise<CreateDrinkResult> => {
       if (!userId) throw new Error('Sign in to save drinks.');
       const warnings: string[] = [];
       // New rows the pickers' lists don't have yet: ingredients by id, spec items (glass, method, ice) at all.
@@ -188,6 +194,15 @@ export function useCreateDrink() {
       }
       const methodIds: string[] = [];
       for (const m of draft.methods) methodIds.push(await ensure(m, 'method'));
+      if (updateId) {
+        // Its ranks, photos and menus stay; the spec it had is the version before, so it can be put back.
+        // ponytail: a house prep's own recipe made with the sheet isn't written here (Bring in reads none); write it on the drink's page.
+        await saveDrinkSpec(updateId, lines, methodIds, 'Updated from Bring in');
+        void qc.invalidateQueries({ queryKey: ['cocktail', updateId] });
+        void qc.invalidateQueries({ queryKey: ['item-versions', updateId] });
+        void refreshIngredients(qc, newIngredients);
+        return { id: updateId, warnings, created, later };
+      }
       const glassId = draft.glass ? await ensure(draft.glass, 'glassware') : null;
       const iceId = draft.ice ? await ensure(draft.ice, 'ice') : null;
       const methodIceId = draft.methodIce ? await ensure(draft.methodIce, 'ice') : null;
@@ -328,6 +343,8 @@ export function useCreateDrink() {
       if (sketch) qc.setQueryData(['item-sketch', id], sketch);
       useRecentActivityStore.getState().push(recentEntry('cocktail', id, capitalize(draft.name), { barId }));
       void qc.invalidateQueries({ queryKey: ['cocktails'] });
+      // The next drink by this name is told the bar has one now (useSameNameDrink).
+      void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
       if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
       if (newSpecs) void qc.invalidateQueries({ queryKey: dropdownKeys.specs });
       void refreshIngredients(qc, newIngredients);

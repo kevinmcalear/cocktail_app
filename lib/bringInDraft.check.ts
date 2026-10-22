@@ -52,4 +52,12 @@ const withPicks = recipeDraft(pickRecipe, startChoices(pickRecipe), data, lists,
 assert.ok(withPicks.lines[0].name);
 
 assert.equal(prepFromRatio('Fig syrup'), null);
+
+// Keep both: the sheet's is saved as a version of the bar's, with its word in brackets; Update it and Skip keep the name.
+const keep = { id: 'lr-1', name: 'Rye & Fig Old Fashioned', bar: 'Little Rye', as: 'keep' as const, word: 'stronger', riff: { id: 'lr-1', name: 'Rye & Fig Old Fashioned' } };
+const kept = recipeDraft(recipe, { ...choices, same: keep }, data, lists, 'ml');
+assert.equal(kept.name, 'Rye & Fig Old Fashioned (stronger)');
+assert.deepEqual(kept.riffOf, keep.riff);
+assert.equal(kept.sameAs?.as, 'version');
+assert.equal(recipeDraft(recipe, { ...choices, same: { ...keep, as: 'update' } }, data, lists, 'ml').name, draft.name);
 console.log('bringInDraft checks passed');

@@ -23,7 +23,8 @@ export function useRecipeMaker(data: MatchData) {
   const toMake = (r: RecipeReading, c: RecipeChoices): DrinkToMake => {
     const draft = recipeDraft(r, c, data, { methods, glasses, ice }, usual);
     // Saved as drawn here, so the drink keeps the drawing the check showed.
-    return { draft, prepNames: r.lines.filter((l) => isPrepName(l.ingredient)).map((l) => l.ingredient), sketch: draftSketchInputs(sketchLook(draft, variants)) };
+    const updateId = c.same?.as === 'update' ? c.same.id : null;
+    return { draft, prepNames: r.lines.filter((l) => isPrepName(l.ingredient)).map((l) => l.ingredient), sketch: draftSketchInputs(sketchLook(draft, variants)), updateId };
   };
   return { usual, toMake };
 }
