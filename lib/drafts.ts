@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { draftMethodIds } from '@/lib/drinkMethods';
+import { numericPrice } from '@/lib/menus';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 
 /**
@@ -324,7 +325,7 @@ export async function resolveBeerId(id: string, drafts: any[]): Promise<string> 
             description: data.description?.trim() || null,
             brand_maker: capitalize(data.brewery) || null,
             abv: data.abv ? parseFloat(data.abv) : null,
-            price: data.price ? parseFloat(data.price) : null,
+            price: data.price ? numericPrice(parseFloat(data.price)) : null,
             bar_id: data.barId || null,
             override_visibility_level: data.overrideVisibility ? parseInt(data.overrideVisibility) : null,
             override_generic_ingredient_level: data.overrideGeneric ? parseInt(data.overrideGeneric) : null,
@@ -409,7 +410,7 @@ export async function resolveWineId(id: string, drafts: any[]): Promise<string> 
             description: data.description?.trim() || null,
             brand_maker: capitalize(data.vintner) || null,
             abv: data.abv ? parseFloat(data.abv) : null,
-            price: data.price ? parseFloat(data.price) : null,
+            price: data.price ? numericPrice(parseFloat(data.price)) : null,
             bar_id: data.barId || null,
             override_visibility_level: data.overrideVisibility ? parseInt(data.overrideVisibility) : null,
             override_generic_ingredient_level: data.overrideGeneric ? parseInt(data.overrideGeneric) : null,

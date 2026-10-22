@@ -112,6 +112,7 @@ export function useSwapSource(barId: string | null) {
       }
       const byDrink = new Map<string, SwapLine[]>();
       for (const line of lineRows) {
+        if (!line.recipe_item_id) continue; // never: selected by recipe_item_id
         const list = byDrink.get(line.recipe_item_id) ?? [];
         list.push({
           id: line.id,

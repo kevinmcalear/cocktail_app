@@ -159,7 +159,7 @@ export function useProfileDrinks(profileId: string | null | undefined, enabled: 
     queryKey: ['profile-drinks', profileId, userId],
     enabled: enabled && !!profileId && !!userId,
     queryFn: async (): Promise<HadDrink[]> => {
-      const { data, error } = await supabase.rpc('get_profile_drinks', { p_profile_id: profileId });
+      const { data, error } = await supabase.rpc('get_profile_drinks', { p_profile_id: profileId! });
       if (error) throw error;
       return ((data ?? []) as SharedHadRow[]).map(fromSharedRow);
     },
@@ -178,7 +178,7 @@ export function useProfileBars(profileId: string | null | undefined, enabled: bo
     queryKey: ['profile-bars', profileId, userId],
     enabled: enabled && !!profileId && !!userId,
     queryFn: async (): Promise<BarTally[]> => {
-      const { data, error } = await supabase.rpc('get_profile_bars', { p_profile_id: profileId });
+      const { data, error } = await supabase.rpc('get_profile_bars', { p_profile_id: profileId! });
       if (error) throw error;
       return ((data ?? []) as SharedBarRow[]).map(fromSharedBarRow);
     },
@@ -459,7 +459,7 @@ export function useDrinkRankings(rankedAsItemId: string | null | undefined, area
     queryKey: ['drink-rankings', rankedAsItemId, area],
     enabled: !!rankedAsItemId && !!area,
     queryFn: async (): Promise<AreaRanking[]> => {
-      const { data, error } = await supabase.rpc('get_drink_rankings', { p_ranked_as_item_id: rankedAsItemId, ...area, p_limit: 20 });
+      const { data, error } = await supabase.rpc('get_drink_rankings', { p_ranked_as_item_id: rankedAsItemId!, ...area, p_limit: 20 });
       if (error) throw error;
       return ((data ?? []) as AreaRanking[]).map((r) => ({ ...r, score: Number(r.score) }));
     },

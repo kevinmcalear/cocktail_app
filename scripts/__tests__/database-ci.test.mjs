@@ -22,7 +22,7 @@ test('the app files the security tests read count, with what they import', () =>
 });
 
 test('database, test, package and CI changes run the job', () => {
-  for (const f of ['supabase/migrations/20990101000000_x.sql', 'supabase/tests/x.test.mjs', 'supabase/functions/x/index.ts', 'package-lock.json', '.github/workflows/ci.yml', 'lib/drinkStyles.ts']) {
+  for (const f of ['supabase/migrations/20990101000000_x.sql', 'supabase/tests/x.test.mjs', 'supabase/functions/x/index.ts', 'package-lock.json', '.github/workflows/ci.yml', 'lib/drinkStyles.ts', 'types/database.ts']) {
     assert.equal(needsDatabase(['components/x.tsx', f]), true, f);
   }
 });

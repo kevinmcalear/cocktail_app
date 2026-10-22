@@ -1,49 +1,26 @@
-// The back bar tables (supabase/migrations/20260926000200_back_bar.sql).
+// The back bar tables (supabase/migrations/20260926000200_back_bar.sql), as the app selects them.
+import type { Enum, Row } from '@/types/db';
 
-export type BarZoneKind =
-  | 'shelf'
-  | 'fridge'
-  | 'freezer'
-  | 'speed_rail'
-  | 'well'
-  | 'garnish'
-  | 'glass_rack'
-  | 'sink'
-  | 'bar_top'
-  | 'storeroom'
-  | 'other';
+export type BarZoneKind = Enum<'bar_zone_kind'>;
 
-/** A place behind the bar, drawn on the venue's plan as fractions of its width and height. */
-export interface BarZone {
-  id: string;
-  bar_id: string;
-  name: string;
-  kind: BarZoneKind;
-  /** "Under the back bar, second from the left. 4 °C." */
-  description: string | null;
-  photo_url: string | null;
-  /** All four are null until the zone is drawn, and keep it inside the plan. */
-  plan_x: number | null;
-  plan_y: number | null;
-  plan_w: number | null;
-  plan_h: number | null;
-  sort_order: number;
-}
+/**
+ * A place behind the bar, drawn on the venue's plan as fractions of its width and height.
+ * description: "Under the back bar, second from the left. 4 °C." The four plan_* are null
+ * until the zone is drawn, and keep it inside the plan.
+ */
+export type BarZone = Pick<
+  Row<'bar_zones'>,
+  'id' | 'bar_id' | 'name' | 'kind' | 'description' | 'photo_url' | 'plan_x' | 'plan_y' | 'plan_w' | 'plan_h' | 'sort_order'
+>;
 
-/** One place an item lives at a venue. An item can live in several. */
-export interface ItemLocation {
-  id: string;
-  bar_id: string;
-  item_id: string;
-  zone_id: string;
-  /** "Top shelf · left" */
-  shelf: string | null;
-  /** "1 L squeeze bottle, blue tape, date on the cap" */
-  container: string | null;
-  photo_url: string | null;
-  par_amount: number | null;
-  par_unit: string | null;
-  sort_order: number;
+/**
+ * One place an item lives at a venue. An item can live in several.
+ * shelf: "Top shelf · left". container: "1 L squeeze bottle, blue tape, date on the cap".
+ */
+export type ItemLocation = Pick<
+  Row<'item_locations'>,
+  'id' | 'bar_id' | 'item_id' | 'zone_id' | 'shelf' | 'container' | 'photo_url' | 'par_amount' | 'par_unit' | 'sort_order'
+> & {
   /** Embedded; null when the item isn't visible to the reader. */
   item: { id: string; name: string } | null;
-}
+};

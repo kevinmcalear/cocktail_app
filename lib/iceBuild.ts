@@ -17,8 +17,11 @@ export const ICE_TO = ['half', 'rim', 'mound'] as const;
 export type IceTo = (typeof ICE_TO)[number];
 export const ICE_TO_LABEL: Record<IceTo, string> = { half: 'Half', rim: 'To the top', mound: 'Mounded' };
 
-/** One layer, bottom first. `ice` is an ice item's id when stored, a wizard pick while drafting. */
-export interface IceLayer<T = string> {
+/**
+ * One layer, bottom first. `ice` is an ice item's id when stored, a wizard pick while drafting.
+ * A type, not an interface, so a build passes as Json (items.ice_build).
+ */
+export type IceLayer<T = string> = {
   ice: T;
   /** Pieces (cubes, a spear): how many. */
   n?: number | null;
@@ -27,7 +30,7 @@ export interface IceLayer<T = string> {
   packed?: boolean;
   /** The shaking ice, dumped in with the drink. */
   tin?: boolean;
-}
+};
 
 /** As the drawings name it ('cubes', 'pebble'), from the ice's name. */
 export const iceKind = (name: string | null | undefined) => iceFromName(name);

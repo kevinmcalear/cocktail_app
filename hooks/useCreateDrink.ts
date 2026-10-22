@@ -20,6 +20,7 @@ import { techniqueById } from '@/lib/techniques';
 import { prepCardFor } from '@/lib/techniques/makeIt';
 import type { SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
+import type { Insert } from '@/types/db';
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 
@@ -210,8 +211,8 @@ export function useCreateDrink() {
       // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
       const otherBar = fromElsewhere && !!originBar;
 
-      const row = {
-        id: undefined as string | undefined,
+      const row: Insert<'items'> = {
+        id: undefined,
         name: capitalize(draft.name),
         item_type: 'cocktail',
         bar_id: barId,

@@ -5,6 +5,7 @@ import { changedProfiles } from '@/hooks/useProfiles';
 import { plainDbMessage } from '@/lib/dbError';
 import { instagramProblem, normalizeHandle, normalizeInstagram, type ProfileDraft, type ShareMode, type ShareSection } from '@/lib/profiles';
 import { supabase } from '@/lib/supabase';
+import type { Update } from '@/types/db';
 
 /** The signed-in person's own profile, public or not. */
 export interface MyProfile {
@@ -151,8 +152,8 @@ export interface SharingChange {
 }
 
 /** The profiles columns a SharingChange writes. */
-export function sharingRow(change: Omit<SharingChange, 'id'>): Record<string, string | boolean | null> {
-  const row: Record<string, string | boolean | null> = {};
+export function sharingRow(change: Omit<SharingChange, 'id'>): Update<'profiles'> {
+  const row: Update<'profiles'> = {};
   if (change.section && change.mode) row[MODE_COLUMN[change.section]] = change.mode;
   if (change.showsDates !== undefined) row.shows_dates = change.showsDates;
   if (change.awardsMode) row.awards_mode = change.awardsMode;

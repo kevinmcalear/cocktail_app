@@ -151,7 +151,10 @@ export function useIngredientEditor(id: string) {
                     brandMaker: ingredient.brand_maker || "",
                     generic: ingredient.generic ?? null,
                     abv: ingredient.abv?.toString() || "",
-                    selectedCategories: (ingredient.item_categories ?? []).map((ic: { category_id: string }) => ic.category_id),
+                    // ponytail: useIngredient doesn't select item_categories, so this has
+                    // always loaded empty, and Save then unlinks every tag left unticked.
+                    // Selecting them there is its own fix; this keeps today's behaviour.
+                    selectedCategories: [],
                     // Someone who can't edit the recipe reads it as shown; Save then asks for their own version (useAskAtSave).
                     recipeItems: (recipes.length ? recipes : (data.recipe ?? [])).map((r) => mapPresentationRecipeToEditItem(r, { includeCocktailFields: true })),
                     barId: ingredient.bar_id || null,

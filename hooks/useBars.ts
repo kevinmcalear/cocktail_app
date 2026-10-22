@@ -28,7 +28,7 @@ export function useBars() {
                         icon_background
                     )
                 `)
-                .eq('user_id', userId);
+                .eq('user_id', userId!);
                 
             if (error) throw error;
             return data;

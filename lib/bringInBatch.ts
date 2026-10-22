@@ -4,8 +4,8 @@
 
 export type BatchKind = 'menu' | 'recipes' | 'bottles';
 
-/** What Brought in lists. Plain JSON: it's stored as is and cached. */
-export interface BatchSummary {
+/** What Brought in lists. Plain JSON: it's stored as is and cached (a type, not an interface, so it passes as Json). */
+export type BatchSummary = {
   kind: BatchKind;
   /** Drinks it made, and drinks it found you already had. */
   drinksNew: number;
@@ -19,7 +19,7 @@ export interface BatchSummary {
   noAmounts: number;
   /** New preps without a recipe, for "Add". */
   prepsNoRecipe: { id: string; name: string }[];
-}
+};
 
 export interface BringInBatch {
   id: string;

@@ -7,11 +7,11 @@ import { rankKeyAt } from './ranking';
 
 export type Compared = 'better' | 'same' | 'worse';
 
-/** What the recipe called for, and what was used instead. */
-export interface Swap {
+/** What the recipe called for, and what was used instead. A type, not an interface, so it passes as Json (made_drinks.swaps). */
+export type Swap = {
   from: string;
   to: string;
-}
+};
 
 /** The database's limits (private.valid_swaps). */
 export const SWAP_LIMIT = 12;

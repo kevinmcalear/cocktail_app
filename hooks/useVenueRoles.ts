@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { supabase } from '@/lib/supabase';
+import type { Enum } from '@/types/db';
+
+type Capability = Enum<'venue_capability'>;
 
 /**
  * One column of the roles matrix (get_venue_role_matrix): a base level when
@@ -65,7 +68,13 @@ export function useSaveVenueRole(barId: string | null | undefined) {
   const invalidate = useInvalidateRoles(barId);
   return useMutation({
     mutationFn: async ({ id, ...role }: VenueRoleDraft) => {
-      const row = { ...role, name: role.name.trim() };
+      // lib/roles names capabilities as plain strings; the column's enum checks them.
+      const row = {
+        ...role,
+        name: role.name.trim(),
+        granted: role.granted as Capability[],
+        revoked: role.revoked as Capability[],
+      };
       const { error } = id
         ? await supabase.from('venue_roles').update(row).eq('id', id).eq('bar_id', barId!)
         : await supabase.from('venue_roles').insert({ ...row, bar_id: barId! });

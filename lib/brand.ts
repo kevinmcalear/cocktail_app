@@ -30,10 +30,11 @@ export function faceToDb(face: DisplayFace): DbDisplayFace {
 /**
  * The display_face to save: the stored value as it is while the picked face
  * still reads as it (so a face this build doesn't know survives a save of
- * other fields), else the picked one.
+ * other fields), else the picked one. A stored value came from
+ * bars.display_face, so the database has it even when this build's types don't.
  */
-export function faceToSave(picked: DisplayFace, stored: string | null | undefined): string {
-  return stored && faceFromDb(stored) === picked ? stored : faceToDb(picked);
+export function faceToSave(picked: DisplayFace, stored: string | null | undefined): DbDisplayFace {
+  return stored && faceFromDb(stored) === picked ? (stored as DbDisplayFace) : faceToDb(picked);
 }
 
 /** The database turned down a display face it doesn't have yet (the app shipped before its migration). */
