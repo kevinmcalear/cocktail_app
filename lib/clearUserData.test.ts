@@ -3,6 +3,7 @@ import { persistQueryClientRestore, persistQueryClientSave, type PersistedClient
 
 import { clearUserData } from '@/lib/clearUserData';
 import { persistOptions, queryClient } from '@/lib/react-query';
+import { useBringIn } from '@/store/useBringIn';
 
 // Who the Supabase client would send a write as, and whose writes went out.
 let signedIn: string | null = null;
@@ -101,4 +102,11 @@ test('a write already sent keeps going: signing out only drops unsent ones', asy
   await done;
 
   expect(sentAs).toEqual(['a']);
+});
+
+test('a big import waiting to be reviewed is forgotten at sign-out', async () => {
+  useBringIn.setState({ reviews: { r1: { id: 'r1' } as never }, reviewing: 'r1' });
+  await clearUserData();
+  expect(useBringIn.getState().reviews).toEqual({});
+  expect(useBringIn.getState().reviewing).toBeNull();
 });

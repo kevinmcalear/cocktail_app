@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import type { MenuSummary } from '@/types/menus';
 
-import { filterGroups, methodWord, isGarnishLine, itemIdOf, menuDrinks, menuState, parseShow, prepGroup, tileLine, venueShelves, yieldText } from './libraryFilters';
+import { filterGroups, splitFilters, methodWord, isGarnishLine, itemIdOf, menuDrinks, menuState, parseShow, prepGroup, tileLine, venueShelves, yieldText } from './libraryFilters';
 
 assert.equal(parseShow(undefined, true), 'all');
 assert.equal(parseShow('staff', true), 'staff');
@@ -139,3 +139,24 @@ assert.equal(methodWord('Shake'), 'Shaken');
 assert.equal(methodWord('Build'), 'Built');
 assert.equal(methodWord('Freezer pour'), 'Freezer pour');
 assert.equal(methodWord(null), null);
+
+// A phone's chip row: four out front, the rest in the filter menu by section.
+{
+  const split = splitFilters(filterGroups(true, true, true));
+  assert.deepEqual(split.front.map((f) => f.label), ['All', 'On menu', 'Classics', 'Preps']);
+  assert.deepEqual(split.more.map((s) => [s.title, s.filters.map((f) => f.label)]), [
+    ['Drinks', ['Old drinks', 'R&D', 'Batched']],
+    ['Shelves', ['Garnishes', 'Bottles']],
+    ['Kind', ['Cocktails', 'Beer', 'Wine']],
+    ['Costs', ['Needs a price']],
+  ]);
+  // Every filter lands somewhere, once.
+  const every = filterGroups(true, true, true).flat().map((f) => f.value).sort();
+  assert.deepEqual([...split.front, ...split.more.flatMap((s) => s.filters)].map((f) => f.value).sort(), every);
+  // Without the extras there are no preps: three out front.
+  assert.deepEqual(splitFilters(filterGroups(true, false, false)).front.map((f) => f.label), ['All', 'On menu', 'Classics']);
+  // Without a venue, each type stays out front and there's no menu.
+  const solo = splitFilters(filterGroups(false, false));
+  assert.deepEqual(solo.front.map((f) => f.label), ['Cocktails', 'Ingredients', 'Beer', 'Wine']);
+  assert.equal(solo.more.length, 0);
+}

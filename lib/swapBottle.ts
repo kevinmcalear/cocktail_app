@@ -48,8 +48,9 @@ function amountOf(line: SwapLine): string {
 /**
  * Cocktails whose spec pours the bottle (or anything of that kind). House
  * recipes are listed beside the swap, not included: changing a syrup changes
- * every drink that pours it. Drinks with a hidden line are left out, because
- * saving would rewrite that line blind.
+ * every drink that pours it. The back bar's swap passes `swapHouses`, so its
+ * preps and batches change with the drinks. Drinks with a hidden line are
+ * left out, because saving would rewrite that line blind.
  */
 export function planSwap(
   drinks: SwapDrink[],
@@ -59,6 +60,7 @@ export function planSwap(
   onMenuIds: Set<string> | null,
   names: Record<string, string>,
   replaceName: string,
+  swapHouses = false,
 ): { hits: SwapHit[]; houses: { id: string; name: string }[] } {
   const hits: SwapHit[] = [];
   const houses: { id: string; name: string }[] = [];
@@ -66,7 +68,7 @@ export function planSwap(
     if (drink.lines.some((line) => !line.ingredientId)) continue;
     const changing = drink.lines.filter((line) => lineHits(line, findId, replaceId, mode));
     if (!changing.length) continue;
-    if (drink.itemType === 'ingredient') {
+    if (drink.itemType === 'ingredient' && !swapHouses) {
       houses.push({ id: drink.id, name: drink.name });
       continue;
     }

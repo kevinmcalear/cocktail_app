@@ -8,6 +8,7 @@ import { useBottomBar } from '@/hooks/useBottomBar';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useMode } from '@/hooks/useMode';
+import { useTrackTab } from '@/hooks/useSearchFrom';
 import { useServiceDay } from '@/hooks/useServiceDay';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { phoneTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
@@ -49,6 +50,8 @@ function Tabs() {
   const dot = (name: VenueTab) => <NativeTabs.Trigger.Badge hidden={!isNew(name)} />;
   // The first round holds Menus and Discover back until their steps come up (lib/firstRound.ts).
   const { hidden } = useFirstRound();
+  // The search circle starts on the tab it was opened from (hooks/useSearchFrom.ts).
+  useTrackTab();
   // Venue and home have different tabs, and switching remounts them all:
   // wait for the mode (a moment, on a first launch) and the venue's switches
   // rather than open the wrong set.

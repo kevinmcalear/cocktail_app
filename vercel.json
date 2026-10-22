@@ -103,6 +103,10 @@
       "destination": "/settings/bar/[id]/glassware"
     },
     {
+      "source": "/settings/bar/:id/what-next",
+      "destination": "/settings/bar/[id]/what-next"
+    },
+    {
       "source": "/settings/bar/:id/ice",
       "destination": "/settings/bar/[id]/ice"
     },

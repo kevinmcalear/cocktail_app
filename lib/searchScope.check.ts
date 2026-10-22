@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { completions, groupCatalog, groupLabel, moreCount, moreLabel, PER_GROUP, scopeOptions, showOptions, shows } from './searchScope';
+import { completions, groupCatalog, groupLabel, moreCount, moreLabel, PER_GROUP, scopeOptions, showOptions, shows, startScope } from './searchScope';
 import type { SearchItem } from '@/types/search';
 
 // "All 30" when a tap shows the rest, else a page at a time; nothing once all show.
@@ -14,6 +14,14 @@ assert.equal(moreLabel(4, 4), null);
 // The area option only comes from Discover.
 assert.deepEqual(scopeOptions('Little Rye', null).map((o) => o.value), ['mine', 'everywhere']);
 assert.deepEqual(scopeOptions('Little Rye', 'This area').map((o) => o.label), ['Little Rye', 'This area', 'Everywhere']);
+
+// The search circle starts where you came from.
+assert.equal(startScope('library', 'mine', false), 'mine');
+assert.equal(startScope('menus', 'mine', true), 'mine');
+assert.equal(startScope('discover', 'mine', true), 'area');
+assert.equal(startScope('discover', 'mine', false), 'everywhere');
+assert.equal(startScope('bar', 'everywhere', false), 'everywhere');
+assert.equal(startScope(null, 'mine', false), 'mine');
 
 const items: SearchItem[] = [
   { id: '1', name: 'Plum Negroni', category: 'Cocktail', menuOrder: 2 },

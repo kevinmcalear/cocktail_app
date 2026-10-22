@@ -9,10 +9,10 @@ import { WEB_TAB_BAR_HEIGHT } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import type { SearchMine } from '@/hooks/useSearchMine';
-import type { SearchScope, SearchShow, ShowCounts } from '@/lib/searchScope';
+import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 import { SearchField } from './SearchField';
-import { SearchBody, searchPlaceholder } from './SearchPanel';
+import { SearchBody, searchPlaceholder, type SearchArea } from './SearchPanel';
 import { ScopeToken, ShowChips } from './SearchParts';
 
 /** The search tab's state, shared by the wide web's page and the two bottom layouts. */
@@ -31,11 +31,15 @@ export interface SearchTabState {
   setShow: (show: SearchShow) => void;
   counts: ShowCounts;
   setCounts: (counts: ShowCounts) => void;
+  /** Discover's area, when the search was opened from Discover. */
+  area?: SearchArea | null;
+  /** Searching Discover's area: show the results on its map. */
+  onShowOnMap?: () => void;
 }
 
-/** "Little Rye ⌄" in the field: a tap flips between the venue (or your drinks) and Everywhere. */
-function Token({ scope, setScope, mine }: Pick<SearchTabState, 'scope' | 'setScope' | 'mine'>) {
-  return <ScopeToken label={scope === 'mine' ? mine.label : 'Everywhere'} onPress={() => setScope(scope === 'mine' ? 'everywhere' : 'mine')} />;
+/** "Little Rye ⌄" in the field: a menu of the venue (or your drinks), This area from Discover, and Everywhere. */
+function Token({ scope, setScope, mine, area }: Pick<SearchTabState, 'scope' | 'setScope' | 'mine' | 'area'>) {
+  return <ScopeToken options={scopeOptions(mine.label, area?.label ?? null)} scope={scope} onScope={setScope} />;
 }
 
 const DISMISS = Platform.OS === 'ios' ? 'interactive' : 'on-drag';
@@ -48,7 +52,7 @@ const DISMISS = Platform.OS === 'ios' ? 'interactive' : 'on-drag';
  * lead the results here. Recents and results scroll above the field;
  * dragging them pulls the keyboard down with your finger.
  */
-export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, focused, carried, show, setShow, counts, setCounts }: SearchTabState) {
+export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, area, onShowOnMap, focused, carried, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
   const gutter = useGutter();
   const bar = useRef<SearchBarCommands>(null);
@@ -73,7 +77,7 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, foc
           title: '',
           headerSearchBarOptions: {
             ref: bar,
-            placeholder: searchPlaceholder(scope, mine),
+            placeholder: searchPlaceholder(scope, mine, area),
             autoCapitalize: 'none',
             tintColor: ds.accentText,
             hideNavigationBar: false,
@@ -92,7 +96,7 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, foc
       >
         {query ? null : <Title role="heading">Search</Title>}
         <View style={styles.chipRow}>
-          <Token scope={scope} setScope={setScope} mine={mine} />
+          <Token scope={scope} setScope={setScope} mine={mine} area={area} />
           {query ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
         </View>
         <SearchBody
@@ -100,6 +104,8 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, foc
           scope={scope}
           onScope={setScope}
           mine={mine}
+          area={area}
+          onShowOnMap={onShowOnMap}
           show={show}
           onCounts={setCounts}
           typeAhead={(next) => {
@@ -120,7 +126,7 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, foc
  * phone web hides its bar); with the keyboard down it sits just above the
  * tabs. The round x empties it and puts the keyboard away.
  */
-export function BottomSearch({ query, setQuery, scope, setScope, mine, focused, show, setShow, counts, setCounts }: SearchTabState) {
+export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onShowOnMap, focused, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
@@ -159,7 +165,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, focused, 
           contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: space.sm, paddingBottom: dockHeight + space.lg, gap: space.lg }}
         >
           {query ? null : <Title role="heading">Search</Title>}
-          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} show={show} onCounts={setCounts} typeAhead={setQuery} />
+          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} onShowOnMap={onShowOnMap} show={show} onCounts={setCounts} typeAhead={setQuery} />
         </ScrollView>
         <View
           ref={dock}
@@ -175,7 +181,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, focused, 
             autoFocus={focused}
             cancel
             glass
-            token={<Token scope={scope} setScope={setScope} mine={mine} />}
+            token={<Token scope={scope} setScope={setScope} mine={mine} area={area} />}
             onFocusChange={setFieldFocused}
           />
         </View>

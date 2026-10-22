@@ -19,8 +19,9 @@ import { useDs } from './theme';
  * `count` follows the label, quieter: how many are in it ("Bottles 12"), or a word ("Negronis the style").
  * `look` is Discover's map layers and sorts (disc-desk-browse, disc-desk-search): 36 tall, the picked one in
  * the accent; `outline` rests as a line, `glass` rests bare inside a glass track.
+ * `trailing` ends it: Library's × on a view picked from its filter menu.
  */
-export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel, leading, count, look }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string; leading?: ReactNode; count?: number | string; look?: 'outline' | 'glass' }) {
+export function Chip({ label, selected, onPress, quiet, multi, disabled, accessibilityLabel, leading, count, look, trailing }: { label: string; selected: boolean; onPress: () => void; quiet?: boolean; multi?: boolean; disabled?: boolean; accessibilityLabel?: string; leading?: ReactNode; count?: number | string; look?: 'outline' | 'glass'; trailing?: ReactNode }) {
   const ds = useDs();
   const fill = look ? ds.accentFill.fill : ds.c.ink;
   const text = selected ? (look ? ds.accentFill.text : ds.c.ground) : ds.c.ink;
@@ -34,7 +35,7 @@ export function Chip({ label, selected, onPress, quiet, multi, disabled, accessi
       onPress={onPress}
       style={[
         styles.chip,
-        leading || count ? styles.withLeading : null,
+        leading || count || trailing ? styles.withLeading : null,
         leading ? styles.leadingPad : null,
         quiet || look === 'outline' ? { borderWidth: look ? 1 : StyleSheet.hairlineWidth, borderColor: selected ? fill : ds.c.lineStrong } : null,
         look ? styles.small : null,
@@ -50,6 +51,7 @@ export function Chip({ label, selected, onPress, quiet, multi, disabled, accessi
           {count}
         </DsText>
       ) : null}
+      {trailing}
     </PressableScale>
   );
 }

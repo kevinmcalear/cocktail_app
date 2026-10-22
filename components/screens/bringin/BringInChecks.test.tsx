@@ -29,7 +29,7 @@ test('the recipe check shows every line in your unit, flags the hard one, and sa
   const onSave = jest.fn();
   await ui(
     <RecipeCheck
-      recipes={[
+      recipe={
         {
           name: 'Orchard Fizz',
           by: 'Little Rye',
@@ -43,8 +43,8 @@ test('the recipe check shows every line in your unit, flags the hard one, and sa
           ice: null,
           garnish: null,
           notes: null,
-        },
-      ]}
+        }
+      }
       files={[]}
       from="From pasted text"
       data={data()}
@@ -61,11 +61,10 @@ test('the recipe check shows every line in your unit, flags the hard one, and sa
   expect(screen.getByText('New prep')).toBeTruthy();
   expect(screen.getByDisplayValue('Little Rye')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Save drink' }));
-  const [[drinks]] = onSave.mock.calls;
-  expect(drinks).toHaveLength(1);
-  expect(drinks[0].draft.lines.map((l: { id: string | null }) => l.id)).toEqual(['calv', 'lemon', null]);
-  expect(drinks[0].draft.methods).toEqual([{ id: 'm1', name: 'Shaken' }]);
-  expect(drinks[0].prepNames).toEqual(['Fig Syrup']);
+  const [[drink]] = onSave.mock.calls;
+  expect(drink.draft.lines.map((l: { id: string | null }) => l.id)).toEqual(['calv', 'lemon', null]);
+  expect(drink.draft.methods).toEqual([{ id: 'm1', name: 'Shaken' }]);
+  expect(drink.prepNames).toEqual(['Fig Syrup']);
 });
 
 test('a drink read from a photo starts as its drawing; the page stays small, to look at bigger', async () => {
@@ -84,7 +83,7 @@ test('a drink read from a photo starts as its drawing; the page stays small, to 
   const page = (name: string, mimeType: string) => ({ uri: `file:///${name}`, mimeType, name });
   await ui(
     <RecipeCheck
-      recipes={[recipe, { ...recipe, name: 'Smoke Signal' }]}
+      recipe={recipe}
       files={[page('one.jpg', 'image/jpeg'), page('two.jpg', 'image/jpeg')]}
       from="From 2 photos"
       data={data()}
@@ -97,23 +96,21 @@ test('a drink read from a photo starts as its drawing; the page stays small, to 
   );
   expect(screen.getByLabelText('Drawing of Orchard Fizz, drawn from the spec')).toBeTruthy();
   expect(screen.getByText('Drawn from the spec')).toBeTruthy();
-  expect(screen.getByText('Drink 1 of 2')).toBeTruthy();
   expect(screen.getByText('Page 2 · tap to see it bigger')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'From your file. See it bigger' }));
   expect(screen.getByText('On the page')).toBeTruthy();
-  await fireEvent.press(screen.getByRole('button', { name: 'Next drink' }));
-  await fireEvent.press(screen.getByRole('button', { name: 'Save 2 drinks' }));
-  const [[drinks]] = onSave.mock.calls;
+  await fireEvent.press(screen.getByRole('button', { name: 'Save drink' }));
+  const [[drink]] = onSave.mock.calls;
   // Nothing from the file goes on the drink as a photo.
-  expect(drinks.every((d: { draft: { photos?: object } }) => !Object.keys(d.draft.photos ?? {}).length)).toBe(true);
-  // Each keeps the drawing it was checked with.
-  expect(drinks.every((d: { sketch?: object }) => !!d.sketch)).toBe(true);
+  expect(Object.keys(drink.draft.photos ?? {})).toHaveLength(0);
+  // It keeps the drawing it was checked with.
+  expect(drink.sketch).toBeTruthy();
 });
 
 test('a drink read from a PDF names the file instead of offering a bigger look', async () => {
   await ui(
     <RecipeCheck
-      recipes={[{ name: 'Low Tide', by: null, lines: [], method: null, glass: null, ice: null, garnish: null, notes: null, at: { page: 0, box: [500, 40, 590, 960] } }]}
+      recipe={{ name: 'Low Tide', by: null, lines: [], method: null, glass: null, ice: null, garnish: null, notes: null, at: { page: 0, box: [500, 40, 590, 960] } }}
       files={[{ uri: 'file:///specs.pdf', mimeType: 'application/pdf', name: 'specs.pdf' }]}
       from="From a PDF"
       data={data()}

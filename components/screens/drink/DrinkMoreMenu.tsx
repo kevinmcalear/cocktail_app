@@ -17,6 +17,8 @@ interface DrinkMoreMenuProps {
   itemId: string;
   name: string;
   canEdit: boolean;
+  /** A catalog admin on someone else's drink: Fix as admin opens the editor, at every width. */
+  adminFix?: boolean;
   onEdit: () => void;
   /** Wide screens show Edit beside the hero, so it stays out of here. */
   wide: boolean;
@@ -30,10 +32,10 @@ interface DrinkMoreMenuProps {
 
 /**
  * The More button and its sheet (boards drink-phone-venue/-home/-floor): Edit
- * on phones, View as for staff, Report for everyone else, and Share when it
- * isn't its own button. Nothing when there's nothing to put in it.
+ * on phones, View as for staff, Report for everyone else, Fix as admin for a
+ * catalog admin on someone else's drink, and Share when it isn't its own button. Nothing when there's nothing to put in it.
  */
-export function DrinkMoreMenu({ itemId, name, canEdit, onEdit, wide, onShare, teamRole, scheme }: DrinkMoreMenuProps) {
+export function DrinkMoreMenu({ itemId, name, canEdit, adminFix = false, onEdit, wide, onShare, teamRole, scheme }: DrinkMoreMenuProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const [open, setOpen] = useState(false);
@@ -43,8 +45,8 @@ export function DrinkMoreMenu({ itemId, name, canEdit, onEdit, wide, onShare, te
   const edit = canEdit && !wide;
   const viewAs = !!teamRole && teamRole > 10;
   const report = signedIn && !canEdit;
-  if (!edit && !viewAs && !report && !onShare) return null;
-  const parts = [onShare ? 'share' : null, edit ? 'edit' : null, viewAs ? 'view as' : null, report ? 'report' : null].filter(Boolean).join(', ');
+  if (!edit && !viewAs && !report && !adminFix && !onShare) return null;
+  const parts = [onShare ? 'share' : null, edit ? 'edit' : null, viewAs ? 'view as' : null, report ? 'report' : null, adminFix ? 'fix as admin' : null].filter(Boolean).join(', ');
   const run = () => {
     const next = then.current;
     then.current = null;
@@ -72,6 +74,7 @@ export function DrinkMoreMenu({ itemId, name, canEdit, onEdit, wide, onShare, te
             <Row icon="info.circle" label="Who sees what" onPick={() => (then.current = () => router.push({ pathname: '/cocktail/[id]/roles', params: { id: itemId } } as unknown as Href))} />
           ) : null}
           {report ? <Row icon="flag" label={`Report ${name}`} onPick={() => (then.current = () => setReporting(true))} /> : null}
+          {adminFix ? <Row icon="lock.shield.fill" label="Fix as admin" onPick={() => (then.current = onEdit)} /> : null}
         </ScrollView>
       </Sheet>
       {reporting ? <ReportSheet subject={name} targets={[{ label: name, target: { kind: 'item', itemId } }]} onClose={() => setReporting(false)} /> : null}

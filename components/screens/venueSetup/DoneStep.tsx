@@ -1,9 +1,8 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, TextLink, useDs, type IconName } from '@/components/ds';
+import { Button, Caption, DsText, Sheet, SheetScrollView, TextLink, Title, useDs, type IconName } from '@/components/ds';
 import { VenueMark } from '@/components/nav/VenueMarks';
-import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { SetupHead } from '@/components/screens/onboarding/SetupParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import type { Venue } from '@/hooks/useActiveVenue';
@@ -18,22 +17,20 @@ import { colourName } from '@/lib/brandColours';
 import { withAlpha } from '@/lib/color';
 import { PAGE_COPY, type PageVisibility } from '@/lib/pageVisibility';
 import { namesLine, onItsWay, type ClaimState } from '@/lib/venueSetup';
+import { setupLine } from '@/lib/whatNext';
 import type { HeldSetup } from '@/store/useVenueSetup';
 
 import { SetupBanner } from './SetupBanner';
+import { WhatNext } from './WhatNext';
 
 /** How the claim is being checked, in a few words. */
 const CLAIM_LINE = { email: 'Work email', instagram: 'A code sent from the bar’s Instagram', phone: 'A call to the bar', note: 'A call to the bar' } as const;
 
-/** The summary's mark: the venue's logo with a check in the accent beside it. */
+/** The end of setup's mark: the venue's logo, over the title (eddie-oct22-wave2, fix 15). */
 export function DoneMark({ venue }: { venue: Venue }) {
-  const ds = useDs();
   return (
     <View style={styles.head} aria-hidden>
-      <VenueMark venue={venue} size={64} />
-      <View style={[styles.badge, { backgroundColor: ds.accentFill.fill }]}>
-        <IconSymbol name="checkmark" size={16} color={ds.accentFill.text} />
-      </View>
+      <VenueMark venue={venue} size={52} />
     </View>
   );
 }
@@ -55,23 +52,7 @@ function Line({ icon, title, line, end, waiting }: { icon: IconName; title: stri
   );
 }
 
-/**
- * The summary (canvas make-venue-done): what's on its way (the claim, the
- * invites nobody's taken up, what's waiting to be read) and what's done.
- * Kept private, the public page says so, with a way to prove it's yours now
- * (eddie-oct22-wave1).
- */
-export function DoneStep({
-  barId,
-  profileId,
-  name,
-  claim,
-  claimState,
-  held,
-  waitingFiles,
-  onOpen,
-  onProve,
-}: {
+interface DoneProps {
   barId: string;
   profileId: string | null;
   name: string;
@@ -81,8 +62,18 @@ export function DoneStep({
   held: HeldSetup | undefined;
   waitingFiles: number;
   onOpen: () => void;
+  /** Leaving for Bring in or a Venue settings page: setup is finished. */
+  onLeave: () => void;
   onProve: () => void;
-}) {
+}
+
+/**
+ * Wave 1's summary (canvas make-venue-done), now behind See all: what's on
+ * its way (the claim, the invites nobody's taken up, what's waiting to be
+ * read) and what's done. Kept private, the public page says so, with a way
+ * to prove it's yours now (eddie-oct22-wave1).
+ */
+function SetupSummary({ barId, profileId, name, claim, claimState, held, waitingFiles, onProve }: DoneProps) {
   const invites = useBarInvites(barId).data ?? [];
   const resend = useSendInviteEmail(barId);
   const brand = useVenueBrand(barId).data;
@@ -99,7 +90,8 @@ export function DoneStep({
   const look = brand ? [accent ? colourName(accent) : 'App colours', displayFaces[faceFromDb(brand.display_face)].label, tint].join(', ') : '';
 
   return (
-    <SetupPage footer={<SetupFooter label={`Open ${name || 'your bar'}`} onPress={onOpen} skipLabel="Prove it’s yours now" onSkip={claimState === 'none' ? onProve : undefined} />}>
+    <View style={styles.summary}>
+      <Title>{`${name || 'Your bar'} is set up`}</Title>
       {count ? (
         <>
           <SetupHead>On its way</SetupHead>
@@ -138,15 +130,60 @@ export function DoneStep({
           <SetupBanner count={count} />
         </>
       ) : null}
-    </SetupPage>
+      {claimState === 'none' ? <Button label="Prove it’s yours now" variant="secondary" onPress={onProve} style={styles.start} /> : null}
+    </View>
+  );
+}
+
+/**
+ * The end of venue setup: "This is your bar. What next?" (eddie-oct22-wave2,
+ * fix 15), with wave 1's summary shrunk to one line and See all.
+ */
+export function DoneStep(props: DoneProps) {
+  const { barId, name, claimState, waitingFiles, onOpen, onLeave, onProve } = props;
+  const invites = useBarInvites(barId).data ?? [];
+  const [all, setAll] = useState(false);
+  const bar = name || 'your bar';
+  return (
+    <>
+      <WhatNext
+        barId={barId}
+        name={bar}
+        openLabel={`Open ${bar}`}
+        onOpen={onOpen}
+        onLeave={onLeave}
+        summary={
+          <View style={styles.oneLine}>
+            <Caption tone="muted" style={styles.flex}>
+              {setupLine({ invites: invites.length, claim: claimState, waitingFiles })}
+            </Caption>
+            <TextLink label="See all" onPress={() => setAll(true)} />
+          </View>
+        }
+      />
+      <Sheet visible={all} onClose={() => setAll(false)} accessibilityLabel="What’s set up">
+        <SheetScrollView contentContainerStyle={styles.sheet}>
+          <SetupSummary
+            {...props}
+            onProve={() => {
+              setAll(false);
+              onProve();
+            }}
+          />
+        </SheetScrollView>
+      </Sheet>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  summary: { gap: space.sm },
+  sheet: { padding: space.xl },
+  oneLine: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  start: { alignSelf: 'flex-start', marginTop: space.md },
   list: { gap: 0 },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
   mark: { width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  head: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.md },
-  badge: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  head: { marginBottom: space.md },
   flex: { flex: 1, minWidth: 0 },
 });
