@@ -180,6 +180,11 @@ before(async () => {
       [ids.copy, ids.both, image.id, ids.copyEntry],
     )
   ).id;
+  // The copy's ranking was pinned to their profile; the classic's wasn't shown.
+  await db.query(
+    "UPDATE public.rank_entries SET on_profile = (id = $1), profile_pin = CASE WHEN id = $1 THEN 1 END WHERE id = ANY($2)",
+    [ids.copyEntry, [ids.copyEntry, ids.keepEntry]],
+  );
   ids.made = (
     await one(
       `INSERT INTO public.made_drinks (user_id, item_id, rank_entry_id) VALUES ($1, $2, $3) RETURNING id`,
@@ -207,6 +212,11 @@ before(async () => {
     ids.keep2,
     ids.copy2,
   ]);
+  // Both have a readable link: the copy's clashes and is kept in the record.
+  await db.query(
+    `INSERT INTO private.share_slugs (kind, slug, item_id) VALUES ('d', $1, $2), ('d', $3, $4)`,
+    [`merge-two-${run}`, ids.keep2, `merge-two-copy-${run}`, ids.copy2],
+  );
   await db.query("SELECT private.merge_item($1, $2)", [ids.copy2, ids.keep2]);
 
   // The test-drink step of the migration, on stand-ins with its ids.
@@ -386,6 +396,11 @@ describe("merge_item", () => {
     );
     assert.equal(made.item_id, ids.keep);
     assert.equal(made.rank_entry_id, ids.keepEntry);
+    const kept = await one(
+      "SELECT on_profile, profile_pin FROM public.rank_entries WHERE id = $1",
+      [ids.keepEntry],
+    );
+    assert.deepEqual(kept, { on_profile: true, profile_pin: 1 });
   });
 
   test("a bring-in's undo list drops the copy and never gains the kept drink", async () => {
@@ -408,6 +423,25 @@ describe("merge_item", () => {
       [ids.copy2],
     );
     assert.equal(merge.into_id, ids.keep2);
+  });
+
+  test("a row that clashes with the kept drink's is kept in the merge record", async () => {
+    const merge = await one(
+      "SELECT snapshot FROM private.item_merges WHERE from_id = $1",
+      [ids.copy2],
+    );
+    assert.deepEqual(
+      merge.snapshot.dropped.map((d) => [d.table, d.row.slug]),
+      [["private.share_slugs", `merge-two-copy-${run}`]],
+    );
+    assert.equal(
+      (
+        await one("SELECT item_id FROM private.share_slugs WHERE slug = $1", [
+          `merge-two-${run}`,
+        ])
+      ).item_id,
+      ids.keep2,
+    );
   });
 
   test("a bar-credited copy's notes follow onto a bar-credited drink", async () => {

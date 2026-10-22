@@ -24,10 +24,11 @@
 --        figures) go, as the classic has its own;
 --      * someone who ranked both keeps the classic's ranking, with the
 --        copy's comparisons, photos and made drinks moved onto it;
---      * the copy's row and its spec are kept in private.item_merges, so the
---        old id can still be looked up.
---    Its readable link (e.g. paper-plane-498f) goes with it; the classic keeps
---    the plain one (paper-plane).
+--      * the copy's row, its spec and any row that clashed with the
+--        classic's are kept in private.item_merges, so the old id can still
+--        be looked up (nothing in the app redirects from it yet).
+--    Its readable link (e.g. paper-plane-498f) goes with it, kept in that
+--    record; the classic keeps the plain one (paper-plane).
 --
 -- 3. The method "Flask Pour" was there twice, made 20 seconds apart, the same
 --    in every field and used by nothing: the later one merges into the first.
@@ -38,8 +39,10 @@
 --    (profiles) of the same name, with no link between them. Each page is
 --    linked the way hand_over_claim links an approved bar claim: the page
 --    stays at 'description' (what it shows today, and what an approval with
---    no settings gives), it gets bar_id and claimed_at, invitees who already
---    said yes join, and any pending claim on the page is turned down. Linking
+--    no settings gives; a workspace no longer at 'open' keeps its choice), it
+--    gets bar_id and claimed_at, invitees who already said yes join, and any
+--    pending claim on the page is turned down (none on 22 Oct). With no
+--    approved claim, Private stays closed to them until one is. Linking
 --    a staffed bar's page moves its researched menus onto the team
 --    (venue_takes_menu_history, 20261017600000); Three Horses' one menu is
 --    moved by the explicit call after it too.
@@ -83,6 +86,7 @@ DECLARE
     v_ctid tid;
     v_pin smallint;
     v_images uuid[];
+    v_row jsonb;
     v_worker text := current_setting('app.image_worker', true);
 BEGIN
     SELECT * INTO v_from FROM public.items WHERE id = p_from;
@@ -122,11 +126,14 @@ BEGIN
         DELETE FROM private.item_sketch_ai WHERE item_id = p_from;
         DELETE FROM public.discover_drink_facts WHERE item_id = p_from;
         DELETE FROM private.item_spec_matches WHERE item_id = p_from;
-        -- Sketches drawn from the copy's spec; photos move with the rest.
+        -- Sketches drawn from the copy's spec, current or retired; photos
+        -- move with the rest.
         WITH gone AS (
             DELETE FROM public.item_images WHERE item_id = p_from AND is_generated RETURNING image_id
+        ), retired AS (
+            DELETE FROM private.retired_drink_sketches WHERE item_id = p_from RETURNING image_id
         )
-        SELECT array_agg(image_id) INTO v_images FROM gone;
+        SELECT array_agg(image_id) INTO v_images FROM (SELECT image_id FROM gone UNION SELECT image_id FROM retired) x;
         DELETE FROM public.images im
          WHERE im.id = ANY (COALESCE(v_images, '{}'))
            AND NOT EXISTS (SELECT 1 FROM public.item_images ii WHERE ii.image_id = im.id)
@@ -183,7 +190,9 @@ BEGIN
               USING v_dup.keep_id, v_dup.drop_id;
         END LOOP;
         DELETE FROM public.rank_entries WHERE id = v_dup.drop_id RETURNING profile_pin INTO v_pin;
-        UPDATE public.rank_entries SET profile_pin = v_pin WHERE id = v_dup.keep_id AND profile_pin IS NULL AND v_pin IS NOT NULL;
+        -- A pinned ranking stays pinned, so it stays shown (rank_entries_pin_shown).
+        UPDATE public.rank_entries SET profile_pin = v_pin, on_profile = true
+         WHERE id = v_dup.keep_id AND profile_pin IS NULL AND v_pin IS NOT NULL;
     END LOOP;
 
     -- Every foreign key to items, on the column that holds the item's id
@@ -228,7 +237,13 @@ BEGIN
                         RAISE EXCEPTION 'Merging % into %: a %.% row clashes and other rows depend on it.', p_from, p_into, v_fk.schema_name, v_fk.table_name
                             USING ERRCODE = 'unique_violation';
                     END IF;
-                    EXECUTE format('DELETE FROM %I.%I WHERE ctid = $1', v_fk.schema_name, v_fk.table_name) USING v_ctid;
+                    -- Kept in the merge record, so it can be put back.
+                    EXECUTE format('DELETE FROM %I.%I t WHERE ctid = $1 RETURNING to_jsonb(t)', v_fk.schema_name, v_fk.table_name)
+                      INTO v_row USING v_ctid;
+                    UPDATE private.item_merges
+                       SET snapshot = jsonb_set(snapshot, '{dropped}', COALESCE(snapshot -> 'dropped', '[]')
+                                      || jsonb_build_array(jsonb_build_object('table', v_fk.schema_name || '.' || v_fk.table_name, 'row', v_row)))
+                     WHERE from_id = p_from;
                     RAISE NOTICE 'merge_item %: dropped a %.% row that p_into already has', p_from, v_fk.schema_name, v_fk.table_name;
                 END;
             END LOOP;
@@ -415,7 +430,7 @@ BEGIN
         WHERE p.kind = 'bar' AND p.bar_id IS NULL AND p.user_id IS NULL
           AND NOT EXISTS (SELECT 1 FROM public.profiles o WHERE o.bar_id = b.id)
     LOOP
-        UPDATE public.bars SET page_visibility = 'description' WHERE id = r.bar_id;
+        UPDATE public.bars SET page_visibility = 'description' WHERE id = r.bar_id AND page_visibility = 'open';
         UPDATE public.profiles SET bar_id = r.bar_id, claimed_at = now() WHERE id = r.profile_id;
 
         INSERT INTO public.user_bars (user_id, bar_id, role_level)
@@ -449,7 +464,8 @@ BEGIN
     IF v_left > 0 THEN
         RAISE EXCEPTION '% researched menus are still on a staffed workspace''s page.', v_left;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM public.user_bars WHERE bar_id = '76ad06f3-639e-4950-9f44-5e2140dbbaf1') THEN
+    IF EXISTS (SELECT 1 FROM public.bars WHERE id = '76ad06f3-639e-4950-9f44-5e2140dbbaf1')
+       AND NOT EXISTS (SELECT 1 FROM public.user_bars WHERE bar_id = '76ad06f3-639e-4950-9f44-5e2140dbbaf1') THEN
         RAISE NOTICE 'Three Horses has no staff: its menu stays as research history.';
     END IF;
 END;
