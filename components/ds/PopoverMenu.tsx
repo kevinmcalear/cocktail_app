@@ -1,4 +1,4 @@
-import { useState, type ComponentRef } from 'react';
+import { useState, type ComponentRef, type ReactNode } from 'react';
 import { Keyboard, Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -48,16 +48,17 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
   const ds = useDs();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   if (!anchor) return null;
-  const right = Math.max(space.sm, windowWidth - (anchor.x + anchor.width));
+  // Its right edge on the button's, kept on screen.
+  const left = Math.max(space.sm, Math.min(anchor.x + anchor.width - WIDTH, windowWidth - WIDTH - space.sm));
   const above = anchor.y > windowHeight / 2;
   const place = above ? { bottom: windowHeight - anchor.y + space.sm } : { top: anchor.y + anchor.height + space.sm };
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <Pressable accessibilityLabel="Close the menu" style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(ds.c.ground, 0.3) }]} onPress={onClose} />
       {/* Unseen until the button's place is known, so it never flashes in the corner. */}
-      <Appear kind="fade" duration={140} style={[styles.panel, place, { right, shadowColor: ds.c.ground, maxHeight: windowHeight - space.xxxl * 2 }, anchor.height ? null : styles.unplaced]}>
-        {/* The web's blur is thin: a nearly solid fill keeps the rows readable over what's under them. */}
-        <GlassSurface style={styles.glass} tint={Platform.OS === 'web' ? withAlpha(ds.c.raised, 0.94) : undefined}>
+      <Appear kind="fade" duration={140} style={[styles.panel, place, { left, shadowColor: ds.c.ground, maxHeight: windowHeight - space.xxxl * 2 }, anchor.height ? null : styles.unplaced]}>
+        {/* The web's blur keeps its own thin fill, so the web gets a solid panel the rows stay readable on. */}
+        <Panel>
           <View role="menu" aria-label={label}>
             {sections.map((s, i) => (
               <View key={s.title ?? i} role="group" aria-label={s.title} style={i > 0 ? [styles.section, { borderTopColor: ds.c.lineStrong }] : null}>
@@ -72,10 +73,16 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
               </View>
             ))}
           </View>
-        </GlassSurface>
+        </Panel>
       </Appear>
     </Modal>
   );
+}
+
+function Panel({ children }: { children: ReactNode }) {
+  const ds = useDs();
+  if (Platform.OS !== 'web') return <GlassSurface style={styles.glass}>{children}</GlassSurface>;
+  return <View style={[styles.glass, styles.solid, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>{children}</View>;
 }
 
 function Row({ item, onClose }: { item: PopoverItem; onClose: () => void }) {
@@ -128,6 +135,7 @@ export function usePopover() {
 const styles = StyleSheet.create({
   panel: { position: 'absolute', width: WIDTH, shadowOffset: { width: 0, height: 18 }, shadowOpacity: Platform.OS === 'ios' ? 0.35 : 0.5, shadowRadius: 24 },
   glass: { borderRadius: radius.card, paddingVertical: space.xs },
+  solid: { borderWidth: 1 },
   section: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: space.xs, paddingTop: space.xs },
   // Lines up with the labels, past the check's column.
   title: { paddingLeft: space.md + 20 + space.sm, paddingTop: space.xs, paddingBottom: 2 },
