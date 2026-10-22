@@ -90,7 +90,7 @@ GRANT INSERT ("user_id", "bar_id", "screen", "drink_name", "kind", "body", "phot
 -- --- Photos ---
 
 INSERT INTO "storage"."buckets" ("id", "name", "public", "file_size_limit", "allowed_mime_types")
-VALUES ('feedback', 'feedback', false, 10485760, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/heic'])
+VALUES ('feedback', 'feedback', false, 10485760, ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/gif'])
 ON CONFLICT ("id") DO NOTHING;
 
 -- As 20261010120000, plus feedback uploads: 20 a day per person.

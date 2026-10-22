@@ -1,4 +1,4 @@
-import { Alert, Linking } from 'react-native';
+import { Linking } from 'react-native';
 
 import { NoteSheet, REPORT_KINDS, type ReportKind } from '@/components/feedback/NoteSheet';
 import { BRAND } from '@/constants/brand';
@@ -21,14 +21,16 @@ const ABOUT = { screen: 'Settings › Report a problem' };
  * instead opens an email with the same things filled in.
  */
 export function ReportProblemSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const email = async (kind: ReportKind, details: string) => {
+  // Resolves to what to say when no email app opened, else null.
+  const onEmail = async (kind: ReportKind, details: string) => {
     const { subject, body } = problemEmail(kind, details);
     const url = `mailto:${BRAND.supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     try {
       await Linking.openURL(url);
+      return null;
     } catch {
-      Alert.alert('No email app opened', `Email ${BRAND.supportEmail} and tell us what happened.`);
+      return `No email app opened. Email ${BRAND.supportEmail} and tell us what happened.`;
     }
   };
-  return <NoteSheet visible={visible} onClose={onClose} about={ABOUT} report={{ onEmail: (kind, body) => void email(kind, body) }} />;
+  return <NoteSheet visible={visible} onClose={onClose} about={ABOUT} report={{ onEmail }} />;
 }

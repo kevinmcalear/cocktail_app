@@ -17,8 +17,29 @@ export interface NoteInput {
   drinkName?: string | null;
   barId?: string | null;
   body: string;
-  /** A picked photo (a local uri), uploaded with the note. Its id names the file, so a retry after a failed send reuses the upload instead of adding another. */
-  photo?: { uri: string; id: string } | null;
+  photo?: NotePhoto | null;
+}
+
+/**
+ * A picked photo (a local uri, and its type when the picker says), uploaded
+ * with the note. Its id names the file, so a retry after a failed send reuses
+ * the upload instead of adding another.
+ */
+export interface NotePhoto {
+  uri: string;
+  id: string;
+  type: string | null;
+}
+
+/** The file types the feedback bucket takes, by extension. */
+const PHOTO_TYPES: Record<string, string> = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic', gif: 'image/gif' };
+
+/** What the sheet says when a send fails: the daily limit (row-level security says no), else most likely offline. */
+export function sendFailure(error: unknown): string {
+  const e = error as { code?: string; message?: string } | null;
+  if (e?.code === '42501' || /row-level security/i.test(e?.message ?? '')) return 'Couldn’t send it: that’s a lot of notes for one day. What you wrote is kept here, so try again tomorrow.';
+  if (e?.message === 'Sign in to send this.') return 'Sign in to send this. What you wrote is kept here.';
+  return 'Couldn’t send it. What you wrote is kept here, so try again when you’re online.';
 }
 
 /** The app version and device, sent with every note ("1.5.0", "ios 26.1"). */
@@ -47,11 +68,14 @@ export function useSendNote() {
       if (!userId) throw new Error('Sign in to send this.');
       let photoPath: string | null = null;
       if (note.photo) {
-        const ext = imageExtFromUri(note.photo.uri);
-        photoPath = `${userId}/${note.photo.id}.${ext}`;
+        // The picker's type when it gives one (a web pick has no file name), else the name's.
+        const fromType = Object.keys(PHOTO_TYPES).find((k) => PHOTO_TYPES[k] === note.photo?.type);
+        const ext = fromType ?? (imageExtFromUri(note.photo.uri).replace('jpeg', 'jpg'));
+        const contentType = PHOTO_TYPES[ext] ?? 'image/jpeg';
+        photoPath = `${userId}/${note.photo.id}.${ext in PHOTO_TYPES ? ext : 'jpg'}`;
         const { error } = await supabase.storage
           .from('feedback')
-          .upload(photoPath, decode(await uriToBase64(note.photo.uri)), { contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`, upsert: false });
+          .upload(photoPath, decode(await uriToBase64(note.photo.uri)), { contentType, upsert: false });
         // Already there: an earlier try uploaded it before the note failed.
         if (error && !/exists|duplicate/i.test(error.message)) throw error;
       }

@@ -8,7 +8,7 @@ import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { DEFAULT_ACCENT, layout, radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
-import { useSendNote, type NoteKind } from '@/hooks/useSendNote';
+import { sendFailure, useSendNote, type NoteKind, type NotePhoto } from '@/hooks/useSendNote';
 import { newDraftId } from '@/lib/drinkWizard';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
 
@@ -41,8 +41,12 @@ interface NoteSheetProps {
   visible: boolean;
   onClose: () => void;
   about: NoteAbout;
-  /** Report a problem: what kind, optional words, and Email us instead (with what's typed). Without it, Tell us. */
-  report?: { onEmail: (kind: ReportKind, body: string) => void };
+  /**
+   * Report a problem: what kind, optional words, and Email us instead (with
+   * what's typed; resolves to what to say when no email app opened). Without
+   * it, Tell us.
+   */
+  report?: { onEmail: (kind: ReportKind, body: string) => Promise<string | null> };
 }
 
 /**
@@ -63,13 +67,14 @@ export function NoteSheet(props: NoteSheetProps) {
 function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
   const ds = useDs();
   const userId = useUserId();
-  const key = `${userId ?? 'signed-out'}:${about.screen}`;
+  // Words typed for one drink at one bar stay with that drink and bar.
+  const key = [userId ?? 'signed-out', about.screen, about.barId ?? '', about.drinkName?.trim() ?? ''].join(':');
   const draft = useNoteDrafts((s) => s.drafts[key]);
   const saveDraft = useNoteDrafts((s) => s.save);
   const send = useSendNote();
   // A picked photo, and the id its upload is stored under (so a retry reuses it).
-  const [photo, setPhoto] = useState<{ uri: string; id: string } | null>(null);
-  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<NotePhoto | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
   const body = draft?.body ?? '';
@@ -85,23 +90,25 @@ function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
     }
     // A send still going keeps going: it clears the words and thanks them when it lands.
     if (!send.isPending) send.reset();
-    setPhotoError(null);
+    setProblem(null);
     onClose();
   };
 
   const pick = async () => {
-    setPhotoError(null);
+    setProblem(null);
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') return setPhotoError('Allow access to your photos to add one.');
+      if (status !== 'granted') return setProblem('Allow access to your photos to add one.');
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
-      if (!result.canceled && result.assets?.length) setPhoto({ uri: result.assets[0].uri, id: newDraftId() });
+      const asset = result.canceled ? null : result.assets?.[0];
+      if (asset) setPhoto({ uri: asset.uri, id: newDraftId(), type: asset.mimeType ?? null });
     } catch {
-      setPhotoError('That photo couldn’t be opened. Try another.');
+      setProblem('That photo couldn’t be opened. Try another.');
     }
   };
 
   const submit = () => {
+    setProblem(null);
     send.mutate(
       { kind, screen: about.screen, drinkName: about.drinkName, barId: about.barId, body, photo: report ? null : photo },
       {
@@ -113,6 +120,15 @@ function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
     );
   };
 
+  const email = async () => {
+    setProblem(null);
+    const failed = report ? await report.onEmail(kind as ReportKind, body) : null;
+    if (failed) return setProblem(failed);
+    // Sent by email: it doesn't wait here to be sent a second time.
+    saveDraft(key, null);
+    close();
+  };
+
   if (sent) {
     return (
       <MenuSheet visible={visible} onClose={close} eyebrow={report ? 'Report a problem' : 'Tell us'} title={report ? 'Thanks for telling us.' : 'Thanks. It’s with us.'} footer={<Button label="Done" size="lg" onPress={close} />}>
@@ -121,27 +137,30 @@ function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
     );
   }
 
+  const shown = problem ?? (send.isError ? sendFailure(send.error) : null);
   const footer = (
     <View style={styles.footer}>
-      {send.isError ? (
+      {shown ? (
         <Caption tone="accent" role="alert">
-          Couldn’t send it. What you wrote is kept here, so try again when you’re online.
+          {shown}
         </Caption>
       ) : null}
       <Button label={send.isPending ? 'Sending…' : 'Send'} size="lg" disabled={!canSend} onPress={submit} />
-      {report ? <TextLink label="Email us instead" tone="ink" onPress={() => report.onEmail(kind as ReportKind, body)} /> : null}
+      {report ? <TextLink label="Email us instead" tone="ink" onPress={() => void email()} /> : null}
     </View>
   );
+  // Nothing typed while it's sending, so nothing new is cleared with the sent words.
+  const editable = !send.isPending;
 
   if (report) {
     return (
       <MenuSheet visible={visible} onClose={close} title="Report a problem" footer={footer}>
         <View role="radiogroup" aria-label="What kind of problem" style={styles.chips}>
           {REPORT_KINDS.map((k) => (
-            <Chip key={k.id} label={k.label} selected={kind === k.id} onPress={() => update({ kind: k.id })} />
+            <Chip key={k.id} label={k.label} selected={kind === k.id} disabled={!editable} onPress={() => update({ kind: k.id })} />
           ))}
         </View>
-        <Field label="What happened (optional)" value={body} onChangeText={(text) => update({ body: text })} multiline minLines={3} maxLength={2000} />
+        <Field label="What happened (optional)" value={body} onChangeText={(text) => update({ body: text })} editable={editable} multiline minLines={3} maxLength={2000} />
         <Caption tone="muted">{sentWith(about, true)}</Caption>
       </MenuSheet>
     );
@@ -155,20 +174,19 @@ function Sheet({ visible, onClose, about, report }: NoteSheetProps) {
           {sentWith(about)}
         </Caption>
       </View>
-      <Field label="What you do" value={body} onChangeText={(text) => update({ body: text })} multiline minLines={4} maxLength={2000} />
+      <Field label="What you do" value={body} onChangeText={(text) => update({ body: text })} editable={editable} multiline minLines={4} maxLength={2000} />
       {photo ? (
         <View style={styles.photoRow}>
           <Image source={{ uri: photo.uri }} style={styles.thumb} contentFit="cover" accessibilityLabel="Your photo" />
           <Body style={styles.flex}>Photo added</Body>
-          <TextLink label="Remove" tone="ink" onPress={() => setPhoto(null)} />
+          {editable ? <TextLink label="Remove" tone="ink" onPress={() => setPhoto(null)} /> : null}
         </View>
       ) : (
-        <PressableScale role="button" accessibilityLabel="Add a photo (optional)" onPress={() => void pick()} style={[styles.addPhoto, { borderColor: ds.c.lineStrong }]}>
+        <PressableScale role="button" accessibilityLabel="Add a photo (optional)" disabled={!editable} onPress={() => void pick()} style={[styles.addPhoto, { borderColor: ds.c.lineStrong }]}>
           <IconSymbol name="camera" size={18} color={ds.c.ink} />
           <Body>Add a photo (optional)</Body>
         </PressableScale>
       )}
-      {photoError ? <Caption tone="accent" role="alert">{photoError}</Caption> : null}
       <Caption tone="muted">Only the Cocktail team sees this. We’ll tell you when it’s in.</Caption>
     </MenuSheet>
   );
