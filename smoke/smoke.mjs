@@ -103,21 +103,47 @@ async function servedCommit(base) {
   return /^[0-9a-f]{7,40}$/.test(text) ? text : null;
 }
 
+/**
+ * Whether `served` comes after `expected` on GitHub (a newer deploy replaced
+ * the expected one). Needs GITHUB_REPOSITORY; GITHUB_TOKEN avoids the
+ * anonymous rate limit. False when it can't tell.
+ */
+const newerCache = new Map();
+async function isNewer(served, expected) {
+  const repo = process.env.GITHUB_REPOSITORY;
+  if (!repo) return false;
+  if (!newerCache.has(served)) {
+    const headers = { accept: 'application/vnd.github+json', ...(process.env.GITHUB_TOKEN ? { authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}) };
+    const status = await get(`https://api.github.com/repos/${repo}/compare/${expected}...${served}`, { headers })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => body?.status ?? null)
+      .catch(() => null);
+    if (status) newerCache.set(served, status === 'ahead');
+    else return false;
+  }
+  return newerCache.get(served);
+}
+
 async function checkBuild(base) {
   let commit = await servedCommit(base);
-  if (expectCommit && commit && commit !== expectCommit) {
-    console.log(`wait ${base} serves ${short(commit)}; waiting up to ${COMMIT_WAIT / 60_000} minutes for ${short(expectCommit)}`);
+  const settled = async () => !expectCommit || commit === expectCommit || (commit !== null && (await isNewer(commit, expectCommit)));
+  if (!(await settled())) {
+    // Poll while it serves another commit or doesn't answer (a timeout, a
+    // 5xx, or no /commit.txt yet).
+    console.log(`wait ${base} serves ${commit ? short(commit) : 'an unknown commit'}; waiting up to ${COMMIT_WAIT / 60_000} minutes for ${short(expectCommit)}`);
     const until = Date.now() + COMMIT_WAIT;
-    while (commit !== expectCommit && Date.now() < until) {
+    while (!(await settled()) && Date.now() < until) {
       await sleep(15_000);
       commit = (await servedCommit(base)) ?? commit;
     }
-    if (commit !== expectCommit) {
-      fail(`${base} build`, `still serves commit ${short(commit)} ${COMMIT_WAIT / 60_000} minutes after the deploy of ${short(expectCommit)} succeeded, so that deploy did not reach it (or a newer one replaced it)`);
+    if (commit !== null && !(await settled())) {
+      fail(`${base} build`, `still serves commit ${short(commit)} ${COMMIT_WAIT / 60_000} minutes after the deploy of ${short(expectCommit)} succeeded, so that deploy did not reach it`);
     }
   }
-  if (commit) note(`${base} serves commit ${short(commit)}${expectCommit && commit === expectCommit ? ', the one just deployed' : ''}`);
-  else note(`${base} does not say which commit it serves (no /commit.txt)${expectCommit ? `, so this may not be ${short(expectCommit)} yet` : ''}`);
+  if (!commit) note(`${base} does not say which commit it serves (no /commit.txt)${expectCommit ? `, so this may not be ${short(expectCommit)}` : ''}`);
+  else if (!expectCommit) note(`${base} serves commit ${short(commit)}`);
+  else if (commit === expectCommit) note(`${base} serves commit ${short(commit)}, the one just deployed`);
+  else if (await isNewer(commit, expectCommit)) note(`${base} serves commit ${short(commit)}, newer than the deployed ${short(expectCommit)}`);
 }
 
 // --- 1. scripts in the HTML, and they load ---

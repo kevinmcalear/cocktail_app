@@ -35,18 +35,19 @@ permissions:
   contents: read
   issues: write
 
-# One check of production at a time, queued rather than cancelled (a
-# cancelled run would open an issue). Each PR gets its own group.
-concurrency:
-  group: after-deploy-smoke-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
-  cancel-in-progress: false
-
 jobs:
   smoke:
     name: Smoke check babyvom.it
     if: github.event_name != 'deployment_status' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # On the job, under its `if`, so skipped runs (deployment statuses other
+    # than success) never join the group. One check at a time; a run in
+    # progress is never cancelled (that would open an issue), and a newer
+    # pending run replaces an older pending one, which checks the newer build.
+    concurrency:
+      group: after-deploy-smoke-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+      cancel-in-progress: false
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
@@ -74,10 +75,13 @@ jobs:
       # Authentication (today it is, so the script notes it and skips it).
       # A step timeout fails the step, so the issue steps below still run.
       - name: Smoke check
-        timeout-minutes: 11
+        timeout-minutes: 13
         env:
           EXTRA_URL: ${{ github.event.deployment_status.target_url || inputs.url }}
           EXPECT_COMMIT: ${{ github.event.deployment.sha }}
+          # Read-only: lets the script ask GitHub whether the commit babyvom.it
+          # serves is newer than the deployed one.
+          GITHUB_TOKEN: ${{ github.token }}
         run: node smoke/smoke.mjs --url https://babyvom.it ${EXTRA_URL:+--url "$EXTRA_URL"} ${EXPECT_COMMIT:+--expect-commit "$EXPECT_COMMIT"} --out smoke-results
       - if: failure() || cancelled()
         uses: actions/upload-artifact@v7
