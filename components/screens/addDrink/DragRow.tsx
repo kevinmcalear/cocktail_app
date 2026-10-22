@@ -22,19 +22,25 @@ const HOLD_MS = Platform.OS === 'web' ? 0 : 200;
 export function DragRow({ index, onDrop, onMove, onHeight, children }: { index: number; onDrop: (from: number, dy: number) => void; onMove?: (from: number, dy: number) => void; onHeight: (h: number) => void; children: (grip: (node: ReactNode) => ReactNode, active: boolean) => ReactNode }) {
   const y = useSharedValue(0);
   const lifted = useSharedValue(0);
+  // Where the finger or mouse went down: on the web the pan counts from when it activates, after it has already moved (memory: cocktail-local-testing).
+  const from = useSharedValue(0);
   const [active, setActive] = useState(false);
   const pan = Gesture.Pan()
     .activateAfterLongPress(HOLD_MS)
+    .onBegin((e) => {
+      from.set(e.absoluteY);
+    })
     .onStart(() => {
       lifted.set(1);
       scheduleOnRN(setActive, true);
     })
     .onUpdate((e) => {
-      y.set(e.translationY);
-      if (onMove) scheduleOnRN(onMove, index, e.translationY);
+      const dy = e.absoluteY - from.get();
+      y.set(dy);
+      if (onMove) scheduleOnRN(onMove, index, dy);
     })
     .onEnd((e) => {
-      scheduleOnRN(onDrop, index, e.translationY);
+      scheduleOnRN(onDrop, index, e.absoluteY - from.get());
     })
     .onFinalize(() => {
       y.set(0);
@@ -44,7 +50,8 @@ export function DragRow({ index, onDrop, onMove, onHeight, children }: { index: 
   const follow = useAnimatedStyle(() => ({ zIndex: lifted.get() ? 1 : 0, transform: [{ translateY: y.get() }] }));
   return (
     <Animated.View style={follow} onLayout={(e) => onHeight(e.nativeEvent.layout.height)}>
-      {children((node) => <GestureDetector gesture={pan}>{node}</GestureDetector>, active)}
+      {/* The detector holds a plain View, not the grip itself: on the web Gesture Handler won't capture the pointer for a role="button" view, so a mouse drag stopped once it left the grip. */}
+      {children((node) => <GestureDetector gesture={pan}><View>{node}</View></GestureDetector>, active)}
     </Animated.View>
   );
 }

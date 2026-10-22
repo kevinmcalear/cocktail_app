@@ -109,9 +109,13 @@ function Body_({ line, drinkName, onChange, onSave, onSplit }: Omit<BatchSheetPr
       </View>
 
       <PressableScale role="button" aria-expanded={perDrink} accessibilityLabel="Per drink amounts" onPress={() => setPerDrink(!perDrink)} haptic={false} style={styles.toggle}>
-        <Body style={styles.strong}>Per drink amounts</Body>
+        <Body style={styles.strong} numberOfLines={1}>
+          Per drink amounts
+        </Body>
         <IconSymbol name={perDrink ? 'chevron.up' : 'chevron.down'} size={14} color={ds.c.muted} />
-        <Caption tone="muted">only if you want them</Caption>
+        <Caption tone="muted" style={styles.flex} numberOfLines={1}>
+          only if you want them
+        </Caption>
       </PressableScale>
       {perDrink ? (
         <View>

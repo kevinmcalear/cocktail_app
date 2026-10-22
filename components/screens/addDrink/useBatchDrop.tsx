@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { useToast } from '@/components/ds';
 import { useDragMergeDwell } from '@/hooks/useDragMergeDwell';
 import { mergeLines, splitBatch } from '@/lib/batchLines';
 import { overIndex } from '@/lib/dropIndex';
 import type { StepProps, WizardLine } from '@/lib/drinkWizard';
 
 import { BatchAddSheet, BatchSheet } from './BatchSheet';
+import { WizardNotice } from './WizardChrome';
 
-/** Points the toast sits higher, over the wizard's Skip and Next. */
-const TOAST_LIFT = 72;
+/** How long "Batch saved" stays, as the wizard's other notices do. */
+const NOTICE_MS = 10000;
 
 /**
  * Drop one line on another to make a batch (board fix 9): hold a dragged line
@@ -20,8 +20,14 @@ const TOAST_LIFT = 72;
  */
 export function useBatchDrop({ draft, set, enabled, heights }: StepProps & { enabled: boolean; heights: () => number[] }) {
   const dwell = useDragMergeDwell(enabled);
-  const toast = useToast();
   const [openKey, setOpenKey] = useState<string | null>(null);
+  /** The batch just saved: "Batch saved … Open" for a moment. */
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+  useEffect(() => {
+    if (!savedKey) return;
+    const t = setTimeout(() => setSavedKey(null), NOTICE_MS);
+    return () => clearTimeout(t);
+  }, [savedKey]);
   const [adding, setAdding] = useState<{ from: string; onto: string } | null>(null);
   const lines = draft.lines;
   const indexOf = (key: string) => lines.findIndex((l) => l.key === key);
@@ -56,15 +62,18 @@ export function useBatchDrop({ draft, set, enabled, heights }: StepProps & { ena
 
   const sheets = (
     <>
+      {/* In the flow under the lines, like the wizard's other notices: a toast would sit behind the wizard's iOS modal. */}
+      {/* ponytail: the prep is made when the drink is saved (as every prep made here is), so Open is the batch again, not its prep page. */}
+      {savedKey && lines.some((l) => l.key === savedKey && l.batch) ? (
+        <WizardNotice action={{ label: 'Open', onPress: () => setOpenKey(savedKey) }}>Batch saved. It’s in Preps once the drink is saved.</WizardNotice>
+      ) : null}
       <BatchSheet
         line={open}
         drinkName={draft.name}
         onChange={(line: WizardLine) => set({ lines: lines.map((l) => (l.key === line.key ? line : l)) })}
         onSave={() => {
-          const key = openKey;
+          setSavedKey(openKey);
           close();
-          // ponytail: the prep is made when the drink is saved (as every prep made here is), so Open is the batch again, not its prep page.
-          toast.show({ title: 'Batch saved.', detail: 'It’s in Preps once the drink is saved.', action: key ? { label: 'Open', onPress: () => setOpenKey(key) } : undefined, lift: TOAST_LIFT });
         }}
         onSplit={() => {
           if (openKey) set({ lines: splitBatch(lines, openKey) });
