@@ -9,6 +9,7 @@ import { useWebNav } from '@/hooks/useIsWideWeb';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
+import { ResumeCard } from '@/components/screens/bringin/ResumeCard';
 import { FeatureNewsLine } from '@/components/screens/library/FeatureNewsLine';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { useFirstRound } from '@/hooks/useFirstRound';
@@ -142,6 +143,7 @@ export function LibraryScreen() {
   const header = (
     <View style={styles.header}>
       <PageHeader title="Library" width="full" display />
+      {activeId ? <ResumeCard barId={activeId} /> : null}
       <FeatureNewsLine />
       <FirstRoundCard />
       {/* The staff list is dragged into order, so it isn't narrowed. */}
