@@ -46,3 +46,17 @@ assert.equal(readSketchInputs({ ...bare, ice: 'cubes', houseIce: 'none' })?.ice,
 assert.equal(readSketchInputs({ ...bare, ice: 'cubes', houseIce: 'gravel' })?.ice, 'cubes', 'an unknown kind is ignored');
 
 console.log('draft sketch: ok');
+
+// A discard finishes the drink with nothing on the glass: the name's guess
+// (a Spritz's orange wheel) doesn't draw over it, but a plain Spritz keeps it.
+const spritzLines = [
+  { name: 'Fino sherry', amount: 30, unit: 'ml' },
+  { name: 'Soda water', amount: null, unit: 'top' },
+];
+const spritz = { name: 'Fig Leaf Spritz', glass: 'Spritz glass', methods: ['Build'], ice: 'Cubes', lines: spritzLines };
+assert.equal(draftSketchInputs(spritz).garnish, 'orange_wheel', 'a plain Spritz gets its guessed wheel');
+const discard = draftSketchInputs({ ...spritz, lines: [...spritzLines, { name: 'Lemon', amount: 1, unit: 'discard' }] });
+assert.equal(discard.garnish, null, 'a discard draws no garnish');
+assert.equal(discard.from.garnish, 'default');
+const both = draftSketchInputs({ ...spritz, lines: [...spritzLines, { name: 'Lemon', amount: 1, unit: 'discard' }, { name: 'Olive', amount: 1, unit: 'each' }] });
+assert.equal(both.garnish, 'olive', 'a real garnish line still draws beside a discard');
