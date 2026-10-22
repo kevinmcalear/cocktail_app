@@ -7,7 +7,7 @@
 import { printPaper as P } from '@/constants/tokens';
 
 import type { RunSheet } from './runSheet';
-import { needAmount, sheetHead } from './runSheetText';
+import { needAmount, sheetHead, type PartyList } from './runSheetText';
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -66,5 +66,16 @@ export function runSheetHtml(sheet: RunSheet, menu: { name: string; startsAt: st
 <h2>Who brings what</h2>${partyHtml || '<p class="muted">Set some serves and the list fills in.</p>'}
 <h2>The drinks</h2>${drinkHtml}
 <footer class="muted">Printed ${esc(printed)} from the ${esc(menu.name)} menu. Specs as swapped for this menu.</footer>
+</body></html>`;
+}
+
+/** One bar's or brand's list (lib/runSheetText.ts partyList) as a one-page HTML document, to send them as a PDF. */
+export function partyListHtml(list: PartyList): string {
+  const rows = list.needs.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${esc(needAmount(x))}</td></tr>`).join('');
+  const others = list.others.length ? `<h2>Everyone else</h2>${list.others.map((o) => `<p>${esc(o)}</p>`).join('')}` : '';
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(list.title)}</title><style>${CSS}</style></head><body>
+<header><div class="eyebrow">${esc(list.eyebrow)}</div><h1>${esc(list.title)}</h1><div>${esc(list.when || 'No date yet')}</div><div class="muted">${esc(list.from)}</div></header>
+<h2>${esc(list.ask)}</h2><table>${rows}</table>${others}
+<footer class="muted">Questions? Reply to whoever sent you this.</footer>
 </body></html>`;
 }

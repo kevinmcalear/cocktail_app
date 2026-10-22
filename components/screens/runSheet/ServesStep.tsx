@@ -79,15 +79,15 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
         )}
         <View style={[styles.rule, { backgroundColor: ds.c.line }]} />
         <View style={styles.party}>
-          <Caption tone="muted">Hosting</Caption>
+          <Caption tone="muted">Our bar</Caption>
           <Body>{data.menu.hostName}</Body>
         </View>
         <View style={[styles.between, styles.party]}>
           <View style={{ flex: 1 }}>
-            <Caption tone="muted">Guest venue</Caption>
-            <Body tone={guest ? 'ink' : 'muted'}>{guest?.name ?? 'None'}</Body>
+            <Caption tone="muted">Coming to us</Caption>
+            <Body tone={guest ? 'ink' : 'muted'}>{guest?.name ?? 'Nobody yet'}</Body>
           </View>
-          <Button label={guest ? 'Change' : 'Add'} size="sm" variant="secondary" accessibilityLabel={guest ? 'Change the guest venue' : 'Add a guest venue'} onPress={() => setEditing({ kind: 'guest', party: guest })} />
+          <Button label={guest ? 'Change' : 'Add'} size="sm" variant="secondary" accessibilityLabel={guest ? 'Change the bar coming to us' : 'Add the bar coming to us'} onPress={() => setEditing({ kind: 'guest', party: guest })} />
         </View>
         <View style={{ gap: space.sm }}>
           <Caption tone="muted">Brands</Caption>

@@ -100,9 +100,9 @@ assert.deepEqual(row('Large cube'), ['320', null, 'ice']);
 assert.equal(sheet.groups.flatMap((g) => g.needs).some((n) => n.name === 'London dry gin'), false, 'swapped out everywhere');
 assert.deepEqual(sheet.groups.map((g) => g.title), ['Spirits and liqueurs', 'Juices and fresh', 'House preps', 'Mixers', 'Garnish', 'Glassware', 'Ice']);
 
-// Default owners: the brand that makes the bottle, the guest for their drink's house preps, the host for the rest.
+// Default owners: the brand that makes the bottle, the visiting bar for their drink's house preps, the bar it's at for the rest.
 const counts = sheet.parties.map((p) => [p.name, p.role, p.needs.length]);
-assert.deepEqual(counts, [["Caretaker's Cottage", 'Hosting', 16], ['Little Rye', 'Guest venue', 2], ['Mill & Ash Gin', 'Brand', 1], ['Harbour Scotch', 'Brand', 2]]);
+assert.deepEqual(counts, [["Caretaker's Cottage", 'Venue', 16], ['Little Rye', 'Visiting team', 2], ['Mill & Ash Gin', 'Brand', 1], ['Harbour Scotch', 'Brand', 2]]);
 assert.deepEqual(sheet.parties[1].needs.map((n) => n.name), ['Honey-ginger syrup', 'Candied ginger']);
 assert.equal(need('Sugar syrup').ownerId, null, "the host's drink, the host's syrup");
 

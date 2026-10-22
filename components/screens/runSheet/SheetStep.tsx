@@ -9,6 +9,8 @@ import type { RunSheet } from '@/lib/runSheet';
 import { runSheetHtml } from '@/lib/runSheetHtml';
 import { runSheetText } from '@/lib/runSheetText';
 
+import type { PartyLook } from './parts';
+import { SendLists } from './SendLists';
 import { canSharePdf, sharePdf } from './sharePdf';
 import { SheetPaper } from './SheetPaper';
 
@@ -42,8 +44,8 @@ export function useSheetActions(sheet: RunSheet, menu: Menu, breakDown = false) 
   };
 }
 
-/** Step 4 on a phone: a look at the sheet, then print, save or share it (board "4. The sheet"). */
-export function SheetStep({ sheet, menu, breakDown }: { sheet: RunSheet; menu: Menu; breakDown: boolean }) {
+/** Step 4 on a phone: a look at the sheet, print, save or share it, and send each bar or brand their list (boards "4. The sheet", R1). */
+export function SheetStep({ sheet, menu, breakDown, looks }: { sheet: RunSheet; menu: Menu; breakDown: boolean; looks: PartyLook[] }) {
   const a = useSheetActions(sheet, menu, breakDown);
   return (
     <View style={{ gap: space.lg }}>
@@ -67,6 +69,7 @@ export function SheetStep({ sheet, menu, breakDown }: { sheet: RunSheet; menu: M
           ? 'Pick “Save as PDF” in the print dialog to send it. Changes to serves or swaps update the sheet straight away.'
           : `Share opens Mail, Messages and the rest${a.pdf ? ' with the PDF attached' : ''}. Changes to serves or swaps update the sheet straight away.`}
       </Caption>
+      <SendLists sheet={sheet} menu={menu} looks={looks} />
     </View>
   );
 }
