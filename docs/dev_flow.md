@@ -48,7 +48,7 @@ Vercel builds no PR previews: each build is billed by the CPU minute, and previe
 
 Kevin merges when CI is green. There's no auto-merge. After merging a stack, retarget the next PR to `main` before merging it.
 
-After each production deploy, the After-deploy smoke workflow (`.github/workflows/after-deploy-smoke.yml`, also daily and by hand) opens babyvom.it signed out in headless Chromium at 390 and 1440 px: the app's scripts load, `/` lands on Sign in, `/d/negroni` shows the Negroni, and nothing logs an error. A failure opens an issue with screenshots in the run's artifact. Run it yourself with `npm run smoke` (or `npm run smoke -- --url <url>`).
+After each production deploy, the After-deploy smoke workflow (`.github/workflows/after-deploy-smoke.yml`, also daily and by hand) waits for babyvom.it/commit.txt (written by `vercel.json`'s build command) to name the deployed commit, then opens babyvom.it signed out in headless Chromium at 390 and 1440 px: the app's scripts load, `/` lands on Sign in, `/d/negroni` shows the Negroni, and nothing logs an error (missing pictures and signed-out 401s are warnings). A failure opens an issue labelled `smoke-failing` with screenshots in the run's artifact; the next pass closes it. Run it yourself with `npm run smoke` (or `npm run smoke -- --url <url>`).
 
 ## Changes that need Kevin
 
