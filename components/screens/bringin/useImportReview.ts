@@ -70,7 +70,11 @@ export function useImportReview(id: string, data: MatchData) {
 
   const setChoices = (i: number, change: (c: RecipeChoices) => RecipeChoices) => edit((r) => ({ ...r, choices: r.choices.map((c, k) => (k === i ? change(c) : c)) }));
 
-  /** The full editor for one drink, filled in; saving there approves it here (app/add-cocktail.tsx). */
+  /**
+   * The full editor for one drink, filled in; saving there approves it here (app/add-cocktail.tsx).
+   * ponytail: a batch made there isn't recorded in review.batches (the wizard's save returns only the drink's id), so a
+   * later drink pouring the same batch makes its own copy. Return what the save made from the wizard to close it.
+   */
   const editDrink = (i: number) => {
     const r = current();
     if (!r || !canCheck(r, i)) return;

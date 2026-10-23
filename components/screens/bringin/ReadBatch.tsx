@@ -4,7 +4,7 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { BackbarTheme, Body, Button, Caption, DsText, Field, IngredientThumb, PressableScale, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
-import { bottleAmounts } from '@/lib/batchLines';
+import { bottleAmounts, drinkMl } from '@/lib/batchLines';
 import { amountLabel, type WizardLine } from '@/lib/drinkWizard';
 import { yieldText } from '@/lib/libraryFilters';
 import type { ReadFile } from '@/lib/readAnything';
@@ -67,6 +67,7 @@ function TextLink({ label, muted, onPress }: { label: string; muted?: boolean; o
   );
 }
 
+// As the board draws it: 750 ml, 1 L, Other (a 700 ml bottle is Other here, one of the chips in the wizard's BatchSheet).
 const BOTTLES = [750, 1000];
 
 interface ReadBatchSheetProps {
@@ -149,7 +150,7 @@ function SheetBody({ line, batch, drinkName, files, onBottle, onSeparate, onClos
               setOtherText(digits);
               const n = Number(digits);
               // As the batch sheet: a bottle big enough for a drink, no bigger than a keg.
-              if (n >= 50 && n <= 20000) onBottle(n);
+              if (n >= Math.max(drinkMl(line.batch!.lines), 50) && n <= 20000) onBottle(n);
             }}
           />
         ) : null}

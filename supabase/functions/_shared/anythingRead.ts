@@ -285,7 +285,11 @@ export function cleanRecipes(raw: unknown, files = 0): RecipeReading[] {
     const found = cleanBatch(recipe.batch, name, files);
     const marked = read.findIndex((l) => l.pours);
     const pour = marked >= 0 ? marked : reading.lines.findIndex((l) => /\bbatch\b/i.test(l.ingredient) || (!!found && norm(l.ingredient) === norm(found.name)));
-    if (pour < 0 || !isPour(reading.lines[pour])) continue;
+    if (pour < 0 || !isPour(reading.lines[pour])) {
+      // A bottle with no measured pour of it in the drink: kept in the notes, so its recipe isn't lost.
+      if (found) reading.notes = clean([reading.notes, `${found.heading ?? found.name}: ${found.lines.map((l) => `${l.amount ?? ""} ${l.unit ?? ""} ${l.ingredient}`.replace(/\s+/g, " ").trim()).join(", ")}`].filter(Boolean).join(". "), 400);
+      continue;
+    }
     if (!found) {
       // Its bottle may be another drink's ("60 ml House batch"): matched by name once every recipe is read.
       pending.push({ recipe: reading, pour });
@@ -294,7 +298,8 @@ export function cleanRecipes(raw: unknown, files = 0): RecipeReading[] {
     const key = batchKey(found.lines);
     const batch = byKey.get(key) ?? { ...found, key };
     byKey.set(key, batch);
-    if (!byName.has(norm(batch.name))) byName.set(norm(batch.name), batch);
+    // Either name finds it: a drink may pour it by the name another gave it.
+    for (const said of [batch.name, found.name]) if (!byName.has(norm(said))) byName.set(norm(said), batch);
     reading.lines[pour] = { ...reading.lines[pour], ingredient: batch.name, batch: true };
     reading.batch = batch;
   }

@@ -136,6 +136,8 @@ for (const bad of [
   assert.equal(r.batch, undefined, JSON.stringify(bad));
   assert.ok(r.lines.every((l) => l.batch === undefined));
 }
+// A bottle with no pour of it in the drink isn't lost: it's kept in the notes.
+assert.equal(cleanRecipes([smoke({ lines: [{ amount: 30, unit: 'ml', ingredient: 'Pink grapefruit' }], notes: 'Fine strain' })])[0].notes, 'Fine strain. Batch recipe (750 ml): 450 ml Mezcal, 300 ml Cynar');
 // The bottle's lines are capped like a drink's.
 assert.equal(cleanRecipes([smoke({ batch: { ...SMOKE, lines: Array.from({ length: 30 }, (_, i) => ({ amount: 10, unit: 'ml', ingredient: `Part ${i}` })) } })])[0].batch?.lines.length, 20);
 // Shared: the same bottle given twice is one batch (one key, the first one's name); a drink naming another's batch gets it.
@@ -144,7 +146,10 @@ const shared = cleanRecipes([
   { name: 'Last Light', lines: [{ amount: 45, unit: 'ml', ingredient: 'Batch', batch: true }], batch: { ...SMOKE, name: 'Mezcal batch' } },
   { name: 'Ember', lines: [{ amount: 30, unit: 'ml', ingredient: 'Smoke Signal Batch', batch: true }] },
   { name: 'Other', lines: [{ amount: 30, unit: 'ml', ingredient: 'Nobody’s batch', batch: true }] },
+  { name: 'Late', lines: [{ amount: 30, unit: 'ml', ingredient: 'Mezcal batch', batch: true }] },
 ]);
+// By the name a later drink gave the same bottle, too.
+assert.equal(shared[4].batch?.key, shared[0].batch?.key);
 assert.equal(shared[1].batch?.key, shared[0].batch?.key);
 assert.equal(shared[1].batch?.name, 'Smoke Signal batch');
 assert.equal(shared[1].lines[0].ingredient, 'Smoke Signal batch');
