@@ -24,6 +24,8 @@ export interface DrinkToMake {
   sketch?: SketchInputs;
   /** Update it: the bar's drink with this name takes the spec (useCreateDrink), and no drink is made. */
   updateId?: string | null;
+  /** The batch read from the file that this save makes as a house prep (lib/readBatch), by its key. */
+  batch?: { key: string; name: string };
 }
 
 export type MenuRowToSave = { section: string | null; drink: MenuDrink } | { section: string | null; make: DrinkToMake; price: string | null };
@@ -45,6 +47,8 @@ export interface SavedBringIn {
   summary: BatchSummary;
   createdAt: string;
   warnings: string[];
+  /** Batches read from the file and made here, by their key: the house prep each became. */
+  batches?: Record<string, string>;
 }
 
 const newDrinkItem = (id: string, name: string, price: string | null): MenuDrink => ({ id, name, kind: 'cocktail', line: '', price, imageUrl: null, isSketch: true, glass: null });
@@ -73,14 +77,18 @@ export function useBringInSave(barId: string | null) {
       const itemIds: string[] = [];
       const drinkIds: string[] = [];
       const warnings: string[] = [];
+      const batches: Record<string, string> = {};
       let menuId: string | null = null;
       let title = '';
 
-      const make = async ({ draft, prepNames, sketch: drawn, updateId }: DrinkToMake): Promise<string> => {
+      const make = async ({ draft, prepNames, sketch: drawn, updateId, batch }: DrinkToMake): Promise<string> => {
         // A drink off a menu wasn't drawn in its check: drawn here, with the bar's own glasses.
         const sketch = drawn ?? draftSketchInputs(sketchLook(draft, barVariants(glasses)));
         const result = await createDrink.mutateAsync({ draft, barId: barId, myProfileId: me?.id ?? null, sketch, updateId });
         warnings.push(...result.warnings);
+        // A batch read from the file, made now: a later drink pouring it uses this one.
+        const madeBatch = batch ? result.created?.find((c) => c.name.toLowerCase() === batch.name.toLowerCase()) : undefined;
+        if (batch && madeBatch) batches[batch.key] = madeBatch.id;
         if (updateId) {
           // The bar's own drink, updated: never in the batch, so Undo all can't take it (or what its spec now uses) away.
           drinkIds.push(result.id);
@@ -91,7 +99,8 @@ export function useBringInSave(barId: string | null) {
         drinkIds.push(result.id);
         summary.drinksNew += 1;
         const preps = new Set(prepNames.map((n) => n.toLowerCase()));
-        const withRecipe = new Set(draft.lines.filter((l) => l.prep).map((l) => l.name.toLowerCase()));
+        // A batch is a house prep with its recipe, the bottle's.
+        const withRecipe = new Set(draft.lines.filter((l) => l.prep || l.batch).map((l) => l.name.toLowerCase()));
         for (const made of result.created ?? []) {
           itemIds.push(made.id);
           const prep = preps.has(made.name.toLowerCase()) || withRecipe.has(made.name.toLowerCase());
@@ -158,7 +167,7 @@ export function useBringInSave(barId: string | null) {
         prices: input.kind === 'menu' ? input.prices : [],
         summary,
       });
-      return { batchId, kind: input.kind, title: title || 'Brought in', source: input.source, menuId, drinkIds, summary, createdAt: new Date().toISOString(), warnings };
+      return { batchId, kind: input.kind, title: title || 'Brought in', source: input.source, menuId, drinkIds, summary, createdAt: new Date().toISOString(), warnings, batches };
     },
     onError: () => {},
   });

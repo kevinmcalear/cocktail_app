@@ -7,7 +7,7 @@
 // finishing on a phone would need the waiting drinks in a small table.
 
 import type { BatchSummary } from '@/lib/bringInBatch';
-import type { RecipeChoices } from '@/lib/bringInDraft';
+import type { MadeBatches, RecipeChoices } from '@/lib/bringInDraft';
 import { dayWord } from '@/lib/featureNews';
 import type { ReadFile } from '@/lib/readAnything';
 import type { RecipeReading } from '@/supabase/functions/_shared/anythingRead';
@@ -39,6 +39,8 @@ export interface ImportReview {
   /** What the saves made, added up, for Brought in at the end. */
   summary: BatchSummary;
   warnings: string[];
+  /** Batches read from the file that a drink here already saved, by their key: a later drink pouring one uses it (lib/readBatch). */
+  batches?: MadeBatches;
 }
 
 export interface Tally {
@@ -123,9 +125,10 @@ export function addSummary(a: BatchSummary, b: BatchSummary): BatchSummary {
 }
 
 /** A save that went through: approved, with its drink and what it made. */
-export function approved(review: ImportReview, i: number, saved: { drinkId: string | null; summary: BatchSummary; warnings: string[] }, now: string): ImportReview {
+export function approved(review: ImportReview, i: number, saved: { drinkId: string | null; summary: BatchSummary; warnings: string[]; batches?: MadeBatches }, now: string): ImportReview {
   const next = setMark(review, i, 'approved', now, saved.drinkId);
-  return { ...next, summary: addSummary(review.summary, saved.summary), warnings: [...review.warnings, ...saved.warnings] };
+  const batches = saved.batches && Object.keys(saved.batches).length ? { batches: { ...review.batches, ...saved.batches } } : {};
+  return { ...next, summary: addSummary(review.summary, saved.summary), warnings: [...review.warnings, ...saved.warnings], ...batches };
 }
 
 /**

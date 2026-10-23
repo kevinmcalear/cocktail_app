@@ -41,7 +41,7 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
   const at = review ? (canCheck(review, review.at) ? review.at : (nextOpen(review.marks, review.at) ?? review.at)) : 0;
   const recipe = review?.recipes[at];
   const choices = review?.choices[at];
-  const made = recipe && choices ? toMake(recipe, choices) : null;
+  const made = recipe && choices ? toMake(recipe, choices, review?.batches) : null;
   const sketch = useSteadySketch(made?.sketch);
   // The venue already has one by this name (board dup-drink-warning): Approve waits on what to do with it.
   const { there, checking } = useAlreadyThere(review?.barId ?? null, choices?.name ?? '', made?.draft ?? EMPTY_DRAFT, usual, choices?.same);
@@ -78,7 +78,7 @@ export function ImportReview({ id, data, onFinishLater }: { id: string; data: Ma
             onLook={() => setLook({ at: recipe.at, title: choices.name })}
           />
         ) : null}
-        <RecipeSpec recipe={recipe} choices={choices} data={data} files={files} usual={usual} label={false} onChoose={(i, c) => setChoices(at, (prev) => chooseLine(prev, i, c))} onLook={(where, title) => setLook({ at: where, title })} />
+        <RecipeSpec recipe={recipe} choices={choices} data={data} files={files} usual={usual} label={false} made={review.batches} onChoose={(i, c) => setChoices(at, (prev) => chooseLine(prev, i, c))} onChoices={(change) => setChoices(at, change)} onLook={(where, title) => setLook({ at: where, title })} />
         {open ? <EditLink onPress={() => editDrink(at)} /> : null}
         {note ? <Caption tone="muted">{note}</Caption> : null}
         {error ? <Caption tone="accent">{error}</Caption> : null}

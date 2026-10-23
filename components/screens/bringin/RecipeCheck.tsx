@@ -102,7 +102,7 @@ export function RecipeCheck({ recipe, files, from, data, saving, error, onCancel
           </View>
           <Caption tone="muted">Made by and source are saved as notes on the drink.</Caption>
         </View>
-        <RecipeSpec recipe={recipe} choices={choices} data={data} files={files} usual={usual} onChoose={(i, c) => setChoices((prev) => chooseLine(prev, i, c))} onLook={(at, title) => setLook({ at, title })} />
+        <RecipeSpec recipe={recipe} choices={choices} data={data} files={files} usual={usual} onChoose={(i, c) => setChoices((prev) => chooseLine(prev, i, c))} onChoices={setChoices} onLook={(at, title) => setLook({ at, title })} />
         <Chips words={[recipe.method, recipe.glass, recipe.ice, recipe.garnish].filter((w): w is string => !!w)} onNotes={() => setNotesOpen((o) => !o)} />
         {notesOpen || choices.notes ? <Field label="Notes" value={choices.notes} onChangeText={(notes) => set({ notes })} minLines={3} /> : null}
         {error ? <Caption tone="accent">{error}</Caption> : null}

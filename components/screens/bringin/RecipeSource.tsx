@@ -33,7 +33,7 @@ export function DrawnFromSpec({ inputs, seed, name }: { inputs: SketchInputs; se
  * number can be checked against the page. A photo opens bigger; a PDF can't
  * be drawn here, so it shows the words read and the file's name.
  */
-export function FromYourFile({ file, box, words, page, onLook }: { file: ReadFile; box: ReadBox; words: string; page: number | null; onLook: () => void }) {
+export function FromYourFile({ file, box, words, page, title = 'From your file', onLook }: { file: ReadFile; box: ReadBox; words: string; page: number | null; title?: string; onLook: () => void }) {
   const ds = useDs();
   const photo = file.mimeType.startsWith('image/');
   const where = !photo ? (file.name ?? 'A PDF') : page === null ? 'Tap to see it bigger' : `Page ${page} · tap to see it bigger`;
@@ -41,7 +41,9 @@ export function FromYourFile({ file, box, words, page, onLook }: { file: ReadFil
     <>
       <SourceCrop file={file} box={box} words={words} width={92} height={44} />
       <View style={styles.flex}>
-        <Caption style={styles.title}>From your file</Caption>
+        <Caption style={styles.title} numberOfLines={1}>
+          {title}
+        </Caption>
         <Caption tone="muted" numberOfLines={1}>
           {where}
         </Caption>
@@ -51,7 +53,7 @@ export function FromYourFile({ file, box, words, page, onLook }: { file: ReadFil
   const frame = [styles.row, { backgroundColor: ds.c.surface }];
   if (!photo) return <View style={frame}>{body}</View>;
   return (
-    <PressableScale role="button" accessibilityLabel="From your file. See it bigger" onPress={onLook} style={frame}>
+    <PressableScale role="button" accessibilityLabel={`${title}. See it bigger`} onPress={onLook} style={frame}>
       {body}
     </PressableScale>
   );

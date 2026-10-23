@@ -26,6 +26,24 @@ export interface RecipeReadLine {
   doubt?: string | null;
   /** Where the line is written (photos only). */
   at?: ReadPlace | null;
+  /** This line pours the recipe's batch ("60 ml batch"): its ingredient is the batch's name. Newer readers only. */
+  batch?: true;
+}
+
+/**
+ * A bottle made ahead that a drink pours from: a "Batch recipe (750 ml)"
+ * column beside the spec, or what a "60 ml batch" line is made of. Its
+ * lines are what goes in one bottle, as written.
+ */
+export interface ReadBatch {
+  /** The same for every drink that uses this bottle (its lines, as written), so it's made once. */
+  key: string;
+  name: string;
+  /** The heading it's under ("Batch recipe (750 ml)"), as written. */
+  heading: string | null;
+  lines: RecipeReadLine[];
+  /** Where the batch recipe is written (photos only). */
+  at?: ReadPlace | null;
 }
 
 export interface RecipeReading {
@@ -40,6 +58,8 @@ export interface RecipeReading {
   notes: string | null;
   /** Where the recipe is written (photos only). */
   at?: ReadPlace | null;
+  /** The bottle one of its lines pours (newer readers only; older replies have none). */
+  batch?: ReadBatch | null;
 }
 
 /** A menu line left out, kept so the person can bring it back. */
@@ -93,6 +113,7 @@ export function anythingReadPrompt(hint: ReadKind | null, text: string | null, a
     `- lines: each ingredient in order. amount is a number (convert fractions: 3/4 is 0.75, 1 1/2 is 1.5); unit is one of ${RECIPE_UNIT_VALUES.join(", ")}, or null; ingredient is the ingredient as written, brand included, without the amount. "Top with soda" is amount null, unit "top". Set unsure true when the amount or ingredient was hard to read, and say in doubt what you couldn't tell in a few words (e.g. "¾ or ½?"); never guess silently.`,
     "- method (\"Shaken\", \"Stirred\", \"Built\", \"Blended\"), glass, ice, garnish: as written, else null.",
     "- notes: any other instructions, short, else null.",
+    '- batch: when the drink pours a bottle made ahead (a line like "60 ml batch", or a "Batch recipe (750 ml)" column beside the spec), that bottle\'s recipe goes here and never in lines. name: as written, else the drink\'s name and "batch" ("Smoke Signal batch"). heading: the heading it\'s under, as written, else null. lines: what goes in one bottle, in order, with the same fields as a drink\'s lines. page and box: around the whole batch recipe. In the drink\'s lines, the pour of it is one line with batch true, its amount, and the batch\'s name as its ingredient ("60 ml batch" is amount 60, unit ml). Two drinks that pour the same bottle both give it, with the same name and lines. No batch: null.',
     "",
     "For bottles: brand, name (brand first, title case, no size or ABV), kind in a few plain words, abv as a number or null. When you can read the bottle but not which version it is, say what you couldn't tell in doubt (e.g. \"Can't see the label colour\"), else null. A bottle whose label you can't read goes in unreadable with its page and box; never guess one from its shape or colour.",
     "",
@@ -105,6 +126,19 @@ export function anythingReadPrompt(hint: ReadKind | null, text: string | null, a
 /** The reply shape, as a Gemini response schema. */
 const MENU_DRINK = MENU_READ_SCHEMA.properties.sections.items.properties.drinks.items;
 const BOTTLE = BOTTLE_READ_SCHEMA.properties.bottles.items;
+
+const RECIPE_LINE = {
+  type: "OBJECT",
+  properties: {
+    amount: { type: "NUMBER", nullable: true },
+    unit: { type: "STRING", nullable: true, enum: RECIPE_UNIT_VALUES },
+    ingredient: { type: "STRING" },
+    unsure: { type: "BOOLEAN" },
+    doubt: { type: "STRING", nullable: true },
+    ...PLACE_SCHEMA,
+  },
+  required: ["ingredient"],
+};
 
 export const ANYTHING_READ_SCHEMA = {
   type: "OBJECT",
@@ -137,20 +171,12 @@ export const ANYTHING_READ_SCHEMA = {
         properties: {
           name: { type: "STRING" },
           by: { type: "STRING", nullable: true },
-          lines: {
-            type: "ARRAY",
-            items: {
-              type: "OBJECT",
-              properties: {
-                amount: { type: "NUMBER", nullable: true },
-                unit: { type: "STRING", nullable: true, enum: RECIPE_UNIT_VALUES },
-                ingredient: { type: "STRING" },
-                unsure: { type: "BOOLEAN" },
-                doubt: { type: "STRING", nullable: true },
-                ...PLACE_SCHEMA,
-              },
-              required: ["ingredient"],
-            },
+          lines: { type: "ARRAY", items: { ...RECIPE_LINE, properties: { ...RECIPE_LINE.properties, batch: { type: "BOOLEAN", nullable: true } } } },
+          batch: {
+            type: "OBJECT",
+            nullable: true,
+            properties: { name: { type: "STRING" }, heading: { type: "STRING", nullable: true }, lines: { type: "ARRAY", items: RECIPE_LINE }, ...PLACE_SCHEMA },
+            required: ["lines"],
           },
           method: { type: "STRING", nullable: true },
           glass: { type: "STRING", nullable: true },
@@ -182,38 +208,103 @@ function cleanAmount(value: unknown): number | null {
   return Number.isFinite(n) && n > 0 && n < 10_000 ? Math.round(n * 100) / 100 : null;
 }
 
+/** One spec line, and whether the model marked it as the batch's pour; null when it names no ingredient. */
+function cleanLine(raw: unknown, files: number): { line: RecipeReadLine; pours: boolean } | null {
+  const line = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const ingredient = clean(line.ingredient, 80);
+  if (!ingredient) return null;
+  const unit = typeof line.unit === "string" && RECIPE_UNIT_VALUES.includes(line.unit) ? line.unit : null;
+  const unsure = line.unsure === true;
+  const read: RecipeReadLine = { amount: cleanAmount(line.amount), unit, ingredient, unsure };
+  if (files) read.at = cleanPlace(line.page, line.box, files);
+  if (unsure && orNull(line.doubt, 60)) read.doubt = orNull(line.doubt, 60);
+  return { line: read, pours: line.batch === true };
+}
+
+function cleanLines(raw: unknown, files: number): { line: RecipeReadLine; pours: boolean }[] {
+  const out: { line: RecipeReadLine; pours: boolean }[] = [];
+  for (const l of Array.isArray(raw) ? raw : []) {
+    if (out.length >= MAX_LINES) break;
+    const line = cleanLine(l, files);
+    if (line) out.push(line);
+  }
+  return out;
+}
+
+/** Units a bottle's pours are measured in. */
+const POUR_UNITS = ["ml", "cl", "oz"];
+const isPour = (l: RecipeReadLine) => l.amount !== null && !!l.unit && POUR_UNITS.includes(l.unit);
+const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+/** A batch's lines as one string: two drinks giving the same lines pour the same bottle. */
+const batchKey = (lines: RecipeReadLine[]) => lines.map((l) => `${norm(l.ingredient)}:${l.amount ?? ""}${l.unit ?? ""}`).join("|");
+
+/**
+ * The batch the model read for a recipe, made safe: a name and what goes in
+ * the bottle, something of it measured. Anything less is no batch, and the
+ * recipe keeps its lines as plain lines.
+ */
+function cleanBatch(raw: unknown, recipeName: string, files: number): Omit<ReadBatch, "key"> | null {
+  if (!raw || typeof raw !== "object") return null;
+  const batch = raw as Record<string, unknown>;
+  const lines = cleanLines(batch.lines, files).map((l) => l.line);
+  if (!lines.some(isPour)) return null;
+  return {
+    name: clean(batch.name, 80).replace(/^[-•*]+\s*/, "") || clean(`${recipeName} batch`, 80),
+    heading: orNull(batch.heading, 80),
+    lines,
+    ...(files ? { at: cleanPlace(batch.page, batch.box, files) } : {}),
+  };
+}
+
 export function cleanRecipes(raw: unknown, files = 0): RecipeReading[] {
   const out: RecipeReading[] = [];
+  // Batches by their lines and by name, so a bottle two drinks pour is one batch.
+  const byKey = new Map<string, ReadBatch>();
+  const byName = new Map<string, ReadBatch>();
+  const pending: { recipe: RecipeReading; pour: number }[] = [];
   for (const r of Array.isArray(raw) ? raw : []) {
     if (out.length >= MAX_RECIPES) break;
     const recipe = (r && typeof r === "object" ? r : {}) as Record<string, unknown>;
     // A name the Bring in parser can't mistake for a list item.
     const name = clean(recipe.name, 80).replace(/^[-•*]+\s*/, "");
     if (!name) continue;
-    const lines: RecipeReadLine[] = [];
-    for (const l of Array.isArray(recipe.lines) ? recipe.lines : []) {
-      if (lines.length >= MAX_LINES) break;
-      const line = (l && typeof l === "object" ? l : {}) as Record<string, unknown>;
-      const ingredient = clean(line.ingredient, 80);
-      if (!ingredient) continue;
-      const unit = typeof line.unit === "string" && RECIPE_UNIT_VALUES.includes(line.unit) ? line.unit : null;
-      const unsure = line.unsure === true;
-      const read: RecipeReadLine = { amount: cleanAmount(line.amount), unit, ingredient, unsure };
-      if (files) read.at = cleanPlace(line.page, line.box, files);
-      if (unsure && orNull(line.doubt, 60)) read.doubt = orNull(line.doubt, 60);
-      lines.push(read);
-    }
-    out.push({
+    const read = cleanLines(recipe.lines, files);
+    const reading: RecipeReading = {
       name,
       by: orNull(recipe.by, 80),
-      lines,
+      lines: read.map((l) => l.line),
       method: orNull(recipe.method, 40),
       glass: orNull(recipe.glass, 40),
       ice: orNull(recipe.ice, 40),
       garnish: orNull(recipe.garnish, 80),
       notes: orNull(recipe.notes, 400),
       ...(files ? { at: cleanPlace(recipe.page, recipe.box, files) } : {}),
-    });
+    };
+    out.push(reading);
+    // The pour of the batch: the line marked, else one that says it's a batch. It must be measured.
+    const found = cleanBatch(recipe.batch, name, files);
+    const marked = read.findIndex((l) => l.pours);
+    const pour = marked >= 0 ? marked : reading.lines.findIndex((l) => /\bbatch\b/i.test(l.ingredient) || (!!found && norm(l.ingredient) === norm(found.name)));
+    if (pour < 0 || !isPour(reading.lines[pour])) continue;
+    if (!found) {
+      // Its bottle may be another drink's ("60 ml House batch"): matched by name once every recipe is read.
+      pending.push({ recipe: reading, pour });
+      continue;
+    }
+    const key = batchKey(found.lines);
+    const batch = byKey.get(key) ?? { ...found, key };
+    byKey.set(key, batch);
+    if (!byName.has(norm(batch.name))) byName.set(norm(batch.name), batch);
+    reading.lines[pour] = { ...reading.lines[pour], ingredient: batch.name, batch: true };
+    reading.batch = batch;
+  }
+  for (const { recipe, pour } of pending) {
+    const said = recipe.lines[pour].ingredient;
+    // A bare "batch" is the file's one batch, when it has only one.
+    const batch = byName.get(norm(said)) ?? (byName.size === 1 && /^(the\s+)?batch$/i.test(said) ? [...byName.values()][0] : undefined);
+    if (!batch) continue;
+    recipe.lines[pour] = { ...recipe.lines[pour], ingredient: batch.name, batch: true };
+    recipe.batch = batch;
   }
   return out;
 }
@@ -266,14 +357,17 @@ export function cleanUnreadable(raw: unknown, files = 0): { at: ReadPlace | null
 
 /** A made-up spot on the first page, for the mocks: row `n` of a printed list, or bottle `n` of `of` on a shelf. */
 const row = (n: number) => ({ page: 0, box: [140 + n * 80, 90, 200 + n * 80, 910] });
+/** A spot in one of two columns of a spec sheet: row `n` down, on the left (the drink) or the right (its batch). */
+const cell = (n: number, right = false) => ({ page: 0, box: [520 + n * 50, right ? 520 : 60, 560 + n * 50, right ? 940 : 480] });
 const bottle = (n: number, of: number) => ({ page: 0, box: [300, Math.round((n * 1000) / of) + 10, 950, Math.round(((n + 1) * 1000) / of) - 10] });
 
 /**
  * What a local stack returns instead of calling the model, by what it's read
- * as (or the screen the person started from): two recipes (one all from the
- * seeded catalog, one with a bottle it doesn't have and a hard-to-read
- * amount), a menu with a dish to skip, or a shelf with a bottle to pick and
- * one it can't read. Every line has a made-up place on the first page.
+ * as (or the screen the person started from): four recipes (one all from
+ * the seeded catalog, one with a bottle it doesn't have and a hard-to-read
+ * amount, and two that pour one batch), a menu with a dish to skip, or a
+ * shelf with a bottle to pick and one it can't read. Every line has a
+ * made-up place on the first page.
  */
 export function mockAnythingReply(hint: ReadKind | null): Record<string, unknown> {
   if (hint === "menu") {
@@ -339,6 +433,50 @@ export function mockAnythingReply(hint: ReadKind | null): Record<string, unknown
         notes: null,
         ...row(4),
       },
+      // A spec sheet with a "Batch recipe (750 ml)" column (Eddie, 22 Oct), the bottle two drinks pour.
+      {
+        name: "Smoke Signal",
+        by: null,
+        lines: [
+          { amount: 60, unit: "ml", ingredient: "Batch", unsure: false, batch: true, ...cell(1) },
+          { amount: 30, unit: "ml", ingredient: "Pink Grapefruit Juice", unsure: false, ...cell(2) },
+          { amount: 5, unit: "ml", ingredient: "Agave Syrup", unsure: false, ...cell(3) },
+        ],
+        batch: SMOKE_BATCH,
+        method: "Shaken",
+        glass: "Coupe",
+        ice: null,
+        garnish: null,
+        notes: "Fine strain",
+        ...cell(0),
+      },
+      {
+        name: "Last Light",
+        by: null,
+        lines: [
+          { amount: 45, unit: "ml", ingredient: "Smoke Signal batch", unsure: false, batch: true, ...cell(6) },
+          { amount: 15, unit: "ml", ingredient: "Lime Juice", unsure: false, ...cell(7) },
+          { amount: null, unit: "top", ingredient: "Tonic Water", unsure: false, ...cell(8) },
+        ],
+        batch: SMOKE_BATCH,
+        method: "Built",
+        glass: "Highball",
+        ice: "Cubes",
+        garnish: null,
+        notes: null,
+        ...cell(5),
+      },
     ],
   };
 }
+
+const SMOKE_BATCH = {
+  name: "Smoke Signal batch",
+  heading: "Batch recipe (750 ml)",
+  lines: [
+    { amount: 450, unit: "ml", ingredient: "Mezcal", unsure: false, ...cell(1, true) },
+    { amount: 300, unit: "ml", ingredient: "Cynar", unsure: false, ...cell(2, true) },
+  ],
+  page: 0,
+  box: [520, 520, 660, 940],
+};

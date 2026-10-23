@@ -87,7 +87,7 @@ function offsetPages(reading: AnythingReading, by: number): AnythingReading {
   return {
     ...reading,
     menu: reading.menu ? { ...reading.menu, sections: reading.menu.sections.map((s) => ({ ...s, lines: s.lines.map(move) })) } : null,
-    recipes: reading.recipes.map((r) => ({ ...move(r), lines: r.lines.map(move) })),
+    recipes: reading.recipes.map((r) => ({ ...move(r), lines: r.lines.map(move), ...(r.batch ? { batch: { ...move(r.batch), lines: r.batch.lines.map(move) } } : {}) })),
     bottles: reading.bottles.map(move),
     skipped: reading.skipped?.map(move),
     unreadable: reading.unreadable?.map(move),

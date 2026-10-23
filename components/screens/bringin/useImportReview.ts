@@ -41,7 +41,6 @@ export function useImportReview(id: string, data: MatchData) {
   const approve = (i: number) => {
     const r = current();
     if (!r || !canCheck(r, i) || !r.choices[i]?.name.trim()) return;
-    const drink = toMake(r.recipes[i], r.choices[i]);
     const name = r.choices[i].name.trim();
     // Marked (and kept) before it's sent: a review read back after the app
     // stopped mid-save keeps it approved and never sends it again.
@@ -50,8 +49,11 @@ export function useImportReview(id: string, data: MatchData) {
     moveOn(i);
     line = line.then(async () => {
       try {
+        // Made when its turn comes, so a batch an earlier drink just saved is used, not made again.
+        const x = current() ?? r;
+        const drink = toMake(x.recipes[i], x.choices[i], x.batches);
         const done = await save.mutateAsync({ kind: 'recipes', source: r.source, drinks: [drink] });
-        edit((x) => approved(x, i, { drinkId: done.drinkIds[0] ?? null, summary: done.summary, warnings: done.warnings }, stamp()));
+        edit((y) => approved(y, i, { drinkId: done.drinkIds[0] ?? null, summary: done.summary, warnings: done.warnings, batches: done.batches }, stamp()));
       } catch (e) {
         edit((x) => setMark(x, i, null, stamp()));
         setError(`${name} didn’t save, so it’s still to check. ${e instanceof Error ? e.message : ''}`.trim());
@@ -75,7 +77,7 @@ export function useImportReview(id: string, data: MatchData) {
     const wizardAt = wizardPlace(r.barId);
     const wizard = useDrinkWizardStore.getState();
     wizard.clear(wizardAt);
-    wizard.patch(wizardAt, toMake(r.recipes[i], r.choices[i]).draft);
+    wizard.patch(wizardAt, toMake(r.recipes[i], r.choices[i], r.batches).draft);
     wizard.setStep(wizardAt, 'review');
     const query = `review=${encodeURIComponent(id)}&drink=${i}`;
     router.push((r.barId ? `/add-cocktail?barId=${r.barId}&${query}` : `/add-cocktail?${query}`) as Href);
