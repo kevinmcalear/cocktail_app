@@ -2,11 +2,13 @@
 // check saves (through the wizard's own save, hooks/useCreateDrink) and what
 // "Edit all" opens. Pure.
 
+import { batchLine } from '@/lib/batchLines';
 import { prepRatio } from '@/lib/bringIn';
 import { ingredientState, plainKind, type MatchData } from '@/lib/bringInMatch';
 import { convertPour, EMPTY_DRAFT, newLine, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { normName } from '@/lib/paste';
 import { startPrep, type PrepDraft } from '@/lib/prepKinds';
+import { batchAt, batchShownAt, bottleMl, drinkRecipe, perDrinkLines } from '@/lib/readBatch';
 import { sameName, versionName } from '@/lib/sameName';
 import type { RecipeReadLine, RecipeReading } from '@/supabase/functions/_shared/anythingRead';
 
@@ -22,6 +24,8 @@ export interface RecipeChoices {
   lines: Record<number, LineChoice>;
   /** The bar already has a drink by this name, with a different spec: what to do with the sheet's. */
   same?: SheetPick | null;
+  /** A batch read from the file (lib/readBatch): kept as separate lines, or the bottle it fills (ml) when changed. */
+  batch?: { separate?: boolean; bottleMl?: number };
 }
 
 /**
@@ -60,6 +64,29 @@ export function prepFromRatio(name: string): PrepDraft | null {
   return { ...base, lines: [{ ...first, name: flavour.charAt(0).toUpperCase() + flavour.slice(1), parts: Number(ratio[2]) }, { ...water, parts: Number(ratio[3]) }] };
 }
 
+/** Batches already saved by an earlier drink of the same import, by their key (ReadBatch.key): the item each became. */
+export type MadeBatches = Record<string, string>;
+
+/**
+ * The drink's one line for its batch: the bottle's lines as one drink pours
+ * them, each matched to your bar, in the bottle the file gives (or the one
+ * picked). Once an earlier drink of the import saved it, the line is that
+ * house prep. Null when the recipe has no batch line.
+ */
+export function readBatchLine(recipe: RecipeReading, choices: Pick<RecipeChoices, 'batch'>, data: Pick<MatchData, 'catalog' | 'aliases' | 'venueId'>, made: MadeBatches = {}): WizardLine | null {
+  const at = batchAt(recipe);
+  if (at < 0 || !recipe.batch) return null;
+  const pour = recipe.lines[at];
+  const saved = made[recipe.batch.key];
+  if (saved) return newLine({ id: saved, name: recipe.batch.name }, pour.unit ?? 'ml', String(pour.amount));
+  // ponytail: the bottle's lines take their best match (an open pick saves as the plain kind); keep them as separate lines to pick.
+  const inner = perDrinkLines(recipe).map((l) => {
+    const pick = linePick(l, data, undefined);
+    return newLine({ id: pick.id, name: pick.name }, l.unit ?? '', l.amount === null ? '' : String(l.amount));
+  });
+  return batchLine(`batch-${at}`, recipe.batch.name, inner, choices.batch?.bottleMl ?? bottleMl(recipe.batch));
+}
+
 /** What a line saves as: the bottle it matched or was picked, the plain kind when nobody picked, else a new one. */
 export function linePick(line: RecipeReadLine, data: Pick<MatchData, 'catalog' | 'aliases' | 'venueId'>, choice: LineChoice | undefined): WizardPick & { prep?: PrepDraft } {
   const read = { id: null, name: line.ingredient };
@@ -94,8 +121,12 @@ export function recipeDraft(
   data: Pick<MatchData, 'catalog' | 'aliases' | 'venueId'>,
   lists: { methods: NamedRow[]; glasses: NamedRow[]; ice: NamedRow[] },
   usual: string,
+  made: MadeBatches = {},
 ): WizardDraft {
-  const lines: WizardLine[] = recipe.lines.map((line, i) => {
+  const batchLineAt = batchShownAt(recipe, choices);
+  const lines: WizardLine[] = drinkRecipe(recipe, choices).lines.map((line, i) => {
+    const batch = i === batchLineAt ? readBatchLine(recipe, choices, data, made) : null;
+    if (batch) return batch;
     const pick = linePick(line, data, choices.lines[i]);
     const pour = line.unit === 'top' ? { amount: '', unit: 'top' } : convertPour(line.amount, line.unit ?? usual, usual);
     return { ...newLine({ id: pick.id, name: pick.name }, pour.unit, pour.amount), ...(pick.prep ? { prep: pick.prep } : {}) };
@@ -131,9 +162,10 @@ export function recipeDraft(
 
 /** "Pick the pear liqueur, or it saves as “Pear liqueur”": the first open pick, said as the footer says it. */
 export function openPickLine(recipe: RecipeReading, choices: RecipeChoices, data: Pick<MatchData, 'catalog' | 'aliases' | 'venueId'>): string | null {
-  for (const [i, line] of recipe.lines.entries()) {
+  const batchLineAt = batchShownAt(recipe, choices);
+  for (const [i, line] of drinkRecipe(recipe, choices).lines.entries()) {
     const choice = choices.lines[i];
-    if (choice && 'fresh' in choice) continue;
+    if ((choice && 'fresh' in choice) || i === batchLineAt) continue;
     const state = ingredientState(line.ingredient, data, choice?.pick);
     if (state.state !== 'pick') continue;
     const kind = plainKind(line.ingredient, state.items, data);

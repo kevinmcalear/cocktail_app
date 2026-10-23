@@ -16,8 +16,9 @@ import type { Fact } from '../drink/DrinkFacts';
 import type { ShownPicture } from '../drink/PictureViewer';
 
 /**
- * The top of an ingredient page: its drawing on sketch paper, or for a batch,
- * the photos of the drink it makes.
+ * The top of an ingredient page: its drawing on sketch paper, or its pictures
+ * (its own photo, or for a drawn batch, the photos of the drink it makes).
+ * With None there's no hero (IngredientScreen).
  */
 export function IngredientHero({ id, name, pictures, height, fade }: { id: string; name: string; pictures: ShownPicture[]; height: number; fade: boolean }) {
   const ds = useDs();
@@ -27,7 +28,7 @@ export function IngredientHero({ id, name, pictures, height, fade }: { id: strin
   return (
     <View style={[styles.hero, { height, backgroundColor: ds.c.paper, paddingBottom: fade ? space.xxl : 0, justifyContent: fade ? 'flex-end' : 'center' }]} accessibilityLabel={`Drawing of ${name}`}>
       <View style={{ width: size, height: size }}>
-        <IngredientDrawing id={id} name={name} />
+        <IngredientDrawing id={id} name={name} drawn />
       </View>
     </View>
   );

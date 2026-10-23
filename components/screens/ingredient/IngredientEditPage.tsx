@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, Chip, Field, FieldButton, Headline, IngredientDrawing, PressableScale, Switch, TextLink, useDs, useGutter } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, FieldButton, Headline, PressableScale, Switch, TextLink, useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { SettingsRow } from '@/components/screens/settings/SettingsParts';
@@ -17,6 +17,7 @@ import { getPreferredUnit } from '@/store/useSettingsStore';
 import { EditSpecList } from '../drink/edit/EditSpecList';
 import { SpecPad } from '../drink/edit/SpecPad';
 import { AccessSheet, FindSheet, SameNameNotice, TagsSheet } from './IngredientEditSheets';
+import { usePictureTile } from './PictureTile';
 import { EditorHead } from './PrepEditor';
 
 interface Props {
@@ -41,6 +42,7 @@ const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) 
  * draft from New > Drafts), in the prep editor's look: Back, what it is and
  * Save; the name in the venue's face beside its drawing; the recipe as the
  * drink editor's spec lines and pad; then what it is, its tags and who sees it.
+ * The picture beside the name opens "Its picture" (PictureTile).
  */
 export function IngredientEditPage(props: Props) {
   return (
@@ -66,8 +68,8 @@ function Page({ editor, eyebrow, onBack, onSave, saveLabel, onPublish, children 
   const tags = (editor.dropdowns?.categories ?? []).filter((c) => c.domain === 'spirit').map((c) => ({ id: c.id, name: c.name ?? '' }));
   const picked = tags.filter((t) => form.selectedCategories.includes(t.id));
   const toggleTag = (id: string) => set({ selectedCategories: form.selectedCategories.includes(id) ? form.selectedCategories.filter((c) => c !== id) : [...form.selectedCategories, id] });
-  // A saved one is drawn from its own chain; a draft from its name.
-  const drawnId = editor.draftId ? null : editor.selfId;
+  // Its picture beside the name: a saved one's choice opens "Its picture"; a draft is drawn from its name.
+  const picture = usePictureTile(editor);
 
   // A name nothing matches opens the add-ingredient wizard; the new one comes back onto this recipe.
   const makeNew = async (name: string) => {
@@ -91,10 +93,9 @@ function Page({ editor, eyebrow, onBack, onSave, saveLabel, onPublish, children 
             placeholderTextColor={ds.c.faint}
             style={[type.title, styles.name, NO_OUTLINE, { fontFamily: displayFaces[ds.displayFace].regular, color: ds.c.ink }]}
           />
-          <View style={[styles.drawing, { backgroundColor: ds.c.paper }]} accessibilityLabel={`Drawing of ${form.name || 'the ingredient'}`}>
-            <IngredientDrawing id={drawnId} name={form.name || form.generic?.name || 'Ingredient'} />
-          </View>
+          {picture.tile}
         </View>
+        {picture.caption}
         <SameNameNotice name={form.name} barId={form.barId} rows={rows} aliases={aliases} excludeId={editor.selfId} generic={form.generic} onGeneric={(generic) => set({ generic })} />
 
         <View style={styles.section}>
@@ -193,6 +194,7 @@ function Page({ editor, eyebrow, onBack, onSave, saveLabel, onPublish, children 
       ) : null}
       {open && 'sheet' in open && open.sheet === 'tags' ? <TagsSheet tags={tags} selected={form.selectedCategories} onToggle={toggleTag} onClose={close} /> : null}
       {open && 'sheet' in open && open.sheet === 'access' ? <AccessSheet form={form} set={set} onClose={close} /> : null}
+      {picture.sheet}
       {children}
     </View>
   );
@@ -234,7 +236,6 @@ const styles = StyleSheet.create({
   page: { width: '100%', maxWidth: layout.page.text, alignSelf: 'center', gap: space.lg },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   name: { flex: 1, minWidth: 0, paddingVertical: space.xs },
-  drawing: { width: 72, height: 72, borderRadius: radius.control, overflow: 'hidden' },
   section: { gap: space.sm },
   start: { alignItems: 'flex-start', paddingTop: space.xs },
   headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

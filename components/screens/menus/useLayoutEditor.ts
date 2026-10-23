@@ -19,6 +19,7 @@ import {
   dropDrink,
   removeDrink,
   setDrinkPrice,
+  setMenuPrice,
   removeSection,
   setDrinks,
   updateSection,
@@ -98,6 +99,10 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     setError(null);
     setLayout(next);
   };
+  const update = (fn: (l: MenuLayout) => MenuLayout) => {
+    setError(null);
+    setLayout(fn);
+  };
 
   /** Saves if anything changed. Resolves false (with the error shown) when it couldn't. */
   const saveLayout = save.mutateAsync;
@@ -162,7 +167,10 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     },
     made,
     remove: (key: string, drinkId: string) => edit(removeDrink(layout, key, drinkId)),
-    setPrice: (drinkId: string, price: string | null) => edit(setDrinkPrice(layout, drinkId, price)),
+    // From the layout as it is when React applies them, so the phone's Done can set both prices at once.
+    setPrice: (drinkId: string, price: string | null) => update((l) => setDrinkPrice(l, drinkId, price)),
+    /** This menu's own price for the drink; null goes back to the drink's. */
+    setMenuPrice: (drinkId: string, price: string | null) => update((l) => setMenuPrice(l, drinkId, price)),
     reorder: (key: string, drinks: MenuDrink[]) => edit(setDrinks(layout, key, drinks)),
     move: (key: string, from: number, to: number) => edit(moveDrink(layout, key, from, to)),
     moveTo: (fromKey: string, drinkId: string, toKey: string) => edit(moveToSection(layout, fromKey, drinkId, toKey)),

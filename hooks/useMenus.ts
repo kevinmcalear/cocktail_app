@@ -137,7 +137,8 @@ type LineIngredient = { name: string; ingredient_role?: string | null };
 
 const KINDS: SectionDrinkType[] = ['cocktail', 'beer', 'wine'];
 
-export function toMenuDrink(item: MenuItemRow): MenuDrink | null {
+/** `menuPrice`: the menu line's own price (menu_drinks.price), when read from a menu. */
+export function toMenuDrink(item: MenuItemRow, menuPrice: string | null = null): MenuDrink | null {
   const kind = KINDS.find((k) => k === item.item_type);
   if (!kind) return null;
   const images = Array.isArray(item.item_images) ? item.item_images : item.item_images ? [item.item_images] : [];
@@ -153,6 +154,7 @@ export function toMenuDrink(item: MenuItemRow): MenuDrink | null {
     kind,
     line,
     price: item.price ?? null,
+    menuPrice,
     imageUrl: hero?.url ?? null,
     isSketch: hero?.isSketch ?? false,
     glass: glass?.icon_key || glass?.name || null,
@@ -187,21 +189,21 @@ export function useMenu(menuId: string | null | undefined, { fresh = false }: { 
         supabase.from('menus').select(MENU_COLUMNS).eq('id', menuId!).maybeSingle(),
         supabase
           .from('menu_sections')
-          .select(`id, name, sort_order, min_items, max_items, allowed_types, menu_drinks(sort_order, item_id, ${MENU_DRINK_ITEM})`)
+          .select(`id, name, sort_order, min_items, max_items, allowed_types, menu_drinks(sort_order, item_id, price, ${MENU_DRINK_ITEM})`)
           .eq('menu_id', menuId!)
           .order('sort_order'),
       ]);
       if (menuRes.error) throw menuRes.error;
       if (sectionsRes.error) throw sectionsRes.error;
       if (!menuRes.data) return null;
-      type Row = { sort_order: number | null; item_id: string | null; item: MenuItemRow | MenuItemRow[] | null };
+      type Row = { sort_order: number | null; item_id: string | null; price: string | null; item: MenuItemRow | MenuItemRow[] | null };
       const rows = (sectionsRes.data ?? []).flatMap((s) => (s.menu_drinks ?? []) as Row[]);
       // A home menu can hold drinks other bars published: the public read them
       // through published_items, not items.
       const published = await fetchPublished(rows.filter((r) => !one(r.item) && r.item_id).map((r) => r.item_id!));
       const drinkFor = (r: Row): MenuDrink | null => {
         const item = one(r.item);
-        if (item) return toMenuDrink(item);
+        if (item) return toMenuDrink(item, r.price);
         const p = published.find((x) => x.id === r.item_id);
         return p ? publishedMenuDrink(p) : null;
       };

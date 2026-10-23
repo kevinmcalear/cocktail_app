@@ -122,7 +122,12 @@ describe('read-anything function', { skip }, () => {
     const reading = await res.json();
     assert.equal(reading.kind, 'recipes');
     assert.equal(reading.menu, null);
-    assert.deepEqual(reading.recipes.map((r) => r.name), ['Negroni', 'Orchard Fizz']);
+    assert.deepEqual(reading.recipes.map((r) => r.name), ['Negroni', 'Orchard Fizz', 'Signal Fire', 'Last Light']);
+    // The two spec-sheet drinks pour one bottle, read once: the batch column, not more of the drink.
+    const [signal, last] = reading.recipes.slice(2);
+    assert.equal(signal.batch.key, last.batch.key);
+    assert.deepEqual(signal.batch.lines.map((l) => `${l.amount} ${l.unit} ${l.ingredient}`), ['450 ml Mezcal', '300 ml Cynar']);
+    assert.deepEqual(signal.lines[0], { ...signal.lines[0], amount: 60, unit: 'ml', ingredient: 'Signal Fire batch', batch: true });
     // Photos come back with where each line is, and a hard-to-read line says what was hard (b10).
     assert.deepEqual(reading.recipes[1].lines[2], { amount: 0.75, unit: 'oz', ingredient: 'Lemon Juice', unsure: true, doubt: '¾ or ½?', at: { page: 0, box: [700, 90, 760, 910] } });
     assert.equal(await usage(user.id), 1);

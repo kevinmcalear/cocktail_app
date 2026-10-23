@@ -10,15 +10,15 @@ assert.equal(nightLine('2026-10-22T19:30:00Z', null), 'Thu 22 Oct · 7:30 pm');
 assert.equal(nightLine('2026-10-22', null), 'Thu 22 Oct');
 assert.equal(nightLine(null, null), null);
 
-const sheet = buildRunSheet({
+const input: Parameters<typeof buildRunSheet>[0] = {
   hostName: "Caretaker's Cottage",
   drinks: [
     {
-      id: 'neg', itemId: 'negroni', name: 'Negroni', itemType: 'cocktail', serves: 200, byGuest: false, icePerServeG: null, ice: null,
+      id: 'neg', itemId: 'negroni', name: 'Negroni', itemType: 'cocktail', serves: 200, partyId: null, icePerServeG: null, ice: null,
       glass: { id: 'rocks', name: 'Rocks glass' },
       recipe: [{ ingredientId: 'gin', name: 'Gin', amount: 30, unit: 'ml' }, { ingredientId: 'twist', name: 'Orange twist', amount: 1, unit: 'each' }],
     },
-    { id: 'mart', itemId: 'martini', name: 'Martini', itemType: 'cocktail', serves: null, byGuest: false, icePerServeG: null, ice: null, glass: null, recipe: [] },
+    { id: 'mart', itemId: 'martini', name: 'Martini', itemType: 'cocktail', serves: null, partyId: null, icePerServeG: null, ice: null, glass: null, recipe: [] },
   ],
   swaps: [],
   parties: [{ id: 'mill', kind: 'brand', name: 'Mill & Ash Gin', profileId: null }, { id: 'rye', kind: 'guest', name: 'Little Rye', profileId: null }],
@@ -27,7 +27,8 @@ const sheet = buildRunSheet({
   purchasing: { gin: { supplierName: null, packAmount: 700, packUnit: 'ml' } },
   items: {},
   breakDownPreps: false,
-});
+};
+const sheet = buildRunSheet(input);
 const menu = { name: 'Halloween takeover', startsAt: '2026-10-22T19:00:00Z', endsAt: null };
 assert.deepEqual(sheetHead(sheet, menu), {
   name: 'Halloween takeover',
@@ -51,5 +52,20 @@ assert.equal(partyListText(list), [
   'PLEASE BRING', '- Gin: 6 L · 9 × 700 ml', '', 'EVERYONE ELSE', "- Caretaker's Cottage: Orange twist 200, Rocks glass 200",
 ].join('\n'));
 assert.equal(partyList(sheet, menu, sheet.parties[0]).ask, 'Please have ready', 'the bar it is at has things ready');
+
+// A guest bar's own drink goes first on their list, with where to claim it while their page is unclaimed.
+const theirs = buildRunSheet({ ...input, drinks: input.drinks.map((d) => (d.id === 'neg' ? { ...d, partyId: 'rye' } : d)) });
+const rye = theirs.parties.find((p) => p.id === 'rye')!;
+const ryeList = partyList(theirs, menu, rye, 'https://cocktail.test/p/littlerye');
+assert.deepEqual(ryeList.drinks, [{ name: 'Negroni', serves: 200, makes: [] }]);
+assert.equal(ryeList.claim, 'Negroni is on Cocktail, credited to Little Rye. Claim your page to see it: https://cocktail.test/p/littlerye');
+assert.equal(partyListText(ryeList), [
+  'FOR LITTLE RYE', 'Your list for Halloween takeover', "Thu 22 Oct · 7 pm · Caretaker's Cottage", "From Caretaker's Cottage", '',
+  'YOUR DRINKS', '- Negroni × 200', '',
+  'EVERYONE ELSE', "- Caretaker's Cottage: Orange twist 200, Rocks glass 200", '- Mill & Ash Gin: Gin 6 L', '',
+  'Negroni is on Cocktail, credited to Little Rye. Claim your page to see it: https://cocktail.test/p/littlerye',
+].join('\n'), 'nothing to bring: no Please bring');
+assert.equal(partyList(theirs, menu, rye).claim, null, 'no page to claim: no claim line');
+assert.deepEqual(partyList(theirs, menu, mill).drinks, [], "a brand has no drinks of its own");
 
 console.log('runSheetText checks passed');

@@ -50,8 +50,10 @@ export interface RunDrink {
   glass: { id: string; name: string } | null;
   ice: { id: string; name: string } | null;
   icePerServeG: number | null;
-  /** The guest bar's own drink, not ours: its house preps start with whoever made it. */
-  byGuest: boolean;
+  /** The guest bar whose own drink this is (menu_drinks.party_id), or null for ours: its house preps start with whoever makes it. */
+  partyId: string | null;
+  /** The bar page the drink is credited to (items.origin_bar_profile_id), when the app knows it. */
+  originProfileId?: string | null;
 }
 
 export interface RunSwap {
@@ -113,6 +115,8 @@ export interface SheetDrink {
   lines: SheetLine[];
   /** "Rocks glass · Large cube · Candied ginger". */
   serve: string;
+  /** The guest bar's own drink; null is ours. */
+  partyId: string | null;
 }
 
 export interface Need {
@@ -214,7 +218,7 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
   // The bar the night is at, and the one visiting it (null is us).
   const venueId = atTheirs ? guest!.id : null;
   const visitorId = atTheirs ? null : (guest?.id ?? null);
-  const visitorDrinks = new Set(input.drinks.filter((d) => d.byGuest !== atTheirs).map((d) => d.name));
+  const visitorDrinks = new Set(input.drinks.filter((d) => (!!guest && d.partyId === guest.id) !== atTheirs).map((d) => d.name));
   const partyIds = new Set(input.parties.map((p) => p.id));
 
   const drinks: SheetDrink[] = input.drinks.map((d) => {
@@ -224,7 +228,7 @@ export function buildRunSheet(input: RunSheetInput): RunSheet {
       return { ...line, per: perServe(line), total: q && serves ? amountOf([scale(q, serves)]) : null, garnish: isGarnishLine(line) };
     });
     const garnishes = lines.filter((l) => l.garnish).map((l) => l.name);
-    return { id: d.id, itemId: d.itemId, name: d.name, serves, lines, serve: [d.glass?.name, d.ice?.name, ...garnishes].filter(Boolean).join(' · ') };
+    return { id: d.id, itemId: d.itemId, name: d.name, serves, lines, serve: [d.glass?.name, d.ice?.name, ...garnishes].filter(Boolean).join(' · '), partyId: guest && d.partyId === guest.id ? guest.id : null };
   });
 
   const prep = buildPrepList({

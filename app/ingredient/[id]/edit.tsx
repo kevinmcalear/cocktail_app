@@ -7,6 +7,7 @@ import { VenueBrandProvider } from "@/components/nav/VenueBrandProvider";
 import { useAskAtSave } from "@/components/screens/ingredient/AskAtSave";
 import { FindSheet } from "@/components/screens/ingredient/IngredientEditSheets";
 import { IngredientEditPage, useLeaveGuard } from "@/components/screens/ingredient/IngredientEditPage";
+import { usePictureTile } from "@/components/screens/ingredient/PictureTile";
 import { PrepEditor } from "@/components/screens/ingredient/PrepEditor";
 import { useIngredientEditor } from "@/hooks/useIngredientEditor";
 import { toastDone } from "@/lib/toast";
@@ -35,6 +36,7 @@ export default function EditIngredientScreen() {
     };
     const askAtSave = useAskAtSave(id, { name: form.name, description: form.description, abv: form.abv, lines: form.recipeItems }, () => void save());
     const onSave = () => (askAtSave.ask() ? undefined : void save());
+    const picture = usePictureTile(editor);
 
     if (editor.loading) return <Loading />;
 
@@ -53,7 +55,9 @@ export default function EditIngredientScreen() {
                     onSave={onSave}
                     saving={editor.saving}
                     onAllFields={() => setAllFields(true)}
+                    picture={editor.canChoosePicture ? picture : undefined}
                 />
+                {picture.sheet}
                 {adding ? (
                     <FindSheet
                         title="Add an ingredient"

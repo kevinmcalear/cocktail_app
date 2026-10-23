@@ -41,7 +41,7 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
   const at = review?.at ?? 0;
   const recipe = review?.recipes[at];
   const choices = review?.choices[at];
-  const made = recipe && choices ? toMake(recipe, choices) : null;
+  const made = recipe && choices ? toMake(recipe, choices, review?.batches) : null;
   const sketch = useSteadySketch(made?.sketch);
   // The venue already has one by this name (board dup-drink-warning): Approve waits on what to do with it.
   const { there, checking } = useAlreadyThere(review?.barId ?? null, choices?.name ?? '', made?.draft ?? EMPTY_DRAFT, usual, choices?.same);
@@ -122,7 +122,7 @@ export function ImportReviewDesk({ id, data, onFinishLater }: { id: string; data
             </View>
           </View>
           {there && open ? <AlreadyThereCard there={there} pick={choices.same} onPick={(same) => setChoices(at, (c) => ({ ...c, same }))} onSkip={() => skip(at)} /> : null}
-          <RecipeSpec recipe={recipe} choices={choices} data={data} files={files} usual={usual} label={false} onChoose={(i, c) => setChoices(at, (prev) => chooseLine(prev, i, c))} onLook={(where, title) => setLook({ at: where, title })} />
+          <RecipeSpec recipe={recipe} choices={choices} data={data} files={files} usual={usual} label={false} made={review.batches} onChoose={(i, c) => setChoices(at, (prev) => chooseLine(prev, i, c))} onChoices={(change) => setChoices(at, change)} onLook={(where, title) => setLook({ at: where, title })} />
           {open ? <EditLink onPress={() => editDrink(at)} /> : null}
           {pickNote ? <Caption tone="muted">{pickNote}</Caption> : null}
           {note ? <Caption tone="muted">{note}</Caption> : null}

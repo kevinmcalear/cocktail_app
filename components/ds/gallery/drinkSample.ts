@@ -60,6 +60,8 @@ export function sampleDrink(role: number): DatabaseItem {
     generic_id: null,
     hide_from_search: false,
     ice_build: null,
+    picture: 'drawing',
+    picture_url: null,
     ice_per_serve_g: null,
     iced_capacity_ml: null,
     icon_key: null,

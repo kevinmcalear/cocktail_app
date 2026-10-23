@@ -4,6 +4,7 @@ import { BackbarTheme } from '@/components/ds';
 import { renderWithTamagui } from '@/jest.setup';
 import type { MatchData } from '@/lib/bringInMatch';
 import type { CatalogItem } from '@/lib/match';
+import { cleanRecipes } from '@/supabase/functions/_shared/anythingRead';
 
 import { BottlesCheck } from './BottlesCheck';
 import { RecipeCheck } from './RecipeCheck';
@@ -160,4 +161,24 @@ test('the bottles check counts what it found, and an open pick still lands as th
   const [[saved]] = onSave.mock.calls;
   expect(saved.shelf).toContain('calv');
   expect(saved.had).toBe(1);
+});
+
+test('a batch read from the file is one line, saved as the batch; Keep as separate lines undoes it', async () => {
+  const onSave = jest.fn();
+  const [recipe] = cleanRecipes([
+    {
+      name: 'Smoke Signal',
+      lines: [{ amount: 60, unit: 'ml', ingredient: 'Batch', batch: true }, { amount: 30, unit: 'ml', ingredient: 'Pink grapefruit juice' }],
+      batch: { name: 'Smoke Signal batch', heading: 'Batch recipe (750 ml)', lines: [{ amount: 450, unit: 'ml', ingredient: 'Mezcal' }, { amount: 300, unit: 'ml', ingredient: 'Cynar' }] },
+    },
+  ]);
+  await ui(<RecipeCheck recipe={recipe} files={[]} from="From a PDF" data={data()} saving={false} error={null} onCancel={jest.fn()} onSave={onSave} onEditAll={jest.fn()} />);
+  expect(screen.getByText('Batch read from your file')).toBeTruthy();
+  expect(screen.getByText('One 750 ml bottle: Mezcal 450 ml, Cynar 300 ml')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Save drink' }));
+  expect(onSave.mock.calls[0][0].draft.lines[0]).toMatchObject({ name: 'Smoke Signal batch', amount: '60', unit: 'ml', batch: { bottleMl: 750 } });
+  await fireEvent.press(screen.getByRole('button', { name: 'Keep as separate lines' }));
+  expect(screen.queryByText('Batch read from your file')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Save drink' }));
+  expect(onSave.mock.calls[1][0].draft.lines.map((l: { name: string; amount: string }) => [l.name, l.amount])).toEqual([['Mezcal', '36'], ['Cynar', '24'], ['Pink grapefruit juice', '30']]);
 });

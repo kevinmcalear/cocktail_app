@@ -7,11 +7,11 @@ import { isHeroLink } from '@/lib/itemImages';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
 import { offerCutout } from '@/store/useCutoutOffer';
 
-/** `cutout`: a venue's drink photo, so offer to lift the drink off its background (store/useCutoutOffer). */
-type PickOptions = { cutout?: boolean };
+/** `cutout`: a venue's drink photo, so offer to lift the drink off its background (store/useCutoutOffer). `square`: crop 1:1 (an ingredient's photo), not 4:5. */
+type PickOptions = { cutout?: boolean; square?: boolean };
 
 /** Asks for photo access and lets the user pick photos; returns their local URIs. */
-export async function pickDrinkPhotos({ cutout = false }: PickOptions = {}): Promise<string[]> {
+export async function pickDrinkPhotos({ cutout = false, square = false }: PickOptions = {}): Promise<string[]> {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== 'granted') {
     Alert.alert('Permission needed', 'We need access to your photos.');
@@ -20,7 +20,7 @@ export async function pickDrinkPhotos({ cutout = false }: PickOptions = {}): Pro
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ImagePicker.MediaTypeOptions.Images,
     allowsEditing: true,
-    aspect: [4, 5],
+    aspect: square ? [1, 1] : [4, 5],
     quality: 0.8,
   });
   if (result.canceled) return [];
@@ -29,13 +29,13 @@ export async function pickDrinkPhotos({ cutout = false }: PickOptions = {}): Pro
 }
 
 /** Asks for camera access and takes one photo; returns its local URI, or null if cancelled. */
-export async function takeDrinkPhoto({ cutout = false }: PickOptions = {}): Promise<string | null> {
+export async function takeDrinkPhoto({ cutout = false, square = false }: PickOptions = {}): Promise<string | null> {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
   if (status !== 'granted') {
     Alert.alert('Camera access needed', 'Allow camera access in Settings to take drink photos.');
     return null;
   }
-  const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [4, 5], quality: 0.8 });
+  const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: square ? [1, 1] : [4, 5], quality: 0.8 });
   const uri = result.canceled ? null : (result.assets[0]?.uri ?? null);
   return uri && cutout ? offerCutout(uri) : uri;
 }
