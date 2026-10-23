@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import type { MenuDrink } from '@/types/menus';
 
 import {
+  setDrinkPrice,
   nameToMake,
   nearLibrary,
   moveToSection,
@@ -137,3 +138,15 @@ assert.equal(nameToMake(library, '  '), null);
 assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['cocktail'] }, 'stamp collector')), ['Champ Stamp']);
 assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['cocktail'] }, 'tie')), [], 'short words don\'t count');
 assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['beer'] }, 'stamp')), []);
+
+// A price is the drink's own: set on every row of it, kept as typed, and it counts as a change to save.
+{
+  const d = (id: string, price: string | null): MenuDrink => ({ id, name: id, kind: 'cocktail', line: '', price, imageUrl: null, isSketch: false, glass: null });
+  const base = { name: 'M', coverUrl: null, coverPosition: 50, sections: [{ key: 'a', id: 'a', name: 'A', minItems: 1, maxItems: null, allowedTypes: ['cocktail' as const], drinks: [d('x', '19'), d('y', null)] }, { key: 'b', id: 'b', name: 'B', minItems: 1, maxItems: null, allowedTypes: ['cocktail' as const], drinks: [d('x', '19')] }] };
+  const next = setDrinkPrice(base, 'x', ' 21.50 ');
+  assert.deepEqual(next.sections.map((s) => s.drinks.map((x) => x.price)), [['21.50', null], ['21.50']]);
+  assert.deepEqual(next.prices, { x: '21.50' });
+  assert.ok(layoutChanged(next, base));
+  assert.ok(!layoutChanged(next, next));
+  assert.deepEqual(setDrinkPrice(next, 'y', '  ').prices, { x: '21.50', y: null });
+}

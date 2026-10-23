@@ -3,15 +3,15 @@ import { useRef, useState, type ComponentRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { ScaleDecorator } from 'react-native-draggable-flatlist';
 
-import { Caption, DrinkImage, DsText, PressableScale, Spec, Tag, useBreakpoint, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, PressableScale, Tag, useBreakpoint, useDs } from '@/components/ds';
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, radius, space, type } from '@/constants/tokens';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
-import { formatPrice } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
 import { RowMenu, useRowMenu, type RowMenuItem } from './RowMenu';
+import { PriceButton, PriceEditor, PriceField } from './RowPrice';
 import { dragSource, dropRow, dropSlot } from './useMenuDrag';
 
 /** The grip's width: only a touch there starts a drag (gripOnly). */
@@ -36,6 +36,10 @@ interface EditorRowProps {
   onMoveTo: (toKey: string) => void;
   /** Desktop web drag and drop: the row's section, a drop slot above or below it, and whether it's the one being dragged. */
   web?: { from: string; slot: 'before' | 'after' | null; dragging: boolean };
+  /** A venue's row: changes the drink's own price, saved with the menu. */
+  onPrice?: (price: string | null) => void;
+  /** Another menu the drink is on, which shows the same price. */
+  alsoOn?: string;
 }
 
 /** Where a dragged drink will land, as the board draws it: a dashed slot the height of a row. */
@@ -53,11 +57,12 @@ const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail'
 /**
  * One drink on the menu being edited, set like the menu itself: its picture on
  * paper, its name in the venue's display face, its line, for a venue its price
- * in mono, then the grip on the right (b36). A ... button holds Move to
+ * (the drink's own, changed right here: a field on desktop, a tap and an edit
+ * under the row on a phone), then the grip on the right (b36). A ... button holds Move to
  * another section, Open the drink, Move to top (and on a phone, Remove). On a
  * desktop browser, Remove and ... show on hover or keyboard focus.
  */
-export function EditorRow({ drink, index: i, count, home, isNew, active, drag, onRemove, onMove, others, onMoveTo, web: dnd }: EditorRowProps) {
+export function EditorRow({ drink, index: i, count, home, isNew, active, drag, onRemove, onMove, others, onMoveTo, web: dnd, onPrice, alsoOn }: EditorRowProps) {
   const ds = useDs();
   const router = useRouter();
   const [menu, setMenu] = useState<'open' | 'sections'>('open');
@@ -70,7 +75,9 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
   const [hot, setHot] = useState(false);
   // react-native-web passes these to the row's div; focus events bubble from the grip and Remove.
   const hover = quiet ? ({ onMouseEnter: () => setHot(true), onMouseLeave: () => setHot(false), onFocus: () => setHot(true), onBlur: () => setHot(false) } as object) : {};
-  const price = home ? null : formatPrice(drink.price);
+  const [pricing, setPricing] = useState(false);
+  // A home menu shows no prices.
+  const changePrice = home ? undefined : onPrice;
   // Keyboard (web): the focused grip moves its drink with the arrow keys.
   const onKeyDown = (e: { key: string; preventDefault: () => void }) => {
     const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : null;
@@ -113,13 +120,13 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
               </DsText>
               {isNew ? <Tag label="New" tone="success" /> : null}
             </View>
-            {drink.line ? (
+            {drink.line || (quiet && alsoOn && changePrice) ? (
               <Caption tone="muted" numberOfLines={1}>
-                {drink.line}
+                {[drink.line, quiet && alsoOn && changePrice ? `also on ${alsoOn}` : null].filter(Boolean).join(' · ')}
               </Caption>
             ) : null}
           </View>
-          {home ? null : price ? <Spec>{price}</Spec> : <Caption tone="muted">No price</Caption>}
+          {!changePrice ? null : quiet ? <PriceField key={drink.price ?? ''} drink={drink} onPrice={changePrice} /> : <PriceButton drink={drink} open={pricing} onPress={() => setPricing((p) => !p)} />}
           {quiet ? (
             <PressableScale accessibilityLabel={`Remove ${drink.name}`} onPress={onRemove} style={[styles.icon, !show && styles.hidden]}>
               <IconSymbol name="xmark" size={16} color={ds.c.muted} />
@@ -154,6 +161,7 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
             <IconSymbol name="circle.grid.3x3.fill" size={18} color={ds.c.muted} />
           </PressableScale>
         </View>
+        {pricing && changePrice && !quiet ? <PriceEditor drink={drink} alsoOn={alsoOn} onPrice={changePrice} onClose={() => setPricing(false)} /> : null}
         <RowMenu anchor={popover.anchor} label={menu === 'sections' ? `Move ${drink.name} to` : `${drink.name} options`} items={items} onClose={popover.close} />
       </View>
       {dnd?.slot === 'after' ? <DropSlot /> : null}

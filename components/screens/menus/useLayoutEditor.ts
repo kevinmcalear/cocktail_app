@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useToast } from '@/components/ds';
 import { itemHref } from '@/lib/itemRoutes';
+import { useSetDrinkPrices } from '@/hooks/useDrinkCost';
 import { useMenuLibrary, usePickMenuCover, useSaveMenu } from '@/hooks/useMenuMutations';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { confirmDiscardChanges } from '@/lib/dialogs';
@@ -17,6 +18,7 @@ import {
   moveToSection,
   dropDrink,
   removeDrink,
+  setDrinkPrice,
   removeSection,
   setDrinks,
   updateSection,
@@ -49,6 +51,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [now] = useState(() => Date.now());
   const save = useSaveMenu(menu.id);
+  const prices = useSetDrinkPrices();
   const cover = usePickMenuCover(menu.id);
   const libraryQuery = useMenuLibrary(menu.barId);
   const library = libraryQuery.data ?? [];
@@ -98,6 +101,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
 
   /** Saves if anything changed. Resolves false (with the error shown) when it couldn't. */
   const saveLayout = save.mutateAsync;
+  const savePrices = prices.mutateAsync;
   const persist = useCallback(async (): Promise<boolean> => {
     const problem = layoutProblem(layout);
     if (problem) {
@@ -109,18 +113,21 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     const snapshot = layout;
     try {
       await saveLayout(snapshot);
-      setSaved(snapshot);
+      // Prices are the drinks' own: written once the menu holds them.
+      if (Object.keys(snapshot.prices ?? {}).length) await savePrices(snapshot.prices!);
+      setSaved({ ...snapshot, prices: {} });
+      setLayout((l) => (l.prices === snapshot.prices ? { ...l, prices: {} } : l));
       setSavedAt(Date.now());
       return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Couldn’t save. Your changes are still here; try again.');
       return false;
     }
-  }, [layout, changed, saveLayout]);
+  }, [layout, changed, saveLayout, savePrices]);
 
   // Autosave: a moment after the last change, one save at a time. A layout that
   // can't be saved (a section with no name) waits, with the problem shown.
-  const saving = save.isPending;
+  const saving = save.isPending || prices.isPending;
   useEffect(() => {
     if (!changed || saving || layoutProblem(layout)) return;
     const timer = setTimeout(() => void persist(), AUTOSAVE_MS);
@@ -132,7 +139,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     layout,
     status,
     changed,
-    saving: save.isPending,
+    saving,
     savedAt,
     error,
     library,
@@ -154,6 +161,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     },
     made,
     remove: (key: string, drinkId: string) => edit(removeDrink(layout, key, drinkId)),
+    setPrice: (drinkId: string, price: string | null) => edit(setDrinkPrice(layout, drinkId, price)),
     reorder: (key: string, drinks: MenuDrink[]) => edit(setDrinks(layout, key, drinks)),
     move: (key: string, from: number, to: number) => edit(moveDrink(layout, key, from, to)),
     moveTo: (fromKey: string, drinkId: string, toKey: string) => edit(moveToSection(layout, fromKey, drinkId, toKey)),

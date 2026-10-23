@@ -718,7 +718,6 @@ export type Database = {
           dilution_pct: number | null
           item_id: string
           price: string | null
-          price_minor: number | null
           serve_abv: number | null
           serve_ml: number | null
         }
@@ -726,7 +725,6 @@ export type Database = {
           dilution_pct?: number | null
           item_id: string
           price?: string | null
-          price_minor?: number | null
           serve_abv?: number | null
           serve_ml?: number | null
         }
@@ -734,7 +732,6 @@ export type Database = {
           dilution_pct?: number | null
           item_id?: string
           price?: string | null
-          price_minor?: number | null
           serve_abv?: number | null
           serve_ml?: number | null
         }

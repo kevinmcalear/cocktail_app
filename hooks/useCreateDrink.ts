@@ -17,6 +17,7 @@ import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import type { ImageAngle } from '@/lib/itemImages';
+import { formatPrice } from '@/lib/menus';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
@@ -254,7 +255,7 @@ export function useCreateDrink() {
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
         origin_year: draft.originYear ?? null,
-        price_minor: barId ? (draft.priceMinor ?? null) : null,
+        price: barId ? formatPrice(draft.price) : null,
         // You can claim your own credit; anyone else's starts as suggested.
         credit_status: creatorId && creatorId === myProfileId && !otherBar ? 'claimed' : null,
       };
