@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
@@ -48,7 +48,9 @@ interface IngredientsStepProps extends StepProps {
   /** Off on the desktop page, where the taste sits beside the spec. */
   balance?: boolean;
   /** Under each line's name on the desktop page: its supplier and cost. */
-  lineDetail?: (line: WizardLine) => string | null;
+  lineDetail?: (line: WizardLine) => ReactNode;
+  /** Under each line on the desktop page: what opens in place (the supplier pick). */
+  lineBelow?: (line: WizardLine) => ReactNode;
   /** Each bottle line's back bar (or shelf) toggle, and its hint and note (StockToggle). */
   stock?: LineStock;
   /** Make it house's "Tell us": the drink and bar a note would come from. */
@@ -63,7 +65,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, stock, tellUs, placeholder }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, tellUs, placeholder }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -184,6 +186,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                     onEditPrep={() => setMaking({ name: l.name, key: l.key })}
                     onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
                     detail={lineDetail?.(l)}
+                    below={lineBelow?.(l)}
                     stock={stock?.toggle(l)}
                   />
                 )

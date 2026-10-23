@@ -29,7 +29,9 @@ interface LineRowProps {
   /** The units to pick from; the finish offers drops, sprays, rinses and the garnish counts. */
   units?: readonly string[];
   /** Under the name on the desktop page: who brings it and what this pour costs ("Bluestone Trade · $1.28"). */
-  detail?: string | null;
+  detail?: ReactNode;
+  /** Under the whole line: what opens in place on the desktop page (the supplier pick). */
+  below?: ReactNode;
   /** Its grip, from DragRow: hold it and drag to move the line. */
   grip?: (node: ReactNode) => ReactNode;
   /** Moves the line one place up or down: the arrow keys on the web, a screen reader's actions. */
@@ -49,7 +51,7 @@ interface LineRowProps {
  * On a phone the controls sit under the name, and the bottle and remove
  * beside it; on a wider screen they all share its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, grip, onMove, lifted, dropTarget, stock }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, below, grip, onMove, lifted, dropTarget, stock }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   // So does a narrow column (the desktop page's spec), where the bottle left the name a few letters.
@@ -100,10 +102,11 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
               <Body numberOfLines={2}>{line.name}</Body>
               {dropTarget ? <Caption tone="accent">Drop to batch</Caption> : null}
               {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
-              {detail ? <Caption tone="muted" numberOfLines={1}>{detail}</Caption> : null}
             </PressableScale>
-            {stacked ? ends : null}
+            {/* Beside the name's button, not in it: the detail can be a button of its own (the supplier chip). */}
+            {stacked ? ends : detail}
           </View>
+          {stacked ? detail : null}
           <View style={styles.controls}>
             <View style={[styles.stepper, { backgroundColor: ds.c.raised }]}>
               {top ? (
@@ -145,6 +148,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
         </View>
         {stacked ? null : ends}
       </View>
+      {below}
       {open ? (
         <View style={[styles.more, grip ? styles.gripped : null]}>
           {status ? <Caption tone={status.accent ? 'accent' : 'muted'}>{status.text}</Caption> : null}
