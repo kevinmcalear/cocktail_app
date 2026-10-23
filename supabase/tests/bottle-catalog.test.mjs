@@ -107,6 +107,12 @@ describe('bottle catalog', () => {
     // abort us with a serialization failure (40001); start over when it does.
     for (let attempt = 1; ; attempt++) {
       await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      // Each file ends with a loop that breaks generic_id cycles. Against the
+      // full catalog the planner runs its ORDER BY ... LIMIT 1 as a nested loop
+      // that rescans the whole walk once per item: 45s a file, six times over
+      // (7 to 22 minutes in CI). Plans never change what SQL returns, so the
+      // rerun is the same check without them: about 3s.
+      await db.query('SET LOCAL enable_nestloop = off');
       try {
         for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
         const once = await one(snapshot);
