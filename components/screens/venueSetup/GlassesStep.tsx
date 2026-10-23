@@ -63,7 +63,7 @@ export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { b
       if (on && mine) await remove.mutateAsync(mine.id);
       else if (!on) {
         const main = !glasses.some((g) => g.glass === m.glass && g.is_default);
-        await save.mutateAsync({ glass: m.glass, variant: m.variant, name: m.name, maker: m.maker?.display_name ?? null, maker_profile_id: m.maker_profile_id, designer: m.designer, series: m.series, shape_note: null, model_id: m.id, is_default: main });
+        await save.mutateAsync({ glass: m.glass, variant: m.variant, name: m.name, maker: null, maker_profile_id: null, designer: null, series: null, shape_note: null, model_id: m.id, is_default: main });
       }
       await client.refetchQueries({ queryKey: ['bar-glassware', barId] });
     } catch {

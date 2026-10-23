@@ -1,0 +1,23 @@
+{
+ "maker": "john.jenkins",
+ "models": [
+  {
+   "name": "Atlantic Half Martini",
+   "series": "Atlantic",
+   "designer": null,
+   "model_code": "127047",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 100,
+   "capacity_as_stated": "100ml / 4oz",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.johnjenkins.co.uk/atlantic-half-martini.html",
+   "source_urls": [
+    "https://www.johnjenkins.co.uk/atlantic-half-martini.html",
+    "https://www.johnjenkins.co.uk/atlantic-half-martini-classic.html"
+   ]
+  }
+ ]
+}
