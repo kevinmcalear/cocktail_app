@@ -3,7 +3,7 @@ import { addIngredientFn, updateIngredientFn } from '@/hooks/useIngredients';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
-import { focusManager, notifyManager, onlineManager, QueryClient } from '@tanstack/react-query';
+import { focusManager, type Mutation, notifyManager, onlineManager, QueryClient } from '@tanstack/react-query';
 import { AppState, Platform } from 'react-native';
 
 import { coalesceTimer } from '@/lib/coalesceTimer';
@@ -84,8 +84,32 @@ export const persistOptions = {
   // clean, since its query shapes may differ (an OTA bumps a key instead).
   maxAge: KEEP,
   buster: Constants.expoConfig?.version ?? '',
-  dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+  dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery, shouldDehydrateMutation: canResendAfterRelaunch },
 };
+
+/**
+ * Only unsent writes registered below are saved between launches: the screen's
+ * mutationFn doesn't survive a relaunch, so any other write would come back
+ * unable to send and fail with "No mutationFn found".
+ */
+export function canResendAfterRelaunch(write: Mutation<unknown, Error, unknown, unknown>): boolean {
+  const key = write.options.mutationKey;
+  return write.state.isPaused && !!key && !!queryClient.getMutationDefaults(key).mutationFn;
+}
+
+/**
+ * Sends writes saved offline before the app closed as soon as the cache is
+ * restored, rather than at the next reconnect or return to the app. Sign-out
+ * already dropped any that weren't this user's (lib/clearUserData.ts).
+ */
+export async function resumeSavedWrites(): Promise<void> {
+  if (!queryClient.getMutationCache().getAll().some((write) => write.state.isPaused)) return;
+  // onlineManager says online until NetInfo's first event, which can land
+  // after the restore: ask first, or a write sent with no signal fails and is lost.
+  const { isConnected } = await NetInfo.fetch();
+  onlineManager.setOnline(!!isConnected);
+  await queryClient.resumePausedMutations();
+}
 
 // Freshness by kind of data (static, catalog, public, yours, live), and a
 // week in memory for whatever is saved between launches. A hook's own options win.
@@ -93,8 +117,12 @@ for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS)) {
   queryClient.setQueryDefaults(queryKey, options);
 }
 
-// Register mutation defaults so they can resume offline
-queryClient.setMutationDefaults(['updateCocktail'], { mutationFn: updateCocktailFn });
-queryClient.setMutationDefaults(['deleteCocktail'], { mutationFn: deleteCocktailFn });
-queryClient.setMutationDefaults(['updateIngredient'], { mutationFn: updateIngredientFn });
-queryClient.setMutationDefaults(['addIngredient'], { mutationFn: addIngredientFn });
+// Writes that can resume after a relaunch. A restored write gets only these
+// options, not the screen's onSettled, so it refreshes what it changed itself;
+// a live write's own onSettled wins.
+// ponytail: refreshes every query, fine for a rare restored write; give each its own keys if they become common.
+const refreshAll = () => queryClient.invalidateQueries();
+queryClient.setMutationDefaults(['updateCocktail'], { mutationFn: updateCocktailFn, onSettled: refreshAll });
+queryClient.setMutationDefaults(['deleteCocktail'], { mutationFn: deleteCocktailFn, onSettled: refreshAll });
+queryClient.setMutationDefaults(['updateIngredient'], { mutationFn: updateIngredientFn, onSettled: refreshAll });
+queryClient.setMutationDefaults(['addIngredient'], { mutationFn: addIngredientFn, onSettled: refreshAll });
