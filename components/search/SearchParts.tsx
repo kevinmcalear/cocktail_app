@@ -1,19 +1,18 @@
 import { useRouter } from 'expo-router';
 import { useRef, type ComponentRef } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PopoverMenu, PressableScale, RowScore, scoreWords, useDs, usePopover } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
-import { withAlpha } from '@/lib/color';
 import { foldName } from '@/lib/discover';
 import { STYLES } from '@/lib/drinkStyles';
 import { showOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 /**
- * "Little Rye ⌄" inside the search field: where the search looks. A tap opens
- * the places as a menu (search-starts-here):
+ * "Little Rye ⌄": where the search looks, in glass at the head of the row over
+ * the bottom field. A tap opens the places as a menu (search-starts-here):
  * the venue or your drinks, This area from Discover, and Everywhere.
  */
 export function ScopeToken({ options, scope, onScope }: { options: { value: SearchScope; label: string; detail?: string }[]; scope: SearchScope; onScope: (scope: SearchScope) => void }) {
@@ -24,45 +23,35 @@ export function ScopeToken({ options, scope, onScope }: { options: { value: Sear
   const items = options.map((o) => ({ label: o.label, detail: o.detail, checked: o.value === scope, onPress: () => onScope(o.value) }));
   return (
     <View ref={token} collapsable={false}>
-      <PressableScale
-        role="button"
-        aria-expanded={!!menu.anchor}
-        accessibilityLabel={`Searching ${label}. Change where to search`}
-        onPress={() => menu.open(token.current)}
-        style={[styles.token, { backgroundColor: withAlpha(ds.accentText, menu.anchor ? 0.4 : 0.2) }]}
-      >
-        <DsText variant="label" color={ds.accentText} numberOfLines={1} style={styles.tokenText}>
-          {label}
-        </DsText>
-        <IconSymbol name="chevron.down" size={12} color={ds.accentText} />
+      <PressableScale role="button" aria-expanded={!!menu.anchor} accessibilityLabel={`Searching ${label}. Change where to search`} onPress={() => menu.open(token.current)}>
+        <GlassSurface interactive style={styles.token}>
+          <DsText variant="label" color={ds.accentText} numberOfLines={1} style={styles.tokenText}>
+            {label}
+          </DsText>
+          <IconSymbol name="chevron.down" size={12} color={ds.accentText} />
+        </GlassSurface>
       </PressableScale>
       <PopoverMenu anchor={menu.anchor} label="Where to search" onClose={menu.close} sections={[{ title: 'Search in', items }]} />
     </View>
   );
 }
 
-/** All, Drinks 4, Ingredients 2, Menus 1: what the results show. Nothing when only one kind found anything. */
-export function ShowChips({ show, onShow, counts, glass }: { show: SearchShow; onShow: (show: SearchShow) => void; counts: ShowCounts; glass?: boolean }) {
+/**
+ * All, Drinks 4, Ingredients 2, Menus 1: what the results show, in one glass
+ * track as Discover's map layers are. Nothing when only one kind found anything.
+ */
+export function ShowChips({ show, onShow, counts }: { show: SearchShow; onShow: (show: SearchShow) => void; counts: ShowCounts }) {
   const options = showOptions(counts);
   if (!options.length) return null;
   const picked = options.some((o) => o.value === show) ? show : 'all';
-  const chips = options.map((o) => <Chip key={o.value} look={glass ? 'glass' : undefined} label={o.label} count={o.count} selected={picked === o.value} onPress={() => onShow(o.value)} />);
-  // Floating over the results: the chips sit in one glass track, as Discover's map layers do.
-  if (glass) {
-    return (
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={styles.glassRow}>
-        <GlassSurface interactive style={styles.track}>
-          <View role="radiogroup" accessibilityLabel="Show" style={styles.trackChips}>
-            {chips}
-          </View>
-        </GlassSurface>
-      </ScrollView>
-    );
-  }
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.chips} role="radiogroup" accessibilityLabel="Show">
-      {chips}
-    </ScrollView>
+    <GlassSurface interactive style={styles.track}>
+      <View role="radiogroup" accessibilityLabel="Show" style={styles.trackChips}>
+        {options.map((o) => (
+          <Chip key={o.value} look="glass" label={o.label} count={o.count} selected={picked === o.value} onPress={() => onShow(o.value)} />
+        ))}
+      </View>
+    </GlassSurface>
   );
 }
 
@@ -177,10 +166,9 @@ export function StyleTiles() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  token: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 36, maxWidth: 160, paddingHorizontal: space.sm + 2, borderRadius: radius.pill },
+  // As tall as the chips' track beside it.
+  token: { flexDirection: 'row', alignItems: 'center', gap: space.xs, height: layout.minTapTarget, maxWidth: 240, paddingHorizontal: space.md, borderRadius: radius.pill },
   tokenText: { flexShrink: 1, fontFamily: fontFamilies.bodyMedium },
-  chips: { gap: space.sm - 2, paddingRight: space.lg },
-  glassRow: { flexGrow: 0 },
   // 36-point chips in a 4-point track: a 44-point target (disc-desk-browse).
   track: { padding: space.xs },
   trackChips: { flexDirection: 'row', gap: space.xs + 2 },
