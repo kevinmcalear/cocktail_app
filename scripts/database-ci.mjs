@@ -20,6 +20,7 @@ const ALWAYS = new Set([
   '.github/workflows/ci.yml',
   'scripts/check-local-migrations.mjs',
   'scripts/database-ci.mjs',
+  'scripts/security-shard.mjs',
 ]);
 
 const isFile = (root, path) => existsSync(join(root, path)) && statSync(join(root, path)).isFile();

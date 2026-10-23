@@ -63,24 +63,25 @@ jobs:
             echo functions=true >> "$GITHUB_OUTPUT"
           fi
 
-  database:
-    name: Migrations and security tests
+  # The security suite runs in parallel shards, each on its own runner with
+  # its own stack (scripts/security-shard.mjs splits the files by measured
+  # time). Every shard rebuilds the database from every migration, so a
+  # migration that cannot rebuild the schema fails in each.
+  security-shard:
+    name: Security tests (${{ matrix.shard }}/3)
     needs: changes
-    # A skipped job passes the required check. Skip only on an explicit "no":
-    # if the changes job fails, this still runs. Pushes to main always run it.
+    # Skip only on an explicit "no": if the changes job fails, this still runs.
+    # Pushes to main always run it.
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
-    # One rebuild at a time. Two at once (a PR beside a merge to main) is
-    # what pushed runs into the timeout. A concurrency group is not used: it
-    # keeps one pending run and cancels every older one, so several PRs
-    # pushing together lost their required check. Each job instead waits its
-    # turn in the first step (scripts/wait-for-turn.mjs).
     runs-on: ubuntu-latest
-    # A clean run of the whole suite on main took 32 minutes (15 Oct 2026).
-    # The job limit covers the wait (up to 120 minutes) plus a rebuild; the
-    # steps below carry their own limits, so a stuck file still fails in under
-    # an hour. test:security passes --test-force-exit, so an open database
+    # The slowest shard is one file of about 7 minutes after a 5 to 8 minute
+    # rebuild. test:security passes --test-force-exit, so an open database
     # handle fails the file instead of holding the job.
-    timeout-minutes: 200
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     # Supabase's images come from public.ecr.aws by default, which rate limits
     # anonymous pulls ("toomanyrequests: Rate exceeded") when several PRs run
     # at once. The same images are on GitHub's registry, where this job's own
@@ -88,7 +89,6 @@ jobs:
     permissions:
       contents: read
       packages: read
-      actions: read
     env:
       SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
     steps:
@@ -97,16 +97,20 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      # Keep the step name: the script finds the job holding the slot by it.
-      - name: Wait for turn
-        timeout-minutes: 125
-        run: node scripts/wait-for-turn.mjs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JOB_ID: ${{ job.check_run_id }}
       - uses: supabase/setup-cli@v3
         with:
           version: latest
+      # The CLI version and config.toml decide which images start pulls, so
+      # they key the saved copy.
+      - id: images
+        run: echo "key=supabase-images-$(supabase --version)-${{ hashFiles('supabase/config.toml') }}" >> "$GITHUB_OUTPUT"
+      - id: image-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/supabase-images.tar
+          key: ${{ steps.images.outputs.key }}
+      - if: steps.image-cache.outputs.cache-hit == 'true'
+        run: docker load -i "$RUNNER_TEMP/supabase-images.tar"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -119,8 +123,34 @@ jobs:
       # for the image tests; on a local stack the image model is always mocked.
       - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
       - run: supabase db lint --level warning --fail-on error
+      - if: steps.image-cache.outputs.cache-hit != 'true' && matrix.shard == 1
+        run: docker images --format '{{.Repository}}:{{.Tag}}' | grep '/supabase/' | xargs docker save -o "$RUNNER_TEMP/supabase-images.tar"
+      - if: steps.image-cache.outputs.cache-hit != 'true' && matrix.shard == 1
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/supabase-images.tar
+          key: ${{ steps.images.outputs.key }}
       - run: npm run test:security
-        timeout-minutes: 55
+        timeout-minutes: 30
+        env:
+          SECURITY_SHARD: ${{ matrix.shard }}/3
+
+  # The required check. It passes only when every shard passed, so a failed,
+  # cancelled or timed-out shard fails it. always() keeps it from being
+  # skipped (a skipped job passes a required check) when the run is cancelled;
+  # it skips only on the explicit "no database changes" path.
+  database:
+    name: Migrations and security tests
+    needs: [changes, security-shard]
+    if: ${{ always() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - if: needs.security-shard.result != 'success'
+        run: |
+          echo "Security shards: ${{ needs.security-shard.result }}"
+          exit 1
+      - run: echo "Every security shard passed."
 
   edge-functions:
     name: Edge functions typecheck
