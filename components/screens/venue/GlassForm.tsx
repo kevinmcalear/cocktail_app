@@ -63,17 +63,17 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
   const save = () => {
     setTried(true);
     if (glassFieldProblem(fields)) return;
-    // A model brings its maker, series and designer; the venue's own name wins.
+    // A model keeps its maker, series and designer (useBarGlassware reads them from it); the venue's own name wins.
     if (model) {
       return onSave({
         id: glass?.id,
         glass: model.glass,
         variant: shapes.some((s) => s.key === variant) ? variant : null,
         name: textOrNull(fields.name) ?? model.name,
-        maker: model.maker?.display_name ?? null,
-        maker_profile_id: model.maker_profile_id,
-        designer: model.designer,
-        series: model.series,
+        maker: null,
+        maker_profile_id: null,
+        designer: null,
+        series: null,
         shape_note: textOrNull(fields.shape_note),
         model_id: model.id,
         is_default: isMain,

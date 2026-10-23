@@ -1,0 +1,77 @@
+{
+ "maker": "bobo",
+ "models": [
+  {
+   "name": "Popolare Martini",
+   "series": "Popolare",
+   "designer": null,
+   "model_code": "110329",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/popolare-the-martini",
+   "source_urls": [
+    "https://bobo.store/products.json",
+    "https://bobo.store/products/popolare-the-martini"
+   ]
+  },
+  {
+   "name": "Popolare Highball",
+   "series": "Popolare",
+   "designer": null,
+   "model_code": "110330",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/popolare-the-highball",
+   "source_urls": [
+    "https://bobo.store/products.json",
+    "https://bobo.store/products/popolare-the-highball"
+   ]
+  },
+  {
+   "name": "Popolare Spritz",
+   "series": "Popolare",
+   "designer": null,
+   "model_code": "110328",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/popolare-the-spritz",
+   "source_urls": [
+    "https://bobo.store/products.json",
+    "https://bobo.store/products/popolare-the-spritz"
+   ]
+  },
+  {
+   "name": "Popolare Rock",
+   "series": "Popolare",
+   "designer": null,
+   "model_code": "110331",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/popolare-the-rock",
+   "source_urls": [
+    "https://bobo.store/products.json",
+    "https://bobo.store/products/popolare-the-rock"
+   ]
+  }
+ ]
+}

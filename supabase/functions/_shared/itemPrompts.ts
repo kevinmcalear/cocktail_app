@@ -24,7 +24,7 @@ export const ITEM_SELECT = `
   glassware:items!glassware_id(name),
   ice:items!ice_id(name),
   item_methods!item_methods_item_id_fkey(sort_order, method:items!item_methods_method_item_id_fkey(name)),
-  recipes!new_recipes_recipe_item_id_fkey(amount, unit, sort_order, ingredient:items!new_recipes_ingredient_item_id_fkey(name))
+  recipes!recipe_item_id(amount, unit, sort_order, ingredient:items!ingredient_item_id(name))
 `;
 
 /**

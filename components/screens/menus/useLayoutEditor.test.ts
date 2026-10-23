@@ -15,6 +15,8 @@ jest.mock('@/hooks/useMenuMutations', () => ({
   usePickMenuCover: () => ({ isPending: false, mutateAsync: jest.fn() }),
 }));
 jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: () => ({ data: [] }) }));
+const mockSavePrices = jest.fn(async (_prices: Record<string, string | null>) => {});
+jest.mock('@/hooks/useDrinkCost', () => ({ useSetDrinkPrices: () => ({ isPending: false, mutateAsync: mockSavePrices }) }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), replace: jest.fn(), canGoBack: () => true }) }));
 
 const menu = {
@@ -36,4 +38,17 @@ test('a drink made from "Create a new drink" lands in its section', async () => 
   await waitFor(() => expect(result.current.layout.sections[1].drinks.map((d) => d.id)).toEqual(['new']));
   expect(result.current.changed).toBe(true);
   expect(useMenuDrinkHandoff.getState().pending).toBeNull();
+});
+
+test('a price changed in the builder is the drink\'s own: saved with the menu, then cleared', async () => {
+  const { result } = await renderHook(() => useLayoutEditor(menu));
+  await act(async () => result.current.setPrice('old', ' 19.50 '));
+  expect(result.current.layout.sections[0].drinks[0].price).toBe('19.50');
+  expect(result.current.changed).toBe(true);
+  await act(async () => {
+    await result.current.persist();
+  });
+  expect(mockSavePrices).toHaveBeenCalledWith({ old: '19.50' });
+  expect(result.current.changed).toBe(false);
+  expect(result.current.layout.prices).toEqual({});
 });

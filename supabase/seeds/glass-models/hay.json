@@ -1,0 +1,23 @@
+{
+ "maker": "hay",
+ "models": [
+  {
+   "name": "Curve Stem Glass Small",
+   "series": "Curve",
+   "designer": null,
+   "model_code": "AE981-A668-AS23-87RO",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.hay.com/hay/accessories/kitchen--dining/drinkware/curve-stem-glass",
+   "source_urls": [
+    "https://www.hay.com/hay/accessories/kitchen--dining/drinkware/curve-stem-glass",
+    "https://www.hay.nl/en/curve-stem-glass-set-of-2-small-clear"
+   ]
+  }
+ ]
+}
