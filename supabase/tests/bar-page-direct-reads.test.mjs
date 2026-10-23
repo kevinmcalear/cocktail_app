@@ -137,8 +137,9 @@ describe('a credited drink\'s figures', () => {
     for (const who of ['team', 'catalogAdmin']) {
       const row = await presented(users[who].client);
       assert.deepEqual(
+        // The typed price only: a credited drink keeps no number on items (20261103100000).
         [Number(row.serve_ml), Number(row.serve_abv), Number(row.dilution_pct), row.price, row.price_minor],
-        [95, 21.4, 22, '$18', 1800],
+        [95, 21.4, 22, '$18', null],
         who
       );
     }
@@ -148,13 +149,20 @@ describe('a credited drink\'s figures', () => {
     await setPage('open');
     const row = await presented(users.stranger.client);
     assert.equal(Number(row.serve_ml), 95);
-    assert.equal(row.price_minor, 1800);
+    assert.equal(row.price, '$18');
   });
 
   test('an update that names a figure sets it, NULL clears it, and others are kept', async () => {
-    await db.query('UPDATE public.items SET price_minor = 2000, price = NULL WHERE id = $1', [ids.drink]);
-    const { rows } = await db.query('SELECT serve_ml, price, price_minor FROM public.credited_drink_details WHERE item_id = $1', [ids.drink]);
-    assert.deepEqual([Number(rows[0].serve_ml), rows[0].price, rows[0].price_minor], [95, null, 2000]);
+    await db.query("UPDATE public.items SET price = '20' WHERE id = $1", [ids.drink]);
+    let { rows } = await db.query('SELECT serve_ml, price FROM public.credited_drink_details WHERE item_id = $1', [ids.drink]);
+    assert.deepEqual([Number(rows[0].serve_ml), rows[0].price], [95, '20']);
+    // An app from before 20261103100000 writes the number: it lands as the typed price, out of sight.
+    await db.query('UPDATE public.items SET price_minor = 2150 WHERE id = $1', [ids.drink]);
+    ({ rows } = await db.query('SELECT price FROM public.credited_drink_details WHERE item_id = $1', [ids.drink]));
+    assert.equal(rows[0].price, '21.50');
+    await db.query('UPDATE public.items SET price = NULL WHERE id = $1', [ids.drink]);
+    ({ rows } = await db.query('SELECT serve_ml, price FROM public.credited_drink_details WHERE item_id = $1', [ids.drink]));
+    assert.deepEqual([Number(rows[0].serve_ml), rows[0].price], [95, null]);
     const row = await db.query('SELECT price, price_minor FROM public.items WHERE id = $1', [ids.drink]);
     assert.deepEqual(row.rows[0], { price: null, price_minor: null });
   });
