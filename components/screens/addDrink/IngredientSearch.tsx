@@ -5,10 +5,12 @@ import { Body, Caption, IngredientThumb, PressableScale, useDs } from '@/compone
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useIngredientUse } from '@/hooks/useIngredientUse';
-import type { WizardPick } from '@/lib/drinkWizard';
+import { typedUnit, type WizardPick } from '@/lib/drinkWizard';
 import { bottlesOfKind, closestIngredients, nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
+import { typedPour, type TypedPour } from '@/lib/paste';
 import { guessKind, PREP_KINDS } from '@/lib/prepKinds';
 import { looksMadeInHouse } from '@/lib/techniques/makeIt';
+import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { KindResults } from './KindResults';
 
@@ -33,8 +35,13 @@ export interface IngredientSearchProps {
   coreIds?: ReadonlySet<string>;
   /** Holds off offering a new one until the list is in, so a known bottle isn't added twice. */
   loading?: boolean;
-  onPick: (pick: WizardPick) => void;
+  /** With `amounts`, the pour typed before the name ("30 pommeau"). */
+  onPick: (pick: WizardPick, pour?: TypedPour) => void;
   label: string;
+  /** The field's hint, when it says more than its label. */
+  placeholder?: string;
+  /** Reads a pour typed before the name ("30 pommeau", "1/2 oz lemon"): it searches the name and hands on the pour. */
+  amounts?: boolean;
   autoFocus?: boolean;
   /** Shows a close button: leaving a swap without changing anything. */
   onCancel?: () => void;
@@ -43,9 +50,11 @@ export interface IngredientSearchProps {
   /** Off: only existing ingredients can be picked (a kind of must exist). */
   allowNew?: boolean;
   /** Offers to make it in house, with its own recipe: a new name, or your own version of one that exists. */
-  onMake?: (name: string) => void;
+  onMake?: (name: string, pour?: TypedPour) => void;
+  /** "Add “X”, a bottle you buy": the desktop page opens its card under its line (what it is, who brings it, its pack). */
+  onBottle?: (name: string, pour?: TypedPour) => void;
   /** "Just add the name" for a prep: its recipe is written later, and the save reminds you. */
-  onLater?: (name: string) => void;
+  onLater?: (name: string, pour?: TypedPour) => void;
   /** A name that sounds made (an oil, a cordial) offers making it before any bottle. */
   makeFirst?: boolean;
   /** Under each found ingredient: "On your shelf" (these ids), else "In 14 drinks". Off by default (it asks the server). */
@@ -65,15 +74,18 @@ export interface IngredientSearchProps {
  * (your own version when the name exists). Return takes the top hit.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, autoFocus, onCancel, onTyping, allowNew = true, onMake, onLater, makeFirst, captions, shelf, backBar, brands } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands } = props;
   const ds = useDs();
-  const [query, setQueryState] = useState('');
+  const [text, setQueryState] = useState('');
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
   const [focused, setFocused] = useState(false);
   const setQuery = (q: string) => {
     setQueryState(q);
     onTyping?.(!!q.trim());
   };
+  // "30 pommeau": the pour, then the name to look for. A name that is itself an ingredient ("7 Up") stays a name.
+  const pour = amounts && !sameIngredient(text, ingredients, aliases) ? typedPour(text) : null;
+  const query = pour ? pour.name : text;
   const q = query.trim();
   const results = searchIngredients(query, ingredients, { aliases, coreIds });
   const exact = !!sameIngredient(query, ingredients, aliases) || results.some((r) => (r.name ?? '').trim().toLowerCase() === q.toLowerCase());
@@ -96,7 +108,19 @@ export function IngredientSearch(props: IngredientSearchProps) {
       sub={exact ? 'Your own version, with your recipe. We’ll start you off.' : 'Your own house prep. We’ll start you off.'}
       icon="make"
       onPress={() => {
-        onMake(q);
+        onMake(q, pour ?? undefined);
+        done();
+      }}
+    />
+  ) : null;
+  const Name = `${q.charAt(0).toUpperCase()}${q.slice(1)}`;
+  const bottleRow = onBottle ? (
+    <ResultRow
+      label={`Add “${Name}”, a bottle you buy`}
+      sub="Opens right here, under the line"
+      icon="make"
+      onPress={() => {
+        onBottle(Name, pour ?? undefined);
         done();
       }}
     />
@@ -109,8 +133,8 @@ export function IngredientSearch(props: IngredientSearchProps) {
       sub={later ? 'Write the recipe later. We’ll remind you.' : 'Added as new when you save.'}
       icon="new"
       onPress={() => {
-        if (later) onLater?.(q);
-        else onPick({ id: null, name: q });
+        if (later) onLater?.(q, pour ?? undefined);
+        else onPick({ id: null, name: q }, pour ?? undefined);
         done();
       }}
     />
@@ -119,7 +143,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const lead = makeFirst && prepLike && !exact && !loading;
 
   const pick = (p: WizardPick) => {
-    onPick(p);
+    onPick(p, pour ?? undefined);
     done();
   };
   const found = (r: CatalogIngredient, text?: string) => (
@@ -139,9 +163,9 @@ export function IngredientSearch(props: IngredientSearchProps) {
         <TextInput
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          value={query}
+          value={text}
           onChangeText={setQuery}
-          placeholder={label}
+          placeholder={placeholder ?? label}
           placeholderTextColor={ds.c.muted}
           aria-label={label}
           autoFocus={autoFocus}
@@ -150,7 +174,10 @@ export function IngredientSearch(props: IngredientSearchProps) {
           maxLength={80}
           onSubmitEditing={() => {
             if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
-            else if (allowNew && q && !loading) pick({ id: null, name: q });
+            else if (allowNew && q && !loading && onBottle && !prepLike) {
+              onBottle(Name, pour ?? undefined);
+              done();
+            } else if (allowNew && q && !loading) pick({ id: null, name: q });
           }}
           style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }, NO_OUTLINE]}
         />
@@ -161,6 +188,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
         ) : null}
       </View>
 
+      {pour && q ? <Caption tone="muted">{`${pour.amount} ${typedUnit(q, pour.unit, getPreferredUnit())} of the one you pick`}</Caption> : null}
       {q && kindView ? <KindResults key={kindView.id} kind={kindView} bottles={bottles} have={have} haveLabel={backBar ? 'On your back bar' : 'On your shelf'} onPick={pick} /> : null}
       {q && (!kindView || listed.length || loading || makeRow) ? (
         <View role="list" style={[styles.results, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
@@ -187,8 +215,11 @@ export function IngredientSearch(props: IngredientSearchProps) {
           ) : !allowNew ? null : (
             <>
               {makeRow && prepLike && !lead ? makeRow : null}
+              {/* A bottle you buy, then making it, then the name alone (board make-create-desktop, step 4). */}
+              {bottleRow}
+              {bottleRow && !prepLike ? makeRow : null}
               {newRow}
-              {makeRow && !prepLike ? makeRow : null}
+              {makeRow && !prepLike && !bottleRow ? makeRow : null}
             </>
           )}
         </View>

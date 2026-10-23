@@ -48,6 +48,19 @@ describe('IngredientsStep', () => {
     expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: 'campari', name: 'Campari' });
   });
 
+  test('a pour typed before the name is the line\'s: "30ml camp" finds Campari at 30 ml, "1/2 pommeau" adds a new one', async () => {
+    const set = jest.fn();
+    await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), '30ml camp');
+    expect(screen.getByText('30 ml of the one you pick')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Campari' }));
+    expect(set.mock.calls[0][0].lines[0]).toMatchObject({ id: 'campari', name: 'Campari', amount: '30', unit: 'ml' });
+
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), '1/2 pommeau');
+    await fireEvent(screen.getByLabelText('Add an ingredient'), 'submitEditing');
+    expect(set.mock.calls[1][0].lines[0]).toMatchObject({ id: null, name: 'pommeau', amount: '0.5' });
+  });
+
   test('a prep the shelf lacks is made in house from a technique: the line carries its recipe', async () => {
     const set = jest.fn();
     await renderWithTamagui(<IngredientsStep draft={EMPTY_DRAFT} set={set} ingredients={[CAMPARI]} />);

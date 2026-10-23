@@ -65,6 +65,28 @@ export function parseSpecLine(row: string): SpecLine | null {
   return { amount, unit, name: match[3].trim() };
 }
 
+export interface TypedPour {
+  /** As typed, for the line's amount field ("30", "1/2"). */
+  amount: string;
+  /** Null when only a number leads ("30 pommeau"): the line guesses its unit. */
+  unit: string | null;
+  name: string;
+}
+
+/**
+ * A pour typed into the add field: "30 pommeau", "30ml pommeau", "1/2 oz
+ * lemon", "2 dashes bitters". Null when no amount leads, or a number runs
+ * into a word that isn't a unit ("7up").
+ */
+export function typedPour(text: string): TypedPour | null {
+  const m = text.trim().match(/^((?:\d+\s+)?\d+\/\d+|\d+(?:[.,]\d+)?|\d*[¼½¾⅓⅔⅛])(\s*)(\S+)(?:\s+(.+))?$/);
+  if (!m) return null;
+  const unit = UNIT_BY_WORD[m[3].toLowerCase().replace(/\.$/, '')] ?? null;
+  if (unit) return m[4] ? { amount: m[1].replace(',', '.'), unit, name: m[4].trim() } : null;
+  if (!m[2]) return null;
+  return { amount: m[1].replace(',', '.'), unit: null, name: [m[3], m[4]].filter(Boolean).join(' ') };
+}
+
 /** A spec line, or "- Campari" (an ingredient with no amount, as a printed menu lists it). */
 function parseBringRow(row: string): SpecLine | null {
   const listed = row.trim().match(/^[-•*]\s*(.+)$/);

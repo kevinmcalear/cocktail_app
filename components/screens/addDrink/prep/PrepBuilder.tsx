@@ -3,11 +3,8 @@ import { Modal, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { IngredientDrawing } from '@/components/ds';
-import { useCatalogRecipe } from '@/hooks/usePrepCard';
-import { guessKind, openSlots, prepFromCatalog, prepFromTechnique, prepPhrase, recipeEyebrow, sourceSite, startPrep, withFacts, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
+import { recipeEyebrow, withFacts, type PrepDraft, type PrepPick } from '@/lib/prepKinds';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import { prepCardFor, waysToMake } from '@/lib/techniques/makeIt';
-import { techniqueById } from '@/lib/techniques';
 
 import type { CatalogIngredient } from '../IngredientSearch';
 import { PaperBand } from '../PaperBand';
@@ -15,7 +12,8 @@ import { WizardFooter } from '../WizardChrome';
 import { WizardFrame } from '../WizardFrame';
 import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
-import { PrepRecipeStep, RecipeView, type RecipeViewKind } from './PrepRecipeStep';
+import { PrepRecipeStep, RecipeView } from './PrepRecipeStep';
+import { usePrepDraft } from './usePrepDraft';
 
 const STEPS = ['kind', 'recipe', 'method'] as const;
 type Step = (typeof STEPS)[number];
@@ -58,34 +56,12 @@ export function PrepBuilder(props: PrepBuilderProps) {
   );
 }
 
-/** A new prep's first draft: the technique picked, else the kind its name says, else the technique that most likely makes it, else blank. */
-function firstDraft(name: string, picked: PrepBuilderProps['picked'], technique: string | null | undefined): PrepDraft {
-  const chosen = techniqueById(technique);
-  if (chosen) return prepFromTechnique(chosen, name, prepCardFor(chosen), picked);
-  const kind = guessKind(name);
-  const way = kind ? null : waysToMake(name)[0];
-  return way ? prepFromTechnique(way, name, prepCardFor(way), picked) : startPrep(kind ?? 'other', name);
-}
-
 function Builder({ name, drinkName, initial, picked, technique, ingredients, aliases, onDone, onLater, onClose }: PrepBuilderProps & { name: string }) {
   const [step, setStep] = useState<Step>(initial || technique ? 'recipe' : 'kind');
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [draft, setDraftState] = useState<PrepDraft>(() => initial ?? firstDraft(name, picked, technique));
-  const [view, setView] = useState<RecipeViewKind>('parts');
-  // A name the catalog has a sourced recipe for starts from it, until the maker changes anything.
-  const [touched, setTouched] = useState(false);
-  const setDraft = (d: PrepDraft) => {
-    setTouched(true);
-    setDraftState(d);
-  };
-  const { data: catalog } = useCatalogRecipe(initial || technique ? null : name);
-  const [seeded, setSeeded] = useState<string | null>(null);
-  if (catalog && !touched && seeded !== catalog.id) {
-    setSeeded(catalog.id);
-    setDraftState(prepFromCatalog(name, catalog));
+  const { draft, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name, initial, picked, technique }, () => {
     if (step === 'kind') setStep('recipe');
-  }
-  const fromCatalog = seeded && catalog ? `Started from the catalog recipe${catalog.checkedOn.length ? `, checked on ${catalog.checkedOn.map(sourceSite).join(' and ')}` : ''}. Change anything.` : undefined;
+  });
   const at = STEPS.indexOf(step);
   const go = (to: Step) => {
     setDirection(STEPS.indexOf(to) >= at ? 1 : -1);
@@ -93,17 +69,9 @@ function Builder({ name, drinkName, initial, picked, technique, ingredients, ali
   };
   const back = () => (at > 0 ? go(STEPS[at - 1]) : onClose());
   const next = () => (step === 'method' ? onDone(withFacts(draft)) : go(STEPS[at + 1]));
-  // A stand-in line ("Spirit") is never saved: pick it or take it out first.
-  const ready = draft.lines.some((l) => l.name.trim()) && (step === 'kind' || !openSlots(draft).length);
-  const pickKind = (kind: PrepKindId, way?: string) => setDraft(startPrep(kind, name, way));
-  const pickTechnique = (id: string) => {
-    const t = techniqueById(id);
-    if (!t) return;
-    setDraft(prepFromTechnique(t, name, prepCardFor(t), picked));
-  };
+  const ready = named && (step === 'kind' || !slotsOpen);
 
   const drink = drinkName || 'your drink';
-  const phrase = prepPhrase(draft);
   const timers = 'Drag a step by its grip to move it; times you write become timers.';
   const filled = phrase ? `${phrase[0].toUpperCase()}${phrase.slice(1)}, filled in from the recipe.` : draft.technique ? 'Filled in from Techniques.' : 'Filled in from the recipe.';
   const where = drinkName && drinkName.length <= SHORT_NAME ? `${drinkName} › New prep` : 'New prep';

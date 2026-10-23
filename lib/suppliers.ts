@@ -123,3 +123,54 @@ export function withoutSupplier(ings: readonly VenueIngredient[]): VenueIngredie
     .filter((i) => i.used && !i.supplierId && i.type === 'ingredient' && i.role !== 'prep' && !WATER.test(i.name.trim()))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
+
+/** A venue supplier as the pick under an ingredient line shows it. */
+export interface SupplierChoice {
+  id: string;
+  name: string;
+  /** "Brings your Calvados and 11 more · orders by Tue". */
+  sub: string;
+}
+
+export interface SupplierPick {
+  choices: SupplierChoice[];
+  /** The first choice, when there's a reason for it. */
+  suggested: string | null;
+  /** "Cellar & Co brings your Calvados", for "Suggested because…". */
+  why: string | null;
+}
+
+/**
+ * The venue's suppliers to pick from for one bottle, the likeliest first: one
+ * whose page lists the bottle's maker where the venue is (supplier_lines,
+ * `carriers` are those pages' ids), then whoever brings most of the venue's
+ * bottles of the same kind or maker, then the rest by how much they bring.
+ * `where` is the venue's region heading ("In Victoria").
+ */
+export function pickSuppliers(
+  bottle: { id: string; makerId: string | null; kindId: string | null },
+  suppliers: readonly { id: string; name: string; order_by: string | null; items: number; pageId: string | null }[],
+  bought: readonly { id: string; name: string; makerId: string | null; kindId: string | null; supplierId: string | null }[],
+  carriers: ReadonlySet<string>,
+  where: string | null
+): SupplierPick {
+  // The venue's other bottles like this one: the same kind (or this kind's own bottles), or the same maker.
+  const like = bought.filter(
+    (b) => b.id !== bottle.id && b.supplierId && ((bottle.kindId && b.kindId === bottle.kindId) || b.kindId === bottle.id || (bottle.makerId && b.makerId === bottle.makerId))
+  );
+  const likeFrom = (id: string) => like.filter((b) => b.supplierId === id);
+  const lists = (s: { pageId: string | null }) => !!s.pageId && carriers.has(s.pageId);
+  const ranked = [...suppliers].sort((a, b) => Number(lists(b)) - Number(lists(a)) || likeFrom(b.id).length - likeFrom(a.id).length || b.items - a.items || a.name.localeCompare(b.name));
+  const top = ranked[0];
+  const topLike = top ? likeFrom(top.id)[0] : null;
+  const why = !top ? null : lists(top) ? `${top.name}’s page lists it ${where ? where.charAt(0).toLowerCase() + where.slice(1) : 'where you are'}` : topLike ? `${top.name} brings your ${topLike.name}` : null;
+  return {
+    choices: ranked.map((s) => {
+      const mine = likeFrom(s.id)[0];
+      const brings = mine ? (s.items > 1 ? `Brings your ${mine.name} and ${s.items - 1} more` : `Brings your ${mine.name}`) : s.items === 1 ? 'Brings one of your bottles' : s.items ? `Brings ${s.items} of your bottles` : 'Nothing of yours yet';
+      return { id: s.id, name: s.name, sub: [brings, s.order_by?.trim() ? `orders by ${s.order_by.trim()}` : null].filter(Boolean).join(' · ') };
+    }),
+    suggested: why ? top.id : null,
+    why,
+  };
+}

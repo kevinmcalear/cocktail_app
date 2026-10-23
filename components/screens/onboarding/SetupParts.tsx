@@ -4,9 +4,9 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 
-/** "Little Rye" -> "LR": the first letters of the first two words. */
+/** "Little Rye" -> "LR": the first letters of the first two words ("Cellar & Co" -> "CC", the "&" isn't one). */
 export function initials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
+  const words = name.trim().split(/\s+/).filter((w) => /[a-z0-9\u00c0-\uffff]/i.test(w));
   return words.slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('') || '·';
 }
 

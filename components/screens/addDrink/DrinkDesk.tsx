@@ -8,23 +8,20 @@ import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import type { KitRow } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
-import { useDraftPacks, useMenuSectionPlace } from '@/hooks/useDrinkDesk';
+import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { usePricingSettings } from '@/hooks/usePricing';
 import type { SameNameDrink } from '@/hooks/useSameNameDrink';
 import { perDrinkLines } from '@/lib/batchLines';
 import type { ClassicMatch } from '@/lib/classics';
-import { lineCostMinor } from '@/lib/costing';
-import { amountOf, guessUnit, hasContent, newLine, pickByName, sketchLook, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
-import { density } from '@/lib/drinkMath';
+import { guessUnit, hasContent, newLine, pickByName, sketchLook, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import { formatMoney } from '@/lib/money';
 import { creditWaits, nameWaits, theirs } from '@/lib/sameName';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { suggestAmount } from '@/lib/specDefaults';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { CreditsStep } from './CreditsStep';
-import { DeskCost, DeskDrinkCard, DeskMenuNote, DeskTaste, type DeskCostLine } from './DrinkDeskRail';
+import { DeskCost, DeskDrinkCard, DeskMenuNote, DeskTaste } from './DrinkDeskRail';
 import { FinishStep } from './FinishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
@@ -32,12 +29,14 @@ import { ApartHint, TakenWord } from './NameStepBody';
 import type { CatalogIngredient } from './IngredientSearch';
 import { IceStep } from './IceStep';
 import { PickStep } from './PickStep';
+import { PREP_CARD_ID } from './prep/PrepCard';
 import { PublishStep } from './PublishStep';
 import { ReviewPhotos } from './ReviewPhotos';
 import { BracketField, SameNameCard, useSameNamePicks } from './SameNameCard';
 import { StartFromClassic } from './StartFromClassic';
 import type { LineStock } from './StockToggle';
 import { BigName, NotesStep } from './TextSteps';
+import { useDeskLines } from './useDeskLines';
 import { Eyebrow, WizardChip } from './WizardChrome';
 
 export interface DrinkDeskProps {
@@ -90,27 +89,23 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const menu = place?.menu ?? null;
   const caps = useCapabilities(barId).data;
   const canCost = !!barId && !!caps?.includes('costs');
+  const canBuy = canCost || (!!barId && !!caps?.includes('prep'));
   const pricing = usePricingSettings(canCost ? barId : null).data ?? null;
-  // A batch costs what one drink's own pours do.
-  const costed = [...perDrinkLines(draft.lines), ...draft.garnishes];
-  const ids = costed.flatMap((l) => (l.id ? [l.id] : []));
-  const packs = useDraftPacks(barId, ids, canCost).data ?? [];
-  const currency = pricing?.currency ?? 'GBP';
+  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({
+    draft,
+    set,
+    barId,
+    venueName: p.venueName,
+    ingredients: p.ingredients,
+    coreIds: p.coreIds,
+    canBuy,
+    canCost,
+    currency: pricing?.currency ?? 'GBP',
+  });
   const [finishOpen, setFinishOpen] = useState(false);
   // A classic or a riff can bring garnishes in after the page opens: they show.
   const finishing = finishOpen || draft.garnishes.length > 0;
 
-  const pack = (l: WizardLine) => packs.find((k) => k.itemId === l.id) ?? null;
-  const cost = (l: WizardLine) => {
-    const k = pack(l);
-    return k?.costMinor != null && k.amount && k.unit ? lineCostMinor(amountOf(l.amount), l.unit, { amount: k.amount, unit: k.unit, costMinor: k.costMinor }, density(l.name, null)) : null;
-  };
-  const costLines: DeskCostLine[] = costed.map((l) => ({ key: l.key, name: l.name, minor: cost(l) }));
-  const lineDetail = (l: WizardLine) => {
-    if (!canCost) return null;
-    const minor = cost(l);
-    return [pack(l)?.supplier, minor != null ? formatMoney(minor, currency) : null].filter(Boolean).join(' · ') || null;
-  };
   // A one-tap fix from the taste card: a likely pour, as a line added from the search would get.
   const addByName = (name: string) => {
     const pick = pickByName(name, p.ingredients);
@@ -127,8 +122,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
   });
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      // Not while a sheet is open over the page (a prep being written): that sheet's work isn't done.
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !document.querySelector('[role="dialog"][aria-modal="true"]')) {
+      // Not while a sheet is open over the page, or a prep is being written under its line: that work isn't done.
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !document.querySelector(`[role="dialog"][aria-modal="true"], #${PREP_CARD_ID}`)) {
         e.preventDefault();
         latest.current();
       }
@@ -210,6 +205,10 @@ export function DrinkDesk(p: DrinkDeskProps) {
             stock={p.stock}
             balance={false}
             lineDetail={lineDetail}
+            lineBelow={lineBelow}
+            onNewBottle={onNewBottle}
+            inlinePrep={{ venueName: barId ? p.venueName : null }}
+            placeholder="Add an ingredient: “30 pommeau” works too"
             tellUs={tellUsAbout}
           />
           <Row label="Method">

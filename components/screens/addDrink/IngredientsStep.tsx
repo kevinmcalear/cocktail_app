@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
@@ -6,14 +6,16 @@ import type { TellUsAbout } from '@/components/feedback/TellUs';
 import { radius, space } from '@/constants/tokens';
 import { useExpiring } from '@/hooks/useExpiring';
 import { perDrinkLines } from '@/lib/batchLines';
-import { guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { guessUnit, newLine, pickByName, typedUnit, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { dropIndex } from '@/lib/dropIndex';
 import { houseNudge, houseWays } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import { PREP_KINDS, type PrepDraft } from '@/lib/prepKinds';
-import { suggestAmount } from '@/lib/specDefaults';
+import type { TypedPour } from '@/lib/paste';
+import { bottleKindRow, guessBottleKind } from '@/lib/newBottle';
+import type { PrepDraft } from '@/lib/prepKinds';
+import { suggestAmount, tidyAmount } from '@/lib/specDefaults';
 import { capitalizeFirst } from '@/lib/stringUtils';
-import { techniqueById, type Technique } from '@/lib/techniques';
+import type { Technique } from '@/lib/techniques';
 import { startsFrom } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
@@ -25,9 +27,9 @@ import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { IngredientSuggestions } from './IngredientSuggestions';
 import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
-import { PrepBuilder } from './prep/PrepBuilder';
 import type { LineStock } from './StockToggle';
 import { useBatchDrop } from './useBatchDrop';
+import { useMakePrep } from './useMakePrep';
 import { WizardNotice } from './WizardChrome';
 
 /** How long "Removed … Undo", and "Shrub added", stay. */
@@ -47,11 +49,19 @@ interface IngredientsStepProps extends StepProps {
   /** Off on the desktop page, where the taste sits beside the spec. */
   balance?: boolean;
   /** Under each line's name on the desktop page: its supplier and cost. */
-  lineDetail?: (line: WizardLine) => string | null;
+  lineDetail?: (line: WizardLine) => ReactNode;
+  /** Under each line on the desktop page: what opens in place (the supplier pick). */
+  lineBelow?: (line: WizardLine) => ReactNode;
   /** Each bottle line's back bar (or shelf) toggle, and its hint and note (StockToggle). */
   stock?: LineStock;
   /** Make it house's "Tell us": the drink and bar a note would come from. */
   tellUs?: TellUsAbout;
+  /** The add field's hint, when it says more than "Add an ingredient" (the desktop page's "30 pommeau" works too). */
+  placeholder?: string;
+  /** The desktop page: "Add “X”, a bottle you buy" adds the line with its card open under it (this line's key). */
+  onNewBottle?: (key: string) => void;
+  /** The desktop page: a house prep is written under its own line, not over the page. */
+  inlinePrep?: { venueName: string | null };
 }
 
 /**
@@ -60,30 +70,14 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, stock, tellUs }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, tellUs, placeholder, onNewBottle, inlinePrep }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [removed, setRemoved] = useExpiring<{ line: WizardLine; at: number }>(UNDO_MS);
-  /**
-   * A house prep being made: a new line, the recipe of a line in the drink
-   * (its key), or a line swapped for one (its key, `replace`). Make it house
-   * on a bottle also brings the technique and the bottle as its base.
-   */
-  const [making, setMaking] = useState<{ name: string; key?: string; replace?: boolean; technique?: string; base?: WizardPick } | null>(null);
-  // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
-  const editingKey = making?.key ?? null;
-  const makingName = making?.name ?? null;
-  const replacing = !!making?.replace;
-  const makingTechnique = making?.technique ?? null;
-  const makingBase = making?.base ?? null;
   /** The bottle line "What did you do to it?" is open for. */
   const [houseKey, setHouseKey] = useState<string | null>(null);
   const [nudgeOff, setNudgeOff] = useState(false);
-  /** A prep just made in the builder: "Shrub saved to your preps…" for a moment. */
-  const [madePrep, setMadePrep] = useExpiring<string>(UNDO_MS);
-  // Shown the way it saves ("coconut fat washed rum" is "Coconut fat washed rum").
-  const make = (name: string, key?: string) => setMaking({ name: capitalizeFirst(name), key, replace: !!key });
   const generic = (id: string | null) => {
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
@@ -94,23 +88,34 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   const houseLine = houseKey ? draft.lines.find((l) => l.key === houseKey) ?? null : null;
   const makeHouse = (line: WizardLine, t: Technique, adjunct: string | null) => {
     setHouseKey(null);
-    setMaking({ name: nameFor(t, { base: line.name, adjunct }), key: line.key, replace: true, technique: t.id, base: { id: line.id, name: line.name } });
+    prep.house(line, nameFor(t, { base: line.name, adjunct }), t.id);
   };
 
-  const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean) => {
-    const unit = guessUnit(pick.name, getPreferredUnit());
-    const amount = !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
-    set({ lines: [...draft.lines, { ...newLine(pick, unit, amount), ...(prep ? { prep, technique: prep.technique } : null), ...(later ? { later: true } : null) }] });
+  // A pour typed with the name ("30 pommeau") is the line's; otherwise it starts at a likely one.
+  const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour, more?: Partial<WizardLine>): WizardLine => {
+    const unit = pour ? typedUnit(pick.name, pour.unit, getPreferredUnit()) : guessUnit(pick.name, getPreferredUnit());
+    const amount = pour ? tidyAmount(pour.amount) : !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
+    const line = { ...newLine(pick, unit, amount), ...(prep ? { prep, technique: prep.technique } : null), ...(later ? { later: true } : null), ...more };
+    set({ lines: [...draft.lines, line] });
     setRemoved(null);
+    return line;
   };
-  // What the prep is, for "Shrub added": its kind, its technique, else its name.
-  const prepWord = (prep: PrepDraft, name: string) =>
-    (prep.technique ? techniqueById(prep.technique)?.name : prep.kind !== 'other' ? PREP_KINDS.find((k) => k.id === prep.kind)?.name : null) ?? name;
+  // A bottle you buy, with what its name says it is, filled in on its card under the line.
+  const core = ingredients.filter((i) => coreIds?.has(i.id));
+  const newBottle = (name: string, pour?: TypedPour) => {
+    const kind = guessBottleKind(name);
+    const line = add({ id: null, name }, undefined, false, pour, {
+      bottle: { kind, kindId: bottleKindRow(name, kind, core, ingredients)?.id ?? null, abv: '', supplier: null, packAmount: '', packUnit: 'ml', packPrice: '' },
+    });
+    onNewBottle?.(line.key);
+  };
   const change = (key: string, c: Partial<WizardLine>) => set({ lines: draft.lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
   const remove = (line: WizardLine) => {
     setRemoved({ line, at: draft.lines.indexOf(line) });
     set({ lines: draft.lines.filter((x) => x.key !== line.key) });
   };
+  const prep = useMakePrep({ draft, ingredients, aliases, inlinePrep, add, change });
+  const make = prep.make;
   const undo = () => {
     if (!removed) return;
     const lines = [...draft.lines];
@@ -151,7 +156,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                       onCancel={() => setSwapKey(null)}
                       onPick={(p) => {
                         // A different ingredient isn't the house prep that was here.
-                        change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined });
+                        change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined, bottle: undefined });
                         setSwapKey(null);
                       }}
                       onMake={
@@ -176,9 +181,15 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                     onChange={(c) => change(l.key, c)}
                     onRemove={() => remove(l)}
                     onSwap={() => setSwapKey(l.key)}
-                    onEditPrep={() => setMaking({ name: l.name, key: l.key })}
+                    onEditPrep={() => prep.edit(l)}
                     onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
                     detail={lineDetail?.(l)}
+                    below={
+                      <>
+                        {lineBelow?.(l)}
+                        {prep.card(l.key)}
+                      </>
+                    }
                     stock={stock?.toggle(l)}
                   />
                 )
@@ -217,38 +228,18 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       <IngredientSearch
         {...search}
         label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'}
-        onPick={add}
+        placeholder={placeholder}
+        amounts
+        onPick={(pick, pour) => add(pick, undefined, false, pour)}
         onTyping={setTyping}
-        onMake={forDrink ? (name) => make(name) : undefined}
-        onLater={forDrink ? (name) => add({ id: null, name: capitalizeFirst(name) }, undefined, true) : undefined}
+        onMake={forDrink ? (name, pour) => make(name, undefined, pour) : undefined}
+        onBottle={forDrink && onNewBottle ? newBottle : undefined}
+        onLater={forDrink ? (name, pour) => add({ id: null, name: capitalizeFirst(name) }, undefined, true, pour) : undefined}
         captions={forDrink}
       />
       {/* In the flow under the field, so it never covers the balance or Goes with (canvas make-create-prep-back). */}
-      {madePrep ? <WizardNotice>{madePrep}</WizardNotice> : null}
-      <PrepBuilder
-        name={makingName}
-        drinkName={draft.name.trim()}
-        initial={editingKey && !replacing ? draft.lines.find((l) => l.key === editingKey)?.prep : null}
-        technique={makingTechnique}
-        picked={makingBase ? { base: makingBase } : undefined}
-        ingredients={ingredients}
-        aliases={aliases}
-        onClose={() => setMaking(null)}
-        onDone={(prep) => {
-          if (editingKey && replacing) change(editingKey, { id: null, name: makingName ?? '', prep, technique: prep.technique, later: undefined });
-          else if (editingKey) change(editingKey, { prep, technique: prep.technique, later: undefined });
-          else if (makingName) add({ id: null, name: makingName }, prep);
-          setMaking(null);
-          // The prep is saved with the drink, not before, so this says when rather than "saved" (canvas make-create-house-line).
-          if (!editingKey) setMadePrep(`${prepWord(prep, makingName ?? 'The prep')} saved to your preps when you save the drink. Its page is ready then.`);
-          else if (replacing) setMadePrep(`Saved to your bar’s preps when you save the drink. Next time, type “${(makingName ?? '').split(/[\s-]/)[0].toLowerCase()}”.`);
-        }}
-        onLater={() => {
-          if (editingKey) change(editingKey, { id: null, name: makingName ?? '', prep: undefined, technique: undefined, later: true });
-          else if (makingName) add({ id: null, name: makingName }, undefined, true);
-          setMaking(null);
-        }}
-      />
+      {prep.made ? <WizardNotice>{prep.made}</WizardNotice> : null}
+      {prep.builder}
       <MakeItHouseSheet
         bottle={houseLine?.name ?? null}
         ways={houseLine ? houseWays(houseLine.name, generic(houseLine.id)) : []}
