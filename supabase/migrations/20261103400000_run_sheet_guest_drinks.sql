@@ -65,6 +65,9 @@ CREATE TABLE "private"."run_sheet_credits" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
+-- Only private.move_run_drink_credit (SECURITY DEFINER, owned like the table)
+-- reads or writes it, so it has no policies: nobody else gets a row.
+ALTER TABLE "private"."run_sheet_credits" ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON "private"."run_sheet_credits" FROM PUBLIC, "anon", "authenticated";
 
 -- Moves a run sheet's credit on one drink from one bar page to another
