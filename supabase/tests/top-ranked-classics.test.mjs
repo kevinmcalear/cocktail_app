@@ -24,15 +24,22 @@ const db = new pg.Client({ connectionString: status.DB_URL });
 
 const users = {};
 const ids = {};
+const made = [];
+// A classic shows once it has the rankers a score needs (private.ranking_min_rankers).
+const MIN = 20;
 
-async function makeUser(label) {
+async function makeUser(label, signIn = false) {
   const email = `${label}-${run}@security-test.local`;
   const { data, error } = await service.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
   if (error) throw error;
-  const client = createClient(status.API_URL, status.ANON_KEY, clientOptions);
-  const { error: signInError } = await client.auth.signInWithPassword({ email, password: PASSWORD });
-  if (signInError) throw signInError;
-  return { id: data.user.id, client };
+  const user = { id: data.user.id };
+  made.push(user);
+  if (signIn) {
+    user.client = createClient(status.API_URL, status.ANON_KEY, clientOptions);
+    const { error: signInError } = await user.client.auth.signInWithPassword({ email, password: PASSWORD });
+    if (signInError) throw signInError;
+  }
+  return user;
 }
 
 async function serviceInsert(table, row) {
@@ -41,11 +48,13 @@ async function serviceInsert(table, row) {
   return data;
 }
 
+const confirmAge = (userId) => db.query("INSERT INTO private.age_checks (user_id, country_code, minimum_age, confirmed_at) VALUES ($1, 'AU', 18, now())", [userId]);
+
 // Fixture rankings go straight in: what's under test is the count, not who may rank.
-const rank = (who, item_id, ranked_as_item_id, venue_profile_id = null) =>
+const rank = (userId, item_id, ranked_as_item_id, venue_profile_id = null) =>
   db.query(
     "INSERT INTO public.rank_entries (user_id, item_id, ranked_as_item_id, venue_profile_id, sentiment, rank_key) VALUES ($1, $2, $3, $4, 'loved', 0)",
-    [users[who].id, item_id, ranked_as_item_id, venue_profile_id]
+    [userId, item_id, ranked_as_item_id, venue_profile_id]
   );
 
 const counts = async (client, limit = 200) => {
@@ -56,28 +65,42 @@ const counts = async (client, limit = 200) => {
 
 before(async () => {
   await db.connect();
-  for (const label of ['home', 'guest', 'regular', 'young']) users[label] = await makeUser(label);
-  for (const label of ['home', 'guest', 'regular']) {
-    await db.query("INSERT INTO private.age_checks (user_id, country_code, minimum_age, confirmed_at) VALUES ($1, 'AU', 18, now())", [users[label].id]);
-  }
+  const people = [];
+  for (let i = 0; i < MIN; i++) people.push(await makeUser(`ranker${i}`));
+  users.signedIn = await makeUser('reader', true);
+  users.staff = await makeUser('staff');
+  users.young = await makeUser('young');
+  users.secret = await makeUser('secret');
+  for (const u of [...people, users.staff, users.secret]) await confirmAge(u.id);
 
   ids.bar = (await serviceInsert('bars', { name: `Top Classics Bar ${run}` })).id;
   ids.barProfile = (await serviceInsert('profiles', { kind: 'bar', handle: `topclassics${run}`, display_name: `Top Classics Bar ${run}`, bar_id: ids.bar, is_public: true })).id;
+  ids.privateBar = (await serviceInsert('bars', { name: `Private Classics Bar ${run}` })).id;
+  ids.privateProfile = (await serviceInsert('profiles', { kind: 'bar', handle: `privclassics${run}`, display_name: `Private Classics Bar ${run}`, bar_id: ids.privateBar, is_public: true })).id;
+  // A venue's page follows its bar's setting.
+  await db.query("UPDATE public.bars SET page_visibility = 'private' WHERE id = $1", [ids.privateBar]);
+  await db.query('INSERT INTO public.user_bars (user_id, bar_id, role_level) VALUES ($1, $2, 30)', [users.staff.id, ids.bar]);
+
   const item = async (row) => (await serviceInsert('items', { item_type: 'cocktail', ...row })).id;
   ids.classic = await item({ name: `Top Classic ${run}`, is_catalog: true });
+  ids.short = await item({ name: `Nearly Classic ${run}`, is_catalog: true });
   ids.riff = await item({ name: `Bar's Top Classic ${run}`, bar_id: ids.bar, riff_of_id: ids.classic, origin: 'Classic' });
-  ids.original = await item({ name: `Bar Original ${run}`, bar_id: ids.bar });
+  ids.privateRiff = await item({ name: `Private Top Classic ${run}`, bar_id: ids.privateBar, riff_of_id: ids.classic, origin: 'Classic' });
 
-  // One person ranks the classic itself, one ranks the bar's version as it,
-  // one does both (still one person), and one without a confirmed age does both.
-  await rank('home', ids.classic, ids.classic);
-  await rank('guest', ids.riff, ids.classic, ids.barProfile);
-  await rank('regular', ids.classic, ids.classic);
-  await rank('regular', ids.riff, ids.classic, ids.barProfile);
-  await rank('young', ids.classic, ids.classic);
-  await rank('young', ids.riff, ids.classic, ids.barProfile);
-  // A bar original is ranked as itself: never a classic.
-  await rank('guest', ids.original, ids.original, ids.barProfile);
+  // MIN - 1 people rank the classic itself. The last ranks the bar's version
+  // as the classic, and the classic too: still one person.
+  for (const u of people.slice(0, MIN - 1)) await rank(u.id, ids.classic, ids.classic);
+  const last = people[MIN - 1];
+  await rank(last.id, ids.riff, ids.classic, ids.barProfile);
+  await rank(last.id, ids.classic, ids.classic);
+  // A bar's drink ranked as itself is never a classic.
+  await rank(last.id, ids.riff, ids.riff, ids.barProfile);
+  // Not counted: staff at their own bar, no confirmed age, a private page.
+  await rank(users.staff.id, ids.riff, ids.classic, ids.barProfile);
+  await rank(users.young.id, ids.classic, ids.classic);
+  await rank(users.secret.id, ids.privateRiff, ids.classic, ids.privateProfile);
+  // One short of the rankers a score needs.
+  for (const u of people.slice(0, MIN - 1)) await rank(u.id, ids.short, ids.short);
 });
 
 after(async () => {
@@ -85,31 +108,35 @@ after(async () => {
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.profiles WHERE handle LIKE $1', [like]);
   await db.query('DELETE FROM public.bars WHERE name LIKE $1', [like]);
-  for (const user of Object.values(users)) await service.auth.admin.deleteUser(user.id);
+  for (const user of made) await service.auth.admin.deleteUser(user.id);
   await db.end();
 });
 
 describe('top_ranked_classics', () => {
-  test('counts each person once per classic, the classic itself and a bar’s drink ranked as it', async () => {
+  test('counts each person once per classic: the classic itself and a bar’s drink ranked as it', async () => {
     const row = (await counts(anon)).find((r) => r.item_id === ids.classic);
-    // home, guest and regular; young has no confirmed age, so isn't counted.
-    assert.deepEqual(row, { item_id: ids.classic, rankers: 3 });
+    // Not the staff member, the one with no confirmed age, or the private page's guest.
+    assert.deepEqual(row, { item_id: ids.classic, rankers: MIN });
   });
 
-  test('lists only catalog classics, never a bar’s own drink', async () => {
+  test('leaves out a classic short of the rankers a score needs, and a bar’s own drink', async () => {
     const rows = await counts(anon);
-    assert.ok(!rows.some((r) => r.item_id === ids.riff || r.item_id === ids.original));
+    assert.ok(!rows.some((r) => r.item_id === ids.short), 'one short of the minimum');
+    assert.ok(!rows.some((r) => r.item_id === ids.riff || r.item_id === ids.privateRiff), 'not a catalog classic');
   });
 
-  test('returns a count per classic and nothing else, most ranked first', async () => {
-    const rows = await counts(users.home.client);
-    assert.ok(rows.length > 0);
+  test('returns a count per classic and nothing else, most ranked first, signed in or out', async () => {
+    const rows = await counts(users.signedIn.client);
+    assert.ok(rows.some((r) => r.item_id === ids.classic));
     for (const r of rows) assert.deepEqual(Object.keys(r).sort(), ['item_id', 'rankers']);
     for (let i = 1; i < rows.length; i++) assert.ok(rows[i - 1].rankers >= rows[i].rankers);
   });
 
-  test('caps the rows at 200 and reads nothing for a zero or negative limit', async () => {
-    assert.ok((await counts(anon, 100000)).length <= 200);
+  test('a limit brings the tie at its last row, caps at 200 and reads nothing at zero or below', async () => {
+    const top = await counts(anon, 1);
+    assert.ok(top.length >= 1 && top.every((r) => r.rankers === top[0].rankers), 'one row, and every classic tied with it');
+    const all = await counts(anon, 100000);
+    assert.ok(all.slice(200).every((r) => r.rankers === all[199].rankers), 'past 200, only the tie');
     assert.deepEqual(await counts(anon, 0), []);
     assert.deepEqual(await counts(anon, -5), []);
   });

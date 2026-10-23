@@ -7,20 +7,20 @@ import { useDrinkLists, type DrinkList } from '@/hooks/useDiscover';
 import { useViewAs } from '@/hooks/useViewAs';
 import { draftFromSpec, EMPTY_DRAFT, newDraftId, type SourceSpec } from '@/lib/drinkWizard';
 import { supabase } from '@/lib/supabase';
-import { haveClassics, topClassics } from '@/lib/whatNext';
+import { CLASSIC_COUNT, haveClassics, topClassics } from '@/lib/whatNext';
 
 /**
  * How many people rank each classic, counting a bar's drink ranked as it
- * (top_ranked_classics). Only ranked classics come back, most ranked first;
- * topClassics fills the rest of the 20 in the catalog's best-known order,
- * which also breaks ties. 100 rows is room for ties past the 20th.
+ * (top_ranked_classics): the most ranked 20 and any tie with the 20th, only
+ * those with the rankers a score needs. topClassics breaks ties and fills the
+ * rest of the 20 in the catalog's best-known order.
  */
 function useClassicRankers() {
   return useQuery({
     queryKey: ['top-ranked-classics'],
     staleTime: 60 * 60_000,
     queryFn: async (): Promise<Record<string, number>> => {
-      const { data, error } = await supabase.rpc('top_ranked_classics', { p_limit: 100 });
+      const { data, error } = await supabase.rpc('top_ranked_classics', { p_limit: CLASSIC_COUNT });
       if (error) throw error;
       return Object.fromEntries((data ?? []).map((r) => [r.item_id, r.rankers]));
     },
@@ -31,9 +31,9 @@ function useClassicRankers() {
 export function useTopClassics() {
   const catalog = useDrinkLists();
   const rankers = useClassicRankers();
-  // Rankings that fail to load still leave the best-known 20.
+  // Rankings that fail to load still leave the best-known 20, without waiting out the retries.
   const classics = useMemo(() => topClassics(catalog.data ?? [], rankers.data ?? {}), [catalog.data, rankers.data]);
-  return { classics, isLoading: catalog.isLoading || rankers.isLoading, error: catalog.error };
+  return { classics, isLoading: catalog.isLoading || (rankers.isPending && rankers.failureCount === 0), error: catalog.error };
 }
 
 /**

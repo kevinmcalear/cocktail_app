@@ -6881,7 +6881,7 @@ export type Database = {
           rankers: number
         }[]
       }
-      undo_bring_in:{ Args: { p_batch: string }; Returns: Json }
+      undo_bring_in: { Args: { p_batch: string }; Returns: Json }
       update_bar_settings: {
         Args: {
           p_bar_id: string
