@@ -87,6 +87,14 @@ export const persistOptions = {
   dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
 };
 
+/**
+ * Sends writes saved offline before the app closed as soon as the cache is
+ * restored, rather than at the next reconnect or return to the app. Waits
+ * while offline. Sign-out already dropped any that weren't this user's
+ * (lib/clearUserData.ts).
+ */
+export const resumeSavedWrites = () => void queryClient.resumePausedMutations();
+
 // Freshness by kind of data (static, catalog, public, yours, live), and a
 // week in memory for whatever is saved between launches. A hook's own options win.
 for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS)) {

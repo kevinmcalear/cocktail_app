@@ -35,7 +35,7 @@ import { prefetchRoutes } from '@/lib/prefetchRoutes';
 import { BringIn, RootExtras, SideNav } from '@/components/nav/RootLazy';
 
 import { initMonitoring } from '@/lib/monitoring';
-import { persistOptions, queryClient } from '@/lib/react-query';
+import { persistOptions, queryClient, resumeSavedWrites } from '@/lib/react-query';
 import { Platform, View } from 'react-native';
 
 
@@ -276,10 +276,7 @@ export default function RootLayout() {
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme === "dark" ? "dark" : "light"}>
       <Theme name={colorScheme === "dark" ? "dark" : "light"}>
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={persistOptions}
-        >
+        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions} onSuccess={resumeSavedWrites}>
           <GestureRoot style={{ flex: 1 }}>
             <AuthProvider>
               <ObservabilityProvider>
