@@ -20,9 +20,10 @@ says more in its header.
 `brand_maker` is the brand ("Eagle Rare"); `maker_profile_id` is the house
 that makes it (Buffalo Trace Distillery). They often differ, and both are
 kept. A beer's brewery and a wine's producer live only in `brand_maker`: only
-ingredients have maker pages (`private.guard_item_maker`). Where a bottle's
-`brand_maker` is exactly one maker page's name, the bottle points at that page
-(20261103240000).
+ingredients have maker pages (`private.guard_item_maker`). Migration
+20261103240000 pointed the branded catalog bottles whose `brand_maker` was
+exactly one maker page's name at that page, once; bottles added later are not
+linked for you.
 
 ## Where it came from
 
