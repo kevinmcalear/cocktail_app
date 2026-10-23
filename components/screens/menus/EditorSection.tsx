@@ -34,6 +34,10 @@ interface EditorSectionProps {
   onMove: (from: number, to: number) => void;
   /** Desktop web: the browser's drag and drop (useMenuDrag) instead of the grip drag. */
   drag?: { at: number | null; dragging: string | null };
+  /** A venue's menu: changes a drink's own price. */
+  onPrice?: (drinkId: string, price: string | null) => void;
+  /** Drinks also on another of the venue's menus, by id: that menu's name. */
+  elsewhere?: Record<string, string>;
 }
 
 const noDrag = () => {};
@@ -45,7 +49,7 @@ const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : Draggab
  * reorder), and adding more. No box of its own: on desktop the section the
  * library adds to sits on a raised ground, tagged "Adding here".
  */
-export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, made, onRemove, onReorder, onMove, onMoveTo, drag: web }: EditorSectionProps) {
+export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, made, onRemove, onReorder, onMove, onMoveTo, drag: web, onPrice, elsewhere }: EditorSectionProps) {
   const ds = useDs();
   const count = section.drinks.length;
   const line = sectionLine(section);
@@ -65,6 +69,8 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
       onMove={onMove}
       others={others}
       onMoveTo={(toKey) => onMoveTo(item.id, toKey)}
+      onPrice={onPrice ? (price) => onPrice(item.id, price) : undefined}
+      alsoOn={elsewhere?.[item.id]}
     />
   );
 

@@ -1,0 +1,41 @@
+{
+ "maker": "kimura.glass",
+ "models": [
+  {
+   "name": "Bambi 8oz Wine",
+   "series": "Bambi",
+   "designer": null,
+   "model_code": "6434",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240 cc",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://zizi.kimuraglass.jp/products/6434",
+   "source_urls": [
+    "https://zizi.kimuraglass.jp/products/6434",
+    "https://zizi.kimuraglass.jp/products.json"
+   ]
+  },
+  {
+   "name": "Crumple Old",
+   "series": "Crumple",
+   "designer": "Makoto Komatsu",
+   "model_code": "1721",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300 cc",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://zizi.kimuraglass.jp/products/1721",
+   "source_urls": [
+    "https://zizi.kimuraglass.jp/products/1721",
+    "https://zizi.kimuraglass.jp/products.json"
+   ]
+  }
+ ]
+}

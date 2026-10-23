@@ -7,14 +7,15 @@ export interface MenuCostRow {
   id: string;
   name: string;
   itemType: string;
-  priceMinor: number | null;
+  /** The drink's price as typed ("19.50", "MP"); the screen reads the number from it. */
+  price: string | null;
   /** Null when the drink has no spec to price, or the caller has no costs capability. */
   cost: DrinkCost | null;
 }
 
 /**
  * Every drink on a menu with its cost per serve (drink_cost, one call per
- * drink: menus are short) and its menu price, in menu order. Nothing comes
+ * drink: menus are short) and its price, in menu order. Nothing comes
  * back without the costs capability, so the screen stays locked there.
  */
 export function useMenuCosting(menuId: string | null | undefined, barId: string | null | undefined, enabled = true) {
@@ -26,9 +27,9 @@ export function useMenuCosting(menuId: string | null | undefined, barId: string 
       if (menuRes.error) throw menuRes.error;
       const ids = [...new Set((menuRes.data ?? []).map((r) => r.item_id as string))];
       if (!ids.length) return [];
-      const itemRes = await supabase.from('app_item_presentation').select('id, name, item_type, price_minor').in('id', ids);
+      const itemRes = await supabase.from('app_item_presentation').select('id, name, item_type, price').in('id', ids);
       if (itemRes.error) throw itemRes.error;
-      const items = new Map((itemRes.data ?? []).map((i) => [i.id as string, i as { id: string; name: string; item_type: string; price_minor: number | null }]));
+      const items = new Map((itemRes.data ?? []).map((i) => [i.id as string, i as { id: string; name: string; item_type: string; price: string | null }]));
       const costs = await Promise.all(
         ids.map(async (id) => {
           if (items.get(id)?.item_type !== 'cocktail') return null;
@@ -39,7 +40,7 @@ export function useMenuCosting(menuId: string | null | undefined, barId: string 
       );
       return ids.flatMap((id, i) => {
         const item = items.get(id);
-        return item ? [{ id, name: item.name, itemType: item.item_type, priceMinor: item.price_minor, cost: costs[i] }] : [];
+        return item ? [{ id, name: item.name, itemType: item.item_type, price: item.price, cost: costs[i] }] : [];
       });
     },
   });

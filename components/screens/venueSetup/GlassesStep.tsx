@@ -19,8 +19,11 @@ import { GlassShelfRows } from './GlassShelfRows';
 /** "coupe", "Nick & Nora", "rocks": a shape in a sentence. */
 const shapeWord = (g: SketchGlass) => (g === 'nick' ? GLASS_TYPE_LABEL.nick : GLASS_TYPE_LABEL[g].toLowerCase());
 
-/** A catalog glass as a Glassware row (the main one is decided when it's saved). */
-const fromModel = (m: GlassModel) => ({ glass: m.glass, variant: m.variant, name: m.name, maker: m.maker?.display_name ?? null, maker_profile_id: m.maker_profile_id, designer: m.designer, series: m.series, shape_note: null, model_id: m.id });
+/**
+ * A catalog glass as a Glassware row (the main one is decided when it's
+ * saved). Its maker, series and designer stay on the model (20261103230000).
+ */
+const fromModel = (m: GlassModel) => ({ glass: m.glass, variant: m.variant, name: m.name, maker: null, maker_profile_id: null, designer: null, series: null, shape_note: null, model_id: m.id });
 
 /** Skip and the main button side by side, as the board pins them. */
 export function StepFooter({ skip, onSkip, label, onPress, disabled }: { skip: string; onSkip: () => void; label: string; onPress: () => void; disabled?: boolean }) {
@@ -68,7 +71,8 @@ export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip 
     const kept = held.find((g) => g.model_id === m.id);
     if (on && kept) return dropGlass(barId, kept.key);
     if (!pageId) {
-      if (!on) holdGlass(barId, { key: m.id, ...fromModel(m), is_default: false });
+      // Held with its maker's name, to show it until it's saved (the save leaves it on the model).
+      if (!on) holdGlass(barId, { key: m.id, ...fromModel(m), maker: m.maker?.display_name ?? null, is_default: false });
       return;
     }
     setPending((p) => ({ ...p, [m.id]: !on }));

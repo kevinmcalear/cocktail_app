@@ -10,7 +10,9 @@ import { useVenueSetup, type HeldGlass } from '@/store/useVenueSetup';
 
 // A bar's glassware (bar_glassware, supabase/migrations/20261007100000_glass_variants.sql):
 // the glasses it pours into and which drawing each one is, on the bar's
-// profile. Row shapes are written by hand until types/ is regenerated.
+// profile. A real glass (model_id) keeps its maker, series and designer on the
+// model (20261103230000); they're filled in here, so a row reads the same
+// either way. Row shapes are written by hand until types/ is regenerated.
 
 export interface BarGlass {
   id: string;
@@ -56,13 +58,27 @@ async function fetchBarGlassware(barId: string): Promise<BarGlass[]> {
     .order('created_at');
   if (error) throw error;
   type Row = Omit<BarGlass, 'bar_name'> & { profiles: { display_name: string } | null };
-  return ((data ?? []) as unknown as Row[]).map(({ profiles, ...row }) => ({ ...row, bar_name: profiles?.display_name ?? '' }));
+  return ((data ?? []) as unknown as Row[]).map(({ profiles, ...row }) => ({ ...withModel(row), bar_name: profiles?.display_name ?? '' }));
 }
 
-/** The bar's default glass of a type, if it has one. */
+/** A real glass's maker, series and designer, which live on its model. */
+export function withModel<T extends Pick<BarGlass, 'model' | 'maker' | 'maker_profile_id' | 'maker_page' | 'series' | 'designer'>>(row: T): T {
+  const m = row.model;
+  if (!m) return row;
+  return {
+    ...row,
+    maker: row.maker ?? m.maker?.display_name ?? null,
+    maker_profile_id: row.maker_profile_id ?? m.maker_profile_id,
+    maker_page: row.maker_page ?? m.maker ?? null,
+    series: row.series ?? m.series,
+    designer: row.designer ?? m.designer,
+  };
+}
+
 /** The bar's own glass drawings, as the sketch's barVariants. */
 export const barVariants = (rows: readonly BarGlass[] | undefined): string[] => (rows ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
 
+/** The bar's default glass of a type, if it has one. */
 export const barGlassFor = (rows: readonly BarGlass[] | undefined, glass: SketchGlass) => rows?.find((r) => r.glass === glass && r.is_default) ?? null;
 
 /** The venue's public page (kind bar): glassware hangs off it. Null when the venue has none yet. */
@@ -172,7 +188,8 @@ export function useFlushHeldGlasses(barId: string | null | undefined) {
         const plan = heldGlassPlan(glasses[barId] ?? [], onPage);
         for (const key of plan.skip) dropGlass(barId, key);
         for (const { key, ...row } of plan.save) {
-          await save.mutateAsync(row);
+          // A real glass's maker stays on its model: the held copy is only for showing it meanwhile.
+          await save.mutateAsync(row.model_id ? { ...row, maker: null, maker_profile_id: null, series: null, designer: null } : row);
           dropGlass(barId, key);
         }
       } catch (e) {
