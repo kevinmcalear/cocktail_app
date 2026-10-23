@@ -250,6 +250,8 @@ export function useCreateDrink() {
         notes: draft.notesPrivate ? null : draft.notes.trim() || null,
         glassware_id: glassId,
         sketch_variant: draft.glassVariant ?? null,
+        // One of the venue's real glasses, when one was picked; the database sets glassware_id to its kind.
+        ...(draft.glassModelId ? { glass_model_id: draft.glassModelId } : {}),
         // The colour picked as it was made; the database copies it into the drawing (20261017100000_sketch_liquid).
         sketch_liquid: draft.tint ?? null,
         ice_id: iceId,

@@ -97,14 +97,12 @@ export function VenueSetupScreen() {
     setFromPage(false);
     setClaimBack(null);
   };
-  // What steps 3 and 5 kept before the claim goes onto it, then off the device. An Instagram only
-  // gets there on an Instagram claim (usePushHeldSetup), so otherwise it stays kept here.
+  // What steps 3 and 5 kept before the claim goes onto it, then off the device.
   const afterSend = async (sent: ProfileClaim) => {
     const kept = useVenueSetup.getState().runs[keyRef.current]?.held;
     if (!kept) return;
     await pushHeld.mutateAsync({ claim: sent, held: kept });
     hold(keyRef.current, null);
-    if (kept.instagram && sent.method !== 'instagram' && sent.status !== 'approved') hold(keyRef.current, { instagram: kept.instagram });
   };
 
   const copy = setupCopy(screen, name || 'your bar', claimState);

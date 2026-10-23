@@ -45,11 +45,22 @@ export interface Fills {
   fills: { model_code: string; capacity_ml: number; capacity_as_stated: string; source_url: string }[];
 }
 
+/** A maker page a load needs and production doesn't have yet. */
+export interface MakerPage {
+  handle: string;
+  name: string;
+  website: string;
+  /** ISO 3166-1 alpha-2. */
+  country: string;
+}
+
 /** One migration: which makers' files it loads, and what its header says. */
 interface Load {
   file: string;
   makers: string[];
   header: string;
+  /** Maker pages to add first (an existing page of that name makes glassware too). */
+  pages?: MakerPage[];
   /** A supabase/seeds/glass-models/<name>.json of Fills to apply. */
   fills?: string;
 }
@@ -121,6 +132,44 @@ export const LOADS: Load[] = [
 --   * Held: Nude (its pages put up a Cloudflare check), Krosno (9% wrong at
 --     audit, mostly materials stated below the text that was read).`,
   },
+  {
+    file: 'supabase/migrations/20261103220000_glass_models_named_in_use.sql',
+    makers: ['nude', 'kimura.glass', 'kinto', 'mamo', 'duralex', 'lsa.international', 'hay', 'john.jenkins', 'olympia', 'karakter', 'svev', 'steelite.utopia', 'bobo'],
+    pages: [
+      { handle: 'mamo', name: 'MAMO', website: 'https://mamo.nyc', country: 'US' },
+      { handle: 'hay', name: 'HAY', website: 'https://www.hay.com', country: 'DK' },
+      { handle: 'john.jenkins', name: 'John Jenkins', website: 'https://www.johnjenkins.co.uk', country: 'GB' },
+      { handle: 'olympia', name: 'Olympia', website: 'https://www.olympia-tableware.com', country: 'GB' },
+      { handle: 'karakter', name: 'Karakter', website: 'https://www.karakter-copenhagen.com', country: 'DK' },
+      { handle: 'svev', name: 'SVEV', website: 'https://svevglass.com', country: 'NO' },
+    ],
+    header: `
+-- Glass models, wave 3: the real glasses bars name, after 20261030200000
+-- (database audit, 22 Oct, 2.5). 20261103230000 points the drinks and venue
+-- glasses that name them at them.
+--
+--   * A Bar with Shapes for a Name's specs name their glass ("Glass: Nude x
+--     Savage - Coupetini", "Kimura Bambi 8oz"): 18 models from 12 makers,
+--     the five Nude x Savage glasses among them. Bar Leone's four BOBO
+--     Popolare glasses and Jigger & Pony's Kimura Crumple too: 23 in all.
+--   * Facts from the makers' own pages and catalogs (Nude's trade catalogue,
+--     its site being behind a Cloudflare check), or a large stockist where
+--     the maker's page states none; every row cites its pages. No copied
+--     text or photos. rim_mm stays empty.
+--   * Six new maker pages, as for any glassware maker: MAMO, HAY, John
+--     Jenkins, Olympia, Karakter, SVEV.
+--   * Wine glasses come in (Kimura's Bambi, HAY's Curve), under the shared
+--     Wine shape.
+--   * Held: "Bormioli Rocco Rocks" and "Tall LSA" (too many glasses fit),
+--     Munktiki's Rum Barrel (facts only on a collector's site), The Aviary's
+--     Crucial Detail mug (not sold).
+--   * Audit: an independent re-check of every row found 7 of 23 with a wrong
+--     fact: a missing item code (HAY), a reseller given as Olympia's site,
+--     Sferico No. 2's height, material and pages (it is Karakter's, in
+--     lead-free crystal), and BOBO's material (lead-free crystal). All are
+--     fixed from the makers' pages; Outline's heights, seen only in search
+--     snippets, are left empty.`,
+  },
 ];
 
 // The catalog shape each type of glass is a kind of (a shared glassware item).
@@ -135,6 +184,7 @@ export const SHAPE_NAME: Partial<Record<SketchGlass, string>> = {
   fizz: 'Fizz',
   flute: 'Flute',
   spritz: 'Spritz',
+  wine: 'Wine',
   snifter: 'Snifter',
   julep: 'Julep Cup',
   tiki: 'Tiki Mug',
@@ -238,6 +288,42 @@ ${values}) f(model_code, capacity_ml, capacity_as_stated, source_url)
 `;
 }
 
+/** Why a maker page can't load, or null. */
+export function pageProblem(p: MakerPage): string | null {
+  if (!/^[a-z0-9]+(\.[a-z0-9]+)*$/.test(p.handle)) return `handle ${p.handle}`;
+  if (!p.name.trim() || p.name.length > 80) return `${p.handle} name`;
+  if (!/^https:\/\/[^\s/]+\/?$/.test(p.website)) return `${p.handle} website is not a site's https home page`;
+  if (!/^[A-Z]{2}$/.test(p.country)) return `${p.handle} country`;
+  return null;
+}
+
+/** New glassware maker pages, public, in our own words (none: a name, a site, a country). */
+function renderPages(pages: MakerPage[]): string {
+  for (const p of pages) {
+    const problem = pageProblem(p);
+    if (problem) throw new Error(problem);
+  }
+  const values = pages.map((p) => `(${[q(p.handle), q(p.name), q(p.website), q(p.country)].join(', ')})`).join(',\n');
+  return `-- The glassware makers these glasses need a page for.
+CREATE TEMP TABLE maker_in (handle text PRIMARY KEY, name text NOT NULL, website text NOT NULL, country text NOT NULL);
+INSERT INTO maker_in VALUES
+${values};
+
+UPDATE public.profiles p SET makes = array_append(p.makes, 'glassware')
+  FROM maker_in m
+ WHERE p.kind = 'maker' AND (p.handle = m.handle OR lower(p.display_name) = lower(m.name)) AND NOT ('glassware' = ANY (p.makes));
+
+INSERT INTO public.profiles (kind, handle, display_name, website, country_code, makes, is_public)
+SELECT 'maker', m.handle, m.name, m.website, m.country, ARRAY['glassware'], true
+  FROM maker_in m
+ WHERE NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.handle = m.handle)
+   AND NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.kind = 'maker' AND lower(p.display_name) = lower(m.name));
+
+DROP TABLE maker_in;
+
+`;
+}
+
 /** The rows a load writes: valid, one per maker, name and size (the first wins). */
 export function rowsOf(seeds: Seed[]) {
   const seen = new Set<string>();
@@ -275,7 +361,7 @@ SELECT s.name, 'glassware'
   FROM (VALUES ${shapes.map((s) => `(${q(s)})`).join(', ')}) s(name)
  WHERE NOT EXISTS (SELECT 1 FROM public.items i WHERE i.item_type = 'glassware' AND i.bar_id IS NULL AND lower(i.name) = lower(s.name));
 
-CREATE TEMP TABLE glass_in (maker text, glass text, shape text, variant text, name text, series text, designer text, model_code text,
+${load.pages?.length ? renderPages(load.pages) : ''}CREATE TEMP TABLE glass_in (maker text, glass text, shape text, variant text, name text, series text, designer text, model_code text,
   capacity_ml numeric, capacity_as_stated text, height_mm numeric, rim_mm numeric, material text, product_url text, source_urls text[]);
 INSERT INTO glass_in VALUES
 ${values};

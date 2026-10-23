@@ -1,12 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { GLASS_MODEL_SELECT, type GlassModel } from '@/hooks/useGlassModels';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
+import { heldGlassPlan } from '@/lib/whatNext';
+import { useVenueSetup, type HeldGlass } from '@/store/useVenueSetup';
 
 // A bar's glassware (bar_glassware, supabase/migrations/20261007100000_glass_variants.sql):
 // the glasses it pours into and which drawing each one is, on the bar's
-// profile. Row shapes are written by hand until types/ is regenerated.
+// profile. A real glass (model_id) keeps its maker, series and designer on the
+// model (20261103230000); they're filled in here, so a row reads the same
+// either way. Row shapes are written by hand until types/ is regenerated.
 
 export interface BarGlass {
   id: string;
@@ -37,26 +43,42 @@ export function useBarGlassware(barId: string | null | undefined) {
     queryKey: ['bar-glassware', barId],
     enabled: !!barId,
     staleTime: 10 * 60_000,
-    queryFn: async (): Promise<BarGlass[]> => {
-      const { data, error } = await supabase
-        .from('bar_glassware')
-        .select(
-          `id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, model_id, model:glass_models!bar_glassware_model_id_fkey(${GLASS_MODEL_SELECT}), profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)`
-        )
-        .eq('profiles.bar_id', barId!)
-        .order('sort_order')
-        .order('created_at');
-      if (error) throw error;
-      type Row = Omit<BarGlass, 'bar_name'> & { profiles: { display_name: string } | null };
-      return ((data ?? []) as unknown as Row[]).map(({ profiles, ...row }) => ({ ...row, bar_name: profiles?.display_name ?? '' }));
-    },
+    queryFn: () => fetchBarGlassware(barId!),
   });
 }
 
-/** The bar's default glass of a type, if it has one. */
+async function fetchBarGlassware(barId: string): Promise<BarGlass[]> {
+  const { data, error } = await supabase
+    .from('bar_glassware')
+    .select(
+      `id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, model_id, model:glass_models!bar_glassware_model_id_fkey(${GLASS_MODEL_SELECT}), profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)`
+    )
+    .eq('profiles.bar_id', barId)
+    .order('sort_order')
+    .order('created_at');
+  if (error) throw error;
+  type Row = Omit<BarGlass, 'bar_name'> & { profiles: { display_name: string } | null };
+  return ((data ?? []) as unknown as Row[]).map(({ profiles, ...row }) => ({ ...withModel(row), bar_name: profiles?.display_name ?? '' }));
+}
+
+/** A real glass's maker, series and designer, which live on its model. */
+export function withModel<T extends Pick<BarGlass, 'model' | 'maker' | 'maker_profile_id' | 'maker_page' | 'series' | 'designer'>>(row: T): T {
+  const m = row.model;
+  if (!m) return row;
+  return {
+    ...row,
+    maker: row.maker ?? m.maker?.display_name ?? null,
+    maker_profile_id: row.maker_profile_id ?? m.maker_profile_id,
+    maker_page: row.maker_page ?? m.maker ?? null,
+    series: row.series ?? m.series,
+    designer: row.designer ?? m.designer,
+  };
+}
+
 /** The bar's own glass drawings, as the sketch's barVariants. */
 export const barVariants = (rows: readonly BarGlass[] | undefined): string[] => (rows ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
 
+/** The bar's default glass of a type, if it has one. */
 export const barGlassFor = (rows: readonly BarGlass[] | undefined, glass: SketchGlass) => rows?.find((r) => r.glass === glass && r.is_default) ?? null;
 
 /** The venue's public page (kind bar): glassware hangs off it. Null when the venue has none yet. */
@@ -128,4 +150,53 @@ export function useDeleteBarGlass(barId: string | null | undefined) {
       client.invalidateQueries({ queryKey: ['maker-glass-bars'] });
     },
   });
+}
+
+const NONE: HeldGlass[] = [];
+
+/** Glasses What next holds on this device for a venue whose page isn't checked yet (store/useVenueSetup). */
+export function useHeldGlasses(barId: string | null | undefined): HeldGlass[] {
+  return useVenueSetup((s) => (barId ? s.glasses[barId] : undefined)) ?? NONE;
+}
+
+// Venues whose held glasses are being saved now: What next and Venue settings can both be mounted.
+const flushing = new Set<string>();
+
+/**
+ * Glasses picked before the venue's page was checked go onto it once it's
+ * linked and the venue can write to it (Prep): each saved as Glassware saves
+ * one, then let go from the device. Once per screen, where What next and
+ * Venue settings open; a save that fails keeps the rest for next time.
+ */
+export function useFlushHeldGlasses(barId: string | null | undefined) {
+  const client = useQueryClient();
+  const waiting = useHeldGlasses(barId).length > 0;
+  const caps = useCapabilities(waiting ? barId : null).data;
+  const pageId = useBarPageId(waiting ? barId : null).data ?? null;
+  const ready = waiting && !!pageId && !!caps?.includes('prep');
+  const save = useSaveBarGlass(barId, pageId);
+  const tried = useRef(false);
+  useEffect(() => {
+    if (!ready || !barId || tried.current || flushing.has(barId)) return;
+    tried.current = true;
+    flushing.add(barId);
+    void (async () => {
+      try {
+        // What's on the page now, not a list cached while it was unchecked.
+        const onPage = await client.fetchQuery({ queryKey: ['bar-glassware', barId], queryFn: () => fetchBarGlassware(barId), staleTime: 0 });
+        const { glasses, dropGlass } = useVenueSetup.getState();
+        const plan = heldGlassPlan(glasses[barId] ?? [], onPage);
+        for (const key of plan.skip) dropGlass(barId, key);
+        for (const { key, ...row } of plan.save) {
+          // A real glass's maker stays on its model: the held copy is only for showing it meanwhile.
+          await save.mutateAsync(row.model_id ? { ...row, maker: null, maker_profile_id: null, series: null, designer: null } : row);
+          dropGlass(barId, key);
+        }
+      } catch (e) {
+        console.warn('Held glasses wait for next time', e);
+      } finally {
+        flushing.delete(barId);
+      }
+    })();
+  }, [ready, barId, client, save]);
 }

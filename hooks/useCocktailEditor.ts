@@ -145,6 +145,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 setSketchVariant(data.sketch_variant ?? null);
                 setGlassModelState((data as unknown as { glass_model: GlassModel | null }).glass_model ?? null);
                 const ices = data as unknown as { method_ice_id?: string | null; ice_build?: unknown };
+                // The ice from this read, not the cached drink's: a stale one saved back would move the build's top layer.
+                setIceId(data.ice_id);
                 setMethodIceIdState(ices.method_ice_id ?? null);
                 setIceBuildState(readIceBuild(ices.ice_build));
                 iceTouched.current = false;
@@ -258,7 +260,12 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                 setGlassModelState((m) => (m && m.shape_item_id === id ? m : null));
             },
             family: setFamilyIdDirty,
-            ice: setIceIdDirty,
+            // One plain ice: a build it had goes (the database keeps ice_id as a build's top layer).
+            ice: (id: string | null) => {
+                setIceIdDirty(id);
+                iceTouched.current = true;
+                setIceBuildState(null);
+            },
         };
         setters[category](value);
     }

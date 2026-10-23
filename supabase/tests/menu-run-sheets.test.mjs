@@ -245,3 +245,91 @@ describe('keeping the plan', () => {
     assert.equal(kept.rows[0].serves, 6969);
   });
 });
+
+// 20261103400000_run_sheet_guest_drinks: menu_drinks.party_id says a drink is
+// the guest bar's own. A typed name keeps the credit on the sheet; a linked
+// page gets a suggested credit on our own copy of the drink.
+describe("a guest bar's drinks are theirs", () => {
+  const origin = async (itemId) => (await db.query('SELECT origin_bar_profile_id AS o, credit_status AS s FROM public.items WHERE id = $1', [itemId])).rows[0];
+  const mark = (rowId, partyId) => users.maker.client.from('menu_drinks').update({ party_id: partyId }).eq('id', rowId).select('party_id');
+
+  before(async () => {
+    const item = async (name, extra = {}) => (await serviceInsert('items', { name: `${name} ${run}`, item_type: 'cocktail', bar_id: ids.bar, ...extra })).id;
+    ids.penicillin = await item('Penicillin');
+    ids.boloTie = await item('Bolo Tie');
+    ids.otherPage = (await serviceInsert('profiles', { kind: 'bar', handle: `elsewhere.${run}`, display_name: `Elsewhere ${run}`, is_public: true })).id;
+    ids.credited = await item('Gimlet', { origin_bar_profile_id: ids.otherPage });
+    ids.theirOwn = (await serviceInsert('items', { name: `Their own ${run}`, item_type: 'cocktail', bar_id: ids.otherBar })).id;
+    ids.night = (await serviceInsert('menus', { name: `October at Leone ${run}`, bar_id: ids.bar })).id;
+    ids.penRow = (await menuDrink(ids.night, ids.penicillin, 0)).id;
+    ids.boloRow = (await menuDrink(ids.night, ids.boloTie, 1)).id;
+    ids.creditedRow = (await menuDrink(ids.night, ids.credited, 2)).id;
+    ids.theirOwnRow = (await menuDrink(ids.night, ids.theirOwn, 3)).id;
+    ids.leone = (await serviceInsert('menu_run_parties', { menu_id: ids.night, kind: 'guest', name: 'Bar Leone', is_venue: true })).id;
+    ids.nightBrand = (await serviceInsert('menu_run_parties', { menu_id: ids.night, kind: 'brand', name: 'Smirnoff', sort_order: 1 })).id;
+  });
+
+  test('a typed-name guest: the drink is theirs on the sheet, and no bar page is touched', async () => {
+    const res = await mark(ids.penRow, ids.leone);
+    assert.ifError(res.error);
+    assert.deepEqual(res.data, [{ party_id: ids.leone }]);
+    assert.equal((await origin(ids.penicillin)).o, null);
+  });
+
+  test('only the guest, of this menu, by its editors', async () => {
+    const brand = await mark(ids.boloRow, ids.nightBrand);
+    assert.equal(brand.error?.code, '22023');
+    const elsewhere = await mark(ids.boloRow, ids.guest);
+    assert.equal(elsewhere.error?.code, '23503');
+    const floor = await users.floor.client.from('menu_drinks').update({ party_id: ids.leone }).eq('id', ids.boloRow).select('id');
+    assert.equal(floor.data?.length ?? 0, 0);
+    const outsider = await users.outsider.client.from('menu_drinks').update({ party_id: ids.leone }).eq('id', ids.boloRow).select('id');
+    assert.equal(outsider.data?.length ?? 0, 0);
+  });
+
+  test('linking the guest to a page credits the drinks marked theirs, as a suggestion', async () => {
+    await mark(ids.theirOwnRow, ids.leone);
+    await mark(ids.creditedRow, ids.leone);
+    const link = await users.maker.client.from('menu_run_parties').update({ profile_id: ids.guestPage }).eq('id', ids.leone);
+    assert.ifError(link.error);
+    assert.deepEqual(await origin(ids.penicillin), { o: ids.guestPage, s: 'suggested' });
+    assert.equal((await origin(ids.credited)).o, ids.otherPage, 'another bar’s credit stays');
+    assert.equal((await origin(ids.theirOwn)).o, null, 'only our own copy of a drink is credited');
+  });
+
+  test('with a page linked, marking credits and unmarking takes the suggestion off', async () => {
+    await mark(ids.boloRow, ids.leone);
+    assert.equal((await origin(ids.boloTie)).o, ids.guestPage);
+    await mark(ids.boloRow, null);
+    assert.deepEqual(await origin(ids.boloTie), { o: null, s: null });
+  });
+
+  test('a verified credit is never moved', async () => {
+    await db.query("UPDATE public.items SET origin_bar_profile_id = $2, credit_status = 'verified' WHERE id = $1", [ids.boloTie, ids.guestPage]);
+    await mark(ids.boloRow, ids.leone);
+    await mark(ids.boloRow, null);
+    assert.deepEqual(await origin(ids.boloTie), { o: ids.guestPage, s: 'verified' });
+  });
+
+  test('a credit set by hand stays when the mark comes off', async () => {
+    ids.handSet = (await serviceInsert('items', { name: `Leone Highball ${run}`, item_type: 'cocktail', bar_id: ids.bar, origin_bar_profile_id: ids.guestPage })).id;
+    const row = await menuDrink(ids.night, ids.handSet, 5);
+    assert.equal(row.party_id, ids.leone, 'credited to their page: theirs');
+    await mark(row.id, null);
+    assert.deepEqual(await origin(ids.handSet), { o: ids.guestPage, s: 'suggested' });
+  });
+
+  test('a drink added to the menu that is credited to the linked page starts as theirs', async () => {
+    ids.sour = (await serviceInsert('items', { name: `Leone Sour ${run}`, item_type: 'cocktail', bar_id: ids.bar, origin_bar_profile_id: ids.guestPage })).id;
+    const row = await menuDrink(ids.night, ids.sour, 4);
+    assert.equal(row.party_id, ids.leone);
+  });
+
+  test('taking the guest off the sheet takes their suggested credits off', async () => {
+    const res = await users.maker.client.from('menu_run_parties').delete().eq('id', ids.leone);
+    assert.ifError(res.error);
+    assert.equal((await origin(ids.penicillin)).o, null);
+    const { rows } = await db.query('SELECT count(*)::int AS n FROM public.menu_drinks WHERE menu_id = $1 AND party_id IS NOT NULL', [ids.night]);
+    assert.equal(rows[0].n, 0);
+  });
+});
