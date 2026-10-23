@@ -37,7 +37,6 @@ import { DrinkHero, phoneHeroHeight } from './DrinkHero';
 import { DrinkMoreMenu } from './DrinkMoreMenu';
 import { GlassSheet } from './GlassSheet';
 import type { ShownPicture } from './PictureViewer';
-import { SketchColourSheet } from './SketchColour';
 import { StrengthSheet } from './StrengthSheet';
 import { useDrinkActions } from './useDrinkActions';
 import { useDrinkFacts } from './useDrinkFacts';
@@ -46,7 +45,7 @@ export interface DrinkScreenProps {
   item: DatabaseItem;
   inStudyPile: boolean;
   onToggleStudyPile: () => void;
-  /** The drink's own people (its venue's team, its creator): Edit, the spec's pencils and Colour. */
+  /** The drink's own people (its venue's team, its creator): Edit. The page itself stays a read view; changes happen in the editor. */
   canEdit: boolean;
   /** A catalog admin on someone else's drink: a visitor's page with one Fix as admin in More. */
   adminFix?: boolean;
@@ -101,7 +100,6 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   const [batchOpen, setBatchOpen] = useState(!!openBatch);
   const [strengthOpen, setStrengthOpen] = useState(false);
   const [glassOpen, setGlassOpen] = useState(false);
-  const [colourOpen, setColourOpen] = useState(false);
   const role = useEffectiveRole(item.bar_id);
   const teamRole = useTeamRole(preview ? null : item.bar_id);
   // The venue's own team sees its staff rows, in venue mode (decision b49). Viewing as a lower role, the app's
@@ -177,7 +175,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
     venueName: teamRole !== null ? (venue?.name ?? null) : null,
   };
   const sections = useDrinkSections(bodyProps);
-  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} onColour={canEdit && !preview ? () => setColourOpen(true) : undefined} />;
+  const hero = (h: number) => <DrinkHero name={item.name} pictures={pictures} glass={glassKey} itemId={item.id} palette={pictures[0]?.palette} height={h} fade={!wide} />;
   const more = preview ? null : <DrinkMoreMenu itemId={item.id} name={item.name} canEdit={canEdit} adminFix={adminFix && !preview} onEdit={onEdit} wide={wide} onShare={viewingAs ? share : undefined} teamRole={teamRole} />;
   const heroScheme = glassOver(pictures[0]);
 
@@ -228,9 +226,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
       {toMake.sheet}
       {actions.sheets}
       {glassOpen ? (
-        <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} canEditDrink={canEdit} accent={venue?.accent ?? undefined} />
+        <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing={false} accent={venue?.accent ?? undefined} />
       ) : null}
-      {colourOpen ? <SketchColourSheet visible onClose={() => setColourOpen(false)} itemId={item.id} name={item.name} accent={venue?.accent ?? undefined} /> : null}
       {canBatch && batchOpen ? (
         <BatchSheet
           visible

@@ -44,7 +44,8 @@ interface Options {
  * dropdown items. Strength comes from the server's figures for every role;
  * the line-by-line sheet needs the amounts.
  */
-export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefaults, openStrength, openGlass, specLocked, measures, makers = [] }: Options) {
+/** The drink's glass and ice as the Glass sheet reads them: the drink page's facts and the editor's Glass and ice row. */
+export function useDrinkGlass(item: Pick<DatabaseItem, 'id' | 'glassware_id' | 'ice_id'>) {
   const { data: dropdowns } = useDropdowns();
   const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
   const glassItem = find(dropdowns?.glassware as Named[], item.glassware_id);
@@ -57,6 +58,13 @@ export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefa
     ? { ...(shape ?? { id: model.id, icon_key: null, bar_id: null }), name: model.name, capacity_ml: model.capacity_ml ?? shape?.capacity_ml ?? null, iced_capacity_ml: model.capacity_ml ? null : (shape?.iced_capacity_ml ?? null), model }
     : shape;
   const ice = find(dropdowns?.iceTypes as Named[], item.ice_id) ?? null;
+  return { glass, ice, model };
+}
+
+export function useDrinkFacts(item: DatabaseItem, { lines, amounts, dilutionDefaults, openStrength, openGlass, specLocked, measures, makers = [] }: Options) {
+  const { data: dropdowns } = useDropdowns();
+  const find = (list: Named[] | undefined, id: string | null | undefined) => (id ? list?.find((x) => x.id === id) : undefined);
+  const { glass, ice, model } = useDrinkGlass(item);
   const methodIce = find(dropdowns?.iceTypes as Named[], item.method_ice_id) ?? null;
   // How the ice sits (20261029500000), by each layer's name; a layer whose ice is gone drops out.
   const build = (readIceBuild(item.ice_build) ?? []).map((l) => ({ ...l, ice: find(dropdowns?.iceTypes as Named[], l.ice)?.name ?? '' })).filter((l) => l.ice);

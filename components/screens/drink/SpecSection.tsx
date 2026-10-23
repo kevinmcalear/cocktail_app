@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, LockedSection, SpecRow, useDs } from '@/components/ds';
@@ -7,7 +7,6 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { HouseMadeSheet } from './HouseMadeSheet';
-import { SwapLineSheet, useSwapToast } from './SwapLineSheet';
 import { ToolsSheet, type ToolsSheetProps } from '@/components/tools/ToolsSheet';
 import { useMode } from '@/hooks/useMode';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
@@ -75,19 +74,9 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
   const [convert, setConvert] = useState<ToolsSheetProps['amount']>(null);
   // A house-made line opens in place (board drink-sheet-housemade); anything else goes to its page.
   const [houseLine, setHouseLine] = useState<(typeof lines)[number] | null>(null);
-  // The drink's own people tap a line to fix it (Kitty's "we pour Y, not X"); a catalog admin fixes from More. A venue's drink is fixed in venue mode, not from home.
+  // The drink's own people fix the spec in the editor (More › Edit), never from the read view; anyone else can make it their own riff. A venue's drink is fixed in venue mode, not from home.
   const homeVenueDrink = useMode().mode === 'home' && !!barId;
   const canEdit = useItemEditAccess(!preview && !homeVenueDrink ? { id: itemId, bar_id: barId } : null) === 'edit';
-  const [swapLine, setSwapLine] = useState<(typeof lines)[number] | null>(null);
-  // After a fix: a toast with Undo (board KittyDone).
-  const swapped = useSwapToast();
-  // The changed line is raised for a moment, so the eye finds it (board KittyDone).
-  const [lit, setLit] = useState<string | null>(null);
-  useEffect(() => {
-    if (!lit) return;
-    const t = setTimeout(() => setLit(null), 4000);
-    return () => clearTimeout(t);
-  }, [lit]);
   const open = (l: (typeof lines)[number]) => (l.houseMade ? setHouseLine(l) : router.push(`/ingredient/${l.ingredientId}` as never));
   const opensAt = (level: number | undefined) => (level ? roleLabel(level) : 'a higher role');
 
@@ -143,18 +132,11 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
             houseMade={l.houseMade}
             note={l.note ?? undefined}
             flag={missing.includes(l.key) ? 'Not on your shelf' : undefined}
-            // An editor's line is one button that opens its fix (board KittyDrink); everyone else's amount opens the conversions.
-            fix={canEdit && !!l.ingredientId}
-            highlight={lit === l.key}
-            onPressAmount={access.amounts && l.value !== null && !preview && !canEdit ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
-            onPress={l.ingredientId && !preview ? () => (canEdit ? setSwapLine(l) : open(l)) : undefined}
+            // The amount opens the conversions; the rest of the line opens the ingredient.
+            onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
+            onPress={l.ingredientId && !preview ? () => open(l) : undefined}
           />
         ))}
-        {canEdit && lines.some((l) => l.ingredientId) ? (
-          <Caption tone="muted" style={styles.fixHint}>
-            Something wrong? Tap a line to fix it.
-          </Caption>
-        ) : null}
       </View>
       {/* Not yours to fix: one way to change it, as your own riff (board create-eddie-oct16). */}
       {riff && !canEdit && !preview ? (
@@ -166,24 +148,6 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
       {make}
       {children}
       {houseLine ? <HouseMadeSheet line={houseLine} onClose={() => setHouseLine(null)} /> : null}
-      {swapLine ? (
-        <SwapLineSheet
-          itemId={itemId}
-          barId={barId}
-          line={swapLine}
-          amounts={access.amounts}
-          onClose={() => setSwapLine(null)}
-          onSaved={(done) => {
-            setSwapLine(null);
-            swapped(done);
-            setLit(done.lineKey);
-          }}
-          onOpen={() => {
-            setSwapLine(null);
-            router.push(`/ingredient/${swapLine.ingredientId}` as never);
-          }}
-        />
-      ) : null}
       {convert ? <ToolsSheet visible onClose={() => setConvert(null)} tool="convert" amount={convert} scheme="dark" /> : null}
       {!access.prep && levels ? (
         <LockedSection title="Prep notes" unlocked={false} opensAt={opensAt(levels.prep)}>
@@ -200,6 +164,5 @@ const styles = StyleSheet.create({
   title: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm, flexShrink: 1, flexWrap: 'wrap' },
   ratio: { flexDirection: 'row', height: 6, borderRadius: radius.pill, overflow: 'hidden', gap: 2 },
   lockNote: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  fixHint: { paddingTop: space.sm },
   riff: { gap: space.sm },
 });

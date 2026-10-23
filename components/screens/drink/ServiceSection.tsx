@@ -1,12 +1,10 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, DrinkImage, LockedSection, PressableScale, Tag, TextLink, useDs } from '@/components/ds';
+import { Body, Caption, DrinkImage, LockedSection, PressableScale, Tag, TextLink, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useServiceNotes } from '@/hooks/useServiceNotes';
-import { useSetLineService, useSetServiceStyle } from '@/hooks/useServiceSpec';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { pictureTag, type ItemImageLink } from '@/lib/itemImages';
 import { roleLabel } from '@/lib/roles';
@@ -15,7 +13,6 @@ import { EMPTY_SERVICE_NOTES } from '@/lib/serviceNotes';
 import { SERVICE_OPENS_AT, serviceShots, shotCaption, type ServiceShot } from '@/lib/servicePhotos';
 import type { SpecLine } from '@/lib/spec';
 
-import { ServiceNotesSheet } from './ServiceNotesSheet';
 import { ServiceSpec } from './ServiceSpec';
 
 interface ServiceSectionProps {
@@ -23,8 +20,6 @@ interface ServiceSectionProps {
   barId: string | null;
   name: string;
   links: ItemImageLink[] | null | undefined;
-  /** The viewer can edit this drink (useCanEditItem). */
-  canEdit: boolean;
   /** Glassware icon, drawn when a photo has no subject. */
   glass: string | null;
   /** The spec as this role sees it, for what's batched and what's added at the station. */
@@ -43,19 +38,16 @@ interface ServiceSectionProps {
  * garnish goes on and the hand-off, what's poured from the batch and what's
  * added at the station, then every service angle (a sketch until someone
  * photographs it) and the way into the full-screen service view. Venue drinks
- * open the section at Employee; the split opens with the amounts.
+ * open the section at Employee; the split opens with the amounts. Read only:
+ * how it goes out, the split and the notes are set in the editor's Service.
  */
-export function ServiceSection({ itemId, barId, name, links, canEdit, glass, lines, showLines, splitOpensAt, serviceStyle, preview }: ServiceSectionProps) {
+export function ServiceSection({ itemId, barId, name, links, glass, lines, showLines, splitOpensAt, serviceStyle, preview }: ServiceSectionProps) {
   const ds = useDs();
   const router = useRouter();
   const realRole = useEffectiveRole(barId);
-  const setLine = useSetLineService(itemId);
-  const setStyle = useSetServiceStyle(itemId);
   const unlocked = !barId || (preview?.role ?? realRole) >= SERVICE_OPENS_AT;
   const { data: notes = EMPTY_SERVICE_NOTES } = useServiceNotes(itemId, barId, unlocked && !preview);
-  const [editing, setEditing] = useState(false);
   const shots = serviceShots(links);
-  const canSetSpec = !preview && canEdit && lines.length > 0;
   const open = (angle?: string) => router.push({ pathname: '/cocktail/[id]/service', params: { id: itemId, ...(angle ? { angle } : {}) } } as unknown as Href);
 
   return (
@@ -83,20 +75,14 @@ export function ServiceSection({ itemId, barId, name, links, canEdit, glass, lin
           </View>
         </View>
       ) : null}
-      {canEdit && barId && !preview ? (
-        <Button label={notes.garnish || notes.handoff.length ? 'Edit service notes' : 'Add garnish and hand-off notes'} variant="secondary" onPress={() => setEditing(true)} style={styles.edit} />
-      ) : null}
       {lines.length ? (
         <ServiceSpec
           lines={lines}
           style={isServiceStyle(serviceStyle) ? serviceStyle : null}
           showLines={showLines}
-          canEdit={canSetSpec}
-          onSetLine={(key, atService) => setLine.mutate({ key, atService })}
-          onSetStyle={(style) => setStyle.mutate(style)}
+          canEdit={false}
         />
       ) : null}
-      {setLine.error || setStyle.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
       <Body tone="muted">How it should look when it goes out.</Body>
       <View style={styles.grid}>
         {shots.map((shot) => (
@@ -110,7 +96,6 @@ export function ServiceSection({ itemId, barId, name, links, canEdit, glass, lin
         </View>
       ) : null}
       {preview ? null : <TextLink label="Open the service view" onPress={() => open()} />}
-      {editing && barId ? <ServiceNotesSheet itemId={itemId} barId={barId} name={name} notes={notes} onClose={() => setEditing(false)} /> : null}
     </LockedSection>
   );
 }
@@ -143,7 +128,6 @@ const styles = StyleSheet.create({
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, paddingVertical: space.xs },
   dot: { width: 6, height: 6, borderRadius: radius.pill, marginTop: 9 },
   flex: { flex: 1 },
-  edit: { alignSelf: 'flex-start' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   tile: { flexGrow: 1, gap: space.xs },
   caption: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs },
