@@ -11,14 +11,13 @@ import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useRoleMatrix, type RoleMatrixRow } from '@/hooks/useVenueRoles';
-import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
 import { defaultColumns, LENS_GROUPS, lensValue, type LensRow } from '@/lib/roleLens';
-import { canManageTeam } from '@/lib/team';
 
 const LEGEND: MatrixLegend = {
   yes: 'Opens',
   no: 'Locked: stays on the page, collapsed, and says who opens it',
-  lock: 'Set by the base level',
+  lock: 'Follows the built-in role',
 };
 
 /**
@@ -37,6 +36,7 @@ export function RoleLensScreen({ itemId, barId, name }: { itemId: string; barId:
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const barName = venue?.name ?? 'this venue';
   const mine = useEffectiveRole(barId);
+  const manage = useCanManageStaff(barId);
   const matrix = useRoleMatrix(barId);
   const columns: RoleMatrixRow[] = matrix.data?.length ? matrix.data : defaultColumns();
   const drink = name ?? 'this drink';
@@ -62,7 +62,7 @@ export function RoleLensScreen({ itemId, barId, name }: { itemId: string; barId:
             subtitle={
               <Body tone="muted">{`Every section of ${drink} and who opens it at ${barName}: the base levels and the venue’s own roles. It follows Roles and access, so changing a role there changes this.`}</Body>
             }
-            trailing={barId && canManageTeam(mine) ? <Button label="Roles and access" variant="secondary" onPress={() => router.push(`/settings/bar/${barId}/roles` as Href)} /> : null}
+            trailing={barId && manage ? <Button label="Roles and access" variant="secondary" onPress={() => router.push(`/settings/bar/${barId}/roles` as Href)} /> : null}
           />
           {matrix.error ? <Caption tone="muted">Couldn’t load this venue’s roles, so these are the default levels.</Caption> : null}
           <RoleMatrixTable

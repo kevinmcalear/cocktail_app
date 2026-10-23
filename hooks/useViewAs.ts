@@ -1,6 +1,8 @@
 import { useBars } from '@/hooks/useBars';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { effectiveRole } from '@/lib/roles';
 import { supabase } from '@/lib/supabase';
+import { canManageTeam } from '@/lib/team';
 import { useUserId } from '@/ctx/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -62,22 +64,35 @@ export function useViewAs({ fresh = false }: { fresh?: boolean } = {}) {
 
 /** Effective role at this venue under view-as (no venue: a guest's). */
 export function useEffectiveRole(barId: string | null) {
+  return useRoleAt(barId).role;
+}
+
+/**
+ * The role at this venue and whether View as is previewing a lower one there.
+ * View as is one setting across venues, so a venue where the person's real
+ * role is at or under it isn't previewed: the server applies their own
+ * grants and revokes there, and so should the app.
+ */
+export function useRoleAt(barId: string | null | undefined): { role: number; previewing: boolean } {
   const { data: bars } = useBars();
   const { viewAsRoleLevel } = useViewAs();
   const real = (barId ? bars?.find((b) => b.bar_id === barId)?.role_level : undefined) ?? 10;
-  return effectiveRole(real, viewAsRoleLevel);
+  const role = effectiveRole(real, viewAsRoleLevel);
+  return { role, previewing: role < real };
 }
 
 /**
  * Whether to offer editing an item, following the items RLS rule
  * (private.can_write).
  *
- * - Venue items: a Drink Creator (35) or above at the item's own venue, not
- *   the selected one. View-as caps the role.
- * - Shared items (no venue): their creator, a Drink Creator or above at the
- *   bar a drink is credited to, or a catalog admin. The client can't see
- *   catalog admins or credits, so this asks the can_edit_item RPC. A view-as
- *   role of Bartender (30) or lower hides editing here too.
+ * - Venue items: the create and edit drinks permission at the item's own
+ *   venue, not the selected one (any role the venue gives it). Under View as,
+ *   the previewed built-in role decides.
+ * - Shared items (no venue): their creator, someone with the create and edit
+ *   drinks permission at the bar a drink is credited to, or a catalog admin.
+ *   The client can't see catalog admins or credits, so this asks the
+ *   can_edit_item RPC. A view-as role of Bartender (30) or lower hides
+ *   editing here too.
  *
  * 'edit' is the drink's own people: its page shows Edit and its pencils.
  * 'admin' is a catalog admin on someone else's drink: the page stays a
@@ -85,9 +100,7 @@ export function useEffectiveRole(barId: string | null) {
  */
 export function useItemEditAccess(item: { id: string; bar_id: string | null } | null | undefined): 'edit' | 'admin' | null {
   const userId = useUserId();
-  const { data: bars } = useBars();
   const barId = item?.bar_id ?? null;
-  const venueRole = useEffectiveRole(barId);
   const { viewAsRoleLevel } = useViewAs();
   const shared = !!item && !barId;
 
@@ -110,16 +123,34 @@ export function useItemEditAccess(item: { id: string; bar_id: string | null } | 
     },
   });
 
+  // The venue that decides: the drink's own, or the bar a shared drink is credited to.
+  const decidingBarId = barId ?? sharedAccess?.creditedBarId ?? null;
+  const deciding = useRoleAt(decidingBarId);
+  const caps = useCapabilities(decidingBarId).data;
+  // The edit_drinks permission there (a role the bar made can have it); under View as, the previewed built-in role.
+  const editsThere = !!decidingBarId && (!deciding.previewing && caps ? caps.includes('edit_drinks') : deciding.role > 30);
+
   if (!item) return null;
-  if (barId) return venueRole > 30 ? 'edit' : null;
+  if (barId) return editsThere ? 'edit' : null;
   if (!sharedAccess || (viewAsRoleLevel != null && viewAsRoleLevel <= 30)) return null;
-  const creditedRole = bars?.find((b) => b.bar_id === sharedAccess.creditedBarId)?.role_level ?? 10;
-  return sharedAccess.creator || creditedRole >= 35 ? 'edit' : 'admin';
+  return sharedAccess.creator || editsThere ? 'edit' : 'admin';
 }
 
 /** Whether the viewer may edit the item at all, as its own people or as a catalog admin. */
 export function useCanEditItem(item: { id: string; bar_id: string | null } | null | undefined) {
   return useItemEditAccess(item) !== null;
+}
+
+/**
+ * Whether to offer inviting, changing roles and removing people at a venue:
+ * the staff permission, which an Admin always has and a venue can give any
+ * role. Under View as, the previewed built-in role decides.
+ */
+export function useCanManageStaff(barId: string | null | undefined): boolean {
+  const caps = useCapabilities(barId).data;
+  const { role, previewing } = useRoleAt(barId);
+  if (!barId) return false;
+  return !previewing && caps ? caps.includes('staff') : canManageTeam(role);
 }
 
 export function useMaxRealRole() {

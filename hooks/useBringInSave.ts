@@ -22,6 +22,8 @@ export interface DrinkToMake {
   draft: WizardDraft;
   prepNames: string[];
   sketch?: SketchInputs;
+  /** Update it: the bar's drink with this name takes the spec (useCreateDrink), and no drink is made. */
+  updateId?: string | null;
 }
 
 export type MenuRowToSave = { section: string | null; drink: MenuDrink } | { section: string | null; make: DrinkToMake; price: string | null };
@@ -74,11 +76,17 @@ export function useBringInSave(barId: string | null) {
       let menuId: string | null = null;
       let title = '';
 
-      const make = async ({ draft, prepNames, sketch: drawn }: DrinkToMake): Promise<string> => {
+      const make = async ({ draft, prepNames, sketch: drawn, updateId }: DrinkToMake): Promise<string> => {
         // A drink off a menu wasn't drawn in its check: drawn here, with the bar's own glasses.
         const sketch = drawn ?? draftSketchInputs(sketchLook(draft, barVariants(glasses)));
-        const result = await createDrink.mutateAsync({ draft, barId: barId, myProfileId: me?.id ?? null, sketch });
+        const result = await createDrink.mutateAsync({ draft, barId: barId, myProfileId: me?.id ?? null, sketch, updateId });
         warnings.push(...result.warnings);
+        if (updateId) {
+          // The bar's own drink, updated: never in the batch, so Undo all can't take it (or what its spec now uses) away.
+          drinkIds.push(result.id);
+          summary.drinksHad += 1;
+          return result.id;
+        }
         itemIds.push(result.id);
         drinkIds.push(result.id);
         summary.drinksNew += 1;

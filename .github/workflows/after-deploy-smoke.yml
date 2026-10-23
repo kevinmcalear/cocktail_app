@@ -1,0 +1,113 @@
+# After each production deploy, check that babyvom.it actually works in a
+# browser (smoke/smoke.mjs): the pages carry the app's scripts and they load,
+# the app starts signed out, a public drink page shows data from Supabase, and
+# nothing logs an error, at phone and desktop widths. On 22 Oct 2026 the site
+# served pages with no JavaScript for about three hours and nobody noticed.
+#
+# Signed out and read-only, no secrets. A failure fails the run and opens (or
+# comments on) an issue labelled smoke-failing, since a run triggered by
+# Vercel's deployment event emails nobody. The next pass closes every open
+# smoke-failing issue.
+#
+# After a deploy it first waits (up to 5 minutes) for babyvom.it/commit.txt to
+# name the deployed commit, so it checks the new build, not the old one. The
+# deployment's own URL is behind Vercel Authentication, so it is skipped.
+name: After-deploy smoke
+
+on:
+  # Vercel reports each deployment to GitHub; production ones say "Production".
+  deployment_status:
+  # A backstop for a deploy whose event was missed, or a break that comes later.
+  schedule:
+    - cron: '23 7 * * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Another URL to check as well as https://babyvom.it
+        required: false
+  # Changes to the check itself run it against production first.
+  pull_request:
+    paths:
+      - 'smoke/**'
+      - '.github/workflows/after-deploy-smoke.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  smoke:
+    name: Smoke check babyvom.it
+    if: github.event_name != 'deployment_status' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    # On the job, under its `if`, so skipped runs (deployment statuses other
+    # than success) never join the group. One check at a time; a run in
+    # progress is never cancelled (that would open an issue), and a newer
+    # pending run replaces an older pending one, which checks the newer build.
+    concurrency:
+      group: after-deploy-smoke-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+      cancel-in-progress: false
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: smoke
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: smoke/package-lock.json
+      - run: npm ci --prefix smoke --no-audit --no-fund
+      # ImageVersion is the runner image's version: a new image misses the
+      # cache and installs Chrome's system libraries again with the browser.
+      - id: pw
+        run: |
+          echo "version=$(node -p "require('./smoke/node_modules/playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "image=${ImageOS:-unknown}-${ImageVersion:-unknown}" >> "$GITHUB_OUTPUT"
+      - id: browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-shell-${{ steps.pw.outputs.image }}-${{ steps.pw.outputs.version }}
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        run: smoke/node_modules/.bin/playwright install --with-deps --only-shell chromium
+      # The deployment's own URL is checked too when it isn't behind Vercel
+      # Authentication (today it is, so the script notes it and skips it).
+      # A step timeout fails the step, so the issue steps below still run.
+      - name: Smoke check
+        timeout-minutes: 13
+        env:
+          EXTRA_URL: ${{ github.event.deployment_status.target_url || inputs.url }}
+          EXPECT_COMMIT: ${{ github.event.deployment.sha }}
+          # Read-only: lets the script ask GitHub whether the commit babyvom.it
+          # serves is newer than the deployed one.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node smoke/smoke.mjs --url https://babyvom.it ${EXTRA_URL:+--url "$EXTRA_URL"} ${EXPECT_COMMIT:+--expect-commit "$EXPECT_COMMIT"} --out smoke-results
+      - if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-results
+          path: smoke-results
+          retention-days: 14
+      - name: Open or update the failure issue
+        if: (failure() || cancelled()) && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body="$( [ -f smoke-results/summary.md ] && cat smoke-results/summary.md || echo 'The check did not finish (it failed early or timed out).')
+
+          Run: $RUN (screenshots and console log in its artifact)"
+          gh label create smoke-failing -R "$GITHUB_REPOSITORY" --color B60205 --description 'The after-deploy smoke check of babyvom.it is failing' 2>/dev/null || true
+          n=$(gh issue list -R "$GITHUB_REPOSITORY" --state open --label smoke-failing --json number --jq 'map(.number) | min // empty')
+          if [ -n "$n" ]; then gh issue comment "$n" -R "$GITHUB_REPOSITORY" --body "$body"
+          else gh issue create -R "$GITHUB_REPOSITORY" --title 'babyvom.it smoke check is failing' --label smoke-failing --body "$body" --assignee kevinmcalear; fi
+      - name: Close the failure issues
+        if: success() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          for n in $(gh issue list -R "$GITHUB_REPOSITORY" --state open --label smoke-failing --json number --jq '.[].number'); do
+            gh issue close "$n" -R "$GITHUB_REPOSITORY" --comment "Passing again: $RUN"
+          done

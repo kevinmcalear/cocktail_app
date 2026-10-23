@@ -226,10 +226,11 @@ describe('a new account with no bars', () => {
   });
 
   test('cannot move the shared catalog into their own bar', async () => {
-    const { error } = await users.outsider.client.rpc('assign_item_to_bar', {
-      p_item_id: ids.legacyGlobal, p_bar_id: ids.outsiderBar,
-    });
-    assert.ok(error);
+    const { data, error } = await users.outsider.client.from('items').update({ bar_id: ids.outsiderBar }).eq('id', ids.legacyGlobal).select('id');
+    // Refused by RLS: either no row matched, or the new row failed the check.
+    assert.ok(error ? error.code === '42501' : data.length === 0, error?.message);
+    const { rows } = await db.query('SELECT bar_id FROM public.items WHERE id = $1', [ids.legacyGlobal]);
+    assert.equal(rows[0].bar_id, null);
   });
 
   test('cannot edit legacy menus, other bars\' menu drinks or legacy templates', async () => {
@@ -426,10 +427,11 @@ describe('members of a bar', () => {
   });
 
   test('an admin still cannot move the shared catalog into their bar', async () => {
-    const { error } = await users.owner.client.rpc('assign_item_to_bar', {
-      p_item_id: ids.legacyGlobal, p_bar_id: ids.barOne,
-    });
-    assert.ok(error);
+    const { data, error } = await users.owner.client.from('items').update({ bar_id: ids.barOne }).eq('id', ids.legacyGlobal).select('id');
+    // Refused by RLS: either no row matched, or the new row failed the check.
+    assert.ok(error ? error.code === '42501' : data.length === 0, error?.message);
+    const { rows } = await db.query('SELECT bar_id FROM public.items WHERE id = $1', [ids.legacyGlobal]);
+    assert.equal(rows[0].bar_id, null);
   });
 });
 

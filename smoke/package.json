@@ -1,0 +1,10 @@
+{
+  "name": "smoke",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "After-deploy smoke check of the web app (smoke/smoke.mjs). Own manifest so the app does not carry Playwright.",
+  "dependencies": {
+    "playwright": "1.64.1"
+  }
+}

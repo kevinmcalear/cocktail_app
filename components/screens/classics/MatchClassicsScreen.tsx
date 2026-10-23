@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, Tag, Title, useDs, useGutter } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { useClassicSuggestions, useLinkClassic, type ClassicSuggestion } from '@/hooks/useClassics';
 
 /** Editors link a venue's drinks to catalog classics in one pass, so they appear in "best Martini" lists. */
@@ -38,7 +39,9 @@ function MatchClassicsPage() {
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const { active } = useActiveVenue();
-  const editor = (active?.roleLevel ?? 0) > 30;
+  // Linking writes the venue's drinks: the create and edit drinks permission, any role the venue gives it.
+  const caps = useCapabilities(active?.id);
+  const editor = !!caps.data?.includes('edit_drinks');
   const { suggestions, unmatched, isLoading, error } = useClassicSuggestions(editor ? active?.id : null);
   const link = useLinkClassic();
   const exact = suggestions.filter((s) => s.match.exact);
@@ -46,6 +49,8 @@ function MatchClassicsPage() {
 
   let note: string | null = null;
   if (!active) note = 'Choose a venue first.';
+  else if (caps.isLoading) note = 'Loading…';
+  else if (caps.error) note = 'Couldn’t check what you can do here. Check your connection and try again.';
   else if (!editor) note = `Only editors at ${active.name} can link drinks to classics.`;
   else if (error) note = `Couldn't load your drinks: ${error.message}`;
   else if (!isLoading && !suggestions.length) note = 'Every drink that looks like a classic is linked.';

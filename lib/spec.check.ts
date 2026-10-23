@@ -60,5 +60,7 @@ const levels = { generic: 20, brand: 30, measurement: 30, prep: 40 };
 assert.deepEqual(specAccess(10, levels, true), { names: false, amounts: false, prep: false });
 assert.deepEqual(specAccess(30, levels, true), { names: true, amounts: true, prep: false });
 assert.deepEqual(specAccess(10, levels, false), { names: true, amounts: true, prep: true }, 'personal drinks show everything');
+assert.deepEqual(specAccess(20, levels, true, { granted: true, revoked: false }), { names: true, amounts: true, prep: false }, 'a specs grant opens names and amounts');
+assert.deepEqual(specAccess(30, levels, true, { granted: false, revoked: true }), { names: true, amounts: false, prep: false }, 'a specs revoke closes amounts, not names');
 
 console.log('spec: ok');

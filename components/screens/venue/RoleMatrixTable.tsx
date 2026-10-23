@@ -5,33 +5,45 @@ import { Body, Caption, PressableScale, Surface, useBreakpoint, useDs } from '@/
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { RoleMatrixRow } from '@/hooks/useVenueRoles';
+import { pressedProps } from '@/lib/a11yState';
 import { withAlpha } from '@/lib/color';
-import { CAPABILITY_GROUPS, cell, columnCaption, type Cell } from '@/lib/roleMatrix';
+import { CAPABILITY_GROUPS, cell, columnCaption, isChangedBuiltIn, isLocked, type Cell } from '@/lib/roleMatrix';
 import { roleLabel } from '@/lib/roles';
 
-const LABEL_WIDTH = 240;
+const LABEL_WIDTH = 200;
 /** Phones keep room for two or three role columns beside the names (drink-role-lens-phone). */
 const LABEL_WIDTH_PHONE = 150;
 const COLUMN = 92;
+const COLUMN_MAX = 136;
 const MARK = 14;
-const CHANGED_DOT = 7;
+const CHANGED_DOT = 6;
 
 function columnName(c: RoleMatrixRow): string {
   return c.role_id ? (c.name ?? '') : roleLabel(c.base_level);
 }
 
-/** Can, can't, or changed from the base level: a dot, a ring, and a raised box with a corner dot. */
-function Mark({ value, label }: { value: Cell; label: string }) {
+/** Can, can't, and changed from where it started: a dot, a ring, and a raised box with a gold corner dot. Always on: a small lock. */
+function Mark({ value, label, locked, onPress, disabled }: { value: Cell; label: string; locked?: boolean; onPress?: () => void; disabled?: boolean }) {
   const ds = useDs();
-  return (
-    <View
-      role="img"
-      accessibilityLabel={label}
-      style={[styles.cell, value.changed ? { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong, borderWidth: 1 } : null]}
-    >
+  const inner = (
+    <>
       <View style={[styles.mark, value.can ? { backgroundColor: ds.c.ink } : { borderWidth: 1.5, borderColor: ds.c.faint }]} />
-      {value.changed ? <View style={[styles.changedDot, { backgroundColor: ds.c.ink }]} /> : null}
-    </View>
+      {value.changed ? <View style={[styles.changedDot, { backgroundColor: ds.accentText }]} /> : null}
+      {locked ? (
+        <View style={styles.lock}>
+          <IconSymbol name="lock.fill" size={11} color={ds.c.muted} />
+        </View>
+      ) : null}
+    </>
+  );
+  const box = [styles.cell, value.changed ? { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong, borderWidth: 1 } : null];
+  if (!onPress || locked) {
+    return <View role="img" accessibilityLabel={label} style={box}>{inner}</View>;
+  }
+  return (
+    <PressableScale role="button" accessibilityLabel={label} {...pressedProps(value.can)} disabled={disabled} onPress={onPress} style={box}>
+      {inner}
+    </PressableScale>
   );
 }
 
@@ -40,6 +52,7 @@ export interface MatrixRowSpec {
   id: string;
   label: string;
   detail?: string;
+  /** Follows the built-in role, whatever a venue changes (Who sees what's sections with no permission). */
   levelBound?: boolean;
 }
 
@@ -50,19 +63,26 @@ export interface MatrixLegend {
   lock: string;
 }
 
-const ROLES_LEGEND: MatrixLegend = { yes: 'Can', no: 'Can’t', lock: 'Set by the base level. Menu and Specs also follow Who sees what in venue settings.' };
+const ROLES_LEGEND: MatrixLegend = { yes: 'Can', no: 'Can’t', lock: 'An Admin always keeps this' };
 
 /**
- * What each role can do: base levels and the venue's own roles as columns,
- * capabilities as rows in three groups. Scrolls sideways when it doesn't fit.
- * Admins get an Edit button on each of the venue's roles. Who sees what on a
- * drink (drink-role-lens) passes its own rows, cells and words, and marks the
- * viewer's column You.
+ * What each role can do: built-in roles and the venue's own as columns,
+ * permissions as rows in three groups. Scrolls sideways when it doesn't fit.
+ * With onToggle every dot is a button that switches it for that role (an
+ * Admin's staff stays, with a lock); with onEdit the venue's roles have an
+ * Edit button, and with onReset a changed built-in role offers Reset to
+ * built in. Who sees what on a drink (drink-role-lens) passes its own rows,
+ * cells and words, and marks the viewer's column You.
  */
-export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_GROUPS, cellOf, label, heading = 'What they can do', legend = ROLES_LEGEND, isYou }: {
+export function RoleMatrixTable({ matrix, barName, onEdit, onToggle, onReset, canChange = () => true, busy, groups = CAPABILITY_GROUPS, cellOf, label, heading = 'What they can do', legend = ROLES_LEGEND, isYou }: {
   matrix: RoleMatrixRow[];
   barName: string;
   onEdit?: (role: RoleMatrixRow) => void;
+  onToggle?: (role: RoleMatrixRow, capability: string, on: boolean) => void;
+  onReset?: (role: RoleMatrixRow) => void;
+  /** Whether this viewer may change a column at all (only an Admin changes Admin roles); the others show as they are. */
+  canChange?: (role: RoleMatrixRow) => boolean;
+  busy?: boolean;
   groups?: { title: string; rows: MatrixRowSpec[] }[];
   cellOf?: (column: RoleMatrixRow, row: MatrixRowSpec) => Cell;
   label?: string;
@@ -73,6 +93,8 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
   const ds = useDs();
   const labelWidth = { width: useBreakpoint() === 'phone' ? LABEL_WIDTH_PHONE : LABEL_WIDTH };
   const value = cellOf ?? ((c: RoleMatrixRow, r: MatrixRowSpec) => cell(matrix, c, r.id));
+  // The Admin lock is a Roles and access rule; Who sees what has its own rows.
+  const lockable = !cellOf;
   return (
     <View style={styles.wrap}>
       <Surface style={styles.card}>
@@ -85,6 +107,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
               </View>
               {matrix.map((c) => {
                 const name = columnName(c);
+                const mine = canChange(c);
                 const head = (
                   <>
                     <Body style={[styles.center, styles.head]} numberOfLines={2}>{name}</Body>
@@ -98,7 +121,7 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
                 );
                 return (
                   <View key={c.role_id ?? c.base_level} role="columnheader" style={styles.column}>
-                    {c.role_id && onEdit ? (
+                    {c.role_id && onEdit && mine ? (
                       <PressableScale role="button" accessibilityLabel={`Edit ${name}`} onPress={() => onEdit(c)} style={[styles.edit, { borderColor: ds.c.line }]}>
                         {head}
                         <IconSymbol name="pencil" size={14} color={ds.c.muted} />
@@ -106,6 +129,11 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
                     ) : (
                       head
                     )}
+                    {onReset && mine && isChangedBuiltIn(c) ? (
+                      <PressableScale role="button" accessibilityLabel={`Reset ${name} to built in`} disabled={busy} onPress={() => onReset(c)} style={styles.reset}>
+                        <Caption color={ds.accentText} style={styles.center}>Reset to built in</Caption>
+                      </PressableScale>
+                    ) : null}
                   </View>
                 );
               })}
@@ -123,17 +151,29 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
                         {r.detail ? <Caption tone="muted">{r.detail}</Caption> : null}
                       </View>
                       {r.levelBound ? (
-                        <View role="img" accessibilityLabel="Set by the base level">
+                        <View role="img" accessibilityLabel="Follows the built-in role">
                           <IconSymbol name="lock.fill" size={14} color={ds.c.muted} />
                         </View>
                       ) : null}
                     </View>
                     {matrix.map((c) => {
                       const v = value(c, r);
-                      const words = `${v.can ? legend.yes : legend.no}${v.changed ? ', changed from its base level' : ''}`;
+                      const toggle = onToggle && canChange(c) ? onToggle : undefined;
+                      const locked = lockable && isLocked(c, r.id);
+                      // Roles and access reads Yes and No, as the board labels them; Who sees what uses its legend's words.
+                      const [yes, no] = lockable ? ['Yes', 'No'] : [legend.yes, legend.no];
+                      const words = locked
+                        ? `${yes}, always`
+                        : `${v.can ? yes : no}${v.changed ? ', changed from where it started' : ''}${toggle ? '. Tap to change' : ''}`;
                       return (
                         <View key={c.role_id ?? c.base_level} role="cell" style={styles.column}>
-                          <Mark value={v} label={`${columnName(c)}: ${r.label}: ${words}`} />
+                          <Mark
+                            value={v}
+                            label={`${columnName(c)}: ${r.label}: ${words}`}
+                            locked={locked}
+                            disabled={busy}
+                            onPress={toggle ? () => toggle(c, r.id, !v.can) : undefined}
+                          />
                         </View>
                       );
                     })}
@@ -154,13 +194,11 @@ export function RoleMatrixTable({ matrix, barName, onEdit, groups = CAPABILITY_G
           <Caption tone="muted">{legend.no}</Caption>
         </View>
         <View style={styles.key}>
-          <View style={[styles.keyChanged, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>
-            <View style={[styles.keyDot, { backgroundColor: ds.c.ink }]} />
-          </View>
-          <Caption tone="muted">Changed from its base level</Caption>
+          <View style={[styles.keyDot, { backgroundColor: ds.accentText }]} />
+          <Caption tone="muted">Changed from where it started</Caption>
         </View>
         <View style={styles.key}>
-          <IconSymbol name="lock.fill" size={14} color={ds.c.muted} />
+          <IconSymbol name="lock.fill" size={12} color={ds.c.muted} />
           <Caption tone="muted">{legend.lock}</Caption>
         </View>
       </View>
@@ -180,16 +218,18 @@ const styles = StyleSheet.create({
   label: { paddingVertical: space.sm, paddingRight: space.md },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   labelText: { flexShrink: 1, gap: 2 },
-  column: { flexGrow: 1, flexBasis: COLUMN, minWidth: COLUMN, alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs, paddingHorizontal: space.xs },
+  // A wide cap so long role names wrap and eight roles fit beside the names on a desktop (board fix 14).
+  column: { flexGrow: 1, flexBasis: COLUMN, minWidth: COLUMN, maxWidth: COLUMN_MAX, alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs, paddingHorizontal: space.xs },
   center: { textAlign: 'center' },
   you: { marginTop: 2, paddingHorizontal: space.sm, borderRadius: radius.pill },
-  edit: { alignItems: 'center', gap: 2, paddingVertical: space.xs, paddingHorizontal: space.sm, borderRadius: radius.control, borderWidth: 1 },
+  edit: { alignItems: 'center', gap: 2, paddingVertical: space.xs, paddingHorizontal: space.xs, borderRadius: radius.control, borderWidth: 1 },
+  reset: { marginTop: 2, paddingVertical: 2, paddingHorizontal: space.xs },
   cell: { width: 40, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   mark: { width: MARK, height: MARK, borderRadius: radius.pill },
-  changedDot: { position: 'absolute', top: 5, right: 5, width: CHANGED_DOT, height: CHANGED_DOT, borderRadius: radius.pill },
+  changedDot: { position: 'absolute', top: 5, right: 6, width: CHANGED_DOT, height: CHANGED_DOT, borderRadius: radius.pill },
+  lock: { position: 'absolute', top: 2, right: 2 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.lg, rowGap: space.sm },
   key: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1 },
   keyMark: { width: 12, height: 12, borderRadius: radius.pill },
-  keyChanged: { width: 22, height: 18, borderRadius: radius.mark, borderWidth: 1 },
-  keyDot: { position: 'absolute', top: 3, right: 3, width: 5, height: 5, borderRadius: radius.pill },
+  keyDot: { width: 6, height: 6, borderRadius: radius.pill },
 });

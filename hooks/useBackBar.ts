@@ -1,17 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useSwapSource } from '@/hooks/useBulk';
 import { useTonight } from '@/hooks/useTonight';
-import { ingredientsUsed, waitingForSpot, type NamedItem } from '@/lib/backBar';
+import { ingredientsUsed, waitingForSpot, type NamedItem, type UsedItem } from '@/lib/backBar';
 import { showMessage } from '@/lib/dialogs';
 import { supabase } from '@/lib/supabase';
-import type { BarZone, BarZoneKind, ItemLocation } from '@/types/backBar';
+import type { BackBarItem, BackBarSource, BarZone, BarZoneKind, ItemLocation } from '@/types/backBar';
 
 const zonesKey = (barId: string | null | undefined) => ['bar-zones', barId];
 const locationsKey = (barId: string | null | undefined) => ['item-locations', barId];
 
 const ZONE_COLUMNS = 'id, bar_id, name, kind, description, photo_url, plan_x, plan_y, plan_w, plan_h, sort_order';
+const stockKey = (barId: string | null | undefined) => ['back-bar-items', barId];
+const STOCK_COLUMNS = 'id, bar_id, item_id, source, from_name, added_at, item:items!item_id(id, name)';
 const LOCATION_COLUMNS = 'id, bar_id, item_id, zone_id, shelf, container, photo_url, par_amount, par_unit, sort_order, item:items!item_id(id, name)';
 
 /** The venue's zones (shelves, fridges, speed rail...), in their set order. Needs the `locations` capability. */
@@ -40,21 +42,55 @@ export function useItemLocations(barId: string | null | undefined) {
   });
 }
 
+/** What the venue says it stocks, newest first, with each item's name. Every member reads it. */
+export function useBackBarStock(barId: string | null | undefined) {
+  return useQuery({
+    queryKey: stockKey(barId),
+    enabled: !!barId,
+    queryFn: async (): Promise<BackBarItem[]> => {
+      const { data, error } = await supabase.from('back_bar_items').select(STOCK_COLUMNS).eq('bar_id', barId!).order('added_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as BackBarItem[];
+    },
+  });
+}
+
+/** Why a bottle is on the back bar besides the stock list: the bar made it, it has a spot, or a spec pours it. */
+export type BackBarReason = 'own' | 'spot' | 'pour';
+
 /**
- * The venue's back bar as item ids: its own bottles, what its specs already
- * pour, and what has a spot on its map. Empty at home (no venue).
+ * The venue's back bar in two parts: what's on its stock list, and what is
+ * there anyway (its own bottles, what has a spot on its map, what its specs
+ * already pour). Empty at home (no venue).
  */
-export function useBackBarIds(barId: string | null | undefined, catalog: readonly { id: string; bar_id?: string | null }[]): Set<string> {
+export function useBackBarParts(barId: string | null | undefined, catalog: readonly { id: string; bar_id?: string | null }[]): BackBarParts {
   const pours = useSwapSource(barId ?? null);
   const spots = useItemLocations(barId);
+  const stock = useBackBarStock(barId);
   return useMemo(() => {
-    const ids = new Set<string>();
-    if (!barId) return ids;
-    for (const d of pours.data?.drinks ?? []) for (const l of d.lines) if (l.ingredientId) ids.add(l.ingredientId);
-    for (const s of spots.data ?? []) ids.add(s.item_id);
-    for (const i of catalog) if (i.bar_id === barId) ids.add(i.id);
-    return ids;
-  }, [barId, pours.data, spots.data, catalog]);
+    const fixed = new Map<string, BackBarReason>();
+    const stocked = new Map<string, BackBarItem>();
+    if (!barId) return { fixed, stocked, ids: new Set<string>() };
+    for (const d of pours.data?.drinks ?? []) for (const l of d.lines) if (l.ingredientId) fixed.set(l.ingredientId, 'pour');
+    for (const s of spots.data ?? []) fixed.set(s.item_id, 'spot');
+    for (const i of catalog) if (i.bar_id === barId) fixed.set(i.id, 'own');
+    for (const s of stock.data ?? []) stocked.set(s.item_id, s);
+    return { fixed, stocked, ids: new Set([...fixed.keys(), ...stocked.keys()]) };
+  }, [barId, pours.data, spots.data, stock.data, catalog]);
+}
+
+export interface BackBarParts {
+  /** On the back bar anyway, and why. */
+  fixed: Map<string, BackBarReason>;
+  /** The stock list's rows by item id, so a line's Undo can put one back as it was. */
+  stocked: Map<string, BackBarItem>;
+  /** Both, as item ids. */
+  ids: Set<string>;
+}
+
+/** The venue's back bar as item ids: its stock list and everything that's there anyway. */
+export function useBackBarIds(barId: string | null | undefined, catalog: readonly { id: string; bar_id?: string | null }[]): Set<string> {
+  return useBackBarParts(barId, catalog).ids;
 }
 
 interface RecipeRow {
@@ -75,9 +111,10 @@ function useMenuIngredients(barId: string | null | undefined) {
   // Menu order, so the waiting list reads like the menu; sorted only for the cache key.
   const drinkIds = useMemo(() => [...new Set(drinks.map((d) => d.id))], [drinks]);
   const query = useQuery({
-    queryKey: ['menu-ingredients', barId, [...drinkIds].sort()],
+    // Named apart from the older cache entry, whose rows had no `drinks`.
+    queryKey: ['menu-ingredients-by-drink', barId, [...drinkIds].sort()],
     enabled: !!barId && drinkIds.length > 0,
-    queryFn: async (): Promise<NamedItem[]> => {
+    queryFn: async (): Promise<UsedItem[]> => {
       const recipeOf: Record<string, NamedItem[]> = {};
       const fetched = new Set<string>();
       let frontier = drinkIds;
@@ -100,15 +137,96 @@ function useMenuIngredients(barId: string | null | undefined) {
       return ingredientsUsed(drinkIds, recipeOf);
     },
   });
-  return { data: query.data ?? [], isLoading: menusLoading || query.isLoading, error: query.error };
+  return { data: query.data ?? [], drinks, isLoading: menusLoading || query.isLoading, error: query.error };
 }
 
-/** Ingredients the current menus need that have no place at the venue yet. */
+/** What has no place at the venue yet: bottles put on the back bar, then what the current menus pour. */
 export function useWaitingForSpot(barId: string | null | undefined) {
   const used = useMenuIngredients(barId);
   const locations = useItemLocations(barId);
-  const waiting = useMemo(() => waitingForSpot(used.data, locations.data ?? []), [used.data, locations.data]);
-  return { waiting, isLoading: used.isLoading || locations.isLoading };
+  const stock = useBackBarStock(barId);
+  // "Added just now" ages while the page stays open.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60 * 1000);
+    return () => clearInterval(t);
+  }, []);
+  const waiting = useMemo(() => {
+    const names = new Map(used.drinks.map((d) => [d.id, d.name]));
+    return waitingForSpot(stock.data ?? [], used.data, locations.data ?? [], (id) => names.get(id), now);
+  }, [stock.data, used.data, used.drinks, locations.data, now]);
+  return { waiting, isLoading: used.isLoading || locations.isLoading || stock.isLoading };
+}
+
+interface StockAdd {
+  item: NamedItem;
+  source: BackBarSource;
+  fromName?: string | null;
+  /** Undo puts a row back as it was, in its place on the list. */
+  addedAt?: string;
+}
+
+/**
+ * Put a bottle on the back bar's stock list, or take it off. Create and edit
+ * drinks, or Prep list and orders (the same people who place items). The
+ * list changes in the cache straight away, so the line's bottle lights at
+ * once; a failed write puts it back.
+ */
+export function useStockMutations(barId: string | null | undefined) {
+  const qc = useQueryClient();
+  const key = stockKey(barId);
+  const before = async () => {
+    await qc.cancelQueries({ queryKey: key });
+    return { before: qc.getQueryData<BackBarItem[]>(key) };
+  };
+  const rollback = (error: Error, _v: unknown, ctx?: { before?: BackBarItem[] }) => {
+    qc.setQueryData(key, ctx?.before);
+    onWriteError(error);
+  };
+  // A tap and its Undo save one after the other, in order (a delete must not
+  // pass the insert it undoes), and the list is read again after the last.
+  const queue = { mutationKey: ['stock-write', barId], scope: { id: `stock-write-${barId}` } };
+  const refresh = () => {
+    if (qc.isMutating({ mutationKey: queue.mutationKey }) <= 1) void qc.invalidateQueries({ queryKey: key });
+  };
+
+  const add = useMutation({
+    ...queue,
+    mutationFn: async ({ item, source, fromName, addedAt }: StockAdd) => {
+      const { error } = await supabase
+        .from('back_bar_items')
+        .insert({ bar_id: barId!, item_id: item.id, source, from_name: fromName?.trim().slice(0, 200) || null, ...(addedAt ? { added_at: addedAt } : {}) });
+      // Already on the list (another tap, another person): that's what was asked for.
+      if (error && error.code !== '23505') throw error;
+    },
+    onMutate: async ({ item, source, fromName, addedAt }) => {
+      const ctx = await before();
+      const row: BackBarItem = { id: `pending-${item.id}`, bar_id: barId!, item_id: item.id, source, from_name: fromName ?? null, added_at: addedAt ?? new Date().toISOString(), item };
+      // Newest first, as the list reads; an Undo's older row goes back in its place.
+      const newest = (x: BackBarItem, y: BackBarItem) => Date.parse(y.added_at) - Date.parse(x.added_at);
+      qc.setQueryData<BackBarItem[]>(key, (rows) => [row, ...(rows ?? []).filter((r) => r.item_id !== item.id)].sort(newest));
+      return ctx;
+    },
+    onError: rollback,
+    onSettled: refresh,
+  });
+
+  const remove = useMutation({
+    ...queue,
+    mutationFn: async (itemId: string) => {
+      const { error } = await supabase.from('back_bar_items').delete().eq('bar_id', barId!).eq('item_id', itemId);
+      if (error) throw error;
+    },
+    onMutate: async (itemId) => {
+      const ctx = await before();
+      qc.setQueryData<BackBarItem[]>(key, (rows) => rows?.filter((r) => r.item_id !== itemId));
+      return ctx;
+    },
+    onError: rollback,
+    onSettled: refresh,
+  });
+
+  return { add, remove };
 }
 
 function onWriteError(error: Error) {
@@ -222,6 +340,8 @@ export function useLocationMutations(barId: string | null | undefined) {
 
 const SPOT_COLUMNS = 'id, bar_id, item_id, zone_id, shelf, container, photo_url, par_amount, par_unit, sort_order';
 type Spot = Omit<ItemLocation, 'item'>;
+/** A stock list row as Undo puts it back: who added it is whoever undoes (the insert policy asks for that). */
+export type StockRow = Pick<BackBarItem, 'item_id' | 'source' | 'from_name' | 'added_at'>;
 
 /**
  * A bottle's every spot at the venue at once, for the back bar's Replace and
@@ -230,14 +350,32 @@ type Spot = Omit<ItemLocation, 'item'>;
  */
 export function useBottleSpots(barId: string | null | undefined) {
   const qc = useQueryClient();
-  const refresh = () => qc.invalidateQueries({ queryKey: locationsKey(barId) });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: locationsKey(barId) });
+    qc.invalidateQueries({ queryKey: stockKey(barId) });
+  };
+  // The stock list follows the spots: a bottle replaced or taken off leaves it,
+  // or it would come back under Waiting for a spot. The new bottle needs no row,
+  // its spots put it on the back bar. This runs after the spots changed, so it
+  // must not fail the change: a row it couldn't take off only lists the bottle
+  // under Waiting for a spot, where it can be taken off again.
+  const leaveStock = async (itemId: string): Promise<StockRow | null> => {
+    try {
+      const { data, error } = await supabase.from('back_bar_items').delete().eq('bar_id', barId!).eq('item_id', itemId).select('item_id, source, from_name, added_at');
+      if (error) throw error;
+      return ((data ?? [])[0] as StockRow | undefined) ?? null;
+    } catch (e) {
+      console.warn('The bottle stays on the stock list', e);
+      return null;
+    }
+  };
 
-  /** Resolves the spots it changed, so Undo points just those back. */
+  /** Resolves the spots it changed, so Undo points just those back, and the stock row it took off. */
   const replace = useMutation({
-    mutationFn: async ({ fromId, toId }: { fromId: string; toId: string }): Promise<string[]> => {
+    mutationFn: async ({ fromId, toId }: { fromId: string; toId: string }): Promise<{ moved: string[]; stock: StockRow | null }> => {
       const { data, error } = await supabase.from('item_locations').update({ item_id: toId }).eq('bar_id', barId!).eq('item_id', fromId).select('id');
       if (error) throw error;
-      return (data ?? []).map((row) => row.id);
+      return { moved: (data ?? []).map((row) => row.id), stock: await leaveStock(fromId) };
     },
     onSettled: refresh,
   });
@@ -251,12 +389,12 @@ export function useBottleSpots(barId: string | null | undefined) {
     onSettled: refresh,
   });
 
-  /** Resolves the spots it took off, whole, so Undo can put them back as they were. */
+  /** Resolves the spots it took off, whole, so Undo can put them back as they were, and the stock row it took off. */
   const takeOff = useMutation({
-    mutationFn: async (itemId: string): Promise<Spot[]> => {
+    mutationFn: async (itemId: string): Promise<{ removed: Spot[]; stock: StockRow | null }> => {
       const { data, error } = await supabase.from('item_locations').delete().eq('bar_id', barId!).eq('item_id', itemId).select(SPOT_COLUMNS);
       if (error) throw error;
-      return (data ?? []) as Spot[];
+      return { removed: (data ?? []) as Spot[], stock: await leaveStock(itemId) };
     },
     onSettled: refresh,
   });
@@ -270,5 +408,15 @@ export function useBottleSpots(barId: string | null | undefined) {
     onSettled: refresh,
   });
 
-  return { replace, pointBack, takeOff, putBack };
+  /** Undo's last step: the stock row Replace or Take it off took off, with its source and when it was added. */
+  const restock = useMutation({
+    mutationFn: async (row: StockRow) => {
+      const { error } = await supabase.from('back_bar_items').insert({ bar_id: barId!, ...row });
+      // Someone put it back already: that's what Undo asks for.
+      if (error && error.code !== '23505') throw error;
+    },
+    onSettled: refresh,
+  });
+
+  return { replace, pointBack, takeOff, putBack, restock };
 }

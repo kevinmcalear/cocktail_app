@@ -7,9 +7,9 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useBarInvites } from '@/hooks/useBarInvites';
-import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useCanManageStaff, useEffectiveRole } from '@/hooks/useViewAs';
 import { teamLine } from '@/lib/shellNav';
-import { canManageTeam, canSeeTeam, personName } from '@/lib/team';
+import { canSeeTeam, personName } from '@/lib/team';
 
 const FACES = 3;
 const FACE = 30;
@@ -21,7 +21,7 @@ const FACE = 30;
 export function useTeamCard(barId: string | null) {
   const role = useEffectiveRole(barId);
   const see = !!barId && canSeeTeam(role);
-  const manage = canManageTeam(role);
+  const manage = useCanManageStaff(barId);
   const members = useBarMembers(see ? barId : null).data;
   const invited = useBarInvites(barId ?? '', see && manage);
   const invites = invited.data ?? [];

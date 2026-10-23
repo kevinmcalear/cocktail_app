@@ -15,6 +15,7 @@ jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data
 jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: (id: string | null) => ({ data: id === 'campari' ? 14 : 0 }) }));
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: jest.fn(), isPending: false }) }));
+jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrepCard'), useCatalogRecipe: () => ({ data: null }) }));
 
@@ -161,13 +162,15 @@ describe('IngredientsStep', () => {
   });
 
   test('any spirit line can be made house: what did you do to it?', async () => {
-    await renderWithTamagui(<IngredientsStep draft={{ ...daiquiri, name: 'Daiquiri' }} set={jest.fn()} ingredients={[CAMPARI, BACARDI, WHITE_RUM]} />);
+    await renderWithTamagui(<IngredientsStep draft={{ ...daiquiri, name: 'Daiquiri' }} set={jest.fn()} ingredients={[CAMPARI, BACARDI, WHITE_RUM]} tellUs={{ drinkName: 'Daiquiri', barId: null }} />);
     expect(screen.queryByText(/The name says/)).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: /^Bacardí Carta Blanca, / }));
     await fireEvent.press(screen.getByRole('button', { name: /^Make Bacardí Carta Blanca house/ }));
     expect(screen.getByText('What did you do to it?')).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Fat washing,/ })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Simple and rich syrup,/ })).toBeNull();
+    // Under the list, for a way that isn't there.
+    expect(screen.getByRole('button', { name: 'Doing something different? Tell us. We’ll add your technique to the app.' })).toBeTruthy();
   });
 
   test('a line that isn’t a spirit or juice has no Make it house', async () => {

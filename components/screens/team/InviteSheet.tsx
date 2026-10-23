@@ -23,7 +23,7 @@ interface InviteSheetProps {
   onClose: () => void;
   barId: string;
   barName: string;
-  /** The inviter's own role: nobody invites above it. */
+  /** The highest role the inviter may hand out: nobody invites above it. */
   ceiling: number;
   onDone: (note: InviteNote) => void;
 }
@@ -40,7 +40,9 @@ export function InviteSheet({ visible, onClose, barId, barName, ceiling, onDone 
   const send = useSendInviteEmail(barId);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState(Math.min(BARTENDER, ceiling));
+  const [picked, setRole] = useState(BARTENDER);
+  // The ceiling can drop once the inviter's permissions load, so the pick follows it down.
+  const role = Math.min(picked, ceiling);
   const [problem, setProblem] = useState<string | null>(null);
   const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
   const busy = add.isPending || send.isPending;
