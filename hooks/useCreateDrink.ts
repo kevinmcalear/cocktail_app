@@ -17,6 +17,7 @@ import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import type { ImageAngle } from '@/lib/itemImages';
+import { formatPrice } from '@/lib/menus';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
@@ -66,6 +67,12 @@ type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
  * again doesn't leave a copy; the draft stays on the device until this
  * succeeds.
  */
+/** A draft saved before prices were typed text kept the number (WizardDraft.priceMinor). */
+function legacyPriceMinor(draft: WizardDraft): number | null {
+  const minor = (draft as { priceMinor?: unknown }).priceMinor;
+  return typeof minor === 'number' ? minor : null;
+}
+
 export function useCreateDrink() {
   const qc = useQueryClient();
   const userId = useUserId();
@@ -254,7 +261,10 @@ export function useCreateDrink() {
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
         origin_year: draft.originYear ?? null,
-        price_minor: barId ? (draft.priceMinor ?? null) : null,
+        price: barId ? formatPrice(draft.price) : null,
+        // ponytail: a draft saved before 20261103100000 has the number only;
+        // the database turns it into the typed price. Drop with price_minor.
+        ...(barId && !formatPrice(draft.price) && legacyPriceMinor(draft) != null ? { price_minor: legacyPriceMinor(draft) } : {}),
         // You can claim your own credit; anyone else's starts as suggested.
         credit_status: creatorId && creatorId === myProfileId && !otherBar ? 'claimed' : null,
       };

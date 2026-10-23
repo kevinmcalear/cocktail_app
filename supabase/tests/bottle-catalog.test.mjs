@@ -98,15 +98,17 @@ describe('bottle catalog', () => {
     const snapshot = `SELECT count(*)::int AS n, count(*) FILTER (WHERE ingredient_role = 'product')::int AS bottles,
                              md5(string_agg(id::text || coalesce(generic_id::text, '') || coalesce(made_from_id::text, '') || coalesce(ingredient_role, '') || name, ',' ORDER BY id)) AS h
                         FROM public.items WHERE item_type = 'ingredient' AND bar_id IS NULL`;
-    // One snapshot for the whole check, so another test file adding or removing
-    // its own catalog ingredient meanwhile doesn't count as a change. Measured
-    // against the chain's own first run: later migrations refile some rows on
-    // purpose (taxonomy v2 moves Tequila under Agave Spirit), which a fresh run
-    // of the chain undoes, and a second run must change nothing more.
-    // That snapshot means a test file writing a catalog row we also write can
-    // abort us with a serialization failure (40001); start over when it does.
+    // Measured against the chain's own first run: later migrations refile some
+    // rows on purpose (taxonomy v2 moves Tequila under Agave Spirit), which a
+    // fresh run of the chain undoes, and a second run must change nothing more.
+    // Read committed, as a migration really runs. Test files run one at a time,
+    // so the only other writers are cron and the image and flavour workers,
+    // which never touch the columns hashed above. A repeatable-read snapshot
+    // made their every commit to a job, flavour or image row this rewrites
+    // abort the whole run (40001), and on a slow runner every retry too.
+    // A deadlock with one of them (40P01) is still possible: start over then.
     for (let attempt = 1; ; attempt++) {
-      await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      await db.query('BEGIN');
       try {
         for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
         const once = await one(snapshot);
@@ -114,7 +116,7 @@ describe('bottle catalog', () => {
         assert.deepEqual(await one(snapshot), once);
         return;
       } catch (error) {
-        if (error?.code !== '40001' || attempt >= 3) throw error;
+        if (error?.code !== '40P01' || attempt >= 3) throw error;
       } finally {
         await db.query('ROLLBACK');
       }
