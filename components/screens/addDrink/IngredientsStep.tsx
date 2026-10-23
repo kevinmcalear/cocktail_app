@@ -27,9 +27,11 @@ import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { IngredientSuggestions } from './IngredientSuggestions';
 import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
+import { PasteSpecPanel } from './PasteSpecPanel';
 import type { LineStock } from './StockToggle';
 import { useBatchDrop } from './useBatchDrop';
 import { useMakePrep } from './useMakePrep';
+import { useTypedHouse } from './useTypedHouse';
 import { WizardNotice } from './WizardChrome';
 
 /** How long "Removed … Undo", and "Shrub added", stay. */
@@ -78,24 +80,30 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   /** The bottle line "What did you do to it?" is open for. */
   const [houseKey, setHouseKey] = useState<string | null>(null);
   const [nudgeOff, setNudgeOff] = useState(false);
+  const [pasting, setPasting] = useState(false);
+  const [toFinish, setToFinish] = useExpiring<string>(UNDO_MS);
   const generic = (id: string | null) => {
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
   };
   // Bottles a technique can change (a spirit, a juice), and what the drink's name says about one.
   const changeable = (l: WizardLine) => !!l.id && !!(startsFrom(l.name) ?? startsFrom(generic(l.id) ?? ''));
-  const nudge = forDrink && !nudgeOff ? houseNudge(draft.name, draft.lines.map((l) => ({ ...l, styleName: generic(l.id) }))) : null;
+  const nameNudge = forDrink && !nudgeOff ? houseNudge(draft.name, draft.lines.map((l) => ({ ...l, styleName: generic(l.id) }))) : null;
   const houseLine = houseKey ? draft.lines.find((l) => l.key === houseKey) ?? null : null;
   const makeHouse = (line: WizardLine, t: Technique, adjunct: string | null) => {
     setHouseKey(null);
+    typed.drop(line.key);
     prep.house(line, nameFor(t, { base: line.name, adjunct }), t.id);
   };
 
   // A pour typed with the name ("30 pommeau") is the line's; otherwise it starts at a likely one.
-  const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour, more?: Partial<WizardLine>): WizardLine => {
+  const lineFor = (pick: WizardPick, pour?: TypedPour): WizardLine => {
     const unit = pour ? typedUnit(pick.name, pour.unit, getPreferredUnit()) : guessUnit(pick.name, getPreferredUnit());
     const amount = pour ? tidyAmount(pour.amount) : !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
-    const line = { ...newLine(pick, unit, amount), ...(prep ? { prep, technique: prep.technique } : null), ...(later ? { later: true } : null), ...more };
+    return newLine(pick, unit, amount);
+  };
+  const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour, more?: Partial<WizardLine>): WizardLine => {
+    const line = { ...lineFor(pick, pour), ...(prep ? { prep, technique: prep.technique } : null), ...(later ? { later: true } : null), ...more };
     set({ lines: [...draft.lines, line] });
     setRemoved(null);
     return line;
@@ -115,6 +123,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     set({ lines: draft.lines.filter((x) => x.key !== line.key) });
   };
   const prep = useMakePrep({ draft, ingredients, aliases, inlinePrep, add, change });
+  // Lines typed or pasted as made house ask first, then the drink's name does.
+  const typed = useTypedHouse({ draft, set, lineFor, add: (pick, pour) => add(pick, undefined, false, pour), makeHouse, ask: setHouseKey });
+  const nudge = typed.next ?? nameNudge;
   const make = prep.make;
   const undo = () => {
     if (!removed) return;
@@ -138,6 +149,20 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   // The taste and what goes with it read one drink's own lines, not the batch.
   const poured = perDrinkLines(draft.lines);
   const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
+
+  // Pasting takes the step's place, right under its heading, so the box sits above the keyboard (canvas make-create-finish-oil, step 4).
+  if (pasting) {
+    return (
+      <PasteSpecPanel
+        onClose={() => setPasting(false)}
+        drinkName={draft.name}
+        {...search}
+        have={backBar ?? shelf}
+        haveLabel={backBar ? 'On your back bar' : 'On your shelf'}
+        onAdd={(rows) => setToFinish(typed.paste(rows).join(', ') || null)}
+      />
+    );
+  }
 
   return (
     <View style={styles.stack}>
@@ -204,7 +229,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
 
       {nudge ? (
         <View style={[styles.nudge, { backgroundColor: ds.c.surface }]}>
-          <Body>{`The name says ${nudge.phrase}. Make the ${draft.lines.find((l) => l.key === nudge.key)?.name} that way?`}</Body>
+          <Body>{`${nudge.from === 'typed' ? 'You wrote' : 'The name says'} ${nudge.phrase}. Make the ${draft.lines.find((l) => l.key === nudge.key)?.name} that way?`}</Body>
           <View style={styles.nudgeButtons}>
             <Button
               label="Make it house"
@@ -213,7 +238,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                 if (line) makeHouse(line, nudge.technique, nudge.adjunct);
               }}
             />
-            <Button label="Not now" variant="secondary" onPress={() => setNudgeOff(true)} />
+            <Button label="Not now" variant="secondary" onPress={() => (nudge.from === 'typed' ? typed.drop(nudge.key) : setNudgeOff(true))} />
           </View>
         </View>
       ) : null}
@@ -235,15 +260,18 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         onMake={forDrink ? (name, pour) => make(name, undefined, pour) : undefined}
         onBottle={forDrink && onNewBottle ? newBottle : undefined}
         onLater={forDrink ? (name, pour) => add({ id: null, name: capitalizeFirst(name) }, undefined, true, pour) : undefined}
+        onHouse={forDrink ? typed.typed : undefined}
         captions={forDrink}
       />
+      {forDrink && !typing ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => setPasting(true)} /> : null}
+      {toFinish ? <WizardNotice>{`${toFinish} went to the finish.`}</WizardNotice> : null}
       {/* In the flow under the field, so it never covers the balance or Goes with (canvas make-create-prep-back). */}
       {prep.made ? <WizardNotice>{prep.made}</WizardNotice> : null}
       {prep.builder}
       <MakeItHouseSheet
         bottle={houseLine?.name ?? null}
         ways={houseLine ? houseWays(houseLine.name, generic(houseLine.id)) : []}
-        nudge={nudge && nudge.key === houseKey ? nudge : null}
+        nudge={typed.forLine(houseKey) ?? (nameNudge && nameNudge.key === houseKey ? nameNudge : null)}
         onPick={(t, adjunct) => houseLine && makeHouse(houseLine, t, adjunct)}
         onClose={() => setHouseKey(null)}
         tellUs={tellUs}
@@ -263,4 +291,5 @@ const styles = StyleSheet.create({
   nudgeButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs },
   flex: { flex: 1 },
+  paste: { alignSelf: 'flex-start' },
 });
