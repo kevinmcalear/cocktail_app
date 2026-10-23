@@ -498,6 +498,13 @@ export function guessUnit(name: string, usual: string): string {
   return usual;
 }
 
+/** The unit a typed pour ("30 pommeau") lands in: as typed, else the ingredient's own. A number typed means it isn't a top. */
+export function typedUnit(name: string, unit: string | null, usual: string): string {
+  if (unit) return unit;
+  const guess = guessUnit(name, usual);
+  return guess === 'top' ? usual : guess;
+}
+
 // --- starting from a classic ---
 
 /** A spec as a drink page loads it, cut down to what the wizard copies. */

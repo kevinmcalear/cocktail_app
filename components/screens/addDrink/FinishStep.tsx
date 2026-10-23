@@ -102,7 +102,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
         autoFocus={!!asking}
         label={asking?.ask ?? 'Add to the finish'}
         makeFirst
-        onPick={add}
+        onPick={(pick) => add(pick)}
         onTyping={setTyping}
         onMake={(name) => setMaking({ name: capitalizeFirst(name) })}
       />

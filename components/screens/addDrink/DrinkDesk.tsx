@@ -210,6 +210,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             stock={p.stock}
             balance={false}
             lineDetail={lineDetail}
+            placeholder="Add an ingredient: “30 pommeau” works too"
             tellUs={tellUsAbout}
           />
           <Row label="Method">

@@ -10,6 +10,7 @@ import {
   parseBringIn,
   parseMenuPaste,
   parseSpecLine,
+  typedPour,
   type ParsedMenuSection,
 } from './paste';
 import { blankSection, type MenuLayout } from './menuLayout';
@@ -20,6 +21,18 @@ assert.equal(parseAmount('1/2'), 0.5);
 assert.equal(parseAmount('1 1/2'), 1.5);
 assert.equal(parseAmount('0'), 0);
 assert.equal(parseAmount('nope'), null);
+
+// The add field reads a pour before the name.
+assert.deepEqual(typedPour('30 pommeau'), { amount: '30', unit: null, name: 'pommeau' });
+assert.deepEqual(typedPour('30ml pommeau'), { amount: '30', unit: 'ml', name: 'pommeau' });
+assert.deepEqual(typedPour('1/2 oz lemon juice'), { amount: '1/2', unit: 'oz', name: 'lemon juice' });
+assert.deepEqual(typedPour('2 dashes Angostura'), { amount: '2', unit: 'dash', name: 'Angostura' });
+assert.deepEqual(typedPour('22,5 lime'), { amount: '22.5', unit: null, name: 'lime' });
+assert.deepEqual(typedPour('2 lemon peels'), { amount: '2', unit: null, name: 'lemon peels' });
+assert.equal(typedPour('pommeau'), null);
+assert.equal(typedPour('30'), null);
+assert.equal(typedPour('30 ml'), null);
+assert.equal(typedPour('7up'), null);
 
 const gin = parseSpecLine('30 ml Gin');
 assert.equal(gin?.amount, 30);

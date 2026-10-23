@@ -6,12 +6,13 @@ import type { TellUsAbout } from '@/components/feedback/TellUs';
 import { radius, space } from '@/constants/tokens';
 import { useExpiring } from '@/hooks/useExpiring';
 import { perDrinkLines } from '@/lib/batchLines';
-import { guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { guessUnit, newLine, pickByName, typedUnit, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { dropIndex } from '@/lib/dropIndex';
 import { houseNudge, houseWays } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
+import type { TypedPour } from '@/lib/paste';
 import { PREP_KINDS, type PrepDraft } from '@/lib/prepKinds';
-import { suggestAmount } from '@/lib/specDefaults';
+import { suggestAmount, tidyAmount } from '@/lib/specDefaults';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById, type Technique } from '@/lib/techniques';
 import { startsFrom } from '@/lib/techniques/makeIt';
@@ -52,6 +53,8 @@ interface IngredientsStepProps extends StepProps {
   stock?: LineStock;
   /** Make it house's "Tell us": the drink and bar a note would come from. */
   tellUs?: TellUsAbout;
+  /** The add field's hint, when it says more than "Add an ingredient" (the desktop page's "30 pommeau" works too). */
+  placeholder?: string;
 }
 
 /**
@@ -60,7 +63,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, stock, tellUs }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, stock, tellUs, placeholder }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -70,20 +73,21 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
    * (its key), or a line swapped for one (its key, `replace`). Make it house
    * on a bottle also brings the technique and the bottle as its base.
    */
-  const [making, setMaking] = useState<{ name: string; key?: string; replace?: boolean; technique?: string; base?: WizardPick } | null>(null);
+  const [making, setMaking] = useState<{ name: string; key?: string; replace?: boolean; technique?: string; base?: WizardPick; pour?: TypedPour } | null>(null);
   // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
   const editingKey = making?.key ?? null;
   const makingName = making?.name ?? null;
   const replacing = !!making?.replace;
   const makingTechnique = making?.technique ?? null;
   const makingBase = making?.base ?? null;
+  const makingPour = making?.pour;
   /** The bottle line "What did you do to it?" is open for. */
   const [houseKey, setHouseKey] = useState<string | null>(null);
   const [nudgeOff, setNudgeOff] = useState(false);
   /** A prep just made in the builder: "Shrub saved to your preps…" for a moment. */
   const [madePrep, setMadePrep] = useExpiring<string>(UNDO_MS);
   // Shown the way it saves ("coconut fat washed rum" is "Coconut fat washed rum").
-  const make = (name: string, key?: string) => setMaking({ name: capitalizeFirst(name), key, replace: !!key });
+  const make = (name: string, key?: string, pour?: TypedPour) => setMaking({ name: capitalizeFirst(name), key, replace: !!key, pour });
   const generic = (id: string | null) => {
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
@@ -97,9 +101,10 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     setMaking({ name: nameFor(t, { base: line.name, adjunct }), key: line.key, replace: true, technique: t.id, base: { id: line.id, name: line.name } });
   };
 
-  const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean) => {
-    const unit = guessUnit(pick.name, getPreferredUnit());
-    const amount = !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
+  // A pour typed with the name ("30 pommeau") is the line's; otherwise it starts at a likely one.
+  const add = (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour) => {
+    const unit = pour ? typedUnit(pick.name, pour.unit, getPreferredUnit()) : guessUnit(pick.name, getPreferredUnit());
+    const amount = pour ? tidyAmount(pour.amount) : !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
     set({ lines: [...draft.lines, { ...newLine(pick, unit, amount), ...(prep ? { prep, technique: prep.technique } : null), ...(later ? { later: true } : null) }] });
     setRemoved(null);
   };
@@ -217,10 +222,12 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       <IngredientSearch
         {...search}
         label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'}
-        onPick={add}
+        placeholder={placeholder}
+        amounts
+        onPick={(pick, pour) => add(pick, undefined, false, pour)}
         onTyping={setTyping}
-        onMake={forDrink ? (name) => make(name) : undefined}
-        onLater={forDrink ? (name) => add({ id: null, name: capitalizeFirst(name) }, undefined, true) : undefined}
+        onMake={forDrink ? (name, pour) => make(name, undefined, pour) : undefined}
+        onLater={forDrink ? (name, pour) => add({ id: null, name: capitalizeFirst(name) }, undefined, true, pour) : undefined}
         captions={forDrink}
       />
       {/* In the flow under the field, so it never covers the balance or Goes with (canvas make-create-prep-back). */}
@@ -237,7 +244,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         onDone={(prep) => {
           if (editingKey && replacing) change(editingKey, { id: null, name: makingName ?? '', prep, technique: prep.technique, later: undefined });
           else if (editingKey) change(editingKey, { prep, technique: prep.technique, later: undefined });
-          else if (makingName) add({ id: null, name: makingName }, prep);
+          else if (makingName) add({ id: null, name: makingName }, prep, false, makingPour);
           setMaking(null);
           // The prep is saved with the drink, not before, so this says when rather than "saved" (canvas make-create-house-line).
           if (!editingKey) setMadePrep(`${prepWord(prep, makingName ?? 'The prep')} saved to your preps when you save the drink. Its page is ready then.`);
@@ -245,7 +252,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         }}
         onLater={() => {
           if (editingKey) change(editingKey, { id: null, name: makingName ?? '', prep: undefined, technique: undefined, later: true });
-          else if (makingName) add({ id: null, name: makingName }, undefined, true);
+          else if (makingName) add({ id: null, name: makingName }, undefined, true, makingPour);
           setMaking(null);
         }}
       />
