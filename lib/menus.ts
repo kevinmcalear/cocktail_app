@@ -103,6 +103,7 @@ export function ingredientLine(names: (string | null | undefined)[]): string {
   return kept.join(', ');
 }
 
+/** A price as typed, trimmed (items.price is text: "19.50" and "MP" stay as they are), or null when blank. */
 export function formatPrice(price: string | null | undefined): string | null {
   const p = price?.trim();
   return p ? p : null;

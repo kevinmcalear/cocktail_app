@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { Snapshot } from '@/lib/specDiff';
-import { supabase } from '@/lib/supabase';
+import { jsonAs, supabase } from '@/lib/supabase';
 
 export interface ItemVersion {
   version: number;
@@ -41,7 +41,7 @@ export function usePublicSpecChanges(itemId: string | null | undefined, enabled 
     queryFn: async (): Promise<ItemVersion[]> => {
       const { data, error } = await supabase.rpc('public_spec_changes', { p_item: itemId! });
       if (error) throw error;
-      return ((data ?? []) as { version: number; snapshot: Snapshot; created_at: string }[]).map((v) => ({ ...v, note: null, created_by: null, created_by_name: null }));
+      return (data ?? []).map((v) => ({ ...v, snapshot: jsonAs<Snapshot>(v.snapshot), note: null, created_by: null, created_by_name: null }));
     },
   });
 }
@@ -63,14 +63,15 @@ export function useRestoreVersion(itemId: string) {
   });
 }
 
-export interface SpecLineInput {
+/** A type, not an interface, so the lines pass as Json. */
+export type SpecLineInput = {
   id?: string | null;
   ingredient_item_id: string;
   amount: number | null;
   unit: string | null;
   preparation_notes: string | null;
   is_optional: boolean;
-}
+};
 
 /** The editor's save: lines and methods (in order) in one transaction, versioned. Returns the version number. */
 export async function saveDrinkSpec(itemId: string, lines: SpecLineInput[], methodIds: string[], note: string | null): Promise<number> {

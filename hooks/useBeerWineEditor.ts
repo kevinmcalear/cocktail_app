@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 
@@ -6,6 +6,8 @@ import type { ImageItem } from '@/components/cocktail/SortableImageList';
 import { imageIdFor, pickDrinkPhotos, setItemImages } from '@/components/drink/drinkImages';
 import { plainDbMessage } from '@/lib/dbError';
 import { DRINK_KINDS, type DrinkKind, type DrinkKindConfig } from '@/lib/drinkKinds';
+import { changedColumns, levelColumns, levelFields, OVERRIDE_LEVELS, saveItemTags, type LevelRow } from '@/lib/itemSave';
+import { formatPrice } from '@/lib/menus';
 import { capitalize } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
 import { toastDone } from '@/lib/toast';
@@ -49,7 +51,8 @@ type Update<T> = T | ((prev: T) => T);
 /** The fields, a setter for each (the names the drink editor's shared sheets expect), and whether they changed since `reset`. */
 export function useBeerWineFields(initial: BeerWineFields) {
   const [fields, setFields] = useState(initial);
-  const [clean, setClean] = useState(() => JSON.stringify(initial));
+  // What was last loaded or saved: Save writes only what differs from it.
+  const [clean, setClean] = useState(initial);
   const set = (patch: Partial<BeerWineFields>) => setFields((f) => ({ ...f, ...patch }));
   const field =
     <K extends keyof BeerWineFields>(key: K) =>
@@ -59,12 +62,13 @@ export function useBeerWineFields(initial: BeerWineFields) {
     ...fields,
     fields,
     set,
-    isDirty: JSON.stringify(fields) !== clean,
+    loaded: clean,
+    isDirty: JSON.stringify(fields) !== JSON.stringify(clean),
     reset: (next: BeerWineFields) => {
       setFields(next);
-      setClean(JSON.stringify(next));
+      setClean(next);
     },
-    markClean: () => setClean(JSON.stringify(fields)),
+    markClean: () => setClean(fields),
     setName: field('name'),
     setDescription: field('description'),
     setMaker: field('maker'),
@@ -85,19 +89,15 @@ export type BeerWineForm = ReturnType<typeof useBeerWineFields>;
 
 /** The item's columns, from the form (shared by publishing a draft and saving an edit). */
 export function beerWineColumns(f: BeerWineFields) {
-  const level = (value: string | null) => (value ? parseInt(value, 10) : null);
   return {
     name: capitalize(f.name),
     description: f.description,
     brand_maker: capitalize(f.maker) || null,
     abv: f.abv ? parseFloat(f.abv) : null,
-    price: f.price ? parseFloat(f.price) : null,
+    // Text as typed: "19.50" stays "19.50" and "MP" stays "MP".
+    price: formatPrice(f.price),
     bar_id: f.barId || null,
-    override_visibility_level: level(f.overrideVisibility),
-    override_generic_ingredient_level: level(f.overrideGeneric),
-    override_specific_brand_level: level(f.overrideSpecific),
-    override_measurement_level: level(f.overrideMeasurement),
-    override_prep_level: level(f.overridePrep),
+    ...levelColumns(f),
   };
 }
 
@@ -119,9 +119,8 @@ export async function beerWineImageIds(images: ImageItem[], folder: string): Pro
 type Item = NonNullable<ReturnType<DrinkKindConfig['useItem']>['data']>;
 
 const text = (v: unknown) => (v == null ? '' : String(v));
-const levelOf = (v: number | null | undefined) => (v == null ? null : String(v));
 
-function fieldsOf(item: Item): BeerWineFields {
+function fieldsOf(item: Item, levels: LevelRow | undefined): BeerWineFields {
   const links = (item.item_images ?? []) as { sort_order: number | null; images: { id: string; url: string } | null }[];
   return {
     name: text(item.name),
@@ -134,11 +133,7 @@ function fieldsOf(item: Item): BeerWineFields {
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
       .flatMap((l) => (l.images ? [{ id: l.images.id, url: l.images.url, isNew: false }] : [])),
     barId: item.bar_id ?? null,
-    overrideVisibility: levelOf(item.override_visibility_level),
-    overrideGeneric: levelOf(item.override_generic_ingredient_level),
-    overrideSpecific: levelOf(item.override_specific_brand_level),
-    overrideMeasurement: levelOf(item.override_measurement_level),
-    overridePrep: levelOf(item.override_prep_level),
+    ...levelFields(levels),
   };
 }
 
@@ -147,13 +142,29 @@ export function useBeerWineEditor(kindName: DrinkKind, id: string) {
   const kind = DRINK_KINDS[kindName];
   const queryClient = useQueryClient();
   const { data: item, isLoading } = kind.useItem(id);
+  // Read fresh each time the editor opens and kept only while it's open: an
+  // editor must start from what's saved now, not from another session's cache.
+  const levels = useQuery({
+    queryKey: ['item-levels', id],
+    enabled: !!id,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+    queryFn: async (): Promise<LevelRow> => {
+      const { data, error } = await supabase.from('items').select(OVERRIDE_LEVELS).eq('id', id).single();
+      if (error) throw error;
+      return data;
+    },
+  });
   const form = useBeerWineFields(EMPTY_BEER_WINE_FIELDS);
   const [saving, setSaving] = useState(false);
-  // Filled once: a refetch while editing mustn't throw away what's typed.
+  // Filled once: a refetch while editing mustn't throw away what's typed. A
+  // failed or offline (paused) levels read fills them empty; Save then leaves
+  // them as they are, since it writes only what changed.
   const [loadedId, setLoadedId] = useState<string | null>(null);
-  if (item && loadedId !== item.id) {
+  if (item && levels.fetchStatus !== 'fetching' && loadedId !== item.id) {
     setLoadedId(item.id);
-    form.reset(fieldsOf(item));
+    form.reset(fieldsOf(item, levels.data));
   }
 
   // New photos stay local until Save.
@@ -170,18 +181,13 @@ export function useBeerWineEditor(kindName: DrinkKind, id: string) {
     setSaving(true);
     try {
       await setItemImages(id, await beerWineImageIds(f.localImages, `${kind.storageFolder}/${id}`), { replace: true });
-      const { error } = await supabase.from('items').update(beerWineColumns(f)).eq('id', id);
-      if (error) throw error;
-
-      // Sync tags: remove the unticked ones, add the new ones.
-      const { data: existingLinks } = await supabase.from('item_categories').select('category_id').eq('item_id', id);
-      const existingIds = existingLinks?.map((l) => l.category_id) || [];
-      const toDelete = existingIds.filter((cid) => !f.selectedCategories.includes(cid));
-      const toAdd = f.selectedCategories.filter((cid) => !existingIds.includes(cid));
-      if (toDelete.length > 0) await supabase.from('item_categories').delete().eq('item_id', id).in('category_id', toDelete);
-      for (const catId of toAdd) {
-        await supabase.from('item_categories').upsert({ item_id: id, category_id: catId, is_primary: true }, { onConflict: 'item_id,category_id' });
+      // Only what changed since it loaded: a column the form didn't load isn't written back blank.
+      const changed = changedColumns(beerWineColumns(form.loaded), beerWineColumns(f));
+      if (Object.keys(changed).length) {
+        const { error } = await supabase.from('items').update(changed).eq('id', id);
+        if (error) throw error;
       }
+      await saveItemTags(id, form.loaded.selectedCategories, f.selectedCategories);
 
       await queryClient.invalidateQueries({ queryKey: [kind.kind, id] });
       await queryClient.invalidateQueries({ queryKey: [kind.listQueryKey] });

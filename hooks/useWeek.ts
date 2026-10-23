@@ -29,7 +29,7 @@ export function useBarWeek(barId: string | null | undefined) {
     meta: viewer.meta,
     enabled: !!barId,
     queryFn: async (): Promise<WeekItem[]> => {
-      const { data, error } = await supabase.rpc('bar_week', { p_bar_id: barId, p_from: from.toISOString(), p_days: WEEK_DAYS });
+      const { data, error } = await supabase.rpc('bar_week', { p_bar_id: barId!, p_from: from.toISOString(), p_days: WEEK_DAYS });
       if (error) throw error;
       return addGuestStaff(withGuestColors(((data ?? []) as WeekRow[]).map(toWeekItem)));
     },
@@ -58,7 +58,7 @@ export function useWeekEvent(id: string | null | undefined) {
     meta: viewer.meta,
     enabled: !!id,
     queryFn: async (): Promise<WeekItem | null> => {
-      const { data, error } = await supabase.rpc('week_event', { p_event_id: id });
+      const { data, error } = await supabase.rpc('week_event', { p_event_id: id! });
       if (error) throw error;
       const row = ((data ?? []) as WeekRow[])[0];
       return row ? toWeekItem(row) : null;
@@ -86,7 +86,7 @@ export function useWeekEventDrinks(id: string | null | undefined, enabled = true
     meta: viewer.meta,
     enabled: !!id && enabled,
     queryFn: async (): Promise<EventDrink[]> => {
-      const { data, error } = await supabase.rpc('week_event_drinks', { p_event_id: id });
+      const { data, error } = await supabase.rpc('week_event_drinks', { p_event_id: id! });
       if (error) throw error;
       return ((data ?? []) as { id: string; name: string; description: string | null; image_url: string | null; glass_key: string | null }[]).map((d) => ({
         id: d.id,
@@ -117,7 +117,7 @@ export function useWeekEventBrand(id: string | null | undefined) {
     meta: viewer.meta,
     enabled: !!id,
     queryFn: async (): Promise<{ host: EventBrandSide; guest: EventBrandSide | null } | null> => {
-      const { data, error } = await supabase.rpc('week_event_brand', { p_event_id: id });
+      const { data, error } = await supabase.rpc('week_event_brand', { p_event_id: id! });
       // ponytail: a database without week_event_brand; the page keeps the bar's accent alone. Drop once it's in production.
       if (error?.code === 'PGRST202') return null;
       if (error) throw error;

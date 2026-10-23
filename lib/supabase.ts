@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 import { storedSessionUser } from '@/lib/authCache';
+import type { Database, Json } from '@/types/db';
 
 // Return the write promises: auth-js awaits them before announcing SIGNED_IN,
 // and every request reads its token back from here. Unawaited, the first
@@ -62,7 +63,14 @@ export async function forgetStoredSession(): Promise<void> {
  */
 export const UPLOAD_CACHE_SECONDS = '31536000';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+/**
+ * A jsonb value the database builds (a function's json result, a snapshot
+ * column) read as the shape the app knows it has. The generated types can only
+ * say Json; the SQL that builds it is the contract.
+ */
+export const jsonAs = <T>(value: Json): T => value as unknown as T;
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: authStorage,
     storageKey: authStorageKey,

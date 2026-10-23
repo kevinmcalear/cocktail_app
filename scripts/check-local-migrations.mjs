@@ -9,23 +9,14 @@
 //   npm run db:check
 //
 // Honours SUPABASE_WORKDIR, like the rest of the Supabase CLI.
-import { execFileSync } from 'node:child_process';
+import { listMigrations } from './supabase-cli.mjs';
 
 let listed;
 try {
-  const out = execFileSync('supabase', ['migration', 'list', '--local', '--output-format', 'json'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  listed = JSON.parse(out).migrations;
+  listed = listMigrations('--local');
 } catch (error) {
-  // The CLI reports its own errors as JSON on stdout.
-  let detail = String(error.stdout || error.stderr || error.message).trim();
-  try {
-    detail = JSON.parse(detail).error.message;
-  } catch {}
   console.error('Could not list the local database\'s migrations. Is the local stack running (`supabase start`)?');
-  console.error(`  ${detail}`);
+  console.error(`  ${error.message}`);
   process.exit(1);
 }
 

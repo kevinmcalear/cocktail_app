@@ -100,5 +100,7 @@ assert.deepEqual(ontoBarLines(sheetLines, barRows), [
 ]);
 // One bar row is kept once, even when the sheet has the ingredient twice.
 assert.deepEqual(ontoBarLines([sheetLines[0], sheetLines[0]], barRows).map((l) => l.id), ['r1', null]);
+// A bar row with no ingredient (recipes.ingredient_item_id is nullable) keeps no sheet line's place.
+assert.deepEqual(ontoBarLines(sheetLines, [{ id: 'r0', ingredient_item_id: null, preparation_notes: 'old', is_optional: true }, ...barRows]).map((l) => l.id), ['r1', 'r2', null]);
 
 console.log('sameName checks passed');

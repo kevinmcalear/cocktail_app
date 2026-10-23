@@ -141,7 +141,7 @@ export function useProfileMade(profileId: string | null | undefined, enabled: bo
     queryKey: ['profile-made', profileId, userId],
     enabled: enabled && !!profileId,
     queryFn: async (): Promise<SharedMade[]> => {
-      const { data, error } = await supabase.rpc('get_profile_made', { p_profile_id: profileId });
+      const { data, error } = await supabase.rpc('get_profile_made', { p_profile_id: profileId! });
       if (error) throw error;
       return ((data ?? []) as SharedMadeRow[]).map((r) => ({
         id: r.id,

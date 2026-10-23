@@ -57,9 +57,10 @@ export function useSaveBarFacts(profileId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (change: BarFactsChange) => {
+      // Every text field trimmed, and blank text clears it (null). A field left out of the change stays out.
       const trimmed = Object.fromEntries(
         Object.entries(change).map(([k, v]) => [k, typeof v === 'string' ? v.trim() || null : v])
-      );
+      ) as BarFactsChange;
       const { data, error } = await supabase.from('profiles').update(trimmed).eq('id', profileId).select('id');
       if (error) throw error;
       if (!data?.length) throw new Error('You can’t edit this bar’s details.');

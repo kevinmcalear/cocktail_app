@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import {
   cell, columnCaption, dayOfEnd, endOfDay, endsLabel, isChangedBuiltIn, isLocked, limitTo, overridesFor, reachCeiling, ROLE_PRESETS, roleSummary,
-  today, toggleLine, withinReach, withToggle, type MatrixColumn,
+  isCapability, today, toCapability, toggleLine, withinReach, withToggle, type MatrixColumn,
 } from './roleMatrix';
 import { agoLabel, memberRoleName, memberSinceLine } from './team';
 
@@ -109,3 +109,8 @@ assert.equal(agoLabel('2026-09-20T08:00:00Z', now), '3 weeks ago');
 }
 
 console.log('roleMatrix checks passed');
+
+// Permission names: known ones pass through as the enum; an unknown one throws instead of saving less.
+assert.equal(toCapability('prep'), 'prep');
+assert.equal(isCapability('nope'), false);
+assert.throws(() => toCapability('nope'), /Unknown permission: nope/);

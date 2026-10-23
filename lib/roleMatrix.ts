@@ -1,4 +1,8 @@
 import { roleLabel } from '@/lib/roles';
+import type { Enum } from '@/types/db';
+
+/** A permission, as the database names it. */
+export type Capability = Enum<'venue_capability'>;
 
 /**
  * Roles and access: the permissions a venue role can have (the database's
@@ -8,7 +12,7 @@ import { roleLabel } from '@/lib/roles';
  * venue can't lock itself out.
  */
 export interface CapabilityRow {
-  id: string;
+  id: Capability;
   label: string;
   /** The words after "plus" or "no" in a role's summary: "house-made recipes". */
   short: string;
@@ -52,6 +56,14 @@ const ADMIN = 40;
 const ROWS = CAPABILITY_GROUPS.flatMap((g) => g.rows);
 /** Every permission, in the table's order. */
 export const CAPABILITIES = ROWS.map((r) => r.id);
+
+export const isCapability = (s: string): s is Capability => CAPABILITIES.some((c) => c === s);
+
+/** A plain permission name as the database's enum; an unknown one is a bug, so it throws rather than saving less. */
+export function toCapability(s: string): Capability {
+  if (!isCapability(s)) throw new Error(`Unknown permission: ${s}`);
+  return s;
+}
 
 /** The bits of a matrix row this needs (useRoleMatrix's RoleMatrixRow). */
 export interface MatrixColumn {

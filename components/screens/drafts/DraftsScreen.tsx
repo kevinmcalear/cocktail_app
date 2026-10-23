@@ -92,7 +92,7 @@ export function DraftsScreen() {
               const caption = [
                 DRAFT_KIND_LABEL[d.entity_type] ?? 'Draft',
                 d.user_id && d.user_id !== userId ? 'a teammate’s' : null,
-                `${timeAgo(new Date(d.updated_at).getTime())} ago`,
+                d.updated_at && `${timeAgo(new Date(d.updated_at).getTime())} ago`,
               ]
                 .filter(Boolean)
                 .join(' · ');

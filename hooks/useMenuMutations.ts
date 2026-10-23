@@ -11,6 +11,7 @@ import { savePayload, type EditSection, type MenuLayout } from '@/lib/menuLayout
 import { normalizeAllowedTypes } from '@/lib/sectionAllowedTypes';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { supabase, UPLOAD_CACHE_SECONDS } from '@/lib/supabase';
+import type { Database } from '@/types/db';
 import type { MenuDrink } from '@/types/menus';
 
 /** Uploads a cover picture to the drinks bucket: under the menu, or loose before the menu exists. */
@@ -36,7 +37,7 @@ function readable(error: { code?: string; message: string }): Error {
   return new Error(error.message.charAt(0).toUpperCase() + error.message.slice(1));
 }
 
-async function rpc(fn: string, args: Record<string, unknown>) {
+async function rpc<F extends keyof Database['public']['Functions']>(fn: F, args: Database['public']['Functions'][F]['Args']) {
   const { error } = await supabase.rpc(fn, args);
   if (error) throw readable(error);
 }

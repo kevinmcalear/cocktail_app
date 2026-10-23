@@ -12,7 +12,7 @@ import type { ItemImageLink } from '@/lib/itemImages';
 import type { CreditProfile, CreditStatus, LineageDrink, ProfileKind } from '@/lib/lineage';
 import type { PageVisibility } from '@/lib/pageVisibility';
 import { groupMenuCredits, parseProfileRef, profileQueryShows, type MenuCredit, type MenuDrinkRow, type ProfileChange, type ShareMode, type ShareSection } from '@/lib/profiles';
-import { supabase } from '@/lib/supabase';
+import { jsonAs, supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
 
 export interface Profile {
@@ -290,7 +290,7 @@ export function useMenuEditions(profileId: string | null | undefined) {
     queryFn: async (): Promise<MenuEdition[]> => {
       const { data, error } = await supabase.rpc('get_menu_editions', { p_profile_id: profileId! });
       if (error) throw error;
-      return sortEditions((data ?? []) as MenuEdition[]);
+      return sortEditions((data ?? []).map((e) => ({ ...e, drinks: jsonAs<MenuEditionDrink[]>(e.drinks) })));
     },
   });
 }
@@ -428,13 +428,14 @@ export interface ProfileClaim {
 }
 
 /** What save_claim_setup keeps on a waiting bar claim. */
-export interface ClaimSetup {
+// A type, not an interface, so it passes as Json.
+export type ClaimSetup = {
   page_visibility?: PageVisibility;
   hours?: Record<string, [string, string][]> | null;
   timezone?: string | null;
   phone?: string | null;
   website?: string | null;
-}
+};
 
 export const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, created_at, method, code, evidence, decline_reason, setup';
 

@@ -21,6 +21,8 @@ const ALWAYS = new Set([
   'scripts/check-local-migrations.mjs',
   'scripts/database-ci.mjs',
   'scripts/security-shard.mjs',
+  // Checked against the migrations by regenerating it (npm run gen:types).
+  'types/database.ts',
 ]);
 
 const isFile = (root, path) => existsSync(join(root, path)) && statSync(join(root, path)).isFile();
