@@ -11,14 +11,17 @@
 -- The one overlap is that top layer, and nothing kept it in step: picking a
 -- single ice on a drink that had a build changed ice_id and left the build,
 -- so the drink page showed the build's ice and the rest of the app the new
--- one. Now, on every write of a drink:
+-- one. The editor now lets the build go when a single ice is picked
+-- (hooks/useCocktailEditor.ts). Here, on every write of a drink:
 --
 --   * a build sets ice_id to its top layer
---   * a new ice_id that isn't the build's top layer lets the build go: the
---     drink is served over one plain ice again
+--   * a new ice_id written on its own becomes the build's top layer, so a
+--     writer that only knows ice_id (merge_item moving a merged ice, an
+--     import) keeps the two in step without losing the layers under it
 --
 -- refresh_ice_build redrew the drink only when a write named ice_build; it
--- now fires on any change to it, so a build let go here redraws too.
+-- now fires on any change to it, so a top layer moved here redraws too.
+-- Production has no builds yet, so no row needs fixing.
 --
 -- No RLS changes: items keeps its policies and table grants.
 
@@ -26,17 +29,16 @@ CREATE FUNCTION "private"."keep_ice_top_layer"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     SET "search_path" TO ''
     AS $$
-DECLARE
-    v_top uuid := (NEW.ice_build -> -1 ->> 'ice')::uuid;
 BEGIN
     IF NEW.ice_build IS NULL THEN
         RETURN NEW;
     END IF;
-    IF TG_OP = 'UPDATE' AND NEW.ice_build IS NOT DISTINCT FROM OLD.ice_build
-       AND NEW.ice_id IS DISTINCT FROM OLD.ice_id AND NEW.ice_id IS DISTINCT FROM v_top THEN
-        NEW.ice_build := NULL;
+    IF TG_OP = 'UPDATE' AND NEW.ice_build IS NOT DISTINCT FROM OLD.ice_build AND NEW.ice_id IS DISTINCT FROM OLD.ice_id THEN
+        -- A new ice on its own: it is the top layer now (no ice at all is no build).
+        NEW.ice_build := CASE WHEN NEW.ice_id IS NULL THEN NULL
+                              ELSE jsonb_set(NEW.ice_build, ARRAY[(jsonb_array_length(NEW.ice_build) - 1)::text, 'ice'], to_jsonb(NEW.ice_id::text)) END;
     ELSE
-        NEW.ice_id := v_top;
+        NEW.ice_id := (NEW.ice_build -> -1 ->> 'ice')::uuid;
     END IF;
     RETURN NEW;
 END;
@@ -51,9 +53,3 @@ DROP TRIGGER "refresh_ice_build" ON "public"."items";
 CREATE TRIGGER "refresh_ice_build" AFTER UPDATE ON "public"."items"
     FOR EACH ROW WHEN (OLD."ice_build" IS DISTINCT FROM NEW."ice_build")
     EXECUTE FUNCTION "private"."refresh_ice_build"();
-
--- Drinks whose build and ice already disagree keep the build (it is the
--- newer, fuller answer) and take its top layer as their ice.
-UPDATE public.items
-   SET ice_id = (ice_build -> -1 ->> 'ice')::uuid
- WHERE ice_build IS NOT NULL AND ice_id IS DISTINCT FROM (ice_build -> -1 ->> 'ice')::uuid;

@@ -48,15 +48,21 @@ describe('ice build top layer', () => {
       assert.equal((await one('SELECT ice_id FROM public.items WHERE id = $1', [drink.id])).ice_id, cubes);
     }));
 
-  test('picking another single ice lets the build go', () =>
+  test('a new ice written on its own becomes the top layer; no ice is no build', () =>
     rolledBack(async () => {
-      const [cubes, crushed, large] = [await ice('Cubes'), await ice('Crushed'), await ice('Large cube')];
+      const [cubes, crushed, pebble] = [await ice('Cubes'), await ice('Crushed'), await ice('Pebble')];
       const { id } = await one("INSERT INTO public.items (name, item_type, ice_build) VALUES ($1, 'cocktail', $2) RETURNING id", [
         `Julep ${run}`,
-        build(cubes, crushed),
+        JSON.stringify([{ ice: cubes, n: 3 }, { ice: crushed, to: 'mound' }]),
       ]);
-      await db.query('UPDATE public.items SET ice_id = $2 WHERE id = $1', [id, large]);
-      assert.deepEqual(await one('SELECT ice_id, ice_build FROM public.items WHERE id = $1', [id]), { ice_id: large, ice_build: null });
+      // As merge_item moves a merged ice: the layers under it stay.
+      await db.query('UPDATE public.items SET ice_id = $2 WHERE id = $1', [id, pebble]);
+      assert.deepEqual(await one('SELECT ice_id, ice_build FROM public.items WHERE id = $1', [id]), {
+        ice_id: pebble,
+        ice_build: [{ ice: cubes, n: 3 }, { ice: pebble, to: 'mound' }],
+      });
+      await db.query('UPDATE public.items SET ice_id = NULL WHERE id = $1', [id]);
+      assert.deepEqual(await one('SELECT ice_id, ice_build FROM public.items WHERE id = $1', [id]), { ice_id: null, ice_build: null });
     }));
 
   test('other writes leave a build alone', () =>
