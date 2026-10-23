@@ -9,12 +9,12 @@ export interface CurrentSectionRow {
   menu_id: string;
   name: string;
   sort_order: number | null;
-  menu_drinks: { sort_order: number | null; item: MenuItemRow | MenuItemRow[] | null }[] | null;
+  menu_drinks: { sort_order: number | null; price?: string | null; item: MenuItemRow | MenuItemRow[] | null }[] | null;
 }
 
 /**
- * The sections of the menus on now, each with its drinks (their line and
- * price), for Tonight. Rows as they come (plain JSON: saved between launches);
+ * The sections of the menus on now, each with its drinks (their line, price
+ * and the menu's own price), for Tonight. Rows as they come (plain JSON: saved between launches);
  * useTonight puts them in running order.
  */
 export function useCurrentMenuDrinks(menuIds: string[]) {
@@ -27,7 +27,7 @@ export function useCurrentMenuDrinks(menuIds: string[]) {
     queryFn: async (): Promise<CurrentSectionRow[]> => {
       const { data, error } = await supabase
         .from('menu_sections')
-        .select(`id, menu_id, name, sort_order, menu_drinks(sort_order, ${MENU_DRINK_ITEM})`)
+        .select(`id, menu_id, name, sort_order, menu_drinks(sort_order, price, ${MENU_DRINK_ITEM})`)
         .in('menu_id', key)
         .order('sort_order', { ascending: true });
       if (error) throw error;

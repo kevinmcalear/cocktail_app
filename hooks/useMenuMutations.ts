@@ -305,7 +305,7 @@ export function useMenuLibrary(barId: string | null | undefined, enabled = true)
         ? await query.eq('bar_id', barId)
         : await query.is('bar_id', null).or(`created_by.eq.${userId},is_catalog.eq.true`);
       if (error) throw error;
-      const own = ((data ?? []) as unknown as MenuItemRow[]).map(toMenuDrink).filter((d): d is MenuDrink => !!d);
+      const own = ((data ?? []) as unknown as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
       if (barId) return own;
       // At home, the drinks you collected from bars too, while they're published.
       const collected = await supabase.from('collected_items').select('item_id').not('item_id', 'is', null).order('collected_at', { ascending: false });

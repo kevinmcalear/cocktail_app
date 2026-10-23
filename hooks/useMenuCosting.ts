@@ -9,13 +9,15 @@ export interface MenuCostRow {
   itemType: string;
   /** The drink's price as typed ("19.50", "MP"); the screen reads the number from it. */
   price: string | null;
+  /** This menu's own price for it (menu_drinks.price), which costing uses when set. */
+  menuPrice: string | null;
   /** Null when the drink has no spec to price, or the caller has no costs capability. */
   cost: DrinkCost | null;
 }
 
 /**
  * Every drink on a menu with its cost per serve (drink_cost, one call per
- * drink: menus are short) and its price, in menu order. Nothing comes
+ * drink: menus are short), its price and this menu's, in menu order. Nothing comes
  * back without the costs capability, so the screen stays locked there.
  */
 export function useMenuCosting(menuId: string | null | undefined, barId: string | null | undefined, enabled = true) {
@@ -23,9 +25,11 @@ export function useMenuCosting(menuId: string | null | undefined, barId: string 
     queryKey: ['menu-costing', barId, menuId],
     enabled: !!menuId && !!barId && enabled,
     queryFn: async (): Promise<MenuCostRow[]> => {
-      const menuRes = await supabase.from('menu_drinks').select('item_id, sort_order').eq('menu_id', menuId!).order('sort_order');
+      const menuRes = await supabase.from('menu_drinks').select('item_id, sort_order, price').eq('menu_id', menuId!).order('sort_order');
       if (menuRes.error) throw menuRes.error;
       const ids = [...new Set((menuRes.data ?? []).map((r) => r.item_id as string))];
+      const menuPrices = new Map<string, string | null>();
+      for (const r of menuRes.data ?? []) if (!menuPrices.has(r.item_id as string)) menuPrices.set(r.item_id as string, r.price);
       if (!ids.length) return [];
       const itemRes = await supabase.from('app_item_presentation').select('id, name, item_type, price').in('id', ids);
       if (itemRes.error) throw itemRes.error;
@@ -40,7 +44,7 @@ export function useMenuCosting(menuId: string | null | undefined, barId: string 
       );
       return ids.flatMap((id, i) => {
         const item = items.get(id);
-        return item ? [{ id, name: item.name, itemType: item.item_type, price: item.price, cost: costs[i] }] : [];
+        return item ? [{ id, name: item.name, itemType: item.item_type, price: item.price, menuPrice: menuPrices.get(id) ?? null, cost: costs[i] }] : [];
       });
     },
   });

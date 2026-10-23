@@ -4,6 +4,7 @@ import type { MenuDrink } from '@/types/menus';
 
 import {
   setDrinkPrice,
+  setMenuPrice,
   nameToMake,
   nearLibrary,
   moveToSection,
@@ -88,8 +89,8 @@ assert.equal(layoutProblem(base), null);
 
 // --- what gets saved, and whether anything changed ---
 assert.deepEqual(savePayload(base), [
-  { id: 's1', name: 'Stirred', min_items: 2, max_items: 5, allowed_types: ['cocktail'], item_ids: ['martini', 'bolo'] },
-  { id: 's2', name: 'Beer', min_items: 0, max_items: 3, allowed_types: ['beer'], item_ids: ['pils'] },
+  { id: 's1', name: 'Stirred', min_items: 2, max_items: 5, allowed_types: ['cocktail'], item_ids: ['martini', 'bolo'], prices: [null, null] },
+  { id: 's2', name: 'Beer', min_items: 0, max_items: 3, allowed_types: ['beer'], item_ids: ['pils'], prices: [null] },
 ]);
 assert.equal(layoutChanged(base, { ...base }), false);
 assert.equal(layoutChanged(base, { ...base, name: 'Winter menu ' }), false, 'trailing spaces are not a change');
@@ -152,4 +153,20 @@ assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['beer'] }, 'stamp')
   assert.equal(setDrinkPrice(base, 'x', '19'), base);
   assert.deepEqual(setDrinkPrice(next, 'y', '  ').prices, { x: '21.50' }, 'blank on an unpriced drink is nothing to save');
   assert.deepEqual(setDrinkPrice(next, 'x', '19').prices, { x: '19' }, 'back to the saved price still saves');
+}
+
+// This menu's own price: on every row of the drink here, saved beside item_ids, and blank goes back to the drink's.
+{
+  const d = (id: string, price: string | null): MenuDrink => ({ id, name: id, kind: 'cocktail', line: '', price, imageUrl: null, isSketch: false, glass: null });
+  const base = { name: 'M', coverUrl: null, coverPosition: 50, sections: [{ key: 'a', id: 'a', name: 'A', minItems: 1, maxItems: null, allowedTypes: ['cocktail' as const], drinks: [d('x', '19'), d('y', null)] }, { key: 'b', id: 'b', name: 'B', minItems: 1, maxItems: null, allowedTypes: ['cocktail' as const], drinks: [d('x', '19')] }] };
+  const next = setMenuPrice(base, 'x', ' 22 ');
+  assert.deepEqual(savePayload(next).map((s) => s.prices), [['22', null], ['22']]);
+  assert.deepEqual(next.sections[0].drinks[0].price, '19', "the drink's own price stays");
+  assert.equal(next.prices, undefined, 'nothing to write to the drink');
+  assert.ok(layoutChanged(next, base));
+  const cleared = setMenuPrice(next, 'x', '  ');
+  assert.deepEqual(savePayload(cleared).map((s) => s.prices), [[null, null], [null]]);
+  assert.ok(!layoutChanged(cleared, base), 'cleared is back to the saved menu');
+  assert.equal(setMenuPrice(next, 'x', '22'), next, 'an unchanged menu price is no change');
+  assert.match(layoutProblem(setMenuPrice(base, 'y', 'x'.repeat(41))) ?? '', /under 40 characters/);
 }

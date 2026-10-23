@@ -8,13 +8,13 @@ import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
-import { useSetDrinkPrice } from '@/hooks/useDrinkCost';
+import { useSetDrinkPrice, useSetMenuDrinkPrice } from '@/hooks/useDrinkCost';
 import { useMenuCosting, type MenuCostRow } from '@/hooks/useMenuCosting';
 import { useMenu } from '@/hooks/useMenus';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { formatPct, margin, menuSummary, targetsLine, targetStatus, underLabel, type Targets, type TaxRule } from '@/lib/costing';
 import { andList } from '@/lib/makers';
-import { formatPrice } from '@/lib/menus';
+import { formatPrice, printedPrice } from '@/lib/menus';
 import { formatMoney, priceMinor, priceText } from '@/lib/money';
 import { roleLabel } from '@/lib/roles';
 
@@ -24,8 +24,9 @@ import { roleLabel } from '@/lib/roles';
  * the price that clears the venue's targets (a GP, and the least a drink
  * should make). A drink under either gets a tag and a Use button that sets
  * that price. Click a price to set your own: it's the drink's one price, as
- * typed, so every menu with the drink shows it. MP and no price have no
- * margin. Phones get the drink, cost, price and profit, with the same tags.
+ * typed, so every menu with the drink shows it, unless this menu has its
+ * own price for it: then costing uses that, and changes that. MP and no
+ * price have no margin. Phones get the drink, cost, price and profit, with the same tags.
  */
 export function MenuCostingScreen({ menuId }: { menuId: string }) {
   return (
@@ -54,14 +55,14 @@ function Page({ menuId }: { menuId: string }) {
   const currency = settings?.currency ?? null;
   const drinks = (rows ?? []).filter((r) => r.itemType === 'cocktail');
   const summary = menuSummary(
-    drinks.map((r) => ({ costMinor: r.cost && !(r.cost.total_minor === 0 && r.cost.missing > 0) ? r.cost.total_minor : null, priceMinor: priceMinor(r.price, currency), missing: r.cost?.missing ?? 0 })),
+    drinks.map((r) => ({ costMinor: r.cost && !(r.cost.total_minor === 0 && r.cost.missing > 0) ? r.cost.total_minor : null, priceMinor: priceMinor(printedPrice(r), currency), missing: r.cost?.missing ?? 0 })),
     targets,
     tax
   );
   const money = (minor: number | null | undefined) => formatMoney(minor, currency) ?? '–';
   // Drinks the averages can't count: no price, or a price with no number in it (MP).
   const leftOut = drinks.flatMap((r) => {
-    const p = formatPrice(r.price);
+    const p = printedPrice(r);
     return !p ? [`${r.name} (no price)`] : priceMinor(p, currency) == null ? [`${r.name} (${p})`] : [];
   });
   const wants = targetsLine(targets, (m) => money(m));
@@ -99,7 +100,7 @@ function Page({ menuId }: { menuId: string }) {
                 <View role="table" style={[styles.table, { borderColor: ds.c.line }]}>
                   <Header wide={wide} pricesIncludeTax={tax.pricesIncludeTax} />
                   {drinks.map((r) => (
-                    <Row key={r.id} row={r} wide={wide} tax={tax} targets={targets} currency={currency} money={money} />
+                    <Row key={r.id} row={r} menuId={menuId} menuName={menu?.name ?? 'this menu'} wide={wide} tax={tax} targets={targets} currency={currency} money={money} />
                   ))}
                 </View>
                 <View style={styles.foot}>
@@ -138,12 +139,19 @@ function Header({ wide, pricesIncludeTax }: { wide: boolean; pricesIncludeTax: b
   );
 }
 
-function Row({ row, wide, tax, targets, currency, money }: { row: MenuCostRow; wide: boolean; tax: TaxRule; targets: Targets; currency: string; money: (m: number | null | undefined) => string }) {
+function Row({ row, menuId, menuName, wide, tax, targets, currency, money }: { row: MenuCostRow; menuId: string; menuName: string; wide: boolean; tax: TaxRule; targets: Targets; currency: string; money: (m: number | null | undefined) => string }) {
   const ds = useDs();
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(row.price ?? '');
-  const set = useSetDrinkPrice(row.id);
-  const typed = formatPrice(row.price);
+  // A drink with this menu's own price: the price, Use and the edit change that one; otherwise the drink's.
+  const own = formatPrice(row.menuPrice);
+  const editPrice = own ? row.menuPrice : row.price;
+  const [draft, setDraft] = useState(editPrice ?? '');
+  const setDrink = useSetDrinkPrice(row.id);
+  const setMenu = useSetMenuDrinkPrice(menuId, row.id);
+  const set = own ? setMenu : setDrink;
+  const typed = printedPrice(row);
+  const usual = formatPrice(row.price);
+  const usualMinor = priceMinor(usual, currency);
   const minor = priceMinor(typed, currency);
   // A drink whose every line is unpriced has no cost yet, not a cost of nothing.
   const costMinor = row.cost && !(row.cost.total_minor === 0 && row.cost.missing > 0) ? row.cost.total_minor : null;
@@ -182,11 +190,18 @@ function Row({ row, wide, tax, targets, currency, money }: { row: MenuCostRow; w
         <View style={{ flex: wide ? COLS.drink : COLS.drinkPhone, gap: space.xs }}>
           <Body>{row.name}</Body>
           {row.cost?.missing ? <Tag label={`${row.cost.missing} without a price`} tone="warning" /> : null}
+          {own ? <Tag label={`This menu · usually ${usualMinor != null ? money(usualMinor) : (usual ?? 'no price')}`} /> : null}
           {!typed ? <Tag label="No price yet" /> : minor == null ? <Tag label={`${/^mp$/i.test(typed) ? 'Market price' : typed}: no margin worked out`} /> : null}
           {wide ? flag : null}
           {editing ? (
             <View style={styles.edit}>
-              <Field label={`Price (${currency})`} value={draft} onChangeText={setDraft} placeholder="12.00 or MP" hint="As the menu prints it. Every menu with this drink shows it." />
+              <Field
+                label={own ? `${row.name} on ${menuName} (${currency})` : `Price (${currency})`}
+                value={draft}
+                onChangeText={setDraft}
+                placeholder={own ? (usual ?? '12.00 or MP') : '12.00 or MP'}
+                hint={own ? `Only this menu. Empty: it prints the drink’s ${usual ?? 'price'}.` : 'As the menu prints it. Every menu with this drink shows it, unless the menu has its own.'}
+              />
               <View style={styles.editActions}>
                 <Button label={set.isPending ? 'Saving…' : 'Save'} size="md" disabled={set.isPending} onPress={() => set.mutateAsync(draft).then(() => setEditing(false), () => {})} />
                 <Button label="Cancel" variant="ghost" onPress={() => setEditing(false)} />
@@ -196,7 +211,7 @@ function Row({ row, wide, tax, targets, currency, money }: { row: MenuCostRow; w
         </View>
         {cell(costMinor == null ? '–' : money(costMinor), costMinor == null ? 'muted' : 'ink')}
         <PressableScale role="button" accessibilityLabel={`Change the price of ${row.name}`} onPress={() => {
-          setDraft(row.price ?? '');
+          setDraft(editPrice ?? '');
           setEditing((e) => !e);
         }} style={{ flex: COLS.num, minHeight: layout.minTapTarget, justifyContent: 'center' }}>
           <Spec tone="accent" align="right">

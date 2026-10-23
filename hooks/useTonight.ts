@@ -57,8 +57,10 @@ export function useTonight(venueId: string | null) {
             name: s.name,
             drinks: [...(s.menu_drinks ?? [])]
               .sort((a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0))
-              .map((d) => (Array.isArray(d.item) ? d.item[0] : d.item))
-              .map((item) => (item ? toMenuDrink(item) : null))
+              .map((d) => {
+                const item = Array.isArray(d.item) ? d.item[0] : d.item;
+                return item ? toMenuDrink(item, d.price ?? null) : null;
+              })
               .filter((d): d is MenuDrink => !!d)
               .map((d) => ({ ...d, isNew: fresh.has(d.id) })),
           }))

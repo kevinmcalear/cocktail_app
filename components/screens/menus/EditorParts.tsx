@@ -122,7 +122,7 @@ export function EditorSections({ editor, targetable, drag }: { editor: LayoutEdi
           onReorder={(drinks) => editor.reorder(s.key, drinks)}
           onMove={(from, to) => editor.move(s.key, from, to)}
           onMoveTo={(id, toKey) => editor.moveTo(s.key, id, toKey)}
-          onPrice={home ? undefined : editor.setPrice}
+          pricing={home ? undefined : { menuName: editor.layout.name.trim() || editor.menu.name, barId: editor.menu.barId, onPrice: editor.setPrice, onMenuPrice: editor.setMenuPrice }}
           elsewhere={editor.elsewhere}
           drag={drag?.on ? { at: drag.at?.key === s.key ? drag.at.index : null, dragging: drag.dragging } : undefined}
         />
