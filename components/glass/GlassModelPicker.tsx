@@ -38,10 +38,10 @@ interface RowProps {
   onPress: () => void;
 }
 
-/** One maker's glass: its drawing, name, maker and material, and its size. */
+/** One maker's glass: its drawing, name, maker, designer and material, and its size. */
 export function GlassModelRow({ model, note, first, selected, onPress }: RowProps) {
   const ds = useDs();
-  const sub = [model.maker?.display_name, glassModelMaterial(model), note].filter(Boolean).join(' · ');
+  const sub = [model.maker?.display_name, model.designer, glassModelMaterial(model), note].filter(Boolean).join(' · ');
   const size = glassModelSize(model);
   return (
     <PressableScale
@@ -77,9 +77,14 @@ interface PickerProps {
   venueModelIds?: readonly string[];
   venueName?: string;
   initialGlass?: SketchGlass | null;
+  /** What the search starts with: the maker a bar wrote for a glass it described. */
+  initialTerm?: string;
+  /** Glasses of this type come first, without hiding the rest. */
+  preferGlass?: SketchGlass | null;
   onPick: (model: GlassModel) => void;
   /** "Not listed? Describe it yourself". */
   onDescribe?: () => void;
+  describeLabel?: string;
 }
 
 /**
@@ -87,15 +92,26 @@ interface PickerProps {
  * catalogs by maker, name, series or item code, narrowed to a type. The
  * venue's own glasses come first.
  */
-export function GlassModelPicker({ venueModelIds = [], venueName, initialGlass = null, onPick, onDescribe }: PickerProps) {
+export function GlassModelPicker({
+  venueModelIds = [],
+  venueName,
+  initialGlass = null,
+  initialTerm = '',
+  preferGlass = null,
+  onPick,
+  onDescribe,
+  describeLabel = 'Not listed? Describe it yourself',
+}: PickerProps) {
   const ds = useDs();
-  const [term, setTerm] = useState('');
+  const [term, setTerm] = useState(initialTerm);
   const [glass, setGlass] = useState<SketchGlass | null>(initialGlass);
   const [more, setMore] = useState(!!initialGlass && MORE_TYPES.includes(initialGlass));
   const search = useDeferredValue(term);
   const { data = [], isFetching, error } = useGlassModelSearch(search, glass);
   const ours = new Set(venueModelIds);
-  const models = [...data.filter((m) => ours.has(m.id)), ...data.filter((m) => !ours.has(m.id))];
+  // The venue's own first, then the preferred type; the search's order otherwise (sort is stable).
+  const rank = (m: GlassModel) => (ours.has(m.id) ? 0 : 2) + (m.glass === preferGlass ? 0 : 1);
+  const models = [...data].sort((a, b) => rank(a) - rank(b));
   const looking = search.trim().length >= 2 || !!glass;
   const types = more ? [...FIRST_TYPES, ...MORE_TYPES] : FIRST_TYPES;
 
@@ -107,7 +123,7 @@ export function GlassModelPicker({ venueModelIds = [], venueName, initialGlass =
         icon="magnifyingglass"
         value={term}
         onChangeText={setTerm}
-        placeholder="Maker, name or item code"
+        placeholder="Maker, name, designer or item code"
         autoCorrect={false}
         maxLength={80}
       />
@@ -142,7 +158,7 @@ export function GlassModelPicker({ venueModelIds = [], venueName, initialGlass =
           {`From the makers’ own catalogs. ${data.length >= GLASS_SEARCH_LIMIT ? `The first ${GLASS_SEARCH_LIMIT}; type more to narrow it.` : ''}`.trim()}
         </Caption>
       ) : null}
-      {onDescribe ? <Button label="Not listed? Describe it yourself" variant="ghost" onPress={onDescribe} style={styles.start} /> : null}
+      {onDescribe ? <Button label={describeLabel} variant="ghost" onPress={onDescribe} style={styles.start} /> : null}
     </View>
   );
 }
