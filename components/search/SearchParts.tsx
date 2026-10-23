@@ -6,6 +6,7 @@ import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, P
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useDrinkLists } from '@/hooks/useDiscover';
+import { withAlpha } from '@/lib/color';
 import { foldName } from '@/lib/discover';
 import { STYLES } from '@/lib/drinkStyles';
 import { showOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
@@ -24,7 +25,7 @@ export function ScopeToken({ options, scope, onScope }: { options: { value: Sear
   return (
     <View ref={token} collapsable={false}>
       <PressableScale role="button" aria-expanded={!!menu.anchor} accessibilityLabel={`Searching ${label}. Change where to search`} onPress={() => menu.open(token.current)}>
-        <GlassSurface interactive style={styles.token}>
+        <GlassSurface interactive tint={menu.anchor ? withAlpha(ds.accentText, 0.25) : undefined} style={styles.token}>
           <DsText variant="label" color={ds.accentText} numberOfLines={1} style={styles.tokenText}>
             {label}
           </DsText>
