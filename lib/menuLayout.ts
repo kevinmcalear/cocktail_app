@@ -196,6 +196,9 @@ export function layoutChanged(a: MenuLayout, b: MenuLayout): boolean {
 /** Changes a drink's price, as typed, on every row of it here; blank clears it. Saved with the menu. */
 export function setDrinkPrice(layout: MenuLayout, drinkId: string, price: string | null): MenuLayout {
   const typed = price?.trim() || null;
+  const rows = layout.sections.flatMap((s) => s.drinks.filter((d) => d.id === drinkId));
+  // Nothing new (Done on an untouched price): no write.
+  if (!(layout.prices && drinkId in layout.prices) && rows.every((d) => (d.price?.trim() || null) === typed)) return layout;
   return {
     ...layout,
     prices: { ...layout.prices, [drinkId]: typed },

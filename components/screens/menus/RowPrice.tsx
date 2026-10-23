@@ -51,16 +51,25 @@ export function PriceEditor({ drink, alsoOn, onPrice, onClose }: { drink: MenuDr
 
 /**
  * A builder row's price on desktop: a field in every row, so a whole menu can
- * be priced in one pass with Tab. It takes the price when you leave it.
+ * be priced in one pass. Each keystroke goes into the layout (autosave waits
+ * for a pause), so leaving the page right after typing still saves it; the
+ * field keeps what was typed, spaces and all.
  */
 export function PriceField({ drink, onPrice }: { drink: MenuDrink; onPrice: (price: string | null) => void }) {
   const [draft, setDraft] = useState(drink.price ?? '');
-  const commit = () => {
-    if ((formatPrice(draft) ?? null) !== (formatPrice(drink.price) ?? null)) onPrice(draft);
-  };
   return (
     <View style={styles.field}>
-      <Field label={`${drink.name}’s price`} hideLabel value={draft} onChangeText={setDraft} placeholder="Price" onBlur={commit} onSubmitEditing={commit} textAlign="right" />
+      <Field
+        label={`${drink.name}’s price`}
+        hideLabel
+        value={draft}
+        onChangeText={(text) => {
+          setDraft(text);
+          onPrice(text);
+        }}
+        placeholder="Price"
+        textAlign="right"
+      />
     </View>
   );
 }

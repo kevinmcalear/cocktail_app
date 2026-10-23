@@ -126,7 +126,7 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
               </Caption>
             ) : null}
           </View>
-          {!changePrice ? null : quiet ? <PriceField key={drink.price ?? ''} drink={drink} onPrice={changePrice} /> : <PriceButton drink={drink} open={pricing} onPress={() => setPricing((p) => !p)} />}
+          {!changePrice ? null : quiet ? <PriceField drink={drink} onPrice={changePrice} /> : <PriceButton drink={drink} open={pricing} onPress={() => setPricing((p) => !p)} />}
           {quiet ? (
             <PressableScale accessibilityLabel={`Remove ${drink.name}`} onPress={onRemove} style={[styles.icon, !show && styles.hidden]}>
               <IconSymbol name="xmark" size={16} color={ds.c.muted} />

@@ -144,7 +144,10 @@ function Costed({ itemId, barId, cost, price, canEdit, currency, taxRate, prices
             {setPrice.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
           </View>
         ) : (
-          <Button label={price == null ? 'Add a price' : 'Change price'} variant="secondary" onPress={() => setEditing(true)} style={styles.button} />
+          <Button label={price == null ? 'Add a price' : 'Change price'} variant="secondary" onPress={() => {
+              setDraft(price ?? '');
+              setEditing(true);
+            }} style={styles.button} />
         )
       ) : null}
       <View style={styles.calc}>

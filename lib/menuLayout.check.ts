@@ -148,5 +148,8 @@ assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['beer'] }, 'stamp')
   assert.deepEqual(next.prices, { x: '21.50' });
   assert.ok(layoutChanged(next, base));
   assert.ok(!layoutChanged(next, next));
-  assert.deepEqual(setDrinkPrice(next, 'y', '  ').prices, { x: '21.50', y: null });
+  assert.equal(setDrinkPrice(base, 'y', ' '), base, 'an unchanged price is no change');
+  assert.equal(setDrinkPrice(base, 'x', '19'), base);
+  assert.deepEqual(setDrinkPrice(next, 'y', '  ').prices, { x: '21.50' }, 'blank on an unpriced drink is nothing to save');
+  assert.deepEqual(setDrinkPrice(next, 'x', '19').prices, { x: '19' }, 'back to the saved price still saves');
 }

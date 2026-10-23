@@ -126,13 +126,14 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   }, [layout, changed, saveLayout, savePrices]);
 
   // Autosave: a moment after the last change, one save at a time. A layout that
-  // can't be saved (a section with no name) waits, with the problem shown.
+  // can't be saved (a section with no name), or a save that failed (a price
+  // the caller can't change), waits with the problem shown until the next edit.
   const saving = save.isPending || prices.isPending;
   useEffect(() => {
-    if (!changed || saving || layoutProblem(layout)) return;
+    if (!changed || saving || error || layoutProblem(layout)) return;
     const timer = setTimeout(() => void persist(), AUTOSAVE_MS);
     return () => clearTimeout(timer);
-  }, [layout, changed, saving, persist]);
+  }, [layout, changed, saving, error, persist]);
 
   return {
     menu,

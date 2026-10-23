@@ -195,7 +195,10 @@ function Row({ row, wide, tax, targets, currency, money }: { row: MenuCostRow; w
           ) : null}
         </View>
         {cell(costMinor == null ? '–' : money(costMinor), costMinor == null ? 'muted' : 'ink')}
-        <PressableScale role="button" accessibilityLabel={`Change the price of ${row.name}`} onPress={() => setEditing((e) => !e)} style={{ flex: COLS.num, minHeight: layout.minTapTarget, justifyContent: 'center' }}>
+        <PressableScale role="button" accessibilityLabel={`Change the price of ${row.name}`} onPress={() => {
+          setDraft(row.price ?? '');
+          setEditing((e) => !e);
+        }} style={{ flex: COLS.num, minHeight: layout.minTapTarget, justifyContent: 'center' }}>
           <Spec tone="accent" align="right">
             {minor != null ? money(minor) : (typed ?? 'Set')}
           </Spec>
