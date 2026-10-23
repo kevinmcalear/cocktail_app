@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -26,6 +26,8 @@ interface PrepEditorProps {
   saving: boolean;
   /** The full form (IngredientEditPage): brand, ABV, tags, who sees it, reordering and removing lines. */
   onAllFields: () => void;
+  /** Its picture beside the name and the caption under it (usePictureTile), when its editor may choose one. */
+  picture?: { tile: ReactNode; caption: ReactNode };
 }
 
 /**
@@ -41,7 +43,7 @@ export function PrepEditor(props: PrepEditorProps) {
   );
 }
 
-function PrepEditorBody({ name, onName, lines, onAmount, onAdd, description, onDescription, onBack, onSave, saving, onAllFields }: PrepEditorProps) {
+function PrepEditorBody({ name, onName, lines, onAmount, onAdd, description, onDescription, onBack, onSave, saving, onAllFields, picture }: PrepEditorProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
@@ -49,14 +51,18 @@ function PrepEditorBody({ name, onName, lines, onAmount, onAdd, description, onD
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.page, { paddingTop: insets.top + space.sm, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }]}>
         <EditorHead eyebrow="PREP" onBack={onBack} onSave={onSave} saving={saving} />
-        <TextInput
-          value={name}
-          onChangeText={onName}
-          aria-label="Name"
-          placeholder="Name"
-          placeholderTextColor={ds.c.faint}
-          style={[type.title, styles.title, { fontFamily: displayFaces[ds.displayFace].regular, color: ds.c.ink }]}
-        />
+        <View style={styles.nameRow}>
+          <TextInput
+            value={name}
+            onChangeText={onName}
+            aria-label="Name"
+            placeholder="Name"
+            placeholderTextColor={ds.c.faint}
+            style={[type.title, styles.title, styles.flex, { fontFamily: displayFaces[ds.displayFace].regular, color: ds.c.ink }]}
+          />
+          {picture?.tile}
+        </View>
+        {picture?.caption}
         <View role="list" aria-label="Recipe">
           {lines.map((l, i) => (
             <Line key={`${l.ingredient_id}-${i}`} line={l} onAmount={(a) => onAmount(i, a)} />
@@ -132,6 +138,7 @@ const styles = StyleSheet.create({
   eyebrow: { letterSpacing: 1.2 },
   bold: { fontFamily: fontFamilies.bodySemiBold },
   title: { paddingVertical: space.xs, marginBottom: space.xs },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },
   box: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, minWidth: 88, height: 40, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 2 },

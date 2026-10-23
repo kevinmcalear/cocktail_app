@@ -39,6 +39,8 @@ const FORM: IngredientForm = {
   overrideMeasurement: null,
   overridePrep: null,
   hideFromSearch: false,
+  picture: 'drawing',
+  photo: null,
 };
 
 function editorWith(form: IngredientForm, set: jest.Mock) {
