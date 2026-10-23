@@ -158,6 +158,19 @@ describe('the catalog', () => {
     assert.deepEqual(await names(anon, { p_query: `${run} saucer` }), [], 'every word must match');
   });
 
+  test('a search forgives accents and a slip or two, but not a guess', async () => {
+    const names = async (p_query) => {
+      const { data, error } = await anon.rpc('search_glass_models', { p_query }).select('name');
+      assert.ifError(error);
+      return data.filter((m) => m.name.includes(run)).map((m) => m.name);
+    };
+    assert.deepEqual(await names(`Désigner Sériés ${run} coupe`), [`Coupe ${run}`], 'accents folded');
+    assert.deepEqual(await names(`designr ${run} coupe`), [`Coupe ${run}`], 'one letter off a 7-letter word');
+    assert.deepEqual(await names(`dseigner ${run} coupe`), [`Coupe ${run}`], 'two letters off an 8-letter word');
+    assert.deepEqual(await names(`copue ${run}`), [], 'two letters off a 5-letter word is too far');
+    assert.deepEqual(await names(`${run} cup`), [], 'words under 4 letters match only as typed');
+  });
+
   test('one row per maker, name and size', async () => {
     const { error } = await service.from('glass_models').insert(model({ name: `coupe  ${run}`, capacity_ml: 190 }));
     assert.ok(error, 'same name and size refused');
