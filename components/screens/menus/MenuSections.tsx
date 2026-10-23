@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { displayFaces, displayName, fontFamilies, space } from '@/constants/tokens';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
-import { formatPrice } from '@/lib/menus';
+import { printedPrice } from '@/lib/menus';
 import type { SketchInputs } from '@/lib/sketch/types';
 import type { MenuDrink, MenuSectionDetail } from '@/types/menus';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
@@ -60,7 +60,7 @@ function NewMark() {
  */
 function DrinkLine({ drink, centered, card = false, isNew = false, code = false }: { drink: MenuDrink; centered: boolean; card?: boolean | 'compact'; isNew?: boolean; code?: boolean }) {
   const ds = useDs();
-  const price = card ? formatPrice(drink.price) : null;
+  const price = card ? printedPrice(drink) : null;
   const url = code ? `${siteOrigin()}${menuDrinkHref(drink)}` : null;
   return (
     <View style={centered ? styles.centered : styles.flex}>
@@ -117,7 +117,7 @@ interface MenuSectionsProps {
 
 /** A page row's price, in mono at the row's end. */
 function RowPrice({ drink }: { drink: MenuDrink }) {
-  const price = formatPrice(drink.price);
+  const price = printedPrice(drink);
   return price ? <Spec>{price}</Spec> : null;
 }
 
@@ -161,7 +161,7 @@ export function MenuDrinkRow({ drink: d, href, isNew = false, sketch }: { drink:
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={[d.name, isNew ? 'new' : null, formatPrice(d.price), d.line].filter(Boolean).join(', ')}
+      accessibilityLabel={[d.name, isNew ? 'new' : null, printedPrice(d), d.line].filter(Boolean).join(', ')}
       onPressIn={() => {
         const id = drinkIdFromHref(href);
         if (id) prefetch(id, { name: d.name, imageUrl: d.isSketch ? null : d.imageUrl });

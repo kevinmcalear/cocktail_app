@@ -159,7 +159,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
     menus: (
       <>
         {home && onMenu ? (
-          <MenuCard title="On the menu now" detail={[onMenu.name, p.venueName].filter(Boolean).join(' at ')} onPress={() => router.push(`/menus/${onMenu.menuId}` as Href)} />
+          <MenuCard title="On the menu now" detail={[[onMenu.name, p.venueName].filter(Boolean).join(' at '), onMenu.price ? `${onMenu.price} there` : null].filter(Boolean).join(' · ')} onPress={() => router.push(`/menus/${onMenu.menuId}` as Href)} />
         ) : null}
         <MenuRuns runs={menuRuns} />
       </>
@@ -189,7 +189,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
       />
     ) : null,
     history: staff && live ? <HistorySection itemId={item.id} barId={item.bar_id} canEdit={p.canEdit} compact={p.wide} /> : null,
-    cost: staff && live ? <CostSection itemId={item.id} barId={item.bar_id} price={item.price} canEdit={p.canEdit} /> : null,
+    cost: staff && live ? <CostSection itemId={item.id} barId={item.bar_id} price={item.price} onMenu={onMenu} canEdit={p.canEdit} /> : null,
     backstory: live ? <Backstory itemId={copy?.classicId ?? item.id} lines={lines} classicName={copy?.classicName} onRiff={p.onRiff} story={catalog && !lock ? item.notes : null} /> : null,
     classicLink: live && p.canEdit ? <ClassicLink item={item} /> : null,
     publish: live && (staff || !item.bar_id) ? <PublishSection itemId={item.id} barId={item.bar_id} showLocked={staff} /> : null,

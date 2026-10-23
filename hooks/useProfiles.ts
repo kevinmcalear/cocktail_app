@@ -368,7 +368,7 @@ export function useMenuEditionDrinks(drinks: MenuEditionDrink[]) {
     queryFn: async (): Promise<MenuDrink[]> => {
       const { data, error } = await supabase.from('items').select(MENU_DRINK_COLUMNS).in('id', ids);
       if (error) throw error;
-      return ((data ?? []) as unknown as MenuItemRow[]).map(toMenuDrink).filter((d): d is MenuDrink => !!d);
+      return ((data ?? []) as unknown as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
     },
   });
 }

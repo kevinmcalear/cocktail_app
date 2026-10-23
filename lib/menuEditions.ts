@@ -4,7 +4,7 @@ import type { MenuDrink } from '@/types/menus';
 export interface MenuEditionDrink {
   id: string;
   name: string;
-  /** A venue's own menu: the price as the venue typed it, and the menu section it sits in. */
+  /** A venue's own menu: the price it prints (its own for the drink, else the drink's), as typed, and the menu section it sits in. */
   price?: string | null;
   section?: string | null;
 }
@@ -158,9 +158,12 @@ export function sortEditions<T extends Pick<MenuEdition, 'year' | 'month' | 'nam
  */
 export function editionMenuDrinks(drinks: MenuEditionDrink[], loaded: MenuDrink[]): MenuDrink[] {
   const byId = new Map(loaded.map((d) => [d.id, d]));
-  return drinks.map(
-    (d) => byId.get(d.id) ?? { id: d.id, name: d.name, kind: 'cocktail', line: '', price: d.price ?? null, imageUrl: null, isSketch: false, glass: null }
-  );
+  return drinks.map((d) => {
+    const drink = byId.get(d.id);
+    // A venue menu's price is the one it prints (its own, else the drink's).
+    if (drink) return d.price === undefined ? drink : { ...drink, menuPrice: d.price };
+    return { id: d.id, name: d.name, kind: 'cocktail', line: '', price: d.price ?? null, imageUrl: null, isSketch: false, glass: null };
+  });
 }
 
 /**

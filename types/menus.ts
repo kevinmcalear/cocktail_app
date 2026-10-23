@@ -51,8 +51,13 @@ export interface MenuDrink {
   kind: SectionDrinkType;
   /** Ingredients for a cocktail, maker or origin for beer and wine. */
   line: string;
-  /** As the venue typed it (items.price is text): "18", "19.50", "MP". */
+  /** The drink's own price, as the venue typed it (items.price is text): "18", "19.50", "MP". */
   price: string | null;
+  /**
+   * This menu's own price for the drink (menu_drinks.price), typed the same
+   * way; null or missing prints the drink's price (lib/menus printedPrice).
+   */
+  menuPrice?: string | null;
   imageUrl: string | null;
   isSketch: boolean;
   glass: string | null;

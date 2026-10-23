@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase';
 export interface OnMenu {
   menuId: string;
   name: string;
+  /** That menu's own price for the drink, as typed; null when it prints the drink's. */
+  price: string | null;
 }
 
 /**
@@ -22,14 +24,14 @@ export function useDrinkOnMenu(itemId: string | null | undefined, barId: string 
     queryFn: async (): Promise<OnMenu | null> => {
       const { data, error } = await supabase
         .from('menu_drinks')
-        .select('menu:menus!inner(id, name, is_active, kind)')
+        .select('price, menu:menus!inner(id, name, is_active, kind)')
         .eq('item_id', itemId!)
         .eq('menu.is_active', true)
         .limit(5);
       if (error) throw error;
-      const rows = (data ?? []) as unknown as { menu: { id: string; name: string; kind: string } }[];
-      const menu = rows.find((r) => r.menu.kind === 'menu')?.menu ?? rows[0]?.menu;
-      return menu ? { menuId: menu.id, name: menu.name } : null;
+      const rows = (data ?? []) as unknown as { price: string | null; menu: { id: string; name: string; kind: string } }[];
+      const row = rows.find((r) => r.menu.kind === 'menu') ?? rows[0];
+      return row ? { menuId: row.menu.id, name: row.menu.name, price: row.price?.trim() || null } : null;
     },
   });
 }

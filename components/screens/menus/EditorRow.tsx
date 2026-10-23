@@ -8,10 +8,11 @@ import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, radius, space, type } from '@/constants/tokens';
 import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
+import { bothPrices } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
 import { RowMenu, useRowMenu, type RowMenuItem } from './RowMenu';
-import { PriceButton, PriceEditor, PriceField } from './RowPrice';
+import { PRICE_FIELD, PriceButton, PriceEditor, PriceFields, SuggestedPriceLine, type RowPricing } from './RowPrice';
 import { dragSource, dropRow, dropSlot } from './useMenuDrag';
 
 /** The grip's width: only a touch there starts a drag (gripOnly). */
@@ -36,10 +37,28 @@ interface EditorRowProps {
   onMoveTo: (toKey: string) => void;
   /** Desktop web drag and drop: the row's section, a drop slot above or below it, and whether it's the one being dragged. */
   web?: { from: string; slot: 'before' | 'after' | null; dragging: boolean };
-  /** A venue's row: changes the drink's own price, saved with the menu. */
-  onPrice?: (price: string | null) => void;
-  /** Another menu the drink is on, which shows the same price. */
+  /** A venue's row: changes the drink's own price and this menu's, saved with the menu. */
+  pricing?: RowPricing;
+  /** Another menu the drink is on, which shows the drink's price unless it has its own. */
   alsoOn?: string;
+}
+
+/**
+ * Desktop: PRICE and THIS MENU over a section's price fields, lined up with
+ * them (the row's Remove, ... and grip come after).
+ */
+export function PriceHeads() {
+  return (
+    <View aria-hidden style={styles.heads}>
+      <Caption tone="muted" align="right" style={styles.head}>
+        PRICE
+      </Caption>
+      <Caption tone="muted" align="right" style={styles.head}>
+        THIS MENU
+      </Caption>
+      <View style={styles.headsEnd} />
+    </View>
+  );
 }
 
 /** Where a dragged drink will land, as the board draws it: a dashed slot the height of a row. */
@@ -62,7 +81,7 @@ const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail'
  * another section, Open the drink, Move to top (and on a phone, Remove). On a
  * desktop browser, Remove and ... show on hover or keyboard focus.
  */
-export function EditorRow({ drink, index: i, count, home, isNew, active, drag, onRemove, onMove, others, onMoveTo, web: dnd, onPrice, alsoOn }: EditorRowProps) {
+export function EditorRow({ drink, index: i, count, home, isNew, active, drag, onRemove, onMove, others, onMoveTo, web: dnd, pricing: rowPricing, alsoOn }: EditorRowProps) {
   const ds = useDs();
   const router = useRouter();
   const [menu, setMenu] = useState<'open' | 'sections'>('open');
@@ -75,9 +94,12 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
   const [hot, setHot] = useState(false);
   // react-native-web passes these to the row's div; focus events bubble from the grip and Remove.
   const hover = quiet ? ({ onMouseEnter: () => setHot(true), onMouseLeave: () => setHot(false), onFocus: () => setHot(true), onBlur: () => setHot(false) } as object) : {};
-  const [pricing, setPricing] = useState(false);
+  const [editing, setEditing] = useState(false);
   // A home menu shows no prices.
-  const changePrice = home ? undefined : onPrice;
+  const pricing = home ? undefined : rowPricing;
+  // "19, or 22 on this menu": a phone shows it in place of the line, desktop after it.
+  const both = pricing ? bothPrices(drink) : null;
+  const caption = quiet ? [drink.line, both, alsoOn && pricing ? `also on ${alsoOn}` : null].filter(Boolean).join(' · ') : (both ?? drink.line);
   // Keyboard (web): the focused grip moves its drink with the arrow keys.
   const onKeyDown = (e: { key: string; preventDefault: () => void }) => {
     const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : null;
@@ -120,13 +142,14 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
               </DsText>
               {isNew ? <Tag label="New" tone="success" /> : null}
             </View>
-            {drink.line || (quiet && alsoOn && changePrice) ? (
-              <Caption tone="muted" numberOfLines={1}>
-                {[drink.line, quiet && alsoOn && changePrice ? `also on ${alsoOn}` : null].filter(Boolean).join(' · ')}
+            {caption ? (
+              <Caption tone={both && !quiet ? 'accent' : 'muted'} numberOfLines={1}>
+                {caption}
               </Caption>
             ) : null}
+            {pricing && quiet ? <SuggestedPriceLine drink={drink} pricing={pricing} /> : null}
           </View>
-          {!changePrice ? null : quiet ? <PriceField drink={drink} onPrice={changePrice} /> : <PriceButton drink={drink} open={pricing} onPress={() => setPricing((p) => !p)} />}
+          {!pricing ? null : quiet ? <PriceFields drink={drink} pricing={pricing} /> : <PriceButton drink={drink} open={editing} onPress={() => setEditing((p) => !p)} />}
           {quiet ? (
             <PressableScale accessibilityLabel={`Remove ${drink.name}`} onPress={onRemove} style={[styles.icon, !show && styles.hidden]}>
               <IconSymbol name="xmark" size={16} color={ds.c.muted} />
@@ -161,7 +184,7 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
             <IconSymbol name="circle.grid.3x3.fill" size={18} color={ds.c.muted} />
           </PressableScale>
         </View>
-        {pricing && changePrice && !quiet ? <PriceEditor drink={drink} alsoOn={alsoOn} onPrice={changePrice} onClose={() => setPricing(false)} /> : null}
+        {editing && pricing && !quiet ? <PriceEditor drink={drink} alsoOn={alsoOn} pricing={pricing} onClose={() => setEditing(false)} /> : null}
         <RowMenu anchor={popover.anchor} label={menu === 'sections' ? `Move ${drink.name} to` : `${drink.name} options`} items={items} onClose={popover.close} />
       </View>
       {dnd?.slot === 'after' ? <DropSlot /> : null}
@@ -190,5 +213,9 @@ const styles = StyleSheet.create({
   held: { opacity: 0.4 },
   // Its whole height is what it pushes the rows down by (useMenuDrag), so no margins.
   slotSpace: { paddingVertical: space.xs },
+  heads: { flexDirection: 'row', gap: space.md },
+  head: { width: PRICE_FIELD, letterSpacing: 1 },
+  // The row's Remove and ... (a tap target each) and the grip, with the gaps between.
+  headsEnd: { width: layout.minTapTarget * 2 + GRIP + space.md * 2 },
   slot: { height: 72, borderRadius: radius.control, borderWidth: 1, borderStyle: 'dashed' },
 });

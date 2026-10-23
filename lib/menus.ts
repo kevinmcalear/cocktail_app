@@ -1,5 +1,5 @@
 import { dayLabel, parseDay, toDay } from '@/lib/collection';
-import type { MenuDetail, MenuSectionDetail, MenuStatus, MenuSummary } from '@/types/menus';
+import type { MenuDetail, MenuDrink, MenuSectionDetail, MenuStatus, MenuSummary } from '@/types/menus';
 
 type Dated = Pick<MenuSummary, 'startsAt' | 'endsAt'> & Partial<Pick<MenuSummary, 'menuDate'>>;
 
@@ -109,6 +109,19 @@ export function formatPrice(price: string | null | undefined): string | null {
   return p ? p : null;
 }
 
+/** The price a menu prints for a drink: the menu's own for it, else the drink's. */
+export function printedPrice(drink: Pick<MenuDrink, 'price' | 'menuPrice'>): string | null {
+  return formatPrice(drink.menuPrice) ?? formatPrice(drink.price);
+}
+
+/** "19, or 22 on this menu" when this menu has its own price for the drink; null when it doesn't. */
+export function bothPrices(drink: Pick<MenuDrink, 'price' | 'menuPrice'>): string | null {
+  const own = formatPrice(drink.price);
+  const menu = formatPrice(drink.menuPrice);
+  if (!menu) return null;
+  return own ? `${own}, or ${menu} on this menu` : `${menu} on this menu only`;
+}
+
 export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
 }
@@ -167,7 +180,7 @@ export function menuReadiness(menu: { sections: Pick<MenuSectionDetail, 'name' |
     if (s.maxItems !== null && s.drinks.length > s.maxItems) over.push({ name: s.name, extra: s.drinks.length - s.maxItems });
     for (const d of s.drinks) {
       if (!d.imageUrl || d.isSketch) needsPhoto.push(d.name);
-      if (!formatPrice(d.price)) noPrice.push(d.name);
+      if (!printedPrice(d)) noPrice.push(d.name);
     }
   }
   const hasDrinks = menu.sections.some((s) => s.drinks.length > 0);
@@ -229,7 +242,7 @@ export function menuAsText(menu: Pick<MenuDetail, 'name' | 'sections'>, venueNam
     if (!s.drinks.length) continue;
     lines.push('', s.name.toUpperCase());
     for (const d of s.drinks) {
-      lines.push([d.name, formatPrice(d.price)].filter(Boolean).join(' '));
+      lines.push([d.name, printedPrice(d)].filter(Boolean).join(' '));
       if (d.line) lines.push(`  ${d.line}`);
     }
   }

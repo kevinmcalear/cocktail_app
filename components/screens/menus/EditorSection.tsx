@@ -1,7 +1,7 @@
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { NestableDraggableFlatList, type RenderItemParams } from 'react-native-draggable-flatlist';
 
-import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { Caption, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { STATUS } from '@/constants/palette';
 import { gripOnly, supportsNestableDrag } from '@/components/recipe/FormScrollContainer';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -11,7 +11,7 @@ import { readableAccent } from '@/lib/color';
 import { sectionLine } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
-import { DropSlot, EditorRow, GRIP } from './EditorRow';
+import { DropSlot, EditorRow, GRIP, PriceHeads } from './EditorRow';
 import { dropSection } from './useMenuDrag';
 
 interface EditorSectionProps {
@@ -34,8 +34,8 @@ interface EditorSectionProps {
   onMove: (from: number, to: number) => void;
   /** Desktop web: the browser's drag and drop (useMenuDrag) instead of the grip drag. */
   drag?: { at: number | null; dragging: string | null };
-  /** A venue's menu: changes a drink's own price. */
-  onPrice?: (drinkId: string, price: string | null) => void;
+  /** A venue's menu: changes a drink's own price, and this menu's price for it. */
+  pricing?: { menuName: string; barId: string | null; onPrice: (drinkId: string, price: string | null) => void; onMenuPrice: (drinkId: string, price: string | null) => void };
   /** Drinks also on another of the venue's menus, by id: that menu's name. */
   elsewhere?: Record<string, string>;
 }
@@ -49,8 +49,11 @@ const ListComponent = supportsNestableDrag ? NestableDraggableFlatList : Draggab
  * reorder), and adding more. No box of its own: on desktop the section the
  * library adds to sits on a raised ground, tagged "Adding here".
  */
-export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, made, onRemove, onReorder, onMove, onMoveTo, drag: web, onPrice, elsewhere }: EditorSectionProps) {
+export function EditorSection({ section, sections, targeted, onTarget, onAdd, onSettings, home, made, onRemove, onReorder, onMove, onMoveTo, drag: web, pricing, elsewhere }: EditorSectionProps) {
   const ds = useDs();
+  const breakpoint = useBreakpoint();
+  // A desktop browser: the rows have price fields, with heads over them.
+  const wide = Platform.OS === 'web' && breakpoint === 'desktop';
   const count = section.drinks.length;
   const line = sectionLine(section);
   const others = sections.filter((s) => s.key !== section.key).map((s) => ({ key: s.key, name: s.name }));
@@ -69,7 +72,11 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
       onMove={onMove}
       others={others}
       onMoveTo={(toKey) => onMoveTo(item.id, toKey)}
-      onPrice={onPrice ? (price) => onPrice(item.id, price) : undefined}
+      pricing={
+        pricing
+          ? { menuName: pricing.menuName, barId: pricing.barId, onPrice: (price) => pricing.onPrice(item.id, price), onMenuPrice: (price) => pricing.onMenuPrice(item.id, price) }
+          : undefined
+      }
       alsoOn={elsewhere?.[item.id]}
     />
   );
@@ -103,6 +110,7 @@ export function EditorSection({ section, sections, targeted, onTarget, onAdd, on
           <IconSymbol name="ellipsis" size={18} color={ds.c.muted} />
         </PressableScale>
       </View>
+      {count && pricing && wide && !home ? <PriceHeads /> : null}
       {count ? (
         <ListComponent
           data={section.drinks}

@@ -22,6 +22,8 @@ interface CostSectionProps {
   price: string | null | undefined;
   /** The viewer can edit the drink (its price). */
   canEdit: boolean;
+  /** The menu on now with the drink, when it prints its own price for it: "$22.00 on Winter menu". */
+  onMenu?: { name: string; price?: string | null } | null;
 }
 
 /**
@@ -32,7 +34,7 @@ interface CostSectionProps {
  * (drink-cost-floor). Locked until the costs capability; the server returns
  * nothing below it either.
  */
-export function CostSection({ itemId, barId, price, canEdit }: CostSectionProps) {
+export function CostSection({ itemId, barId, price, onMenu, canEdit }: CostSectionProps) {
   const { data: capabilities } = useCapabilities(barId);
   const { data: opensAtLevel } = useCapabilityOpensAt(barId, 'costs');
   const unlocked = !!barId && !!capabilities?.includes('costs');
@@ -43,7 +45,7 @@ export function CostSection({ itemId, barId, price, canEdit }: CostSectionProps)
     <LockedSection title="Cost and margin" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Drink Creator'}>
       {error ? <Body tone="muted">Couldn’t work out the cost. Check your connection and try again.</Body> : null}
       {isPending && !error ? <Caption tone="muted">Adding it up…</Caption> : null}
-      {cost && settings ? <Costed itemId={itemId} barId={barId} cost={cost} price={formatPrice(price)} canEdit={canEdit} currency={settings.currency} taxRate={settings.tax_rate} pricesIncludeTax={settings.prices_include_tax} targets={{ gp: settings.target_gp, minProfitMinor: settings.min_profit_minor }} /> : null}
+      {cost && settings ? <Costed itemId={itemId} barId={barId} cost={cost} price={formatPrice(price)} onMenu={onMenu?.price ? { name: onMenu.name, price: onMenu.price } : null} canEdit={canEdit} currency={settings.currency} taxRate={settings.tax_rate} pricesIncludeTax={settings.prices_include_tax} targets={{ gp: settings.target_gp, minProfitMinor: settings.min_profit_minor }} /> : null}
     </LockedSection>
   );
 }
@@ -53,6 +55,7 @@ interface CostedProps {
   barId: string;
   cost: NonNullable<ReturnType<typeof useDrinkCost>['data']>;
   price: string | null;
+  onMenu: { name: string; price: string } | null;
   canEdit: boolean;
   currency: string | null;
   taxRate: number;
@@ -60,7 +63,7 @@ interface CostedProps {
   targets: Targets;
 }
 
-function Costed({ itemId, barId, cost, price, canEdit, currency, taxRate, pricesIncludeTax, targets }: CostedProps) {
+function Costed({ itemId, barId, cost, price, onMenu, canEdit, currency, taxRate, pricesIncludeTax, targets }: CostedProps) {
   const ds = useDs();
   const router = useRouter();
   const tax = { taxRate, pricesIncludeTax };
@@ -69,6 +72,11 @@ function Costed({ itemId, barId, cost, price, canEdit, currency, taxRate, prices
   const known = !(cost.total_minor === 0 && cost.missing > 0);
   // The number in the typed price; MP and the like have none, so no margin.
   const priceMinorValue = currency ? priceMinor(price, currency) : null;
+  // A menu's own price, as money when it has a number ("$22.00"), else as typed ("MP").
+  const menuPrice = (typed: string) => {
+    const minor = currency ? priceMinor(typed, currency) : null;
+    return minor != null ? money(minor) : typed;
+  };
   const m = known ? margin(cost.total_minor, priceMinorValue, tax) : null;
   const target = known ? targetStatus(cost.total_minor, priceMinorValue, targets, tax) : null;
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'The venue';
@@ -114,7 +122,7 @@ function Costed({ itemId, barId, cost, price, canEdit, currency, taxRate, prices
         ) : null}
       </View>
       <View style={styles.facts}>
-        <Fact label="Price" value={priceMinorValue != null ? money(priceMinorValue) : (price ?? 'None')} sub={m ? (pricesIncludeTax ? `${money(Math.round(m.exTaxMinor))} without tax` : 'tax added at the till') : price ? 'no number in it: no margin worked out' : 'add one to see the margin'} />
+        <Fact label="Price" value={priceMinorValue != null ? money(priceMinorValue) : (price ?? 'None')} sub={onMenu && onMenu.price !== price ? `${menuPrice(onMenu.price)} on ${onMenu.name}` : m ? (pricesIncludeTax ? `${money(Math.round(m.exTaxMinor))} without tax` : 'tax added at the till') : price ? 'no number in it: no margin worked out' : 'add one to see the margin'} />
         <Fact label="Profit" value={m ? money(Math.round(m.profitMinor)) : '–'} sub={m ? 'after tax and ingredients' : 'set a price'} />
         <Fact label="GP" value={m ? formatPct(m.gp) : '–'} sub={m ? `pour cost ${formatPct(m.pourCost)}` : 'set a price'} />
       </View>

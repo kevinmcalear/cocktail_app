@@ -179,6 +179,8 @@ export function savePayload(layout: MenuLayout) {
     max_items: s.maxItems,
     allowed_types: s.allowedTypes,
     item_ids: s.drinks.map((d) => d.id),
+    // This menu's own price for each, beside item_ids; null prints the drink's.
+    prices: s.drinks.map((d) => d.menuPrice?.trim() || null),
   }));
 }
 
@@ -203,6 +205,15 @@ export function setDrinkPrice(layout: MenuLayout, drinkId: string, price: string
     ...layout,
     prices: { ...layout.prices, [drinkId]: typed },
     sections: layout.sections.map((s) => ({ ...s, drinks: s.drinks.map((d) => (d.id === drinkId ? { ...d, price: typed } : d)) })),
+  };
+}
+
+/** Sets this menu's own price for a drink (every row of it here), as typed; blank goes back to the drink's price. Saved with the menu. */
+export function setMenuPrice(layout: MenuLayout, drinkId: string, price: string | null): MenuLayout {
+  const typed = price?.trim() || null;
+  return {
+    ...layout,
+    sections: layout.sections.map((s) => ({ ...s, drinks: s.drinks.map((d) => (d.id === drinkId ? { ...d, menuPrice: typed } : d)) })),
   };
 }
 
