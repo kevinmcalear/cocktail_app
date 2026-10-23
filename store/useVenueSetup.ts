@@ -16,7 +16,7 @@ export type HeldSetup = ClaimSetup & { instagram?: string | null };
 /**
  * A glass picked on What next before the venue's page is checked: glassware
  * hangs off the page, so it waits here until the page is linked and the
- * venue can write to it (hooks/useWhatNext useFlushHeldGlasses). `key` is the
+ * venue can write to it (hooks/useBarGlassware useFlushHeldGlasses). `key` is the
  * catalog glass's id, or made up for one described by hand.
  */
 export type HeldGlass = Omit<BarGlassInput, 'id'> & { key: string };

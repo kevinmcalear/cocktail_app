@@ -10,7 +10,7 @@ import { useBackBarStock } from '@/hooks/useBackBar';
 import { useBarGlassware, useBarPageId, useFlushHeldGlasses, useHeldGlasses } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useBarClassics, useTopClassics } from '@/hooks/useWhatNext';
-import { glassMakers } from '@/lib/whatNext';
+import { glassMakers, heldNotOnPage } from '@/lib/whatNext';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BrandsStep } from './BrandsStep';
@@ -62,7 +62,7 @@ export function WhatNext({
   const pageId = pageQuery.data ?? null;
   // On the page, then held on this device until it's checked (a held one already saved isn't counted twice).
   const onPage = glassQuery.data ?? [];
-  const glasses = [...onPage, ...held.filter((h) => !h.model_id || !onPage.some((g) => g.model_id === h.model_id)).map((h) => ({ ...h, id: h.key, maker_page: null }))];
+  const glasses = [...onPage, ...heldNotOnPage(held, onPage).map((h) => ({ ...h, id: h.key, maker_page: null }))];
   const stock = stockQuery.data ?? [];
   const inLibrary = (libraryQuery.data ?? []).length;
   // What's there decides which steps show and whether it's filled in: wait for it, not a flash of the wrong one.
@@ -132,7 +132,7 @@ export function WhatNext({
           </>
         }
       >
-        <BackBarShelf name={name} glasses={glasses} bottles={stock.map((r) => r.item ?? { id: r.item_id, name: '' })} />
+        <BackBarShelf name={name} glasses={glasses} bottles={can.brands ? stock.map((r) => r.item ?? { id: r.item_id, name: '' }) : null} />
         {filled ? null : <Caption tone="muted">Fill it in as you like. Every step can wait.</Caption>}
         <View style={styles.steps}>
           <StepRow

@@ -10,6 +10,7 @@ import { space } from '@/constants/tokens';
 import { useBarGlassware, useDeleteBarGlass, useHeldGlasses, useSaveBarGlass } from '@/hooks/useBarGlassware';
 import { useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
+import { heldNotOnPage } from '@/lib/whatNext';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
@@ -93,7 +94,9 @@ export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip 
     setDescribing(true);
   };
 
-  const count = glasses.length + held.length;
+  const count = glasses.length + heldNotOnPage(held, glasses).length;
+  // Described by hand and waiting for the page: listed here so one can come off.
+  const own = held.filter((g) => !g.model_id);
   const page = (title: string, back: () => void, footer: ReactNode, body: ReactNode) => (
     <SetupChromeProvider value={{ ...chrome, title, intro: undefined, mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack: back }}>
       <SetupPage footer={footer}>
@@ -182,6 +185,14 @@ export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip 
           {more ? null : <Button label="More" variant="secondary" size="sm" accessibilityLabel="More shapes" onPress={() => setMore(true)} />}
         </View>
       </View>
+      {own.length ? (
+        <View role="group" aria-label="Described by you" style={styles.wrap}>
+          {own.map((g) => {
+            const label = g.name ?? GLASS_TYPE_LABEL[g.glass];
+            return <Chip key={g.key} multi selected label={label} accessibilityLabel={`${label} is on your shelf. Remove`} onPress={() => dropGlass(barId, g.key)} />;
+          })}
+        </View>
+      ) : null}
       {looking && results.length ? <GlassShelfRows models={results} by="range" onShelf={onShelf} onToggle={(m) => void toggle(m)} /> : null}
       {looking && !results.length && !found.isFetching ? (
         found.error ? (

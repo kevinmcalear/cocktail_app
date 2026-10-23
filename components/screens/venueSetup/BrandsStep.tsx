@@ -24,7 +24,8 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
   const chrome = useSetupChrome();
   const ds = useDs();
   const dropdowns = useDropdowns({ ingredients: true }).data;
-  const stock = useBackBarStock(barId).data ?? [];
+  const stockRows = useBackBarStock(barId).data;
+  const stock = useMemo(() => stockRows ?? [], [stockRows]);
   const { add, remove } = useStockMutations(barId);
   const [typing, setTyping] = useState(false);
   const all = dropdowns?.ingredients;
@@ -36,7 +37,7 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
   const coreIds = useMemo(() => new Set(dropdowns?.coreIngredientIds ?? []), [dropdowns?.coreIngredientIds]);
   const stocked = new Set(stock.map((r) => r.item_id));
   // Oldest first, so a chip stays where it was as more go on.
-  const groups = brandGroups(all ?? [], stock.map((r) => r.item_id).reverse());
+  const groups = useMemo(() => brandGroups(all ?? [], stock.map((r) => r.item_id).reverse()), [all, stock]);
 
   const toggle = (item: { id: string; name: string | null }) => {
     if (stocked.has(item.id)) remove.mutate(item.id);
@@ -81,8 +82,8 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
         {typing ? null : !all ? (
           <Caption tone="muted">Loading…</Caption>
         ) : (
-          groups.map((g) => (
-            <View key={g.title} style={styles.group}>
+          groups.map((g, i) => (
+            <View key={`${g.title}-${i}`} style={styles.group}>
               <Caption tone="muted" role="heading">
                 {g.title}
               </Caption>

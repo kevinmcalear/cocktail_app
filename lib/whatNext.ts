@@ -64,9 +64,12 @@ export function setupLine(p: { invites: number; claim: 'none' | 'pending' | 'app
     .join(' · ');
 }
 
-/** "Cocktail Kingdom, Libbey": who makes the bar's glasses, first seen first. */
-export function glassMakers(glasses: readonly { maker: string | null; maker_page: { display_name: string } | null }[], max = 2): string {
-  const makers = [...new Set(glasses.map((g) => g.maker_page?.display_name ?? g.maker).filter((m): m is string => !!m))];
+/** "Cocktail Kingdom, Libbey": who makes the bar's glasses, first seen first. A catalog glass's maker is its model's. */
+export function glassMakers(
+  glasses: readonly { maker: string | null; maker_page: { display_name: string } | null; model?: { maker: { display_name: string } | null } | null }[],
+  max = 2
+): string {
+  const makers = [...new Set(glasses.map((g) => g.model?.maker?.display_name ?? g.maker_page?.display_name ?? g.maker).filter((m): m is string => !!m))];
   return makers.length > max ? `${makers.slice(0, max).join(', ')} and more` : makers.join(', ');
 }
 
@@ -94,6 +97,11 @@ export function heldGlassPlan<T extends { key: string; glass: string; model_id?:
     mains.add(g.glass);
   }
   return { save, skip };
+}
+
+/** Held glasses not on the page yet (a catalog glass saved there already counts once). */
+export function heldNotOnPage<T extends { model_id?: string | null }>(held: readonly T[], onPage: readonly { model_id: string | null }[]): T[] {
+  return held.filter((h) => !h.model_id || !onPage.some((g) => g.model_id === h.model_id));
 }
 
 /** The kinds the brands step starts from, as drawn: a title, and the catalog kinds under it. */

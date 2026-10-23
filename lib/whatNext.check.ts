@@ -1,7 +1,7 @@
 // Checks for lib/whatNext.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { anyKind, brandGroups, classicsToAdd, glassMakers, groupGlasses, haveClassics, heldGlassPlan, setupLine, topClassics } from './whatNext';
+import { anyKind, brandGroups, classicsToAdd, glassMakers, groupGlasses, haveClassics, heldGlassPlan, heldNotOnPage, setupLine, topClassics } from './whatNext';
 
 const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
 
@@ -61,6 +61,7 @@ const row = (maker: string | null, page?: string) => ({ maker, maker_page: page 
 assert.equal(glassMakers([row('Cocktail Kingdom'), row('Cocktail Kingdom'), row(null, 'Libbey')]), 'Cocktail Kingdom, Libbey');
 assert.equal(glassMakers([row('A'), row('B'), row('C')]), 'A, B and more');
 assert.equal(glassMakers([row(null)]), '');
+assert.equal(glassMakers([{ maker: null, maker_page: null, model: { maker: { display_name: 'Libbey' } } }]), 'Libbey', 'a catalog glass: its model’s maker');
 
 // --- heldGlassPlan: each catalog glass once, first of a type the main one ---
 const held = [
@@ -74,6 +75,7 @@ assert.deepEqual(plan.skip, ['nick'], 'already on the page: not saved twice');
 assert.deepEqual(plan.save.map((g) => [g.key, g.is_default]), [['leo', true], ['perc', false], ['mine', true]]);
 assert.deepEqual(heldGlassPlan(held.slice(0, 1), [{ glass: 'coupe', model_id: 'other', is_default: true }]).save[0].is_default, false, 'the page has a main coupe: keep it');
 assert.deepEqual(heldGlassPlan([], []), { save: [], skip: [] });
+assert.deepEqual(heldNotOnPage(held, [{ model_id: 'nick' }]).map((g) => g.key), ['leo', 'perc', 'mine'], 'a glass on the page and held counts once');
 
 // --- brandGroups: the starting kinds, what's stocked under each however deep, the rest under its own top kind ---
 const ing = [

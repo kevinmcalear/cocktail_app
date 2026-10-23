@@ -18,18 +18,18 @@ const many = (n: number, one: string, more: string) => (n === 1 ? `one ${one}` :
 /**
  * The bar's back bar, drawn: a shelf of empty spots that fill with the real
  * drawing of each glass picked, and one below for the bottles on the back
- * bar. Past six, the last spot counts the rest.
+ * bar (null: not this member's to fill). Past six, the last spot counts the rest.
  */
-export function BackBarShelf({ name, glasses, bottles }: { name: string; glasses: readonly ShelfGlass[]; bottles: readonly { id: string; name: string }[] }) {
+export function BackBarShelf({ name, glasses, bottles }: { name: string; glasses: readonly ShelfGlass[]; bottles: readonly { id: string; name: string }[] | null }) {
   const ds = useDs();
   return (
     <View
       role="img"
-      aria-label={`${name}’s back bar, drawn: ${many(glasses.length, 'glass', 'glasses')} and ${many(bottles.length, 'bottle', 'bottles')} so far`}
+      aria-label={`${name}’s back bar, drawn: ${many(glasses.length, 'glass', 'glasses')}${bottles ? ` and ${many(bottles.length, 'bottle', 'bottles')}` : ''} so far`}
       style={[styles.shelf, { backgroundColor: ds.c.ground, borderColor: ds.c.line }]}
     >
       <Shelf items={glasses} draw={(g) => <GlassThumb glass={g.glass} variant={g.variant} size={44} />} />
-      <Shelf items={bottles} draw={(b) => <IngredientThumb id={b.id} name={b.name} size={44} />} />
+      {bottles ? <Shelf items={bottles} draw={(b) => <IngredientThumb id={b.id} name={b.name} size={44} />} /> : null}
     </View>
   );
 }
