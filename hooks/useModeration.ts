@@ -84,11 +84,12 @@ export function useResolveReport() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ report, status, resolution, hide }: { report: QueuedReport; status: 'actioned' | 'dismissed'; resolution: string; hide: boolean }) => {
-      const hiding = hide && !report.target_hidden && !!hideTarget(report);
+      const target = hideTarget(report);
+      const hiding = hide && !report.target_hidden && !!target;
       // resolve_report hides profiles, drinks and releases in the same
       // transaction; a ranking's bar profile is hidden directly first.
-      if (hiding && report.target_kind === 'ranking') {
-        const { error } = await supabase.rpc('set_content_hidden', { p_kind: 'profile', p_id: report.profile_id, p_hidden: true });
+      if (hiding && target && report.target_kind === 'ranking') {
+        const { error } = await supabase.rpc('set_content_hidden', { p_kind: target.kind, p_id: target.id, p_hidden: true });
         if (error) throw error;
       }
       const { error } = await supabase.rpc('resolve_report', {
