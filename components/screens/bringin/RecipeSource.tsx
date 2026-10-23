@@ -35,11 +35,13 @@ export function DrawnFromSpec({ inputs, seed, name }: { inputs: SketchInputs; se
  */
 export function FromYourFile({ file, box, words, page, title = 'From your file', onLook }: { file: ReadFile; box: ReadBox; words: string; page: number | null; title?: string; onLook: () => void }) {
   const ds = useDs();
-  const photo = file.mimeType.startsWith('image/');
-  const where = !photo ? (file.name ?? 'A PDF') : page === null ? 'Tap to see it bigger' : `Page ${page} · tap to see it bigger`;
+  // A photo that didn't outlive the session (a review picked up later on the web) shows its words, like a PDF.
+  const image = file.mimeType.startsWith('image/');
+  const photo = image && !!file.uri;
+  const where = !photo ? (file.name ?? (image ? 'A photo' : 'A PDF')) : page === null ? 'Tap to see it bigger' : `Page ${page} · tap to see it bigger`;
   const body = (
     <>
-      <SourceCrop file={file} box={box} words={words} width={92} height={44} />
+      <SourceCrop file={photo ? file : null} box={box} words={words} width={92} height={44} />
       <View style={styles.flex}>
         <Caption style={styles.title} numberOfLines={1}>
           {title}

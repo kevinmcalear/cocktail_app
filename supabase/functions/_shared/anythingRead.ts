@@ -435,14 +435,14 @@ export function mockAnythingReply(hint: ReadKind | null): Record<string, unknown
       },
       // A spec sheet with a "Batch recipe (750 ml)" column (Eddie, 22 Oct), the bottle two drinks pour.
       {
-        name: "Smoke Signal",
+        name: "Signal Fire",
         by: null,
         lines: [
           { amount: 60, unit: "ml", ingredient: "Batch", unsure: false, batch: true, ...cell(1) },
           { amount: 30, unit: "ml", ingredient: "Pink Grapefruit Juice", unsure: false, ...cell(2) },
           { amount: 5, unit: "ml", ingredient: "Agave Syrup", unsure: false, ...cell(3) },
         ],
-        batch: SMOKE_BATCH,
+        batch: SIGNAL_BATCH,
         method: "Shaken",
         glass: "Coupe",
         ice: null,
@@ -454,11 +454,11 @@ export function mockAnythingReply(hint: ReadKind | null): Record<string, unknown
         name: "Last Light",
         by: null,
         lines: [
-          { amount: 45, unit: "ml", ingredient: "Smoke Signal batch", unsure: false, batch: true, ...cell(6) },
+          { amount: 45, unit: "ml", ingredient: "Signal Fire batch", unsure: false, batch: true, ...cell(6) },
           { amount: 15, unit: "ml", ingredient: "Lime Juice", unsure: false, ...cell(7) },
           { amount: null, unit: "top", ingredient: "Tonic Water", unsure: false, ...cell(8) },
         ],
-        batch: SMOKE_BATCH,
+        batch: SIGNAL_BATCH,
         method: "Built",
         glass: "Highball",
         ice: "Cubes",
@@ -470,8 +470,8 @@ export function mockAnythingReply(hint: ReadKind | null): Record<string, unknown
   };
 }
 
-const SMOKE_BATCH = {
-  name: "Smoke Signal batch",
+const SIGNAL_BATCH = {
+  name: "Signal Fire batch",
   heading: "Batch recipe (750 ml)",
   lines: [
     { amount: 450, unit: "ml", ingredient: "Mezcal", unsure: false, ...cell(1, true) },

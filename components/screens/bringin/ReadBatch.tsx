@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { BackbarTheme, Body, Button, Caption, DsText, Field, IngredientThumb, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, DsText, Field, IngredientThumb, PressableScale, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { bottleAmounts } from '@/lib/batchLines';
 import { amountLabel, type WizardLine } from '@/lib/drinkWizard';
 import { yieldText } from '@/lib/libraryFilters';
@@ -49,10 +49,21 @@ export function ReadBatchRow({ line, made, onOpen, onSeparate }: { line: WizardL
         </Caption>
       ) : null}
       <View style={[styles.links, styles.indent]}>
-        {line.batch ? <Button label="See the batch" variant="ghost" onPress={onOpen} style={styles.link} /> : null}
-        <Button label="Keep as separate lines" variant="ghost" onPress={onSeparate} style={styles.link} />
+        {line.batch ? <TextLink label="See the batch" onPress={onOpen} /> : null}
+        <TextLink label="Keep as separate lines" muted onPress={onSeparate} />
       </View>
     </View>
+  );
+}
+
+function TextLink({ label, muted, onPress }: { label: string; muted?: boolean; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel={label} onPress={onPress} haptic={false} style={styles.link}>
+      <Caption color={muted ? ds.c.muted : ds.c.ink} style={styles.strong}>
+        {label}
+      </Caption>
+    </PressableScale>
   );
 }
 
@@ -179,7 +190,7 @@ const styles = StyleSheet.create({
   strong: { fontFamily: fontFamilies.bodySemiBold },
   indent: { paddingLeft: 36 + space.md },
   links: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
-  link: { paddingHorizontal: 0 },
+  link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   body: { padding: space.lg, paddingTop: space.sm, paddingBottom: space.xxl, gap: space.lg },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
   group: { gap: space.sm },
