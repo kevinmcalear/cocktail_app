@@ -18,8 +18,6 @@ interface SearchFieldProps {
   keys?: boolean;
   /** The search tab: a round close button beside the field while it's in use, which empties it and puts the keyboard away. */
   cancel?: boolean;
-  /** At the field's end, after the clear button: where it searches (ScopeToken). */
-  token?: ReactNode;
   /** Hears the field gain and lose focus (Try it's bottom search moves with it). */
   onFocusChange?: (focused: boolean) => void;
   /** Floating over the results (the bottom search): the field and its close button are glass. */
@@ -41,7 +39,7 @@ export function KeyCap({ label }: { label: string }) {
  * something's typed. With `keys` (the ⌘K palette) it's the card's borderless
  * header instead, with the esc key at its end (nav-search-desk-palette).
  */
-export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel, token, onFocusChange, glass }: SearchFieldProps) {
+export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel, onFocusChange, glass }: SearchFieldProps) {
   const ds = useDs();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [focused, setFocused] = useState(false);
@@ -63,7 +61,7 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
   };
   return (
     <View style={styles.row}>
-      <FieldShell glass={glass} style={[styles.field, token ? styles.withToken : null, glass ? null : keys ? styles.bare : [styles.ring, { backgroundColor: ds.c.raised, borderColor: focused ? ds.accentText : ds.c.lineStrong }]]}>
+      <FieldShell glass={glass} style={[styles.field, glass ? null : keys ? styles.bare : [styles.ring, { backgroundColor: ds.c.raised, borderColor: focused ? ds.accentText : ds.c.lineStrong }]]}>
         <IconSymbol name="magnifyingglass" size={18} color={ds.c.muted} />
         <TextInput
           ref={input}
@@ -99,7 +97,6 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
             <IconSymbol name="xmark.circle.fill" size={22} color={ds.c.muted} />
           </PressableScale>
         ) : null}
-        {token}
         {keys && onDone ? (
           <PressableScale accessibilityLabel="Close the search (Escape)" onPress={onDone} style={styles.esc}>
             <KeyCap label="esc" />
@@ -151,7 +148,6 @@ const styles = StyleSheet.create({
   },
   ring: { borderWidth: 1 },
   bare: { borderWidth: 0, paddingLeft: 0 },
-  withToken: { paddingRight: space.xs },
   input: { ...type.body, fontFamily: fontFamilies.body, flex: 1, minWidth: 0, paddingVertical: space.md },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   esc: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingRight: space.md },
