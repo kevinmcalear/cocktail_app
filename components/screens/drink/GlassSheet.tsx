@@ -29,8 +29,8 @@ interface GlassSheetProps {
   iceName: string | null;
   serveMl: number | null;
   icePerServeG: number | null;
-  /** The viewer can edit the drink (its ice per serve). */
-  canEditDrink: boolean;
+  /** The drink's editor: the glass size, the ice per serve and the makers can change. The read view only reads. */
+  editing: boolean;
   accent?: string;
 }
 
@@ -43,9 +43,10 @@ export function hasIce(iceName: string | null | undefined): boolean {
 
 /**
  * The glass and the ice: whether the serve fits, the glass's capacity with
- * and without ice (editable by whoever can edit the glass), the ice a serve
- * takes (editable by the drink's editors), which the event prep list adds up,
- * and who cut the ice and made the glass.
+ * and without ice, the ice a serve takes (the event prep list adds it up)
+ * and who cut the ice and made the glass. They change from the editor
+ * (`editing`, board drink-read-and-edit): the glass's size by whoever can
+ * edit the glass, the rest by the drink's editors.
  */
 export function GlassSheet(props: GlassSheetProps) {
   return (
@@ -59,8 +60,8 @@ export function GlassSheet(props: GlassSheetProps) {
   );
 }
 
-function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, canEditDrink }: GlassSheetProps) {
-  const canEditGlass = useCanEditItem(glass);
+function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, editing }: GlassSheetProps) {
+  const canEditGlass = useCanEditItem(glass) && editing;
   const setSize = useSetGlassSize(glass?.id ?? '');
   const setIce = useSetIcePerServe(itemId);
   const [capacity, setCapacity] = useState(glass?.capacity_ml ? String(glass.capacity_ml) : '');
@@ -113,7 +114,7 @@ function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, canEdi
                 : 'Not weighed yet.'
             : 'No ice in the glass.'}
         </Body>
-        {canEditDrink && withIce ? (
+        {editing && withIce ? (
           <>
             <Field label="Grams of ice in the glass" value={ice} onChangeText={setIceDraft} placeholder={suggested ? String(suggested) : '140'} keyboardType="decimal-pad" error={iceProblem ?? undefined} hint="Leave blank to clear it." />
             <Button label={setIce.isPending ? 'Saving…' : 'Save ice'} disabled={setIce.isPending || !!iceProblem} onPress={() => setIce.mutate(iceN)} style={styles.button} />
@@ -121,7 +122,7 @@ function GlassBody({ itemId, name, glass, iceName, serveMl, icePerServeG, canEdi
           </>
         ) : null}
       </View>
-      <DrinkMakerCredits itemId={itemId} canEdit={canEditDrink} />
+      <DrinkMakerCredits itemId={itemId} canEdit={editing} />
     </SheetScrollView>
   );
 }
