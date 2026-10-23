@@ -101,9 +101,10 @@ jobs:
         with:
           version: latest
       # The CLI version and config.toml decide which images start pulls, so
-      # they key the saved copy.
+      # they key the saved copy. Only main saves it (PRs read main's caches),
+      # so each PR does not add its own 1 GiB to the repo's 10 GiB of cache.
       - id: images
-        run: echo "key=supabase-images-$(supabase --version)-${{ hashFiles('supabase/config.toml') }}" >> "$GITHUB_OUTPUT"
+        run: echo "key=supabase-images-${{ runner.arch }}-$(supabase --version)-${{ hashFiles('supabase/config.toml') }}" >> "$GITHUB_OUTPUT"
       - id: image-cache
         uses: actions/cache/restore@v6
         with:
@@ -123,9 +124,9 @@ jobs:
       # for the image tests; on a local stack the image model is always mocked.
       - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
       - run: supabase db lint --level warning --fail-on error
-      - if: steps.image-cache.outputs.cache-hit != 'true' && matrix.shard == 1
+      - if: github.event_name == 'push' && steps.image-cache.outputs.cache-hit != 'true' && matrix.shard == 1
         run: docker images --format '{{.Repository}}:{{.Tag}}' | grep '/supabase/' | xargs docker save -o "$RUNNER_TEMP/supabase-images.tar"
-      - if: steps.image-cache.outputs.cache-hit != 'true' && matrix.shard == 1
+      - if: github.event_name == 'push' && steps.image-cache.outputs.cache-hit != 'true' && matrix.shard == 1
         uses: actions/cache/save@v6
         with:
           path: ${{ runner.temp }}/supabase-images.tar
