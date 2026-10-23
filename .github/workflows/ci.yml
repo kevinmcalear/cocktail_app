@@ -73,7 +73,7 @@ jobs:
     # Skip only on an explicit "no": if the changes job fails, this still runs.
     # Pushes to main always run it.
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     # The slowest shard is bottle-catalog alone, 7 to 12 minutes after a 4 to 8
     # minute rebuild (runners vary about twofold). test:security passes --test-force-exit, so an open database
     # handle fails the file instead of holding the job.
