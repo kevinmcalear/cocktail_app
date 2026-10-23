@@ -223,4 +223,13 @@ describe('an Instagram kept on a waiting claim', () => {
     await db.query('SELECT private.hand_over_claim($1, NULL)', [claim.id]);
     assert.equal(await pageInstagram(profileId), `keep${run}`);
   });
+
+  test('a handle typed into the claim wins over one kept from setup', async () => {
+    const profileId = await barePage('typed');
+    const { data: claim, error } = await users.caller.client.rpc('start_bar_claim', { p_profile_id: profileId, p_method: 'instagram', p_instagram: `typed${run}` });
+    assert.ifError(error);
+    assert.ifError((await save(claim.id, { instagram: `kept${run}` })).error);
+    await db.query('SELECT private.hand_over_claim($1, NULL)', [claim.id]);
+    assert.equal(await pageInstagram(profileId), `typed${run}`);
+  });
 });

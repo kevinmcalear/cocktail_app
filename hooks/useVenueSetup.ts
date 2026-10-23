@@ -148,7 +148,6 @@ export function usePushHeldSetup() {
       const typed = claim.evidence?.typed ?? {};
       if (typed.website) delete setup.website;
       if (typed.phone) delete setup.phone;
-      if (typed.instagram) delete setup.instagram;
       if (claim.status === 'pending') {
         if (!Object.keys(setup).length) return;
         const { error } = await supabase.rpc('save_claim_setup', { p_claim_id: claim.id, p_setup: setup });
