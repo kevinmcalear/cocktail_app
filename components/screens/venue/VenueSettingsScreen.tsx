@@ -11,6 +11,7 @@ import { UnsavedBar } from '@/components/screens/settings/SettingsParts';
 import { WebHead } from '@/components/WebHead';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useFlushHeldGlasses } from '@/hooks/useBarGlassware';
 import { confirmDiscardChanges } from '@/lib/dialogs';
 import type { EditorChromeState } from '@/lib/editorChrome';
 import { roleLabel } from '@/lib/roles';
@@ -34,6 +35,8 @@ function VenuePage({ barId }: { barId: string }) {
   const tabBarInset = useTabBarInset();
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const name = venue?.name ?? 'Venue';
+  // Glasses What next held before the page was checked go onto it once it is.
+  useFlushHeldGlasses(barId);
   // The editor's Save and Discard, so changes can be saved from the bar at the bottom.
   const [chrome, setChrome] = useState<EditorChromeState | null>(null);
   const dirty = !!chrome?.isDirty;
