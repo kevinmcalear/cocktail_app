@@ -106,10 +106,16 @@ export function PriceFields({ drink, pricing }: { drink: MenuDrink; pricing: Row
   const [draft, setDraft] = useState(drink.price ?? '');
   const [menuDraft, setMenuDraft] = useState(drink.menuPrice ?? '');
   // Use $24.50 (SuggestedPriceLine) sets the price from outside the field.
+  // A drink listed twice on the menu: the other row's field changes it too.
   const [seen, setSeen] = useState(drink.price);
   if (drink.price !== seen) {
     setSeen(drink.price);
     if ((drink.price ?? '') !== draft.trim()) setDraft(drink.price ?? '');
+  }
+  const [seenMenu, setSeenMenu] = useState(drink.menuPrice);
+  if (drink.menuPrice !== seenMenu) {
+    setSeenMenu(drink.menuPrice);
+    if ((drink.menuPrice ?? '') !== menuDraft.trim()) setMenuDraft(drink.menuPrice ?? '');
   }
   return (
     <>

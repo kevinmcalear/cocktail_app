@@ -122,7 +122,7 @@ function Costed({ itemId, barId, cost, price, onMenu, canEdit, currency, taxRate
         ) : null}
       </View>
       <View style={styles.facts}>
-        <Fact label="Price" value={priceMinorValue != null ? money(priceMinorValue) : (price ?? 'None')} sub={onMenu && onMenu.price !== price ? `${menuPrice(onMenu.price)} on ${onMenu.name}` : m ? (pricesIncludeTax ? `${money(Math.round(m.exTaxMinor))} without tax` : 'tax added at the till') : price ? 'no number in it: no margin worked out' : 'add one to see the margin'} />
+        <Fact label="Price" value={priceMinorValue != null ? money(priceMinorValue) : (price ?? 'None')} sub={[m ? (pricesIncludeTax ? `${money(Math.round(m.exTaxMinor))} without tax` : 'tax added at the till') : price ? 'no number in it: no margin worked out' : 'add one to see the margin', onMenu && onMenu.price !== price ? `${menuPrice(onMenu.price)} on ${onMenu.name}` : null].filter(Boolean).join('; ')} />
         <Fact label="Profit" value={m ? money(Math.round(m.profitMinor)) : '–'} sub={m ? 'after tax and ingredients' : 'set a price'} />
         <Fact label="GP" value={m ? formatPct(m.gp) : '–'} sub={m ? `pour cost ${formatPct(m.pourCost)}` : 'set a price'} />
       </View>

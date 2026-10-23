@@ -167,4 +167,6 @@ assert.deepEqual(names(nearLibrary(library, { allowedTypes: ['beer'] }, 'stamp')
   const cleared = setMenuPrice(next, 'x', '  ');
   assert.deepEqual(savePayload(cleared).map((s) => s.prices), [[null, null], [null]]);
   assert.ok(!layoutChanged(cleared, base), 'cleared is back to the saved menu');
+  assert.equal(setMenuPrice(next, 'x', '22'), next, 'an unchanged menu price is no change');
+  assert.match(layoutProblem(setMenuPrice(base, 'y', 'x'.repeat(41))) ?? '', /under 40 characters/);
 }
