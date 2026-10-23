@@ -5,7 +5,8 @@ export interface DraftRow {
   id: string;
   entity_type: string;
   bar_id?: string | null;
-  updated_at: string;
+  /** Set on every save; the column allows null. */
+  updated_at: string | null;
   draft_data?: { name?: string; menuName?: string } | null;
 }
 
@@ -41,7 +42,7 @@ export function draftTitle(d: DraftRow): string {
 
 /** One group per venue, in the order their newest draft was touched; the person's own (no venue) are keyed ''. */
 export function groupDrafts<T extends DraftRow>(drafts: readonly T[]): { barId: string; drafts: T[] }[] {
-  const sorted = [...drafts].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  const sorted = [...drafts].sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''));
   const groups = new Map<string, T[]>();
   for (const d of sorted) {
     const key = d.bar_id ?? '';

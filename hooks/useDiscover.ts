@@ -120,7 +120,7 @@ export function useDiscoverRankings(rankedAsItemId: string | null | undefined, a
     enabled: enabled && !!rankedAsItemId,
     meta: { ...viewer.meta, ...pointMeta(area) },
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('discover_drink_rankings', { p_ranked_as_item_id: rankedAsItemId, ...params, p_limit: 20 });
+      const { data, error } = await supabase.rpc('discover_drink_rankings', { p_ranked_as_item_id: rankedAsItemId!, ...params, p_limit: 20 });
       if (error) throw error;
       return splitEarly(await withLogos(asRows(data)));
     },
@@ -164,7 +164,7 @@ export function useVenueScore(profileId: string | null | undefined) {
     meta: viewer.meta,
     enabled: !!profileId,
     queryFn: async (): Promise<VenueScore | null> => {
-      const { data, error } = await supabase.rpc('get_venue_score', { p_venue_profile_id: profileId });
+      const { data, error } = await supabase.rpc('get_venue_score', { p_venue_profile_id: profileId! });
       if (error) throw error;
       const row = ((data ?? []) as VenueScore[])[0];
       return row ? { ...row, score: row.score === null ? null : Number(row.score) } : null;

@@ -50,7 +50,7 @@ export function useBackBarStock(barId: string | null | undefined) {
     queryFn: async (): Promise<BackBarItem[]> => {
       const { data, error } = await supabase.from('back_bar_items').select(STOCK_COLUMNS).eq('bar_id', barId!).order('added_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as BackBarItem[];
+      return (data ?? []) as BackBarItem[];
     },
   });
 }

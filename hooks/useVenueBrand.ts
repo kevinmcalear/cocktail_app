@@ -6,6 +6,7 @@ import { isUnknownFaceError } from '@/lib/brand';
 import { uriToBase64 } from '@/lib/imageBase64';
 import { invokeFunction } from '@/lib/invokeFunction';
 import { supabase } from '@/lib/supabase';
+import type { Enum } from '@/types/db';
 
 export interface VenueBrandRow {
   id: string;
@@ -27,7 +28,7 @@ export interface VenueBrandRow {
 
 export type AccentTextChoice = 'cream' | 'ink';
 
-export type VenueBrandPatch = Partial<Omit<VenueBrandRow, 'id' | 'name' | 'slug'>>;
+export type VenueBrandPatch = Partial<Omit<VenueBrandRow, 'id' | 'name' | 'slug' | 'display_face'> & { display_face: Enum<'venue_display_face'> }>;
 
 const COLUMNS = 'id, name, slug, logo_url, primary_color, secondary_color, display_face, ground_tint, short_name, icon_url, accent_text, icon_background';
 

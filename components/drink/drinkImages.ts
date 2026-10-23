@@ -103,7 +103,7 @@ export async function setItemImages(itemId: string, imageIds: string[], { replac
 
   if (replace) {
     const keep = new Set(heroIds);
-    const removed = existing.filter((link) => !keep.has(link.image_id)).map((link) => link.id);
+    const removed = existing.filter((link) => !link.image_id || !keep.has(link.image_id)).map((link) => link.id);
     if (removed.length) {
       const { error: deleteError } = await supabase.from('item_images').delete().in('id', removed);
       if (deleteError) throw deleteError;

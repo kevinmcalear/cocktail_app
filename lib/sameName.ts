@@ -135,7 +135,8 @@ export function storedLine(l: { id: string | null; name: string; amount: number 
 /** A stored spec line (recipes), as Update it finds it before writing the sheet's over it. */
 export interface BarLine {
   id: string;
-  ingredient_item_id: string;
+  /** Null on a row whose ingredient is gone (the column allows it); it matches no sheet line, so it goes. */
+  ingredient_item_id: string | null;
   preparation_notes: string | null;
   is_optional: boolean | null;
 }

@@ -259,6 +259,11 @@ before(async () => {
     migration.indexOf("-- --- 2 and 3. Duplicates ---"),
   );
   assert.ok(step.length > 100, "the test-drink step is in the migration");
+  // The step ran in production before 20261102300000 dropped this table. A
+  // stand-in, gone with the ROLLBACK below, lets it run as it did then.
+  await db.query(
+    "CREATE TABLE IF NOT EXISTS private.retired_drink_sketches (item_id uuid, image_id uuid)",
+  );
   await db.query(step);
 });
 

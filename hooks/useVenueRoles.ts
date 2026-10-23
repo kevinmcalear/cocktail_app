@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { withToggle } from '@/lib/roleMatrix';
+import { toCapability, withToggle } from '@/lib/roleMatrix';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -68,7 +68,12 @@ export function useSaveVenueRole(barId: string | null | undefined) {
   const invalidate = useInvalidateRoles(barId);
   return useMutation({
     mutationFn: async ({ id, ...role }: VenueRoleDraft) => {
-      const row = { ...role, name: role.name.trim() };
+      const row = {
+        ...role,
+        name: role.name.trim(),
+        granted: role.granted.map(toCapability),
+        revoked: role.revoked.map(toCapability),
+      };
       const { error } = id
         ? await supabase.from('venue_roles').update(row).eq('id', id).eq('bar_id', barId!)
         : await supabase.from('venue_roles').insert({ ...row, bar_id: barId! });
@@ -114,7 +119,7 @@ export function useSetRoleCapability(barId: string | null | undefined) {
     scope,
     mutationFn: async ({ roleId, level, capability, on }: RoleToggle) => {
       const { error } = await supabase.rpc('set_role_capability', {
-        p_bar_id: barId!, p_role_id: roleId, p_level: roleId ? null : level, p_capability: capability, p_on: on,
+        p_bar_id: barId!, p_role_id: roleId, p_level: roleId ? null : level, p_capability: toCapability(capability), p_on: on,
       });
       if (error) throw error;
     },

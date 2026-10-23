@@ -107,9 +107,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JOB_ID: ${{ job.check_run_id }}
+      # Pinned: the types drift check below needs the same CLI as npm run
+      # gen:types (each version prints the file differently). Bump both together.
       - uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: 2.112.0
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -121,6 +123,16 @@ jobs:
       # The edge runtime serves image-worker, the generators and image-palette
       # for the image tests; on a local stack the image model is always mocked.
       - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
+      # types/database.ts is generated from the schema: regenerate it from the
+      # database just built and fail if the committed copy differs. Same command
+      # as npm run gen:types, with the CLI installed above (no npx download).
+      - name: Generated database types match the migrations
+        run: |
+          supabase gen types typescript --local --schema public > types/database.ts
+          git diff --exit-code -- types/database.ts || {
+            echo "::error file=types/database.ts::Out of date with supabase/migrations. Run npm run gen:types against a local stack built from this branch's migrations and commit the result."
+            exit 1
+          }
       - run: supabase db lint --level warning --fail-on error
       - run: npm run test:security
         timeout-minutes: 55
