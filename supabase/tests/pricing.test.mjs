@@ -95,7 +95,7 @@ describe('pricing settings', () => {
   });
 });
 
-describe('menu price', () => {
+describe('drink price', () => {
   test('a plain typed price carried over to minor units, and reads with the drink', async () => {
     const { data, error } = await users.employee.client.from('app_item_presentation').select('price, price_minor').eq('id', ids.drink).single();
     assert.ifError(error);
@@ -105,6 +105,23 @@ describe('menu price', () => {
     assert.ifError(set.error);
     assert.equal(set.data.price_minor, 1250);
     assert.ok((await service.from('items').update({ price_minor: -1 }).eq('id', ids.drink)).error, 'a negative price is refused');
+  });
+
+  // 20261103100000: the typed price is the drink's one price; the number follows it for older apps.
+  test('the number follows the typed price, and an older app\'s number becomes the typed price', async () => {
+    const write = async (patch) => {
+      const { data, error } = await users.creator.client.from('items').update(patch).eq('id', ids.drink).select('price, price_minor').single();
+      assert.ifError(error);
+      return [data.price, data.price_minor];
+    };
+    assert.deepEqual(await write({ price: '23' }), ['23', 2300]);
+    assert.deepEqual(await write({ price: '$19.50' }), ['$19.50', 1950]);
+    assert.deepEqual(await write({ price: '14 / 60' }), ['14 / 60', 1400], 'the glass price, first');
+    assert.deepEqual(await write({ price: 'MP' }), ['MP', null], 'market price has no number');
+    assert.deepEqual(await write({ price_minor: 1850 }), ['18.50', 1850]);
+    assert.deepEqual(await write({ price_minor: 2000 }), ['20', 2000]);
+    assert.deepEqual(await write({ price: null }), [null, null]);
+    assert.deepEqual(await write({ price: '12.50' }), ['12.50', 1250]);
   });
 });
 

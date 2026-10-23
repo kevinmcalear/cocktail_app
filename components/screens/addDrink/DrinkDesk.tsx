@@ -244,7 +244,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           <Eyebrow>The drink, as you go</Eyebrow>
           <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
           <DeskTaste lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
-          {canCost ? <DeskCost lines={costLines} pricing={pricing} priceMinor={draft.priceMinor ?? null} onPrice={(priceMinor) => set({ priceMinor })} /> : null}
+          {canCost ? <DeskCost lines={costLines} pricing={pricing} price={draft.price ?? ''} onPrice={(price) => set({ price })} /> : null}
         </ScrollView>
       </View>
     </View>

@@ -2,7 +2,8 @@
 // me" (find yourself, step 4). Claims start through start_person_claim, by an
 // Instagram message code or a note, and approval merges the page into the
 // claimant's own profile when they have one
-// (supabase/migrations/20261030100000_person_claim_merge.sql).
+// (supabase/migrations/20261030100000_person_claim_merge.sql). Old links to the
+// merged page find the claimant through merged_profile_handle (20261103300000).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -76,10 +77,17 @@ before(async () => {
   await db.query('INSERT INTO private.app_admins (user_id) VALUES ($1)', [users.moderator.id]);
 
   await page('Moth', 'bar');
-  // Ash's own profile, made when they signed up. No bio or Instagram yet.
-  await page('AshOwn', 'person', { user_id: users.ash.id, display_name: 'Ash' });
+  // Ash's own profile, made when they signed up. Their website, but no bio,
+  // Instagram or links yet (a bio of spaces counts as blank).
+  await page('AshOwn', 'person', { user_id: users.ash.id, display_name: 'Ash', bio: '  ', website: 'https://ash.example.com' });
   // The page we seeded for them, before they joined.
-  await page('Ash', 'person', { instagram: `ash.okafor${run}`, bio: 'Head bartender at Pale Moth.', tagline: 'Stirred, mostly.' });
+  await page('Ash', 'person', {
+    instagram: `ash.okafor${run}`,
+    bio: 'Head bartender at Pale Moth.',
+    tagline: 'Stirred, mostly.',
+    website: 'https://palemoth.example.com/team/ash',
+    social_links: ['https://www.tiktok.com/@ashokafor'],
+  });
   await page('NoGram', 'person');
   await page('Spare', 'person', { instagram: `spare${run}` });
   await page('Taken', 'person', { user_id: users.stranger.id });
@@ -263,7 +271,7 @@ describe('approving merges the page into their profile', () => {
     assert.equal(jobs[1].start_year, 2021);
     assert.equal(jobs[1].bar_accepted, true);
     assert.equal(jobs[0].id, ids.pageJob);
-    const own = await one('SELECT bio, tagline, instagram, headline_position_id, display_name FROM public.profiles WHERE id = $1', [ids.AshOwn]);
+    const own = await one('SELECT bio, tagline, instagram, website, social_links, headline_position_id, display_name FROM public.profiles WHERE id = $1', [ids.AshOwn]);
     assert.equal(own.headline_position_id, ids.ownHead);
 
     // Menu credits: one Spring 2023 with the drink, and Winter.
@@ -279,10 +287,12 @@ describe('approving merges the page into their profile', () => {
     assert.equal(await count('SELECT 1 FROM public.loved_bars WHERE profile_id = $1', [ids.AshOwn]), 1);
     assert.equal(await count('SELECT 1 FROM public.reports WHERE profile_id = $1', [ids.AshOwn]), 2, 'the duplicate report is dropped, the other moves');
 
-    // The page's words fill Ash's blanks; their name stays.
+    // The page's words fill Ash's blanks; what they filled in, and their name, stay.
     assert.equal(own.bio, 'Head bartender at Pale Moth.');
     assert.equal(own.tagline, 'Stirred, mostly.');
     assert.equal(own.instagram, `ash.okafor${run}`);
+    assert.deepEqual(own.social_links, ['https://www.tiktok.com/@ashokafor']);
+    assert.equal(own.website, 'https://ash.example.com', 'their own website is not overwritten');
     assert.equal(own.display_name, 'Ash');
   });
 
@@ -320,6 +330,55 @@ describe('approving merges the page into their profile', () => {
   test('only an unclaimed person merges, and only into someone\'s own profile', async () => {
     await assert.rejects(db.query('SELECT private.merge_person_profile($1, $2, NULL, NULL)', [ids.Spare, ids.Moth]), /only be merged into someone's own profile/);
     await assert.rejects(db.query('SELECT private.merge_person_profile($1, $2, NULL, NULL)', [ids.Taken, ids.AshOwn]), /Only an unclaimed person's page/);
+  });
+});
+
+describe('old links to a merged page', () => {
+  const moved = (client, ref) => client.rpc('merged_profile_handle', { p_ref: ref });
+
+  test('the old handle or id leads to the claimant\'s handle, for anyone', async () => {
+    const own = `ashown${run}`;
+    for (const ref of [`ash${run}`, `@Ash${run}`, ids.Ash, ids.Ash.toUpperCase()]) {
+      const { data, error } = await moved(anon, ref);
+      assert.ifError(error);
+      assert.equal(data, own, ref);
+    }
+    assert.equal((await moved(users.stranger.client, `ash${run}`)).data, own);
+  });
+
+  test('a handle never merged, or a page still live, leads nowhere', async () => {
+    for (const ref of [`nobody${run}`, `spare${run}`, ids.Spare, randomUUID(), '']) {
+      const { data, error } = await moved(anon, ref);
+      assert.ifError(error);
+      assert.equal(data, null, ref);
+    }
+  });
+
+  test('a private or blocked claimant is only found by themselves', async () => {
+    await db.query('UPDATE public.profiles SET is_public = false WHERE id = $1', [ids.AshOwn]);
+    try {
+      assert.equal((await moved(anon, `ash${run}`)).data, null);
+      assert.equal((await moved(users.stranger.client, `ash${run}`)).data, null);
+      assert.equal((await moved(users.ash.client, `ash${run}`)).data, `ashown${run}`, 'their own, even private');
+    } finally {
+      await db.query('UPDATE public.profiles SET is_public = true WHERE id = $1', [ids.AshOwn]);
+    }
+    await db.query('INSERT INTO public.user_blocks (blocker_id, blocked_id) VALUES ($1, $2)', [users.ash.id, users.rival.id]);
+    try {
+      assert.equal((await moved(users.rival.client, `ash${run}`)).data, null);
+    } finally {
+      await db.query('DELETE FROM public.user_blocks WHERE blocker_id = $1', [users.ash.id]);
+    }
+  });
+
+  test('only the handle comes back, and nobody can read the merges', async () => {
+    const { data } = await moved(anon, `ash${run}`);
+    assert.equal(typeof data, 'string');
+    const privileges = await one(
+      `SELECT has_function_privilege('anon', 'public.merged_profile_handle(text)', 'execute') AS anon_lookup,
+              has_table_privilege('anon', 'private.profile_merges', 'select') AS anon_merges`
+    );
+    assert.deepEqual(privileges, { anon_lookup: true, anon_merges: false });
   });
 });
 

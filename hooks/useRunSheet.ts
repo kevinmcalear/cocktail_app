@@ -9,7 +9,8 @@ import { supabase } from '@/lib/supabase';
 /**
  * A menu's run sheet (lib/runSheet.ts builds it from this): the menu's drinks
  * with their serves and specs (masked by role, like every recipe read), this
- * menu's swaps, its guest bar (and whether the night is at theirs) and brands, the owners someone picked, the
+ * menu's swaps, its guest bar (whether the night is at theirs, which drinks
+ * are its own, and its page if linked) and brands, the owners someone picked, the
  * house preps under the drinks, pack sizes, and the brands' own bottles for
  * the "pour it everywhere" suggestion. Plain JSON, for the persisted cache.
  */
@@ -17,12 +18,18 @@ export interface RunSheetData {
   menu: { id: string; name: string; barId: string | null; createdBy: string | null; hostName: string; startsAt: string | null; endsAt: string | null };
   drinks: RunDrink[];
   swaps: RunSwap[];
-  parties: (RunParty & { sortOrder: number })[];
+  parties: (RunParty & { sortOrder: number; page: PartyPageLink | null })[];
   owners: Record<string, string | null>;
   houseMade: Record<string, HouseMade>;
   purchasing: Record<string, Purchasing>;
   items: Record<string, ItemFacts & { name: string }>;
   brandBottles: BrandBottle[];
+}
+
+/** A party's linked page: where it lives, and whether its bar has claimed it (on Cocktail) yet. */
+export interface PartyPageLink {
+  handle: string;
+  claimed: boolean;
 }
 
 export const runSheetKey = (menuId: string, userId: string | null) => ['run-sheet', menuId, userId] as const;
@@ -42,7 +49,8 @@ interface MenuRow {
 interface DrinkRow {
   id: string;
   serves: number | null;
-  item: { id: string; name: string; item_type: string; glassware_id: string | null; ice_id: string | null; ice_per_serve_g: number | null; bar_id: string | null; origin_bar_profile_id: string | null } | null;
+  party_id: string | null;
+  item: { id: string; name: string; item_type: string; glassware_id: string | null; ice_id: string | null; ice_per_serve_g: number | null; origin_bar_profile_id: string | null } | null;
 }
 interface FactRow {
   id: string;
@@ -74,19 +82,26 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
     supabase.from('menus').select('id, name, bar_id, created_by, starts_at, ends_at, planned_starts_at, planned_ends_at, menu_date, bar:bars(name)').eq('id', menuId).single(),
     supabase
       .from('menu_drinks')
-      .select('id, serves, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, bar_id, origin_bar_profile_id)')
+      .select('id, serves, party_id, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, origin_bar_profile_id)')
       .eq('menu_id', menuId)
       .order('sort_order'),
-    supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, is_venue, profile:profiles!profile_id(bar_id)').eq('menu_id', menuId).order('sort_order'),
+    supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, is_venue, profile:profiles!profile_id(handle, is_claimed, bar_id)').eq('menu_id', menuId).order('sort_order'),
     supabase.from('menu_run_owners').select('item_id, party_id').eq('menu_id', menuId),
   ]);
   for (const res of [menuRes, drinkRes, partyRes, ownerRes]) if (res.error) throw res.error;
   const menu = menuRes.data as unknown as MenuRow;
   // A home menu's collected drinks come through published_items, not items: they have no spec to total here.
   const rows = ((drinkRes.data ?? []) as unknown as DrinkRow[]).filter((r) => r.item);
-  type PartyRow = { id: string; kind: 'guest' | 'brand'; name: string; profile_id: string | null; sort_order: number; is_venue: boolean; profile: { bar_id: string | null } | null };
+  type PartyRow = {
+    id: string;
+    kind: 'guest' | 'brand';
+    name: string;
+    profile_id: string | null;
+    sort_order: number;
+    is_venue: boolean;
+    profile: { handle: string; is_claimed: boolean; bar_id: string | null } | null;
+  };
   const partyRows = (partyRes.data ?? []) as unknown as PartyRow[];
-  const guest = partyRows.find((p) => p.kind === 'guest');
 
   const cocktailIds = [...new Set(rows.filter((r) => r.item!.item_type === 'cocktail').map((r) => r.item!.id))];
   const [recipeRows, swapRes] = await Promise.all([
@@ -123,7 +138,8 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
       glass: named(item.glassware_id),
       ice: named(item.ice_id),
       icePerServeG: item.ice_per_serve_g,
-      byGuest: !!guest && ((!!guest.profile_id && item.origin_bar_profile_id === guest.profile_id) || (!!guest.profile?.bar_id && item.bar_id === guest.profile.bar_id)),
+      partyId: r.party_id,
+      originProfileId: item.origin_bar_profile_id,
     };
   });
   type BottleRow = { id: string; name: string; maker_profile_id: string; generic_id: string | null; generic: { name: string } | null };
@@ -144,7 +160,15 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
     },
     drinks,
     swaps: swapRows.map((s) => ({ menuDrinkId: s.menu_drink_id, fromItemId: s.from_item_id, toItemId: s.to_item_id, toName: items[s.to_item_id]?.name ?? 'Another bottle' })),
-    parties: partyRows.map((p) => ({ id: p.id, kind: p.kind, name: p.name, profileId: p.profile_id, sortOrder: p.sort_order, isVenue: p.is_venue })),
+    parties: partyRows.map((p) => ({
+      id: p.id,
+      kind: p.kind,
+      name: p.name,
+      profileId: p.profile_id,
+      sortOrder: p.sort_order,
+      isVenue: p.is_venue,
+      page: p.profile ? { handle: p.profile.handle, claimed: p.profile.is_claimed || !!p.profile.bar_id } : null,
+    })),
     owners: Object.fromEntries(((ownerRes.data ?? []) as { item_id: string; party_id: string | null }[]).map((o) => [o.item_id, o.party_id])),
     houseMade,
     purchasing,
@@ -238,15 +262,36 @@ export interface PartyInput {
 
 /** Adds or changes the guest venue or a brand. */
 export function useSaveParty(menuId: string) {
+  const queryClient = useQueryClient();
   return useRunSheetWrite<PartyInput>(
     menuId,
     async (p) => {
       const row = { kind: p.kind, name: p.name.trim(), profile_id: p.profileId };
       if (p.id) check(await supabase.from('menu_run_parties').update(row).eq('id', p.id));
       else check(await supabase.from('menu_run_parties').insert({ ...row, menu_id: menuId, sort_order: p.sortOrder ?? 0, is_venue: !!p.isVenue }));
+      // Linking or unlinking a guest's page moves the credit on its drinks.
+      if (p.kind === 'guest') void queryClient.invalidateQueries({ queryKey: ['cocktail'] });
     },
     (data, p) =>
       p.id ? { ...data, parties: data.parties.map((x) => (x.id === p.id ? { ...x, name: p.name, kind: p.kind, profileId: p.profileId } : x)) } : data,
+  );
+}
+
+/**
+ * Whose a drink is: the guest bar's own (they make it) or ours (null). With
+ * their page linked, the database also credits our copy of the drink to it,
+ * as a suggestion until they claim it (20261103400000).
+ */
+export function useSetDrinkParty(menuId: string) {
+  const queryClient = useQueryClient();
+  return useRunSheetWrite<{ menuDrinkId: string; itemId: string; partyId: string | null }>(
+    menuId,
+    async ({ menuDrinkId, itemId, partyId }) => {
+      check(await supabase.from('menu_drinks').update({ party_id: partyId }).eq('id', menuDrinkId));
+      // The drink's own credit may have moved with it.
+      void queryClient.invalidateQueries({ queryKey: ['cocktail', itemId] });
+    },
+    (data, { menuDrinkId, partyId }) => ({ ...data, drinks: data.drinks.map((d) => (d.id === menuDrinkId ? { ...d, partyId } : d)) }),
   );
 }
 
@@ -296,9 +341,13 @@ export interface PartyPage {
   id: string;
   display_name: string;
   handle: string;
+  /** "Hong Kong": where a bar is, to tell two of the same name apart. */
+  place: string | null;
+  /** Its bar is on Cocktail and runs the page. */
+  claimed: boolean;
 }
 
-/** Pages to link a party to: bars for the guest venue, makers for a brand. */
+/** Pages to link a party to: bars for the guest venue, makers for a brand. Never makes one. */
 export function usePartySearch(term: string, kind: 'guest' | 'brand') {
   const q = term.trim();
   return useQuery({
@@ -307,13 +356,14 @@ export function usePartySearch(term: string, kind: 'guest' | 'brand') {
     queryFn: async (): Promise<PartyPage[]> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, handle')
+        .select('id, display_name, handle, locality, city, is_claimed, bar_id')
         .eq('kind', kind === 'guest' ? 'bar' : 'maker')
         .ilike('display_name', `%${q.replace(/[\\%_]/g, '\\$&')}%`)
         .order('display_name')
         .limit(8);
       if (error) throw error;
-      return (data ?? []) as PartyPage[];
+      type Row = { id: string; display_name: string; handle: string; locality: string | null; city: string | null; is_claimed: boolean; bar_id: string | null };
+      return ((data ?? []) as Row[]).map((r) => ({ id: r.id, display_name: r.display_name, handle: r.handle, place: r.city ?? r.locality, claimed: r.is_claimed || !!r.bar_id }));
     },
   });
 }

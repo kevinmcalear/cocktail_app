@@ -32,7 +32,7 @@ export function nightLine(startsAt: string | null, endsAt: string | null): strin
   return `${day} · ${time(start)}${end && !Number.isNaN(end.getTime()) ? ` to ${time(end)}` : ''}`;
 }
 
-const andList = (names: string[]) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
+export const andList = (names: string[]) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
 const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString('en-GB')} ${n === 1 ? one : many}`;
 
 type MenuWords = { name: string; startsAt: string | null; endsAt: string | null };
@@ -69,20 +69,31 @@ export interface PartyList {
   when: string;
   /** "From Caretaker's Cottage". */
   from: string;
+  /** A guest bar's own drinks on the menu, with the house preps they make for each. */
+  drinks: { name: string; serves: number; makes: string[] }[];
   /** The bar it's at has things ready; everyone else brings theirs. */
   ask: 'Please have ready' | 'Please bring';
   needs: Need[];
   /** "Caretaker's Cottage: Lemon Drop Batch 37.5 L, Ceramic cup 500". */
   others: string[];
+  /** "Penicillin is on Cocktail, credited to Bar Leone. Claim your page to see it: <link>", while their page is unclaimed. */
+  claim: string | null;
 }
 
 /**
- * One bar's or brand's part of the sheet, to send them (board R2): what
- * they bring, then what everyone else does. We send it, so it's from us.
+ * One bar's or brand's part of the sheet, to send them (board R2): a guest
+ * bar's own drinks, what they bring, then what everyone else does. We send
+ * it, so it's from us. `claimUrl` is their unclaimed bar page, where they
+ * can claim the drinks credited to them (board 10).
  */
-export function partyList(sheet: RunSheet, menu: MenuWords, party: PartySheet): PartyList {
+export function partyList(sheet: RunSheet, menu: MenuWords, party: PartySheet, claimUrl?: string | null): PartyList {
   const us = sheet.parties.find((p) => p.id === null);
+  const drinks = sheet.drinks
+    .filter((d) => d.partyId !== null && d.partyId === party.id && d.serves > 0)
+    .map((d) => ({ name: d.name, serves: d.serves, makes: party.needs.filter((n) => n.group === 'preps' && n.forDrinks.includes(d.name)).map((n) => n.name) }));
+  const names = drinks.map((d) => d.name);
   return {
+    drinks,
     eyebrow: `For ${party.name}`.toUpperCase(),
     title: `Your list for ${menu.name}`,
     when: sheetHead(sheet, menu).when,
@@ -90,13 +101,20 @@ export function partyList(sheet: RunSheet, menu: MenuWords, party: PartySheet): 
     ask: party.role === 'Venue' ? 'Please have ready' : 'Please bring',
     needs: party.needs,
     others: sheet.parties.filter((p) => p !== party && p.needs.length).map((p) => `${p.name}: ${p.needs.map((n) => `${n.name} ${n.amount}`).join(', ')}`),
+    claim: claimUrl && names.length ? `${andList(names)} ${names.length === 1 ? 'is' : 'are'} on Cocktail, credited to ${party.name}. Claim your page to see ${names.length === 1 ? 'it' : 'them'}: ${claimUrl}` : null,
   };
 }
 
+/** "Penicillin × 120 (you make Honey-ginger syrup)". */
+export const drinkLine = (d: PartyList['drinks'][number]) => `- ${d.name} × ${d.serves.toLocaleString('en-GB')}${d.makes.length ? ` (you make ${andList(d.makes)})` : ''}`;
+
 /** One party's list as plain text, for Share or the clipboard. */
 export function partyListText(list: PartyList): string {
-  const out = [list.eyebrow, list.title, list.when, list.from, '', list.ask.toUpperCase(), ...list.needs.map((n) => `- ${n.name}: ${needAmount(n)}`)];
+  const out = [list.eyebrow, list.title, list.when, list.from];
+  if (list.drinks.length) out.push('', 'YOUR DRINKS', ...list.drinks.map(drinkLine));
+  if (list.needs.length) out.push('', list.ask.toUpperCase(), ...list.needs.map((n) => `- ${n.name}: ${needAmount(n)}`));
   if (list.others.length) out.push('', 'EVERYONE ELSE', ...list.others.map((o) => `- ${o}`));
+  if (list.claim) out.push('', list.claim);
   return out.join('\n');
 }
 

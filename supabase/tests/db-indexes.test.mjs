@@ -63,14 +63,14 @@ CREATE FUNCTION pg_temp.old_search_bar_drinks(p_query text, p_limit integer DEFA
     LIMIT least(greatest(coalesce(p_limit, 48), 1), 100);
 $$;`;
 
-async function asUser(key, fn) {
-  await db.query('BEGIN');
+async function asUser(key, fn, client = db) {
+  await client.query('BEGIN');
   try {
-    await db.query(`SELECT set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: uid(`user:${key}`), role: 'authenticated' })]);
-    await db.query('SET LOCAL ROLE authenticated');
+    await client.query(`SELECT set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: uid(`user:${key}`), role: 'authenticated' })]);
+    await client.query('SET LOCAL ROLE authenticated');
     return await fn();
   } finally {
-    await db.query('ROLLBACK');
+    await client.query('ROLLBACK');
   }
 }
 
@@ -108,7 +108,6 @@ before(async () => {
     await db.query('INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit) VALUES ($1, $2, 30, $3)', [uid(`item:${drink}`), uid('item:Numbat Gin'), 'ml']);
   }
   await db.query('SET session_replication_role = origin');
-  await db.query(OLD_SEARCH);
 });
 
 after(async () => {
@@ -122,18 +121,28 @@ after(async () => {
   await db.end();
 });
 
-describe('search_bar_drinks', () => {
+// The old definition checks the editor on every recipe row of every drink,
+// about 5s a call against the full catalog, so each reader's comparison runs
+// side by side on its own connection (pg_temp is per connection).
+describe('search_bar_drinks', { concurrency: true }, () => {
   const queries = [`quokka`, `sour ${run}`, `wombat`, `numbat`, `bilby fizz ${run}`, 'x', '%', `_${run}`, '  ', `QUOKKA LOUNGE ${run}`];
   for (const who of ['reader', 'maker', 'admin']) {
     test(`gives ${who} the same rows, in the same order, as before`, async () => {
-      await asUser(who, async () => {
-        for (const q of queries) {
-          const sql = (fn) => `SELECT t::text FROM ${fn}($1, 100) t`;
-          const before = (await db.query(sql('pg_temp.old_search_bar_drinks'), [q])).rows.map((r) => r.t);
-          const now = (await db.query(sql('public.search_bar_drinks'), [q])).rows.map((r) => r.t);
-          assert.deepEqual(now, before, `query ${JSON.stringify(q)}`);
-        }
-      });
+      const client = new pg.Client({ connectionString: status.DB_URL });
+      await client.connect();
+      try {
+        await client.query(OLD_SEARCH);
+        await asUser(who, async () => {
+          for (const q of queries) {
+            const sql = (fn) => `SELECT t::text FROM ${fn}($1, 100) t`;
+            const before = (await client.query(sql('pg_temp.old_search_bar_drinks'), [q])).rows.map((r) => r.t);
+            const now = (await client.query(sql('public.search_bar_drinks'), [q])).rows.map((r) => r.t);
+            assert.deepEqual(now, before, `query ${JSON.stringify(q)}`);
+          }
+        }, client);
+      } finally {
+        await client.end();
+      }
     });
   }
 

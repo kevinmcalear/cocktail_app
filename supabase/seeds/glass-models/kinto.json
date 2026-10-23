@@ -1,0 +1,22 @@
+{
+ "maker": "kinto",
+ "models": [
+  {
+   "name": "CAST Iced Tea Glass",
+   "series": "CAST",
+   "designer": null,
+   "model_code": "8431",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "350 ml",
+   "height_mm": 106,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://kinto-usa.com/products/8431",
+   "source_urls": [
+    "https://kinto-usa.com/products/8431"
+   ]
+  }
+ ]
+}

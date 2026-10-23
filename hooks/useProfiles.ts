@@ -85,6 +85,25 @@ export function useProfile(ref: string | string[] | null | undefined) {
   });
 }
 
+/**
+ * Where a merged person page went: the claimant's handle for an old /p/<handle>
+ * or /p/<id> link, or null. Asked only once the profile itself isn't found.
+ */
+export function useMergedHandle(ref: string | string[] | null | undefined, enabled: boolean) {
+  const parsed = parseProfileRef(ref);
+  const viewer = viewerScoped(useUserId());
+  return useQuery({
+    queryKey: ['mergedProfile', parsed, viewer.key],
+    meta: viewer.meta,
+    enabled: enabled && !!parsed,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.rpc('merged_profile_handle', { p_ref: 'id' in parsed! ? parsed.id : parsed!.handle });
+      if (error) throw error;
+      return data ?? null;
+    },
+  });
+}
+
 export interface Original extends LineageDrink {
   item_type: string;
   description: string | null;

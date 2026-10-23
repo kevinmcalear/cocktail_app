@@ -1,0 +1,22 @@
+{
+ "maker": "duralex",
+ "models": [
+  {
+   "name": "Le Gigogne",
+   "series": "Le Gigogne",
+   "designer": null,
+   "model_code": "1015AB06",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 90,
+   "capacity_as_stated": "9 cl",
+   "height_mm": 61,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.duralex.com/en/products/le-gigogne-verre-transparent-9-cl-lot-de-6",
+   "source_urls": [
+    "https://www.duralex.com/en/products/le-gigogne-verre-transparent-9-cl-lot-de-6"
+   ]
+  }
+ ]
+}
