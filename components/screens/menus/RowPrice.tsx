@@ -165,6 +165,6 @@ const styles = StyleSheet.create({
   suggest: { gap: space.sm, padding: space.md, borderRadius: radius.card, borderWidth: 1 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   field: { width: PRICE_FIELD },
-  line: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.xs },
+  line: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingBottom: space.sm },
   shrink: { flexShrink: 1 },
 });

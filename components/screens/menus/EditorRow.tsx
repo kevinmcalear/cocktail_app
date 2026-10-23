@@ -97,9 +97,9 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
   const [editing, setEditing] = useState(false);
   // A home menu shows no prices.
   const pricing = home ? undefined : rowPricing;
-  // "19, or 22 on this menu": a phone shows it in place of the line, desktop after it.
+  // "19, or 22 on this menu": a phone shows it in place of the line, desktop on a line of its own under it.
   const both = pricing ? bothPrices(drink) : null;
-  const caption = quiet ? [drink.line, both, alsoOn && pricing ? `also on ${alsoOn}` : null].filter(Boolean).join(' · ') : (both ?? drink.line);
+  const caption = quiet ? [drink.line, alsoOn && pricing ? `also on ${alsoOn}` : null].filter(Boolean).join(' · ') : (both ?? drink.line);
   // Keyboard (web): the focused grip moves its drink with the arrow keys.
   const onKeyDown = (e: { key: string; preventDefault: () => void }) => {
     const to = e.key === 'ArrowUp' ? i - 1 : e.key === 'ArrowDown' ? i + 1 : null;
@@ -143,11 +143,15 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
               {isNew ? <Tag label="New" tone="success" /> : null}
             </View>
             {caption ? (
-              <Caption tone={both && !quiet ? 'accent' : 'muted'} numberOfLines={1}>
+              <Caption tone={both && !quiet ? 'accent' : 'muted'} numberOfLines={both && !quiet ? 2 : 1}>
                 {caption}
               </Caption>
             ) : null}
-            {pricing && quiet ? <SuggestedPriceLine drink={drink} pricing={pricing} /> : null}
+            {quiet && both ? (
+              <Caption tone="accent" numberOfLines={2}>
+                {both}
+              </Caption>
+            ) : null}
           </View>
           {!pricing ? null : quiet ? <PriceFields drink={drink} pricing={pricing} /> : <PriceButton drink={drink} open={editing} onPress={() => setEditing((p) => !p)} />}
           {quiet ? (
@@ -184,6 +188,11 @@ export function EditorRow({ drink, index: i, count, home, isNew, active, drag, o
             <IconSymbol name="circle.grid.3x3.fill" size={18} color={ds.c.muted} />
           </PressableScale>
         </View>
+        {pricing && quiet ? (
+          <View style={styles.under}>
+            <SuggestedPriceLine drink={drink} pricing={pricing} />
+          </View>
+        ) : null}
         {editing && pricing && !quiet ? <PriceEditor drink={drink} alsoOn={alsoOn} pricing={pricing} onClose={() => setEditing(false)} /> : null}
         <RowMenu anchor={popover.anchor} label={menu === 'sections' ? `Move ${drink.name} to` : `${drink.name} options`} items={items} onClose={popover.close} />
       </View>
@@ -203,6 +212,8 @@ const styles = StyleSheet.create({
   grip: { width: GRIP, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   thumb: { width: 52 },
   thumbWide: { width: 64 },
+  // Under the row's text, past the picture (thumbWide and the row's gap).
+  under: { marginLeft: 64 + space.md },
   nameWide: { fontSize: type.headline.fontSize * 1.3, lineHeight: 30 },
   namePhone: { fontSize: type.headline.fontSize * 1.1, lineHeight: 26 },
   text: { flex: 1, gap: 2, minWidth: 0 },
@@ -213,7 +224,7 @@ const styles = StyleSheet.create({
   held: { opacity: 0.4 },
   // Its whole height is what it pushes the rows down by (useMenuDrag), so no margins.
   slotSpace: { paddingVertical: space.xs },
-  heads: { flexDirection: 'row', gap: space.md },
+  heads: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.md },
   head: { width: PRICE_FIELD, letterSpacing: 1 },
   // The row's Remove and ... (a tap target each) and the grip, with the gaps between.
   headsEnd: { width: layout.minTapTarget * 2 + GRIP + space.md * 2 },
