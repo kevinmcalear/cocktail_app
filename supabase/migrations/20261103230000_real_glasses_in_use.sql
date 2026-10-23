@@ -22,7 +22,7 @@
 --    drawing, whether it's the main one, a note); the app reads the rest
 --    from the model (hooks/useBarGlassware.ts). A check holds it.
 -- 2. A Bar with Shapes for a Name names a real glass on 56 of its specs
---    ("Glass: Nude x Savage - Coupetini"). The drinks whose glass is one
+--    ("Glass: Nude x Savage - Coupetini"). The 36 drinks whose glass is one
 --    model, size included, now point at it, and the bar's glassware lists
 --    each of those glasses (not as its main glass, so no drawing changes
 --    until the bar says so), so its team is offered them first. Its 13
@@ -31,8 +31,9 @@
 -- 3. Glasses research bars list by maker and name (Bar Leone's four BOBO
 --    Popolare glasses, Jigger & Pony's Kimura Crumple) now point at them.
 --
--- The kind of glass follows the real one (a drink in a Savage Water glass is
--- a Rocks, no longer a Small Rocks), so those drinks are redrawn in it. No
+-- The kind of glass follows the real one, so 12 of those drinks change kind
+-- (a Savage Water glass is a Rocks, no longer a Small Rocks; Kimura's Bambi
+-- is a Wine glass, no longer a Small Highball) and are redrawn in it. No
 -- paid AI: app.image_worker stops picture jobs, and the flavour jobs these
 -- updates queue are removed at the end.
 --
