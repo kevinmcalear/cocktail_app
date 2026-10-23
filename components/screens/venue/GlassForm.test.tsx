@@ -60,7 +60,7 @@ test('adding a glass picks its maker page, keeps the name as written, and trims 
   });
 });
 
-test('a maker\'s model brings its type, drawing, maker and series; the venue\'s own name wins', async () => {
+test('a maker\'s model brings its type and drawing and keeps its maker and series; the venue\'s own name wins', async () => {
   const onSave = jest.fn();
   await renderWithTamagui(<GlassForm glass={null} saving={false} onSave={onSave} onCancel={() => {}} />);
   await fireEvent.press(screen.getByText('Pick Fenwick'));
@@ -68,7 +68,7 @@ test('a maker\'s model brings its type, drawing, maker and series; the venue\'s 
   expect(screen.queryByText('Who makes it')).toBeNull();
   await fireEvent.press(screen.getByText('Save glass'));
   expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({
-    glass: 'coupe', variant: 'coupe_wide', name: 'Fenwick coupe', maker: 'Corvid Glass Works', maker_profile_id: 'corvid', series: 'Fenwick', model_id: 'm1',
+    glass: 'coupe', variant: 'coupe_wide', name: 'Fenwick coupe', maker: null, maker_profile_id: null, series: null, designer: null, model_id: 'm1',
   }));
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Our coupe');
   await fireEvent.press(screen.getByText('Save glass'));
