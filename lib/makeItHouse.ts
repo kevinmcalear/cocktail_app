@@ -4,10 +4,11 @@
  * drink's own name already says ("Coconut Fat-Washed Daiquiri"). Pure: the
  * wizard (IngredientsStep) opens the prep builder from these.
  */
+import { searchIngredients, type IngredientAlias, type IngredientRow } from '@/lib/ingredientNames';
 import { capitalize } from '@/lib/stringUtils';
 import { TECHNIQUES, type Technique } from '@/lib/techniques';
-import { FITS, startsFrom, waysToMake } from '@/lib/techniques/makeIt';
-import { splitName } from '@/lib/techniques/template';
+import { FITS, looksMadeInHouse, startsFrom, waysToMake } from '@/lib/techniques/makeIt';
+import { nameParts, splitName } from '@/lib/techniques/template';
 import type { BaseKind } from '@/lib/techniques/types';
 
 /** The order the sheet lists them in: the ones bars reach for first, then by group, the rare ones last. */
@@ -51,6 +52,8 @@ export interface HouseNudge {
   adjunct: string | null;
   /** "coconut fat-washed", as the name says it. */
   phrase: string;
+  /** Where it was said: the drink's name, or the line as typed or pasted ("60 ml coconut fat-washed bacardi"). */
+  from?: 'name' | 'typed';
 }
 
 /**
@@ -74,3 +77,45 @@ export function houseNudge(drinkName: string, lines: readonly { key: string; nam
   return { key: line.key, technique: t, adjunct, phrase };
 }
 
+
+export interface HouseReading<T> {
+  technique: Technique;
+  /** The "with what" ("Coconut"), if the line says one. */
+  adjunct: string | null;
+  /** What it's made from, as written ("Bacardi"). */
+  base: string;
+  /** The bottles that could be, the ones you have first: the line starts as the first. */
+  bottles: T[];
+  /** "coconut fat-washed", as written. */
+  phrase: string;
+}
+
+/**
+ * A line written the way a spec says it, "coconut fat-washed bacardi": a
+ * bottle you have, changed by a technique, with what. Null when the line
+ * names no technique that changes a bottle, or no bottle it could start
+ * from. Made things (another wash, a cordial) are never the bottle.
+ */
+export function readHouse<T extends IngredientRow & { generic_id?: string | null }>(
+  text: string,
+  rows: readonly T[],
+  opts: { aliases?: readonly IngredientAlias[]; coreIds?: ReadonlySet<string>; have?: ReadonlySet<string> } = {},
+): HouseReading<T> | null {
+  const technique = waysToMake(text).find(changes);
+  if (!technique) return null;
+  const { base, adjunct } = nameParts(text, technique);
+  if (!base) return null;
+  // Yours first, then ones it can start from (a rum for a wash, not "Bacardi Falernum"), then as search ranks them.
+  const have = opts.have ?? new Set<string>();
+  const fits = FITS[technique.starts as BaseKind] ?? [technique.starts as BaseKind];
+  const kind = (r: T) => startsFrom(r.name ?? '') ?? startsFrom(rows.find((g) => g.id === r.generic_id)?.name ?? '');
+  const ranked = searchIngredients(base, rows, { ...opts, limit: 12 })
+    .filter((r) => !looksMadeInHouse(r.name ?? ''))
+    // Each one's rank once: its kind looks up its style in the whole catalog.
+    .map((r, i) => ({ r, i, mine: have.has(r.id) ? 0 : 1, misfit: technique.starts === 'liquid' || fits.includes(kind(r) as BaseKind) ? 0 : 1 }));
+  const bottles = ranked.sort((a, b) => a.mine - b.mine || a.misfit - b.misfit || a.i - b.i).slice(0, 3).map((x) => x.r);
+  if (!bottles.length) return null;
+  const { before, word } = splitName(text);
+  const phrase = [...before, technique.word ?? word ?? technique.name].join(' ').toLowerCase();
+  return { technique, adjunct, base, bottles, phrase };
+}
