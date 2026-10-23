@@ -24,7 +24,7 @@ import { suggestAmount } from '@/lib/specDefaults';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { CreditsStep } from './CreditsStep';
-import { DeskCost, DeskDrinkCard, DeskTaste, type DeskCostLine } from './DrinkDeskRail';
+import { DeskCost, DeskDrinkCard, DeskMenuNote, DeskTaste, type DeskCostLine } from './DrinkDeskRail';
 import { FinishStep } from './FinishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
@@ -245,6 +245,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
           <DeskTaste lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
           {canCost ? <DeskCost lines={costLines} pricing={pricing} price={draft.price ?? ''} onPrice={(price) => set({ price })} /> : null}
+          <DeskMenuNote sectionId={p.menuSectionId} menu={menu} lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} />
         </ScrollView>
       </View>
     </View>

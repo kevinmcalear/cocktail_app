@@ -7,8 +7,10 @@ import { withAlpha } from '@/lib/color';
 import { balanceOf, fixesFor, tasteWord } from '@/lib/balance';
 import { formatPct, margin } from '@/lib/costing';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
+import { menuNote } from '@/lib/menuNote';
 import { formatMoney, priceMinor } from '@/lib/money';
 import type { DraftLook } from '@/lib/sketch/draft';
+import { useMenuDrinkSpecs } from '@/hooks/useDrinkDesk';
 import type { PricingSettings } from '@/hooks/usePricing';
 
 import { inputsFor } from './SketchHeader';
@@ -60,8 +62,7 @@ const DIMS = [
 /** Taste so far, from the same rules as the wizard's balance card, as five-step meters with a word each. */
 export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly WizardLine[]; ingredients: readonly CatalogIngredient[]; onAdd: (name: string) => void }) {
   const ds = useDs();
-  const byId = new Map(ingredients.map((i) => [i.id, i]));
-  const parts = lines.map((l) => ({ name: l.name, genericName: (l.id && byId.get(byId.get(l.id)?.generic_id ?? '')?.name) || null, amount: amountOf(l.amount), unit: l.unit || null }));
+  const parts = tasteParts(lines, ingredients);
   const balance = balanceOf(parts);
   const fixes = balance?.need ? fixesFor(balance.need, parts) : [];
   return (
@@ -101,6 +102,19 @@ export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly Wizar
       )}
     </Surface>
   );
+}
+
+/** A spec's lines as the taste reads them: each with what it's a kind of. */
+function tasteParts(lines: readonly WizardLine[], ingredients: readonly CatalogIngredient[]) {
+  const byId = new Map(ingredients.map((i) => [i.id, i]));
+  return lines.map((l) => ({ name: l.name, genericName: (l.id && byId.get(byId.get(l.id)?.generic_id ?? '')?.name) || null, amount: amountOf(l.amount), unit: l.unit || null }));
+}
+
+/** On the way to a menu: how the drink sits among its others ("On Winter menu it’s the lightest drink, and the only sherry one"). */
+export function DeskMenuNote({ sectionId, menu, lines, ingredients }: { sectionId: string | null | undefined; menu: string | null; lines: readonly WizardLine[]; ingredients: readonly CatalogIngredient[] }) {
+  const others = useMenuDrinkSpecs(menu ? sectionId : null).data;
+  const note = menu && others ? menuNote(menu, tasteParts(lines, ingredients), others) : null;
+  return note ? <Body>{note}</Body> : null;
 }
 
 export interface DeskCostLine {
