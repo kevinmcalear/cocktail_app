@@ -10,8 +10,9 @@
 //     fails here until someone checks what it shows outsiders, adds a test
 //     for that, and adds it to the list
 //   * signed-out and signed-in callers can only read them
-//   * a venue's private drink and its spec stay out of both, for a signed-out
-//     visitor and for someone signed in who isn't on its team
+//   * for a signed-out visitor and for someone signed in who isn't on the
+//     team: a drink published with its spec shows with its lines, one
+//     published as a menu drink shows without them, a private one not at all
 //
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
@@ -90,20 +91,28 @@ describe('views that run with owner rights', () => {
     });
   }
 
-  test("a venue's private drink and its spec stay out of both views", async () => {
+  test('outsiders see a published drink, the spec only when it is published with it, and nothing of a private one', async () => {
     const run = randomUUID().slice(0, 8);
     const outsider = randomUUID();
     const seen = await rolledBack(async () => {
       const one = async (sql, params) => (await db.query(sql, params)).rows[0].id;
-      const bar = await one('INSERT INTO public.bars (name) VALUES ($1) RETURNING id', [`Owner Rights Bar ${run}`]);
-      const ingredient = await one("INSERT INTO public.items (name, item_type) VALUES ($1, 'ingredient') RETURNING id", [`Owner Rights Gin ${run}`]);
-      const drink = await one("INSERT INTO public.items (name, item_type, bar_id) VALUES ($1, 'cocktail', $2) RETURNING id", [`Owner Rights Sour ${run}`, bar]);
-      await db.query("INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit) VALUES ($1, $2, 45, 'ml')", [drink, ingredient]);
-
-      const look = async () => ({
-        items: (await db.query('SELECT 1 FROM public.published_items WHERE id = $1', [drink])).rowCount,
-        lines: (await db.query('SELECT 1 FROM public.app_recipe_presentation WHERE recipe_item_id = $1', [drink])).rowCount,
-      });
+      const bar = await one("INSERT INTO public.bars (name, page_visibility) VALUES ($1, 'open') RETURNING id", [`Owner Rights Bar ${run}`]);
+      await db.query("INSERT INTO public.profiles (kind, handle, display_name, bar_id, is_public) VALUES ('bar', $1, $2, $3, true)", [`ownerrights${run}`, `Owner Rights Bar ${run}`, bar]);
+      const gin = await one("INSERT INTO public.items (name, item_type) VALUES ($1, 'ingredient') RETURNING id", [`Owner Rights Gin ${run}`]);
+      const drinks = {};
+      for (const mode of ['spec', 'description', 'private']) {
+        drinks[mode] = await one("INSERT INTO public.items (name, item_type, bar_id, publish_mode) VALUES ($1, 'cocktail', $2, $3) RETURNING id", [`Owner Rights ${mode} ${run}`, bar, mode]);
+        await db.query("INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit) VALUES ($1, $2, 45, 'ml')", [drinks[mode], gin]);
+      }
+      const look = async () => {
+        const out = {};
+        for (const [mode, id] of Object.entries(drinks)) {
+          const listed = (await db.query('SELECT publish_mode FROM public.published_items WHERE id = $1', [id])).rows[0]?.publish_mode ?? null;
+          const lines = (await db.query('SELECT amount, unit FROM public.app_recipe_presentation WHERE recipe_item_id = $1', [id])).rows;
+          out[mode] = { listed, lines: lines.map((l) => `${Number(l.amount)} ${l.unit}`) };
+        }
+        return out;
+      };
       await db.query('SET LOCAL ROLE anon');
       const anon = await look();
       await db.query('RESET ROLE');
@@ -112,6 +121,11 @@ describe('views that run with owner rights', () => {
       const signedIn = await look();
       return { anon, signedIn };
     });
-    assert.deepEqual(seen, { anon: { items: 0, lines: 0 }, signedIn: { items: 0, lines: 0 } });
+    const expected = {
+      spec: { listed: 'spec', lines: ['45 ml'] },
+      description: { listed: 'description', lines: [] },
+      private: { listed: null, lines: [] },
+    };
+    assert.deepEqual(seen, { anon: expected, signedIn: expected });
   });
 });
