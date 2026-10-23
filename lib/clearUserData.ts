@@ -34,7 +34,7 @@ export async function clearUserData(): Promise<void> {
   useDrinkWizardStore.setState({ kept: {} });
   useIngredientWizardStore.setState({ kept: {} });
   useBeerWineWizardStore.setState({ kept: {} });
-  useVenueSetup.setState({ runs: {} });
+  useVenueSetup.setState({ runs: {}, glasses: {} });
   useNoteDrafts.setState({ drafts: {} });
   useBringIn.setState({ reviews: {}, reviewing: null, later: [] });
   await Promise.all([
