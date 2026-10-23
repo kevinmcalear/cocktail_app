@@ -6882,6 +6882,13 @@ export type Database = {
         Args: { p_bar_id: string; p_email: string; p_sender: string }
         Returns: string
       }
+      top_ranked_classics: {
+        Args: { p_limit?: number }
+        Returns: {
+          item_id: string
+          rankers: number
+        }[]
+      }
       undo_bring_in: { Args: { p_batch: string }; Returns: Json }
       update_bar_settings: {
         Args: {

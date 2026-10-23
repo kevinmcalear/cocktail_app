@@ -7,33 +7,22 @@ import { useDrinkLists, type DrinkList } from '@/hooks/useDiscover';
 import { useViewAs } from '@/hooks/useViewAs';
 import { draftFromSpec, EMPTY_DRAFT, newDraftId, type SourceSpec } from '@/lib/drinkWizard';
 import { supabase } from '@/lib/supabase';
-import { chunk } from '@/lib/commandSearchGrid';
-import { haveClassics, topClassics } from '@/lib/whatNext';
+import { CLASSIC_COUNT, haveClassics, topClassics } from '@/lib/whatNext';
 
 /**
- * How many people rank each classic (get_item_scores over the catalog, 200 at
- * a time). ponytail: it counts rankings of the classic itself, and only once
- * a drink has the 20 rankers a score needs; a bar's own Negroni ranked as a
- * Negroni isn't in it. A `top_ranked_classics` RPC over the ranking refresh
- * (counted_rank_scores by ranked_as_item_id) is the upgrade; it needs a migration.
+ * How many people rank each classic, counting a bar's drink ranked as it
+ * (top_ranked_classics): the most ranked 20 and any tie with the 20th, only
+ * those with the rankers a score needs. topClassics breaks ties and fills the
+ * rest of the 20 in the catalog's best-known order.
  */
-function useClassicRankers(itemIds: readonly string[]) {
-  const ids = [...itemIds].sort();
+function useClassicRankers() {
   return useQuery({
-    queryKey: ['classic-rankers', ids],
-    enabled: ids.length > 0,
+    queryKey: ['top-ranked-classics'],
     staleTime: 60 * 60_000,
-    // Four hundred ids is a big key: keep it in memory only (as useItemScores does).
-    meta: { persist: false },
     queryFn: async (): Promise<Record<string, number>> => {
-      const batches = await Promise.all(
-        chunk(ids, 200).map(async (batch) => {
-          const { data, error } = await supabase.rpc('get_item_scores', { p_item_ids: batch });
-          if (error) throw error;
-          return (data ?? []) as { item_id: string; rankers: number }[];
-        })
-      );
-      return Object.fromEntries(batches.flat().map((r) => [r.item_id, r.rankers]));
+      const { data, error } = await supabase.rpc('top_ranked_classics', { p_limit: CLASSIC_COUNT });
+      if (error) throw error;
+      return Object.fromEntries((data ?? []).map((r) => [r.item_id, r.rankers]));
     },
   });
 }
@@ -41,11 +30,10 @@ function useClassicRankers(itemIds: readonly string[]) {
 /** The 20 most ranked classics in the app, best-known first among equals. */
 export function useTopClassics() {
   const catalog = useDrinkLists();
-  const ids = useMemo(() => (catalog.data ?? []).map((c) => c.id), [catalog.data]);
-  const rankers = useClassicRankers(ids);
-  // Rankings that fail to load still leave the best-known 20.
+  const rankers = useClassicRankers();
+  // Rankings that fail to load still leave the best-known 20, without waiting out the retries.
   const classics = useMemo(() => topClassics(catalog.data ?? [], rankers.data ?? {}), [catalog.data, rankers.data]);
-  return { classics, isLoading: catalog.isLoading || (rankers.isLoading && ids.length > 0), error: catalog.error };
+  return { classics, isLoading: catalog.isLoading || (rankers.isPending && rankers.failureCount === 0), error: catalog.error };
 }
 
 /**
