@@ -226,7 +226,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
       {toMake.sheet}
       {actions.sheets}
       {glassOpen ? (
-        <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} canEditDrink={canEdit} accent={venue?.accent ?? undefined} />
+        <GlassSheet visible onClose={() => setGlassOpen(false)} itemId={item.id} name={item.name} glass={glass} iceName={ice?.name ?? null} serveMl={item.serve_ml ?? null} icePerServeG={item.ice_per_serve_g ?? null} editing={false} accent={venue?.accent ?? undefined} />
       ) : null}
       {canBatch && batchOpen ? (
         <BatchSheet

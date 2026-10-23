@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,6 +28,7 @@ import { IngredientPickSheet } from './IngredientPickSheet';
 import { MadeList } from './MadeList';
 import { SpecPad } from './SpecPad';
 import { useEditHistory } from './useEditHistory';
+import { VenueSections, type PendingEdits, type VenueSheet } from './VenueSections';
 
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 const PHONE_HERO = 300;
@@ -85,7 +86,10 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
 
   const [pad, setPad] = useState<number | null>(null);
   const [picking, setPicking] = useState<{ swap: number | null } | null>(null);
-  const [sheet, setSheet] = useState<MoreChoice | 'calc' | 'more' | 'colour' | null>(null);
+  const [sheet, setSheet] = useState<MoreChoice | VenueSheet | 'calc' | 'more' | 'colour' | null>(null);
+  // For the floor, Service and Price: saved with Done, next to the editor's own changes.
+  const venueEdits = useRef<PendingEdits | null>(null);
+  const [venueDirty, setVenueDirty] = useState(false);
 
   // A new ingredient made from here comes back onto this drink's spec.
   const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
@@ -97,11 +101,12 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
   }, [editor, recentlyCreatedItem, setRecentlyCreatedItem, selfId]);
 
   const done = async () => {
+    if (venueEdits.current?.dirty && !(await venueEdits.current.save())) return;
     if (!editor.isDirty) return onExit();
     if (draft ? await draft.handleSaveDraft(false) : await editor.handleSave()) onExit();
   };
   const leave = async () => {
-    if (editor.isDirty && !(await confirmAsync({ title: 'Discard your changes?', message: 'Nothing you changed here is saved yet.', confirmText: 'Discard', destructive: true }))) return;
+    if ((editor.isDirty || venueEdits.current?.dirty) && !(await confirmAsync({ title: 'Discard your changes?', message: 'Nothing you changed here is saved yet.', confirmText: 'Discard', destructive: true }))) return;
     editor.discardChanges();
     onExit();
   };
@@ -163,6 +168,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
       <TextInput value={editor.origin} onChangeText={editor.setOrigin} placeholder="Where it’s from: a bar, a year" placeholderTextColor={ds.c.muted} accessibilityLabel="Origin" style={[styles.origin, NO_OUTLINE, { color: ds.c.muted }]} />
     </>
   );
+  const servicePhotos = cocktail && id ? <ShotList itemId={id} barId={cocktail.bar_id ?? null} links={cocktail.item_images as ItemImageLink[] | undefined} /> : null;
   const body = (
     <>
       <EditSpecList
@@ -185,9 +191,9 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
         </View>
         <GrowingField minHeight={96} value={editor.notes} onChangeText={editor.setNotes} placeholder="Tricks, swaps, what guests ask" placeholderTextColor={ds.c.muted} accessibilityLabel="Notes for the team" style={fieldBox} />
       </View>
+      {cocktail && id ? <VenueSections item={cocktail} onPending={(p) => ((venueEdits.current = p), setVenueDirty(p.dirty))} sheet={sheet === 'classic' || sheet === 'publish' || sheet === 'glass' ? sheet : null} onSheet={setSheet} servicePhotos={wide ? undefined : servicePhotos} /> : null}
     </>
   );
-  const servicePhotos = cocktail && id ? <ShotList itemId={id} barId={cocktail.bar_id ?? null} links={cocktail.item_images as ItemImageLink[] | undefined} /> : null;
   const toolbar = <EditToolbar canUndo={history.canUndo} canRedo={history.canRedo} onUndo={history.undo} onRedo={history.redo} onDone={() => void done()} saving={editor.saving} wide={wide} media={pictures.length ? 'photo' : 'paper'} more={wide ? <GlassButton accessibilityLabel="More" icon="ellipsis" onPress={() => setSheet('more')} /> : undefined} />;
 
   return (
@@ -212,7 +218,6 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
             <View style={[styles.phoneBody, { paddingHorizontal: gutter }]}>
               {words}
               {body}
-              {servicePhotos}
             </View>
           </FormScrollContainer>
           <View style={[styles.top, { top: top + space.sm, left: gutter, right: gutter }]}>{toolbar}</View>
@@ -261,7 +266,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
           }}
         />
       ) : null}
-      <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty} draft={!!draft} onPick={onMore} />
+      <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty || venueDirty} draft={!!draft} onPick={onMore} />
       {sheet === 'photos' ? <PhotosSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'access' ? <AccessSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'colour' && id ? <SketchColourSheet visible onClose={() => setSheet(null)} itemId={id} name={editor.name || cocktail?.name || ''} /> : null}

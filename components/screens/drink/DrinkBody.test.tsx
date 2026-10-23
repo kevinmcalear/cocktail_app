@@ -9,7 +9,7 @@ import type { DrinkSections } from './DrinkSections';
 // Each section as its own name, so the test reads the order the page draws.
 const KEYS = [
   'header', 'spec', 'intro', 'journey', 'floor', 'moreHeading', 'standing', 'banner', 'description', 'facts', 'allergens',
-  'flavor', 'servedAt', 'menus', 'photos', 'service', 'history', 'cost', 'backstory', 'classicLink', 'publish',
+  'flavor', 'servedAt', 'menus', 'photos', 'service', 'history', 'cost', 'backstory', 'publish',
 ] as const;
 const sections = Object.fromEntries(KEYS.map((k) => [k, <Text key={k}>{k}</Text>])) as unknown as DrinkSections;
 

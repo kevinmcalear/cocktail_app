@@ -1,18 +1,17 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Field, Headline, LockedSection, Spec, Tag, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, LockedSection, Spec, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
-import { useDrinkCost, useSetDrinkPrice } from '@/hooks/useDrinkCost';
+import { useDrinkCost } from '@/hooks/useDrinkCost';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { withAlpha } from '@/lib/color';
-import { formatPct, margin, priceForTarget, targetsLine, targetStatus, type Margin, type Targets } from '@/lib/costing';
+import { formatPct, margin, targetsLine, targetStatus, type Margin, type Targets } from '@/lib/costing';
 import { formatPrice } from '@/lib/menus';
-import { formatMoney, priceMinor, priceText } from '@/lib/money';
+import { formatMoney, priceMinor } from '@/lib/money';
 import { roleLabel } from '@/lib/roles';
 
 interface CostSectionProps {
@@ -20,8 +19,6 @@ interface CostSectionProps {
   barId: string | null;
   /** The drink's one price, as typed ("19.50", "MP"); every menu with it shows it. */
   price: string | null | undefined;
-  /** The viewer can edit the drink (its price). */
-  canEdit: boolean;
   /** The menu on now with the drink, when it prints its own price for it: "$22.00 on Winter menu". */
   onMenu?: { name: string; price?: string | null } | null;
 }
@@ -30,11 +27,11 @@ interface CostSectionProps {
  * Cost and margin: cost per serve through every sub-recipe at today's pack
  * prices, the drink's price with and without tax, profit, GP and pour cost.
  * Under the venue's targets (a GP, and the least a drink should make) it
- * says so with the price that clears them, and editors can use it
- * (drink-cost-floor). Locked until the costs capability; the server returns
+ * says so with the price that clears them (drink-cost-floor). Read only: the
+ * price and the GP helper are in the editor's Price (EditPrice). Locked until the costs capability; the server returns
  * nothing below it either.
  */
-export function CostSection({ itemId, barId, price, onMenu, canEdit }: CostSectionProps) {
+export function CostSection({ itemId, barId, price, onMenu }: CostSectionProps) {
   const { data: capabilities } = useCapabilities(barId);
   const { data: opensAtLevel } = useCapabilityOpensAt(barId, 'costs');
   const unlocked = !!barId && !!capabilities?.includes('costs');
@@ -45,25 +42,23 @@ export function CostSection({ itemId, barId, price, onMenu, canEdit }: CostSecti
     <LockedSection title="Cost and margin" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Drink Creator'}>
       {error ? <Body tone="muted">Couldn’t work out the cost. Check your connection and try again.</Body> : null}
       {isPending && !error ? <Caption tone="muted">Adding it up…</Caption> : null}
-      {cost && settings ? <Costed itemId={itemId} barId={barId} cost={cost} price={formatPrice(price)} onMenu={onMenu?.price ? { name: onMenu.name, price: onMenu.price } : null} canEdit={canEdit} currency={settings.currency} taxRate={settings.tax_rate} pricesIncludeTax={settings.prices_include_tax} targets={{ gp: settings.target_gp, minProfitMinor: settings.min_profit_minor }} /> : null}
+      {cost && settings ? <Costed barId={barId} cost={cost} price={formatPrice(price)} onMenu={onMenu?.price ? { name: onMenu.name, price: onMenu.price } : null} currency={settings.currency} taxRate={settings.tax_rate} pricesIncludeTax={settings.prices_include_tax} targets={{ gp: settings.target_gp, minProfitMinor: settings.min_profit_minor }} /> : null}
     </LockedSection>
   );
 }
 
 interface CostedProps {
-  itemId: string;
   barId: string;
   cost: NonNullable<ReturnType<typeof useDrinkCost>['data']>;
   price: string | null;
   onMenu: { name: string; price: string } | null;
-  canEdit: boolean;
   currency: string | null;
   taxRate: number;
   pricesIncludeTax: boolean;
   targets: Targets;
 }
 
-function Costed({ itemId, barId, cost, price, onMenu, canEdit, currency, taxRate, pricesIncludeTax, targets }: CostedProps) {
+function Costed({ barId, cost, price, onMenu, currency, taxRate, pricesIncludeTax, targets }: CostedProps) {
   const ds = useDs();
   const router = useRouter();
   const tax = { taxRate, pricesIncludeTax };
@@ -80,12 +75,6 @@ function Costed({ itemId, barId, cost, price, onMenu, canEdit, currency, taxRate
   const m = known ? margin(cost.total_minor, priceMinorValue, tax) : null;
   const target = known ? targetStatus(cost.total_minor, priceMinorValue, targets, tax) : null;
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'The venue';
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(price ?? '');
-  const [ask, setAsk] = useState(targets.gp == null ? '' : String(targets.gp));
-  const setPrice = useSetDrinkPrice(itemId);
-  const askN = Number(ask);
-  const askPrice = known && ask.trim() && Number.isFinite(askN) ? priceForTarget(cost.total_minor, askN, tax) : null;
 
   if (!currency) {
     return (
@@ -135,47 +124,21 @@ function Costed({ itemId, barId, cost, price, onMenu, canEdit, currency, taxRate
           price={money(target.priceMinor)}
           both={targets.gp != null && targets.minProfitMinor != null}
           money={money}
-          onUse={canEdit ? () => setPrice.mutate(priceText(target.priceMinor, currency)) : undefined}
-          busy={setPrice.isPending}
           onPricing={() => router.push(`/settings/bar/${barId}/pricing` as Href)}
         />
       ) : null}
-      {setPrice.error && !editing ? <Caption tone="accent" role="alert">{"Couldn't save the price. Check your connection and try again."}</Caption> : null}
-      {canEdit ? (
-        editing ? (
-          <View style={styles.edit}>
-            <Field label={`Price (${currency})`} value={draft} onChangeText={setDraft} placeholder="12.00 or MP" hint="As the menu prints it. Every menu with this drink shows it; blank clears it." />
-            <View style={styles.actions}>
-              <Button label={setPrice.isPending ? 'Saving…' : 'Save price'} disabled={setPrice.isPending} onPress={() => setPrice.mutateAsync(draft).then(() => setEditing(false), () => {})} />
-              <Button label="Cancel" variant="ghost" onPress={() => setEditing(false)} />
-            </View>
-            {setPrice.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
-          </View>
-        ) : (
-          <Button label={price == null ? 'Add a price' : 'Change price'} variant="secondary" onPress={() => {
-              setDraft(price ?? '');
-              setEditing(true);
-            }} style={styles.button} />
-        )
-      ) : null}
-      <View style={styles.calc}>
-        <Field label="Price for a GP of (percent)" value={ask} onChangeText={setAsk} placeholder="80" keyboardType="decimal-pad" />
-        <Caption tone="muted">{askPrice == null ? 'Enter a GP under 100 to see the menu price it needs.' : `${money(askPrice)} on the menu${pricesIncludeTax ? `, with ${taxRate}% tax in it` : ''}.`}</Caption>
-      </View>
     </View>
   );
 }
 
 /** Under the venue's targets: what it wants, what this drink makes, and the price that clears it (drink-cost-floor). */
-function UnderTarget({ venueName, wants, margin: m, price, both, money, onUse, busy, onPricing }: {
+function UnderTarget({ venueName, wants, margin: m, price, both, money, onPricing }: {
   venueName: string;
   wants: string;
   margin: Margin | null;
   price: string;
   both: boolean;
   money: (minor: number) => string;
-  onUse?: () => void;
-  busy: boolean;
   onPricing: () => void;
 }) {
   const ds = useDs();
@@ -188,7 +151,6 @@ function UnderTarget({ venueName, wants, margin: m, price, both, money, onUse, b
       </View>
       <Body>{`${venueName} wants ${wants}. ${makes} ${price} on the menu clears ${both ? 'both' : 'it'}.`}</Body>
       <View style={styles.actions}>
-        {onUse ? <Button label={busy ? 'Saving…' : `Use ${price}`} disabled={busy} onPress={onUse} /> : null}
         <Button label="Pricing" variant="secondary" onPress={onPricing} />
       </View>
     </View>
@@ -214,10 +176,7 @@ const styles = StyleSheet.create({
   name: { flex: 1 },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   fact: { flexGrow: 1, flexBasis: '40%', padding: space.md, borderRadius: space.md, gap: 2 },
-  edit: { gap: space.sm },
   actions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
-  button: { alignSelf: 'flex-start' },
-  calc: { gap: space.xs, marginTop: space.sm },
   under: { gap: space.sm, padding: space.lg, borderRadius: radius.card, borderWidth: 1 },
   underHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
