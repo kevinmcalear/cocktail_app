@@ -138,8 +138,9 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
   const hours = held.hours !== undefined ? (held.hours as WeekHours | null) : (facts?.hours ?? null);
   const phone = held.phone !== undefined ? held.phone : (facts?.phone ?? null);
   const website = held.website !== undefined ? held.website : (facts?.website ?? null);
-  // A waiting claim can't keep an Instagram (usePushHeldSetup), so it shows what the claim brought.
-  const instagram = ig ?? (holding ? kept?.instagram : pending ? claim?.evidence?.typed?.instagram : null) ?? (profile ? pageInstagram(profile) : null) ?? '';
+  const pageIg = profile ? pageInstagram(profile) : null;
+  // A waiting claim's Instagram (typed into it, else kept from setup) goes on only where the page has none.
+  const instagram = ig ?? (pending ? (pageIg ?? claim?.evidence?.typed?.instagram ?? claim?.setup?.instagram) : holding ? (kept?.instagram ?? pageIg) : pageIg) ?? '';
   const igProblem = instagramProblem(instagram);
   const error = problem ?? (saveFacts.error ?? saveSetup.error ?? saveInstagram.error)?.message ?? null;
 

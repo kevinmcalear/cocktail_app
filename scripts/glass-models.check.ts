@@ -37,7 +37,7 @@ assert.equal(drawingFor(row({ glass: 'snifter', name: 'Whisky Nosing Glass' })),
 
 // What can't load.
 assert.equal(problemWith(row({})), null);
-assert.match(problemWith(row({ glass: 'wine' }))!, /not in scope/);
+assert.match(problemWith(row({ glass: 'ceramic' }))!, /not in scope/);
 assert.match(problemWith(row({ source_urls: [] }))!, /sources/);
 assert.match(problemWith(row({ source_urls: ['http://example.com'] }))!, /https/);
 assert.match(problemWith(row({ material: 'unobtainium' }))!, /material/);

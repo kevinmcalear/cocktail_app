@@ -3048,6 +3048,7 @@ export type Database = {
           item_id: string | null
           menu_id: string | null
           menu_section_id: string | null
+          party_id: string | null
           serves: number | null
           sort_order: number | null
           template_section_id: string | null
@@ -3058,6 +3059,7 @@ export type Database = {
           item_id?: string | null
           menu_id?: string | null
           menu_section_id?: string | null
+          party_id?: string | null
           serves?: number | null
           sort_order?: number | null
           template_section_id?: string | null
@@ -3068,6 +3070,7 @@ export type Database = {
           item_id?: string | null
           menu_id?: string | null
           menu_section_id?: string | null
+          party_id?: string | null
           serves?: number | null
           sort_order?: number | null
           template_section_id?: string | null
@@ -3100,6 +3103,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "menu_sections"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drinks_party_fkey"
+            columns: ["party_id", "menu_id"]
+            isOneToOne: false
+            referencedRelation: "menu_run_parties"
+            referencedColumns: ["id", "menu_id"]
           },
           {
             foreignKeyName: "menu_drinks_template_section_id_fkey"
@@ -6372,6 +6382,7 @@ export type Database = {
         Args: { p_from: string; p_into: string }
         Returns: undefined
       }
+      merged_profile_handle: { Args: { p_ref: string }; Returns: string }
       my_bar_drinks: {
         Args: {
           p_after_id?: string
@@ -6888,6 +6899,13 @@ export type Database = {
       take_invite_email_slot: {
         Args: { p_bar_id: string; p_email: string; p_sender: string }
         Returns: string
+      }
+      top_ranked_classics: {
+        Args: { p_limit?: number }
+        Returns: {
+          item_id: string
+          rankers: number
+        }[]
       }
       undo_bring_in: { Args: { p_batch: string }; Returns: Json }
       update_bar_settings: {

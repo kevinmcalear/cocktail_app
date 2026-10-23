@@ -1,0 +1,23 @@
+{
+ "maker": "olympia",
+ "models": [
+  {
+   "name": "Stemmed Sundae Cup",
+   "series": null,
+   "designer": null,
+   "model_code": "FU287",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "8¾oz / 250ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.nisbets.ie/olympia-stemmed-sundae-cup-250ml/fu287",
+   "source_urls": [
+    "https://www.nisbets.ie/olympia-stemmed-sundae-cup-250ml/fu287",
+    "https://www.nisbets.ie/search?q=olympia%20sundae"
+   ]
+  }
+ ]
+}
