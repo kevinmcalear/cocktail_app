@@ -1,5 +1,5 @@
 import { useState, type ComponentRef, type ReactNode, type Ref } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, GlassButton, IngredientDrawing, PressableScale, Sheet, SheetScrollView, sheetIsDialog, TextLink, Title, useBreakpoint, useDs, useSheetClose, type IconName } from '@/components/ds';
 import { IngredientPhoto } from '@/components/ds/IngredientDrawing';
@@ -17,7 +17,8 @@ const ART = 72;
 /**
  * "Its picture" (eddie-oct22-ingredient-picture): Drawing, Your photo or None.
  * Phones stack the three and take or choose a photo; wide screens set them
- * side by side, with a drop zone for the photo, Cancel and a close button.
+ * side by side, with Cancel and a close button, and on the web a drop zone
+ * for the photo.
  * Done hands the choice back to the edit page, which saves it with Save.
  */
 export function PictureSheet({ itemId, name, value, onDone, onClose }: { itemId: string; name: string; value: PictureChoice; onDone: (choice: PictureChoice) => void; onClose: () => void }) {
@@ -28,8 +29,9 @@ export function PictureSheet({ itemId, name, value, onDone, onClose }: { itemId:
   const takeUri = (uri: string | null | undefined) => uri && setChoice({ picture: 'photo', photo: uri });
   const choose = async () => takeUri((await pickDrinkPhotos({ square: true }))[0]);
   const take = async () => takeUri(await takeDrinkPhoto({ square: true }));
-  // Wide screens on the web: a photo dropped anywhere on its card.
-  const dropRef = useWebImageDrop(wide ? (uris) => takeUri(uris[0]) : undefined, setDropping);
+  // Wide screens on the web: a photo dropped anywhere on its card. Tablets take or choose one, as phones do.
+  const dropZone = wide && Platform.OS === 'web';
+  const dropRef = useWebImageDrop(dropZone ? (uris) => takeUri(uris[0]) : undefined, setDropping);
   const photo = choice.photo;
   const select = (picture: IngredientPicture) => (picture === 'photo' && !photo ? void choose() : setChoice({ ...choice, picture }));
 
@@ -49,7 +51,7 @@ export function PictureSheet({ itemId, name, value, onDone, onClose }: { itemId:
             art={
               photo ? (
                 <Paper><IngredientPhoto url={photo} /></Paper>
-              ) : wide ? (
+              ) : dropZone ? (
                 <View style={[styles.drop, { borderColor: ds.accentFill.fill, backgroundColor: dropping ? ds.c.line : 'transparent' }]}>
                   <Icon name="arrow.up" />
                   <Caption tone="muted" align="center">Drop a photo or choose one</Caption>
@@ -59,7 +61,7 @@ export function PictureSheet({ itemId, name, value, onDone, onClose }: { itemId:
               )
             }
           >
-            {wide ? (
+            {dropZone ? (
               photo ? <TextLink label="Choose another" onPress={() => void choose()} /> : null
             ) : (
               <View style={styles.buttons}>

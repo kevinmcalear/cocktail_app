@@ -42,9 +42,13 @@ async function read(ids: string[]) {
   }
 }
 
-/** Reads the ingredients, then each layer of kinds above them, until every chain ends. */
+/**
+ * Reads the ingredients, then each layer of kinds above them, until every
+ * chain ends. The ingredients themselves are read every time (their picture
+ * can change on another device); kinds already seen aren't.
+ */
 async function walk(ids: string[]) {
-  let next = ids.filter((id) => !seen.has(id));
+  let next = ids;
   for (let depth = 0; next.length && depth < 8; depth++) {
     await read(next);
     next = [...new Set(next.map((id) => seen.get(id)?.generic_id).filter((id): id is string => !!id && !seen.has(id)))];
@@ -75,7 +79,7 @@ function load(id: string): Promise<IngredientChain> {
   return pending.result.then(() => chainOf(id));
 }
 
-/** After its picture or kinds change: read it again next time it's drawn. */
+/** After its picture changes here: read it again now, not when its query goes stale. */
 export function forgetIngredientChain(queryClient: QueryClient, id: string) {
   seen.delete(id);
   return queryClient.invalidateQueries({ queryKey: ['ingredient-chain', id] });

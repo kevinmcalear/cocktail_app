@@ -125,9 +125,10 @@ describe("a bar's house prep", () => {
     assert.equal(await shown('stranger', ids.shrub), null);
   });
 
-  test('None hides the photo but keeps it, and Your photo brings it back', async () => {
+  test('None hides the photo but keeps it for its editor, and Your photo brings it back', async () => {
     assert.ifError((await setPicture('editor', ids.shrub, 'none')).error);
     assert.deepEqual(await shown('member', ids.shrub), { picture: 'none', picture_url: null });
+    assert.deepEqual(await shown('editor', ids.shrub), { picture: 'none', picture_url: `${PHOTO_ROOT}/shrub-2.jpg` });
     assert.ifError((await setPicture('editor', ids.shrub, 'photo')).error);
     assert.equal((await shown('member', ids.shrub)).picture_url, `${PHOTO_ROOT}/shrub-2.jpg`);
   });
@@ -183,6 +184,18 @@ describe('catalogue and shared items stay drawn', () => {
       assert.ok(rows.length);
       const view = await db.query('SELECT picture, picture_url FROM public.app_item_presentation WHERE id = $1', [ids.shared]);
       assert.deepEqual(view.rows[0], { picture: 'drawing', picture_url: null });
+    } finally {
+      await db.query('ROLLBACK');
+    }
+  });
+
+  test('merging an ingredient with its own photo into a catalogue one still works', async () => {
+    await db.query('BEGIN');
+    try {
+      // What private.merge_ingredient does to the links of the one merged away.
+      await db.query('UPDATE public.item_images SET item_id = $1 WHERE item_id = $2', [ids.catalogue, ids.shrub]);
+      const { rows } = await db.query('SELECT count(*)::int AS n FROM public.item_images WHERE item_id = $1 AND is_picture', [ids.catalogue]);
+      assert.equal(rows[0].n, 1);
     } finally {
       await db.query('ROLLBACK');
     }

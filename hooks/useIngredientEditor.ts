@@ -198,6 +198,8 @@ export function useIngredientEditor(id: string) {
         }
         setSaving(true);
         try {
+            // Its picture first: a photo that won't upload stops the save before anything is written.
+            if (f.picture !== loaded.picture || f.photo !== loaded.photo) await saveIngredientPicture(queryClient, id, f.picture, f.photo);
             // Only what changed since it loaded, so someone else's edit to another field isn't undone.
             const changed = changedColumns(ingredientColumns(loaded), ingredientColumns(f));
             if (Object.keys(changed).length) {
@@ -206,7 +208,6 @@ export function useIngredientEditor(id: string) {
             }
 
             await saveItemTags(id, loaded.selectedCategories, f.selectedCategories);
-            if (f.picture !== loaded.picture || f.photo !== loaded.photo) await saveIngredientPicture(queryClient, id, f.picture, f.photo);
 
             const { error: deleteError } = await supabase.from("recipes").delete().eq("recipe_item_id", id);
             if (deleteError) throw deleteError;

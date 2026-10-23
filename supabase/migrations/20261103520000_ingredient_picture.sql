@@ -49,7 +49,10 @@ $$;
 
 CREATE TRIGGER guard_item_picture BEFORE INSERT OR UPDATE OF picture ON public.items
     FOR EACH ROW EXECUTE FUNCTION private.guard_item_picture();
-CREATE TRIGGER guard_item_picture BEFORE INSERT OR UPDATE OF is_picture, item_id ON public.item_images
+-- Not on UPDATE OF item_id: merging an ingredient into a catalogue one moves
+-- its links (private.merge_ingredient), and the view never shows a photo on a
+-- shared item anyway.
+CREATE TRIGGER guard_item_picture BEFORE INSERT OR UPDATE OF is_picture ON public.item_images
     FOR EACH ROW EXECUTE FUNCTION private.guard_item_picture();
 
 -- The chosen photo's URL. The view calls it only for rows the caller can
@@ -98,6 +101,9 @@ GRANT EXECUTE ON FUNCTION public.set_item_picture(uuid, public.item_picture, uui
 
 -- As 20261101200000_role_permissions_per_role.sql, with picture and
 -- picture_url at the end. A shared item reads as drawn whatever it holds.
+-- picture_url is the chosen photo. While the choice is Drawing or None it is
+-- kept for whoever can edit the ingredient, so the edit page can offer it
+-- again; everyone else sees it only while it's the picture.
 CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker" = true) AS
  SELECT c.id,
     c.name,
@@ -137,7 +143,8 @@ CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker"
     c.method_ice_id,
     c.ice_build,
     CASE WHEN c.bar_id IS NULL AND c.created_by IS NULL THEN 'drawing'::public.item_picture ELSE c.picture END AS picture,
-    CASE WHEN c.picture = 'photo' AND (c.bar_id IS NOT NULL OR c.created_by IS NOT NULL) THEN private.item_picture_url(c.id) END AS picture_url
+    CASE WHEN c.item_type = 'ingredient' AND (c.bar_id IS NOT NULL OR c.created_by IS NOT NULL) AND (c.picture = 'photo' OR private.can_edit_item(c.id))
+         THEN private.item_picture_url(c.id) END AS picture_url
    FROM public.items c
      LEFT JOIN public.bars b ON c.bar_id = b.id
      LEFT JOIN public.user_bars ub ON ub.bar_id = c.bar_id AND ub.user_id = auth.uid()
