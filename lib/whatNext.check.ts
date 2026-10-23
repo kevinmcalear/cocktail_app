@@ -11,6 +11,8 @@ assert.deepEqual(ids(topClassics(catalog, {}, 3)), ['martini', 'negroni', 'old-f
 assert.deepEqual(ids(topClassics(catalog, { zombie: 40, daiquiri: 25, negroni: 25 }, 4)), ['zombie', 'negroni', 'daiquiri', 'martini'], 'ranked first, ties in catalog order');
 assert.equal(topClassics(Array.from({ length: 405 }, (_, i) => ({ id: `c${i}` })), {}).length, 20, '20 by default');
 assert.equal(topClassics(catalog, {}).length, 6, 'fewer than 20 in the catalog: all of them');
+// top_ranked_classics returns only the ranked ones (maybe one the catalog no longer has): the rest fill in catalog order.
+assert.deepEqual(ids(topClassics(catalog, { aviation: 2, gone: 9 }, 3)), ['aviation', 'martini', 'negroni'], 'a few ranked, then best-known; unknown ids ignored');
 assert.deepEqual(ids(catalog), ['martini', 'negroni', 'old-fashioned', 'daiquiri', 'aviation', 'zombie'], 'the catalog is left as it was');
 
 // --- haveClassics: a version of it, or the same name, at the bar ---
