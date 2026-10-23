@@ -23,6 +23,6 @@ Tests in `supabase/tests/` are the living spec. `npm run test:security` runs the
 
 `menu_templates`, `template_sections`, and `menu_drinks.template_section_id` still back the legacy menu editor. `menus.is_active` is kept in step with `starts_at` / `ends_at` by `sweep_menu_dates`.
 
-## Unused, needs a human-gated migration
+## Unused
 
-`attributes`, `category_attributes`, `item_attributes`, and `substitutions` have no `.from()` callers in the app, functions, or tests. Confirm they are empty in production before dropping them. `images.credit` and `images.source_url` are live columns the UI does not read yet.
+`images.credit` and `images.source_url` are live columns the UI does not read yet.

@@ -166,7 +166,7 @@ export function LibraryScreen() {
       {activeId ? <ResumeCard barId={activeId} /> : null}
       <FeatureNewsLine />
       <FirstRoundCard />
-      {active && active.roleLevel > 30 ? <MatchClassicsNudge barId={active.id} /> : null}
+      {active && canEdit ? <MatchClassicsNudge barId={active.id} /> : null}
       {phone ? (
         <View onLayout={(e) => setRowY(e.nativeEvent.layout.y)}>
           <PhoneFilterRow set={filterSet} gutter={gutter} />

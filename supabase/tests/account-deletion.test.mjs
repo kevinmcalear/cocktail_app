@@ -53,8 +53,10 @@ async function exists(table, id) {
 async function deleteAccount(userId) {
   const { error } = await service.rpc('prepare_account_deletion', { p_user_id: userId });
   if (error) return error;
-  const { data: files } = await service.storage.from('avatars').list(userId);
-  if (files?.length) await service.storage.from('avatars').remove(files.map((f) => `${userId}/${f.name}`));
+  for (const bucket of ['avatars', 'feedback']) {
+    const { data: files } = await service.storage.from(bucket).list(userId);
+    if (files?.length) await service.storage.from(bucket).remove(files.map((f) => `${userId}/${f.name}`));
+  }
   const { error: deleteError } = await service.auth.admin.deleteUser(userId);
   return deleteError;
 }
@@ -100,6 +102,12 @@ before(async () => {
     .from('avatars')
     .upload(`${users.leaver.id}/avatar.png`, png, { contentType: 'image/png' });
   if (avatarError) throw avatarError;
+  // A Tell us note with a photo.
+  const { error: noteError } = await users.leaver.client.storage
+    .from('feedback')
+    .upload(`${users.leaver.id}/note.png`, png, { contentType: 'image/png' });
+  if (noteError) throw noteError;
+  ids.note = (await insert('feedback_notes', { user_id: users.leaver.id, screen: 'Adding a drink › Ice', kind: 'tell_us', body: 'Stacked', photo_path: `${users.leaver.id}/note.png` })).id;
   ids.drinkPhoto = `cocktails/${ids.sharedCocktail}/${run}.png`;
   const { error: photoError } = await users.leaver.client.storage
     .from('drinks')
@@ -129,7 +137,7 @@ describe('account deletion', () => {
     assert.ok(data.user, 'the account must still exist');
   });
 
-  test('deleting an account removes the user, their solo bar, personal menus, drafts and avatar', async () => {
+  test('deleting an account removes the user, their solo bar, personal menus, drafts, avatar and Tell us notes', async () => {
     const error = await deleteAccount(users.leaver.id);
     assert.ifError(error);
 
@@ -145,6 +153,9 @@ describe('account deletion', () => {
 
     const { data: avatarFiles } = await service.storage.from('avatars').list(users.leaver.id);
     assert.deepEqual(avatarFiles, []);
+    assert.equal(await exists('feedback_notes', ids.note), false);
+    const { data: noteFiles } = await service.storage.from('feedback').list(users.leaver.id);
+    assert.deepEqual(noteFiles, []);
   });
 
   test('content in shared bars and shared ingredients stays, anonymised', async () => {

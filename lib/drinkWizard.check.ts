@@ -5,7 +5,7 @@ import {
   methodIceLabel,
   amountLabel, amountOf, canSave, choiceList, convertPour, draftFromSpec, COMMON_ICE, creatorProfileId, EMPTY_DRAFT, GARNISH_CHIPS, guessUnit, hasContent, newLine, nextUnit, pickByName,
   likeExactly, QUICK_UNITS, searchByName, stepAmount, sketchLook, specLines, stepFilled, WIZARD_STEPS, type WizardDraft,
-  newDraftId, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY, parseYear,
+  newDraftId, FINISH_CHIPS, FINISH_UNITS, finishLabel, finishStart, STEP_COPY, parseYear, savedNotice,
 } from './drinkWizard';
 import { draftSketchInputs } from './sketch/draft';
 import { RECIPE_UNITS } from './units';
@@ -207,3 +207,11 @@ assert.equal(iceLine('No ice', 'Cubes', ['Shake']), 'Shaken with cubes, served u
 assert.equal(iceLine('Cubes', 'Crushed', ['Shake']), 'Shaken with crushed, over cubes', 'no "a" before plurals');
 assert.equal(iceLine('Crushed', 'Pebble', ['Blend']), 'Blended with pebble, over crushed');
 assert.equal(iceLine('Spear', 'Cubes', ['Shake']), 'Shaken with cubes, over a spear');
+
+// After a save: nothing to say, the preps still to write, or the warnings first.
+assert.equal(savedNotice([], []), null);
+assert.deepEqual(savedNotice([], ['Shrub']), { title: 'A recipe to write', body: 'Shrub has no recipe yet. Write it on its page when you’re ready.' });
+assert.deepEqual(savedNotice(['Check the glass.'], ['Shrub', 'Cordial']), {
+  title: 'Saved, with one thing to fix',
+  body: 'Check the glass.\n\nShrub, Cordial have no recipe yet. Write them on their pages when you’re ready.',
+});

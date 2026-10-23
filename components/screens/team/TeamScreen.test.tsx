@@ -20,7 +20,9 @@ jest.mock('@/hooks/useIsWideWeb', () => ({ useIsWideWeb: () => true, useWebNavWi
 jest.mock('@/hooks/useActiveVenue', () => ({
   useActiveVenue: () => ({ active: { id: 'bar', name: 'Caretakers' }, isLoading: false }),
 }));
-jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole }));
+jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole, useCanManageStaff: () => mockRole >= 40 }));
+// An Admin isn't limited to their own permissions, so these only matter below Admin.
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: ['menu'] }) }));
 jest.mock('@/ctx/AuthContext', () => jest.requireActual('@/jest.authMock').mockAuthContext(() => ({ user: { id: 'me' } })));
 jest.mock('@/lib/dialogs', () => ({ confirmAsync: jest.fn(async () => true) }));
 jest.mock('@/hooks/useBarDetail', () => ({
@@ -135,7 +137,7 @@ test('an employee sees the team and cannot manage it', async () => {
   await renderWithTamagui(<TeamScreen />);
   expect(screen.getByText('Ada (you)')).toBeTruthy();
   expect(screen.getByText('Jo')).toBeTruthy();
-  expect(screen.getByText('Only Admins can invite people or change roles.')).toBeTruthy();
+  expect(screen.getByText('Only people who can invite and manage staff change roles here.')).toBeTruthy();
   expect(screen.queryByRole('button', { name: /Manage$/ })).toBeNull();
   expect(screen.queryByLabelText('Search the team')).toBeNull();
   expect(screen.getByText('Team · 2')).toBeTruthy();

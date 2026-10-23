@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from '
 import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Button, Caption, TextLink, useDs } from '@/components/ds';
+import { TellUs } from '@/components/feedback/TellUs';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
@@ -84,6 +85,7 @@ export interface DrinkDeskProps {
 export function DrinkDesk(p: DrinkDeskProps) {
   const ds = useDs();
   const { draft, set, barId } = p;
+  const tellUsAbout = { drinkName: draft.name, barId, barName: barId ? p.venueName : null, draftId: draft.id ?? null };
   const place = useMenuSectionPlace(p.menuSectionId).data;
   const menu = place?.menu ?? null;
   const caps = useCapabilities(barId).data;
@@ -208,15 +210,17 @@ export function DrinkDesk(p: DrinkDeskProps) {
             stock={p.stock}
             balance={false}
             lineDetail={lineDetail}
+            tellUs={tellUsAbout}
           />
           <Row label="Method">
             <PickStep label="Method" ownLabel="Your own method" multi compact options={p.methods} selected={draft.methods} onChange={(methods) => set({ methods })} suggested={p.guess.method} />
+            <TellUs screen="Adding a drink › Method" line="We’ll add your method to the app." {...tellUsAbout} />
           </Row>
           <Row label="Glass">
             <GlassStep compact draft={draft} set={set} options={p.glasses} barId={barId} barGlasses={p.barGlasses} barVariants={p.barVariants} suggested={p.guess.glass} />
           </Row>
           <Row label="Ice">
-            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.barKit} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} />
+            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.barKit} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} tellUs={tellUsAbout} />
           </Row>
           <Row label="Finish">
             {finishing ? (
@@ -254,7 +258,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
       <View style={styles.rowLabel}>
         <Eyebrow>{label}</Eyebrow>
       </View>
-      <View style={styles.flex}>{children}</View>
+      <View style={[styles.flex, styles.rowBody]}>{children}</View>
     </View>
   );
 }
@@ -263,6 +267,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.lg, paddingHorizontal: space.xxl, paddingVertical: space.lg, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
+  rowBody: { gap: space.lg },
   body: { flex: 1, flexDirection: 'row' },
   left: { flex: 1, maxWidth: 760 },
   form: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.xxxl, gap: space.lg },

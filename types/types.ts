@@ -5,12 +5,10 @@ import type { Enum, Row } from '@/types/db';
 
 export type ItemDomain = Enum<'item_domain'>;
 export type EntityType = Enum<'entity_type'>;
-export type AttributeType = Enum<'attribute_type_enum'>;
 
 export type DatabaseCategory = Row<'categories'>;
 export type DatabaseBar = Row<'bars'>;
 export type DatabaseUserBar = Row<'user_bars'>;
-export type DatabaseAttribute = Row<'attributes'>;
 
 export type DatabaseDraft = Omit<Row<'drafts'>, 'entity_type' | 'draft_data'> & {
     entity_type: EntityType | 'menu';

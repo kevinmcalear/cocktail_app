@@ -30,7 +30,7 @@ jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: mo
 jest.mock('@/hooks/useHomeBar', () => ({ useShelf: () => ({ data: ['a', 'b', 'c'] }) }));
 jest.mock('@/components/ui/UserAvatar', () => ({ CurrentUserAvatar: () => null, useUserDisplayName: () => 'Kevin McAlear' }));
 let mockRole = 40;
-jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole }));
+jest.mock('@/hooks/useViewAs', () => ({ useEffectiveRole: () => mockRole, useCanManageStaff: () => mockRole >= 40 }));
 // These read the signed-in person's venues from Supabase; the nav doesn't need them here.
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: unknown }) => children }));
 jest.mock('@/components/nav/VenueSwitcher', () => {

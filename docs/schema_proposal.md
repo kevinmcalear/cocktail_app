@@ -32,7 +32,7 @@ Tests: `supabase/tests/venue-platform.test.mjs` (40 tests), plus one updated ass
 |---|---|
 | `private.my_bar_ids(min_role)` | Existing. Now also skips memberships whose venue role has ended. |
 | `private.can_write(bar, creator)` | Existing. Same rule, now built on `my_bar_ids(35)` so it skips ended memberships too. |
-| `public.get_my_bars()` | Existing. Same change. |
+| `public.get_my_bars()` | Existing. Same change. (Dropped in 20261102300000: nothing called it.) |
 | `private.can_view_bar_item(bar, override)` | From #46, behind the `items` read policy; reads `user_bars` itself. Same change. |
 | `public.app_recipe_presentation` | From #39 and #46, where it runs as its owner and reads `user_bars` itself. Same change: an ended membership doesn't join, so it reads as "not a member". |
 | `public.get_bar_members(bar)` | From #39, also owner-run. Same change: an ended guest can't call it and isn't listed. |
@@ -72,7 +72,7 @@ Columns on `bars`, next to the logo and colours it already has. A separate `bar_
 - Assigning a role sets `role_level` to its base level (trigger). Changing a role's base level moves everyone who holds it.
 - Changing a member's `role_level` by hand (an admin edit, or the existing `add_user_to_bar_by_email`) drops them back to a plain base role, so the level you set is the level they get.
 - An admin role (40) can't have an end date, so a bar can't lose its last admin on a timer.
-- **Expiry:** a membership whose role has ended stops counting in `my_bar_ids()`, `can_write()`, `get_my_bars()`, `can_view_bar_item()`, `app_recipe_presentation`, `get_bar_members()` and the capability helpers immediately. A pg_cron job (`sweep-expired-memberships`, every 15 minutes) then deletes those memberships, so direct `role_level` reads elsewhere stop seeing them too.
+- **Expiry:** a membership whose role has ended stops counting in `my_bar_ids()`, `can_write()`, `get_my_bars()` (since dropped), `can_view_bar_item()`, `app_recipe_presentation`, `get_bar_members()` and the capability helpers immediately. A pg_cron job (`sweep-expired-memberships`, every 15 minutes) then deletes those memberships, so direct `role_level` reads elsewhere stop seeing them too.
 
 ### Capabilities
 
@@ -96,7 +96,7 @@ One enum, `venue_capability`, with the rows of the brief's roles matrix:
 
 `menu` and `specs` follow the bar's own `default_visibility_level` and `default_measurement_level`, as they do today.
 
-**Level-bound** capabilities are ones an existing policy or view already decides from `role_level` (item and menu writes at 35, roster and brand writes at 40, visibility and measurement levels in the presentation views). They follow the base level and a CHECK constraint refuses overrides, so the app can never show a permission the database would refuse, or hide one the API would still allow.
+**Level-bound** capabilities were ones an existing policy or view decided from `role_level` (item and menu writes at 35, roster and brand writes at 40, visibility and measurement levels in the presentation views), and a CHECK constraint refused overrides. Since `20261101200000_role_permissions_per_role.sql` every capability is per role: those policies check the capability instead, a venue can change its built-in roles too (`venue_level_overrides`), an Admin always keeps `staff`, and `menu` and `specs` keep their Who sees what levels, moved by a role's grant or revoke. The columns above are where each role starts.
 
 **Overridable** capabilities are new. Roles grant or revoke them, and the new tables' policies enforce them. `photos` is here for the photo task's policies to use. `talking_points` and `house_made` apply to data in existing tables, so for those rows they're applied where specs are applied today, in the app and the presentation views.
 

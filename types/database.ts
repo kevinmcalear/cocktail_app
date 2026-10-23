@@ -9,24 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      attributes: {
-        Row: {
-          id: string
-          name: string
-          type: Database["public"]["Enums"]["attribute_type_enum"]
-        }
-        Insert: {
-          id?: string
-          name: string
-          type: Database["public"]["Enums"]["attribute_type_enum"]
-        }
-        Update: {
-          id?: string
-          name?: string
-          type?: Database["public"]["Enums"]["attribute_type_enum"]
-        }
-        Relationships: []
-      }
       back_bar_items: {
         Row: {
           added_at: string
@@ -587,36 +569,6 @@ export type Database = {
           {
             foreignKeyName: "categories_parent_id_fkey"
             columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      category_attributes: {
-        Row: {
-          attribute_id: string
-          category_id: string
-        }
-        Insert: {
-          attribute_id: string
-          category_id: string
-        }
-        Update: {
-          attribute_id?: string
-          category_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "category_attributes_attribute_id_fkey"
-            columns: ["attribute_id"]
-            isOneToOne: false
-            referencedRelation: "attributes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "category_attributes_category_id_fkey"
-            columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
@@ -1205,6 +1157,56 @@ export type Database = {
           },
         ]
       }
+      feedback_notes: {
+        Row: {
+          app_version: string | null
+          bar_id: string | null
+          body: string
+          created_at: string
+          device: string | null
+          drink_name: string | null
+          id: string
+          kind: string
+          photo_path: string | null
+          screen: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          bar_id?: string | null
+          body?: string
+          created_at?: string
+          device?: string | null
+          drink_name?: string | null
+          id?: string
+          kind: string
+          photo_path?: string | null
+          screen: string
+          user_id?: string
+        }
+        Update: {
+          app_version?: string | null
+          bar_id?: string | null
+          body?: string
+          created_at?: string
+          device?: string | null
+          drink_name?: string | null
+          id?: string
+          kind?: string
+          photo_path?: string | null
+          screen?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_notes_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       glass_models: {
         Row: {
           aliases: string[]
@@ -1696,43 +1698,6 @@ export type Database = {
           },
           {
             foreignKeyName: "item_allergens_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      item_attributes: {
-        Row: {
-          attribute_id: string
-          item_id: string
-        }
-        Insert: {
-          attribute_id: string
-          item_id: string
-        }
-        Update: {
-          attribute_id?: string
-          item_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "item_attributes_attribute_id_fkey"
-            columns: ["attribute_id"]
-            isOneToOne: false
-            referencedRelation: "attributes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "item_attributes_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "app_item_presentation"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "item_attributes_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "items"
@@ -4750,56 +4715,6 @@ export type Database = {
           },
         ]
       }
-      substitutions: {
-        Row: {
-          id: string
-          notes: string | null
-          original_item_id: string | null
-          substitute_item_id: string | null
-        }
-        Insert: {
-          id?: string
-          notes?: string | null
-          original_item_id?: string | null
-          substitute_item_id?: string | null
-        }
-        Update: {
-          id?: string
-          notes?: string | null
-          original_item_id?: string | null
-          substitute_item_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "substitutions_original_item_id_fkey"
-            columns: ["original_item_id"]
-            isOneToOne: false
-            referencedRelation: "app_item_presentation"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "substitutions_original_item_id_fkey"
-            columns: ["original_item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "substitutions_substitute_item_id_fkey"
-            columns: ["substitute_item_id"]
-            isOneToOne: false
-            referencedRelation: "app_item_presentation"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "substitutions_substitute_item_id_fkey"
-            columns: ["substitute_item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       supplier_lines: {
         Row: {
           created_at: string
@@ -5072,6 +4987,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "venue_feature_events_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_level_overrides: {
+        Row: {
+          bar_id: string
+          base_level: number
+          granted: Database["public"]["Enums"]["venue_capability"][]
+          revoked: Database["public"]["Enums"]["venue_capability"][]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bar_id: string
+          base_level: number
+          granted?: Database["public"]["Enums"]["venue_capability"][]
+          revoked?: Database["public"]["Enums"]["venue_capability"][]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bar_id?: string
+          base_level?: number
+          granted?: Database["public"]["Enums"]["venue_capability"][]
+          revoked?: Database["public"]["Enums"]["venue_capability"][]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_level_overrides_bar_id_fkey"
             columns: ["bar_id"]
             isOneToOne: false
             referencedRelation: "bars"
@@ -5720,79 +5670,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      assign_item_to_bar: {
-        Args: { p_bar_id: string; p_item_id: string }
-        Returns: {
-          abv: number | null
-          abv_source: string
-          bar_id: string | null
-          brand_maker: string | null
-          capacity_ml: number | null
-          created_at: string
-          created_by: string | null
-          creator_profile_id: string | null
-          credit_status: Database["public"]["Enums"]["credit_status"] | null
-          density_g_ml: number | null
-          description: string | null
-          dilution_pct: number | null
-          family_id: string | null
-          generic_id: string | null
-          gi: string | null
-          glass_model_id: string | null
-          glassware_id: string | null
-          hide_from_search: boolean
-          ice_build: Json | null
-          ice_id: string | null
-          ice_per_serve_g: number | null
-          iced_capacity_ml: number | null
-          icon_key: string | null
-          icon_url: string | null
-          id: string
-          ingredient_role: string | null
-          is_catalog: boolean
-          is_core: boolean
-          item_type: Database["public"]["Enums"]["entity_type"]
-          lineage_family: string | null
-          lineage_note: string | null
-          lineage_parent_id: string | null
-          lineage_style_id: string | null
-          made_from_id: string | null
-          maker_profile_id: string | null
-          method_ice_id: string | null
-          moderated_at: string | null
-          name: string
-          notes: string | null
-          origin: string | null
-          origin_bar_profile_id: string | null
-          origin_country: string | null
-          origin_year: number | null
-          origin_year_approx: boolean
-          override_generic_ingredient_level: number | null
-          override_measurement_level: number | null
-          override_prep_level: number | null
-          override_specific_brand_level: number | null
-          override_visibility_level: number | null
-          price: string | null
-          price_minor: number | null
-          publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
-          published_at: string | null
-          riff_of_id: string | null
-          serve_abv: number | null
-          serve_ml: number | null
-          service_style: string | null
-          sketch_liquid: string | null
-          sketch_variant: string | null
-          spec_from_id: string | null
-          spec_source: string
-          status: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "items"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       attach_generated_item_image: {
         Args: {
           p_item_id: string
@@ -6181,28 +6058,6 @@ export type Database = {
           sweet: number
         }[]
       }
-      flavor_for_you: {
-        Args: { p_limit?: number; p_taste: Json }
-        Returns: {
-          bitter: number
-          botanical: number
-          creamy: number
-          fruity: number
-          herbal: number
-          id: string
-          image_url: string
-          is_classic: boolean
-          name: string
-          riff_of_id: string
-          savory: number
-          smoky: number
-          sour: number
-          spiced: number
-          spicy: number
-          strong: number
-          sweet: number
-        }[]
-      }
       get_bar_classics: {
         Args: { p_bar_id: string }
         Returns: {
@@ -6304,7 +6159,6 @@ export type Database = {
         }[]
       }
       get_my_age_check: { Args: never; Returns: string }
-      get_my_bars: { Args: never; Returns: string[] }
       get_my_blocks: {
         Args: never
         Returns: {
@@ -6470,6 +6324,7 @@ export type Database = {
           name: string
           revoked: Database["public"]["Enums"]["venue_capability"][]
           role_id: string
+          starts_with: Database["public"]["Enums"]["venue_capability"][]
         }[]
       }
       get_venue_score: {
@@ -6908,6 +6763,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_role_capability: {
+        Args: {
+          p_bar_id: string
+          p_capability: Database["public"]["Enums"]["venue_capability"]
+          p_level: number
+          p_on: boolean
+          p_role_id: string
+        }
+        Returns: undefined
+      }
       set_spec_match: {
         Args: { p_item_id: string; p_spec_match: string }
         Returns: undefined
@@ -7139,7 +7004,6 @@ export type Database = {
         | "sesame"
         | "soya"
         | "sulphites"
-      attribute_type_enum: "tasting_note" | "physical_trait"
       bar_page_visibility: "private" | "locked" | "description" | "open"
       bar_zone_kind:
         | "shelf"
@@ -7360,7 +7224,6 @@ export const Constants = {
         "soya",
         "sulphites",
       ],
-      attribute_type_enum: ["tasting_note", "physical_trait"],
       bar_page_visibility: ["private", "locked", "description", "open"],
       bar_zone_kind: [
         "shelf",
