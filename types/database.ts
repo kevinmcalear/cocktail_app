@@ -3042,6 +3042,7 @@ export type Database = {
           item_id: string | null
           menu_id: string | null
           menu_section_id: string | null
+          price: string | null
           serves: number | null
           sort_order: number | null
           template_section_id: string | null
@@ -3052,6 +3053,7 @@ export type Database = {
           item_id?: string | null
           menu_id?: string | null
           menu_section_id?: string | null
+          price?: string | null
           serves?: number | null
           sort_order?: number | null
           template_section_id?: string | null
@@ -3062,6 +3064,7 @@ export type Database = {
           item_id?: string | null
           menu_id?: string | null
           menu_section_id?: string | null
+          price?: string | null
           serves?: number | null
           sort_order?: number | null
           template_section_id?: string | null
