@@ -62,6 +62,9 @@ export function PartySheet({ menuId, kind, party, venue, sortOrder, onClose }: {
           autoFocus={!party}
         />
         {profileId ? <Caption tone="muted">Linked to their page.</Caption> : null}
+        {kind === 'guest' && party?.profileId && !profileId ? (
+          <Caption tone="accent">Saving like this unlinks their page and takes its credit off their drinks. Pick their page again to keep it.</Caption>
+        ) : null}
         {search.data?.length ? <Caption tone="muted">On Cocktail: is it one of these?</Caption> : null}
         {(search.data ?? []).map((p) => (
           <Choice

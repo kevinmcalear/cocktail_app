@@ -50,7 +50,7 @@ interface DrinkRow {
   id: string;
   serves: number | null;
   party_id: string | null;
-  item: { id: string; name: string; item_type: string; glassware_id: string | null; ice_id: string | null; ice_per_serve_g: number | null } | null;
+  item: { id: string; name: string; item_type: string; glassware_id: string | null; ice_id: string | null; ice_per_serve_g: number | null; origin_bar_profile_id: string | null } | null;
 }
 interface FactRow {
   id: string;
@@ -82,7 +82,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
     supabase.from('menus').select('id, name, bar_id, created_by, starts_at, ends_at, planned_starts_at, planned_ends_at, menu_date, bar:bars(name)').eq('id', menuId).single(),
     supabase
       .from('menu_drinks')
-      .select('id, serves, party_id, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g)')
+      .select('id, serves, party_id, item:items!item_id(id, name, item_type, glassware_id, ice_id, ice_per_serve_g, origin_bar_profile_id)')
       .eq('menu_id', menuId)
       .order('sort_order'),
     supabase.from('menu_run_parties').select('id, kind, name, profile_id, sort_order, is_venue, profile:profiles!profile_id(handle, is_claimed, bar_id)').eq('menu_id', menuId).order('sort_order'),
@@ -139,6 +139,7 @@ async function fetchRunSheet(menuId: string): Promise<RunSheetData> {
       ice: named(item.ice_id),
       icePerServeG: item.ice_per_serve_g,
       partyId: r.party_id,
+      originProfileId: item.origin_bar_profile_id,
     };
   });
   type BottleRow = { id: string; name: string; maker_profile_id: string; generic_id: string | null; generic: { name: string } | null };
@@ -261,12 +262,15 @@ export interface PartyInput {
 
 /** Adds or changes the guest venue or a brand. */
 export function useSaveParty(menuId: string) {
+  const queryClient = useQueryClient();
   return useRunSheetWrite<PartyInput>(
     menuId,
     async (p) => {
       const row = { kind: p.kind, name: p.name.trim(), profile_id: p.profileId };
       if (p.id) check(await supabase.from('menu_run_parties').update(row).eq('id', p.id));
       else check(await supabase.from('menu_run_parties').insert({ ...row, menu_id: menuId, sort_order: p.sortOrder ?? 0, is_venue: !!p.isVenue }));
+      // Linking or unlinking a guest's page moves the credit on its drinks.
+      if (p.kind === 'guest') void queryClient.invalidateQueries({ queryKey: ['cocktail'] });
     },
     (data, p) =>
       p.id ? { ...data, parties: data.parties.map((x) => (x.id === p.id ? { ...x, name: p.name, kind: p.kind, profileId: p.profileId } : x)) } : data,
@@ -279,9 +283,14 @@ export function useSaveParty(menuId: string) {
  * as a suggestion until they claim it (20261103400000).
  */
 export function useSetDrinkParty(menuId: string) {
-  return useRunSheetWrite<{ menuDrinkId: string; partyId: string | null }>(
+  const queryClient = useQueryClient();
+  return useRunSheetWrite<{ menuDrinkId: string; itemId: string; partyId: string | null }>(
     menuId,
-    async ({ menuDrinkId, partyId }) => check(await supabase.from('menu_drinks').update({ party_id: partyId }).eq('id', menuDrinkId)),
+    async ({ menuDrinkId, itemId, partyId }) => {
+      check(await supabase.from('menu_drinks').update({ party_id: partyId }).eq('id', menuDrinkId));
+      // The drink's own credit may have moved with it.
+      void queryClient.invalidateQueries({ queryKey: ['cocktail', itemId] });
+    },
     (data, { menuDrinkId, partyId }) => ({ ...data, drinks: data.drinks.map((d) => (d.id === menuDrinkId ? { ...d, partyId } : d)) }),
   );
 }

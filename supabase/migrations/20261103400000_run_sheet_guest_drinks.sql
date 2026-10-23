@@ -19,9 +19,11 @@
 -- (items.origin_bar_profile_id, 'suggested' until the bar confirms it), when
 -- it has no origin yet and the editor can edit the venue's drinks. Taking the
 -- mark off, unlinking the page or taking the guest off the sheet removes a
--- suggested credit it gave, unless another menu still names that bar for the
--- drink. A verified or claimed credit is never touched, and no bar page is
--- ever made here: the app links an existing page or uses add_venue.
+-- credit the run sheet gave (private.run_sheet_credits remembers which), while
+-- it is still a suggestion and no other menu names that bar for the drink. A
+-- credit someone set by hand, or one verified or claimed, is never touched,
+-- and no bar page is ever made here: the app links an existing page or uses
+-- add_venue.
 --
 -- Linking a guest to a page (or adding a drink to a menu whose guest is
 -- linked) marks the drinks already credited to that page, or made by that
@@ -56,11 +58,21 @@ WHERE "p"."menu_id" = "md"."menu_id"
 -- Credit on our own copy of a guest's drink
 -- ---------------------------------------------------------------------------
 
+-- The credits a run sheet gave, so taking a mark off removes only those.
+CREATE TABLE "private"."run_sheet_credits" (
+    "item_id" "uuid" PRIMARY KEY REFERENCES "public"."items"("id") ON DELETE CASCADE,
+    "profile_id" "uuid" NOT NULL REFERENCES "public"."profiles"("id") ON DELETE CASCADE,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+REVOKE ALL ON "private"."run_sheet_credits" FROM PUBLIC, "anon", "authenticated";
+
 -- Moves a run sheet's credit on one drink from one bar page to another
 -- (either may be NULL). Only the menu's own bar's library copy, only for
 -- someone who may edit that bar's drinks (or the service role), and only a
--- credit nobody has verified or claimed. A credit is taken off only when no
--- other run sheet (p_except_party aside) still names that page for the drink.
+-- credit nobody has verified or claimed. A credit is taken off only when a
+-- run sheet gave it and no other run sheet (p_except_party aside) still names
+-- that page for the drink.
 CREATE FUNCTION "private"."move_run_drink_credit"("p_item_id" "uuid", "p_menu_id" "uuid", "p_from" "uuid", "p_to" "uuid", "p_except_party" "uuid") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO ''
@@ -81,16 +93,23 @@ BEGIN
         RETURN;
     END IF;
 
-    IF p_from IS NOT NULL AND NOT EXISTS (
-        SELECT 1 FROM public.menu_drinks md JOIN public.menu_run_parties p ON p.id = md.party_id
-        WHERE md.item_id = p_item_id AND p.profile_id = p_from AND p.id IS DISTINCT FROM p_except_party
-    ) THEN
+    IF p_from IS NOT NULL
+       AND EXISTS (SELECT 1 FROM private.run_sheet_credits c WHERE c.item_id = p_item_id AND c.profile_id = p_from)
+       AND NOT EXISTS (
+           SELECT 1 FROM public.menu_drinks md JOIN public.menu_run_parties p ON p.id = md.party_id
+           WHERE md.item_id = p_item_id AND p.profile_id = p_from AND p.id IS DISTINCT FROM p_except_party
+       ) THEN
         UPDATE public.items SET origin_bar_profile_id = NULL
         WHERE id = p_item_id AND origin_bar_profile_id = p_from AND credit_status = 'suggested';
+        DELETE FROM private.run_sheet_credits WHERE item_id = p_item_id;
     END IF;
     IF p_to IS NOT NULL THEN
         UPDATE public.items SET origin_bar_profile_id = p_to
         WHERE id = p_item_id AND origin_bar_profile_id IS NULL AND (credit_status IS NULL OR credit_status = 'suggested');
+        IF FOUND THEN
+            INSERT INTO private.run_sheet_credits (item_id, profile_id) VALUES (p_item_id, p_to)
+            ON CONFLICT (item_id) DO UPDATE SET profile_id = EXCLUDED.profile_id, created_at = now();
+        END IF;
     END IF;
 END;
 $$;
@@ -145,8 +164,11 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER "menu_drink_party_credit" AFTER INSERT OR DELETE OR UPDATE OF "party_id" ON "public"."menu_drinks"
+CREATE TRIGGER "menu_drink_party_credit" AFTER DELETE OR UPDATE OF "party_id" ON "public"."menu_drinks"
     FOR EACH ROW EXECUTE FUNCTION "private"."menu_drink_party_credit"();
+-- A new drink only matters when it comes in marked.
+CREATE TRIGGER "menu_drink_party_credit_insert" AFTER INSERT ON "public"."menu_drinks"
+    FOR EACH ROW WHEN ("new"."party_id" IS NOT NULL) EXECUTE FUNCTION "private"."menu_drink_party_credit"();
 
 -- Linking, relinking or unlinking the guest's page moves the credit on its
 -- drinks, then marks the menu's drinks credited to the new page as theirs.

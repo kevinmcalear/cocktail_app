@@ -8,7 +8,7 @@ import { MAX_SERVES } from '@/lib/batch';
 import { clampServes, type RunDrink, type RunParty } from '@/lib/runSheet';
 import { nightLine } from '@/lib/runSheetText';
 
-import { GuestCredit, GuestPageNote, WhoseTag } from './GuestCredit';
+import { GuestCredit, GuestPageNote, possessive, WhoseTag } from './GuestCredit';
 import { usePartyLooks } from './parts';
 import { PartySheet } from './PartySheet';
 
@@ -100,7 +100,7 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
   const looks = usePartyLooks(host, data.parties);
   const guestColour = looks.find((l) => l.id === guest?.id)?.colour ?? ds.c.muted;
   const guestNote = guest ? <GuestPageNote guest={guest} guestColour={guestColour} /> : undefined;
-  const whose = guest ? ` Tap Ours or ${guest.name}’s on a drink to say whose it is.` : '';
+  const whose = guest ? ` Tap Ours or ${possessive(guest.name)} on a drink to say whose it is.` : '';
 
   return (
     <View style={{ gap: space.xl }}>
@@ -180,7 +180,7 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
                 <Caption tone="muted" numberOfLines={1}>{summaries[d.id] || (d.itemType === 'cocktail' ? 'No spec yet' : 'One a serve')}</Caption>
               </View>
               {guest ? (
-                <WhoseTag drink={d} guest={guest} guestColour={guestColour} onToggle={() => setDrinkParty.mutate({ menuDrinkId: d.id, partyId: d.partyId === guest.id ? null : guest.id })} />
+                <WhoseTag drink={d} guest={guest} guestColour={guestColour} onToggle={() => setDrinkParty.mutate({ menuDrinkId: d.id, itemId: d.itemId, partyId: d.partyId === guest.id ? null : guest.id })} />
               ) : null}
             </View>
             <Stepper drink={d} onSet={(serves) => setServes.mutate({ menuDrinkIds: [d.id], serves })} />

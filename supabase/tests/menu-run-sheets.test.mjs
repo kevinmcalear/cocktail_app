@@ -311,6 +311,14 @@ describe("a guest bar's drinks are theirs", () => {
     assert.deepEqual(await origin(ids.boloTie), { o: ids.guestPage, s: 'verified' });
   });
 
+  test('a credit set by hand stays when the mark comes off', async () => {
+    ids.handSet = (await serviceInsert('items', { name: `Leone Highball ${run}`, item_type: 'cocktail', bar_id: ids.bar, origin_bar_profile_id: ids.guestPage })).id;
+    const row = await menuDrink(ids.night, ids.handSet, 5);
+    assert.equal(row.party_id, ids.leone, 'credited to their page: theirs');
+    await mark(row.id, null);
+    assert.deepEqual(await origin(ids.handSet), { o: ids.guestPage, s: 'suggested' });
+  });
+
   test('a drink added to the menu that is credited to the linked page starts as theirs', async () => {
     ids.sour = (await serviceInsert('items', { name: `Leone Sour ${run}`, item_type: 'cocktail', bar_id: ids.bar, origin_bar_profile_id: ids.guestPage })).id;
     const row = await menuDrink(ids.night, ids.sour, 4);

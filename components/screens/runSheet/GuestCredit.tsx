@@ -13,7 +13,7 @@ import { Dot } from './parts';
 type Guest = RunSheetData['parties'][number];
 
 /** "Bar Leone’s". */
-const possessive = (name: string) => (/s$/i.test(name) ? `${name}’` : `${name}’s`);
+export const possessive = (name: string) => (/s$/i.test(name) ? `${name}’` : `${name}’s`);
 
 /** Whose a drink is, on its Serves row (board 7): tap to make it the guest bar's own, or ours again. */
 export function WhoseTag({ drink, guest, guestColour, onToggle }: { drink: RunDrink; guest: Guest; guestColour: string; onToggle: () => void }) {
@@ -54,12 +54,13 @@ export function GuestPageNote({ guest, guestColour }: { guest: Guest; guestColou
  */
 export function GuestCredit({ guest, drinks, menuName, day, onLink }: { guest: Guest; drinks: RunDrink[]; menuName: string; day: string | null; onLink: () => void }) {
   const ds = useDs();
-  const names = drinks.filter((d) => d.partyId === guest.id).map((d) => d.name);
-  if (!names.length || guest.page?.claimed) return null;
+  const page = guest.page;
+  // With a page, only the drinks the database did credit to it (it skips one credited elsewhere, or one we can't edit).
+  const names = drinks.filter((d) => d.partyId === guest.id && (!page || d.originProfileId === guest.profileId)).map((d) => d.name);
+  if (!names.length || page?.claimed) return null;
   const list = andList(names);
   const verb = names.length === 1 ? 'is' : 'are';
   const them = names.length === 1 ? 'it' : 'them';
-  const page = guest.page;
   const invite = () => {
     if (!page) return;
     const message = `Hi ${guest.name}, we’ve put ${list} on Cocktail, credited to you, for ${menuName}${day ? ` on ${day}` : ''}. Claim your page to see ${them} and fix anything: ${siteOrigin()}/p/${page.handle}`;

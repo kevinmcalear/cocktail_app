@@ -26,7 +26,7 @@ export function SendLists({ sheet, menu, looks, claimUrls }: { sheet: RunSheet; 
   const ds = useDs();
   // What was copied, so the button says Copied only while the list is still the same.
   const [copied, setCopied] = useState<string | null>(null);
-  const drinksOf = (p: PartySheet) => sheet.drinks.filter((d) => d.partyId !== null && d.partyId === p.id && d.serves > 0).length;
+  const drinksOf = (p: PartySheet) => partyList(sheet, menu, p).drinks.length;
   const others = sheet.parties.filter((p) => p.id !== null && (p.needs.length || drinksOf(p)));
   if (!others.length) return null;
   const copies = Platform.OS === 'web' && !canShareOnWeb();

@@ -52,6 +52,8 @@ export interface RunDrink {
   icePerServeG: number | null;
   /** The guest bar whose own drink this is (menu_drinks.party_id), or null for ours: its house preps start with whoever makes it. */
   partyId: string | null;
+  /** The bar page the drink is credited to (items.origin_bar_profile_id), when the app knows it. */
+  originProfileId?: string | null;
 }
 
 export interface RunSwap {
