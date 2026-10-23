@@ -74,8 +74,8 @@ jobs:
     # Pushes to main always run it.
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
     runs-on: ubuntu-latest
-    # The slowest shard is one file of about 7 minutes after a 5 to 8 minute
-    # rebuild. test:security passes --test-force-exit, so an open database
+    # The slowest shard is bottle-catalog alone, 7 to 12 minutes after a 4 to 8
+    # minute rebuild (runners vary about twofold). test:security passes --test-force-exit, so an open database
     # handle fails the file instead of holding the job.
     timeout-minutes: 45
     strategy:
@@ -100,17 +100,6 @@ jobs:
       - uses: supabase/setup-cli@v3
         with:
           version: latest
-      # The CLI version and config.toml decide which images start pulls, so
-      # they key the saved copy.
-      - id: images
-        run: echo "key=supabase-images-$(supabase --version)-${{ hashFiles('supabase/config.toml') }}" >> "$GITHUB_OUTPUT"
-      - id: image-cache
-        uses: actions/cache/restore@v6
-        with:
-          path: ${{ runner.temp }}/supabase-images.tar
-          key: ${{ steps.images.outputs.key }}
-      - if: steps.image-cache.outputs.cache-hit == 'true'
-        run: docker load -i "$RUNNER_TEMP/supabase-images.tar"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -123,13 +112,6 @@ jobs:
       # for the image tests; on a local stack the image model is always mocked.
       - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
       - run: supabase db lint --level warning --fail-on error
-      - if: steps.image-cache.outputs.cache-hit != 'true' && matrix.shard == 1
-        run: docker images --format '{{.Repository}}:{{.Tag}}' | grep '/supabase/' | xargs docker save -o "$RUNNER_TEMP/supabase-images.tar"
-      - if: steps.image-cache.outputs.cache-hit != 'true' && matrix.shard == 1
-        uses: actions/cache/save@v6
-        with:
-          path: ${{ runner.temp }}/supabase-images.tar
-          key: ${{ steps.images.outputs.key }}
       - run: npm run test:security
         timeout-minutes: 30
         env:
