@@ -18,7 +18,11 @@ Expo SDK 58 (RN 0.88.0, React 19.3, React Compiler), Expo Router, Tamagui 2.7 (`
 - **Verify the real thing before asking for review:** web at phone and desktop widths, plus the iOS simulator and Android when native code or layout changes. Put screenshots in the PR. Local recipes: [docs/dev_flow.md](docs/dev_flow.md#verify).
 - **Human-gated:** database migrations, RLS, auth, `lib/roles.ts`, and deploying edge functions. Build and test these against the local Supabase stack only; never push them to production without Kevin's explicit OK in the conversation. A migration merged to main (which needs the `human-approved` label) is applied to production by the Deploy migrations workflow; that label is the OK. Apply it yourself only when Kevin has explicitly approved that PR at its current head, and leave an audit comment linking his approval ([docs/change_policy.md](docs/change_policy.md#who-may-apply-the-label)). Edge functions are still deployed by hand.
 - **Public repo:** no emails, user data, secrets or unfixed security details in code, commits or PR text.
+- **Test on the local stack, never in production.** A test bar or drink that must live in production has "Demo" in its name and stays hidden, like "Demo Bar (App Review)".
+- **A migration's header says what it does.** No "DRAFT", "Local stack only" or "Not applied to production" lines: every merged migration is applied (CI checks).
 - **One app, no old UI.** The Back Bar redesign is the app; the old screens and the redesign flag were removed in step 9. New screens build from `components/ds`. A large change that must reach people gradually can use a PostHog flag, but remove the old path in the PR that makes the new one the default.
+- **One home for each fact.** When a PR replaces a field or table, it removes the old one in the same PR, or names the follow-up PR that will. Two places for one fact is a bug.
+- **Weekly database health check:** `npm run db:health` (`scripts/db-health.mjs`, read-only) reports test rows, duplicates, unlinked venues, open grants, RLS gaps, empty tables, old drafts, migration drift and unused pictures to HQ.
 - **Parallel work:** foundation pieces (tokens, shared components, navigation) go in order in one session. Independent screens can be built in parallel worktrees once those land.
 
 ## Working within the usage budget
@@ -38,6 +42,7 @@ Claude usage is the scarce resource here, not CI minutes (the repo is public, so
 - `npm run lint`: zero errors. React Compiler warnings are tolerated but don't add new ones.
 - `npm run check:design`: a ratchet (`scripts/design-ratchet.mjs`). A file may not gain raw hex/rgb colours, raw font sizes, raw corner radii, `any`, or direct Supabase calls in `app/` or `components/`. New `.tsx` files stay under 300 lines, and files already over that may not grow. When you fix violations, run `npm run check:design -- --update` to lock the gain in.
 - `npm run test:unit` (node checks and script tests), `npm run test:jest -- --ci`, `npm run test:security` (RLS, against local Supabase), `npm run test:policy` (PR class), `npm run build:web`.
+- `scripts/migration-rules.mjs` on the migrations a PR adds or changes: a header with no "DRAFT", "Local stack only" or "Not applied to production" markers, no INSERT, UPDATE, DELETE, TRUNCATE or ALL on a table granted to `anon` or `public` (unless that statement says `-- allow-anon-write: <reason>`; drop the `GRANT ALL ON TABLE ... TO "anon"` lines `supabase db diff` writes), and `enable row level security` for every new public table. `scripts/migration-order.mjs` checks their numbers.
 - `types/database.ts` matches the migrations (the database job regenerates it and diffs).
 - `deno check` on each `supabase/functions/*/index.ts` (CI does this). Edge functions do not ship with the app; deploy is separate and human-gated.
 
