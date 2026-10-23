@@ -111,12 +111,24 @@ export interface SpecAccess {
   prep: boolean;
 }
 
-/** What this role can see. Personal drinks (no venue) show everything. */
-export function specAccess(role: number, levels: SpecLevels | null, isVenueDrink: boolean): SpecAccess {
+/** A role's grant or revoke of the specs permission at a venue (Roles and access). */
+export interface SpecsMove {
+  granted: boolean;
+  revoked: boolean;
+}
+
+export const NO_SPECS_MOVE: SpecsMove = { granted: false, revoked: false };
+
+/**
+ * What this role can see, as app_recipe_presentation decides it: the drink's
+ * levels, moved by the role's specs grant (amounts, and the names with them)
+ * or revoke (amounts). Personal drinks (no venue) show everything.
+ */
+export function specAccess(role: number, levels: SpecLevels | null, isVenueDrink: boolean, specs: SpecsMove = NO_SPECS_MOVE): SpecAccess {
   if (!isVenueDrink || !levels) return { names: true, amounts: true, prep: true };
   return {
-    names: role >= Math.min(levels.generic, levels.brand),
-    amounts: role >= levels.measurement,
+    names: role >= Math.min(levels.generic, levels.brand) || specs.granted,
+    amounts: (role >= levels.measurement || specs.granted) && !specs.revoked,
     prep: role >= levels.prep,
   };
 }

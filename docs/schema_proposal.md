@@ -96,7 +96,7 @@ One enum, `venue_capability`, with the rows of the brief's roles matrix:
 
 `menu` and `specs` follow the bar's own `default_visibility_level` and `default_measurement_level`, as they do today.
 
-**Level-bound** capabilities are ones an existing policy or view already decides from `role_level` (item and menu writes at 35, roster and brand writes at 40, visibility and measurement levels in the presentation views). They follow the base level and a CHECK constraint refuses overrides, so the app can never show a permission the database would refuse, or hide one the API would still allow.
+**Level-bound** capabilities were ones an existing policy or view decided from `role_level` (item and menu writes at 35, roster and brand writes at 40, visibility and measurement levels in the presentation views), and a CHECK constraint refused overrides. Since `20261101200000_role_permissions_per_role.sql` every capability is per role: those policies check the capability instead, a venue can change its built-in roles too (`venue_level_overrides`), an Admin always keeps `staff`, and `menu` and `specs` keep their Who sees what levels, moved by a role's grant or revoke. The columns above are where each role starts.
 
 **Overridable** capabilities are new. Roles grant or revoke them, and the new tables' policies enforce them. `photos` is here for the photo task's policies to use. `talking_points` and `house_made` apply to data in existing tables, so for those rows they're applied where specs are applied today, in the app and the presentation views.
 

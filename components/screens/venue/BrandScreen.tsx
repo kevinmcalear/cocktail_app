@@ -201,7 +201,7 @@ function BrandEditor({ row, canEdit, header, setup }: { row: VenueBrandRow; canE
       >
         <View style={[frame.column, styles.page]}>
           {header(changed)}
-          {canEdit ? null : <Body tone="muted">Only venue Admins can change the brand.</Body>}
+          {canEdit ? null : <Body tone="muted">Only people who can edit the brand change it.</Body>}
           <View style={[styles.columns, wide && styles.columnsWide]}>
             {wide ? null : preview}
             {settings}
@@ -233,7 +233,7 @@ export function BrandSetup({ barId, setup }: { barId: string; setup: BrandSetupM
   return <BrandEditor key={brand.data.id} row={brand.data} canEdit header={() => null} setup={setup} />;
 }
 
-/** Brand settings for a venue, with a live preview. Admins edit; others can look. */
+/** Brand settings for a venue, with a live preview. People with the edit brand permission edit; others can look. */
 export function BrandScreen({ barId }: { barId: string }) {
   const ds = useDs();
   const router = useRouter();

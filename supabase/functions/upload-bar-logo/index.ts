@@ -8,7 +8,7 @@
 //   Takes a flat background out of one of the venue's stored logos and stores
 //   the result beside the original (which stays, for "Use original"). 422 when
 //   there's no flat background to take out.
-// Venue Admins only.
+// People with the edit brand permission at the venue only.
 import { decode, GIF, Image } from "https://deno.land/x/imagescript@1.3.0/mod.ts";
 
 import { type Caller, requireUser } from "../_shared/auth.ts";
@@ -101,20 +101,15 @@ async function decodeLogo(bytes: Uint8Array): Promise<Image> {
   return scale < 1 ? image.resize(Math.max(1, Math.round(image.width * scale)), Math.max(1, Math.round(image.height * scale))) : image;
 }
 
-/** Only the venue's Admins (role 40 and up, while their role is current). */
-async function requireBarAdmin(caller: Caller, barId: string): Promise<void> {
-  const { data: membership, error: membershipError } = await caller.userClient
-    .from("user_bars")
-    .select("role_level")
-    .eq("bar_id", barId)
-    .eq("user_id", caller.user.id)
-    .maybeSingle();
-
-  // The bars row is visible only while the role is current (an ended
-  // venue role drops it), the same rule update_bar_settings uses.
-  const { data: bar, error: barError } = await caller.userClient.from("bars").select("id").eq("id", barId).maybeSingle();
-  if (membershipError || barError || !membership || !bar || membership.role_level < 40) {
-    throw new HttpError(403, "Only the venue's Admins can change its logo.");
+/**
+ * Only people with the edit brand permission at the venue (an Admin's by
+ * default; a venue can give it to any role). my_capabilities is empty once a
+ * role has ended, like the bars_update policy and its brand guard.
+ */
+async function requireBrandEditor(caller: Caller, barId: string): Promise<void> {
+  const { data, error } = await caller.userClient.rpc("my_capabilities", { p_bar_id: barId });
+  if (error || !Array.isArray(data) || !data.includes("brand")) {
+    throw new HttpError(403, "Only people who can edit the venue's brand can change its logo.");
   }
 }
 
@@ -156,7 +151,7 @@ serveJson("upload-bar-logo", async (req) => {
   const { bar_id, image_base64, extract_only = false } = body;
   if (body.action === "remove_background") {
     if (typeof bar_id !== "string" || !bar_id) throw new HttpError(400, "bar_id and logo_url are required");
-    await requireBarAdmin(caller, bar_id);
+    await requireBrandEditor(caller, bar_id);
     return await removeBackground(caller, bar_id, body.logo_url);
   }
   if (typeof bar_id !== "string" || typeof image_base64 !== "string" || !bar_id || !image_base64) {
@@ -167,7 +162,7 @@ serveJson("upload-bar-logo", async (req) => {
     throw new HttpError(413, "That logo is too large. Use an image under 5 MB.");
   }
 
-  await requireBarAdmin(caller, bar_id);
+  await requireBrandEditor(caller, bar_id);
 
   let binaryStr: string;
   try {

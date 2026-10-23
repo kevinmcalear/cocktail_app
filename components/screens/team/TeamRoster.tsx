@@ -12,11 +12,14 @@ import { radius, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useBarInvites, useRemoveInvite, useSendInviteEmail } from '@/hooks/useBarInvites';
 import { useBarMembers, useRemoveMember, type BarMember } from '@/hooks/useBarDetail';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { useRoleMatrix, useSetMemberRoleChoice, type MemberRoleChoice } from '@/hooks/useVenueRoles';
+import { useCanManageStaff } from '@/hooks/useViewAs';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
+import { reachCeiling, withinReach } from '@/lib/roleMatrix';
 import { roleLabel } from '@/lib/roles';
-import { agoLabel, canManageTeam, joinedLabel, memberRoleName, personName, rosterGroups, TEAM_MANAGE, TEAM_SORTS } from '@/lib/team';
+import { agoLabel, joinedLabel, memberRoleName, personName, rosterGroups, TEAM_MANAGE, TEAM_SORTS } from '@/lib/team';
 import { useTeamSort } from '@/store/useTeamSort';
 
 import { InviteSheet, type InviteNote } from './InviteSheet';
@@ -53,9 +56,10 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
   onCloseInvite: () => void;
 }) {
   const myId = useUserId();
-  const manage = canManageTeam(role);
+  const manage = useCanManageStaff(barId);
   const members = useBarMembers(barId);
-  const venueRoles = (useRoleMatrix(manage ? barId : null).data ?? []).filter((r) => r.role_id);
+  const matrix = useRoleMatrix(manage ? barId : null).data ?? [];
+  const myCaps = useCapabilities(manage ? barId : null).data;
   const change = useSetMemberRoleChoice(barId);
   const remove = useRemoveMember(barId);
   const { data: invites = [] } = useBarInvites(barId, manage);
@@ -67,6 +71,12 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
   const [now] = useState(Date.now);
   const [note, setNote] = useState<InviteNote | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  // Someone with staff who isn't an Admin can't change, remove or cancel an Admin (the database refuses), so it isn't offered.
+  const admin = role >= TEAM_MANAGE;
+  // And hands out only what they can do themselves: roles and invites beyond that aren't offered.
+  const mine = admin ? null : (myCaps ?? []);
+  const venueRoles = matrix.filter((r) => r.role_id && withinReach(r.capabilities, mine));
+  const ceiling = reachCeiling(matrix, mine, role);
   const busy = change.isPending || remove.isPending || cancel.isPending || send.isPending;
 
   if (members.isLoading) return <Caption tone="muted">Loading the team…</Caption>;
@@ -145,14 +155,14 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
                     showEmail={manage}
                     showRole={!g.title}
                     lineUp={manage}
-                    onPress={manage && m.user_id !== myId ? () => setOpenId(m.user_id) : undefined}
+                    onPress={manage && m.user_id !== myId && (admin || m.role_level < TEAM_MANAGE) ? () => setOpenId(m.user_id) : undefined}
                   />
                 </View>
               ))}
             </Surface>
           </View>
         ))}
-        {manage ? null : <Caption tone="muted">Only Admins can invite people or change roles.</Caption>}
+        {manage ? null : <Caption tone="muted">Only people who can invite and manage staff change roles here.</Caption>}
       </View>
 
       {invites.length > 0 ? (
@@ -169,7 +179,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
                   ago={agoLabel(inv.created_at, now)}
                   busy={busy}
                   onResend={() => emailInvite(inv.email)}
-                  onCancel={() => cancel.mutate(inv.id)}
+                  onCancel={admin || inv.role_level < TEAM_MANAGE ? () => cancel.mutate(inv.id) : undefined}
                 />
               </View>
             ))}
@@ -183,8 +193,8 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
 
       {manage ? (
         <>
-          <InviteSheet visible={inviting} onClose={onCloseInvite} barId={barId} barName={barName} ceiling={role} onDone={setNote} />
-          <MemberSheet member={open} barName={barName} ceiling={role} venueRoles={venueRoles} busy={busy} onClose={() => setOpenId(null)} onRole={setRole} onRemove={removeMember} />
+          <InviteSheet visible={inviting} onClose={onCloseInvite} barId={barId} barName={barName} ceiling={ceiling} onDone={setNote} />
+          <MemberSheet member={open} barName={barName} ceiling={ceiling} venueRoles={venueRoles} busy={busy} onClose={() => setOpenId(null)} onRole={setRole} onRemove={removeMember} />
         </>
       ) : null}
     </View>
@@ -236,7 +246,7 @@ function InviteRow({ name, email, roleLevel, ago, busy, onResend, onCancel }: {
   ago: string | null;
   busy: boolean;
   onResend: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 }) {
   const ds = useDs();
   return (
@@ -252,7 +262,7 @@ function InviteRow({ name, email, roleLevel, ago, busy, onResend, onCancel }: {
       </View>
       <View style={styles.inviteActions}>
         <Button label="Resend" variant="ghost" accessibilityLabel={`Email the invite to ${email} again`} disabled={busy} onPress={onResend} size="sm" />
-        <Button label="Cancel" variant="ghost" accessibilityLabel={`Cancel the invite for ${email}`} disabled={busy} onPress={onCancel} size="sm" />
+        {onCancel ? <Button label="Cancel" variant="ghost" accessibilityLabel={`Cancel the invite for ${email}`} disabled={busy} onPress={onCancel} size="sm" /> : null}
       </View>
     </View>
   );
