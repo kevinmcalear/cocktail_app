@@ -77,11 +77,10 @@ jobs:
     # Pushes to main always run it.
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
     runs-on: ubuntu-latest
-    # The slowest shard is bottle-catalog alone: 7 to 22 minutes after a 4 to
-    # 14 minute rebuild (runners vary up to threefold). test:security passes
-    # --test-force-exit, so an open database handle fails the file instead of
-    # holding the job.
-    timeout-minutes: 60
+    # A shard's tests take 2 to 7 minutes after a 4 to 14 minute rebuild
+    # (runners vary up to threefold). test:security passes --test-force-exit,
+    # so an open database handle fails the file instead of holding the job.
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -95,6 +94,8 @@ jobs:
       packages: read
     env:
       SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
+      SUPABASE_CLI: 2.112.0
+      SUPABASE_EXCLUDE: studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -105,18 +106,41 @@ jobs:
       # gen:types (each version prints the file differently). Bump both together.
       - uses: supabase/setup-cli@v3
         with:
-          version: 2.112.0
+          version: ${{ env.SUPABASE_CLI }}
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: npm ci
-      # Applies every migration to a fresh database, so a migration that
-      # cannot rebuild the schema fails here.
+      # A PR starts from the database main last built (the database-snapshot
+      # job) and applies only its own new migrations, when scripts/db-snapshot.mjs
+      # says a fresh replay would build the same database. Otherwise, and
+      # always on main, every migration replays from scratch.
+      # One snapshot per CLI, config, seed and set of migrations.
+      - id: key
+        run: echo "prefix=supabase-db-$RUNNER_ARCH-$SUPABASE_CLI-${{ hashFiles('supabase/config.toml', 'supabase/seed.sql') }}-" >> "$GITHUB_OUTPUT"
+      - id: snapshot
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/db-snapshot
+          key: ${{ steps.key.outputs.prefix }}${{ hashFiles('supabase/migrations/**') }}
+          restore-keys: ${{ steps.key.outputs.prefix }}
+      - id: reuse
+        if: steps.snapshot.outputs.cache-matched-key != ''
+        run: |
+          if node scripts/db-snapshot.mjs check "$RUNNER_TEMP/db-snapshot/migrations.sha256"; then
+            docker volume create supabase_db_cocktail_app
+            sudo tar --numeric-owner -C /var/lib/docker/volumes/supabase_db_cocktail_app/_data -xf "$RUNNER_TEMP/db-snapshot/db.tar"
+            echo ok=true >> "$GITHUB_OUTPUT"
+          fi
+      # With main's database in place, start skips the migrations and the seed.
       # The edge runtime serves image-worker, the generators and image-palette
       # for the image tests; on a local stack the image model is always mocked.
-      - run: supabase start -x studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
+      - run: supabase start -x ${{ env.SUPABASE_EXCLUDE }}
+      - if: steps.reuse.outputs.ok == 'true'
+        run: supabase migration up --local
       # types/database.ts is generated from the schema: regenerate it from the
       # database just built and fail if the committed copy differs. Same command
       # as npm run gen:types, with the CLI installed above (no npx download).
@@ -131,9 +155,61 @@ jobs:
           }
       - run: supabase db lint --level warning --fail-on error
       - run: npm run test:security
-        timeout-minutes: 45
+        timeout-minutes: 20
         env:
           SECURITY_SHARD: ${{ matrix.shard }}/3
+
+  # Builds the database from every migration on each push to main and saves
+  # it for PRs (see the shards' reuse step). Not a required check: if it fails
+  # or is missing, PRs replay from scratch. One copy per set of migrations.
+  database-snapshot:
+    name: Database snapshot for PRs
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
+      SUPABASE_CLI: 2.112.0
+      SUPABASE_EXCLUDE: studio,imgproxy,logflare,vector,realtime,supavisor,mailpit,postgres-meta
+    steps:
+      - uses: actions/checkout@v7
+      # One snapshot per CLI, config, seed and set of migrations.
+      - id: key
+        run: echo "prefix=supabase-db-$RUNNER_ARCH-$SUPABASE_CLI-${{ hashFiles('supabase/config.toml', 'supabase/seed.sql') }}-" >> "$GITHUB_OUTPUT"
+      - id: saved
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/db-snapshot
+          key: ${{ steps.key.outputs.prefix }}${{ hashFiles('supabase/migrations/**') }}
+          lookup-only: true
+      - if: steps.saved.outputs.cache-hit != 'true'
+        uses: supabase/setup-cli@v3
+        with:
+          version: ${{ env.SUPABASE_CLI }}
+      - if: steps.saved.outputs.cache-hit != 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Stopped (keeping its volume) so the copy is of a shut-down database.
+      - if: steps.saved.outputs.cache-hit != 'true'
+        run: |
+          supabase start -x "$SUPABASE_EXCLUDE"
+          supabase stop
+          mkdir -p "$RUNNER_TEMP/db-snapshot"
+          node scripts/db-snapshot.mjs list > "$RUNNER_TEMP/db-snapshot/migrations.sha256"
+          sudo tar --numeric-owner -C /var/lib/docker/volumes/supabase_db_cocktail_app/_data -cf "$RUNNER_TEMP/db-snapshot/db.tar" .
+          sudo chown "$USER" "$RUNNER_TEMP/db-snapshot/db.tar"
+          ls -lh "$RUNNER_TEMP/db-snapshot"
+      - if: steps.saved.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/db-snapshot
+          key: ${{ steps.key.outputs.prefix }}${{ hashFiles('supabase/migrations/**') }}
 
   # The required check. It passes only when every shard passed, so a failed,
   # cancelled or timed-out shard fails it. always() keeps it from being

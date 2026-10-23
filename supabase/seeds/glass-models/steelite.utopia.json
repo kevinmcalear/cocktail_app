@@ -1,0 +1,43 @@
+{
+ "maker": "steelite.utopia",
+ "models": [
+  {
+   "name": "Outline Tumbler",
+   "series": "Outline",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 310,
+   "capacity_as_stated": "0.31 Ltr",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.nisbets.ie/utopia-outline-tumblers-310ml-pack-of-6/hx302",
+   "source_urls": [
+    "https://www.nisbets.ie/utopia-outline-tumblers-310ml-pack-of-6/hx302",
+    "https://www.cardiffnewsroom.co.uk/releases/e-1/33937.html",
+    "https://www.brakesce.co.uk/glassware/tumblers-hi-balls/outline/steelite-outline-tumbler-11oz/p/5006510"
+   ]
+  },
+  {
+   "name": "Outline Tumbler",
+   "series": "Outline",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 385,
+   "capacity_as_stated": "0.385 Ltr",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.nisbets.ie/utopia-outline-tumblers-385ml-pack-of-6/hx303",
+   "source_urls": [
+    "https://www.nisbets.ie/utopia-outline-tumblers-385ml-pack-of-6/hx303",
+    "https://www.cardiffnewsroom.co.uk/releases/e-1/33937.html",
+    "https://www.brakesce.co.uk/glassware/tumblers-hi-balls/outline/steelite-outline-tumbler-13-5oz/p/5006512"
+   ]
+  }
+ ]
+}

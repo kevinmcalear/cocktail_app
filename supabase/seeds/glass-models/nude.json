@@ -1,0 +1,102 @@
+{
+ "maker": "nude",
+ "models": [
+  {
+   "name": "Savage Coupetini",
+   "series": "Savage",
+   "designer": "Rémy Savage",
+   "model_code": "P67286",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "6oz (17cl)",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://us.nudeglass.com/products/savage-coupetini-glasses",
+   "source_urls": [
+    "https://res.katom.com/products/706/706-P64172/706-P64172_catalog.pdf",
+    "https://us.nudeglass.com/collections/savage/products.json",
+    "https://eu.nudeglass.com/collections/savage/products.json",
+    "https://us.nudeglass.com/products/savage-coupetini-glasses"
+   ]
+  },
+  {
+   "name": "Savage Pony",
+   "series": "Savage",
+   "designer": "Rémy Savage",
+   "model_code": "P67276",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 135,
+   "capacity_as_stated": "4oz (13.5cl)",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://us.nudeglass.com/products/savage-pony-glasses",
+   "source_urls": [
+    "https://res.katom.com/products/706/706-P64172/706-P64172_catalog.pdf",
+    "https://us.nudeglass.com/collections/savage/products.json",
+    "https://us.nudeglass.com/products/savage-pony-glasses",
+    "https://www.diffordsguide.com/glassware/284/nude-savage-pony-glass"
+   ]
+  },
+  {
+   "name": "Savage Lowball",
+   "series": "Savage",
+   "designer": "Rémy Savage",
+   "model_code": "P64154",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "10oz (29cl)",
+   "height_mm": 79,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://us.nudeglass.com/products/savage-low-ball-glasses",
+   "source_urls": [
+    "https://res.katom.com/products/706/706-P64172/706-P64172_catalog.pdf",
+    "https://us.nudeglass.com/collections/savage/products.json",
+    "https://eu.nudeglass.com/collections/savage/products.json"
+   ]
+  },
+  {
+   "name": "Savage Highball",
+   "series": "Savage",
+   "designer": "Rémy Savage",
+   "model_code": "P64135",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "11oz (33cl)",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://us.nudeglass.com/products/savage-high-ball-glasses",
+   "source_urls": [
+    "https://res.katom.com/products/706/706-P64172/706-P64172_catalog.pdf",
+    "https://us.nudeglass.com/collections/savage/products.json",
+    "https://eu.nudeglass.com/collections/savage/products.json"
+   ]
+  },
+  {
+   "name": "Savage Water",
+   "series": "Savage",
+   "designer": "Rémy Savage",
+   "model_code": "P64172",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "8 3/4oz (26cl)",
+   "height_mm": 83,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://us.nudeglass.com/products/savage-water-glasses",
+   "source_urls": [
+    "https://res.katom.com/products/706/706-P64172/706-P64172_catalog.pdf",
+    "https://us.nudeglass.com/collections/savage/products.json",
+    "https://eu.nudeglass.com/collections/savage/products.json"
+   ]
+  }
+ ]
+}

@@ -28,15 +28,16 @@ import { useShareLink } from './useShareLink';
  * bars that put those drinks on a menu (the credit that matters most). A
  * person who chooses to can show the drinks they've had, with their scores.
  */
-export function ProfileScreen({ profileRef }: { profileRef: string | string[] | undefined }) {
+export function ProfileScreen({ profileRef, checking = false }: { profileRef: string | string[] | undefined; checking?: boolean }) {
   return (
     <BackbarTheme>
-      <ProfilePage profileRef={profileRef} />
+      <ProfilePage profileRef={profileRef} checking={checking} />
     </BackbarTheme>
   );
 }
 
-function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined }) {
+/** checking: still asking whether a missing page was merged into someone's, so it isn't "no profile" yet. */
+function ProfilePage({ profileRef, checking }: { profileRef: string | string[] | undefined; checking: boolean }) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -97,7 +98,7 @@ function ProfilePage({ profileRef }: { profileRef: string | string[] | undefined
         <BarProfile profile={profile} columns={columns} />
       );
   }
-  else if (isLoading) body = <Caption tone="muted" accessibilityLabel="Loading profile">Loading…</Caption>;
+  else if (isLoading || checking) body = <Caption tone="muted" accessibilityLabel="Loading profile">Loading…</Caption>;
   else
     body = (
       <BlockedProfileNote profileRef={profileRef}>

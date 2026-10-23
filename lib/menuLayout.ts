@@ -23,6 +23,12 @@ export interface MenuLayout {
   coverUrl: string | null;
   coverPosition: number;
   sections: EditSection[];
+  /**
+   * Prices changed in the builder and not saved yet, by drink id. A price is
+   * the drink's own (items.price), so these are written to the drinks after
+   * save_menu(), and every menu with the drink shows them.
+   */
+  prices?: Record<string, string | null>;
 }
 
 let counter = 0;
@@ -182,8 +188,22 @@ export function layoutChanged(a: MenuLayout, b: MenuLayout): boolean {
     a.name.trim() !== b.name.trim() ||
     a.coverUrl !== b.coverUrl ||
     a.coverPosition !== b.coverPosition ||
-    JSON.stringify(savePayload(a)) !== JSON.stringify(savePayload(b))
+    JSON.stringify(savePayload(a)) !== JSON.stringify(savePayload(b)) ||
+    JSON.stringify(a.prices ?? {}) !== JSON.stringify(b.prices ?? {})
   );
+}
+
+/** Changes a drink's price, as typed, on every row of it here; blank clears it. Saved with the menu. */
+export function setDrinkPrice(layout: MenuLayout, drinkId: string, price: string | null): MenuLayout {
+  const typed = price?.trim() || null;
+  const rows = layout.sections.flatMap((s) => s.drinks.filter((d) => d.id === drinkId));
+  // Nothing new (Done on an untouched price): no write.
+  if (!(layout.prices && drinkId in layout.prices) && rows.every((d) => (d.price?.trim() || null) === typed)) return layout;
+  return {
+    ...layout,
+    prices: { ...layout.prices, [drinkId]: typed },
+    sections: layout.sections.map((s) => ({ ...s, drinks: s.drinks.map((d) => (d.id === drinkId ? { ...d, price: typed } : d)) })),
+  };
 }
 
 /** Drinks that fit a section, matching a search, optionally only ones on no other menu. */

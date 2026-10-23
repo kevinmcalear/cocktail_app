@@ -1,0 +1,23 @@
+{
+ "maker": "mamo",
+ "models": [
+  {
+   "name": "Classic Cocktail Glass Duotone Honey Amber",
+   "series": "Classic",
+   "designer": null,
+   "model_code": "0101YA-N",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz (20.7 cl) top, 2 oz (5 cl) bottom",
+   "height_mm": 122,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://mamo.nyc/products/classic",
+   "source_urls": [
+    "https://mamo.nyc/products/classic",
+    "https://mamo.nyc/products.json"
+   ]
+  }
+ ]
+}
