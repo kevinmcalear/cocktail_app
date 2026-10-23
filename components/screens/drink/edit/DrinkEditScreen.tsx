@@ -89,6 +89,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
   const [sheet, setSheet] = useState<MoreChoice | VenueSheet | 'calc' | 'more' | 'colour' | null>(null);
   // For the floor, Service and Price: saved with Done, next to the editor's own changes.
   const venueEdits = useRef<PendingEdits | null>(null);
+  const [venueDirty, setVenueDirty] = useState(false);
 
   // A new ingredient made from here comes back onto this drink's spec.
   const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
@@ -190,7 +191,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
         </View>
         <GrowingField minHeight={96} value={editor.notes} onChangeText={editor.setNotes} placeholder="Tricks, swaps, what guests ask" placeholderTextColor={ds.c.muted} accessibilityLabel="Notes for the team" style={fieldBox} />
       </View>
-      {cocktail && id ? <VenueSections item={cocktail} onPending={(p) => (venueEdits.current = p)} sheet={sheet === 'classic' || sheet === 'publish' || sheet === 'glass' ? sheet : null} onSheet={setSheet} servicePhotos={wide ? undefined : servicePhotos} /> : null}
+      {cocktail && id ? <VenueSections item={cocktail} onPending={(p) => ((venueEdits.current = p), setVenueDirty(p.dirty))} sheet={sheet === 'classic' || sheet === 'publish' || sheet === 'glass' ? sheet : null} onSheet={setSheet} servicePhotos={wide ? undefined : servicePhotos} /> : null}
     </>
   );
   const toolbar = <EditToolbar canUndo={history.canUndo} canRedo={history.canRedo} onUndo={history.undo} onRedo={history.redo} onDone={() => void done()} saving={editor.saving} wide={wide} media={pictures.length ? 'photo' : 'paper'} more={wide ? <GlassButton accessibilityLabel="More" icon="ellipsis" onPress={() => setSheet('more')} /> : undefined} />;
@@ -265,7 +266,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
           }}
         />
       ) : null}
-      <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty} draft={!!draft} onPick={onMore} />
+      <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty || venueDirty} draft={!!draft} onPick={onMore} />
       {sheet === 'photos' ? <PhotosSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'access' ? <AccessSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'colour' && id ? <SketchColourSheet visible onClose={() => setSheet(null)} itemId={id} name={editor.name || cocktail?.name || ''} /> : null}

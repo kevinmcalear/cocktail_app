@@ -54,8 +54,16 @@ interface VenueSectionsProps {
 export function VenueSections(props: VenueSectionsProps) {
   const barId = props.item.bar_id;
   const { data: notes, isPending } = useServiceNotes(props.item.id, barId, !!barId);
-  // The boxes start from the saved notes, so wait for them.
-  if (barId && isPending) return null;
+  // The boxes start from the saved notes, so wait for them. Without them, saving a box would blank the rest.
+  if (barId && isPending) return props.servicePhotos ?? null;
+  if (barId && !notes) {
+    return (
+      <>
+        <Caption tone="accent">{"Couldn't load the floor and service notes. Check your connection and open Edit again."}</Caption>
+        {props.servicePhotos}
+      </>
+    );
+  }
   return <Sections {...props} notes={notes ?? EMPTY_SERVICE_NOTES} />;
 }
 
