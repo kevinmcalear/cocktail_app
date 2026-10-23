@@ -15,6 +15,7 @@ jest.mock('@/hooks/useTrackRecent', () => ({ recentEntry: () => ({}), useTrackRe
 const mockDb: MockDb = { rows: {}, calls: [] };
 jest.mock('@/lib/supabase', () => jest.requireActual('@/jest.supabaseMock').mockSupabase(() => mockDb));
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
+jest.mock('@/hooks/useViewAs', () => ({ useCanEditItem: () => true }));
 
 const DRAFT = { id: 'd1', entity_type: 'ingredient', draft_data: { name: 'Honey water', description: '2:1 honey to water' }, bar_id: null };
 

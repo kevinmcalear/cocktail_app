@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
+import { bothPrices, printedPrice, cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -125,6 +125,18 @@ assert.ok('error' in homeNight({ when: 'date', date: 'next sat', guests: '' }, a
 assert.ok('error' in homeNight({ when: 'none', date: '', guests: '0' }, at));
 assert.ok('error' in homeNight({ when: 'none', date: '', guests: '2.5' }, at));
 assert.ok('error' in homeNight({ when: 'none', date: '', guests: '501' }, at));
+
+// A menu prints its own price for a drink, else the drink's.
+assert.equal(printedPrice({ price: '19', menuPrice: '22' }), '22');
+assert.equal(printedPrice({ price: '19', menuPrice: ' ' }), '19');
+assert.equal(printedPrice({ price: null }), null);
+assert.equal(bothPrices({ price: '19', menuPrice: '22' }), '19, or 22 on this menu');
+assert.equal(bothPrices({ price: null, menuPrice: 'MP' }), 'MP on this menu only');
+assert.equal(bothPrices({ price: '19', menuPrice: null }), null);
+{
+  const priced = { id: 'n', name: 'Negroni', kind: 'cocktail' as const, line: '', price: '19', menuPrice: '22', imageUrl: null, isSketch: false, glass: null };
+  assert.match(menuAsText({ name: 'Winter', sections: [{ id: 's', name: 'Stirred', minItems: 0, maxItems: null, allowedTypes: ['cocktail'], drinks: [priced] }] }), /Negroni 22/);
+}
 
 console.log('menus: ok');
 

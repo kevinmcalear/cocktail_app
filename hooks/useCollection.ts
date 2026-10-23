@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { moveHeartsToCollection } from '@/hooks/useFavorites';
-import { fetchPublished, type PublishMode } from '@/hooks/usePublished';
+import { fetchPublicBars, fetchPublished, type PublishMode } from '@/hooks/usePublished';
 import { track } from '@/lib/analytics';
+import { memoryNow } from '@/lib/collectionMemory';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -81,28 +82,38 @@ export function useCollection() {
       const itemIds = (drinks.data ?? []).map((d) => d.item_id).filter((id): id is string => !!id);
       const live = await fetchPublished(itemIds);
       // The drinks whose own row they can read: their spec opens, whatever the bar published (a classic, say).
-      const readable = itemIds.length ? await supabase.from('items').select('id, is_catalog').in('id', itemIds) : { data: [], error: null };
+      const readable = itemIds.length ? await supabase.from('items').select('id, name, is_catalog').in('id', itemIds) : { data: [], error: null };
       if (readable.error) throw readable.error;
-      const rows = (readable.data ?? []) as { id: string; is_catalog: boolean | null }[];
+      const rows = (readable.data ?? []) as { id: string; name: string; is_catalog: boolean | null }[];
+      // A drink they can still read shows as it is now (its name, bar and picture); the memory is for one they can't.
+      const bars = await fetchPublicBars(live.map((p) => p.barId));
+      const now = (id: string | null) => {
+        const p = live.find((x) => x.id === id);
+        const name = p?.name ?? rows.find((r) => r.id === id)?.name ?? null;
+        return name ? { name, barName: bars.find((b) => b.barId === p?.barId)?.name ?? null, imageUrl: p?.imageUrl ?? null } : null;
+      };
       const opens = new Set(rows.map((r) => r.id));
       const classics = new Set(rows.filter((r) => r.is_catalog).map((r) => r.id));
       const isLive = (id: string | null) => live.some((p) => p.id === id);
       return {
-        drinks: (drinks.data ?? []).map((d) => ({
-          id: d.id,
-          itemId: d.item_id,
-          releaseId: d.release_id,
-          collectedAt: d.collected_at,
-          name: d.name ?? 'A drink',
-          barName: d.bar_name,
-          imageUrl: d.image_url,
-          hadOn: d.had_on,
-          note: d.note,
-          liveMode: live.find((p) => p.id === d.item_id)?.publishMode ?? null,
-          readable: !!d.item_id && !isLive(d.item_id) && opens.has(d.item_id),
-          specOpens: !!d.item_id && opens.has(d.item_id),
-          classic: !!d.item_id && classics.has(d.item_id),
-        })),
+        drinks: (drinks.data ?? []).map((d) => {
+          const shown = memoryNow({ name: d.name, barName: d.bar_name, imageUrl: d.image_url }, now(d.item_id));
+          return {
+            id: d.id,
+            itemId: d.item_id,
+            releaseId: d.release_id,
+            collectedAt: d.collected_at,
+            name: shown.name ?? 'A drink',
+            barName: shown.barName,
+            imageUrl: shown.imageUrl,
+            hadOn: d.had_on,
+            note: d.note,
+            liveMode: live.find((p) => p.id === d.item_id)?.publishMode ?? null,
+            readable: !!d.item_id && !isLive(d.item_id) && opens.has(d.item_id),
+            specOpens: !!d.item_id && opens.has(d.item_id),
+            classic: !!d.item_id && classics.has(d.item_id),
+          };
+        }),
         releases: (releases.data ?? []).map((r) => ({
           id: r.id,
           releaseId: r.release_id,

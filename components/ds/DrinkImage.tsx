@@ -28,7 +28,7 @@ export interface DrinkImageProps {
   aspectRatio?: number;
   radius?: keyof typeof radii | 0;
   style?: StyleProp<ViewStyle>;
-  /** An ingredient instead of a drink: always its drawing (lib/sketch/ingredientArt.ts), never a photo. */
+  /** An ingredient instead of a drink: its picture as IngredientDrawing shows it (the drawing, its own photo, or plain paper), never `source`. */
   ingredient?: { id: string | null; name: string } | null;
   /**
    * List or grid size: the 480 px copy (lib/thumbnails.ts) instead of the
@@ -75,7 +75,7 @@ export function DrinkImage({ source, generated, glass, itemId, accessibilityLabe
     <View
       accessible
       role="img"
-      accessibilityLabel={ingredient ? `${accessibilityLabel}, drawing` : uri ? (generated ? `${accessibilityLabel}, sketch` : accessibilityLabel) : `${accessibilityLabel}, no photo yet`}
+      accessibilityLabel={ingredient ? accessibilityLabel : uri ? (generated ? `${accessibilityLabel}, sketch` : accessibilityLabel) : `${accessibilityLabel}, no photo yet`}
       style={[styles.frame, { aspectRatio: aspectRatio || undefined, borderRadius, backgroundColor: (uri && !cutout && placeholderColor) || ds.c.paper }, style]}
     >
       {ingredient ? (

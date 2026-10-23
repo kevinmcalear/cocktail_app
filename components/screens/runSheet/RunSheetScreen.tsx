@@ -11,6 +11,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useRunSheet } from '@/hooks/useRunSheet';
 import { buildRunSheet, swappedRecipe } from '@/lib/runSheet';
+import { siteOrigin } from '@/lib/venueLink';
 
 import { STEPS, StepNav, usePartyLooks, type PartyLook, type Step } from './parts';
 import { SendLists } from './SendLists';
@@ -39,6 +40,8 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
   const [breakDown, setBreakDown] = useState(false);
   const sheet = useMemo(() => (data ? buildRunSheet({ ...data, hostName: data.menu.hostName, breakDownPreps: breakDown }) : null), [data, breakDown]);
   const looks = usePartyLooks(data?.menu.hostName ?? '', data?.parties ?? []);
+  // A linked bar page nobody has claimed yet: their list says where to claim the drinks credited to them.
+  const claimUrls = Object.fromEntries((data?.parties ?? []).flatMap((p) => (p.page && !p.page.claimed ? [[p.id, `${siteOrigin()}/p/${p.page.handle}`]] : [])));
   const summaries = useMemo(
     () => Object.fromEntries((data?.drinks ?? []).map((d) => [d.id, swappedRecipe(d, data!.swaps).filter((l) => l.unit !== 'each').map((l) => l.name).join(', ')])),
     [data],
@@ -62,7 +65,7 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
   ) : shownStep === 'who' ? (
     <WhoStep menuId={menuId} sheet={sheet} looks={looks} breakDown={breakDown} onBreakDown={setBreakDown} wide={desktop} />
   ) : (
-    <SheetStep sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} />
+    <SheetStep sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} claimUrls={claimUrls} />
   );
 
   return (
@@ -95,7 +98,7 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
             {body}
             {nextStep && showNext && canEdit && desktop ? <Button label={nextStep.next} onPress={() => setStep(nextStep.value)} style={styles.nextInline} /> : null}
           </View>
-          {desktop && data && sheet && canEdit ? <LivePreview sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} /> : null}
+          {desktop && data && sheet && canEdit ? <LivePreview sheet={sheet} menu={data.menu} breakDown={breakDown} looks={looks} claimUrls={claimUrls} /> : null}
         </View>
       </ScrollView>
     </View>
@@ -103,7 +106,7 @@ export function RunSheetScreen({ menuId }: { menuId: string }) {
 }
 
 /** Desktop: the sheet beside the editor, updating as you go, and each bar's or brand's own list to send (boards "Desktop", R1). */
-function LivePreview({ sheet, menu, breakDown, looks }: { sheet: ReturnType<typeof buildRunSheet>; menu: { id: string; name: string; startsAt: string | null; endsAt: string | null }; breakDown: boolean; looks: PartyLook[] }) {
+function LivePreview({ sheet, menu, breakDown, looks, claimUrls }: { sheet: ReturnType<typeof buildRunSheet>; menu: { id: string; name: string; startsAt: string | null; endsAt: string | null }; breakDown: boolean; looks: PartyLook[]; claimUrls: Record<string, string> }) {
   const a = useSheetActions(sheet, menu, breakDown);
   return (
     <View role="complementary" aria-label="Live preview of the run sheet" style={styles.preview}>
@@ -113,7 +116,7 @@ function LivePreview({ sheet, menu, breakDown, looks }: { sheet: ReturnType<type
         <Button label="Save PDF" size="sm" icon="printer" accessibilityHint="Opens the print dialog: pick Save as PDF" onPress={a.print} />
       </View>
       <SheetPaper sheet={sheet} menu={menu} variant="compact" />
-      <SendLists sheet={sheet} menu={menu} looks={looks} />
+      <SendLists sheet={sheet} menu={menu} looks={looks} claimUrls={claimUrls} />
     </View>
   );
 }

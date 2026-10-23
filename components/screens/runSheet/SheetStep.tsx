@@ -45,7 +45,7 @@ export function useSheetActions(sheet: RunSheet, menu: Menu, breakDown = false) 
 }
 
 /** Step 4 on a phone: a look at the sheet, print, save or share it, and send each bar or brand their list (boards "4. The sheet", R1). */
-export function SheetStep({ sheet, menu, breakDown, looks }: { sheet: RunSheet; menu: Menu; breakDown: boolean; looks: PartyLook[] }) {
+export function SheetStep({ sheet, menu, breakDown, looks, claimUrls }: { sheet: RunSheet; menu: Menu; breakDown: boolean; looks: PartyLook[]; claimUrls: Record<string, string> }) {
   const a = useSheetActions(sheet, menu, breakDown);
   return (
     <View style={{ gap: space.lg }}>
@@ -69,7 +69,7 @@ export function SheetStep({ sheet, menu, breakDown, looks }: { sheet: RunSheet; 
           ? 'Pick “Save as PDF” in the print dialog to send it. Changes to serves or swaps update the sheet straight away.'
           : `Share opens Mail, Messages and the rest${a.pdf ? ' with the PDF attached' : ''}. Changes to serves or swaps update the sheet straight away.`}
       </Caption>
-      <SendLists sheet={sheet} menu={menu} looks={looks} />
+      <SendLists sheet={sheet} menu={menu} looks={looks} claimUrls={claimUrls} />
     </View>
   );
 }

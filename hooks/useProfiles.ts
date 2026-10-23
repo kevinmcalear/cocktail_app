@@ -387,7 +387,7 @@ export function useMenuEditionDrinks(drinks: MenuEditionDrink[]) {
     queryFn: async (): Promise<MenuDrink[]> => {
       const { data, error } = await supabase.from('items').select(MENU_DRINK_COLUMNS).in('id', ids);
       if (error) throw error;
-      return ((data ?? []) as unknown as MenuItemRow[]).map(toMenuDrink).filter((d): d is MenuDrink => !!d);
+      return ((data ?? []) as unknown as MenuItemRow[]).map((row) => toMenuDrink(row)).filter((d): d is MenuDrink => !!d);
     },
   });
 }
@@ -454,6 +454,8 @@ export type ClaimSetup = {
   timezone?: string | null;
   phone?: string | null;
   website?: string | null;
+  /** The bar's handle; goes on the page only when the page has none (20261103510000). */
+  instagram?: string | null;
 };
 
 export const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, created_at, method, code, evidence, decline_reason, setup';

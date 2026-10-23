@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
+import { savePayload, type MenuLayout } from '@/lib/menuLayout';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 import { useLayoutEditor } from './useLayoutEditor';
@@ -9,9 +10,10 @@ const drink = (id: string): MenuDrink => ({ id, name: id, kind: 'cocktail', line
 
 // The library before the new drink is saved, then after (what a refetch returns).
 let mockLibrary: MenuDrink[] = [drink('old')];
+const mockSaveMenu = jest.fn(async (_layout: MenuLayout) => {});
 jest.mock('@/hooks/useMenuMutations', () => ({
   useMenuLibrary: () => ({ data: mockLibrary, refetch: async () => ({ data: mockLibrary }) }),
-  useSaveMenu: () => ({ isPending: false, mutateAsync: jest.fn() }),
+  useSaveMenu: () => ({ isPending: false, mutateAsync: mockSaveMenu }),
   usePickMenuCover: () => ({ isPending: false, mutateAsync: jest.fn() }),
 }));
 jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: () => ({ data: [] }) }));
@@ -51,4 +53,21 @@ test('a price changed in the builder is the drink\'s own: saved with the menu, t
   expect(mockSavePrices).toHaveBeenCalledWith({ old: '19.50' });
   expect(result.current.changed).toBe(false);
   expect(result.current.layout.prices).toEqual({});
+});
+
+test("the phone's Done sets the drink's price and this menu's at once; this menu's saves with the menu", async () => {
+  mockSavePrices.mockClear();
+  const { result } = await renderHook(() => useLayoutEditor(menu));
+  await act(async () => {
+    result.current.setPrice('old', '19');
+    result.current.setMenuPrice('old', ' 22 ');
+  });
+  const row = result.current.layout.sections[0].drinks[0];
+  expect([row.price, row.menuPrice]).toEqual(['19', '22']);
+  await act(async () => {
+    await result.current.persist();
+  });
+  expect(savePayload(mockSaveMenu.mock.calls.at(-1)![0])[0].prices).toEqual(['22']);
+  expect(mockSavePrices).toHaveBeenCalledWith({ old: '19' });
+  expect(result.current.changed).toBe(false);
 });

@@ -166,6 +166,9 @@ export function layoutProblem(layout: MenuLayout): string | null {
   for (const s of layout.sections) {
     const p = sectionRuleProblem(s);
     if (p) return `${s.name || 'A section'}: ${p}`;
+    // menu_drinks_price_check: a menu's price is a short typed price.
+    const long = s.drinks.find((d) => (d.menuPrice?.trim().length ?? 0) > 40);
+    if (long) return `${long.name}: keep this menu’s price under 40 characters.`;
   }
   return null;
 }
@@ -179,6 +182,8 @@ export function savePayload(layout: MenuLayout) {
     max_items: s.maxItems,
     allowed_types: s.allowedTypes,
     item_ids: s.drinks.map((d) => d.id),
+    // This menu's own price for each, beside item_ids; null prints the drink's.
+    prices: s.drinks.map((d) => d.menuPrice?.trim() || null),
   }));
 }
 
@@ -203,6 +208,17 @@ export function setDrinkPrice(layout: MenuLayout, drinkId: string, price: string
     ...layout,
     prices: { ...layout.prices, [drinkId]: typed },
     sections: layout.sections.map((s) => ({ ...s, drinks: s.drinks.map((d) => (d.id === drinkId ? { ...d, price: typed } : d)) })),
+  };
+}
+
+/** Sets this menu's own price for a drink (every row of it here), as typed; blank goes back to the drink's price. Saved with the menu. */
+export function setMenuPrice(layout: MenuLayout, drinkId: string, price: string | null): MenuLayout {
+  const typed = price?.trim() || null;
+  // Nothing new (Done on an untouched price): the same layout.
+  if (layout.sections.every((s) => s.drinks.every((d) => d.id !== drinkId || (d.menuPrice?.trim() || null) === typed))) return layout;
+  return {
+    ...layout,
+    sections: layout.sections.map((s) => ({ ...s, drinks: s.drinks.map((d) => (d.id === drinkId ? { ...d, menuPrice: typed } : d)) })),
   };
 }
 

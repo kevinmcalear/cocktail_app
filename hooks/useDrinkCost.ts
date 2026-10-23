@@ -84,3 +84,20 @@ export function useSetDrinkPrices() {
     onSuccess: (_, prices) => invalidate(Object.keys(prices)),
   });
 }
+
+/**
+ * This menu's own price for a drink (menu_drinks.price), as typed; blank goes
+ * back to the drink's. A menu the caller can't edit comes back with no row
+ * (RLS), which is an error here.
+ */
+export function useSetMenuDrinkPrice(menuId: string, itemId: string) {
+  const invalidate = useInvalidatePrices();
+  return useMutation({
+    mutationFn: async (price: string | null) => {
+      const { data, error } = await supabase.from('menu_drinks').update({ price: price?.trim() || null }).eq('menu_id', menuId).eq('item_id', itemId).select('id');
+      if (error) throw error;
+      if (!data?.length) throw new Error('Couldn’t change that price: only people who can edit the menu can.');
+    },
+    onSuccess: () => invalidate([itemId]),
+  });
+}

@@ -46,6 +46,10 @@ const venue = [
 const venueSet = editionMenuDrinks(venue, []);
 assert.equal(venueSet[0].price, '18');
 assert.equal(venueSet[2].price, null);
+// A loaded drink on a venue's menu prints the menu's price, not only its own.
+const loaded = editionMenuDrinks([{ id: 'b', name: 'Bee', price: '22' }], [{ ...full, price: '19' }]);
+assert.equal(loaded[0].price, '19');
+assert.equal(loaded[0].menuPrice, '22');
 assert.deepEqual(
   editionSections({ id: 'm', drinks: venue }, venueSet).map((s) => [s.name, s.drinks.map((d) => d.id)]),
   [['Stirred', ['a', 'c']], ['Long', ['b']]]

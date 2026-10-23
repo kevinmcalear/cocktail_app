@@ -162,7 +162,7 @@ function Wizard({ barId = null, initialName, embedded, onClose, onSaved }: AddIn
           onBack={back}
           progress={{ now: Math.min(at + 1, steps.length - 1), of: steps.length - 1, label: step === 'review' ? 'Review' : `${at + 1} of ${steps.length - 1}` }}
           // Drawn from its kind's chain once it has one ("Gin": a gin bottle), else from the name.
-          art={<IngredientDrawing id={draft.generic?.id ?? null} name={name} />}
+          art={<IngredientDrawing id={draft.generic?.id ?? null} name={name} drawn />}
           artKey={`${draft.generic?.id ?? ''}|${name}`}
           artLabel="Drawing of the ingredient"
         />
