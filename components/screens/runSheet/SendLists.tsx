@@ -18,18 +18,21 @@ const canShareOnWeb = () => typeof navigator !== 'undefined' && typeof navigator
 
 /**
  * "Send each their list" (board R1): every other bar or brand with things to
- * bring gets just their part, a one-page PDF on a phone, else as text.
+ * bring (or a guest bar with drinks of its own) gets just their part, a
+ * one-page PDF on a phone, else as text. `claimUrls`: party id to its
+ * unclaimed bar page, for the claim line (board 10).
  */
-export function SendLists({ sheet, menu, looks }: { sheet: RunSheet; menu: Menu; looks: PartyLook[] }) {
+export function SendLists({ sheet, menu, looks, claimUrls }: { sheet: RunSheet; menu: Menu; looks: PartyLook[]; claimUrls: Record<string, string> }) {
   const ds = useDs();
   // What was copied, so the button says Copied only while the list is still the same.
   const [copied, setCopied] = useState<string | null>(null);
-  const others = sheet.parties.filter((p) => p.id !== null && p.needs.length);
+  const drinksOf = (p: PartySheet) => partyList(sheet, menu, p).drinks.length;
+  const others = sheet.parties.filter((p) => p.id !== null && (p.needs.length || drinksOf(p)));
   if (!others.length) return null;
   const copies = Platform.OS === 'web' && !canShareOnWeb();
 
   const send = async (party: PartySheet) => {
-    const list = partyList(sheet, menu, party);
+    const list = partyList(sheet, menu, party, claimUrls[party.id ?? '']);
     const text = partyListText(list);
     if (copies) {
       await Clipboard.setStringAsync(text);
@@ -54,10 +57,10 @@ export function SendLists({ sheet, menu, looks }: { sheet: RunSheet; menu: Menu;
               {look ? <Dot colour={look.colour} size={10} /> : null}
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Body numberOfLines={1} style={{ fontFamily: fontFamilies.bodySemiBold }}>{p.name}</Body>
-                <Caption tone="muted">{`${look?.role ?? p.role} · ${thingCount(p.needs.length)}`}</Caption>
+                <Caption tone="muted">{`${look?.role ?? p.role} · ${p.needs.length ? thingCount(p.needs.length) : `${drinksOf(p)} of their drinks`}`}</Caption>
               </View>
               <Button
-                label={copies && copied === partyListText(partyList(sheet, menu, p)) ? 'Copied' : copies ? 'Copy their list' : 'Send their list'}
+                label={copies && copied === partyListText(partyList(sheet, menu, p, claimUrls[p.id ?? ''])) ? 'Copied' : copies ? 'Copy their list' : 'Send their list'}
                 size="sm"
                 variant="secondary"
                 icon={copies ? 'doc.on.doc' : 'square.and.arrow.up'}

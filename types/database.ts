@@ -718,7 +718,6 @@ export type Database = {
           dilution_pct: number | null
           item_id: string
           price: string | null
-          price_minor: number | null
           serve_abv: number | null
           serve_ml: number | null
         }
@@ -726,7 +725,6 @@ export type Database = {
           dilution_pct?: number | null
           item_id: string
           price?: string | null
-          price_minor?: number | null
           serve_abv?: number | null
           serve_ml?: number | null
         }
@@ -734,7 +732,6 @@ export type Database = {
           dilution_pct?: number | null
           item_id?: string
           price?: string | null
-          price_minor?: number | null
           serve_abv?: number | null
           serve_ml?: number | null
         }
@@ -3045,6 +3042,7 @@ export type Database = {
           item_id: string | null
           menu_id: string | null
           menu_section_id: string | null
+          party_id: string | null
           serves: number | null
           sort_order: number | null
           template_section_id: string | null
@@ -3055,6 +3053,7 @@ export type Database = {
           item_id?: string | null
           menu_id?: string | null
           menu_section_id?: string | null
+          party_id?: string | null
           serves?: number | null
           sort_order?: number | null
           template_section_id?: string | null
@@ -3065,11 +3064,33 @@ export type Database = {
           item_id?: string | null
           menu_id?: string | null
           menu_section_id?: string | null
+          party_id?: string | null
           serves?: number | null
           sort_order?: number | null
           template_section_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "menu_drinks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drinks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drinks_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "menu_drinks_menu_section_id_fkey"
             columns: ["menu_section_id"]
@@ -3078,28 +3099,14 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_menu_drinks_item_id_fkey"
-            columns: ["item_id"]
+            foreignKeyName: "menu_drinks_party_fkey"
+            columns: ["party_id", "menu_id"]
             isOneToOne: false
-            referencedRelation: "app_item_presentation"
-            referencedColumns: ["id"]
+            referencedRelation: "menu_run_parties"
+            referencedColumns: ["id", "menu_id"]
           },
           {
-            foreignKeyName: "new_menu_drinks_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "new_menu_drinks_menu_id_fkey"
-            columns: ["menu_id"]
-            isOneToOne: false
-            referencedRelation: "menus"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "new_menu_drinks_template_section_id_fkey"
+            foreignKeyName: "menu_drinks_template_section_id_fkey"
             columns: ["template_section_id"]
             isOneToOne: false
             referencedRelation: "template_sections"
@@ -4209,29 +4216,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_parent_ingredient_id_fkey"
-            columns: ["parent_ingredient_id"]
+            foreignKeyName: "new_recipes_recipe_item_id_fkey"
+            columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "app_item_presentation"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_parent_ingredient_id_fkey"
-            columns: ["parent_ingredient_id"]
+            foreignKeyName: "new_recipes_recipe_item_id_fkey"
+            columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_recipe_item_id_fkey"
-            columns: ["recipe_item_id"]
+            foreignKeyName: "recipes_parent_ingredient_id_fkey"
+            columns: ["parent_ingredient_id"]
             isOneToOne: false
             referencedRelation: "app_item_presentation"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_recipe_item_id_fkey"
-            columns: ["recipe_item_id"]
+            foreignKeyName: "recipes_parent_ingredient_id_fkey"
+            columns: ["parent_ingredient_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
@@ -6365,6 +6372,7 @@ export type Database = {
         Args: { p_from: string; p_into: string }
         Returns: undefined
       }
+      merged_profile_handle: { Args: { p_ref: string }; Returns: string }
       my_bar_drinks: {
         Args: {
           p_after_id?: string

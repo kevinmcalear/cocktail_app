@@ -1,0 +1,23 @@
+{
+ "maker": "karakter",
+ "models": [
+  {
+   "name": "Sferico No. 2",
+   "series": "Sferico",
+   "designer": "Joe Colombo",
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 180,
+   "capacity_as_stated": "180 ml",
+   "height_mm": 145,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.karakter-copenhagen.com/products/accessories/sferico-glasses",
+   "source_urls": [
+    "https://www.karakter-copenhagen.com/products/accessories/sferico-glasses",
+    "https://www.finnishdesignshop.com/en-au/product/sferico-no-2-glass"
+   ]
+  }
+ ]
+}

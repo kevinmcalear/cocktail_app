@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, Caption, DsText, Field, Headline, SketchTintPicker, Spec, Surface, Title, useDs } from '@/components/ds';
@@ -8,7 +7,7 @@ import { withAlpha } from '@/lib/color';
 import { balanceOf, fixesFor, tasteWord } from '@/lib/balance';
 import { formatPct, margin } from '@/lib/costing';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
-import { formatMoney, moneyFieldValue, parseMoney } from '@/lib/money';
+import { formatMoney, priceMinor } from '@/lib/money';
 import type { DraftLook } from '@/lib/sketch/draft';
 import type { PricingSettings } from '@/hooks/usePricing';
 
@@ -111,15 +110,14 @@ export interface DeskCostLine {
 }
 
 /** What it costs to make from the bar's pack prices, then the price and GP against the bar's target. */
-export function DeskCost({ lines, pricing, priceMinor, onPrice }: { lines: DeskCostLine[]; pricing: PricingSettings | null; priceMinor: number | null; onPrice: (minor: number | null) => void }) {
+export function DeskCost({ lines, pricing, price, onPrice }: { lines: DeskCostLine[]; pricing: PricingSettings | null; price: string; onPrice: (price: string) => void }) {
   const currency = pricing?.currency ?? 'GBP';
   const money = (minor: number) => formatMoney(minor, currency) ?? '';
-  const [text, setText] = useState(() => (priceMinor != null ? moneyFieldValue(priceMinor, currency) : ''));
-  // Start over clears the draft's price: the field follows.
-  if (priceMinor == null && text.trim() && parseMoney(text, currency) != null) setText('');
+  // The drink's price as typed ("19.50", "MP"); the margin reads the number in it.
+  const minor = priceMinor(price, currency);
   const total = lines.reduce((n, l) => n + (l.minor ?? 0), 0);
   const missing = lines.filter((l) => l.minor == null).length;
-  const m = pricing ? margin(total, priceMinor, { taxRate: pricing.tax_rate, pricesIncludeTax: pricing.prices_include_tax }) : null;
+  const m = pricing ? margin(total, minor, { taxRate: pricing.tax_rate, pricesIncludeTax: pricing.prices_include_tax }) : null;
   return (
     <Surface raised style={styles.card}>
       <Eyebrow>Cost</Eyebrow>
@@ -146,13 +144,10 @@ export function DeskCost({ lines, pricing, priceMinor, onPrice }: { lines: DeskC
         <View style={styles.flex}>
           <Field
             label="Price"
-            value={text}
-            onChangeText={(t) => {
-              setText(t);
-              onPrice(t.trim() ? parseMoney(t, currency) : null);
-            }}
-            keyboardType="decimal-pad"
-            placeholder={money(0).replace(/0/g, '–')}
+            value={price}
+            onChangeText={onPrice}
+            placeholder="12.00 or MP"
+            hint={price.trim() && minor == null ? 'No number in it: no margin worked out.' : undefined}
           />
         </View>
         {m ? (
