@@ -156,7 +156,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                       onCancel={() => setSwapKey(null)}
                       onPick={(p) => {
                         // A different ingredient isn't the house prep that was here.
-                        change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined });
+                        change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined, bottle: undefined });
                         setSwapKey(null);
                       }}
                       onMake={

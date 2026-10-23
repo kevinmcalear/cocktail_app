@@ -21,7 +21,7 @@ export const PREP_CARD_ID = 'prep-card-open';
  * and how it's made, the builder's own steps on one card. Add hands it to
  * the line; Just the name leaves its recipe for later.
  */
-export function PrepCard({ name, venueName, initial, picked, technique, ingredients, aliases, onDone, onLater }: Omit<PrepBuilderProps, 'name' | 'drinkName' | 'onClose'> & { name: string; venueName: string | null }) {
+export function PrepCard({ name, venueName, initial, picked, technique, ingredients, aliases, onDone, onLater, onClose }: Omit<PrepBuilderProps, 'name' | 'drinkName'> & { name: string; venueName: string | null }) {
   const ds = useDs();
   const { draft, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, version, phrase, named, slotsOpen } = usePrepDraft({ name, initial, picked, technique });
   const set = (c: Partial<typeof draft>) => setDraft({ ...draft, ...c });
@@ -45,7 +45,8 @@ export function PrepCard({ name, venueName, initial, picked, technique, ingredie
       {slotsOpen ? <Caption tone="accent">Pick the parts still marked, or take them out, to add it.</Caption> : null}
       <View style={styles.buttons}>
         <Button label={word ? `Add the ${word}` : `Add ${name}`} disabled={!named || slotsOpen} onPress={() => onDone(withFacts(draft))} />
-        {onLater ? <Button label="Just the name for now" variant="secondary" onPress={onLater} /> : null}
+        {/* A recipe already written can't go back to a name; leaving keeps it as it was. */}
+        {onLater ? <Button label="Just the name for now" variant="secondary" onPress={onLater} /> : <Button label="Keep it as it was" variant="secondary" onPress={onClose} />}
       </View>
     </View>
   );

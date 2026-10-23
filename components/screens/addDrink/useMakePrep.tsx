@@ -69,7 +69,7 @@ export function useMakePrep({ draft, ingredients, aliases, inlinePrep, add, chan
     aliases,
     onClose: () => setMaking(null),
     onDone: (prep: PrepDraft) => {
-      if (editingKey && replacing) change(editingKey, { id: null, name: makingName ?? '', prep, technique: prep.technique, later: undefined });
+      if (editingKey && replacing) change(editingKey, { id: null, name: makingName ?? '', prep, technique: prep.technique, later: undefined, bottle: undefined });
       else if (editingKey) change(editingKey, { prep, technique: prep.technique, later: undefined });
       else if (makingName) add({ id: null, name: makingName }, prep, false, makingPour);
       setMaking(null);
@@ -81,7 +81,7 @@ export function useMakePrep({ draft, ingredients, aliases, inlinePrep, add, chan
     onLater: editingPrep
       ? undefined
       : () => {
-          if (editingKey) change(editingKey, { id: null, name: makingName ?? '', prep: undefined, technique: undefined, later: true });
+          if (editingKey) change(editingKey, { id: null, name: makingName ?? '', prep: undefined, technique: undefined, later: true, bottle: undefined });
           else if (makingName) add({ id: null, name: makingName }, undefined, true, makingPour);
           setMaking(null);
         },

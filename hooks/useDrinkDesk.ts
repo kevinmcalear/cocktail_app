@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { NewBottle } from '@/lib/drinkWizard';
+import { likeExactly, type NewBottle } from '@/lib/drinkWizard';
 import { parseMoney } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 
@@ -130,7 +130,7 @@ export async function saveNewBottles(barId: string, bottles: readonly { itemId: 
       }
       let supplierId = b.supplier?.id ?? null;
       if (!supplierId && b.supplier?.name.trim()) {
-        const same = await supabase.from('suppliers').select('id').eq('bar_id', barId).ilike('name', b.supplier.name.trim()).limit(1).maybeSingle();
+        const same = await supabase.from('suppliers').select('id').eq('bar_id', barId).ilike('name', likeExactly(b.supplier.name.trim())).limit(1).maybeSingle();
         supplierId = same.data?.id ?? null;
         if (!supplierId) {
           const made = await supabase.from('suppliers').insert({ bar_id: barId, name: b.supplier.name.trim() }).select('id').single();
