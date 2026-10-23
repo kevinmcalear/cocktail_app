@@ -104,7 +104,7 @@ export function usePrepUsedIn(itemId: string | null | undefined) {
     queryFn: async (): Promise<PrepUsedIn> => {
       const { data, error } = await supabase
         .from('app_recipe_presentation')
-        .select('amount, unit, parent:app_item_presentation!new_recipes_recipe_item_id_fkey(id, name, item_type)')
+        .select('amount, unit, parent:app_item_presentation!recipe_item_id(id, name, item_type)')
         .eq('display_ingredient_id', itemId!);
       if (error) throw error;
       const seen = new Map<string, UsedInPrep>();

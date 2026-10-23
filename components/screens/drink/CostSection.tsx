@@ -7,30 +7,32 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
-import { useDrinkCost, useSetMenuPrice } from '@/hooks/useDrinkCost';
+import { useDrinkCost, useSetDrinkPrice } from '@/hooks/useDrinkCost';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { withAlpha } from '@/lib/color';
 import { formatPct, margin, priceForTarget, targetsLine, targetStatus, type Margin, type Targets } from '@/lib/costing';
-import { formatMoney, moneyFieldValue, parseMoney } from '@/lib/money';
+import { formatPrice } from '@/lib/menus';
+import { formatMoney, priceMinor, priceText } from '@/lib/money';
 import { roleLabel } from '@/lib/roles';
 
 interface CostSectionProps {
   itemId: string;
   barId: string | null;
-  priceMinor: number | null | undefined;
-  /** The viewer can edit the drink (its menu price). */
+  /** The drink's one price, as typed ("19.50", "MP"); every menu with it shows it. */
+  price: string | null | undefined;
+  /** The viewer can edit the drink (its price). */
   canEdit: boolean;
 }
 
 /**
  * Cost and margin: cost per serve through every sub-recipe at today's pack
- * prices, the menu price with and without tax, profit, GP and pour cost.
+ * prices, the drink's price with and without tax, profit, GP and pour cost.
  * Under the venue's targets (a GP, and the least a drink should make) it
  * says so with the price that clears them, and editors can use it
  * (drink-cost-floor). Locked until the costs capability; the server returns
  * nothing below it either.
  */
-export function CostSection({ itemId, barId, priceMinor, canEdit }: CostSectionProps) {
+export function CostSection({ itemId, barId, price, canEdit }: CostSectionProps) {
   const { data: capabilities } = useCapabilities(barId);
   const { data: opensAtLevel } = useCapabilityOpensAt(barId, 'costs');
   const unlocked = !!barId && !!capabilities?.includes('costs');
@@ -41,7 +43,7 @@ export function CostSection({ itemId, barId, priceMinor, canEdit }: CostSectionP
     <LockedSection title="Cost and margin" unlocked={unlocked} opensAt={opensAtLevel ? roleLabel(opensAtLevel) : 'Drink Creator'}>
       {error ? <Body tone="muted">Couldn’t work out the cost. Check your connection and try again.</Body> : null}
       {isPending && !error ? <Caption tone="muted">Adding it up…</Caption> : null}
-      {cost && settings ? <Costed itemId={itemId} barId={barId} cost={cost} priceMinor={priceMinor ?? null} canEdit={canEdit} currency={settings.currency} taxRate={settings.tax_rate} pricesIncludeTax={settings.prices_include_tax} targets={{ gp: settings.target_gp, minProfitMinor: settings.min_profit_minor }} /> : null}
+      {cost && settings ? <Costed itemId={itemId} barId={barId} cost={cost} price={formatPrice(price)} canEdit={canEdit} currency={settings.currency} taxRate={settings.tax_rate} pricesIncludeTax={settings.prices_include_tax} targets={{ gp: settings.target_gp, minProfitMinor: settings.min_profit_minor }} /> : null}
     </LockedSection>
   );
 }
@@ -50,7 +52,7 @@ interface CostedProps {
   itemId: string;
   barId: string;
   cost: NonNullable<ReturnType<typeof useDrinkCost>['data']>;
-  priceMinor: number | null;
+  price: string | null;
   canEdit: boolean;
   currency: string | null;
   taxRate: number;
@@ -58,23 +60,24 @@ interface CostedProps {
   targets: Targets;
 }
 
-function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, pricesIncludeTax, targets }: CostedProps) {
+function Costed({ itemId, barId, cost, price, canEdit, currency, taxRate, pricesIncludeTax, targets }: CostedProps) {
   const ds = useDs();
   const router = useRouter();
   const tax = { taxRate, pricesIncludeTax };
   const money = (minor: number | null | undefined) => formatMoney(minor, currency) ?? (minor == null ? 'no price' : String(minor));
   // Every line unpriced: no cost yet, so no margin either.
   const known = !(cost.total_minor === 0 && cost.missing > 0);
-  const m = known ? margin(cost.total_minor, priceMinor, tax) : null;
-  const target = known ? targetStatus(cost.total_minor, priceMinor, targets, tax) : null;
+  // The number in the typed price; MP and the like have none, so no margin.
+  const priceMinorValue = currency ? priceMinor(price, currency) : null;
+  const m = known ? margin(cost.total_minor, priceMinorValue, tax) : null;
+  const target = known ? targetStatus(cost.total_minor, priceMinorValue, targets, tax) : null;
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'The venue';
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(currency ? moneyFieldValue(priceMinor, currency) : '');
+  const [draft, setDraft] = useState(price ?? '');
   const [ask, setAsk] = useState(targets.gp == null ? '' : String(targets.gp));
-  const setPrice = useSetMenuPrice(itemId);
+  const setPrice = useSetDrinkPrice(itemId);
   const askN = Number(ask);
   const askPrice = known && ask.trim() && Number.isFinite(askN) ? priceForTarget(cost.total_minor, askN, tax) : null;
-  const draftMinor = currency ? parseMoney(draft, currency) : null;
 
   if (!currency) {
     return (
@@ -111,7 +114,7 @@ function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, p
         ) : null}
       </View>
       <View style={styles.facts}>
-        <Fact label="Menu price" value={priceMinor == null ? 'Not set' : money(priceMinor)} sub={m ? (pricesIncludeTax ? `${money(Math.round(m.exTaxMinor))} without tax` : 'tax added at the till') : undefined} />
+        <Fact label="Price" value={priceMinorValue != null ? money(priceMinorValue) : (price ?? 'None')} sub={m ? (pricesIncludeTax ? `${money(Math.round(m.exTaxMinor))} without tax` : 'tax added at the till') : price ? 'no number in it: no margin worked out' : 'add one to see the margin'} />
         <Fact label="Profit" value={m ? money(Math.round(m.profitMinor)) : '–'} sub={m ? 'after tax and ingredients' : 'set a price'} />
         <Fact label="GP" value={m ? formatPct(m.gp) : '–'} sub={m ? `pour cost ${formatPct(m.pourCost)}` : 'set a price'} />
       </View>
@@ -124,7 +127,7 @@ function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, p
           price={money(target.priceMinor)}
           both={targets.gp != null && targets.minProfitMinor != null}
           money={money}
-          onUse={canEdit ? () => setPrice.mutate(target.priceMinor) : undefined}
+          onUse={canEdit ? () => setPrice.mutate(priceText(target.priceMinor, currency)) : undefined}
           busy={setPrice.isPending}
           onPricing={() => router.push(`/settings/bar/${barId}/pricing` as Href)}
         />
@@ -133,15 +136,18 @@ function Costed({ itemId, barId, cost, priceMinor, canEdit, currency, taxRate, p
       {canEdit ? (
         editing ? (
           <View style={styles.edit}>
-            <Field label={`Menu price (${currency})`} value={draft} onChangeText={setDraft} placeholder="12.00" keyboardType="decimal-pad" hint="Leave blank to clear it." />
+            <Field label={`Price (${currency})`} value={draft} onChangeText={setDraft} placeholder="12.00 or MP" hint="As the menu prints it. Every menu with this drink shows it; blank clears it." />
             <View style={styles.actions}>
-              <Button label={setPrice.isPending ? 'Saving…' : 'Save price'} disabled={setPrice.isPending || (!!draft.trim() && draftMinor === null)} onPress={() => setPrice.mutateAsync(draft.trim() ? draftMinor : null).then(() => setEditing(false), () => {})} />
+              <Button label={setPrice.isPending ? 'Saving…' : 'Save price'} disabled={setPrice.isPending} onPress={() => setPrice.mutateAsync(draft).then(() => setEditing(false), () => {})} />
               <Button label="Cancel" variant="ghost" onPress={() => setEditing(false)} />
             </View>
             {setPrice.error ? <Caption tone="accent">{"Couldn't save. Check your connection and try again."}</Caption> : null}
           </View>
         ) : (
-          <Button label={priceMinor == null ? 'Set price' : 'Change price'} variant="secondary" onPress={() => setEditing(true)} style={styles.button} />
+          <Button label={price == null ? 'Add a price' : 'Change price'} variant="secondary" onPress={() => {
+              setDraft(price ?? '');
+              setEditing(true);
+            }} style={styles.button} />
         )
       ) : null}
       <View style={styles.calc}>
