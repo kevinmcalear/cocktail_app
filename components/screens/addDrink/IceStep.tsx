@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption } from '@/components/ds';
+import { TellUs, type TellUsAbout } from '@/components/feedback/TellUs';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import type { KitRow } from '@/hooks/useBarKit';
@@ -29,6 +30,8 @@ interface IceStepProps extends StepProps {
   barGlasses?: readonly BarGlass[];
   barVariants?: readonly string[];
   venueName?: string | null;
+  /** Under the list, beside it (the parent's spacing): "Doing something different? Tell us". */
+  tellUs?: TellUsAbout;
 }
 
 
@@ -38,7 +41,7 @@ interface IceStepProps extends StepProps {
  * build from the bottom up (cubes under pebble, a spear on a cube) with quick
  * builds, the venue's ice first, and one suggestion at a time.
  */
-export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit = [], barGlasses, barVariants = [], venueName }: IceStepProps) {
+export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit = [], barGlasses, barVariants = [], venueName, tellUs }: IceStepProps) {
   const [adding, setAdding] = useState(false);
   const made = methodIceLabel(draft.methods.map((m) => m.name));
   const mine = barIce.length ? { has: (p: WizardPick) => isVenueIce(barIce, p.name), label: 'Your ice', restLabel: 'Other ice' } : undefined;
@@ -78,47 +81,50 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
 
   const top = named[named.length - 1];
   return (
-    <View style={styles.stack}>
-      {made ? (
-        <View style={styles.group}>
-          <Eyebrow>{made}</Eyebrow>
-          <PickStep label={made} ownLabel="Other ice" compact={compact} options={ices} selected={draft.methodIce ? [draft.methodIce] : []} onChange={([ice]) => set({ methodIce: ice ?? null })} />
-          <Caption tone="muted">Follows the method: shaken with, stirred over, blended with.</Caption>
-        </View>
-      ) : null}
-      <View style={styles.group}>
-        <Eyebrow>In the glass</Eyebrow>
-        <View role="radiogroup" accessibilityLabel="Ways to build the ice" style={styles.chips}>
-          <WizardChip label="One kind" selected={!saysMore(layers)} onPress={() => setLayers(layers.length ? [{ ice: layers[layers.length - 1].ice }] : [])} />
-          {QUICK_BUILDS.map((q) => (
-            <WizardChip key={q} label={QUICK_LABEL[q]} selected={quick === q} onPress={() => setLayers(quickBuild(q, pickOf, draft.methodIce ?? null))} />
-          ))}
-        </View>
-        {layers.length ? (
-          <IceLayers layers={layers} onChange={setLayers} onAdd={() => setAdding(true)} sourceOf={sourceOf} />
-        ) : (
-          <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null, iceBuild: null })} suggested={suggested} why={why} mine={mine} />
-        )}
-        {tip ? (
-          <IceTipCard
-            tip={tip}
-            now={named}
-            look={look}
-            seed={draft.id ?? 'new-drink'}
-            onUse={() => setLayers(tip.layers.map((l) => ({ ...l, ice: pickOf(l.ice) })))}
-            onNo={() => set({ iceTipsOff: [...(draft.iceTipsOff ?? []), tip.id] })}
-          />
+    <>
+      <View style={styles.stack}>
+        {made ? (
+          <View style={styles.group}>
+            <Eyebrow>{made}</Eyebrow>
+            <PickStep label={made} ownLabel="Other ice" compact={compact} options={ices} selected={draft.methodIce ? [draft.methodIce] : []} onChange={([ice]) => set({ methodIce: ice ?? null })} />
+            <Caption tone="muted">Follows the method: shaken with, stirred over, blended with.</Caption>
+          </View>
         ) : null}
+        <View style={styles.group}>
+          <Eyebrow>In the glass</Eyebrow>
+          <View role="radiogroup" accessibilityLabel="Ways to build the ice" style={styles.chips}>
+            <WizardChip label="One kind" selected={!saysMore(layers)} onPress={() => setLayers(layers.length ? [{ ice: layers[layers.length - 1].ice }] : [])} />
+            {QUICK_BUILDS.map((q) => (
+              <WizardChip key={q} label={QUICK_LABEL[q]} selected={quick === q} onPress={() => setLayers(quickBuild(q, pickOf, draft.methodIce ?? null))} />
+            ))}
+          </View>
+          {layers.length ? (
+            <IceLayers layers={layers} onChange={setLayers} onAdd={() => setAdding(true)} sourceOf={sourceOf} />
+          ) : (
+            <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null, iceBuild: null })} suggested={suggested} why={why} mine={mine} />
+          )}
+          {tip ? (
+            <IceTipCard
+              tip={tip}
+              now={named}
+              look={look}
+              seed={draft.id ?? 'new-drink'}
+              onUse={() => setLayers(tip.layers.map((l) => ({ ...l, ice: pickOf(l.ice) })))}
+              onNo={() => set({ iceTipsOff: [...(draft.iceTipsOff ?? []), tip.id] })}
+            />
+          ) : null}
+        </View>
+        <AddLayerSheet
+          visible={adding}
+          onClose={() => setAdding(false)}
+          onAdd={(l) => setLayers([...layers, l])}
+          options={ices}
+          venue={venueName && kitIce.length ? { name: venueName, ice: kitIce.map((r) => ({ pick: pickOf(ICE_LABEL[r.key as IceKind]), source: kitSourceLine(r) || null })) } : null}
+          below={top ? iceBuildLine([top]).replace(/^Over /, '') : null}
+        />
       </View>
-      <AddLayerSheet
-        visible={adding}
-        onClose={() => setAdding(false)}
-        onAdd={(l) => setLayers([...layers, l])}
-        options={ices}
-        venue={venueName && kitIce.length ? { name: venueName, ice: kitIce.map((r) => ({ pick: pickOf(ICE_LABEL[r.key as IceKind]), source: kitSourceLine(r) || null })) } : null}
-        below={top ? iceBuildLine([top]).replace(/^Over /, '') : null}
-      />
-    </View>
+      {tellUs ? <TellUs screen="Adding a drink › Ice" line="We’ll add your ice to the app." {...tellUs} /> : null}
+    </>
   );
 }
 

@@ -17,7 +17,7 @@ import { suggestClassic } from '@/lib/classics';
 import { stepWaits, versionHeading } from '@/lib/sameName';
 import { plainDbMessage } from '@/lib/dbError';
 import {
-  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, sketchLook, STEP_COPY, WIZARD_STEPS,
+  canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, samePick, savedNotice, sketchLook, STEP_COPY, WIZARD_STEPS,
   type WizardDraft, type WizardPick, type WizardStep,
 } from '@/lib/drinkWizard';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -142,10 +142,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
           clear(place);
           if (firstRound) roundDone('house_spec', id);
           toastDone('Drink saved', draft.name.trim());
-          // The reminder "Just add the name" promised: the preps whose recipes are still to write.
-          const one = later.length === 1;
-          const remind = later.length ? `${later.join(', ')} ${one ? 'has' : 'have'} no recipe yet. Write ${one ? 'it on its page' : 'them on their pages'} when you’re ready.` : null;
-          if (warnings.length || remind) Alert.alert(warnings.length ? 'Saved, with one thing to fix' : 'A recipe to write', [...warnings, ...(remind ? [remind] : [])].join('\n\n'));
+          const notice = savedNotice(warnings, later);
+          if (notice) Alert.alert(notice.title, notice.body);
           onSaved(id);
         },
         onError: (e) => Alert.alert('Couldn’t save the drink', `${plainDbMessage(e) ?? e.message} Your draft is kept on this device.`),
@@ -158,6 +156,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   };
 
   const ingredients = dropdowns?.ingredients ?? [];
+  const tellUsAbout = { drinkName: draft.name, barId, barName: barId ? venueName : null, draftId: draft.id ?? null };
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const stock = useLineStock({ barId, venueName, drinkName: draft.name.trim(), ingredients, lines: draft.lines, pinned: !desk });
   const copy = STEP_COPY[step];
@@ -214,6 +213,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
           <IngredientsStep
             draft={draft}
             set={set}
+            tellUs={tellUsAbout}
             ingredients={ingredients}
             loading={!dropdowns?.ingredients}
             aliases={dropdowns?.ingredientAliases}
@@ -234,15 +234,14 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
               suggested={guess.method}
               why={serveCard ? null : guess.why}
               hint={<FoamerHint draft={draft} set={set} ingredients={ingredients} />}
+              tellUs={tellUsAbout}
             />
           </>
         );
       case 'glass':
         return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
-        return (
-          <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={barKit} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} />
-        );
+        return <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={barKit} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />;
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'credits':

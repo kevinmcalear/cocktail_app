@@ -16,13 +16,24 @@ serveJson("delete-account", async (req) => {
     throw prepareError;
   }
 
-  // Avatars live under avatars/<user id>/.
-  const avatars = caller.admin.storage.from("avatars");
-  const { data: files, error: listError } = await avatars.list(userId);
-  if (listError) throw listError;
-  if (files.length > 0) {
-    const { error: removeError } = await avatars.remove(files.map((file) => `${userId}/${file.name}`));
-    if (removeError) throw removeError;
+  // Avatars and Tell us photos live under <bucket>/<user id>/. A page at a
+  // time until the folder is empty. Before the Tell us migration has run there
+  // is no feedback bucket, and nothing in it to remove.
+  for (const bucket of ["avatars", "feedback"]) {
+    const files = caller.admin.storage.from(bucket);
+    while (true) {
+      const { data, error: listError } = await files.list(userId, { limit: 100 });
+      if (listError) {
+        if (bucket === "feedback" && /not found/i.test(listError.message)) break;
+        throw listError;
+      }
+      // Files only (a folder entry has no id); stop when a page removes nothing.
+      const paths = data.filter((file) => file.id).map((file) => `${userId}/${file.name}`);
+      if (paths.length === 0) break;
+      const { data: removed, error: removeError } = await files.remove(paths);
+      if (removeError) throw removeError;
+      if (!removed?.length) break;
+    }
   }
 
   const { error: deleteError } = await caller.admin.auth.admin.deleteUser(userId);

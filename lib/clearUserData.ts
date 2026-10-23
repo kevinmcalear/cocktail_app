@@ -10,6 +10,7 @@ import { useBringIn } from '@/store/useBringIn';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useIngredientWizardStore } from '@/store/useIngredientWizardStore';
 import { useLastPlace } from '@/store/useLastPlace';
+import { useNoteDrafts } from '@/store/useNoteDrafts';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
@@ -17,9 +18,9 @@ import { useVenueSetup } from '@/store/useVenueSetup';
  * Forgets everything the signed-out user left on this device: cached query
  * data (in memory and persisted), edits made offline and not yet sent, recent
  * activity, favorites and the study pile, AI consent, the last near-me place, the
- * venue they were working in, drinks and bottles half added, and big imports
- * waiting to be reviewed. Bar iPads are shared, so the next person must not
- * see any of it, or send it as themselves.
+ * venue they were working in, drinks and bottles half added, big imports
+ * waiting to be reviewed, and notes to us not yet sent. Bar iPads are shared,
+ * so the next person must not see any of it, or send it as themselves.
  */
 export async function clearUserData(): Promise<void> {
   // Queries marked public (a venue's staff-link branding) aren't the user's,
@@ -34,6 +35,7 @@ export async function clearUserData(): Promise<void> {
   useIngredientWizardStore.setState({ kept: {} });
   useBeerWineWizardStore.setState({ kept: {} });
   useVenueSetup.setState({ runs: {} });
+  useNoteDrafts.setState({ drafts: {} });
   useBringIn.setState({ reviews: {}, reviewing: null, later: [] });
   await Promise.all([
     asyncStoragePersister.removeClient(),
