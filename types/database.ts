@@ -3068,6 +3068,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "menu_drinks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drinks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drinks_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "menu_drinks_menu_section_id_fkey"
             columns: ["menu_section_id"]
             isOneToOne: false
@@ -3075,28 +3096,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_menu_drinks_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "app_item_presentation"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "new_menu_drinks_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "new_menu_drinks_menu_id_fkey"
-            columns: ["menu_id"]
-            isOneToOne: false
-            referencedRelation: "menus"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "new_menu_drinks_template_section_id_fkey"
+            foreignKeyName: "menu_drinks_template_section_id_fkey"
             columns: ["template_section_id"]
             isOneToOne: false
             referencedRelation: "template_sections"
@@ -4206,29 +4206,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_parent_ingredient_id_fkey"
-            columns: ["parent_ingredient_id"]
+            foreignKeyName: "new_recipes_recipe_item_id_fkey"
+            columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "app_item_presentation"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_parent_ingredient_id_fkey"
-            columns: ["parent_ingredient_id"]
+            foreignKeyName: "new_recipes_recipe_item_id_fkey"
+            columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_recipe_item_id_fkey"
-            columns: ["recipe_item_id"]
+            foreignKeyName: "recipes_parent_ingredient_id_fkey"
+            columns: ["parent_ingredient_id"]
             isOneToOne: false
             referencedRelation: "app_item_presentation"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_recipe_item_id_fkey"
-            columns: ["recipe_item_id"]
+            foreignKeyName: "recipes_parent_ingredient_id_fkey"
+            columns: ["parent_ingredient_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
