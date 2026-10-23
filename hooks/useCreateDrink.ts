@@ -207,13 +207,24 @@ export function useCreateDrink() {
       }
       const methodIds: string[] = [];
       for (const m of draft.methods) methodIds.push(await ensure(m, 'method'));
+      // A prep made here: its recipe, method and keeping, on the row this save made.
+      const saveOwnPreps = async () => {
+        for (const p of ownPreps) {
+          try {
+            await savePrepRecipe(p.id, p.prep, ensure, barId);
+          } catch (e) {
+            warnings.push(plainDbMessage(e) ?? `${capitalize(p.name)}’s recipe wasn’t saved. Add it on its page.`);
+          }
+        }
+      };
       if (updateId) {
         // Its ranks, photos and menus stay; the spec it had is the version before, so it can be put back.
-        // ponytail: a house prep's own recipe made with the sheet isn't written here (Bring in reads none); write it on the drink's page.
         const [had, hadMethods] = await Promise.all([fetchEditableRecipes(updateId), supabase.from('item_methods').select('method_item_id, sort_order').eq('item_id', updateId)]);
         if (hadMethods.error) throw hadMethods.error;
         // Its own rows keep their notes and service decisions, and a sheet that names no method we know (it went to notes) keeps the drink's.
         await saveDrinkSpec(updateId, ontoBarLines(lines, had), methodIds.length ? methodIds : orderedMethodIds(hadMethods.data), 'Updated from Bring in');
+        // A batch read from the sheet keeps its bottle's recipe.
+        await saveOwnPreps();
         void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
         void refreshSpecs({ drinkIds: [updateId], ingredientIds: newIngredients });
         return { id: updateId, warnings, created, later };
@@ -330,14 +341,7 @@ export function useCreateDrink() {
       if (photosMissed) warnings.push(photosMissed === 1 ? 'One photo wasn’t added. Add it on the drink’s page.' : `${photosMissed} photos weren’t added. Add them on the drink’s page.`);
       if (Object.keys(draft.photos ?? {}).length) void qc.invalidateQueries({ queryKey: ['cocktail', id] });
 
-      // A prep made here: its recipe, method and keeping, on the row this save made.
-      for (const p of ownPreps) {
-        try {
-          await savePrepRecipe(p.id, p.prep, ensure, barId);
-        } catch (e) {
-          warnings.push(plainDbMessage(e) ?? `${capitalize(p.name)}’s recipe wasn’t saved. Add it on its page.`);
-        }
-      }
+      await saveOwnPreps();
 
       // Only rows this save made get a card: an existing prep keeps its own.
       for (const p of preps) {
