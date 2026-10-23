@@ -1,6 +1,7 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption, IngredientThumb, PressableScale, useDs } from '@/components/ds';
 import { GlassThumb } from '@/components/glass/GlassModelPicker';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
@@ -9,27 +10,43 @@ import type { BarGlass } from '@/hooks/useBarGlassware';
 
 const SLOTS = 6;
 
+/** A glass on the drawn shelf: one on the page, or one held until it's checked. */
+export type ShelfGlass = Pick<BarGlass, 'id' | 'glass' | 'variant'>;
+
+const many = (n: number, one: string, more: string) => (n === 1 ? `one ${one}` : `${n} ${more}`);
+
 /**
  * The bar's back bar, drawn: a shelf of empty spots that fill with the real
- * drawing of each glass picked. Past six, the last spot counts the rest.
+ * drawing of each glass picked, and one below for the bottles on the back
+ * bar. Past six, the last spot counts the rest.
  */
-export function BackBarShelf({ name, glasses }: { name: string; glasses: readonly BarGlass[] }) {
+export function BackBarShelf({ name, glasses, bottles }: { name: string; glasses: readonly ShelfGlass[]; bottles: readonly { id: string; name: string }[] }) {
   const ds = useDs();
-  const extra = glasses.length > SLOTS ? glasses.length - (SLOTS - 1) : 0;
-  const shown = glasses.slice(0, extra ? SLOTS - 1 : SLOTS);
   return (
     <View
       role="img"
-      aria-label={`${name}’s back bar, drawn: ${glasses.length === 1 ? 'one glass' : `${glasses.length} glasses`} so far`}
+      aria-label={`${name}’s back bar, drawn: ${many(glasses.length, 'glass', 'glasses')} and ${many(bottles.length, 'bottle', 'bottles')} so far`}
       style={[styles.shelf, { backgroundColor: ds.c.ground, borderColor: ds.c.line }]}
     >
+      <Shelf items={glasses} draw={(g) => <GlassThumb glass={g.glass} variant={g.variant} size={44} />} />
+      <Shelf items={bottles} draw={(b) => <IngredientThumb id={b.id} name={b.name} size={44} />} />
+    </View>
+  );
+}
+
+function Shelf<T extends { id: string }>({ items, draw }: { items: readonly T[]; draw: (item: T) => ReactNode }) {
+  const ds = useDs();
+  const extra = items.length > SLOTS ? items.length - (SLOTS - 1) : 0;
+  const shown = items.slice(0, extra ? SLOTS - 1 : SLOTS);
+  return (
+    <View style={styles.row}>
       <View style={styles.slots}>
         {Array.from({ length: SLOTS }, (_, i) => {
-          const g = shown[i];
-          if (g) {
+          const item = shown[i];
+          if (item) {
             return (
-              <View key={g.id} style={[styles.slot, { backgroundColor: ds.c.paper }]}>
-                <GlassThumb glass={g.glass} variant={g.variant} size={44} />
+              <View key={item.id} style={[styles.slot, { backgroundColor: ds.c.paper }]}>
+                {draw(item)}
               </View>
             );
           }
@@ -106,7 +123,8 @@ export function DeeperRow({ title, line, onPress }: { title: string; line: strin
 }
 
 const styles = StyleSheet.create({
-  shelf: { gap: space.sm, paddingTop: space.md, paddingBottom: space.sm, paddingHorizontal: space.md, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
+  shelf: { gap: space.md, paddingTop: space.md, paddingBottom: space.sm, paddingHorizontal: space.md, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
+  row: { gap: space.sm },
   slots: { flexDirection: 'row', gap: space.sm, justifyContent: 'center', flexWrap: 'wrap' },
   slot: { width: 44, height: 52, borderRadius: radius.control, borderCurve: 'continuous', overflow: 'hidden', justifyContent: 'flex-end' },
   empty: { borderWidth: 1.5, borderStyle: 'dashed' },

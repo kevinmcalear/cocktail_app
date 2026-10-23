@@ -1,8 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { GLASS_MODEL_SELECT, type GlassModel } from '@/hooks/useGlassModels';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
+import { heldGlassPlan } from '@/lib/whatNext';
+import { useVenueSetup, type HeldGlass } from '@/store/useVenueSetup';
 
 // A bar's glassware (bar_glassware, supabase/migrations/20261007100000_glass_variants.sql):
 // the glasses it pours into and which drawing each one is, on the bar's
@@ -128,4 +132,45 @@ export function useDeleteBarGlass(barId: string | null | undefined) {
       client.invalidateQueries({ queryKey: ['maker-glass-bars'] });
     },
   });
+}
+
+const NONE: HeldGlass[] = [];
+
+/** Glasses What next holds on this device for a venue whose page isn't checked yet (store/useVenueSetup). */
+export function useHeldGlasses(barId: string | null | undefined): HeldGlass[] {
+  return useVenueSetup((s) => (barId ? s.glasses[barId] : undefined)) ?? NONE;
+}
+
+/**
+ * Glasses picked before the venue's page was checked go onto it once it's
+ * linked and the venue can write to it (Prep): each saved as Glassware saves
+ * one, then let go from the device. Once per screen, where What next and
+ * Venue settings open; a save that fails keeps the rest for next time.
+ */
+export function useFlushHeldGlasses(barId: string | null | undefined) {
+  const held = useHeldGlasses(barId);
+  const waiting = held.length > 0;
+  const caps = useCapabilities(waiting ? barId : null).data;
+  const pageId = useBarPageId(waiting ? barId : null).data ?? null;
+  const ready = waiting && !!pageId && !!caps?.includes('prep');
+  const onPage = useBarGlassware(ready ? barId : null).data;
+  const save = useSaveBarGlass(barId, pageId);
+  const tried = useRef(false);
+  useEffect(() => {
+    if (!ready || !barId || !onPage || tried.current) return;
+    tried.current = true;
+    const { dropGlass } = useVenueSetup.getState();
+    const plan = heldGlassPlan(held, onPage);
+    for (const key of plan.skip) dropGlass(barId, key);
+    void (async () => {
+      try {
+        for (const { key, ...row } of plan.save) {
+          await save.mutateAsync(row);
+          dropGlass(barId, key);
+        }
+      } catch (e) {
+        console.warn('Held glasses wait for next time', e);
+      }
+    })();
+  }, [ready, barId, onPage, held, save]);
 }

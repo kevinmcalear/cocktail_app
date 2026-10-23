@@ -69,3 +69,83 @@ export function glassMakers(glasses: readonly { maker: string | null; maker_page
   const makers = [...new Set(glasses.map((g) => g.maker_page?.display_name ?? g.maker).filter((m): m is string => !!m))];
   return makers.length > max ? `${makers.slice(0, max).join(', ')} and more` : makers.join(', ');
 }
+
+/**
+ * Glasses held on the device before the venue's page was checked, as they
+ * go onto the page: each catalog glass once (one already there is `skip`),
+ * and the first of a type the main one when the page has no main glass of
+ * that type yet.
+ */
+export function heldGlassPlan<T extends { key: string; glass: string; model_id?: string | null }>(
+  held: readonly T[],
+  onPage: readonly { glass: string; model_id: string | null; is_default: boolean }[]
+): { save: (T & { is_default: boolean })[]; skip: string[] } {
+  const models = new Set(onPage.map((g) => g.model_id).filter(Boolean));
+  const mains = new Set(onPage.filter((g) => g.is_default).map((g) => g.glass));
+  const save: (T & { is_default: boolean })[] = [];
+  const skip: string[] = [];
+  for (const g of held) {
+    if (g.model_id && models.has(g.model_id)) {
+      skip.push(g.key);
+      continue;
+    }
+    if (g.model_id) models.add(g.model_id);
+    save.push({ ...g, is_default: !mains.has(g.glass) });
+    mains.add(g.glass);
+  }
+  return { save, skip };
+}
+
+/** The kinds the brands step starts from, as drawn: a title, and the catalog kinds under it. */
+export const BRAND_GROUPS: readonly { title: string; kinds: readonly string[] }[] = [
+  { title: 'Mezcal', kinds: ['Mezcal'] },
+  { title: 'Gin', kinds: ['Gin'] },
+  { title: 'Bitter and amaro', kinds: ['Bitter aperitivo', 'Amaro'] },
+  { title: 'Whiskey', kinds: ['Whiskey'] },
+];
+
+export interface BrandGroup<T> {
+  title: string;
+  /** The plain things ("Any mezcal"), tapped when the brand doesn't matter. */
+  kinds: T[];
+  /** What's on the back bar under it that isn't one of `kinds`. */
+  picked: T[];
+}
+
+/**
+ * The brands step's groups: the starting kinds (each with what's on the back
+ * bar under it, however deep: Del Maguey Vida is an espadín, which is a
+ * mezcal), then anything else on the back bar under its own top kind (a
+ * lager under Beer), in the order it came.
+ */
+export function brandGroups<T extends { id: string; name: string | null; generic_id?: string | null; ingredient_role?: string | null }>(
+  ingredients: readonly T[],
+  stocked: readonly string[],
+  starts: readonly { title: string; kinds: readonly string[] }[] = BRAND_GROUPS
+): BrandGroup<T>[] {
+  const byId = new Map(ingredients.map((i) => [i.id, i]));
+  const fold = (s: string | null) => (s ?? '').trim().toLowerCase();
+  const kindByName = new Map(ingredients.filter((i) => i.ingredient_role !== 'product').map((i) => [fold(i.name), i]));
+  const groups: BrandGroup<T>[] = starts.map((s) => ({ title: s.title, kinds: s.kinds.map((k) => kindByName.get(fold(k))).filter((k): k is T => !!k), picked: [] }));
+  const groupOf = new Map<string, BrandGroup<T>>();
+  for (const g of groups) for (const k of g.kinds) groupOf.set(k.id, g);
+  const up = (i: T) => (i.generic_id ? byId.get(i.generic_id) : undefined);
+  for (const id of stocked) {
+    const item = byId.get(id);
+    if (!item) continue;
+    // Up the kinds to a starting one, else to the top (ten deep at most: a loop in the data stops there).
+    let top = item;
+    let home = groupOf.get(item.id);
+    for (let k = up(item), n = 0; k && !home && n < 10; k = up(k), n++) {
+      top = k;
+      home = groupOf.get(k.id);
+    }
+    if (!home) {
+      home = { title: top.name ?? '', kinds: top === item ? [] : [top], picked: [] };
+      groups.push(home);
+      groupOf.set(top.id, home);
+    }
+    if (!home.kinds.includes(item) && !home.picked.includes(item)) home.picked.push(item);
+  }
+  return groups.filter((g) => g.kinds.length || g.picked.length);
+}

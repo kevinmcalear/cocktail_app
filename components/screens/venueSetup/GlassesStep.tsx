@@ -7,15 +7,19 @@ import { FIRST_TYPES, MORE_TYPES } from '@/components/glass/GlassModelPicker';
 import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
 import { GlassForm } from '@/components/screens/venue/GlassForm';
 import { space } from '@/constants/tokens';
-import { useBarGlassware, useDeleteBarGlass, useSaveBarGlass } from '@/hooks/useBarGlassware';
+import { useBarGlassware, useDeleteBarGlass, useHeldGlasses, useSaveBarGlass } from '@/hooks/useBarGlassware';
 import { useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
 import type { SketchGlass } from '@/lib/sketch/types';
+import { useVenueSetup } from '@/store/useVenueSetup';
 
 import { GlassShelfRows } from './GlassShelfRows';
 
 /** "coupe", "Nick & Nora", "rocks": a shape in a sentence. */
 const shapeWord = (g: SketchGlass) => (g === 'nick' ? GLASS_TYPE_LABEL.nick : GLASS_TYPE_LABEL[g].toLowerCase());
+
+/** A catalog glass as a Glassware row (the main one is decided when it's saved). */
+const fromModel = (m: GlassModel) => ({ glass: m.glass, variant: m.variant, name: m.name, maker: m.maker?.display_name ?? null, maker_profile_id: m.maker_profile_id, designer: m.designer, series: m.series, shape_note: null, model_id: m.id });
 
 /** Skip and the main button side by side, as the board pins them. */
 export function StepFooter({ skip, onSkip, label, onPress, disabled }: { skip: string; onSkip: () => void; label: string; onPress: () => void; disabled?: boolean }) {
@@ -31,13 +35,17 @@ export function StepFooter({ skip, onSkip, label, onPress, disabled }: { skip: s
  * Step 1, your glasses: search the makers' catalogs by maker, range or name,
  * or browse a shape ("Every coupe", by maker). A + puts a glass on the
  * shelf the way Venue settings' Glassware saves one (the first of its type
- * is the main one); a check takes it off. Needs the venue's page: glassware
- * hangs off it.
+ * is the main one); a check takes it off. Glassware hangs off the venue's
+ * page, so before it's checked (no `pageId`) picks are held on the device
+ * and go onto the page once it is (useFlushHeldGlasses).
  */
-export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { barId: string; pageId: string; step: string; onBack: () => void; onNext: () => void; onSkip: () => void }) {
+export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip }: { barId: string; pageId: string | null; name: string; step: string; onBack: () => void; onNext: () => void; onSkip: () => void }) {
   const chrome = useSetupChrome();
   const client = useQueryClient();
   const glasses = useBarGlassware(barId).data ?? [];
+  const held = useHeldGlasses(barId);
+  const holdGlass = useVenueSetup((s) => s.holdGlass);
+  const dropGlass = useVenueSetup((s) => s.dropGlass);
   const save = useSaveBarGlass(barId, pageId);
   const remove = useDeleteBarGlass(barId);
   const [term, setTerm] = useState('');
@@ -52,10 +60,16 @@ export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { b
   const found = useGlassModelSearch(search, null, { enabled: !shape && !describing });
   const every = useGlassModelSearch('', shape, { enabled: !!shape, limit: 100 });
 
-  const onShelf = (m: GlassModel) => pending[m.id] ?? glasses.some((g) => g.model_id === m.id);
+  const onShelf = (m: GlassModel) => pending[m.id] ?? (glasses.some((g) => g.model_id === m.id) || held.some((g) => g.model_id === m.id));
   const toggle = async (m: GlassModel) => {
     if (m.id in pending) return;
     const on = onShelf(m);
+    const kept = held.find((g) => g.model_id === m.id);
+    if (on && kept) return dropGlass(barId, kept.key);
+    if (!pageId) {
+      if (!on) holdGlass(barId, { key: m.id, ...fromModel(m), is_default: false });
+      return;
+    }
     setPending((p) => ({ ...p, [m.id]: !on }));
     setFailed(false);
     try {
@@ -63,7 +77,7 @@ export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { b
       if (on && mine) await remove.mutateAsync(mine.id);
       else if (!on) {
         const main = !glasses.some((g) => g.glass === m.glass && g.is_default);
-        await save.mutateAsync({ glass: m.glass, variant: m.variant, name: m.name, maker: m.maker?.display_name ?? null, maker_profile_id: m.maker_profile_id, designer: m.designer, series: m.series, shape_note: null, model_id: m.id, is_default: main });
+        await save.mutateAsync({ ...fromModel(m), is_default: main });
       }
       await client.refetchQueries({ queryKey: ['bar-glassware', barId] });
     } catch {
@@ -79,11 +93,12 @@ export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { b
     setDescribing(true);
   };
 
-  const count = glasses.length;
+  const count = glasses.length + held.length;
   const page = (title: string, back: () => void, footer: ReactNode, body: ReactNode) => (
     <SetupChromeProvider value={{ ...chrome, title, intro: undefined, mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack: back }}>
       <SetupPage footer={footer}>
         {body}
+        {pageId ? null : <Caption tone="muted">{`Kept with your setup. They go on ${name}’s page once we’ve checked it’s yours.`}</Caption>}
         {failed ? (
           <Caption tone="accent" role="alert">
             Couldn’t change your shelf. Check your connection and try again.
@@ -104,7 +119,11 @@ export function GlassesStep({ barId, pageId, step, onBack, onNext, onSkip }: { b
           describe
           saving={save.isPending}
           error={save.error ? 'Couldn’t save that. Check your connection and try again.' : null}
-          onSave={(row) => save.mutate(row, { onSuccess: () => setDescribing(false) })}
+          onSave={(row) => {
+            if (pageId) return save.mutate(row, { onSuccess: () => setDescribing(false) });
+            holdGlass(barId, { ...row, key: `own-${Date.now()}` });
+            setDescribing(false);
+          }}
           onCancel={() => setDescribing(false)}
         />
       </Surface>
