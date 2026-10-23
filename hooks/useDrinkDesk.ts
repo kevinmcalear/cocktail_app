@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { likeExactly, type NewBottle } from '@/lib/drinkWizard';
 import { parseMoney } from '@/lib/money';
+import type { MenuDrinkSpec } from '@/lib/menuNote';
 import { supabase } from '@/lib/supabase';
 
 /** How a bar buys one ingredient, for the cost of a drink not saved yet. */
@@ -154,4 +155,50 @@ export async function saveNewBottles(barId: string, bottles: readonly { itemId: 
     }
   }
   return warnings;
+}
+
+/**
+ * The other drinks on the menu a new drink is going on, with their specs as
+ * the taste reads them (lib/menuNote): what the desktop page's one line about
+ * the menu compares it with. Drinks with no spec (a beer, a wine) are left out.
+ * ponytail: four reads, fine for a menu of a few dozen drinks.
+ */
+export function useMenuDrinkSpecs(sectionId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['menu-drink-specs', sectionId],
+    enabled: !!sectionId,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<MenuDrinkSpec[]> => {
+      const section = await supabase.from('menu_sections').select('menu_id').eq('id', sectionId!).maybeSingle();
+      if (section.error) throw section.error;
+      if (!section.data) return [];
+      const onMenu = await supabase.from('menu_drinks').select('item_id').eq('menu_id', section.data.menu_id);
+      if (onMenu.error) throw onMenu.error;
+      const drinkIds = [...new Set((onMenu.data ?? []).flatMap((r) => (r.item_id ? [r.item_id] : [])))];
+      if (!drinkIds.length) return [];
+      const [drinks, recipes] = await Promise.all([
+        supabase.from('items').select('id, name').in('id', drinkIds),
+        supabase.from('app_recipe_presentation').select('recipe_item_id, ingredient_item_id, amount, unit').in('recipe_item_id', drinkIds).limit(2000),
+      ]);
+      if (drinks.error) throw drinks.error;
+      if (recipes.error) throw recipes.error;
+      const ingIds = [...new Set((recipes.data ?? []).flatMap((r) => (r.ingredient_item_id ? [r.ingredient_item_id] : [])))];
+      const ings = ingIds.length ? await supabase.from('items').select('id, name, generic_id').in('id', ingIds) : { data: [], error: null };
+      if (ings.error) throw ings.error;
+      const genericIds = [...new Set((ings.data ?? []).flatMap((i) => (i.generic_id ? [i.generic_id] : [])))];
+      const generics = genericIds.length ? await supabase.from('items').select('id, name').in('id', genericIds) : { data: [], error: null };
+      if (generics.error) throw generics.error;
+      const ing = new Map((ings.data ?? []).map((i) => [i.id, i]));
+      const generic = new Map((generics.data ?? []).map((g) => [g.id, g.name]));
+      return (drinks.data ?? []).flatMap((d) => {
+        const lines = (recipes.data ?? [])
+          .filter((r) => r.recipe_item_id === d.id && r.ingredient_item_id && ing.has(r.ingredient_item_id))
+          .map((r) => {
+            const i = ing.get(r.ingredient_item_id!)!;
+            return { name: i.name, genericName: (i.generic_id && generic.get(i.generic_id)) || null, amount: r.amount, unit: r.unit };
+          });
+        return lines.length ? [{ name: d.name, lines }] : [];
+      });
+    },
+  });
 }
