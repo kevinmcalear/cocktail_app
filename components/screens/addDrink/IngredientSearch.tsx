@@ -7,12 +7,14 @@ import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useIngredientUse } from '@/hooks/useIngredientUse';
 import { typedUnit, type WizardPick } from '@/lib/drinkWizard';
 import { bottlesOfKind, closestIngredients, nearIngredient, sameIngredient, searchIngredients, type IngredientAlias } from '@/lib/ingredientNames';
+import { readHouse, type HouseReading } from '@/lib/makeItHouse';
 import { typedPour, type TypedPour } from '@/lib/paste';
 import { guessKind, PREP_KINDS } from '@/lib/prepKinds';
 import { looksMadeInHouse } from '@/lib/techniques/makeIt';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { KindResults } from './KindResults';
+import { TypedLineCard } from './TypedLineCard';
 
 // The pill's accent border shows focus. Chrome draws `outline-style: auto` at any width, so it's switched off (as SearchField does).
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
@@ -64,6 +66,8 @@ export interface IngredientSearchProps {
   backBar?: ReadonlySet<string>;
   /** A kind typed in full (mezcal) shows the plain one first, then its bottles under "Pick a brand". For a drink's lines. */
   brands?: boolean;
+  /** "60 ml coconut fat-washed bacardi": says what it read, then adds the bottle to make house (check: ask how first). */
+  onHouse?: (bottle: WizardPick, reading: HouseReading<CatalogIngredient>, check: boolean, pour?: TypedPour) => void;
 }
 
 /**
@@ -74,7 +78,7 @@ export interface IngredientSearchProps {
  * (your own version when the name exists). Return takes the top hit.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands, onHouse } = props;
   const ds = useDs();
   const [text, setQueryState] = useState('');
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
@@ -97,6 +101,8 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const bottles = typed ? bottlesOfKind(typed, ingredients, have) : [];
   const kindView = typed && bottles.length ? typed : null;
   const listed = kindView ? results.filter((r) => r.id !== kindView.id && !bottles.includes(r)) : results;
+  // A bottle you have, made house ("coconut fat-washed bacardi"): what it read sits over the catalog's own matches.
+  const reading = onHouse && q && !loading ? readHouse(query, ingredients, { aliases, coreIds, have }) : null;
 
   // Any new name can be made in house; one that sounds like a prep (a shrub, a cordial, a clarified juice), not a bought bottle, offers it first.
   const prepLike = looksMadeInHouse(query);
@@ -188,7 +194,17 @@ export function IngredientSearch(props: IngredientSearchProps) {
         ) : null}
       </View>
 
-      {pour && q ? <Caption tone="muted">{`${pour.amount} ${typedUnit(q, pour.unit, getPreferredUnit())} of the one you pick`}</Caption> : null}
+      {pour && q && !reading ? <Caption tone="muted">{`${pour.amount} ${typedUnit(q, pour.unit, getPreferredUnit())} of the one you pick`}</Caption> : null}
+      {reading ? (
+        <TypedLineCard
+          reading={reading}
+          amount={pour ? `${pour.amount} ${typedUnit(reading.base, pour.unit, getPreferredUnit())}` : null}
+          onAdd={(bottle, check) => {
+            onHouse?.(bottle, reading, check, pour ?? undefined);
+            done();
+          }}
+        />
+      ) : null}
       {q && kindView ? <KindResults key={kindView.id} kind={kindView} bottles={bottles} have={have} haveLabel={backBar ? 'On your back bar' : 'On your shelf'} onPick={pick} /> : null}
       {q && (!kindView || listed.length || loading || makeRow) ? (
         <View role="list" style={[styles.results, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
