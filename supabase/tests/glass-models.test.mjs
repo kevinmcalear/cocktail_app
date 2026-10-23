@@ -167,16 +167,30 @@ describe('the catalog', () => {
 });
 
 describe('a venue\'s glass names its model', () => {
-  test('picking one fills what the row leaves empty', async () => {
+  test('picking one makes the row that glass; its maker, series and designer stay on the model', async () => {
     const { data, error } = await users.admin.client.from('bar_glassware')
-      .insert({ profile_id: ids.barProfile, glass: 'rocks', model_id: ids.coupe })
+      .insert({ profile_id: ids.barProfile, glass: 'rocks', model_id: ids.coupe, maker: 'Typed maker', series: 'Typed series' })
       .select('glass, variant, name, series, designer, maker, maker_profile_id').single();
     assert.ifError(error);
     assert.deepEqual(data, {
-      glass: 'coupe', variant: 'coupe_saucer', name: `Coupe ${run}`, series: 'Series', designer: 'Designer',
-      maker: `glassmaker ${run}`, maker_profile_id: ids.maker,
+      glass: 'coupe', variant: 'coupe_saucer', name: `Coupe ${run}`, series: null, designer: null, maker: null, maker_profile_id: null,
     });
     ids.barCoupe = (await service.from('bar_glassware').select('id').eq('profile_id', ids.barProfile).eq('glass', 'coupe').single()).data.id;
+  });
+
+  test('a row that names a model can\'t take its facts back (20261103230000)', async () => {
+    const { error } = await users.admin.client.from('bar_glassware').update({ designer: 'Someone', maker_profile_id: ids.maker }).eq('id', ids.barCoupe);
+    assert.ifError(error);
+    const { rows } = await db.query('SELECT designer, maker_profile_id FROM public.bar_glassware WHERE id = $1', [ids.barCoupe]);
+    assert.deepEqual(rows[0], { designer: null, maker_profile_id: null });
+    // And with triggers off (in a transaction rolled back), the check refuses it.
+    await db.query('BEGIN');
+    try {
+      await db.query("SET LOCAL session_replication_role = 'replica'");
+      await assert.rejects(db.query("UPDATE public.bar_glassware SET series = 'x' WHERE id = $1", [ids.barCoupe]), /bar_glassware_model_holds_maker/);
+    } finally {
+      await db.query('ROLLBACK');
+    }
   });
 
   test('the bar\'s own words and drawing win', async () => {

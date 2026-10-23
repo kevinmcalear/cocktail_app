@@ -21,6 +21,7 @@ const ALWAYS = new Set([
   'scripts/check-local-migrations.mjs',
   'scripts/database-ci.mjs',
   'scripts/security-shard.mjs',
+  'scripts/db-snapshot.mjs',
   // Checked against the migrations by regenerating it (npm run gen:types).
   'types/database.ts',
 ]);

@@ -69,22 +69,29 @@ export interface MakerGlassBar {
   glasses: string[];
 }
 
-/** The bars that pour into a glass maker's glasses (bar_glassware.maker_profile_id). */
+/** The bars that pour into a glass maker's glasses: ones it names, and its models a bar picked (bar_glassware). */
 export function useMakerGlassBars(profileId: string | null | undefined) {
   const userId = useUserId();
   return useQuery({
     queryKey: ['maker-glass-bars', profileId, userId],
     enabled: !!profileId && !!userId,
     queryFn: async (): Promise<MakerGlassBar[]> => {
-      const { data, error } = await supabase
-        .from('bar_glassware')
-        .select('name, glass, bar:profiles!bar_glassware_profile_id_fkey(id, handle, display_name)')
-        .eq('maker_profile_id', profileId!)
-        .limit(200);
-      if (error) throw error;
-      type Row = { name: string | null; glass: string; bar: { id: string; handle: string; display_name: string } | null };
+      const BAR = 'bar:profiles!bar_glassware_profile_id_fkey(id, handle, display_name)';
+      const [named, models] = await Promise.all([
+        supabase.from('bar_glassware').select(`id, name, glass, ${BAR}`).eq('maker_profile_id', profileId!).limit(200),
+        supabase
+          .from('bar_glassware')
+          .select(`id, name, glass, ${BAR}, model:glass_models!bar_glassware_model_id_fkey!inner(maker_profile_id)`)
+          .eq('model.maker_profile_id', profileId!)
+          .limit(200),
+      ]);
+      if (named.error) throw named.error;
+      if (models.error) throw models.error;
+      type Row = { id: string; name: string | null; glass: string; bar: { id: string; handle: string; display_name: string } | null };
+      const rows = new Map<string, Row>();
+      for (const r of [...(named.data ?? []), ...(models.data ?? [])] as unknown as Row[]) rows.set(r.id, r);
       const bars = new Map<string, MakerGlassBar>();
-      for (const r of (data ?? []) as unknown as Row[]) {
+      for (const r of rows.values()) {
         if (!r.bar) continue;
         const bar = bars.get(r.bar.id) ?? { ...r.bar, glasses: [] };
         bar.glasses.push(r.name ?? r.glass);

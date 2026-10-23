@@ -1,0 +1,23 @@
+{
+ "maker": "svev",
+ "models": [
+  {
+   "name": "Skye Tumbler",
+   "series": "Skye",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250 ml",
+   "height_mm": 78,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://svevglass.com/products/skye",
+   "source_urls": [
+    "https://svevglass.com/products/skye",
+    "https://svevglass.com/"
+   ]
+  }
+ ]
+}
