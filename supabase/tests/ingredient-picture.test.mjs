@@ -206,6 +206,32 @@ describe('catalogue and shared items stay drawn', () => {
   });
 });
 
+describe('signed out', () => {
+  // items_select is for signed-in readers only, so a visitor reads no ingredient
+  // rows, and so no photo. What matters here: the read works (every function
+  // the view calls is granted to anon) instead of failing the whole query.
+  test('a visitor reads picture and picture_url without an error, and sees no photo', async () => {
+    const visitor = createClient(status.API_URL, status.ANON_KEY, clientOptions);
+    for (const id of [ids.shrub, ids.homeSyrup, ids.catalogue]) {
+      const { data, error } = await visitor.from('app_item_presentation').select('picture, picture_url').eq('id', id);
+      assert.ifError(error);
+      assert.deepEqual(data, []);
+    }
+    const all = await visitor.from('app_item_presentation').select('id, picture, picture_url').limit(5);
+    assert.ifError(all.error);
+  });
+
+  test('the anon role plans the view with no missing EXECUTE grant', async () => {
+    await db.query('BEGIN');
+    try {
+      await db.query('SET LOCAL ROLE anon');
+      await db.query('SELECT count(picture), count(picture_url) FROM public.app_item_presentation');
+    } finally {
+      await db.query('ROLLBACK');
+    }
+  });
+});
+
 describe("a home cook's own ingredient", () => {
   test('its maker sets a photo; nobody else can', async () => {
     assert.ifError((await setPicture('homeCook', ids.homeSyrup, 'photo', ids.homePhoto)).error);

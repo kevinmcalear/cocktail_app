@@ -55,8 +55,13 @@ CREATE TRIGGER guard_item_picture BEFORE INSERT OR UPDATE OF picture ON public.i
 CREATE TRIGGER guard_item_picture BEFORE INSERT OR UPDATE OF is_picture ON public.item_images
     FOR EACH ROW EXECUTE FUNCTION private.guard_item_picture();
 
--- The chosen photo's URL. The view calls it only for rows the caller can
--- read, so it reads past item_images' row checks (one index lookup a row).
+-- The chosen photo's URL, as an ingredient shows it: only on a bar's or a
+-- person's own ingredient (shared ones read as drawn), and while the choice is
+-- Drawing or None only to whoever can edit it. Old item_images links are never
+-- marked is_picture, so they never come back. The view calls it only for rows
+-- the caller can already read; it reads past item_images' row checks (an
+-- index lookup a row) and, as a definer, calls can_edit_item for signed-out
+-- readers too, who have no EXECUTE on it.
 CREATE OR REPLACE FUNCTION private.item_picture_url(p_item_id uuid)
 RETURNS text
 LANGUAGE sql
@@ -64,8 +69,14 @@ STABLE
 SECURITY DEFINER
 SET search_path TO ''
 AS $$
-  SELECT im.url FROM public.item_images ii JOIN public.images im ON im.id = ii.image_id
-  WHERE ii.item_id = p_item_id AND ii.is_picture
+  SELECT im.url
+  FROM public.items i
+  JOIN public.item_images ii ON ii.item_id = i.id AND ii.is_picture
+  JOIN public.images im ON im.id = ii.image_id
+  WHERE i.id = p_item_id
+    AND i.item_type = 'ingredient'
+    AND (i.bar_id IS NOT NULL OR i.created_by IS NOT NULL)
+    AND (i.picture = 'photo' OR private.can_edit_item(i.id))
   LIMIT 1;
 $$;
 REVOKE ALL ON FUNCTION private.item_picture_url(uuid) FROM PUBLIC;
@@ -101,9 +112,11 @@ GRANT EXECUTE ON FUNCTION public.set_item_picture(uuid, public.item_picture, uui
 
 -- As 20261101200000_role_permissions_per_role.sql, with picture and
 -- picture_url at the end. A shared item reads as drawn whatever it holds.
--- picture_url is the chosen photo. While the choice is Drawing or None it is
--- kept for whoever can edit the ingredient, so the edit page can offer it
--- again; everyone else sees it only while it's the picture.
+-- picture_url is the chosen photo (private.item_picture_url decides who sees
+-- it). While the choice is Drawing or None it is kept for whoever can edit
+-- the ingredient, so the edit page can offer it again; everyone else sees it
+-- only while it's the picture. Every function the view calls is granted to
+-- anon, so signed-out pages read it too.
 CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker" = true) AS
  SELECT c.id,
     c.name,
@@ -143,8 +156,7 @@ CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker"
     c.method_ice_id,
     c.ice_build,
     CASE WHEN c.bar_id IS NULL AND c.created_by IS NULL THEN 'drawing'::public.item_picture ELSE c.picture END AS picture,
-    CASE WHEN c.item_type = 'ingredient' AND (c.bar_id IS NOT NULL OR c.created_by IS NOT NULL) AND (c.picture = 'photo' OR private.can_edit_item(c.id))
-         THEN private.item_picture_url(c.id) END AS picture_url
+    CASE WHEN c.item_type = 'ingredient' AND (c.bar_id IS NOT NULL OR c.created_by IS NOT NULL) THEN private.item_picture_url(c.id) END AS picture_url
    FROM public.items c
      LEFT JOIN public.bars b ON c.bar_id = b.id
      LEFT JOIN public.user_bars ub ON ub.bar_id = c.bar_id AND ub.user_id = auth.uid()
