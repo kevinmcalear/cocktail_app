@@ -19,6 +19,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { DrinkHero } from '../DrinkHero';
+import { SketchColourSheet } from '../SketchColour';
 import { ShotList } from '../ShotList';
 import { AccessSheet, EditBottomBar, EditMoreMenu, GrowingField, PhotosSheet, type DrinkEditor, type MoreChoice } from './EditParts';
 import { EditSpecList } from './EditSpecList';
@@ -84,7 +85,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
 
   const [pad, setPad] = useState<number | null>(null);
   const [picking, setPicking] = useState<{ swap: number | null } | null>(null);
-  const [sheet, setSheet] = useState<MoreChoice | 'calc' | 'more' | null>(null);
+  const [sheet, setSheet] = useState<MoreChoice | 'calc' | 'more' | 'colour' | null>(null);
 
   // A new ingredient made from here comes back onto this drink's spec.
   const { recentlyCreatedItem, setRecentlyCreatedItem } = useAppStore();
@@ -140,8 +141,9 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
 
   const hero = (height: number) => (
     <View>
-      <DrinkHero name={editor.name || cocktail?.name || ''} pictures={pictures} glass={null} itemId={id} height={height} fade={!wide} />
-      <View style={styles.photoButton}>
+      <DrinkHero name={editor.name || cocktail?.name || ''} pictures={pictures} glass={null} itemId={id} height={height} fade={!wide} onColour={() => setSheet('colour')} />
+      {/* Level with Colour on the drawing (DrinkHero's buttons sit clear of the fade). */}
+      <View style={[styles.photoButton, { bottom: wide ? space.lg : space.xxl + space.md }]}>
         <GlassButton accessibilityLabel="Add a photo" icon="camera" label={pictures.length ? 'Photos' : 'Add a photo'} onMedia onPress={() => (pictures.length ? setSheet('photos') : void editor.pickImage())} />
       </View>
     </View>
@@ -262,6 +264,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
       <EditMoreMenu open={sheet === 'more'} onClose={() => setSheet(null)} canDelete={!credited} dirty={editor.isDirty} draft={!!draft} onPick={onMore} />
       {sheet === 'photos' ? <PhotosSheet editor={editor} onClose={() => setSheet(null)} /> : null}
       {sheet === 'access' ? <AccessSheet editor={editor} onClose={() => setSheet(null)} /> : null}
+      {sheet === 'colour' && id ? <SketchColourSheet visible onClose={() => setSheet(null)} itemId={id} name={editor.name || cocktail?.name || ''} /> : null}
       {sheet === 'calc' ? <ToolsSheet visible onClose={() => setSheet(null)} tool="prep" prepName={editor.name} scheme={ds.scheme} /> : null}
     </View>
   );
@@ -269,7 +272,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  photoButton: { position: 'absolute', right: space.lg, bottom: space.xl },
+  photoButton: { position: 'absolute', right: space.lg },
   phoneBody: { gap: space.xl, marginTop: -space.lg },
   name: { ...type.display, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.xs },
   origin: { ...type.body, fontFamily: fontFamilies.body, marginTop: -space.md },
