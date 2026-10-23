@@ -70,6 +70,8 @@ export interface WizardDraft {
   glass: WizardPick | null;
   /** How the glass is drawn ('martini_pony', lib/sketch/geometry.ts); null is the bar's glass or the default. Saved as items.sketch_variant. */
   glassVariant?: string | null;
+  /** The real glass (glass_models), when the shape picked is one of the venue's glasses that names one. Saved as items.glass_model_id. */
+  glassModelId?: string | null;
   ice: WizardPick | null;
   /** The ice it's made with ("blended with pebble"), when it isn't the one it's served over (items.method_ice_id). */
   methodIce?: WizardPick | null;
