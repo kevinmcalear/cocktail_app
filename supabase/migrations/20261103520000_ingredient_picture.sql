@@ -110,8 +110,8 @@ $$;
 REVOKE ALL ON FUNCTION public.set_item_picture(uuid, public.item_picture, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.set_item_picture(uuid, public.item_picture, uuid) TO authenticated;
 
--- As 20261101200000_role_permissions_per_role.sql, with picture and
--- picture_url at the end. A shared item reads as drawn whatever it holds.
+-- As 20261103100000_one_drink_price.sql, with only picture and picture_url
+-- added at the end. A shared item reads as drawn whatever it holds.
 -- picture_url is the chosen photo (private.item_picture_url decides who sees
 -- it). While the choice is Drawing or None it is kept for whoever can edit
 -- the ingredient, so the edit page can offer it again; everyone else sees it
@@ -149,7 +149,7 @@ CREATE OR REPLACE VIEW "public"."app_item_presentation" WITH ("security_invoker"
     c.capacity_ml,
     c.iced_capacity_ml,
     c.ice_per_serve_g,
-    COALESCE(c.price_minor, (SELECT cd.price_minor FROM public.credited_drink_details cd WHERE cd.item_id = c.id)) AS price_minor,
+    c.price_minor,
     c.is_core,
     c.ingredient_role,
     c.made_from_id,
