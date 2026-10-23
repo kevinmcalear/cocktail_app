@@ -104,6 +104,9 @@ export const BRAND_GROUPS: readonly { title: string; kinds: readonly string[] }[
   { title: 'Whiskey', kinds: ['Whiskey'] },
 ];
 
+/** "Any mezcal", "Any bitter aperitivo": the plain thing, when the brand doesn't matter. */
+export const anyKind = (name: string) => `Any ${name.charAt(0).toLowerCase()}${name.slice(1)}`;
+
 export interface BrandGroup<T> {
   title: string;
   /** The plain things ("Any mezcal"), tapped when the brand doesn't matter. */

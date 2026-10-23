@@ -9,8 +9,7 @@ import { space } from '@/constants/tokens';
 import { useBackBarStock, useStockMutations } from '@/hooks/useBackBar';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { isStockable } from '@/lib/backBar';
-import { kindWords } from '@/lib/ingredientNames';
-import { brandGroups } from '@/lib/whatNext';
+import { anyKind, brandGroups } from '@/lib/whatNext';
 
 import { StepFooter } from './GlassesStep';
 
@@ -88,7 +87,7 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
                 {g.title}
               </Caption>
               <View role="group" aria-label={g.title} style={styles.wrap}>
-                {g.kinds.map((k) => chip(k, `Any ${kindWords(k.name ?? '')}`))}
+                {g.kinds.map((k) => chip(k, anyKind(k.name ?? '')))}
                 {g.picked.map((p) => chip(p, p.name ?? ''))}
               </View>
             </View>

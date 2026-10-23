@@ -1,7 +1,7 @@
 // Checks for lib/whatNext.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { brandGroups, classicsToAdd, glassMakers, groupGlasses, haveClassics, heldGlassPlan, setupLine, topClassics } from './whatNext';
+import { anyKind, brandGroups, classicsToAdd, glassMakers, groupGlasses, haveClassics, heldGlassPlan, setupLine, topClassics } from './whatNext';
 
 const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
 
@@ -101,5 +101,8 @@ assert.deepEqual(shape(brandGroups(ing, ['vida', 'gin', 'irish', 'peroni', 'loop
   ['Beer', ['beer'], ['peroni']],
   ['Loop', [], ['loop']],
 ], 'deep brands find their group, the plain one shows as its kind, a loop in the data stops');
+
+assert.equal(anyKind('Bitter aperitivo'), 'Any bitter aperitivo');
+assert.equal(anyKind('Mezcal'), 'Any mezcal');
 
 console.log('whatNext checks passed');
