@@ -109,6 +109,12 @@ describe('bottle catalog', () => {
     // A deadlock with one of them (40P01) is still possible: start over then.
     for (let attempt = 1; ; attempt++) {
       await db.query('BEGIN');
+      // Each file ends with a loop that breaks generic_id cycles. Against the
+      // full catalog the planner runs its ORDER BY ... LIMIT 1 as a nested loop
+      // that rescans the whole walk once per item: 45s a file, six times over
+      // (7 to 22 minutes in CI). Plans never change what SQL returns, so the
+      // rerun is the same check without them: about 3s.
+      await db.query('SET LOCAL enable_nestloop = off');
       try {
         for (const m of MIGRATIONS) await db.query(readFileSync(m, 'utf8'));
         const once = await one(snapshot);

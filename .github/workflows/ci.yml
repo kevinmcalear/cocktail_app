@@ -77,11 +77,10 @@ jobs:
     # Pushes to main always run it.
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.database != 'false') }}
     runs-on: ubuntu-latest
-    # The slowest shard is bottle-catalog alone: 7 to 22 minutes after a 4 to
-    # 14 minute rebuild (runners vary up to threefold). test:security passes
-    # --test-force-exit, so an open database handle fails the file instead of
-    # holding the job.
-    timeout-minutes: 60
+    # A shard's tests take 2 to 7 minutes after a 4 to 14 minute rebuild
+    # (runners vary up to threefold). test:security passes --test-force-exit,
+    # so an open database handle fails the file instead of holding the job.
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -131,7 +130,7 @@ jobs:
           }
       - run: supabase db lint --level warning --fail-on error
       - run: npm run test:security
-        timeout-minutes: 45
+        timeout-minutes: 20
         env:
           SECURITY_SHARD: ${{ matrix.shard }}/3
 
