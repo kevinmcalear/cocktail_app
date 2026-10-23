@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, Headline, PressableScale, Segmented, Spec, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { useSetServes, useSetVenue, type RunSheetData } from '@/hooks/useRunSheet';
+import { useSetDrinkParty, useSetServes, useSetVenue, type RunSheetData } from '@/hooks/useRunSheet';
 import { MAX_SERVES } from '@/lib/batch';
 import { clampServes, type RunDrink, type RunParty } from '@/lib/runSheet';
 import { nightLine } from '@/lib/runSheetText';
 
+import { GuestCredit, GuestPageNote, WhoseTag } from './GuestCredit';
+import { usePartyLooks } from './parts';
 import { PartySheet } from './PartySheet';
 
 /** A serves box: type a number (1 to 6,969) or step it with − and +. */
@@ -60,13 +62,14 @@ const WHERE = [
   { value: 'theirs', label: 'At their bar' },
 ] as const;
 
-/** One bar on the night card: what it is to us, its name, and maybe a button. */
-function BarRow({ label, name, action }: { label: string; name: string | null; action?: { label: string; a11y: string; onPress: () => void } }) {
+/** One bar on the night card: what it is to us, its name, a note under it, and maybe a button. */
+function BarRow({ label, name, note, action }: { label: string; name: string | null; note?: ReactNode; action?: { label: string; a11y: string; onPress: () => void } }) {
   return (
     <View style={[styles.between, styles.party]}>
       <View style={{ flex: 1 }}>
         <Caption tone="muted">{label}</Caption>
         <Body tone={name ? 'ink' : 'muted'}>{name ?? 'Nobody yet'}</Body>
+        {note}
       </View>
       {action ? <Button label={action.label} size="sm" variant="secondary" accessibilityLabel={action.a11y} onPress={action.onPress} /> : null}
     </View>
@@ -79,6 +82,7 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
   const setServes = useSetServes(data.menu.id);
   const [same, setSame] = useState('100');
   const setVenue = useSetVenue(data.menu.id);
+  const setDrinkParty = useSetDrinkParty(data.menu.id);
   const [editing, setEditing] = useState<{ kind: 'guest' | 'brand'; party: RunParty | null; venue?: boolean } | null>(null);
   const guest = data.parties.find((p) => p.kind === 'guest') ?? null;
   const atTheirs = !!guest?.isVenue;
@@ -93,6 +97,10 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
   const brands = data.parties.filter((p) => p.kind === 'brand');
   const night = nightLine(data.menu.startsAt, data.menu.endsAt);
   const [day, hours] = night ? night.split(' · ') : [null, null];
+  const looks = usePartyLooks(host, data.parties);
+  const guestColour = looks.find((l) => l.id === guest?.id)?.colour ?? ds.c.muted;
+  const guestNote = guest ? <GuestPageNote guest={guest} guestColour={guestColour} /> : undefined;
+  const whose = guest ? ` Tap Ours or ${guest.name}’s on a drink to say whose it is.` : '';
 
   return (
     <View style={{ gap: space.xl }}>
@@ -112,22 +120,23 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
         </View>
         {atTheirs && guest ? (
           <>
-            <BarRow label="Their bar" name={guest.name} action={{ ...changeGuest, a11y: 'Change the bar we’re going to' }} />
+            <BarRow label="Their bar" name={guest.name} note={guestNote} action={{ ...changeGuest, a11y: 'Change the bar we’re going to' }} />
             <BarRow label="Going there" name={`${host} (us)`} />
           </>
         ) : (
           <>
             <BarRow label="Our bar" name={host} />
-            <BarRow label="Coming to us" name={guest?.name ?? null} action={{ ...changeGuest, a11y: guest ? 'Change the bar coming to us' : 'Add the bar coming to us' }} />
+            <BarRow label="Coming to us" name={guest?.name ?? null} note={guestNote} action={{ ...changeGuest, a11y: guest ? 'Change the bar coming to us' : 'Add the bar coming to us' }} />
           </>
         )}
+        {guest ? <GuestCredit guest={guest} drinks={data.drinks} menuName={data.menu.name} day={day} onLink={changeGuest.onPress} /> : null}
         {guest ? (
           <Caption tone="muted">
-            {atTheirs
+            {(atTheirs
               ? `Everything starts with ${guest.name} except the house preps for your drinks and a brand’s own bottles. Change any of it on Who.`
-              : data.drinks.some((d) => d.byGuest)
+              : data.drinks.some((d) => d.partyId === guest.id)
                 ? `Everything starts with you except ${guest.name}’s house preps and a brand’s own bottles. Change any of it on Who.`
-                : `Everything starts with you. Give ${guest.name} what they bring on Who.`}
+                : `Everything starts with you. Give ${guest.name} what they bring on Who.`) + whose}
           </Caption>
         ) : null}
         <View style={{ gap: space.sm }}>
@@ -165,9 +174,14 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
         </View>
         {data.drinks.map((d) => (
           <View key={d.id} style={[styles.drink, { backgroundColor: ds.c.surface }]}>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>{d.name}</Body>
-              <Caption tone="muted" numberOfLines={1}>{summaries[d.id] || (d.itemType === 'cocktail' ? 'No spec yet' : 'One a serve')}</Caption>
+            <View style={{ flex: 1, minWidth: 0, gap: space.xs + 2 }}>
+              <View>
+                <Body style={{ fontFamily: fontFamilies.bodySemiBold }}>{d.name}</Body>
+                <Caption tone="muted" numberOfLines={1}>{summaries[d.id] || (d.itemType === 'cocktail' ? 'No spec yet' : 'One a serve')}</Caption>
+              </View>
+              {guest ? (
+                <WhoseTag drink={d} guest={guest} guestColour={guestColour} onToggle={() => setDrinkParty.mutate({ menuDrinkId: d.id, partyId: d.partyId === guest.id ? null : guest.id })} />
+              ) : null}
             </View>
             <Stepper drink={d} onSet={(serves) => setServes.mutate({ menuDrinkIds: [d.id], serves })} />
           </View>

@@ -9,7 +9,7 @@ const sheet = buildRunSheet({
   hostName: 'Caretaker’s <Cottage>',
   drinks: [
     {
-      id: 'neg', itemId: 'negroni', name: 'Negroni & Co', itemType: 'cocktail', serves: 200, byGuest: false, icePerServeG: null, ice: null,
+      id: 'neg', itemId: 'negroni', name: 'Negroni & Co', itemType: 'cocktail', serves: 200, partyId: null, icePerServeG: null, ice: null,
       glass: { id: 'rocks', name: 'Rocks glass' },
       recipe: [{ ingredientId: 'gin', name: 'Gin', amount: 30, unit: 'ml' }, { ingredientId: 'twist', name: 'Orange twist', amount: 1, unit: 'each' }],
     },

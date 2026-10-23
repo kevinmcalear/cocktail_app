@@ -73,9 +73,12 @@ export function runSheetHtml(sheet: RunSheet, menu: { name: string; startsAt: st
 export function partyListHtml(list: PartyList): string {
   const rows = list.needs.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${esc(needAmount(x))}</td></tr>`).join('');
   const others = list.others.length ? `<h2>Everyone else</h2>${list.others.map((o) => `<p>${esc(o)}</p>`).join('')}` : '';
+  const drinkRows = list.drinks.map((d) => `<tr><td>${esc(d.name)}${d.makes.length ? `<div class="muted">You make ${esc(d.makes.join(', '))}</div>` : ''}</td><td class="num">${d.serves.toLocaleString('en-GB')}</td></tr>`);
+  const drinks = drinkRows.length ? `<h2>Your drinks</h2><table>${drinkRows.join('')}</table>` : '';
+  const claim = list.claim ? `<p class="muted">${esc(list.claim)}</p>` : '';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(list.title)}</title><style>${CSS}</style></head><body>
 <header><div class="eyebrow">${esc(list.eyebrow)}</div><h1>${esc(list.title)}</h1><div>${esc(list.when || 'No date yet')}</div><div class="muted">${esc(list.from)}</div></header>
-<h2>${esc(list.ask)}</h2><table>${rows}</table>${others}
+${drinks}${rows ? `<h2>${esc(list.ask)}</h2><table>${rows}</table>` : ''}${others}${claim}
 <footer class="muted">Questions? Reply to whoever sent you this.</footer>
 </body></html>`;
 }

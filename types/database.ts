@@ -3045,6 +3045,7 @@ export type Database = {
           item_id: string | null
           menu_id: string | null
           menu_section_id: string | null
+          party_id: string | null
           serves: number | null
           sort_order: number | null
           template_section_id: string | null
@@ -3055,6 +3056,7 @@ export type Database = {
           item_id?: string | null
           menu_id?: string | null
           menu_section_id?: string | null
+          party_id?: string | null
           serves?: number | null
           sort_order?: number | null
           template_section_id?: string | null
@@ -3065,6 +3067,7 @@ export type Database = {
           item_id?: string | null
           menu_id?: string | null
           menu_section_id?: string | null
+          party_id?: string | null
           serves?: number | null
           sort_order?: number | null
           template_section_id?: string | null
@@ -3076,6 +3079,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "menu_sections"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_drinks_party_fkey"
+            columns: ["party_id", "menu_id"]
+            isOneToOne: false
+            referencedRelation: "menu_run_parties"
+            referencedColumns: ["id", "menu_id"]
           },
           {
             foreignKeyName: "new_menu_drinks_item_id_fkey"
