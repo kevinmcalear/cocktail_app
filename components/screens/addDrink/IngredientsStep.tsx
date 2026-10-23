@@ -2,10 +2,11 @@ import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
+import type { TellUsAbout } from '@/components/feedback/TellUs';
 import { radius, space } from '@/constants/tokens';
 import { useExpiring } from '@/hooks/useExpiring';
 import { perDrinkLines } from '@/lib/batchLines';
-import { COMMON_INGREDIENTS, guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
+import { guessUnit, newLine, pickByName, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { dropIndex } from '@/lib/dropIndex';
 import { houseNudge, houseWays } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
@@ -19,18 +20,16 @@ import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { BatchLineRow } from './BatchLineRow';
 import { DragRow } from './DragRow';
-import { BalanceCard, CloseToClassic, GoesWith } from './GoesWith';
+import { BalanceCard } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
+import { IngredientSuggestions } from './IngredientSuggestions';
 import { LineRow } from './LineRow';
 import { MakeItHouseSheet } from './MakeItHouseSheet';
 import { PrepBuilder } from './prep/PrepBuilder';
-import { StartFromClassic } from './StartFromClassic';
 import type { LineStock } from './StockToggle';
 import { useBatchDrop } from './useBatchDrop';
-import { WizardChip, WizardNotice } from './WizardChrome';
+import { WizardNotice } from './WizardChrome';
 
-/** How many quick adds show under the field. */
-const QUICK = 8;
 /** How long "Removed … Undo", and "Shrub added", stay. */
 const UNDO_MS = 10000;
 
@@ -51,6 +50,8 @@ interface IngredientsStepProps extends StepProps {
   lineDetail?: (line: WizardLine) => string | null;
   /** Each bottle line's back bar (or shelf) toggle, and its hint and note (StockToggle). */
   stock?: LineStock;
+  /** Make it house's "Tell us": the drink and bar a note would come from. */
+  tellUs?: TellUsAbout;
 }
 
 /**
@@ -59,7 +60,7 @@ interface IngredientsStepProps extends StepProps {
  * goes with what's in it, a classic to start from, and a one-tap fix when
  * it's out of balance. Each new line starts at a likely pour.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, stock }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, stock, tellUs }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -87,8 +88,6 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
   };
-  // Its generic's id (Mezcal's is Agave Spirit), for matching classics.
-  const genericOf = (id: string) => ingredients.find((i) => i.id === id)?.generic_id ?? null;
   // Bottles a technique can change (a spirit, a juice), and what the drink's name says about one.
   const changeable = (l: WizardLine) => !!l.id && !!(startsFrom(l.name) ?? startsFrom(generic(l.id) ?? ''));
   const nudge = forDrink && !nudgeOff ? houseNudge(draft.name, draft.lines.map((l) => ({ ...l, styleName: generic(l.id) }))) : null;
@@ -133,8 +132,6 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   const drop = (from: number, dy: number) => batches.onDrop(from) || move(from, dropIndex(from, dy, rowHeights()));
   // The taste and what goes with it read one drink's own lines, not the batch.
   const poured = perDrinkLines(draft.lines);
-  const has = (name: string) => poured.some((l) => l.name.trim().toLowerCase() === name.toLowerCase());
-  const quick = COMMON_INGREDIENTS.filter((n) => !has(n)).slice(0, QUICK);
   const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
 
   return (
@@ -258,27 +255,12 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         nudge={nudge && nudge.key === houseKey ? nudge : null}
         onPick={(t, adjunct) => houseLine && makeHouse(houseLine, t, adjunct)}
         onClose={() => setHouseKey(null)}
+        tellUs={tellUs}
       />
 
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
       {forDrink && balance && !typing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}
-      {typing || !forDrink ? null : (
-        <>
-          <GoesWith
-            lines={poured}
-            onAdd={add}
-            fallback={
-              <View role="group" accessibilityLabel="Quick adds" style={styles.chips}>
-                {quick.map((n) => (
-                  <WizardChip key={n} label={n} add kind="button" onPress={() => add(pickByName(n, ingredients))} />
-                ))}
-              </View>
-            }
-            after={<CloseToClassic ingredients={poured.flatMap((l) => (l.id ? [{ id: l.id, generic: genericOf(l.id) }] : []))} riffOf={draft.riffOf} onRiff={(riffOf) => set({ riffOf })} />}
-          />
-          {draft.lines.length ? null : <StartFromClassic set={set} />}
-        </>
-      )}
+      {typing || !forDrink ? null : <IngredientSuggestions draft={draft} set={set} poured={poured} ingredients={ingredients} onAdd={add} />}
     </View>
   );
 }
@@ -290,5 +272,4 @@ const styles = StyleSheet.create({
   nudgeButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   undo: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.control, paddingLeft: space.lg, paddingRight: space.xs },
   flex: { flex: 1 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

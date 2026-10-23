@@ -49,6 +49,7 @@ const MAPPING = {
   'person.badge.plus': 'user-plus',
   'person.badge.minus': 'user-minus',
   'envelope': 'mail',
+  'bubble.left': 'message-square',
   'key.fill': 'key',
   'person': 'user',
   'globe': 'globe',

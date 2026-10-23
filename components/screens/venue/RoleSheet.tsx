@@ -7,22 +7,30 @@ import { RowDivider, SwitchRow } from '@/components/screens/settings/SettingsPar
 import { STATUS } from '@/constants/palette';
 import { space } from '@/constants/tokens';
 import type { RoleMatrixRow, VenueRoleDraft } from '@/hooks/useVenueRoles';
-import { baseCapabilities, CAPABILITY_GROUPS, dayOfEnd, endOfDay, overridesFor } from '@/lib/roleMatrix';
+import {
+  baseCapabilities, CAPABILITY_GROUPS, dayOfEnd, endOfDay, isLocked, limitTo, overridesFor, ROLE_PRESETS, today, withinReach, type RolePreset,
+} from '@/lib/roleMatrix';
 import { ROLE_LEVELS, roleLabel } from '@/lib/roles';
 
 const ADMIN = 40;
-const OVERRIDABLE_ROWS = CAPABILITY_GROUPS.flatMap((g) => g.rows).filter((r) => !r.levelBound);
+/** "A built-in role": start from one of the five, with nothing switched. */
+const BUILT_IN = 'built-in';
 
 /**
- * New role or Edit role: a name, the base level it starts from, the
- * capabilities it adds or takes away, and for guest staff the last day they
- * have access. Level-bound capabilities follow the base level, so they aren't
- * offered here. The parent saves; errors come back as `error`.
+ * New role (board fix 14, phone): a name, a ready-made role to start from
+ * (Apprentice, Head bartender, Takeover bartender) or a built-in one, every
+ * permission as a switch to change before saving, and for a takeover the day
+ * it ends. Edit role: the same without the ready-made roles. An Admin role
+ * always keeps staff. The parent saves; errors come back as `error`.
  */
-export function RoleSheet({ role, matrix, visible, busy, error, onClose, onSave, onDelete }: {
+export function RoleSheet({ role, matrix, allowAdmin = true, canGive = null, visible, busy, error, onClose, onSave, onDelete }: {
   /** The role to edit, or null for a new one. */
   role: RoleMatrixRow | null;
   matrix: RoleMatrixRow[];
+  /** Off for someone with staff who isn't an Admin: the database refuses Admin roles from them. */
+  allowAdmin?: boolean;
+  /** What they may hand out (their own permissions), or null for an Admin: nothing more is offered. */
+  canGive?: string[] | null;
   visible: boolean;
   busy: boolean;
   error: string | null;
@@ -30,29 +38,53 @@ export function RoleSheet({ role, matrix, visible, busy, error, onClose, onSave,
   onSave: (draft: VenueRoleDraft) => void;
   onDelete: (role: RoleMatrixRow) => void;
 }) {
-  const [name, setName] = useState(role?.name ?? '');
-  const [level, setLevel] = useState(role?.base_level ?? 20);
-  const [on, setOn] = useState<string[]>(role?.capabilities ?? baseCapabilities(matrix, 20));
+  const first = ROLE_PRESETS[0];
+  const [start, setStart] = useState<string>(role ? BUILT_IN : first.id);
+  const [name, setName] = useState(role?.name ?? first.name);
+  const [level, setLevel] = useState(role?.base_level ?? first.base_level);
+  // What the role already has may stay; anything new must be something they can do (the database's rule).
+  const had = role?.capabilities ?? [];
+  const reach = (caps: string[]) => limitTo(caps, canGive, had);
+  const [on, setOn] = useState<string[]>(role?.capabilities ?? reach(first.on(baseCapabilities(matrix, first.base_level))));
   const [lastDay, setLastDay] = useState(dayOfEnd(role?.ends_at));
   const baseCaps = baseCapabilities(matrix, level);
   const missingName = !name.trim();
+  const presetNames = ROLE_PRESETS.map((p) => p.name);
+  // Read once, so a render never sees the clock move (a takeover ends today by default).
+  const [now] = useState(Date.now);
+
+  const pickPreset = (p: RolePreset) => {
+    setStart(p.id);
+    if (!name.trim() || presetNames.includes(name.trim())) setName(p.name);
+    setLevel(p.base_level);
+    setOn(reach(p.on(baseCapabilities(matrix, p.base_level))));
+    setLastDay(p.ends ? today(now) : '');
+  };
+
+  const pickBuiltIn = () => {
+    setStart(BUILT_IN);
+    if (presetNames.includes(name.trim())) setName('');
+    setOn(reach(baseCapabilities(matrix, level)));
+    setLastDay('');
+  };
 
   const pickLevel = (next: number) => {
-    // Keep the role's changes from its old base level on top of the new one.
+    // Keep the role's changes from its old built-in role on top of the new one.
     const { granted, revoked } = overridesFor(baseCapabilities(matrix, level), on);
-    setOn([...baseCapabilities(matrix, next).filter((c) => !revoked.includes(c)), ...granted]);
+    const kept = [...baseCapabilities(matrix, next).filter((c) => !revoked.includes(c)), ...granted];
+    setOn(next >= ADMIN ? [...new Set([...kept, 'staff'])] : reach(kept));
     setLevel(next);
     if (next >= ADMIN) setLastDay('');
   };
 
   const save = () => {
-    if (missingName) return;
+    if (missingName || busy) return;
     onSave({
       id: role?.role_id ?? undefined,
       name,
       base_level: level,
       ...overridesFor(baseCaps, on),
-      ends_at: lastDay ? endOfDay(lastDay) : null,
+      ends_at: lastDay && level < ADMIN ? endOfDay(lastDay) : null,
     });
   };
 
@@ -61,44 +93,39 @@ export function RoleSheet({ role, matrix, visible, busy, error, onClose, onSave,
       visible={visible}
       onClose={onClose}
       title={role ? `Edit ${role.name ?? 'role'}` : 'New role'}
+      save={{ label: 'Save', onPress: save, disabled: busy || missingName }}
       footer={
-        <View style={styles.footer}>
-          {error ? <Caption color={STATUS.danger} role="alert">{error}</Caption> : null}
-          <Button label={role ? 'Save role' : 'Add role'} disabled={busy || missingName} onPress={save} />
-          {role ? <Button label="Delete role" variant="danger" disabled={busy} onPress={() => onDelete(role)} /> : null}
-        </View>
+        error || role ? (
+          <View style={styles.footer}>
+            {error ? <Caption color={STATUS.danger} role="alert">{error}</Caption> : null}
+            {role ? <Button label="Delete role" variant="danger" disabled={busy} onPress={() => onDelete(role)} /> : null}
+          </View>
+        ) : undefined
       }
     >
       <Field label="Name" value={name} onChangeText={setName} placeholder="Barback, Head bartender, Guest bartender" maxLength={40} />
-      <View role="radiogroup" accessibilityLabel="Starts from" style={styles.list}>
-        <Caption tone="muted" role="heading">STARTS FROM</Caption>
-        {ROLE_LEVELS.map((r) => (
-          <Choice key={r.level} label={roleLabel(r.level)} selected={level === r.level} disabled={busy} onPress={() => pickLevel(r.level)} />
-        ))}
-      </View>
-      <View style={styles.list}>
-        <Caption tone="muted" role="heading">WHAT IT CAN DO</Caption>
-        {OVERRIDABLE_ROWS.map((r, i) => {
-          const value = on.includes(r.id);
-          const changed = value !== baseCaps.includes(r.id);
-          return (
-            <View key={r.id}>
-              {i > 0 ? <RowDivider /> : null}
-              <SwitchRow
-                label={r.label}
-                detail={changed ? `Changed from ${roleLabel(level)}` : r.detail}
-                value={value}
-                disabled={busy}
-                onValueChange={(next) => setOn((list) => (next ? [...list, r.id] : list.filter((c) => c !== r.id)))}
-              />
-            </View>
-          );
-        })}
-        <Caption tone="muted">Seeing the menu and specs, editing drinks, menus, staff and brand follow the base level.</Caption>
-      </View>
+      {role ? null : (
+        <View style={styles.list}>
+          <Caption tone="muted" role="heading">Start from</Caption>
+          <View role="radiogroup" accessibilityLabel="Start from" style={styles.pills}>
+            {ROLE_PRESETS.map((p) => (
+              <Choice key={p.id} label={p.name} pill="outline" selected={start === p.id} disabled={busy} onPress={() => pickPreset(p)} />
+            ))}
+            <Choice label="A built-in role" pill="outline" selected={start === BUILT_IN} disabled={busy} onPress={pickBuiltIn} />
+          </View>
+        </View>
+      )}
+      {start === BUILT_IN ? (
+        <View role="radiogroup" accessibilityLabel="Starts from" style={styles.list}>
+          <Caption tone="muted" role="heading">STARTS FROM</Caption>
+          {ROLE_LEVELS.filter((r) => allowAdmin || r.level < ADMIN).map((r) => (
+            <Choice key={r.level} label={roleLabel(r.level)} selected={level === r.level} disabled={busy} onPress={() => pickLevel(r.level)} />
+          ))}
+        </View>
+      ) : null}
       {level < ADMIN ? (
         <DateField
-          label="Last day (guest staff)"
+          label="Ends"
           value={lastDay}
           onChange={setLastDay}
           clearable
@@ -106,11 +133,35 @@ export function RoleSheet({ role, matrix, visible, busy, error, onClose, onSave,
           hint="They lose access on their own at midnight after this day."
         />
       ) : null}
+      {CAPABILITY_GROUPS.map((g) => (
+        <View key={g.title} style={styles.list}>
+          <Caption tone="muted" role="heading">{g.title.toUpperCase()}</Caption>
+          {g.rows.map((r, i) => {
+            const locked = isLocked({ base_level: level }, r.id);
+            const value = locked || on.includes(r.id);
+            const changed = value !== baseCaps.includes(r.id);
+            const outOfReach = !value && !withinReach([r.id], canGive, had);
+            return (
+              <View key={r.id}>
+                {i > 0 ? <RowDivider /> : null}
+                <SwitchRow
+                  label={r.label}
+                  detail={locked ? 'An Admin always keeps this' : outOfReach ? 'You can only give what you can do' : changed ? `Changed from ${roleLabel(level)}` : r.detail}
+                  value={value}
+                  disabled={busy || locked || outOfReach}
+                  onValueChange={(next) => setOn((list) => (next ? [...list, r.id] : list.filter((c) => c !== r.id)))}
+                />
+              </View>
+            );
+          })}
+        </View>
+      ))}
     </MenuSheet>
   );
 }
 
 const styles = StyleSheet.create({
   list: { gap: space.sm },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   footer: { gap: space.sm },
 });

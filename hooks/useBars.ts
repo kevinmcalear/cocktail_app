@@ -16,6 +16,7 @@ export function useBars() {
                 .select(`
                     bar_id,
                     role_level,
+                    venue_role_id,
                     bars:bar_id (
                         id,
                         name,

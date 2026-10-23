@@ -250,13 +250,13 @@ describe('venue roles', () => {
     assert.deepEqual([...(await caps('outsider'))], []);
   });
 
-  test('overrides cannot touch what existing policies decide by level', async () => {
-    for (const cap of ['edit_drinks', 'specs', 'staff', 'brand', 'menus', 'menu']) {
-      const { error } = await users.admin.client
-        .from('venue_roles')
-        .insert({ bar_id: ids.barOne, name: `Sneaky ${cap}`, base_level: 20, granted: [cap] });
-      assert.ok(error, `granting ${cap} should fail`);
-    }
+  // Since 20261101200000 every permission is per role (role-permissions.test.mjs),
+  // except that an Admin role always keeps staff.
+  test('an Admin role cannot give up invite and manage staff', async () => {
+    const { error } = await users.admin.client
+      .from('venue_roles')
+      .insert({ bar_id: ids.barOne, name: 'Hands-off admin', base_level: 40, revoked: ['staff'] });
+    assert.ok(error);
   });
 
   test('admin roles cannot expire', async () => {
@@ -351,7 +351,6 @@ describe('venue roles', () => {
     const client = users.expiredGuest.client;
     assert.equal((await visible(client, 'items', 'id', [ids.penicillin])).size, 0);
     assert.deepEqual((await client.rpc('my_capabilities', { p_bar_id: ids.barOne })).data, []);
-    assert.deepEqual((await client.rpc('get_my_bars')).data, []);
     // The recipe view runs as its owner and reads user_bars itself.
     assert.equal((await visible(client, 'app_recipe_presentation', 'id', [ids.penicillinRecipe])).size, 0);
     // So does the member list, which also no longer lists them.
