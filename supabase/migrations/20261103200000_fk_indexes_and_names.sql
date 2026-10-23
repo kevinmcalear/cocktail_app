@@ -7,11 +7,13 @@
 --    item_prep.updated_by and private.item_spec_matches.override_by. The
 --    other unindexed keys are on small tables and wait until those grow.
 -- 2. recipes and menu_drinks were built as new_recipes and new_menu_drinks
---    and renamed, but their keys kept the old names. They now match the
---    tables. PostgREST embeds name a key by constraint, so the one edge
---    function that did (image-worker, through _shared/itemPrompts.ts) now
---    names the column instead, which works with either name: deploy it
---    before this is applied.
+--    and renamed, but their keys kept the old names. Six now match their
+--    tables. Two stay for now: recipes' recipe_item_id and ingredient_item_id
+--    keys, because PostgREST embeds name a key by constraint and installed
+--    apps (hooks/usePrepCard.ts) and the image-worker edge function
+--    (_shared/itemPrompts.ts) named those two. Both now name the column
+--    instead, which works with either name; the last two renames follow once
+--    every installed app has that update.
 
 -- --- Indexes ---
 
@@ -24,8 +26,6 @@ CREATE INDEX IF NOT EXISTS "item_spec_matches_override_by_idx" ON "private"."ite
 -- --- Names ---
 
 ALTER TABLE "public"."recipes" RENAME CONSTRAINT "new_recipes_pkey" TO "recipes_pkey";
-ALTER TABLE "public"."recipes" RENAME CONSTRAINT "new_recipes_recipe_item_id_fkey" TO "recipes_recipe_item_id_fkey";
-ALTER TABLE "public"."recipes" RENAME CONSTRAINT "new_recipes_ingredient_item_id_fkey" TO "recipes_ingredient_item_id_fkey";
 ALTER TABLE "public"."recipes" RENAME CONSTRAINT "new_recipes_parent_ingredient_id_fkey" TO "recipes_parent_ingredient_id_fkey";
 ALTER TABLE "public"."menu_drinks" RENAME CONSTRAINT "new_menu_drinks_pkey" TO "menu_drinks_pkey";
 ALTER TABLE "public"."menu_drinks" RENAME CONSTRAINT "new_menu_drinks_item_id_fkey" TO "menu_drinks_item_id_fkey";

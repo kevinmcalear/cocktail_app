@@ -4195,15 +4195,29 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "recipes_ingredient_item_id_fkey"
+            foreignKeyName: "new_recipes_ingredient_item_id_fkey"
             columns: ["ingredient_item_id"]
             isOneToOne: false
             referencedRelation: "app_item_presentation"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "recipes_ingredient_item_id_fkey"
+            foreignKeyName: "new_recipes_ingredient_item_id_fkey"
             columns: ["ingredient_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "new_recipes_recipe_item_id_fkey"
+            columns: ["recipe_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "new_recipes_recipe_item_id_fkey"
+            columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
@@ -4218,20 +4232,6 @@ export type Database = {
           {
             foreignKeyName: "recipes_parent_ingredient_id_fkey"
             columns: ["parent_ingredient_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipes_recipe_item_id_fkey"
-            columns: ["recipe_item_id"]
-            isOneToOne: false
-            referencedRelation: "app_item_presentation"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipes_recipe_item_id_fkey"
-            columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
@@ -5333,14 +5333,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "recipes_recipe_item_id_fkey"
+            foreignKeyName: "new_recipes_recipe_item_id_fkey"
             columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "app_item_presentation"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "recipes_recipe_item_id_fkey"
+            foreignKeyName: "new_recipes_recipe_item_id_fkey"
             columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "items"
