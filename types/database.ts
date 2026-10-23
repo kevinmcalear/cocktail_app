@@ -6365,6 +6365,7 @@ export type Database = {
         Args: { p_from: string; p_into: string }
         Returns: undefined
       }
+      merged_profile_handle: { Args: { p_ref: string }; Returns: string }
       my_bar_drinks: {
         Args: {
           p_after_id?: string
