@@ -51,6 +51,8 @@ export interface IngredientSearchProps {
   allowNew?: boolean;
   /** Offers to make it in house, with its own recipe: a new name, or your own version of one that exists. */
   onMake?: (name: string, pour?: TypedPour) => void;
+  /** "Add “X”, a bottle you buy": the desktop page opens its card under its line (what it is, who brings it, its pack). */
+  onBottle?: (name: string, pour?: TypedPour) => void;
   /** "Just add the name" for a prep: its recipe is written later, and the save reminds you. */
   onLater?: (name: string, pour?: TypedPour) => void;
   /** A name that sounds made (an oil, a cordial) offers making it before any bottle. */
@@ -72,7 +74,7 @@ export interface IngredientSearchProps {
  * (your own version when the name exists). Return takes the top hit.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onLater, makeFirst, captions, shelf, backBar, brands } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands } = props;
   const ds = useDs();
   const [text, setQueryState] = useState('');
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
@@ -107,6 +109,18 @@ export function IngredientSearch(props: IngredientSearchProps) {
       icon="make"
       onPress={() => {
         onMake(q, pour ?? undefined);
+        done();
+      }}
+    />
+  ) : null;
+  const Name = `${q.charAt(0).toUpperCase()}${q.slice(1)}`;
+  const bottleRow = onBottle ? (
+    <ResultRow
+      label={`Add “${Name}”, a bottle you buy`}
+      sub="Opens right here, under the line"
+      icon="make"
+      onPress={() => {
+        onBottle(Name, pour ?? undefined);
         done();
       }}
     />
@@ -160,7 +174,10 @@ export function IngredientSearch(props: IngredientSearchProps) {
           maxLength={80}
           onSubmitEditing={() => {
             if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
-            else if (allowNew && q && !loading) pick({ id: null, name: q });
+            else if (allowNew && q && !loading && onBottle && !prepLike) {
+              onBottle(Name, pour ?? undefined);
+              done();
+            } else if (allowNew && q && !loading) pick({ id: null, name: q });
           }}
           style={[styles.input, type.body, { fontFamily: fontFamilies.body, color: ds.c.ink }, NO_OUTLINE]}
         />
@@ -198,8 +215,11 @@ export function IngredientSearch(props: IngredientSearchProps) {
           ) : !allowNew ? null : (
             <>
               {makeRow && prepLike && !lead ? makeRow : null}
+              {/* A bottle you buy, then making it, then the name alone (board make-create-desktop, step 4). */}
+              {bottleRow}
+              {bottleRow && !prepLike ? makeRow : null}
               {newRow}
-              {makeRow && !prepLike ? makeRow : null}
+              {makeRow && !prepLike && !bottleRow ? makeRow : null}
             </>
           )}
         </View>

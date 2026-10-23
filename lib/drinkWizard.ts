@@ -7,6 +7,7 @@
 import { iceBuildLine, saysMore, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
 import type { LineBatch } from '@/lib/batchLines';
+import type { BottleKind } from '@/lib/newBottle';
 import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
 import type { PublishMode } from '@/lib/publishing';
@@ -53,7 +54,24 @@ export interface WizardLine extends WizardPick {
   /** A house prep added by name only ("Just add the name", or Later in the prep builder): its recipe is to write, and the save reminds you. */
   later?: boolean;
   /** A batch made by dropping one line on another (lib/batchLines): the drink's own lines and the bottle, saved as a Batch prep. */
-  batch?: LineBatch;
+  batch?: LineBatch;  /** A new bottle you buy, filled in under its line on the desktop page (lib/newBottle): saved with the drink. */
+  bottle?: NewBottle;
+}
+
+/** What a new bottle is and how the venue buys it, as typed on its card. Set once for the venue when the drink is saved. */
+export interface NewBottle {
+  /** What it is (lib/newBottle BOTTLE_KINDS); its kind row is worked out on save. */
+  kind: BottleKind | null;
+  /** The kind row it saves as (items.generic_id), when the catalog has one. */
+  kindId: string | null;
+  /** In percent, as typed. */
+  abv: string;
+  /** An existing supplier, or a new one by name. */
+  supplier: { id: string; name: string } | { id?: undefined; name: string } | null;
+  packAmount: string;
+  packUnit: string;
+  /** The pack's price as typed, in the venue's currency. */
+  packPrice: string;
 }
 
 export interface WizardDraft {

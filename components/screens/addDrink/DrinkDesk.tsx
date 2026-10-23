@@ -29,6 +29,7 @@ import { ApartHint, TakenWord } from './NameStepBody';
 import type { CatalogIngredient } from './IngredientSearch';
 import { IceStep } from './IceStep';
 import { PickStep } from './PickStep';
+import { PREP_CARD_ID } from './prep/PrepCard';
 import { PublishStep } from './PublishStep';
 import { ReviewPhotos } from './ReviewPhotos';
 import { BracketField, SameNameCard, useSameNamePicks } from './SameNameCard';
@@ -90,7 +91,17 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const canCost = !!barId && !!caps?.includes('costs');
   const canBuy = canCost || (!!barId && !!caps?.includes('prep'));
   const pricing = usePricingSettings(canCost ? barId : null).data ?? null;
-  const { costLines, lineDetail, lineBelow } = useDeskLines({ draft, barId, venueName: p.venueName, ingredients: p.ingredients, canBuy, canCost, currency: pricing?.currency ?? 'GBP' });
+  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({
+    draft,
+    set,
+    barId,
+    venueName: p.venueName,
+    ingredients: p.ingredients,
+    coreIds: p.coreIds,
+    canBuy,
+    canCost,
+    currency: pricing?.currency ?? 'GBP',
+  });
   const [finishOpen, setFinishOpen] = useState(false);
   // A classic or a riff can bring garnishes in after the page opens: they show.
   const finishing = finishOpen || draft.garnishes.length > 0;
@@ -111,8 +122,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
   });
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      // Not while a sheet is open over the page (a prep being written): that sheet's work isn't done.
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !document.querySelector('[role="dialog"][aria-modal="true"]')) {
+      // Not while a sheet is open over the page, or a prep is being written under its line: that work isn't done.
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !document.querySelector(`[role="dialog"][aria-modal="true"], #${PREP_CARD_ID}`)) {
         e.preventDefault();
         latest.current();
       }
@@ -195,6 +206,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
             balance={false}
             lineDetail={lineDetail}
             lineBelow={lineBelow}
+            onNewBottle={onNewBottle}
+            inlinePrep={{ venueName: barId ? p.venueName : null }}
             placeholder="Add an ingredient: “30 pommeau” works too"
             tellUs={tellUsAbout}
           />

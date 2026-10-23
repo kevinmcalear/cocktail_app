@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import type { NewBottle } from '@/lib/drinkWizard';
+import { parseMoney } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 
 /** How a bar buys one ingredient, for the cost of a drink not saved yet. */
@@ -103,4 +105,53 @@ export function useSetLineSupplier(barId: string | null) {
       void client.invalidateQueries({ queryKey: ['prep-data'] });
     },
   });
+}
+
+/**
+ * After a drink saves: what each new bottle from the desktop page's card is
+ * (only on a row this save made) and how the venue buys it (its supplier,
+ * pack and pack price, set once for the venue). Not the drink's to fail: what
+ * doesn't save comes back as a warning.
+ */
+export async function saveNewBottles(barId: string, bottles: readonly { itemId: string; name: string; bottle: NewBottle; isNew: boolean }[]): Promise<string[]> {
+  const warnings: string[] = [];
+  if (!bottles.length) return warnings;
+  const bar = await supabase.from('bars').select('currency').eq('id', barId).maybeSingle();
+  const currency = bar.data?.currency ?? null;
+  for (const { itemId, name, bottle: b, isNew } of bottles) {
+    try {
+      const abv = b.abv.trim() ? Number(b.abv.replace(',', '.')) : null;
+      if (isNew) {
+        const kind = await supabase
+          .from('items')
+          .update({ ingredient_role: 'product', ...(b.kindId ? { generic_id: b.kindId } : {}), ...(abv != null && abv >= 0 && abv <= 100 ? { abv } : {}) })
+          .eq('id', itemId);
+        if (kind.error) throw kind.error;
+      }
+      let supplierId = b.supplier?.id ?? null;
+      if (!supplierId && b.supplier?.name.trim()) {
+        const same = await supabase.from('suppliers').select('id').eq('bar_id', barId).ilike('name', b.supplier.name.trim()).limit(1).maybeSingle();
+        supplierId = same.data?.id ?? null;
+        if (!supplierId) {
+          const made = await supabase.from('suppliers').insert({ bar_id: barId, name: b.supplier.name.trim() }).select('id').single();
+          if (made.error) throw made.error;
+          supplierId = made.data.id;
+        }
+      }
+      const pack = Number(b.packAmount.replace(',', '.'));
+      if (supplierId || pack > 0) {
+        const row = { bar_id: barId, item_id: itemId, ...(supplierId ? { supplier_id: supplierId } : {}), ...(pack > 0 ? { pack_size_amount: pack, pack_size_unit: b.packUnit || 'ml' } : {}) };
+        const bought = await supabase.from('item_purchasing').upsert(row, { onConflict: 'bar_id,item_id' });
+        if (bought.error) throw bought.error;
+      }
+      const price = currency && b.packPrice.trim() ? parseMoney(b.packPrice, currency) : null;
+      if (price != null) {
+        const cost = await supabase.from('item_costs').upsert({ bar_id: barId, item_id: itemId, pack_cost_minor: price, updated_at: new Date().toISOString() }, { onConflict: 'bar_id,item_id' });
+        if (cost.error) throw cost.error;
+      }
+    } catch {
+      warnings.push(`${name}’s supplier, pack or price didn’t save. Add them on its page.`);
+    }
+  }
+  return warnings;
 }

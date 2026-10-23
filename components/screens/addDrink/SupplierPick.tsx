@@ -15,22 +15,28 @@ const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) 
  * brings it, as a chip that opens the pick under the line, and what this pour
  * costs. Without a chip (no Prep or Costs, or not a bottle), the words alone.
  */
-export function LineSupplier({ line, supplier, price, open, onPress }: { line: string; supplier: string | null; price: string | null; open?: boolean; onPress?: () => void }) {
+export function LineSupplier({ line, supplier, price, tag, open, onPress, hint }: { line: string; supplier: string | null; price: string | null; tag?: string; open?: boolean; onPress?: () => void; hint?: string }) {
   const ds = useDs();
-  if (!onPress) return supplier || price ? <Caption tone="muted" numberOfLines={1}>{[supplier, price].filter(Boolean).join(' · ')}</Caption> : null;
+  if (!onPress && !tag) return supplier || price ? <Caption tone="muted" numberOfLines={1}>{[supplier, price].filter(Boolean).join(' · ')}</Caption> : null;
   return (
     <View style={styles.detail}>
+      {tag ? <Tag label={tag} tone="success" /> : null}
+      {!onPress ? (
+        supplier ? <Caption tone="muted" numberOfLines={1}>{supplier}</Caption> : null
+      ) : (
       <PressableScale
         onPress={onPress}
         haptic={false}
         role="button"
         aria-expanded={!!open}
         accessibilityLabel={supplier ? `Who brings ${line}: ${supplier}. Change` : `Who brings ${line}? Pick a supplier`}
+        accessibilityHint={hint}
         style={[styles.chip, { borderColor: open ? ds.c.ink : ds.c.lineStrong }]}
       >
         <Caption tone={supplier ? 'ink' : 'muted'} numberOfLines={1}>{supplier ?? 'Who brings it?'}</Caption>
         <IconSymbol name={open ? 'chevron.up' : 'chevron.down'} size={12} color={ds.c.muted} />
       </PressableScale>
+      )}
       {price ? <DsText variant="spec" color={ds.c.muted} style={styles.mono}>{price}</DsText> : null}
     </View>
   );

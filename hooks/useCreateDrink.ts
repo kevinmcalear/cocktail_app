@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { uploadDrinkPhoto } from '@/components/drink/drinkImages';
 import { useUserId } from '@/ctx/AuthContext';
 import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
+import { saveNewBottles } from '@/hooks/useDrinkDesk';
 import { dropdownKeys, refreshIngredients } from '@/hooks/useDropdowns';
 import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
@@ -12,7 +13,7 @@ import { track } from '@/lib/analytics';
 import { batchPrep } from '@/lib/batchLines';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
-import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardPick } from '@/lib/drinkWizard';
+import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import { existingIngredientId } from '@/lib/ingredientNames';
@@ -185,6 +186,8 @@ export function useCreateDrink() {
       // New house preps with their own recipe (made in the wizard), saved once the drink is in.
       const ownPreps: { id: string; name: string; prep: PrepDraft }[] = [];
       const later: string[] = [];
+      // New bottles with what they are and how the venue buys them (the desktop page's card).
+      const bottles: { itemId: string; name: string; bottle: NonNullable<WizardLine['bottle']>; isNew: boolean }[] = [];
       for (const { line, amount } of specLines(draft)) {
         const madeBefore = newIngredients.length;
         // A batch made by dropping lines together is a house prep of the kind Batch: the bottle's recipe.
@@ -196,6 +199,7 @@ export function useCreateDrink() {
         if (line.later && !prep && isNew) later.push(capitalize(line.name));
         if (prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep });
         else if (line.technique && isNew) preps.push({ id: ingredientId, technique: line.technique });
+        if (line.bottle && barId && !ownPrep) bottles.push({ itemId: ingredientId, name: capitalizeFirst(line.name), bottle: line.bottle, isNew });
         lines.push({
           id: null,
           ingredient_item_id: ingredientId,
@@ -359,6 +363,8 @@ export function useCreateDrink() {
           warnings.push(plainDbMessage(e) ?? `${t.name} steps weren’t added to the new prep. Add them on its page.`);
         }
       }
+
+      if (barId) warnings.push(...(await saveNewBottles(barId, bottles)));
 
       if (menuSectionId) useMenuDrinkHandoff.getState().deliver(menuSectionId, id);
 
