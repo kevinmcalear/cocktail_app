@@ -435,6 +435,8 @@ export type ClaimSetup = {
   timezone?: string | null;
   phone?: string | null;
   website?: string | null;
+  /** The bar's handle; goes on the page only when the page has none (20261103510000). */
+  instagram?: string | null;
 };
 
 export const CLAIM_COLUMNS = 'id, profile_id, user_id, bar_id, message, status, created_at, method, code, evidence, decline_reason, setup';

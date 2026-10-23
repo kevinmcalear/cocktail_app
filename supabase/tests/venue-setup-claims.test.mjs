@@ -1,6 +1,7 @@
 // Venue setup while a bar claim waits: the code shown before sending, page
 // settings kept on the claim, invites held until approval
-// (supabase/migrations/20261014900000_venue_setup_claims.sql).
+// (supabase/migrations/20261014900000_venue_setup_claims.sql), and the
+// Instagram kept on it (20261103510000_claim_setup_instagram.sql).
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -68,7 +69,7 @@ async function setUp(who, name, code) {
 
 before(async () => {
   await db.connect();
-  for (const label of ['owner', 'staff', 'other']) users[label] = await makeUser(label);
+  for (const label of ['owner', 'staff', 'other', 'caller']) users[label] = await makeUser(label);
 });
 
 after(async () => {
@@ -164,5 +165,62 @@ describe('invites while the claim waits', () => {
     const { data, error } = await users.other.client.rpc('accept_bar_invite', { p_bar_id: venue.id });
     assert.ifError(error);
     assert.equal(data.role_level, 20);
+  });
+});
+
+// A work-email or phone claim waits for a person and brings no Instagram, so
+// the handle typed in setup rides on the claim's setup (20261103510000).
+describe('an Instagram kept on a waiting claim', () => {
+  const barePage = async (name) =>
+    (await db.query("INSERT INTO public.profiles (kind, handle, display_name, is_public) VALUES ('bar', $1, $2, true) RETURNING id", [`${name}${run}`, `${name} ${run}`])).rows[0].id;
+  const phoneClaim = async (profileId) => {
+    const { data, error } = await users.caller.client.rpc('start_bar_claim', { p_profile_id: profileId, p_method: 'phone', p_phone: '(555) 010-2291' });
+    assert.ifError(error);
+    assert.equal(data.status, 'pending');
+    return data;
+  };
+  const save = (claimId, setup, who = 'caller') => users[who].client.rpc('save_claim_setup', { p_claim_id: claimId, p_setup: setup });
+  const pageInstagram = async (profileId) => (await db.query('SELECT instagram FROM public.profiles WHERE id = $1', [profileId])).rows[0].instagram;
+
+  test('a waiting phone claim keeps it, cleaned up, and the page waits', async () => {
+    ids.barePage = await barePage('gram');
+    ids.phoneClaim = (await phoneClaim(ids.barePage)).id;
+    const { data, error } = await save(ids.phoneClaim, { instagram: `https://www.instagram.com/Gram${run}/?hl=en` });
+    assert.ifError(error);
+    assert.equal(data.setup.instagram, `gram${run}`);
+    assert.equal(data.setup.phone, '(555) 010-2291', 'the typed phone stays');
+    assert.equal(await pageInstagram(ids.barePage), null, 'nothing on the page before approval');
+
+    const blank = await save(ids.phoneClaim, { instagram: '' });
+    assert.ifError(blank.error);
+    assert.equal(blank.data.setup.instagram, undefined, 'blank clears it');
+    assert.ifError((await save(ids.phoneClaim, { instagram: ` @Gram${run} ` })).error);
+  });
+
+  test('a bad handle is refused', async () => {
+    for (const instagram of ['not a handle!', '.gram', 'gram.', 'gr..am', 'g'.repeat(31), 42]) {
+      const { error } = await save(ids.phoneClaim, { instagram });
+      assert.equal(error?.code, '22023', JSON.stringify(instagram));
+    }
+  });
+
+  test('nobody else can set it', async () => {
+    const { error } = await save(ids.phoneClaim, { instagram: 'imposter' }, 'other');
+    assert.equal(error?.code, '42501');
+    const { rows: [c] } = await db.query('SELECT setup FROM public.profile_claims WHERE id = $1', [ids.phoneClaim]);
+    assert.equal(c.setup.instagram, `gram${run}`);
+  });
+
+  test('approving puts it on a page with no Instagram', async () => {
+    await db.query('SELECT private.hand_over_claim($1, NULL)', [ids.phoneClaim]);
+    assert.equal(await pageInstagram(ids.barePage), `gram${run}`);
+  });
+
+  test('a page with an Instagram keeps its own', async () => {
+    const profileId = await page('keep');
+    const claim = await phoneClaim(profileId);
+    assert.ifError((await save(claim.id, { instagram: `other${run}` })).error);
+    await db.query('SELECT private.hand_over_claim($1, NULL)', [claim.id]);
+    assert.equal(await pageInstagram(profileId), `keep${run}`);
   });
 });
