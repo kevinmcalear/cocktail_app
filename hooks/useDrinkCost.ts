@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { dropdownKeys } from '@/hooks/useDropdowns';
+import { menuKeys } from '@/hooks/useMenus';
 import { supabase } from '@/lib/supabase';
 
 export interface CostLine {
@@ -37,17 +39,48 @@ export function useDrinkCost(itemId: string | null | undefined, barId: string | 
   });
 }
 
-/** The menu price (items.price_minor), or null to clear it. */
-export function useSetMenuPrice(itemId: string) {
+/**
+ * Writes drinks' prices, as typed ("19.50", "MP"; blank clears). A drink the
+ * caller can't edit comes back with no row (RLS), which is an error here, so
+ * a price never looks saved when it wasn't.
+ */
+async function writePrices(prices: Record<string, string | null>) {
+  const results = await Promise.all(
+    Object.entries(prices).map(([id, price]) => supabase.from('items').update({ price: price?.trim() || null }).eq('id', id).select('id'))
+  );
+  for (const { data, error } of results) {
+    if (error) throw error;
+    if (!data?.length) throw new Error('Couldn’t change that price: only people who can edit the drink can.');
+  }
+}
+
+function useInvalidatePrices() {
   const queryClient = useQueryClient();
+  return (ids: string[]) => {
+    for (const id of ids) void queryClient.invalidateQueries({ queryKey: ['cocktail', id] });
+    void queryClient.invalidateQueries({ queryKey: ['menu-costing'] });
+    void queryClient.invalidateQueries({ queryKey: menuKeys.all });
+    void queryClient.invalidateQueries({ queryKey: dropdownKeys.currentMenuDrinks });
+  };
+}
+
+/**
+ * The drink's one price, as typed ("19.50", "MP"), or null to clear it. Every
+ * menu with the drink shows it, so menus refetch too.
+ */
+export function useSetDrinkPrice(itemId: string) {
+  const invalidate = useInvalidatePrices();
   return useMutation({
-    mutationFn: async (minor: number | null) => {
-      const { error } = await supabase.from('items').update({ price_minor: minor }).eq('id', itemId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['cocktail', itemId] });
-      void queryClient.invalidateQueries({ queryKey: ['menu-costing'] });
-    },
+    mutationFn: (price: string | null) => writePrices({ [itemId]: price }),
+    onSuccess: () => invalidate([itemId]),
+  });
+}
+
+/** Several drinks' prices at once: the menu builder's, after the menu saves. */
+export function useSetDrinkPrices() {
+  const invalidate = useInvalidatePrices();
+  return useMutation({
+    mutationFn: writePrices,
+    onSuccess: (_, prices) => invalidate(Object.keys(prices)),
   });
 }

@@ -26,7 +26,7 @@ test('the slow files get a shard each', () => {
 });
 
 test('a renamed slow file fails loudly', () => {
-  assert.throws(() => shard(files.filter((f) => f !== 'bottle-catalog.test.mjs'), 1, 3), /bottle-catalog/);
+  assert.throws(() => shard(files.filter((f) => f !== 'db-indexes.test.mjs'), 1, 3), /db-indexes/);
 });
 
 test('SECURITY_SHARD must be index/total', () => {

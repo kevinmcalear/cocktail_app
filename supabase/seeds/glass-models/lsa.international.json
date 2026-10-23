@@ -1,0 +1,41 @@
+{
+ "maker": "lsa.international",
+ "models": [
+  {
+   "name": "Gio Tumbler Large",
+   "series": "Gio",
+   "designer": null,
+   "model_code": "G060-18-992A",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 560,
+   "capacity_as_stated": "560ml",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.lsa-international.com/products/gio-tumbler-large",
+   "source_urls": [
+    "https://www.lsa-international.com/products/gio-tumbler-large",
+    "https://www.lsa-international.com/collections/gio/products.json",
+    "https://www.boroughkitchen.com/products/lsa-gio-tumbler-large-560ml-pack-of-6"
+   ]
+  },
+  {
+   "name": "Metropolitan Stemless Glass",
+   "series": "Metropolitan",
+   "designer": null,
+   "model_code": "G1719-13-301",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 75,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.lsa-international.com/products/metropolitan-stemless-glass",
+   "source_urls": [
+    "https://www.lsa-international.com/products/metropolitan-stemless-glass"
+   ]
+  }
+ ]
+}

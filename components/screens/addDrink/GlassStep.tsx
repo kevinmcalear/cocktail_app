@@ -33,7 +33,8 @@ interface GlassStepProps extends StepProps {
  * glasses of that type, by their names; a bar with none of that type gets
  * every shape (lib/sketch/geometry.ts GLASS_VARIANTS). Then a field for
  * another glass. The sketch at the top redraws with the
- * pick. Saved as items.sketch_variant. At a venue, its own glasses are
+ * pick. Saved as items.sketch_variant, and a shape that is one of the bar's
+ * real glasses as items.glass_model_id. At a venue, its own glasses are
  * listed first, and a glass it doesn't list yet asks to be added.
  */
 export function GlassStep({ draft, set, options, barId, barGlasses, barVariants, suggested, compact }: GlassStepProps) {
@@ -45,8 +46,10 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
   const own = (barGlasses ?? [])
     .filter((g) => g.glass === inputs.glass)
     .sort((a, b) => Number(b.is_default) - Number(a.is_default))
-    .map((g) => ({ key: g.variant ?? list[0].key, label: glassTitle(g) }))
+    .map((g) => ({ key: g.variant ?? list[0].key, label: glassTitle(g), modelId: g.model_id }))
     .filter((g, i, all) => all.findIndex((x) => x.key === g.key) === i);
+  // A shape that is one of the bar's real glasses saves that glass too.
+  const modelOf = (key: string) => own.find((g) => g.key === key)?.modelId ?? null;
   const shapes = own.length ? own : list;
   const shown = inputs.variant ?? list[0].key;
   // Only a glass we can name is asked about: an unknown one is drawn as a guess.
@@ -61,13 +64,16 @@ export function GlassStep({ draft, set, options, barId, barGlasses, barVariants,
       suggested={suggested}
       compact={compact}
       // A shape belongs to its glass: one of the bar's own glasses by name is that glass; else the bar's main one (or the default).
-      onChange={([glass]) => set({ glass: glass ?? null, glassVariant: barGlasses?.find((g) => g.name && g.name.trim().toLowerCase() === glass?.name.trim().toLowerCase())?.variant ?? null })}
+      onChange={([glass]) => {
+        const mine = barGlasses?.find((g) => g.name && g.name.trim().toLowerCase() === glass?.name.trim().toLowerCase());
+        set({ glass: glass ?? null, glassVariant: mine?.variant ?? null, glassModelId: mine?.model_id ?? null });
+      }}
       mine={venueGlasses ? { has: (p) => isVenueGlassName(venueGlasses, p.name), label: 'Your glasses', restLabel: 'Other glasses' } : undefined}
     >
       {draft.glass && (own.length || list.length > 1) ? (
         <View style={styles.shapes}>
           <Eyebrow>Which shape?</Eyebrow>
-          <ShapeTiles shapes={shapes} inputs={inputs} seed="new-drink" value={shown} onChange={(glassVariant) => set({ glassVariant })} />
+          <ShapeTiles shapes={shapes} inputs={inputs} seed="new-drink" value={shown} onChange={(glassVariant) => set({ glassVariant, glassModelId: modelOf(glassVariant) })} />
           <Caption tone="muted">{`The sketch ${compact ? 'on the right' : 'at the top'} redraws in the shape you pick.`}</Caption>
         </View>
       ) : null}

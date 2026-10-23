@@ -44,3 +44,22 @@ export function moneyFieldValue(minor: number | null | undefined, currency: stri
   const per = minorPerMajor(currency);
   return per === 1 ? String(minor) : (minor / per).toFixed(2);
 }
+
+/**
+ * A drink's price as the bar typed it ("19", "$19.50", "14 / 60"), as minor
+ * units: the first number in it, so a glass / bottle price reads as the
+ * glass. Null for "MP", blanks and words. Same rule as the database's
+ * private.price_minor_of (20261103100000).
+ */
+export function priceMinor(price: string | null | undefined, currency: string | null | undefined): number | null {
+  const first = price?.match(/\d[\d,]*(?:\.\d+)?/)?.[0];
+  if (!first) return null;
+  const major = Number(first.replace(/,/g, ''));
+  return Number.isFinite(major) ? Math.round(major * minorPerMajor(currency ?? '')) : null;
+}
+
+/** Minor units as a price to save on a drink: 2300 → "23", 2350 → "23.50", 1200 yen → "1200". */
+export function priceText(minor: number, currency: string): string {
+  const per = minorPerMajor(currency);
+  return minor % per === 0 ? String(minor / per) : (minor / per).toFixed(2);
+}
