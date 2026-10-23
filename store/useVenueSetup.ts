@@ -7,11 +7,11 @@ import type { ClaimSetup } from '@/hooks/useProfiles';
 import type { VenueStep } from '@/lib/venueSetup';
 
 /**
- * Page details typed before there's a claim (hours, phone, website, who sees
- * the page) and the bar's Instagram. They go onto the claim when it's sent,
- * and onto the page once it's checked.
+ * Page details typed before there's a claim (hours, phone, website, Instagram,
+ * who sees the page). They go onto the claim when it's sent, and onto the page
+ * once it's checked.
  */
-export type HeldSetup = ClaimSetup & { instagram?: string | null };
+export type HeldSetup = ClaimSetup;
 
 /**
  * A glass picked on What next before the venue's page is checked: glassware
