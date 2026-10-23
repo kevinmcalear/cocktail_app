@@ -13,11 +13,11 @@ const highball = { id: 'highball', name: 'Highball' };
 const large = { id: 'large', name: 'Large cube' };
 const cubes = { id: 'cubes', name: 'Cubes' };
 const drink = (id: string, name: string, serves: number | null, recipe: SpecLine[], extra: Partial<RunDrink> = {}): RunDrink => ({
-  id, itemId: `item-${id}`, name, itemType: 'cocktail', serves, recipe, glass: null, ice: null, icePerServeG: null, byGuest: false, ...extra,
+  id, itemId: `item-${id}`, name, itemType: 'cocktail', serves, recipe, glass: null, ice: null, icePerServeG: null, partyId: null, ...extra,
 });
 
 const drinks: RunDrink[] = [
-  drink('pen', 'Penicillin', 120, [line('scotch', 'Blended Scotch', 60), line('lemon', 'Lemon juice', 22.5), line('hgs', 'Honey-ginger syrup', 22.5), line('islay', 'Islay Scotch', 7.5), line('ginger', 'Candied ginger', 1, 'each')], { glass: rocks, ice: large, byGuest: true }),
+  drink('pen', 'Penicillin', 120, [line('scotch', 'Blended Scotch', 60), line('lemon', 'Lemon juice', 22.5), line('hgs', 'Honey-ginger syrup', 22.5), line('islay', 'Islay Scotch', 7.5), line('ginger', 'Candied ginger', 1, 'each')], { glass: rocks, ice: large, partyId: 'rye' }),
   drink('neg', 'Negroni', 200, [line('gin', 'London dry gin', 30), line('campari', 'Campari', 30), line('sweet', 'Sweet vermouth', 30), line('twist', 'Orange twist', 1, 'each')], { glass: rocks, ice: large }),
   drink('tokyo', 'Tokyo Collins', 80, [line('gin', 'London dry gin', 45), line('lemon', 'Lemon juice', 22.5), line('gf', 'Grapefruit juice', 30), line('sugar', 'Sugar syrup', 15), line('soda', 'Soda water', 60), line('wedge', 'Grapefruit wedge', 1, 'each')], { glass: highball, ice: cubes, icePerServeG: 650 }),
   drink('amer', 'Americano', 150, [line('campari', 'Campari', 30), line('sweet', 'Sweet vermouth', 30), line('soda', 'Soda water', 90), line('wheel', 'Orange wheel', 1, 'each')], { glass: highball, ice: cubes, icePerServeG: 650 }),
