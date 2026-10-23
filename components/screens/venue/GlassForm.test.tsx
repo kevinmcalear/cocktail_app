@@ -19,10 +19,10 @@ const mockPony = {
   ...mockFenwick, id: 'm2', maker_profile_id: 'nude', maker: { handle: 'nude', display_name: 'Nude' }, glass: 'nick' as const, variant: null,
   name: 'Savage Pony', series: 'Savage', designer: 'Rémy Savage', model_code: 'P67276', capacity_ml: 135, material: 'lead-free crystal',
 };
-// The makers' glasses: Nude lists the Savage Pony, nobody else lists anything.
+// The makers' glasses: Nude lists the Savage Pony; "Kmart" only finds another maker's glass.
 jest.mock('@/hooks/useGlassModels', () => ({
   ...jest.requireActual<typeof import('@/hooks/useGlassModels')>('@/hooks/useGlassModels'),
-  useGlassModelSearch: (term: string) => ({ data: term === 'Nude' ? [mockPony] : [] }),
+  useGlassModelSearch: (term: string) => ({ data: term === 'Nude' ? [mockPony] : term === 'Kmart' ? [mockFenwick] : [] }),
 }));
 const mockPicker = jest.fn();
 jest.mock('@/components/glass/GlassModelPicker', () => ({
@@ -140,4 +140,19 @@ test('a glass described by hand opens on its maker\'s glasses, its own type firs
   expect(screen.getByText('P67276')).toBeTruthy();
   await fireEvent.press(screen.getByText('Save glass'));
   expect(onSave).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'g1', glass: 'nick', name: 'Nick & Nora', model_id: 'm2', maker: null, maker_profile_id: null }));
+});
+
+test('a described glass whose search only finds other makers\' glasses opens on the form', async () => {
+  await renderWithTamagui(<GlassForm glass={{ ...glass, maker: 'Kmart' }} saving={false} onSave={() => {}} onCancel={() => {}} />);
+  expect(screen.queryByText('Is it one of these?')).toBeNull();
+  expect(screen.getByLabelText('Who makes it')).toBeTruthy();
+});
+
+test('the catalog starts from the maker and name as typed now, for a new glass too', async () => {
+  await renderWithTamagui(<GlassForm glass={null} describe saving={false} onSave={() => {}} onCancel={() => {}} />);
+  await fireEvent.changeText(screen.getByLabelText('Name'), 'Little coupe');
+  await fireEvent.changeText(screen.getByLabelText('Who makes it'), 'Nude');
+  await fireEvent.press(screen.getByText('Find it in the makers’ catalogs'));
+  expect(screen.getByText('Your Little coupe by Nude. Pick it and its size, designer and series come with it.')).toBeTruthy();
+  expect(mockPicker).toHaveBeenLastCalledWith(expect.objectContaining({ initialTerm: 'Nude', initialGlass: null, preferGlass: 'coupe' }));
 });

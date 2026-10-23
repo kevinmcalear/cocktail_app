@@ -40,13 +40,16 @@ interface GlassFormProps {
  */
 export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, onDelete, venueModelIds, venueName, describe }: GlassFormProps) {
   const [model, setModel] = useState<GlassModel | null>(glass?.model ?? null);
-  // A glass the bar described by hand: its maker, to look for among the makers' glasses.
+  // A glass the bar described by hand, as saved: does its maker list glasses?
   const handMaker = glass && !glass.model ? (glass.maker_page?.display_name ?? glass.maker ?? '').trim() : '';
   const makersGlasses = useGlassModelSearch(handMaker, null, { enabled: handMaker.length >= 2 });
+  // Only the maker's own: the search also finds other makers' glasses a letter off or naming the word.
+  const own = makersGlasses.data?.filter((m) =>
+    glass?.maker_profile_id ? m.maker_profile_id === glass.maker_profile_id : m.maker?.display_name.toLowerCase() === handMaker.toLowerCase(),
+  );
   const [choseFinding, setFinding] = useState<boolean | null>(null);
   // Until the bar chooses, a new glass starts on the search, and a described one when its maker lists glasses.
-  const finding = choseFinding ?? (glass ? handMaker.length >= 2 && (makersGlasses.data?.length ?? 1) > 0 : !describe);
-  const matching = !!glass && !model && handMaker.length >= 2;
+  const finding = choseFinding ?? (glass ? handMaker.length >= 2 && (own ? own.length > 0 : !makersGlasses.isError) : !describe);
   const [type, setType] = useState<SketchGlass>(glass?.glass ?? 'coupe');
   const [variant, setVariant] = useState<string | null>(glass?.variant ?? null);
   const [fields, setFields] = useState<GlassFields>({
@@ -59,6 +62,9 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
   const [makerPage, setMakerPage] = useState<MakerPage | null>(
     glass?.maker_profile_id && glass.maker_page ? { id: glass.maker_profile_id, display_name: glass.maker_page.display_name } : null,
   );
+  // Described with a maker, as the form says now: the search starts there.
+  const typedMaker = (makerPage?.display_name ?? fields.maker).trim();
+  const matching = !model && typedMaker.length >= 2;
   const [isMain, setIsMain] = useState(glass?.is_default ?? true);
   const [tried, setTried] = useState(false);
   const problem = tried ? glassFieldProblem(fields) : null;
@@ -117,7 +123,7 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
           <Headline role="heading">{matching ? 'Is it one of these?' : 'Which glass is it?'}</Headline>
           <Caption tone="muted">
             {matching
-              ? `Your ${glass.name ?? GLASS_TYPE_LABEL[glass.glass]} by ${handMaker}. Pick it and its size, designer and series come with it.`
+              ? `Your ${fields.name.trim() || GLASS_TYPE_LABEL[type]} by ${typedMaker}. Pick it and its size, designer and series come with it.`
               : 'Find the one you pour into. Its size and drawing come with it.'}
           </Caption>
         </View>
@@ -125,8 +131,8 @@ export function GlassForm({ glass, saving, deleting, error, onSave, onCancel, on
           venueModelIds={venueModelIds}
           venueName={venueName}
           initialGlass={matching ? null : (glass?.glass ?? null)}
-          initialTerm={matching ? handMaker : ''}
-          preferGlass={glass?.glass ?? null}
+          initialTerm={matching ? typedMaker : ''}
+          preferGlass={matching ? type : null}
           onPick={pick}
           onDescribe={() => setFinding(false)}
           describeLabel={matching ? 'Keep it as I described it' : undefined}
