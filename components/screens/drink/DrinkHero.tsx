@@ -24,7 +24,7 @@ interface DrinkHeroProps {
   height: number;
   /** Phone: the photo fades into the page. Wide: it sits in its own column. */
   fade: boolean;
-  /** The drink's editors: a Colour button on its drawing, to repaint it (SketchColourSheet). */
+  /** The editor: a Colour button on the drawing, to repaint it (SketchColourSheet). */
   onColour?: () => void;
   /** With no pictures: draw from these instead of the stored drawing (a beer or wine, lib/beerWineWizard.ts). */
   sketch?: SketchInputs | null;

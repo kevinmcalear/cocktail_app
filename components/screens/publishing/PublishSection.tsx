@@ -17,15 +17,17 @@ import { PublishChoice } from './PublishChoice';
  * where that comes from, and the drink's own override. For people who can
  * publish at its venue, or the creator of a personal drink. With `showLocked`
  * (the venue's own team on a drink page), everyone else sees it as a locked
- * "Publishing" row that says who opens it.
+ * "Publishing" row that says who opens it. A drink page reads it (`read`: no
+ * Change) and its editor sets it (`edit`: the choice open, board drink-read-and-edit).
  */
-export function PublishSection({ itemId, barId, noun = 'drink', showLocked }: { itemId: string; barId: string | null; noun?: string; showLocked?: boolean }) {
+export function PublishSection({ itemId, barId, noun = 'drink', showLocked, mode }: { itemId: string; barId: string | null; noun?: string; showLocked?: boolean; mode?: 'read' | 'edit' }) {
   const router = useRouter();
   const userId = useUserId();
   const { data: caps = [], isSuccess: capsLoaded } = useCapabilities(barId);
   const { data } = useItemPublishing(itemId, barId);
   const set = useSetPublish(barId);
-  const [open, setOpen] = useState(false);
+  const [opened, setOpen] = useState(false);
+  const open = mode === 'edit' || opened;
   const { data: opensAt } = useCapabilityOpensAt(showLocked ? barId : null, 'publish');
 
   if (showLocked && barId && capsLoaded && !caps.includes('publish')) {
@@ -38,7 +40,7 @@ export function PublishSection({ itemId, barId, noun = 'drink', showLocked }: { 
   if (!data || !(barId ? caps.includes('publish') : !!userId && data.createdBy === userId)) return null;
   return (
     <View style={styles.section}>
-      <Headline role="heading">Who can see it</Headline>
+      {mode === 'edit' ? null : <Headline role="heading">Who can see it</Headline>}
       <Body tone="muted">
         {describePublish(data.mode, data.source)}. {PUBLISH_COPY[data.mode].detail}
       </Body>
@@ -53,10 +55,12 @@ export function PublishSection({ itemId, barId, noun = 'drink', showLocked }: { 
           onChange={(mode) => set.mutate({ level: 'item', id: itemId, mode })}
         />
       ) : null}
-      <View style={styles.actions}>
-        <Button label={open ? 'Done' : 'Change'} variant="secondary" onPress={() => setOpen(!open)} />
-        {barId ? <Button label="Venue settings" variant="ghost" onPress={() => router.push(`/settings/bar/${barId}/publishing`)} /> : null}
-      </View>
+      {mode === 'read' ? null : (
+        <View style={styles.actions}>
+          {mode === 'edit' ? null : <Button label={open ? 'Done' : 'Change'} variant="secondary" onPress={() => setOpen(!open)} />}
+          {barId ? <Button label="Venue settings" variant="ghost" onPress={() => router.push(`/settings/bar/${barId}/publishing`)} /> : null}
+        </View>
+      )}
     </View>
   );
 }
