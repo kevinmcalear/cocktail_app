@@ -12,7 +12,7 @@ interface MakeItHouseSheetProps {
   bottle: string | null;
   /** Its ways, best fit first (houseWays). */
   ways: readonly Technique[];
-  /** What the drink's name says, when it's about this line. */
+  /** What the drink's name, or the line as typed, says about this line. */
   nudge?: HouseNudge | null;
   onPick: (t: Technique, adjunct: string | null) => void;
   onClose: () => void;
@@ -22,8 +22,8 @@ interface MakeItHouseSheetProps {
 
 /**
  * "What did you do to it?" for a bottle already in the drink: a fat wash, an
- * infusion, a milk wash. The drink's name can answer first ("coconut
- * fat-washed"). Picking one opens the prep builder with the bottle as its base.
+ * infusion, a milk wash. The drink's name, or the line as typed, can answer
+ * first ("coconut fat-washed"). Picking one opens the prep builder with the bottle as its base.
  */
 export function MakeItHouseSheet({ bottle, ways, nudge, onPick, onClose, tellUs }: MakeItHouseSheetProps) {
   const ds = useDs();
@@ -33,11 +33,11 @@ export function MakeItHouseSheet({ bottle, ways, nudge, onPick, onClose, tellUs 
       {nudge ? (
         <PressableScale
           role="button"
-          accessibilityLabel={`From the drink’s name: ${nudge.phrase}`}
+          accessibilityLabel={`${nudge.from === 'typed' ? 'From what you typed' : 'From the drink’s name'}: ${nudge.phrase}`}
           onPress={() => onPick(nudge.technique, nudge.adjunct)}
           style={[styles.nudge, { borderColor: ds.accentFill.fill, backgroundColor: ds.c.surface }]}
         >
-          <Caption tone="accent">FROM THE DRINK’S NAME</Caption>
+          <Caption tone="accent">{nudge.from === 'typed' ? 'FROM WHAT YOU TYPED' : 'FROM THE DRINK’S NAME'}</Caption>
           <Body>{nudge.phrase[0].toUpperCase() + nudge.phrase.slice(1)}</Body>
         </PressableScale>
       ) : null}
