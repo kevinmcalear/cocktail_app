@@ -61,6 +61,15 @@ tell an agent in Kevin's GitHub session from Kevin, so these rules are the guard
 Merging a migration with the label applies it to production, so an agent that
 is unsure the approval covers this PR at this head asks Kevin instead.
 
+## Migration headers
+
+Before a migration merges, remove any line in its header comment that says it
+is a draft, local stack only, or not applied to production (for example
+"DRAFT", "Local stack only", "Not applied to production"). Merging applies it
+to production, so a line like that is wrong from then on and misleads the next
+reader, agents included. Leave migrations that are already merged as they are:
+they have been applied, and their files don't change.
+
 ## Why the rules come from the base branch
 
 The gate reads `change-policy.yml` and the classifier from the PR's **base**

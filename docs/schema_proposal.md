@@ -32,7 +32,7 @@ Tests: `supabase/tests/venue-platform.test.mjs` (40 tests), plus one updated ass
 |---|---|
 | `private.my_bar_ids(min_role)` | Existing. Now also skips memberships whose venue role has ended. |
 | `private.can_write(bar, creator)` | Existing. Same rule, now built on `my_bar_ids(35)` so it skips ended memberships too. |
-| `public.get_my_bars()` | Existing. Same change. |
+| `public.get_my_bars()` | Existing. Same change. (Dropped in 20261102300000: nothing called it.) |
 | `private.can_view_bar_item(bar, override)` | From #46, behind the `items` read policy; reads `user_bars` itself. Same change. |
 | `public.app_recipe_presentation` | From #39 and #46, where it runs as its owner and reads `user_bars` itself. Same change: an ended membership doesn't join, so it reads as "not a member". |
 | `public.get_bar_members(bar)` | From #39, also owner-run. Same change: an ended guest can't call it and isn't listed. |
@@ -72,7 +72,7 @@ Columns on `bars`, next to the logo and colours it already has. A separate `bar_
 - Assigning a role sets `role_level` to its base level (trigger). Changing a role's base level moves everyone who holds it.
 - Changing a member's `role_level` by hand (an admin edit, or the existing `add_user_to_bar_by_email`) drops them back to a plain base role, so the level you set is the level they get.
 - An admin role (40) can't have an end date, so a bar can't lose its last admin on a timer.
-- **Expiry:** a membership whose role has ended stops counting in `my_bar_ids()`, `can_write()`, `get_my_bars()`, `can_view_bar_item()`, `app_recipe_presentation`, `get_bar_members()` and the capability helpers immediately. A pg_cron job (`sweep-expired-memberships`, every 15 minutes) then deletes those memberships, so direct `role_level` reads elsewhere stop seeing them too.
+- **Expiry:** a membership whose role has ended stops counting in `my_bar_ids()`, `can_write()`, `get_my_bars()` (since dropped), `can_view_bar_item()`, `app_recipe_presentation`, `get_bar_members()` and the capability helpers immediately. A pg_cron job (`sweep-expired-memberships`, every 15 minutes) then deletes those memberships, so direct `role_level` reads elsewhere stop seeing them too.
 
 ### Capabilities
 

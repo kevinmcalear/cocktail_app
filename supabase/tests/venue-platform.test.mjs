@@ -351,7 +351,6 @@ describe('venue roles', () => {
     const client = users.expiredGuest.client;
     assert.equal((await visible(client, 'items', 'id', [ids.penicillin])).size, 0);
     assert.deepEqual((await client.rpc('my_capabilities', { p_bar_id: ids.barOne })).data, []);
-    assert.deepEqual((await client.rpc('get_my_bars')).data, []);
     // The recipe view runs as its owner and reads user_bars itself.
     assert.equal((await visible(client, 'app_recipe_presentation', 'id', [ids.penicillinRecipe])).size, 0);
     // So does the member list, which also no longer lists them.
