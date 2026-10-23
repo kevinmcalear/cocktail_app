@@ -179,7 +179,11 @@ export function IngredientSearch(props: IngredientSearchProps) {
           returnKeyType="done"
           maxLength={80}
           onSubmitEditing={() => {
-            if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
+            // Return does what the reading says it will (Looks right), not the catalog's top hit.
+            if (reading) {
+              onHouse?.({ id: reading.bottles[0].id, name: reading.bottles[0].name ?? reading.base }, reading, false, pour ?? undefined);
+              done();
+            } else if (results[0]) pick({ id: results[0].id, name: results[0].name ?? query });
             else if (allowNew && q && !loading && onBottle && !prepLike) {
               onBottle(Name, pour ?? undefined);
               done();
@@ -198,7 +202,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
       {reading ? (
         <TypedLineCard
           reading={reading}
-          amount={pour ? `${pour.amount} ${typedUnit(reading.base, pour.unit, getPreferredUnit())}` : null}
+          pour={pour}
           onAdd={(bottle, check) => {
             onHouse?.(bottle, reading, check, pour ?? undefined);
             done();

@@ -55,12 +55,17 @@ assert.equal(spec[2].house, undefined, 'a plain line is just a line');
 assert.equal(spec[5].note, 'Set in its own step');
 
 // Odd lines: a garnish heading goes to the finish, a name with no amount is a line, a new name stays as written.
-const odd = readSpec('Garnish: mint oil\n- Campari\n30 ml yuzu sake', rows);
+const odd = readSpec('Garnish: mint oil\n- Campari\n30 ml yuzu sake\nIce: cubes', rows);
 assert.deepEqual(odd.map((r) => [r.kind, r.pick.id, r.pick.name]), [
   ['finish', 'mint-oil', 'Mint oil'],
   ['line', null, 'Campari'],
   ['line', null, 'Yuzu sake'],
+  ['skip', null, 'Ice: cubes'],
 ]);
+// The spec's own title is skipped whatever the drink is called; an ingredient on the first line is not.
+assert.equal(readSpec('Coconut Fat-Washed Daiquiri\n2 oz lime juice', rows, { drinkName: 'Daiquiri' })[0].note, 'The title');
+assert.equal(readSpec('Lime juice\n2 oz simple syrup', rows)[0].kind, 'line');
+assert.equal(readSpec('2 oz lime juice\n- Ice cream', rows)[1].kind, 'line', 'an ingredient that starts with a method word is still a line');
 assert.deepEqual(readSpec('\n  \n', rows), [], 'nothing pasted, nothing read');
 
 console.log('specPaste checks passed');

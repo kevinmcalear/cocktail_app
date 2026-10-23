@@ -109,11 +109,11 @@ export function readHouse<T extends IngredientRow & { generic_id?: string | null
   const have = opts.have ?? new Set<string>();
   const fits = FITS[technique.starts as BaseKind] ?? [technique.starts as BaseKind];
   const kind = (r: T) => startsFrom(r.name ?? '') ?? startsFrom(rows.find((g) => g.id === r.generic_id)?.name ?? '');
-  const misfit = (r: T) => (technique.starts === 'liquid' || fits.includes(kind(r) as BaseKind) ? 0 : 1);
-  const bottles = searchIngredients(base, rows, { ...opts, limit: 12 })
+  const ranked = searchIngredients(base, rows, { ...opts, limit: 12 })
     .filter((r) => !looksMadeInHouse(r.name ?? ''))
-    .sort((a, b) => Number(have.has(b.id)) - Number(have.has(a.id)) || misfit(a) - misfit(b))
-    .slice(0, 3);
+    // Each one's rank once: its kind looks up its style in the whole catalog.
+    .map((r, i) => ({ r, i, mine: have.has(r.id) ? 0 : 1, misfit: technique.starts === 'liquid' || fits.includes(kind(r) as BaseKind) ? 0 : 1 }));
+  const bottles = ranked.sort((a, b) => a.mine - b.mine || a.misfit - b.misfit || a.i - b.i).slice(0, 3).map((x) => x.r);
   if (!bottles.length) return null;
   const { before, word } = splitName(text);
   const phrase = [...before, technique.word ?? word ?? technique.name].join(' ').toLowerCase();

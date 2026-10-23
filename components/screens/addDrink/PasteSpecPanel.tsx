@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, Title, useDs } from '@/components/ds';
@@ -36,7 +36,9 @@ interface PasteSpecPanelProps {
 export function PasteSpecPanel({ onClose, drinkName, ingredients, aliases, coreIds, have, haveLabel, onAdd }: PasteSpecPanelProps) {
   const ds = useDs();
   const [text, setText] = useState('');
-  const rows = useMemo(() => readSpec(text, ingredients, { aliases, coreIds, have, drinkName }), [text, ingredients, aliases, coreIds, have, drinkName]);
+  // Read behind the typing: each line is matched against the whole catalog.
+  const reading = useDeferredValue(text);
+  const rows = useMemo(() => readSpec(reading, ingredients, { aliases, coreIds, have, drinkName }), [reading, ingredients, aliases, coreIds, have, drinkName]);
   const n = rows.filter((r) => r.kind !== 'skip').length;
   const tag = (r: SpecRow) => {
     if (r.kind === 'skip') return r.note ?? 'Skipped';

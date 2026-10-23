@@ -72,6 +72,15 @@ describe('typing a line the way you’d write it', () => {
     expect(screen.getByText('You wrote coconut fat-washed. Make the Bacardí Carta Blanca that way?')).toBeTruthy();
   });
 
+  test('Return does what the card says, not the top search hit', async () => {
+    await renderWithTamagui(<Step />);
+    await type('60 ml coconut fat-washed bacardi');
+    await fireEvent(screen.getByLabelText('Add an ingredient'), 'submitEditing');
+    await laidOut();
+    expect(screen.getByLabelText('Coconut Oil. Swap it')).toBeTruthy();
+    expect(latest().lines.map((l) => [l.id, l.amount, l.unit])).toEqual([['bacardi', '60', 'ml']]);
+  });
+
   test('a plain bottle is just searched, with no reading', async () => {
     await renderWithTamagui(<Step />);
     await type('30 ml bacardi');

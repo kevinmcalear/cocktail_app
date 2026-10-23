@@ -33,8 +33,8 @@ const FINISH_UNITS = new Set(['drop', 'spray', 'rinse', 'float', 'peel', 'twist'
 const FINISH_WORDS = /[,\s]+(on top|to finish|as a garnish|to garnish|on the glass)\.?$/i;
 const GARNISH = /^garnish(?:ed)?(?: with)?:?\s+(.+)$/i;
 const TOP = /^top(?:\s+(?:up\s+)?with)?\s+(.+)$/i;
-// The method, the glass and the ice have their own steps.
-const NOT_A_LINE = /^(shake|shaken|stir|stirred|build|built|blend|blended|throw|thrown|swizzle|swizzled|double strain|fine strain|strain|dry shake|serve|glass|ice|method)\b/i;
+// The method, the glass and the ice have their own steps: a method word, or a "Glass:" style heading.
+const NOT_A_LINE = /^(shake|shaken|stir|stirred|build|built|blend|blended|throw|thrown|swizzle|swizzled|double strain|fine strain|strain|dry shake)\b|^(glass|ice|serve|method)\s*:/i;
 
 /** Each pasted line, read. `drinkName` is skipped where it heads the paste. */
 export function readSpec<T extends IngredientRow>(
@@ -56,6 +56,8 @@ export function readSpec<T extends IngredientRow>(
       const key = String(i);
       const skip = (note: string): SpecRow => ({ key, source, kind: 'skip', note, amount: '', unit: null, pick: { id: null, name: source } });
       if (drinkName.trim() && normName(row) === normName(drinkName)) return skip('The drink’s name');
+      // A first line with no amount that isn't an ingredient is the spec's title, whatever the drink is called here.
+      if (i === 0 && !typedPour(row) && !TOP.test(row) && !GARNISH.test(row) && !sameIngredient(row, rows, aliases) && !nearIngredient(row, rows, aliases)) return skip('The title');
       const garnish = row.match(GARNISH);
       if (garnish) return { key, source, kind: 'finish', amount: '', unit: null, pick: pickFor(garnish[1].trim()) };
       if (NOT_A_LINE.test(row)) return skip('Set in its own step');

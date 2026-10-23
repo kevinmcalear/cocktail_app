@@ -3,9 +3,11 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
-import type { WizardPick } from '@/lib/drinkWizard';
+import { typedUnit, type WizardPick } from '@/lib/drinkWizard';
 import type { HouseReading } from '@/lib/makeItHouse';
+import type { TypedPour } from '@/lib/paste';
 import { nameFor } from '@/lib/techniques/template';
+import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import type { CatalogIngredient } from './IngredientSearch';
 import { WizardChip } from './WizardChrome';
@@ -13,7 +15,7 @@ import { WizardChip } from './WizardChrome';
 interface TypedLineCardProps {
   reading: HouseReading<CatalogIngredient>;
   /** The pour typed before it ("60 ml"), if any. */
-  amount: string | null;
+  pour: TypedPour | null;
   /** Looks right (check false): the line, made house straight away. Check it: the line, then "What did you do to it?". */
   onAdd: (bottle: WizardPick, check: boolean) => void;
 }
@@ -23,13 +25,15 @@ interface TypedLineCardProps {
  * coconut fat-washed bacardi": the amount, the way, the "with what" and which
  * bottle, before anything is added (canvas make-create-finish-oil, step 1).
  */
-export function TypedLineCard({ reading, amount, onAdd }: TypedLineCardProps) {
+export function TypedLineCard({ reading, pour, onAdd }: TypedLineCardProps) {
   const ds = useDs();
   const [pickedId, setPickedId] = useState<string | null>(null);
   const { technique, adjunct, bottles, base } = reading;
   const bottle = bottles.find((b) => b.id === pickedId) ?? bottles[0];
   const pick = { id: bottle.id, name: bottle.name ?? base };
   const made = nameFor(technique, { base: pick.name, adjunct });
+  // The unit the line will get, as add does it: from the bottle picked.
+  const amount = pour ? `${pour.amount} ${typedUnit(pick.name, pour.unit, getPreferredUnit())}` : null;
   const parts: [string, string][] = [...(amount ? [['Amount', amount] as [string, string]] : []), ['Way', technique.name], ['With', adjunct ?? 'You pick it next']];
   return (
     <View role="group" aria-label="What it read" style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.accentText }]}>
