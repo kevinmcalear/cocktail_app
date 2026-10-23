@@ -1,6 +1,6 @@
 // Does a PR need CI's "Migrations and security tests" job? It rebuilds the
-// database and runs supabase/tests (20 to 45 minutes), so a PR that changes
-// none of what that job reads skips it. A skipped job still passes the
+// database and runs supabase/tests (about 20 minutes, in three parallel
+// shards), so a PR that changes none of what that job reads skips it. A skipped job still passes the
 // required check, so UI-only PRs merge as soon as the rest of CI is green.
 //
 //   git diff --name-only HEAD^1 HEAD | node scripts/database-ci.mjs
@@ -20,6 +20,7 @@ const ALWAYS = new Set([
   '.github/workflows/ci.yml',
   'scripts/check-local-migrations.mjs',
   'scripts/database-ci.mjs',
+  'scripts/security-shard.mjs',
   // Checked against the migrations by regenerating it (npm run gen:types).
   'types/database.ts',
 ]);
