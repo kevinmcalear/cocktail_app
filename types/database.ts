@@ -1971,6 +1971,7 @@ export type Database = {
           id: string
           image_id: string | null
           is_generated: boolean
+          is_picture: boolean
           item_id: string | null
           outdated_since: string | null
           sort_order: number | null
@@ -1982,6 +1983,7 @@ export type Database = {
           id?: string
           image_id?: string | null
           is_generated?: boolean
+          is_picture?: boolean
           item_id?: string | null
           outdated_since?: string | null
           sort_order?: number | null
@@ -1993,6 +1995,7 @@ export type Database = {
           id?: string
           image_id?: string | null
           is_generated?: boolean
+          is_picture?: boolean
           item_id?: string | null
           outdated_since?: string | null
           sort_order?: number | null
@@ -2615,6 +2618,7 @@ export type Database = {
           override_prep_level: number | null
           override_specific_brand_level: number | null
           override_visibility_level: number | null
+          picture: Database["public"]["Enums"]["item_picture"]
           price: string | null
           price_minor: number | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -2679,6 +2683,7 @@ export type Database = {
           override_prep_level?: number | null
           override_specific_brand_level?: number | null
           override_visibility_level?: number | null
+          picture?: Database["public"]["Enums"]["item_picture"]
           price?: string | null
           price_minor?: number | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -2743,6 +2748,7 @@ export type Database = {
           override_prep_level?: number | null
           override_specific_brand_level?: number | null
           override_visibility_level?: number | null
+          picture?: Database["public"]["Enums"]["item_picture"]
           price?: string | null
           price_minor?: number | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -5105,6 +5111,8 @@ export type Database = {
           notes: string | null
           origin: string | null
           origin_bar_profile_id: string | null
+          picture: Database["public"]["Enums"]["item_picture"] | null
+          picture_url: string | null
           price: string | null
           price_minor: number | null
           serve_abv: number | null
@@ -5284,6 +5292,7 @@ export type Database = {
             override_prep_level: number | null
             override_specific_brand_level: number | null
             override_visibility_level: number | null
+            picture: Database["public"]["Enums"]["item_picture"]
             price: string | null
             price_minor: number | null
             publish_mode:
@@ -6011,6 +6020,7 @@ export type Database = {
           override_prep_level: number | null
           override_specific_brand_level: number | null
           override_visibility_level: number | null
+          picture: Database["public"]["Enums"]["item_picture"]
           price: string | null
           price_minor: number | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
@@ -6760,6 +6770,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_item_picture: {
+        Args: {
+          p_image_id?: string
+          p_item_id: string
+          p_picture: Database["public"]["Enums"]["item_picture"]
+        }
+        Returns: undefined
+      }
       set_role_capability: {
         Args: {
           p_bar_id: string
@@ -7034,6 +7052,7 @@ export type Database = {
         | "ingredient"
         | "cocktail_family"
         | "glassware_style"
+      item_picture: "drawing" | "photo" | "none"
       item_publish_mode: "private" | "description" | "spec"
       profile_kind: "person" | "bar" | "maker" | "supplier"
       rank_sentiment: "loved" | "fine" | "disliked"
@@ -7257,6 +7276,7 @@ export const Constants = {
         "cocktail_family",
         "glassware_style",
       ],
+      item_picture: ["drawing", "photo", "none"],
       item_publish_mode: ["private", "description", "spec"],
       profile_kind: ["person", "bar", "maker", "supplier"],
       rank_sentiment: ["loved", "fine", "disliked"],

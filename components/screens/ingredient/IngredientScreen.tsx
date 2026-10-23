@@ -5,7 +5,7 @@ import Animated, { useAnimatedRef, useAnimatedScrollHandler, useSharedValue } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WhereItLives } from '@/components/backbar/WhereItLives';
-import { BackbarTheme, Body, BrandProvider, Button, Display, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { AroundIt, useBottleTiles } from '@/components/ingredient/IngredientFacts';
 import { Crumbs, type Crumb } from '@/components/nav/PageFrame';
 import { PrepEditSheet } from '@/components/prep/PrepEditSheet';
@@ -21,6 +21,7 @@ import type { IngredientBottle } from '@/hooks/useIngredients';
 import { useMode } from '@/hooks/useMode';
 import { useItemPrep, usePrepSources, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { ingredientHeroPictures, shownIngredientPicture, type IngredientPicture } from '@/lib/ingredientPicture';
 import { readNoteRecipe } from '@/lib/noteRecipe';
 import { toQuantity } from '@/lib/quantity';
 import { leadTimeLabel, scaledYield } from '@/lib/scale';
@@ -40,10 +41,11 @@ import { printPrepCard } from './printPrepCard';
 type Link = { id: string; name: string };
 
 export interface IngredientScreenProps {
-  ingredient: { id: string; name: string; description: string | null; bar_id: string | null; created_by?: string | null; ingredient_role?: string | null; brand_maker?: string | null; abv?: number | null; origin?: string | null; generic?: Link | null; madeFrom?: Link | null };
+  ingredient: { id: string; name: string; description: string | null; bar_id: string | null; created_by?: string | null; ingredient_role?: string | null; brand_maker?: string | null; abv?: number | null; origin?: string | null; generic?: Link | null; madeFrom?: Link | null; picture?: IngredientPicture | null; picture_url?: string | null };
   lines: PrepLine[];
   drinks: { id: string; name: string }[];
   bottles: IngredientBottle[];
+  /** A batch's drink photos: the hero while its picture is Drawing (its own photo replaces them; None shows none). */
   pictures: ShownPicture[];
   inStudyPile: boolean;
   onToggleStudyPile: () => void;
@@ -76,7 +78,7 @@ export function IngredientScreen(props: IngredientScreenProps) {
   );
 }
 
-function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyPile, onToggleStudyPile, canEdit, onEdit, venueName }: IngredientScreenProps & { venueName: string | null }) {
+function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPictures, inStudyPile, onToggleStudyPile, canEdit, onEdit, venueName }: IngredientScreenProps & { venueName: string | null }) {
   const ds = useDs();
   const userId = useUserId();
   const insets = useSafeAreaInsets();
@@ -129,7 +131,12 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
     !wide && isPrep && canViewDetails ? { label: 'Print card', onPress: print } : null,
   ].filter((a): a is { label: string; onPress: () => void } => !!a);
 
-  const heroHeight = wide ? 340 : Math.min(width * 0.9, height * 0.36);
+  // Its picture (eddie-oct22-ingredient-picture): null is None, and the page starts with its name.
+  const shown = shownIngredientPicture(ingredient.picture, ingredient.picture_url);
+  const pictures = ingredientHeroPictures(shown, batchPictures);
+  const photoBy = shown.kind !== 'photo' ? null : ingredient.bar_id ? venueName : userId && ingredient.created_by === userId ? 'you' : null;
+  // With None, only room for the controls (and the body's pull-up over a hero's foot).
+  const heroHeight = !pictures ? top + layout.minTapTarget + space.lg + space.xxl : wide ? 340 : Math.min(width * 0.9, height * 0.36);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
@@ -144,6 +151,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
     <View style={styles.stack}>
       <IngredientTags isPrep={isPrep} actions={prep?.actions ?? []} venueName={venueName} shared={!ingredient.bar_id} mine={!!userId && ingredient.created_by === userId} role={ingredient.ingredient_role ?? null} technical={technical} />
       <Display>{ingredient.name}</Display>
+      {photoBy ? <Caption tone="muted">{`Photo by ${photoBy}`}</Caption> : null}
       {noteShown ? <NoteRecipe note={ingredient.description!} read={noteRead!} choice={noteChoice} /> : ingredient.description ? <Body tone="muted">{ingredient.description}</Body> : null}
       {noteShown && wide ? <NoteBar itemId={ingredient.id} barId={ingredient.bar_id} read={noteRead!} lines={noteChoice.lines} card={card} bottom={0} inline /> : null}
       {wide ? null : <DrinkFacts facts={facts} columns={isPrep ? 4 : 3} compact />}
@@ -192,7 +200,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
     </View>
   );
 
-  const hero = <IngredientHero id={ingredient.id} name={ingredient.name} pictures={pictures} height={heroHeight} fade={!wide} />;
+  const hero = pictures ? <IngredientHero id={ingredient.id} name={ingredient.name} pictures={pictures} height={heroHeight} fade={!wide} /> : <View style={{ height: heroHeight }} />;
   const bottomRoom = insets.bottom + space.xxxl + (pinned ? layout.minTapTarget + space.xl : 0);
   const trail: Crumb[] = home ? [{ label: 'My Bar', href: '/bar' }] : [{ label: 'Library', href: '/library' }, { label: isPrep ? 'Preps' : 'Ingredients', href: '/library' }];
 
@@ -203,7 +211,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
           <Crumbs trail={trail} />
           <View style={styles.wideRow}>
             <View style={styles.aside}>
-              <View style={styles.drawing}>{hero}</View>
+              {pictures ? <View style={styles.drawing}>{hero}</View> : null}
               <DrinkFacts facts={facts} columns={2} compact />
               {showRecipe ? <Button label={makes ? `Make ${makes}` : 'Make'} icon="play.fill" size="lg" onPress={() => make()} /> : null}
               <View style={styles.actions}>
@@ -227,7 +235,8 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures, inStudyP
       )}
       {wide ? null : (
         <DrinkControls
-          media={pictures[0] && !pictures[0].isSketch ? 'photo' : 'paper'}
+          // With None the controls sit on the page's ground, not on paper.
+          media={pictures ? (pictures[0] && !pictures[0].isSketch ? 'photo' : 'paper') : ds.scheme === 'dark' ? 'photo' : 'paper'}
           top={top}
           heroHeight={heroHeight}
           scrollY={scrollY}

@@ -5,12 +5,15 @@ import { Alert } from "react-native";
 import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { useDrafts } from "@/hooks/useDrafts";
 import { refreshIngredients, useDropdowns } from "@/hooks/useDropdowns";
+import { saveIngredientPicture } from "@/hooks/ingredientPicture";
 import { useIngredient } from "@/hooks/useIngredients";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
+import { useCanEditItem } from "@/hooks/useViewAs";
 import { resolveIngredientId, syncIngredientRefsInParentDrafts, updateParentDraftsWithPublishedId } from "@/lib/drafts";
 import { fetchEditableRecipes } from "@/lib/editableRecipes";
 import { changedColumns, levelColumns, levelFields, OVERRIDE_LEVELS, saveItemTags } from "@/lib/itemSave";
 import { applyIngredientHandoff, withoutSelfRecipeRefs } from "@/lib/ingredientHandoff";
+import { canChoosePicture, shownIngredientPicture, type IngredientPicture } from "@/lib/ingredientPicture";
 import { mapPresentationRecipeToEditItem } from "@/lib/recipeUtils";
 import { capitalize, capitalizeFirst } from "@/lib/stringUtils";
 import { supabase } from "@/lib/supabase";
@@ -38,6 +41,10 @@ export interface IngredientForm {
     overrideMeasurement: string | null;
     overridePrep: string | null;
     hideFromSearch: boolean;
+    /** Its picture (lib/ingredientPicture.ts), saved by set_item_picture, not with the columns. */
+    picture: IngredientPicture;
+    /** Its photo: the saved one's URL, or a local file picked here and not yet uploaded. */
+    photo: string | null;
 }
 
 const EMPTY: IngredientForm = {
@@ -55,6 +62,8 @@ const EMPTY: IngredientForm = {
     overrideMeasurement: null,
     overridePrep: null,
     hideFromSearch: false,
+    picture: "drawing",
+    photo: null,
 };
 
 type Lines = SortableRecipeItem[];
@@ -169,6 +178,8 @@ export function useIngredientEditor(id: string) {
                     barId: ingredient.bar_id || null,
                     ...levelFields(raw),
                     hideFromSearch: ingredient.hide_from_search === true,
+                    picture: shownIngredientPicture(ingredient.picture, ingredient.picture_url).kind,
+                    photo: ingredient.picture_url ?? null,
                 });
             })
             .catch(() => {
@@ -195,6 +206,7 @@ export function useIngredientEditor(id: string) {
             }
 
             await saveItemTags(id, loaded.selectedCategories, f.selectedCategories);
+            if (f.picture !== loaded.picture || f.photo !== loaded.photo) await saveIngredientPicture(queryClient, id, f.picture, f.photo);
 
             const { error: deleteError } = await supabase.from("recipes").delete().eq("recipe_item_id", id);
             if (deleteError) throw deleteError;
@@ -230,7 +242,10 @@ export function useIngredientEditor(id: string) {
         }
     };
 
-    return { ...editor, role: data?.ingredient?.ingredient_role ?? null, loading: !editor.loaded, saving, save, draftId: null };
+    // Only what a bar or a person owns gets "Its picture", and only for whoever may edit it; catalogue bottles stay drawn.
+    const canEdit = useCanEditItem(data?.ingredient);
+    const canChoose = canEdit && canChoosePicture(data?.ingredient);
+    return { ...editor, role: data?.ingredient?.ingredient_role ?? null, loading: !editor.loaded, saving, save, draftId: null, canChoosePicture: canChoose };
 }
 
 /**
@@ -347,7 +362,7 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
         }
     };
 
-    return { ...editor, role: null, loading: !editor.loaded, saving, saveAsDraft, publish, draftId };
+    return { ...editor, role: null, loading: !editor.loaded, saving, saveAsDraft, publish, draftId, canChoosePicture: false };
 }
 
 export type IngredientEditor = ReturnType<typeof useIngredientEditor> | ReturnType<typeof useIngredientDraftEditor>;
