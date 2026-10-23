@@ -5,6 +5,7 @@ import { allRowsById, byName } from '@/lib/allRows';
 import { venueListOptions } from '@/lib/queryDefaults';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
+import type { Update } from '@/types/db';
 import { DatabaseItem } from '@/types/types';
 import { QueryClientContext, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
@@ -171,31 +172,29 @@ export function cocktailQuery(id: string | string[] | undefined, viewAsRoleLevel
                 .single();
 
             if (error) throw error;
-            
-            if (data) {
+
+            // Glass, family and ice by name for the legacy editor and Start from a classic,
+            // from the spec lists already loaded (no second request). The drink page reads
+            // the ids against those lists itself (useDrinkFacts).
+            type Named = { id: string; name: string };
+            const specs = client.getQueryData<Record<'glassware' | 'families' | 'iceTypes', Named[]>>(dropdownKeys.specs);
+            const named = (list: Named[] | undefined, itemId: string | null) => {
+                const row = itemId ? list?.find((i) => i.id === itemId) : undefined;
+                return row ? { id: row.id, name: row.name } : undefined;
+            };
+            return {
+                ...data,
                 // Map the secure recipes payload to match the expected UI shapes
-                data.recipes = sortRecipesByOrder(
+                recipes: sortRecipesByOrder(
                     data.recipes?.map((recipe: any) => ({
                         ...recipe,
                         ingredient: resolvePresentationIngredient(recipe),
                     }))
-                );
-
-                // Glass, family and ice by name for the legacy editor and Start from a classic,
-                // from the spec lists already loaded (no second request). The drink page reads
-                // the ids against those lists itself (useDrinkFacts).
-                type Named = { id: string; name: string };
-                const specs = client.getQueryData<Record<'glassware' | 'families' | 'iceTypes', Named[]>>(dropdownKeys.specs);
-                const named = (list: Named[] | undefined, itemId: string | null) => {
-                    const row = itemId ? list?.find((i) => i.id === itemId) : undefined;
-                    return row ? { id: row.id, name: row.name } : undefined;
-                };
-                data.glassware = named(specs?.glassware, data.glassware_id);
-                data.family = named(specs?.families, data.family_id);
-                data.ice = named(specs?.iceTypes, data.ice_id);
-            }
-
-            return data as DatabaseItem;
+                ),
+                glassware: named(specs?.glassware, data.glassware_id),
+                family: named(specs?.families, data.family_id),
+                ice: named(specs?.iceTypes, data.ice_id),
+            } as DatabaseItem;
         },
         enabled: !!id,
     });
@@ -231,7 +230,7 @@ export function usePrefetchCocktail() {
     };
 }
 
-export const updateCocktailFn = async ({ id, updates }: { id: string, updates: Partial<DatabaseItem> }) => {
+export const updateCocktailFn = async ({ id, updates }: { id: string, updates: Update<'items'> }) => {
     const { data, error } = await supabase
         .from('items')
         .update(updates)

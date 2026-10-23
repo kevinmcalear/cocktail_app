@@ -1,3 +1,5 @@
+import type { Json } from '@/types/db';
+
 /** item_images.angle. Hero pictures lead the drink; the rest are service photos. */
 export type ImageAngle = 'hero' | 'side' | 'top' | 'garnish' | 'handoff';
 
@@ -14,7 +16,8 @@ export interface ItemImageLink {
   sort_order?: number | null;
   is_generated?: boolean | null;
   outdated_since?: string | null;
-  images?: { url?: string | null; credit?: string | null; source_url?: string | null; palette?: string[] | null } | null;
+  /** palette is jsonb: the colours as "#rrggbb", [] for none, null until worked out. */
+  images?: { url?: string | null; credit?: string | null; source_url?: string | null; palette?: Json | null } | null;
 }
 
 export interface ItemPicture {
@@ -72,7 +75,7 @@ export function toPicture(link: ItemImageLink): ItemPicture {
     isOutdated: !link.is_generated && !!link.outdated_since,
     credit: link.images!.credit ?? null,
     sourceUrl: link.images!.source_url ?? null,
-    palette: link.images!.palette ?? null,
+    palette: Array.isArray(link.images!.palette) ? link.images!.palette.filter((c) => typeof c === 'string') : null,
   };
 }
 

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchPublished, type PublishedDrink } from '@/hooks/usePublished';
 import { resolveShareKey } from '@/hooks/useShareSlug';
 import type { IngredientName } from '@/lib/publicDrink';
-import { supabase } from '@/lib/supabase';
+import { jsonAs, supabase } from '@/lib/supabase';
 
 /** A home menu someone shared, as anyone reads it: /m/<id> or /m/<slug>. */
 export interface SharedMenuPage {
@@ -45,7 +45,7 @@ export function useSharedMenu(id: string | null | undefined) {
       const { data, error } = await supabase.rpc('shared_menu', { p_menu_id: menuId });
       if (error) throw error;
       if (!data) return null;
-      const row = data as SharedMenuRow;
+      const row = jsonAs<SharedMenuRow>(data);
       const ids = row.sections.flatMap((s) => s.item_ids).filter((x): x is string => !!x);
       const [drinks, names] = await Promise.all([fetchPublished(ids), ids.length ? supabase.rpc('public_drink_ingredients', { p_item_ids: ids }) : Promise.resolve({ data: [], error: null })]);
       if (names.error) throw names.error;

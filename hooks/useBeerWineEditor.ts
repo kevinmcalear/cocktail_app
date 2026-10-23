@@ -6,6 +6,7 @@ import type { ImageItem } from '@/components/cocktail/SortableImageList';
 import { imageIdFor, pickDrinkPhotos, setItemImages } from '@/components/drink/drinkImages';
 import { plainDbMessage } from '@/lib/dbError';
 import { DRINK_KINDS, type DrinkKind, type DrinkKindConfig } from '@/lib/drinkKinds';
+import { numericPrice } from '@/lib/menus';
 import { capitalize } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
 import { toastDone } from '@/lib/toast';
@@ -91,7 +92,7 @@ export function beerWineColumns(f: BeerWineFields) {
     description: f.description,
     brand_maker: capitalize(f.maker) || null,
     abv: f.abv ? parseFloat(f.abv) : null,
-    price: f.price ? parseFloat(f.price) : null,
+    price: f.price ? numericPrice(parseFloat(f.price)) : null,
     bar_id: f.barId || null,
     override_visibility_level: level(f.overrideVisibility),
     override_generic_ingredient_level: level(f.overrideGeneric),
@@ -119,7 +120,6 @@ export async function beerWineImageIds(images: ImageItem[], folder: string): Pro
 type Item = NonNullable<ReturnType<DrinkKindConfig['useItem']>['data']>;
 
 const text = (v: unknown) => (v == null ? '' : String(v));
-const levelOf = (v: number | null | undefined) => (v == null ? null : String(v));
 
 function fieldsOf(item: Item): BeerWineFields {
   const links = (item.item_images ?? []) as { sort_order: number | null; images: { id: string; url: string } | null }[];
@@ -134,11 +134,14 @@ function fieldsOf(item: Item): BeerWineFields {
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
       .flatMap((l) => (l.images ? [{ id: l.images.id, url: l.images.url, isNew: false }] : [])),
     barId: item.bar_id ?? null,
-    overrideVisibility: levelOf(item.override_visibility_level),
-    overrideGeneric: levelOf(item.override_generic_ingredient_level),
-    overrideSpecific: levelOf(item.override_specific_brand_level),
-    overrideMeasurement: levelOf(item.override_measurement_level),
-    overridePrep: levelOf(item.override_prep_level),
+    // ponytail: app_item_presentation has no override_* columns, so these
+    // have always loaded empty (and Save writes them back as null). Reading
+    // them from items is its own fix; this keeps today's behaviour.
+    overrideVisibility: null,
+    overrideGeneric: null,
+    overrideSpecific: null,
+    overrideMeasurement: null,
+    overridePrep: null,
   };
 }
 

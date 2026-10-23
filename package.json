@@ -15,6 +15,7 @@
     "check:design": "node --no-warnings=ExperimentalWarning scripts/design-ratchet.mjs",
     "test:jest": "jest",
     "db:check": "node scripts/check-local-migrations.mjs",
+    "gen:types": "npx -y supabase@2.112.0 gen types typescript --local --schema public > types/database.ts.tmp && mv types/database.ts.tmp types/database.ts || { rm -f types/database.ts.tmp; exit 1; }",
     "test:security": "node scripts/check-local-migrations.mjs && node --test --test-concurrency=1 --test-force-exit \"supabase/tests/*.test.mjs\"",
     "test:policy": "npm ci --prefix scripts/change-policy --ignore-scripts --no-audit --no-fund --silent && node --test \"scripts/change-policy/*.test.mjs\"",
     "smoke": "npm install --prefix smoke --no-audit --no-fund --silent && smoke/node_modules/.bin/playwright install --only-shell chromium && node smoke/smoke.mjs",

@@ -97,10 +97,10 @@ export function useBarPublishing(barId: string | null) {
     staleTime: 0,
     queryFn: async (): Promise<BarPublishing> => {
       const [bar, profile, menus, items, verified] = await Promise.all([
-        supabase.from('bars').select('default_publish_mode, page_visibility, page_visibility_changed_at, show_spec_changes').eq('id', barId).single(),
-        supabase.from('profiles').select('id, handle, instagram, kind, makes, serves').eq('bar_id', barId).eq('is_public', true).is('moderated_at', null).maybeSingle(),
-        supabase.from('menus').select('id, name, publish_mode, starts_at, ends_at, menu_drinks(item_id)').eq('bar_id', barId).order('name'),
-        supabase.from('items').select('id, name, item_type, publish_mode').eq('bar_id', barId).in('item_type', ['cocktail', 'beer', 'wine']),
+        supabase.from('bars').select('default_publish_mode, page_visibility, page_visibility_changed_at, show_spec_changes').eq('id', barId!).single(),
+        supabase.from('profiles').select('id, handle, instagram, kind, makes, serves').eq('bar_id', barId!).eq('is_public', true).is('moderated_at', null).maybeSingle(),
+        supabase.from('menus').select('id, name, publish_mode, starts_at, ends_at, menu_drinks(item_id)').eq('bar_id', barId!).order('name'),
+        supabase.from('items').select('id, name, item_type, publish_mode').eq('bar_id', barId!).in('item_type', ['cocktail', 'beer', 'wine']),
         supabase.rpc('bar_claim_verified', { p_bar_id: barId! }),
       ]);
       for (const r of [bar, profile, menus, items, verified]) if (r.error) throw r.error;

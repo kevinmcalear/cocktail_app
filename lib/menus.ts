@@ -108,6 +108,17 @@ export function formatPrice(price: string | null | undefined): string | null {
   return p ? p : null;
 }
 
+/**
+ * A price read as a number, written to items.price (text) the way these saves
+ * always have: "19.50" saves as "19.5", and anything that isn't a number
+ * ("MP") as no price. The number went over the wire and Postgres cast it.
+ * ponytail: keeps today's behaviour for the typed-client change; saving the
+ * text as typed is its own fix.
+ */
+export function numericPrice(n: number | null): string | null {
+  return n != null && Number.isFinite(n) ? String(n) : null;
+}
+
 export function plural(n: number, one: string, many = `${one}s`): string {
   return `${n} ${n === 1 ? one : many}`;
 }
