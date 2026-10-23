@@ -6,9 +6,8 @@
 //
 // Prints the files, space-separated, for `npm run test:security` to pass to
 // node --test. Test file names have no spaces.
-// Two files are most of the suite's time, so the split is by measured seconds,
-// not by count: each file goes to the shard with the least time so far,
-// slowest first.
+// Files differ a lot in time, so the split is by measured seconds, not by
+// count: each file goes to the shard with the least time so far, slowest first.
 import { readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,15 +15,13 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TESTS = 'supabase/tests';
 
-// ponytail: hand-measured seconds on CI's faster runners (22 to 23 Oct 2026;
-// the whole suite was 975s in one job). A file that slows down still runs,
-// just less evenly; the upgrade path is reading durations from a JUnit report
-// of the last run.
+// ponytail: hand-measured seconds on CI's faster runners (23 Oct 2026). A file
+// that slows down still runs, just less evenly; the upgrade path is reading
+// durations from a JUnit report of the last run.
 export const SECONDS = {
-  'bottle-catalog.test.mjs': 431, // re-runs the ingredient tree migrations twice
-  'db-indexes.test.mjs': 227, // compares search_bar_drinks old and new for every reader
+  'db-indexes.test.mjs': 95, // compares search_bar_drinks old and new for every reader
 };
-const OTHER = 1.8; // the other 134 files took about 240s together
+const OTHER = 1.8; // the other 135 files took about 240s together
 
 /** The test files for shard `index` (1-based) of `total`. */
 export function shard(files, index, total) {
