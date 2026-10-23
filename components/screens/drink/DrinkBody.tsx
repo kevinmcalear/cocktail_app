@@ -40,7 +40,6 @@ export function DrinkBody({ sections: s, home }: { sections: DrinkSections; home
       {s.cost}
       {s.backstory}
       {home ? s.photos : null}
-      {s.classicLink}
       {s.publish}
     </View>
   );

@@ -83,7 +83,6 @@ export function DrinkDesktop({ sections: s, children, hero, heroActions, actions
               {s.cost}
               {s.backstory}
               {s.photos}
-              {s.classicLink}
               {s.publish}
             </View>
           ) : null}

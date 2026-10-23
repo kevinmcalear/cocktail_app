@@ -23,7 +23,6 @@ import { MyNote } from './MyNote';
 import { AllergensSection } from './AllergensSection';
 import { AtHomeSpec } from './AtHomeSpec';
 import { Backstory } from './Backstory';
-import { ClassicLink } from './ClassicLink';
 import { CostSection } from './CostSection';
 import { DrinkCredit } from './DrinkCredit';
 import { DrinkFacts, DrinkTags, type Fact } from './DrinkFacts';
@@ -167,7 +166,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
     banner: live ? <VersionBanner itemId={item.id} inline={p.wide} venueName={barName} /> : null,
     description: short ? null : description,
     // The floor's talking points: for floor roles below Bartender, and editors who write them. A Bartender has the spec (board drink-phone-venue).
-    floor: staff && item.bar_id && live && (role < 30 || p.canEdit) ? <ForTheFloor itemId={item.id} barId={item.bar_id} name={item.name} ingredients={names} canEdit={p.canEdit} /> : null,
+    floor: staff && item.bar_id && live && (role < 30 || p.canEdit) ? <ForTheFloor itemId={item.id} barId={item.bar_id} ingredients={names} /> : null,
     facts: <DrinkFacts facts={p.facts} columns={2} />,
     allergens: <AllergensSection itemId={item.id} barId={item.bar_id} preview={!!preview} />,
     flavor: live ? <FlavorSection itemId={item.id} name={item.name} /> : null,
@@ -179,7 +178,6 @@ export function useDrinkSections(p: DrinkBodyProps) {
         barId={item.bar_id}
         name={item.name}
         links={item.item_images as ItemImageLink[] | undefined}
-        canEdit={p.canEdit}
         glass={p.glass}
         lines={access.names ? lines : []}
         showLines={access.amounts}
@@ -189,10 +187,9 @@ export function useDrinkSections(p: DrinkBodyProps) {
       />
     ) : null,
     history: staff && live ? <HistorySection itemId={item.id} barId={item.bar_id} canEdit={p.canEdit} compact={p.wide} /> : null,
-    cost: staff && live ? <CostSection itemId={item.id} barId={item.bar_id} price={item.price} onMenu={onMenu} canEdit={p.canEdit} /> : null,
+    cost: staff && live ? <CostSection itemId={item.id} barId={item.bar_id} price={item.price} onMenu={onMenu} /> : null,
     backstory: live ? <Backstory itemId={copy?.classicId ?? item.id} lines={lines} classicName={copy?.classicName} onRiff={p.onRiff} story={catalog && !lock ? item.notes : null} /> : null,
-    classicLink: live && p.canEdit ? <ClassicLink item={item} /> : null,
-    publish: live && (staff || !item.bar_id) ? <PublishSection itemId={item.id} barId={item.bar_id} showLocked={staff} /> : null,
+    publish: live && (staff || !item.bar_id) ? <PublishSection itemId={item.id} barId={item.bar_id} showLocked={staff} mode="read" /> : null,
   };
 }
 
