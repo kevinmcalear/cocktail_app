@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef, type RefObject } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
@@ -9,6 +10,7 @@ import { WEB_TAB_BAR_HEIGHT } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import type { SearchMine } from '@/hooks/useSearchMine';
+import { withAlpha } from '@/lib/color';
 import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 import { SearchField } from './SearchField';
@@ -37,10 +39,31 @@ export interface SearchTabState {
   onShowOnMap?: () => void;
 }
 
-/** "Little Rye ⌄" in the field: a menu of the venue (or your drinks), This area from Discover, and Everywhere. */
-function Token({ scope, setScope, mine, area }: Pick<SearchTabState, 'scope' | 'setScope' | 'mine' | 'area'>) {
-  return <ScopeToken options={scopeOptions(mine.label, area?.label ?? null)} scope={scope} onScope={setScope} />;
+/**
+ * Over the bottom field: where it searches ("Little Rye ⌄", a menu of the
+ * venue or your drinks, This area from Discover, and Everywhere), then the
+ * type chips once you type. One glass row, edge to edge, so it scrolls off the
+ * screen's side rather than against an edge, with the results passing under it
+ * (search-typing, decided 23 Oct 2026).
+ */
+function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts }: Pick<SearchTabState, 'query' | 'scope' | 'setScope' | 'mine' | 'area' | 'show' | 'setShow' | 'counts'>) {
+  const gutter = useGutter();
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={styles.placeRow} contentContainerStyle={[styles.placeChips, { paddingHorizontal: gutter }]}>
+      <ScopeToken options={scopeOptions(mine.label, area?.label ?? null)} scope={scope} onScope={setScope} />
+      {query ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
+    </ScrollView>
+  );
 }
+
+/** Under the row and the field: the results fade into the ground, so the glass reads over busy rows. */
+function DockFade() {
+  const ds = useDs();
+  return <LinearGradient colors={[withAlpha(ds.c.ground, 0), withAlpha(ds.c.ground, 0.85), ds.c.ground]} locations={[0, 0.5, 1]} style={styles.fade} />;
+}
+
+/** The place row's height: the 44-point token and chip track, and the gap to the field. */
+const PLACE_ROW = layout.minTapTarget + space.sm;
 
 const DISMISS = Platform.OS === 'ios' ? 'interactive' : 'on-drag';
 
@@ -48,13 +71,15 @@ const DISMISS = Platform.OS === 'ios' ? 'interactive' : 'on-drag';
  * iOS 26: the system's search tab. The screen carries a native search bar,
  * and iOS turns the tab bar into that field when the tab opens, sitting on
  * the keyboard while you type, with a button back to the tabs beside it.
- * The system field can't hold the place token or the type chips, so they
- * lead the results here. Recents and results scroll above the field;
- * dragging them pulls the keyboard down with your finger.
+ * The system field can't hold the place or the type chips, so their glass
+ * row floats just above it, riding the keyboard with it. Recents and results
+ * scroll above and under them; dragging them pulls the keyboard down with
+ * your finger.
  */
 export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, area, onShowOnMap, focused, carried, show, setShow, counts, setCounts }: SearchTabState) {
   const ds = useDs();
   const gutter = useGutter();
+  const insets = useSafeAreaInsets();
   const bar = useRef<SearchBarCommands>(null);
   const keyboard = useKeyboardHeight();
   // Keyboard up every time the tab opens, as in today's search. The bar mounts with the header, a beat later.
@@ -90,15 +115,11 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={DISMISS}
-        // The last rows clear the keyboard and the field riding on it. Padding, not
+        // The last rows clear the keyboard, the field riding on it and the place row. Padding, not
         // automaticallyAdjustKeyboardInsets, which scrolls the recents off the top.
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: keyboard + layout.minTapTarget + space.xl, gap: space.lg }}
+        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: keyboard + SYSTEM_FIELD + PLACE_ROW + space.lg, gap: space.lg }}
       >
         {query ? null : <Title role="heading">Search</Title>}
-        <View style={styles.chipRow}>
-          <Token scope={scope} setScope={setScope} mine={mine} area={area} />
-          {query ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
-        </View>
         <SearchBody
           query={query}
           scope={scope}
@@ -114,13 +135,24 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
           }}
         />
       </ScrollView>
+      {/* KeyboardAvoidingView moves the row in step with the keyboard and the field on it. */}
+      <KeyboardAvoidingView behavior="padding" style={styles.systemDock}>
+        <View style={[styles.systemRow, { paddingBottom: keyboard ? SYSTEM_FIELD : insets.bottom }]}>
+          <DockFade />
+          <PlaceRow query={query} scope={scope} setScope={setScope} mine={mine} area={area} show={show} setShow={setShow} counts={counts} />
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
+// The system field over the keyboard, measured on iOS 26. With the keyboard down the field rests in the
+// tab bar, which the tab screen's bottom safe area already takes in.
+const SYSTEM_FIELD = 64;
+
 /**
  * Android, phone web and iOS before 26: the field floats at the bottom in glass, with
- * where it searches inside it and the type chips over it; recents and results
+ * the place row over it; recents and results
  * scroll above and under it (search-start, search-typing). While you type it rides on the
  * keyboard and takes the tab bar's place (Android's keyboard covers the bar;
  * phone web hides its bar); with the keyboard down it sits just above the
@@ -170,20 +202,13 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
         <View
           ref={dock}
           onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
-          style={[styles.dock, { paddingHorizontal: gutter, paddingBottom: under + space.sm }]}
+          style={[styles.dock, { paddingBottom: under + space.sm }]}
         >
-          {query ? <ShowChips show={show} onShow={setShow} counts={counts} glass /> : null}
-          <SearchField
-            query={query}
-            onQuery={setQuery}
-            // Short, so the place token beside it fits.
-            placeholder={scope === 'mine' ? 'Drinks, menus' : 'Bars, drinks'}
-            autoFocus={focused}
-            cancel
-            glass
-            token={<Token scope={scope} setScope={setScope} mine={mine} area={area} />}
-            onFocusChange={setFieldFocused}
-          />
+          <DockFade />
+          <PlaceRow query={query} scope={scope} setScope={setScope} mine={mine} area={area} show={show} setShow={setShow} counts={counts} />
+          <View style={{ paddingHorizontal: gutter }}>
+            <SearchField query={query} onQuery={setQuery} placeholder={searchPlaceholder(scope, mine, area)} autoFocus={focused} cancel glass onFocusChange={setFieldFocused} />
+          </View>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -249,6 +274,10 @@ function useWebKeyboardInset() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   // Floats over the results' bottom edge: the field and chips are glass, and the rows show through around them.
-  dock: { position: 'absolute', left: 0, right: 0, bottom: 0, pointerEvents: 'box-none', paddingTop: space.sm, gap: space.sm },
-  chipRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  dock: { position: 'absolute', left: 0, right: 0, bottom: 0, pointerEvents: 'box-none', paddingTop: space.lg, gap: space.sm },
+  systemDock: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', pointerEvents: 'box-none' },
+  systemRow: { paddingTop: space.lg, pointerEvents: 'box-none' },
+  fade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
+  placeRow: { flexGrow: 0 },
+  placeChips: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
