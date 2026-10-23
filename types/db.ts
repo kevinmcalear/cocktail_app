@@ -43,6 +43,8 @@ type NullArgs = {
   search_glass_models: 'p_glass';
   // Null clears the match.
   set_spec_match: 'p_spec_match';
+  // A venue role (p_role_id) or a built-in level (p_level); the other is null.
+  set_role_capability: 'p_role_id' | 'p_level';
   start_bar_claim: 'p_bar_id' | 'p_note' | 'p_code' | 'p_instagram' | 'p_website' | 'p_phone';
   start_person_claim: 'p_note' | 'p_code';
   update_bar_settings: 'p_logo_url' | 'p_primary_color' | 'p_secondary_color';
