@@ -41,7 +41,7 @@ interface DiscoverMapPaneProps {
   onViewport?: (viewport: Viewport | null) => void;
   /** sheet: phones, the list in a bottom sheet over the map. side: wide screens, the list is beside it. */
   mode: 'sheet' | 'side';
-  /** Controls over the top of the map (phones: search, where, filters, and back to the list). */
+  /** Over the top of the map, under the header (phones: the drink chips, and a note on where). */
   top?: ReactNode;
   /** Room for the screen header over the top of the map: the controls and the open sheet stay below it. */
   topInset?: number;
@@ -55,14 +55,14 @@ interface DiscoverMapPaneProps {
   opened?: string | null;
   focus?: Camera | null;
   onShowBar?: (barId: string | null) => void;
-  /** Find me: back to where the person is (Near me, FindMe.tsx). */
+  /** Find me: back to where the person is (Near me, FindMe.tsx). Phones: List / Map (`view`, ViewPill) rides the sheet beside it. */
   onFindMe?: () => void;
+  view?: ReactNode;
 }
 
 const NO_DRINKS: DiscoverDrink[] = []; // "Nothing yet" with the same identity between renders, so the pins aren't rebuilt.
 const drinkKey = (d: DiscoverDrink) => d.id;
 const PREFETCH_AFTER_MS = 2000; // How long after the drinks land before the other layers load behind them.
-
 const SHEET_PEEK = 136; // Collapsed phone sheet: the grabber, the count, the title and the chips (disc-map), until the head measures itself.
 
 /**
@@ -74,7 +74,7 @@ const SHEET_PEEK = 136; // Collapsed phone sheet: the grabber, the count, the ti
  * asks. The camera fits the results whenever the area, drink or layer
  * changes, but never after a search of the map, so the person's view stays put.
  */
-export function DiscoverMapPane({ area, onArea, drink: given, filter, results, onViewport, mode, top, topInset = 0, from = null, me = null, pick, opened = null, focus = null, onShowBar, onFindMe }: DiscoverMapPaneProps) {
+export function DiscoverMapPane({ area, onArea, drink: given, filter, results, onViewport, mode, top, topInset = 0, from = null, me = null, pick, opened = null, focus = null, onShowBar, onFindMe, view }: DiscoverMapPaneProps) {
   const ds = useDs();
   const findMe = useFindMe(onFindMe);
   const sheetRef = useRef<BottomSheet>(null);
@@ -144,7 +144,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   useEffect(() => onViewport?.(moves.settled), [moves.settled, onViewport]);
 
   const title = byDrinks ? (searching ? searchTitle(filter.search) : results.title) : `${byDrink ? `Best ${drink.name}` : 'Top bars'} ${areaLabel(area)}`;
-  const layers = <MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} />;
+  const layers = <GlassSurface style={styles.glassRow}><MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} onGlass /></GlassSurface>;
   const searchHere = moves.offer ? <SearchHere onPress={() => moves.offer && moves.search(moves.offer)} /> : null;
 
   const ranked = rows.data?.ranked ?? [];
@@ -203,7 +203,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
       <View style={styles.fill}>
         {map}
         <View pointerEvents="box-none" style={[styles.overlay, styles.overlayTop]}>
-          {searching && pick ? null : <GlassSurface style={styles.glassRow}><MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} onGlass /></GlassSurface>}
+          {searching && pick ? null : layers}
           {searchHere}
         </View>
         {findMe.button('side')}
@@ -220,12 +220,13 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
     <View style={styles.fill}>
       {map}
       <View pointerEvents="box-none" style={[styles.overlay, { top: topInset + space.lg }]}>
+        {selected ? null : layers}
         {top}
         {searchHere}
       </View>
       {/* The sheet lives in a box that ends above the tab bar, so nothing of it shows behind the bar. */}
       <View pointerEvents="box-none" style={[styles.sheetBox, chrome.box, { top: topInset }]}>
-        {findMe.button('sheet')}
+        {findMe.button('sheet', view)}
         <BottomSheet ref={sheetRef} snapPoints={[peek, '50%', '88%']} {...chrome.sheet} {...findMe.sheet} accessibilityLabel="Results">
           {/* A virtualized list: "anywhere" can load hundreds of drinks, and only the ones on screen are drawn. */}
           <BottomSheetFlatList
@@ -253,7 +254,6 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
                           : resultsCaption(searching && byDrinks, results.totals, areaLabel(area), pins.length)
                     }
                     title={title}
-                    chips={layers}
                     below={searching && byDrinks ? <ClassicLine drinks={results.drinks} search={filter.search} where={areaLabel(area)} /> : null}
                     onOpen={() => sheetRef.current?.snapToIndex(1)}
                     onLayout={(e) => setPeek(Math.max(SHEET_PEEK, Math.ceil(e.nativeEvent.layout.height) + SHEET_HANDLE + space.sm))}

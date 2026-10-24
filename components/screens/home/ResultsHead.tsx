@@ -20,7 +20,7 @@ interface ResultsHeadProps {
   caption: string;
   title: string;
   /** The layer (browsing) or sort (searching) chips. */
-  chips: ReactNode;
+  chips?: ReactNode;
   /** Under the chips while searching: the classic line. */
   below?: ReactNode;
   /** Phones: the caption opens the sheet, for anyone who taps rather than swipes. */
