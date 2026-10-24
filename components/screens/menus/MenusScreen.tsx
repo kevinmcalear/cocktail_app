@@ -32,10 +32,10 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 }
 
 /**
- * Every menu at the venue: on now, coming up, drafts and previous. The Menus
+ * Every menu at the venue: on now, coming up, drafts, past and R&D. The Menus
  * tab (`tab`), and opened from Tonight and the venue menu. In home mode (or
- * with no venue) it's the person's own menus, reached from Collection. The
- * two never mix.
+ * with no venue) it's the person's own menus, reached from Collection, in the
+ * same groups (menus-one-look). The two never mix.
  */
 export function MenusScreen({ tab = false }: { tab?: boolean }) {
   const ds = useDs();
@@ -59,11 +59,14 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
   // Anyone can make their own menu; a venue's needs Drink Creator or up.
   const canCreate = canBuild || !barId;
 
-  const venue = groupMenus(barId ? menus.filter((m) => m.barId === barId) : [], now);
-  const mine = barId ? [] : menus.filter((m) => m.barId === null && m.createdBy === userId);
+  // The same groups in both modes: a venue's menus, or with none, your own.
+  const venue = groupMenus(menus.filter((m) => (barId ? m.barId === barId : m.barId === null && m.createdBy === userId)), now);
+  // The first menu gets the card: what's on, else the next one.
+  const lead = venue.on[0] ?? venue.upcoming[0] ?? null;
+  const comingUp = venue.on.length ? venue.upcoming : venue.upcoming.slice(1);
   // The venue leads: "Little Rye · 1 on now · 2 coming up".
   const summary = [
-    barId ? (active?.name ?? null) : null,
+    barId ? (active?.name ?? null) : 'For nights in',
     venue.on.length ? `${venue.on.length} on now` : null,
     venue.upcoming.length ? `${venue.upcoming.length} coming up` : null,
   ]
@@ -75,7 +78,7 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
       <ScrollView contentContainerStyle={[column, styles.content, { paddingBottom: (tab ? tabBarInset : insets.bottom) + space.xxxl }]}>
         <PageHeader
           title="Menus"
-          display={!!barId}
+          display
           subtitle={summary}
           onBack={tab ? undefined : () => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
           backLabel={barId ? `Back to ${first}` : 'Back'}
@@ -95,22 +98,23 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
           </>
         ) : null}
 
-        {venue.on.length ? (
-          <Group title="On now">
+        {lead ? (
+          <Group title={venue.on.length ? 'On now' : 'Coming up'}>
             {venue.on.map((m) => (
               <MenuCard key={m.id} menu={m} now={now} />
             ))}
+            {venue.on.length ? null : <MenuCard menu={lead} now={now} />}
           </Group>
         ) : null}
-        {venue.upcoming.length ? (
+        {comingUp.length ? (
           <Group title="Coming up">
-            {venue.upcoming.map((m) => (
+            {comingUp.map((m) => (
               <MenuListRow key={m.id} menu={m} now={now} />
             ))}
           </Group>
         ) : null}
-        {venue.draft.length && barId ? (
-          canBuild ? (
+        {venue.draft.length ? (
+          canBuild || !barId ? (
             <Group title="Drafts">
               {venue.draft.map((m) => (
                 <MenuListRow key={m.id} menu={m} now={now} />
@@ -127,7 +131,7 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
           )
         ) : null}
         {venue.previous.length ? (
-          <Group title="Previous">
+          <Group title="Past">
             <View>
               {venue.previous.map((m) => (
                 <MenuPastLine key={m.id} menu={m} />
@@ -138,13 +142,6 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
         {venue.rnd.length && barId && canBuild ? (
           <Group title="R&D">
             {venue.rnd.map((m) => (
-              <MenuListRow key={m.id} menu={m} now={now} />
-            ))}
-          </Group>
-        ) : null}
-        {mine.length ? (
-          <Group title="Your menus">
-            {mine.map((m) => (
               <MenuListRow key={m.id} menu={m} now={now} />
             ))}
           </Group>

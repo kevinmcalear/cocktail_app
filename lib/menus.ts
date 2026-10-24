@@ -281,8 +281,12 @@ export function draftLine(menu: Pick<MenuSummary, 'itemIds' | 'updatedAt'> & { s
   return [missing ?? plural(new Set(menu.itemIds).size, 'drink'), editedWhen(menu.updatedAt, now, locale)].join(' · ');
 }
 
-/** A coming-up row's caption: the kind, the drinks, the date. "Takeover · 9 drinks · from Fri 3 Oct", "One night · 4 drinks · Fri 31 Oct". */
-export function comingUpLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'menuDate' | 'itemIds' | 'event' | 'guestCount'>, locale?: string): string {
+/**
+ * A coming-up row's caption: the kind, the drinks, the date. "Takeover · 9
+ * drinks · from Fri 3 Oct", "One night · 4 drinks · Fri 31 Oct". `tiled`: the
+ * row shows the day in a tile, so a one-night menu leaves it off the line.
+ */
+export function comingUpLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'menuDate' | 'itemIds' | 'event' | 'guestCount'>, locale?: string, tiled = false): string {
   const night = isOneNightRun(menu.startsAt, menu.endsAt) || (!menu.startsAt && !!menu.menuDate);
   const start = menu.event?.startsAt ?? menu.startsAt ?? (menu.menuDate ? `${menu.menuDate}T00:00:00` : null);
   const date = start ? day(start, locale) : null;
@@ -290,13 +294,15 @@ export function comingUpLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'me
     menu.event ? 'Takeover' : night ? 'One night' : null,
     menu.guestCount ? plural(menu.guestCount, 'guest') : null,
     plural(new Set(menu.itemIds).size, 'drink'),
-    date ? (night ? date : `from ${date}`) : null,
+    date ? (night ? (tiled ? null : date) : `from ${date}`) : null,
   ].filter(Boolean).join(' · ');
 }
 
-/** A previous menu's line, in mono at the row's end: "3 Jun to 31 Aug · 10". */
-export function previousLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'itemIds'>, locale?: string): string {
-  const dates = menu.endsAt ? (menu.startsAt ? `${shortDay(menu.startsAt, locale)} to ${shortDay(menu.endsAt, locale)}` : `off ${shortDay(menu.endsAt, locale)}`) : null;
+/** A past menu's line, in mono at the row's end: "3 Jun to 31 Aug · 10", a home night "27 Nov 2025 · 5". */
+export function previousLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'itemIds'> & { menuDate?: string | null }, locale?: string): string {
+  // A home night is a day, read as local midnight; it carries its year, as past nights run back further.
+  const night = menu.menuDate && !menu.endsAt ? new Date(`${menu.menuDate}T00:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+  const dates = night ?? (menu.endsAt ? (menu.startsAt ? `${shortDay(menu.startsAt, locale)} to ${shortDay(menu.endsAt, locale)}` : `off ${shortDay(menu.endsAt, locale)}`) : null);
   return [dates, String(new Set(menu.itemIds).size)].filter(Boolean).join(' · ');
 }
 
