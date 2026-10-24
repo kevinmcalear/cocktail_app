@@ -3,8 +3,6 @@ import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackbarTheme, Body, Button, Caption, GlassButton, Title, useDs, useGutter } from '@/components/ds';
-import { ScreenHeader } from '@/components/nav/ScreenHeader';
-import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
 import { WebHead } from '@/components/WebHead';
 import { layout, space } from '@/constants/tokens';
@@ -26,12 +24,11 @@ import { YouTabs } from './YouTabs';
 /**
  * You: your own profile, whether or not you've made a public one. Every
  * drink you've had with your score, your favourites, how each bar did across
- * what you had there, and the drinks you've made. It's the You tab in home
- * mode, and /you (the avatar in the header) in venue mode.
+ * what you had there, and the drinks you've made. /you, opened from the
+ * avatar in the header on phones, and the sidebar's You on wide web (the
+ * home sidebar's You tab shows it too). Always with Close and Settings on top.
  */
-export function YouScreen({ inTabs }: { inTabs?: boolean }) {
-  // The tabs already sit in the Back Bar theme (VenueBrandProvider).
-  if (inTabs) return <You inTabs />;
+export function YouScreen() {
   return (
     <BackbarTheme>
       <You />
@@ -39,12 +36,11 @@ export function YouScreen({ inTabs }: { inTabs?: boolean }) {
   );
 }
 
-function You({ inTabs }: { inTabs?: boolean }) {
+function You() {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const tabInset = useTabBarInset();
   const authName = useUserDisplayName();
   const { data: profile } = useMyProfile();
   const had = useMyHadDrinks();
@@ -65,9 +61,7 @@ function You({ inTabs }: { inTabs?: boolean }) {
   const pinned = drinks
     .filter((d) => picks[d.id]?.pin && profile && pickedShown(profile.sharing.had, picks[d.id]?.onProfile))
     .sort((a, b) => (picks[a.id]?.pin ?? 0) - (picks[b.id]?.pin ?? 0));
-  const padding = inTabs
-    ? { paddingBottom: tabInset }
-    : { paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl };
+  const padding = { paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl };
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -75,8 +69,7 @@ function You({ inTabs }: { inTabs?: boolean }) {
         <title>You</title>
       </WebHead>
       <ScrollView contentContainerStyle={padding}>
-        {inTabs ? <ScreenHeader you={false} /> : null}
-        <View style={[styles.body, inTabs && styles.underHeader, { paddingHorizontal: gutter }]}>
+        <View style={[styles.body, { paddingHorizontal: gutter }]}>
           <View style={styles.header}>
             <CurrentUserAvatar size={96} />
             <Title role="heading" align="center">
@@ -109,16 +102,14 @@ function You({ inTabs }: { inTabs?: boolean }) {
           <YouTabs profile={profile ?? null} drinks={drinks} made={made.data ?? []} loading={had.isLoading || made.isLoading} failed={!!had.error} />
         </View>
       </ScrollView>
-      {inTabs ? null : (
-        <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
-          <GlassButton
-            accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
-            icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-          />
-          <GlassButton accessibilityLabel="Settings" icon="gearshape" onPress={() => router.push('/settings')} />
-        </View>
-      )}
+      <View style={[styles.controls, { top: insets.top + space.sm, left: gutter, right: gutter }]}>
+        <GlassButton
+          accessibilityLabel={Platform.OS === 'web' ? 'Back' : 'Close'}
+          icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        />
+        <GlassButton accessibilityLabel="Settings" icon="gearshape" onPress={() => router.push('/settings')} />
+      </View>
     </View>
   );
 }
@@ -127,7 +118,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   // Centred: the profile itself is centred under your avatar. Wider than text for the drink grids.
   body: { gap: space.xl, width: '100%', maxWidth: 960, alignSelf: 'center' },
-  underHeader: { paddingTop: space.lg },
   controls: { position: 'absolute', flexDirection: 'row', justifyContent: 'space-between' },
   header: { alignItems: 'center', gap: space.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space.sm, marginTop: space.xs },

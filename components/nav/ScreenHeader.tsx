@@ -3,23 +3,19 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Display, GlassButton, PressableScale, Title, useGutter } from '@/components/ds';
+import { Display, PressableScale, Title, useGutter } from '@/components/ds';
 import { CurrentUserAvatar } from '@/components/ui/UserAvatar';
 import { layout, space } from '@/constants/tokens';
-import { useBottomBar } from '@/hooks/useBottomBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useMode } from '@/hooks/useMode';
 
-import { CreateButton } from './CreateSheet';
 import { VenueSwitcher } from './VenueSwitcher';
 
 /**
  * The top of every redesigned tab on a phone: the logo (the venue menu) with
- * the page's title beside it ("Tonight", "Discover") on the left, New and you
- * on the right. The title takes the row the venue's name used to, so the page
- * starts a row higher (Kevin and Eddie, 13 Oct). In venue mode "You" lives
- * here rather than in the tab bar, which keeps the tabs for the work. The You
- * screen itself passes `you={false}` and gets Settings and New, with no logo.
+ * the page's title beside it ("Tonight", "Discover") on the left, the page's
+ * tools and you on the right. The title takes the row the venue's name used
+ * to, so the page starts a row higher (Kevin and Eddie, 13 Oct). New is a tab
+ * (24 Oct), and the avatar opens You over the tabs in both modes.
  *
  * Wide web has the logo, New and you in the side nav, so there is no avatar
  * on the page (you live in the sidebar's foot): the title (at display size
@@ -28,37 +24,26 @@ import { VenueSwitcher } from './VenueSwitcher';
  *
  * `center` (phones) fills the middle of the row, between the logo and you,
  * and the title becomes a heading only screen readers hear (Discover's
- * search pill). `create={false}` leaves New out of the row.
+ * search pill).
  */
-export function ScreenHeader({ you = true, title, display, actions, center, create = true }: { you?: boolean; title?: string; display?: boolean; actions?: ReactNode; center?: ReactNode; create?: boolean }) {
+export function ScreenHeader({ title, display, actions, center }: { title?: string; display?: boolean; actions?: ReactNode; center?: ReactNode }) {
   const router = useRouter();
-  const home = useMode().mode === 'home';
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const wide = useIsWideWeb();
-  // Settings › Try it: New lives in the tab bar, and home mode's You tab makes way for it.
-  const bottomBar = useBottomBar();
-  const youTab = home && !bottomBar;
-  const settings = <GlassButton accessibilityLabel="Settings" icon="gearshape" onPress={() => router.push('/settings')} />;
   if (wide) {
-    const trailing = you ? actions : (
-      <>
-        {actions}
-        {settings}
-      </>
-    );
-    if (!title && !trailing) return <View style={styles.wide} />;
+    if (!title && !actions) return <View style={styles.wide} />;
     return (
       <View style={[styles.row, styles.wideTitled, { paddingHorizontal: gutter }]}>
         {!title ? <View /> : display ? <Display aria-level={1}>{title}</Display> : <Title aria-level={1}>{title}</Title>}
-        <View style={styles.end}>{trailing}</View>
+        <View style={styles.end}>{actions}</View>
       </View>
     );
   }
   return (
     <View style={[styles.row, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
       <View style={styles.start}>
-        {you ? <VenueSwitcher /> : null}
+        <VenueSwitcher />
         {title && !center ? (
           <Title aria-level={1} numberOfLines={1} style={styles.title}>
             {title}
@@ -77,20 +62,9 @@ export function ScreenHeader({ you = true, title, display, actions, center, crea
       ) : null}
       <View style={styles.end}>
         {actions}
-        {you ? (
-          <>
-            {create && !bottomBar ? <CreateButton /> : null}
-            {/* Home mode has You as a tab; venue mode opens it over the tabs. */}
-            <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => (youTab ? router.navigate('/profile') : router.push('/you'))} style={styles.avatar}>
-              <CurrentUserAvatar size={32} />
-            </PressableScale>
-          </>
-        ) : (
-          <>
-            {settings}
-            {bottomBar ? null : <CreateButton />}
-          </>
-        )}
+        <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => router.push('/you')} style={styles.avatar}>
+          <CurrentUserAvatar size={32} />
+        </PressableScale>
       </View>
     </View>
   );
