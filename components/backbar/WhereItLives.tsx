@@ -23,13 +23,14 @@ interface WhereItLivesProps {
   bare?: boolean;
   /** A house prep's Recipe button (prep-ing-where): back to its recipe. */
   onRecipe?: () => void;
+  /** Whoever can open the ingredient's Edit gives it a spot there; this only reads for them (ingredient-edit-proposal). */
+  readOnly?: boolean;
 }
 
 /**
  * "Where it lives" on an ingredient's page: a small plan of the active venue
  * with its zone lit, then the shelf, container and par for each place it's
  * kept. The first time a new barback opens Fridge 2, they know what to look for.
- * It only reads: giving it a spot is in Edit (ingredient-edit-proposal).
  */
 export function WhereItLives(props: WhereItLivesProps) {
   return (
@@ -63,10 +64,11 @@ export function useWhereItLives(itemId: string) {
   return { shown, active, barId, capabilities, canRead, zones, here, lines };
 }
 
-function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProps) {
+function WhereItLivesCard({ itemId, itemName, bare, onRecipe, readOnly }: WhereItLivesProps) {
   const ds = useDs();
   const router = useRouter();
-  const { shown, active, barId, canRead, zones, here, lines } = useWhereItLives(itemId);
+  const { shown, active, barId, capabilities, canRead, zones, here, lines } = useWhereItLives(itemId);
+  const canPlace = !!capabilities?.some((c) => c === 'edit_drinks' || c === 'prep');
   const { data: opensAt } = useCapabilityOpensAt(barId, 'locations');
   const { data: onHand = [] } = useStockOnHand(canRead && here.length ? barId : null);
 
@@ -136,6 +138,13 @@ function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProp
       ) : (
         <View style={styles.actions}>
           {onRecipe ? <Button label="Recipe" variant="secondary" onPress={onRecipe} /> : null}
+          {canPlace && !readOnly ? (
+            <Button
+              label="Give it a spot"
+              icon="map.fill"
+              onPress={() => router.push({ pathname: '/back-bar', params: { place: itemId, name: itemName } } as never)}
+            />
+          ) : null}
           <Button label="Open the back bar" variant="secondary" onPress={() => router.push('/back-bar' as never)} />
         </View>
       )}

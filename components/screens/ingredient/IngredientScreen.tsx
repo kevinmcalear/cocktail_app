@@ -170,8 +170,8 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   // A technical ingredient's page ends with Where to buy and its drinks (prep-ing-xanthan).
   const forBar = technical ? null : (
     <View style={styles.stack}>
-      {isPrep ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />}
-      <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} />
+      {isPrep ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} readOnly={offerEdit} />}
+      <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} editable={offerEdit} />
     </View>
   );
   // In the canvas's order; wide screens set them in two columns that each run on, so a

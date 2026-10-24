@@ -1,4 +1,4 @@
-import { useRouter, type Href } from 'expo-router';
+import type { Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -74,7 +74,6 @@ function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string
   const { data } = useIngredient(savedId ?? undefined);
   const { venues } = useActiveVenue();
   const home = useMode().mode === 'home';
-  const router = useRouter();
   useHoldUpdates();
 
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -106,8 +105,8 @@ function Page({ edit, savedId, onExit }: { edit: IngredientEdit; savedId: string
     if (!id) return;
     toastDone('Ingredient saved', form.name.trim());
     allowExit();
-    // Its page, now it's an ingredient.
-    router.replace(`/ingredient/${id}`);
+    // Back to whoever opened it: an editor waiting for it (attachTo) picks it up there.
+    onExit();
   };
   const removeDraft = async () => {
     if (!draft?.draftId || !(await confirmAsync({ title: 'Delete draft?', message: 'This draft goes for good.', confirmText: 'Delete', destructive: true }))) return;
