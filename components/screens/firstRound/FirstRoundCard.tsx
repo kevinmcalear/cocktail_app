@@ -109,7 +109,7 @@ export function RoundOpened() {
       <Surface raised style={[styles.card, styles.opened, { borderColor: ds.c.lineStrong }]}>
         <View role="status" style={styles.openedRow}>
           <View style={[styles.openedIcon, { backgroundColor: ds.c.surface }]}>
-            <IconSymbol name={tab === 'menus' ? 'text.alignleft' : 'safari'} size={20} color={ds.accentText} />
+            <IconSymbol name={tab === 'menus' ? 'place.menus' : 'place.discover'} size={20} color={ds.accentText} />
           </View>
           <View style={styles.grow}>
             <Body style={styles.strong}>{copy.title}</Body>

@@ -59,6 +59,18 @@ The written rules behind the Back Bar look. What each screen should be is drawn 
 - Haptics: `selectionAsync` on each detent when scrubbing (batch size, cards). `notificationAsync` on save, publish and a correct answer.
 - With Reduce Motion on, springs become fades and nothing moves on its own.
 
+## Icons
+
+One set, the bar kit (whole-app canvas, Shell page, nav-icons), drawn the same on iOS, Android and web. The drawings live in `components/ui/glyphs.ts`; `IconSymbol` draws them and nothing else draws an icon.
+
+- **Style:** a 24-point box, a 1.7 stroke, round caps and joins. Off is the muted ink; on is the accent with the accent at 22% inside the main shape (`<IconSymbol on />`). Names ending `.fill` are always on. A loved heart and a dot are solid.
+- **Places:** the shell's places use `place.*` (Tonight, Library, Menus, Prep, Study, Discover, History, This week, Back bar, My Bar, Collection, You, My team, Brand, Roles and access, Settings), wherever the place is meant, not only in the nav. One icon per place: Menus is always the menu card, Settings always the sliders.
+- **Names:** SF Symbol names, so a call site reads the same everywhere. A new icon is drawn into `glyphs.ts` in this style (check it in the gallery's Icons section beside the rest), never pulled from an icon font.
+- **Sizes:** 24 for tabs and standalone buttons, 20 in rows and the rail, 18 inside text-sized controls. The control around it keeps its 44 (iOS) or 48 (Android) tap target.
+- **The system's bars:** the iOS and Android tab bars stay the system's (Liquid Glass on iOS 26+, Material 3 on Android) and take our drawings as template images the system tints, an off and an on image per tab (`components/nav/tabImages.ts`, drawn by `npx tsx scripts/nav-tab-icons.ts`). Run that script after changing a tab's glyph. iOS draws its own magnifying glass on the search tab.
+- **Android back** is an arrow, iOS and web a chevron (`IconSymbol` swaps `chevron.left`).
+- **Accessibility:** icons are decorative (`aria-hidden`); the control that holds one carries the label.
+
 ## Glass
 
 - iOS 26+: Expo Router `NativeTabs` for the tab bar, `GlassView` (expo-glass-effect) for floating controls, `BlurView` fallback where glass isn't available.

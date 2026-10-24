@@ -35,10 +35,10 @@ export function VenueTeamLinks({ barId, barName }: { barId: string; barName: str
   const team = members ? [plural(members.length, 'person', 'people'), invites.length ? `${invites.length} invited` : null].filter(Boolean).join(' · ') : undefined;
   return (
     <SettingsSection title="Team and roles">
-      <SettingsRow icon="person.2.fill" label="My team" detail={team} onPress={() => router.push('/team' as Href)} />
+      <SettingsRow icon="place.team" label="My team" detail={team} onPress={() => router.push('/team' as Href)} />
       <RowDivider />
       <SettingsRow
-        icon="lock.shield.fill"
+        icon="place.roles"
         label="Roles and access"
         detail={`5 base levels${own ? ` and ${own} of ${barName}’s own` : ''}`}
         onPress={() => router.push(`/settings/bar/${barId}/roles` as Href)}

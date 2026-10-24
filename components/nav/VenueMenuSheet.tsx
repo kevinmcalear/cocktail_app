@@ -56,8 +56,7 @@ function PlaceRow({ icon, label, detail, last, onPress }: { icon: IconName; labe
 }
 
 // The switcher draws Settings as a sun and Menus as a document (nav-switcher); the sidebar keeps its own.
-const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'sun.min', path: '/settings' };
-const SHEET_ICON: Record<string, IconName> = { menus: 'doc' };
+const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'place.settings', path: '/settings' };
 
 /** The venue's own lines under each place: live counts where the app already has them. */
 function useVenueLines(venue: Venue): Record<string, string> {
@@ -92,7 +91,7 @@ function useHomeLines(): Record<string, string> {
 }
 
 function Places({ places, lines, onGo }: { places: Place[]; lines: Record<string, string>; onGo: (p: Place) => void }) {
-  return places.map((p, i) => <PlaceRow key={p.key} icon={SHEET_ICON[p.key] ?? p.icon} label={p.label} detail={lines[p.key] ?? ''} last={i === places.length - 1} onPress={() => onGo(p)} />);
+  return places.map((p, i) => <PlaceRow key={p.key} icon={p.icon} label={p.label} detail={lines[p.key] ?? ''} last={i === places.length - 1} onPress={() => onGo(p)} />);
 }
 
 function VenuePlaces({ venue, onGo }: { venue: Venue; onGo: (p: Place) => void }) {

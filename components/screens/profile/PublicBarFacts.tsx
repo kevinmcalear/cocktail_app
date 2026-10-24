@@ -4,7 +4,6 @@ import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { LineGlyph } from '@/components/ui/lineGlyphs';
 import { STATUS } from '@/constants/palette';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { useBarFacts } from '@/hooks/useBarFacts';
@@ -51,7 +50,7 @@ export function PublicBarFacts({ profileId, instagram }: { profileId: string; in
   if (!facts && !handle) return null;
   const insta = handle ? (
     <PressableScale role="link" accessibilityLabel={`@${handle} on Instagram`} accessibilityHint="Opens Instagram" onPress={() => void Linking.openURL(instagramUrl(handle))} style={styles.row}>
-      <LineGlyph name="instagram" size={18} color={ds.c.muted} />
+      <IconSymbol name="instagram" size={18} color={ds.c.muted} />
       <DsText variant="body" color={ds.accentText} style={[styles.flex, styles.text]} numberOfLines={1}>
         {`@${handle}`}
       </DsText>

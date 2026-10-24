@@ -21,6 +21,7 @@ import { TimeField } from '../TimeField';
 import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
 import { AnimatedDrawings, GlassVariants, SketchTints } from './GlassVariants';
+import { IconSet } from './IconSet';
 import { KitDrawings } from './KitDrawings';
 import { LogoMarks } from './LogoMarks';
 import { SheetDemo } from './SheetDemo';
@@ -187,6 +188,10 @@ export function GallerySections() {
             <Caption tone="muted">No image yet</Caption>
           </View>
         </View>
+      </Section>
+
+      <Section title="Icons">
+        <IconSet />
       </Section>
 
       <Section title="Logos">

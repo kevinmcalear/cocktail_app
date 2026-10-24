@@ -33,9 +33,9 @@ const SCHEMES = [
 ] as const;
 
 const TABS: { label: string; icon: IconName }[] = [
-  { label: 'Tonight', icon: 'calendar' },
-  { label: 'Library', icon: 'book' },
-  { label: 'Discover', icon: 'safari' },
+  { label: 'Tonight', icon: 'place.tonight' },
+  { label: 'Library', icon: 'place.library' },
+  { label: 'Discover', icon: 'place.discover' },
 ];
 
 /** Tonight in one scheme, in the draft brand, drawn with the real components so it matches the app. */

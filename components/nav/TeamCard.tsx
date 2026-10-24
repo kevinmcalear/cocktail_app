@@ -45,7 +45,7 @@ export function InviteTeamCard({ onInvite }: { onInvite: () => void }) {
   return (
     <View style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
       <View style={[styles.tile, { backgroundColor: ds.c.surface }]}>
-        <IconSymbol name="person.2.fill" size={20} color={ds.c.ink} />
+        <IconSymbol name="place.team" size={20} color={ds.c.ink} />
       </View>
       <View style={styles.text}>
         <Body style={styles.strong}>Invite your team</Body>
@@ -70,7 +70,7 @@ export function TeamCard({ barId, onGo }: { barId: string; onGo: (invite: boolea
   return (
     <PressableScale role="link" accessibilityLabel={`My team: ${line}`} onPress={() => onGo(false)} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
       <View style={[styles.tile, { backgroundColor: ds.c.surface }]}>
-        <IconSymbol name="person.2.fill" size={20} color={ds.c.ink} />
+        <IconSymbol name="place.team" size={20} color={ds.c.ink} />
       </View>
       <View style={styles.text}>
         <Body numberOfLines={1} style={styles.strong}>

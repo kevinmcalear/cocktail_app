@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CurrentUserAvatar, useUserDisplayName } from '@/components/ui/UserAvatar';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { Venue } from '@/hooks/useActiveVenue';
@@ -13,7 +14,6 @@ import { roleLabel } from '@/lib/roles';
 import { footerLine, shortPersonName } from '@/lib/shellNav';
 
 import { VenueSwitcher } from './VenueSwitcher';
-import { TabIcon } from './WebTabBar';
 
 /** A keyboard hint at the end of a row: ⌘K, N. */
 export function Kbd({ children }: { children: string }) {
@@ -51,7 +51,7 @@ export function NavRow({ label, icon, current, hint, role = 'link', look, isNew,
         current && { backgroundColor: withAlpha(ds.accentText, 0.16) },
       ]}
     >
-      <TabIcon name={icon} size={18} color={current ? ds.accentText : look === 'outlined' ? ds.c.ink : ds.c.muted} />
+      <IconSymbol name={icon} size={18} color={current ? ds.accentText : look === 'outlined' ? ds.c.ink : ds.c.muted} on={current} />
       <DsText color={current || look === 'outlined' ? ds.c.ink : ds.c.muted} numberOfLines={1} style={[styles.label, current && styles.strong]}>
         {label}
       </DsText>

@@ -14,7 +14,6 @@ import { footerLine, shortPersonName } from '@/lib/shellNav';
 
 import { useNavPlaces, type Place } from './navPlaces';
 import { VenueSwitcher } from './VenueSwitcher';
-import { TabIcon } from './WebTabBar';
 import type { SideNavProps } from './WebSideNav';
 
 function RailItem({ place, current, isNew, onPress }: { place: Place; current: boolean; isNew: boolean; onPress: () => void }) {
@@ -30,7 +29,7 @@ function RailItem({ place, current, isNew, onPress }: { place: Place; current: b
     >
       {isNew ? <View style={[styles.dot, { backgroundColor: ds.accentFill.fill }]} /> : null}
       <View style={styles.icon}>
-        <TabIcon name={place.icon} size={20} color={color} />
+        <IconSymbol name={place.icon} size={20} color={color} on={current} />
       </View>
       <DsText variant="caption" color={color} numberOfLines={1} align="center" style={[styles.label, current && styles.strong]}>
         {place.label}
