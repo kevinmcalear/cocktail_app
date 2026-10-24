@@ -27,6 +27,8 @@ export interface PopoverItem {
   count?: number;
   /** The one picked: a check before the label. */
   checked?: boolean;
+  /** A picture before the label: a venue's mark in the venue menu's Switch. */
+  leading?: ReactNode;
   onPress: () => void;
 }
 
@@ -135,6 +137,7 @@ function Row({ item, onClose }: { item: PopoverItem; onClose: () => void }) {
       style={styles.row}
     >
       <View style={styles.tick}>{item.checked ? <IconSymbol name="checkmark" size={16} color={ds.c.ink} /> : null}</View>
+      {item.leading}
       <View style={styles.flex}>
         <Body>{item.label}</Body>
         {item.detail ? <Caption tone="muted">{item.detail}</Caption> : null}

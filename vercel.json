@@ -87,6 +87,10 @@
       "destination": "/settings/bar/[id]"
     },
     {
+      "source": "/settings/bar/:id/features",
+      "destination": "/settings/bar/[id]/features"
+    },
+    {
       "source": "/settings/bar/:id/publishing",
       "destination": "/settings/bar/[id]/publishing"
     },
