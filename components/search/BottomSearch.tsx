@@ -57,8 +57,8 @@ function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts }:
   );
 }
 
-/** Under the row and the field: the results fade into the ground, so the glass reads over busy rows. */
-function DockFade() {
+/** Under the row and the field: the results fade into the ground, so the glass reads over busy rows. Library's filter dock too. */
+export function DockFade() {
   const ds = useDs();
   return <LinearGradient colors={[withAlpha(ds.c.ground, 0), withAlpha(ds.c.ground, 0.85), ds.c.ground]} locations={[0, 0.5, 1]} style={styles.fade} />;
 }
