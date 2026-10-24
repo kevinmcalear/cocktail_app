@@ -137,9 +137,9 @@ function Tabs() {
             ponytail: drop unstable_nativeProps once expo-router forwards them
             (expo/expo#51876). */}
         <NativeTabs.Trigger name="search" role="search" unstable_nativeProps={{ ios: { role: 'search', automaticallyActivatesSearch: true } }}>
-          {/* iOS draws the system magnifying glass from role="search" (the search
-              tab's look is the system's); Android has no search role, so it takes ours. */}
-          <NativeTabs.Trigger.Icon src={TAB_IMAGES.search} renderingMode="template" />
+          {/* iOS draws the system magnifying glass from role="search": no image there, or it
+              would replace the system's. Android has no search role, so it takes ours. */}
+          <NativeTabs.Trigger.Icon src={Platform.OS === 'android' ? TAB_IMAGES.search : undefined} renderingMode="template" />
           <NativeTabs.Trigger.Label>Search</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
       </NativeTabs>

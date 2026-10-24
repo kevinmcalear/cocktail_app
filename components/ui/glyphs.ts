@@ -4,7 +4,7 @@
  * line; `f` is the shape that fills (the accent at 22%) when the icon is on,
  * or always for a `.fill` name; `solid` fills `f` in full (a loved heart, a
  * dot). One table for iOS, Android and web: IconSymbol draws it in app, and
- * scripts/nav-tab-icons.mjs renders the tab bar's images from it.
+ * scripts/nav-tab-icons.ts renders the tab bar's images from it.
  *
  * Names are SF Symbol names, so call sites read the same on every platform.
  * `place.*` are the shell's places: use them wherever a place is meant.
@@ -181,7 +181,7 @@ const G = {
   sparkles: { d: 'M11 3.5l1.7 4.6 4.6 1.7-4.6 1.7L11 16.1l-1.7-4.6-4.6-1.7 4.6-1.7zM18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z', f: 'M11 3.5l1.7 4.6 4.6 1.7-4.6 1.7L11 16.1l-1.7-4.6-4.6-1.7 4.6-1.7z' },
   '8.circle': { d: RING + C(12, 11, 4.2) + C(12, 9.6, 1.2) + C(12, 12.4, 1.5), f: RING },
   target: { d: RING + C(12, 12, 5.5) + C(12, 12, 2), f: C(12, 12, 2) },
-  'circle.lefthalf.filled': { d: RING + 'M12 3v18', f: 'M12 3a9 9 0 0 0 0 18z', on: true },
+  'circle.lefthalf.filled': { d: RING + 'M12 3v18', f: 'M12 3a9 9 0 0 0 0 18z', solid: true, on: true },
   percent: { d: 'M18.5 5.5l-13 13' + C(7, 7, 2.3) + C(17, 17, 2.3) },
   'dollarsign.circle.fill': filled({ d: RING + 'M14.8 8.8h-3.6a1.8 1.8 0 0 0 0 3.6h1.6a1.8 1.8 0 0 1 0 3.6H9.2M12 7v1.8M12 16v1.5', f: RING }),
   trophy: { d: 'M7.5 4h9v5a4.5 4.5 0 0 1-9 0zM7.5 6H5a2.5 2.5 0 0 0 2.5 4.5M16.5 6H19a2.5 2.5 0 0 1-2.5 4.5M12 13.5v3.5M8.5 20.5h7M9.5 20.5c0-2 1-3.5 2.5-3.5s2.5 1.5 2.5 3.5', f: 'M7.5 4h9v5a4.5 4.5 0 0 1-9 0z' },
