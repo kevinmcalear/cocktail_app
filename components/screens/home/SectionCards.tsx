@@ -86,7 +86,7 @@ function SectionCard({ card, onOpen, onAdd }: { card: SectionCardData; onOpen: (
         {shown.map((t) => (
           <PressableScale key={t.key} role="link" accessibilityLabel={t.name} onPress={t.onPress} style={styles.tile}>
             <View style={styles.square}>{t.picture}</View>
-            <Caption numberOfLines={2} style={styles.name}>
+            <Caption numberOfLines={nameLines(t.name)} style={styles.name}>
               {t.name}
             </Caption>
           </PressableScale>
@@ -96,7 +96,7 @@ function SectionCard({ card, onOpen, onAdd }: { card: SectionCardData; onOpen: (
             <View style={[styles.square, styles.dashed, { borderColor: ds.c.lineStrong }]}>
               <View style={styles.faded}>{t.picture}</View>
             </View>
-            <Caption tone="muted" numberOfLines={2} style={styles.name}>
+            <Caption tone="muted" numberOfLines={nameLines(t.name)} style={styles.name}>
               {t.name}
             </Caption>
           </PressableScale>
@@ -166,6 +166,13 @@ export function useSectionCards({ on, bottles, pantry, fridge, lab, preps, owned
   const ideas: Partial<Record<ShelfSection, CardTile[]>> = { fridge: missing, kit: kitIdeas };
   return (Object.keys(tiles) as ShelfSection[]).map((section) => ({ section, count: counts[section], tiles: tiles[section], ideas: ideas[section] ?? [] }));
 }
+
+/**
+ * A tile's name runs to two lines, but one with a word too long for the tile
+ * keeps to one and trails off, so "Grapefruit" never breaks mid-word.
+ * ponytail: counts letters, not measured width; measure the text if a name still splits.
+ */
+const nameLines = (name: string) => (name.split(/[\s-]+/).some((w) => w.length > 8) ? 1 : 2);
 
 const styles = StyleSheet.create({
   grid: { gap: space.md },
