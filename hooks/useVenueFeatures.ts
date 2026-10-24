@@ -41,6 +41,8 @@ export function useVenueFeatures() {
   return {
     ready: home || (!!venue && data !== undefined),
     home,
+    /** The venue's switches that are on; none at home, where nothing switches. */
+    on: venue ? (data ?? []) : [],
     has: (key: VenueFeatureKey) => (venue ? (data ?? []).includes(key) : home && featureAtHome(key)),
   };
 }

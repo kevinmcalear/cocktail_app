@@ -16,6 +16,8 @@ interface MenuSheetProps {
   eyebrow?: string;
   /** A picture before the title: the bottle a back bar sheet is about. */
   leading?: ReactNode;
+  /** Beside the subtitle, under the title: the venue menu's Switch. Keeps the title its whole width. */
+  aside?: ReactNode;
   children: ReactNode;
   /** Pinned under the scrolling body: the sheet's main action. */
   footer?: ReactNode;
@@ -39,7 +41,7 @@ interface MenuSheetProps {
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, children, footer, onShow, save, plain, form, list }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, aside, children, footer, onShow, save, plain, form, list }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -65,7 +67,14 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading,
                 </Caption>
               ) : null}
               {plain ? <Headline role="heading">{title}</Headline> : <Title>{title}</Title>}
-              {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+              {aside ? (
+                <View style={styles.aside}>
+                  {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
+                  {aside}
+                </View>
+              ) : subtitle ? (
+                <Caption tone="muted">{subtitle}</Caption>
+              ) : null}
             </View>
             <SheetCloseButton />
           </View>
@@ -202,6 +211,7 @@ export function Choice({ label, selected, onPress, kind = 'radio', detail, disab
 const styles = StyleSheet.create({
   dialog: { paddingTop: space.md },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, paddingHorizontal: space.xl, paddingTop: space.md },
+  aside: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.sm, rowGap: space.xs },
   form: { alignItems: 'center', paddingHorizontal: space.md },
   formButton: { minWidth: 72, minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.sm },
   formSave: { alignItems: 'flex-end' },

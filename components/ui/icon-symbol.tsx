@@ -128,6 +128,8 @@ const MAPPING = {
   'flag': 'flag',
   'gearshape': 'settings',
   'slider.horizontal.3': 'sliders',
+  // Features, a venue's switches.
+  'switch.2': 'toggle-right',
   // Menus: the R&D tile, printing, and a builder row's ... menu.
   'square.grid.2x2': 'grid',
   'printer': 'printer',
