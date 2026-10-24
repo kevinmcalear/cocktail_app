@@ -177,9 +177,12 @@ assert.equal(sentenceLine(ingredientLine(['gin', 'dry vermouth', 'Campari'])), '
   const fri = new Date(2026, 9, 31, 18).toISOString();
   const night = comingUpLine({ startsAt: fri, endsAt: new Date(2026, 10, 1, 2).toISOString(), menuDate: null, itemIds: ['a', 'b', 'c', 'd'], event: null, guestCount: null }, 'en-GB');
   assert.match(night, /^One night · 4 drinks · Sat 31 Oct$|^One night · 4 drinks · Fri 31 Oct$/);
+  // Beside a date tile, a one-night menu leaves its day off; a run keeps "from".
+  assert.equal(comingUpLine({ startsAt: fri, endsAt: new Date(2026, 10, 1, 2).toISOString(), menuDate: null, itemIds: ['a', 'b'], event: null, guestCount: null }, 'en-GB', true), 'One night · 2 drinks');
   const takeover = comingUpLine({ startsAt: fri, endsAt: null, menuDate: null, itemIds: ['a'], event: { id: 'e', name: 'Pale Moth', startsAt: fri }, guestCount: null }, 'en-GB');
   assert.match(takeover, /^Takeover · 1 drink · from /);
   assert.equal(previousLine({ startsAt: new Date(2026, 5, 3).toISOString(), endsAt: new Date(2026, 7, 31).toISOString(), itemIds: ['a', 'b', 'a'] }, 'en-GB'), '3 Jun to 31 Aug · 2');
+  assert.equal(previousLine({ startsAt: null, endsAt: null, menuDate: '2025-11-27', itemIds: ['a', 'b'] }, 'en-GB'), '27 Nov 2025 · 2');
 }
 
 {

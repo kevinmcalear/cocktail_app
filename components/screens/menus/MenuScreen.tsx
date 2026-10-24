@@ -26,7 +26,7 @@ import { MenuPageRowView, menuPageRows } from './MenuSections';
 import { MenuVisual } from './MenuVisual';
 import { ShareMenuSheet } from './ShareMenuSheet';
 
-const STATUS_LABEL: Record<MenuStatus, string> = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' };
+const STATUS_LABEL: Record<MenuStatus, string> = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Past' };
 // Not the accent for Coming up: Edit is the page's one accent.
 const STATUS_TONE = { on: 'success', upcoming: 'default', draft: 'default', previous: 'default' } as const;
 
