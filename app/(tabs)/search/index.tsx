@@ -55,10 +55,8 @@ function ToPalette() {
   useEffect(() => {
     if (!ready && !home) return;
     const start = { query: q ?? '', scope: scope === 'everywhere' ? ('everywhere' as const) : null };
+    useSearchPalette.getState().search(start);
     router.replace(first);
-    // After the move: the palette closes when the page under it changes.
-    const t = setTimeout(() => useSearchPalette.getState().search(start), 0);
-    return () => clearTimeout(t);
   }, [ready, home, first, q, scope, router]);
   return null;
 }

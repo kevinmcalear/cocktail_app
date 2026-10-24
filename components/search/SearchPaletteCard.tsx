@@ -82,7 +82,10 @@ function Palette() {
   const pathname = usePathname();
   const fromPath = useRef(pathname);
   useEffect(() => {
-    if (pathname !== fromPath.current) setOpen(false);
+    if (pathname === fromPath.current) return;
+    // A /search link opens the palette as it moves to the first tab (app/(tabs)/search): that move keeps it.
+    if (fromPath.current === '/search') fromPath.current = pathname;
+    else setOpen(false);
   }, [pathname, setOpen]);
 
   // ↑↓ move the highlight (the top row leads), Return opens it, Tab moves to the next place.
