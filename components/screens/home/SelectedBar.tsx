@@ -42,8 +42,6 @@ interface SelectedBarProps {
   variant?: 'card' | 'sheet';
   /** Where the person is, for "400 m" and Directions; null when unknown. */
   me?: Point;
-  /** How many results the search found: the way back says "Back to all 14 results". */
-  total?: number | null;
   onClose: () => void;
 }
 
@@ -53,10 +51,10 @@ interface SelectedBarProps {
  * what else is good there. Browsing, the bar (disc-map-bar): its type and
  * place, score, Love, hours, its top drinks, then (phones) its drinks in the
  * sheet's list below. On a phone the bar's row opens it, the pin button
- * beside the heart opens its listing in Apple or Google Maps, and a close
- * button in the corner goes back to the results, as maps apps draw a place.
+ * beside the heart opens its listing in Apple or Google Maps, and the
+ * header's pill (a back arrow and the bar's name) goes back to the results.
  */
-export function SelectedBar({ pin, drinks, scores, query = '', area, lead = false, variant = 'card', me = null, total, onClose }: SelectedBarProps) {
+export function SelectedBar({ pin, drinks, scores, query = '', area, lead = false, variant = 'card', me = null, onClose }: SelectedBarProps) {
   const ds = useDs();
   const router = useRouter();
   const facts = useBarFacts(pin.id).data;
@@ -77,18 +75,19 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   const early = !pin.closed && pin.score === null && pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : null;
   const said = pin.closed ? pin.closed : pin.score !== null ? `Score ${formatScore(pin.score)}, ${pin.rankers} ranked` : pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : null;
 
-  const back = <GlassButton icon="xmark" accessibilityLabel={total ? `Back to all ${total} results` : 'Back to all results'} onPress={onClose} />;
+  // The wide card's way back to the results; on a phone the header's pill is.
+  const back = variant === 'card' ? <GlassButton icon="chevron.left" accessibilityLabel="Back to all results" onPress={onClose} /> : null;
 
   if (hero) {
     // The drink, then the bar it's at: a row that opens the bar.
     return (
       <View style={styles.card}>
-        <View style={styles.top}>
-          {matches.length > 1 ? (
-            <Caption tone="muted" role="status" style={styles.flex}>{`${page + 1} of ${matches.length} at ${pin.name}`}</Caption>
-          ) : <View style={styles.flex} />}
-          {back}
-        </View>
+        {matches.length > 1 || back ? (
+          <View style={styles.top}>
+            {back}
+            <Caption tone="muted" role="status" style={styles.flex}>{matches.length > 1 ? `${page + 1} of ${matches.length} at ${pin.name}` : ''}</Caption>
+          </View>
+        ) : null}
         <DrinkHero key={hero.id} drink={hero} query={query} area={area} />
         {next ? <NextMatch drink={next} score={scores?.drinks[next.id]} count={matches.length} page={page} onNext={() => setPage((page + 1) % matches.length)} /> : null}
         <View style={[styles.atBar, { borderColor: ds.c.line }]}>
@@ -126,7 +125,6 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   if (variant === 'sheet') {
     return (
       <View style={styles.card}>
-        <View style={styles.top}>{back}</View>
         <View style={styles.cardRow}>
           {/* The bar's row is the way in: no Open bar button. */}
           <PressableScale role="link" accessibilityLabel={`${headLabel}. Open the bar`} onPress={openBar} style={[styles.cardRow, styles.barHead]}>
@@ -210,8 +208,8 @@ const styles = StyleSheet.create({
   count: { flexGrow: 1 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, marginLeft: 'auto' },
   cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm + 2 },
-  // The close button in the card's top corner, with "1 of 2 at Little Rye" beside it when searching.
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm },
+  // The wide card's back button, then "1 of 2 at Little Rye" when searching.
+  top: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   atBar: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderRadius: radius.mark, paddingVertical: space.sm },
   atLink: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md },
 });

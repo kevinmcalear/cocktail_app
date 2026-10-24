@@ -147,8 +147,7 @@ test('on phones a tapped bar opens the sheet on it, not a card over the map', as
   expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
   expect(screen.queryByText(/Caretaker's Cottage ·/)).toBeNull(); // its rows don't repeat the bar
   expect(screen.getByRole('link', { name: /Open the bar$/ })).toBeTruthy(); // the bar's row, no Open bar button
-  await fireEvent.press(screen.getByRole('button', { name: /^Back to all/ }));
-  expect(screen.getByRole('button', { name: /Show the list$/ })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /^Back to all/ })).toBeNull(); // the header's pill goes back (DiscoverControls)
 });
 
 test('searching, pins name the best match and a tapped bar leads with the drink, then the bar', async () => {
@@ -173,7 +172,7 @@ test('searching, pins name the best match and a tapped bar leads with the drink,
   expect(screen.getByRole('button', { name: 'Open drink' })).toBeTruthy();
   // The matches page one at a time, the next peeking (disc-search-pin); then the bar, as a link.
   expect(screen.getByText("1 of 3 at Caretaker's Cottage")).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Back to all 3 results' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /^Back to all/ })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Next: Gibson, Riff on a Martini' }));
   expect(screen.getByText("2 of 3 at Caretaker's Cottage")).toBeTruthy();
   expect(screen.getByText('At')).toBeTruthy();
