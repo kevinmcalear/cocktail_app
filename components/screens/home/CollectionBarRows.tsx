@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useBarTopDrinks } from '@/hooks/useRankings';
 import type { BarNews } from '@/lib/collectionMenus';
-import { dayShort, type BeenBar } from '@/lib/collectionStages';
+import { dayShort, type BeenBar, type WantBar } from '@/lib/collectionStages';
 import { formatScore } from '@/lib/ranking';
 
 import { BarMark } from './BarMark';
@@ -92,19 +92,6 @@ export function BeenRow({ bar, loved, news, everyone, now }: { bar: BeenBar; lov
   );
 }
 
-export interface WantBar {
-  id: string;
-  handle: string | null;
-  name: string;
-  avatarUrl: string | null;
-  place: string | null;
-  away: string | null;
-  km: number | null;
-  hours: { open: boolean; text: string } | null;
-  why: string | null;
-  everyone: number | null;
-}
-
 /**
  * "Their best: Night Garden Sour", on a desktop: the bar's top-ranked drink.
  * ponytail: one query per row, fine for the dozens of bars someone loves.
@@ -119,11 +106,11 @@ function TheirBest({ id }: { id: string }) {
   ) : null;
 }
 
-/** Want to go (board home-collection-bars, step 1): how far, open tonight or not, why it's here, everyone's score. */
-export function WantRow({ bar }: { bar: WantBar }) {
+/** Want to go (board home-collection-bars, step 1): how far, open tonight or not, why it's here, everyone's score. `compact`: the phone row on any screen (the map's list pane, step 3). */
+export function WantRow({ bar, compact = false }: { bar: WantBar; compact?: boolean }) {
   const ds = useDs();
   const router = useRouter();
-  const desk = useBreakpoint() === 'desktop';
+  const desk = useBreakpoint() === 'desktop' && !compact;
   const hoursColor = bar.hours?.open ? ds.accentText : ds.c.muted;
   const label = [bar.name, bar.away ?? bar.place, bar.hours?.text, bar.why, bar.everyone !== null ? `everyone ${formatScore(bar.everyone)}` : null].filter(Boolean).join('. ');
   if (desk) {

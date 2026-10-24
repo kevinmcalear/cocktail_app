@@ -45,6 +45,8 @@ interface SelectedBarProps {
   me?: Point;
   /** How many results the search found: the way back reads "All 14". */
   total?: number | null;
+  /** The phone sheet's way back, when it isn't to "All results" (Want to go's map). */
+  back?: string;
   onClose: () => void;
 }
 
@@ -55,7 +57,7 @@ interface SelectedBarProps {
  * place, score, Love, hours and address, Directions and Open bar, its top
  * drinks, then (phones) its drinks in the sheet's list below.
  */
-export function SelectedBar({ pin, drinks, scores, query = '', area, lead = false, variant = 'card', me = null, total, onClose }: SelectedBarProps) {
+export function SelectedBar({ pin, drinks, scores, query = '', area, lead = false, variant = 'card', me = null, total, back = 'All results', onClose }: SelectedBarProps) {
   const ds = useDs();
   const router = useRouter();
   const facts = useBarFacts(pin.id).data;
@@ -132,7 +134,7 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
     return (
       <View style={styles.card}>
         <View style={styles.actions}>
-          <Button label="All results" icon="chevron.left" variant="ghost" onPress={onClose} />
+          <Button label={back} icon="chevron.left" variant="ghost" onPress={onClose} />
           <View style={styles.right}>
             <DirectionsButton target={target} />
             <Button label="Open bar" variant="secondary" onPress={openBar} />
