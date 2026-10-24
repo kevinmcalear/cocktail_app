@@ -15,7 +15,7 @@ import { FilterRow, SearchPill, type MapLayer } from '@/components/screens/home/
 import { mapAvailable } from '@/components/screens/home/DiscoverMap';
 import { DiscoverHeader, ScrollAwayHeader, useScrollAway } from '@/components/screens/home/DiscoverHeader';
 import { DiscoverMapPane } from '@/components/screens/home/DiscoverMapPane';
-import { DiscoverSearchHead, DiscoverSearchSheet } from '@/components/screens/home/DiscoverSearchSheet';
+import { DiscoverSearchHead } from '@/components/screens/home/DiscoverSearchHead';
 import { AreaSheet, FiltersSheet, OptionsSheet } from '@/components/screens/home/DiscoverSheet';
 import { DeskSearchResults } from '@/components/screens/home/DeskSearchResults';
 import { AllowLocation } from '@/components/screens/home/DiscoverArea';
@@ -31,7 +31,7 @@ import { useDrinkPick } from '@/hooks/useDiscover';
 import { useDiscoverResults } from '@/hooks/useDiscoverDrinks';
 import { useDiscoverArea } from '@/hooks/useDiscoverArea';
 import { useSearchMine } from '@/hooks/useSearchMine';
-import { usePublishSearchArea } from '@/hooks/useSearchFrom';
+import { useOpenSearch, usePublishSearchArea } from '@/hooks/useSearchFrom';
 import { useMode } from '@/hooks/useMode';
 import { kindsTitle, pinOf } from '@/lib/discoverDrinks';
 import { areaFromViewport, armBarHover, cameraOn, type MapPin, type Viewport } from '@/lib/discoverMap';
@@ -122,11 +122,13 @@ export function DiscoverScreen() {
   };
   // Wide screens, searching the area or everywhere: the list pane holds the ranked results (disc-desk-search).
   const deskSearch = split && searching && scope !== 'mine';
-
+  const toSearch = useOpenSearch();
   const openSearch = () => {
-    // On the map, "this area" is what the map shows: search it, as "Search this area" would.
+    // On the map, "this area" is what the map shows: search it, in the search tab on phones (q02, decided 24 Oct 2026).
     if (onMap && viewport.current) onArea(areaFromViewport(viewport.current));
-    if (!searching) setScope(onMap || area.kind !== 'anywhere' ? 'area' : 'everywhere');
+    const here = onMap || area.kind !== 'anywhere' ? 'area' : 'everywhere';
+    if (!split) return toSearch({ query: search, scope: here });
+    if (!searching) setScope(here);
     setSheet('search');
   };
   // "Search this area" on the map searches here, even after "Everywhere".
@@ -170,9 +172,7 @@ export function DiscoverScreen() {
   const filterProps = { kinds, onChange: setKinds, bars: signedIn && results.totals ? results.totals.bars : null, closed, past, notHad: unhad, onClose: close };
   const where = { area, near, access, preferNear, onArea, onNearMe, onThisArea };
   let overlay = null;
-  if (sheet === 'search' && !split) {
-    overlay = <DiscoverSearchSheet {...searchProps} filters={filtersOn} onFilters={() => setSheet('filters')} onAddBar={signedIn ? () => setSheet('add') : undefined} onShowBar={showBar} />;
-  } else if (sheet === 'filters') {
+  if (sheet === 'filters') {
     overlay = <FiltersSheet {...filterProps} />;
   } else if (sheet === 'options') {
     overlay = <OptionsSheet {...filterProps} where={where} view={mapAvailable && !split ? { showing: phoneMap ? 'map' : 'list', onChange: showView } : undefined} />;

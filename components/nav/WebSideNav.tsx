@@ -90,7 +90,7 @@ function SideNav() {
   const props: SideNavProps = {
     current,
     go: (p) => (p.tab ? router.navigate(p.path as Href) : router.push(p.path as Href)),
-    searching: searching || pathname === '/search',
+    searching,
     onSearch: () => setSearching(true),
     onNew: () => setCreating(true),
     dots,

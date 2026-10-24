@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useRef, type ComponentRef } from 'react';
+import { useRef, type ComponentRef, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Chip, DrinkImage, DsText, GlassSurface, Headline, MatchText, PopoverMenu, PressableScale, RowScore, scoreWords, useDs, usePopover } from '@/components/ds';
@@ -14,9 +14,10 @@ import { showOptions, type SearchScope, type SearchShow, type ShowCounts } from 
 /**
  * "Little Rye ⌄": where the search looks, in glass at the head of the row over
  * the bottom field. A tap opens the places as a menu (search-starts-here):
- * the venue or your drinks, This area from Discover, and Everywhere.
+ * the venue or your drinks, This area from Discover, and Everywhere. The ⌘K
+ * palette has the same token at the end of its field (q03, decided 24 Oct 2026).
  */
-export function ScopeToken({ options, scope, onScope }: { options: { value: SearchScope; label: string; detail?: string }[]; scope: SearchScope; onScope: (scope: SearchScope) => void }) {
+export function ScopeToken({ options, scope, onScope, hint }: { options: { value: SearchScope; label: string; detail?: string }[]; scope: SearchScope; onScope: (scope: SearchScope) => void; hint?: ReactNode }) {
   const ds = useDs();
   const menu = usePopover();
   const token = useRef<ComponentRef<typeof View>>(null);
@@ -32,7 +33,7 @@ export function ScopeToken({ options, scope, onScope }: { options: { value: Sear
           <IconSymbol name="chevron.down" size={12} color={ds.accentText} />
         </GlassSurface>
       </PressableScale>
-      <PopoverMenu anchor={menu.anchor} label="Where to search" onClose={menu.close} sections={[{ title: 'Search in', items }]} />
+      <PopoverMenu anchor={menu.anchor} label="Where to search" onClose={menu.close} sections={[{ title: 'Search in', items }]} footer={hint} />
     </View>
   );
 }

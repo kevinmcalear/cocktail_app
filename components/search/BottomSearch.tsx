@@ -25,8 +25,8 @@ export interface SearchTabState {
   mine: SearchMine;
   /** The tab is the one showing. */
   focused: boolean;
-  /** A search carried in with ?q=. */
-  carried?: string;
+  /** A search carried in (a ?q= link, or a door such as Discover's pill): a new object each time. */
+  carried?: { query: string };
   /** The type chips: what the results show, and how many of each they found. */
   show: SearchShow;
   setShow: (show: SearchShow) => void;
@@ -81,9 +81,11 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
     const t = setTimeout(() => bar.current?.focus(), 150);
     return () => clearTimeout(t);
   }, [focused]);
-  // The native field holds its own text: write a carried-in search into it.
+  // The native field holds its own text: write a carried-in search into it, once the bar has mounted.
   useEffect(() => {
-    if (carried) bar.current?.setText(carried);
+    if (!carried) return;
+    const t = setTimeout(() => bar.current?.setText(carried.query), 150);
+    return () => clearTimeout(t);
   }, [carried]);
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

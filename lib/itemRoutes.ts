@@ -17,6 +17,11 @@ export function itemHref(category: ItemCategory | undefined, id: string): string
   }
 }
 
+/** The add-drink wizard, started on a name, for a venue or (no bar) your own drinks. */
+export function newDrinkHref(name: string, barId: string | null): string {
+  return `/add-cocktail?name=${encodeURIComponent(name)}${barId ? `&barId=${encodeURIComponent(barId)}` : ''}`;
+}
+
 /**
  * A drink's page: signed in, the in-app page (/cocktail/<id>), which shows a
  * bar's published drink to people outside the bar too; signed out, its public
