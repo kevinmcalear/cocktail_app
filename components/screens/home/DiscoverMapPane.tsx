@@ -132,13 +132,13 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   // A tapped bar's own drinks, from the server on the drinks layer (its pin may be outside the area).
   const atBar = useDiscoverList({ ...filter, area }, { barId: selected?.id, enabled: !!selected && byDrinks && !selected.closed, pageSize: 100 });
 
-  // Refit when what's shown changes, not after "Search this area"; near me stays on the person.
+  // Refit when what's shown changes, not after "Search this area"; near me stays on the person, again on each fresh fix (opening, Find me).
   const nearMe = area.kind === 'point' && area.source === 'me';
   const fitting = rows.isLoading || (byDrinks && areaBars.isPlaceholderData);
-  const nearCamera = nearMe && !areaBars.isPlaceholderData ? cameraForArea(area, (areaBars.data ?? []).filter((b) => !b.closed)) : null;
-  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, nearMe ? [nearCamera?.zoom, findMe.again] : fitting]);
+  const nearCamera = nearMe && !areaBars.isPlaceholderData ? cameraForArea(area, (areaBars.data ?? []).filter((b) => !b.closed), me) : null;
+  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, nearMe ? [nearCamera?.zoom, findMe.again, me?.latitude, me?.longitude] : fitting]);
   if (fitKey !== null && fit?.key !== fitKey) {
-    setFit({ key: fitKey, camera: (fitting || nearMe ? null : cameraFor(byDrinks ? barPins(areaBars.data ?? []) : pins)) ?? nearCamera ?? cameraForArea(area) ?? fit?.camera ?? null });
+    setFit({ key: fitKey, camera: (fitting || nearMe ? null : cameraFor(byDrinks ? barPins(areaBars.data ?? []) : pins)) ?? nearCamera ?? cameraForArea(area, [], me) ?? fit?.camera ?? null });
     moves.reset();
   }
   useEffect(() => onViewport?.(moves.settled), [moves.settled, onViewport]);
