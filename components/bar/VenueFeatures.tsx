@@ -25,6 +25,8 @@ export function VenueFeatures({ barId, venueName }: { barId: string; venueName: 
   const wide = useIsWideWeb();
   // Which sample is open, and whether it was on when it opened (so Turn on doesn't swap the buttons as the sheet leaves).
   const [trying, setTrying] = useState<{ key: TryItKey; on: boolean } | null>(null);
+  // Lined up with the card's rows on phones; on wide web, with the page title over the cards.
+  const inset = wide ? null : styles.inset;
   const intro = `Start small. Switch the rest on when your team is ready. Everyone at ${venueName} sees what’s on.`;
 
   const control = (f: Feature) => ({ value: features.includes(f.key), onValueChange: (on: boolean) => set(f.key, on) });
@@ -32,7 +34,7 @@ export function VenueFeatures({ barId, venueName }: { barId: string; venueName: 
 
   return (
     <View style={styles.section}>
-      <DsText variant="label" tone="muted" style={styles.inset}>
+      <DsText variant="label" tone="muted" style={inset}>
         {wide ? `${intro} Library, Menus and Discover are always on.` : intro}
       </DsText>
       {wide ? (
@@ -56,11 +58,11 @@ export function VenueFeatures({ barId, venueName }: { barId: string; venueName: 
         </Surface>
       )}
       {error ? (
-        <Caption tone="accent" role="alert" style={styles.inset}>
+        <Caption tone="accent" role="alert" style={inset}>
           {error}
         </Caption>
       ) : null}
-      <Caption tone="muted" style={styles.inset}>
+      <Caption tone="muted" style={inset}>
         {wide
           ? 'Always there: Batch on every drink page, My team, and Roles and access.'
           : 'Always there: Batch on every drink page, My team, and Roles and access, which sets who sees specs and prep notes.'}

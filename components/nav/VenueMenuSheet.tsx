@@ -44,7 +44,7 @@ function PlaceRow({ icon, label, detail, last, onPress }: { icon: IconName; labe
 }
 
 /**
- * Switch, beside the X: a short menu of Home bar and your venues, the one
+ * Switch, under the name beside your role: a short menu of Home bar and your venues, the one
  * you're in checked. The sheet opens on where you are; switching is a tap
  * away, not the first screen (venue-menu proposal A, 24 Oct 2026).
  */
@@ -59,7 +59,7 @@ function SwitchButton({ home, active, onPick }: { home: boolean; active: Venue |
   ];
   return (
     <View ref={button} collapsable={false}>
-      <PressableScale role="button" aria-expanded={!!menu.anchor} accessibilityLabel="Switch to Home bar or another venue" onPress={() => menu.open(button.current)} style={[styles.switch, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+      <PressableScale role="button" aria-expanded={!!menu.anchor} accessibilityLabel="Switch to Home bar or another venue" onPress={() => menu.open(button.current)} hitSlop={SLOP} style={[styles.switch, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
         <DsText variant="label" style={styles.medium}>
           Switch
         </DsText>
@@ -69,6 +69,9 @@ function SwitchButton({ home, active, onPick }: { home: boolean; active: Venue |
     </View>
   );
 }
+
+// The pill is 32 tall on the subtitle line; the slop makes it a full tap target.
+const SLOP = (layout.minTapTarget - 32) / 2;
 
 // The sheet draws Settings as a sun and Menus as a document (nav-switcher); the sidebar keeps its own.
 const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'sun.min', path: '/settings' };
@@ -171,7 +174,7 @@ function HomePlaces({ onGo }: { onGo: (p: Place) => void }) {
 /**
  * The venue menu, opened from the logo on phones, the tablet rail and the
  * desktop sidebar. Titled with where you are (the venue and your role, or
- * Home bar) with Switch beside the X, then that place's pages: at a venue
+ * Home bar) with Switch under the name, then that place's pages: at a venue
  * its working pages, Venue and You; at home My Bar, Collection, You and
  * Settings (venue-menu proposal A, approved 24 Oct 2026).
  */
@@ -199,7 +202,7 @@ export function VenueMenuSheet({ onClose }: { onClose: () => void }) {
       title={venue ? venue.name : 'Home bar'}
       subtitle={venue ? roleLabel(venue.roleLevel) : 'Your shelf and collection'}
       leading={venue ? <VenueMark venue={venue} size={40} /> : <HomeMark size={40} />}
-      trailing={<SwitchButton home={home} active={active} onPick={choose} />}
+      aside={<SwitchButton home={home} active={active} onPick={choose} />}
       plain
     >
       {venue ? (
@@ -226,5 +229,5 @@ const styles = StyleSheet.create({
   medium: { fontFamily: fontFamilies.bodyMedium },
   heading: { fontFamily: fontFamilies.mono, textTransform: 'uppercase', marginTop: space.lg, marginBottom: space.xs },
   venue: { gap: space.xs },
-  switch: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: layout.minTapTarget, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth },
+  switch: { flexDirection: 'row', alignItems: 'center', gap: space.xs, height: 32, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth },
 });
