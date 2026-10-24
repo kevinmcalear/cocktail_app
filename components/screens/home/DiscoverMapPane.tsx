@@ -48,8 +48,8 @@ interface DiscoverMapPaneProps {
   from?: { latitude: number; longitude: number } | null;
   /** Where the person is: the "You are here" dot, and how far a tapped bar is. */
   me?: { latitude: number; longitude: number } | null;
-  /** Wide screens: the tapped pin and the layer are the screen's; the pin shows in its list rather than over the map, and searching, the sort chips sit in the list (disc-desk-search). */
-  pick?: { id: string | null; onPick: (pin: MapPin | null) => void; layer?: MapLayer; onLayer: (layer: MapLayer) => void };
+  /** The tapped pin is the screen's (wide screens: the layer too; the pin shows in its list rather than over the map, and searching, the sort chips sit in the list, disc-desk-search). Phones: the header's pill goes back from it. */
+  pick?: { id: string | null; onPick: (pin: MapPin | null) => void; layer?: MapLayer; onLayer?: (layer: MapLayer) => void };
   /** A bar the list is showing: its pin stays open, and the camera sits on it. */
   opened?: string | null;
   focus?: Camera | null;
@@ -86,7 +86,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   const chosen = pick?.layer ?? own;
   const setLayer = (next: MapLayer) => {
     setOwn(next);
-    pick?.onLayer(next);
+    pick?.onLayer?.(next);
   };
   // Phones browse with Nearest beside the mixed list (Kevin, 15 Oct); wide screens' list pane has its own switch.
   const canNear = !!from && (searching || mode === 'sheet');
@@ -242,7 +242,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
             ListHeaderComponent={
               <View style={styles.sheetHead}>
                 {selected && !selected.closed ? (
-                  <SelectedBar key={selected.id} variant="sheet" pin={selected} drinks={drinkLayer ? barDrinks : []} scores={shown} query={filter.search} area={area} lead={lead} me={me} total={results.more.total ?? results.drinks.length} onClose={() => setSelectedId(null)} />
+                  <SelectedBar key={selected.id} variant="sheet" pin={selected} drinks={drinkLayer ? barDrinks : []} scores={shown} query={filter.search} area={area} lead={lead} me={me} onClose={() => setSelectedId(null)} />
                 ) : (
                   <ResultsHead
                     caption={

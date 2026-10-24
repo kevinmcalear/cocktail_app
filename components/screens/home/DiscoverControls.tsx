@@ -1,4 +1,5 @@
-import { StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { BackHandler, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -40,6 +41,31 @@ export function SearchPill({ query, placeholder, label = placeholder, onOpen, on
           <IconSymbol name="xmark.circle.fill" size={20} color={ds.c.muted} />
         </PressableScale>
       ) : null}
+    </GlassSurface>
+  );
+}
+
+/**
+ * The pill while a bar on the phone map is open (disc-map-bar): a back arrow
+ * to the results and the bar's name, as Google Maps does, so the card below
+ * is just the bar. The name opens search; Android's back button goes back too.
+ */
+export function BackPill({ name, onBack, onOpen }: { name: string; onBack: () => void; onOpen: () => void }) {
+  const ds = useDs();
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => (onBack(), true));
+    return () => sub.remove();
+  }, [onBack]);
+  return (
+    <GlassSurface interactive style={[styles.pill, styles.compact]}>
+      <PressableScale role="button" accessibilityLabel="Back to the results" onPress={onBack} hitSlop={4} style={styles.clear}>
+        <IconSymbol name="chevron.left" size={20} color={ds.c.ink} />
+      </PressableScale>
+      <PressableScale role="button" accessibilityLabel={`${name}. Search`} onPress={onOpen} style={[styles.pillOpen, styles.back]}>
+        <Body numberOfLines={1} style={styles.flex}>
+          {name}
+        </Body>
+      </PressableScale>
     </GlassSurface>
   );
 }
@@ -144,6 +170,8 @@ const styles = StyleSheet.create({
   pillOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, minHeight: layout.minTapTarget + space.xs, paddingLeft: space.lg + 2 },
   compact: { minHeight: layout.minTapTarget },
   compactOpen: { minHeight: layout.minTapTarget, paddingLeft: space.md + 2, gap: space.sm },
+  // The arrow sits where the magnifier was; the name starts right after it.
+  back: { minHeight: layout.minTapTarget, paddingLeft: 0 },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   buttonWrap: { maxWidth: 200 },

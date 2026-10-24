@@ -11,7 +11,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space, springs } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
-import { SearchPill } from './DiscoverControls';
+import { BackPill, SearchPill } from './DiscoverControls';
 
 interface DiscoverHeaderProps {
   query: string;
@@ -22,6 +22,8 @@ interface DiscoverHeaderProps {
   /** How many filters are on; the options button fills in when any are. */
   filters: number;
   onOptions: () => void;
+  /** A bar open on the phone map: the pill becomes its back arrow and name. */
+  bar?: { name: string; onBack: () => void } | null;
 }
 
 /**
@@ -30,14 +32,14 @@ interface DiscoverHeaderProps {
  * 13 Oct). The pill is the page's identity, so "Discover" is a heading only
  * screen readers hear.
  */
-export function DiscoverHeader({ query, onMap, onSearch, onClear, filters, onOptions }: DiscoverHeaderProps) {
+export function DiscoverHeader({ query, onMap, onSearch, onClear, filters, onOptions, bar }: DiscoverHeaderProps) {
   const ds = useDs();
   const on = filters > 0;
   const ink = on ? ds.c.ground : ds.c.ink;
   const pill = (
     <View style={styles.middle}>
       <View style={styles.flex}>
-        <SearchPill compact query={query} placeholder={onMap ? 'Search this area' : 'Bars and drinks'} label={onMap ? 'Search this area' : 'Search bars and drinks'} onOpen={onSearch} onClear={onClear} />
+        {bar ? <BackPill name={bar.name} onBack={bar.onBack} onOpen={onSearch} /> : <SearchPill compact query={query} placeholder={onMap ? 'Search this area' : 'Bars and drinks'} label={onMap ? 'Search this area' : 'Search bars and drinks'} onOpen={onSearch} onClear={onClear} />}
       </View>
       <PressableScale accessibilityLabel={on ? `Options: list or map, where, and filters, ${filters} on` : 'Options: list or map, where, and filters'} onPress={onOptions} hitSlop={4}>
         <GlassSurface interactive tint={on ? ds.c.ink : undefined} style={styles.options}>

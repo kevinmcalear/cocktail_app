@@ -32,6 +32,19 @@ export function appUrl(app: MapsApp, d: Destination): string {
   }
 }
 
+/**
+ * The bar's own listing in a maps app (its photos, hours, reviews and a
+ * Directions button), found by name: Apple searches near where the bar is,
+ * Google by name and street. A listing rather than a route to the address.
+ */
+export function listingUrl(app: 'apple' | 'google', d: Destination & { address?: string | null }): string {
+  if (app === 'apple') return `https://maps.apple.com/?q=${encodeURIComponent(d.name)}&sll=${at(d)}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.address ? `${d.name}, ${d.address}` : at(d))}`;
+}
+
+/** Android: the listing in the person's maps app, searched by name around the bar. */
+export const geoListingUrl = (d: Destination & { address?: string | null }) => `geo:${at(d)}?q=${encodeURIComponent([d.name, d.address].filter(Boolean).join(', '))}`;
+
 /** Android: the person's chosen maps app, with the bar's name on the pin. */
 export const geoUrl = (d: Destination) => `geo:0,0?q=${at(d)}(${encodeURIComponent(d.name)})`;
 
