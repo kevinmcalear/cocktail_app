@@ -27,6 +27,9 @@
 --    named versions picked by hand (the sangrias, Clyde Common Eggnog, the
 --    Cantaritos...). Same-name drinks that are something else are left alone,
 --    and so are home drinks.
+-- 6. Past jobs now on the public record show (is_shown), by the rule in
+--    20261009200000_cocktail_legends.sql: the bar closed, the person made a
+--    credited drink there, or their credited drinks go back before 2000.
 --
 -- No paid AI: app.image_worker stops sketch jobs, and the flavour jobs these
 -- inserts queue are removed at the end. No RLS or grant changes. Running it
@@ -712,6 +715,22 @@ WHERE i.item_type = 'cocktail' AND NOT i.is_catalog AND i.riff_of_id IS NULL
   AND lower(btrim(i.name)) = k.lname AND i.origin_bar_profile_id = b.id
   AND (i.bar_id IS NOT NULL OR i.created_by IS NULL);
 
+-- --- 7. Past jobs on the public record show ---
+
+UPDATE "public"."profile_positions" pp SET "is_shown" = true
+FROM "public"."profiles" per, "public"."profiles" bar
+WHERE per.id = pp.person_profile_id AND bar.id = pp.bar_profile_id
+  AND NOT pp.is_current AND NOT pp.is_shown
+  AND per.user_id IS NULL
+  AND (
+    bar.is_closed
+    OR EXISTS (SELECT 1 FROM "public"."items" i WHERE i.creator_profile_id = per.id AND i.origin_bar_profile_id = bar.id)
+    OR EXISTS (SELECT 1 FROM "public"."item_co_creators" c JOIN "public"."items" i ON i.id = c.item_id
+               WHERE c.profile_id = per.id AND i.origin_bar_profile_id = bar.id)
+    OR EXISTS (SELECT 1 FROM "public"."items" i WHERE i.creator_profile_id = per.id AND i.origin_year < 2000)
+    OR EXISTS (SELECT 1 FROM "public"."item_co_creators" c JOIN "public"."items" i ON i.id = c.item_id
+               WHERE c.profile_id = per.id AND i.origin_year < 2000)
+  );
 
 -- --- No paid AI: drop the flavour jobs these inserts queued ---
 
