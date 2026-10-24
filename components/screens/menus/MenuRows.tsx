@@ -102,7 +102,7 @@ function Thumb({ menu, status }: { menu: MenuSummary; status: RowStatus }) {
   }
   return (
     <View style={[styles.thumb, styles.empty, { backgroundColor: status === 'rnd' ? ds.c.raised : withAlpha(ds.c.paper, 0.08) }]} aria-hidden>
-      {status === 'rnd' ? <IconSymbol name="square.grid.2x2" size={22} color={ds.c.muted} /> : <View style={[styles.slot, { borderColor: ds.c.lineStrong }]} />}
+      {status === 'rnd' ? <IconSymbol name="square.grid.2x2" size={22} color={ds.c.muted} /> : status === 'draft' ? <View style={[styles.slot, { borderColor: ds.c.lineStrong }]} /> : null}
     </View>
   );
 }

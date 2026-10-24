@@ -100,10 +100,9 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
 
         {lead ? (
           <Group title={venue.on.length ? 'On now' : 'Coming up'}>
-            {venue.on.map((m) => (
+            {(venue.on.length ? venue.on : [lead]).map((m) => (
               <MenuCard key={m.id} menu={m} now={now} />
             ))}
-            {venue.on.length ? null : <MenuCard menu={lead} now={now} />}
           </Group>
         ) : null}
         {comingUp.length ? (
@@ -139,7 +138,7 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
             </View>
           </Group>
         ) : null}
-        {venue.rnd.length && barId && canBuild ? (
+        {venue.rnd.length && (canBuild || !barId) ? (
           <Group title="R&D">
             {venue.rnd.map((m) => (
               <MenuListRow key={m.id} menu={m} now={now} />
