@@ -88,6 +88,11 @@ const walk = Array.from({ length: 6 }, (_, i) => ({ latitude: 40.72 + i * 0.001,
 assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, walk)!.zoom, CLOSE_ZOOM);
 assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, walk.slice(0, 5))!.zoom, near.zoom);
 assert.equal(cameraForArea({ kind: 'anywhere' }), null);
+// Found, near me centres on the person, not the snapped area a kilometre off; crowded counts around them.
+const me = { latitude: 40.7261, longitude: -73.9807 };
+assert.deepEqual(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, [], me), { ...me, zoom: near.zoom });
+assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'me' }, walk, me)!.zoom, near.zoom);
+assert.equal(cameraForArea({ kind: 'point', latitude: 40.72, longitude: -73.99, radiusKm: 10, source: 'map' }, [], me)!.latitude, empty.latitude);
 
 // --- search this area: half the diagonal, rounded, clamped ---
 const area = areaFromViewport({ latitude: 40.7209, longitude: -73.988, latitudeDelta: 0.1, longitudeDelta: 0.1, zoom: 11 });

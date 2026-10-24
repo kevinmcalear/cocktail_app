@@ -415,10 +415,17 @@ function crowded(area: { latitude: number; longitude: number }, bars: readonly {
   return false;
 }
 
-/** A camera for an area: near me, the person's neighbourhood (street level when it's crowded); a map area, its whole circle; null for a city or anywhere. */
-export function cameraForArea(area: Area, around: readonly { latitude: number | null; longitude: number | null }[] = []): Camera | null {
+/**
+ * A camera for an area: near me, the person's neighbourhood (street level when it's crowded), centred on
+ * them (`me`) once found, as the area is snapped to about 1 km and kept until a 2 km walk (useDiscoverArea);
+ * a map area, its whole circle; null for a city or anywhere.
+ */
+export function cameraForArea(area: Area, around: readonly { latitude: number | null; longitude: number | null }[] = [], me?: { latitude: number; longitude: number } | null): Camera | null {
   if (area.kind !== 'point') return null;
-  if (area.source === 'me') return { latitude: area.latitude, longitude: area.longitude, zoom: crowded(area, around) ? CLOSE_ZOOM : NEAR_ME_ZOOM };
+  if (area.source === 'me') {
+    const at = me ?? area;
+    return { latitude: at.latitude, longitude: at.longitude, zoom: crowded(at, around) ? CLOSE_ZOOM : NEAR_ME_ZOOM };
+  }
   const dLat = area.radiusKm / KM_PER_DEG;
   return cameraFor([
     { latitude: area.latitude - dLat, longitude: area.longitude },
