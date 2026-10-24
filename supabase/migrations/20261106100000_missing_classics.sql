@@ -21,7 +21,8 @@
 --    story says so.
 -- 3. House specs (proportions are facts). Every ingredient is one we have.
 -- 4. One web source per drink as its first record in "From the books".
--- 5. Bars' drinks with one of these names (or a common spelling) become
+-- 5. Bars' drinks with one of these names (or a common spelling; not the
+--    one-word ones like Star or Paradise, too common to be sure) become
 --    versions of the classic (riff_of_id), so they rank in its list, and so do
 --    named versions picked by hand (the sangrias, Clyde Common Eggnog, the
 --    Cantaritos...). Same-name drinks that are something else are left alone,
@@ -564,17 +565,14 @@ WHERE f.src IS NOT NULL
 CREATE TEMP TABLE "mc_names" ("lname" text PRIMARY KEY, "key" text NOT NULL);
 INSERT INTO "mc_names" VALUES
     ('12 mile limit', 'twelve-mile-limit'),
-    ('abbey', 'abbey'),
     ('abbey cocktail', 'abbey'),
     ('absinthe suisse', 'absinthe-suissesse'),
     ('absinthe suissesse', 'absinthe-suissesse'),
     ('algonquin', 'algonquin'),
     ('algonquin cocktail', 'algonquin'),
     ('angel face', 'angel-face'),
-    ('barracuda', 'barracuda'),
     ('bicicleta', 'bicicletta'),
     ('bicicletta', 'bicicletta'),
-    ('bicycle', 'bicicletta'),
     ('black thorn', 'blackthorn'),
     ('blackthorn', 'blackthorn'),
     ('blackthorn (irish)', 'blackthorn'),
@@ -601,12 +599,10 @@ INSERT INTO "mc_names" VALUES
     ('french martini', 'french-martini'),
     ('gluhwein', 'mulled-wine'),
     ('glühwein', 'mulled-wine'),
-    ('illegal', 'illegal'),
     ('illegal margarita', 'illegal'),
     ('income tax', 'income-tax'),
     ('income tax cocktail', 'income-tax'),
     ('irish blackthorn', 'blackthorn'),
-    ('journalist', 'journalist'),
     ('journalist cocktail', 'journalist'),
     ('leap year', 'leap-year'),
     ('leap year cocktail', 'leap-year'),
@@ -615,7 +611,6 @@ INSERT INTO "mc_names" VALUES
     ('new algonquin', 'algonquin'),
     ('orange blossom', 'orange-blossom'),
     ('orange blossom cocktail', 'orange-blossom'),
-    ('paradise', 'paradise'),
     ('paradise cocktail', 'paradise'),
     ('periodista', 'periodista'),
     ('periodista daiquiri', 'periodista'),
@@ -638,12 +633,9 @@ INSERT INTO "mc_names" VALUES
     ('spiced wine', 'mulled-wine'),
     ('spicy 50', 'spicy-fifty'),
     ('spicy fifty', 'spicy-fifty'),
-    ('star', 'star'),
     ('star cocktail', 'star'),
     ('star no. 1', 'star'),
-    ('suisse', 'absinthe-suissesse'),
     ('suissesse', 'absinthe-suissesse'),
-    ('the abbey', 'abbey'),
     ('twelve mile limit', 'twelve-mile-limit'),
     ('vampiro', 'vampiro'),
     ('vampiros', 'vampiro'),
