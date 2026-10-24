@@ -1,5 +1,6 @@
-import { useStudyPile } from '@/hooks/useStudyPile';
 import { usePublishedDrink } from '@/hooks/usePublished';
+import { useStudyPile } from '@/hooks/useStudyPile';
+import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { visitorDrink } from '@/lib/visitorDrink';
 
 import { CouldNotLoad, NotAvailable } from '../safety/NotAvailable';
@@ -14,6 +15,8 @@ import { DrinkScreen } from './DrinkScreen';
 export function VisitorDrink({ id }: { id: string }) {
   const query = usePublishedDrink(id);
   const { toggleStudyPile, isInStudyPile } = useStudyPile();
+  const drink = query.data?.drink;
+  useTrackRecent(!!drink, drink ? recentEntry('cocktail', drink.id, drink.name, { imageUrl: drink.imageUrl, barId: drink.barId }) : null);
   if (query.isPending) return <DrinkLoading seed={null} />;
   if (query.error) return <CouldNotLoad what="drink" failed={{ retry: () => void query.refetch() }} />;
   if (!query.data) return <NotAvailable what="drink" />;
