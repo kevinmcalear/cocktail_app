@@ -12,6 +12,8 @@ interface ServiceSpecProps {
   /** This role sees amounts, so it sees the split too (batched drinks only). */
   showLines: boolean;
   canEdit: boolean;
+  /** The editor's Service: the five styles and the split are always open to change. */
+  inEditor?: boolean;
   onSetLine?: (key: string, atService: boolean) => void;
   onSetStyle?: (style: ServiceStyle | null) => void;
 }
@@ -23,14 +25,15 @@ interface ServiceSpecProps {
  * and nobody else sees a split. Editors decide per line (until they do, the
  * split is the same guess Batch makes from the names).
  */
-export function ServiceSpec({ lines, style, showLines, canEdit, onSetLine, onSetStyle }: ServiceSpecProps) {
-  const [editing, setEditing] = useState(false);
+export function ServiceSpec({ lines, style, showLines, canEdit, inEditor = false, onSetLine, onSetStyle }: ServiceSpecProps) {
+  const [toggled, setEditing] = useState(false);
+  const editing = inEditor || toggled;
   const spec = serviceSpec(lines);
   const styleLabel = serviceStyleLabel(style);
   const batched = isBatchedStyle(style);
   const bottle = bottleLine(spec);
   if (!styleLabel && !canEdit) return null;
-  const asking = canEdit && !styleLabel;
+  const asking = canEdit && !styleLabel && !inEditor;
 
   return (
     <View style={styles.block}>
@@ -59,7 +62,7 @@ export function ServiceSpec({ lines, style, showLines, canEdit, onSetLine, onSet
           ) : null}
         </>
       ) : null}
-      {canEdit && !asking ? (
+      {canEdit && !asking && !inEditor ? (
         <Button
           label={editing ? 'Done' : batched ? 'Set the batch split' : 'Change how it goes out'}
           variant="secondary"
