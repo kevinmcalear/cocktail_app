@@ -1,6 +1,7 @@
 import { usePathname, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
@@ -111,6 +112,8 @@ function SideNav() {
  */
 function Sidebar({ current, go, searching, onSearch, onNew, dots }: SideNavProps) {
   const ds = useDs();
+  // An iPad's status bar and home indicator; 0 on the web.
+  const insets = useSafeAreaInsets();
   const { venue, tabs, work, venuePlaces, history, week } = useNavPlaces();
   const row = (p: Place) => <NavRow key={p.key} label={p.label} icon={p.icon} current={current === p.key} isNew={!!p.tab && dots.includes(p.key)} onPress={() => go(p)} />;
   // History sits right under Discover.
@@ -118,7 +121,7 @@ function Sidebar({ current, go, searching, onSearch, onNew, dots }: SideNavProps
   // The shortcuts listen on the page's document, so only the web shows their keys (not a native iPad).
   const keys = Platform.OS === 'web';
   return (
-    <View role="navigation" accessibilityLabel="Main" style={[styles.nav, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line }]}>
+    <View role="navigation" accessibilityLabel="Main" style={[styles.nav, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line, paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + space.lg }]}>
       <MarksRow />
       <NavRow label="Search" icon="magnifyingglass" role="button" look="filled" hint={keys ? (isApplePlatform() ? '⌘K' : 'Ctrl K') : undefined} current={searching} onPress={onSearch} />
       {nav.map(row)}
