@@ -4,7 +4,9 @@ import { StyleSheet, View } from "react-native";
 
 import { Body, Button, Caption, PressableScale, scoreWords, Spec, useDs } from "@/components/ds";
 import { radius, space } from "@/constants/tokens";
+import { useSignedIn } from "@/ctx/AuthContext";
 import { useSpecMatches, type SpecMatchRow } from "@/hooks/useSpecMatches";
+import { drinkPageHref } from "@/lib/itemRoutes";
 import { formatScore } from "@/lib/ranking";
 
 /**
@@ -55,6 +57,7 @@ export function ClassicsTheyPour({
 }) {
   const ds = useDs();
   const router = useRouter();
+  const signedIn = useSignedIn();
   const [all, setAll] = useState(false);
   if (!drinks.length) return null;
   const scoreOf = (d: { id: string | null }) => (d.id ? scores?.[d.id] : undefined);
@@ -81,7 +84,7 @@ export function ClassicsTheyPour({
                 key={d.id}
                 role="link"
                 accessibilityLabel={[d.name, scoreWords(score)].filter(Boolean).join(", ")}
-                onPress={() => router.push(`/cocktail/${d.id}` as Href)}
+                onPress={() => router.push(drinkPageHref(d.id!, signedIn) as Href)}
                 style={styles.name}
               >
                 {words}

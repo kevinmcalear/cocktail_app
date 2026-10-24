@@ -2,17 +2,6 @@ import { Platform } from 'react-native';
 import { create } from 'zustand';
 
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { useSettingsStore } from '@/store/useSettingsStore';
-
-/**
- * Settings › Try it, "New in the tab bar": on phones, New sits in the tab bar
- * instead of the header. Wide web keeps its sidebar (New) either way.
- */
-export function useBottomBar(): boolean {
-  const on = useSettingsStore((s) => s.bottomBar);
-  const wide = useIsWideWeb();
-  return on && !wide;
-}
 
 /**
  * Phones search at the bottom, over the keyboard (search-start, decided

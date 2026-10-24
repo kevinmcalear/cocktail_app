@@ -5,6 +5,7 @@ export { Chip } from './Chip';
 export { DrinkImage, type DrinkImageProps } from './DrinkImage';
 export { DateField } from './DateField';
 export { Field, FieldButton, MULTILINE_MAX } from './Field';
+export { DockFade } from './DockFade';
 export { GlassButton, GlassSurface } from './Glass';
 export { IngredientThumb } from './IngredientThumb';
 export { EquipmentThumb } from './EquipmentThumb';

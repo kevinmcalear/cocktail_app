@@ -1,14 +1,13 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption } from '@/components/ds';
-import { SearchBody, SearchHead, type SearchArea } from '@/components/search/SearchPanel';
+import { SearchHead, type SearchArea } from '@/components/search/SearchPanel';
 import { space } from '@/constants/tokens';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { kindsTitle } from '@/lib/discoverDrinks';
 import type { SearchScope } from '@/lib/searchScope';
 
 import { FiltersChip } from './DiscoverControls';
-import { DiscoverOverlay } from './DiscoverSheet';
 
 interface DiscoverSearchProps {
   query: string;
@@ -23,13 +22,12 @@ interface DiscoverSearchProps {
   /** How many filters are on, and the way to them, beside the scope (disc-desk-search). */
   filters?: number;
   onFilters?: () => void;
-  /** When a search finds nothing: add the bar they were looking for. */
-  onAddBar?: () => void;
-  /** Hovering a result opens its bar on the map. */
-  onShowBar?: (barId: string | null) => void;
 }
 
-/** The field and scope, plus a line for Discover's filters, which narrow the search too. */
+/**
+ * Wide Discover's search, in its list pane (disc-desk-search): the field and scope, plus a line
+ * for Discover's filters, which narrow the search too. Phones search in the search tab instead.
+ */
 export function DiscoverSearchHead({ query, onQuery, scope, onScope, mine, area, onClearKinds, onClose, filters = 0, onFilters }: DiscoverSearchProps) {
   const kinds = area.kinds;
   return (
@@ -43,19 +41,6 @@ export function DiscoverSearchHead({ query, onQuery, scope, onScope, mine, area,
         </View>
       ) : null}
     </View>
-  );
-}
-
-/**
- * Discover's door into the one search, opened on this area (what the map
- * shows). What's typed also narrows the list and map behind, so Done keeps
- * the search.
- */
-export function DiscoverSearchSheet(props: DiscoverSearchProps) {
-  return (
-    <DiscoverOverlay label="Search" full onClose={props.onClose} head={<DiscoverSearchHead {...props} />}>
-      <SearchBody query={props.query} scope={props.scope} onScope={props.onScope} mine={props.mine} area={props.area} onAddBar={props.onAddBar} onShowBar={props.onShowBar} />
-    </DiscoverOverlay>
   );
 }
 

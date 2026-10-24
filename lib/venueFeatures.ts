@@ -84,10 +84,13 @@ export const tabPath = (name: string) => (name === 'index' ? '/' : `/${name}`);
  */
 export const PHONE_TAB_LIMIT = 4;
 
-/** Home mode's tabs, by route name. */
+/**
+ * Home mode's tabs, by route name. Phones show the first three (You opens
+ * from the header's avatar); the wide sidebar shows all four.
+ */
 export const HOME_TAB_NAMES = ['discover', 'bar', 'collection', 'profile'] as const;
 
-/** An item in a phone tab bar, by route name. `new` is the New button (Settings › Try it). */
+/** An item in a phone tab bar, by route name. `new` is the New button. */
 export type PhoneTab = VenueTab | (typeof HOME_TAB_NAMES)[number] | 'new';
 
 /**
@@ -111,12 +114,12 @@ export function venueTabs(has: (key: VenueFeatureKey) => boolean, limit = Infini
 
 /**
  * A phone tab bar's items, in order, before Search (which is always there).
- * Settings › Try it puts New in the bar (`withNew`), and it takes a tab's
- * room so the bar never passes five: at home You steps out (the avatar opens
- * it), at a venue venueTabs drops one more in its usual order.
+ * New is a tab (decided 24 Oct 2026) and takes a tab's room so the bar never
+ * passes five: at home You steps out (the avatar opens it), at a venue
+ * venueTabs drops one more in its usual order.
  */
-export function phoneTabs(home: boolean, has: (key: VenueFeatureKey) => boolean, withNew: boolean): PhoneTab[] {
-  const limit = PHONE_TAB_LIMIT - (withNew ? 1 : 0);
+export function phoneTabs(home: boolean, has: (key: VenueFeatureKey) => boolean): PhoneTab[] {
+  const limit = PHONE_TAB_LIMIT - 1;
   const tabs: PhoneTab[] = home ? HOME_TAB_NAMES.slice(0, limit) : venueTabs(has, limit);
-  return withNew ? [...tabs, 'new'] : tabs;
+  return [...tabs, 'new'];
 }

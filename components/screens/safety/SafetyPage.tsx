@@ -8,6 +8,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { usePageFrame } from '@/components/nav/PageFrame';
 import { useAuth } from '@/ctx/AuthContext';
 import { WebHead } from '@/components/WebHead';
+import { PublicPage } from '@/components/screens/published/PublicChrome';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
 /** Where a setup step is: the segments filled so far and the words beside them. */
@@ -107,6 +108,30 @@ function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, 
   const desk = !!aside && frame.wide;
   const pinned = footer && !desk;
   const back = onBack ?? (noBack || sidebar ? null : () => (router.canGoBack() ? router.back() : router.replace(backTo)));
+  const heading = (
+    <>
+      {mark}
+      {kicker ? <Caption tone="muted">{kicker}</Caption> : null}
+      {eyebrow ? (
+        <Caption style={[styles.eyebrow, { color: eyebrowTone === 'accent' ? ds.accentText : ds.c.muted }]} numberOfLines={1}>
+          {eyebrow.toUpperCase()}
+        </Caption>
+      ) : null}
+      <Title role="heading">{title}</Title>
+      {intro ? <Body tone="muted">{intro}</Body> : null}
+    </>
+  );
+  // Signed out on the web (Support, Privacy, a link that leads nowhere), the page wears the website's nav and footer like every public page (ppl-support-desktop).
+  if (Platform.OS === 'web' && !signedIn && !setupBar && !aside) {
+    return (
+      <PublicPage title={title}>
+        <View style={[styles.readable, styles.publicColumn]}>
+          {heading}
+          {children}
+        </View>
+      </PublicPage>
+    );
+  }
   const page = (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <WebHead>
@@ -120,19 +145,10 @@ function Page({ title, intro, kicker, eyebrow, eyebrowTone = 'muted', topLabel, 
           paddingHorizontal: gutter,
         }}
       >
-        {/* Signed out on the web (Support) there's no sidebar to sit beside, so the column centres (ppl-support-desktop). */}
-        <View style={[frame.column, styles.readable, frame.wide && !signedIn && styles.centred]}>
+        <View style={[frame.column, styles.readable]}>
           {/* With the sidebar there's no Back row, so the action sits over the title. */}
           {action && sidebar ? <View style={styles.inline}>{action}</View> : null}
-          {mark}
-          {kicker ? <Caption tone="muted">{kicker}</Caption> : null}
-          {eyebrow ? (
-            <Caption style={[styles.eyebrow, { color: eyebrowTone === 'accent' ? ds.accentText : ds.c.muted }]} numberOfLines={1}>
-              {eyebrow.toUpperCase()}
-            </Caption>
-          ) : null}
-          <Title role="heading">{title}</Title>
-          {intro ? <Body tone="muted">{intro}</Body> : null}
+          {heading}
           {children}
           {footer && desk ? <View style={[styles.deskFooter, { borderTopColor: ds.c.line }]}>{footer}</View> : null}
         </View>
@@ -175,7 +191,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   withAside: { flexDirection: 'row' },
   readable: { gap: space.md },
-  centred: { alignSelf: 'center' },
+  // The board's 720 reading column, centred under the site nav.
+  publicColumn: { width: '100%', maxWidth: 720, alignSelf: 'center', paddingTop: space.xxl },
   back: { position: 'absolute' },
   flex: { flex: 1, minWidth: 0 },
   strong: { fontFamily: fontFamilies.bodySemiBold },

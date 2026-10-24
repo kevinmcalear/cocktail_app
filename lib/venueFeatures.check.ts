@@ -33,29 +33,25 @@ assert.deepEqual(venueTabs(on('prep', 'study'), PHONE_TAB_LIMIT), ['library', 'm
 assert.deepEqual(venueTabs(on('tonight', 'prep', 'study'), PHONE_TAB_LIMIT), ['index', 'library', 'prep', 'discover']);
 assert.deepEqual(venueTabs(on('tonight', 'prep', 'study')), ['index', 'library', 'menus', 'prep', 'test', 'discover'], 'the sidebar has room for all');
 
-// --- a phone bar never passes five items (Search included), in any mode, switches or Try it setting ---
+// --- a phone bar never passes five items (Search included), in any mode or switches ---
 const keys = VENUE_FEATURES.map((f) => f.key);
 for (let mask = 0; mask < 1 << keys.length; mask++) {
   const has = on(...keys.filter((_, i) => mask & (1 << i)));
   for (const home of [false, true]) {
-    for (const withNew of [false, true]) {
-      const items = [...phoneTabs(home, has, withNew), 'search'];
-      const what = `${home ? 'home' : 'venue'} ${keys.filter((_, i) => mask & (1 << i)).join('+') || 'default'}${withNew ? ' with New' : ''}`;
-      assert.ok(items.length <= PHONE_TAB_LIMIT + 1, `${what}: ${items.join(', ')}`);
-      assert.equal(new Set(items).size, items.length, `${what}: no repeats`);
-      assert.equal(items.includes('new'), withNew, `${what}: New only with the setting`);
-      assert.ok(items.includes('discover'), `${what}: Discover is always there`);
-      if (!home) assert.ok(items.includes('library') && (items.includes('index') || items.includes('menus')), `${what}: Library, and Tonight or Menus`);
-    }
+    const items = [...phoneTabs(home, has), 'search'];
+    const what = `${home ? 'home' : 'venue'} ${keys.filter((_, i) => mask & (1 << i)).join('+') || 'default'}`;
+    assert.ok(items.length <= PHONE_TAB_LIMIT + 1, `${what}: ${items.join(', ')}`);
+    assert.equal(new Set(items).size, items.length, `${what}: no repeats`);
+    assert.ok(items.includes('new'), `${what}: New is always a tab`);
+    assert.ok(items.includes('discover'), `${what}: Discover is always there`);
+    if (!home) assert.ok(items.includes('library') && (items.includes('index') || items.includes('menus')), `${what}: Library, and Tonight or Menus`);
   }
 }
-assert.deepEqual(phoneTabs(true, on(), false), ['discover', 'bar', 'collection', 'profile']);
-assert.deepEqual(phoneTabs(true, on(), true), ['discover', 'bar', 'collection', 'new'], 'at home, You makes room for New');
-assert.deepEqual(phoneTabs(false, on(), true), ['library', 'menus', 'discover', 'new'], 'the default venue has room');
-assert.deepEqual(phoneTabs(false, on('tonight'), true), ['index', 'library', 'discover', 'new'], 'Menus gives way first when Tonight carries it');
-assert.deepEqual(phoneTabs(false, on('prep', 'study'), true), ['library', 'menus', 'discover', 'new'], 'then Study, then Prep');
-assert.deepEqual(phoneTabs(false, on('tonight', 'prep', 'study'), true), ['index', 'library', 'discover', 'new']);
-assert.deepEqual(phoneTabs(false, on('tonight', 'prep'), false), ['index', 'library', 'prep', 'discover'], 'without New, as before');
+assert.deepEqual(phoneTabs(true, on()), ['discover', 'bar', 'collection', 'new'], 'at home, You makes room for New');
+assert.deepEqual(phoneTabs(false, on()), ['library', 'menus', 'discover', 'new'], 'the default venue has room');
+assert.deepEqual(phoneTabs(false, on('tonight')), ['index', 'library', 'discover', 'new'], 'Menus gives way first when Tonight carries it');
+assert.deepEqual(phoneTabs(false, on('prep', 'study')), ['library', 'menus', 'discover', 'new'], 'then Study, then Prep');
+assert.deepEqual(phoneTabs(false, on('tonight', 'prep', 'study')), ['index', 'library', 'discover', 'new']);
 
 // --- the database allows exactly these keys (plus any a later PR adds there first) ---
 const dir = new URL('../supabase/migrations/', import.meta.url);

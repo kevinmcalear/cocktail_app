@@ -1,4 +1,4 @@
-import { useState, type ComponentRef, type ReactNode } from 'react';
+import { useEffect, useState, type ComponentRef, type ReactNode } from 'react';
 import { Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -44,9 +44,21 @@ const WIDTH = 280;
  * in the bottom half (the search field's place). A pick, a tap outside or
  * Escape closes it.
  */
-export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anchor | null; label: string; sections: PopoverSection[]; onClose: () => void }) {
+export function PopoverMenu({ anchor, label, sections, onClose, footer }: { anchor: Anchor | null; label: string; sections: PopoverSection[]; onClose: () => void; footer?: ReactNode }) {
   const ds = useDs();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  // Web: Escape closes only the menu, not the card or palette it hangs over (they close on keydown, ahead of the Modal's keyup).
+  const open = !!anchor;
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      onClose();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [open, onClose]);
   if (!anchor) return null;
   // Its right edge on the button's, kept on screen.
   const left = Math.max(space.sm, Math.min(anchor.x + anchor.width - WIDTH, windowWidth - WIDTH - space.sm));
@@ -69,6 +81,8 @@ export function PopoverMenu({ anchor, label, sections, onClose }: { anchor: Anch
             ))}
           </View>
         ))}
+        {/* A line under the rows, such as the palette's "tab moves to the next place". */}
+        {footer ? <View style={[styles.section, styles.footer, { borderTopColor: ds.c.lineStrong }]}>{footer}</View> : null}
       </ScrollView>
     </Panel>
   );
@@ -160,6 +174,7 @@ const styles = StyleSheet.create({
   glass: { borderRadius: radius.card, paddingVertical: space.xs, overflow: 'hidden' },
   solid: { borderWidth: 1 },
   section: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: space.xs, paddingTop: space.xs },
+  footer: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingHorizontal: space.md, paddingVertical: space.xs },
   // Lines up with the labels, past the check's column.
   title: { paddingLeft: space.md + 20 + space.sm, paddingTop: space.xs, paddingBottom: 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget, paddingLeft: space.md, paddingRight: space.lg, paddingVertical: space.xs },

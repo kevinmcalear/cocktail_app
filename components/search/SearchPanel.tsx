@@ -26,7 +26,7 @@ import { PublicResults } from './PublicResults';
 import { ForgetButton, ResultGroup, ResultRow } from './ResultRows';
 import { ScopeSwitch } from './ScopeSwitch';
 import { KeyCap, SearchField } from './SearchField';
-import { StyleTiles } from './SearchParts';
+import { ScopeToken, StyleTiles } from './SearchParts';
 
 const NO_ITEMS: SearchItem[] = [];
 
@@ -52,10 +52,8 @@ interface HeadProps {
   onDone?: () => void;
   /** Return in the field; Done (onDone) when not given. */
   onSubmit?: () => void;
-  /** The ⌘K palette: the esc key cap and "Press tab to switch" (nav-search-desk-palette). */
+  /** The ⌘K palette: the place menu and the esc key cap at the field's end (nav-search-desk-preview). */
   keys?: boolean;
-  /** The search tab: Cancel beside the field while it's in use. */
-  cancel?: boolean;
 }
 
 /** What the field says it searches: the venue, the area or everywhere. */
@@ -65,31 +63,37 @@ export function searchPlaceholder(scope: SearchScope, mine: SearchMine, area?: S
   return `Search ${mine.venueId ? mine.label : 'your drinks'}`;
 }
 
-/** The search field and where it looks. The same at every door: the tab, ⌘K, Library and Discover. */
-export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys, cancel }: HeadProps) {
+/** The search field and where it looks: ⌘K's field with its place menu, or wide Discover's field over its scope switch. */
+export function SearchHead({ query, onQuery, scope, onScope, mine, area, autoFocus, onDone, onSubmit, keys }: HeadProps) {
   const ds = useDs();
   const gutter = useGutter();
   const options = scopeOptions(mine.label, area?.label ?? null);
   const placeholder = searchPlaceholder(scope, mine, area);
+  if (keys) {
+    // The palette: the place at the field's end, as phones have it over theirs (q03, nav-search-desk-preview).
+    const place = <ScopeToken options={options} scope={scope} onScope={onScope} hint={<TabHint />} />;
+    return (
+      <View style={styles.head}>
+        <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys place={place} />
+        <View style={[styles.rule, { marginHorizontal: -gutter, backgroundColor: ds.c.line }]} />
+      </View>
+    );
+  }
   return (
     <View style={styles.head}>
-      <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} keys={keys} cancel={cancel} />
-      {keys ? <View style={[styles.rule, { marginHorizontal: -gutter, backgroundColor: ds.c.line }]} /> : null}
-      {keys ? (
-        <View style={styles.scopeRow}>
-          <View style={styles.scope}>
-            <ScopeSwitch options={options} scope={scope} onScope={onScope} />
-          </View>
-          <View style={styles.hint}>
-            <Caption tone="muted">Press</Caption>
-            <KeyCap label="tab" />
-            <Caption tone="muted">to switch</Caption>
-          </View>
-        </View>
-      ) : (
-        <ScopeSwitch options={options} scope={scope} onScope={onScope} />
-      )}
+      <SearchField query={query} onQuery={onQuery} placeholder={placeholder} autoFocus={autoFocus} onSubmit={onSubmit ?? onDone} onDone={onDone} />
+      <ScopeSwitch options={options} scope={scope} onScope={onScope} />
     </View>
+  );
+}
+
+/** Under the palette's place menu: "tab moves to the next place". */
+function TabHint() {
+  return (
+    <>
+      <KeyCap label="tab" />
+      <Caption tone="muted">moves to the next place</Caption>
+    </>
   );
 }
 
@@ -263,9 +267,6 @@ const styles = StyleSheet.create({
   head: { gap: space.md },
   // The palette's line under its field, edge to edge across the card.
   rule: { height: StyleSheet.hairlineWidth },
-  scopeRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  scope: { flexGrow: 0, flexShrink: 1, minWidth: 240 },
-  hint: { flexDirection: 'row', alignItems: 'center', gap: space.xs, marginLeft: 'auto' },
   mapButton: { alignSelf: 'flex-start' },
   empty: { gap: space.lg },
   jumps: { gap: space.sm },

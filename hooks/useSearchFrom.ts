@@ -1,8 +1,10 @@
-import { useSegments } from 'expo-router';
+import { useRouter, useSegments } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
 
 import type { SearchArea } from '@/components/search/SearchPanel';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useSearchPalette, type SearchStart } from '@/store/useSearchPalette';
 
 interface SearchFrom {
   /** The last tab opened before the search tab ('library', 'discover'; 'index' is Tonight). */
@@ -11,10 +13,27 @@ interface SearchFrom {
   area: SearchArea | null;
   /** Discover shows a search's results on its map. */
   showOnMap: ((query: string) => void) | null;
+  /** A search a door opened the tab on (Discover's pill, My Bar's "Search every drink for …"); the tab takes it once. */
+  start: SearchStart | null;
 }
 
 /** Where the search circle was opened from (search-starts-here, 22 Oct 2026). */
-export const useSearchFrom = create<SearchFrom>(() => ({ from: null, area: null, showOnMap: null }));
+export const useSearchFrom = create<SearchFrom>(() => ({ from: null, area: null, showOnMap: null, start: null }));
+
+/**
+ * Opens the one search on a query and a place: the ⌘K palette on wide
+ * screens, the search tab's bottom search on phones (decided 24 Oct 2026, q01
+ * and q02). With nothing given, it opens where the door's tab starts.
+ */
+export function useOpenSearch() {
+  const router = useRouter();
+  const wide = useIsWideWeb();
+  return (start: SearchStart = { query: '', scope: null }) => {
+    if (wide) return useSearchPalette.getState().search(start);
+    useSearchFrom.setState({ start });
+    router.navigate('/search');
+  };
+}
 
 /** Remembers the tab that's showing, so the search tab can start there. Called by the tab layouts. */
 export function useTrackTab() {

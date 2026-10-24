@@ -9,6 +9,7 @@ import type { MyProfile } from '@/hooks/useMyProfile';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useProfilePicks, useSetPick, type Original } from '@/hooks/useProfiles';
 import { useMyHadPicks, useSetHadPick } from '@/hooks/useRankings';
+import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { hasDates, sortHad, tallyBars, whereLine, type HadDrink, type HadSort } from '@/lib/hadDrinks';
 import { heroPicture } from '@/lib/itemImages';
 import { itemHref } from '@/lib/itemRoutes';
@@ -48,6 +49,7 @@ interface Row {
  */
 export function YouTabs({ profile, drinks, made, loading, failed }: { profile: MyProfile | null; drinks: HadDrink[]; made: Original[]; loading: boolean; failed: boolean }) {
   const router = useRouter();
+  const openSearch = useOpenSearch();
   const [tab, setTab] = useState<ShareSection>('had');
   const [sort, setSort] = useState<HadSort>('score');
   const hadPicks = useMyHadPicks().data ?? {};
@@ -120,7 +122,7 @@ export function YouTabs({ profile, drinks, made, loading, failed }: { profile: M
       ) : (
         <View style={styles.empty}>
           <Body tone="muted">Nothing here yet. Open a drink you’ve had and tap Rank it: it lands here with your score, and counts towards the bar’s.</Body>
-          <Button label="Find a drink" icon="magnifyingglass" onPress={() => router.navigate('/search')} style={styles.start} />
+          <Button label="Find a drink" icon="magnifyingglass" onPress={() => openSearch()} style={styles.start} />
         </View>
       );
   else
