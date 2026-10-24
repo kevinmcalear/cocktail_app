@@ -44,7 +44,7 @@ jest.mock('@/hooks/useRankings', () => ({ useBarTopDrinks: () => ({ data: mockTo
 jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, useBarVersions: () => ({}), useSpecMatches: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useBarFacts', () => ({ useBarFacts: () => ({ data: null }) }));
 jest.mock('@/hooks/useBarBrands', () => ({ useBarBrand: () => null }));
-jest.mock('@/components/screens/kept/LoveBarButton', () => ({ LoveBarButton: () => null })); jest.mock('@/components/screens/kept/HideBarButton', () => ({ HideBarButton: () => null }));
+jest.mock('@/components/screens/kept/LoveBarButton', () => ({ LoveBarButton: () => null }));
 // The hero's Collect and Rank have their own tests; here they only need to be there.
 jest.mock('@/components/screens/published/CollectButton', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -145,10 +145,9 @@ test('on phones a tapped bar opens the sheet on it, not a card over the map', as
   expect(screen.getAllByText('Martini No. 4')).toHaveLength(1);
   expect(screen.queryByRole('button', { name: 'Open drink' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
-
   expect(screen.queryByText(/Caretaker's Cottage ·/)).toBeNull(); // its rows don't repeat the bar
-  await fireEvent.press(screen.getByRole('button', { name: 'All results' }));
-  expect(screen.getByRole('button', { name: /Show the list$/ })).toBeTruthy();
+  expect(screen.getByRole('link', { name: /Open the bar$/ })).toBeTruthy(); // the bar's row, no Open bar button
+  expect(screen.queryByRole('button', { name: /^Back to all/ })).toBeNull(); // the header's pill goes back (DiscoverControls)
 });
 
 test('searching, pins name the best match and a tapped bar leads with the drink, then the bar', async () => {
@@ -173,7 +172,7 @@ test('searching, pins name the best match and a tapped bar leads with the drink,
   expect(screen.getByRole('button', { name: 'Open drink' })).toBeTruthy();
   // The matches page one at a time, the next peeking (disc-search-pin); then the bar, as a link.
   expect(screen.getByText("1 of 3 at Caretaker's Cottage")).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'All 3' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /^Back to all/ })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Next: Gibson, Riff on a Martini' }));
   expect(screen.getByText("2 of 3 at Caretaker's Cottage")).toBeTruthy();
   expect(screen.getByText('At')).toBeTruthy();

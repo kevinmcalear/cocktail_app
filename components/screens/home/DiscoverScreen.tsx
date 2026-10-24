@@ -73,7 +73,7 @@ export function DiscoverScreen() {
   const [sheet, setSheet] = useState<'search' | 'filters' | 'area' | 'options' | 'add' | null>(null);
   const [headerHeight, setHeaderHeight] = useState(useSafeAreaInsets().top + layout.minTapTarget + space.lg);
   const away = useScrollAway();
-  // Wide screens: the tapped pin, shown at the top of the list.
+  // The tapped pin: wide screens show it at the top of the list; the phone map's pill turns into its back arrow.
   const [picked, setPicked] = useState<MapPin | null>(null);
   const [hover, setHover] = useState<{ id: string; cam: ReturnType<typeof cameraOn>; area: Area } | null>(null);
   // Which layer the wide map shows, so its tapped bar's card shows the same scores.
@@ -160,7 +160,7 @@ export function DiscoverScreen() {
   const openBar = (ref: string) => (setSheet(null), router.push(`/p/${ref}`));
 
   const filtersOn = kinds.length + (showClosed ? 1 : 0) + (showPast ? 1 : 0) + (filter.notHad ? 1 : 0);
-  const header = <DiscoverHeader query={search} onMap={phoneMap} onSearch={openSearch} onClear={() => setSearch('')} filters={filtersOn} onOptions={() => setSheet('options')} />;
+  const header = <DiscoverHeader query={search} onMap={phoneMap} onSearch={openSearch} onClear={() => setSearch('')} filters={filtersOn} onOptions={() => setSheet('options')} bar={phoneMap && picked ? { name: picked.name, onBack: () => setPicked(null) } : null} />;
   // Wide screens search in the list pane itself, so the map beside it stays live; the scopes stay while searching (disc-desk-search).
   const controls = split && (sheet === 'search' || searching) ? (
     <DiscoverSearchHead {...searchProps} filters={filtersOn} onFilters={() => setSheet('filters')} />
@@ -204,7 +204,7 @@ export function DiscoverScreen() {
           me={me}
           opened={openHover?.id}
           focus={openHover?.cam}
-          onShowBar={showBar}
+          onShowBar={showBar} pick={{ id: picked?.id ?? null, onPick: setPicked }}
           top={
             note ? (
               // On glass: bare text over the map is lost under the pins.
