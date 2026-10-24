@@ -3,8 +3,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, Spec } from '@/components/ds';
 import { space } from '@/constants/tokens';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useBarTopDrinks } from '@/hooks/useRankings';
-import { splitTopDrinks, topDrinkHref, topDrinkLabel } from '@/lib/barTopDrinks';
+import { splitTopDrinks, topDrinkLabel } from '@/lib/barTopDrinks';
+import { drinkPageHref } from '@/lib/itemRoutes';
 import { formatScore } from '@/lib/ranking';
 
 /** How many a bar card shows. */
@@ -18,6 +20,7 @@ const TOP = 3;
  */
 export function BarTopDrinks({ barId, title = 'Top drinks here' }: { barId: string; title?: string }) {
   const router = useRouter();
+  const signedIn = useSignedIn();
   const { data } = useBarTopDrinks(barId, TOP);
   const top = splitTopDrinks(data ?? []).scored;
   if (!top.length) return null;
@@ -32,7 +35,7 @@ export function BarTopDrinks({ barId, title = 'Top drinks here' }: { barId: stri
             key={d.item_id}
             role="link"
             accessibilityLabel={`${topDrinkLabel(d)}. Open`}
-            onPress={() => router.push(topDrinkHref(d) as Href)}
+            onPress={() => router.push(drinkPageHref(d.item_id, signedIn) as Href)}
             style={styles.row}
           >
             <Spec tone="muted" style={styles.position}>

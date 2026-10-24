@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, Display, Headline } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { space } from '@/constants/tokens';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useRelease } from '@/hooks/usePublished';
 import { dayLabel } from '@/lib/collection';
 import { plural } from '@/lib/menus';
@@ -16,10 +17,11 @@ import { loadFailure, PublicMissing, PublicShell } from './PublicShell';
 /**
  * A bar's release ("Autumn release"), as anyone sees it: its cover, the date
  * it's known by, and its drinks that are still published, each opening its
- * public page. Collect keeps the release.
+ * public page (signed in, the in-app drink page). Collect keeps the release.
  */
 export function ReleaseScreen({ id }: { id: string }) {
   const query = useRelease(id);
+  const signedIn = useSignedIn();
   const { data, isPending } = query;
   const [now] = useState(() => Date.now());
   if (!data) return <PublicMissing loading={isPending} what="release" failed={loadFailure(query)} />;
@@ -41,7 +43,7 @@ export function ReleaseScreen({ id }: { id: string }) {
               <View role="listitem" key={d.id}>
                 <DrinkRow
                   name={d.name}
-                  href={`/d/${d.id}?release=${release.id}`}
+                  href={signedIn ? `/cocktail/${d.id}` : `/d/${d.id}?release=${release.id}`}
                   imageUrl={d.imageUrl}
                   glass={null}
                   itemId={d.id}

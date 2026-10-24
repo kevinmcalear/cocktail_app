@@ -73,7 +73,8 @@ test('scored drinks with their score, ratings and menu, then early ones; drinks 
   expect(screen.getByText('Had something here? Your ranking moves this list.')).toBeTruthy();
 
   await fireEvent.press(screen.getByLabelText('Number 1: House Gimlet, a Gimlet. Score 8.4 from 64 ratings. On the menu now. Open'));
-  expect(mockPush).toHaveBeenCalledWith('/d/a');
+  // Signed in, a bar's drink opens the in-app drink page, not the website's /d page (p02).
+  expect(mockPush).toHaveBeenCalledWith('/cocktail/a');
 });
 
 test('no scores yet: says how a drink gets one', async () => {

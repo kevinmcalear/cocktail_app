@@ -4,7 +4,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, PressableScale } from '@/components/ds';
 import { space } from '@/constants/tokens';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { usePublicClassics, type PublicClassic } from '@/hooks/useStaffList';
+import { drinkPageHref } from '@/lib/itemRoutes';
 import { patronGroups } from '@/lib/staffList';
 
 /**
@@ -38,6 +40,7 @@ export function BarClassics({ barId }: { barId: string | null }) {
 
 function Group({ title, hint, rows }: { title: string; hint: string; rows: PublicClassic[] }) {
   const router = useRouter();
+  const signedIn = useSignedIn();
   if (!rows.length) return null;
   return (
     <View style={styles.group}>
@@ -57,7 +60,7 @@ function Group({ title, hint, rows }: { title: string; hint: string; rows: Publi
               key={row.name + String(row.rank)}
               role="link"
               accessibilityLabel={label}
-              onPress={() => router.push(`/d/${row.openId}` as Href)}
+              onPress={() => router.push(drinkPageHref(row.openId!, signedIn) as Href)}
               style={styles.row}
             >
               {text}

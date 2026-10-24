@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
@@ -156,6 +156,13 @@ export interface VenueScore {
   is_early: boolean;
 }
 
+async function readVenueScore(profileId: string): Promise<VenueScore | null> {
+  const { data, error } = await supabase.rpc('get_venue_score', { p_venue_profile_id: profileId });
+  if (error) throw error;
+  const row = ((data ?? []) as VenueScore[])[0];
+  return row ? { ...row, score: row.score === null ? null : Number(row.score) } : null;
+}
+
 /** A bar's score for its profile. Null when nobody has ranked a drink there yet. */
 export function useVenueScore(profileId: string | null | undefined) {
   const viewer = viewerScoped(useAuth().user?.id);
@@ -163,12 +170,22 @@ export function useVenueScore(profileId: string | null | undefined) {
     queryKey: ['venue-score', profileId, viewer.key],
     meta: viewer.meta,
     enabled: !!profileId,
-    queryFn: async (): Promise<VenueScore | null> => {
-      const { data, error } = await supabase.rpc('get_venue_score', { p_venue_profile_id: profileId! });
-      if (error) throw error;
-      const row = ((data ?? []) as VenueScore[])[0];
-      return row ? { ...row, score: row.score === null ? null : Number(row.score) } : null;
-    },
+    queryFn: () => readVenueScore(profileId!),
+  });
+}
+
+/**
+ * Several bars' scores at once (Collection's Bars), each from the same cache
+ * as useVenueScore: profile id to score, missing until it's known or while
+ * the bar is too early to score.
+ * ponytail: one RPC per bar, fine for the dozens of bars someone keeps.
+ * Upgrade path: a batched get_venue_scores(ids) RPC (needs a migration).
+ */
+export function useVenueScores(profileIds: readonly string[]): Map<string, number> {
+  const viewer = viewerScoped(useAuth().user?.id);
+  return useQueries({
+    queries: profileIds.map((id) => ({ queryKey: ['venue-score', id, viewer.key], meta: viewer.meta, queryFn: () => readVenueScore(id) })),
+    combine: (results) => new Map(results.flatMap((r, i) => (r.data?.score != null ? [[profileIds[i], r.data.score] as const] : []))),
   });
 }
 

@@ -1,60 +1,10 @@
 /**
- * Collection's Menus and Bars, as drawn (home-collection-menus, -bars): your
- * home menus split into coming up, still building and past nights, the date
- * tile and "In 8 days", how much of a menu your shelf makes, a bar's latest
- * news and your average there. Pure helpers (lib/collectionMenus.check.ts).
+ * Collection's Menus and Bars, as drawn (home-collection-menus, -bars): how
+ * much of a menu your shelf makes, a bar's latest news and your average
+ * there. Pure helpers (lib/collectionMenus.check.ts).
  */
-import { toDay } from '@/lib/collection';
 import type { MenuDates } from '@/lib/menuEditions';
 import type { AwayGroup } from '@/lib/toMake';
-
-interface Night {
-  menuDate: string | null;
-  createdAt: string;
-}
-
-export interface HomeMenuSplit<T> {
-  /** Dated today or later, soonest first: the paper cards. */
-  coming: T[];
-  /** No night picked yet, newest first. */
-  building: T[];
-  /** Nights gone by, latest first. */
-  past: T[];
-}
-
-/** A home menu with a night is a finished menu: coming up, or a past night. Only an undated one is still building. */
-export function splitHomeMenus<T extends Night>(menus: readonly T[], now: number): HomeMenuSplit<T> {
-  const today = toDay(new Date(now));
-  const out: HomeMenuSplit<T> = { coming: [], building: [], past: [] };
-  for (const m of menus) out[!m.menuDate ? 'building' : m.menuDate >= today ? 'coming' : 'past'].push(m);
-  out.coming.sort((a, b) => a.menuDate!.localeCompare(b.menuDate!));
-  out.building.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  out.past.sort((a, b) => b.menuDate!.localeCompare(a.menuDate!));
-  return out;
-}
-
-const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-/** A day's tile: { mon: 'OCT', day: '17' }. Days are days, not instants: no time zone shift. */
-export function dateTile(day: string): { mon: string; day: string } {
-  const [, m, d] = day.split('-').map(Number);
-  return { mon: MON[m - 1], day: String(d).padStart(2, '0') };
-}
-
-/** "Tonight", "Tomorrow", "In 8 days", or null once it's gone. */
-export function daysAway(day: string, now: number): string | null {
-  const [y, m, d] = day.split('-').map(Number);
-  const t = new Date(now);
-  const n = Math.round((new Date(y, m - 1, d).getTime() - new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime()) / 86_400_000);
-  return n < 0 ? null : n === 0 ? 'Tonight' : n === 1 ? 'Tomorrow' : `In ${n} days`;
-}
-
-/** "Saturday · 17 October", the paper card's top line. */
-export function nightLong(day: string, locale?: string): string {
-  const [y, m, d] = day.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  return `${date.toLocaleDateString(locale, { weekday: 'long' })} · ${date.toLocaleDateString(locale, { day: 'numeric', month: 'long' })}`;
-}
 
 export interface ShelfReady {
   ready: number;
