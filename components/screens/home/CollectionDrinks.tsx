@@ -59,8 +59,8 @@ export function CollectionDrinks() {
   const kept = data.drinks.map((d) => ({ id: d.id, itemId: d.itemId, name: d.name, imageUrl: d.imageUrl, barName: d.barName, hadOn: d.hadOn, past: !opens.has(d.id), locked: isLocked(d) }));
   const hadRows = hadOutRows(had, kept, bar, sort);
   const madeList = madeRows(tallies, had, classics);
-  const out = had.filter((h) => h.venue || h.atBar);
-  const avg = averageScore(out.map((h) => h.score));
+  // The same rows the list shows: one a drink, at your best score.
+  const avg = averageScore(hadRows.flatMap((r) => (r.score !== null ? [r.score] : [])));
   const ready = toMake.filter((d) => d.itemId && bar.canMakeIds.has(d.itemId) && !d.locked).length;
   const beat = beatCount(madeList);
 

@@ -15,17 +15,18 @@ import { StageHead, TableHead, stageStyles } from './CollectionStages';
 const specOf = (r: MadeRow) => (r.barName ? `${r.barName}’s spec` : r.classic ? 'Classic' : null);
 const timesOf = (n: number) => (n === 1 ? 'made once' : n === 2 ? 'made twice' : `made ${n} times`);
 /** Where a score sits on the track, which runs 6 to 10 (below 6 sits at the start). */
-const at = (score: number) => `${Math.max(0, Math.min(100, ((score - 6) / 4) * 100))}%` as const;
+const pct = (score: number) => Math.max(0, Math.min(100, ((score - 6) / 4) * 100));
+const at = (score: number) => `${pct(score)}%` as const;
 
 /** Your version (the dot) against your score for the bar's (the ring), on one line, with the stretch between lit. */
 function Track({ you, bar }: { you: number | null; bar: number | null }) {
   const ds = useDs();
-  const beat = you !== null && bar !== null && you >= bar;
+  const beat = you !== null && bar !== null && you > bar;
   const low = you !== null && bar !== null ? Math.min(you, bar) : null;
   return (
     <View aria-hidden style={[styles.track, { backgroundColor: ds.c.line }]}>
       {you !== null && bar !== null && low !== null ? (
-        <View style={[styles.span, { left: at(low), width: `${(Math.abs(you - bar) / 4) * 100}%`, backgroundColor: beat ? withAlpha(ds.accentText, 0.7) : ds.c.lineStrong }]} />
+        <View style={[styles.span, { left: at(low), width: `${Math.abs(pct(you) - pct(bar))}%`, backgroundColor: beat ? withAlpha(ds.accentText, 0.7) : ds.c.lineStrong }]} />
       ) : null}
       {bar !== null ? <View style={[styles.ring, { left: at(bar), borderColor: ds.accentText, backgroundColor: ds.c.ground }]} /> : null}
       {you !== null ? <View style={[styles.dot, { left: at(you), backgroundColor: ds.c.ink }]} /> : null}
@@ -61,7 +62,7 @@ export function MadeAtHome({ rows }: { rows: MadeRow[] }) {
   const desk = useBreakpoint() === 'desktop';
   if (!rows.length) return <Body tone="muted">Tap I made it on a drink’s page after you make it at home. It lands here, against the bar’s.</Body>;
   const gapOf = (r: MadeRow) => (r.you !== null && r.bar !== null ? gapLabel(r.you, r.bar) : null);
-  const beat = (r: MadeRow) => r.you !== null && r.bar !== null && r.you >= r.bar;
+  const beat = (r: MadeRow) => r.you !== null && r.bar !== null && r.you > r.bar;
   const label = (r: MadeRow) =>
     [r.tally.name, specOf(r), timesOf(r.tally.times), r.you !== null ? `yours ${formatScore(r.you)}` : null, r.bar !== null ? `the bar’s ${formatScore(r.bar)}, ${gapOf(r)}` : r.classic ? 'a classic' : null].filter(Boolean).join('. ');
   const open = (r: MadeRow) => router.push(itemHref('Cocktail', r.tally.itemId));
@@ -97,12 +98,10 @@ export function MadeAtHome({ rows }: { rows: MadeRow[] }) {
               <Body tone="muted" style={styles.times}>
                 {timesOf(r.tally.times)}
               </Body>
-              <View style={styles.trackCell}>
-                <Track you={r.you} bar={r.bar} />
-              </View>
+              <View style={styles.trackCell}>{r.you !== null || r.bar !== null ? <Track you={r.you} bar={r.bar} /> : null}</View>
               <Spec style={styles.num}>{r.you !== null ? formatScore(r.you) : ''}</Spec>
               <Spec tone="muted" style={styles.num}>
-                {r.bar !== null ? formatScore(r.bar) : '·'}
+                {r.bar !== null ? formatScore(r.bar) : ''}
               </Spec>
               <View style={styles.gapCell}>
                 <View style={[styles.gap, { backgroundColor: beat(r) ? withAlpha(ds.accentText, 0.16) : ds.c.line }]}>

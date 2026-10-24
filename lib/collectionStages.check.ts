@@ -90,6 +90,7 @@ const made = madeRows([tally('fig'), tally('negroni')], had, new Set(['negroni']
 assert.deepEqual(made.map((r) => [r.you, r.bar, r.barName, r.classic]), [[8.2, 8.7, 'Little Rye', false], [null, null, null, true]]);
 assert.equal(beatCount(made), 0);
 assert.equal(beatCount([{ ...made[0], you: 9 }]), 1);
+assert.equal(beatCount([{ ...made[0], you: 8.7 }]), 0);
 
 // --- Bars you've been to: your average, best drink, last time ---
 const been = beenBars(had, 'score');

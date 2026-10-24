@@ -84,7 +84,8 @@ export function CollectionBars() {
       km,
       away: km !== null ? formatDistance(km, miles) : null,
       hours: status ? { open: status.open, text: hoursText(status) } : null,
-      why: whyLine(b, saved.filter((d) => d.barName === b.name).length),
+      // A classic's barName is whoever publishes it, not a drink saved from this bar.
+      why: whyLine(b, saved.filter((d) => !d.classic && d.barName === b.name).length),
       everyone: scores.get(b.id) ?? null,
     };
   });

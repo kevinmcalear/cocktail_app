@@ -19,7 +19,7 @@ const SORTS = [
 ] as const;
 
 /** "Ready to make", "Need Cynar", "Made at home · 8.2", "Off the menu · memory kept". Null when the shelf is far from it. */
-export function statusText(s: HadStatus): string | null {
+function statusText(s: HadStatus): string | null {
   switch (s.kind) {
     case 'ready':
       return 'Ready to make';

@@ -184,8 +184,8 @@ export function madeRows(tallies: readonly MadeTally[], had: readonly HadDrink[]
   });
 }
 
-/** How many of your versions scored at least what you gave the bar's: "3 beat the bar". */
-export const beatCount = (rows: readonly MadeRow[]) => rows.filter((r) => r.you !== null && r.bar !== null && r.you >= r.bar).length;
+/** How many of your versions scored higher than you gave the bar's: "3 beat the bar". A draw isn't a win. */
+export const beatCount = (rows: readonly MadeRow[]) => rows.filter((r) => r.you !== null && r.bar !== null && r.you > r.bar).length;
 
 // --- Bars ---
 

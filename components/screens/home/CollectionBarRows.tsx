@@ -105,7 +105,11 @@ export interface WantBar {
   everyone: number | null;
 }
 
-/** "Their best: Night Garden Sour", on a desktop: the bar's top-ranked drink. */
+/**
+ * "Their best: Night Garden Sour", on a desktop: the bar's top-ranked drink.
+ * ponytail: one query per row, fine for the dozens of bars someone loves.
+ * Upgrade path: return the top drink from a batched bar query.
+ */
 function TheirBest({ id }: { id: string }) {
   const top = (useBarTopDrinks(id, 1).data ?? [])[0];
   return top ? (
