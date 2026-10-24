@@ -242,13 +242,13 @@ export interface DrinkPair<R> {
   rows: R[];
 }
 
-/** Rows with each run of drinks folded two to a row (the desktop grid); everything else as it was. */
-export function pairDrinks<R extends { kind: string; key: string }>(rows: readonly R[]): (R | DrinkPair<R>)[] {
+/** Rows with each run of drinks folded `per` to a row (two: the desktop grid; one: a tablet's panel of cards); everything else as it was. */
+export function pairDrinks<R extends { kind: string; key: string }>(rows: readonly R[], per = 2): (R | DrinkPair<R>)[] {
   const out: (R | DrinkPair<R>)[] = [];
   for (const r of rows) {
     const last = out[out.length - 1];
     if (r.kind !== 'drink') out.push(r);
-    else if (last && last.kind === 'pair' && (last as DrinkPair<R>).rows.length < 2) (last as DrinkPair<R>).rows.push(r);
+    else if (last && last.kind === 'pair' && (last as DrinkPair<R>).rows.length < per) (last as DrinkPair<R>).rows.push(r);
     else out.push({ kind: 'pair', key: `pair:${r.key}`, rows: [r] });
   }
   return out;

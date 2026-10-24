@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Caption, dragDismissesKeyboard, Title, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
@@ -18,8 +18,10 @@ import { KitSection, LabSection, MoreSections, OpenShelfItem, PrepsSection, Sect
 import { BottleSheet } from './BottleSheet';
 import { MakeFirst, MakeFirstStrip } from './MakeFirst';
 import { BottleGroup, MakeCard, MakeDrink, type AwayGroup } from './MakeRows';
+import { TABLET_DRINKS, TabletOverview, TextLink } from './MyBarTablet';
 import { PantrySection } from './PantrySection';
 import { Projects } from './Projects';
+import { useSectionCards } from './SectionCards';
 import { BottleTiles, ShelfFoot, ShelfHead } from './ShelfSection';
 import { StarterShelf } from './StarterShelf';
 import { useMyBarData } from './useMyBarData';
@@ -39,7 +41,10 @@ export function MyBarScreen() {
   const ds = useDs();
   const gutter = useGutter();
   const bottom = useTabBarInset();
-  const wide = useBreakpoint() === 'desktop';
+  const breakpoint = useBreakpoint();
+  const wide = breakpoint === 'desktop';
+  const window = useWindowDimensions();
+  const portrait = window.height > window.width;
   // A desktop's shelf column fits five tiles to a row (home-mybar-desktop).
   const tileCols = useTileCols();
   const cols = wide ? 5 : tileCols;
@@ -62,6 +67,12 @@ export function MyBarScreen() {
   const m = useMyBarData({ query: search.query, projectsOpen: picked === 'projects' });
   const { bar, counts, toMake, projects, addIds, removeId } = m;
   const showing = show.filter((s) => counts[s] > 0);
+  // A tablet with no section picked: each section a card, What to make beside them (above, in portrait). mybar-tablet-proposal, option C.
+  const overview = breakpoint === 'tablet' && !showing.length && bar.shelfIds.size > 0;
+  // Portrait opens on the best few drinks; See all lists the rest.
+  const [allMake, setAllMake] = useState(false);
+  const brief = overview && portrait && !allMake && !search.query.trim();
+  const cards = useSectionCards({ bottles: m.bottles, pantry: m.pantry, fridge: m.fridge, lab: m.lab, preps: m.preps, owned: m.owned, shelf: bar.shelf, onShelf: bar.shelfIds, counts, onItem: setOpened });
 
   // The starter stays up from an empty shelf until Show me, so the bottles tapped in there don't throw you out of it.
   // Only once every shelf row has its name: a query between loads mustn't read as an empty shelf.
@@ -86,12 +97,21 @@ export function MyBarScreen() {
     cols,
     more: { fridge: m.fridgeCount, lab: m.lab.length, preps: m.preps.length, kit: m.owned.length },
     show: showing,
-    make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, first: toMake.length, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown, query: search.query, shownIn: search.shownIn, shelf: bar.shelf } : null,
+    make: bar.shelfIds.size ? { canMake: bar.canMake, oneAway: bar.oneAway, twoAway: bar.twoAway, first: toMake.length, projects: projects ? projects.ready.length + projects.away.length : 0, tab, shown: brief ? Math.min(shown, TABLET_DRINKS) : shown, query: search.query, shownIn: search.shownIn, shelf: bar.shelf } : null,
   });
 
   // On a desktop-wide window the shelf and What to make sit side by side, each scrolling on its own, under one header.
-  const cut = wide ? rows.findIndex((r) => r.kind === 'make-head') : -1;
-  const split = cut > 0;
+  const cut = wide || overview ? rows.findIndex((r) => r.kind === 'make-head') : -1;
+  const split = wide && cut > 0;
+  // A tablet's panel lists drinks as cards: one to a row down the side, two across in portrait.
+  const perRow = overview && !portrait ? 1 : 2;
+  const tabTotal = { ready: bar.canMake.length, first: toMake.length, one: bar.oneAway.length, two: bar.twoAway.length, projects: projects ? projects.ready.length + projects.away.length : 0 }[tab];
+  const cutShort = brief && rows.some((r) => r.kind === 'make-foot' && r.more > 0);
+  const seeAll = !overview || !portrait ? null : cutShort ? (
+    <TextLink label={`See all ${tabTotal}`} onPress={() => setAllMake(true)} />
+  ) : allMake ? (
+    <TextLink label="Show fewer" onPress={() => setAllMake(false)} />
+  ) : null;
 
   const renderRow = ({ item, prev }: { item: ListRow; prev?: ListRow }) => {
     switch (item.kind) {
@@ -99,7 +119,7 @@ export function MyBarScreen() {
         return (
           <View style={styles.pair}>
             {item.rows.map((r) => (r.kind === 'drink' ? <MakeCard key={r.key} drink={r.drink} text={m.text} needs={r.needs} /> : null))}
-            {item.rows.length < 2 ? <View style={styles.flex} /> : null}
+            {item.rows.length < perRow ? <View style={styles.flex} /> : null}
           </View>
         );
       case 'top':
@@ -141,7 +161,7 @@ export function MyBarScreen() {
       case 'make-head':
         return (
           <View style={styles.section}>
-            <MakeHead tab={tab} onTab={pick} counts={{ ready: bar.canMake.length, first: toMake.length, one: bar.oneAway.length, two: bar.twoAway.length, projects: projects?.ready.length }} bottles={m.bottles.length} search={search} found={item.found}>
+            <MakeHead tab={tab} onTab={pick} counts={{ ready: bar.canMake.length, first: toMake.length, one: bar.oneAway.length, two: bar.twoAway.length, projects: projects?.ready.length }} bottles={m.bottles.length} search={search} found={item.found} action={seeAll}>
               {wide && tab === 'ready' ? <MakeFirstStrip preps={toMake} /> : null}
             </MakeHead>
           </View>
@@ -198,7 +218,19 @@ export function MyBarScreen() {
   return (
     <OpenShelfItem value={setOpened}>
       <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
-        {split ? (
+        {overview && cut >= 0 ? (
+          <TabletOverview
+            portrait={portrait}
+            counts={counts}
+            cards={cards}
+            // Cut short, See all takes the place of the foot's Show more.
+            makeRows={pairDrinks(rows.slice(cut).filter((r) => !(cutShort && r.kind === 'make-foot')), perRow)}
+            renderRow={(item, prev) => renderRow({ item, prev })}
+            onOpen={(s) => setShow([s])}
+            onAdd={setAdding}
+            bottom={bottom}
+          />
+        ) : split ? (
           <>
             <ScreenHeader />
             <View style={[styles.deskHead, { paddingHorizontal: gutter }]}>

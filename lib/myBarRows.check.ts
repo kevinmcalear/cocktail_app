@@ -174,5 +174,8 @@ console.log('myBarRows checks passed');
 {
   const r = (kind: string, key: string) => ({ kind, key });
   const paired = pairDrinks([r('make-head', 'h'), r('drink', 'a'), r('drink', 'b'), r('drink', 'c'), r('make-foot', 'f')]);
-  assert.deepEqual(paired.map((p) => (p.kind === 'pair' ? (p as { rows: { key: string }[] }).rows.map((x) => x.key).join('+') : p.key)), ['h', 'a+b', 'c', 'f']);
+  const keys = (rows: typeof paired) => rows.map((p) => (p.kind === 'pair' ? (p as { rows: { key: string }[] }).rows.map((x) => x.key).join('+') : p.key));
+  assert.deepEqual(keys(paired), ['h', 'a+b', 'c', 'f']);
+  // A tablet's side panel: one to a row.
+  assert.deepEqual(keys(pairDrinks([r('make-head', 'h'), r('drink', 'a'), r('drink', 'b'), r('make-foot', 'f')], 1)), ['h', 'a', 'b', 'f']);
 }
