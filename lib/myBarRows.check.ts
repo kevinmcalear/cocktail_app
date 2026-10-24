@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { MAKE_PAGE, makeTab, myBarRows, pairDrinks, pickSection, searchCaption, searchMake } from './myBarRows';
+import { cardFit, MAKE_PAGE, makeTab, myBarRows, pairDrinks, pickSection, searchCaption, searchMake } from './myBarRows';
 
 const bottle = (i: number, kind: string | null = null) => ({ id: `b${i}`, name: `Bottle ${i}`, kind, uses: i % 2 });
 const drink = (i: number) => ({ id: `d${i}`, name: `Drink ${i}` });
@@ -178,4 +178,13 @@ console.log('myBarRows checks passed');
   assert.deepEqual(keys(paired), ['h', 'a+b', 'c', 'f']);
   // A tablet's side panel: one to a row.
   assert.deepEqual(keys(pairDrinks([r('make-head', 'h'), r('drink', 'a'), r('drink', 'b'), r('make-foot', 'f')], 1)), ['h', 'a', 'b', 'f']);
+}
+
+// A tablet's section card: four 56 pt tiles fit 254 pt, so two rows hold Add and seven.
+{
+  const fit = { tile: 56, gap: 10, rows: 2 };
+  assert.deepEqual(cardFit(254, 9, fit), { shown: 7, more: 2 });
+  assert.deepEqual(cardFit(254, 3, fit), { shown: 3, more: 0 });
+  // Too narrow for even one: still one across, so the Add tile and one more.
+  assert.deepEqual(cardFit(20, 5, fit), { shown: 1, more: 4 });
 }

@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Caption, dragDismissesKeyboard, DsText, PressableScale, useDs, useGutter } from '@/components/ds';
+import { Body, Caption, dragDismissesKeyboard, DsText, PressableScale, useDs, useGutter } from '@/components/ds';
 import { ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { layout, radius, space } from '@/constants/tokens';
 import type { ShelfSection } from '@/lib/myBarRows';
@@ -16,6 +16,10 @@ export const TABLET_DRINKS = 4;
 interface TabletProps<R extends { key: string }> {
   portrait: boolean;
   counts: Record<ShelfSection, number>;
+  /** In place of the counts while the shelf loads. */
+  note: string | null;
+  /** The shelf didn't load: said under the heading, as on a phone. */
+  error: boolean;
   cards: SectionCardData[];
   /** What to make's rows, from its heading to its foot. */
   makeRows: R[];
@@ -33,14 +37,15 @@ interface TabletProps<R extends { key: string }> {
  * top with the best few drinks, then the cards. A card opens its section as
  * the phone list.
  */
-export function TabletOverview<R extends { key: string }>({ portrait, counts, cards, makeRows, renderRow, onOpen, onAdd, bottom }: TabletProps<R>) {
+export function TabletOverview<R extends { key: string }>({ portrait, counts, note, error, cards, makeRows, renderRow, onOpen, onAdd, bottom }: TabletProps<R>) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const head = (
     <View style={styles.head}>
       <ScreenHeaderSpacer title="My Bar" />
-      <Caption tone="muted">{shelfCountsLine(counts)}</Caption>
+      <Caption tone="muted">{note ?? shelfCountsLine(counts)}</Caption>
+      {error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
     </View>
   );
   const sections = <SectionCards cards={cards} onOpen={onOpen} onAdd={onAdd} />;

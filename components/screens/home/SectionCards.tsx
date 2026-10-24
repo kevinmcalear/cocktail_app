@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
 import { SECTIONS } from '@/lib/barSections';
-import type { ShelfSection } from '@/lib/myBarRows';
+import { cardFit, type ShelfSection } from '@/lib/myBarRows';
 import { PANTRY } from '@/lib/pantry';
 import { equipmentById } from '@/lib/techniques';
 
@@ -56,9 +56,9 @@ function SectionCard({ card, onOpen, onAdd }: { card: SectionCardData; onOpen: (
   const [width, setWidth] = useState(0);
   const { title, add } = SECTIONS[card.section];
   // As many tiles as fit across the card, two rows of them; the Add tile takes the first place.
-  const perRow = Math.max(1, Math.floor((width - 2 * space.md + GAP) / (TILE + GAP)));
-  const shown = width ? card.tiles.slice(0, CARD_ROWS * perRow - 1) : [];
-  const more = width ? card.tiles.length - shown.length : 0;
+  const fit = cardFit(width - 2 * space.md, card.tiles.length, { tile: TILE, gap: GAP, rows: CARD_ROWS });
+  const shown = width ? card.tiles.slice(0, fit.shown) : [];
+  const more = width ? fit.more : 0;
   return (
     <View role="group" accessibilityLabel={title} style={[styles.card, { backgroundColor: ds.c.surface }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       <PressableScale role="link" accessibilityLabel={card.count ? `${title}, ${card.count}` : `${title}: ${add}`} onPress={onOpen} style={styles.head}>
@@ -96,7 +96,9 @@ function SectionCard({ card, onOpen, onAdd }: { card: SectionCardData; onOpen: (
  * Each section's card: what's in it, newest first as My Bar lists it. A
  * shelf tile opens the bottle sheet, kit its page.
  */
-export function useSectionCards({ bottles, pantry, fridge, lab, preps, owned, shelf, onShelf, counts, onItem }: {
+export function useSectionCards({ on, bottles, pantry, fridge, lab, preps, owned, shelf, onShelf, counts, onItem, onSection }: {
+  /** Only a tablet's overview shows the cards; elsewhere none are built. */
+  on: boolean;
   bottles: ShelfItem[];
   pantry: { id: string; name: string }[];
   fridge: ShelfItem[];
@@ -108,15 +110,20 @@ export function useSectionCards({ bottles, pantry, fridge, lab, preps, owned, sh
   counts: Record<ShelfSection, number>;
   /** A shelf tile's tap: My Bar's bottle sheet. */
   onItem: (item: ShelfItem) => void;
+  /** A staple whose shelf row hasn't loaded opens its section instead. */
+  onSection: (section: ShelfSection) => void;
 }): SectionCardData[] {
   const router = useRouter();
+  if (!on) return [];
   const shelfTile = (item: ShelfItem, name = item.name): CardTile => ({ key: item.id, name, picture: <IngredientThumb id={item.id} name={item.name} size={TILE} />, onPress: () => onItem(item) });
   // The staples you keep, as the fridge section lists them, then anything else you've added.
   const ids = new Map(pantry.map((p) => [p.name, p.id]));
   const byId = new Map(shelf.map((s) => [s.id, s]));
   const staples = PANTRY.flatMap((p) => {
-    const item = byId.get(ids.get(p.name) ?? '');
-    return item && onShelf.has(item.id) ? [shelfTile(item, p.label)] : [];
+    const id = ids.get(p.name);
+    if (!id || !onShelf.has(id)) return [];
+    const item = byId.get(id);
+    return [item ? shelfTile(item, p.label) : { key: id, name: p.label, picture: <IngredientThumb id={id} name={p.name} size={TILE} />, onPress: () => onSection('fridge') }];
   });
   const kit = owned.flatMap((id) => {
     const e = equipmentById(id);

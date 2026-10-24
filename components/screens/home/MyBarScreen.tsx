@@ -72,7 +72,7 @@ export function MyBarScreen() {
   // Portrait opens on the best few drinks; See all lists the rest.
   const [allMake, setAllMake] = useState(false);
   const brief = overview && portrait && !allMake && !search.query.trim();
-  const cards = useSectionCards({ bottles: m.bottles, pantry: m.pantry, fridge: m.fridge, lab: m.lab, preps: m.preps, owned: m.owned, shelf: bar.shelf, onShelf: bar.shelfIds, counts, onItem: setOpened });
+  const cards = useSectionCards({ on: overview, bottles: m.bottles, pantry: m.pantry, fridge: m.fridge, lab: m.lab, preps: m.preps, owned: m.owned, shelf: bar.shelf, onShelf: bar.shelfIds, counts, onItem: setOpened, onSection: (s) => setShow([s]) });
 
   // The starter stays up from an empty shelf until Show me, so the bottles tapped in there don't throw you out of it.
   // Only once every shelf row has its name: a query between loads mustn't read as an empty shelf.
@@ -107,7 +107,8 @@ export function MyBarScreen() {
   const perRow = overview && !portrait ? 1 : 2;
   const tabTotal = { ready: bar.canMake.length, first: toMake.length, one: bar.oneAway.length, two: bar.twoAway.length, projects: projects ? projects.ready.length + projects.away.length : 0 }[tab];
   const cutShort = brief && rows.some((r) => r.kind === 'make-foot' && r.more > 0);
-  const seeAll = !overview || !portrait ? null : cutShort ? (
+  // A search lists every match, so neither shows under one.
+  const seeAll = !overview || !portrait || search.query.trim() ? null : cutShort ? (
     <TextLink label={`See all ${tabTotal}`} onPress={() => setAllMake(true)} />
   ) : allMake ? (
     <TextLink label="Show fewer" onPress={() => setAllMake(false)} />
@@ -222,6 +223,8 @@ export function MyBarScreen() {
           <TabletOverview
             portrait={portrait}
             counts={counts}
+            note={bar.isLoading ? 'Checking your shelf…' : null}
+            error={!!bar.error}
             cards={cards}
             // Cut short, See all takes the place of the foot's Show more.
             makeRows={pairDrinks(rows.slice(cut).filter((r) => !(cutShort && r.kind === 'make-foot')), perRow)}

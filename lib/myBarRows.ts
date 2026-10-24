@@ -235,6 +235,17 @@ export function myBarRows<B extends ShelfBottle, D extends Drink, G extends Grou
   return rows;
 }
 
+/**
+ * A tablet's section card (mybar-tablet-proposal, option C): how many of its
+ * `items` fit as tiles `tile` wide with `gap` between, across `width`, in
+ * `rows` rows after the Add tile, and how many are left for "+N more".
+ */
+export function cardFit(width: number, items: number, { tile, gap, rows }: { tile: number; gap: number; rows: number }): { shown: number; more: number } {
+  const across = Math.max(1, Math.floor((width + gap) / (tile + gap)));
+  const shown = Math.min(items, Math.max(0, rows * across - 1));
+  return { shown, more: items - shown };
+}
+
 /** Two drinks side by side: a desktop's What to make lays its drinks out as cards, two to a row. */
 export interface DrinkPair<R> {
   kind: 'pair';
