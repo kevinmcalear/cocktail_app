@@ -1,51 +1,12 @@
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, DrinkImage, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { WebHead } from '@/components/WebHead';
-import { layout, space } from '@/constants/tokens';
+import { Body, DrinkImage, useBreakpoint } from '@/components/ds';
+import { space } from '@/constants/tokens';
 
 import { CouldNotLoad, NotAvailable, type LoadFailure } from '../safety/NotAvailable';
-import { PublicFooter, PublicNav } from './PublicChrome';
-
-/**
- * A public page's frame (ppl-pub-* boards): the site nav on top, the page in
- * a centred column up to 1240 wide, the footer at the end. Opens signed out.
- */
-export function PublicPage({ title, quietCta, children }: { title: string; /** Get the app as an outline: the page has its own gold sign-in. */ quietCta?: boolean; children: ReactNode }) {
-  return (
-    <BackbarTheme>
-      <WebHead>
-        <title>{title}</title>
-      </WebHead>
-      <PageFrame quietCta={quietCta}>{children}</PageFrame>
-    </BackbarTheme>
-  );
-}
-
-function PageFrame({ quietCta, children }: { quietCta?: boolean; children: ReactNode }) {
-  const ds = useDs();
-  const insets = useSafeAreaInsets();
-  const gutter = useGutter();
-  return (
-    <ScrollView
-      style={[styles.screen, { backgroundColor: ds.c.ground }]}
-      contentContainerStyle={{
-        paddingTop: insets.top,
-        paddingBottom: insets.bottom,
-        paddingHorizontal: gutter,
-      }}
-    >
-      <View style={styles.column}>
-        <PublicNav quietCta={quietCta} />
-        <View style={styles.content}>{children}</View>
-        <PublicFooter />
-      </View>
-    </ScrollView>
-  );
-}
+import { PublicPage } from './PublicChrome';
 
 interface PublicShellProps {
   title: string;
@@ -108,10 +69,7 @@ export function PublicMissing({ loading, what, failed }: { loading: boolean; wha
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
   flex: { flex: 1, minWidth: 0 },
-  column: { width: '100%', maxWidth: layout.page.wide, alignSelf: 'center' },
-  content: { paddingVertical: space.xl, gap: space.xl },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xxl },
   stack: { gap: space.lg },
   pictureColumn: { width: 320 },

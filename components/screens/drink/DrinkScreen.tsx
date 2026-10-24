@@ -16,7 +16,7 @@ import { useMode } from '@/hooks/useMode';
 import { useSearchMine } from '@/hooks/useSearchMine';
 import { useShareSlug } from '@/hooks/useShareSlug';
 import { useSpecAccess } from '@/hooks/useSpecAccess';
-import { useSpecLock } from '@/hooks/useSpecLock';
+import { useSpecLock, type SpecLock } from '@/hooks/useSpecLock';
 import { useTeamRole } from '@/hooks/useTeamRole';
 import { useItemVersions } from '@/hooks/useVersions';
 import { useEffectiveRole } from '@/hooks/useViewAs';
@@ -56,6 +56,8 @@ export interface DrinkScreenProps {
   pane?: boolean;
   /** Open with the Batch sheet up (/cocktail/[id]/batch links here). */
   openBatch?: boolean;
+  /** A bar's published drink read from its public page (VisitorDrink): the spec it keeps back. */
+  visitorLock?: SpecLock | null;
   /** /dev/drink only: a bundled hero image and a simulated role. */
   preview?: { heroSource?: number | null; role: number; levels: SpecLevels };
 }
@@ -78,7 +80,7 @@ export function DrinkScreen(props: DrinkScreenProps) {
 
 export { DrinkLoading } from './DrinkLoading';
 
-function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, sheet, pane, openBatch, preview }: DrinkScreenProps) {
+function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = false, onEdit, sheet, pane, openBatch, visitorLock, preview }: DrinkScreenProps) {
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -92,7 +94,7 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   const signedIn = useSignedIn();
   const { access, amountsOpenAt } = useSpecAccess(item.id, item.bar_id, preview);
   // A bar's drink whose page keeps the spec back: no spec, method or notes, just why (and on a Names page, no description).
-  const lock = useSpecLock(preview ? null : item).data;
+  const lock = useSpecLock(preview ? null : item).data ?? visitorLock;
   // The bookmark: To make in Collection (collected_items).
   const toMake = useCollectToggle({ kind: 'drink', itemId: item.id }, item.name);
   const lines = specLines(item.recipes as PresentationRecipe[] | undefined);

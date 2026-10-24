@@ -1,7 +1,7 @@
 // Checks for lib/barTopDrinks.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { pastMenuLabel, ratingCount, splitTopDrinks, toTopDrink, topDrinkCaption, topDrinkHref, topDrinkLabel, type BarTopDrink } from './barTopDrinks';
+import { pastMenuLabel, ratingCount, splitTopDrinks, toTopDrink, topDrinkCaption, topDrinkLabel, type BarTopDrink } from './barTopDrinks';
 
 const row = (over: Partial<BarTopDrink> & { item_id: string }): BarTopDrink => ({
   position: null,
@@ -48,8 +48,5 @@ assert.equal(topDrinkCaption(fresh), '', 'nothing to say yet: no caption');
 assert.equal(topDrinkLabel(gimlet), 'Number 1: House Gimlet, a Gimlet. Score 8.4 from 64 ratings. On the menu now');
 assert.equal(topDrinkLabel(early), 'Drink b. 3 ratings, no score yet. Past menu, 2024 to 2025');
 assert.equal(topDrinkLabel(row({ item_id: 'e' })), 'Drink e. Not rated yet');
-
-assert.equal(topDrinkHref(gimlet), '/d/a', "a bar's own drink opens its published page");
-assert.equal(topDrinkHref(fresh), '/cocktail/c', 'a signature opens the drink page');
 
 console.log('barTopDrinks checks passed');
