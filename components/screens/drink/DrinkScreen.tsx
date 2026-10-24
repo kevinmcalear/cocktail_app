@@ -82,7 +82,8 @@ function DrinkPage({ item, inStudyPile, onToggleStudyPile, canEdit, adminFix = f
   const ds = useDs();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const top = pane ? 0 : sheet && Platform.OS === 'ios' ? space.sm : insets.top;
+  // In Library's pane: below an iPad's status bar (0 on the web).
+  const top = pane ? insets.top : sheet && Platform.OS === 'ios' ? space.sm : insets.top;
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
   const wide = breakpoint !== 'phone' && !pane;
