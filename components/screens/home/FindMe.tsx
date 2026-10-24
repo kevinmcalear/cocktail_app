@@ -4,6 +4,7 @@ import Animated, { Extrapolation, interpolate, useAnimatedStyle, useSharedValue,
 
 import { GlassButton } from '@/components/ds';
 import { layout, space } from '@/constants/tokens';
+import { ZOOM_BUTTON } from '@/lib/discoverMap';
 
 /**
  * Find me (disc-maps-habits, approved 24 Oct), as Google Maps' button: back
@@ -53,10 +54,11 @@ function OnSheet({ position, index, onPress }: { position: SharedValue<number>; 
   );
 }
 
-const ZOOM_HEIGHT = 82;
+// Two buttons, a line between them and the group's border (discoverMapDom.ts).
+const ZOOM_HEIGHT = 2 * ZOOM_BUTTON + 2;
 
 const styles = StyleSheet.create({
   onSheet: { position: 'absolute', right: 0 },
-  // Under the web map's zoom buttons: two 40-point buttons and their borders, space.lg in from the top right (discoverMapDom.ts).
+  // Under the web map's zoom buttons, which sit space.lg in from the top right.
   side: { position: 'absolute', right: space.lg, top: Platform.OS === 'web' ? space.lg + ZOOM_HEIGHT + space.sm : space.lg },
 });

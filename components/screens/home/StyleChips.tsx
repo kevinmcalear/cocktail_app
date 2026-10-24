@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Chip, DsText, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import type { DiscoverDrink } from '@/lib/discoverDrinks';
-import { stylesByBars } from '@/lib/discoverShelves';
+import { chipIds, stylesByBars } from '@/lib/discoverShelves';
 import { kindLabel } from '@/lib/drinkStyles';
 
 /** The most chips the wide list shows, the ones on included. */
@@ -33,14 +33,13 @@ export function StyleChips({ kinds, onChange, drinks, onGlass }: StyleChipsProps
   const ds = useDs();
   const [order, setOrder] = useState<string[]>([]);
   // A chip turned on moves to the front: bring the row back to the start so it stays in sight.
-  const row = useRef<ScrollView>(null);
+  const row = useRef<ComponentRef<typeof ScrollView>>(null);
   const picked = kinds.join();
   useEffect(() => row.current?.scrollTo({ x: 0, animated: true }), [picked]);
   const counted = kinds.length ? [] : stylesByBars(drinks);
   if (counted.length && counted.join() !== order.join()) setOrder(counted);
-  const rest = (counted.length ? counted : order).filter((id) => !kinds.includes(id));
   // The list wraps, so it keeps to one or two rows (the board's six); Filters has every style. The map's row scrolls.
-  const ids = [...kinds, ...(onGlass ? rest : rest.slice(0, Math.max(0, LIST_MAX - kinds.length)))];
+  const ids = chipIds(kinds, counted.length ? counted : order, onGlass ? undefined : LIST_MAX);
   if (!ids.length) return null;
   const toggle = (id: string) => onChange(kinds.includes(id) ? kinds.filter((k) => k !== id) : [...kinds, id]);
   const chips = ids.map((id) => {

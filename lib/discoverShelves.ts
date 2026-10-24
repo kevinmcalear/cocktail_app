@@ -81,6 +81,12 @@ export function stylesByBars(drinks: readonly DiscoverDrink[]): string[] {
     .map((s) => s.id);
 }
 
+/** The chips to show: the ones on first, then the rest in `order` (the last unfiltered stylesByBars), at most `max` in all. */
+export function chipIds(kinds: readonly string[], order: readonly string[], max = Infinity): string[] {
+  const rest = order.filter((id) => !kinds.includes(id));
+  return [...kinds, ...rest.slice(0, Math.max(0, max - kinds.length))];
+}
+
 /** How many bars pour each style, from the first page. */
 function barsPerStyle(drinks: readonly DiscoverDrink[]): Map<string, number> {
   const bars = new Map<string, Set<string>>();

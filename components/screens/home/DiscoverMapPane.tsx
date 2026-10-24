@@ -136,7 +136,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   const nearMe = area.kind === 'point' && area.source === 'me';
   const fitting = rows.isLoading || (byDrinks && areaBars.isPlaceholderData);
   const nearCamera = nearMe && !areaBars.isPlaceholderData ? cameraForArea(area, (areaBars.data ?? []).filter((b) => !b.closed)) : null;
-  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, nearMe ? nearCamera?.zoom : fitting, findMe.again]);
+  const fitKey = area.kind === 'point' && area.source === 'map' ? null : JSON.stringify([areaParams(area), layer, byDrink ? drink.id : null, results.title, nearMe ? [nearCamera?.zoom, findMe.again] : fitting]);
   if (fitKey !== null && fit?.key !== fitKey) {
     setFit({ key: fitKey, camera: (fitting || nearMe ? null : cameraFor(byDrinks ? barPins(areaBars.data ?? []) : pins)) ?? nearCamera ?? cameraForArea(area) ?? fit?.camera ?? null });
     moves.reset();
