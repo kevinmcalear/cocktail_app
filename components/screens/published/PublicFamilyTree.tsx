@@ -1,10 +1,12 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Caption, DsText, Headline, PressableScale, TextLink, useDs } from '@/components/ds';
 import { displayFaces, fontFamilies, radius, space } from '@/constants/tokens';
+import { useSignedIn } from '@/ctx/AuthContext';
 import type { PublicDrinkMore, TreeDrink } from '@/hooks/usePublicDrink';
+import { drinkPageHref } from '@/lib/itemRoutes';
 import { ancestorCaption, makerLabel } from '@/lib/publicDrink';
 import { formatScore } from '@/lib/ranking';
 
@@ -57,12 +59,13 @@ function Joint() {
 export function PublicFamilyTree({ drink, more }: { drink: { id: string; name: string; originYear: number | null }; more: PublicDrinkMore }) {
   const ds = useDs();
   const router = useRouter();
+  const signedIn = useSignedIn();
   const [all, setAll] = useState(false);
   const row = useRef<ComponentRef<typeof ScrollView>>(null);
   const { ancestors, riffs, profiles } = more;
   if (!ancestors.length && !riffs.length) return null;
   const maker = (d: TreeDrink) => makerLabel(d.makerId ? (profiles[d.makerId] ?? null) : null);
-  const open = (id: string) => router.push(`/d/${id}`);
+  const open = (id: string) => router.push(drinkPageHref(id, signedIn) as Href);
   const shown = all ? riffs : riffs.slice(0, SHOWN_RIFFS);
 
   return (

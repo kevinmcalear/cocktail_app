@@ -1,13 +1,16 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, DsText, GlassButton, Headline, PressableScale, Surface, useBreakpoint, useDs } from '@/components/ds';
-import { displayFaces, fontFamilies, space } from '@/constants/tokens';
+import { BackbarTheme, Body, Button, Caption, DsText, GlassButton, Headline, PressableScale, Surface, useBreakpoint, useDs, useGutter } from '@/components/ds';
+import { WebHead } from '@/components/WebHead';
+import { displayFaces, fontFamilies, layout, space } from '@/constants/tokens';
 
-// The public web's own chrome, around every signed-out page (/d, /p, /m, /r):
-// the site nav, the footer, the sign-in band and the small capitals kicker.
-// Boards: ppl-pub-drink-desktop, ppl-pub-drink-phone, ppl-pub-bar-*, ppl-pub-menu-*.
+// The public web's own chrome, around every signed-out page (/d, /p, /m, /r,
+// Support and the legal pages): the frame with the site nav and footer, the
+// sign-in band and the small capitals kicker.
+// Boards: ppl-pub-drink-desktop, ppl-pub-drink-phone, ppl-pub-bar-*, ppl-pub-menu-*, ppl-support-desktop.
 
 /** Where the nav goes. Signed out, the app's own screens ask you to sign in first. */
 const LINKS: { label: string; href: Href }[] = [
@@ -100,6 +103,43 @@ export function PublicFooter() {
   );
 }
 
+/**
+ * A public page's frame (ppl-pub-* boards): the site nav on top, the page in
+ * a centred column up to 1240 wide, the footer at the end. Opens signed out.
+ */
+export function PublicPage({ title, quietCta, children }: { title: string; /** Get the app as an outline: the page has its own gold sign-in. */ quietCta?: boolean; children: ReactNode }) {
+  return (
+    <BackbarTheme>
+      <WebHead>
+        <title>{title}</title>
+      </WebHead>
+      <PageFrame quietCta={quietCta}>{children}</PageFrame>
+    </BackbarTheme>
+  );
+}
+
+function PageFrame({ quietCta, children }: { quietCta?: boolean; children: ReactNode }) {
+  const ds = useDs();
+  const insets = useSafeAreaInsets();
+  const gutter = useGutter();
+  return (
+    <ScrollView
+      style={[styles.screen, { backgroundColor: ds.c.ground }]}
+      contentContainerStyle={{
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingHorizontal: gutter,
+      }}
+    >
+      <View style={styles.column}>
+        <PublicNav quietCta={quietCta} />
+        <View style={styles.content}>{children}</View>
+        <PublicFooter />
+      </View>
+    </ScrollView>
+  );
+}
+
 /** "MODERN CLASSIC · 2005": small capitals in the mono face over a name or a section. */
 export function Kicker({ children }: { children: string }) {
   return (
@@ -127,7 +167,10 @@ export function SignInBand({ text, title = 'Rank it, save it, find where it’s 
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   flex: { flex: 1 },
+  column: { width: '100%', maxWidth: layout.page.wide, alignSelf: 'center' },
+  content: { paddingVertical: space.xl, gap: space.xl },
   tap: { minHeight: 44, justifyContent: 'center' },
   wordmark: { marginRight: space.sm },
   nav: {

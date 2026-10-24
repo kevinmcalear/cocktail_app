@@ -6,7 +6,6 @@ import { TabIcon } from '@/components/nav/WebTabBar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useBarMembers } from '@/hooks/useBarDetail';
-import { useBottomBar } from '@/hooks/useBottomBar';
 import { useFeatureNews } from '@/hooks/useFeatureNews';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
@@ -37,10 +36,9 @@ function Line({ barId, venueName, news, onDismiss }: { barId: string; venueName:
   const { data: members } = useBarMembers(barId);
   const { has } = useVenueFeatures();
   const wide = useIsWideWeb();
-  const bottomBar = useBottomBar();
   // "Look for this tab" only when it's in the bar (a phone's bar holds four) or the sidebar.
   const tab = featureTab(news.feature);
-  const shown: string[] = wide ? venueTabs(has) : phoneTabs(false, has, bottomBar);
+  const shown: string[] = wide ? venueTabs(has) : phoneTabs(false, has);
   const who = firstName(members?.find((m) => m.user_id === news.by_user)?.display_name);
   const label = `New at ${venueName}`;
   return (

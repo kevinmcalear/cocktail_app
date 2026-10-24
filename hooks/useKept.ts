@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
+import { parseHours, type WeekHours } from '@/lib/barHours';
 import { editionDates, type MenuDates, type MenuEdition } from '@/lib/menuEditions';
 import { supabase } from '@/lib/supabase';
 
@@ -25,6 +26,11 @@ export interface LovedBar {
   currentMenu: { id: string; name: string; dates: MenuDates } | null;
   /** The bar's newest live release, when it has one. */
   latestRelease: { id: string; name: string; date: string } | null;
+  /** For Want to go: tonight's hours and how far away it is. */
+  hours: WeekHours | null;
+  timezone: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface SavedMenu {
@@ -41,7 +47,19 @@ export interface SavedMenu {
 
 interface LovedRow {
   alerts: LoveAlerts;
-  profile: { id: string; handle: string | null; display_name: string; avatar_url: string | null; locality: string | null; city: string | null; bar_id: string | null } | null;
+  profile: {
+    id: string;
+    handle: string | null;
+    display_name: string;
+    avatar_url: string | null;
+    locality: string | null;
+    city: string | null;
+    bar_id: string | null;
+    hours: unknown;
+    timezone: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  } | null;
 }
 
 type EditionCols = Pick<MenuEdition, 'id' | 'name' | 'year' | 'month' | 'end_year' | 'end_month' | 'is_current'>;
@@ -62,7 +80,7 @@ export function useLovedBars() {
     queryFn: async (): Promise<LovedBar[]> => {
       const { data, error } = await supabase
         .from('loved_bars')
-        .select('alerts, profile:profiles!profile_id(id, handle, display_name, avatar_url, locality, city, bar_id)')
+        .select('alerts, profile:profiles!profile_id(id, handle, display_name, avatar_url, locality, city, bar_id, hours, timezone, latitude, longitude)')
         .order('loved_at', { ascending: false });
       if (error) throw error;
       // A bar whose page went private drops out (its profile embed comes back empty).
@@ -94,6 +112,10 @@ export function useLovedBars() {
           place: [b.locality, b.city].filter(Boolean).join(', ') || null,
           currentMenu: menu ? { id: menu.id, name: menu.name, dates: editionDates(menu) } : null,
           latestRelease: release ? { id: release.id, name: release.name, date: release.release_date } : null,
+          hours: parseHours(b.hours),
+          timezone: b.timezone,
+          latitude: b.latitude,
+          longitude: b.longitude,
         };
       });
     },

@@ -1,33 +1,9 @@
 import assert from 'node:assert/strict';
 
 import type { MenuDates } from './menuEditions';
-import { averageScore, barMenuPicks, listMenuPicks, barNews, dateTile, daysAway, initials, nightLong, shelfReady, splitHomeMenus } from './collectionMenus';
+import { averageScore, barMenuPicks, listMenuPicks, barNews, initials, shelfReady } from './collectionMenus';
 
 const now = new Date(2026, 9, 9, 20, 0).getTime(); // Fri 9 Oct 2026, evening
-
-// --- dated menus are finished: coming up or past; only undated ones are still building ---
-const menus = [
-  { id: 'a', menuDate: '2026-10-24', createdAt: '2026-10-01' },
-  { id: 'b', menuDate: '2026-10-17', createdAt: '2026-10-02' },
-  { id: 'c', menuDate: null, createdAt: '2026-10-03' },
-  { id: 'd', menuDate: '2026-08-02', createdAt: '2026-07-01' },
-  { id: 'e', menuDate: '2026-10-09', createdAt: '2026-10-05' },
-  { id: 'f', menuDate: null, createdAt: '2026-10-06' },
-  { id: 'g', menuDate: '2026-09-01', createdAt: '2026-08-01' },
-];
-const split = splitHomeMenus(menus, now);
-assert.deepEqual(split.coming.map((m) => m.id), ['e', 'b', 'a']);
-assert.deepEqual(split.building.map((m) => m.id), ['f', 'c']);
-assert.deepEqual(split.past.map((m) => m.id), ['g', 'd']);
-
-// --- the date tile and how far off ---
-assert.deepEqual(dateTile('2026-10-17'), { mon: 'OCT', day: '17' });
-assert.deepEqual(dateTile('2026-08-02'), { mon: 'AUG', day: '02' });
-assert.equal(daysAway('2026-10-17', now), 'In 8 days');
-assert.equal(daysAway('2026-10-09', now), 'Tonight');
-assert.equal(daysAway('2026-10-10', now), 'Tomorrow');
-assert.equal(daysAway('2026-10-08', now), null);
-assert.equal(nightLong('2026-10-17', 'en-GB'), 'Saturday · 17 October');
 
 // --- ready from the shelf, and what to buy ---
 const canMake = new Set(['sour', 'highball']);
