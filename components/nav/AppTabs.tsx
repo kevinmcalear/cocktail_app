@@ -1,7 +1,6 @@
 import { NativeTabs } from 'expo-router/native-tabs';
-import type { SFSymbol } from 'expo-symbols';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 import { useDs } from '@/components/ds';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
@@ -11,11 +10,12 @@ import { useMode } from '@/hooks/useMode';
 import { useTrackTab } from '@/hooks/useSearchFrom';
 import { useServiceDay } from '@/hooks/useServiceDay';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
+import { withAlpha } from '@/lib/color';
 import { phoneTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
 
 import { CreateSheet } from './CreateSheet';
 import { JsTabs } from './JsTabs';
-import { calendarDayImage, hasNumberedCalendarSymbols } from './tabCalendar';
+import { NEW_TAB_IMAGE, TAB_IMAGES, tonightImage } from './tabImages';
 import { VenueBrandProvider } from './VenueBrandProvider';
 
 /**
@@ -27,6 +27,8 @@ import { VenueBrandProvider } from './VenueBrandProvider';
  * at five with Search (lib/venueFeatures.ts phoneTabs); You opens from the
  * header's avatar.
  * Tonight is a calendar page showing the date, which turns over at 6am.
+ * The icons are the app's own (components/nav/tabImages.ts), template images
+ * the system tints, so the glass and Material bars stay the system's.
  * A native iPad wide enough for the side nav uses the JS tabs instead, with
  * the rail or sidebar in the root layout, like tablet web (24 Oct 2026).
  * ponytail: crossing 768 (Split View, Stage Manager) swaps navigators and
@@ -62,55 +64,59 @@ function Tabs() {
   // rather than open the wrong set.
   if (!ready || !features.ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
   const shown = phoneTabs(home, features.has);
+  // Android's Material 3 bar in our colours: the surface, the accent's indicator pill (the
+  // sidebar's current-row tint) and an ink ripple. iOS keeps the system's Liquid Glass untouched.
+  const material = { backgroundColor: ds.c.surface, indicatorColor: withAlpha(ds.accentText, 0.16), rippleColor: withAlpha(ds.c.ink, 0.12) };
   const off = (name: PhoneTab) => !shown.includes(name) || (hidden as readonly string[]).includes(name);
   // Discover is in both modes. The rest swap, the way an account switch swaps
   // an app's tabs; home mode's index redirects to Discover. Android's Material
   // bar hides unselected labels past three tabs; "labeled" keeps every tab named.
   return (
     <>
-      <NativeTabs tintColor={ds.accentText} badgeBackgroundColor={ds.accentFill.fill} minimizeBehavior="onScrollDown" labelVisibilityMode="labeled">
+      <NativeTabs
+        tintColor={ds.accentText}
+        badgeBackgroundColor={ds.accentFill.fill}
+        minimizeBehavior="onScrollDown"
+        labelVisibilityMode="labeled"
+        {...(Platform.OS === 'android' ? material : null)}
+      >
         <NativeTabs.Trigger name="index" hidden={off('index')} accessibilityLabel={isNew('index') ? 'Tonight, new' : undefined}>
-          {/* No filled variant of a dated calendar: the tint marks the selected tab. */}
-          <NativeTabs.Trigger.Icon
-            sf={hasNumberedCalendarSymbols ? (`${day}.calendar` as SFSymbol) : undefined}
-            src={calendarDayImage(day)}
-            renderingMode="template"
-          />
+          <NativeTabs.Trigger.Icon src={tonightImage(day)} renderingMode="template" />
           <NativeTabs.Trigger.Label>Tonight</NativeTabs.Trigger.Label>
           {dot('index')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="library" hidden={off('library')}>
-          <NativeTabs.Trigger.Icon sf={{ default: 'book', selected: 'book.fill' }} md="menu_book" />
+          <NativeTabs.Trigger.Icon src={TAB_IMAGES.library} renderingMode="template" />
           <NativeTabs.Trigger.Label>Library</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="menus" hidden={off('menus')}>
-          <NativeTabs.Trigger.Icon sf={{ default: 'list.bullet.rectangle', selected: 'list.bullet.rectangle.fill' }} md="restaurant_menu" />
+          <NativeTabs.Trigger.Icon src={TAB_IMAGES.menus} renderingMode="template" />
           <NativeTabs.Trigger.Label>Menus</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="prep" hidden={off('prep')} accessibilityLabel={isNew('prep') ? 'Prep, new' : undefined}>
-          <NativeTabs.Trigger.Icon sf={{ default: 'flask', selected: 'flask.fill' }} md="science" />
+          <NativeTabs.Trigger.Icon src={TAB_IMAGES.prep} renderingMode="template" />
           <NativeTabs.Trigger.Label>Prep</NativeTabs.Trigger.Label>
           {dot('prep')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="test" hidden={off('test')} accessibilityLabel={isNew('test') ? 'Study, new' : undefined}>
-          <NativeTabs.Trigger.Icon sf={{ default: 'rectangle.stack', selected: 'rectangle.stack.fill' }} md="style" />
+          <NativeTabs.Trigger.Icon src={TAB_IMAGES.test} renderingMode="template" />
           <NativeTabs.Trigger.Label>Study</NativeTabs.Trigger.Label>
           {dot('test')}
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="discover" hidden={off('discover')}>
-          <NativeTabs.Trigger.Icon sf={{ default: 'safari', selected: 'safari.fill' }} md="explore" />
+          <NativeTabs.Trigger.Icon src={TAB_IMAGES.discover} renderingMode="template" />
           <NativeTabs.Trigger.Label>Discover</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="bar" hidden={off('bar')}>
-          <NativeTabs.Trigger.Icon sf={{ default: 'wineglass', selected: 'wineglass.fill' }} md="wine_bar" />
+          <NativeTabs.Trigger.Icon src={TAB_IMAGES.bar} renderingMode="template" />
           <NativeTabs.Trigger.Label>My Bar</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="collection" hidden={off('collection')}>
-          <NativeTabs.Trigger.Icon sf={{ default: 'bookmark', selected: 'bookmark.fill' }} md="bookmark" />
+          <NativeTabs.Trigger.Icon src={TAB_IMAGES.collection} renderingMode="template" />
           <NativeTabs.Trigger.Label>Collection</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="profile" hidden={off('profile')}>
-          <NativeTabs.Trigger.Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} md="account_circle" />
+          <NativeTabs.Trigger.Icon src={TAB_IMAGES.profile} renderingMode="template" />
           <NativeTabs.Trigger.Label>You</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         {/* A button, not a page: disabled, so a press never selects it, only tells us. */}
@@ -121,7 +127,7 @@ function Tabs() {
           accessibilityLabel="New: drink, ingredient, beer, wine, menu, bring something in, or a draft"
           listeners={{ tabPress: () => setCreating(true) }}
         >
-          <NativeTabs.Trigger.Icon sf="plus" md="add" />
+          <NativeTabs.Trigger.Icon src={NEW_TAB_IMAGE} renderingMode="template" />
           <NativeTabs.Trigger.Label>New</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
         {/* iOS 27 only moves the search field into the tab bar for a real
@@ -131,9 +137,9 @@ function Tabs() {
             ponytail: drop unstable_nativeProps once expo-router forwards them
             (expo/expo#51876). */}
         <NativeTabs.Trigger name="search" role="search" unstable_nativeProps={{ ios: { role: 'search', automaticallyActivatesSearch: true } }}>
-          {/* iOS draws the system magnifying glass from role="search" and ignores
-              md; Android has no search role, so without this the tab is blank. */}
-          <NativeTabs.Trigger.Icon md="search" />
+          {/* iOS draws the system magnifying glass from role="search": no image there, or it
+              would replace the system's. Android has no search role, so it takes ours. */}
+          <NativeTabs.Trigger.Icon src={Platform.OS === 'android' ? TAB_IMAGES.search : undefined} renderingMode="template" />
           <NativeTabs.Trigger.Label>Search</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
       </NativeTabs>

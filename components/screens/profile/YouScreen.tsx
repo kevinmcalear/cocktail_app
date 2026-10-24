@@ -108,7 +108,7 @@ function You() {
           icon={Platform.OS === 'web' ? 'chevron.left' : 'xmark'}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         />
-        <GlassButton accessibilityLabel="Settings" icon="gearshape" onPress={() => router.push('/settings')} />
+        <GlassButton accessibilityLabel="Settings" icon="place.settings" onPress={() => router.push('/settings')} />
       </View>
     </View>
   );

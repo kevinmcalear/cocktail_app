@@ -64,6 +64,6 @@ assert.equal(newsDetail(tonight, 'Sam', NOW, true), 'Sam turned it on today. Loo
 assert.equal(newsDetail(prep, null, NOW, false), 'Turned on today.');
 assert.equal(featureTab('study'), 'test', 'Study’s route is still /test');
 assert.equal(featureTab('history'), null);
-assert.equal(featureIcon('tonight'), 'calendar', 'Tonight is the tab bar’s dated calendar');
+assert.equal(featureIcon('tonight'), 'place.tonight', 'Tonight is the tab bar’s dated calendar');
 
 console.log('featureNews checks passed');

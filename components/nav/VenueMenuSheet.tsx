@@ -73,9 +73,8 @@ function SwitchButton({ home, active, onPick }: { home: boolean; active: Venue |
 // The pill is 32 tall on the subtitle line; the slop makes it a full tap target.
 const SLOP = (layout.minTapTarget - 32) / 2;
 
-// The sheet draws Settings as a sun and Menus as a document (nav-switcher); the sidebar keeps its own.
-const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'sun.min', path: '/settings' };
-const SHEET_ICON: Record<string, IconName> = { menus: 'doc' };
+// Settings is the sliders and Menus the menu card, as everywhere else (nav-icons).
+const SETTINGS: Place = { key: 'settings', label: 'Settings', icon: 'place.settings', path: '/settings' };
 
 /** The venue's own lines under each place: live counts where the app already has them. */
 function useVenueLines(venue: Venue): Record<string, string> {
@@ -112,7 +111,7 @@ function useHomeLines(): Record<string, string> {
 }
 
 function Places({ places, lines, onGo }: { places: Place[]; lines: Record<string, string>; onGo: (p: Place) => void }) {
-  return places.map((p, i) => <PlaceRow key={p.key} icon={SHEET_ICON[p.key] ?? p.icon} label={p.label} detail={lines[p.key] ?? ''} last={i === places.length - 1} onPress={() => onGo(p)} />);
+  return places.map((p, i) => <PlaceRow key={p.key} icon={p.icon} label={p.label} detail={lines[p.key] ?? ''} last={i === places.length - 1} onPress={() => onGo(p)} />);
 }
 
 function Heading({ children }: { children: string }) {

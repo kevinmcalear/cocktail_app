@@ -35,17 +35,17 @@ export function featureTab(feature: string): VenueTab | null {
 }
 
 const ICONS: Record<VenueFeatureKey, IconName> = {
-  tonight: 'calendar',
-  prep: 'flask',
-  study: 'rectangle.stack',
-  backBar: 'map.fill',
-  history: 'clock.arrow.circlepath',
+  tonight: 'place.tonight',
+  prep: 'place.prep',
+  study: 'place.study',
+  backBar: 'place.backbar',
+  history: 'place.history',
   flavorMap: 'target',
   techniques: 'flask',
   libraryExtras: 'line.3.horizontal.decrease',
 };
 
-/** The icon of the tab or place a feature adds. 'calendar' is Tonight's dated page (TabIcon). */
+/** The icon of the tab or place a feature adds (components/ui/glyphs.ts place.*). */
 export function featureIcon(feature: string): IconName {
   return ICONS[feature as VenueFeatureKey] ?? 'sparkles';
 }

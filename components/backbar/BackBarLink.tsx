@@ -14,7 +14,7 @@ export function BackBarLink() {
   const router = useRouter();
   const on = useVenueFeature('backBar');
   if (useIsWideWeb() || !on) return null;
-  return <Button label="Back bar" icon="map.fill" variant="secondary" onPress={() => router.push('/back-bar' as never)} style={styles.link} />;
+  return <Button label="Back bar" icon="place.backbar" variant="secondary" onPress={() => router.push('/back-bar' as never)} style={styles.link} />;
 }
 
 const styles = StyleSheet.create({

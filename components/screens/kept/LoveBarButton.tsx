@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
-import { LineGlyph } from '@/components/ui/lineGlyphs';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useLoveBar, useLovedBars } from '@/hooks/useKept';
@@ -49,7 +49,7 @@ export function LoveBarButton({ profileId, name, labelled = false }: { profileId
           style={[styles.loved, { borderColor: withAlpha(ds.accentText, 0.45), backgroundColor: withAlpha(ds.accentText, 0.16) }]}
         >
           <View style={styles.row}>
-            <LineGlyph name="heartFill" size={18} color={ds.accentText} />
+            <IconSymbol name="heart.fill" size={18} color={ds.accentText} />
             <DsText variant="label" color={ds.accentText} style={styles.text}>
               Loved
             </DsText>

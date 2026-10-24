@@ -1,6 +1,6 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useState } from 'react';
-import { Platform, StyleSheet, View, type ColorValue } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
@@ -14,26 +14,25 @@ import { useMode } from '@/hooks/useMode';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { phoneTabs, venueTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
 
-import { CalendarDayIcon } from './CalendarDayIcon';
 import { CreateSheet } from './CreateSheet';
 
 export type WebTab = { name: string; label: string; icon: IconName };
 
-const DISCOVER: WebTab = { name: 'discover', label: 'Discover', icon: 'safari' };
+const DISCOVER: WebTab = { name: 'discover', label: 'Discover', icon: 'place.discover' };
 
 const VENUE_TABS: Record<VenueTab, WebTab> = {
-  index: { name: 'index', label: 'Tonight', icon: 'calendar' },
-  library: { name: 'library', label: 'Library', icon: 'book' },
-  menus: { name: 'menus', label: 'Menus', icon: 'text.alignleft' },
-  prep: { name: 'prep', label: 'Prep', icon: 'flask' },
-  test: { name: 'test', label: 'Study', icon: 'rectangle.stack' },
+  index: { name: 'index', label: 'Tonight', icon: 'place.tonight' },
+  library: { name: 'library', label: 'Library', icon: 'place.library' },
+  menus: { name: 'menus', label: 'Menus', icon: 'place.menus' },
+  prep: { name: 'prep', label: 'Prep', icon: 'place.prep' },
+  test: { name: 'test', label: 'Study', icon: 'place.study' },
   discover: DISCOVER,
 };
 
 const HOME_TABS = {
-  bar: { name: 'bar', label: 'My Bar', icon: 'wineglass' },
-  collection: { name: 'collection', label: 'Collection', icon: 'bookmark' },
-  profile: { name: 'profile', label: 'You', icon: 'person.crop.circle' },
+  bar: { name: 'bar', label: 'My Bar', icon: 'place.mybar' },
+  collection: { name: 'collection', label: 'Collection', icon: 'place.collection' },
+  profile: { name: 'profile', label: 'You', icon: 'place.you' },
 } satisfies Record<string, WebTab>;
 
 const TABS: Record<Exclude<PhoneTab, 'new'>, WebTab> = { ...VENUE_TABS, ...HOME_TABS };
@@ -49,11 +48,6 @@ export function useModeTabs(): WebTab[] {
   // The first round holds Menus and Discover back until their steps come up (lib/firstRound.ts).
   const { hidden } = useFirstRound();
   return mode === 'home' ? [DISCOVER, ...Object.values(HOME_TABS)] : venueTabs(has).flatMap((name) => ((hidden as readonly string[]).includes(name) ? [] : [VENUE_TABS[name]]));
-}
-
-/** A tab's icon. 'calendar' is Tonight's page with the date on it; the rest are symbols. */
-export function TabIcon({ name, size, color }: { name: IconName; size: number; color: ColorValue }) {
-  return name === 'calendar' ? <CalendarDayIcon size={size} color={color} /> : <IconSymbol name={name} size={size} color={color} />;
 }
 
 // The board's pill and search circle are both 64 tall.
@@ -138,7 +132,7 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
                 style={[styles.tab, selected && { backgroundColor: ds.c.line }]}
               >
                 {isNew ? <View style={[styles.dot, { backgroundColor: ds.accentFill.fill }]} /> : null}
-                <TabIcon name={t.icon} size={20} color={color} />
+                <IconSymbol name={t.icon} size={20} color={color} on={selected} />
                 <DsText variant="caption" color={color} numberOfLines={1}>
                   {t.label}
                 </DsText>

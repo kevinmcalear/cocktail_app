@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { TabIcon } from '@/components/nav/WebTabBar';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useBarMembers } from '@/hooks/useBarDetail';
@@ -44,7 +43,7 @@ function Line({ barId, venueName, news, onDismiss }: { barId: string; venueName:
   return (
     <View role="complementary" aria-label={label} style={[styles.line, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>
       <View aria-hidden style={[styles.icon, { backgroundColor: withAlpha(ds.accentText, 0.16) }]}>
-        <TabIcon name={featureIcon(news.feature)} size={22} color={ds.accentText} />
+        <IconSymbol name={featureIcon(news.feature)} size={22} color={ds.accentText} />
       </View>
       <View style={styles.words}>
         <Body style={styles.title}>{`${label}: ${featureLabel(news.feature)}`}</Body>
