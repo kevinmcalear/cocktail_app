@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import { useDs } from '@/components/ds';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useFirstRound } from '@/hooks/useFirstRound';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useTrackTab } from '@/hooks/useSearchFrom';
 import { useServiceDay } from '@/hooks/useServiceDay';
@@ -13,20 +14,27 @@ import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { phoneTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
 
 import { CreateSheet } from './CreateSheet';
+import { JsTabs } from './JsTabs';
 import { calendarDayImage, hasNumberedCalendarSymbols } from './tabCalendar';
 import { VenueBrandProvider } from './VenueBrandProvider';
 
 /**
  * Redesigned tabs on iOS and Android: the system tab bar (Liquid Glass on
  * iOS 26+, Material 3 on Android), tinted with the venue's accent. Web uses
- * AppTabs.web.tsx. Venue mode: Library, Menus, Discover, plus Tonight, Prep
+ * JsTabs.tsx. Venue mode: Library, Menus, Discover, plus Tonight, Prep
  * and Study when the venue switched them on (lib/venueFeatures.ts). Home
  * mode: Discover, My Bar, Collection. New is a tab in both, and the bar stays
  * at five with Search (lib/venueFeatures.ts phoneTabs); You opens from the
  * header's avatar.
  * Tonight is a calendar page showing the date, which turns over at 6am.
+ * A native iPad wide enough for the side nav uses the JS tabs instead, with
+ * the rail or sidebar in the root layout, like tablet web (24 Oct 2026).
+ * ponytail: crossing 768 (Split View, Stage Manager) swaps navigators and
+ * resets the tabs' stacks. Upgrade path: one navigator whose bar hides.
  */
 export function AppTabs() {
+  const wide = useIsWideWeb();
+  if (wide) return <JsTabs />;
   return (
     <VenueBrandProvider>
       <Tabs />
