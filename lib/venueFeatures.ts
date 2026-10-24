@@ -1,14 +1,14 @@
 /**
  * What a venue can switch on. A venue's first release is Discover, Library
  * and Menus (decided 13 Oct 2026); everything here is off until the venue's
- * Admin turns it on in Venue settings (bars.enabled_features,
+ * Admin turns it on in Features (bars.enabled_features,
  * supabase/migrations/20261016800000_venue_feature_switches.sql, whose CHECK
  * lists these keys). Home mode doesn't read the switches: it gets `atHome`.
  *
  * Not behind a switch, on purpose: Batch (a sheet on every drink page), the
  * drink page's Service section, and prep cards on ingredient pages.
  *
- * In the order Venue settings lists them (canvas first-round-and-features).
+ * In the order Features lists them (canvas first-round-and-features).
  * `tryIt`: the feature has a sample to try before switching it on
  * (components/bar/TryItSheet.tsx), and about how long that takes.
  */
@@ -64,6 +64,11 @@ export function featureSaveMessage(error: DbError): string {
 /** Switch one feature on or off, keeping the rest and the catalog's order. */
 export function withFeature(on: readonly VenueFeatureKey[], key: VenueFeatureKey, enabled: boolean): VenueFeatureKey[] {
   return VENUE_FEATURES.map((f) => f.key).filter((k) => (k === key ? enabled : on.includes(k)));
+}
+
+/** Who may switch features: Admins (level 40, lib/roles.ts), the only role bars_update lets write them. */
+export function canSwitchFeatures(role: number): boolean {
+  return role >= 40;
 }
 
 /** At home there's no venue to ask: each feature is what home mode always had. */

@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { TryItSheet } from '@/components/bar/TryItSheet';
 import { Body, Caption, DsText, PressableScale, Surface, Switch, useDs } from '@/components/ds';
-import { RowDivider, SectionHeading, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { RowDivider, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -14,8 +14,8 @@ import { VENUE_FEATURES } from '@/lib/venueFeatures';
 type Feature = (typeof VENUE_FEATURES)[number];
 
 /**
- * Features, in a venue's settings, for its Admins (canvas
- * first-round-and-features): what's always on, then a switch for each extra,
+ * Features, on a venue's Features page, for its Admins (canvas
+ * first-round-and-features; its own page since the venue-menu proposal): what's always on, then a switch for each extra,
  * Tonight and Back bar with a Try it under them. Each switch saves as it's
  * flipped, and the tabs and links follow for the whole team. On wide web the
  * switches are cards, two across.
@@ -25,6 +25,8 @@ export function VenueFeatures({ barId, venueName }: { barId: string; venueName: 
   const wide = useIsWideWeb();
   // Which sample is open, and whether it was on when it opened (so Turn on doesn't swap the buttons as the sheet leaves).
   const [trying, setTrying] = useState<{ key: TryItKey; on: boolean } | null>(null);
+  // Lined up with the card's rows on phones; on wide web, with the page title over the cards.
+  const inset = wide ? null : styles.inset;
   const intro = `Start small. Switch the rest on when your team is ready. Everyone at ${venueName} sees what’s on.`;
 
   const control = (f: Feature) => ({ value: features.includes(f.key), onValueChange: (on: boolean) => set(f.key, on) });
@@ -32,8 +34,7 @@ export function VenueFeatures({ barId, venueName }: { barId: string; venueName: 
 
   return (
     <View style={styles.section}>
-      <SectionHeading>Features</SectionHeading>
-      <DsText variant="label" tone="muted" style={styles.inset}>
+      <DsText variant="label" tone="muted" style={inset}>
         {wide ? `${intro} Library, Menus and Discover are always on.` : intro}
       </DsText>
       {wide ? (
@@ -57,11 +58,11 @@ export function VenueFeatures({ barId, venueName }: { barId: string; venueName: 
         </Surface>
       )}
       {error ? (
-        <Caption tone="accent" role="alert" style={styles.inset}>
+        <Caption tone="accent" role="alert" style={inset}>
           {error}
         </Caption>
       ) : null}
-      <Caption tone="muted" style={styles.inset}>
+      <Caption tone="muted" style={inset}>
         {wide
           ? 'Always there: Batch on every drink page, My team, and Roles and access.'
           : 'Always there: Batch on every drink page, My team, and Roles and access, which sets who sees specs and prep notes.'}

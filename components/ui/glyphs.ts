@@ -142,6 +142,7 @@ const G = {
   scissors: { d: C(6.5, 6.5, 2.8) + C(6.5, 17.5, 2.8) + 'M19.5 4.5L8.6 15.4M14.3 14.3l5.2 5.2M8.6 8.6L12 12' },
   'hand.tap': { d: 'M4 4l6.5 15.5 2.3-6.7 6.7-2.3zM13 13l6 6' },
   'chevron.left.forwardslash.chevron.right': { d: 'M16 17.5l5.5-5.5L16 6.5M8 6.5L2.5 12 8 17.5' },
+  'switch.2': { d: R(2.5, 7, 19, 10, 5) + C(16.5, 12, 2.6), f: C(16.5, 12, 2.6) },
   'slider.horizontal.3': { d: SLIDERS, f: C(15, 7, 2.5) + C(9, 17, 2.5) },
   gearshape: { d: SLIDERS, f: C(15, 7, 2.5) + C(9, 17, 2.5) },
   'sun.min': { d: SLIDERS, f: C(15, 7, 2.5) + C(9, 17, 2.5) },

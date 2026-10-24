@@ -7,13 +7,12 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useVenueMenus } from '@/hooks/useMenus';
+import { useEffectiveRole } from '@/hooks/useViewAs';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { onAMenu, OPENED_COPY } from '@/lib/firstRound';
+import { canSwitchFeatures } from '@/lib/venueFeatures';
 
 import { nextLine, progressLine, RoundBars, RoundStepList, useRoundGo } from './RoundParts';
-
-/** Admins can switch more on (Venue settings, Features). */
-const ADMIN_LEVEL = 40;
 
 function CloseButton({ label, onPress }: { label: string; onPress: () => void }) {
   const ds = useDs();
@@ -39,6 +38,8 @@ export function FirstRoundCard() {
   const menus = useVenueMenus(round.active && round.current?.key === 'menu' ? (round.venue?.id ?? null) : null).data;
   const markMenu = !!menus && round.current?.key === 'menu' && onAMenu(round.round, menus.filter((m) => m.barId === round.venue?.id));
   const { done } = round;
+  // Admins can switch more on, as the role they're viewing as (the Features row and page check the same).
+  const switches = canSwitchFeatures(useEffectiveRole(round.venue?.id ?? null));
   useEffect(() => {
     if (markMenu) done('menu');
   }, [markMenu, done]);
@@ -55,7 +56,7 @@ export function FirstRoundCard() {
           <Body style={styles.strong}>That’s the round</Body>
           <Caption tone="muted">{`Menus and Discover are open. Anything else ${venue.name} turns on shows up here.`}</Caption>
         </View>
-        {venue.roleLevel >= ADMIN_LEVEL ? <TextLink label={`Turn on more for ${venue.name}`} tone="ink" onPress={() => router.push(`/settings/bar/${venue.id}`)} /> : null}
+        {switches ? <TextLink label={`Turn on more for ${venue.name}`} tone="ink" onPress={() => router.push(`/settings/bar/${venue.id}/features`)} /> : null}
       </Surface>
     );
   }
