@@ -1,7 +1,7 @@
 // The web map's HTML bits (DiscoverMap.web.tsx): its stylesheet, the score
 // pins and the area labels. Plain DOM, since MapLibre GL markers take elements.
 import { backbar, fontFamilies, radius, space, type } from '@/constants/tokens';
-import { areaLook, CLOSE_ZOOM, pinDescription, pinLook, type MapArea, type MapPin } from '@/lib/discoverMap';
+import { areaLook, CLOSE_ZOOM, pinDescription, pinLook, ZOOM_BUTTON, type MapArea, type MapPin } from '@/lib/discoverMap';
 import { knownLogoEdge, lookAtLogoEdge, type KnownEdge } from '@/lib/logoEdge';
 
 import type { DiscoverMapProps } from './DiscoverMap';
@@ -142,7 +142,7 @@ export function styleControls(container: HTMLElement, scheme: 'light' | 'dark') 
   const m = '.discover-map .maplibregl-ctrl';
   css.textContent = `${m}-top-right .maplibregl-ctrl { margin: ${space.lg}px ${space.lg}px 0 0; }
 ${m}-group { background: var(--dm-glass); border: 1px solid var(--dm-edge); border-radius: ${radius.control}px; box-shadow: none; overflow: hidden; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-${m}-group button { width: 40px; height: 40px; background-color: transparent; }
+${m}-group button { width: ${ZOOM_BUTTON}px; height: ${ZOOM_BUTTON}px; background-color: transparent; }
 ${m}-group button + button { border-top: 1px solid var(--dm-edge); }
 ${m}-group button:not(:disabled):hover { background-color: var(--dm-edge); }
 ${m}-icon { filter: var(--dm-icon); }

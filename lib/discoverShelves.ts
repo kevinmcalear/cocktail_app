@@ -60,21 +60,43 @@ export function byTaste(drinks: readonly DiscoverDrink[], taste: Taste, profiles
  * upgrade is a per-style bar count from the server.
  */
 export function topStyle(drinks: readonly DiscoverDrink[]): string | null {
+  const bars = barsPerStyle(drinks);
+  let best: string | null = null;
+  let most = SHELF_MIN - 1;
+  for (const { id } of STYLES) {
+    const n = id === ZERO ? 0 : (bars.get(id) ?? 0);
+    if (n > most) [best, most] = [id, n];
+  }
+  return best;
+}
+
+/**
+ * The map's drink chips (disc-maps-habits): every style a bar here pours, the
+ * most bars first, ties in the chips' order. Counts the first page, as topStyle.
+ */
+export function stylesByBars(drinks: readonly DiscoverDrink[]): string[] {
+  const bars = barsPerStyle(drinks);
+  return STYLES.filter((s) => bars.has(s.id))
+    .sort((a, b) => bars.get(b.id)! - bars.get(a.id)!)
+    .map((s) => s.id);
+}
+
+/** The chips to show: the ones on first, then the rest in `order` (the last unfiltered stylesByBars), at most `max` in all. */
+export function chipIds(kinds: readonly string[], order: readonly string[], max = Infinity): string[] {
+  const rest = order.filter((id) => !kinds.includes(id));
+  return [...kinds, ...rest.slice(0, Math.max(0, max - kinds.length))];
+}
+
+/** How many bars pour each style, from the first page. */
+function barsPerStyle(drinks: readonly DiscoverDrink[]): Map<string, number> {
   const bars = new Map<string, Set<string>>();
   for (const d of drinks.slice(0, FIRST_PAGE)) {
     for (const s of d.styles ?? []) {
-      if (s === ZERO) continue;
       if (!bars.has(s)) bars.set(s, new Set());
       bars.get(s)!.add(d.barId);
     }
   }
-  let best: string | null = null;
-  let most = SHELF_MIN - 1;
-  for (const { id } of STYLES) {
-    const n = bars.get(id)?.size ?? 0;
-    if (n > most) [best, most] = [id, n];
-  }
-  return best;
+  return new Map([...bars].map(([s, set]) => [s, set.size]));
 }
 
 /** "Martinis, five ways". */
