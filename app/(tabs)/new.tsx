@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { useDs } from '@/components/ds';
 
 /**
- * The New item in the tab bar (Settings › Try it). Pressing it opens the New
+ * The New item in the tab bar. Pressing it opens the New
  * sheet over the tab you're on and never shows this screen; native tabs need
  * a route behind every item. A link straight here goes home.
  */

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { useDs } from '@/components/ds';
-import { useBottomBar } from '@/hooks/useBottomBar';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useMode } from '@/hooks/useMode';
@@ -22,8 +21,9 @@ import { VenueBrandProvider } from './VenueBrandProvider';
  * iOS 26+, Material 3 on Android), tinted with the venue's accent. Web uses
  * AppTabs.web.tsx. Venue mode: Library, Menus, Discover, plus Tonight, Prep
  * and Study when the venue switched them on (lib/venueFeatures.ts). Home
- * mode: Discover, My Bar, Collection, You. Settings › Try it adds New, and
- * the bar stays at five with Search (lib/venueFeatures.ts phoneTabs).
+ * mode: Discover, My Bar, Collection. New is a tab in both, and the bar stays
+ * at five with Search (lib/venueFeatures.ts phoneTabs); You opens from the
+ * header's avatar.
  * Tonight is a calendar page showing the date, which turns over at 6am.
  */
 export function AppTabs() {
@@ -40,9 +40,6 @@ function Tabs() {
   const features = useVenueFeatures();
   const home = mode === 'home';
   const day = useServiceDay() ?? 1;
-  // Settings › Try it: New moves from the header into the tab bar, taking a
-  // tab's room (at home You steps out and the avatar opens it).
-  const bottomBar = useBottomBar();
   const [creating, setCreating] = useState(false);
   // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
   const dots = useFeatureNewsDots();
@@ -56,7 +53,7 @@ function Tabs() {
   // wait for the mode (a moment, on a first launch) and the venue's switches
   // rather than open the wrong set.
   if (!ready || !features.ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
-  const shown = phoneTabs(home, features.has, bottomBar);
+  const shown = phoneTabs(home, features.has);
   const off = (name: PhoneTab) => !shown.includes(name) || (hidden as readonly string[]).includes(name);
   // Discover is in both modes. The rest swap, the way an account switch swaps
   // an app's tabs; home mode's index redirects to Discover. Android's Material
