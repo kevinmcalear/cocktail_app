@@ -3,9 +3,10 @@
  * make and Made for drinks; Want to go and Been for bars. The tiles switch
  * the list under them. Pure helpers (lib/collectionStages.check.ts); the
  * data comes from useMyHadDrinks, useCollection, useMadeDrinks, useMyBar and
- * useLovedBars.
+ * useLovedBars; Want to go's map pins its bars as Discover does (lib/discoverMap.ts).
  */
 import { averageScore } from './collectionMenus';
+import { cameraFor, type Camera, type MapPin } from './discoverMap';
 import type { HadDrink, HadVenue } from './hadDrinks';
 import type { MadeTally } from './madeIt';
 import type { AwayGroup } from './toMake';
@@ -217,4 +218,39 @@ export function beenBars(had: readonly HadDrink[], sort: BeenSort): BeenBar[] {
 /** The order Want to go lists bars: nearest first when we know where you are, else by name. Unknown distances go last. */
 export function nearestFirst<T extends { name: string; km: number | null }>(bars: readonly T[]): T[] {
   return [...bars].sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity) || a.name.localeCompare(b.name));
+}
+
+/** A bar on Want to go: how far, open tonight or not, why it's here, everyone's score. */
+export interface WantBar {
+  id: string;
+  handle: string | null;
+  name: string;
+  avatarUrl: string | null;
+  place: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  away: string | null;
+  km: number | null;
+  hours: { open: boolean; text: string } | null;
+  why: string | null;
+  everyone: number | null;
+}
+
+/** How near a Want to go bar must be for the map to open on it (board home-collection-bars, step 3). */
+export const WANT_NEAR_KM = 25;
+
+/** Want to go's bars as Discover's pins: everyone's score on each, a plain dot until there is one. */
+export function wantPins(bars: readonly WantBar[]): MapPin[] {
+  return bars.flatMap((b) =>
+    b.latitude !== null && b.longitude !== null
+      ? [{ id: b.id, handle: b.handle || b.id, name: b.name, logo: b.avatarUrl, place: b.place ?? '', latitude: b.latitude, longitude: b.longitude, score: b.everyone, position: null, rankers: 0 }]
+      : [],
+  );
+}
+
+/** Where the map opens: on the bars near you, else on all of them. */
+export function wantCamera(bars: readonly WantBar[]): Camera | null {
+  // A distance means it has a place: km comes from its coordinates.
+  const near = bars.filter((b) => b.km !== null && b.km <= WANT_NEAR_KM);
+  return cameraFor(wantPins(near.length ? near : bars));
 }

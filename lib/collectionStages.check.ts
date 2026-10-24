@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, homeReach, madeRows, nearestFirst, nextBottle, toMakeGroups, type HadMemory } from './collectionStages';
+import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, homeReach, madeRows, nearestFirst, nextBottle, toMakeGroups, wantCamera, wantPins, type HadMemory, type WantBar } from './collectionStages';
+import { cameraFor } from './discoverMap';
 import type { HadDrink } from './hadDrinks';
 
 const shelf = {
@@ -101,3 +102,15 @@ assert.deepEqual(beenBars(had, 'recent').map((b) => b.venue.name), ['Little Rye'
 
 // --- Want to go: nearest first, unknown distances last, then by name ---
 assert.deepEqual(nearestFirst([{ name: 'B', km: null }, { name: 'C', km: 3 }, { name: 'A', km: null }, { name: 'D', km: 1 }]).map((b) => b.name), ['D', 'C', 'A', 'B']);
+
+// --- Want to go on the map: pins with everyone's score, opening on the bars near you ---
+const want = (id: string, km: number | null, at: [number, number] | null, everyone: number | null = null): WantBar => ({
+  id, handle: null, name: id, avatarUrl: null, place: null, latitude: at?.[0] ?? null, longitude: at?.[1] ?? null, away: null, km, hours: null, why: null, everyone,
+});
+const near = want('near', 1.2, [-37.8, 144.98], 8.8);
+const far = want('far', 12000, [40.7, -74.0]);
+const nowhere = want('nowhere', null, null);
+assert.deepEqual(wantPins([near, far, nowhere]).map((p) => [p.id, p.handle, p.score]), [['near', 'near', 8.8], ['far', 'far', null]]);
+assert.deepEqual(wantCamera([near, far]), cameraFor(wantPins([near])));
+assert.deepEqual(wantCamera([want('a', 900, [1, 1]), want('b', null, [2, 2])]), cameraFor([{ latitude: 1, longitude: 1 }, { latitude: 2, longitude: 2 }]));
+assert.equal(wantCamera([nowhere]), null);

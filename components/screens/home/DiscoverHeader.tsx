@@ -48,7 +48,7 @@ export function DiscoverHeader({ query, onMap, onSearch, onClear, filters, onOpt
       </PressableScale>
     </View>
   );
-  return <ScreenHeader title="Discover" center={pill} create={false} />;
+  return <ScreenHeader title="Discover" center={pill} />;
 }
 
 /** Scrolled this far past the top before the header may go, and the travel either way that hides or brings it back. */

@@ -18,9 +18,9 @@ import { useAgeGate } from '../safety/AgeGate';
 import { ReportAction } from '../safety/ReportSheet';
 import { CollectButton } from './CollectButton';
 import { MemorySheet } from './MemorySheet';
-import { Kicker, SignInBand } from './PublicChrome';
+import { Kicker, PublicPage, SignInBand } from './PublicChrome';
 import { PublicFamilyTree } from './PublicFamilyTree';
-import { loadFailure, PublicMissing, PublicPage, PublicPicture } from './PublicShell';
+import { loadFailure, PublicMissing, PublicPicture } from './PublicShell';
 import { PublicSpec } from './PublicSpec';
 import { PublicWhereToDrink } from './PublicWhereToDrink';
 

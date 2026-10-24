@@ -46,7 +46,7 @@ const PEOPLE_ONLY = TABS.filter((t) => t.value === 'people');
 /**
  * A bar's page on a phone, signed in (ppl-bar-top, -menus, -originals,
  * -unclaimed): who it is, hours and location, what matches a search, its
- * numbers between two rules, an unclaimed bar's facts, This week, then Menus,
+ * numbers between two rules, its facts (Opened, Awards), This week, then Menus,
  * Originals, Top drinks and People as tabs. A page that keeps its specs back
  * (unclaimed, or not open) shows names, a lock, and why. Wider screens get
  * the drawn desktop page (PublicBarPage signed in).
@@ -107,7 +107,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
 
       {awardsOpen ? <Awards profileId={profile.id} /> : null}
 
-      {unclaimed ? <BarFactsList profile={profile} /> : null}
+      <BarFactsList profile={profile} />
 
       {unclaimed && !specsLocked ? <ClaimProfile profile={profile} /> : null}
 

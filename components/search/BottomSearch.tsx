@@ -1,17 +1,15 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef, type RefObject } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SearchBarCommands } from 'react-native-screens';
 
-import { useDs, useGutter } from '@/components/ds';
+import { DockFade, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { WEB_TAB_BAR_HEIGHT } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import type { SearchMine } from '@/hooks/useSearchMine';
-import { withAlpha } from '@/lib/color';
 import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 import { SearchField } from './SearchField';
@@ -27,8 +25,8 @@ export interface SearchTabState {
   mine: SearchMine;
   /** The tab is the one showing. */
   focused: boolean;
-  /** A search carried in with ?q=. */
-  carried?: string;
+  /** A search carried in (a ?q= link, or a door such as Discover's pill): a new object each time. */
+  carried?: { query: string };
   /** The type chips: what the results show, and how many of each they found. */
   show: SearchShow;
   setShow: (show: SearchShow) => void;
@@ -57,12 +55,6 @@ function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts }:
   );
 }
 
-/** Under the row and the field: the results fade into the ground, so the glass reads over busy rows. */
-function DockFade() {
-  const ds = useDs();
-  return <LinearGradient colors={[withAlpha(ds.c.ground, 0), withAlpha(ds.c.ground, 0.85), ds.c.ground]} locations={[0, 0.5, 1]} style={styles.fade} />;
-}
-
 /** The place row's height: the 44-point token and chip track, and the gap to the field. */
 const PLACE_ROW = layout.minTapTarget + space.sm;
 
@@ -89,9 +81,11 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
     const t = setTimeout(() => bar.current?.focus(), 150);
     return () => clearTimeout(t);
   }, [focused]);
-  // The native field holds its own text: write a carried-in search into it.
+  // The native field holds its own text: write a carried-in search into it, once the bar has mounted.
   useEffect(() => {
-    if (carried) bar.current?.setText(carried);
+    if (!carried) return;
+    const t = setTimeout(() => bar.current?.setText(carried.query), 150);
+    return () => clearTimeout(t);
   }, [carried]);
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -281,7 +275,6 @@ const styles = StyleSheet.create({
   dock: { position: 'absolute', left: 0, right: 0, bottom: 0, pointerEvents: 'box-none', paddingTop: space.lg, gap: space.sm },
   systemDock: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', pointerEvents: 'box-none' },
   systemRow: { paddingTop: space.lg, pointerEvents: 'box-none' },
-  fade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
   placeRow: { flexGrow: 0 },
   placeChips: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });
