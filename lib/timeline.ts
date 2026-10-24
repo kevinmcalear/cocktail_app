@@ -81,7 +81,7 @@ export interface TimelineRow {
   node: TreeNode;
   /** What it came from, in any family, for "Riff of Manhattan, 1882". */
   from: TreeNode | null;
-  /** Its year differs from the row above, so the year is printed. */
+  /** Its printed year ("c.1880", "1930s") differs from the row above's, so it is printed. */
   newYear: boolean;
   /** A fold in a followed thread: this many drinks off the thread, starting at `node`, drawn as one dashed stretch. */
   folded?: number;
@@ -126,7 +126,7 @@ export function timelineSections(nodes: readonly TreeNode[], filter: TimelineFil
   const byKey = new Map(nodes.map((n) => [n.key, n]));
   const dated = nodes.filter((n) => n.year != null && passes(n, filter)).sort(byYear);
   const sections: TimelineSection[] = [];
-  let lastYear: number | null = null;
+  let lastYear: string | null = null;
   for (const n of dated) {
     const era = eraOf(n.year!);
     let section = sections.at(-1);
@@ -135,9 +135,9 @@ export function timelineSections(nodes: readonly TreeNode[], filter: TimelineFil
       sections.push(section);
       lastYear = null;
     }
-    section.data.push({ node: n, from: n.parentKey ? (byKey.get(n.parentKey) ?? null) : null, newYear: n.year !== lastYear });
+    section.data.push({ node: n, from: n.parentKey ? (byKey.get(n.parentKey) ?? null) : null, newYear: shortYear(n) !== lastYear });
     if (n.kind === 'drink') section.drinks++;
-    lastYear = n.year;
+    lastYear = shortYear(n);
   }
   return sections;
 }
@@ -242,15 +242,16 @@ export function threadBack(line: readonly TreeNode[]): string | null {
   return years > 0 ? `${years} years back to ${to.name}, ${shortYear(to)}` : null;
 }
 
-/** "c. 1880" or "1880" for a row; "c.1880" squeezes into the year column. */
-export function shortYear(n: Pick<TreeNode, 'year' | 'approx'>): string {
-  return n.year == null ? '' : `${n.approx ? 'c.' : ''}${n.year}`;
+/** "c.1880", "1880", or a best guess's decade ("1930s"), to squeeze into the year column. */
+export function shortYear(n: Pick<TreeNode, 'year' | 'approx' | 'guess'>): string {
+  if (n.year == null) return '';
+  return n.guess ? `${Math.floor(n.year / 10) * 10}s` : `${n.approx ? 'c.' : ''}${n.year}`;
 }
 
 /** "Riff of Manhattan, 1882", a style's riffs too ("Riff of Swizzle, 1840", board prep-hist-timeline-phone). */
 export function fromLine(row: Pick<TimelineRow, 'from'>): string | null {
   const f = row.from;
   if (!f) return null;
-  const year = yearLabel(f.year, f.approx);
+  const year = yearLabel(f.year, f.approx, f.guess);
   return `Riff of ${f.name}${year ? `, ${year}` : ''}`;
 }

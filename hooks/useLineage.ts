@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 // The credit columns aren't in app_item_presentation, so these read items
 // directly; the items RLS policy applies the same visibility rules.
 export const PROFILE_COLUMNS = 'id, kind, handle, display_name, avatar_url, locality, is_closed, closed_year';
-export const LINEAGE_COLUMNS = `id, name, riff_of_id, origin_year, origin_year_approx, credit_status, origin,
+export const LINEAGE_COLUMNS = `id, name, riff_of_id, origin_year, origin_year_approx, origin_year_guess, credit_status, origin,
   is_catalog, lineage_parent_id, lineage_style_id, lineage_note,
   creator:profiles!items_creator_profile_id_fkey(${PROFILE_COLUMNS}),
   origin_bar:profiles!items_origin_bar_profile_id_fkey(${PROFILE_COLUMNS}),

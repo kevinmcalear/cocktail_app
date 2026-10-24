@@ -40,7 +40,7 @@ export function DrinkDetail({ node, from, kids, byMaker, threadOn, onThread }: P
   const city = useDrinkSources(ids).data?.[node.id]?.city;
   const score = useItemScores(ids).data?.[node.id];
   const bar = node.bar ? [`${node.bar}${node.barClosed ? ' (closed)' : ''}`, city].filter(Boolean).join(', ') : null;
-  const where = [yearLabel(node.year, node.approx), bar].filter(Boolean).join(' · ');
+  const where = [yearLabel(node.year, node.approx, node.guess), bar].filter(Boolean).join(' · ');
   const lineage = [fromLine({ from }), kids ? `${kids} riff${kids === 1 ? '' : 's'} on it` : null].filter(Boolean).join(' · ');
   return (
     <View style={styles.detail}>

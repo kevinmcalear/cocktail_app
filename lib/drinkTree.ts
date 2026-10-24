@@ -5,6 +5,8 @@
  * comes from hooks/useDrinkTree.ts.
  */
 
+import { yearLabel } from '@/lib/lineage';
+
 export const FAMILIES = [
   { key: 'oldfashioned', name: 'Old Fashioned', blurb: 'Spirit, sugar, bitters. Slings, toddies and juleps.' },
   { key: 'martini', name: 'Martini & Manhattan', blurb: 'Spirit and aromatized wine, stirred.' },
@@ -26,6 +28,8 @@ export interface TreeNode {
   name: string;
   year: number | null;
   approx: boolean;
+  /** The year is our best guess inside a range ('decade', 'early', 'mid', 'late'); drinks only. */
+  guess?: string | null;
   /** A family key, or "trunk" for Punch. */
   family: string;
   parentKey: string | null;
@@ -122,7 +126,7 @@ export function searchTree(nodes: readonly TreeNode[], query: string, limit = 8)
 /** "c. 1880 · Jerry Thomas · Pegu Club (closed) · 13 bar versions". */
 export function rowMeta(n: TreeNode): string {
   return [
-    n.year ? `${n.approx ? 'c. ' : ''}${n.year}` : null,
+    yearLabel(n.year, n.approx, n.guess),
     n.creator,
     n.bar ? `${n.bar}${n.barClosed ? ' (closed)' : ''}` : null,
     n.versions ? `${n.versions} bar version${n.versions === 1 ? '' : 's'}` : null,
