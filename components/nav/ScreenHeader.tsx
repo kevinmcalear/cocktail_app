@@ -32,9 +32,10 @@ export function ScreenHeader({ title, display, actions, center }: { title?: stri
   const gutter = useGutter();
   const wide = useIsWideWeb();
   if (wide) {
-    if (!title && !actions) return <View style={styles.wide} />;
+    // insets.top: an iPad's status bar (0 on the web).
+    if (!title && !actions) return <View style={[styles.wide, { marginTop: insets.top }]} />;
     return (
-      <View style={[styles.row, styles.wideTitled, { paddingHorizontal: gutter }]}>
+      <View style={[styles.row, styles.wideTitled, { paddingHorizontal: gutter, marginTop: insets.top }]}>
         {!title ? <View /> : display ? <Display aria-level={1}>{title}</Display> : <Title aria-level={1}>{title}</Title>}
         <View style={styles.end}>{actions}</View>
       </View>

@@ -1,6 +1,6 @@
 import { usePathname } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Caption, useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
@@ -38,6 +38,8 @@ function Palette() {
   const [picked, setScope] = useState<SearchScope | null>(null);
   const scope = picked ?? mine.defaultScope;
   const close = () => setOpen(false);
+  // The arrow, Tab and Return keys are the web's (searchNav.tsx); a native iPad gets Done and no key hints.
+  const keys = Platform.OS === 'web';
   // The eight ball, the Easter egg phones open with a shake. Here it's a command, always in the list (as the
   // palette board draws it, typed or not), plus its key anywhere (WebSideNav).
   const pick = (
@@ -50,7 +52,7 @@ function Palette() {
           title="Pick for me"
           caption="A drink to make, at random"
           icon="8.circle"
-          trailing={<PickKeys />}
+          trailing={keys ? <PickKeys /> : undefined}
           onPress={() => {
             close();
             useEightBallStore.getState().setOpen(true);
@@ -77,8 +79,8 @@ function Palette() {
       label="Search"
       full
       onClose={close}
-      head={<SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus onDone={close} onSubmit={() => void nav.open()} keys />}
-      footer={<KeyHints back={mine.venueId ? 'Back' : 'Close'} />}
+      head={<SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus onDone={close} onSubmit={() => void nav.open()} keys={keys} />}
+      footer={keys ? <KeyHints back={mine.venueId ? 'Back' : 'Close'} /> : undefined}
       aside={<SearchPreview item={previews.preview(nav.active)} onOpen={() => void nav.open()} />}
     >
       <SearchNavProvider active={nav.active} register={previews.register}>

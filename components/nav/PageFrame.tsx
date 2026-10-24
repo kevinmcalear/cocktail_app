@@ -19,7 +19,8 @@ export interface Crumb {
  * for lists and forms, `wide` (1240) for pages with a preview beside them, or
  * a number where the canvas draws one (Settings is 680). Never centred there.
  * On a phone it's the full width inside the gutter. `top` is the room above
- * the page: the status bar on a phone, 40 or so on the web.
+ * the page: the status bar on a phone, 40 or so on the web (below the status
+ * bar on an iPad).
  */
 export function usePageFrame(width: keyof typeof layout.page | number = 'text'): { wide: boolean; column: ViewStyle; top: number } {
   const wide = useIsWideWeb();
@@ -28,7 +29,7 @@ export function usePageFrame(width: keyof typeof layout.page | number = 'text'):
   return {
     wide,
     column: { width: '100%', maxWidth, alignSelf: wide ? 'flex-start' : 'center' },
-    top: wide ? space.xxl + space.sm : insets.top + space.sm,
+    top: insets.top + (wide ? space.xxl : 0) + space.sm,
   };
 }
 
