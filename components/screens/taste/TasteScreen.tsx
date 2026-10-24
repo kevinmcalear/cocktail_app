@@ -8,6 +8,7 @@ import { WebHead } from '@/components/WebHead';
 import { layout, palateHues, radius, space } from '@/constants/tokens';
 import { useAuthIdentity } from '@/ctx/AuthContext';
 import { useMyTaste, useSaveTasteAnswers } from '@/hooks/useFlavor';
+import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { blendTaste, COLD_START_DRINKS, rankingsDrift, tasteHeadline, tasteSource, type Taste } from '@/lib/flavor';
 import { palateByMonth, shapedBy } from '@/lib/palate';
 
@@ -34,6 +35,7 @@ export function TasteScreen() {
 function TastePage() {
   const ds = useDs();
   const router = useRouter();
+  const openSearch = useOpenSearch();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const { width } = useWindowDimensions();
@@ -76,7 +78,7 @@ function TastePage() {
         {toGo > 0 ? (
           <View style={styles.section}>
             <Caption tone="muted">{`Rank ${toGo} more drink${toGo === 1 ? '' : 's'} you've had to see match scores on drinks.`}</Caption>
-            <Button label="Find a drink" icon="magnifyingglass" variant="secondary" onPress={() => router.navigate('/search')} style={styles.start} />
+            <Button label="Find a drink" icon="magnifyingglass" variant="secondary" onPress={() => openSearch()} style={styles.start} />
           </View>
         ) : null}
       </View>

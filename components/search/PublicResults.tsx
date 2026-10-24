@@ -51,7 +51,7 @@ interface PublicResultsProps {
   onKind?: (kind: string) => void;
   /** In an area: the button that widens the search. */
   onEverywhere?: () => void;
-  /** Whose search it is: a venue's (classics lead) or someone at home (bars lead, then their own drinks). */
+  /** Whose search it is: a venue's (classics lead) or someone at home (their own drinks lead, then bars). */
   mine?: SearchMine;
   /** The type chips' pick. */
   show?: SearchShow;
@@ -71,7 +71,7 @@ interface PublicResultsProps {
  * Bars, bartenders and the drinks bars pour, here or everywhere; bar and
  * person rows say what is credited there and whether it's claimed
  * (find-yourself). Everywhere adds the classics (each with its bars' variations gathered under
- * it), your own drinks at home, and the ingredients. Every drink and bar row
+ * it), your own drinks at home (first), and the ingredients. Every drink and bar row
  * ends with its score (b02) and lights the searched word. Bars' drinks need
  * an account; the rest is public.
  */
@@ -234,13 +234,17 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     const word = capitalize(q.toLowerCase());
     groups = [drinkGroup(`Named ${word}`, strong.filter((d) => d.match?.kind !== 'riff')), drinkGroup(`Riffs on a ${word}`, strong.filter((d) => d.match?.kind === 'riff')), alsoGroup, barGroup, peopleGroup];
   } else if (atHome) {
-    groups = [barGroup, peopleGroup, drinkGroup(`Drinks ${area ? where : 'at bars'}`, strong), classicGroup, yoursGroup, alsoGroup, ingredientGroup];
+    // Your own drinks lead, then bars, people, drinks at bars and classics (q04, decided 24 Oct 2026; nav-search-home).
+    groups = [yoursGroup, barGroup, peopleGroup, drinkGroup(`Drinks ${area ? where : 'at bars'}`, strong), classicGroup, alsoGroup, ingredientGroup];
   } else {
     groups = [classicGroup, drinkGroup(`Drinks ${area ? where : 'at bars'}`, strong), alsoGroup, barGroup, peopleGroup, ingredientGroup];
   }
 
-  // A bar named what's typed ("Black Pearl") leads, ahead of drinks that only mention it.
-  if (bars[0] && foldName(bars[0].name).startsWith(foldName(q))) groups = [barGroup, ...groups.filter((g) => g !== barGroup)];
+  // A bar named what's typed ("Black Pearl") leads, ahead of drinks that only mention it; at home, right after your own drinks.
+  if (bars[0] && foldName(bars[0].name).startsWith(foldName(q))) {
+    const rest = groups.filter((g) => g !== barGroup && g !== yoursGroup);
+    groups = groups.includes(yoursGroup) ? [yoursGroup, barGroup, ...rest] : [barGroup, ...rest];
+  }
 
   // The type chips narrow the groups to one kind.
   const kindOf: Record<string, 'bars' | 'people' | 'ingredients'> = { bars: 'bars', people: 'people', ingredients: 'ingredients' };

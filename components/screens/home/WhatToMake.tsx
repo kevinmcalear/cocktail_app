@@ -1,10 +1,10 @@
-import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Button, Caption, Field, FieldButton, Headline, Segmented, useBreakpoint } from '@/components/ds';
 import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
 import { layout, space } from '@/constants/tokens';
+import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { MAKE_PAGE, searchCaption, type Found, type MakeSearchRowData, type MakeTab } from '@/lib/myBarRows';
 import { footLine, tabIntro } from '@/lib/myBarText';
 
@@ -142,7 +142,8 @@ export function MakeSearchRow({ row, onMore }: { row: MakeSearchRowData; onMore:
  * list up and slide the search box under the keyboard.
  */
 export function MakeFoot({ more, tab, query, onMore }: { more: number; tab: MakeTab; query?: string; onMore: () => void }) {
-  const router = useRouter();
+  // The palette on wide screens, the search tab on phones, set to Everywhere (q01).
+  const openSearch = useOpenSearch();
   const { height } = useWindowDimensions();
   const q = query?.trim();
   return (
@@ -154,7 +155,7 @@ export function MakeFoot({ more, tab, query, onMore }: { more: number; tab: Make
           label={q ? `Search every drink for “${q}”` : 'Search every drink'}
           icon="magnifyingglass"
           variant={q ? 'secondary' : 'ghost'}
-          onPress={() => router.push((q ? `/search?q=${encodeURIComponent(q)}` : '/search') as never)}
+          onPress={() => openSearch({ query: q ?? '', scope: 'everywhere' })}
         />
         {q ? <Caption tone="muted">{footLine('ready')}</Caption> : null}
       </View>

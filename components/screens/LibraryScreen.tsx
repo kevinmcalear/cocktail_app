@@ -22,6 +22,7 @@ import { SearchField } from '@/components/search/SearchField';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useVenueMenus } from '@/hooks/useMenus';
@@ -55,6 +56,8 @@ const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
 export function LibraryScreen() {
   const ds = useDs();
   const router = useRouter();
+  // The palette on wide screens, the search tab on phones (q01).
+  const openSearch = useOpenSearch();
   const prefetch = usePrefetchCocktail();
   const gutter = useGutter();
   const breakpoint = useBreakpoint();
@@ -228,7 +231,7 @@ export function LibraryScreen() {
   // Past this list: the one search, everywhere, with what was typed.
   const foot = q ? (
     <View style={styles.foot}>
-      <Button label={`Search everywhere for “${found}”`} icon="magnifyingglass" variant="secondary" onPress={() => router.push(`/search?scope=everywhere&q=${encodeURIComponent(found)}` as never)} />
+      <Button label={`Search everywhere for “${found}”`} icon="magnifyingglass" variant="secondary" onPress={() => openSearch({ query: found, scope: 'everywhere' })} />
     </View>
   ) : null;
 

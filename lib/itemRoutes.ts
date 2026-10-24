@@ -17,6 +17,11 @@ export function itemHref(category: ItemCategory | undefined, id: string): string
   }
 }
 
+/** The add-drink wizard, started on a name, for a venue or (no bar) your own drinks. */
+export function newDrinkHref(name: string, barId: string | null): string {
+  return `/add-cocktail?name=${encodeURIComponent(name)}${barId ? `&barId=${encodeURIComponent(barId)}` : ''}`;
+}
+
 /** The drink in a drink page link (/cocktail/<id>), or null for any other page. */
 export function drinkIdFromHref(href: string | null | undefined): string | null {
   return href?.startsWith('/cocktail/') ? href.slice('/cocktail/'.length) || null : null;
