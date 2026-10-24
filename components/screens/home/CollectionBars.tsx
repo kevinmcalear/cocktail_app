@@ -138,7 +138,7 @@ export function CollectionBars() {
 function MapLink({ label, onPress }: { label: string; onPress: () => void }) {
   const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel="See your Want to go bars on the map" onPress={onPress} style={styles.mapLink} hitSlop={4}>
+    <PressableScale role="link" accessibilityLabel={`${label}: your Want to go bars`} onPress={onPress} style={styles.mapLink} hitSlop={4}>
       <IconSymbol name="mappin.and.ellipse" size={16} color={ds.accentText} />
       <DsText variant="body" color={ds.accentText}>
         {label}

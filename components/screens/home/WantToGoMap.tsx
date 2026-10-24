@@ -66,7 +66,7 @@ export function WantToGoMap() {
   const status = error ? 'Couldn’t load your bars. Try again in a moment.' : !isLoading && !rows.length ? 'Tap the heart on a bar’s page to keep it here until you go.' : null;
   const map =
     mapAvailable && !isLoading ? (
-      <WantMap pins={pins} camera={wantCamera(rows)} me={me} selectedId={pickedId} onSelect={onSelect} compact={!split} />
+      <WantMap pins={pins} rows={rows} me={me} selectedId={pickedId} onSelect={onSelect} compact={!split} />
     ) : null;
   const list = rows.map((b) => (
     <View role="listitem" key={b.id}>
@@ -147,9 +147,9 @@ export function WantToGoMap() {
 }
 
 /** The map, mounted once the bars are in, so it opens on them; after that it stays where the person moves it. */
-function WantMap({ pins, camera, me, selectedId, onSelect, compact }: { pins: ReturnType<typeof wantPins>; camera: ReturnType<typeof wantCamera>; me: { latitude: number; longitude: number } | null; selectedId: string | null; onSelect: (id: string | null) => void; compact: boolean }) {
+function WantMap({ pins, rows, me, selectedId, onSelect, compact }: { pins: ReturnType<typeof wantPins>; rows: WantBar[]; me: { latitude: number; longitude: number } | null; selectedId: string | null; onSelect: (id: string | null) => void; compact: boolean }) {
   const ds = useDs();
-  const [start] = useState(camera);
+  const [start] = useState(() => wantCamera(rows));
   return <DiscoverMap pins={pins} me={me} selectedId={selectedId} onSelect={onSelect} onViewportChange={noMove} camera={start} scheme={ds.scheme} accent={ds.accentFill} compact={compact} />;
 }
 

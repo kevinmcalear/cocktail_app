@@ -1,5 +1,5 @@
 import { getLocales } from 'expo-localization';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 
 import { useCollection } from '@/hooks/useCollection';
 import { useVenueScores } from '@/hooks/useDiscover';
@@ -31,9 +31,12 @@ function hoursText(s: { open: boolean; detail: string | null }): string {
  */
 export function useWantToGo(): { want: WantBar[]; isLoading: boolean; error: Error | null } {
   const { data: loved = [], isLoading, error } = useLovedBars();
-  const had = useMyHadDrinks().data ?? [];
+  const hadQuery = useMyHadDrinks();
+  const had = hadQuery.data ?? [];
   const saved = useCollection().data?.drinks ?? [];
   const place = useLastPlace((s) => s.place);
+  // The last place comes back from storage after the first render on native; distances wait for it.
+  const placeReady = useSyncExternalStore(useLastPlace.persist.onFinishHydration, useLastPlace.persist.hasHydrated, useLastPlace.persist.hasHydrated);
   const [now] = useState(() => Date.now());
   const beenIds = new Set(beenBars(had, 'score').map((b) => b.venue.id));
   const bars = loved.filter((b) => !beenIds.has(b.id));
@@ -59,5 +62,6 @@ export function useWantToGo(): { want: WantBar[]; isLoading: boolean; error: Err
       everyone: scores.get(b.id) ?? null,
     };
   });
-  return { want, isLoading, error };
+  // Loading until the bars you've been to and where you were are known: before that, Want to go holds the wrong bars and no distances.
+  return { want, isLoading: isLoading || hadQuery.isLoading || !placeReady, error };
 }
