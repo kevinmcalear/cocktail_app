@@ -34,7 +34,7 @@ function setReadableStyle(m: MapLibreMap, scheme: DiscoverMapProps['scheme']) {
  * The web map: MapLibre GL, loaded only in the browser (never in the static
  * render, and never in native bundles), with OpenFreeMap tiles and HTML pins.
  */
-export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, me, style }: DiscoverMapProps) {
+export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, inset, scheme, accent, compact, me, style }: DiscoverMapProps) {
   const host = useRef<ComponentRef<typeof View>>(null);
   const map = useRef<MapLibreMap | null>(null);
   const lib = useRef<MapLibre | null>(null);
@@ -47,9 +47,9 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   const areas = useRef({ key: '', markers: [] as Marker[] });
   // Set while the map is moving because we moved it.
   const ours = useRef(false);
-  const latest = useRef({ onSelect, onViewportChange, pins, selectedId, accent, camera, scheme, me });
+  const latest = useRef({ onSelect, onViewportChange, pins, selectedId, accent, camera, inset, scheme, me });
   useEffect(() => {
-    latest.current = { onSelect, onViewportChange, pins, selectedId, accent, camera, scheme, me };
+    latest.current = { onSelect, onViewportChange, pins, selectedId, accent, camera, inset, scheme, me };
   });
 
   // "You are here": a dot with a halo, under the pins.
@@ -162,6 +162,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
         dragRotate: false,
         pitchWithRotate: false,
       });
+      if (latest.current.inset) m.setPadding(paddingOf(latest.current.inset));
       // The scheme now, not at mount: it starts light until hydration, and
       // a flip to dark while maplibre loads finds no map to restyle.
       setReadableStyle(m, latest.current.scheme);
@@ -213,14 +214,17 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     if (map.current) styleControls(map.current.getContainer(), scheme);
   }, [scheme]);
 
+  // The sheet and controls as they are when the camera moves; a new size alone doesn't move the map.
   useEffect(() => {
     const m = map.current;
     if (!camera || !m) return;
     const c = m.getCenter();
-    const same = Math.abs(c.lat - camera.latitude) < 1e-6 && Math.abs(c.lng - camera.longitude) < 1e-6 && Math.abs(m.getZoom() - camera.zoom) < 0.01;
+    const padding = paddingOf(latest.current.inset);
+    const p = m.getPadding();
+    const same = Math.abs(c.lat - camera.latitude) < 1e-6 && Math.abs(c.lng - camera.longitude) < 1e-6 && Math.abs(m.getZoom() - camera.zoom) < 0.01 && p.top === padding.top && p.bottom === padding.bottom;
     if (same) return; // no move, so no moveend to swallow
     ours.current = true;
-    m.easeTo({ center: [camera.longitude, camera.latitude], zoom: camera.zoom, duration: 500 });
+    m.easeTo({ center: [camera.longitude, camera.latitude], zoom: camera.zoom, padding, duration: 500 });
   }, [camera]);
 
   useEffect(syncMe, [me?.latitude, me?.longitude]);
@@ -235,6 +239,11 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   useEffect(syncPins, [pins, selectedId, accent.fill, accent.text]);
 
   return <View ref={host} style={[styles.fill, style]} />;
+}
+
+/** The camera's padding: the map covered at the top and bottom (none on wide screens). */
+function paddingOf(inset: DiscoverMapProps['inset']) {
+  return { top: inset?.top ?? 0, bottom: inset?.bottom ?? 0, left: 0, right: 0 };
 }
 
 const styles = StyleSheet.create({

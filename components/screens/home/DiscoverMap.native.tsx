@@ -18,7 +18,7 @@ export const mapAvailable = true;
  * same pins as the web map (DiscoverMap.web.tsx), so it looks the same on a
  * phone as in the browser.
  */
-export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, scheme, accent, compact, me, style }: DiscoverMapProps) {
+export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, camera, inset, scheme, accent, compact, me, style }: DiscoverMapProps) {
   const mapRef = useRef<MapRef>(null);
   const cameraRef = useRef<CameraRef>(null);
   const dotsRef = useRef<GeoJSONSourceRef>(null);
@@ -45,11 +45,14 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
   const showMe = access === 'granted' || !!me;
   const mapStyle = useMapStyle(scheme);
 
+  // The sheet and controls as they are when the camera next moves; a new size alone doesn't move the map.
+  const padding = useRef(inset);
+  useEffect(() => void (padding.current = inset));
   // Move only when asked to (a new camera), never on every re-render, so the
   // person's own panning isn't undone.
   useEffect(() => {
     if (!camera || camera === start) return;
-    cameraRef.current?.easeTo({ center: [camera.longitude, camera.latitude], zoom: camera.zoom, duration: 500 });
+    cameraRef.current?.easeTo({ center: [camera.longitude, camera.latitude], zoom: camera.zoom, padding: padding.current, duration: 500 });
   }, [camera, start]);
 
   // Android hit-tests overlapping markers in the order they were added and
@@ -122,7 +125,7 @@ export function DiscoverMap({ pins, selectedId, onSelect, onViewportChange, came
     >
       <Camera
         ref={cameraRef}
-        initialViewState={start ? { center: [start.longitude, start.latitude], zoom: start.zoom } : { center: [0, 20], zoom: 1.5 }}
+        initialViewState={start ? { center: [start.longitude, start.latitude], zoom: start.zoom, padding: inset } : { center: [0, 20], zoom: 1.5 }}
       />
       <GeoJSONSource id="discover-dots" ref={dotsRef} data={dots} {...AREA_CLUSTER} onPress={onDot}>
         <Layer id="discover-dots" type="circle" filter={filter} paint={DOT_PAINT} />

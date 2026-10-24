@@ -147,8 +147,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   const layers = <MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} />;
   const searchHere = moves.offer ? <SearchHere onPress={() => moves.offer && moves.search(moves.offer)} /> : null;
 
-  const ranked = rows.data?.ranked ?? [];
-  const early = rows.data?.early ?? [];
+  const [ranked, early] = [rows.data?.ranked ?? [], rows.data?.early ?? []];
   const drinkLayer = byDrinks || byDrink;
   const lead = drinkLayer && (searching || filter.kinds.length > 0);
   // A tapped bar narrows the drinks to its own.
@@ -192,6 +191,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
       }}
       onViewportChange={moves.onMove}
       camera={moves.camera}
+      inset={mode === 'sheet' ? chrome.inset(topInset + space.lg, peek) : undefined}
       scheme={ds.scheme}
       accent={ds.accentFill}
       compact={mode === 'sheet'}
@@ -220,7 +220,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
     <View style={styles.fill}>
       {map}
       <View pointerEvents="box-none" style={[styles.overlay, { top: topInset + space.lg }]}>
-        {top}
+        <View {...chrome.controls}>{top}</View>
         {searchHere}
       </View>
       {/* The sheet lives in a box that ends above the tab bar, so nothing of it shows behind the bar. */}
