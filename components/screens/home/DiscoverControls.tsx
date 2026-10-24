@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { BackHandler, ScrollView, StyleSheet, View } from 'react-native';
+import { BackHandler, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Body, Chip, DsText, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -80,7 +80,7 @@ export function BackPill({ name, onBack, onOpen }: { name: string; onBack: () =>
 }
 
 /** How many filters are on, in the accent, on the Filters button. */
-function Count({ n, style }: { n: number; style?: object }) {
+function Count({ n, style }: { n: number; style?: StyleProp<ViewStyle> }) {
   const ds = useDs();
   return (
     <View aria-hidden style={[styles.count, { backgroundColor: ds.accentFill.fill }, style]}>
