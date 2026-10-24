@@ -42,6 +42,8 @@ export function GlassSurface({
       </GlassView>
     );
   }
+  // A tinted (selected) control is solid, so it needs no blur; expo-blur's web BlurView would also paint over the tint.
+  if (tint && Platform.OS !== 'android') return <View style={[styles.clip, { backgroundColor: tint, borderColor: tint, borderWidth: 1 }, style]}>{children}</View>;
   if (Platform.OS === 'android') {
     return <View style={[styles.clip, { backgroundColor: tint ?? c.raised, borderColor: tint ?? c.glassBorder, borderWidth: 1, elevation: 6 }, style]}>{children}</View>;
   }

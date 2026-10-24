@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import type { DiscoverDrink } from './discoverDrinks';
-import { byTaste, onePerBar, pickShelves, SHELF_MAX, topStyle, waysTitle } from './discoverShelves';
+import { byTaste, onePerBar, pickShelves, SHELF_MAX, stylesByBars, topStyle, waysTitle } from './discoverShelves';
 import type { Profile } from './flavor';
 
 const drink = (id: string, barId: string, styles: string[] = []): DiscoverDrink => ({
@@ -39,6 +39,12 @@ assert.equal(topStyle([drink('u1', 'a')]), null, 'no styles (a server before 202
 
 const pageTwo = [...Array.from({ length: 30 }, (_, i) => drink(`p${i}`, 'a')), ...sours];
 assert.equal(topStyle(pageTwo), null, 'only the first page counts, so Show more never swaps the shelf');
+
+// --- the map's drink chips: every style poured here, most bars first, ties in the chips' order, zero-proof too ---
+assert.deepEqual(stylesByBars([...martinis, ...sours]), ['sour', 'martini'], 'sours at three bars before Martinis at two');
+assert.deepEqual(stylesByBars(tie), ['martini', 'negroni'], 'a tie goes to the chips order');
+assert.deepEqual(stylesByBars([drink('z1', 'a', ['zero-proof'])]), ['zero-proof'], 'one bar is enough for a chip');
+assert.deepEqual(stylesByBars(pageTwo), [], 'only the first page counts');
 
 assert.equal(waysTitle('martini', 5), 'Martinis, five ways');
 assert.equal(waysTitle('sour', 10), 'Sours, ten ways');
