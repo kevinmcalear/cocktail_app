@@ -5303,6 +5303,7 @@ export type Database = {
             origin_country: string | null
             origin_year: number | null
             origin_year_approx: boolean
+            origin_year_guess: string | null
             override_generic_ingredient_level: number | null
             override_measurement_level: number | null
             override_prep_level: number | null
