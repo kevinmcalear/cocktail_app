@@ -67,6 +67,18 @@ describe('missing classics', () => {
     ]);
   });
 
+  test('mulled wine keeps its 1390 date, and the two no source dates are best guesses', async () => {
+    const { rows } = await db.query(
+      `SELECT name, origin_year AS year, origin_year_guess AS guess FROM public.items
+       WHERE is_catalog AND name IN ('Mulled Wine', 'Bicicletta', 'Cantarito') ORDER BY name`
+    );
+    assert.deepEqual(rows, [
+      { name: 'Bicicletta', year: 1935, guess: 'mid' },
+      { name: 'Cantarito', year: 1975, guess: 'decade' },
+      { name: 'Mulled Wine', year: 1390, guess: null },
+    ]);
+  });
+
   test('Eggnog takes the nogs under it', async () => {
     const { rows } = await db.query(
       `SELECT i.name FROM public.items i JOIN public.items p ON p.id = i.lineage_parent_id
