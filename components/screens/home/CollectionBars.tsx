@@ -1,130 +1,165 @@
-import { useRouter, type Href } from 'expo-router';
+import { getLocales } from 'expo-localization';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, DsText, Headline, PressableScale, useDs } from '@/components/ds';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { fontFamilies, radius, space } from '@/constants/tokens';
-import { useLoveBar, useLovedBars, type LovedBar } from '@/hooks/useKept';
+import { Body, Chip, useBreakpoint } from '@/components/ds';
+import { space } from '@/constants/tokens';
+import { useCollection } from '@/hooks/useCollection';
+import { useVenueScores } from '@/hooks/useDiscover';
+import { useLovedBars, type LovedBar } from '@/hooks/useKept';
 import { useMyHadDrinks } from '@/hooks/useRankings';
+import { hoursStatus } from '@/lib/barHours';
 import { averageScore, barNews } from '@/lib/collectionMenus';
-import type { HadDrink } from '@/lib/hadDrinks';
+import { beenBars, nearestFirst, type BarStage, type BeenSort } from '@/lib/collectionStages';
+import { distanceKm } from '@/lib/discoverDrinks';
+import { formatDistance, usesMiles } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
+import { useLastPlace } from '@/store/useLastPlace';
 
-import { BarMark } from './BarMark';
+import { BeenRow, WantRow, type WantBar } from './CollectionBarRows';
+import { SortChoice, StageHead, StageStrip, TableHead, stageStyles } from './CollectionStages';
 import { GoogleImportEntry, GoogleImportSheet } from './GoogleImport';
 
-const barHref = (bar: LovedBar) => `/p/${bar.handle || bar.id}` as Href;
+const BEEN_SORTS = [
+  { value: 'score', label: 'Your score' },
+  { value: 'recent', label: 'Recent' },
+] as const;
+type WantSort = 'near' | 'best' | 'open';
+const WANT_SORTS = [
+  { value: 'near', label: 'Nearest' },
+  { value: 'best', label: 'Best scored' },
+  { value: 'open', label: 'Open now' },
+] as const;
 
-/** A bar you've been to: its mark, your average there, a heart to unlove it, and its latest news. */
-function LovedRow({ bar, had }: { bar: LovedBar; had: HadDrink[] }) {
-  const ds = useDs();
-  const router = useRouter();
-  const love = useLoveBar();
-  const avg = averageScore(had.map((h) => h.score));
-  const news = barNews(bar.currentMenu, bar.latestRelease ? { name: bar.latestRelease.name, date: bar.latestRelease.date } : null);
-  const count = `${had.length} ${had.length === 1 ? 'drink' : 'drinks'}`;
-  const newsHref = news?.text.startsWith('New release') && bar.latestRelease ? (`/r/${bar.latestRelease.id}` as Href) : bar.currentMenu ? (`/p/${bar.id}/menus/${bar.currentMenu.id}` as Href) : barHref(bar);
-  return (
-    <View style={[styles.loved, { borderBottomColor: ds.c.line }]}>
-      <View style={styles.row}>
-        <BarMark name={bar.name} logoUrl={bar.avatarUrl} profileId={bar.id} size={52} />
-        <PressableScale role="link" accessibilityLabel={[bar.name, bar.place, avg !== null ? `you average ${formatScore(avg)} over ${count}` : null].filter(Boolean).join('. ')} onPress={() => router.push(barHref(bar))} style={styles.flex}>
-          <Headline numberOfLines={1}>{bar.name}</Headline>
-          <Caption tone="muted">
-            {[bar.place, avg !== null ? 'you average ' : null].filter(Boolean).join(' · ')}
-            {avg !== null ? (
-              <Text style={{ fontFamily: fontFamilies.monoMedium, color: ds.c.ink }}>{formatScore(avg)}</Text>
-            ) : null}
-            {avg !== null ? ` over ${count}` : null}
-          </Caption>
-        </PressableScale>
-        <PressableScale
-          role="button"
-          aria-pressed
-          accessibilityLabel={`Unlove ${bar.name}`}
-          onPress={() => love.mutate({ profileId: bar.id, love: false })}
-          disabled={love.isPending}
-          style={styles.heart}
-        >
-          <IconSymbol name="heart.fill" size={22} color={ds.accentText} />
-        </PressableScale>
-      </View>
-      {news ? (
-        <PressableScale role="link" accessibilityLabel={`${news.text}, ${news.when}`} onPress={() => router.push(newsHref)} style={[styles.news, { backgroundColor: ds.c.surface }]}>
-          <View style={[styles.dot, { backgroundColor: ds.accentText }]} />
-          <DsText variant="body" style={styles.flex} numberOfLines={2}>
-            {news.text}
-          </DsText>
-          <Caption tone="muted">{news.when}</Caption>
-        </PressableScale>
-      ) : null}
-    </View>
-  );
+/** Why a bar is on your list: the drinks you saved from it, else what it's pouring now. */
+function whyLine(bar: LovedBar, saved: number): string | null {
+  if (saved) return `You saved ${saved === 1 ? 'a drink' : `${saved} drinks`} from here`;
+  return bar.currentMenu ? `${bar.currentMenu.name} on now` : null;
 }
 
-/** A bar you want to go to: its mark, where it is and what it's pouring now. */
-function WishRow({ bar }: { bar: LovedBar }) {
-  const ds = useDs();
-  const router = useRouter();
-  const detail = [bar.place, bar.currentMenu ? `${bar.currentMenu.name} on now` : null].filter(Boolean).join(' · ');
-  return (
-    <PressableScale role="link" accessibilityLabel={`${bar.name}${detail ? `. ${detail}` : ''}`} onPress={() => router.push(barHref(bar))} style={[styles.row, styles.wish, { borderBottomColor: ds.c.line }]}>
-      <BarMark name={bar.name} logoUrl={bar.avatarUrl} profileId={bar.id} size={44} />
-      <View style={styles.flex}>
-        <Headline numberOfLines={1}>{bar.name}</Headline>
-        {detail ? <Caption tone="muted">{detail}</Caption> : null}
-      </View>
-    </PressableScale>
-  );
+/** "Open until 1am", "Opens 5pm Thu", "Closed". */
+function hoursText(s: { open: boolean; detail: string | null }): string {
+  if (s.open) return s.detail ? `Open ${s.detail}` : 'Open now';
+  return s.detail ? s.detail.charAt(0).toUpperCase() + s.detail.slice(1) : 'Closed';
 }
 
 /**
- * Collection's Bars: the bars you love (the heart on a bar's page). The ones
- * you've had drinks at, with your average there and their latest news, and a
- * heart to let go; then the ones you want to go to. From Google Maps brings
- * the bars someone saved there.
+ * Collection's Bars (board home-collection-bars): Want to go → Been. Want to
+ * go is the bars you love and haven't had a drink at yet, nearest first
+ * (from where near me last found you), with tonight's hours and everyone's
+ * score. Been is every bar you've scored a drink at: your score for it (the
+ * average of yours there) beside everyone's; the heart is a filter. From
+ * Google Maps brings the bars someone saved there.
  */
 export function CollectionBars() {
-  const { data: bars = [], isLoading, error } = useLovedBars();
+  const desk = useBreakpoint() === 'desktop';
+  const { data: loved = [], isLoading, error } = useLovedBars();
   const had = useMyHadDrinks().data ?? [];
+  const saved = useCollection().data?.drinks ?? [];
+  const place = useLastPlace((s) => s.place);
+  const [stage, setStage] = useState<BarStage>('want');
+  const [beenSort, setBeenSort] = useState<BeenSort>('score');
+  const [lovedOnly, setLovedOnly] = useState(false);
+  const [wantSort, setWantSort] = useState<WantSort>('near');
   const [importing, setImporting] = useState(false);
+  const [now] = useState(() => Date.now());
+  const allBeen = beenBars(had, beenSort);
+  const beenIds = new Set(allBeen.map((b) => b.venue.id));
+  const lovedById = new Map(loved.map((b) => [b.id, b]));
+  const wantBars = loved.filter((b) => !beenIds.has(b.id));
+  const scores = useVenueScores([...allBeen.map((b) => b.venue.id), ...wantBars.map((b) => b.id)]);
   if (error) return <Body tone="muted">Couldn’t load your bars. Try again in a moment.</Body>;
   if (isLoading) return null;
-  const hadAt = (id: string) => had.filter((h) => h.venue?.id === id);
-  const been = bars.filter((b) => hadAt(b.id).length > 0);
-  const want = bars.filter((b) => hadAt(b.id).length === 0);
-  // One tree whether or not there are bars yet: loving the first ones mustn't remount the open import.
+
+  const miles = usesMiles(getLocales()[0]);
+  const want: WantBar[] = wantBars.map((b) => {
+    const km = place && b.latitude != null && b.longitude != null ? distanceKm(place, { latitude: b.latitude, longitude: b.longitude }) : null;
+    const status = hoursStatus(b.hours, new Date(now), b.timezone);
+    return {
+      id: b.id,
+      handle: b.handle,
+      name: b.name,
+      avatarUrl: b.avatarUrl,
+      place: b.place,
+      km,
+      away: km !== null ? formatDistance(km, miles) : null,
+      hours: status ? { open: status.open, text: hoursText(status) } : null,
+      why: whyLine(b, saved.filter((d) => d.barName === b.name).length),
+      everyone: scores.get(b.id) ?? null,
+    };
+  });
+  const wantShown =
+    wantSort === 'best' ? [...want].sort((a, b) => (b.everyone ?? -1) - (a.everyone ?? -1)) : nearestFirst(wantSort === 'open' ? want.filter((b) => b.hours?.open) : want);
+  const been = lovedOnly ? allBeen.filter((b) => lovedById.has(b.venue.id)) : allBeen;
+  const avg = averageScore(allBeen.map((b) => b.yours));
+  const openNow = want.filter((b) => b.hours?.open).length;
+
   return (
     <View style={styles.wrap}>
-      {!bars.length ? <Body tone="muted">Tap the heart on a bar’s page to keep it here, with what it’s pouring now.</Body> : null}
-      {been.length ? (
-        <View style={styles.section}>
-          <Headline role="heading">Bars you love</Headline>
-          <Caption tone="muted">Hearted bars. You hear when they put out a new menu or a release.</Caption>
-          <View role="list">
-            {been.map((b) => (
-              <View role="listitem" key={b.id}>
-                <LovedRow bar={b} had={hadAt(b.id)} />
+      <StageStrip
+        label="Your bars"
+        value={stage}
+        onChange={setStage}
+        stages={[
+          { key: 'want', n: want.length, label: 'Want to go', sub: openNow ? `${openNow} open now` : null },
+          { key: 'been', n: allBeen.length, label: 'Been', sub: avg !== null ? `you avg ${formatScore(avg)}` : null },
+        ]}
+      />
+      {stage === 'want' ? (
+        <View style={stageStyles.section}>
+          {want.length ? (
+            <>
+              <StageHead>
+                <SortChoice options={WANT_SORTS} value={wantSort} onChange={setWantSort} label="Sort" />
+              </StageHead>
+              {desk ? <TableHead cols={[{ label: 'Bar', width: null }, { label: 'Away', width: 90 }, { label: 'Tonight', width: 150 }, { label: 'Why it’s here', width: 230 }, { label: 'Everyone', width: 80, end: true }]} /> : null}
+              <View role="list">
+                {wantShown.map((b) => (
+                  <View role="listitem" key={b.id}>
+                    <WantRow bar={b} />
+                  </View>
+                ))}
               </View>
-            ))}
+              {!wantShown.length ? <Body tone="muted">None of them are open right now.</Body> : null}
+            </>
+          ) : (
+            <Body tone="muted">Tap the heart on a bar’s page to keep it here until you go.</Body>
+          )}
+          <View style={styles.google}>
+            <GoogleImportEntry onPress={() => setImporting(true)} />
           </View>
         </View>
       ) : null}
-      {want.length ? (
-        <View style={styles.section}>
-          <Headline role="heading">Want to go</Headline>
-          <Caption tone="muted">Not been yet.</Caption>
-          <View role="list">
-            {want.map((b) => (
-              <View role="listitem" key={b.id}>
-                <WishRow bar={b} />
+      {stage === 'been' ? (
+        <View style={stageStyles.section}>
+          {allBeen.length ? (
+            <>
+              <StageHead>
+                <View role="radiogroup" aria-label="Show" style={styles.chips}>
+                  <Chip label="All" selected={!lovedOnly} quiet onPress={() => setLovedOnly(false)} />
+                  <Chip label="Loved" selected={lovedOnly} quiet onPress={() => setLovedOnly(true)} />
+                </View>
+                <SortChoice options={BEEN_SORTS} value={beenSort} onChange={setBeenSort} label="Sort" />
+              </StageHead>
+              {desk ? (
+                <TableHead cols={[{ label: 'Bar', width: null }, { label: 'Drinks you had', width: 150 }, { label: 'Your best there', width: 220 }, { label: 'Last time', width: 100 }, { label: 'Yours', width: 70, end: true }, { label: 'Everyone', width: 80, end: true }]} />
+              ) : null}
+              <View role="list">
+                {been.map((b) => {
+                  const l = lovedById.get(b.venue.id);
+                  return (
+                    <View role="listitem" key={b.venue.id}>
+                      <BeenRow bar={b} loved={!!l} news={l ? barNews(l.currentMenu, l.latestRelease ? { name: l.latestRelease.name, date: l.latestRelease.date } : null) : null} everyone={scores.get(b.venue.id) ?? null} now={now} />
+                    </View>
+                  );
+                })}
               </View>
-            ))}
-          </View>
+            </>
+          ) : (
+            <Body tone="muted">Score a drink at a bar and the bar lands here, with your score for it.</Body>
+          )}
         </View>
       ) : null}
-      <GoogleImportEntry onPress={() => setImporting(true)} />
       <GoogleImportSheet visible={importing} onClose={() => setImporting(false)} />
     </View>
   );
@@ -132,12 +167,6 @@ export function CollectionBars() {
 
 const styles = StyleSheet.create({
   wrap: { gap: space.xl },
-  section: { gap: space.xs },
-  loved: { gap: space.sm + 2, paddingVertical: space.md + 2, borderBottomWidth: StyleSheet.hairlineWidth },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  wish: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth },
-  flex: { flex: 1, minWidth: 0 },
-  heart: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  news: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 44, paddingVertical: space.sm + 2, paddingHorizontal: space.md, borderRadius: radius.control },
-  dot: { width: 8, height: 8, borderRadius: radius.pill },
+  chips: { flexDirection: 'row', gap: space.xs + 2 },
+  google: { paddingTop: space.lg, maxWidth: 420 },
 });

@@ -5,7 +5,8 @@
 
 /** A group of drinks the same one or two bottles would open (useMyBar's oneAway). */
 export interface AwayGroup {
-  bottles: readonly { name: string }[];
+  /** The id is there for the shelf's own groups, so "I have it" can add the bottle. */
+  bottles: readonly { id?: string; name: string }[];
   drinks: readonly { id: string }[];
 }
 
