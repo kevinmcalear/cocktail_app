@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, LockedSection } from '@/components/ds';
+import { Caption, LockedSection, TextLink } from '@/components/ds';
 import { fontFamilies, space } from '@/constants/tokens';
 import { groupMenus, plural } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
@@ -29,6 +29,9 @@ interface MenuGroupListProps {
   opensAt?: string;
   /** Added to a menu's line, like how many of its drinks you can make. */
   note?: (menu: MenuSummary) => string | undefined;
+  /** Past shows this many, then "All N" (Collection, where more follows below). */
+  pastShown?: number;
+  onAllPast?: () => void;
 }
 
 /**
@@ -36,7 +39,7 @@ interface MenuGroupListProps {
  * (on now, else the next) as a card, then Coming up, Drafts and R&D as rows,
  * and Past as lines. The Menus screen and Collection's Menus both draw this.
  */
-export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator', note }: MenuGroupListProps) {
+export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator', note, pastShown, onAllPast }: MenuGroupListProps) {
   const g = groupMenus(menus, now);
   // The first menu gets the card: what's on, else the next one.
   const lead = g.on.length ? g.on : g.upcoming.slice(0, 1);
@@ -73,10 +76,11 @@ export function MenuGroupList({ menus, now, canBuild, opensAt = 'Drink Creator',
       {g.previous.length ? (
         <MenuGroup title="Past">
           <View>
-            {g.previous.map((m) => (
+            {g.previous.slice(0, pastShown).map((m) => (
               <MenuPastLine key={m.id} menu={m} />
             ))}
           </View>
+          {pastShown !== undefined && onAllPast && g.previous.length > pastShown ? <TextLink label={`All ${g.previous.length}`} onPress={onAllPast} /> : null}
         </MenuGroup>
       ) : null}
       {g.rnd.length && canBuild ? (

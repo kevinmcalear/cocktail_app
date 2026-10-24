@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -16,6 +17,8 @@ export interface Shelf {
   oneAway: readonly AwayGroup[];
 }
 
+const PAST_SHOWN = 3;
+
 /** "3 you can make · Need Cynar": what your shelf makes, and the bottle that gets you closer. Nothing when it's neither. */
 function shelfNote(menu: MenuSummary, shelf: Shelf): string | undefined {
   const r = shelfReady(menu.itemIds, shelf.canMakeIds, shelf.oneAway);
@@ -30,6 +33,7 @@ function shelfNote(menu: MenuSummary, shelf: Shelf): string | undefined {
  * for that).
  */
 export function CollectionMenus({ shelf, wide, creating, setCreating }: { shelf: Shelf; wide: boolean; creating: boolean; setCreating: (on: boolean) => void }) {
+  const router = useRouter();
   const userId = useUserId();
   const { data = [], isLoading } = useVenueMenus(null);
   const [now] = useState(() => Date.now());
@@ -44,7 +48,7 @@ export function CollectionMenus({ shelf, wide, creating, setCreating }: { shelf:
         {wide ? null : <Button label="New menu" icon="plus" variant="secondary" onPress={() => setCreating(true)} />}
       </View>
       {!isLoading && !mine.length ? <Body tone="muted">Plan a night in: pick the drinks, then share the menu with your guests.</Body> : null}
-      <MenuGroupList menus={mine} now={now} canBuild note={(m) => shelfNote(m, shelf)} />
+      <MenuGroupList menus={mine} now={now} canBuild note={(m) => shelfNote(m, shelf)} pastShown={PAST_SHOWN} onAllPast={() => router.push('/menus/all')} />
       {creating ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={mine} now={now} /> : null}
     </View>
   );
