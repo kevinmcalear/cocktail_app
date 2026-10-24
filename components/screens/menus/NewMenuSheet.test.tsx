@@ -3,6 +3,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { renderWithTamagui } from '@/jest.setup';
 
 import { NewMenuSheet } from './NewMenuSheet';
+import { StartTiles } from './NewMenuStart';
 
 const mockPush = jest.fn();
 const mockCreate = jest.fn();
@@ -14,7 +15,8 @@ jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: mockMode }) }));
 jest.mock('@/hooks/useMenus', () => ({ useMenu: () => ({ data: undefined }) }));
 jest.mock('@/hooks/useVenueSetup', () => ({ useVenuePage: () => ({ data: null }) }));
 const mockPick = jest.fn();
-jest.mock('@/lib/readMenu', () => ({ ...jest.requireActual('@/lib/readMenu'), pickMenuPhotos: (n: number) => mockPick(n), takeMenuPhoto: () => mockPick(1) }));
+const mockTake = jest.fn();
+jest.mock('@/lib/readMenu', () => ({ ...jest.requireActual('@/lib/readMenu'), pickMenuPhotos: (n: number) => mockPick(n), takeMenuPhoto: () => mockTake() }));
 jest.mock('@/hooks/useMenuMutations', () => ({
   useMenuLayouts: () => ({ data: [] }),
   useCreateMenu: () => ({ mutateAsync: mockCreate, isPending: false }),
@@ -28,6 +30,7 @@ beforeEach(() => {
   mockPush.mockReset();
   mockCreate.mockReset();
   mockPick.mockReset().mockResolvedValue([]);
+  mockTake.mockReset().mockResolvedValue([]);
 });
 
 test('a home menu goes start, name, when: tapping a start goes on, and the card fills in', async () => {
@@ -98,11 +101,20 @@ test('Paste a list makes the draft and opens the builder on the paste sheet', as
 test('a photo skips the name: two steps, and it needs a page to read', async () => {
   mockMode = 'venue';
   await renderWithTamagui(<NewMenuSheet visible onClose={jest.fn()} menus={[]} now={now} />);
-  await fireEvent.press(screen.getByRole('button', { name: /^Snap the menu/ }));
+  expect(screen.queryByRole('button', { name: /^Snap the menu/ })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: /^From your photos/ }));
   expect(mockPick).toHaveBeenCalled();
   expect(screen.getByText('2 of 2')).toBeTruthy();
   expect(screen.getByLabelText('Name')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Read the menu' }));
   expect(screen.getByText('Add a photo of the menu first.')).toBeTruthy();
   expect(mockCreate).not.toHaveBeenCalled();
+});
+
+test('with a camera, Snap the menu and From your photos are both there', async () => {
+  const onPick = jest.fn();
+  await renderWithTamagui(<StartTiles saved={null} camera onPick={onPick} />);
+  await fireEvent.press(screen.getByRole('button', { name: /^Snap the menu/ }));
+  await fireEvent.press(screen.getByRole('button', { name: /^From your photos/ }));
+  expect(onPick.mock.calls).toEqual([['photo'], ['library']]);
 });
