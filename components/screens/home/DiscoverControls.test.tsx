@@ -2,9 +2,10 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 
-import { BackPill, SearchPill } from './DiscoverControls';
+import { BackPill, FiltersButton, SearchPill, ViewPill } from './DiscoverControls';
 import { scrollAwayStep } from './DiscoverHeader';
-import { FiltersSheet, OptionsSheet } from './DiscoverSheet';
+import { placeSections } from './DiscoverPlace';
+import { FiltersSheet } from './DiscoverSheet';
 
 jest.mock('@/hooks/useDiscover', () => ({ useBarCities: () => ({ data: [] }) }));
 
@@ -64,21 +65,36 @@ test('"Not had yet" shows only when signed in, and clears with the rest', async 
   expect(onNotHad).toHaveBeenLastCalledWith(false);
 });
 
-test('options: list or map closes the sheet; where and filters keep it open', async () => {
-  const onClose = jest.fn();
-  const onView = jest.fn();
+test('the place menu: near me, this area, anywhere, then the cities; the one in use is checked', () => {
   const onArea = jest.fn();
-  const onChange = jest.fn();
-  const where = { area: { kind: 'anywhere' } as const, near: { status: 'idle' } as const, access: null, preferNear: false, onArea, onNearMe: jest.fn(), onThisArea: jest.fn() };
-  await renderWithTamagui(<OptionsSheet kinds={[]} onChange={onChange} bars={3} closed={{ count: 0, shown: false, onShow: jest.fn() }} past={{ shown: false, onShow: jest.fn() }} onClose={onClose} where={where} view={{ showing: 'list', onChange: onView }} />);
-  await fireEvent.press(screen.getByRole('checkbox', { name: 'Gin' }));
-  expect(onChange).toHaveBeenLastCalledWith(['gin']);
-  await fireEvent.press(screen.getByRole('radio', { name: 'Anywhere' }));
+  const onThisArea = jest.fn();
+  const cities = [{ city: 'New York', country_code: 'US', label: 'New York' }];
+  const where = { area: { kind: 'city', city: 'New York', country_code: 'US', label: 'New York' } as const, preferNear: false, onArea, onNearMe: jest.fn(), onThisArea };
+  const [places, inCities] = placeSections(where, cities);
+  expect(places.items.map((i) => i.label)).toEqual(['Near me', 'This area', 'Anywhere']);
+  expect(places.items.some((i) => i.checked)).toBe(false);
+  expect(inCities.title).toBe('Cities');
+  expect(inCities.items[0].checked).toBe(true);
+  places.items[1].onPress();
+  expect(onThisArea).toHaveBeenCalled();
+  places.items[2].onPress();
   expect(onArea).toHaveBeenCalledWith({ kind: 'anywhere' });
-  expect(onClose).not.toHaveBeenCalled();
-  await fireEvent.press(screen.getByRole('tab', { name: 'Map' }));
+  // No cities with bars yet: no Cities heading.
+  expect(placeSections({ ...where, area: { kind: 'anywhere' } }, [])).toHaveLength(1);
+});
+
+test('Filters says how many are on; List / Map switches the view', async () => {
+  const onView = jest.fn();
+  await renderWithTamagui(
+    <>
+      <FiltersButton filters={2} onPress={() => {}} />
+      <ViewPill showing="list" onChange={onView} />
+    </>
+  );
+  expect(screen.getByRole('button', { name: 'Filters, 2 on' })).toBeTruthy();
+  expect(screen.getByRole('radio', { name: 'List', checked: true })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('radio', { name: 'Map' }));
   expect(onView).toHaveBeenCalledWith('map');
-  expect(onClose).toHaveBeenCalled();
 });
 
 test('the header goes after a scroll down and comes back after a small scroll up', () => {

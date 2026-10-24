@@ -1,26 +1,8 @@
-import type { ReactNode } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
 
-import { Button, Caption } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { Button } from '@/components/ds';
 import type { NearMe } from '@/hooks/useNearMe';
 import type { LocationAccess } from '@/lib/deviceLocation';
-
-/** A sideways row of chips. `title` is the heading above it ("By spirit"). */
-export function ChipRow({ label, title, children }: { label: string; title?: string; children: ReactNode }) {
-  return (
-    <View style={styles.group}>
-      {title ? (
-        <Caption tone="muted">{title}</Caption>
-      ) : null}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        <View role="radiogroup" accessibilityLabel={label} style={styles.chips}>
-          {children}
-        </View>
-      </ScrollView>
-    </View>
-  );
-}
 
 /** Why near me didn't stick, when it didn't. `usingLast`: no fresh position, so near me is near the last place. */
 export function areaStatus(near: NearMe, usingLast = false): string | null {
@@ -52,6 +34,4 @@ export function AllowLocation({ near, access, onAsk }: { near: NearMe; access: L
 
 const styles = StyleSheet.create({
   allow: { alignItems: 'flex-start' },
-  group: { gap: space.sm },
-  chips: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
 });

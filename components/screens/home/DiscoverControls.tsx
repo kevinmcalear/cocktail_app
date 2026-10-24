@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
-import { BackHandler, StyleSheet, View } from 'react-native';
+import { useEffect, type ReactNode } from 'react';
+import { BackHandler, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Body, Caption, Chip, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
+import { Body, Chip, DsText, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import type { Area } from '@/lib/nearMe';
 
 /** What the area chip says: "Near me", "London", "This area", "Anywhere". */
@@ -18,21 +18,24 @@ export function areaChipLabel(area: Area, preferNear: boolean): string {
  * query once there is one, with a clear button that's always there.
  * `compact`: 44 tall, to sit in a header row beside the logo and you.
  * `label`: what a screen reader hears before there's a query, when the
- * placeholder is shortened to fit.
+ * placeholder is shortened to fit. `place`: where it looks, at its end after
+ * a line (PlaceToken, discover-options-proposal).
  */
-export function SearchPill({ query, placeholder, label = placeholder, onOpen, onClear, compact }: { query: string; placeholder: string; label?: string; onOpen: () => void; onClear: () => void; compact?: boolean }) {
+export function SearchPill({ query, placeholder, label = placeholder, onOpen, onClear, compact, place }: { query: string; placeholder: string; label?: string; onOpen: () => void; onClear: () => void; compact?: boolean; place?: ReactNode }) {
   const ds = useDs();
   const q = query.trim();
+  // A short "Search" before the place keeps its width; the place gives way first. A query gives way to the place.
+  const keep = !!place && !q;
   return (
-    <GlassSurface interactive style={[styles.pill, compact ? styles.compact : null]}>
+    <GlassSurface interactive style={[styles.pill, compact ? styles.compact : null, place ? styles.placed : null]}>
       <PressableScale
         role="button"
         accessibilityLabel={q ? `Search: ${q}. Change the search` : label}
         onPress={onOpen}
-        style={[styles.pillOpen, compact ? styles.compactOpen : null]}
+        style={[styles.pillOpen, compact ? styles.compactOpen : null, keep ? styles.keep : null]}
       >
         <IconSymbol name="magnifyingglass" size={18} color={ds.c.muted} />
-        <Body numberOfLines={1} tone={q ? 'ink' : 'muted'} style={styles.flex}>
+        <Body numberOfLines={1} tone={q ? 'ink' : 'muted'} style={keep ? null : styles.flex}>
           {q || placeholder}
         </Body>
       </PressableScale>
@@ -40,6 +43,12 @@ export function SearchPill({ query, placeholder, label = placeholder, onOpen, on
         <PressableScale accessibilityLabel="Clear the search" onPress={onClear} hitSlop={4} style={styles.clear}>
           <IconSymbol name="xmark.circle.fill" size={20} color={ds.c.muted} />
         </PressableScale>
+      ) : null}
+      {place ? (
+        <>
+          <View style={[styles.line, { backgroundColor: ds.c.lineStrong }]} />
+          {place}
+        </>
       ) : null}
     </GlassSurface>
   );
@@ -70,48 +79,81 @@ export function BackPill({ name, onBack, onOpen }: { name: string; onBack: () =>
   );
 }
 
-function RowButton({ icon, label, a11y, active, onPress }: { icon: IconName; label: string; a11y: string; active: boolean; onPress: () => void }) {
+/** How many filters are on, in the accent, on the Filters button. */
+function Count({ n, style }: { n: number; style?: StyleProp<ViewStyle> }) {
   const ds = useDs();
-  const ink = active ? ds.c.ground : ds.c.ink;
-  const face = (
-    <>
-      <IconSymbol name={icon} size={16} color={ink} />
-      <Caption numberOfLines={1} color={ink} style={styles.shrink}>
-        {label}
-      </Caption>
-    </>
-  );
-  // On, a solid ink pill. Glass tint leaves the dark scheme's blur under the text, so the label goes dark on dark.
   return (
-    <PressableScale accessibilityLabel={a11y} onPress={onPress} style={styles.buttonWrap}>
-      {active ? <View style={[styles.button, { backgroundColor: ds.c.ink }]}>{face}</View> : <GlassSurface interactive style={styles.button}>{face}</GlassSurface>}
-    </PressableScale>
-  );
-}
-
-interface FilterRowProps {
-  area: Area;
-  preferNear: boolean;
-  /** How many styles, spirits and tasting notes are picked. */
-  filters: number;
-  onArea: () => void;
-  onFilters: () => void;
-}
-
-/** Where (the area chip) and what (Filters) in one row, on wide screens. Phones have them in the header's options. */
-export function FilterRow({ area, preferNear, filters, onArea, onFilters }: FilterRowProps) {
-  const where = areaChipLabel(area, preferNear);
-  return (
-    <View style={styles.row}>
-      <RowButton icon="mappin.and.ellipse" label={where} a11y={`Where: ${where}. Change`} active={false} onPress={onArea} />
-      <FiltersChip filters={filters} onPress={onFilters} />
+    <View aria-hidden style={[styles.count, { backgroundColor: ds.accentFill.fill }, style]}>
+      <DsText variant="caption" color={ds.accentFill.text} style={styles.countText}>
+        {n}
+      </DsText>
     </View>
   );
 }
 
-/** Filters, and how many are on, as a chip (disc-desk-browse); also beside the scope while searching (disc-desk-search). */
+const filtersLabel = (filters: number) => (filters ? `Filters, ${filters} on` : 'Filters');
+
+/** Filters, and how many are on, as a glass chip beside the wide pill (discover-options-proposal); also beside the scope while searching (disc-desk-search). */
 export function FiltersChip({ filters, onPress }: { filters: number; onPress: () => void }) {
-  return <RowButton icon="line.3.horizontal.decrease" label={filters ? `Filters · ${filters}` : 'Filters'} a11y={filters ? `Filters, ${filters} on` : 'Filters'} active={filters > 0} onPress={onPress} />;
+  const ds = useDs();
+  return (
+    <PressableScale accessibilityLabel={filtersLabel(filters)} onPress={onPress}>
+      <GlassSurface interactive style={styles.chip}>
+        <IconSymbol name="line.3.horizontal.decrease" size={16} color={ds.c.ink} />
+        <DsText variant="label">Filters</DsText>
+        {filters ? <Count n={filters} /> : null}
+      </GlassSurface>
+    </PressableScale>
+  );
+}
+
+/** The phone header's round Filters button, the count on its corner. */
+export function FiltersButton({ filters, onPress }: { filters: number; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale accessibilityLabel={filtersLabel(filters)} onPress={onPress} hitSlop={4}>
+      <GlassSurface interactive style={styles.round}>
+        <IconSymbol name="line.3.horizontal.decrease" size={18} color={ds.c.ink} />
+      </GlassSurface>
+      {filters ? <Count n={filters} style={styles.corner} /> : null}
+    </PressableScale>
+  );
+}
+
+/** The List / Map pill's height: its buttons in the track's padding. */
+export const VIEW_PILL = layout.minTapTarget + space.xs;
+const VIEW_BUTTON = VIEW_PILL - 2 * space.xs;
+
+const VIEWS = [
+  { value: 'list', label: 'List', icon: 'list.bullet' },
+  { value: 'map', label: 'Map', icon: 'map.fill' },
+] as const;
+
+/**
+ * List / Map, floating over the phone's content (discover-options-proposal),
+ * as Airbnb and Yelp have it. It stays put as the list scrolls. The one
+ * showing is a solid ink pill.
+ */
+export function ViewPill({ showing, onChange }: { showing: 'list' | 'map'; onChange: (view: 'list' | 'map') => void }) {
+  const ds = useDs();
+  return (
+    <GlassSurface interactive style={[styles.track, styles.lifted, { shadowColor: ds.c.ground }]}>
+      <View role="radiogroup" accessibilityLabel="Show as" style={styles.views}>
+        {VIEWS.map((v) => {
+          const on = v.value === showing;
+          const ink = on ? ds.c.ground : ds.c.ink;
+          return (
+            <PressableScale key={v.value} role="radio" aria-checked={on} accessibilityLabel={v.label} onPress={() => onChange(v.value)} style={[styles.view, on ? { backgroundColor: ds.c.ink } : null]}>
+              <IconSymbol name={v.icon} size={16} color={ink} />
+              <DsText variant="label" color={ink}>
+                {v.label}
+              </DsText>
+            </PressableScale>
+          );
+        })}
+      </View>
+    </GlassSurface>
+  );
 }
 
 /** "Search this area", once the person has moved the map. */
@@ -154,6 +196,17 @@ export function MapLayers({ layer, onLayer, drinkName, searching, nearest, onGla
   );
 }
 
+/** The layers over the map in a glass track, scrolling sideways when they don't fit (a phone's four, with Nearest). */
+export function GlassLayers(props: Omit<MapLayersProps, 'onGlass'>) {
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.edge} contentContainerStyle={styles.edgeRow}>
+      <GlassSurface style={styles.track}>
+        <MapLayers {...props} onGlass />
+      </GlassSurface>
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   glassChips: { gap: space.xs + 2 },
@@ -169,11 +222,24 @@ const styles = StyleSheet.create({
   },
   pillOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm + 2, minHeight: layout.minTapTarget + space.xs, paddingLeft: space.lg + 2 },
   compact: { minHeight: layout.minTapTarget },
-  compactOpen: { minHeight: layout.minTapTarget, paddingLeft: space.md + 2, gap: space.sm },
+  compactOpen: { minHeight: layout.minTapTarget, paddingLeft: space.md, gap: space.xs + 2 },
+  keep: { flexShrink: 0, flexBasis: 'auto' },
   // The arrow sits where the magnifier was; the name starts right after it.
   back: { minHeight: layout.minTapTarget, paddingLeft: 0 },
   clear: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  buttonWrap: { maxWidth: 200 },
-  button: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: layout.minTapTarget, paddingHorizontal: space.md + 2, borderRadius: radius.pill, borderCurve: 'continuous' },
+  // The place token ends the pill, so it has no room of its own on the right.
+  placed: { paddingRight: 0 },
+  line: { width: StyleSheet.hairlineWidth, height: space.lg + space.xs },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.xs, paddingHorizontal: space.lg },
+  round: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
+  count: { minWidth: 20, height: 20, paddingHorizontal: space.xs, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  countText: { fontFamily: fontFamilies.bodySemiBold },
+  corner: { position: 'absolute', top: -space.xs, right: -space.xs },
+  track: { padding: space.xs, borderRadius: radius.pill },
+  // Edge to edge, so the track scrolls out under the screen's sides.
+  edge: { marginHorizontal: -space.lg, flexGrow: 0 },
+  edgeRow: { paddingHorizontal: space.lg },
+  lifted: { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 24, elevation: 6 },
+  views: { flexDirection: 'row', gap: 2 },
+  view: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: VIEW_BUTTON, paddingHorizontal: space.lg, borderRadius: radius.pill, borderCurve: 'continuous' },
 });
