@@ -5,7 +5,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DsText, GlassButton, Headline, useBreakpoint, useDs } from '@/components/ds';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
-import { MenuOnRow } from '@/components/screens/menus/MenuRows';
+import { MenuListRow } from '@/components/screens/menus/MenuRows';
 import { MenuPageRowView, menuPageRows, type MenuPageRow } from '@/components/screens/menus/MenuSections';
 import { TonightSetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { TonightWeek } from '@/components/screens/week/TonightWeek';
@@ -80,7 +80,7 @@ export function TonightScreen() {
             {/* The This week strip (and a takeover card when one is on), then the menus that are on. */}
             {active ? <TonightWeek barId={active.id} /> : null}
             {menus.map((m) => (
-              <MenuOnRow key={m.id} menu={m} now={now} />
+              <MenuListRow key={m.id} menu={m} now={now} />
             ))}
           </View>
         }

@@ -1,41 +1,30 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Button, Caption, LockedSection, useDs } from '@/components/ds';
+import { Body, Button, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { InviteTeamCard, useOpenTeam, useTeamCard } from '@/components/nav/TeamCard';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { fontFamilies, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
 import { useVenueFeature } from '@/hooks/useVenueFeatures';
-import { groupMenus, plural } from '@/lib/menus';
+import { groupMenus } from '@/lib/menus';
 import { roleLabel } from '@/lib/roles';
 
-import { MenuCard, MenuListRow, MenuPastLine } from './MenuRows';
+import { MenuGroupList } from './MenuGroupList';
 import { NewMenuSheet } from './NewMenuSheet';
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <View style={styles.group}>
-      <Caption tone="muted" role="heading" style={styles.groupTitle}>
-        {title.toUpperCase()}
-      </Caption>
-      {children}
-    </View>
-  );
-}
-
 /**
- * Every menu at the venue: on now, coming up, drafts and previous. The Menus
+ * Every menu at the venue: on now, coming up, drafts, past and R&D. The Menus
  * tab (`tab`), and opened from Tonight and the venue menu. In home mode (or
- * with no venue) it's the person's own menus, reached from Collection. The
- * two never mix.
+ * with no venue) it's the person's own menus, reached from Collection, in the
+ * same groups (menus-one-look). The two never mix.
  */
 export function MenusScreen({ tab = false }: { tab?: boolean }) {
   const ds = useDs();
@@ -59,11 +48,12 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
   // Anyone can make their own menu; a venue's needs Drink Creator or up.
   const canCreate = canBuild || !barId;
 
-  const venue = groupMenus(barId ? menus.filter((m) => m.barId === barId) : [], now);
-  const mine = barId ? [] : menus.filter((m) => m.barId === null && m.createdBy === userId);
+  // The same groups in both modes: a venue's menus, or with none, your own.
+  const own = menus.filter((m) => (barId ? m.barId === barId : m.barId === null && m.createdBy === userId));
+  const venue = groupMenus(own, now);
   // The venue leads: "Little Rye · 1 on now · 2 coming up".
   const summary = [
-    barId ? (active?.name ?? null) : null,
+    barId ? (active?.name ?? null) : 'For nights in',
     venue.on.length ? `${venue.on.length} on now` : null,
     venue.upcoming.length ? `${venue.upcoming.length} coming up` : null,
   ]
@@ -75,7 +65,7 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
       <ScrollView contentContainerStyle={[column, styles.content, { paddingBottom: (tab ? tabBarInset : insets.bottom) + space.xxxl }]}>
         <PageHeader
           title="Menus"
-          display={!!barId}
+          display
           subtitle={summary}
           onBack={tab ? undefined : () => (router.canGoBack() ? router.back() : router.navigate(barId ? '/' : '/collection'))}
           backLabel={barId ? `Back to ${first}` : 'Back'}
@@ -95,60 +85,7 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
           </>
         ) : null}
 
-        {venue.on.length ? (
-          <Group title="On now">
-            {venue.on.map((m) => (
-              <MenuCard key={m.id} menu={m} now={now} />
-            ))}
-          </Group>
-        ) : null}
-        {venue.upcoming.length ? (
-          <Group title="Coming up">
-            {venue.upcoming.map((m) => (
-              <MenuListRow key={m.id} menu={m} now={now} />
-            ))}
-          </Group>
-        ) : null}
-        {venue.draft.length && barId ? (
-          canBuild ? (
-            <Group title="Drafts">
-              {venue.draft.map((m) => (
-                <MenuListRow key={m.id} menu={m} now={now} />
-              ))}
-            </Group>
-          ) : (
-            <LockedSection
-              title={`Drafts · ${plural(venue.draft.length, 'menu')}`}
-              unlocked={false}
-              opensAt={opensAt ? roleLabel(opensAt) : 'Drink Creator'}
-            >
-              {null}
-            </LockedSection>
-          )
-        ) : null}
-        {venue.previous.length ? (
-          <Group title="Previous">
-            <View>
-              {venue.previous.map((m) => (
-                <MenuPastLine key={m.id} menu={m} />
-              ))}
-            </View>
-          </Group>
-        ) : null}
-        {venue.rnd.length && barId && canBuild ? (
-          <Group title="R&D">
-            {venue.rnd.map((m) => (
-              <MenuListRow key={m.id} menu={m} now={now} />
-            ))}
-          </Group>
-        ) : null}
-        {mine.length ? (
-          <Group title="Your menus">
-            {mine.map((m) => (
-              <MenuListRow key={m.id} menu={m} now={now} />
-            ))}
-          </Group>
-        ) : null}
+        <MenuGroupList menus={own} now={now} canBuild={canBuild || !barId} opensAt={opensAt ? roleLabel(opensAt) : undefined} />
       </ScrollView>
       {creating && canCreate ? <NewMenuSheet visible onClose={() => setCreating(false)} menus={menus} now={now} /> : null}
     </View>
@@ -158,8 +95,6 @@ export function MenusScreen({ tab = false }: { tab?: boolean }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { gap: space.lg },
-  group: { gap: space.sm },
-  groupTitle: { letterSpacing: 1.5, fontFamily: fontFamilies.mono },
 });
 
 /** An empty venue's Menus asks an Admin alone on the team to invite people (venue-library-empty-admin). */

@@ -14,6 +14,9 @@ assert.equal(menuStatus({ startsAt: d('2026-10-03T19:00:00Z'), endsAt: null }, n
 assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: null }, now), 'on');
 assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: d('2026-12-01T00:00:00Z') }, now), 'on');
 assert.equal(menuStatus({ startsAt: d('2026-06-03T00:00:00Z'), endsAt: d('2026-08-31T00:00:00Z') }, now), 'previous');
+// Sharing a home menu stamps a start; its night (or having none) still decides.
+assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: null, menuDate: '2099-10-31', barId: null }, now), 'upcoming');
+assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: null, menuDate: null, barId: null }, now), 'draft');
 // Legacy menus that were never current: an end with no start.
 assert.equal(menuStatus({ startsAt: null, endsAt: d('2026-09-20T00:00:00Z') }, now), 'previous');
 // The instant it starts, it's on; the instant it ends, it's previous.
@@ -177,9 +180,14 @@ assert.equal(sentenceLine(ingredientLine(['gin', 'dry vermouth', 'Campari'])), '
   const fri = new Date(2026, 9, 31, 18).toISOString();
   const night = comingUpLine({ startsAt: fri, endsAt: new Date(2026, 10, 1, 2).toISOString(), menuDate: null, itemIds: ['a', 'b', 'c', 'd'], event: null, guestCount: null }, 'en-GB');
   assert.match(night, /^One night · 4 drinks · Sat 31 Oct$|^One night · 4 drinks · Fri 31 Oct$/);
+  // Beside a date tile, a one-night menu leaves its day off; a run keeps "from".
+  assert.equal(comingUpLine({ startsAt: fri, endsAt: new Date(2026, 10, 1, 2).toISOString(), menuDate: null, itemIds: ['a', 'b'], event: null, guestCount: null }, 'en-GB', true), 'One night · 2 drinks');
   const takeover = comingUpLine({ startsAt: fri, endsAt: null, menuDate: null, itemIds: ['a'], event: { id: 'e', name: 'Pale Moth', startsAt: fri }, guestCount: null }, 'en-GB');
   assert.match(takeover, /^Takeover · 1 drink · from /);
+  // A shared home night is still one night on its own date, not "from" the day it was shared.
+  assert.equal(comingUpLine({ startsAt: new Date(2026, 9, 24, 12).toISOString(), endsAt: null, menuDate: '2026-10-31', barId: null, itemIds: ['a'], event: null, guestCount: null }, 'en-GB', true), 'One night · 1 drink');
   assert.equal(previousLine({ startsAt: new Date(2026, 5, 3).toISOString(), endsAt: new Date(2026, 7, 31).toISOString(), itemIds: ['a', 'b', 'a'] }, 'en-GB'), '3 Jun to 31 Aug · 2');
+  assert.equal(previousLine({ startsAt: null, endsAt: null, menuDate: '2025-11-27', itemIds: ['a', 'b'] }, 'en-GB'), '27 Nov 2025 · 2');
 }
 
 {

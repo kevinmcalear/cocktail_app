@@ -8,7 +8,6 @@ import { WhereItLives } from '@/components/backbar/WhereItLives';
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { AroundIt, useBottleTiles } from '@/components/ingredient/IngredientFacts';
 import { Crumbs, type Crumb } from '@/components/nav/PageFrame';
-import { PrepEditSheet } from '@/components/prep/PrepEditSheet';
 import { PairsWith } from '@/components/screens/pairings/PairsWith';
 import { TechnicalIngredientCard, WhereToBuy } from '@/components/techniques/TechnicalIngredientCard';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
@@ -50,6 +49,7 @@ export interface IngredientScreenProps {
   inStudyPile: boolean;
   onToggleStudyPile: () => void;
   canEdit: boolean;
+  /** Edit: turns the page into editing in place. */
   onEdit: () => void;
 }
 
@@ -100,7 +100,6 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const [size, setSize] = useState<{ factor: number; makes: string | null } | null>(null);
   const factor = size?.factor ?? 1;
   const make = (mode?: 'have') => router.push(`/ingredient/${ingredient.id}/make?factor=${factor}${mode ? `&mode=${mode}` : ''}` as never);
-  const [editingPrep, setEditingPrep] = useState(false);
   const home = useMode().mode === 'home';
   const [sheet, setSheet] = useState<'proof' | 'more' | null>(null);
   const { data: shelf } = useShelf();
@@ -160,7 +159,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
     </View>
   );
   const recipe = showRecipe ? <PrepRecipe lines={lines} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} onSize={(f, m) => setSize({ factor: f, makes: m })} onFromWhatIHave={() => make('have')} checkedOn={sources?.filter((s) => s.field === 'recipe').map((s) => s.url)} /> : null;
-  const method = isPrep && canViewDetails ? <PrepMethod steps={steps} takes={leadTimeLabel(prep?.lead_time_minutes ?? null, prep?.lead_time_note ?? null)} onEdit={canEditPrep ? () => setEditingPrep(true) : undefined} /> : null;
+  const method = isPrep && canViewDetails ? <PrepMethod steps={steps} takes={leadTimeLabel(prep?.lead_time_minutes ?? null, prep?.lead_time_note ?? null)} /> : null;
   const around = <AroundIt ingredient={ingredient} bottles={bottles} isPrep={isPrep} />;
   const pairs = <PairsWith itemId={ingredient.id} name={ingredient.name} />;
   const inDrinks = (
@@ -171,8 +170,8 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   // A technical ingredient's page ends with Where to buy and its drinks (prep-ing-xanthan).
   const forBar = technical ? null : (
     <View style={styles.stack}>
-      {isPrep ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} />}
-      <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} />
+      {isPrep ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} readOnly={offerEdit} />}
+      <ForTheBar item={ingredient} houseMade={lines.length > 0} canEditItem={canEdit} whereRow={isPrep} editable={offerEdit} />
     </View>
   );
   // In the canvas's order; wide screens set them in two columns that each run on, so a
@@ -249,7 +248,6 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       {pinned && showRecipe ? <MakeBar bottom={insets.bottom} onMake={() => make()} makes={makes} drinks={drinks.length} onDrinks={toDrinks} /> : null}
       {pinned && noteShown ? <NoteBar itemId={ingredient.id} barId={ingredient.bar_id} read={noteRead!} lines={noteChoice.lines} card={card} bottom={insets.bottom} /> : null}
       {sheet === 'more' ? <MoreSheet name={ingredient.name} actions={wide ? more.filter((a) => a.label !== 'Edit') : more} onClose={() => setSheet(null)} /> : null}
-      {editingPrep && card ? <PrepEditSheet visible onClose={() => setEditingPrep(false)} itemId={ingredient.id} itemName={ingredient.name} current={card} /> : null}
       {sheet === 'proof' ? <ToolsSheet visible onClose={() => setSheet(null)} tool="proof" volumeMl={yieldQ?.kind === 'ml' ? yieldQ.value : null} /> : null}
     </View>
   );

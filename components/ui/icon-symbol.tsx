@@ -124,6 +124,7 @@ const MAPPING = {
   'trophy': 'award',
   'line.horizontal.3': 'menu',
   'location': 'map-pin',
+  'location.fill': 'navigation',
   'flag': 'flag',
   'gearshape': 'settings',
   'slider.horizontal.3': 'sliders',

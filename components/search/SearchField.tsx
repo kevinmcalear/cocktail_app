@@ -22,6 +22,8 @@ interface SearchFieldProps {
   onFocusChange?: (focused: boolean) => void;
   /** Floating over the results (the bottom search): the field and its close button are glass. */
   glass?: boolean;
+  /** The ⌘K palette: where it searches, at the field's end before esc (nav-search-desk-preview). */
+  place?: ReactNode;
 }
 
 /** A keyboard key, as the palette's hints draw it: "esc", "tab", "↵". */
@@ -39,7 +41,7 @@ export function KeyCap({ label }: { label: string }) {
  * something's typed. With `keys` (the ⌘K palette) it's the card's borderless
  * header instead, with the esc key at its end (nav-search-desk-palette).
  */
-export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel, onFocusChange, glass }: SearchFieldProps) {
+export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel, onFocusChange, glass, place }: SearchFieldProps) {
   const ds = useDs();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [focused, setFocused] = useState(false);
@@ -97,6 +99,7 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
             <IconSymbol name="xmark.circle.fill" size={22} color={ds.c.muted} />
           </PressableScale>
         ) : null}
+        {place}
         {keys && onDone ? (
           <PressableScale accessibilityLabel="Close the search (Escape)" onPress={onDone} style={styles.esc}>
             <KeyCap label="esc" />

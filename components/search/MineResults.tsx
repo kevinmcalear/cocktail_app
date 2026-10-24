@@ -12,7 +12,7 @@ import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { foldName } from '@/lib/discover';
 import { heroPicture } from '@/lib/itemImages';
-import { fallbackGlass, type ItemCategory } from '@/lib/itemRoutes';
+import { fallbackGlass, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
 import { itemIdOf } from '@/lib/libraryFilters';
 import { openSearchItem } from '@/lib/openSearchItem';
 import { drinkFacts, ingredientFacts, menuFacts } from '@/lib/searchCaptions';
@@ -86,7 +86,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
   if (!found) {
     if (isLoading) return <Caption tone="muted">Searching…</Caption>;
     const where = mine.venueId ? mine.label : 'your drinks';
-    const add = () => router.push(`/add-cocktail?name=${encodeURIComponent(capitalize(q))}${mine.venueId ? `&barId=${mine.venueId}` : ''}` as never);
+    const add = () => router.push(newDrinkHref(capitalize(q), mine.venueId) as never);
     return (
       <View style={styles.results}>
         <MissCard

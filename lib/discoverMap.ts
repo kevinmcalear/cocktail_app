@@ -254,6 +254,9 @@ export function pinDescription(pin: MapPin): string {
  */
 export const CLOSE_ZOOM = 16;
 
+/** The wide web map's zoom buttons (discoverMapDom.ts), so Find me can sit under them. */
+export const ZOOM_BUTTON = 40;
+
 /** A camera on one bar, close enough that its pin writes the name. */
 export function cameraOn(at: { latitude: number; longitude: number }): Camera {
   return { latitude: at.latitude, longitude: at.longitude, zoom: CLOSE_ZOOM };

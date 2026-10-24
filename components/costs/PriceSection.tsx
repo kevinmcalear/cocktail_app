@@ -25,9 +25,10 @@ const PACK_UNITS = [
  * How the venue buys an ingredient: the pack, who sells it, and what a pack
  * costs. Pack and supplier open with prep or costs; the price only with
  * costs, which is also what the database enforces. The first pass is quick:
- * the Library's "Needs a price" filter lists what's left.
+ * the Library's "Needs a price" filter lists what's left. `readOnly` for whoever
+ * can open the ingredient's Edit, where its price changes (ingredient-edit-proposal).
  */
-export function PriceSection({ itemId }: { itemId: string }) {
+export function PriceSection({ itemId, readOnly }: { itemId: string; readOnly?: boolean }) {
   const { active } = useActiveVenue();
   const barId = useMode().mode === 'home' ? null : (active?.id ?? null);
   if (!barId) return null;
@@ -37,13 +38,13 @@ export function PriceSection({ itemId }: { itemId: string }) {
         <Caption tone="muted" role="heading" style={styles.eyebrow}>
           PRICE AT {(active?.name ?? 'THE VENUE').toUpperCase()}
         </Caption>
-        <PriceBody itemId={itemId} barId={barId} />
+        <PriceBody itemId={itemId} barId={barId} readOnly={readOnly} />
       </Surface>
     </VenueBrandProvider>
   );
 }
 
-function PriceBody({ itemId, barId }: { itemId: string; barId: string }) {
+function PriceBody({ itemId, barId, readOnly }: { itemId: string; barId: string; readOnly?: boolean }) {
   const router = useRouter();
   const { data: capabilities } = useCapabilities(barId);
   const { data: costsOpenAt } = useCapabilityOpensAt(barId, 'costs');
@@ -72,7 +73,7 @@ function PriceBody({ itemId, barId }: { itemId: string; barId: string }) {
           Set the venue’s currency in Pricing before adding prices.
         </Caption>
       ) : null}
-      <Button label={line ? 'Edit' : canCost ? 'Add pack and price' : 'Add pack'} variant="secondary" onPress={() => setEditing(true)} style={styles.button} />
+      {readOnly ? null : <Button label={line ? 'Edit' : canCost ? 'Add pack and price' : 'Add pack'} variant="secondary" onPress={() => setEditing(true)} style={styles.button} />}
       {save.isSuccess ? <Caption tone="muted">Saved.</Caption> : null}
     </View>
   );

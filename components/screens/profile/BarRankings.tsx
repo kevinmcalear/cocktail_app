@@ -6,7 +6,8 @@ import { Body, Button, Caption, DrinkImage, Headline, PressableScale, Spec, Tag,
 import { radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useBarTopDrinks } from '@/hooks/useRankings';
-import { pastMenuLabel, splitTopDrinks, topDrinkCaption, topDrinkHref, topDrinkLabel, type BarTopDrink } from '@/lib/barTopDrinks';
+import { pastMenuLabel, splitTopDrinks, topDrinkCaption, topDrinkLabel, type BarTopDrink } from '@/lib/barTopDrinks';
+import { drinkPageHref } from '@/lib/itemRoutes';
 import { MIN_RANKERS, formatScore } from '@/lib/ranking';
 
 import { RankFlow } from '../rank/RankActions';
@@ -119,13 +120,14 @@ function Group({ title, hint, children }: { title: string; hint: string; childre
 function TopDrinkRow({ drink: d }: { drink: BarTopDrink }) {
   const ds = useDs();
   const router = useRouter();
+  const signedIn = useSignedIn();
   const caption = topDrinkCaption(d);
   const past = pastMenuLabel(d);
   return (
     <PressableScale
       role="link"
       accessibilityLabel={`${topDrinkLabel(d)}. Open`}
-      onPress={() => router.push(topDrinkHref(d) as Href)}
+      onPress={() => router.push(drinkPageHref(d.item_id, signedIn) as Href)}
       style={[styles.row, { borderBottomColor: ds.c.line }]}
     >
       {d.position ? (

@@ -10,6 +10,7 @@ import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { LoveBarButton } from '../kept/LoveBarButton';
+import { PublicPage } from '../published/PublicChrome';
 import { SignInCard } from '../published/SignInCard';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
 import { BarProfile } from './BarProfile';
@@ -103,6 +104,15 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
         <Body tone="muted">{error ? "Couldn't load this profile. Check your connection and try again." : "There's no public profile here. It may be private or the link may be wrong."}</Body>
       </BlockedProfileNote>
     );
+
+  // Signed out, every page here wears the website's nav and footer, like a bar's (p05): a person's sign-in prompt, a maker's, a supplier's.
+  if (!signedIn) {
+    return (
+      <PublicPage title={profile?.display_name ?? 'Profile'}>
+        <View style={styles.readable}>{body}</View>
+      </PublicPage>
+    );
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

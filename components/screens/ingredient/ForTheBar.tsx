@@ -28,6 +28,8 @@ interface ForTheBarProps {
   canEditItem: boolean;
   /** A house prep keeps Where it lives here as a row (a bottle shows it as its own section). */
   whereRow: boolean;
+  /** This person can open Edit, where the spot and the price change: the sheets only read. */
+  editable: boolean;
 }
 
 type Open = 'allergens' | 'where' | 'cost' | 'publish' | null;
@@ -38,7 +40,7 @@ type Open = 'allergens' | 'where' | 'cost' | 'publish' | null;
  * where it lives, cost, who can see it). A row shows only when its section has
  * something for this person.
  */
-export function ForTheBar({ item, houseMade, canEditItem, whereRow }: ForTheBarProps) {
+export function ForTheBar({ item, houseMade, canEditItem, whereRow, editable }: ForTheBarProps) {
   const [open, setOpen] = useState<Open>(null);
   const allergens = useAllergenValue(item.id, houseMade);
   const where = useWhereItLives(item.id);
@@ -49,10 +51,10 @@ export function ForTheBar({ item, houseMade, canEditItem, whereRow }: ForTheBarP
   const rows: { key: Exclude<Open, null>; label: string; value: string; body: ReactNode; readOnly?: boolean }[] = [
     { key: 'allergens', label: 'Allergens', value: allergens, body: <AllergenSection itemId={item.id} houseMade={houseMade} canEditItem={canEditItem} /> },
     ...(whereRow && where.shown
-      ? [{ key: 'where' as const, label: 'Where it lives', value: !where.canRead ? 'Locked' : (where.lines[0] ?? 'No spot yet'), body: <WhereItLives itemId={item.id} itemName={item.name} bare onRecipe={houseMade ? close : undefined} /> }]
+      ? [{ key: 'where' as const, label: 'Where it lives', value: !where.canRead ? 'Locked' : (where.lines[0] ?? 'No spot yet'), body: <WhereItLives itemId={item.id} itemName={item.name} bare onRecipe={houseMade ? close : undefined} readOnly={editable} /> }]
       : []),
-    ...(cost ? [{ key: 'cost' as const, label: 'Cost', value: cost, body: <PriceSection itemId={item.id} /> }] : []),
-    ...(publish ? [{ key: 'publish' as const, label: 'Who can see it', value: publish.value, readOnly: !publish.canChange, body: <PublishSection itemId={item.id} barId={item.bar_id} noun="ingredient" /> }] : []),
+    ...(cost ? [{ key: 'cost' as const, label: 'Cost', value: cost, body: <PriceSection itemId={item.id} readOnly={editable} /> }] : []),
+    ...(publish ? [{ key: 'publish' as const, label: 'Who can see it', value: publish.value, readOnly: !publish.canChange, body: <PublishSection itemId={item.id} barId={item.bar_id} noun="ingredient" mode="read" /> }] : []),
   ];
   const shown = rows.find((r) => r.key === open);
 

@@ -1,10 +1,10 @@
-import { useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Body, Button, Caption, Field, FieldButton, Headline, Segmented, useBreakpoint } from '@/components/ds';
 import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
 import { layout, space } from '@/constants/tokens';
+import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { MAKE_PAGE, searchCaption, type Found, type MakeSearchRowData, type MakeTab } from '@/lib/myBarRows';
 import { footLine, tabIntro } from '@/lib/myBarText';
 
@@ -38,6 +38,7 @@ export function MakeHead({
   bottles,
   search,
   found,
+  action,
   children,
 }: {
   tab: MakeTab;
@@ -47,11 +48,13 @@ export function MakeHead({
   bottles: number;
   search: { query: string; onQuery: (query: string) => void };
   found?: Record<Found, number>;
+  /** Beside the heading: a tablet's See all. */
+  action?: ReactNode;
   /** Under the tabs: the desktop's Make first strip on Ready. */
   children?: ReactNode;
 }) {
-  // A phone scrolls the tabs sideways; wider screens wrap them, as the desktop board draws.
-  const phone = useBreakpoint() === 'phone';
+  // A phone or tablet scrolls the tabs sideways (a tablet's What to make can be a narrow panel); a desktop has room for them all.
+  const phone = useBreakpoint() !== 'desktop';
   const options: { value: MakeTab; label: string }[] = [{ value: 'ready', label: `Ready · ${counts.ready}` }];
   if (counts.first) options.push({ value: 'first', label: `Make first · ${counts.first}` });
   options.push(
@@ -62,9 +65,12 @@ export function MakeHead({
   if (counts.projects !== undefined) options.push({ value: 'projects', label: `Projects · ${counts.projects}` });
   return (
     <View style={styles.section}>
-      <View style={styles.title}>
-        <Headline role="heading">What to make</Headline>
-        <Caption tone="muted">{`From your ${bottles} ${bottles === 1 ? 'bottle' : 'bottles'} and your pantry. Nothing here needs a trip to the shop unless it says so.`}</Caption>
+      <View style={styles.titleRow}>
+        <View style={styles.title}>
+          <Headline role="heading">What to make</Headline>
+          <Caption tone="muted">{`From your ${bottles} ${bottles === 1 ? 'bottle' : 'bottles'} and your pantry. Nothing here needs a trip to the shop unless it says so.`}</Caption>
+        </View>
+        {action}
       </View>
       <Field
         label="Search what you can make"
@@ -86,7 +92,7 @@ export function MakeHead({
       ) : (
         <>
           {phone ? (
-            // The tabs run off the right edge of a phone, as drawn, so the next one shows there is more.
+            // The tabs run off the right edge, as drawn, so the next one shows there is more.
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bleed}>
               <Segmented variant="ink" accessibilityLabel="What to make" value={tab} onChange={onTab} options={options} />
             </ScrollView>
@@ -142,7 +148,8 @@ export function MakeSearchRow({ row, onMore }: { row: MakeSearchRowData; onMore:
  * list up and slide the search box under the keyboard.
  */
 export function MakeFoot({ more, tab, query, onMore }: { more: number; tab: MakeTab; query?: string; onMore: () => void }) {
-  const router = useRouter();
+  // The palette on wide screens, the search tab on phones, set to Everywhere (q01).
+  const openSearch = useOpenSearch();
   const { height } = useWindowDimensions();
   const q = query?.trim();
   return (
@@ -154,7 +161,7 @@ export function MakeFoot({ more, tab, query, onMore }: { more: number; tab: Make
           label={q ? `Search every drink for “${q}”` : 'Search every drink'}
           icon="magnifyingglass"
           variant={q ? 'secondary' : 'ghost'}
-          onPress={() => router.push((q ? `/search?q=${encodeURIComponent(q)}` : '/search') as never)}
+          onPress={() => openSearch({ query: q ?? '', scope: 'everywhere' })}
         />
         {q ? <Caption tone="muted">{footLine('ready')}</Caption> : null}
       </View>
@@ -164,7 +171,8 @@ export function MakeFoot({ more, tab, query, onMore }: { more: number; tab: Make
 
 const styles = StyleSheet.create({
   section: { gap: space.md, paddingBottom: space.md },
-  title: { gap: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md },
+  title: { flex: 1, gap: 2 },
   heading: { paddingTop: space.lg, paddingBottom: space.xs },
   foot: { gap: space.md, paddingTop: space.md },
   more: { gap: space.sm, alignItems: 'flex-start', paddingTop: space.md },
