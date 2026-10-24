@@ -12,7 +12,6 @@ import { formatScore, MIN_RANKERS } from '@/lib/ranking';
 import { shareLink } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 
-import { HideBarButton } from '../kept/HideBarButton';
 import { LoveBarButton } from '../kept/LoveBarButton';
 import { ProfileSafety } from '../safety/ProfileSafety';
 
@@ -78,10 +77,7 @@ export function PublicBarActions({ profile, signedIn = false }: { profile: Profi
   return (
     <View style={[styles.actions, wide ? styles.wrap : null]}>
       {signedIn ? (
-        <>
-          <LoveBarButton profileId={profile.id} name={profile.display_name} labelled />
-          <HideBarButton profileId={profile.id} name={profile.display_name} />
-        </>
+        <LoveBarButton profileId={profile.id} name={profile.display_name} labelled />
       ) : (
         <Button label="Love" icon="heart" variant="secondary" accessibilityHint={`Sign in to love ${profile.display_name}`} onPress={signIn} style={grow} />
       )}

@@ -5,7 +5,8 @@ import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SearchBarCommands } from 'react-native-screens';
 
-import { Title, useDs, useGutter } from '@/components/ds';
+import { useDs, useGutter } from '@/components/ds';
+import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { WEB_TAB_BAR_HEIGHT } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
@@ -111,15 +112,17 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
           },
         }}
       />
+      {/* The tab's title row, where every tab has it. Above the results rather than in them: it ends below the
+          empty native bar, so the scroll view gets no inset for that bar and the title sits up top, not under it. */}
+      <ScreenHeader title="Search" />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={DISMISS}
         // The last rows clear the keyboard, the field riding on it and the place row. Padding, not
         // automaticallyAdjustKeyboardInsets, which scrolls the recents off the top.
-        contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: keyboard + SYSTEM_FIELD + PLACE_ROW + space.lg, gap: space.lg }}
+        contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: space.md, paddingBottom: keyboard + SYSTEM_FIELD + PLACE_ROW + space.lg, gap: space.lg }}
       >
-        {query ? null : <Title role="heading">Search</Title>}
         <SearchBody
           query={query}
           scope={scope}
@@ -183,7 +186,7 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
     default: 0,
   });
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.screen, { backgroundColor: ds.c.ground, paddingTop: insets.top + space.sm }]}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <Stack.Screen options={{ headerShown: false, headerSearchBarOptions: undefined }} />
       {/* Its own box above the keyboard's padding, so the dock pins to the results' bottom edge. */}
       <View style={styles.screen}>
@@ -194,9 +197,10 @@ export function BottomSearch({ query, setQuery, scope, setScope, mine, area, onS
           // The web has no drag dismissal: blur the field when the results move.
           onScrollBeginDrag={Platform.OS === 'web' ? Keyboard.dismiss : undefined}
           // The last rows scroll clear of the dock floating over them.
-          contentContainerStyle={{ paddingHorizontal: gutter, paddingTop: space.sm, paddingBottom: dockHeight + space.lg, gap: space.lg }}
+          contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: dockHeight + space.lg, gap: space.lg }}
         >
-          {query ? null : <Title role="heading">Search</Title>}
+          {/* The tab's title row, as every tab has it. */}
+          <ScreenHeaderSpacer title="Search" />
           <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={area} onShowOnMap={onShowOnMap} show={show} onCounts={setCounts} typeAhead={setQuery} />
         </ScrollView>
         <View

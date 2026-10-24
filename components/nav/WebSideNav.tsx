@@ -1,6 +1,7 @@
 import { usePathname, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
@@ -35,9 +36,9 @@ export interface SideNavProps {
 }
 
 /**
- * The side nav on wide web, where the phone tab bar is hidden: the full
- * sidebar on a desktop window, the icon rail from 768 to 1199. Owns the
- * keyboard shortcuts and New, so both get them.
+ * The side nav on wide web and a native iPad, where the phone tab bar is
+ * hidden: the full sidebar on a desktop window, the icon rail from 768 to
+ * 1199. Owns the keyboard shortcuts (web only) and New, so both get them.
  */
 export function WebSideNav() {
   return (
@@ -111,17 +112,21 @@ function SideNav() {
  */
 function Sidebar({ current, go, searching, onSearch, onNew, dots }: SideNavProps) {
   const ds = useDs();
+  // An iPad's status bar and home indicator; 0 on the web.
+  const insets = useSafeAreaInsets();
   const { venue, tabs, work, venuePlaces, history, week } = useNavPlaces();
   const row = (p: Place) => <NavRow key={p.key} label={p.label} icon={p.icon} current={current === p.key} isNew={!!p.tab && dots.includes(p.key)} onPress={() => go(p)} />;
   // History sits right under Discover.
   const nav = tabs.flatMap((t) => (t.key === 'discover' && history ? [t, history] : [t]));
+  // The shortcuts listen on the page's document, so only the web shows their keys (not a native iPad).
+  const keys = Platform.OS === 'web';
   return (
-    <View role="navigation" accessibilityLabel="Main" style={[styles.nav, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line }]}>
+    <View role="navigation" accessibilityLabel="Main" style={[styles.nav, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line, paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + space.lg }]}>
       <MarksRow />
-      <NavRow label="Search" icon="magnifyingglass" role="button" look="filled" hint={isApplePlatform() ? '⌘K' : 'Ctrl K'} current={searching} onPress={onSearch} />
+      <NavRow label="Search" icon="magnifyingglass" role="button" look="filled" hint={keys ? (isApplePlatform() ? '⌘K' : 'Ctrl K') : undefined} current={searching} onPress={onSearch} />
       {nav.map(row)}
       {work.map(row)}
-      <NavRow label="New" icon="plus" role="button" look="outlined" hint="N" current={false} onPress={onNew} />
+      <NavRow label="New" icon="plus" role="button" look="outlined" hint={keys ? 'N' : undefined} current={false} onPress={onNew} />
       {venue ? <RoundNav /> : null}
       {week ? <WeekNav /> : null}
       {venuePlaces.length ? (

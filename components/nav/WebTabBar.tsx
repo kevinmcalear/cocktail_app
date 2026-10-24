@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DsText, GlassButton, GlassSurface, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
-import { useBottomBar, useBottomSearchFocus } from '@/hooks/useBottomBar';
+import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -104,15 +104,14 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
   const { mode } = useMode();
   const { has } = useVenueFeatures();
   const current = state.routes[state.index]?.name;
-  // Settings › Try it: New joins the tabs and takes a tab's room (phoneTabs).
-  // While the bottom search field has focus it takes the bar's place.
-  const bottomBar = useBottomBar();
+  // New is the last tab and takes a tab's room (phoneTabs). While the bottom
+  // search field has focus it takes the bar's place.
   const searching = useBottomSearchFocus((s) => s.focused);
   const [creating, setCreating] = useState(false);
   // A new tab the venue switched on keeps a dot until it's first opened (hooks/useFeatureNews.ts).
   const dots = useFeatureNewsDots();
   const { hidden } = useFirstRound();
-  const tabs = phoneTabs(mode === 'home', has, bottomBar).flatMap((name) => (name === 'new' || (hidden as readonly string[]).includes(name) ? [] : [TABS[name]]));
+  const tabs = phoneTabs(mode === 'home', has).flatMap((name) => (name === 'new' || (hidden as readonly string[]).includes(name) ? [] : [TABS[name]]));
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;
@@ -146,14 +145,12 @@ export function WebTabBar({ state, emitter, navigateToTab }: BottomTabBarProps) 
               </PressableScale>
             );
           })}
-          {bottomBar ? (
-            <PressableScale role="button" accessibilityLabel="New: drink, ingredient, beer, wine, menu, bring something in, or a draft" onPress={() => setCreating(true)} style={styles.tab}>
-              <IconSymbol name="plus" size={20} color={ds.c.muted} />
-              <DsText variant="caption" color={ds.c.muted} numberOfLines={1}>
-                New
-              </DsText>
-            </PressableScale>
-          ) : null}
+          <PressableScale role="button" accessibilityLabel="New: drink, ingredient, beer, wine, menu, bring something in, or a draft" onPress={() => setCreating(true)} style={styles.tab}>
+            <IconSymbol name="plus" size={20} color={ds.c.muted} />
+            <DsText variant="caption" color={ds.c.muted} numberOfLines={1}>
+              New
+            </DsText>
+          </PressableScale>
         </View>
       </GlassSurface>
       {/* While search is open, its circle is the current item: its icon takes the accent. */}

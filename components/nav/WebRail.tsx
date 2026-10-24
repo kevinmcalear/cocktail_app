@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -46,12 +47,14 @@ function RailItem({ place, current, isNew, onPress }: { place: Place; current: b
  */
 export function WebRail({ current, go, searching, onSearch, onNew, dots }: SideNavProps) {
   const ds = useDs();
+  // An iPad's status bar and home indicator; 0 on the web.
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { venue, tabs, work } = useNavPlaces();
   const name = shortPersonName(useUserDisplayName());
   const line = footerLine(venue ? { name: venue.name, role: roleLabel(venue.roleLevel) } : null, null);
   return (
-    <View role="navigation" accessibilityLabel="Main" style={[styles.rail, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line }]}>
+    <View role="navigation" accessibilityLabel="Main" style={[styles.rail, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line, paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + space.lg }]}>
       {/* The mark sits on the rail's centre line, its chevron hanging to the right (canvas shell n4). */}
       <View style={styles.mark}>
         <VenueSwitcher size={36} />

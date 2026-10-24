@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
@@ -8,14 +8,15 @@ import { backbar, displayFaces, radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { publishedMenuDrink } from '@/hooks/useMenus';
 import { useSharedMenu } from '@/hooks/useSharedMenu';
+import { drinkPageHref } from '@/lib/itemRoutes';
 import { withAlpha } from '@/lib/color';
 import { plural } from '@/lib/menus';
 import { ingredientsLine } from '@/lib/publicDrink';
 import type { MenuDrink } from '@/types/menus';
 
 import { ReportSheet } from '../safety/ReportSheet';
-import { Kicker } from './PublicChrome';
-import { loadFailure, PublicMissing, PublicPage } from './PublicShell';
+import { Kicker, PublicPage } from './PublicChrome';
+import { loadFailure, PublicMissing } from './PublicShell';
 import { SaveToMake } from './SaveToMake';
 
 const PRIVATE = 'private:';
@@ -125,7 +126,7 @@ export function SharedMenuScreen({ id }: { id: string }) {
                 <Kicker>{s.name || 'Drinks'}</Kicker>
                 <View role="list">
                   {s.drinks.map((d) => (
-                    <MenuRow key={d.id} drink={d} open={d.id.startsWith(PRIVATE) ? null : () => router.push(`/d/${d.id}`)} />
+                    <MenuRow key={d.id} drink={d} open={d.id.startsWith(PRIVATE) ? null : () => router.push(drinkPageHref(d.id, signedIn) as Href)} />
                   ))}
                 </View>
               </View>

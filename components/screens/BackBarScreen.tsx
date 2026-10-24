@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BackBarPlan } from '@/components/backbar/BackBarPlan';
@@ -193,8 +193,8 @@ export function BackBarScreen({ placeItem }: { placeItem?: NamedItem }) {
           trailing={
             canRead && zones.length ? (
               <View style={styles.actions}>
-                {/* Labels are printed from a computer; a phone's head has room for Edit the plan alone (tools-backbar-phone). */}
-                {wide ? <Button label="Print labels" icon="printer" variant="secondary" onPress={() => router.push('/back-bar-labels')} /> : null}
+                {/* Labels are printed from a browser; a phone's head has room for Edit the plan alone (tools-backbar-phone). */}
+                {wide && Platform.OS === 'web' ? <Button label="Print labels" icon="printer" variant="secondary" onPress={() => router.push('/back-bar-labels')} /> : null}
                 {canDraw ? (
                   <Button label={editing ? 'Done' : 'Edit the plan'} icon={editing ? undefined : 'pencil'} variant={editing ? 'secondary' : 'primary'} onPress={() => setEditing((e) => !e)} />
                 ) : null}

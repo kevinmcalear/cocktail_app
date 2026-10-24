@@ -7,7 +7,7 @@ import { savedLine } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
 
 import { HomeNightFields } from './HomeNight';
-import { MenuPhotos, useAddMenuPhotos } from './MenuPhotos';
+import { CAMERA, MenuPhotos, useAddMenuPhotos } from './MenuPhotos';
 import { Choice, MenuSheet } from './MenuSheet';
 import { DraftCard, NameIdeas, StepTrack, VenueDatesFields } from './NewMenuParts';
 import { StartTiles, WhichMenu, type StartKind } from './NewMenuStart';
@@ -53,10 +53,11 @@ function NewMenuSteps({ visible, onClose, menus, now }: NewMenuSheetProps) {
   };
   const pick = (kind: StartKind) => {
     if (kind === 'saved') return go('which');
-    m.setStart({ kind });
-    go(kind === 'photo' ? 'when' : 'name');
-    // Snap the menu: the camera opens at once (the picker, without one).
-    if (kind === 'photo' && !m.photos.length) void addPhotos('snap');
+    const photos = kind === 'photo' || kind === 'library';
+    m.setStart({ kind: photos ? 'photo' : kind });
+    go(photos ? 'when' : 'name');
+    // Snap the menu opens the camera at once, From your photos the library.
+    if (photos && !m.photos.length) void addPhotos(kind === 'photo' ? 'snap' : 'pick');
   };
   const submit = async () => {
     if (!(await m.submit()) && !m.name.trim() && !photo) setStep('name');
@@ -104,7 +105,7 @@ function NewMenuSteps({ visible, onClose, menus, now }: NewMenuSheetProps) {
       {step === 'start' ? (
         <>
           <MonoLabel>How does it start?</MonoLabel>
-          <StartTiles saved={saved.length ? savedLine(saved.map((s) => s.name), true) : null} onPick={pick} />
+          <StartTiles saved={saved.length ? savedLine(saved.map((s) => s.name), true) : null} camera={CAMERA} onPick={pick} />
           <Caption tone="muted" align="center">
             Tap one to go on.
           </Caption>

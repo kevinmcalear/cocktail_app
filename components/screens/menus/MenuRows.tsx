@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { displayFaces, displayName, fontFamilies, radius, space } from '@/constants/tokens';
@@ -13,123 +14,179 @@ import { MenuVisual } from './MenuVisual';
 
 export const menuHref = (id: string) => `/menus/${id}` as const;
 
+type RowStatus = ReturnType<typeof menuStatus> | 'rnd';
+
+const statusOf = (menu: MenuSummary, now: number): RowStatus => (menu.kind === 'rnd' ? 'rnd' : menuStatus(menu, now));
+
+/** Count, then when: "8 drinks · since Mon 1 Sep", "4 drinks · Fri 31 Oct · 8 guests". */
 function metaLine(menu: MenuSummary, now: number): string {
   // A home menu has a night instead of dates on a venue's calendar.
-  return [homeMenuLine(menu, now), plural(menu.itemIds.length, 'drink'), menuDateLine(menu, now)].filter(Boolean).join(' · ');
+  return [plural(new Set(menu.itemIds).size, 'drink'), homeMenuLine(menu, now), menuDateLine(menu, now)].filter(Boolean).join(' · ');
 }
 
-/** A menu that's on now: its cover, name, and how long it's been on. */
-export function MenuCard({ menu, now }: { menu: MenuSummary; now: number }) {
+function lineFor(menu: MenuSummary, status: RowStatus, now: number): string {
+  if (status === 'upcoming') return comingUpLine(menu, undefined, !!startOf(menu));
+  if (status === 'draft') return draftLine(menu, now);
+  if (status === 'rnd') return ['R&D', plural(new Set(menu.itemIds).size, 'drink'), menu.description].filter(Boolean).join(' · ');
+  return metaLine(menu, now);
+}
+
+/** When a coming-up menu starts. A home menu's night is a day (2026-10-04), not an instant: read it as local midnight, even once sharing gave it a start. */
+function startOf(menu: MenuSummary): Date | null {
+  const startsAt = menu.event?.startsAt ?? menu.startsAt;
+  if (menu.menuDate && (!startsAt || menu.barId === null)) return new Date(`${menu.menuDate}T00:00:00`);
+  return startsAt ? new Date(startsAt) : null;
+}
+
+/** A coming-up menu's day: the weekday over the date, tinted in the accent. */
+function DateTile({ start }: { start: Date }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.date, { backgroundColor: withAlpha(ds.accentText, 0.16) }]}>
+      <Caption color={ds.accentText}>{start.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}</Caption>
+      <DsText variant="spec" color={ds.accentText}>
+        {start.getDate()}
+      </DsText>
+    </View>
+  );
+}
+
+/** What ends a card or row: On now, a coming-up menu's day, or (for a draft or R&D) a chevron. */
+function Trailing({ menu, status }: { menu: MenuSummary; status: RowStatus }) {
+  const ds = useDs();
+  const start = status === 'upcoming' ? startOf(menu) : null;
+  if (status === 'on') return <Tag label="On now" tone="success" dot />;
+  if (start) return <DateTile start={start} />;
+  return status === 'draft' || status === 'rnd' ? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} /> : null;
+}
+
+/**
+ * The first menu on a list (on now, else the next one): its drink band, its
+ * name, one line, and On now or its day (menus-one-look Kit). `note` adds
+ * to the line, as on a row.
+ */
+export function MenuCard({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
   const ds = useDs();
   const router = useRouter();
-  const on = menuStatus(menu, now) === 'on';
+  const status = statusOf(menu, now);
+  const line = [lineFor(menu, status, now), note].filter(Boolean).join(' · ');
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={`${menu.name}, ${on ? 'on now, ' : ''}${metaLine(menu, now)}`}
+      accessibilityLabel={`${menu.name}, ${status === 'on' ? 'on now, ' : ''}${line}`}
       onPress={() => router.push(menuHref(menu.id))}
       style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}
     >
       <MenuVisual name={menu.name} coverUrl={menu.coverUrl} coverPosition={menu.coverPosition} pictures={menu.pictures} height={112} />
       <View style={styles.cardBody}>
         <View style={styles.flex}>
-          <DsText variant="title" numberOfLines={1}>
+          <Headline numberOfLines={1} style={[displayName.card, { fontFamily: displayFaces[ds.displayFace].regular }]}>
             {menu.name}
-          </DsText>
-          <Caption tone="muted">{metaLine(menu, now)}</Caption>
+          </Headline>
+          <Caption tone="muted" numberOfLines={1}>
+            {line}
+          </Caption>
         </View>
-        {on ? <Tag label="On now" tone="success" /> : null}
+        <Trailing menu={menu} status={status} />
       </View>
     </PressableScale>
   );
 }
 
-/** Tonight's card for a menu that's on: a small cover, its name, "On now · 8 drinks · since 1 Sep", and a chevron. */
-export function MenuOnRow({ menu, now }: { menu: MenuSummary; now: number }) {
+/** The band cut to a square: the menu's cover or its first drink. A draft with no drinks gets a dashed slot, R&D a grid. */
+function Thumb({ menu, status }: { menu: MenuSummary; status: RowStatus }) {
   const ds = useDs();
-  const router = useRouter();
-  const meta = ['On now', plural(menu.itemIds.length, 'drink'), menuDateLine(menu, now, undefined, true)].filter(Boolean).join(' · ');
+  if (menu.coverUrl || menu.pictures.length) {
+    return (
+      <View style={styles.thumb} aria-hidden>
+        <MenuVisual name={menu.name} coverUrl={menu.coverUrl} coverPosition={menu.coverPosition} pictures={menu.pictures.slice(0, 1)} height={THUMB} />
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.thumb, styles.empty, { backgroundColor: status === 'rnd' ? ds.c.raised : withAlpha(ds.c.paper, 0.08) }]} aria-hidden>
+      {status === 'rnd' ? <IconSymbol name="square.grid.2x2" size={22} color={ds.c.muted} /> : status === 'draft' ? <View style={[styles.slot, { borderColor: ds.c.lineStrong }]} /> : null}
+    </View>
+  );
+}
+
+/** A drink's picture cut to the row's square: its photo, or with none, its sketch. */
+export function DrinkThumb({ itemId, imageUrl = null, name }: { itemId: string | null; imageUrl?: string | null; name: string }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.thumb, { backgroundColor: ds.c.paper }]} aria-hidden>
+      <DrinkImage source={imageUrl} itemId={itemId} accessibilityLabel={name} radius={0} aspectRatio={1} thumb style={styles.fillThumb} />
+    </View>
+  );
+}
+
+interface MenuRowFrameProps {
+  /** What a screen reader hears for the whole row. */
+  label: string;
+  /** None: the row only shows (a release no longer public). */
+  onPress?: () => void;
+  thumb: ReactNode;
+  name: string;
+  line: string;
+  /** A draft: a dashed edge and its line in amber. */
+  dashed?: boolean;
+  trailing?: ReactNode;
+}
+
+/**
+ * The one menu row (menus-one-look): a 56 square, the name in the display
+ * face, one line, then what ends it. Your menus, and bar menus you saved or
+ * collected, all draw through it.
+ */
+export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, trailing }: MenuRowFrameProps) {
+  const ds = useDs();
   return (
     <PressableScale
-      role="link"
-      accessibilityLabel={`${menu.name}, ${meta}`}
-      onPress={() => router.push(menuHref(menu.id))}
-      style={[styles.row, styles.onRow, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}
+      role={onPress ? 'link' : undefined}
+      disabled={!onPress}
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[styles.row, dashed ? { borderColor: ds.c.lineStrong, borderStyle: 'dashed' } : { borderColor: ds.c.line, backgroundColor: ds.c.surface }]}
     >
-      <View style={styles.thumb} aria-hidden>
-        <MenuVisual name={menu.name} coverUrl={menu.coverUrl} coverPosition={menu.coverPosition} pictures={menu.pictures} height={48} />
-      </View>
+      {thumb}
       <View style={styles.flex}>
-        <Headline numberOfLines={1} style={[displayName.card, { fontFamily: displayFaces[ds.displayFace].regular }]}>
-          {menu.name}
+        <Headline numberOfLines={1} style={[displayName.row, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+          {name}
         </Headline>
-        <Caption tone="muted" numberOfLines={1}>
-          {meta}
+        <Caption tone="muted" color={dashed ? readableAccent(STATUS.warning, ds.c.ground) : undefined} numberOfLines={1}>
+          {line}
         </Caption>
       </View>
-      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+      {trailing === undefined && onPress ? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} /> : trailing}
     </PressableScale>
   );
 }
 
 /**
- * A menu in a list: coming up (a date tile tinted in the accent, then the kind,
- * drinks and date: "One night · 4 drinks · Fri 31 Oct"), a draft (dashed,
- * with an amber "1 section short · edited yesterday"), or an R&D collection
- * (an R&D tile, "R&D · 4 drinks · a control and three trials"). Names in the
- * venue's display face; only drafts and R&D carry a chevron. `note` adds a
- * line of its own, like how many of the drinks you can make at home.
+ * A menu in a list, the same in both modes: a square of its first drink, its
+ * name in the display face, one line, then On now, its day, or a chevron. A
+ * draft is dashed, its line in amber saying what's missing. `note` adds to
+ * the line, like how many of the drinks you can make at home.
  */
 export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
-  const ds = useDs();
   const router = useRouter();
-  const status = menu.kind === 'rnd' ? 'rnd' : menuStatus(menu, now);
-  const startsAt = menu.event?.startsAt ?? menu.startsAt;
-  // A home menu's night is a day (2026-10-04), not an instant: read it as local midnight.
-  const start = status !== 'upcoming' ? null : startsAt ? new Date(startsAt) : menu.menuDate ? new Date(`${menu.menuDate}T00:00:00`) : null;
-  const amber = readableAccent(STATUS.warning, ds.c.ground);
-  const drinks = plural(new Set(menu.itemIds).size, 'drink');
-  const meta =
-    status === 'upcoming' ? comingUpLine(menu) : status === 'draft' ? draftLine(menu, now) : status === 'rnd' ? ['R&D', drinks, menu.description].filter(Boolean).join(' · ') : metaLine(menu, now);
-  const label = [status === 'upcoming' ? null : menu.event?.name, meta, note].filter(Boolean).join(' · ');
-  const chevron = status === 'draft' || status === 'rnd';
+  const status = statusOf(menu, now);
+  const draft = status === 'draft';
+  const line = [status === 'upcoming' ? null : menu.event?.name, lineFor(menu, status, now), note].filter(Boolean).join(' · ');
   return (
-    <PressableScale
-      role="link"
-      accessibilityLabel={[menu.name, status === 'draft' ? 'draft' : null, label].filter(Boolean).join(', ')}
+    <MenuRowFrame
+      label={[menu.name, status === 'on' ? 'on now' : draft ? 'draft' : null, line].filter(Boolean).join(', ')}
       onPress={() => router.push(menuHref(menu.id))}
-      style={[
-        styles.row,
-        { borderColor: status === 'draft' ? ds.c.lineStrong : ds.c.line, borderStyle: status === 'draft' ? 'dashed' : 'solid' },
-        status !== 'draft' && { backgroundColor: ds.c.surface },
-      ]}
-    >
-      {start ? (
-        <View style={[styles.date, { backgroundColor: withAlpha(ds.accentText, 0.16) }]}>
-          <Caption color={ds.accentText}>{start.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()}</Caption>
-          <DsText variant="spec" color={ds.accentText}>
-            {start.getDate()}
-          </DsText>
-        </View>
-      ) : status === 'rnd' ? (
-        <View style={[styles.tile, { backgroundColor: ds.c.raised }]} aria-hidden>
-          <IconSymbol name="square.grid.2x2" size={22} color={ds.c.muted} />
-        </View>
-      ) : null}
-      <View style={styles.flex}>
-        <Headline numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
-          {menu.name}
-        </Headline>
-        <Caption tone="muted" color={status === 'draft' ? amber : undefined} numberOfLines={1}>
-          {label}
-        </Caption>
-      </View>
-      {chevron ? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} /> : null}
-    </PressableScale>
+      thumb={<Thumb menu={menu} status={status} />}
+      name={menu.name}
+      line={line}
+      dashed={draft}
+      trailing={<Trailing menu={menu} status={status} />}
+    />
   );
 }
 
-/** A previous menu: a plain divided line, its name in the display face and its dates and count in mono. */
+/** A past menu: a plain divided line, its name in the display face and its dates and count in mono. */
 export function MenuPastLine({ menu }: { menu: MenuSummary }) {
   const ds = useDs();
   const router = useRouter();
@@ -146,24 +203,27 @@ export function MenuPastLine({ menu }: { menu: MenuSummary }) {
   );
 }
 
+const THUMB = 56;
+
 const styles = StyleSheet.create({
   card: { borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', borderCurve: 'continuous' },
-  cardBody: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg },
-  flex: { flex: 1, gap: 2 },
+  cardBody: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md, paddingHorizontal: space.lg - 2 },
+  flex: { flex: 1, minWidth: 0, gap: 2 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.md,
-    paddingVertical: space.md,
-    paddingHorizontal: space.lg,
+    padding: space.sm,
+    paddingRight: space.lg - 2,
     borderRadius: radius.card,
     borderWidth: 1,
     borderCurve: 'continuous',
   },
-  onRow: { paddingVertical: space.sm + 2, paddingHorizontal: space.md, borderWidth: StyleSheet.hairlineWidth },
-  thumb: { width: 48, height: 48, borderRadius: radius.control, overflow: 'hidden' },
-  tile: { width: 48, height: 48, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
+  thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
+  empty: { alignItems: 'center', justifyContent: 'center' },
+  fillThumb: { width: THUMB, height: THUMB },
+  slot: { width: 22, height: 32, borderRadius: radius.mark + 1, borderWidth: 1.5, borderStyle: 'dashed' },
   past: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, paddingHorizontal: 2, borderBottomWidth: StyleSheet.hairlineWidth },
   mono: { fontFamily: fontFamilies.mono },
-  date: { width: 52, paddingVertical: space.xs, borderRadius: radius.control, alignItems: 'center' },
+  date: { width: 44, paddingVertical: space.xs, borderRadius: radius.control, alignItems: 'center' },
 });

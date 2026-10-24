@@ -102,13 +102,20 @@ export function WantToGoMap() {
       {map}
       <View pointerEvents="box-none" style={[styles.pillBox, { top: pillTop, left: gutter, right: gutter }]} onLayout={(e) => setPillHeight(e.nativeEvent.layout.height)}>
         <GlassSurface style={styles.pill}>
-          <PressableScale role="link" accessibilityLabel="Back to Collection" onPress={back} style={styles.backButton} hitSlop={4}>
+          {/* As on Discover's map: with a bar open, the pill is its back arrow and name. */}
+          <PressableScale
+            role={picked ? 'button' : 'link'}
+            accessibilityLabel={picked ? 'Back to Want to go' : 'Back to Collection'}
+            onPress={picked ? () => setPickedId(null) : back}
+            style={styles.backButton}
+            hitSlop={4}
+          >
             <IconSymbol name="chevron.left" size={20} color={ds.c.ink} />
           </PressableScale>
           <Body role="heading" aria-level={1} numberOfLines={1} style={styles.flex}>
-            Want to go
+            {picked ? picked.name : 'Want to go'}
           </Body>
-          {rows.length ? (
+          {rows.length && !picked ? (
             <Caption tone="muted" style={styles.pillCount}>
               {count}
             </Caption>
@@ -125,7 +132,7 @@ export function WantToGoMap() {
             contentContainerStyle={styles.sheet}
             ListHeaderComponent={
               picked ? (
-                <SelectedBar key={picked.id} variant="sheet" pin={picked} drinks={[]} me={me} back="Want to go" onClose={() => setPickedId(null)} />
+                <SelectedBar key={picked.id} variant="sheet" pin={picked} drinks={[]} me={me} onClose={() => setPickedId(null)} />
               ) : (
                 <View style={styles.sheetHead}>
                   {rows.length ? <Caption tone="muted">{`${caption} · swipe up for all`}</Caption> : null}

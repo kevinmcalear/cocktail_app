@@ -64,8 +64,3 @@ export function topDrinkLabel(d: BarTopDrink): string {
     .filter(Boolean)
     .join('. ');
 }
-
-/** A bar's published drink opens its public page; a shared drink opens the drink page. */
-export function topDrinkHref(d: Pick<BarTopDrink, 'item_id' | 'bar_id'>): string {
-  return d.bar_id ? `/d/${d.item_id}` : `/cocktail/${d.item_id}`;
-}
