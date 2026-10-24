@@ -31,6 +31,9 @@
 -- 6. The past jobs this adds show on the public record (is_shown), by the
 --    rule in 20261009200000_cocktail_legends.sql: the bar closed, the person
 --    made a credited drink there, or their credited drinks go back before 2000.
+-- 7. Three styles shared a name with the drink now under them; they take
+--    family names (Kevin, 24 Oct): Champagne Cocktail is Champagne drinks,
+--    Eggnog is Nog, Planter's Punch is Jamaican rum punch.
 --
 -- No paid AI: app.image_worker stops sketch jobs, and the flavour jobs these
 -- inserts queue are removed at the end. No RLS or grant changes. Running it
@@ -743,6 +746,17 @@ WHERE pp.person_profile_id = per.id AND pp.bar_profile_id = bar.id AND pp.title 
     OR EXISTS (SELECT 1 FROM "public"."item_co_creators" c JOIN "public"."items" i ON i.id = c.item_id
                WHERE c.profile_id = per.id AND i.origin_year < 2000)
   );
+
+
+-- --- 8. Styles that shared a name with a drink take family names ---
+
+UPDATE "public"."drink_styles" s SET "name" = v.name, "summary" = coalesce(v.summary, s.summary)
+FROM (VALUES
+    ('champagne-cocktail', 'Champagne drinks', NULL),
+    ('nog', 'Nog', NULL),
+    ('planters-punch', 'Jamaican rum punch', 'One of sour, two of sweet, three of strong, four of weak, made by the bowl')
+) AS v("key", "name", "summary")
+WHERE s.key = v.key AND (s.name IS DISTINCT FROM v.name OR s.summary IS DISTINCT FROM coalesce(v.summary, s.summary));
 
 
 -- --- No paid AI: drop the flavour jobs these inserts queued ---

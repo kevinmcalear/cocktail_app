@@ -79,6 +79,21 @@ describe('missing classics', () => {
     ]);
   });
 
+  test('styles no longer share a name with a drink', async () => {
+    const { rows } = await db.query(
+      `SELECT s.key, s.name FROM public.drink_styles s WHERE s.key IN ('champagne-cocktail', 'nog', 'planters-punch') ORDER BY s.key`
+    );
+    assert.deepEqual(rows, [
+      { key: 'champagne-cocktail', name: 'Champagne drinks' },
+      { key: 'nog', name: 'Nog' },
+      { key: 'planters-punch', name: 'Jamaican rum punch' },
+    ]);
+    const clash = await db.query(
+      `SELECT s.name FROM public.drink_styles s JOIN public.items i ON i.is_catalog AND i.lineage_family IS NOT NULL AND lower(i.name) = lower(s.name)`
+    );
+    assert.deepEqual(clash.rows, []);
+  });
+
   test('Eggnog takes the nogs under it', async () => {
     const { rows } = await db.query(
       `SELECT i.name FROM public.items i JOIN public.items p ON p.id = i.lineage_parent_id
