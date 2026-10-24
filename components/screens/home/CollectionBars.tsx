@@ -1,23 +1,21 @@
-import { getLocales } from 'expo-localization';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Chip, useBreakpoint } from '@/components/ds';
-import { space } from '@/constants/tokens';
-import { useCollection } from '@/hooks/useCollection';
+import { Body, Chip, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { layout, space } from '@/constants/tokens';
 import { useVenueScores } from '@/hooks/useDiscover';
-import { useLovedBars, type LovedBar } from '@/hooks/useKept';
+import { useLovedBars } from '@/hooks/useKept';
 import { useMyHadDrinks } from '@/hooks/useRankings';
-import { hoursStatus } from '@/lib/barHours';
+import { useWantToGo } from '@/hooks/useWantToGo';
 import { averageScore, barNews } from '@/lib/collectionMenus';
 import { beenBars, nearestFirst, type BarStage, type BeenSort } from '@/lib/collectionStages';
-import { distanceKm } from '@/lib/discoverDrinks';
-import { formatDistance, usesMiles } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
-import { useLastPlace } from '@/store/useLastPlace';
 
-import { BeenRow, WantRow, type WantBar } from './CollectionBarRows';
+import { BeenRow, WantRow } from './CollectionBarRows';
 import { SortChoice, StageHead, StageStrip, TableHead, stageStyles } from './CollectionStages';
+import { mapAvailable } from './DiscoverMap';
 import { GoogleImportEntry, GoogleImportSheet } from './GoogleImport';
 
 const BEEN_SORTS = [
@@ -31,32 +29,21 @@ const WANT_SORTS = [
   { value: 'open', label: 'Open now' },
 ] as const;
 
-/** Why a bar is on your list: the drinks you saved from it, else what it's pouring now. */
-function whyLine(bar: LovedBar, saved: number): string | null {
-  if (saved) return `You saved ${saved === 1 ? 'a drink' : `${saved} drinks`} from here`;
-  return bar.currentMenu ? `${bar.currentMenu.name} on now` : null;
-}
-
-/** "Open until 1am", "Opens 5pm Thu", "Closed". */
-function hoursText(s: { open: boolean; detail: string | null }): string {
-  if (s.open) return s.detail ? `Open ${s.detail}` : 'Open now';
-  return s.detail ? s.detail.charAt(0).toUpperCase() + s.detail.slice(1) : 'Closed';
-}
-
 /**
  * Collection's Bars (board home-collection-bars): Want to go → Been. Want to
  * go is the bars you love and haven't had a drink at yet, nearest first
  * (from where near me last found you), with tonight's hours and everyone's
  * score. Been is every bar you've scored a drink at: your score for it (the
  * average of yours there) beside everyone's; the heart is a filter. From
- * Google Maps brings the bars someone saved there.
+ * Google Maps brings the bars someone saved there; See them on the map opens
+ * Discover's map with only Want to go's bars (step 3).
  */
 export function CollectionBars() {
   const desk = useBreakpoint() === 'desktop';
+  const router = useRouter();
   const { data: loved = [], isLoading, error } = useLovedBars();
+  const { want } = useWantToGo();
   const had = useMyHadDrinks().data ?? [];
-  const saved = useCollection().data?.drinks ?? [];
-  const place = useLastPlace((s) => s.place);
   const [stage, setStage] = useState<BarStage>('want');
   const [beenSort, setBeenSort] = useState<BeenSort>('score');
   const [lovedOnly, setLovedOnly] = useState(false);
@@ -64,31 +51,11 @@ export function CollectionBars() {
   const [importing, setImporting] = useState(false);
   const [now] = useState(() => Date.now());
   const allBeen = beenBars(had, beenSort);
-  const beenIds = new Set(allBeen.map((b) => b.venue.id));
   const lovedById = new Map(loved.map((b) => [b.id, b]));
-  const wantBars = loved.filter((b) => !beenIds.has(b.id));
-  const scores = useVenueScores([...allBeen.map((b) => b.venue.id), ...wantBars.map((b) => b.id)]);
+  const scores = useVenueScores(allBeen.map((b) => b.venue.id));
   if (error) return <Body tone="muted">Couldn’t load your bars. Try again in a moment.</Body>;
   if (isLoading) return null;
 
-  const miles = usesMiles(getLocales()[0]);
-  const want: WantBar[] = wantBars.map((b) => {
-    const km = place && b.latitude != null && b.longitude != null ? distanceKm(place, { latitude: b.latitude, longitude: b.longitude }) : null;
-    const status = hoursStatus(b.hours, new Date(now), b.timezone);
-    return {
-      id: b.id,
-      handle: b.handle,
-      name: b.name,
-      avatarUrl: b.avatarUrl,
-      place: b.place,
-      km,
-      away: km !== null ? formatDistance(km, miles) : null,
-      hours: status ? { open: status.open, text: hoursText(status) } : null,
-      // A classic's barName is whoever publishes it, not a drink saved from this bar.
-      why: whyLine(b, saved.filter((d) => !d.classic && d.barName === b.name).length),
-      everyone: scores.get(b.id) ?? null,
-    };
-  });
   const wantShown =
     wantSort === 'best' ? [...want].sort((a, b) => (b.everyone ?? -1) - (a.everyone ?? -1)) : nearestFirst(wantSort === 'open' ? want.filter((b) => b.hours?.open) : want);
   const been = lovedOnly ? allBeen.filter((b) => lovedById.has(b.venue.id)) : allBeen;
@@ -112,6 +79,7 @@ export function CollectionBars() {
             <>
               <StageHead>
                 <SortChoice options={WANT_SORTS} value={wantSort} onChange={setWantSort} label="Sort" />
+                {mapAvailable && want.some((b) => b.latitude !== null) ? <MapLink label={desk ? 'See them on the map' : 'Map'} onPress={() => router.navigate('/discover?list=want')} /> : null}
               </StageHead>
               {desk ? <TableHead cols={[{ label: 'Bar', width: null }, { label: 'Away', width: 90 }, { label: 'Tonight', width: 150 }, { label: 'Why it’s here', width: 230 }, { label: 'Everyone', width: 80, end: true }]} /> : null}
               <View role="list">
@@ -166,7 +134,21 @@ export function CollectionBars() {
   );
 }
 
+/** "See them on the map" (phones: "Map"), at the right of the sort. */
+function MapLink({ label, onPress }: { label: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="link" accessibilityLabel={`${label}: your Want to go bars`} onPress={onPress} style={styles.mapLink} hitSlop={4}>
+      <IconSymbol name="mappin.and.ellipse" size={16} color={ds.accentText} />
+      <DsText variant="body" color={ds.accentText}>
+        {label}
+      </DsText>
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
+  mapLink: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: layout.minTapTarget },
   wrap: { gap: space.xl },
   chips: { flexDirection: 'row', gap: space.xs + 2 },
   google: { paddingTop: space.lg, maxWidth: 420 },
