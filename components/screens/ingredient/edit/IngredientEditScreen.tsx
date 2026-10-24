@@ -205,7 +205,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
-  heroButtons: { position: 'absolute', right: space.lg, flexDirection: 'row', gap: space.sm },
+  // Its picture at the left, Add a photo at the right (ingredient-edit-proposal).
+  heroButtons: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', justifyContent: 'space-between', gap: space.sm },
   phoneBody: { gap: space.xl, marginTop: -space.lg, paddingTop: space.lg, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet },
   float: { position: 'absolute' },
   headRow: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
