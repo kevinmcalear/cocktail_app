@@ -159,7 +159,7 @@ export function PrepsSection({ items, keeps, cols, editing, onEdit, onAdd, onRem
 }
 
 /** Kit suggested to someone who has little: the bar tools, cheapest first, as faded tiles to tap. */
-const KIT_SUGGESTIONS = EQUIPMENT.filter((e) => e.kind === 'bar' && e.tier === '$').map((e) => e.id);
+export const KIT_SUGGESTIONS = EQUIPMENT.filter((e) => e.kind === 'bar' && e.tier === '$').map((e) => e.id);
 const kindName = (kind: string) => EQUIPMENT_KINDS.find((k) => k.id === kind)?.name ?? null;
 
 /**
