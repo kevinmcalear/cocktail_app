@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
+import { Caption, DrinkImage, DsText, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { STATUS } from '@/constants/palette';
 import { displayFaces, displayName, fontFamilies, radius, space } from '@/constants/tokens';
@@ -30,10 +31,11 @@ function lineFor(menu: MenuSummary, status: RowStatus, now: number): string {
   return metaLine(menu, now);
 }
 
-/** When a coming-up menu starts. A home menu's night is a day (2026-10-04), not an instant: read it as local midnight. */
+/** When a coming-up menu starts. A home menu's night is a day (2026-10-04), not an instant: read it as local midnight, even once sharing gave it a start. */
 function startOf(menu: MenuSummary): Date | null {
   const startsAt = menu.event?.startsAt ?? menu.startsAt;
-  return startsAt ? new Date(startsAt) : menu.menuDate ? new Date(`${menu.menuDate}T00:00:00`) : null;
+  if (menu.menuDate && (!startsAt || menu.barId === null)) return new Date(`${menu.menuDate}T00:00:00`);
+  return startsAt ? new Date(startsAt) : null;
 }
 
 /** A coming-up menu's day: the weekday over the date, tinted in the accent. */
@@ -60,13 +62,14 @@ function Trailing({ menu, status }: { menu: MenuSummary; status: RowStatus }) {
 
 /**
  * The first menu on a list (on now, else the next one): its drink band, its
- * name, one line, and On now or its day (menus-one-look Kit).
+ * name, one line, and On now or its day (menus-one-look Kit). `note` adds
+ * to the line, as on a row.
  */
-export function MenuCard({ menu, now }: { menu: MenuSummary; now: number }) {
+export function MenuCard({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
   const ds = useDs();
   const router = useRouter();
   const status = statusOf(menu, now);
-  const line = lineFor(menu, status, now);
+  const line = [lineFor(menu, status, now), note].filter(Boolean).join(' · ');
   return (
     <PressableScale
       role="link"
@@ -107,6 +110,58 @@ function Thumb({ menu, status }: { menu: MenuSummary; status: RowStatus }) {
   );
 }
 
+/** A drink's picture cut to the row's square: its photo, or with none, its sketch. */
+export function DrinkThumb({ itemId, imageUrl = null, name }: { itemId: string | null; imageUrl?: string | null; name: string }) {
+  const ds = useDs();
+  return (
+    <View style={[styles.thumb, { backgroundColor: ds.c.paper }]} aria-hidden>
+      <DrinkImage source={imageUrl} itemId={itemId} accessibilityLabel={name} radius={0} aspectRatio={1} thumb style={styles.fillThumb} />
+    </View>
+  );
+}
+
+interface MenuRowFrameProps {
+  /** What a screen reader hears for the whole row. */
+  label: string;
+  /** None: the row only shows (a release no longer public). */
+  onPress?: () => void;
+  thumb: ReactNode;
+  name: string;
+  line: string;
+  /** A draft: a dashed edge and its line in amber. */
+  dashed?: boolean;
+  trailing?: ReactNode;
+}
+
+/**
+ * The one menu row (menus-one-look): a 56 square, the name in the display
+ * face, one line, then what ends it. Your menus, and bar menus you saved or
+ * collected, all draw through it.
+ */
+export function MenuRowFrame({ label, onPress, thumb, name, line, dashed, trailing }: MenuRowFrameProps) {
+  const ds = useDs();
+  return (
+    <PressableScale
+      role={onPress ? 'link' : undefined}
+      disabled={!onPress}
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[styles.row, dashed ? { borderColor: ds.c.lineStrong, borderStyle: 'dashed' } : { borderColor: ds.c.line, backgroundColor: ds.c.surface }]}
+    >
+      {thumb}
+      <View style={styles.flex}>
+        <Headline numberOfLines={1} style={[displayName.row, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+          {name}
+        </Headline>
+        <Caption tone="muted" color={dashed ? readableAccent(STATUS.warning, ds.c.ground) : undefined} numberOfLines={1}>
+          {line}
+        </Caption>
+      </View>
+      {trailing === undefined && onPress ? <IconSymbol name="chevron.right" size={16} color={ds.c.muted} /> : trailing}
+    </PressableScale>
+  );
+}
+
 /**
  * A menu in a list, the same in both modes: a square of its first drink, its
  * name in the display face, one line, then On now, its day, or a chevron. A
@@ -114,29 +169,20 @@ function Thumb({ menu, status }: { menu: MenuSummary; status: RowStatus }) {
  * the line, like how many of the drinks you can make at home.
  */
 export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
-  const ds = useDs();
   const router = useRouter();
   const status = statusOf(menu, now);
   const draft = status === 'draft';
-  const label = [status === 'upcoming' ? null : menu.event?.name, lineFor(menu, status, now), note].filter(Boolean).join(' · ');
+  const line = [status === 'upcoming' ? null : menu.event?.name, lineFor(menu, status, now), note].filter(Boolean).join(' · ');
   return (
-    <PressableScale
-      role="link"
-      accessibilityLabel={[menu.name, status === 'on' ? 'on now' : draft ? 'draft' : null, label].filter(Boolean).join(', ')}
+    <MenuRowFrame
+      label={[menu.name, status === 'on' ? 'on now' : draft ? 'draft' : null, line].filter(Boolean).join(', ')}
       onPress={() => router.push(menuHref(menu.id))}
-      style={[styles.row, draft ? { borderColor: ds.c.lineStrong, borderStyle: 'dashed' } : { borderColor: ds.c.line, backgroundColor: ds.c.surface }]}
-    >
-      <Thumb menu={menu} status={status} />
-      <View style={styles.flex}>
-        <Headline numberOfLines={1} style={[displayName.row, { fontFamily: displayFaces[ds.displayFace].regular }]}>
-          {menu.name}
-        </Headline>
-        <Caption tone="muted" color={draft ? readableAccent(STATUS.warning, ds.c.ground) : undefined} numberOfLines={1}>
-          {label}
-        </Caption>
-      </View>
-      <Trailing menu={menu} status={status} />
-    </PressableScale>
+      thumb={<Thumb menu={menu} status={status} />}
+      name={menu.name}
+      line={line}
+      dashed={draft}
+      trailing={<Trailing menu={menu} status={status} />}
+    />
   );
 }
 
@@ -175,6 +221,7 @@ const styles = StyleSheet.create({
   },
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, overflow: 'hidden', borderCurve: 'continuous' },
   empty: { alignItems: 'center', justifyContent: 'center' },
+  fillThumb: { width: THUMB, height: THUMB },
   slot: { width: 22, height: 32, borderRadius: radius.mark + 1, borderWidth: 1.5, borderStyle: 'dashed' },
   past: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, paddingHorizontal: 2, borderBottomWidth: StyleSheet.hairlineWidth },
   mono: { fontFamily: fontFamilies.mono },

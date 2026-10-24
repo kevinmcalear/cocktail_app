@@ -1,24 +1,26 @@
 import { dayLabel, parseDay, toDay } from '@/lib/collection';
 import type { MenuDetail, MenuDrink, MenuSectionDetail, MenuStatus, MenuSummary } from '@/types/menus';
 
-type Dated = Pick<MenuSummary, 'startsAt' | 'endsAt'> & Partial<Pick<MenuSummary, 'menuDate'>>;
+type Dated = Pick<MenuSummary, 'startsAt' | 'endsAt'> & Partial<Pick<MenuSummary, 'menuDate' | 'barId'>>;
 
 /**
  * Where a menu is in its life. A venue's menu mirrors private.menu_on_now in
  * the database: no dates is a draft, a future start is coming up, a past end
  * is previous. A home menu has a night (menuDate) instead, and with one it's
  * a finished menu: on that day, coming up before it, previous after. Only an
- * undated home menu is still a draft.
+ * undated home menu is still a draft, even once sharing gave it a start
+ * (`barId` null says it's a home menu).
  */
 export function menuStatus(menu: Dated, now: number): MenuStatus {
   const start = menu.startsAt ? Date.parse(menu.startsAt) : null;
   const end = menu.endsAt ? Date.parse(menu.endsAt) : null;
   if (end !== null && end <= now) return 'previous';
-  if (start === null && menu.menuDate) {
+  // A home menu's night is its date, even once sharing gave it a start. A venue's calendar wins when it has one.
+  if (menu.menuDate && (start === null || menu.barId === null)) {
     const today = toDay(new Date(now));
     return menu.menuDate > today ? 'upcoming' : menu.menuDate === today ? 'on' : 'previous';
   }
-  if (start === null) return 'draft';
+  if (start === null || menu.barId === null) return 'draft';
   if (start > now) return 'upcoming';
   return 'on';
 }
@@ -286,9 +288,11 @@ export function draftLine(menu: Pick<MenuSummary, 'itemIds' | 'updatedAt'> & { s
  * drinks · from Fri 3 Oct", "One night · 4 drinks · Fri 31 Oct". `tiled`: the
  * row shows the day in a tile, so a one-night menu leaves it off the line.
  */
-export function comingUpLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'menuDate' | 'itemIds' | 'event' | 'guestCount'>, locale?: string, tiled = false): string {
-  const night = isOneNightRun(menu.startsAt, menu.endsAt) || (!menu.startsAt && !!menu.menuDate);
-  const start = menu.event?.startsAt ?? menu.startsAt ?? (menu.menuDate ? `${menu.menuDate}T00:00:00` : null);
+export function comingUpLine(menu: Pick<MenuSummary, 'startsAt' | 'endsAt' | 'menuDate' | 'itemIds' | 'event' | 'guestCount'> & Partial<Pick<MenuSummary, 'barId'>>, locale?: string, tiled = false): string {
+  // A home menu's night is its date, even once sharing gave it a start.
+  const homeNight = menu.menuDate && (!menu.startsAt || menu.barId === null) ? menu.menuDate : null;
+  const night = !!homeNight || isOneNightRun(menu.startsAt, menu.endsAt);
+  const start = homeNight ? `${homeNight}T00:00:00` : (menu.event?.startsAt ?? menu.startsAt);
   const date = start ? day(start, locale) : null;
   return [
     menu.event ? 'Takeover' : night ? 'One night' : null,
