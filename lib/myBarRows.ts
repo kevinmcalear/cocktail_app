@@ -238,12 +238,14 @@ export function myBarRows<B extends ShelfBottle, D extends Drink, G extends Grou
 /**
  * A tablet's section card (mybar-tablet-proposal, option C): how many of its
  * `items` fit as tiles `tile` wide with `gap` between, across `width`, in
- * `rows` rows after the Add tile, and how many are left for "+N more".
+ * `rows` rows after the Add tile, and how many are left for "+N more". When
+ * everything shows, up to `ideas` faded suggestions finish the last row.
  */
-export function cardFit(width: number, items: number, { tile, gap, rows }: { tile: number; gap: number; rows: number }): { shown: number; more: number } {
+export function cardFit(width: number, items: number, { tile, gap, rows, ideas = 0 }: { tile: number; gap: number; rows: number; ideas?: number }): { shown: number; more: number; ideas: number } {
   const across = Math.max(1, Math.floor((width + gap) / (tile + gap)));
   const shown = Math.min(items, Math.max(0, rows * across - 1));
-  return { shown, more: items - shown };
+  const more = items - shown;
+  return { shown, more, ideas: more ? 0 : Math.min(ideas, (across - ((shown + 1) % across)) % across) };
 }
 
 /** Two drinks side by side: a desktop's What to make lays its drinks out as cards, two to a row. */

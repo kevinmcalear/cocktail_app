@@ -183,8 +183,12 @@ console.log('myBarRows checks passed');
 // A tablet's section card: four 56 pt tiles fit 254 pt, so two rows hold Add and seven.
 {
   const fit = { tile: 56, gap: 10, rows: 2 };
-  assert.deepEqual(cardFit(254, 9, fit), { shown: 7, more: 2 });
-  assert.deepEqual(cardFit(254, 3, fit), { shown: 3, more: 0 });
+  assert.deepEqual(cardFit(254, 9, fit), { shown: 7, more: 2, ideas: 0 });
+  assert.deepEqual(cardFit(254, 3, fit), { shown: 3, more: 0, ideas: 0 });
   // Too narrow for even one: still one across, so the Add tile and one more.
-  assert.deepEqual(cardFit(20, 5, fit), { shown: 1, more: 4 });
+  assert.deepEqual(cardFit(20, 5, fit), { shown: 1, more: 4, ideas: 0 });
+  // Suggestions finish the row (Add and three of six across leave two), never past it, and never with things hidden.
+  assert.deepEqual(cardFit(386, 3, { ...fit, ideas: 5 }), { shown: 3, more: 0, ideas: 2 });
+  assert.deepEqual(cardFit(254, 3, { ...fit, ideas: 5 }), { shown: 3, more: 0, ideas: 0 });
+  assert.deepEqual(cardFit(254, 9, { ...fit, ideas: 5 }), { shown: 7, more: 2, ideas: 0 });
 }

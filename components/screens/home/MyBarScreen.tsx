@@ -72,7 +72,7 @@ export function MyBarScreen() {
   // Portrait opens on the best few drinks; See all lists the rest.
   const [allMake, setAllMake] = useState(false);
   const brief = overview && portrait && !allMake && !search.query.trim();
-  const cards = useSectionCards({ on: overview, bottles: m.bottles, pantry: m.pantry, fridge: m.fridge, lab: m.lab, preps: m.preps, owned: m.owned, shelf: bar.shelf, onShelf: bar.shelfIds, counts, onItem: setOpened, onSection: (s) => setShow([s]) });
+  const cards = useSectionCards({ on: overview, bottles: m.bottles, pantry: m.pantry, fridge: m.fridge, lab: m.lab, preps: m.preps, owned: m.owned, shelf: bar.shelf, onShelf: bar.shelfIds, counts, onItem: setOpened, onSection: (s) => setShow([s]), onAddIds: addIds, onToggleKit: m.toggleKit });
 
   // The starter stays up from an empty shelf until Show me, so the bottles tapped in there don't throw you out of it.
   // Only once every shelf row has its name: a query between loads mustn't read as an empty shelf.

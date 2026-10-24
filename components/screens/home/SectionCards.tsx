@@ -8,8 +8,10 @@ import { fontFamilies, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
 import { SECTIONS } from '@/lib/barSections';
 import { cardFit, type ShelfSection } from '@/lib/myBarRows';
-import { PANTRY } from '@/lib/pantry';
+import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import { equipmentById } from '@/lib/techniques';
+
+import { KIT_SUGGESTIONS } from './BarSections';
 
 const TILE = 56;
 const GAP = space.sm + 2;
@@ -27,6 +29,8 @@ export interface SectionCardData {
   section: ShelfSection;
   count: number;
   tiles: CardTile[];
+  /** Faded suggestions to tap in (the staples you don't have, common kit), finishing the last row. */
+  ideas: CardTile[];
 }
 
 /**
@@ -44,7 +48,6 @@ export function SectionCards({ cards, onOpen, onAdd }: { cards: SectionCardData[
           {row.map((card) => (
             <SectionCard key={card.section} card={card} onOpen={() => (card.count ? onOpen(card.section) : onAdd(card.section))} onAdd={() => onAdd(card.section)} />
           ))}
-          {row.length < 2 ? <View style={styles.flex} /> : null}
         </View>
       ))}
     </View>
@@ -56,8 +59,9 @@ function SectionCard({ card, onOpen, onAdd }: { card: SectionCardData; onOpen: (
   const [width, setWidth] = useState(0);
   const { title, add } = SECTIONS[card.section];
   // As many tiles as fit across the card, two rows of them; the Add tile takes the first place.
-  const fit = cardFit(width - 2 * space.md, card.tiles.length, { tile: TILE, gap: GAP, rows: CARD_ROWS });
+  const fit = cardFit(width - 2 * space.md, card.tiles.length, { tile: TILE, gap: GAP, rows: CARD_ROWS, ideas: card.ideas.length });
   const shown = width ? card.tiles.slice(0, fit.shown) : [];
+  const ideas = width ? card.ideas.slice(0, fit.ideas) : [];
   const more = width ? fit.more : 0;
   return (
     <View role="group" accessibilityLabel={title} style={[styles.card, { backgroundColor: ds.c.surface }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
@@ -87,6 +91,16 @@ function SectionCard({ card, onOpen, onAdd }: { card: SectionCardData; onOpen: (
             </Caption>
           </PressableScale>
         ))}
+        {ideas.map((t) => (
+          <PressableScale key={t.key} role="button" accessibilityLabel={`I have ${t.name}`} onPress={t.onPress} style={styles.tile}>
+            <View style={[styles.square, styles.dashed, { borderColor: ds.c.lineStrong }]}>
+              <View style={styles.faded}>{t.picture}</View>
+            </View>
+            <Caption tone="muted" numberOfLines={2} style={styles.name}>
+              {t.name}
+            </Caption>
+          </PressableScale>
+        ))}
       </View>
     </View>
   );
@@ -96,7 +110,7 @@ function SectionCard({ card, onOpen, onAdd }: { card: SectionCardData; onOpen: (
  * Each section's card: what's in it, newest first as My Bar lists it. A
  * shelf tile opens the bottle sheet, kit its page.
  */
-export function useSectionCards({ on, bottles, pantry, fridge, lab, preps, owned, shelf, onShelf, counts, onItem, onSection }: {
+export function useSectionCards({ on, bottles, pantry, fridge, lab, preps, owned, shelf, onShelf, counts, onItem, onSection, onAddIds, onToggleKit }: {
   /** Only a tablet's overview shows the cards; elsewhere none are built. */
   on: boolean;
   bottles: ShelfItem[];
@@ -112,6 +126,10 @@ export function useSectionCards({ on, bottles, pantry, fridge, lab, preps, owned
   onItem: (item: ShelfItem) => void;
   /** A staple whose shelf row hasn't loaded opens its section instead. */
   onSection: (section: ShelfSection) => void;
+  /** A faded staple's tap: it goes on the shelf (with water, as the fridge section adds it). */
+  onAddIds: (ids: string[]) => void;
+  /** A faded piece of kit's tap. */
+  onToggleKit: (id: string) => void;
 }): SectionCardData[] {
   const router = useRouter();
   if (!on) return [];
@@ -125,6 +143,15 @@ export function useSectionCards({ on, bottles, pantry, fridge, lab, preps, owned
     const item = byId.get(id);
     return [item ? shelfTile(item, p.label) : { key: id, name: p.label, picture: <IngredientThumb id={id} name={p.name} size={TILE} />, onPress: () => onSection('fridge') }];
   });
+  const water = ids.get(PANTRY_WATER);
+  const missing = PANTRY.flatMap((p) => {
+    const id = ids.get(p.name);
+    return id && !onShelf.has(id) ? [{ key: id, name: p.label, picture: <IngredientThumb id={id} name={p.name} size={TILE} />, onPress: () => onAddIds(water && !onShelf.has(water) ? [id, water] : [id]) }] : [];
+  });
+  const kitIdeas = KIT_SUGGESTIONS.filter((id) => !owned.includes(id)).flatMap((id) => {
+    const e = equipmentById(id);
+    return e ? [{ key: e.id, name: e.name, picture: <EquipmentThumb id={e.id} name={e.name} size={TILE} />, onPress: () => onToggleKit(e.id) }] : [];
+  });
   const kit = owned.flatMap((id) => {
     const e = equipmentById(id);
     return e ? [{ key: e.id, name: e.name, picture: <EquipmentThumb id={e.id} name={e.name} size={TILE} />, onPress: () => router.push(`/equipment/${e.id}` as never) }] : [];
@@ -136,7 +163,8 @@ export function useSectionCards({ on, bottles, pantry, fridge, lab, preps, owned
     preps: preps.map((p) => shelfTile(p)),
     kit,
   };
-  return (Object.keys(tiles) as ShelfSection[]).map((section) => ({ section, count: counts[section], tiles: tiles[section] }));
+  const ideas: Partial<Record<ShelfSection, CardTile[]>> = { fridge: missing, kit: kitIdeas };
+  return (Object.keys(tiles) as ShelfSection[]).map((section) => ({ section, count: counts[section], tiles: tiles[section], ideas: ideas[section] ?? [] }));
 }
 
 const styles = StyleSheet.create({
@@ -150,5 +178,6 @@ const styles = StyleSheet.create({
   tile: { width: TILE, gap: space.xs + 2 },
   square: { width: TILE, height: TILE, borderRadius: radius.control - 2, borderCurve: 'continuous', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   dashed: { borderStyle: 'dashed', borderWidth: 1.5 },
+  faded: { opacity: 0.4 },
   name: { fontFamily: fontFamilies.bodyMedium },
 });
