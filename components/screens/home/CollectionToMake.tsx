@@ -65,8 +65,8 @@ export function ToMake({ drinks, shelf }: { drinks: MakeDrink[]; shelf: ShelfMat
   const [making, setMaking] = useState<MakeDrink | null>(null);
   if (!drinks.length) return <Body tone="muted">Tap the bookmark on any drink to save it here for a night in. Drinks you collect from bars land here too.</Body>;
   const groups = toMakeGroups(drinks, shelf);
-  // A bar's published drink opens its public page; a classic its own.
-  const href = (d: MakeDrink) => (d.liveMode ? `/d/${d.itemId}` : itemHref('Cocktail', d.itemId!));
+  // The in-app drink page, a bar's published drink too (a locked spec shows why).
+  const href = (d: MakeDrink) => itemHref('Cocktail', d.itemId!);
   const made = (d: MakeDrink) => (
     <Button label="Made it" size="sm" variant="secondary" accessibilityLabel={`I made ${d.name}`} onPress={() => ageGate.gate(() => setMaking(d))} />
   );

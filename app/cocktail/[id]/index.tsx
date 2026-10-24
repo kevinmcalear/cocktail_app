@@ -1,6 +1,7 @@
 import { Redirect, useLocalSearchParams } from "expo-router";
 import React, { lazy, Suspense, useState } from "react";
 
+import { useSignedIn } from "@/ctx/AuthContext";
 import { useCocktail } from "@/hooks/useCocktails";
 import { useStudyPile } from "@/hooks/useStudyPile";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
@@ -8,6 +9,7 @@ import { useItemEditAccess } from "@/hooks/useViewAs";
 import { heroPicture } from "@/lib/itemImages";
 import { DrinkLoading, DrinkScreen } from "@/components/screens/drink/DrinkScreen";
 import { CouldNotLoad } from "@/components/screens/safety/NotAvailable";
+import { VisitorDrink } from "@/components/screens/drink/VisitorDrink";
 
 // Editing in place only loads when someone edits, which keeps its gesture code off the web's first load.
 const DrinkEditScreen = lazy(() => import("@/components/screens/drink/edit/DrinkEditScreen").then((m) => ({ default: m.DrinkEditScreen })));
@@ -21,6 +23,7 @@ export default function CocktailDetailsScreen() {
     const { id, batch } = useLocalSearchParams<{ id: string; batch?: string }>();
 
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
+    const signedIn = useSignedIn();
 
     // A placeholder (the tapped row's name and picture) paints the hero only: the rest waits for the drink.
     const query = useCocktail(id as string, { seeded: true });
@@ -40,8 +43,8 @@ export default function CocktailDetailsScreen() {
     const editAccess = useItemEditAccess(cocktail);
     const [isEditing, setIsEditing] = useState(false);
 
-    // Not yours to read (another bar's drink): its public page, if it's published.
-    if ((error as { code?: string } | null)?.code === "PGRST116") return <Redirect href={`/d/${id}`} />;
+    // Not yours to read (another bar's drink): signed in, the in-app page from what the bar published; else its public page.
+    if ((error as { code?: string } | null)?.code === "PGRST116") return signedIn ? <VisitorDrink id={id as string} /> : <Redirect href={`/d/${id}`} />;
     if (error) return <CouldNotLoad what="drink" failed={{ retry: () => void refetch() }} />;
     // The drink page reads it; Edit turns the same page into editing in place (DrinkEditScreen).
     if (!isEditing) {
