@@ -42,7 +42,7 @@ export function ScreenHeader({ title, display, actions, center }: { title?: stri
     );
   }
   return (
-    <View style={[styles.row, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
+    <View style={[styles.row, center ? styles.tight : null, { paddingTop: insets.top + space.sm, paddingHorizontal: gutter }]}>
       <View style={styles.start}>
         <VenueSwitcher />
         {title && !center ? (
@@ -73,6 +73,8 @@ export function ScreenHeader({ title, display, actions, center }: { title?: stri
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
+  // A pill in the middle (Discover's) gets the room: the board's 8 between it, the logo and you.
+  tight: { gap: space.sm },
   // Wide web: the space above the title, where a phone has the logo row.
   wide: { height: space.xl },
   wideTitled: { minHeight: space.xxl + space.md, paddingTop: space.md },

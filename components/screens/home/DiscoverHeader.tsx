@@ -5,47 +5,39 @@ import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { GlassSurface, PressableScale, useDs } from '@/components/ds';
+import { useDs } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, space, springs } from '@/constants/tokens';
+import { space, springs } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
-import { BackPill, SearchPill } from './DiscoverControls';
+import { BackPill, FiltersButton, SearchPill } from './DiscoverControls';
 
 interface DiscoverHeaderProps {
   query: string;
-  /** On the map, the pill searches what it shows. */
-  onMap: boolean;
   onSearch: () => void;
   onClear: () => void;
-  /** How many filters are on; the options button fills in when any are. */
+  /** Where Discover looks, at the pill's end (PlaceToken). */
+  place: ReactNode;
+  /** How many filters are on, counted on the Filters button. */
   filters: number;
-  onOptions: () => void;
+  onFilters: () => void;
   /** A bar open on the phone map: the pill becomes its back arrow and name. */
   bar?: { name: string; onBack: () => void } | null;
 }
 
 /**
- * Discover's phone header: the logo, the search pill filling the middle, the
- * options button (list or map, where, filters) and you, on one row (Eddie,
- * 13 Oct). The pill is the page's identity, so "Discover" is a heading only
- * screen readers hear.
+ * Discover's phone header: the logo, the search pill carrying the place
+ * ("Search | This area"), the Filters button with its count, and you, on one
+ * row (discover-options-proposal, approved 24 Oct). The pill is the page's
+ * identity, so "Discover" is a heading only screen readers hear.
  */
-export function DiscoverHeader({ query, onMap, onSearch, onClear, filters, onOptions, bar }: DiscoverHeaderProps) {
-  const ds = useDs();
-  const on = filters > 0;
-  const ink = on ? ds.c.ground : ds.c.ink;
+export function DiscoverHeader({ query, onSearch, onClear, place, filters, onFilters, bar }: DiscoverHeaderProps) {
   const pill = (
     <View style={styles.middle}>
       <View style={styles.flex}>
-        {bar ? <BackPill name={bar.name} onBack={bar.onBack} onOpen={onSearch} /> : <SearchPill compact query={query} placeholder={onMap ? 'Search this area' : 'Bars and drinks'} label={onMap ? 'Search this area' : 'Search bars and drinks'} onOpen={onSearch} onClear={onClear} />}
+        {bar ? <BackPill name={bar.name} onBack={bar.onBack} onOpen={onSearch} /> : <SearchPill compact query={query} placeholder="Search" label="Search bars and drinks" onOpen={onSearch} onClear={onClear} place={place} />}
       </View>
-      <PressableScale accessibilityLabel={on ? `Options: list or map, where, and filters, ${filters} on` : 'Options: list or map, where, and filters'} onPress={onOptions} hitSlop={4}>
-        <GlassSurface interactive tint={on ? ds.c.ink : undefined} style={styles.options}>
-          <IconSymbol name="line.3.horizontal.decrease" size={18} color={ink} />
-        </GlassSurface>
-      </PressableScale>
+      <FiltersButton filters={filters} onPress={onFilters} />
     </View>
   );
   return <ScreenHeader title="Discover" center={pill} />;
@@ -129,7 +121,6 @@ export function ScrollAwayHeader({ away, onHeight, children }: { away: ReturnTyp
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   middle: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  options: { width: layout.minTapTarget, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   header: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: space.sm },
   fade: { position: 'absolute', left: 0, right: 0, bottom: -space.lg, height: space.lg },
   status: { position: 'absolute', top: 0, left: 0, right: 0 },
