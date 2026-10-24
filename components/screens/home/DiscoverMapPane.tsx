@@ -2,10 +2,10 @@ import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { GlassSurface, useDs } from '@/components/ds';
+import { useDs } from '@/components/ds';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { AlsoMentions, DrinkAtBarList, DrinkAtBarRow, type MoreDrinks } from '@/components/screens/home/DrinksAtBars';
-import { radius, space } from '@/constants/tokens';
+import { space } from '@/constants/tokens';
 import { useBestDrink, useRowScores } from '@/hooks/useBestDrink';
 import { useTopBars } from '@/hooks/useDiscover';
 import { useDiscoverBars, useDiscoverList, useTileBars } from '@/hooks/useDiscoverDrinks';
@@ -16,7 +16,7 @@ import { namePins, searchTitle } from '@/lib/discoverMatch';
 import { areaLabel, areaParams, earlyNote, type Area } from '@/lib/nearMe';
 import { MIN_RANKERS, plural } from '@/lib/ranking';
 
-import { MapLayers, SearchHere, type MapLayer } from './DiscoverControls';
+import { GlassLayers, SearchHere, type MapLayer } from './DiscoverControls';
 import { DiscoverMap } from './DiscoverMap';
 import { useFindMe } from './FindMe';
 import { MapCredit } from './MapCredit';
@@ -144,7 +144,7 @@ export function DiscoverMapPane({ area, onArea, drink: given, filter, results, o
   useEffect(() => onViewport?.(moves.settled), [moves.settled, onViewport]);
 
   const title = byDrinks ? (searching ? searchTitle(filter.search) : results.title) : `${byDrink ? `Best ${drink.name}` : 'Top bars'} ${areaLabel(area)}`;
-  const layers = <GlassSurface style={styles.glassRow}><MapLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} onGlass /></GlassSurface>;
+  const layers = <GlassLayers layer={layer} onLayer={setLayer} drinkName={drink?.name ?? null} searching={searching} nearest={canNear} />;
   const searchHere = moves.offer ? <SearchHere onPress={() => moves.offer && moves.search(moves.offer)} /> : null;
 
   const ranked = rows.data?.ranked ?? [];
@@ -289,7 +289,6 @@ const styles = StyleSheet.create({
   overlayTop: { top: space.lg },
   // Clear of the map's attribution line.
   overlayBottom: { bottom: space.xxxl, maxWidth: 420 },
-  glassRow: { alignSelf: 'flex-start', padding: space.xs, borderRadius: radius.pill },
   sheet: { paddingHorizontal: space.lg, paddingBottom: space.lg },
   sheetHead: { gap: space.sm, paddingBottom: space.sm },
   sheetEmpty: { gap: space.md },

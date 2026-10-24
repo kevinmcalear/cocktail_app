@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { BackHandler, StyleSheet, View } from 'react-native';
+import { BackHandler, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Chip, DsText, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -196,6 +196,17 @@ export function MapLayers({ layer, onLayer, drinkName, searching, nearest, onGla
   );
 }
 
+/** The layers over the map in a glass track, scrolling sideways when they don't fit (a phone's four, with Nearest). */
+export function GlassLayers(props: Omit<MapLayersProps, 'onGlass'>) {
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.edge} contentContainerStyle={styles.edgeRow}>
+      <GlassSurface style={styles.track}>
+        <MapLayers {...props} onGlass />
+      </GlassSurface>
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   glassChips: { gap: space.xs + 2 },
@@ -225,6 +236,9 @@ const styles = StyleSheet.create({
   countText: { fontFamily: fontFamilies.bodySemiBold },
   corner: { position: 'absolute', top: -space.xs, right: -space.xs },
   track: { padding: space.xs, borderRadius: radius.pill },
+  // Edge to edge, so the track scrolls out under the screen's sides.
+  edge: { marginHorizontal: -space.lg, flexGrow: 0 },
+  edgeRow: { paddingHorizontal: space.lg },
   lifted: { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 24, elevation: 6 },
   views: { flexDirection: 'row', gap: 2 },
   view: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: VIEW_BUTTON, paddingHorizontal: space.lg, borderRadius: radius.pill, borderCurve: 'continuous' },
