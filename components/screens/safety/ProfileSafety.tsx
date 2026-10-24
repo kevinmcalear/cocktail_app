@@ -10,30 +10,46 @@ import type { Profile } from '@/hooks/useProfiles';
 import { useMyBlocks, useProfileUserId, useSetBlocked } from '@/hooks/useSafety';
 import { parseProfileRef } from '@/lib/profiles';
 
+import { useHideBarToggle } from '../kept/useHideBarToggle';
+
 import { ReportSheet } from './ReportSheet';
 
 export const BLOCK_EFFECT = 'You won’t see each other’s drinks, rankings or profile. They aren’t told you blocked them.';
 
 /**
  * "More" on someone else's profile: report it, and for a person, block
- * them. Signed in only. Bars can be reported but not blocked: blocks are
- * between people.
+ * them; for a bar, hide it from your Discover. Signed in only. Bars can be
+ * reported but not blocked: blocks are between people.
  */
 export function ProfileSafety({ profile }: { profile: Profile }) {
   const myId = useUserId();
   const { data: userId } = useProfileUserId(profile.kind === 'person' ? profile.id : null);
   const [sheet, setSheet] = useState<'menu' | 'report' | 'block' | null>(null);
   const setBlocked = useSetBlocked();
+  const hiding = useHideBarToggle(profile.id, profile.display_name);
   // Not on my own profile, or on a private one (only its owners see those).
   if (!myId || userId === myId || !profile.is_public) return null;
   const name = `@${profile.handle}`;
   const canBlock = profile.kind === 'person' && !!userId;
+  const bar = profile.kind === 'bar';
+  const does = [bar ? (hiding.hidden ? 'show in Discover' : 'hide from Discover') : null, 'report', canBlock ? 'block' : null].filter(Boolean).join(', ');
 
   return (
     <>
-      <GlassButton accessibilityLabel={`More for ${name}: ${canBlock ? 'report or block' : 'report'}`} icon="ellipsis" onPress={() => setSheet('menu')} />
+      <GlassButton accessibilityLabel={`More for ${name}: ${does}`} icon="ellipsis" onPress={() => setSheet('menu')} />
       {sheet === 'menu' ? (
         <MenuSheet visible onClose={() => setSheet(null)} title={profile.display_name} subtitle={name}>
+          {bar ? (
+            <Button
+              label={hiding.hidden ? 'Show in Discover' : 'Hide from Discover'}
+              icon={hiding.hidden ? 'eye' : 'eye.slash'}
+              variant="secondary"
+              onPress={() => {
+                setSheet(null);
+                hiding.toggle();
+              }}
+            />
+          ) : null}
           <Button label={`Report ${name}`} icon="flag" variant="secondary" onPress={() => setSheet('report')} />
           {canBlock ? <Button label={`Block ${name}`} variant="secondary" onPress={() => setSheet('block')} /> : null}
         </MenuSheet>

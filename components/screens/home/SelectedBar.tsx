@@ -3,11 +3,10 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Caption, Headline, PressableScale, RowScore, Surface, Tag, useDs } from '@/components/ds';
-import { AddressLine, barPlace, directionsTarget, HoursLine } from '@/components/screens/bar/BarFactLines';
-import { DirectionsButton } from '@/components/screens/bar/Directions';
+import { Button, Caption, GlassButton, Headline, PressableScale, RowScore, Surface, Tag, useDs } from '@/components/ds';
+import { barPlace, directionsTarget, HoursLine } from '@/components/screens/bar/BarFactLines';
+import { DirectionsButton, MapsButton } from '@/components/screens/bar/Directions';
 import { type DrinkScores } from '@/components/screens/home/DrinksAtBars';
-import { HideBarButton } from '@/components/screens/kept/HideBarButton';
 import { LoveBarButton } from '@/components/screens/kept/LoveBarButton';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
@@ -43,7 +42,7 @@ interface SelectedBarProps {
   variant?: 'card' | 'sheet';
   /** Where the person is, for "400 m" and Directions; null when unknown. */
   me?: Point;
-  /** How many results the search found: the way back reads "All 14". */
+  /** How many results the search found: the way back says "Back to all 14 results". */
   total?: number | null;
   onClose: () => void;
 }
@@ -52,8 +51,10 @@ interface SelectedBarProps {
  * A tapped pin. Searching, the bar's matches come first, one at a time
  * ("1 of 2 at Little Rye", disc-search-pin), then the bar they're at and
  * what else is good there. Browsing, the bar (disc-map-bar): its type and
- * place, score, Love, hours and address, Directions and Open bar, its top
- * drinks, then (phones) its drinks in the sheet's list below.
+ * place, score, Love, hours, its top drinks, then (phones) its drinks in the
+ * sheet's list below. On a phone the bar's row opens it, the pin button
+ * beside the heart opens its listing in Apple or Google Maps, and a close
+ * button in the corner goes back to the results, as maps apps draw a place.
  */
 export function SelectedBar({ pin, drinks, scores, query = '', area, lead = false, variant = 'card', me = null, total, onClose }: SelectedBarProps) {
   const ds = useDs();
@@ -66,8 +67,9 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   const openBar = () => router.push(barSearchHref(pin.handle || pin.id, query) as never);
   const place = barPlace(facts?.bar_type, pin.place);
   const away = facts ? awayFrom(me, facts, usesMiles(getLocales()[0])) : null;
-  // Wide card: how far, in place of the neighbourhood (Directions has the address).
-  const where = (variant === 'card' ? awayFrom(me, pin, usesMiles(getLocales()[0])) : null) || place || 'Bar';
+  // How far before the neighbourhood, so a long place never cuts it off; the wide card has only how far (Directions has the address).
+  const near = awayFrom(me, pin, usesMiles(getLocales()[0]));
+  const where = (variant === 'card' ? near : [near, place].filter(Boolean).join(' · ')) || place || 'Bar';
   const target = directionsTarget(facts, me);
   const count = pin.drinks ?? drinks.length;
   // A score or Closed sits at the right; an early bar says so under the place, and an unranked one says nothing.
@@ -75,15 +77,17 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
   const early = !pin.closed && pin.score === null && pin.rankers ? `Early · ${peopleCount(pin.rankers)}` : null;
   const said = pin.closed ? pin.closed : pin.score !== null ? `Score ${formatScore(pin.score)}, ${pin.rankers} ranked` : pin.rankers ? `Early: ${peopleCount(pin.rankers)} ranked` : null;
 
+  const back = <GlassButton icon="xmark" accessibilityLabel={total ? `Back to all ${total} results` : 'Back to all results'} onPress={onClose} />;
+
   if (hero) {
     // The drink, then the bar it's at: a row that opens the bar.
     return (
       <View style={styles.card}>
-        <View style={styles.actions}>
-          <Button label={total ? `All ${total}` : 'All results'} icon="chevron.left" variant="ghost" onPress={onClose} />
+        <View style={styles.top}>
           {matches.length > 1 ? (
-            <Caption tone="muted" role="status">{`${page + 1} of ${matches.length} at ${pin.name}`}</Caption>
-          ) : null}
+            <Caption tone="muted" role="status" style={styles.flex}>{`${page + 1} of ${matches.length} at ${pin.name}`}</Caption>
+          ) : <View style={styles.flex} />}
+          {back}
         </View>
         <DrinkHero key={hero.id} drink={hero} query={query} area={area} />
         {next ? <NextMatch drink={next} score={scores?.drinks[next.id]} count={matches.length} page={page} onNext={() => setPage((page + 1) % matches.length)} /> : null}
@@ -104,42 +108,34 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
     );
   }
 
-  const bar = (
-    <View style={styles.cardRow}>
-      <View style={[styles.cardRow, styles.barHead]} accessible accessibilityLabel={[`${pin.name}, ${where}`, said].filter(Boolean).join('. ')}>
-        <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={48} />
-        <View style={styles.flex}>
-          <Headline numberOfLines={2}>{pin.name}</Headline>
-          <Caption tone="muted" numberOfLines={1}>
-            {where}
-          </Caption>
-          {early ? <Caption tone="muted">{early}</Caption> : null}
-        </View>
-        {score}
+  const head = (
+    <>
+      <BarMark logoUrl={pin.logo} name={pin.name} profileId={pin.id} brand={pin.brand} size={48} />
+      <View style={styles.flex}>
+        <Headline numberOfLines={2}>{pin.name}</Headline>
+        <Caption tone="muted" numberOfLines={1}>
+          {where}
+        </Caption>
+        {early ? <Caption tone="muted">{early}</Caption> : null}
       </View>
-      <LoveBarButton profileId={pin.id} name={pin.name} />
-      <HideBarButton profileId={pin.id} name={pin.name} />
-    </View>
+      {score}
+    </>
   );
-  const facts$ = (
-    <View style={styles.facts}>
-      <HoursLine facts={facts} />
-      <AddressLine facts={facts} from={me} />
-    </View>
-  );
+  const headLabel = [`${pin.name}, ${where}`, said].filter(Boolean).join('. ');
 
   if (variant === 'sheet') {
     return (
       <View style={styles.card}>
-        <View style={styles.actions}>
-          <Button label="All results" icon="chevron.left" variant="ghost" onPress={onClose} />
-          <View style={styles.right}>
-            <DirectionsButton target={target} />
-            <Button label="Open bar" variant="secondary" onPress={openBar} />
-          </View>
+        <View style={styles.top}>{back}</View>
+        <View style={styles.cardRow}>
+          {/* The bar's row is the way in: no Open bar button. */}
+          <PressableScale role="link" accessibilityLabel={`${headLabel}. Open the bar`} onPress={openBar} style={[styles.cardRow, styles.barHead]}>
+            {head}
+          </PressableScale>
+          <LoveBarButton profileId={pin.id} name={pin.name} />
+          <MapsButton target={target} />
         </View>
-        {bar}
-        {facts$}
+        <HoursLine facts={facts} />
         <BarTopDrinks barId={pin.id} />
         {!pin.closed && drinks.length ? (
           <Caption tone="muted" role="heading">
@@ -149,6 +145,15 @@ export function SelectedBar({ pin, drinks, scores, query = '', area, lead = fals
       </View>
     );
   }
+
+  const bar = (
+    <View style={styles.cardRow}>
+      <View style={[styles.cardRow, styles.barHead]} accessible accessibilityLabel={headLabel}>
+        {head}
+      </View>
+      <LoveBarButton profileId={pin.id} name={pin.name} />
+    </View>
+  );
 
   // Wide screens: the bar's drinks, two rows of the shelves' grid, the rest in place (disc-desk-wide).
   return (
@@ -199,16 +204,14 @@ const styles = StyleSheet.create({
   cardRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
   // A wrapped name is taller than the mark: top-align them.
   barHead: { alignItems: 'flex-start' },
-  facts: { gap: space.xs },
   // The same room above the drinks as below them.
   drinks: { marginVertical: space.sm },
   // The count beside the buttons, as drawn; in a narrow column the buttons drop under it together rather than leaving Open bar alone.
   count: { flexGrow: 1 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm, marginLeft: 'auto' },
   cardActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.sm + 2 },
-  // Wraps on a narrow phone: Directions and Open bar drop under All results rather than off the edge.
-  actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
-  right: { flexDirection: 'row', gap: space.sm },
+  // The close button in the card's top corner, with "1 of 2 at Little Rye" beside it when searching.
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: space.sm },
   atBar: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderRadius: radius.mark, paddingVertical: space.sm },
   atLink: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space.md },
 });
