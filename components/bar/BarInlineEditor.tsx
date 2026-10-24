@@ -3,7 +3,6 @@ import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import { StaffLinkCard } from '@/components/bar/StaffLinkCard';
 import { VenueBasics } from '@/components/bar/VenueBasics';
-import { VenueFeatures } from '@/components/bar/VenueFeatures';
 import { VenueHoursEditor } from '@/components/bar/VenueHoursEditor';
 import { VenueBuyingLinks, VenueKitLinks, VenueSettingsLinks, VenueTeamLinks } from '@/components/bar/VenueSettingsLinks';
 import { BackbarTheme, Body, Caption, Surface, useDs } from '@/components/ds';
@@ -95,10 +94,6 @@ function BarEditorBody({ barId, onClose, onChromeState, embedded = false }: BarI
                     </View>
                 </Surface>
             )}
-
-            {/* First, as the canvas draws it (first-round-and-features), and where the first round's
-                last card sends an Admin. Only Admins see the switches: everyone else just sees the tabs they give. */}
-            {editor.canEdit ? <VenueFeatures barId={barId} venueName={editor.name || 'your venue'} /> : null}
 
             <VenueBasics editor={editor} barId={barId} />
             <VenueHoursEditor barId={barId} canEdit={editor.canEdit} />

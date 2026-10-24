@@ -12,7 +12,7 @@ import { onAMenu, OPENED_COPY } from '@/lib/firstRound';
 
 import { nextLine, progressLine, RoundBars, RoundStepList, useRoundGo } from './RoundParts';
 
-/** Admins can switch more on (Venue settings, Features). */
+/** Admins can switch more on (Features). */
 const ADMIN_LEVEL = 40;
 
 function CloseButton({ label, onPress }: { label: string; onPress: () => void }) {
@@ -55,7 +55,7 @@ export function FirstRoundCard() {
           <Body style={styles.strong}>That’s the round</Body>
           <Caption tone="muted">{`Menus and Discover are open. Anything else ${venue.name} turns on shows up here.`}</Caption>
         </View>
-        {venue.roleLevel >= ADMIN_LEVEL ? <TextLink label={`Turn on more for ${venue.name}`} tone="ink" onPress={() => router.push(`/settings/bar/${venue.id}`)} /> : null}
+        {venue.roleLevel >= ADMIN_LEVEL ? <TextLink label={`Turn on more for ${venue.name}`} tone="ink" onPress={() => router.push(`/settings/bar/${venue.id}/features`)} /> : null}
       </Surface>
     );
   }

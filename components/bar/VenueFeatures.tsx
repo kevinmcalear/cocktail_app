@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { TryItSheet } from '@/components/bar/TryItSheet';
 import { Body, Caption, DsText, PressableScale, Surface, Switch, useDs } from '@/components/ds';
-import { RowDivider, SectionHeading, SwitchRow } from '@/components/screens/settings/SettingsParts';
+import { RowDivider, SwitchRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -14,8 +14,8 @@ import { VENUE_FEATURES } from '@/lib/venueFeatures';
 type Feature = (typeof VENUE_FEATURES)[number];
 
 /**
- * Features, in a venue's settings, for its Admins (canvas
- * first-round-and-features): what's always on, then a switch for each extra,
+ * Features, on a venue's Features page, for its Admins (canvas
+ * first-round-and-features; its own page since the venue-menu proposal): what's always on, then a switch for each extra,
  * Tonight and Back bar with a Try it under them. Each switch saves as it's
  * flipped, and the tabs and links follow for the whole team. On wide web the
  * switches are cards, two across.
@@ -32,7 +32,6 @@ export function VenueFeatures({ barId, venueName }: { barId: string; venueName: 
 
   return (
     <View style={styles.section}>
-      <SectionHeading>Features</SectionHeading>
       <DsText variant="label" tone="muted" style={styles.inset}>
         {wide ? `${intro} Library, Menus and Discover are always on.` : intro}
       </DsText>

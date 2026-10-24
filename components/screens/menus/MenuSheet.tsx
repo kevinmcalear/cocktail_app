@@ -16,6 +16,8 @@ interface MenuSheetProps {
   eyebrow?: string;
   /** A picture before the title: the bottle a back bar sheet is about. */
   leading?: ReactNode;
+  /** Beside the X: the venue menu's Switch. */
+  trailing?: ReactNode;
   children: ReactNode;
   /** Pinned under the scrolling body: the sheet's main action. */
   footer?: ReactNode;
@@ -39,7 +41,7 @@ interface MenuSheetProps {
  * A titled sheet with a scrolling body and an optional footer, on the app's
  * one Sheet (components/ds/Sheet): springs up on phones, a dialog on the web.
  */
-export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, children, footer, onShow, save, plain, form, list }: MenuSheetProps) {
+export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading, trailing, children, footer, onShow, save, plain, form, list }: MenuSheetProps) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   return (
@@ -67,6 +69,7 @@ export function MenuSheet({ visible, onClose, title, subtitle, eyebrow, leading,
               {plain ? <Headline role="heading">{title}</Headline> : <Title>{title}</Title>}
               {subtitle ? <Caption tone="muted">{subtitle}</Caption> : null}
             </View>
+            {trailing}
             <SheetCloseButton />
           </View>
         )

@@ -91,3 +91,8 @@ export function collectionLine(toMake: number, menus: number): string {
   if (!toMake && !menus) return 'Drinks to make and your menus';
   return [`${toMake} to make`, menus ? plural(menus, 'menu') : null].filter(Boolean).join(' · ');
 }
+
+/** Features: "2 of 8 on", or what to switch on first when none are. */
+export function featuresLine(on: number, of: number): string {
+  return on ? `${on} of ${of} on` : 'History, Prep, Study and more';
+}
