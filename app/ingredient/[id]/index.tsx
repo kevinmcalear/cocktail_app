@@ -1,4 +1,5 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
+import { lazy, Suspense, useState } from "react";
 import { View } from "react-native";
 
 import { BackbarTheme, Body, Button, useDs } from "@/components/ds";
@@ -12,6 +13,9 @@ import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { useCanEditItem } from "@/hooks/useViewAs";
 import { orderedPictures } from "@/lib/itemImages";
 
+// Editing in place only loads when someone edits, as the drink page does.
+const IngredientEditScreen = lazy(() => import("@/components/screens/ingredient/edit/IngredientEditScreen").then((m) => ({ default: m.IngredientEditScreen })));
+
 interface RecipeRow {
     id: string;
     ingredient: { id?: string; name: string; ingredient_role?: string | null } | null;
@@ -23,7 +27,6 @@ interface RecipeRow {
 
 export default function IngredientDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const router = useRouter();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
     const study = useVenueFeature("study");
 
@@ -37,6 +40,7 @@ export default function IngredientDetailScreen() {
         ingredient ? recentEntry('ingredient', ingredient.id, ingredient.name, { barId: ingredient.bar_id ?? null }) : null
     );
     const canEdit = useCanEditItem(ingredient);
+    const [isEditing, setIsEditing] = useState(false);
 
     if (isPending || !ingredient) {
         return (
@@ -62,6 +66,15 @@ export default function IngredientDetailScreen() {
     }));
     const key = `ingredient-${ingredient.id}`;
 
+    // The page reads it; Edit turns the same page into editing in place.
+    if (isEditing) {
+        return (
+            <Suspense fallback={null}>
+                <IngredientEditScreen id={ingredient.id} onExit={() => setIsEditing(false)} />
+            </Suspense>
+        );
+    }
+
     return (
         <IngredientScreen
             ingredient={ingredient}
@@ -72,7 +85,7 @@ export default function IngredientDetailScreen() {
             inStudyPile={isInStudyPile(key)}
             onToggleStudyPile={() => (study ? toggleStudyPile(key) : undefined)}
             canEdit={canEdit}
-            onEdit={() => router.push(`/ingredient/${ingredient.id}/edit`)}
+            onEdit={() => setIsEditing(true)}
         />
     );
 }

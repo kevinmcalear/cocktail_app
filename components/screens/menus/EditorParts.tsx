@@ -10,7 +10,7 @@ import type { LayoutEditor } from './useLayoutEditor';
 import type { MenuDrag } from './useMenuDrag';
 
 /** Where the menu stands, for the editor's header. */
-export const EDITOR_STATUS = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' } as const;
+export const EDITOR_STATUS = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Past' } as const;
 
 /** The name, in the venue's display face, edited in place: a plain title, no field line. */
 export function MenuNameInput({ editor }: { editor: LayoutEditor }) {

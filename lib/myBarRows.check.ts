@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { MAKE_PAGE, makeTab, myBarRows, pairDrinks, pickSection, searchCaption, searchMake } from './myBarRows';
+import { cardFit, MAKE_PAGE, makeTab, myBarRows, pairDrinks, pickSection, searchCaption, searchMake } from './myBarRows';
 
 const bottle = (i: number, kind: string | null = null) => ({ id: `b${i}`, name: `Bottle ${i}`, kind, uses: i % 2 });
 const drink = (i: number) => ({ id: `d${i}`, name: `Drink ${i}` });
@@ -174,5 +174,21 @@ console.log('myBarRows checks passed');
 {
   const r = (kind: string, key: string) => ({ kind, key });
   const paired = pairDrinks([r('make-head', 'h'), r('drink', 'a'), r('drink', 'b'), r('drink', 'c'), r('make-foot', 'f')]);
-  assert.deepEqual(paired.map((p) => (p.kind === 'pair' ? (p as { rows: { key: string }[] }).rows.map((x) => x.key).join('+') : p.key)), ['h', 'a+b', 'c', 'f']);
+  const keys = (rows: typeof paired) => rows.map((p) => (p.kind === 'pair' ? (p as { rows: { key: string }[] }).rows.map((x) => x.key).join('+') : p.key));
+  assert.deepEqual(keys(paired), ['h', 'a+b', 'c', 'f']);
+  // A tablet's side panel: one to a row.
+  assert.deepEqual(keys(pairDrinks([r('make-head', 'h'), r('drink', 'a'), r('drink', 'b'), r('make-foot', 'f')], 1)), ['h', 'a', 'b', 'f']);
+}
+
+// A tablet's section card: four 56 pt tiles fit 254 pt, so two rows hold Add and seven.
+{
+  const fit = { tile: 56, gap: 10, rows: 2 };
+  assert.deepEqual(cardFit(254, 9, fit), { shown: 7, more: 2, ideas: 0 });
+  assert.deepEqual(cardFit(254, 3, fit), { shown: 3, more: 0, ideas: 0 });
+  // Too narrow for even one: still one across, so the Add tile and one more.
+  assert.deepEqual(cardFit(20, 5, fit), { shown: 1, more: 4, ideas: 0 });
+  // Suggestions finish the row (Add and three of six across leave two), never past it, and never with things hidden.
+  assert.deepEqual(cardFit(386, 3, { ...fit, ideas: 5 }), { shown: 3, more: 0, ideas: 2 });
+  assert.deepEqual(cardFit(254, 3, { ...fit, ideas: 5 }), { shown: 3, more: 0, ideas: 0 });
+  assert.deepEqual(cardFit(254, 9, { ...fit, ideas: 5 }), { shown: 7, more: 2, ideas: 0 });
 }

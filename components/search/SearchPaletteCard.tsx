@@ -1,15 +1,19 @@
-import { usePathname } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Caption, useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { DiscoverOverlay } from '@/components/screens/home/DiscoverSheet';
-import { useSearchMine } from '@/hooks/useSearchMine';
-import { eightBallLabel } from '@/lib/eightBallKey';
-import { isApplePlatform } from '@/lib/platformKeys';
 import { space } from '@/constants/tokens';
-import { scopeOptions, type SearchScope } from '@/lib/searchScope';
+import { useSearchFrom } from '@/hooks/useSearchFrom';
+import { useSearchMine } from '@/hooks/useSearchMine';
+import type { City } from '@/lib/discover';
+import { eightBallLabel } from '@/lib/eightBallKey';
+import { newDrinkHref } from '@/lib/itemRoutes';
+import { isApplePlatform } from '@/lib/platformKeys';
+import { scopeOptions, startScope, type SearchScope } from '@/lib/searchScope';
+import { capitalize } from '@/lib/stringUtils';
 import { useEightBallStore } from '@/store/useEightBallStore';
 import { useSearchPalette } from '@/store/useSearchPalette';
 
@@ -32,42 +36,62 @@ export default function SearchPaletteCard() {
 }
 
 function Palette() {
+  const router = useRouter();
   const setOpen = useSearchPalette((s) => s.setOpen);
   const mine = useSearchMine();
-  const [query, setQuery] = useState('');
-  const [picked, setScope] = useState<SearchScope | null>(null);
-  const scope = picked ?? mine.defaultScope;
+  // What the door carried in (Library's "Search everywhere for “neg”"), read as it opens.
+  const [opened] = useState(() => useSearchPalette.getState().start);
+  const [query, setQuery] = useState(opened.query);
+  const [picked, setScope] = useState<SearchScope | null>(opened.scope);
+  // Discover's area while Discover is open (hooks/useSearchFrom.ts): This area, as phones have it.
+  const { from, area } = useSearchFrom();
+  const start = startScope(from, mine.defaultScope, !!area?.label);
+  const scope = picked === 'area' && !area?.label ? start : (picked ?? start);
   const close = () => setOpen(false);
-  // The eight ball, the Easter egg phones open with a shake. Here it's a command, always in the list (as the
-  // palette board draws it, typed or not), plus its key anywhere (WebSideNav).
-  const pick = (
+  // The arrow, Tab and Return keys are the web's (searchNav.tsx); a native iPad gets Done and no key hints.
+  const keys = Platform.OS === 'web';
+  // A style or a city the search names lands on Discover, as the search tab's do.
+  const toDiscover = () => (close(), router.navigate('/discover'));
+  const lent = area && { ...area, onKind: (k: string) => (area.onKind(k), toDiscover()), onPlace: (c: City) => (area.onPlace(c), toDiscover()) };
+  const q = query.trim();
+  // The palette's own rows (nav-search-desk-preview): a new drink with what's typed (N is New's key), and the eight ball,
+  // the Easter egg phones open with a shake, always in the list plus its key anywhere (WebSideNav).
+  const commands = (
     <ResultGroup
       label="Commands"
-      items={[0]}
-      render={() => (
-        <ResultRow
-          key="pick"
-          title="Pick for me"
-          caption="A drink to make, at random"
-          icon="8.circle"
-          trailing={<PickKeys />}
-          onPress={() => {
-            close();
-            useEightBallStore.getState().setOpen(true);
-          }}
-        />
-      )}
+      items={q && mine.canAdd ? ['new', 'pick'] : ['pick']}
+      render={(c) =>
+        c === 'new' ? (
+          <ResultRow key="new" title={`New drink called “${capitalize(q)}”`} icon="plus" accentIcon trailing={keys ? <KeyCap label="N" /> : undefined} onPress={() => router.push(newDrinkHref(capitalize(q), mine.venueId) as never)} />
+        ) : (
+          <ResultRow
+            key="pick"
+            title="Pick for me"
+            caption="A drink to make, at random"
+            icon="8.circle"
+            accentIcon
+            trailing={keys ? <PickKeys /> : undefined}
+            onPress={() => {
+              close();
+              useEightBallStore.getState().setOpen(true);
+            }}
+          />
+        )
+      }
     />
   );
 
   const pathname = usePathname();
-  const from = useRef(pathname);
+  const fromPath = useRef(pathname);
   useEffect(() => {
-    if (pathname !== from.current) setOpen(false);
+    if (pathname === fromPath.current) return;
+    // A /search link opens the palette as it moves to the first tab (app/(tabs)/search): that move keeps it.
+    if (fromPath.current === '/search') fromPath.current = pathname;
+    else setOpen(false);
   }, [pathname, setOpen]);
 
-  // ↑↓ move the highlight (the top row leads), Return opens it, Tab switches where it looks.
-  const scopes = scopeOptions(mine.label, null).map((o) => o.value);
+  // ↑↓ move the highlight (the top row leads), Return opens it, Tab moves to the next place.
+  const scopes = scopeOptions(mine.label, area?.label ?? null).map((o) => o.value);
   const nav = useSearchNav(RESULTS, `${scope}|${query}`, () => setScope(scopes[(scopes.indexOf(scope) + 1) % scopes.length]));
   // The highlighted drink's spec, beside the results (nav-search-desk-preview).
   const previews = useSearchPreviews();
@@ -77,13 +101,13 @@ function Palette() {
       label="Search"
       full
       onClose={close}
-      head={<SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} autoFocus onDone={close} onSubmit={() => void nav.open()} keys />}
-      footer={<KeyHints back={mine.venueId ? 'Back' : 'Close'} />}
+      head={<SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} area={lent} autoFocus onDone={close} onSubmit={() => void nav.open()} keys={keys} />}
+      footer={keys ? <KeyHints back={mine.venueId ? 'Back' : 'Close'} /> : undefined}
       aside={<SearchPreview item={previews.preview(nav.active)} onOpen={() => void nav.open()} />}
     >
       <SearchNavProvider active={nav.active} register={previews.register}>
         <View nativeID={RESULTS} style={styles.results}>
-          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} onJump={close} commands={pick} palette />
+          <SearchBody query={query} scope={scope} onScope={setScope} mine={mine} area={lent} onJump={close} commands={commands} palette />
         </View>
       </SearchNavProvider>
     </DiscoverOverlay>
@@ -103,7 +127,7 @@ function PickKeys() {
   );
 }
 
-/** "↑↓ Select · ↵ Open · tab Switch scope · esc Back": the palette's keys, along its foot. */
+/** "↑↓ Select · ↵ Open · tab Switch place · esc Back": the palette's keys, along its foot. */
 function KeyHints({ back }: { back: string }) {
   const ds = useDs();
   const gutter = useGutter();
@@ -116,12 +140,12 @@ function KeyHints({ back }: { back: string }) {
   return (
     <View
       role="note"
-      accessibilityLabel="Up and down arrows select, Return opens, Tab switches scope, Escape closes"
+      accessibilityLabel="Up and down arrows select, Return opens, Tab switches place, Escape closes"
       style={[styles.hints, { marginHorizontal: -gutter, paddingHorizontal: gutter, borderTopColor: ds.c.line }]}
     >
       {hint('↑↓', 'Select')}
       {hint('↵', 'Open')}
-      {hint('tab', 'Switch scope')}
+      {hint('tab', 'Switch place')}
       <View style={styles.push} />
       {hint('esc', back)}
     </View>

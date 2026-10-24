@@ -1,166 +1,89 @@
-import { useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { useRouter } from 'expo-router';
-
-import { Body, Caption, Headline, RowScore, Tag, scoreWords } from '@/components/ds';
-import { DrinkRow } from '@/components/screens/DrinkRow';
+import { Body } from '@/components/ds';
 import { MemorySheet } from '@/components/screens/published/MemorySheet';
 import { space } from '@/constants/tokens';
 import { useCollection, type CollectedDrink } from '@/hooks/useCollection';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { useMadeDrinks } from '@/hooks/useMade';
 import { useMyHadDrinks } from '@/hooks/useRankings';
-import { hadOnLine, splitCollection } from '@/lib/collection';
-import { itemHref } from '@/lib/itemRoutes';
+import { splitCollection } from '@/lib/collection';
+import { averageScore } from '@/lib/collectionMenus';
+import { beatCount, hadOutRows, madeRows, type DrinkStage, type HadSort } from '@/lib/collectionStages';
 import { tallyMade } from '@/lib/madeIt';
 import { formatScore } from '@/lib/ranking';
-import { readyFirst, shelfTag } from '@/lib/toMake';
 
-import { DrinkCounts, MadeAtHome, type CountJump } from './CollectionMade';
+import { HadOut } from './CollectionHadOut';
+import { MadeAtHome } from './CollectionMade';
+import { StageStrip } from './CollectionStages';
+import { ToMake, type MakeDrink } from './CollectionToMake';
 
-function Section({ title, aside, note, children, onLayout }: { title: string; aside?: string; note?: string; children: ReactNode; onLayout?: (e: LayoutChangeEvent) => void }) {
-  return (
-    <View style={styles.section} onLayout={onLayout}>
-      <View style={styles.head}>
-        <Headline role="heading">{title}</Headline>
-        {aside ? <Caption tone="muted">{aside}</Caption> : null}
-      </View>
-      {note ? <Caption tone="muted">{note}</Caption> : null}
-      {children}
-    </View>
-  );
-}
-
-/** A To make row's pill: Ready, Need Cynar, or a lock and Names only for a bar drink whose spec isn't open. */
-function StatusPill({ drink, shelf }: { drink: CollectedDrink; shelf: string | undefined }) {
-  if (drink.liveMode === 'description' && !drink.specOpens) return <Tag label="Names only" tone="outline" icon="lock.fill" />;
-  if (!shelf) return null;
-  // A long bottle name ("Need Bittersweet Orange Aperitivo") truncates rather than squeezing the drink's name.
-  return (
-    <View style={styles.pill}>
-      <Tag label={shelf} tone={shelf === 'Ready' ? 'accent' : 'outline'} />
-    </View>
-  );
-}
+/** A bar drink whose spec stays closed to you: names only. */
+const isLocked = (d: CollectedDrink) => d.liveMode === 'description' && !d.specOpens;
 
 /**
- * Collection's Drinks, from had out to made: how many of each, each jumping
- * to its part; To make, every drink saved with the bookmark (on any drink
- * page, or Collect on a bar's) and not made yet, ready ones first against
- * your shelf, each saying where it's from with your score; what you've made
- * at home; then past drinks, memories of bar drinks that aren't public any
- * more, grouped by bar. Tapping a memory edits when you had it and your note.
- * `onJump` scrolls the page to a point in this list (the screen owns the scroll).
+ * Collection's Drinks (board home-collection-drinks): Had out → To make →
+ * Made. The tiles switch the list under them, To make first. Had out is
+ * every drink you scored at a bar, with the past drinks you kept; To make,
+ * every drink you saved and haven't made, against your shelf; Made, your
+ * versions against the bars'.
  */
-export function CollectionDrinks({ onJump }: { onJump?: (y: number) => void }) {
-  const router = useRouter();
-  const at = useRef<Record<string, number>>({});
+export function CollectionDrinks() {
   const { data, isLoading, error } = useCollection();
   const bar = useMyBar();
   const made = useMadeDrinks().data ?? [];
   const had = useMyHadDrinks().data ?? [];
-  const [now] = useState(() => Date.now());
-  const [editing, setEditing] = useState<CollectedDrink | null>(null);
+  const [stage, setStage] = useState<DrinkStage>('make');
+  const [sort, setSort] = useState<HadSort>('best');
+  const [memory, setMemory] = useState<CollectedDrink | null>(null);
   if (error) return <Body tone="muted">Couldn’t load your collection. Try again in a moment.</Body>;
   if (isLoading || !data) return null;
 
-  const { live, past } = splitCollection(data.drinks);
-  const tagOf = (d: CollectedDrink) => shelfTag(d.itemId, bar.canMakeIds, bar.oneAway);
+  const { live } = splitCollection(data.drinks);
+  const opens = new Set(live.map((d) => d.id));
   const tallies = tallyMade(made);
   const madeIds = new Set(tallies.map((t) => t.itemId));
   const classics = new Set(made.filter((m) => m.classic).map((m) => m.itemId));
-  const toMake = readyFirst(live.filter((d) => !d.itemId || !madeIds.has(d.itemId)), tagOf);
-  // Your own score for a past drink you ranked (b02), the best if you ranked it twice.
-  const yours = new Map<string, number>();
-  for (const h of had) yours.set(h.itemId, Math.max(h.score, yours.get(h.itemId) ?? 0));
-  const line = (d: CollectedDrink, withBar: boolean) => [withBar ? d.barName : null, hadOnLine(d.hadOn, now)].filter(Boolean).join(' · ') || undefined;
-  const scoreOf = (d: CollectedDrink) => (d.itemId ? yours.get(d.itemId) : undefined);
-  // "Had at Little Rye · 8.4", "Saved from Pale Moth", "Saved · classic".
+  // Your best score for a drink you had out, and where: To make's "Had at Little Rye · 8.4".
+  const yours = new Map<string, { score: number; bar: string | null }>();
+  for (const h of had) if ((h.venue || h.atBar) && h.score >= (yours.get(h.itemId)?.score ?? -1)) yours.set(h.itemId, { score: h.score, bar: h.venue?.name ?? null });
   const from = (d: CollectedDrink) => {
-    const score = scoreOf(d);
-    const had = d.barName && (score !== undefined || d.hadOn);
-    const place = had ? `Had at ${d.barName}` : d.classic ? 'Saved · classic' : d.barName ? `Saved from ${d.barName}` : null;
-    return [place, score !== undefined ? formatScore(score) : null].filter(Boolean).join(' · ') || undefined;
+    const out = d.itemId ? yours.get(d.itemId) : undefined;
+    if (out) return `${out.bar ? `Had at ${out.bar}` : 'Had out'} · ${formatScore(out.score)}`;
+    // A classic's barName is whoever publishes it, not where you had it.
+    if (d.classic) return 'Saved · classic';
+    return d.barName ? `${d.hadOn ? 'Had at' : 'Saved from'} ${d.barName}` : undefined;
   };
-  const jump = (to: CountJump) => {
-    if (to === 'had') router.push('/profile');
-    else if (at.current[to] !== undefined) onJump?.(at.current[to]);
-  };
+  const toMake: MakeDrink[] = live.filter((d) => !d.itemId || !madeIds.has(d.itemId)).map((d) => ({ ...d, locked: isLocked(d), from: from(d) }));
+  const kept = data.drinks.map((d) => ({ id: d.id, itemId: d.itemId, name: d.name, imageUrl: d.imageUrl, barName: d.barName, hadOn: d.hadOn, past: !opens.has(d.id), locked: isLocked(d) }));
+  const hadRows = hadOutRows(had, kept, bar, sort);
+  const madeList = madeRows(tallies, had, classics);
+  // The same rows the list shows: one a drink, at your best score.
+  const avg = averageScore(hadRows.flatMap((r) => (r.score !== null ? [r.score] : [])));
+  const ready = toMake.filter((d) => d.itemId && bar.canMakeIds.has(d.itemId) && !d.locked).length;
+  const beat = beatCount(madeList);
 
   return (
     <View style={styles.wrap}>
-      <DrinkCounts had={had.filter((h) => h.venue || h.atBar).length} toMake={toMake.length} made={tallies.length} onJump={jump} />
-      <Section
-        title="To make"
-        aside={toMake.length ? 'Ready first' : undefined}
-        note={toMake.length ? 'Drinks you bookmarked and ones you had out, to try at home. The bookmark on any drink puts it here.' : undefined}
-        onLayout={(e: LayoutChangeEvent) => (at.current.toMake = e.nativeEvent.layout.y)}
-      >
-        {toMake.length ? (
-          <View role="list">
-            {toMake.map((d) => (
-              <View role="listitem" key={d.id}>
-                <DrinkRow
-                  compact
-                  name={d.name}
-                  itemId={d.itemId}
-                  // A bar's published drink opens its public page; a classic its own.
-                  href={d.liveMode ? `/d/${d.itemId}` : itemHref('Cocktail', d.itemId!)}
-                  imageUrl={d.imageUrl}
-                  glass={null}
-                  caption={from(d)}
-                  note={d.note ?? undefined}
-                  trailing={<StatusPill drink={d} shelf={tagOf(d)} />}
-                  label={[d.name, from(d), d.liveMode === 'description' && !d.specOpens ? 'Names only' : tagOf(d), d.note].filter(Boolean).join('. ')}
-                />
-              </View>
-            ))}
-          </View>
-        ) : (
-          <Body tone="muted">Tap the bookmark on any drink to save it here for a night in. Drinks you collect from bars land here too.</Body>
-        )}
-      </Section>
-      <MadeAtHome tallies={tallies} had={had} classics={classics} onLayout={(e: LayoutChangeEvent) => (at.current.made = e.nativeEvent.layout.y)} />
-      {past.length ? (
-        <Section title="Past drinks" note="No longer on the bar’s public menu. You keep the memory; the spec went with it.">
-          {past.map((group) => (
-            <View key={group.bar} style={styles.group}>
-              <Caption tone="muted" role="heading" style={styles.groupTitle}>
-                {group.bar.toUpperCase()}
-              </Caption>
-              <View role="list">
-                {group.drinks.map((d) => (
-                  <View role="listitem" key={d.id}>
-                    <DrinkRow
-                      compact
-                      name={d.name}
-                      itemId={d.itemId}
-                      onPress={() => setEditing(d)}
-                      imageUrl={d.imageUrl}
-                      glass={null}
-                      caption={line(d, false) ?? 'Add when you had it'}
-                      note={d.note ?? undefined}
-                      trailing={<RowScore score={d.itemId ? yours.get(d.itemId) : null} />}
-                      label={d.itemId && yours.has(d.itemId) ? [d.name, line(d, false), `your ${scoreWords(yours.get(d.itemId))}`, d.note].filter(Boolean).join('. ') : undefined}
-                    />
-                  </View>
-                ))}
-              </View>
-            </View>
-          ))}
-        </Section>
-      ) : null}
-      {editing ? <MemorySheet memory={editing} onClose={() => setEditing(null)} /> : null}
+      <StageStrip
+        label="Where your drinks are"
+        value={stage}
+        onChange={setStage}
+        stages={[
+          { key: 'had', n: hadRows.length, label: 'Had out', sub: avg !== null ? `avg ${formatScore(avg)}` : null },
+          { key: 'make', n: toMake.length, label: 'To make', sub: ready ? `${ready} ready` : null },
+          { key: 'made', n: tallies.length, label: 'Made', sub: beat ? `${beat} beat the bar` : null },
+        ]}
+      />
+      {stage === 'had' ? <HadOut rows={hadRows} sort={sort} onSort={setSort} onMemory={(id) => setMemory(data.drinks.find((d) => d.id === id) ?? null)} /> : null}
+      {stage === 'make' ? <ToMake drinks={toMake} shelf={bar} /> : null}
+      {stage === 'made' ? <MadeAtHome rows={madeList} /> : null}
+      {memory ? <MemorySheet memory={memory} onClose={() => setMemory(null)} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pill: { maxWidth: '45%', flexShrink: 1 },
   wrap: { gap: space.xl },
-  section: { gap: space.xs },
-  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md },
-  group: { gap: space.xs, paddingTop: space.md },
-  groupTitle: { letterSpacing: 1.5 },
 });

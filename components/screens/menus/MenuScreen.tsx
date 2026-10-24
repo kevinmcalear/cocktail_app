@@ -26,7 +26,7 @@ import { MenuPageRowView, menuPageRows } from './MenuSections';
 import { MenuVisual } from './MenuVisual';
 import { ShareMenuSheet } from './ShareMenuSheet';
 
-const STATUS_LABEL: Record<MenuStatus, string> = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Previous' };
+const STATUS_LABEL: Record<MenuStatus, string> = { on: 'On now', upcoming: 'Coming up', draft: 'Draft', previous: 'Past' };
 // Not the accent for Coming up: Edit is the page's one accent.
 const STATUS_TONE = { on: 'success', upcoming: 'default', draft: 'default', previous: 'default' } as const;
 
@@ -162,7 +162,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
       {night ? <HomeNightSheet menu={menu} onClose={() => setNight(false)} /> : null}
       {sharing ? <ShareMenuSheet menu={menu} onClose={() => setSharing(false)} /> : null}
       {/* Going on and off is the venue calendar (startsAt, endsAt): a home menu's night doesn't change it. */}
-      {more ? <MenuMoreSheet menu={menu} status={menuStatus({ startsAt: menu.startsAt, endsAt: menu.endsAt }, now)} visible onClose={() => setMore(false)} /> : null}
+      {more ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setMore(false)} /> : null}
     </View>
   );
 }
