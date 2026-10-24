@@ -23,6 +23,11 @@ interface EditSpecListProps {
   /** The name: swap the ingredient. */
   onSwap: (index: number) => void;
   onAdd: () => void;
+  /** A house prep's list is its Recipe, with what a batch makes beside it. */
+  title?: string;
+  aside?: string | null;
+  /** Said after how to reorder and remove ("The 3 drinks that use it update when you press Done."). */
+  note?: string | null;
 }
 
 // Rows have no id until they're saved; the ingredient and its place keep them apart meanwhile.
@@ -33,7 +38,7 @@ const keyOf = (item: SortableRecipeItem, index: number) => item.id ?? `${item.in
  * grip to reorder, its amount a button that opens the spec pad, and a swipe
  * left to remove it (the web shows an x). A dashed row at the end adds one.
  */
-export function EditSpecList({ items, onReorder, onRemove, onAmount, onSwap, onAdd }: EditSpecListProps) {
+export function EditSpecList({ items, onReorder, onRemove, onAmount, onSwap, onAdd, title = 'Spec', aside, note: after }: EditSpecListProps) {
   const ds = useDs();
   const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<SortableRecipeItem>) => {
     const i = getIndex() ?? 0;
@@ -108,19 +113,23 @@ export function EditSpecList({ items, onReorder, onRemove, onAmount, onSwap, onA
 
   return (
     <View style={styles.section}>
-      <Headline role="heading">Spec</Headline>
+      <View style={styles.head}>
+        <Headline role="heading">{title}</Headline>
+        {aside ? <Caption tone="muted">{aside}</Caption> : null}
+      </View>
       <List data={items} keyExtractor={keyOf} renderItem={renderItem} onDragEnd={({ data }) => onReorder(data)} activationDistance={8} dragHitSlop={gripOnly(GRIP)} />
-      <PressableScale role="button" accessibilityLabel="Add a line to the spec" onPress={onAdd} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
+      <PressableScale role="button" accessibilityLabel={`Add a line to the ${title.toLowerCase()}`} onPress={onAdd} style={[styles.add, { borderColor: ds.c.lineStrong }]}>
         <IconSymbol name="plus" size={18} color={ds.accentText} />
         <Body style={[styles.flex, styles.medium]}>Add a line</Body>
       </PressableScale>
-      <Caption tone="muted">{web ? 'Drag a grip to reorder.' : 'Hold a grip to reorder. Swipe a line left to remove it.'}</Caption>
+      <Caption tone="muted">{[web ? 'Drag a grip to reorder.' : 'Hold a grip to reorder. Swipe a line left to remove it.', after].filter(Boolean).join(' ')}</Caption>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   section: { gap: space.sm },
+  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 68, borderBottomWidth: StyleSheet.hairlineWidth },
   grip: { width: GRIP, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   amount: { width: 84, minHeight: 40, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xs },

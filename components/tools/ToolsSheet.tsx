@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, BrandProvider, Button, Caption, Chip, Field, Sheet, SheetScrollView, Spec, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, BrandProvider, Caption, Chip, Field, Sheet, SheetScrollView, Spec, Title, useDs } from '@/components/ds';
 import { PrepCalc } from '@/components/tools/PrepCalc';
 import { radius, space } from '@/constants/tokens';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -157,8 +157,11 @@ const styles = StyleSheet.create({
 
 type SaveDraft = (args: { entityType: string; draftData: { name: string; barId: string | null; recipeItems: [] } }) => Promise<{ id: string }>;
 
-/** Opens the prep calculator. With `onApply`, "Add to recipe" writes the batch onto the ingredient. */
-export function PrepCalcButton<T extends PrepRecipeLine>({
+/**
+ * The prep calculator, opened from anywhere (an editor's Calculator tool).
+ * With `onApply`, "Add to recipe" writes the batch onto the ingredient.
+ */
+export function usePrepCalc<T extends PrepRecipeLine>({
   name,
   catalog,
   recipe,
@@ -206,10 +209,8 @@ export function PrepCalcButton<T extends PrepRecipeLine>({
         }
       }
     : undefined;
-  return (
-    <>
-      <Button label="Ingredient calculator" variant="secondary" onPress={() => setOpen(true)} accessibilityHint="Amounts for a syrup, foam, juice or soda" />
-      {open ? <ToolsSheet visible onClose={() => setOpen(false)} tool="prep" prepName={name} scheme={scheme} onPrepApply={apply} applying={applying} /> : null}
-    </>
-  );
+  return {
+    open: () => setOpen(true),
+    sheet: open ? <ToolsSheet visible onClose={() => setOpen(false)} tool="prep" prepName={name} scheme={scheme} onPrepApply={apply} applying={applying} /> : null,
+  };
 }

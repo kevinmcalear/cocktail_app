@@ -56,14 +56,17 @@ function Tool({ icon, label, hint, onPress }: { icon: IconName; label: string; h
 
 /**
  * The tools along the bottom while editing on a phone (drink-edit-phone): a line, a photo, the calculator, More.
- * A beer or wine has no spec, so no Line or Calculator.
+ * A beer or wine has no spec, so no Line or Calculator. A house prep has Line, Step, Calculator and More;
+ * a bottle Photo, Spot and More (ingredient-edit-proposal).
  */
-export function EditBottomBar({ onLine, onPhoto, onCalc, onMore, moreHint = 'More: photos, who can see the spec, discard, delete' }: { onLine?: () => void; onPhoto: () => void; onCalc?: () => void; onMore: () => void; moreHint?: string }) {
+export function EditBottomBar({ onLine, lineHint = 'Add a line to the spec', onStep, onPhoto, onSpot, onCalc, onMore, moreHint = 'More: photos, who can see the spec, discard, delete' }: { onLine?: () => void; lineHint?: string; onStep?: () => void; onPhoto?: () => void; onSpot?: () => void; onCalc?: () => void; onMore: () => void; moreHint?: string }) {
   return (
     <GlassSurface style={styles.bar}>
       <View role="toolbar" accessibilityLabel="Edit tools" style={styles.barRow}>
-        {onLine ? <Tool icon="plus" label="Line" hint="Add a line to the spec" onPress={onLine} /> : null}
-        <Tool icon="camera" label="Photo" hint="Add a photo" onPress={onPhoto} />
+        {onLine ? <Tool icon="plus" label="Line" hint={lineHint} onPress={onLine} /> : null}
+        {onStep ? <Tool icon="list.number" label="Step" hint="Add a step to the method" onPress={onStep} /> : null}
+        {onPhoto ? <Tool icon="camera" label="Photo" hint="Add a photo" onPress={onPhoto} /> : null}
+        {onSpot ? <Tool icon="map.fill" label="Spot" hint="Give it a spot on the back bar" onPress={onSpot} /> : null}
         {onCalc ? <Tool icon="percent" label="Calculator" hint="Ingredient calculator: amounts for a syrup, foam, juice or soda" onPress={onCalc} /> : null}
         <Tool icon="ellipsis" label="More" hint={moreHint} onPress={onMore} />
       </View>
@@ -74,7 +77,7 @@ export function EditBottomBar({ onLine, onPhoto, onCalc, onMore, moreHint = 'Mor
 export type MoreChoice = 'publish' | 'photos' | 'access' | 'discard' | 'delete';
 
 /** Editing's More: photos in order, who can see the spec, discard the changes, delete the drink. A draft can also be published. */
-export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick, noun = 'drink' }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; draft?: boolean; onPick: (c: MoreChoice) => void; /** What's edited: "drink", or "beer" or "wine". */ noun?: string }) {
+export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick, noun = 'drink', photosLabel = 'Photos' }: { open: boolean; onClose: () => void; canDelete: boolean; dirty: boolean; draft?: boolean; onPick: (c: MoreChoice) => void; /** What's edited: "drink", "beer", "wine" or "ingredient". */ noun?: string; /** An ingredient has one picture: "Its picture". */ photosLabel?: string }) {
   // What to open once the menu has gone: two sheets never stack.
   const then = useRef<MoreChoice | null>(null);
   const run = () => {
@@ -94,7 +97,7 @@ export function EditMoreMenu({ open, onClose, canDelete, dirty, draft, onPick, n
       header={<Headline role="heading">More</Headline>}
     >
       {draft ? <MoreRow icon="paperplane.fill" label={`Publish ${noun}`} onPick={() => (then.current = 'publish')} /> : null}
-      <MoreRow icon="photo" label="Photos" onPick={() => (then.current = 'photos')} />
+      <MoreRow icon="photo" label={photosLabel} onPick={() => (then.current = 'photos')} />
       <MoreRow icon="lock.shield.fill" label={accessTitle(noun)} onPick={() => (then.current = 'access')} />
       {dirty ? <MoreRow icon="arrow.uturn.backward" label="Discard changes" onPick={() => (then.current = 'discard')} /> : null}
       {canDelete ? <MoreRow icon="trash" label={draft ? 'Delete draft' : `Delete ${noun}`} danger onPick={() => (then.current = 'delete')} /> : null}

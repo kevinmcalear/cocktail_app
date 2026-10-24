@@ -10,6 +10,7 @@ import { existsSync, globSync, readFileSync } from 'node:fs';
 // Not sheets: these round the top of a page body or panel that sits in the page.
 const PAGES = new Set([
   'components/screens/ingredient/IngredientScreen.tsx', // the page's body over its hero picture
+  'components/screens/ingredient/edit/IngredientEditScreen.tsx', // the same body, editing in place
   'components/screens/home/MyBarTablet.tsx', // the section cards' panels, in the page
 ]);
 const SHEET = 'components/ds/Sheet.tsx';

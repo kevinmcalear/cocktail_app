@@ -23,6 +23,8 @@ interface WhereItLivesProps {
   bare?: boolean;
   /** A house prep's Recipe button (prep-ing-where): back to its recipe. */
   onRecipe?: () => void;
+  /** Whoever can open the ingredient's Edit gives it a spot there; this only reads for them (ingredient-edit-proposal). */
+  readOnly?: boolean;
 }
 
 /**
@@ -62,7 +64,7 @@ export function useWhereItLives(itemId: string) {
   return { shown, active, barId, capabilities, canRead, zones, here, lines };
 }
 
-function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProps) {
+function WhereItLivesCard({ itemId, itemName, bare, onRecipe, readOnly }: WhereItLivesProps) {
   const ds = useDs();
   const router = useRouter();
   const { shown, active, barId, capabilities, canRead, zones, here, lines } = useWhereItLives(itemId);
@@ -136,7 +138,7 @@ function WhereItLivesCard({ itemId, itemName, bare, onRecipe }: WhereItLivesProp
       ) : (
         <View style={styles.actions}>
           {onRecipe ? <Button label="Recipe" variant="secondary" onPress={onRecipe} /> : null}
-          {canPlace ? (
+          {canPlace && !readOnly ? (
             <Button
               label="Give it a spot"
               icon="map.fill"
