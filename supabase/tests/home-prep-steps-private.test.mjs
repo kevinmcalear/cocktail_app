@@ -1,7 +1,9 @@
 // A home prep's method stays with its maker
 // (20261012410000_home_prep_steps_private.sql): people who can see a published
 // drink see its home prep's name, but not its prep card (item_prep) or steps
-// (item_steps). Catalog and venue preps read as before.
+// (item_steps), nor its recipe lines through app_recipe_presentation
+// (20261104200000_home_prep_recipes_private.sql). Catalog and venue preps read
+// as before.
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -52,6 +54,18 @@ async function withCard(id) {
   await db.query("INSERT INTO public.item_steps (item_id, position, body) VALUES ($1, 0, 'Warm it.'), ($1, 1, 'Strain it.')", [id]);
 }
 
+/** Two recipe lines on a prep. */
+async function withLines(id) {
+  await db.query("INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit, sort_order) VALUES ($1, $2, 500, 'ml', 0), ($1, $2, 250, 'ml', 1)", [id, ids.gin]);
+}
+
+/** The recipe lines a client reads of an item through app_recipe_presentation. */
+async function lines(who, id) {
+  const { data, error } = await users[who].client.from('app_recipe_presentation').select('id, display_ingredient_id, amount').eq('recipe_item_id', id);
+  assert.ifError(error);
+  return data;
+}
+
 /** What a client reads of an item: the row, its prep card and its steps. */
 async function reads(who, id) {
   const client = users[who].client;
@@ -77,15 +91,19 @@ before(async () => {
     'person', `prepmaker${run}`, `Prep Maker ${run}`, users.maker.id,
   ]);
 
-  // A home prep with a card and steps, in a published home drink.
+  ids.gin = await item({ name: `Gin ${run}`, item_type: 'ingredient' });
+
+  // A home prep with a card, steps and recipe lines, in a published home drink.
   ids.homePrep = await item({ name: `Quince cordial ${run}`, item_type: 'ingredient', created_by: users.maker.id, ingredient_role: 'prep' });
   await withCard(ids.homePrep);
+  await withLines(ids.homePrep);
   ids.drink = await item({ name: `Quince Fizz ${run}`, item_type: 'cocktail', created_by: users.maker.id, publish_mode: 'spec' });
   await db.query("INSERT INTO public.recipes (recipe_item_id, ingredient_item_id, amount, unit, sort_order) VALUES ($1, $2, 1, 'oz', 0)", [ids.drink, ids.homePrep]);
 
   // Shared catalog preps: no creator, and a creator's row marked catalog.
   ids.catalogPrep = await item({ name: `Orgeat ${run}`, item_type: 'ingredient', ingredient_role: 'prep' });
   await withCard(ids.catalogPrep);
+  await withLines(ids.catalogPrep);
   ids.catalogFlagged = await item({ name: `Falernum ${run}`, item_type: 'ingredient', ingredient_role: 'prep', created_by: users.moderator.id, is_catalog: true });
   await withCard(ids.catalogFlagged);
 
@@ -126,6 +144,25 @@ describe("a home prep in a published drink", () => {
     assert.deepEqual(await reads('moderator', ids.homePrep), { row: 1, card: 1, steps: 2 });
   });
 
+  test("another signed-in person gets none of its recipe lines, but the drink's line naming it still shows", async () => {
+    assert.equal((await lines('stranger', ids.homePrep)).length, 0);
+    const drink = await lines('stranger', ids.drink);
+    assert.equal(drink.length, 1);
+    assert.equal(drink[0].display_ingredient_id, ids.homePrep);
+    assert.equal(Number(drink[0].amount), 1);
+  });
+
+  test('signed out, its recipe lines read nothing', async () => {
+    assert.equal((await lines('anon', ids.homePrep)).length, 0);
+  });
+
+  test('its maker, and a moderator, still read its recipe lines', async () => {
+    for (const who of ['maker', 'moderator']) {
+      const r = await lines(who, ids.homePrep);
+      assert.deepEqual(r.map((l) => Number(l.amount)).sort((a, b) => a - b), [250, 500], who);
+    }
+  });
+
   test('another person cannot write a card or steps onto it', async () => {
     const steps = await users.stranger.client.from('item_steps').insert({ item_id: ids.homePrep, position: 9, body: 'Not mine.' });
     assert.ok(steps.error, 'step insert should be refused');
@@ -140,6 +177,10 @@ describe('unchanged', () => {
     for (const id of [ids.catalogPrep, ids.catalogFlagged]) {
       assert.deepEqual(await reads('stranger', id), { row: 1, card: 1, steps: 2 });
     }
+  });
+
+  test("a catalog prep's recipe lines read for every signed-in person", async () => {
+    assert.equal((await lines('stranger', ids.catalogPrep)).length, 2);
   });
 
   test('signed out, catalog cards and steps still read nothing (no anon policy)', async () => {

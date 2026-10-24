@@ -1,8 +1,8 @@
 // Home items stay with their creator (20261008830000_home_items_private.sql):
-// a home prep, syrup, ingredient or glass and its recipe are read by the
-// creator, and by others only when it's published or used by something they
-// can see. Its steps are the creator's alone (20261012410000). The shared
-// catalog is unchanged.
+// a home prep, syrup, ingredient or glass is read by the creator, and by
+// others only when it's published or used by something they can see. Its
+// steps (20261012410000) and recipe lines (20261104200000) are the creator's
+// alone. The shared catalog is unchanged.
 // Runs against the local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
@@ -127,8 +127,9 @@ describe('a home prep nobody else uses', () => {
 describe('used by something the reader can see', () => {
   test("a published drink's prep, the prep's own syrup, and its glass show with it", async () => {
     assert.equal((await reads('stranger', ids.drink)).row, 1);
-    // Its steps stay with the maker (20261012410000_home_prep_steps_private.sql).
-    assert.deepEqual(await reads('stranger', ids.sharedPrep), { row: 1, lines: 1, steps: 0 });
+    // Its recipe lines and steps stay with the maker
+    // (20261012410000_home_prep_steps_private.sql, 20261104200000_home_prep_recipes_private.sql).
+    assert.deepEqual(await reads('stranger', ids.sharedPrep), { row: 1, lines: 0, steps: 0 });
     assert.equal((await reads('stranger', ids.sharedSyrup)).row, 1);
     assert.equal((await reads('stranger', ids.glass)).row, 1);
     const { data, error } = await users.stranger.client
