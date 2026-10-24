@@ -13,6 +13,8 @@ export interface DiscoverMapProps {
   onViewportChange: (viewport: Viewport) => void;
   /** Where to put the camera; a new object moves it there. */
   camera: Camera | null;
+  /** Phones: how much of the map's top and bottom the controls and sheet cover; the camera centres in what's left. */
+  inset?: { top: number; bottom: number };
   scheme: 'light' | 'dark';
   /** The pin colour: the venue accent, contrast-checked. */
   accent: { fill: string; text: string };
