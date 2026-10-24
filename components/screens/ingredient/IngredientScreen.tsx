@@ -49,8 +49,8 @@ export interface IngredientScreenProps {
   inStudyPile: boolean;
   onToggleStudyPile: () => void;
   canEdit: boolean;
-  /** Edit: a house prep edits in place. */
-  onEdit: (isPrep: boolean) => void;
+  /** Edit: turns the page into editing in place. */
+  onEdit: () => void;
 }
 
 /**
@@ -125,7 +125,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const offerEdit = canEdit || (showRecipe && !!userId);
   const print = () => void printPrepCard({ name: ingredient.name, facts, lines: lines.map((l) => ({ amount: [l.amount, l.unit].filter(Boolean).join(' '), name: l.name })), steps: steps.map((s) => s.body) });
   const more = [
-    offerEdit ? { label: 'Edit', onPress: () => onEdit(isPrep) } : null,
+    offerEdit ? { label: 'Edit', onPress: onEdit } : null,
     isPrep && canViewDetails ? { label: 'Proof: work out the strength', onPress: () => setSheet('proof') } : null,
     !wide && isPrep && canViewDetails ? { label: 'Print card', onPress: print } : null,
   ].filter((a): a is { label: string; onPress: () => void } => !!a);
@@ -214,7 +214,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
               <DrinkFacts facts={facts} columns={2} compact />
               {showRecipe ? <Button label={makes ? `Make ${makes}` : 'Make'} icon="play.fill" size="lg" onPress={() => make()} /> : null}
               <View style={styles.actions}>
-                {offerEdit ? <Button label="Edit" variant="secondary" onPress={() => onEdit(isPrep)} /> : null}
+                {offerEdit ? <Button label="Edit" variant="secondary" onPress={onEdit} /> : null}
                 {isPrep && canViewDetails ? <Button label="Print card" variant="secondary" onPress={print} /> : null}
                 <GlassButton accessibilityLabel={onShelf ? 'Take off your bar' : 'Save to your bar'} icon={onShelf ? 'bookmark.fill' : 'bookmark'} onPress={toggleShelf} />
                 {more.length > (offerEdit ? 1 : 0) ? <GlassButton accessibilityLabel="More: proof, make your own" icon="ellipsis" onPress={() => setSheet('more')} /> : null}

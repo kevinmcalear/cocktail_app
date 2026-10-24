@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import DraggableFlatList, { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from 'react-native-draggable-flatlist';
 
 import { Body, Caption, Headline, PressableScale, useDs } from '@/components/ds';
@@ -7,6 +7,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { PrepFields } from '@/lib/prepCardForm';
 import { newStepField } from '@/lib/prepCardForm';
+
+import { GrowingField } from '../../drink/edit/EditParts';
 
 type Step = PrepFields['steps'][number];
 
@@ -43,14 +45,14 @@ export function MethodEdit({ steps, onChange, summary }: MethodEditProps) {
           </View>
           <View style={styles.flex}>
             <Caption tone="muted">{`Step ${i + 1}`}</Caption>
-            <TextInput
+            <GrowingField
+              minHeight={type.body.lineHeight + space.lg}
               value={item.body}
               onChangeText={(body) => set(item.key, body)}
-              multiline
               placeholder="Stir the honey into the hot water"
               placeholderTextColor={ds.c.faint}
               aria-label={`Step ${i + 1}`}
-              style={[styles.body, NO_OUTLINE, { color: ds.c.ink }]}
+              style={[styles.body, NO_OUTLINE, { color: ds.c.ink, backgroundColor: ds.c.surface }]}
             />
           </View>
           <PressableScale role="button" accessibilityLabel={`Remove step ${i + 1}`} onPress={() => onChange(steps.filter((s) => s.key !== item.key))} style={styles.remove}>
@@ -83,7 +85,7 @@ const styles = StyleSheet.create({
   grip: { width: GRIP, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   number: { width: 26, height: 26, marginTop: space.sm, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  body: { ...type.body, fontFamily: fontFamilies.body, padding: 0, minHeight: type.body.lineHeight * 2, textAlignVertical: 'top' },
+  body: { ...type.body, fontFamily: fontFamilies.body, borderRadius: radius.control, padding: space.sm, textAlignVertical: 'top' },
   remove: { width: 32, height: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   add: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1.5, borderStyle: 'dashed', marginTop: space.xs },
   medium: { fontFamily: fontFamilies.bodyMedium },

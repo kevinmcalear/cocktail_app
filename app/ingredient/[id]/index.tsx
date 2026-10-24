@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { lazy, Suspense, useState } from "react";
 import { View } from "react-native";
 
@@ -27,7 +27,6 @@ interface RecipeRow {
 
 export default function IngredientDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const router = useRouter();
     const { toggleStudyPile, isInStudyPile } = useStudyPile();
     const study = useVenueFeature("study");
 
@@ -67,7 +66,7 @@ export default function IngredientDetailScreen() {
     }));
     const key = `ingredient-${ingredient.id}`;
 
-    // The page reads it; Edit turns a house prep's page into editing in place.
+    // The page reads it; Edit turns the same page into editing in place.
     if (isEditing) {
         return (
             <Suspense fallback={null}>
@@ -86,7 +85,7 @@ export default function IngredientDetailScreen() {
             inStudyPile={isInStudyPile(key)}
             onToggleStudyPile={() => (study ? toggleStudyPile(key) : undefined)}
             canEdit={canEdit}
-            onEdit={(isPrep) => (isPrep ? setIsEditing(true) : router.push(`/ingredient/${ingredient.id}/edit`))}
+            onEdit={() => setIsEditing(true)}
         />
     );
 }

@@ -77,7 +77,7 @@ export function KeepsRows({ fields, wide, onOpen }: { fields: PrepFields; wide: 
 export function KeepsSheet({ field, fields, set, onClose }: { field: KeepsField; fields: PrepFields; set: (patch: Partial<PrepFields>) => void; onClose: () => void }) {
   const toggle = (a: string) => set({ actions: fields.actions.includes(a) ? fields.actions.filter((x) => x !== a) : [...fields.actions, a] });
   return (
-    <Sheet visible onClose={onClose} accessibilityLabel={LABELS[field]} keyboard header={<Headline role="heading">{LABELS[field]}</Headline>}>
+    <Sheet visible onClose={onClose} accessibilityLabel={LABELS[field]} keyboard style={styles.sheetPad} header={<Headline role="heading">{LABELS[field]}</Headline>}>
       <SheetScrollView contentContainerStyle={styles.sheet} keyboardShouldPersistTaps="handled">
         {field === 'makes' ? (
           <>
@@ -167,7 +167,8 @@ const styles = StyleSheet.create({
   tile: { flexBasis: '47%', flexGrow: 1, gap: 2, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },
   full: { flexBasis: '100%' },
   tileValue: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  sheet: { paddingHorizontal: space.xl, paddingBottom: space.xxl, gap: space.md },
+  sheetPad: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  sheet: { gap: space.md, paddingTop: space.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   costRow: { flexDirection: 'row', alignItems: 'baseline', gap: space.md, flexWrap: 'wrap' },
   part: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 44, borderBottomWidth: StyleSheet.hairlineWidth },

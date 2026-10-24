@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { usePreventRemove, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
@@ -11,10 +11,20 @@ import { displayFaces, fontFamilies, layout, radius, space, type } from '@/const
 import { useUserId } from '@/ctx/AuthContext';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useItemPublishing } from '@/hooks/usePublishing';
+import { confirmDiscardChanges } from '@/lib/dialogs';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
 
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
+
+/**
+ * Ask before leaving with unsaved changes, by Back or a swipe (on the web,
+ * closing the tab too). Returns what lets the page go once it's saved.
+ */
+export function useLeaveGuard(dirty: boolean) {
+  // repeat() lifts the guard itself before it goes on.
+  return usePreventRemove(dirty, ({ repeat }) => void confirmDiscardChanges(true).then((ok) => ok && repeat()));
+}
 
 /** The name, in the venue's face over a rule, as the drink editor sets it. */
 export function NameField({ value, onChange }: { value: string; onChange: (name: string) => void }) {
