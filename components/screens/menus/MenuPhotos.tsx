@@ -18,12 +18,12 @@ interface MenuPhotosProps {
 }
 
 // The simulator has no camera, and launching it there crashes the app.
-const CAMERA = Platform.OS !== 'web' && Device.isDevice;
+export const CAMERA = Platform.OS !== 'web' && Device.isDevice;
 
 /**
  * Adds pages: `snap` takes one with the camera where there is one (Snap the
- * menu), `ask` offers the camera or the library on a phone, and anywhere
- * else it opens the photo picker.
+ * menu), `pick` opens the photo library (From your photos), `ask` offers the
+ * camera or the library on a phone, and anywhere else it opens the picker.
  */
 export function useAddMenuPhotos({ photos, onChange, onError }: MenuPhotosProps) {
   const add = async (get: () => Promise<MenuPhoto[]>) => {
@@ -35,8 +35,8 @@ export function useAddMenuPhotos({ photos, onChange, onError }: MenuPhotosProps)
     }
   };
   const pick = () => add(() => pickMenuPhotos(MAX_MENU_PHOTOS - photos.length));
-  return (how: 'snap' | 'ask') => {
-    if (!CAMERA) return pick();
+  return (how: 'snap' | 'pick' | 'ask') => {
+    if (!CAMERA || how === 'pick') return pick();
     if (how === 'snap') return add(takeMenuPhoto);
     Alert.alert('Add a page', undefined, [
       { text: 'Take a photo', onPress: () => void add(takeMenuPhoto) },

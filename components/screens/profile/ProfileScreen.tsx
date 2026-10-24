@@ -9,7 +9,6 @@ import { isUnclaimed, useProfile, type Profile } from '@/hooks/useProfiles';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
 import { siteOrigin } from '@/lib/venueLink';
 
-import { HideBarButton } from '../kept/HideBarButton';
 import { LoveBarButton } from '../kept/LoveBarButton';
 import { SignInCard } from '../published/SignInCard';
 import { BlockedProfileNote, ProfileSafety } from '../safety/ProfileSafety';
@@ -70,9 +69,8 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
       {profile && !gated && !wideBar ? (
         <View style={styles.right}>
           <ShareProfile profile={profile} />
-          {/* A bar's Love sits beside Share (ppl-bar-top), and Hide beside Love (disc-hide-bar). */}
+          {/* A bar's Love sits beside Share (ppl-bar-top); Hide is in More (disc-hide-bar). */}
           {profile.kind === 'bar' ? <LoveBarButton profileId={profile.id} name={profile.display_name} labelled /> : null}
-          {profile.kind === 'bar' ? <HideBarButton profileId={profile.id} name={profile.display_name} /> : null}
           <ProfileSafety profile={profile} />
         </View>
       ) : null}

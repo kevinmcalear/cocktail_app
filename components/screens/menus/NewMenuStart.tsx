@@ -13,7 +13,7 @@ import { MenuVisual } from './MenuVisual';
 import { MonoLabel } from './ReviewParts';
 import type { Start } from './useNewMenu';
 
-export type StartKind = 'photo' | 'saved' | 'paste' | 'blank';
+export type StartKind = 'photo' | 'library' | 'saved' | 'paste' | 'blank';
 
 interface Tile {
   kind: StartKind;
@@ -24,13 +24,15 @@ interface Tile {
 
 /**
  * How a new menu starts, as tiles two across. On a phone (venue-menus-new P1)
- * a tap goes straight on, so nothing stays picked: Snap the menu, A menu you
- * saved (when there is one), Paste a list, Blank.
+ * a tap goes straight on, so nothing stays picked: Snap the menu (where there
+ * is a camera), From your photos, A menu you saved (when there is one), Paste
+ * a list, Blank.
  */
-export function StartTiles({ saved, onPick }: { saved: string | null; onPick: (kind: StartKind) => void }) {
+export function StartTiles({ saved, camera, onPick }: { saved: string | null; camera: boolean; onPick: (kind: StartKind) => void }) {
   const ds = useDs();
   const tiles: Tile[] = [
-    { kind: 'photo', label: 'Snap the menu', detail: 'A printed one. We read it.', icon: 'camera' },
+    ...(camera ? [{ kind: 'photo' as const, label: 'Snap the menu', detail: 'A printed one. We read it.', icon: 'camera' as const }] : []),
+    { kind: 'library', label: 'From your photos', detail: 'A picture or screenshot of one', icon: 'photo' },
     ...(saved ? [{ kind: 'saved' as const, label: 'A menu you saved', detail: saved, icon: 'doc.on.doc' as const }] : []),
     { kind: 'paste', label: 'Paste a list', detail: 'Drink names, one a line', icon: 'list.bullet' },
     { kind: 'blank', label: 'Blank', detail: 'One section to fill', icon: 'plus' },

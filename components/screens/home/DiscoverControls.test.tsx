@@ -2,7 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 
-import { SearchPill } from './DiscoverControls';
+import { BackPill, SearchPill } from './DiscoverControls';
 import { scrollAwayStep } from './DiscoverHeader';
 import { FiltersSheet, OptionsSheet } from './DiscoverSheet';
 
@@ -17,6 +17,16 @@ test('the search pill clears only once there is a query', async () => {
   expect(screen.getByText('negroni')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Clear the search' }));
   expect(onClear).toHaveBeenCalled();
+});
+
+test("with a bar open on the phone map, the pill is its back arrow and name; the name opens search", async () => {
+  const onBack = jest.fn();
+  const onOpen = jest.fn();
+  await renderWithTamagui(<BackPill name="Grey Lady" onBack={onBack} onOpen={onOpen} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Back to the results' }));
+  expect(onBack).toHaveBeenCalledTimes(1);
+  await fireEvent.press(screen.getByRole('button', { name: 'Grey Lady. Search' }));
+  expect(onOpen).toHaveBeenCalledTimes(1);
 });
 
 test('filters pick several at once and clear together', async () => {
