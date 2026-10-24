@@ -66,6 +66,11 @@ export function withFeature(on: readonly VenueFeatureKey[], key: VenueFeatureKey
   return VENUE_FEATURES.map((f) => f.key).filter((k) => (k === key ? enabled : on.includes(k)));
 }
 
+/** Who may switch features: Admins (level 40, lib/roles.ts), the only role bars_update lets write them. */
+export function canSwitchFeatures(role: number): boolean {
+  return role >= 40;
+}
+
 /** At home there's no venue to ask: each feature is what home mode always had. */
 export function featureAtHome(key: VenueFeatureKey): boolean {
   return VENUE_FEATURES.find((f) => f.key === key)?.atHome ?? false;

@@ -6,12 +6,9 @@ import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { NavMatch } from '@/lib/shellNav';
 import { canSeeTeam } from '@/lib/team';
-import { tabPath } from '@/lib/venueFeatures';
+import { canSwitchFeatures, tabPath } from '@/lib/venueFeatures';
 
 import { useModeTabs } from './WebTabBar';
-
-// Admin, the level that can switch a venue's features (lib/roles.ts).
-const ADMIN = 40;
 
 /** A place the shell links to: the sidebar, the tablet rail and the phone's venue menu share these. */
 export interface Place extends NavMatch {
@@ -49,7 +46,7 @@ export function useNavPlaces() {
       ? [
           ...(canSeeTeam(role) && !round ? [{ key: 'team', label: 'My team', icon: 'person.2.fill', path: '/team' } as Place] : []),
           // Features is the Admins' (bars_update lets only them switch), first round or not: the round's last card opens it.
-          ...(role >= ADMIN ? [{ key: 'features', label: 'Features', icon: 'switch.2', path: `${settings}/features` } as Place] : []),
+          ...(canSwitchFeatures(role) ? [{ key: 'features', label: 'Features', icon: 'switch.2', path: `${settings}/features` } as Place] : []),
           ...(round
             ? []
             : [
