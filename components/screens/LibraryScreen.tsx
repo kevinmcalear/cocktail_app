@@ -14,7 +14,7 @@ import { FeatureNewsLine } from '@/components/screens/library/FeatureNewsLine';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { FilterRow } from '@/components/screens/library/LibraryChips';
-import { FilterButton, PhoneFilterRow, PinnedFilters, type FilterSet } from '@/components/screens/library/LibraryFilters';
+import { FILTER_DOCK, FilterDock, PinnedTitle, type FilterSet } from '@/components/screens/library/LibraryFilters';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
 import { LibraryTile } from '@/components/screens/library/LibraryTile';
@@ -78,16 +78,16 @@ export function LibraryScreen() {
   const canOrder = !!capabilities?.includes('menus');
   const [swap, setSwap] = useState(false);
   const [snapping, setSnapping] = useState(false);
-  // Phones: four filters and a filter button, no find field; the search circle opens on the venue.
+  // Phones: four filters and a filter button in a glass dock above the tabs, no find field; the search circle opens on the venue.
   // Wider screens keep Find in Library in the header, narrowing the list in place (lib-filters-proposal).
   const phone = breakpoint === 'phone';
   const [find, setFind] = useState('');
   const q = phone ? '' : find.trim().toLowerCase();
-  // Scrolled past the filters, a phone pins them to the top (rowY: where the row sits in the list).
-  const [rowY, setRowY] = useState(0);
+  // Scrolled past the title, a phone pins a small one to the top (titleEnd: where the title ends in the list).
+  const [titleEnd, setTitleEnd] = useState(0);
   const [pinned, setPinned] = useState(false);
-  const onScrollY = (y: number) => setPinned(phone && !!rowY && y > rowY - layout.minTapTarget * 2);
-  // A new view opens at its top (Classics is its own list), so the filters unpin.
+  const onScrollY = (y: number) => setPinned(phone && !!titleEnd && y > titleEnd - layout.minTapTarget);
+  // A new view opens at its top (Classics is its own list), so the title unpins.
   const [pinnedShow, setPinnedShow] = useState(show);
   if (pinnedShow !== show) {
     setPinnedShow(show);
@@ -156,25 +156,19 @@ export function LibraryScreen() {
   const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick };
   const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
-  const content = { paddingHorizontal: gutter, paddingBottom: bottom, gap: space.lg };
+  // The last tiles scroll clear of the phone's filter dock.
+  const listBottom = bottom + (phone ? FILTER_DOCK : 0);
+  const content = { paddingHorizontal: gutter, paddingBottom: listBottom, gap: space.lg };
   const header = (
     <View style={styles.header}>
-      <PageHeader
-        title="Library"
-        width="full"
-        display
-        tools={phone ? <FilterButton set={filterSet} /> : undefined}
-        action={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />}
-      />
+      <View onLayout={(e) => setTitleEnd(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
+        <PageHeader title="Library" width="full" display action={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />} />
+      </View>
       {activeId ? <ResumeCard barId={activeId} /> : null}
       <FeatureNewsLine />
       <FirstRoundCard />
       {active && canEdit ? <MatchClassicsNudge barId={active.id} /> : null}
-      {phone ? (
-        <View onLayout={(e) => setRowY(e.nativeEvent.layout.y)}>
-          <PhoneFilterRow set={filterSet} gutter={gutter} />
-        </View>
-      ) : (
+      {phone ? null : (
         <FilterRow label="Show" gutter={gutter} whole={breakpoint === 'desktop'} groups={groups.map((g) => g.map((f) => <Chip key={f.value} look="outline" label={f.label} count={String(count(f.value))} selected={show === f.value} onPress={() => pick(f.value)} />))} />
       )}
       {show === 'on-menu' && byMenu.onMenus.length > 1 ? (
@@ -241,8 +235,8 @@ export function LibraryScreen() {
         <LibraryPanes venueId={activeId} items={shown} lineOf={lineOf} header={header} empty={empty} footer={foot} />
       ) : staffView && activeId ? (
         // The staff list drags to reorder, so it is the scroll view itself.
-        <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />}>
-          <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} onScrollOffset={onScrollY} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: bottom }} />
+        <Suspense fallback={<FlatList data={[]} renderItem={() => null} ListHeaderComponent={header} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: listBottom }} />}>
+          <StaffList barId={activeId} canEdit={canOrder} onNow={onNow} past={past} header={header} onScrollOffset={onScrollY} contentContainerStyle={{ paddingHorizontal: gutter, paddingBottom: listBottom }} />
         </Suspense>
       ) : (
         <FlatList
@@ -277,7 +271,8 @@ export function LibraryScreen() {
           ListFooterComponent={foot ?? undefined}
         />
       )}
-      {pinned ? <PinnedFilters set={filterSet} gutter={gutter} /> : null}
+      {pinned ? <PinnedTitle /> : null}
+      {phone ? <FilterDock set={filterSet} /> : null}
       <RoundOpened />
       {swap && activeId ? <SwapSheet barId={activeId} onClose={() => setSwap(false)} /> : null}
       {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}

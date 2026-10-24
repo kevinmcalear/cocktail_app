@@ -1,6 +1,6 @@
 import { usePathname, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { Caption, useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
@@ -48,6 +48,8 @@ function Palette() {
   const start = startScope(from, mine.defaultScope, !!area?.label);
   const scope = picked === 'area' && !area?.label ? start : (picked ?? start);
   const close = () => setOpen(false);
+  // The arrow, Tab and Return keys are the web's (searchNav.tsx); a native iPad gets Done and no key hints.
+  const keys = Platform.OS === 'web';
   // A style or a city the search names lands on Discover, as the search tab's do.
   const toDiscover = () => (close(), router.navigate('/discover'));
   const lent = area && { ...area, onKind: (k: string) => (area.onKind(k), toDiscover()), onPlace: (c: City) => (area.onPlace(c), toDiscover()) };
@@ -60,7 +62,7 @@ function Palette() {
       items={q && mine.canAdd ? ['new', 'pick'] : ['pick']}
       render={(c) =>
         c === 'new' ? (
-          <ResultRow key="new" title={`New drink called “${capitalize(q)}”`} icon="plus" accentIcon trailing={<KeyCap label="N" />} onPress={() => router.push(newDrinkHref(capitalize(q), mine.venueId) as never)} />
+          <ResultRow key="new" title={`New drink called “${capitalize(q)}”`} icon="plus" accentIcon trailing={keys ? <KeyCap label="N" /> : undefined} onPress={() => router.push(newDrinkHref(capitalize(q), mine.venueId) as never)} />
         ) : (
           <ResultRow
             key="pick"
@@ -68,7 +70,7 @@ function Palette() {
             caption="A drink to make, at random"
             icon="8.circle"
             accentIcon
-            trailing={<PickKeys />}
+            trailing={keys ? <PickKeys /> : undefined}
             onPress={() => {
               close();
               useEightBallStore.getState().setOpen(true);
@@ -99,8 +101,8 @@ function Palette() {
       label="Search"
       full
       onClose={close}
-      head={<SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} area={lent} autoFocus onDone={close} onSubmit={() => void nav.open()} keys />}
-      footer={<KeyHints back={mine.venueId ? 'Back' : 'Close'} />}
+      head={<SearchHead query={query} onQuery={setQuery} scope={scope} onScope={setScope} mine={mine} area={lent} autoFocus onDone={close} onSubmit={() => void nav.open()} keys={keys} />}
+      footer={keys ? <KeyHints back={mine.venueId ? 'Back' : 'Close'} /> : undefined}
       aside={<SearchPreview item={previews.preview(nav.active)} onOpen={() => void nav.open()} />}
     >
       <SearchNavProvider active={nav.active} register={previews.register}>

@@ -22,6 +22,15 @@ export function newDrinkHref(name: string, barId: string | null): string {
   return `/add-cocktail?name=${encodeURIComponent(name)}${barId ? `&barId=${encodeURIComponent(barId)}` : ''}`;
 }
 
+/**
+ * A drink's page: signed in, the in-app page (/cocktail/<id>), which shows a
+ * bar's published drink to people outside the bar too; signed out, its public
+ * page (/d/<id>), with the website frame and Sign in.
+ */
+export function drinkPageHref(id: string, signedIn: boolean): string {
+  return signedIn ? `/cocktail/${id}` : `/d/${id}`;
+}
+
 /** The drink in a drink page link (/cocktail/<id>), or null for any other page. */
 export function drinkIdFromHref(href: string | null | undefined): string | null {
   return href?.startsWith('/cocktail/') ? href.slice('/cocktail/'.length) || null : null;

@@ -21,6 +21,7 @@ import { DeskSearchResults } from '@/components/screens/home/DeskSearchResults';
 import { AllowLocation } from '@/components/screens/home/DiscoverArea';
 import { BarAway, DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { PickedBar } from '@/components/screens/home/SelectedBar';
+import { StyleChips } from '@/components/screens/home/StyleChips';
 import { TopBars } from '@/components/screens/home/TopBars';
 import { SearchBody, type SearchArea } from '@/components/search/SearchPanel';
 import { HomeWeekStrip } from '@/components/screens/week/HomeWeekStrip';
@@ -79,15 +80,9 @@ export function DiscoverScreen() {
   // Which layer the wide map shows, so its tapped bar's card shows the same scores.
   const [mapLayer, setMapLayer] = useState<MapLayer>('drinks');
   const listRef = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
-  const onPick = (pin: MapPin | null) => {
-    setHover(null);
-    setPicked(pin);
-    if (pin) listRef.current?.scrollTo({ y: 0, animated: true });
-  };
+  const onPick = (pin: MapPin | null) => (setHover(null), setPicked(pin), pin && listRef.current?.scrollTo({ y: 0, animated: true }));
   const viewport = useRef<Viewport | null>(null);
-  const onViewport = useCallback((v: Viewport | null) => {
-    viewport.current = v;
-  }, []);
+  const onViewport = useCallback((v: Viewport | null) => void (viewport.current = v), []);
   // Phones: the map when this device was found before, unless it last picked the list; decided as the screen opens, so a late position doesn't swap it.
   const saved = useDiscoverView((s) => s.view);
   const saveView = useDiscoverView((s) => s.setView);
@@ -170,6 +165,7 @@ export function DiscoverScreen() {
     <View style={styles.controls}>
       <SearchPill query={search} placeholder={onMap ? 'Search this area' : 'Search bars and drinks'} onOpen={openSearch} onClear={() => setSearch('')} />
       <FilterRow area={area} preferNear={preferNear} filters={filtersOn} onArea={() => setSheet('area')} onFilters={() => setSheet('filters')} />
+      <StyleChips kinds={kinds} onChange={setKinds} drinks={results.drinks} />
     </View>
   );
 
@@ -204,15 +200,18 @@ export function DiscoverScreen() {
           me={me}
           opened={openHover?.id}
           focus={openHover?.cam}
-          onShowBar={showBar} pick={{ id: picked?.id ?? null, onPick: setPicked }}
+          onShowBar={showBar} pick={{ id: picked?.id ?? null, onPick: setPicked }} onFindMe={onNearMe}
           top={
-            note ? (
-              // On glass: bare text over the map is lost under the pins.
-              <GlassSurface style={styles.mapNote}>
-                <Caption role="status">{note}</Caption>
-                <AllowLocation near={near} access={access} onAsk={onNearMe} />
-              </GlassSurface>
-            ) : null
+            <>
+              {searching || picked ? null : <StyleChips onGlass kinds={kinds} onChange={setKinds} drinks={results.drinks} />}
+              {note ? (
+                // On glass: bare text over the map is lost under the pins.
+                <GlassSurface style={styles.mapNote}>
+                  <Caption role="status">{note}</Caption>
+                  <AllowLocation near={near} access={access} onAsk={onNearMe} />
+                </GlassSurface>
+              ) : null}
+            </>
           }
         />
         <View pointerEvents="box-none" style={styles.mapHeader} onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
@@ -275,7 +274,7 @@ export function DiscoverScreen() {
       {split ? null : <ScrollAwayHeader away={away} onHeight={setHeaderHeight}>{header}</ScrollAwayHeader>}
       {split ? (
         <View style={[styles.flex, styles.mapSide, { borderLeftColor: ds.c.line }]}>
-          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} from={from} me={me} opened={openHover?.id} focus={openHover?.cam} onShowBar={showBar} pick={{ id: picked?.id ?? null, onPick, layer: mapLayer, onLayer: setMapLayer }} />
+          <DiscoverMapPane mode="side" area={shownArea} onArea={onMapArea} drink={drink} filter={filter} results={mapResults} onViewport={onViewport} from={from} me={me} opened={openHover?.id} focus={openHover?.cam} onShowBar={showBar} pick={{ id: picked?.id ?? null, onPick, layer: mapLayer, onLayer: setMapLayer }} onFindMe={onNearMe} />
         </View>
       ) : null}
       {overlay}

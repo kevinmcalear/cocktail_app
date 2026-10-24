@@ -49,17 +49,17 @@ export function BarYours({ profileId, drinkIds }: { profileId: string; drinkIds:
 }
 
 /**
- * The facts an unclaimed bar's page lists (ppl-bar-unclaimed): when it
- * opened and its best award (its Instagram is in PublicBarFacts). Rows it
- * has no fact for are left out.
+ * The facts every bar's page lists, claimed or not (ppl-bar-unclaimed,
+ * -private, -names): when it opened and its best two awards, one a line (the
+ * awards count above opens them all; its Instagram is in PublicBarFacts).
+ * Rows it has no fact for are left out.
  */
 export function BarFactsList({ profile }: { profile: Profile }) {
   const facts = useBarFacts(profile.id).data;
-  const best = sortAwards(useProfileAwards(profile.id).data ?? [])[0];
-  const award = best ? awardLines(best) : null;
+  const best = sortAwards(useProfileAwards(profile.id).data ?? []).slice(0, 2).map(awardLines);
   const rows = [
     facts?.opened_year ? { term: 'Opened', value: String(facts.opened_year) } : null,
-    award ? { term: 'Award', value: `${award.detail} · ${award.headline}` } : null,
+    best.length ? { term: best.length > 1 ? 'Awards' : 'Award', value: best.map((a) => `${a.detail} · ${a.headline}`).join('\n') } : null,
   ].filter((r): r is { term: string; value: string } => !!r);
   if (!rows.length) return null;
   return (

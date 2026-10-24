@@ -46,7 +46,9 @@ export function GlassSurface({
     return <View style={[styles.clip, { backgroundColor: tint ?? c.raised, borderColor: tint ?? c.glassBorder, borderWidth: 1, elevation: 6 }, style]}>{children}</View>;
   }
   return (
-    <BlurView intensity={60} tint={s} style={[styles.clip, { backgroundColor: tint ?? c.glass, borderColor: tint ?? c.glassBorder, borderWidth: 1 }, style]}>
+    <BlurView intensity={60} tint={s} style={[styles.clip, { backgroundColor: c.glass, borderColor: tint ?? c.glassBorder, borderWidth: 1 }, style]}>
+      {/* The tint as a layer over the blur: expo-blur's web BlurView paints its own background over a backgroundColor. */}
+      {tint ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint }]} /> : null}
       {children}
     </BlurView>
   );
