@@ -55,6 +55,9 @@ assert.equal(collectionLine(0, 0), 'Drinks to make and your menus');
 
 // Phones and native get the tab bar; 768 to 1199 the rail; 1200 and up the sidebar.
 assert.equal(webNavFor('ios', 1400), 'tabs');
+assert.equal(webNavFor('ios', 1024, true), 'rail', 'a native iPad gets the rail like tablet web');
+assert.equal(webNavFor('ios', 1376, true), 'sidebar');
+assert.equal(webNavFor('ios', 700, true), 'tabs', 'an iPad in a narrow split keeps the tab bar');
 assert.equal(webNavFor('web', 390), 'tabs');
 assert.equal(webNavFor('web', 767), 'tabs');
 assert.equal(webNavFor('web', 768), 'rail');

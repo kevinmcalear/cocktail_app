@@ -1,8 +1,7 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, GlassButton, PressableScale, useDs, type IconName } from '@/components/ds';
+import { Body, Caption, PressableScale, useDs, type IconName } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { CustomIcon } from '@/components/ui/CustomIcons';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -123,17 +122,6 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
         ) : null}
       </View>
     </MenuSheet>
-  );
-}
-
-/** The "+" in the header of every redesigned screen. */
-export function CreateButton() {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <GlassButton accessibilityLabel="New: drink, ingredient, beer, wine, menu, bring something in, or a draft" icon="plus" onPress={() => setOpen(true)} />
-      {open ? <CreateSheet visible onClose={() => setOpen(false)} /> : null}
-    </>
   );
 }
 

@@ -6,11 +6,15 @@
 
 import { layout } from '@/constants/tokens';
 
-/** Which nav the web shows: the phone tab bar, the tablet icon rail (768 to 1199) or the desktop sidebar. */
+/**
+ * Which nav the shell shows: the phone tab bar, the tablet icon rail (768 to
+ * 1199) or the desktop sidebar. The web and a native iPad (`pad`, decided
+ * 24 Oct 2026) go wide; iPhone and Android keep the tab bar.
+ */
 export type WebNav = 'tabs' | 'rail' | 'sidebar';
 
-export function webNavFor(os: string, width: number): WebNav {
-  if (os !== 'web' || width < layout.breakpoints.tablet) return 'tabs';
+export function webNavFor(os: string, width: number, pad = false): WebNav {
+  if ((os !== 'web' && !pad) || width < layout.breakpoints.tablet) return 'tabs';
   return width < layout.breakpoints.desktop ? 'rail' : 'sidebar';
 }
 

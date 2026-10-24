@@ -6,12 +6,11 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { useDs, useGutter } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { AccountSection, AppVersion, SignOutSection } from '@/components/screens/settings/AccountSection';
-import { PreferencesSection, TryItSection } from '@/components/screens/settings/PreferencesSection';
+import { PreferencesSection } from '@/components/screens/settings/PreferencesSection';
 import { ProfileSection } from '@/components/screens/settings/ProfileSection';
 import { VenuesSection } from '@/components/screens/settings/VenuesSection';
 import { space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
-import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { confirmAsync } from '@/lib/dialogs';
 
 /**
@@ -36,7 +35,6 @@ function Settings() {
   const router = useRouter();
   const tabBarInset = useTabBarInset();
   const { signOut } = useAuth();
-  const wide = useIsWideWeb();
 
   const logOut = async () => {
     const ok = await confirmAsync({
@@ -66,7 +64,6 @@ function Settings() {
           <ProfileSection />
           <VenuesSection />
           <PreferencesSection />
-          {wide ? null : <TryItSection />}
           <AccountSection />
           <SignOutSection onLogOut={() => void logOut()} />
           <AppVersion />
