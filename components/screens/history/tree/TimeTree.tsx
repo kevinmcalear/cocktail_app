@@ -5,6 +5,7 @@ import Animated, { useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, u
 import { Caption, DsText, PressableScale, useBreakpoint, useDs } from '@/components/ds';
 import { familyHues, fontFamilies, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
+import { shortYear } from '@/lib/timeline';
 import { AXIS_TICKS, axisEras, axisX, TIER_LABEL, type AxisFamily, type AxisRow } from '@/lib/timeTree';
 
 /** Taller than the board's 26 so each row is a fair tap. */
@@ -141,7 +142,7 @@ export function TimeTree({
     const cx = r.x * W;
     const selected = n.key === selectedKey;
     const right = r.x > 0.68;
-    const meta = [r.undated ? 'no year' : `${n.approx ? 'c.' : ''}${n.year}`, n.creator].filter(Boolean).join(' · ');
+    const meta = [r.undated ? 'no year' : shortYear(n), n.creator].filter(Boolean).join(' · ');
     const mark = r.tier === 'style' ? { backgroundColor: hue, borderRadius: radius.mark / 2 } : r.tier === 'modern' ? { backgroundColor: ds.c.ground, borderColor: hue, borderWidth: 2 } : { backgroundColor: hue };
     return (
       <PressableScale

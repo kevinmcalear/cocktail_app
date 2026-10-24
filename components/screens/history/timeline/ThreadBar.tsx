@@ -24,7 +24,7 @@ export function ThreadCard({ line, focusKey, onStep, onClose, inspector = false 
   const last = line.at(-1)!;
   const current = line.some((n) => n.key === focusKey) ? focusKey : last.key;
   const back = threadBack(line);
-  const label = (n: TreeNode) => `${yearLabel(n.year, n.approx) || 'No year'}, ${n.name}${who(n) ? `, ${who(n)}` : ''}`;
+  const label = (n: TreeNode) => `${yearLabel(n.year, n.approx, n.guess) || 'No year'}, ${n.name}${who(n) ? `, ${who(n)}` : ''}`;
   if (inspector) {
     return (
       <View role="region" aria-label={`${last.name}'s thread`} style={styles.card}>
@@ -47,7 +47,7 @@ export function ThreadCard({ line, focusKey, onStep, onClose, inspector = false 
                     {n.name}
                   </DsText>
                   <Caption tone="muted" numberOfLines={2}>
-                    {on ? 'Selected' : [n.kind === 'style' ? 'Style' : who(n), yearLabel(n.year, n.approx)].filter(Boolean).join(n.kind === 'style' ? ' · ' : ', ')}
+                    {on ? 'Selected' : [n.kind === 'style' ? 'Style' : who(n), yearLabel(n.year, n.approx, n.guess)].filter(Boolean).join(n.kind === 'style' ? ' · ' : ', ')}
                   </Caption>
                 </View>
               </PressableScale>
@@ -113,7 +113,7 @@ export function ThreadPick({ node, bottom }: { node: TreeNode; bottom: number })
   const ds = useDs();
   const router = useRouter();
   const score = useItemScores(node.kind === 'drink' ? [node.id] : []).data?.[node.id];
-  const where = [yearLabel(node.year, node.approx), [node.bar, node.city].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
+  const where = [yearLabel(node.year, node.approx, node.guess), [node.bar, node.city].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
   return (
     <View style={[styles.pick, { bottom, backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
       <View style={styles.pickHead}>
@@ -145,7 +145,7 @@ export function Riffs({ kids, onStep }: { kids: TreeNode[]; onStep: (key: string
       </Caption>
       <View role="list">
         {shown.map((k) => (
-          <PressableScale key={k.key} role="link" accessibilityLabel={`${k.name}${k.creator ? `, ${k.creator}` : ''}, ${yearLabel(k.year, k.approx) || 'no year'}`} onPress={() => onStep(k.key)} style={[styles.riff, { borderBottomColor: ds.c.line }]}>
+          <PressableScale key={k.key} role="link" accessibilityLabel={`${k.name}${k.creator ? `, ${k.creator}` : ''}, ${yearLabel(k.year, k.approx, k.guess) || 'no year'}`} onPress={() => onStep(k.key)} style={[styles.riff, { borderBottomColor: ds.c.line }]}>
             <Body style={styles.flex} numberOfLines={1}>
               {k.name}
               {k.creator ? <Body tone="muted">{` · ${k.creator}`}</Body> : null}

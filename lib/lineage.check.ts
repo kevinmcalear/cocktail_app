@@ -82,6 +82,8 @@ async function main() {
   const lastWord = drink('lw', null, { is_catalog: true, origin_year: 1916, origin_year_approx: true, origin_bar: { ...bar, display_name: 'Detroit Athletic Club', locality: null } });
   assert.equal(creditText(nameCredit(lastWord, null)), 'Classic, about 1916 · at Detroit Athletic Club');
   assert.equal(creditText(nameCredit(drink('daiq', null, { is_catalog: true }), null)), 'Classic');
+  // A best guess names its range and says so.
+  assert.equal(creditText(nameCredit(drink('bici', null, { is_catalog: true, origin_year: 1935, origin_year_guess: 'mid' }), null)), 'Classic, mid 1930s (best guess)');
   assert.equal(creditText(nameCredit(drink('mine', null, { creator: person }), null)), 'Created by Sam Ross');
 
   // Credit sentences leave out what isn't known and keep links on names.
@@ -133,6 +135,9 @@ async function main() {
   assert.equal(yearLabel(1880, true), 'c. 1880');
   assert.equal(yearLabel(1888, false), '1888');
   assert.equal(yearLabel(null, true), null);
+  assert.equal(yearLabel(1975, false, 'decade'), '1970s (best guess)');
+  assert.equal(yearLabel(1935, true, 'mid'), 'mid 1930s (best guess)');
+  assert.equal(yearLabel(1390, true), 'c. 1390');
   const closed: CreditProfile = { ...bar, display_name: 'Pegu Club', is_closed: true, closed_year: 2020 };
   assert.equal(
     creditText(creditSentence(drink('x', null, { creator: person, origin_bar: closed, origin_year: 2005, origin_year_approx: true }), null)),

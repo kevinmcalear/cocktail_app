@@ -102,7 +102,7 @@ export function Backstory({ itemId, lines = [], classicName, onRiff = null, stor
   const riffs = data?.riffs ?? [];
   const steps = [
     ...lineStyles.map((s) => ({ key: s.id, name: s.name, year: yearLabel(s.year, s.year_approx), isStyle: true })),
-    ...ancestors.map((d) => ({ key: d.id, name: d.name, year: yearLabel(d.origin_year, d.origin_year_approx), isStyle: false })),
+    ...ancestors.map((d) => ({ key: d.id, name: d.name, year: yearLabel(d.origin_year, d.origin_year_approx, d.origin_year_guess), isStyle: false })),
   ];
   // A classic's bars that pour it, and their variations, sit under its spec (ServedAt); its riffs stay here.
   const versions = useVersionGroups(drink?.is_catalog ? drink.id : null, riffs);

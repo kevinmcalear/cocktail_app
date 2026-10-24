@@ -206,7 +206,7 @@ export function creatorProfileId(d: WizardDraft, myProfileId: string | null): st
   return d.creator.id;
 }
 
-/** The earliest year items.origin_year takes (its check is 1600 to 2100). */
+/** The earliest year a typed credit takes. items.origin_year goes back to 1300, for medieval drinks like mulled wine. */
 export const FIRST_YEAR = 1600;
 
 /** A typed year ("1998") as a number, or null while it isn't a whole year from 1600 to this one. */

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import type { TreeNode } from './drinkTree';
-import { DECADES, decadeCounts, eraBands, eraOf, eraX, foldThread, fromLine, locate, locateKey, placeOptions, thread, threadBack, timelineSections, undatedCount, yearAt } from './timeline';
+import { DECADES, decadeCounts, eraBands, eraOf, eraX, foldThread, fromLine, locate, locateKey, placeOptions, shortYear, thread, threadBack, timelineSections, undatedCount, yearAt } from './timeline';
 
 const node = (key: string, family: string, parentKey: string | null, year: number | null, extra: Partial<TreeNode> = {}): TreeNode => ({
   key,
@@ -125,4 +125,10 @@ assert.deepEqual(names({ family: null, styles: true, place: 'New York' }), ['Sou
 assert.deepEqual(names({ family: null, styles: false, place: "Trader Vic's" }), ['Mai Tai']);
 assert.deepEqual(placeOptions(placed).map((p) => `${p.kind}:${p.name}:${p.count}`), ['city:New York:2', 'city:Oakland:1', 'bar:Milk & Honey:2', "bar:Trader Vic's:1"]);
 
+// A best guess shows its decade in the year column; the row says "best guess".
+assert.equal(shortYear({ year: 1935, approx: false, guess: 'mid' }), '1930s');
+assert.equal(shortYear({ year: 1880, approx: true }), 'c.1880');
+assert.equal(shortYear({ year: null, approx: false }), '');
+
 console.log('timeline checks passed');
+

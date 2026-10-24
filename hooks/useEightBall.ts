@@ -80,7 +80,7 @@ export function useEightBallPool(): { pool: Candidate[]; isLoading: boolean } {
   const classics = useMemo(
     (): Classic[] =>
       (tree.data ?? []).flatMap((n) =>
-        n.kind === 'drink' ? [{ id: n.id, name: n.name, imageUrl: null, glass: null, year: n.year, approx: n.approx, creator: n.creator, bar: n.bar }] : []
+        n.kind === 'drink' ? [{ id: n.id, name: n.name, imageUrl: null, glass: null, year: n.year, approx: n.approx, guess: n.guess, creator: n.creator, bar: n.bar }] : []
       ),
     [tree.data]
   );

@@ -101,7 +101,7 @@ assert.ok(stepFilled('credits', { ...named, coCreators: [{ id: 'p-2', name: 'Ali
 assert.ok(stepFilled('credits', { ...named, originYear: 2019 }), 'a year fills the step');
 assert.ok(stepFilled('credits', { ...named, place: { id: 'bar-1', name: 'Attaboy' } }), 'a bar fills the step');
 
-// A year is four digits, from 1600 (the database's floor) to this one; anything else is not yet a year.
+// A year is four digits, from 1600 (FIRST_YEAR) to this one; anything else is not yet a year.
 assert.equal(parseYear('1998', 2026), 1998);
 assert.equal(parseYear(' 2026 ', 2026), 2026);
 assert.equal(parseYear('2027', 2026), null, 'not a year still to come');

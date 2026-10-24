@@ -42,6 +42,8 @@ export interface LineageDrink {
   lineage_note?: string | null;
   /** The year is approximate ("c. 1880"). */
   origin_year_approx?: boolean | null;
+  /** The year is our best guess inside a range: 'decade', 'early', 'mid' or 'late' (items.origin_year_guess). */
+  origin_year_guess?: string | null;
   is_catalog?: boolean | null;
 }
 
@@ -62,9 +64,21 @@ export function parentId(drink: Pick<LineageDrink, 'riff_of_id' | 'lineage_paren
   return drink.riff_of_id ?? drink.lineage_parent_id ?? null;
 }
 
-/** "1888", "c. 1880", or null. */
-export function yearLabel(year: number | null | undefined, approx?: boolean | null): string | null {
-  return year ? `${approx ? 'c. ' : ''}${year}` : null;
+/** "1888", "c. 1880", "mid 1930s (best guess)", or null. */
+export function yearLabel(year: number | null | undefined, approx?: boolean | null, guess?: string | null): string | null {
+  if (!year) return null;
+  return guess ? `${guessRange(year, guess)} (best guess)` : `${approx ? 'c. ' : ''}${year}`;
+}
+
+/** The range a best-guess year sits in: "1920s", "mid 1930s". */
+export function guessRange(year: number, guess: string): string {
+  const decade = `${Math.floor(year / 10) * 10}s`;
+  return guess === 'decade' ? decade : `${guess} ${decade}`;
+}
+
+/** A year in a sentence: "1888", "about 1880", "mid 1930s (best guess)". */
+export function yearPhrase(year: number, approx?: boolean | null, guess?: string | null): string {
+  return guess ? (yearLabel(year, approx, guess) ?? '') : `${approx ? 'about ' : ''}${year}`;
 }
 
 /** A style and the styles above it, oldest first (Punch, Sour, Fizz). Stops on a loop. */
@@ -166,7 +180,7 @@ export function creditSentence(drink: LineageDrink, parent: Pick<LineageDrink, '
     parts.push({ text: parts.length ? ' at ' : 'At ' }, { text: drink.origin_bar.display_name, profileId: drink.origin_bar.id });
     if (drink.origin_bar.is_closed) parts.push({ text: ' (now closed)' });
   }
-  const year = yearLabel(drink.origin_year, drink.origin_year_approx);
+  const year = yearLabel(drink.origin_year, drink.origin_year_approx, drink.origin_year_guess);
   if (year && parts.length) parts.push({ text: `, ${year}` });
   return parts;
 }
@@ -184,7 +198,7 @@ export function nameCredit(drink: LineageDrink, parent: Pick<LineageDrink, 'id' 
   const withPlace = (parts: CreditPart[]) =>
     parts.flatMap((p) => (bar?.locality && p.profileId === bar.id && !bar.is_closed ? [p, { text: `, ${bar.locality}` }] : [p]));
   if (drink.is_catalog && !creators(drink).length) {
-    const year = drink.origin_year ? `, ${drink.origin_year_approx ? 'about ' : ''}${drink.origin_year}` : '';
+    const year = drink.origin_year ? `, ${yearPhrase(drink.origin_year, drink.origin_year_approx, drink.origin_year_guess)}` : '';
     const parts: CreditPart[] = [{ text: `Classic${year}` }];
     if (bar) parts.push({ text: ' · at ' }, { text: bar.display_name, profileId: bar.id }, ...(bar.is_closed ? [{ text: ' (now closed)' }] : []));
     return withPlace(parts);

@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DrinkImage, DsText, PressableScale, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { familyHues, fontFamilies, layout, radius, space } from '@/constants/tokens';
+import { guessRange, yearPhrase } from '@/lib/lineage';
 import { ERAS, fromLine, shortYear, type TimelineRow as Row, type TimelineSection } from '@/lib/timeline';
 
 const YEAR_W = 52;
@@ -55,7 +56,7 @@ export function TimelineRowView({
   const maker = makerLine(n);
   const from = fromLine(row);
   const year = shortYear(n);
-  const label = [n.approx ? `About ${n.year}` : String(n.year), n.name, style ? 'historic style' : null, maker, from, selected ? 'selected' : null]
+  const label = [n.year == null ? null : yearPhrase(n.year, n.approx, n.guess), n.name, style ? 'historic style' : null, maker, from, selected ? 'selected' : null]
     .filter(Boolean)
     .join(', ');
   return (
@@ -95,6 +96,7 @@ export function TimelineRowView({
           </DsText>
           {style ? <Caption tone="muted" style={[styles.styleTag, { borderColor: ds.c.lineStrong }]}>STYLE</Caption> : null}
         </View>
+        {n.guess && n.year != null ? <Caption tone="muted">Best guess, {guessRange(n.year, n.guess)}</Caption> : null}
         {maker ? (
           <Caption tone="muted" numberOfLines={1}>
             {maker}
@@ -151,7 +153,8 @@ export function EraHeader({ section, wide, compact }: { section: TimelineSection
   const ds = useDs();
   const i = ERAS.findIndex((e) => e.key === section.era.key);
   const next = ERAS[i + 1];
-  const range = `${section.era.start} to ${next ? next.start - 1 : 'now'}`;
+  // A drink older than the era's start (mulled wine, 1390) moves the range back to it.
+  const range = `${Math.min(section.era.start, section.data[0]?.node.year ?? section.era.start)} to ${next ? next.start - 1 : 'now'}`;
   const count = `${range} · ${section.drinks} drink${section.drinks === 1 ? '' : 's'}`;
   // Desktop: the era's name with its range beside it, one line (board prep-hist-timeline-desktop).
   if (wide) {

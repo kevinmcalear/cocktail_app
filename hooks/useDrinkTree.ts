@@ -10,6 +10,7 @@ interface TreeDrinkRow {
   name: string;
   origin_year: number | null;
   origin_year_approx: boolean;
+  origin_year_guess: string | null;
   lineage_family: string;
   lineage_parent_id: string | null;
   lineage_style_id: string | null;
@@ -22,7 +23,7 @@ interface TreeDrinkRow {
 }
 
 // The ingredient names are read once here for the Timeline's Spirit filter; only the spirits are kept.
-const COLUMNS = `id, name, origin_year, origin_year_approx, lineage_family, lineage_parent_id, lineage_style_id, lineage_note, origin,
+const COLUMNS = `id, name, origin_year, origin_year_approx, origin_year_guess, lineage_family, lineage_parent_id, lineage_style_id, lineage_note, origin,
   creator:profiles!items_creator_profile_id_fkey(id, display_name),
   origin_bar:profiles!items_origin_bar_profile_id_fkey(id, display_name, is_closed, city),
   versions:items!riff_of_id(count),
@@ -36,7 +37,7 @@ const COLUMNS = `id, name, origin_year, origin_year_approx, lineage_family, line
  */
 export function useDrinkTree() {
   return useQuery({
-    queryKey: ['drink-tree', 2],
+    queryKey: ['drink-tree', 3],
     queryFn: async (): Promise<TreeNode[]> => {
       const [styles, drinks] = await Promise.all([
         fetchStyles(),
@@ -70,6 +71,7 @@ export function useDrinkTree() {
         name: d.name,
         year: d.origin_year,
         approx: d.origin_year_approx,
+        guess: d.origin_year_guess,
         family: d.lineage_family,
         parentKey: d.lineage_parent_id ? `d:${d.lineage_parent_id}` : d.lineage_style_id ? `s:${d.lineage_style_id}` : null,
         note: d.lineage_note,

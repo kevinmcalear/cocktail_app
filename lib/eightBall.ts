@@ -6,6 +6,8 @@
  * accelerometer from lib/shake.ts.
  */
 
+import { yearPhrase } from '@/lib/lineage';
+
 // --- shake detection ---
 
 export interface Motion {
@@ -68,6 +70,8 @@ export interface Candidate extends EightBallDrink {
 export interface Classic extends EightBallDrink {
   year: number | null;
   approx: boolean;
+  /** A best-guess range (lib/lineage yearLabel). */
+  guess?: string | null;
   creator: string | null;
   bar: string | null;
 }
@@ -102,8 +106,8 @@ export function makeA(name: string): string {
 }
 
 /** "A classic from about 1880.", "A classic from 2005, by Sam Ross at Milk & Honey.", "A classic from the drink history." */
-export function classicReason({ year, approx, creator, bar }: Pick<Classic, 'year' | 'approx' | 'creator' | 'bar'>): string {
-  const when = year ? ` from ${approx ? 'about ' : ''}${year}` : '';
+export function classicReason({ year, approx, guess, creator, bar }: Pick<Classic, 'year' | 'approx' | 'guess' | 'creator' | 'bar'>): string {
+  const when = year ? ` from ${yearPhrase(year, approx, guess)}` : '';
   const who = [creator && `by ${creator}`, bar && `at ${bar}`].filter(Boolean).join(' ');
   if (!when && !who) return 'A classic from the drink history.';
   return `A classic${when}${who ? `, ${who}` : ''}.`;
