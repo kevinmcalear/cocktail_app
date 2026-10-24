@@ -7,8 +7,8 @@ import { Body, Button, Caption, Chip, Field, FieldButton, Headline, PressableSca
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { FormScrollContainer } from '@/components/recipe/FormScrollContainer';
 import { SettingsRow } from '@/components/screens/settings/SettingsParts';
-import { PrepCalcButton } from '@/components/tools/ToolsSheet';
-import { displayFaces, layout, radius, space, type } from '@/constants/tokens';
+import { usePrepCalc } from '@/components/tools/ToolsSheet';
+import { displayFaces, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { IngredientEditor } from '@/hooks/useIngredientEditor';
 import { confirmDiscardChanges } from '@/lib/dialogs';
 import { capitalize, capitalizeFirst, handleCapitalizedChange } from '@/lib/stringUtils';
@@ -18,7 +18,6 @@ import { EditSpecList } from '../drink/edit/EditSpecList';
 import { SpecPad } from '../drink/edit/SpecPad';
 import { AccessSheet, FindSheet, SameNameNotice, TagsSheet } from './IngredientEditSheets';
 import { usePictureTile } from './PictureTile';
-import { EditorHead } from './PrepEditor';
 
 interface Props {
   editor: IngredientEditor;
@@ -38,7 +37,7 @@ type Open = { find: 'line' | 'kind' } | { find: 'swap'; at: number } | { sheet: 
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
 /**
- * Every field of an ingredient (PrepEditor's All fields, a bottle's Edit, a
+ * Every field of an ingredient (a bottle's Edit, a
  * draft from New > Drafts), in the prep editor's look: Back, what it is and
  * Save; the name in the venue's face beside its drawing; the recipe as the
  * drink editor's spec lines and pad; then what it is, its tags and who sees it.
@@ -70,6 +69,7 @@ function Page({ editor, eyebrow, onBack, onSave, saveLabel, onPublish, children 
   const toggleTag = (id: string) => set({ selectedCategories: form.selectedCategories.includes(id) ? form.selectedCategories.filter((c) => c !== id) : [...form.selectedCategories, id] });
   // Its picture beside the name: a saved one's choice opens "Its picture"; a draft is drawn from its name.
   const picture = usePictureTile(editor);
+  const calc = usePrepCalc({ name: form.name, catalog: editor.catalog, recipe: lines, barId: form.barId, saveDraft: editor.saveDraft, onApply: editor.setRecipeItems });
 
   // A name nothing matches opens the add-ingredient wizard; the new one comes back onto this recipe.
   const makeNew = async (name: string) => {
@@ -109,7 +109,7 @@ function Page({ editor, eyebrow, onBack, onSave, saveLabel, onPublish, children 
             onAdd={() => setOpen({ find: 'line' })}
           />
           <View style={styles.start}>
-            <PrepCalcButton name={form.name} catalog={editor.catalog} recipe={lines} barId={form.barId} saveDraft={editor.saveDraft} onApply={editor.setRecipeItems} />
+            <Button label="Ingredient calculator" variant="secondary" onPress={calc.open} accessibilityHint="Amounts for a syrup, foam, juice or soda" />
           </View>
         </View>
 
@@ -195,6 +195,7 @@ function Page({ editor, eyebrow, onBack, onSave, saveLabel, onPublish, children 
       {open && 'sheet' in open && open.sheet === 'tags' ? <TagsSheet tags={tags} selected={form.selectedCategories} onToggle={toggleTag} onClose={close} /> : null}
       {open && 'sheet' in open && open.sheet === 'access' ? <AccessSheet form={form} set={set} onClose={close} /> : null}
       {picture.sheet}
+      {calc.sheet}
       {children}
     </View>
   );
@@ -207,6 +208,26 @@ function Page({ editor, eyebrow, onBack, onSave, saveLabel, onPublish, children 
 export function useLeaveGuard(dirty: boolean) {
   // repeat() lifts the guard itself before it goes on.
   return usePreventRemove(dirty, ({ repeat }) => void confirmDiscardChanges(true).then((ok) => ok && repeat()));
+}
+
+/** Editing's header (prep-prep-edit-shared): Back, what's being edited, and Save in the accent. */
+function EditorHead({ eyebrow, onBack, onSave, saving, saveLabel = 'Save' }: { eyebrow: string; onBack: () => void; onSave: () => void; saving: boolean; saveLabel?: string }) {
+  const ds = useDs();
+  return (
+    <View style={styles.head}>
+      <PressableScale role="button" accessibilityLabel="Back" onPress={onBack} style={styles.headSide}>
+        <Body>Back</Body>
+      </PressableScale>
+      <Caption tone="muted" style={styles.eyebrow}>
+        {eyebrow}
+      </Caption>
+      <PressableScale role="button" accessibilityLabel={saveLabel} aria-disabled={saving} disabled={saving} onPress={onSave} style={[styles.headSide, styles.right]}>
+        <Body color={ds.accentText} style={styles.bold}>
+          {saving ? 'Saving…' : saveLabel}
+        </Body>
+      </PressableScale>
+    </View>
+  );
 }
 
 /** What it's a kind of ("Tanqueray" is a kind of Gin): opens the search; x clears it. */
@@ -245,4 +266,9 @@ const styles = StyleSheet.create({
   kind: { gap: space.xs },
   kindBox: { minHeight: layout.minTapTarget, borderRadius: radius.control, borderWidth: 1, paddingHorizontal: space.md, paddingRight: layout.minTapTarget, justifyContent: 'center' },
   clear: { position: 'absolute', top: 0, bottom: 0, right: 0, justifyContent: 'center' },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: layout.minTapTarget },
+  headSide: { minWidth: 72, minHeight: layout.minTapTarget, justifyContent: 'center' },
+  right: { alignItems: 'flex-end' },
+  eyebrow: { letterSpacing: 1.2 },
+  bold: { fontFamily: fontFamilies.bodySemiBold },
 });

@@ -52,7 +52,7 @@ export function ForTheBar({ item, houseMade, canEditItem, whereRow }: ForTheBarP
       ? [{ key: 'where' as const, label: 'Where it lives', value: !where.canRead ? 'Locked' : (where.lines[0] ?? 'No spot yet'), body: <WhereItLives itemId={item.id} itemName={item.name} bare onRecipe={houseMade ? close : undefined} /> }]
       : []),
     ...(cost ? [{ key: 'cost' as const, label: 'Cost', value: cost, body: <PriceSection itemId={item.id} /> }] : []),
-    ...(publish ? [{ key: 'publish' as const, label: 'Who can see it', value: publish.value, readOnly: !publish.canChange, body: <PublishSection itemId={item.id} barId={item.bar_id} noun="ingredient" /> }] : []),
+    ...(publish ? [{ key: 'publish' as const, label: 'Who can see it', value: publish.value, readOnly: !publish.canChange, body: <PublishSection itemId={item.id} barId={item.bar_id} noun="ingredient" mode="read" /> }] : []),
   ];
   const shown = rows.find((r) => r.key === open);
 

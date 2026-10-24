@@ -8,7 +8,6 @@ import { WhereItLives } from '@/components/backbar/WhereItLives';
 import { BackbarTheme, Body, BrandProvider, Button, Caption, Display, GlassButton, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { AroundIt, useBottleTiles } from '@/components/ingredient/IngredientFacts';
 import { Crumbs, type Crumb } from '@/components/nav/PageFrame';
-import { PrepEditSheet } from '@/components/prep/PrepEditSheet';
 import { PairsWith } from '@/components/screens/pairings/PairsWith';
 import { TechnicalIngredientCard, WhereToBuy } from '@/components/techniques/TechnicalIngredientCard';
 import { ToolsSheet } from '@/components/tools/ToolsSheet';
@@ -50,7 +49,8 @@ export interface IngredientScreenProps {
   inStudyPile: boolean;
   onToggleStudyPile: () => void;
   canEdit: boolean;
-  onEdit: () => void;
+  /** Edit: a house prep edits in place. */
+  onEdit: (isPrep: boolean) => void;
 }
 
 /**
@@ -100,7 +100,6 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const [size, setSize] = useState<{ factor: number; makes: string | null } | null>(null);
   const factor = size?.factor ?? 1;
   const make = (mode?: 'have') => router.push(`/ingredient/${ingredient.id}/make?factor=${factor}${mode ? `&mode=${mode}` : ''}` as never);
-  const [editingPrep, setEditingPrep] = useState(false);
   const home = useMode().mode === 'home';
   const [sheet, setSheet] = useState<'proof' | 'more' | null>(null);
   const { data: shelf } = useShelf();
@@ -126,7 +125,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const offerEdit = canEdit || (showRecipe && !!userId);
   const print = () => void printPrepCard({ name: ingredient.name, facts, lines: lines.map((l) => ({ amount: [l.amount, l.unit].filter(Boolean).join(' '), name: l.name })), steps: steps.map((s) => s.body) });
   const more = [
-    offerEdit ? { label: 'Edit', onPress: onEdit } : null,
+    offerEdit ? { label: 'Edit', onPress: () => onEdit(isPrep) } : null,
     isPrep && canViewDetails ? { label: 'Proof: work out the strength', onPress: () => setSheet('proof') } : null,
     !wide && isPrep && canViewDetails ? { label: 'Print card', onPress: print } : null,
   ].filter((a): a is { label: string; onPress: () => void } => !!a);
@@ -160,7 +159,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
     </View>
   );
   const recipe = showRecipe ? <PrepRecipe lines={lines} yieldAmount={prep?.yield_amount ?? null} yieldUnit={prep?.yield_unit ?? null} onSize={(f, m) => setSize({ factor: f, makes: m })} onFromWhatIHave={() => make('have')} checkedOn={sources?.filter((s) => s.field === 'recipe').map((s) => s.url)} /> : null;
-  const method = isPrep && canViewDetails ? <PrepMethod steps={steps} takes={leadTimeLabel(prep?.lead_time_minutes ?? null, prep?.lead_time_note ?? null)} onEdit={canEditPrep ? () => setEditingPrep(true) : undefined} /> : null;
+  const method = isPrep && canViewDetails ? <PrepMethod steps={steps} takes={leadTimeLabel(prep?.lead_time_minutes ?? null, prep?.lead_time_note ?? null)} /> : null;
   const around = <AroundIt ingredient={ingredient} bottles={bottles} isPrep={isPrep} />;
   const pairs = <PairsWith itemId={ingredient.id} name={ingredient.name} />;
   const inDrinks = (
@@ -215,7 +214,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
               <DrinkFacts facts={facts} columns={2} compact />
               {showRecipe ? <Button label={makes ? `Make ${makes}` : 'Make'} icon="play.fill" size="lg" onPress={() => make()} /> : null}
               <View style={styles.actions}>
-                {offerEdit ? <Button label="Edit" variant="secondary" onPress={onEdit} /> : null}
+                {offerEdit ? <Button label="Edit" variant="secondary" onPress={() => onEdit(isPrep)} /> : null}
                 {isPrep && canViewDetails ? <Button label="Print card" variant="secondary" onPress={print} /> : null}
                 <GlassButton accessibilityLabel={onShelf ? 'Take off your bar' : 'Save to your bar'} icon={onShelf ? 'bookmark.fill' : 'bookmark'} onPress={toggleShelf} />
                 {more.length > (offerEdit ? 1 : 0) ? <GlassButton accessibilityLabel="More: proof, make your own" icon="ellipsis" onPress={() => setSheet('more')} /> : null}
@@ -249,7 +248,6 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       {pinned && showRecipe ? <MakeBar bottom={insets.bottom} onMake={() => make()} makes={makes} drinks={drinks.length} onDrinks={toDrinks} /> : null}
       {pinned && noteShown ? <NoteBar itemId={ingredient.id} barId={ingredient.bar_id} read={noteRead!} lines={noteChoice.lines} card={card} bottom={insets.bottom} /> : null}
       {sheet === 'more' ? <MoreSheet name={ingredient.name} actions={wide ? more.filter((a) => a.label !== 'Edit') : more} onClose={() => setSheet(null)} /> : null}
-      {editingPrep && card ? <PrepEditSheet visible onClose={() => setEditingPrep(false)} itemId={ingredient.id} itemName={ingredient.name} current={card} /> : null}
       {sheet === 'proof' ? <ToolsSheet visible onClose={() => setSheet(null)} tool="proof" volumeMl={yieldQ?.kind === 'ml' ? yieldQ.value : null} /> : null}
     </View>
   );

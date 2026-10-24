@@ -8,7 +8,7 @@ import { IngredientEditPage } from './IngredientEditPage';
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), usePreventRemove: () => jest.fn() }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: null, venues: [] }) }));
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'home' }) }));
-jest.mock('@/components/tools/ToolsSheet', () => ({ PrepCalcButton: () => null }));
+jest.mock('@/components/tools/ToolsSheet', () => ({ usePrepCalc: () => ({ open: () => undefined, sheet: null }) }));
 jest.mock('../drink/edit/EditSpecList', () => ({ EditSpecList: () => null }));
 jest.mock('./IngredientEditSheets', () => {
   const { Pressable, Text } = jest.requireActual<typeof import('react-native')>('react-native');
