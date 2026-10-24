@@ -1,17 +1,15 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef, type RefObject } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SearchBarCommands } from 'react-native-screens';
 
-import { useDs, useGutter } from '@/components/ds';
+import { DockFade, useDs, useGutter } from '@/components/ds';
 import { ScreenHeader, ScreenHeaderSpacer } from '@/components/nav/ScreenHeader';
 import { WEB_TAB_BAR_HEIGHT } from '@/components/nav/WebTabBar';
 import { layout, space } from '@/constants/tokens';
 import { useBottomSearchFocus } from '@/hooks/useBottomBar';
 import type { SearchMine } from '@/hooks/useSearchMine';
-import { withAlpha } from '@/lib/color';
 import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 import { SearchField } from './SearchField';
@@ -55,12 +53,6 @@ function PlaceRow({ query, scope, setScope, mine, area, show, setShow, counts }:
       {query ? <ShowChips show={show} onShow={setShow} counts={counts} /> : null}
     </ScrollView>
   );
-}
-
-/** Under the row and the field: the results fade into the ground, so the glass reads over busy rows. Library's filter dock too. */
-export function DockFade() {
-  const ds = useDs();
-  return <LinearGradient colors={[withAlpha(ds.c.ground, 0), withAlpha(ds.c.ground, 0.85), ds.c.ground]} locations={[0, 0.5, 1]} style={styles.fade} />;
 }
 
 /** The place row's height: the 44-point token and chip track, and the gap to the field. */
@@ -281,7 +273,6 @@ const styles = StyleSheet.create({
   dock: { position: 'absolute', left: 0, right: 0, bottom: 0, pointerEvents: 'box-none', paddingTop: space.lg, gap: space.sm },
   systemDock: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'flex-end', pointerEvents: 'box-none' },
   systemRow: { paddingTop: space.lg, pointerEvents: 'box-none' },
-  fade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' },
   placeRow: { flexGrow: 0 },
   placeChips: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });

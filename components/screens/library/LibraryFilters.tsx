@@ -2,11 +2,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRef, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Chip, GlassSurface, PopoverMenu, PressableScale, useDs, useGutter, usePopover, type Ds } from '@/components/ds';
+import { Chip, DockFade, GlassSurface, PopoverMenu, PressableScale, useDs, useGutter, usePopover, type Ds } from '@/components/ds';
 import { Appear } from '@/components/ds/Appear';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { useTabBarTop } from '@/components/nav/WebTabBar';
-import { DockFade } from '@/components/search/BottomSearch';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
