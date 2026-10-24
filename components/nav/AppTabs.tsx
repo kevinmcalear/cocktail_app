@@ -1,6 +1,6 @@
 import { NativeTabs } from 'expo-router/native-tabs';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 import { useDs } from '@/components/ds';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
@@ -10,6 +10,7 @@ import { useMode } from '@/hooks/useMode';
 import { useTrackTab } from '@/hooks/useSearchFrom';
 import { useServiceDay } from '@/hooks/useServiceDay';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
+import { withAlpha } from '@/lib/color';
 import { phoneTabs, type PhoneTab, type VenueTab } from '@/lib/venueFeatures';
 
 import { CreateSheet } from './CreateSheet';
@@ -63,13 +64,22 @@ function Tabs() {
   // rather than open the wrong set.
   if (!ready || !features.ready) return <View style={{ flex: 1, backgroundColor: ds.c.ground }} />;
   const shown = phoneTabs(home, features.has);
+  // Android's Material 3 bar in our colours: the surface, the accent's indicator pill (the
+  // sidebar's current-row tint) and an ink ripple. iOS keeps the system's Liquid Glass untouched.
+  const material = { backgroundColor: ds.c.surface, indicatorColor: withAlpha(ds.accentText, 0.16), rippleColor: withAlpha(ds.c.ink, 0.12) };
   const off = (name: PhoneTab) => !shown.includes(name) || (hidden as readonly string[]).includes(name);
   // Discover is in both modes. The rest swap, the way an account switch swaps
   // an app's tabs; home mode's index redirects to Discover. Android's Material
   // bar hides unselected labels past three tabs; "labeled" keeps every tab named.
   return (
     <>
-      <NativeTabs tintColor={ds.accentText} badgeBackgroundColor={ds.accentFill.fill} minimizeBehavior="onScrollDown" labelVisibilityMode="labeled">
+      <NativeTabs
+        tintColor={ds.accentText}
+        badgeBackgroundColor={ds.accentFill.fill}
+        minimizeBehavior="onScrollDown"
+        labelVisibilityMode="labeled"
+        {...(Platform.OS === 'android' ? material : null)}
+      >
         <NativeTabs.Trigger name="index" hidden={off('index')} accessibilityLabel={isNew('index') ? 'Tonight, new' : undefined}>
           <NativeTabs.Trigger.Icon src={tonightImage(day)} renderingMode="template" />
           <NativeTabs.Trigger.Label>Tonight</NativeTabs.Trigger.Label>
