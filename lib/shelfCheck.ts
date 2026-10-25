@@ -14,6 +14,8 @@ export interface ShelfCheck {
   total: number;
   /** Spec line keys you don't have. */
   missing: string[];
+  /** Each missing line's bottle to buy, by line key: what the shopping list holds for it. */
+  buyFor: Record<string, string>;
   /** The bottles to buy, by name. */
   buy: string[];
   /** Three or more short: the server doesn't say which. */
@@ -31,17 +33,19 @@ const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
 export function checkShelf(lines: SpecLine[], verdict: ShelfVerdict, kindOf: Record<string, string | null> = {}): ShelfCheck | null {
   const counted = lines.filter((l) => l.ingredient && !l.optional);
   if (!counted.length) return null;
-  if (verdict?.ready) return { have: counted.length, total: counted.length, missing: [], buy: [], far: false };
-  if (!verdict) return { have: Math.max(counted.length - 3, 0), total: counted.length, missing: [], buy: [], far: true };
+  if (verdict?.ready) return { have: counted.length, total: counted.length, missing: [], buyFor: {}, buy: [], far: false };
+  if (!verdict) return { have: Math.max(counted.length - 3, 0), total: counted.length, missing: [], buyFor: {}, buy: [], far: true };
+  const buyFor: Record<string, string> = {};
   const missing = verdict.buy.flatMap((b) => {
     const line =
       counted.find((l) => l.ingredientId === b.id) ??
       counted.find((l) => !!l.ingredientId && kindOf[l.ingredientId] === b.id) ??
       counted.find((l) => norm(l.ingredient) === norm(b.name));
+    if (line) buyFor[line.key] = b.id;
     return line ? [line.key] : [];
   });
   const short = Math.max(missing.length, verdict.buy.length);
-  return { have: Math.max(counted.length - short, 0), total: counted.length, missing, buy: verdict.buy.map((b) => b.name), far: false };
+  return { have: Math.max(counted.length - short, 0), total: counted.length, missing, buyFor, buy: verdict.buy.map((b) => b.name), far: false };
 }
 
 /** "You have 4 of 5", "You have them all", "Three or more short". */

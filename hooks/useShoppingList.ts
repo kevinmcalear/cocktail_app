@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { readFound, SHELF_KEY, useShelfEdit } from '@/hooks/useHomeBar';
 import { barSection } from '@/lib/barSections';
+import { PANTRY_WATER } from '@/lib/pantry';
 import type { ShoppingRow, ShoppingSource } from '@/lib/shoppingList';
 import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
@@ -36,6 +37,17 @@ async function shoppingRows(raw: Raw[]): Promise<ShoppingRow[]> {
       gotAt: r.got_at,
     };
   });
+}
+
+/** What a house-made thing's recipe calls for, optional lines left out. */
+async function readMadeFrom(itemId: string): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabase.from('app_recipe_presentation').select('display_ingredient_id, is_optional').eq('recipe_item_id', itemId);
+  if (error) throw error;
+  const ids = [...new Set((data ?? []).flatMap((r) => (r.display_ingredient_id && !r.is_optional ? [r.display_ingredient_id] : [])))];
+  if (!ids.length) return [];
+  const names = await supabase.from('app_item_presentation').select('id, name').in('id', ids);
+  if (names.error) throw names.error;
+  return (names.data ?? []).flatMap((r) => (r.id && r.name ? [{ id: r.id, name: r.name }] : []));
 }
 
 /** The list: what's still to get, then what's ticked and not yet cleared (Got it), oldest first. */
@@ -176,5 +188,18 @@ export function useShoppingEdit() {
     onSettled,
   });
 
-  return { add, tick, clear, remove, retag };
+  /**
+   * A house-made thing (shopping In 4, d54): what it's made from goes on the
+   * list instead, for it, leaving out what's on the shelf and water. Returns
+   * how many went on.
+   */
+  const addMadeFrom = useMutation({
+    mutationFn: async ({ item, onShelf }: { item: { id: string; name: string }; onShelf: ReadonlySet<string> }): Promise<number> => {
+      const parts = await readMadeFrom(item.id);
+      const needed = parts.filter((p) => !onShelf.has(p.id) && p.name.toLowerCase() !== PANTRY_WATER.toLowerCase());
+      return add.mutateAsync(needed.map((p) => ({ itemId: p.id, name: p.name, source: 'hand' as const, forItemId: item.id })));
+    },
+  });
+
+  return { add, tick, clear, remove, retag, addMadeFrom };
 }

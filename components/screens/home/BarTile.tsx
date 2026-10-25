@@ -35,13 +35,15 @@ interface BarTileProps {
   onLongPress?: () => void;
   /** The Add tile: dashed like a suggestion, but its label reads in ink. */
   add?: boolean;
+  /** Running low and on the shopping list: "Low" in the drawing's corner (shopping B1). */
+  low?: boolean;
 }
 
 /**
  * One thing on your bar, the same everywhere on My Bar and in Add to your
  * bar: its drawing on the house paper, the name, and a line about it.
  */
-export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role, checked, accessibilityLabel, accessibilityHint, ghost, badge, onLongPress, add }: BarTileProps) {
+export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role, checked, accessibilityLabel, accessibilityHint, ghost, badge, onLongPress, add, low }: BarTileProps) {
   const ds = useDs();
   // A desktop fits five tiles to a row, so names take the smaller line (a long word never breaks mid-way).
   const dense = useBreakpoint() === 'desktop';
@@ -58,6 +60,13 @@ export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role
       <View style={[styles.square, ghost ? [styles.ghost, { borderColor: ds.c.lineStrong }] : null, checked ? { borderColor: ds.accentText } : null]}>
         <View style={[styles.picture, ghost ? styles.faded : null]}>{picture}</View>
         {badge ? <TileBadge badge={badge} onPaper={!ghost} /> : null}
+        {low ? (
+          <View style={[styles.low, { backgroundColor: ds.c.ground }]} aria-hidden>
+            <Caption color={ds.accentText} style={styles.lowText}>
+              Low
+            </Caption>
+          </View>
+        ) : null}
       </View>
       <View style={styles.text}>
         <DsText variant={dense ? 'caption' : 'body'} numberOfLines={2} tone={ghost && !add ? 'muted' : 'ink'} style={styles.name}>
@@ -126,6 +135,8 @@ const styles = StyleSheet.create({
   picture: { flex: 1, borderRadius: radius.control - 2, overflow: 'hidden' },
   faded: { opacity: 0.4 },
   badge: { position: 'absolute', top: 7, right: 7, width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  low: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: space.sm, paddingVertical: 1, borderRadius: radius.pill },
+  lowText: { fontFamily: fontFamilies.bodySemiBold },
   text: { gap: 1 },
   name: { fontFamily: fontFamilies.bodyMedium },
   plus: { flex: 1, alignItems: 'center', justifyContent: 'center' },

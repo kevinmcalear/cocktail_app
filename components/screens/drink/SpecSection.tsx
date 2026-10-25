@@ -35,6 +35,8 @@ interface SpecSectionProps {
   caption?: string | null;
   /** Spec line keys your shelf doesn't have: marked "Not on your shelf". */
   missing?: readonly string[];
+  /** Of those, the ones on your shopping list: marked "On your list" instead. */
+  listed?: readonly string[];
   /** Right under the lines: method, glass, ice and garnish (MakeLine). Shown even when the lines are locked. */
   make?: ReactNode;
   /** Someone else's drink: one Make a riff button under the spec, with what it does (Eddie, 16 Oct). */
@@ -61,7 +63,7 @@ function RatioBar({ shares }: { shares: { key: string; share: number }[] }) {
  * line's strength is in the strength sheet (ABV, under More). Anything the server
  * withheld stays on the page as a locked section that says who can open it.
  */
-export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], make, riff, children }: SpecSectionProps) {
+export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec', caption, missing = [], listed = [], make, riff, children }: SpecSectionProps) {
   const ds = useDs();
   const router = useRouter();
   // The same rule as the drink page's Batch and the server's view: levels, moved by the role's specs grant or revoke.
@@ -131,7 +133,7 @@ export function SpecSection({ itemId, barId, recipes, preview, heading = 'Spec',
             optional={l.optional}
             houseMade={l.houseMade}
             note={l.note ?? undefined}
-            flag={missing.includes(l.key) ? 'Not on your shelf' : undefined}
+            flag={listed.includes(l.key) ? 'On your list' : missing.includes(l.key) ? 'Not on your shelf' : undefined}
             // The amount opens the conversions; the rest of the line opens the ingredient.
             onPressAmount={access.amounts && l.value !== null && !preview ? () => setConvert({ value: l.value!, unit: l.unit ?? 'ml', name: l.ingredient, abv: l.abv, density: l.density }) : undefined}
             onPress={l.ingredientId && !preview ? () => open(l) : undefined}

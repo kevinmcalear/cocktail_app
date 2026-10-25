@@ -10,6 +10,7 @@ const lines = specLines([row('mez', 'Mezcal', 45, 'ml'), row('cyn', 'Cynar', 20,
 // One bottle short: the board's Smoke Signal, 4 of 5 (the optional line doesn't count).
 const one = checkShelf(lines, { ready: false, buy: [{ id: 'cyn', name: 'Cynar' }] })!;
 assert.deepEqual(one.missing, ['r-cyn']);
+assert.deepEqual(one.buyFor, { 'r-cyn': 'cyn' });
 assert.equal(shelfCaption(one), 'You have 4 of 5');
 assert.equal(shelfNeed(one), 'Need Cynar');
 
@@ -22,6 +23,7 @@ assert.equal(shelfNeed(byName), 'You have 3 of 5');
 const lastWord = specLines([row('gin', 'Gin', 22.5, 'ml'), row('gc', 'Green Chartreuse', 22.5, 'ml'), row('mar', 'Maraschino Liqueur', 22.5, 'ml'), row('lime', 'Lime Juice', 22.5, 'ml')]);
 const kind = checkShelf(lastWord, { ready: false, buy: [{ id: 'herbal', name: 'Herbal Liqueur' }] }, { gc: 'herbal', mar: 'liqueur' })!;
 assert.deepEqual(kind.missing, ['r-gc']);
+assert.deepEqual(kind.buyFor, { 'r-gc': 'herbal' }, 'a kind marks the spec line it stands for');
 assert.equal(shelfCaption(kind), 'You have 3 of 4');
 
 // Ready, and too far for the server to say.

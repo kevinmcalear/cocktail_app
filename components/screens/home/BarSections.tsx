@@ -11,6 +11,8 @@ import { prepUseBy } from '@/lib/myBarText';
 import { itemHref } from '@/lib/itemRoutes';
 import { EQUIPMENT, EQUIPMENT_KINDS, equipmentById } from '@/lib/techniques';
 
+import { RunningLow } from '../shopping/ToBuy';
+
 import { AddTile, BarTile, TileGrid } from './BarTile';
 import { HomeKitLinks } from './HomeKitLinks';
 
@@ -95,12 +97,14 @@ export const usedLine = (uses: number, what = 'drink') => (uses ? `In ${uses} ${
 export function ShelfTile({ item, meta, metaTone = 'muted', editing, onRemove, onHold }: { item: ShelfItem; meta?: string | null; metaTone?: 'muted' | 'ink'; editing: boolean; onRemove: (id: string) => void; onHold?: () => void }) {
   const router = useRouter();
   const open = use(OpenShelfItem);
-  const line = meta === undefined ? usedLine(item.uses) : meta;
+  const low = use(RunningLow).has(item.id);
+  const line = low ? 'Running low · on your list' : meta === undefined ? usedLine(item.uses) : meta;
   return (
     <BarTile
       name={item.name}
       meta={line}
-      metaTone={metaTone}
+      metaTone={low ? 'accent' : metaTone}
+      low={low}
       picture={<IngredientDrawing id={item.id} name={item.name} lazy />}
       role={editing ? 'button' : 'link'}
       accessibilityLabel={editing ? `Take ${item.name} off your bar` : [item.name, line].filter(Boolean).join(', ')}

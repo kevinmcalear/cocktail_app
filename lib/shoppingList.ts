@@ -4,6 +4,7 @@
  * Share sends. Pure helpers (lib/shoppingList.check.ts).
  */
 import type { BarSection } from '@/lib/barSections';
+import { PANTRY } from '@/lib/pantry';
 import type { AwayGroup } from '@/lib/toMake';
 
 export type ShoppingSource = 'hand' | 'drink' | 'menu' | 'one_away' | 'running_low' | 'again';
@@ -120,4 +121,14 @@ export function menuShopping(drinks: readonly { id: string }[], oneAway: readonl
     for (const b of group?.bottles ?? []) if (b.id && !out.some((o) => o.itemId === b.id)) out.push({ itemId: b.id, name: b.name, forItemId: d.id });
   }
   return out;
+}
+
+/**
+ * The fruit a citrus juice is squeezed from, as the pantry names it ("Lemon"
+ * for lemon juice): nobody buys lemon juice for a home bar (d54). Null for
+ * anything else.
+ */
+export function juiceFruit(name: string): (typeof PANTRY)[number] | null {
+  const m = /^(?:fresh |pink |ruby )?(lemon|lime|orange|grapefruit)s? juice$/i.exec(name.trim());
+  return m ? (PANTRY.find((p) => p.name.toLowerCase() === m[1].toLowerCase()) ?? null) : null;
 }

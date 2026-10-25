@@ -1,4 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
+import { createContext, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, IngredientThumb, PressableScale, Tag, useDs } from '@/components/ds';
@@ -9,6 +10,16 @@ import { useShoppingEdit, useShoppingList } from '@/hooks/useShoppingList';
 import { listOpens } from '@/lib/shoppingList';
 
 const STRIP = 6;
+
+/** The shelf's bottles marked running low and still to buy, for My Bar's tiles (shopping B1's "Low"). */
+export const RunningLow = createContext<ReadonlySet<string>>(new Set());
+
+/** Gives My Bar's tiles what's running low, from one read of the list. */
+export function RunningLowProvider({ children }: { children: ReactNode }) {
+  const rows = useShoppingList().data ?? [];
+  const low = new Set(rows.flatMap((r) => (r.source === 'running_low' && !r.gotAt && r.itemId ? [r.itemId] : [])));
+  return <RunningLow value={low}>{children}</RunningLow>;
+}
 
 /** My Bar's way into the list (shopping B1): a basket in the header, with how many things are on it. */
 export function ShoppingBasket() {

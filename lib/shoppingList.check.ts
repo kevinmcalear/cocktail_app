@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { gotLine, listOpens, menuShopping, opensWith, shoppingGroups, shoppingSummary, shoppingText, shopFor, whyLine, type ShoppingRow } from './shoppingList';
+import { gotLine, juiceFruit, listOpens, menuShopping, opensWith, shoppingGroups, shoppingSummary, shoppingText, shopFor, whyLine, type ShoppingRow } from './shoppingList';
 
 const oneAway = [
   { bottles: [{ id: 'vermouth', name: 'Sweet vermouth' }], drinks: [{ id: 'blvd', name: 'Boulevardier' }, { id: 'fan', name: 'Fanciulli' }, { id: 'amer', name: 'Americano' }, { id: 'mt', name: 'Milano-Torino' }] },
@@ -61,3 +61,9 @@ assert.deepEqual(menuShopping([{ id: 'signal' }, { id: 'toronto' }, { id: 'sour'
   { itemId: 'cynar', name: 'Cynar', forItemId: 'signal' },
   { itemId: 'rye', name: 'Rye whiskey', forItemId: 'toronto' },
 ]);
+
+// --- a juice adds the fruit it's squeezed from ---
+assert.equal(juiceFruit('Lemon juice')?.label, 'Lemons');
+assert.equal(juiceFruit('pink grapefruit juice')?.label, 'Grapefruit');
+assert.equal(juiceFruit('Lime cordial'), null);
+assert.equal(juiceFruit('Pineapple juice'), null);

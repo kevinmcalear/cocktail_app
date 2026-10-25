@@ -12,6 +12,7 @@ import { barSubtitle, shelfCountsLine } from '@/lib/myBarText';
 import type { ShelfSort } from '@/lib/pantry';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
+import { ShoppingColumn } from '../shopping/ShoppingBody';
 import { ShoppingBasket, ToBuyStrip } from '../shopping/ToBuy';
 import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
 import { useTileCols } from './BarTile';
@@ -248,6 +249,7 @@ export function MyBarScreen() {
             <View style={styles.columns}>
               {list(rows.slice(0, cut), styles.shelfColumn, { paddingLeft: gutter, paddingRight: space.xl, paddingBottom: bottom })}
               {list(pairDrinks(rows.slice(cut)), styles.makeColumn, { paddingLeft: space.xl, paddingRight: gutter, paddingBottom: bottom })}
+              <ShoppingColumn bottom={bottom} gutter={gutter} />
             </View>
           </>
         ) : (
