@@ -52,6 +52,7 @@
     "babel-preset-expo": "~58.0.0",
     "base64-arraybuffer": "^1.0.2",
     "burnt": "^0.13.0",
+    "double-metaphone": "^2.0.1",
     "expo": "~58.0.17",
     "expo-application": "~58.1.2",
     "expo-blur": "~58.0.5",

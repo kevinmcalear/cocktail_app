@@ -32,10 +32,12 @@ export interface DrinkList {
  * The drink catalog: the shared classics you can find "the best" of (Martini,
  * Negroni). A bar's own martini is ranked in the Martini list through its
  * riff_of_id. Best-known first. Signed-in only, like every shared item.
+ * `enabled` false skips the read (Library asks only while finding).
  */
-export function useDrinkLists() {
+export function useDrinkLists(enabled = true) {
   return useQuery({
     queryKey: ['drink-lists'],
+    enabled,
     queryFn: async (): Promise<DrinkList[]> => {
       const { data, error } = await supabase
         .from('items')

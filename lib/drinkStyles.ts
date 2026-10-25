@@ -159,3 +159,9 @@ export function findKinds(search: string): Kind[] {
   const noteStarts = (id: string) => !!noteDimension(id)?.startsWith(q);
   return [...KINDS, ...NOTES].filter((k) => wordStarts(k.label) || classicStarts(k.id) || noteStarts(k.id));
 }
+
+/** "Gibsons, Vespers and riffs too": what a style takes in besides its name. */
+export function styleTakesIn(id: string): string {
+  const rest = STYLES.find((s) => s.id === id)?.classics.slice(1, 3) ?? [];
+  return rest.length ? `${rest.map((c) => (c.endsWith('s') ? c : `${c}s`)).join(', ')} and riffs too` : 'and its riffs too';
+}
