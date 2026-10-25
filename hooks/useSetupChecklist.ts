@@ -24,8 +24,10 @@ export function useSetupChecklist(barId: string) {
   const save = useVenueSetup((s) => s.save);
   const onPage = useBarGlassware(barId);
   const held = useHeldGlasses(barId);
-  const ice = useVenueIce(barId).data?.length ?? 0;
-  const tools = useBarKit(barId).data?.length ?? 0;
+  const iceList = useVenueIce(barId);
+  const toolList = useBarKit(barId);
+  const ice = iceList.data?.length ?? 0;
+  const tools = toolList.data?.length ?? 0;
   const stock = useBackBarStock(barId);
   const menus = useVenueMenus(barId);
   const invites = useBarInvites(barId);
@@ -56,7 +58,7 @@ export function useSetupChecklist(barId: string) {
     notes,
     /** The menu First drinks opens: the one with drinks, else the newest. */
     menuId: (withDrinks ?? current[0])?.id ?? null,
-    loading: onPage.isLoading || stock.isLoading || menus.isLoading || invites.isLoading || members.isLoading,
+    loading: onPage.isLoading || iceList.isLoading || toolList.isLoading || stock.isLoading || menus.isLoading || invites.isLoading || members.isLoading,
     skip: (key: ChecklistKey) => save(barId, { skipped: [...new Set([...(run?.skipped ?? []), key])] }),
   };
 }

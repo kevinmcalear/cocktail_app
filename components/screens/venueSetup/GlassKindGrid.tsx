@@ -13,11 +13,11 @@ import { SETUP_KINDS, type GlassKind } from '@/lib/glassKinds';
  * kinds, three across, each drawn, with a tick on the ones on the list, and
  * Something else to name your own.
  */
-export function GlassKindGrid({ on, onToggle, onOther }: { on: (k: GlassKind) => boolean; onToggle: (k: GlassKind) => void; onOther: () => void }) {
+export function GlassKindGrid({ on, fixed, onToggle, onOther }: { on: (k: GlassKind) => boolean; fixed?: (k: GlassKind) => boolean; onToggle: (k: GlassKind) => void; onOther: () => void }) {
   return (
     <View role="group" aria-label="What do you pour into?" style={styles.grid}>
       {SETUP_KINDS.map((k) => (
-        <Tile key={k.key} label={k.label} on={on(k)} onPress={() => onToggle(k)}>
+        <Tile key={k.key} label={k.label} on={on(k)} hint={fixed?.(k) ? 'On your list as a real glass. Kit › Glassware takes it off.' : undefined} onPress={() => onToggle(k)}>
           <GlassThumb glass={k.glass} variant={k.variant} size={44} />
         </Tile>
       ))}
@@ -28,13 +28,15 @@ export function GlassKindGrid({ on, onToggle, onOther }: { on: (k: GlassKind) =>
   );
 }
 
-function Tile({ label, on, onPress, plain, children }: { label: string; on: boolean; onPress: () => void; plain?: boolean; children: ReactNode }) {
+function Tile({ label, on, hint, onPress, plain, children }: { label: string; on: boolean; hint?: string; onPress: () => void; plain?: boolean; children: ReactNode }) {
   const ds = useDs();
   return (
     <PressableScale
       role="button"
       aria-pressed={plain ? undefined : on}
       accessibilityLabel={plain ? 'Something else: name your own' : label}
+      accessibilityHint={hint}
+      disabled={!!hint}
       onPress={onPress}
       style={[styles.tile, on ? { backgroundColor: withAlpha(ds.accentText, 0.14), borderColor: ds.accentText, borderWidth: 1.5 } : { backgroundColor: ds.c.raised, borderColor: 'transparent', borderWidth: 1 }]}
     >

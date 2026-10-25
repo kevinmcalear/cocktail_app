@@ -91,6 +91,7 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
       else {
         holdGlass(barId, { key: `kind-${k.key}`, ...kindRow(k, listed) });
         setAdded((a) => [...a, k.key]);
+        setDismissed(false);
       }
       return;
     }
@@ -101,6 +102,8 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
       else {
         await save.mutateAsync(kindRow(k, glasses));
         setAdded((a) => [...a, k.key]);
+        // A new kind brings the wide screen's model card back for it.
+        setDismissed(false);
       }
       await client.refetchQueries({ queryKey: ['bar-glassware', barId] });
     } catch {
@@ -116,7 +119,11 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
     const row = { glass: m.glass, variant: m.variant, name: null, maker: null, maker_profile_id: null, designer: null, series: null, shape_note: null, model_id: m.id, is_default };
     setFailed(false);
     if (l.id) save.mutate({ id: l.id, ...row }, { onError: () => setFailed(true) });
-    else holdGlass(barId, { key: l.key, ...row, name: m.name, maker: m.maker?.display_name ?? null });
+    else {
+      // Held under the model's id: the kind's key is free for that kind again.
+      dropGlass(barId, l.key);
+      holdGlass(barId, { key: m.id, ...row, name: m.name, maker: m.maker?.display_name ?? null });
+    }
     setModelFor(null);
     setDismissed(true);
   };
@@ -176,7 +183,7 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
   const kinds = (
     <View style={styles.stack}>
       <SectionHeading>What do you pour into? Tap all that apply</SectionHeading>
-      <GlassKindGrid on={on} onToggle={(k) => void toggle(k)} onOther={() => setDescribing(true)} />
+      <GlassKindGrid on={on} fixed={(k) => on(k) && !mine(k).length} onToggle={(k) => void toggle(k)} onOther={() => setDescribing(true)} />
     </View>
   );
 
