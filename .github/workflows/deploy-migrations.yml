@@ -26,23 +26,32 @@ concurrency:
 
 env:
   PROJECT_REF: uzrqriixgxbvhunwrwkn
+  # Same CLI CI tests the migrations with, so production never runs a release
+  # CI hasn't tried.
+  SUPABASE_CLI: 2.112.0
+
+permissions:
+  contents: read
 
 jobs:
   push:
     name: supabase db push
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Only main can deploy to this environment, so the database password
+    # (kept as an environment secret) can't be read from another branch.
+    environment: supabase-production
     env:
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
       - uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: ${{ env.SUPABASE_CLI }}
       - name: Check the secret is set
         run: |
           if [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "::error::Repository secret SUPABASE_DB_PASSWORD is not set. Add it under Settings > Secrets and variables > Actions."
+            echo "::error::Repository secret SUPABASE_DB_PASSWORD is not set. Add it under Settings > Environments > supabase-production."
             exit 1
           fi
       # The project is in us-east-2. Which pooler cluster it sits on is only
