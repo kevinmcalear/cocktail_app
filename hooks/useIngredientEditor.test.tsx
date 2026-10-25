@@ -66,6 +66,7 @@ describe('useIngredientEditor', () => {
     const view = await renderHook(() => useIngredientEditor('i1'));
     await waitFor(() => expect(view.result.current.loading).toBe(false));
     mockDb.calls = [];
+    mockDb.rpcErrors = {};
     return view;
   }
   const tagWrites = () => mockDb.calls.filter((c) => c.table === 'item_categories' && c.op !== 'select');
@@ -123,5 +124,25 @@ describe('useIngredientEditor', () => {
         filters: [],
       },
     ]);
+  });
+
+  it('leaves the recipe alone when its lines did not change', async () => {
+    const { result } = await openGin();
+    await act(() => result.current.set({ brandMaker: 'tanqueray' }));
+    await act(async () => {
+      expect(await result.current.save()).toBe(true);
+    });
+    expect(mockDb.calls.filter((c) => c.op === 'rpc')).toEqual([]);
+  });
+
+  it('a refused recipe save fails the save and stays unsaved', async () => {
+    const { result } = await openGin();
+    mockDb.rpcErrors = { replace_recipe_lines: { message: 'You can’t edit this recipe.' } };
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    await act(() => result.current.setRecipeItems([{ ingredient_id: 'juniper-berries', name: 'Juniper', amount: '5', unit: 'g', preparation_notes: '', is_optional: false }]));
+    await act(async () => {
+      expect(await result.current.save()).toBe(false);
+    });
+    expect(result.current.isDirty).toBe(true);
   });
 });

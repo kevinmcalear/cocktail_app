@@ -15,6 +15,8 @@ export interface MockDb {
   /** What a read of each table returns (a row for .single(), a list otherwise). */
   rows: Record<string, unknown>;
   calls: MockCall[];
+  /** An error an RPC answers with, by function name. */
+  rpcErrors?: Record<string, unknown>;
 }
 
 export function mockSupabase(db: () => MockDb) {
@@ -47,7 +49,7 @@ export function mockSupabase(db: () => MockDb) {
   };
   const rpc = async (fn: string, args?: unknown) => {
     db().calls.push({ table: fn, op: 'rpc', payload: args, filters: [] });
-    return { data: null, error: null };
+    return { data: null, error: db().rpcErrors?.[fn] ?? null };
   };
   return { supabase: { from, rpc } };
 }

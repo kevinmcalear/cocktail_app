@@ -11,8 +11,10 @@
 --
 -- Lines keep their rows by id, as save_drink_spec does, so what hangs off a
 -- line (at_service, the service spec's decision) survives a save. A line
--- with no id, or an id from another item, is a new row; rows not named are
--- removed. Drinks keep saving through save_drink_spec, which also versions.
+-- that changes ingredient drops its generic and service decision, as a new
+-- row would. A line with no id, or an id from another item, is a new row;
+-- rows not named are removed. A cocktail is refused: drinks save through
+-- save_drink_spec, which also writes the version.
 
 CREATE FUNCTION "public"."replace_recipe_lines"("p_item" "uuid", "p_lines" "jsonb") RETURNS void
     LANGUAGE "plpgsql" SECURITY INVOKER
@@ -27,6 +29,9 @@ BEGIN
     IF auth.uid() IS NULL OR NOT (private.can_edit_item(p_item) OR private.can_edit_venue_ice(p_item)) THEN
         RAISE EXCEPTION 'You can''t edit this recipe.' USING ERRCODE = '42501';
     END IF;
+    IF EXISTS (SELECT 1 FROM public.items WHERE id = p_item AND item_type = 'cocktail') THEN
+        RAISE EXCEPTION 'A drink''s spec saves through save_drink_spec.';
+    END IF;
     IF jsonb_typeof(p_lines) IS DISTINCT FROM 'array' THEN RAISE EXCEPTION 'Lines must be a list.'; END IF;
 
     -- Positions are unique per item, so move the old rows out of the way first.
@@ -39,7 +44,9 @@ BEGIN
         v_id := CASE WHEN v_line ->> 'id' ~* '^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$' THEN (v_line ->> 'id')::uuid END;
         IF v_id IS NOT NULL AND NOT (v_id = ANY (v_kept)) AND EXISTS (SELECT 1 FROM public.recipes WHERE id = v_id AND recipe_item_id = p_item) THEN
             UPDATE public.recipes
-               SET ingredient_item_id = (v_line ->> 'ingredient_item_id')::uuid,
+               SET parent_ingredient_id = CASE WHEN ingredient_item_id = (v_line ->> 'ingredient_item_id')::uuid THEN parent_ingredient_id END,
+                   at_service = CASE WHEN ingredient_item_id = (v_line ->> 'ingredient_item_id')::uuid THEN at_service END,
+                   ingredient_item_id = (v_line ->> 'ingredient_item_id')::uuid,
                    amount = NULLIF(v_line ->> 'amount', '')::numeric,
                    unit = NULLIF(v_line ->> 'unit', ''),
                    preparation_notes = NULLIF(v_line ->> 'preparation_notes', ''),

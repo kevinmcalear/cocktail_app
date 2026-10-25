@@ -133,6 +133,22 @@ describe('replace_recipe_lines', () => {
     assert.deepEqual(await lines(ids.prep), before);
   });
 
+  test('a kept line that changes ingredient drops its generic and service decision', async () => {
+    const [lemon] = await reset(ids.prep);
+    await db.query('UPDATE public.recipes SET at_service = true, parent_ingredient_id = $2 WHERE id = $1', [lemon.id, ids.sugar]);
+    const { error } = await users.manager.client.rpc('replace_recipe_lines', { p_item: ids.prep, p_lines: [{ id: lemon.id, ingredient_item_id: ids.water, amount: 30, unit: 'ml' }] });
+    assert.ifError(error);
+    const { rows } = await db.query('SELECT ingredient_item_id, parent_ingredient_id, at_service FROM public.recipes WHERE id = $1', [lemon.id]);
+    assert.deepEqual(rows, [{ ingredient_item_id: ids.water, parent_ingredient_id: null, at_service: null }]);
+  });
+
+  test('a drink is refused: its spec saves through save_drink_spec, with a version', async () => {
+    const before = await reset(ids.drink);
+    const { error } = await users.manager.client.rpc('replace_recipe_lines', { p_item: ids.drink, p_lines: [] });
+    assert.match(error?.message ?? '', /save_drink_spec/);
+    assert.deepEqual(await lines(ids.drink), before);
+  });
+
   test('a line id from another item is a new row there, and the other item is untouched', async () => {
     const drinkLines = await reset(ids.drink);
     await reset(ids.prep);
@@ -150,14 +166,14 @@ describe('replace_recipe_lines', () => {
   test('allows exactly whom the recipes policies allow, and a refusal changes nothing', async () => {
     const who = { manager: users.manager.client, prepper: users.prepper.client, barback: users.barback.client, outsider: users.outsider.client, anon };
     const expected = {
-      manager: { prep: true, drink: true, ice: true },
-      prepper: { prep: false, drink: false, ice: true },
-      barback: { prep: false, drink: false, ice: false },
-      outsider: { prep: false, drink: false, ice: false },
-      anon: { prep: false, drink: false, ice: false },
+      manager: { prep: true, ice: true },
+      prepper: { prep: false, ice: true },
+      barback: { prep: false, ice: false },
+      outsider: { prep: false, ice: false },
+      anon: { prep: false, ice: false },
     };
     for (const [label, client] of Object.entries(who)) {
-      for (const key of ['prep', 'drink', 'ice']) {
+      for (const key of ['prep', 'ice']) {
         // Today's rule: a direct insert of a line.
         await db.query('DELETE FROM public.recipes WHERE recipe_item_id = $1', [ids[key]]);
         const { error: directError } = await client.from('recipes').insert({ recipe_item_id: ids[key], ingredient_item_id: ids.water, sort_order: 0 });
