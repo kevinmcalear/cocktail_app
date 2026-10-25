@@ -54,12 +54,12 @@ assert.equal(loose.find((row) => row.hit.drink.id === 'smoke')?.detail, '45 ml D
 assert.equal(loose.length, 5);
 
 assert.equal(swapQuestion(rows), 'Your Mezcal Negroni uses this. Swap it?');
-assert.equal(pourCount(rows), '4 drinks and 1 prep');
-assert.equal(pourCount(rows.slice(4)), '1 prep');
+assert.equal(pourCount(rows), '4 drinks and 1 house-made ingredient');
+assert.equal(pourCount(rows.slice(4)), '1 house-made ingredient');
 assert.equal(stillPours(rows.slice(0, 2)), '2 drinks still pour it: Mezcal Negroni and Naked and Famous.');
-assert.equal(stillPours(rows), '4 drinks and 1 prep still pour it: Mezcal Negroni, Naked and Famous, Smoke Signal, Trial and 1 more.');
-assert.equal(stillPours(rows.slice(4)), '1 prep still pours it: Ash Garden batch.');
-assert.equal(bottleLine('Mezcal', 'Top shelf, left', rows), 'Mezcal · Top shelf, left · used in 4 drinks and 1 prep');
+assert.equal(stillPours(rows), '4 drinks and 1 house-made ingredient still pour it: Mezcal Negroni, Naked and Famous, Smoke Signal, Trial and 1 more.');
+assert.equal(stillPours(rows.slice(4)), '1 house-made ingredient still pours it: Ash Garden batch.');
+assert.equal(bottleLine('Mezcal', 'Top shelf, left', rows), 'Mezcal · Top shelf, left · used in 4 drinks and 1 house-made ingredient');
 assert.equal(bottleLine(null, '  ', []), '');
 
 console.log('backBarSwap checks passed');

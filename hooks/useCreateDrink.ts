@@ -372,7 +372,7 @@ export function useCreateDrink() {
             steps: card.steps,
           });
         } catch (e) {
-          warnings.push(plainDbMessage(e) ?? `${t.name} steps weren’t added to the new prep. Add them on its page.`);
+          warnings.push(plainDbMessage(e) ?? `${t.name} steps weren’t added to the new house-made ingredient. Add them on its page.`);
         }
       }
 

@@ -36,7 +36,7 @@ export interface PaperBandProps {
   /** What the drawing is: "Sketch of the drink so far". */
   artLabel: string;
   /**
-   * Under the drawing: what's being added, if it needs saying ("House prep"),
+   * Under the drawing: what's being added, if it needs saying ("House-made"),
    * and a note ("Updates as you go"). Never "Sketch": a drawing is obviously a drawing.
    */
   tag?: string;

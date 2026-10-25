@@ -24,7 +24,7 @@ function NewDrinkPanel({ ingredients, data }: { ingredients: string[]; data: Mat
     <View style={[styles.panel, { backgroundColor: ds.c.surface }]}>
       {ingredients.map((name) => {
         const s = ingredientState(name, data);
-        const label = s.state === 'have' ? 'In your bar' : s.state === 'pick' ? 'Which one? Saves as the kind' : s.prep ? 'New prep' : 'New';
+        const label = s.state === 'have' ? 'In your bar' : s.state === 'pick' ? 'Which one? Saves as the kind' : s.prep ? 'New house-made' : 'New';
         return (
           <View key={name} style={styles.ingredient}>
             <ReviewMark state={s.state === 'new' ? 'new' : s.state === 'pick' ? 'pick' : 'have'} size={16} />

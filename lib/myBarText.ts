@@ -3,10 +3,10 @@
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
-/** Under "My Bar": "7 drinks ready · 2 preps you can make now". */
+/** Under "My Bar": "7 drinks ready · 2 house-made ingredients you can make now". */
 export function barSubtitle(ready: number, preps: number): string {
   const parts = [ready ? `${plural(ready, 'drink')} ready` : 'Nothing ready yet'];
-  if (preps) parts.push(`${plural(preps, 'prep')} you can make now`);
+  if (preps) parts.push(`${plural(preps, 'house-made ingredient')} you can make now`);
   return parts.join(' · ');
 }
 

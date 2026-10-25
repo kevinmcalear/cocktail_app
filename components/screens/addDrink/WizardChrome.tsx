@@ -53,7 +53,7 @@ export function WizardChip({ label, selected = false, add, kind = 'radio', sugge
   );
 }
 
-/** A short confirmation over the footer, with a tick: "Shrub saved to your preps when you save the drink." */
+/** A short confirmation over the footer, with a tick: "Shrub saved to your house-made ingredients when you save the drink." */
 export function WizardNotice({ children, action }: { children: string; action?: { label: string; onPress: () => void } }) {
   const ds = useDs();
   return (

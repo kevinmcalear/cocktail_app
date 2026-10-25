@@ -152,7 +152,7 @@ export function BottleSheet({ barId, location, canEditDrinks, onMove, onEdit, on
     title = `Take ${bottle.name} off the back bar?`;
     body = (
       <>
-        <Body>{rows.length ? stillPours(rows) : 'No drinks or preps pour it.'}</Body>
+        <Body>{rows.length ? stillPours(rows) : 'No drinks or house-made ingredients pour it.'}</Body>
         <Caption tone="muted">
           {rows.length
             ? `It comes off every spot it has on the map. Left as they are, while a menu that’s on pours it, it shows under Waiting for a spot.${canEditDrinks ? '' : ' Drink Creators and up can swap the drinks.'}`

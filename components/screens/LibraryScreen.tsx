@@ -198,10 +198,10 @@ export function LibraryScreen() {
       {show === 'rnd' ? <Caption tone="muted">Trials, flights and assignments: drinks on an R&D collection and on no menu. They stay out of All and out of staff search.</Caption> : null}
       {show === 'preps' && prepKinds.length ? (
         <FilterRow
-          label="Which preps"
+          label="Which house-made"
           gutter={gutter}
           groups={[[
-            <Chip look="outline" key="all" label="All preps" count={lists.preps.length} selected={!kind} onPress={() => router.setParams({ kind: undefined })} />,
+            <Chip look="outline" key="all" label="All house-made" count={lists.preps.length} selected={!kind} onPress={() => router.setParams({ kind: undefined })} />,
             ...prepKinds.map((g) => <Chip look="outline" key={g.value} label={g.label} count={g.count} selected={kind?.value === g.value} onPress={() => router.setParams({ kind: g.value })} />),
           ]]}
         />

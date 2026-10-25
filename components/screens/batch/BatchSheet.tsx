@@ -49,7 +49,7 @@ export interface BatchSheetProps {
   canEdit?: boolean;
   /** "House spec · version 3": which spec this is, first in the header. */
   specLabel?: string | null;
-  /** A venue's batch (Save as prep card, Make now); null at home (Share, Make it, tick as I go). */
+  /** A venue's batch (Save as house-made, Make now); null at home (Share, Make it, tick as I go). */
   barId?: string | null;
   /** May make a house prep at the venue. */
   canPrep?: boolean;

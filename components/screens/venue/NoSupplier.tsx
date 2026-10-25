@@ -52,7 +52,7 @@ function GiveForm({ barId, suppliers, missing, onDone }: { barId: string; suppli
     <SheetScrollView contentContainerStyle={styles.sheet}>
       <View style={styles.group}>
         <Title>No supplier yet</Title>
-        <Caption tone="muted">{`${missing.length} ${missing.length === 1 ? 'ingredient your drinks and preps use has' : 'ingredients your drinks and preps use have'} no supplier. Pick who brings them, tick a few, and give them over.`}</Caption>
+        <Caption tone="muted">{`${missing.length} ${missing.length === 1 ? 'ingredient your drinks and house-made ingredients use has' : 'ingredients your drinks and house-made ingredients use have'} no supplier. Pick who brings them, tick a few, and give them over.`}</Caption>
       </View>
       <View style={styles.group}>
         <Caption tone="muted">Give to</Caption>

@@ -55,7 +55,7 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onCha
 
   return (
     <View style={styles.stack}>
-      <View role="radiogroup" accessibilityLabel="Kind of prep" style={styles.grid}>
+      <View role="radiogroup" accessibilityLabel="What kind it is" style={styles.grid}>
         {KIND_TILES.map((id) => {
           const k = PREP_KINDS.find((x) => x.id === id)!;
           const on = k.id === picked;

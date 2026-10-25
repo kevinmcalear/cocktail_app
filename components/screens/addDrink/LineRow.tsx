@@ -70,9 +70,9 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
   const status = line.id
     ? null
     : line.later
-        ? { text: 'Made in-house, recipe to write', accent: true }
+        ? { text: 'House-made, recipe to write', accent: true }
         : line.technique
-          ? { text: `Made in-house: ${techniqueById(line.technique)?.name ?? 'your recipe'}`, accent: true }
+          ? { text: `House-made: ${techniqueById(line.technique)?.name ?? 'your recipe'}`, accent: true }
           : { text: 'New, added when you save', accent: false };
   // The bottle, then remove: beside the name on a phone, so the controls under it keep their width.
   const ends = (

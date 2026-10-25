@@ -65,7 +65,7 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
   // --- No recipe yet: how do you make it? (step 6, question 3) ---
   if (!f.steps.length && !edit.startsFrom && !own && !edit.dirty) {
     return (
-      <VenueSubPage barId={barId} title={title} intro="How do you make it? Start from one of these and change anything. It’s a recipe, like your house preps.">
+      <VenueSubPage barId={barId} title={title} intro="How do you make it? Start from one of these and change anything. It’s a recipe, like your house-made ingredients.">
         <IceMadeStep value={made} onChange={setMade} others={others} />
         <Button label="Make it" disabled={!madeReady(made, others)} onPress={() => made.way && (made.way === 'own' ? setOwn(true) : edit.start(made.way, made.from && { ...made.from, name: made.from.name.trim() }))} />
       </VenueSubPage>
