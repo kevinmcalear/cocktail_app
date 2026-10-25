@@ -20,8 +20,8 @@ function useKindOf(itemId: string | null) {
   });
 }
 
-/** Each spec line's kind (generic) id, so a bottle to buy that's a kind still marks its line. */
-function useKindsOf(ids: string[]) {
+/** Each item's kind (generic) id: a spec line's, so a bottle to buy that's a kind still marks its line; what Add by hand's juice is squeezed from. */
+export function useKindsOf(ids: string[]) {
   const sorted = [...new Set(ids)].sort();
   return useQuery({
     queryKey: ['kinds-of', sorted],

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { gotLine, listOpens, madeFrom, madeFromLine, menuShopping, opensWith, shoppingGroups, shoppingSummary, shoppingText, shopFor, shopName, whyLine, type ShoppingRow } from './shoppingList';
+import { gotLine, listOpens, madeFrom, madeFromLine, staplesFrom, menuShopping, opensWith, shoppingGroups, shoppingSummary, shoppingText, shopFor, shopName, whyLine, type ShoppingRow } from './shoppingList';
 
 const oneAway = [
   { bottles: [{ id: 'vermouth', name: 'Sweet vermouth' }], drinks: [{ id: 'blvd', name: 'Boulevardier' }, { id: 'fan', name: 'Fanciulli' }, { id: 'amer', name: 'Americano' }, { id: 'mt', name: 'Milano-Torino' }] },
@@ -63,25 +63,39 @@ assert.deepEqual(menuShopping([{ id: 'signal' }, { id: 'toronto' }, { id: 'sour'
 ]);
 
 // --- add by hand: a house-made thing adds what it's made from ---
+// As the local catalog has them: lemon juice and lime peel are kinds of Lemon and Lime, with no recipe of their own.
 const recipes = {
-  'lemon-juice': { lines: [{ id: 'lemon', name: 'Lemon' }] },
-  cordial: { lines: [{ id: 'lime-juice', name: 'Lime juice' }, { id: 'sugar', name: 'Sugar' }, { id: 'water', name: 'Water' }] },
-  'lime-juice': { lines: [{ id: 'lime', name: 'Lime' }] },
-  gin: { lines: [] },
+  cordial: { lines: [{ id: 'sugar', name: 'Sugar' }, { id: 'lime-juice', name: 'Lime juice' }, { id: 'lime-peel', name: 'Lime Peel' }] },
+  syrup: { lines: [{ id: 'water', name: 'Water' }, { id: 'sugar', name: 'Sugar' }] },
+  oleo: { lines: [{ id: 'syrup', name: 'Simple syrup' }, { id: 'orgeat', name: 'Orgeat' }] },
+  orgeat: { lines: [{ id: 'almond', name: 'Almonds' }] },
 };
+const lemon = { id: 'lemon', name: 'Lemon' };
+const lime = { id: 'lime', name: 'Lime' };
+const pantry = [lemon, lime, { id: 'soda', name: 'Soda Water' }, { id: 'water', name: 'Water' }];
+const staples = staplesFrom(
+  [{ id: 'lemon-juice', name: 'Lemon juice' }, { id: 'lime-juice', name: 'Lime juice' }, { id: 'lime-peel', name: 'Lime Peel' }, { id: 'topo', name: 'Topo Chico' }, { id: 'lemon', name: 'Lemon' }],
+  { 'lemon-juice': 'lemon', 'lime-juice': 'lime', 'lime-peel': 'lime', topo: 'soda', lemon: null },
+  pantry
+);
+// Only what's squeezed or cut from a staple: a soda brand filed under Soda Water stays a thing to buy.
+assert.deepEqual(staples, { 'lemon-juice': lemon, 'lime-juice': lime, 'lime-peel': lime });
 assert.equal(shopName('Lime'), 'Limes');
 assert.equal(shopName('Cynar'), 'Cynar');
-const lemons = madeFrom('lemon-juice', recipes, new Set());
+const lemons = madeFrom('lemon-juice', recipes, new Set(), staples);
 assert.deepEqual(lemons, [{ id: 'lemon', name: 'Lemons' }]);
-assert.equal(madeFromLine('Lemon juice', lemons), 'Squeezed from lemons, so adds Lemons');
-// Two deep, never water, and not what's on the shelf.
-const cordial = madeFrom('cordial', recipes, new Set(['sugar']));
-assert.deepEqual(cordial, [{ id: 'lime', name: 'Limes' }]);
-assert.equal(madeFromLine('Lime cordial', madeFrom('cordial', recipes, new Set())), 'House-made: adds Limes and Sugar');
-assert.equal(madeFromLine('Lime cordial', madeFrom('cordial', recipes, new Set(['lime', 'sugar']))), 'House-made. You have what goes in it');
-// Made already: the juice on the shelf covers the cordial's line.
-assert.deepEqual(madeFrom('cordial', recipes, new Set(['lime-juice'])), [{ id: 'sugar', name: 'Sugar' }]);
-assert.deepEqual(madeFrom('gin', recipes, new Set()), []);
+assert.equal(madeFromLine('Lemon juice', lemons, true), 'Squeezed from lemons, so adds Lemons');
+assert.equal(madeFromLine('Egg white', [{ name: 'Eggs' }], true), 'Comes from eggs, so adds Eggs');
+assert.deepEqual(madeFrom('lemon-juice', recipes, new Set(['lemon']), staples), []);
+// A cordial: its sugar, and limes once for both its juice and its peel.
+const cordial = madeFrom('cordial', recipes, new Set(), staples);
+assert.deepEqual(cordial, [{ id: 'sugar', name: 'Sugar' }, { id: 'lime', name: 'Limes' }]);
+assert.equal(madeFromLine('Lime cordial', cordial), 'House-made: adds Sugar and Limes');
+assert.deepEqual(madeFrom('cordial', recipes, new Set(['sugar']), staples), [{ id: 'lime', name: 'Limes' }]);
+assert.equal(madeFromLine('Lime cordial', madeFrom('cordial', recipes, new Set(['sugar', 'lime']), staples)), 'House-made. You have what goes in it');
+// Never water; a house-made part by its parts, two deep only.
+assert.deepEqual(madeFrom('syrup', recipes, new Set(), staples), [{ id: 'sugar', name: 'Sugar' }]);
+assert.deepEqual(madeFrom('oleo', recipes, new Set(), staples), [{ id: 'sugar', name: 'Sugar' }, { id: 'almond', name: 'Almonds' }]);
 // Its why line: the drinks it opens, else the thing it's for.
 assert.equal(whyLine({ source: 'hand', forName: 'Lemon juice' }, [{ name: 'Hanky Panky' }, { name: 'Daiquiri' }]), 'Opens 2 drinks: Hanky Panky, Daiquiri');
 assert.equal(whyLine({ source: 'hand', forName: 'Lemon juice' }, []), 'For Lemon juice');

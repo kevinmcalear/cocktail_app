@@ -132,27 +132,50 @@ export function shopName(name: string): string {
   return PANTRY.find((p) => p.name.toLowerCase() === name.toLowerCase())?.label ?? name;
 }
 
+type Part = { id: string; name: string };
+
+// What's cut or squeezed from a staple: its juice, peel or white, not a bottle that's only filed under it.
+const FROM_STAPLE = /\b(juice|peel|zest|twist|wheel|wedge|white|yolk)s?\b/i;
+
+/** Things that come from a pantry staple (lemon juice from Lemon), by id: each name's kind, when it's a staple. */
+export function staplesFrom(things: readonly { id: string; name: string }[], kindOf: Readonly<Record<string, string | null>>, pantry: readonly Part[]): Record<string, Part> {
+  const out: Record<string, Part> = {};
+  for (const t of things) {
+    const staple = FROM_STAPLE.test(t.name) ? pantry.find((p) => p.id === kindOf[t.id] && p.name !== PANTRY_WATER) : undefined;
+    if (staple) out[t.id] = staple;
+  }
+  return out;
+}
+
 type Lines = Readonly<Record<string, { lines: readonly { id: string; name: string }[] } | undefined>>;
 
 /**
- * What to buy to make a house-made thing: its recipe's parts you don't have,
- * a part that's house-made itself by its own parts (two deep). Water never.
- * Lemon juice gives Lemons; lime cordial gives Limes and Sugar.
+ * What to buy to make a house-made thing: a pantry staple it comes from
+ * (`staples`, by its kind: lemon juice and lime peel are kinds of Lemon and
+ * Lime), else its recipe's parts you don't have, a house-made part by its own
+ * parts (two deep). Water never. Lemon juice gives Lemons; lime cordial
+ * (sugar, lime juice, lime peel) gives Sugar and Limes.
  */
-export function madeFrom(id: string, recipes: Lines, onShelf: ReadonlySet<string>, depth = 0): { id: string; name: string }[] {
-  const out: { id: string; name: string }[] = [];
+export function madeFrom(id: string, recipes: Lines, onShelf: ReadonlySet<string>, staples: Readonly<Record<string, Part>>, depth = 0): Part[] {
+  const staple = staples[id];
+  if (staple) return onShelf.has(staple.id) ? [] : [{ id: staple.id, name: shopName(staple.name) }];
+  const out: Part[] = [];
   for (const l of recipes[id]?.lines ?? []) {
     if (onShelf.has(l.id) || l.name === PANTRY_WATER) continue;
-    const parts = depth < 1 && recipes[l.id]?.lines.length ? madeFrom(l.id, recipes, onShelf, depth + 1) : [{ id: l.id, name: shopName(l.name) }];
+    const parts = staples[l.id] || (depth < 1 && recipes[l.id]?.lines.length) ? madeFrom(l.id, recipes, onShelf, staples, depth + 1) : [{ id: l.id, name: shopName(l.name) }];
     for (const p of parts) if (!out.some((o) => o.id === p.id)) out.push(p);
   }
   return out;
 }
 
-/** Add by hand's line for a house-made thing: "Squeezed from limes, so adds Limes", "House-made: adds Limes and Sugar". */
-export function madeFromLine(name: string, parts: readonly { name: string }[]): string {
-  if (!parts.length) return 'House-made. You have what goes in it';
-  if (parts.length === 1 && /\bjuice\b/i.test(name)) return `Squeezed from ${parts[0].name.toLowerCase()}, so adds ${parts[0].name}`;
+/**
+ * Add by hand's line for something made: "Squeezed from limes, so adds Limes",
+ * "Comes from eggs, so adds Eggs", "House-made: adds Limes and Sugar".
+ * `staple`: it comes straight from a pantry staple, not a recipe.
+ */
+export function madeFromLine(name: string, parts: readonly { name: string }[], staple = false): string {
+  if (staple && parts.length === 1) return `${/\bjuice\b/i.test(name) ? 'Squeezed' : 'Comes'} from ${parts[0].name.toLowerCase()}, so adds ${parts[0].name}`;
+  if (!parts.length) return staple ? 'You have what it comes from' : 'House-made. You have what goes in it';
   const names = parts.map((p) => p.name);
   return `House-made: adds ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]}`;
 }

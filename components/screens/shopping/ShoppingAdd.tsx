@@ -3,9 +3,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, Field, IngredientThumb, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { useBarSearch, usePrepDetails } from '@/hooks/useHomeBar';
+import { useBarSearch, usePantryItems, usePrepDetails } from '@/hooks/useHomeBar';
+import { useKindsOf } from '@/hooks/useShelfCheck';
 import type { ShoppingAdd as Add } from '@/hooks/useShoppingList';
-import { madeFrom, madeFromLine, shopFor } from '@/lib/shoppingList';
+import { madeFrom, madeFromLine, shopFor, staplesFrom } from '@/lib/shoppingList';
 
 const SHOWN = 5;
 
@@ -21,10 +22,13 @@ export function ShoppingAdd({ onShelf, onAdd }: { onShelf: ReadonlySet<string>; 
   const [text, setText] = useState('');
   const query = text.trim();
   const found = (useBarSearch(query).data ?? []).slice(0, SHOWN);
-  // Two deep: a cordial's lime juice is made from limes.
+  // Recipes two deep, and what each thing in them is a kind of: a cordial's lime juice and peel come from limes.
   const made = usePrepDetails(found.flatMap((f) => (f.section === 'preps' && !onShelf.has(f.id) ? [f.id] : []))).data ?? {};
   const deeper = usePrepDetails(Object.values(made).flatMap((d) => d.lines.map((l) => l.id))).data ?? {};
   const recipes = { ...deeper, ...made };
+  const things = [...found, ...Object.values(recipes).flatMap((d) => d.lines)];
+  const kinds = useKindsOf(things.map((t) => t.id)).data ?? {};
+  const staples = staplesFrom(things, kinds, usePantryItems().data ?? []);
   const add = (adds: Add[]) => {
     onAdd(adds);
     setText('');
@@ -45,7 +49,7 @@ export function ShoppingAdd({ onShelf, onAdd }: { onShelf: ReadonlySet<string>; 
         <View style={[styles.results, { borderColor: ds.c.line }]}>
           {found.map((f) => {
             const have = onShelf.has(f.id);
-            const parts = !have && made[f.id]?.lines.length ? madeFrom(f.id, recipes, onShelf) : null;
+            const parts = !have && (staples[f.id] || made[f.id]?.lines.length) ? madeFrom(f.id, recipes, onShelf, staples) : null;
             const adds: Add[] = parts?.length ? parts.map((p) => ({ itemId: p.id, name: p.name, source: 'hand', forItemId: f.id })) : [{ itemId: f.id, name: f.name, source: have ? 'running_low' : 'hand' }];
             return (
               <View key={f.id} style={[styles.result, { borderBottomColor: ds.c.line }]}>
@@ -55,7 +59,7 @@ export function ShoppingAdd({ onShelf, onAdd }: { onShelf: ReadonlySet<string>; 
                     {f.name}
                   </DsText>
                   <Caption tone="muted" numberOfLines={2}>
-                    {have ? 'On your shelf' : parts ? madeFromLine(f.name, parts) : shopFor(f.section)}
+                    {have ? 'On your shelf' : parts ? madeFromLine(f.name, parts, !!staples[f.id]) : shopFor(f.section)}
                   </Caption>
                 </View>
                 <Button
