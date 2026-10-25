@@ -118,7 +118,8 @@ export function DeskKit({ bar }: { bar: { id: string; name: string } | null }) {
   const ds = useDs();
   const router = useRouter();
   const { kit, where, edit } = useMakingKit(bar);
-  const names = [...(kit ?? [])].map((id) => equipmentById(id)?.name ?? id);
+  // A tool the library doesn't list (a venue's "ice-ball-press") reads as words.
+  const names = [...(kit ?? [])].map((id) => equipmentById(id)?.name ?? id.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase()));
   return (
     <View style={styles.kit}>
       <Eyebrow>{`Your kit, from ${where}`}</Eyebrow>
