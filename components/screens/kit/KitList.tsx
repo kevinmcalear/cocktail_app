@@ -12,6 +12,8 @@ export interface KitEntry {
   name: string;
   line: string;
   thumb: ReactNode;
+  /** Instead of the chevron: what tapping it does ("Add", "Match"). */
+  action?: string;
 }
 
 export interface KitListProps {
@@ -20,8 +22,8 @@ export interface KitListProps {
   /** The one open beside the list on a wide screen. */
   openId?: string | null;
   onOpen: (id: string) => void;
-  /** "Add a glass"; left out for someone who can't change the kit. */
-  addLabel: string;
+  /** "Add a glass"; none for a list of things to add (What next). */
+  addLabel?: string;
   onAdd?: () => void;
   empty: string;
 }
@@ -51,7 +53,11 @@ export function KitList({ sections, openId, onOpen, addLabel, onAdd, empty }: Ki
       ) : (
         <Body tone="muted">{empty}</Body>
       )}
-      {onAdd ? <Button label={addLabel} icon="plus" onPress={onAdd} style={styles.add} /> : <Caption tone="muted">You can look, but changing the kit needs Prep at this venue.</Caption>}
+      {!addLabel ? null : onAdd ? (
+        <Button label={addLabel} icon="plus" onPress={onAdd} style={styles.add} />
+      ) : (
+        <Caption tone="muted">You can look, but changing the kit needs Prep at this venue.</Caption>
+      )}
     </View>
   );
 }
@@ -76,7 +82,7 @@ function KitRow({ entry, first, open, onPress }: { entry: KitEntry; first: boole
             </Caption>
           ) : null}
         </View>
-        <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+        {entry.action ? <Caption color={ds.accentText}>{entry.action}</Caption> : <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />}
       </PressableScale>
     </View>
   );

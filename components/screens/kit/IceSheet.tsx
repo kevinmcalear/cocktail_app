@@ -28,6 +28,8 @@ export interface IceSheetProps {
    * question 2 and its recipe is written on its page.
    */
   madeStep?: (ice: VenueIceChange) => ReactNode;
+  /** Where it was named: "From the Old Fashioned". */
+  from?: string;
 }
 
 /** Add ice, or change one: what it looks like, where it comes from, and how you make it when you do. */
@@ -50,7 +52,7 @@ function startLooks(from: Partial<VenueIceChange> | null | undefined): IceLooksV
   return from?.name && from.name !== iceName(v) ? { ...v, name: from.name } : v;
 }
 
-function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved, madeStep }: IceSheetProps & { startAt: 0 | 1 }) {
+function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved, madeStep, from: named }: IceSheetProps & { startAt: 0 | 1 }) {
   const suppliers = useVenueSuppliers(barId).data ?? [];
   const save = useSaveVenueIce(barId);
   const from = ice ?? initial;
@@ -119,6 +121,7 @@ function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved,
       onNext={() => (step + 1 < total ? setStep(step + 1) : finish(src))}
       saving={save.isPending}
       error={save.error ? FAILED : null}
+      answered={ice ? undefined : { what: looksName(looks), from: named, onChange: () => setStep(0) }}
     />
   );
 }
