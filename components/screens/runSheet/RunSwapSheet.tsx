@@ -3,8 +3,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, Spec, useDs } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
+import { NearPicks } from '@/components/search/NearPicks';
 import { radius, space } from '@/constants/tokens';
 import { useSpecCatalog } from '@/hooks/useBulk';
+import { useNearIngredients } from '@/hooks/useNearIngredients';
 import { useSetSwaps, type RunSheetData } from '@/hooks/useRunSheet';
 import { normName } from '@/lib/paste';
 import type { RunDrink, SheetLine } from '@/lib/runSheet';
@@ -37,6 +39,8 @@ export function RunSwapSheet({ data, drink, line, onClose }: { data: RunSheetDat
       : catalog.filter((c) => mine(c.barId) && (c.genericId === kindId || c.id === kindId));
     return hits.filter((c) => c.id !== from.id && !brands.some((b) => b.id === c.id)).slice(0, 8);
   }, [catalog, query, kindId, from.id, brands, data.menu.barId]);
+  const pool = useMemo(() => catalog.filter((c) => c.id !== from.id && (c.barId === null || c.barId === data.menu.barId)), [catalog, from.id, data.menu.barId]);
+  const near = useNearIngredients(query, pool, { skip: !query.trim(), shown: results });
 
   const save = () => {
     const to = chosen.id === from.id ? null : chosen;
@@ -75,7 +79,8 @@ export function RunSwapSheet({ data, drink, line, onClose }: { data: RunSheetDat
           <Caption tone="muted">{query ? 'Found' : 'More like it'}</Caption>
           {query ? null : pick(from.id, from.name, 'In the spec now')}
           {results.map((r) => pick(r.id, r.name, r.barId ? 'Your bar' : 'Catalog'))}
-          {query && !results.length ? <Body tone="muted">Nothing called that yet.</Body> : null}
+          <NearPicks found={results.length > 0} near={near} render={(r) => pick(r.id, r.name, r.barId ? 'Your bar' : 'Catalog')} />
+          {query && !results.length && !near.length ? <Body tone="muted">Nothing called that yet.</Body> : null}
         </View>
         {others.length ? (
           <Choice

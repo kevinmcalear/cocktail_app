@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, DrinkImage, Field, PressableScale, RowScore, Switch, useDs } from '@/components/ds';
+import { NearLabel } from '@/components/search/NearPicks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useMyProfile, type MyProfile } from '@/hooks/useMyProfile';
@@ -9,6 +10,7 @@ import { useMyMadeDrinks, useProfilePicks, useSetPick, useSetPicks } from '@/hoo
 import { useMyHadDrinks, useMyHadPicks, usePinDrink, useSetAllHadPicks, useSetHadPick } from '@/hooks/useRankings';
 import { sortHad, tallyBars, whereLine, type HadDrink } from '@/lib/hadDrinks';
 import { plural } from '@/lib/menus';
+import { nearest } from '@/lib/nearName';
 import { pickedShown, SHARE_MODES, type ShareSection } from '@/lib/profiles';
 
 import { SafetyPage } from '../safety/SafetyPage';
@@ -73,7 +75,10 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
         : made?.map((o) => ({ key: o.id, title: o.name, detail: o.origin ?? 'Your original', score: null, pick: madePicks[o.id] }));
   const shownOf = (r: Row) => pickedShown(mode, r.pick);
   const query = search.trim().toLowerCase();
-  const visible = rows?.filter((r) => (!query || r.title.toLowerCase().includes(query)) && (filter === 'all' || (filter === 'shown') === shownOf(r)));
+  const filtered = rows?.filter((r) => filter === 'all' || (filter === 'shown') === shownOf(r));
+  const visible = filtered?.filter((r) => !query || r.title.toLowerCase().includes(query));
+  // "negorni": Negroni, after what matched (NearPicks).
+  const close = query && filtered && visible ? nearest(query, filtered.filter((r) => !visible.includes(r)), (r) => r.title, 3) : [];
   const shownCount = rows?.filter(shownOf).length ?? 0;
   const pinned = (rows ?? []).filter((r) => r.pin).sort((a, b) => (a.pin ?? 0) - (b.pin ?? 0));
 
@@ -147,10 +152,12 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
           <Body tone="muted">{section === 'originals' ? 'You haven’t made a drink yet.' : 'Nothing here yet. Rank a drink and it shows up here.'}</Body>
         ) : (
           <View role="list">
-            {visible.map((r) => {
+            {[...visible, ...close].map((r) => {
               const shown = shownOf(r);
               return (
-                <View key={r.key} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
+                <Fragment key={r.key}>
+                {r === close[0] ? <NearLabel found={visible.length > 0} style={styles.near} /> : null}
+                <View role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
                   <View style={styles.flex}>
                     <Body numberOfLines={2} style={styles.title}>
                       {r.title}
@@ -179,6 +186,7 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
                     label={`Show ${r.title} on your profile`}
                   />
                 </View>
+                </Fragment>
               );
             })}
           </View>
@@ -195,6 +203,7 @@ function Picks({ profile, section }: { profile: MyProfile; section: ShareSection
 }
 
 const styles = StyleSheet.create({
+  near: { paddingTop: space.md },
   box: { gap: space.md, marginTop: space.md },
   group: { gap: space.sm },
   slots: { flexDirection: 'row', gap: space.sm },

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { CLAIM_COLUMNS, changedProfiles, type ProfileClaim } from '@/hooks/useProfiles';
+import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { supabase } from '@/lib/supabase';
 import type { HeldSetup } from '@/store/useVenueSetup';
 
@@ -34,28 +35,32 @@ type Row = Omit<ClaimableBar, 'claimed' | 'awards' | 'drinks'> & {
 /** Bar pages by name for setup's search, claimed ones too (they show dimmed). */
 export function useClaimableBars(search: string) {
   const term = search.replace(/[%_\\,()]/g, '').trim();
+  // Close names too ("lanturn room": The Lantern Room), marked `near`.
+  const close = !!useUserId();
   return useQuery({
-    queryKey: ['claimable-bars', term],
+    queryKey: ['claimable-bars', term, close],
     enabled: term.length >= 2,
-    queryFn: async (): Promise<ClaimableBar[]> => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(
-          'id, handle, display_name, address_line, locality, city, bar_type, avatar_url, is_claimed, bar_id, is_closed, awards:profile_awards!profile_awards_profile_id_fkey(count), drinks:items!items_origin_bar_profile_id_fkey(count), sample:items!items_origin_bar_profile_id_fkey(id, name)'
-        )
-        .eq('kind', 'bar')
-        .eq('is_public', true)
-        .ilike('display_name', `%${term}%`)
-        .order('display_name')
-        .limit(3, { referencedTable: 'sample' })
-        .limit(6);
-      if (error) throw error;
-      return ((data ?? []) as unknown as Row[]).map(({ is_claimed, bar_id, awards, drinks, ...b }) => ({
-        ...b,
-        claimed: is_claimed || !!bar_id,
-        awards: awards?.[0]?.count ?? 0,
-        drinks: drinks?.[0]?.count ?? 0,
-      }));
+    queryFn: async ({ signal }): Promise<MaybeNear<ClaimableBar>[]> => {
+      const read = async (ids?: string[]): Promise<ClaimableBar[]> => {
+        const q = supabase
+          .from('profiles')
+          .select(
+            'id, handle, display_name, address_line, locality, city, bar_type, avatar_url, is_claimed, bar_id, is_closed, awards:profile_awards!profile_awards_profile_id_fkey(count), drinks:items!items_origin_bar_profile_id_fkey(count), sample:items!items_origin_bar_profile_id_fkey(id, name)'
+          )
+          .eq('kind', 'bar')
+          .eq('is_public', true)
+          .limit(3, { referencedTable: 'sample' });
+        const { data, error } = await (ids ? q.in('id', ids) : q.ilike('display_name', `%${term}%`).order('display_name').limit(6)).abortSignal(signal);
+        if (error) throw error;
+        return ((data ?? []) as unknown as Row[]).map(({ is_claimed, bar_id, awards, drinks, ...b }) => ({
+          ...b,
+          claimed: is_claimed || !!bar_id,
+          awards: awards?.[0]?.count ?? 0,
+          drinks: drinks?.[0]?.count ?? 0,
+        }));
+      };
+      const rows = await read();
+      return close ? withNear(term, 'bar', rows, read, signal) : rows;
     },
   });
 }

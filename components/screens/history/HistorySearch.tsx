@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Field, PressableScale, useDs } from '@/components/ds';
+import { NearPicks } from '@/components/search/NearPicks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, space } from '@/constants/tokens';
 import { FAMILIES, rowMeta, searchTree, type TreeNode } from '@/lib/drinkTree';
+import { nearest } from '@/lib/nearName';
 
 /**
  * Find a drink, bartender or bar in the history: a field with a search icon
@@ -16,6 +18,16 @@ export function HistorySearch({ nodes, onJump, autoFocus, compact }: { nodes: re
   const ds = useDs();
   const [query, setQuery] = useState('');
   const results = searchTree(nodes, query);
+  // "jungel bird": Jungle Bird, after what matched (NearPicks).
+  const near = query.trim() ? nearest(query, nodes.filter((n) => !results.includes(n)), (n) => n.name, 3) : [];
+  const row = (n: TreeNode) => (
+    <PressableScale key={n.key} role="button" accessibilityLabel={`Show ${n.name}`} onPress={() => pick(n.key)} style={[styles.result, { borderBottomColor: ds.c.line }]}>
+      <Body numberOfLines={1}>{n.name}</Body>
+      <Caption tone="muted" numberOfLines={1}>
+        {[FAMILIES.find((f) => f.key === n.family)?.name, rowMeta(n)].filter(Boolean).join(' · ')}
+      </Caption>
+    </PressableScale>
+  );
   const pick = (key: string) => {
     onJump(key);
     setQuery('');
@@ -39,18 +51,9 @@ export function HistorySearch({ nodes, onJump, autoFocus, compact }: { nodes: re
       />
       {query.trim() ? (
         <View role="list" aria-label="Matches" style={[styles.results, compact ? { backgroundColor: ds.c.surface, borderColor: ds.c.line } : null, compact ? styles.float : null]}>
-          {results.length ? (
-            results.map((n) => (
-              <PressableScale key={n.key} role="button" accessibilityLabel={`Show ${n.name}`} onPress={() => pick(n.key)} style={[styles.result, { borderBottomColor: ds.c.line }]}>
-                <Body numberOfLines={1}>{n.name}</Body>
-                <Caption tone="muted" numberOfLines={1}>
-                  {[FAMILIES.find((f) => f.key === n.family)?.name, rowMeta(n)].filter(Boolean).join(' · ')}
-                </Caption>
-              </PressableScale>
-            ))
-          ) : (
-            <Caption tone="muted">{`Nothing in the history matches "${query.trim()}".`}</Caption>
-          )}
+          {results.map(row)}
+          <NearPicks found={results.length > 0} near={near} render={row} />
+          {results.length || near.length ? null : <Caption tone="muted">{`Nothing in the history matches "${query.trim()}".`}</Caption>}
         </View>
       ) : null}
     </View>

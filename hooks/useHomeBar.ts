@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { useDebounced } from '@/hooks/useDiscover';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { chunk } from '@/lib/commandSearchGrid';
 import { likeExactly, searchByName } from '@/lib/drinkWizard';
 import { barSection, type BarSection } from '@/lib/barSections';
@@ -141,7 +142,7 @@ export function useBarSearch(text: string) {
     enabled: query.length > 0,
     placeholderData: keepPreviousData,
     meta: { persist: false },
-    queryFn: async (): Promise<FoundItem[]> => {
+    queryFn: async ({ signal }): Promise<MaybeNear<FoundItem>[]> => {
       // Names that start with it, and any that have it: "Gin" can't sort out of reach behind "Aged gin…".
       const read = (pattern: string, limit: number) =>
         supabase
@@ -175,7 +176,13 @@ export function useBarSearch(text: string) {
       const rows = [...byId.values()] as unknown as ItemRow[];
       // Alias matches first: their names don't contain what was typed, so searchByName would drop them.
       const named = (also.data ?? []) as unknown as ItemRow[];
-      return foundItems([...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))]);
+      const found = await foundItems([...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))]);
+      // "chartruse": Green Chartreuse, marked `near` (Did you mean).
+      return withNear(query, 'ingredient', found, async (ids) => {
+        const { data, error } = await supabase.from('app_item_presentation').select(FOUND_SELECT).in('id', ids);
+        if (error) throw error;
+        return foundItems((data ?? []) as unknown as ItemRow[]);
+      }, signal);
     },
   });
 }

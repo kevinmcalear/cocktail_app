@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { fetchPublished } from '@/hooks/usePublished';
+import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { track } from '@/lib/analytics';
 import { viewerScoped } from '@/lib/authCache';
 import { allRowsById } from '@/lib/allRows';
@@ -361,22 +362,23 @@ export function useBarProfile(barId: string | null | undefined, profileId?: stri
 }
 
 /** Public bars by name, for "Where did you have it?". */
-export function usePublicBars(search: string) {
+export function usePublicBars(search: string, { near = false }: { near?: boolean } = {}) {
   const term = search.replace(/[%_\\]/g, '').trim();
+  // A picker asks for close names too ("lanturn room": The Lantern Room), marked `near`; they need an account.
+  const userId = useUserId();
+  const close = near && !!userId;
   return useQuery({
-    queryKey: ['public-bars', term],
+    queryKey: ['public-bars', term, close],
     enabled: term.length >= 2,
-    queryFn: async (): Promise<RankVenue[]> => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(VENUE_COLUMNS)
-        .eq('kind', 'bar')
-        .eq('is_public', true)
-        .ilike('display_name', `%${term}%`)
-        .order('display_name')
-        .limit(8);
-      if (error) throw error;
-      return (data ?? []) as RankVenue[];
+    queryFn: async ({ signal }): Promise<MaybeNear<RankVenue>[]> => {
+      const read = async (ids?: string[]): Promise<RankVenue[]> => {
+        const q = supabase.from('profiles').select(VENUE_COLUMNS).eq('kind', 'bar').eq('is_public', true);
+        const { data, error } = await (ids ? q.in('id', ids) : q.ilike('display_name', `%${term}%`).order('display_name').limit(8)).abortSignal(signal);
+        if (error) throw error;
+        return (data ?? []) as RankVenue[];
+      };
+      const rows = await read();
+      return close ? withNear(term, 'bar', rows, read, signal) : rows;
     },
   });
 }

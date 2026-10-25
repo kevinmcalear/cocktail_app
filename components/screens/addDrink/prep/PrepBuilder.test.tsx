@@ -7,6 +7,7 @@ import { PrepBuilder } from './PrepBuilder';
 
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 // The catalog's sourced recipes: only Grapefruit cordial has one here.
 jest.mock('@/hooks/usePrepCard', () => ({

@@ -43,3 +43,32 @@ export function useSaveSpelling() {
     onSuccess: () => client.invalidateQueries({ queryKey: ['search-near'] }),
   });
 }
+
+/** A picker's row, marked when it's a close name rather than what was typed. Plain JSON. */
+export type MaybeNear<T> = T & { near?: boolean };
+
+/**
+ * A picker's own search with its close names after it (whole-app canvas,
+ * Search page, "Did you mean": 2A, 2B): what public.search_near finds of one
+ * kind that the plain search missed, read by `read` with the picker's own
+ * columns, closest first. Three letters or more; nothing on a database
+ * without search_near.
+ */
+export async function withNear<T extends { id: string }>(
+  term: string,
+  kind: NearKind,
+  rows: T[],
+  read: (ids: string[]) => Promise<T[]>,
+  signal: AbortSignal
+): Promise<MaybeNear<T>[]> {
+  if (term.trim().length < 3) return rows;
+  const { data, error } = await supabase.rpc('search_near', { p_query: term.trim(), p_kinds: [kind], p_limit: 4 }).abortSignal(signal);
+  // ponytail: a database without 20261109200000 has no close names; drop once it's in production.
+  if (error?.code === 'PGRST202') return rows;
+  if (error) throw error;
+  const ids = ((data ?? []) as NearRow[]).map((r) => r.id).filter((id) => !rows.some((r) => r.id === id));
+  if (!ids.length) return rows;
+  const found = await read(ids);
+  const near = ids.flatMap((id) => found.filter((r) => r.id === id)).map((r) => ({ ...r, near: true }));
+  return [...rows, ...near];
+}

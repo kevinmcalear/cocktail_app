@@ -3,6 +3,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, DrinkImage, PressableScale, useDs } from '@/components/ds';
 import { AddBarForm } from '@/components/screens/home/AddBar';
+import { NearPicks, splitNear } from '@/components/search/NearPicks';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
 import type { ItemPicture } from '@/lib/itemImages';
@@ -37,8 +38,20 @@ export function WherePicker({ ownBar, value, onChange }: { ownBar: RankVenue | n
   const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState('');
   const [adding, setAdding] = useState(false);
-  const { data: found } = usePublicBars(search);
+  const [plain, near] = splitNear(usePublicBars(search, { near: true }).data ?? []);
   const other = value && value.id !== ownBar?.id ? value : null;
+  const pickChip = (v: RankVenue) => (
+    <Chip
+      key={v.id}
+      label={v.locality ? `${v.display_name}, ${v.locality}` : v.display_name}
+      selected={value?.id === v.id}
+      onPress={() => {
+        onChange(v);
+        setSearching(false);
+        setSearch('');
+      }}
+    />
+  );
   return (
     <View style={styles.where}>
       <Caption tone="muted">Where did you have it?</Caption>
@@ -65,21 +78,12 @@ export function WherePicker({ ownBar, value, onChange }: { ownBar: RankVenue | n
             style={[styles.input, { color: ds.c.ink, backgroundColor: ds.c.raised }]}
           />
           <View style={styles.chips}>
-            {(found ?? []).map((v) => (
-              <Chip
-                key={v.id}
-                label={v.locality ? `${v.display_name}, ${v.locality}` : v.display_name}
-                selected={value?.id === v.id}
-                onPress={() => {
-                  onChange(v);
-                  setSearching(false);
-                  setSearch('');
-                }}
-              />
-            ))}
-            {search.trim().length >= 2 && found?.length === 0 ? <Caption tone="muted">No public bars match.</Caption> : null}
+            {plain.map(pickChip)}
+            {search.trim().length >= 2 && !plain.length && !near.length ? <Caption tone="muted">No public bars match.</Caption> : null}
           </View>
-          {search.trim().length >= 2 && !adding ? <Button label="Not here? Add it" icon="plus" variant="ghost" onPress={() => setAdding(true)} /> : null}
+          <NearPicks found={plain.length > 0} near={near} no="No, it’s somewhere else" render={pickChip} rowStyle={styles.chips}>
+            {search.trim().length >= 2 && !adding ? <Button label="Not here? Add it" icon="plus" variant="ghost" onPress={() => setAdding(true)} /> : null}
+          </NearPicks>
           {adding ? (
             <AddBarForm
               initialName={search.trim()}

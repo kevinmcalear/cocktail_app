@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient, type Query } from '@tanstack/rea
 import { useUserId } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS, PROFILE_COLUMNS } from '@/hooks/useLineage';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
+import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
 import type { ClaimEvidence, ClaimMethod, PersonClaimMethod } from '@/lib/claimVerification';
@@ -696,32 +697,37 @@ type PersonRow = Omit<PublicPerson, 'job' | 'current_bar' | 'worked'> & {
 };
 
 /** Public people by name, so someone can find a profile we already have. */
-export function usePublicPeople(search: string) {
+export function usePublicPeople(search: string, { near = false }: { near?: boolean } = {}) {
   const term = search.replace(/[%_\\]/g, '').trim();
+  // A picker asks for close names too ("dayle degrof": Dale DeGroff), marked `near`; they need an account.
+  const userId = useUserId();
+  const close = near && !!userId;
   return useQuery({
-    queryKey: ['public-people', term],
+    queryKey: ['public-people', term, close],
     enabled: term.length >= 2,
-    queryFn: async (): Promise<PublicPerson[]> => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(title, is_current, is_shown, is_hidden, person_accepted, bar_accepted, bar:profiles!bar_profile_id(display_name))')
-        .eq('kind', 'person')
-        .eq('is_public', true)
-        .ilike('display_name', `%${term}%`)
-        .order('display_name')
-        .limit(8);
-      if (error) throw error;
-      return ((data ?? []) as unknown as PersonRow[]).map(({ jobs, ...p }) => {
-        // Jobs both sides confirmed, as the profile shows them.
-        const confirmed = (jobs ?? []).filter((j) => j.person_accepted && j.bar_accepted && j.bar);
-        const now = confirmed.find((j) => j.is_current);
-        return {
-          ...p,
-          current_bar: now?.bar?.display_name ?? null,
-          job: now ? [now.title, now.bar!.display_name].filter(Boolean).join(', ') : null,
-          worked: workedBars(confirmed.filter((j) => !j.is_hidden && (j.is_current || j.is_shown))),
-        };
-      });
+    queryFn: async ({ signal }): Promise<MaybeNear<PublicPerson>[]> => {
+      const read = async (ids?: string[]): Promise<PublicPerson[]> => {
+        const q = supabase
+          .from('profiles')
+          .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(title, is_current, is_shown, is_hidden, person_accepted, bar_accepted, bar:profiles!bar_profile_id(display_name))')
+          .eq('kind', 'person')
+          .eq('is_public', true);
+        const { data, error } = await (ids ? q.in('id', ids) : q.ilike('display_name', `%${term}%`).order('display_name').limit(8)).abortSignal(signal);
+        if (error) throw error;
+        return ((data ?? []) as unknown as PersonRow[]).map(({ jobs, ...p }) => {
+          // Jobs both sides confirmed, as the profile shows them.
+          const confirmed = (jobs ?? []).filter((j) => j.person_accepted && j.bar_accepted && j.bar);
+          const now = confirmed.find((j) => j.is_current);
+          return {
+            ...p,
+            current_bar: now?.bar?.display_name ?? null,
+            job: now ? [now.title, now.bar!.display_name].filter(Boolean).join(', ') : null,
+            worked: workedBars(confirmed.filter((j) => !j.is_hidden && (j.is_current || j.is_shown))),
+          };
+        });
+      };
+      const rows = await read();
+      return close ? withNear(term, 'person', rows, read, signal) : rows;
     },
   });
 }
