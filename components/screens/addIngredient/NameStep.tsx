@@ -3,6 +3,7 @@ import { Alert, Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, IngredientThumb, Surface } from '@/components/ds';
 import { space } from '@/constants/tokens';
+import { useNearIngredients } from '@/hooks/useNearIngredients';
 import { useReadLabel } from '@/hooks/useReadLabel';
 import { nearIngredient, sameIngredient, type IngredientAlias } from '@/lib/ingredientNames';
 import { kindGuesses, type IngredientDraft } from '@/lib/ingredientWizard';
@@ -33,7 +34,8 @@ export function NameStep({ draft, set, ingredients, aliases, core, onDone, onUse
   const read = useReadLabel();
   const camera = Platform.OS !== 'web' && Device.isDevice;
   const same = draft.name.trim() ? sameIngredient(draft.name, ingredients, aliases) : null;
-  const near = same ? null : nearIngredient(draft.name, ingredients, aliases);
+  // "chartruse": Green Chartreuse, by a slip or a word spelled close (useNearIngredients).
+  const near = useNearIngredients(draft.name, ingredients, { skip: !!same || !draft.name.trim(), first: same ? null : nearIngredient(draft.name, ingredients, aliases), limit: 1 })[0] ?? null;
   const hit = same ?? near;
 
   const snap = async (get: () => Promise<BottlePhoto | null>) => {

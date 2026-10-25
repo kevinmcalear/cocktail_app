@@ -8,6 +8,7 @@ import { EditBody } from './EditBody';
 import type { IngredientEdit } from './useIngredientEdit';
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }), usePreventRemove: () => jest.fn() }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ active: null, venues: [] }) }));
 jest.mock('@/hooks/useMode', () => ({ useMode: () => ({ mode: 'home' }) }));
 jest.mock('../../drink/edit/EditSpecList', () => {
