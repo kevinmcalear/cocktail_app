@@ -1,0 +1,585 @@
+{
+ "maker": "schott.zwiesel",
+ "models": [
+  {
+   "name": "Bar Special Nick & Nora",
+   "series": "Bar Special",
+   "designer": null,
+   "model_code": "119778",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 166,
+   "capacity_as_stated": "5.6 oz",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/cocktail-glasses/2295-bar-special-nick-und-nora-glass/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/cocktail-glasses/2295-bar-special-nick-und-nora-glass/",
+    "https://www.webstaurantstore.com/schott-zwiesel-bar-special-56-oz-nick-and-nora-glass-by-fortessa-tableware-solutions-case/54923119778.html"
+   ]
+  },
+  {
+   "name": "Basic Bar Classic Cocktail",
+   "series": "Basic Bar Classic",
+   "designer": "Charles Schumann",
+   "model_code": "119640",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 202,
+   "capacity_as_stated": "202 ml",
+   "height_mm": 129,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/cocktail-glasses/819-basic-bar-classic-cocktail/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/cocktail-glasses/819-basic-bar-classic-cocktail/"
+   ]
+  },
+  {
+   "name": "Basic Bar Classic Double Old Fashioned",
+   "series": "Basic Bar Classic",
+   "designer": "Charles Schumann",
+   "model_code": "119636",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 369,
+   "capacity_as_stated": "369 ml",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/gin-glasses/854-basic-bar-classic-double-old-fashioned/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/gin-glasses/854-basic-bar-classic-double-old-fashioned/"
+   ]
+  },
+  {
+   "name": "Basic Bar Classic Longdrink",
+   "series": "Basic Bar Classic",
+   "designer": "Charles Schumann",
+   "model_code": "119638",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "311 ml",
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/aperol-glasses/651-basic-bar-classic-longdrink/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/aperol-glasses/651-basic-bar-classic-longdrink/"
+   ]
+  },
+  {
+   "name": "Basic Bar Motion Longdrink",
+   "series": "Basic Bar Motion",
+   "designer": "Charles Schumann",
+   "model_code": "119648",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "311 ml",
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/aperol-glasses/652-basic-bar-motion-longdrink/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/aperol-glasses/652-basic-bar-motion-longdrink/"
+   ]
+  },
+  {
+   "name": "Basic Bar Selection Manhattan Coupe (88)",
+   "series": "Basic Bar Selection",
+   "designer": "Charles Schumann",
+   "model_code": "115840",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "8.8 oz",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-basic-bar-8-8-oz-coupe-glass-case/5492911584.html",
+   "source_urls": [
+    "https://www.zwieselfortessa.us/basic-bar-bar-glasses-8.8oz-0029.115840",
+    "https://www.webstaurantstore.com/schott-zwiesel-basic-bar-8-8-oz-coupe-glass-case/5492911584.html"
+   ]
+  },
+  {
+   "name": "Basic Bar Selection Martini Coupe (87)",
+   "series": "Basic Bar Selection",
+   "designer": "Charles Schumann",
+   "model_code": "115839",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 225,
+   "capacity_as_stated": "7.6 oz",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/cocktail-glasses/1501-bar-selection-martini-contemporary/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/cocktail-glasses/1501-bar-selection-martini-contemporary/",
+    "https://www.zwieselfortessa.us/basic-bar-bar-glasses-7.6oz-0029.115839",
+    "https://www.webstaurantstore.com/schott-zwiesel-basic-bar-7-6-oz-coupe-glass-case/54929115839.html"
+   ]
+  },
+  {
+   "name": "Basic Bar Selection Softdrink Nr. 1",
+   "series": "Basic Bar Selection",
+   "designer": "Charles Schumann",
+   "model_code": "115848",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 213,
+   "capacity_as_stated": "7.2 oz",
+   "height_mm": 86,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/drinking-glasses/1438-bar-selection-softdrink-nr-1/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/drinking-glasses/1438-bar-selection-softdrink-nr-1/",
+    "https://www.zwieselfortessa.us/basic-bar-bar-glasses-7.2oz-0029.115848",
+    "https://www.webstaurantstore.com/schott-zwiesel-basic-bar-7-2-oz-water-glass-case/54929115848.html"
+   ]
+  },
+  {
+   "name": "Basic Bar Selection Softdrink Nr. 2",
+   "series": "Basic Bar Selection",
+   "designer": "Charles Schumann",
+   "model_code": "115850",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 539,
+   "capacity_as_stated": "539 ml",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/drinking-glasses/644-basic-bar-selection-softdrink-nr-2/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/drinking-glasses/644-basic-bar-selection-softdrink-nr-2/",
+    "https://www.zwieselfortessa.us/basic-bar-bar-glasses-5.1in-0029.115850",
+    "https://www.webstaurantstore.com/schott-zwiesel-basic-bar-18-oz-tumbler-case/5492911585.html"
+   ]
+  },
+  {
+   "name": "Basic Bar Selection Softdrink Nr. 3",
+   "series": "Basic Bar Selection",
+   "designer": "Charles Schumann",
+   "model_code": "115849",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 387,
+   "capacity_as_stated": "13.1 oz",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/long-drink-glasses/1518-bar-selection-softdrink-nr-3/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/long-drink-glasses/1518-bar-selection-softdrink-nr-3/",
+    "https://www.zwieselfortessa.us/basic-bar-bar-glasses-13.1oz-0029.115849",
+    "https://www.webstaurantstore.com/schott-zwiesel-basic-bar-13-1-oz-beverage-glass-case/54929115849.html"
+   ]
+  },
+  {
+   "name": "Beer Basic 13.7 oz. Small Stemmed Pilsner Glass",
+   "series": "Beer Basic",
+   "designer": null,
+   "model_code": "0022.115273",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 405,
+   "capacity_as_stated": "13.7 oz.",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-0022-115273-tritan-beer-basic-13-5-oz-small-stemmed-pilsner-glass-case/54922115273.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-0022-115273-tritan-beer-basic-13-5-oz-small-stemmed-pilsner-glass-case/54922115273.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/beer_basic_glassware_brochure_fortessa.pdf"
+   ]
+  },
+  {
+   "name": "Beer Basic 13.9 oz. Brussels Footed Pilsner Glass",
+   "series": "Beer Basic",
+   "designer": null,
+   "model_code": "0022.865493",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 411,
+   "capacity_as_stated": "13.9 oz.",
+   "height_mm": 206,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-beer-basic-13-9-oz-brussels-pilsner-glass-by-fortessa-tableware-solutions-case/54922865493.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-beer-basic-13-9-oz-brussels-pilsner-glass-by-fortessa-tableware-solutions-case/54922865493.html"
+   ]
+  },
+  {
+   "name": "Beer Basic 15.2 oz. Small Wheat Beer Glass",
+   "series": "Beer Basic",
+   "designer": null,
+   "model_code": "0022.115270",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 449,
+   "capacity_as_stated": "15.2 oz.",
+   "height_mm": 216,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-0022-115270-tritan-beer-basic-14-2-oz-small-wheat-glass-case/54922115270.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-0022-115270-tritan-beer-basic-14-2-oz-small-wheat-glass-case/54922115270.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/beer_basic_glassware_brochure_fortessa.pdf"
+   ]
+  },
+  {
+   "name": "Beer Basic 15.2 oz. Stemmed Craft Beer Glass",
+   "series": "Beer Basic",
+   "designer": null,
+   "model_code": "0022.121390",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 449,
+   "capacity_as_stated": "15.2 oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-beer-basic-15-2-oz-craft-beer-glass-by-fortessa-tableware-solutions-case/5492212139.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-beer-basic-15-2-oz-craft-beer-glass-by-fortessa-tableware-solutions-case/5492212139.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/fortessa_schottzwiesel_tritancrystal_glassware.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/fortessa_schottzwiesel_tritancrystal_glassware2.pdf"
+   ]
+  },
+  {
+   "name": "Beer Basic 23.3 oz. Bavaria Pilsner Glass",
+   "series": "Beer Basic",
+   "designer": null,
+   "model_code": "0022.837267",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 689,
+   "capacity_as_stated": "23.3 oz.",
+   "height_mm": 251,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-beer-basic-23-3-oz-bavaria-pilsner-glass-by-fortessa-tableware-solutions-case/54922837267.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-beer-basic-23-3-oz-bavaria-pilsner-glass-by-fortessa-tableware-solutions-case/54922837267.html"
+   ]
+  },
+  {
+   "name": "Ivento Bordeaux",
+   "series": "Ivento",
+   "designer": null,
+   "model_code": "115588",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 633,
+   "capacity_as_stated": "633 ml",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/red-wine-glasses/762-ivento-bordeaux/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/red-wine-glasses/762-ivento-bordeaux/",
+    "https://www.webstaurantstore.com/schott-zwiesel-ivento-21-4-oz-wine-glass-by-fortessa-tableware-solutions-case/54927115588.html"
+   ]
+  },
+  {
+   "name": "Ivento Burgundy",
+   "series": "Ivento",
+   "designer": null,
+   "model_code": "115589",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 783,
+   "capacity_as_stated": "783 ml",
+   "height_mm": 221,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/red-wine-glasses/768-ivento-burgundy/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/red-wine-glasses/768-ivento-burgundy/",
+    "https://www.webstaurantstore.com/schott-zwiesel-ivento-27-1-oz-burgundy-wine-glass-by-fortessa-tableware-solutions-case/54927115589.html"
+   ]
+  },
+  {
+   "name": "Ivento Champagne Flute",
+   "series": "Ivento",
+   "designer": null,
+   "model_code": "115590",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 228,
+   "capacity_as_stated": "228 ml",
+   "height_mm": 222,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/sparkling-wine-glasses/1013-ivento-sparkling-wine/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/sparkling-wine-glasses/1013-ivento-sparkling-wine/",
+    "https://www.webstaurantstore.com/schott-zwiesel-ivento-7-7-oz-flute-glass-by-fortessa-tableware-solutions-case/5492711559.html"
+   ]
+  },
+  {
+   "name": "Ivento Red Wine",
+   "series": "Ivento",
+   "designer": null,
+   "model_code": "115587",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 506,
+   "capacity_as_stated": "506 ml",
+   "height_mm": 224,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/red-wine-glasses/972-ivento-red-wine/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/red-wine-glasses/972-ivento-red-wine/",
+    "https://www.webstaurantstore.com/schott-zwiesel-ivento-17-1-oz-red-wine-glass-by-fortessa-tableware-solutions-case/54927115587.html"
+   ]
+  },
+  {
+   "name": "Ivento White Wine",
+   "series": "Ivento",
+   "designer": null,
+   "model_code": "115586",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 349,
+   "capacity_as_stated": "349 ml",
+   "height_mm": 208,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/wine-glasses/1074-ivento-white-wine/",
+   "source_urls": [
+    "https://www.zwieselfortessa.com/hospitality/products/glassware/restaurant-bar-glasses/wine-glasses/1074-ivento-white-wine/",
+    "https://www.webstaurantstore.com/schott-zwiesel-ivento-11-6-oz-white-wine-glass-by-fortessa-tableware-solutions-case/54927115586.html"
+   ]
+  },
+  {
+   "name": "Pure Beaujolais",
+   "series": "Pure",
+   "designer": null,
+   "model_code": "0026.112422",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 464,
+   "capacity_as_stated": "15.7 oz.",
+   "height_mm": 221,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-0026-112422-tritan-pure-15-7-oz-beaujolais-wine-glass-case/54926112422.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-0026-112422-tritan-pure-15-7-oz-beaujolais-wine-glass-case/54926112422.html"
+   ]
+  },
+  {
+   "name": "Pure Bordeaux",
+   "series": "Pure",
+   "designer": null,
+   "model_code": "0026.112420",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 680,
+   "capacity_as_stated": "23 oz.",
+   "height_mm": 267,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-0026-112420-tritan-pure-23-oz-bordeaux-wine-glass-case/54926112420.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-0026-112420-tritan-pure-23-oz-bordeaux-wine-glass-case/54926112420.html"
+   ]
+  },
+  {
+   "name": "Pure Burgundy",
+   "series": "Pure",
+   "designer": null,
+   "model_code": "0026.112421",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 701,
+   "capacity_as_stated": "23.7 oz.",
+   "height_mm": 233,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-0026-112421-tritan-pure-23-4-oz-burgundy-wine-glass-case/54926112421.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-0026-112421-tritan-pure-23-4-oz-burgundy-wine-glass-case/54926112421.html"
+   ]
+  },
+  {
+   "name": "Pure Cabernet",
+   "series": "Pure",
+   "designer": null,
+   "model_code": "0026.112413",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "18.6 oz.",
+   "height_mm": 244,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/zwiesel-glas-pure-186-oz-cabernet-wine-glass-by-fortessa-tableware-solutions-case/54926112413.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/zwiesel-glas-pure-186-oz-cabernet-wine-glass-by-fortessa-tableware-solutions-case/54926112413.html"
+   ]
+  },
+  {
+   "name": "Pure Champagne Flute",
+   "series": "Pure",
+   "designer": null,
+   "model_code": "0026.112415",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 216,
+   "capacity_as_stated": "7.3 oz.",
+   "height_mm": 251,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-0026-112415-tritan-pure-7-1-oz-champagne-flute-case/54926112415.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-0026-112415-tritan-pure-7-1-oz-champagne-flute-case/54926112415.html"
+   ]
+  },
+  {
+   "name": "Pure Riesling",
+   "series": "Pure",
+   "designer": null,
+   "model_code": "0026.112414",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 299,
+   "capacity_as_stated": "10.1 oz.",
+   "height_mm": 221,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-0026-112414-tritan-pure-10-1-oz-riesling-wine-glass-case/54926112414.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-0026-112414-tritan-pure-10-1-oz-riesling-wine-glass-case/54926112414.html"
+   ]
+  },
+  {
+   "name": "Pure Sauvignon Blanc",
+   "series": "Pure",
+   "designer": null,
+   "model_code": "0026.112412",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 408,
+   "capacity_as_stated": "13.8 oz.",
+   "height_mm": 232,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-0026-112412-tritan-pure-13-8-oz-sauvignon-blanc-wine-glass-case/54926112412.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-0026-112412-tritan-pure-13-8-oz-sauvignon-blanc-wine-glass-case/54926112412.html"
+   ]
+  },
+  {
+   "name": "Pure Wine / Water Goblet",
+   "series": "Pure",
+   "designer": null,
+   "model_code": "0026.112842",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 449,
+   "capacity_as_stated": "15.2 oz.",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/schott-zwiesel-0026-112842-tritan-pure-15-2-oz-wine-water-goblet-case/54926112842.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/schott-zwiesel-0026-112842-tritan-pure-15-2-oz-wine-water-goblet-case/54926112842.html"
+   ]
+  },
+  {
+   "name": "Vina Bordeaux",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "110496",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 630,
+   "capacity_as_stated": "63 cl",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.tingstad.com/se-en/table-setting/glassware/all-glassware/red-wine-glass-schott-zwiesel-vina-64cl-110496",
+   "source_urls": [
+    "https://www.tingstad.com/se-en/table-setting/glassware/all-glassware/red-wine-glass-schott-zwiesel-vina-64cl-110496"
+   ]
+  },
+  {
+   "name": "Vina Burgundy",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "110458",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl",
+   "height_mm": 217,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.tingstad.com/se-sv/bordsdukning/glas/alla-glas/rodvinsglas-burgundy-schott-zwiesel-vina-40cl-110458",
+   "source_urls": [
+    "https://www.tingstad.com/se-sv/bordsdukning/glas/alla-glas/rodvinsglas-burgundy-schott-zwiesel-vina-40cl-110458"
+   ]
+  },
+  {
+   "name": "Vina Champagne",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "111718",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "27 cl",
+   "height_mm": 212,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.tingstad.com/se-sv/bordsdukning/glas/alla-glas/champagneglas-schott-zwiesel-vina-27cl-sc111718",
+   "source_urls": [
+    "https://www.tingstad.com/se-sv/bordsdukning/glas/alla-glas/champagneglas-schott-zwiesel-vina-27cl-sc111718"
+   ]
+  },
+  {
+   "name": "Vina Champagne Flute",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "110488",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 227,
+   "capacity_as_stated": "22,7 cl",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.tingstad.com/se-sv/bordsdukning/glas/alla-glas/champagneglas-vina-227cl-sc110488",
+   "source_urls": [
+    "https://www.tingstad.com/se-sv/bordsdukning/glas/alla-glas/champagneglas-vina-227cl-sc110488"
+   ]
+  },
+  {
+   "name": "Vina Red Wine",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "110459",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 530,
+   "capacity_as_stated": "53 cl",
+   "height_mm": 227,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.tingstad.com/se-sv/bordsdukning/glas/alla-glas/rodvinsglas-schott-zwiesel-vina-53cl-sc110459",
+   "source_urls": [
+    "https://www.tingstad.com/se-sv/bordsdukning/glas/alla-glas/rodvinsglas-schott-zwiesel-vina-53cl-sc110459"
+   ]
+  }
+ ]
+}

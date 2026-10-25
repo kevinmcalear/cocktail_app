@@ -33,6 +33,12 @@ export interface BarGlass {
   model: GlassModel | null;
   /** The glass of its type the bar's drinks are drawn in. */
   is_default: boolean;
+  /** Bought (from supplier_id) or already ours; null is not said (20261110100000). */
+  source: 'bought' | 'ours' | null;
+  supplier_id: string | null;
+  /** Null when not said, or this person can't see the venue's suppliers. */
+  supplier_name: string | null;
+  count: number | null;
   /** The bar's name, for "Little Rye uses this". */
   bar_name: string;
 }
@@ -51,14 +57,14 @@ async function fetchBarGlassware(barId: string): Promise<BarGlass[]> {
   const { data, error } = await supabase
     .from('bar_glassware')
     .select(
-      `id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, model_id, model:glass_models!bar_glassware_model_id_fkey(${GLASS_MODEL_SELECT}), profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)`
+      `id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, source, supplier_id, count, supplier:suppliers(name), model_id, model:glass_models!bar_glassware_model_id_fkey(${GLASS_MODEL_SELECT}), profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)`
     )
     .eq('profiles.bar_id', barId)
     .order('sort_order')
     .order('created_at');
   if (error) throw error;
-  type Row = Omit<BarGlass, 'bar_name'> & { profiles: { display_name: string } | null };
-  return ((data ?? []) as unknown as Row[]).map(({ profiles, ...row }) => ({ ...withModel(row), bar_name: profiles?.display_name ?? '' }));
+  type Row = Omit<BarGlass, 'bar_name' | 'supplier_name'> & { profiles: { display_name: string } | null; supplier: { name: string } | null };
+  return ((data ?? []) as unknown as Row[]).map(({ profiles, supplier, ...row }) => ({ ...withModel(row), supplier_name: supplier?.name ?? null, bar_name: profiles?.display_name ?? '' }));
 }
 
 /** A real glass's maker, series and designer, which live on its model. */
@@ -108,6 +114,10 @@ export interface BarGlassInput {
   /** The real glass, when one was picked; picking fills what the row leaves empty. */
   model_id?: string | null;
   is_default: boolean;
+  /** Left out, they stay as they are. */
+  source?: 'bought' | 'ours' | null;
+  supplier_id?: string | null;
+  count?: number | null;
 }
 
 /**

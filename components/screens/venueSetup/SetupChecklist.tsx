@@ -5,14 +5,17 @@ import { View } from 'react-native';
 import { Caption } from '@/components/ds';
 import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
 import { useBarPageId, useFlushHeldGlasses } from '@/hooks/useBarGlassware';
+import { useCapabilities } from '@/hooks/useCapabilities';
+import { useKitFromDrinks } from '@/hooks/useKitFromDrinks';
 import { useSetupChecklist } from '@/hooks/useSetupChecklist';
 import { checklistIntro, type ChecklistKey } from '@/lib/setupChecklist';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BrandsStep } from './BrandsStep';
+import { FromDrinksStep, fromDrinksCount } from './FromDrinksStep';
 import { GlassesStep } from './GlassesStep';
 import { MenuStep } from './MenuStep';
-import { ChecklistRow, ClaimNote } from './SetupChecklistParts';
+import { ChecklistRow, ClaimNote, FromDrinksRow } from './SetupChecklistParts';
 import { TeamStep } from './TeamStep';
 
 /**
@@ -31,7 +34,10 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
   // Glasses picked before the page was checked go onto it once it is.
   useFlushHeldGlasses(barId);
   const { list, notes, menuId, loading, skip, run } = useSetupChecklist(barId);
-  const [at, setAt] = useState<ChecklistKey | null>(null);
+  // Only Prep adds to the Kit: nobody else loads what the drinks name (Kit and ice, step 12).
+  const prep = (useCapabilities(barId).data ?? []).includes('prep');
+  const fromDrinks = fromDrinksCount(useKitFromDrinks(prep ? barId : null), pageId);
+  const [at, setAt] = useState<ChecklistKey | 'fromDrinks' | null>(null);
   const back = () => setAt(null);
   const step = (key: ChecklistKey) => `Set up ${name} · ${list.rows.find((r) => r.key === key)?.title ?? ''}`;
   const open = (page: string) => {
@@ -41,7 +47,10 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
 
   if (at === 'kit') return <GlassesStep barId={barId} pageId={pageId} name={name} step={step('kit')} onBack={back} onNext={back} onSkip={() => (skip('kit'), back())} />;
   if (at === 'bottles') return <BrandsStep barId={barId} step={step('bottles')} onBack={back} onNext={back} onSkip={() => (skip('bottles'), back())} />;
-  if (at === 'menu') return <MenuStep barId={barId} step={step('menu')} onBack={back} onDone={back} onSkip={() => (skip('menu'), back())} onBringIn={() => open('/bring-in')} />;
+  if (at === 'fromDrinks') return <FromDrinksStep barId={barId} pageId={pageId} name={name} onBack={back} />;
+  if (at === 'menu') {
+    return <MenuStep barId={barId} step={step('menu')} onBack={back} onDone={back} onSkip={() => (skip('menu'), back())} onBringIn={() => open('/bring-in')} onMade={(id) => open(`/menus/${id}/edit`)} />;
+  }
   if (at === 'team') {
     return (
       <SetupChromeProvider value={{ ...chrome, title: 'Invite your team', intro: `Each person gets an email from ${name} and lands in the app with your menus and specs already there.`, onBack: back }}>
@@ -71,6 +80,7 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
             ))}
           </View>
         )}
+        {fromDrinks ? <FromDrinksRow count={fromDrinks} onPress={() => setAt('fromDrinks')} /> : null}
         <ClaimNote barId={barId} />
       </SetupPage>
     </SetupChromeProvider>

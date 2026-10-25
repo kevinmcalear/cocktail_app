@@ -152,7 +152,7 @@ function useAllMenus(enabled: boolean) {
       // ponytail: every menu; Prep filters is_active
       const { data, error } = await supabase
         .from('menus')
-        .select('id, name, template_id, bar_id, is_active, created_at, cover_url, cover_position')
+        .select('id, name, bar_id, is_active, created_at, cover_url, cover_position')
         .order('created_at');
       if (error) throw error;
       return data ?? [];

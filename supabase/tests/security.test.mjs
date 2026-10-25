@@ -582,7 +582,7 @@ describe('catalog admins', () => {
     assert.equal(menu.length, 1);
     const { data: template } = await client
       .from('menu_templates')
-      .update({ description: 'curated' })
+      .update({ name: `Curated template ${run}` })
       .eq('id', ids.legacyTemplate)
       .select('id');
     assert.equal(template.length, 1);

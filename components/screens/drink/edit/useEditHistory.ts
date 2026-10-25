@@ -103,6 +103,8 @@ export function useSnapshotHistory<S>(snap: S | null, put: (s: S) => void) {
   return {
     canUndo: !!history?.past.length,
     canRedo: !!history?.future.length,
+    /** Steps since editing started, net of undo: the desktop badge's "3 changes". */
+    changes: history?.past.length ?? 0,
     undo: () => move(undo),
     redo: () => move(redo),
   };

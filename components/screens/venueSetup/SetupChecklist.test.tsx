@@ -23,6 +23,7 @@ jest.mock('@/hooks/useSetupChecklist', () => ({
 jest.mock('./SetupChecklistParts', () => {
   const { Pressable, Text } = jest.requireActual('react-native');
   return {
+    FromDrinksRow: () => null,
     ChecklistRow: ({ title, line, note, state, onPress }: { title: string; line: string; note?: string; state: string; onPress: () => void }) => (
       <Pressable role="button" accessibilityLabel={`${title}, ${state}`} onPress={onPress}>
         <Text>{[line, note].filter(Boolean).join(' · ')}</Text>
@@ -46,6 +47,9 @@ jest.mock('./GlassesStep', () => {
 });
 jest.mock('./BrandsStep', () => ({ BrandsStep: () => null }));
 jest.mock('./MenuStep', () => ({ MenuStep: () => null }));
+jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: [] }) }));
+jest.mock('@/hooks/useKitFromDrinks', () => ({ useKitFromDrinks: () => null }));
+jest.mock('./FromDrinksStep', () => ({ FromDrinksStep: () => null, fromDrinksCount: () => null }));
 jest.mock('./TeamStep', () => ({ TeamStep: () => null }));
 
 beforeEach(() => {

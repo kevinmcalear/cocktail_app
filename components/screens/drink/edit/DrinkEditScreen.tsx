@@ -194,7 +194,7 @@ export function EditPage({ editor, id, onExit }: { editor: DrinkEditor; id: stri
       {cocktail && id ? <VenueSections item={cocktail} onPending={(p) => ((venueEdits.current = p), setVenueDirty(p.dirty))} sheet={sheet === 'classic' || sheet === 'publish' || sheet === 'glass' ? sheet : null} onSheet={setSheet} servicePhotos={wide ? undefined : servicePhotos} /> : null}
     </>
   );
-  const toolbar = <EditToolbar canUndo={history.canUndo} canRedo={history.canRedo} onUndo={history.undo} onRedo={history.redo} onDone={() => void done()} saving={editor.saving} wide={wide} media={pictures.length ? 'photo' : 'paper'} more={wide ? <GlassButton accessibilityLabel="More" icon="ellipsis" onPress={() => setSheet('more')} /> : undefined} />;
+  const toolbar = <EditToolbar canUndo={history.canUndo} canRedo={history.canRedo} onUndo={history.undo} onRedo={history.redo} changes={history.changes} onDone={() => void done()} saving={editor.saving} wide={wide} media={pictures.length ? 'photo' : 'paper'} more={wide ? <GlassButton accessibilityLabel="More" icon="ellipsis" onPress={() => setSheet('more')} /> : undefined} />;
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

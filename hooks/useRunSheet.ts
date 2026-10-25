@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { houseMadeUnder, purchasingFor, recipesFor, toLines } from '@/hooks/usePrepList';
+import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import type { HouseMade, Purchasing } from '@/lib/prep';
 import type { BrandBottle, ItemFacts, RunDrink, RunParty, RunSwap } from '@/lib/runSheet';
 import { supabase } from '@/lib/supabase';
@@ -350,20 +351,24 @@ export interface PartyPage {
 /** Pages to link a party to: bars for the guest venue, makers for a brand. Never makes one. */
 export function usePartySearch(term: string, kind: 'guest' | 'brand') {
   const q = term.trim();
+  // Bars it may have meant too ("lanturn room": The Lantern Room), marked `near`.
+  const userId = useUserId();
+  const close = kind === 'guest' && !!userId;
   return useQuery({
-    queryKey: ['run-sheet-party-search', kind, q],
+    queryKey: ['run-sheet-party-search', kind, q, close],
     enabled: q.length >= 2,
-    queryFn: async (): Promise<PartyPage[]> => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, display_name, handle, locality, city, is_claimed, bar_id')
-        .eq('kind', kind === 'guest' ? 'bar' : 'maker')
-        .ilike('display_name', `%${q.replace(/[\\%_]/g, '\\$&')}%`)
-        .order('display_name')
-        .limit(8);
-      if (error) throw error;
-      type Row = { id: string; display_name: string; handle: string; locality: string | null; city: string | null; is_claimed: boolean; bar_id: string | null };
-      return ((data ?? []) as Row[]).map((r) => ({ id: r.id, display_name: r.display_name, handle: r.handle, place: r.city ?? r.locality, claimed: r.is_claimed || !!r.bar_id }));
+    queryFn: async ({ signal }): Promise<MaybeNear<PartyPage>[]> => {
+      const read = async (ids?: string[]): Promise<PartyPage[]> => {
+        const base = supabase
+          .from('profiles')
+          .select('id, display_name, handle, locality, city, is_claimed, bar_id')
+          .eq('kind', kind === 'guest' ? 'bar' : 'maker');
+        const { data, error } = await (ids ? base.in('id', ids) : base.ilike('display_name', `%${q.replace(/[\\%_]/g, '\\$&')}%`).order('display_name').limit(8)).abortSignal(signal);
+        if (error) throw error;
+        type Row = { id: string; display_name: string; handle: string; locality: string | null; city: string | null; is_claimed: boolean; bar_id: string | null };
+        return ((data ?? []) as Row[]).map((r) => ({ id: r.id, display_name: r.display_name, handle: r.handle, place: r.city ?? r.locality, claimed: r.is_claimed || !!r.bar_id }));
+      };
+      return close ? withNear(q, 'bar', read(), read, signal) : read();
     },
   });
 }

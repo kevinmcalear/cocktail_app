@@ -38,12 +38,12 @@ export function useVenueIce(barId: string | null | undefined) {
   });
 }
 
-/** Add a venue's ice, or change one (by id). */
+/** Add a venue's ice, or change one (by id). Resolves to its id. */
 export function useSaveVenueIce(barId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (ice: VenueIceChange) => {
-      const { error } = await supabase.rpc('save_venue_ice', {
+    mutationFn: async (ice: VenueIceChange): Promise<string> => {
+      const { data, error } = await supabase.rpc('save_venue_ice', {
         p_bar_id: barId,
         p_id: ice.id ?? null,
         p_name: ice.name,
@@ -60,6 +60,8 @@ export function useSaveVenueIce(barId: string) {
         p_note: ice.note ?? null,
       });
       if (error) throw error;
+      // The ice item's id, new or the same.
+      return data;
     },
     onSettled: () => client.invalidateQueries({ queryKey: venueIceKey(barId) }),
   });

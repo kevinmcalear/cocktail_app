@@ -71,7 +71,6 @@ export function sampleDrink(role: number): DatabaseItem {
     made_from_id: null,
     method_ice_id: null,
     origin_bar_profile_id: null,
-    price_minor: null,
     serve_abv: null,
     serve_ml: null,
     service_style: null,

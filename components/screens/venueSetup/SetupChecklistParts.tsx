@@ -35,6 +35,21 @@ export function ChecklistRow({ n, title, line, note, state, onPress }: { n: numb
   );
 }
 
+/** "From your drinks": the glasses, ice and tools the bar's drinks name that aren't in its Kit yet (Kit and ice, step 12). */
+export function FromDrinksRow({ count, onPress }: { count: number; onPress: () => void }) {
+  const ds = useDs();
+  const line = `${count} ${count === 1 ? 'thing your drinks name isn’t' : 'things your drinks name aren’t'} in your Kit`;
+  return (
+    <PressableScale role="link" accessibilityLabel={`From your drinks. ${line}`} onPress={onPress} style={[styles.main, styles.from, { borderBottomColor: ds.c.line }]}>
+      <View style={styles.flex}>
+        <Body>From your drinks</Body>
+        <Caption tone="muted">{line}</Caption>
+      </View>
+      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
+    </PressableScale>
+  );
+}
+
 /**
  * Where proving it's yours stands, under the checklist: waiting, with the
  * claim being checked, or a way to do it now. Nothing once the page is theirs.
@@ -64,6 +79,7 @@ const styles = StyleSheet.create({
   mark: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   strong: { fontFamily: fontFamilies.bodySemiBold },
   flex: { flex: 1, minWidth: 0 },
+  from: { borderBottomWidth: StyleSheet.hairlineWidth },
   claim: { gap: space.xs, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
   claimHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   start: { alignSelf: 'flex-start', marginTop: space.xs },

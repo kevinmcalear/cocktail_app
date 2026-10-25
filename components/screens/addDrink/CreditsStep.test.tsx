@@ -10,7 +10,10 @@ jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data
 jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p-me', displayName: 'Jo' } }) }));
 jest.mock('@/hooks/useProfiles', () => ({ usePublicPeople: () => ({ data: [] }) }));
-jest.mock('@/hooks/useRankings', () => ({ usePublicBars: (q: string) => ({ data: q.length >= 2 ? [{ id: 'bar-p-attaboy', display_name: 'Attaboy', city: 'New York' }] : [] }) }));
+// "atabboy" matches nothing as typed; the database says it's close to Attaboy (marked near).
+jest.mock('@/hooks/useRankings', () => ({
+  usePublicBars: (q: string) => ({ data: q.length >= 2 ? [{ id: 'bar-p-attaboy', display_name: 'Attaboy', city: 'New York', near: q === 'atabboy' }] : [] }),
+}));
 
 // The draft as the step leaves it, after each change.
 const changed = jest.fn<void, [WizardDraft]>();
@@ -46,6 +49,16 @@ describe('CreditsStep, where and when', () => {
 
     await fireEvent.press(screen.getByRole('radio', { name: 'At home' }));
     expect(latest().place).toBeNull();
+  });
+
+  test('a close spelling asks Did you mean; tapping it credits that bar, and adding one sits under No', async () => {
+    await renderWithTamagui(<Harness />);
+    await fireEvent.changeText(screen.getByLabelText('First made at a bar'), 'atabboy');
+    expect(screen.getByText('Did you mean')).toBeTruthy();
+    expect(screen.getByText('No, it’s somewhere else')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add “atabboy” as a new bar' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Attaboy · New York' }));
+    expect(latest().place).toEqual({ id: 'bar-p-attaboy', name: 'Attaboy' });
   });
 
   test("at a venue, it's the venue's unless it's from somewhere else", async () => {

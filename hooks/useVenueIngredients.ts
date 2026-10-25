@@ -36,6 +36,8 @@ export function useVenueIngredients(barId: string | null) {
         if (error) throw error;
         type Item = { id: string; name: string; item_type: string; ingredient_role: string | null; maker_profile_id: string | null };
         for (const i of (data ?? []) as Item[]) {
+          // A block or slab an ice starts from is the venue's ice (Kit), not an ingredient in use.
+          if (i.item_type === 'ice') continue;
           out.push({ id: i.id, name: i.name, type: i.item_type, role: i.ingredient_role, makerId: i.maker_profile_id, supplierId: supplier.get(i.id) ?? null, used: used.has(i.id) });
         }
       }

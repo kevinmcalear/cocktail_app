@@ -3,13 +3,14 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption } from '@/components/ds';
 import { TellUs, type TellUsAbout } from '@/components/feedback/TellUs';
+import { IcePrompt } from '@/components/screens/kit/IcePrompt';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import type { VenueIce } from '@/hooks/useVenueIce';
 import { methodIceLabel, samePick, sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
 import { iceBuildLine, iceKind, iceTip, QUICK_BUILDS, QUICK_LABEL, quickBuild, saysMore, whichQuick, type IceLayer } from '@/lib/iceBuild';
 import { draftSketchInputs } from '@/lib/sketch/draft';
-import { iceDrawKind, inTheGlass, isVenueIce, kitIceRow, kitSourceLine } from '@/lib/venueKit';
+import { iceDrawKind, inTheGlass, isVenueIce, kitIceRow, kitSourceLine, venueIceKinds } from '@/lib/venueKit';
 
 import { AddLayerSheet } from './AddLayerSheet';
 import { IceLayers } from './IceLayers';
@@ -30,6 +31,8 @@ interface IceStepProps extends StepProps {
   barGlasses?: readonly BarGlass[];
   barVariants?: readonly string[];
   venueName?: string | null;
+  /** The venue the drink is at: an ice it doesn't pour asks to be added (IcePrompt). */
+  barId?: string | null;
   /** Under the list, beside it (the parent's spacing): "Doing something different? Tell us". */
   tellUs?: TellUsAbout;
 }
@@ -41,7 +44,7 @@ interface IceStepProps extends StepProps {
  * build from the bottom up (cubes under pebble, a spear on a cube) with quick
  * builds, the venue's ice first, and one suggestion at a time.
  */
-export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit = [], barGlasses, barVariants = [], venueName, tellUs }: IceStepProps) {
+export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit = [], barGlasses, barVariants = [], venueName, barId, tellUs }: IceStepProps) {
   const [adding, setAdding] = useState(false);
   const made = methodIceLabel(draft.methods.map((m) => m.name));
   const mine = barIce.length ? { has: (p: WizardPick) => isVenueIce(barIce, p.name), label: 'Your ice', restLabel: 'Other ice' } : undefined;
@@ -103,6 +106,8 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
           ) : (
             <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null, iceBuild: null })} suggested={suggested} why={why} mine={mine} />
           )}
+          {/* ponytail: the first layer from the bottom the venue may lack; a build of two missing asks one at a time. */}
+          <IcePrompt barId={barId} ice={firstMissing(named, kit)} drink={draft.name} />
           {tip ? (
             <IceTipCard
               tip={tip}
@@ -126,6 +131,12 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
       {tellUs ? <TellUs screen="Adding a drink › Ice" line="We’ll add your ice to the app." {...tellUs} /> : null}
     </>
   );
+}
+
+/** The lowest ice in the build the venue pours nothing drawn like, else the top (IcePrompt then stays quiet). */
+function firstMissing(layers: readonly { ice: string }[], kit: readonly VenueIce[]): string | undefined {
+  const kinds = venueIceKinds(kit);
+  return layers.find((l) => !kinds.includes(iceKind(l.ice) as never))?.ice ?? layers[layers.length - 1]?.ice;
 }
 
 const styles = StyleSheet.create({

@@ -65,7 +65,11 @@ export function drinksLine(menu: SharedMenuRow, drinks: PreviewDrink[]): string 
 
 /** Changes whenever what the image shows changes, so a chat app's cached image doesn't outlive an edit. */
 export function menuVersion(menu: SharedMenuRow, drawn = ''): string {
-  const text = [menu.name, menu.menu_date, menu.cover_url, menu.owner.name, ...menu.sections.flatMap((s) => s.item_ids), drawn].join('|');
+  return versionHash([menu.name, menu.menu_date, menu.cover_url, menu.owner.name, ...menu.sections.flatMap((s) => s.item_ids), drawn].join('|'));
+}
+
+/** A short hash of what an image shows, for its URL's v=. */
+export function versionHash(text: string): string {
   let h = 5381;
   for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
   return h.toString(36);
@@ -146,7 +150,7 @@ export async function fetchSharedMenu(db: Supabase, id: string): Promise<SharedM
   return ((await res.json()) as SharedMenuRow | null) ?? null;
 }
 
-async function select<T>(db: Supabase, path: string): Promise<T[]> {
+export async function select<T>(db: Supabase, path: string): Promise<T[]> {
   const res = await fetch(`${db.url}/rest/v1/${path}`, { headers: { apikey: db.anonKey, Authorization: `Bearer ${db.anonKey}` } });
   if (!res.ok) throw new Error(`${path.split('?')[0]} ${res.status}`);
   return (await res.json()) as T[];

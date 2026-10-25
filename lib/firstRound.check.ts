@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { markDone, onAMenu, readRound, roundKind, roundView, seeDone, seeOpened, skipAll, startRound } from './firstRound';
+import { markDone, onAMenu, readRound, roundKind, roundView, seeDone, seeOpened, skipAll, startRound, yourMenuStep } from './firstRound';
 
 const NOW = '2026-10-15T09:00:00Z';
 const fresh = startRound(NOW);
@@ -87,3 +87,10 @@ assert.equal(onAMenu(made, [{ kind: 'rnd', itemIds: ['of-1'] }]), false, 'an R&D
 assert.equal(onAMenu(markDone(fresh, 'house_spec'), menus), true, 'skipped the first step: any menu with a drink');
 
 console.log('firstRound.check: ok');
+
+// Find yourself step 7: the menu on now, counting the drinks credited to you.
+const nightGarden = { name: 'Night Garden', kind: 'menu', itemIds: ['moth', 'sour', 'quiet'], status: 'on' };
+assert.deepEqual(yourMenuStep([nightGarden], new Set(['moth', 'sour'])), { title: 'Open the Night Garden menu', detail: '2 of its drinks are yours' });
+assert.equal(yourMenuStep([nightGarden], new Set(['moth']))?.detail, '1 of its drinks is yours');
+assert.equal(yourMenuStep([nightGarden], new Set(['other'])), null, 'none of yours: the plain step');
+assert.equal(yourMenuStep([{ ...nightGarden, status: 'previous' }], new Set(['moth'])), null, 'only the menu on now');

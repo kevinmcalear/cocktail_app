@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, DsText, Field, Headline, PressableScale, Surface, useDs } from '@/components/ds';
+import { NearPicks, splitNear } from '@/components/search/NearPicks';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useSaveWorkplace } from '@/hooks/useOnboarding';
@@ -149,17 +150,15 @@ export function PlaceStep({
 /** Search bars (closed ones too) and pick one. */
 export function BarPick({ bar, onPick, label = 'Search bars' }: { bar: RankVenue | null; onPick: (venue: RankVenue | null) => void; label?: string }) {
   const [search, setSearch] = useState('');
-  const { data: found } = usePublicBars(bar ? '' : search);
+  const [found, near] = splitNear(usePublicBars(bar ? '' : search, { near: true }).data ?? []);
   if (bar) return <PickedBar bar={bar} onChange={() => onPick(null)} />;
+  const chip = (v: RankVenue) => <Chip key={v.id} label={venueLabel(v)} selected={false} onPress={() => onPick(v)} />;
   return (
     <>
       <Field label={label} value={search} onChangeText={setSearch} placeholder="Bar name" autoCorrect={false} />
-      <View style={styles.chips}>
-        {(found ?? []).map((v) => (
-          <Chip key={v.id} label={venueLabel(v)} selected={false} onPress={() => onPick(v)} />
-        ))}
-      </View>
-      {search.trim().length >= 2 && found?.length === 0 ? <Caption tone="muted">No bars by that name.</Caption> : null}
+      <View style={styles.chips}>{found.map(chip)}</View>
+      <NearPicks found={found.length > 0} near={near} render={chip} rowStyle={styles.chips} />
+      {search.trim().length >= 2 && !found.length && !near.length ? <Caption tone="muted">No bars by that name.</Caption> : null}
     </>
   );
 }

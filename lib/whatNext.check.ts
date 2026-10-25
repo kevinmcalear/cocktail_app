@@ -79,17 +79,22 @@ const ing = [
   { id: 'lager', name: 'Lager', generic_id: 'beer', ingredient_role: 'generic' },
   { id: 'peroni', name: 'Peroni', generic_id: 'lager', ingredient_role: 'product' },
   { id: 'loop', name: 'Loop', generic_id: 'loop', ingredient_role: 'product' },
+  { id: 'wine-stray', name: 'Wine', ingredient_role: null },
+  { id: 'wine', name: 'Wine', ingredient_role: 'generic' },
 ];
 const shape = (gs: ReturnType<typeof brandGroups<(typeof ing)[number]>>) => gs.map((g) => [g.title, ids(g.kinds), ids(g.picked)]);
 assert.deepEqual(shape(brandGroups(ing, [])), [
+  ['Gin', ['gin'], []],
   ['Mezcal', ['mezcal'], []],
-  ['Gin', ['gin'], []],
   ['Whiskey', ['whiskey'], []],
-], 'nothing stocked: the starting kinds the catalog has (no bitter or amaro here)');
+  ['Wine', ['wine'], []],
+  ['Beer', ['beer'], []],
+], 'nothing stocked: the starting kinds the catalog has, in order; a stray row sharing a kind\'s name loses to the generic');
 assert.deepEqual(shape(brandGroups(ing, ['vida', 'gin', 'irish', 'peroni', 'loop', 'gone'])), [
-  ['Mezcal', ['mezcal'], ['vida']],
   ['Gin', ['gin'], []],
+  ['Mezcal', ['mezcal'], ['vida']],
   ['Whiskey', ['whiskey'], ['irish']],
+  ['Wine', ['wine'], []],
   ['Beer', ['beer'], ['peroni']],
   ['Loop', [], ['loop']],
 ], 'deep brands find their group, the plain one shows as its kind, a loop in the data stops');

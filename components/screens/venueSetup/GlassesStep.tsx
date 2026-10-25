@@ -2,10 +2,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useDeferredValue, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, Surface } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field } from '@/components/ds';
 import { FIRST_TYPES, MORE_TYPES } from '@/components/glass/GlassModelPicker';
 import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
-import { GlassForm } from '@/components/screens/venue/GlassForm';
+import { GlassSheet } from '@/components/screens/kit/GlassSheet';
 import { space } from '@/constants/tokens';
 import { useBarGlassware, useDeleteBarGlass, useHeldGlasses, useSaveBarGlass } from '@/hooks/useBarGlassware';
 import { useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
@@ -92,11 +92,7 @@ export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip 
     }
   };
 
-  // A failed + leaves its error on the shared save: the form starts clean.
-  const describe = () => {
-    save.reset();
-    setDescribing(true);
-  };
+  const describe = () => setDescribing(true);
 
   const count = glasses.length + heldNotOnPage(held, glasses).length;
   // Described by hand and waiting for the page: listed here so one can come off.
@@ -105,6 +101,16 @@ export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip 
     <SetupChromeProvider value={{ ...chrome, title, intro: undefined, mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack: back }}>
       <SetupPage footer={footer}>
         {body}
+        <GlassSheet
+          barId={barId}
+          pageId={pageId}
+          visible={describing}
+          describe
+          venueName={name}
+          onClose={() => setDescribing(false)}
+          // Before the page is checked, held on the device like a catalog pick.
+          onSave={pageId ? undefined : (row) => holdGlass(barId, { ...row, key: `own-${Date.now()}` })}
+        />
         {pageId ? null : <Caption tone="muted">{`Kept with your setup. They go on ${name}’s page once we’ve checked it’s yours.`}</Caption>}
         {failed ? (
           <Caption tone="accent" role="alert">
@@ -115,28 +121,6 @@ export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip 
     </SetupChromeProvider>
   );
 
-  if (describing) {
-    return page(
-      'Which glasses do you pour into?',
-      () => setDescribing(false),
-      null,
-      <Surface style={styles.card}>
-        <GlassForm
-          glass={null}
-          describe
-          saving={save.isPending}
-          error={save.error ? 'Couldn’t save that. Check your connection and try again.' : null}
-          onSave={(row) => {
-            if (pageId) return save.mutate(row, { onSuccess: () => setDescribing(false) });
-            holdGlass(barId, { ...row, key: `own-${Date.now()}` });
-            setDescribing(false);
-          }}
-          onCancel={() => setDescribing(false)}
-        />
-      </Surface>
-    );
-  }
-
   if (shape) {
     const models = every.data ?? [];
     const makers = [...new Set(models.map((m) => m.maker?.display_name).filter((n): n is string => !!n))];
@@ -144,7 +128,7 @@ export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip 
     return page(
       `Every ${shapeWord(shape)}`,
       () => setShape(null),
-      <StepFooter skip="Not listed? Describe it" onSkip={describe} label="Done" onPress={() => setShape(null)} />,
+      <StepFooter skip="Not listed? Name your own" onSkip={describe} label="Done" onPress={() => setShape(null)} />,
       <>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View role="radiogroup" aria-label="Maker" style={styles.chips}>
@@ -203,8 +187,8 @@ export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip 
           <Body tone="muted">Couldn’t search the glasses. Check your connection and try again.</Body>
         ) : (
           <View style={styles.stack}>
-            <Body tone="muted">{`No ${search} glasses in the catalogue yet. Describe yours and it’s yours straight away; we add the range when we can.`}</Body>
-            <Button label="Describe it yourself" variant="secondary" onPress={describe} style={styles.start} />
+            <Body tone="muted">{`No ${search} glasses in the catalogue yet. Name yours and it’s yours straight away; we add the range when we can.`}</Body>
+            <Button label="Name your own" variant="secondary" onPress={describe} style={styles.start} />
           </View>
         )
       ) : null}
@@ -218,6 +202,5 @@ const styles = StyleSheet.create({
   stack: { gap: space.sm },
   chips: { flexDirection: 'row', gap: space.xs },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  card: { gap: space.md, padding: space.lg },
   start: { alignSelf: 'flex-start' },
 });

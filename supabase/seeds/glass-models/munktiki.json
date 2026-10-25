@@ -1,0 +1,141 @@
+{
+ "maker": "munktiki",
+ "models": [
+  {
+   "name": "False Idol The Mighty Alkala Mug",
+   "series": "False Idol",
+   "designer": "Bosko",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 651,
+   "capacity_as_stated": "22 fl. oz.",
+   "height_mm": 241,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/the-mighty-alkala-false-idol-1st-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/the-mighty-alkala-false-idol-1st-edition/"
+   ]
+  },
+  {
+   "name": "Hale Pele Cannibal Trio Mug",
+   "series": "Hale Pele",
+   "designer": "Aaron Burke",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/cannibal-trio-hunter-catcher-eater-hale-pele-brown-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/cannibal-trio-hunter-catcher-eater-hale-pele-brown-edition/"
+   ]
+  },
+  {
+   "name": "Hale Pele The Forgotten Float Bowl",
+   "series": "Hale Pele, Smuggler's Cove, False Idol",
+   "designer": "THOR",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 1419,
+   "capacity_as_stated": "48 fl. oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/the-forgotten-float-hale-pele-yellow-edition",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/the-forgotten-float-hale-pele-yellow-edition"
+   ]
+  },
+  {
+   "name": "Hale Pele Little Lava Person Mug",
+   "series": "Hale Pele",
+   "designer": "Paul Nielsen, Tikitronic",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/little-lave-person-hale-pele-orange-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/little-lave-person-hale-pele-orange-edition/"
+   ]
+  },
+  {
+   "name": "Munktiki Whittle Tiki Mug",
+   "series": "Whittle Tiki",
+   "designer": "Jeremy Spears",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 503,
+   "capacity_as_stated": "17 fl. oz.",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/whittle-tiki-mug-munktiki-green-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/whittle-tiki-mug-munktiki-green-edition/"
+   ]
+  },
+  {
+   "name": "Munktiki Zombie Mug",
+   "series": "Zombie",
+   "designer": "Munktiki",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 fl. oz.",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/zombie-munktiki-1st-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/zombie-munktiki-1st-edition/"
+   ]
+  },
+  {
+   "name": "Smuggler's Cove Rum Barrel Mug",
+   "series": "Smuggler's Cove",
+   "designer": null,
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 828,
+   "capacity_as_stated": "28 fl. oz.",
+   "height_mm": 159,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/rum-barrel-smugglers-cove-open-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/rum-barrel-smugglers-cove-open-edition/"
+   ]
+  },
+  {
+   "name": "Three Dots and a Dash Skull Pineapple Mug",
+   "series": "Three Dots and a Dash",
+   "designer": "Darick Maasen",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/skull-pineapple-three-dots-and-a-dash-white-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/skull-pineapple-three-dots-and-a-dash-white-edition/"
+   ]
+  }
+ ]
+}
