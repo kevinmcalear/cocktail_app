@@ -9,6 +9,8 @@ import type { WizardLine } from '@/lib/drinkWizard';
 
 import { WizardChip } from './WizardChrome';
 
+const POURS = ['ml', 'cl', 'oz'];
+
 interface BatchBottleRowProps {
   batch: LineBatch;
   /** The line, and what's in the bottle of it (lib/batchLines bottleAmounts). */
@@ -20,8 +22,8 @@ interface BatchBottleRowProps {
 
 /**
  * One line of what goes in the bottle, typed as it's measured into it (Kevin,
- * 24 Oct: 70 g of red miso, and the sheet wouldn't take it), in ml for a
- * pour or a weight, spoon or count picked under it. Every keystroke
+ * 24 Oct: 70 g of red miso, and the sheet wouldn't take it): in ml for a
+ * pour, anything else (or to taste) with its unit picked under it. Every keystroke
  * works from the batch as it was when the field took focus, so nothing drifts.
  */
 export function BatchBottleRow({ batch, line, amount, unit, onBatch }: BatchBottleRowProps) {
@@ -29,6 +31,8 @@ export function BatchBottleRow({ batch, line, amount, unit, onBatch }: BatchBott
   const [text, setText] = useState<string | null>(null);
   const [units, setUnits] = useState(false);
   const base = useRef<LineBatch | null>(null);
+  // A measured pour stays a pour: its unit is picked on the drink's line, not here.
+  const measured = amount !== null && POURS.includes(unit);
   const shown = text ?? (amount === null ? '' : String(amount));
   const put = (n: number | null, u: string) => onBatch(withBottleAmount(base.current ?? batch, line.key, n, u));
   const number = (t: string) => {
@@ -66,21 +70,27 @@ export function BatchBottleRow({ batch, line, amount, unit, onBatch }: BatchBott
           maxLength={7}
           style={[styles.amount, type.spec, { fontFamily: fontFamilies.monoMedium, color: ds.c.ink, backgroundColor: ds.c.raised }]}
         />
-        <PressableScale
-          onPress={() => setUnits(!units)}
-          haptic={false}
-          role="button"
-          aria-expanded={units}
-          accessibilityLabel={`Unit for ${line.name}: ${unit}`}
-          style={[styles.unit, { borderColor: units ? ds.c.ink : ds.c.lineStrong }]}
-        >
-          <DsText variant="spec" style={styles.mono}>
-            {unit}
+        {measured ? (
+          <DsText variant="spec" color={ds.c.muted} style={styles.unitText}>
+            ml
           </DsText>
-          <IconSymbol name={units ? 'chevron.up' : 'chevron.down'} size={12} color={ds.c.muted} />
-        </PressableScale>
+        ) : (
+          <PressableScale
+            onPress={() => setUnits(!units)}
+            haptic={false}
+            role="button"
+            aria-expanded={units}
+            accessibilityLabel={`Unit for ${line.name}: ${unit}`}
+            style={[styles.unit, { borderColor: units ? ds.c.ink : ds.c.lineStrong }]}
+          >
+            <DsText variant="spec" style={styles.mono}>
+              {unit}
+            </DsText>
+            <IconSymbol name={units ? 'chevron.up' : 'chevron.down'} size={12} color={ds.c.muted} />
+          </PressableScale>
+        )}
       </View>
-      {units ? (
+      {units && !measured ? (
         <View role="radiogroup" aria-label={`Unit for ${line.name}`} style={styles.units}>
           {['ml', ...BOTTLE_UNITS].map((u) => (
             <WizardChip
@@ -105,6 +115,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   amount: { width: 64, height: layout.minTapTarget, borderRadius: radius.control, textAlign: 'right', paddingHorizontal: space.sm },
   mono: { fontFamily: fontFamilies.monoMedium },
+  unitText: { minWidth: 52, textAlign: 'center' },
   unit: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs, minWidth: 52, height: layout.minTapTarget, paddingHorizontal: space.sm, borderRadius: radius.pill, borderWidth: 1 },
   units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2, paddingLeft: 32 + space.sm },
 });

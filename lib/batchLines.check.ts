@@ -101,6 +101,7 @@ console.log('batchLines checks passed');
   assert.deepEqual(bottleAmounts(smaller).map((x) => x.amount), [700, 70]);
   assert.equal(drinkMl(smaller.lines), 22.5);
   assert.equal(withBottleAmount(typed, 't', 0, 'ml'), typed, 'nothing left poured');
+  assert.equal(withBottleAmount(typed, 't', null, 'ml'), typed, 'an emptied pour stays as it was');
   // The liqueur weighed instead: nothing poured either.
   assert.equal(withBottleAmount(typed, 't', 700, 'g'), typed);
 }

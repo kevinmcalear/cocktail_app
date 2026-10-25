@@ -74,14 +74,16 @@ const exact = (n: number) => String(Math.round(n * 1000) / 1000);
  * 70 g of red miso in the Tempus Fugit). Every other amount in the bottle
  * stays as it is, the bottle is its pours added up, and one drink still
  * takes the same from it, so each line's share of one drink follows (70 g
- * over 33 and a third drinks is 2.1 g). Null is to taste. Pours keep their
- * unit. The batch as it was when that would leave nothing poured.
+ * over 33 and a third drinks is 2.1 g). Null is to taste, except for a pour.
+ * Pours keep their unit. The batch as it was when that would leave nothing poured.
  */
 export function withBottleAmount(b: LineBatch, key: string, amount: number | null, unit: string): LineBatch {
   const per = drinkMl(b.lines);
   const at = b.lines.find((l) => l.key === key);
   if (!at || per <= 0) return b;
   const typed = amount !== null && amount > 0 ? amount : null;
+  // A pour emptied is a pour still being typed, never to taste: that would give its share to the others.
+  if (typed === null && pourMl(at) !== null) return b;
   // Each line as it is in the bottle now, and the typed one as typed: ml for a pour, else its own unit.
   const now = bottleAmounts(b);
   const inBottle = b.lines.map((l, i) => (l.key === key ? { amount: typed, unit } : now[i]));

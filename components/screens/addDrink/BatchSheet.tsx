@@ -78,10 +78,11 @@ function Body_({ line, drinkName, onChange, onSave, onSplit }: Omit<BatchSheetPr
             value={otherText ?? (picked && (BATCH_BOTTLES as readonly number[]).includes(batch.bottleMl) ? '' : String(batch.bottleMl))}
             onBlur={() => setOtherText(null)}
             autoFocus={picked}
-            keyboardType="number-pad"
-            maxLength={5}
+            keyboardType="decimal-pad"
+            maxLength={7}
             onChangeText={(t) => {
-              const digits = t.replace(/[^0-9]/g, '');
+              // A decimal too: amounts typed in the bottle can add up to 787.5.
+              const digits = t.replace(/[^0-9.]/g, '');
               setOtherText(digits);
               const n = Number(digits);
               // A bottle big enough for one drink, and no bigger than a keg: anything else waits for a real number.
