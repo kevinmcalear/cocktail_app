@@ -39,7 +39,7 @@ export function DeskDrinkCard({ draft, look, seed, onTint }: { draft: WizardDraf
             {name}
           </Title>
           {what ? <Body color={ds.c.sketchInk}>{what.charAt(0).toUpperCase() + what.slice(1)}</Body> : <Caption color={ds.c.sketchInk}>Draws itself as you write the spec.</Caption>}
-          {what ? <Caption color={withAlpha(ds.c.sketchInk, 0.7)} style={styles.guests}>WHAT GUESTS SEE</Caption> : null}
+          {what ? <Caption color={withAlpha(ds.c.sketchInk, 0.7)} style={styles.guests}>What guests see</Caption> : null}
         </View>
       </View>
       {/* On paper: the light scheme's ink, so the picked swatch's ring shows. */}
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   card: { gap: space.sm },
   words: { fontFamily: fontFamilies.instrument },
-  guests: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
+  guests: { fontFamily: fontFamilies.mono, letterSpacing: 1, textTransform: 'uppercase' },
   meter: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   meterLabel: { width: 64 },
   meterWord: { width: 72 },

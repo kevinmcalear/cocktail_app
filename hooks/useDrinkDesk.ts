@@ -26,6 +26,8 @@ export function useDraftPacks(barId: string | null | undefined, itemIds: readonl
   return useQuery({
     queryKey: ['draft-packs', barId, ids],
     enabled: !!barId && ids.length > 0 && enabled,
+    // A line added or renamed asks again; the costs already shown stay until it answers.
+    placeholderData: (previous) => previous,
     queryFn: async (): Promise<DraftPack[]> => {
       const [packs, costs] = await Promise.all([
         supabase.from('item_purchasing').select('item_id, supplier_id, pack_size_amount, pack_size_unit, suppliers(name)').eq('bar_id', barId!).in('item_id', ids),

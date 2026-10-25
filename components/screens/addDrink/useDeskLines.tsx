@@ -4,10 +4,11 @@ import { useDraftPacks, useLineMakers, useSetLineSupplier } from '@/hooks/useDri
 import { useVenueIngredients } from '@/hooks/useVenueIngredients';
 import { useSupplierSuggestionData, useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { perDrinkLines } from '@/lib/batchLines';
-import { lineCostMinor, prepCostMinor } from '@/lib/costing';
+import { lineCostMinor } from '@/lib/costing';
 import { density } from '@/lib/drinkMath';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { formatMoney, parseMoney } from '@/lib/money';
+import { prepCostMinor } from '@/lib/prepCost';
 import { bottleKindRow } from '@/lib/newBottle';
 import { pickSuppliers, regionHeading } from '@/lib/suppliers';
 
@@ -40,12 +41,14 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
   const costed = [...perDrinkLines(draft.lines), ...draft.garnishes];
   // A house prep being written costs from its parts, so their packs are read too (m08).
   // Its recipe's lines start as names ("Sugar"): the catalog row of that name stands in.
-  const partId = (p: { id: string | null; name: string }) => p.id ?? ingredients.find((i) => i.name?.toLowerCase() === p.name.trim().toLowerCase())?.id ?? null;
-  const ids = costed.flatMap((l) => (l.id ? [l.id] : !l.prep ? [] : l.prep.lines.flatMap((p) => partId(p) ?? [])));
+  // Every row of that name (a kind and the bar's own bottle can share one): the priced one wins.
+  const partIds = (p: { id: string | null; name: string }) => (p.id ? [p.id] : ingredients.filter((i) => i.name?.toLowerCase() === p.name.trim().toLowerCase()).map((i) => i.id));
+  const ids = costed.flatMap((l) => (l.id ? [l.id] : !l.prep ? [] : l.prep.lines.flatMap(partIds)));
   const packs = useDraftPacks(barId, ids, canBuy).data ?? [];
   const pack = (l: WizardLine) => packs.find((k) => k.itemId === l.id) ?? null;
   const packOf = (part: { id: string | null; name: string }) => {
-    const k = packs.find((p) => p.itemId === partId(part));
+    const mine = partIds(part);
+    const k = packs.find((p) => mine.includes(p.itemId) && p.costMinor != null && p.amount && p.unit);
     return k?.costMinor != null && k.amount && k.unit ? { amount: k.amount, unit: k.unit, costMinor: k.costMinor } : null;
   };
   const cost = (l: WizardLine) => {

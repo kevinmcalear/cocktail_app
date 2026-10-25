@@ -2,7 +2,7 @@
 // The example is the Ethyl study's: £12.00 on the menu, £1.90 to make, 20% VAT.
 import assert from 'node:assert/strict';
 
-import { exTax, formatPct, lineCostMinor, margin, prepCostMinor, menuSummary, priceForProfit, priceForTarget, targetsLine, targetStatus, underLabel } from './costing';
+import { exTax, formatPct, lineCostMinor, margin, menuSummary, priceForProfit, priceForTarget, targetsLine, targetStatus, underLabel } from './costing';
 
 const uk = { taxRate: 20, pricesIncludeTax: true };
 const us = { taxRate: 8.875, pricesIncludeTax: false };
@@ -90,18 +90,3 @@ assert.equal(lineCostMinor(1, 'wedge', { amount: 12, unit: 'each', costMinor: 60
 assert.equal(lineCostMinor(1, 'wedge', { amount: 750, unit: 'ml', costMinor: 600 }, 1), null, 'a count never meets a bottle');
 assert.equal(lineCostMinor(null, 'top', { amount: 750, unit: 'ml', costMinor: 600 }, 1), null);
 
-// --- a house prep being written costs itself from its parts (m08) ---
-{
-  const syrup = {
-    kind: 'syrup', baseKey: 'w', baseAmount: 1000, steps: [], keepsHours: null, storage: '', leadMinutes: null, actions: [],
-    lines: [
-      { key: 'w', id: null, name: 'Water', parts: 1, unit: 'ml', amount: '', yieldPer: 1 },
-      { key: 's', id: 'sugar', name: 'Sugar', parts: 1, unit: 'g', amount: '', yieldPer: 0.62 },
-    ],
-  } as unknown as Parameters<typeof prepCostMinor>[0];
-  // 1 kg of sugar from a 2 kg bag at £3.00 is £1.50 a batch; the batch makes about 1,620 ml.
-  const cost = prepCostMinor(syrup, { amount: 20, unit: 'ml' }, (part) => (part.id === 'sugar' ? { amount: 2, unit: 'kg', costMinor: 300 } : null));
-  assert.equal(cost?.batchMinor, 150);
-  assert.equal(cost?.pourMinor, 2, '20 ml of 1,620 ml at £1.50');
-  assert.equal(prepCostMinor(syrup, { amount: 20, unit: 'ml' }, () => null), null, 'a part with no price: no cost yet');
-}

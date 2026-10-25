@@ -4,8 +4,7 @@
  * prices include VAT strips it first, and a US bar that adds tax at the till
  * uses the menu price as it is. Pure; money stays in minor units.
  */
-import { density, toMl } from './drinkMath';
-import { prepAmounts, prepYield, type PrepDraft } from './prepKinds';
+import { toMl } from './drinkMath';
 
 export interface Margin {
   /** The menu price without tax, in minor units. */
@@ -99,8 +98,8 @@ export interface PackPrice {
  * drink_cost reads a bought bottle: volumes and weights meet through the
  * density, and any count (a wedge, a peel) is one of a pack counted in
  * each. Null when it can't be said: no amount, a top, a count against a
- * bottle. ponytail: a house prep's cost from its own recipe and yield is
- * left to drink_cost once the drink is saved.
+ * bottle. A house prep still in the draft costs from its parts on the
+ * desk (lib/prepCost.ts); once saved, drink_cost works it out.
  */
 export function lineCostMinor(amount: number | null, unit: string, pack: PackPrice, gPerMl: number): number | null {
   if (amount == null || !(pack.amount > 0)) return null;
@@ -110,29 +109,6 @@ export function lineCostMinor(amount: number | null, unit: string, pack: PackPri
   // Two counts: a wedge of a box of 12 limes is one of 12, as drink_cost counts them.
   if (used == null && bought == null) return Math.round((pack.costMinor * amount) / pack.amount);
   return null;
-}
-
-/** Free in a batch: tap water costs nothing, so it never holds a prep's cost back. */
-const FREE = /^(tap )?water$/i;
-
-/**
- * A house prep still being written costs itself from its parts (m08): each
- * part's pack price for what the batch uses, over what the batch makes, for
- * the pour in the drink. `packOf` is a part's pack (by its catalog id, or its name). Null
- * while a part has no price or nothing says how much it makes.
- */
-export function prepCostMinor(prep: PrepDraft, pour: { amount: number | null; unit: string }, packOf: (part: { id: string | null; name: string }) => PackPrice | null): { batchMinor: number; pourMinor: number | null } | null {
-  const made = prepYield(prep);
-  if (!made) return null;
-  let batchMinor = 0;
-  for (const { line, amount } of prepAmounts(prep)) {
-    if (amount === null || FREE.test(line.name.trim())) continue;
-    const pack = packOf(line);
-    const minor = pack ? lineCostMinor(amount, line.unit, pack, density(line.name, null)) : null;
-    if (minor === null) return null;
-    batchMinor += minor;
-  }
-  return { batchMinor, pourMinor: lineCostMinor(pour.amount, pour.unit, { amount: made, unit: 'ml', costMinor: batchMinor }, 1) };
 }
 
 /** "81.0%". */

@@ -69,6 +69,8 @@ const TASTE_ADJECTIVE: Record<TasteDimension, string> = {
   creamy: 'creamy',
 };
 const NOTABLE = 0.3;
+// The strength meter's word, as a sentence.
+const STRENGTH: Record<string, string> = { light: 'Light on alcohol.', medium: 'Medium strength.', strong: 'Spirit-forward.' };
 
 /**
  * The desktop taste card's line (make-create-desktop, m07): up to three tastes
@@ -77,11 +79,12 @@ const NOTABLE = 0.3;
  */
 export function tasteSentence(profile: Profile): string {
   const top = (Object.keys(TASTE_ADJECTIVE) as TasteDimension[])
-    .filter((d) => profile[d] >= NOTABLE && !(d === 'sweet' && profile.sweet < LOW))
+    .filter((d) => profile[d] >= NOTABLE)
     .sort((a, b) => profile[b] - profile[a])
     .map((d) => TASTE_ADJECTIVE[d]);
-  const words = [...(profile.sweet < LOW ? ['dry'] : []), ...top].slice(0, 3);
-  const strength = profile.strong < 0.35 ? 'Light on alcohol.' : profile.strong < 0.7 ? 'Medium strength.' : 'Spirit-forward.';
+  // Dry where the sweet meter reads none.
+  const words = [...(tasteWord('sweet', profile.sweet) === 'none' ? ['dry'] : []), ...top].slice(0, 3);
+  const strength = STRENGTH[tasteWord('strong', profile.strong)] ?? 'Spirit-forward.';
   if (!words.length) return strength;
   const said = words.length === 1 ? words[0] : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
   return `${said.charAt(0).toUpperCase()}${said.slice(1)}. ${strength}`;
