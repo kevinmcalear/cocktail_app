@@ -8,6 +8,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useMyPersonClaim, usePublicPeople, useWaiting } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
+import { useClaimReturn } from '@/lib/claimReturn';
 import { closedLabel } from '@/lib/discoverDrinks';
 import { waitingLine } from '@/lib/findYourself';
 
@@ -20,7 +21,8 @@ import { SetupFooter, SetupPage } from './SetupPage';
  * and people we already have, each row saying what is waiting there. Each
  * opens its real page (public pages are open during Setup, and Back returns
  * here as it was), where "This is me" claims a person's page and comes back
- * to "Claim sent". Claiming does not make a second profile.
+ * to "Claim sent". Claiming does not make a second profile. A new account
+ * that came from "Claim it on your phone" goes straight to that claim.
  */
 export function FindStep({
   name,
@@ -39,7 +41,9 @@ export function FindStep({
   const ds = useDs();
   const router = useRouter();
   const [search, setSearch] = useState(name);
-  const { data: claim } = useMyPersonClaim();
+  const { data: claim, isSuccess: checked } = useMyPersonClaim();
+  // Not while a claim they sent waits: Setup claims one page.
+  useClaimReturn(checked && !claim);
   const { data: bars = [] } = usePublicBars(search);
   const { data: people = [] } = usePublicPeople(search);
   const { data: waiting } = useWaiting(
