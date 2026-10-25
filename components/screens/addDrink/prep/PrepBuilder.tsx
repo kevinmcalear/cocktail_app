@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { Alert, Modal, StyleSheet, View, type AlertButton } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Field, IngredientDrawing } from '@/components/ds';
@@ -16,6 +16,7 @@ import type { InDrinkPour } from './InDrink';
 import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
 import { PrepRecipeStep, RecipeView } from './PrepRecipeStep';
+import { LeaveCard } from './LeaveCard';
 import { useInside } from './useInside';
 import { usePrepDraft } from './usePrepDraft';
 
@@ -99,16 +100,8 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: step }, shown) : null;
   // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
   const leave = keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose()));
-  const ask = () => {
-    if (!keep) return leave();
-    // A new one opened by mistake can go; one picked up again can only be left or carried on with.
-    const drop: AlertButton[] = initial ? [] : [{ text: 'Don’t keep it', style: 'destructive', onPress: onClose }];
-    Alert.alert('Leave it for now?', `What you’ve done is kept. ${drinkName || 'The drink'} shows it as Recipe to finish, and New lists it under Drafts, with the way back.`, [
-      { text: 'Keep going', style: 'cancel' },
-      ...drop,
-      { text: 'Leave it for now', onPress: keep },
-    ]);
-  };
+  const [asking, setAsking] = useState(false);
+  const ask = () => (keep ? setAsking(true) : leave());
   const back = () => (at > 0 ? go(STEPS[at - 1]) : ask());
   const next = () => (step === 'method' ? onDone(withFacts(draft), shown) : go(STEPS[at + 1]));
   const ready = named && (step === 'kind' || !slotsOpen);
@@ -124,6 +117,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   if (inside.props) return <Builder key={inside.line!.key} {...inside.props} ingredients={ingredients} aliases={aliases} bar={bar} above={trail} backRef={backRef} />;
   const from = combinedFrom?.length ? `From ${combinedFrom.slice(0, -1).join(', ')} and ${combinedFrom.at(-1)}` : null;
   return (
+    <View style={styles.root}>
     <WizardFrame
       testID="add-prep"
       overNav
@@ -176,6 +170,11 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
         <PrepMethodStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} />
       )}
     </WizardFrame>
+      {asking && keep ? (
+        // A new one opened by mistake can go; one picked up again can only be left or carried on with.
+        <LeaveCard where={shown} step={`${at + 1} of ${STEPS.length}`} drink={drinkName || 'The drink'} onLeave={keep} onStay={() => setAsking(false)} onDrop={initial ? undefined : onClose} />
+      ) : null}
+    </View>
   );
 }
 

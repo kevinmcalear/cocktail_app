@@ -1,4 +1,3 @@
-import { Alert } from 'react-native';
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
@@ -123,19 +122,24 @@ describe('PrepBuilder', () => {
 
   test('leaving asks first, and keeps what is done as a recipe to finish', async () => {
     const onLater = jest.fn();
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.find((b) => b.text === 'Leave it for now')?.onPress?.());
-    await open('Pineapple chili shrub', jest.fn(), onLater);
+    const onClose = jest.fn();
+    await renderWithTamagui(<PrepBuilder name="Pineapple chili shrub" drinkName="Daiquiri" ingredients={[]} onDone={jest.fn()} onLater={onLater} onClose={onClose} />);
+    await laidOut();
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     await fireEvent.press(screen.getByRole('link', { name: 'Up to Daiquiri' }));
     expect(onLater).toHaveBeenCalledWith(expect.objectContaining({ kind: 'shrub', at: 'recipe' }), 'Pineapple chili shrub');
     onLater.mockClear();
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Back to Daiquiri' }));
-    expect(alert).toHaveBeenCalledWith('Leave it for now?', expect.stringContaining('Daiquiri shows it as Recipe to finish'), expect.anything());
+    expect(screen.getByText(/^What you’ve done is kept\. Daiquiri shows it as Recipe to finish/)).toBeTruthy();
+    // A new one can also go.
+    expect(screen.getByRole('button', { name: 'Don’t keep it' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
+    expect(screen.queryByText('Leave it for now?')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Back to Daiquiri' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Leave it for now' }));
     expect(onLater).toHaveBeenCalledWith(expect.objectContaining({ at: 'kind' }), 'Pineapple chili shrub');
-    // A new one can also go: Don't keep it.
-    expect(alert.mock.calls.at(-1)?.[2]?.map((b) => b.text)).toEqual(['Keep going', 'Don’t keep it', 'Leave it for now']);
-    alert.mockRestore();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   test('a clarified juice is its own kind, made the first way the kit covers', async () => {

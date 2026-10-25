@@ -30,13 +30,11 @@ export function confirmAsync({
   title,
   message,
   confirmText = 'OK',
-  cancelText = 'Cancel',
   destructive = false,
 }: {
   title: string;
   message: string;
   confirmText?: string;
-  cancelText?: string;
   destructive?: boolean;
 }): Promise<boolean> {
   return new Promise((resolve) => {
@@ -44,7 +42,7 @@ export function confirmAsync({
       title,
       message,
       [
-        { text: cancelText, style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
         { text: confirmText, style: destructive ? 'destructive' : 'default', onPress: () => resolve(true) },
       ],
       { cancelable: true, onDismiss: () => resolve(false) }
