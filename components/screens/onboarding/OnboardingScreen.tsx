@@ -1,15 +1,13 @@
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 
-import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
+import { Body, Button, Caption } from '@/components/ds';
 import { SafetyPage } from '@/components/screens/safety/SafetyPage';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { layout, radius, space } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
 import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
+import { useMyPersonClaim } from '@/hooks/useProfiles';
 import { inviteJobTitle, needsOnboarding, nextStep, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
 import { useAppMode } from '@/store/useAppMode';
 
@@ -19,6 +17,7 @@ import { FindStep } from './FindStep';
 import { InviteBrand, InviteWelcome } from './InviteWelcome';
 import { NameStep, TasteStep, UnitsStep } from './ProfileSteps';
 import { SetupChromeProvider, SetupFooter, SetupPage } from './SetupPage';
+import { Answer } from './SetupParts';
 import { DrinkStep, MenuStep } from './WorkedSteps';
 import { COPY, HOME_BRING } from './onboardingCopy';
 
@@ -39,9 +38,13 @@ export const forgetSetupProgress = () => resumed.clear();
  */
 export function OnboardingScreen() {
   const router = useRouter();
+  // "Claim this page" on a bar page opened from here comes back with the bar (ClaimProfile).
+  const { run } = useLocalSearchParams<{ run?: string }>();
   const { user, loading } = useAuth();
   const profile = useMyProfile();
   const invites = useMyInvites();
+  // A claim sent from "Find your bar or your name" skips the career steps, so the bar counts the shorter way.
+  const { data: personClaim } = useMyPersonClaim();
   const finish = useFinishOnboarding();
   const saveProfile = useSaveOnboardingName();
   const saveJob = useSaveWorkplace();
@@ -61,8 +64,8 @@ export function OnboardingScreen() {
   const [barName, setBarName] = useState<string | null>(null);
   // Handed something to read on the last step: setup ends in Bring in, where it's being read.
   const [handed, setHanded] = useState(false);
-  // Where setup ends: the app, or Bring in with what they handed over.
-  const [landing, setLanding] = useState<'/(tabs)' | '/bring-in'>('/(tabs)');
+  // Where setup ends: the app, Bring in with what they handed over, or venue setup for an owner.
+  const [landing, setLanding] = useState<Href>('/(tabs)');
   const personId = createdId ?? profile.data?.id ?? null;
 
   useEffect(() => {
@@ -115,9 +118,36 @@ export function OnboardingScreen() {
     );
   };
 
+  // An owner, from a bar page's Claim (?run=) or "Add your bar" ('new'): their
+  // profile is saved, setup ends, and venue setup takes over (it can't open while
+  // setup is unfinished). Kept until then, so a name to fix first doesn't lose it.
+  const [ownerBar, setOwnerBar] = useState<string | null>(null);
+  const setUpBar = (bar: string, named = draft) => {
+    if (saveProfile.isPending || finish.isPending) return;
+    setOwnerBar(bar);
+    if (!personId && !named) {
+      if (step !== 'name') setStep('name');
+      return;
+    }
+    createProfile(() => {
+      setLanding((bar === 'new' ? '/venue-setup' : `/venue-setup?claim=${bar}`) as Href);
+      finish.mutate();
+    }, named);
+  };
+  const ranFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!run || ranFor.current === run || profile.isPending) return;
+    ranFor.current = run;
+    setUpBar(run);
+  });
+
   const saveName = (name: string, handle: string) => {
     setDraft({ name, handle });
     setHandleTaken(false);
+    if (ownerBar) {
+      setUpBar(ownerBar, { name, handle });
+      return;
+    }
     if (!joined) {
       go('name');
       return;
@@ -180,7 +210,7 @@ export function OnboardingScreen() {
         eyebrow: step === 'bring' && !home ? 'Last step' : joined ? joined.bar_name : null,
         // The invited path wears the venue's brand, its name in the accent; "Last step" is quiet.
         eyebrowTone: joined && step !== 'bring' ? 'accent' : 'muted',
-        progress: stepProgress(step, !!joined),
+        progress: stepProgress(step, !!joined, trail, step === 'find' && personClaim ? 'claim' : 'no'),
         onBack: first ? undefined : back,
       }}
     >
@@ -232,6 +262,7 @@ export function OnboardingScreen() {
         <PlaceStep
           personId={personId}
           isCurrent
+          onAddBar={() => setUpBar('new')}
           onDone={(bar) => {
             if (bar) setBarName(bar);
             go('work');
@@ -254,36 +285,9 @@ export function OnboardingScreen() {
         />
       ) : null}
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
+      {ownerBar && finish.error ? <Caption tone="accent">{finish.error.message}</Caption> : null}
     </SetupChromeProvider>
   );
   // Joined: the short setup stays in the venue's colours.
   return joined ? <InviteBrand invite={joined}>{page}</InviteBrand> : page;
 }
-
-/** One answer to a question step: a bold line, a muted one, and a chevron. */
-function Answer({ label, detail, onPress }: { label: string; detail: string; onPress: () => void }) {
-  const ds = useDs();
-  return (
-    <PressableScale role="button" accessibilityLabel={label} accessibilityHint={detail} onPress={onPress} style={[styles.answer, { backgroundColor: ds.c.raised }]}>
-      <View style={styles.flex}>
-        <DsText variant="headline">{label}</DsText>
-        <Caption tone="muted">{detail}</Caption>
-      </View>
-      <IconSymbol name="chevron.right" size={18} color={ds.c.muted} />
-    </PressableScale>
-  );
-}
-
-const styles = StyleSheet.create({
-  flex: { flex: 1, minWidth: 0 },
-  answer: {
-    minHeight: layout.minTapTarget + space.xxl,
-    borderRadius: radius.card,
-    borderCurve: 'continuous',
-    paddingHorizontal: space.xl,
-    paddingVertical: space.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-  },
-});

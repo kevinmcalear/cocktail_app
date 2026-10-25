@@ -7,9 +7,12 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { useVenueMenus } from '@/hooks/useMenus';
+import { useMyProfile } from '@/hooks/useMyProfile';
+import { useMyMadeDrinks } from '@/hooks/useProfiles';
 import { useEffectiveRole } from '@/hooks/useViewAs';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
-import { onAMenu, OPENED_COPY } from '@/lib/firstRound';
+import { onAMenu, OPENED_COPY, yourMenuStep } from '@/lib/firstRound';
+import { menuStatus } from '@/lib/menus';
 import { canSwitchFeatures } from '@/lib/venueFeatures';
 
 import { nextLine, progressLine, RoundBars, RoundStepList, useRoundGo } from './RoundParts';
@@ -35,7 +38,10 @@ export function FirstRoundCard() {
   const round = useFirstRound();
   const go = useRoundGo();
   const [open, setOpen] = useState<boolean | null>(null);
-  const menus = useVenueMenus(round.active && round.current?.key === 'menu' ? (round.venue?.id ?? null) : null).data;
+  const [now] = useState(() => Date.now());
+  const menus = useVenueMenus(round.active && (round.current?.key === 'menu' || round.current?.key === 'open_menu') ? (round.venue?.id ?? null) : null).data;
+  const profileId = useMyProfile().data?.id;
+  const mine = useMyMadeDrinks(profileId, round.active && round.current?.key === 'open_menu' && !!profileId).data;
   const markMenu = !!menus && round.current?.key === 'menu' && onAMenu(round.round, menus.filter((m) => m.barId === round.venue?.id));
   const { done } = round;
   // Admins can switch more on, as the role they're viewing as (the Features row and page check the same).
@@ -63,13 +69,17 @@ export function FirstRoundCard() {
   if (!round.active || !round.current) return null;
 
   const full = open ?? round.doneCount === 0;
+  // "3 of its drinks are yours" on a staff member's first step (find-yourself step 7).
+  const yours = menus && mine ? yourMenuStep(menus.filter((m) => m.barId === venue.id).map((m) => ({ ...m, status: menuStatus(m, now) })), new Set(mine.map((d) => d.id))) : null;
+  const steps = yours ? round.steps.map((s) => (s.key === 'open_menu' ? { ...s, ...yours } : s)) : round.steps;
+  const current = steps.find((s) => s.key === round.current?.key) ?? round.current;
   if (!full) {
     return (
-      <PressableScale role="button" accessibilityLabel={`${progressLine(round.doneCount, round.total)}. ${nextLine(round.current)}. Show the steps`} onPress={() => setOpen(true)}>
+      <PressableScale role="button" accessibilityLabel={`${progressLine(round.doneCount, round.total)}. ${nextLine(current)}. Show the steps`} onPress={() => setOpen(true)}>
         <Surface raised style={[frame, styles.strip]}>
           <View style={styles.grow}>
             <Caption tone="muted">{progressLine(round.doneCount, round.total)}</Caption>
-            <Body style={styles.medium}>{nextLine(round.current)}</Body>
+            <Body style={styles.medium}>{nextLine(current)}</Body>
           </View>
           <RoundBars done={round.doneCount} total={round.total} />
         </Surface>
@@ -86,7 +96,7 @@ export function FirstRoundCard() {
         <Headline role="heading">{make ? 'Three things, about two minutes' : 'Two things, about a minute'}</Headline>
         <Caption tone="muted">{make ? 'Each one opens a bit more of the app. Skip any time.' : `Every spec ${venue.name} pours is here. Skip any time.`}</Caption>
       </View>
-      <RoundStepList steps={round.steps} currentKey={round.current.key} onSkip={() => round.current && round.done(round.current.key)} />
+      <RoundStepList steps={steps} currentKey={round.current.key} onSkip={() => round.current && round.done(round.current.key)} />
       <View style={styles.actions}>
         <Button label={round.current.action} onPress={() => go(round.current)} />
         <Button label="Show me everything" variant="ghost" onPress={round.showEverything} />

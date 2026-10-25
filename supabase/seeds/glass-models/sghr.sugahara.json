@@ -1,0 +1,1994 @@
+{
+ "maker": "sghr.sugahara",
+ "models": [
+  {
+   "name": "3 Types of Bubbles Aligned Bubbles Old Fashioned 260 ml",
+   "series": "3 Types of Bubbles",
+   "designer": null,
+   "model_code": "BUB-309W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260ml",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000065",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000065"
+   ]
+  },
+  {
+   "name": "3 Types of Bubbles Deep-Sea Bubbles Old Fashioned 360 ml",
+   "series": "3 Types of Bubbles",
+   "designer": null,
+   "model_code": "BUB-119W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 98,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000059",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000059"
+   ]
+  },
+  {
+   "name": "3 Types of Bubbles Rising Bubbles Champagne Cocktail 180 ml",
+   "series": "3 Types of Bubbles",
+   "designer": null,
+   "model_code": "BUB-235W",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 180,
+   "capacity_as_stated": "180ml",
+   "height_mm": 180,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000064",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000064"
+   ]
+  },
+  {
+   "name": "3 Types of Bubbles Rising Bubbles Dessert Cocktail 210 ml",
+   "series": "3 Types of Bubbles",
+   "designer": null,
+   "model_code": "BUB-238W",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "210ml",
+   "height_mm": 138,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000062",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000062"
+   ]
+  },
+  {
+   "name": "3 Types of Bubbles Rising Bubbles Shot 50 ml",
+   "series": "3 Types of Bubbles",
+   "designer": null,
+   "model_code": "BUB-203W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 50,
+   "capacity_as_stated": "50ml",
+   "height_mm": 103,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000061",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000061"
+   ]
+  },
+  {
+   "name": "3 Types of Bubbles Rising Bubbles Wine Cocktail 250 ml",
+   "series": "3 Types of Bubbles",
+   "designer": null,
+   "model_code": "BUB-236W",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250ml",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000063",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000063"
+   ]
+  },
+  {
+   "name": "Air Wlap Old Fashioned 250 ml",
+   "series": "Air Wlap",
+   "designer": null,
+   "model_code": "ARW-16W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250ml",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000233",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000233"
+   ]
+  },
+  {
+   "name": "Aya Cocktail Vertical Optic 230 ml",
+   "series": "Aya",
+   "designer": null,
+   "model_code": "AYA-351W",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230ml",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003127",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003127"
+   ]
+  },
+  {
+   "name": "Azul Tumbler (L) 280 ml",
+   "series": "Azul",
+   "designer": null,
+   "model_code": "AZL-9CB",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280ml",
+   "height_mm": 147,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003369",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003369"
+   ]
+  },
+  {
+   "name": "Azul Tumbler (M) 200 ml",
+   "series": "Azul",
+   "designer": null,
+   "model_code": "AZL-7CB",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "200ml",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003368",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003368"
+   ]
+  },
+  {
+   "name": "Bico Rock 250 ml",
+   "series": "Bico",
+   "designer": null,
+   "model_code": "BCO-16FGBL",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250ml",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003362",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003362"
+   ]
+  },
+  {
+   "name": "Bico Tumbler 300 ml",
+   "series": "Bico",
+   "designer": null,
+   "model_code": "BCO-9FGBL",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003365",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003365"
+   ]
+  },
+  {
+   "name": "Black & White 10 oz Glass 300 ml",
+   "series": "Black & White",
+   "designer": null,
+   "model_code": "NC-10KF",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003456",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003456"
+   ]
+  },
+  {
+   "name": "Black & White 14 oz Glass 440 ml",
+   "series": "Black & White",
+   "designer": null,
+   "model_code": "NC-14KF",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 440,
+   "capacity_as_stated": "440ml",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005028",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005028"
+   ]
+  },
+  {
+   "name": "Black & White Rock (L) 450 ml",
+   "series": "Black & White",
+   "designer": null,
+   "model_code": "NC-17KF",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "450ml",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005029",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005029"
+   ]
+  },
+  {
+   "name": "Black & White Rock (S) 320 ml",
+   "series": "Black & White",
+   "designer": null,
+   "model_code": "NC-16KF",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": "320ml",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005030",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005030"
+   ]
+  },
+  {
+   "name": "Black & White Tumbler (L) 320 ml",
+   "series": "Black & White",
+   "designer": null,
+   "model_code": "SY-10KF",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": "320ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000391",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000391"
+   ]
+  },
+  {
+   "name": "Black & White Tumbler (S) 240 ml",
+   "series": "Black & White",
+   "designer": null,
+   "model_code": "SY-8KF",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000390",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000390"
+   ]
+  },
+  {
+   "name": "Blume Old Fashioned 360 ml",
+   "series": "Blume",
+   "designer": null,
+   "model_code": "BLM-19WH",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000159",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000159"
+   ]
+  },
+  {
+   "name": "Cascade 10 oz Old Fashioned 320 ml",
+   "series": "Cascade",
+   "designer": null,
+   "model_code": "CC-19CN",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": "320ml",
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000052",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000052"
+   ]
+  },
+  {
+   "name": "Cascade 8 oz Old Fashioned 240 ml",
+   "series": "Cascade",
+   "designer": null,
+   "model_code": "CC-18CN",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 87,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003483",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003483"
+   ]
+  },
+  {
+   "name": "Chou-chou Old Fashioned (L) 350 ml",
+   "series": "Chou-chou",
+   "designer": null,
+   "model_code": "CHU-18W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "350ml",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000010",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000010"
+   ]
+  },
+  {
+   "name": "Chou-chou Old Fashioned (S) 220 ml",
+   "series": "Chou-chou",
+   "designer": null,
+   "model_code": "CHU-16W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "220ml",
+   "height_mm": 75,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000008",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000008"
+   ]
+  },
+  {
+   "name": "Chou-chou Tumbler (L) 360 ml",
+   "series": "Chou-chou",
+   "designer": null,
+   "model_code": "CHU-10W",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000011",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000011"
+   ]
+  },
+  {
+   "name": "Creo 10 oz Old Fashioned 330 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-18",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "330ml",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002551",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002551"
+   ]
+  },
+  {
+   "name": "Creo 10 oz Tumbler 300 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-10",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002544",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002544"
+   ]
+  },
+  {
+   "name": "Creo 12 oz Old Fashioned 380 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-19",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "380ml",
+   "height_mm": 103,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002552",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002552"
+   ]
+  },
+  {
+   "name": "Creo 12 oz Tumbler 380 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-12",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "380ml",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002545",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002545"
+   ]
+  },
+  {
+   "name": "Creo 14 oz Tumbler 420 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-14",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "420ml",
+   "height_mm": 147,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002546",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002546"
+   ]
+  },
+  {
+   "name": "Creo 2 oz Double 60 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-2",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 60,
+   "capacity_as_stated": "60ml",
+   "height_mm": 60,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002547",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002547"
+   ]
+  },
+  {
+   "name": "Creo 3 oz Tumbler 100 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-4",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 100,
+   "capacity_as_stated": "100ml",
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002540",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002540"
+   ]
+  },
+  {
+   "name": "Creo 4 oz Old Fashioned 120 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-15",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 120,
+   "capacity_as_stated": "120ml",
+   "height_mm": 72,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002548",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002548"
+   ]
+  },
+  {
+   "name": "Creo 6 oz Old Fashioned 190 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-16",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 190,
+   "capacity_as_stated": "190ml",
+   "height_mm": 82,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002549",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002549"
+   ]
+  },
+  {
+   "name": "Creo 8 oz Old Fashioned 250 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-17",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250ml",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002550",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002550"
+   ]
+  },
+  {
+   "name": "Creo 8 oz Tumbler 240 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-8",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 123,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002543",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002543"
+   ]
+  },
+  {
+   "name": "Creo Shot Glass (L) 60 ml",
+   "series": "Creo",
+   "designer": null,
+   "model_code": "CE-3",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 60,
+   "capacity_as_stated": "60ml",
+   "height_mm": 77,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002539",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002539"
+   ]
+  },
+  {
+   "name": "Da Capo 10 oz Rock 300 ml",
+   "series": "Da Capo",
+   "designer": null,
+   "model_code": "DC-17",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 87,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005042",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005042"
+   ]
+  },
+  {
+   "name": "Da Capo 10 oz Tumbler 300 ml",
+   "series": "Da Capo",
+   "designer": null,
+   "model_code": "DC-10",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002559",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002559"
+   ]
+  },
+  {
+   "name": "Da Capo 12 oz Rock 360 ml",
+   "series": "Da Capo",
+   "designer": null,
+   "model_code": "DC-18",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005043",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005043"
+   ]
+  },
+  {
+   "name": "Da Capo 12 oz Tumbler 360 ml",
+   "series": "Da Capo",
+   "designer": null,
+   "model_code": "DC-12",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 134,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002560",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002560"
+   ]
+  },
+  {
+   "name": "Da Capo 8 oz Tumbler 240 ml",
+   "series": "Da Capo",
+   "designer": null,
+   "model_code": "DC-8",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002558",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002558"
+   ]
+  },
+  {
+   "name": "Deco Rock (L) 270 ml",
+   "series": "Deco",
+   "designer": null,
+   "model_code": "DEC-17W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "270ml",
+   "height_mm": 104,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002991",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002991"
+   ]
+  },
+  {
+   "name": "Deco Rock (M) 160 ml",
+   "series": "Deco",
+   "designer": null,
+   "model_code": "DEC-16W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 160,
+   "capacity_as_stated": "160ml",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002990",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002990"
+   ]
+  },
+  {
+   "name": "Deco Tumbler 270 ml",
+   "series": "Deco",
+   "designer": null,
+   "model_code": "DEC-12W",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "270ml",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002992",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002992"
+   ]
+  },
+  {
+   "name": "Dimple 2 10 oz Old Fashioned 300 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-10",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003467",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003467"
+   ]
+  },
+  {
+   "name": "Dimple 2 10 oz Rock 300 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-417",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004793",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004793"
+   ]
+  },
+  {
+   "name": "Dimple 2 10 oz Tumbler 300 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-12",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003471",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003471"
+   ]
+  },
+  {
+   "name": "Dimple 2 12 oz Tumbler 360 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-410",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 126,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004795",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004795"
+   ]
+  },
+  {
+   "name": "Dimple 2 4 oz Rock 100 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-415",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 100,
+   "capacity_as_stated": "100ml",
+   "height_mm": 64,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004791",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004791"
+   ]
+  },
+  {
+   "name": "Dimple 2 4 oz Tumbler 120 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-15",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 120,
+   "capacity_as_stated": "120ml",
+   "height_mm": 103,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003468",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003468"
+   ]
+  },
+  {
+   "name": "Dimple 2 6 oz Old Fashioned 180 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-6",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 180,
+   "capacity_as_stated": "180ml",
+   "height_mm": 71,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003465",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003465"
+   ]
+  },
+  {
+   "name": "Dimple 2 6 oz Tumbler 170 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-9",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "170ml",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003469",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003469"
+   ]
+  },
+  {
+   "name": "Dimple 2 8 oz Old Fashioned 230 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-8",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230ml",
+   "height_mm": 82,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003466",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003466"
+   ]
+  },
+  {
+   "name": "Dimple 2 8 oz Rock 210 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-416",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "210ml",
+   "height_mm": 81,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004792",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004792"
+   ]
+  },
+  {
+   "name": "Dimple 2 8 oz Tumbler 240 ml",
+   "series": "Dimple 2",
+   "designer": null,
+   "model_code": "M-408",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 113,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004794",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004794"
+   ]
+  },
+  {
+   "name": "Duo 9 oz Tumbler 280 ml",
+   "series": "Duo",
+   "designer": null,
+   "model_code": "DU-9W",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280ml",
+   "height_mm": 147,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003088",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003088"
+   ]
+  },
+  {
+   "name": "Duo Old Fashioned 230 ml",
+   "series": "Duo",
+   "designer": null,
+   "model_code": "DU-16CN",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230ml",
+   "height_mm": 82,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000050",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000050"
+   ]
+  },
+  {
+   "name": "Elin Rock 345 ml",
+   "series": "Elin",
+   "designer": null,
+   "model_code": "ELN-19W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 345,
+   "capacity_as_stated": "345ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004707",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004707"
+   ]
+  },
+  {
+   "name": "Elin Tumbler (L) 410 ml",
+   "series": "Elin",
+   "designer": null,
+   "model_code": "ELN-14W",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 410,
+   "capacity_as_stated": "410ml",
+   "height_mm": 134,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004709",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004709"
+   ]
+  },
+  {
+   "name": "Elin Tumbler (M) 230 ml",
+   "series": "Elin",
+   "designer": null,
+   "model_code": "ELN-8W",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230ml",
+   "height_mm": 115,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004708",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004708"
+   ]
+  },
+  {
+   "name": "Farbe Tumbler 350 ml",
+   "series": "Farbe",
+   "designer": null,
+   "model_code": "FRB-17RF",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "350ml",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004054",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004054"
+   ]
+  },
+  {
+   "name": "Fifty's 10 oz Tumbler 320 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-110",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": "320ml",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005036",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005036"
+   ]
+  },
+  {
+   "name": "Fifty's 12 oz Rock 380 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-17",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "380ml",
+   "height_mm": 96,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005039",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005039"
+   ]
+  },
+  {
+   "name": "Fifty's 12 oz Zombie 360 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-012",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005035",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005035"
+   ]
+  },
+  {
+   "name": "Fifty's 14 oz Zombie 420 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-014",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "420ml",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005034",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005034"
+   ]
+  },
+  {
+   "name": "Fifty's 16 oz Zombie 480 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-016",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "480ml",
+   "height_mm": 184,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005033",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005033"
+   ]
+  },
+  {
+   "name": "Fifty's 6 oz Rock 180 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-215",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 180,
+   "capacity_as_stated": "180ml",
+   "height_mm": 74,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005041",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005041"
+   ]
+  },
+  {
+   "name": "Fifty's 8 oz Rock 220 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-6",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "220ml",
+   "height_mm": 79,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005040",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005040"
+   ]
+  },
+  {
+   "name": "Fifty's 8 oz Tumbler 250 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-108",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250ml",
+   "height_mm": 123,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005037",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005037"
+   ]
+  },
+  {
+   "name": "Fifty's Rock 300 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-16CN",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000054",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000054"
+   ]
+  },
+  {
+   "name": "Fifty's Tumbler 380 ml",
+   "series": "Fifty's",
+   "designer": null,
+   "model_code": "#50-10CN",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "380ml",
+   "height_mm": 108,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000055",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000055"
+   ]
+  },
+  {
+   "name": "Ginette Old Fashioned 300 ml",
+   "series": "Ginette",
+   "designer": null,
+   "model_code": "GNT-16CN",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000057",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000057"
+   ]
+  },
+  {
+   "name": "Kagayaki Tumbler 290 ml",
+   "series": "Kagayaki",
+   "designer": null,
+   "model_code": "SGBL-100WR",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "290ml",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003707",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003707"
+   ]
+  },
+  {
+   "name": "Kirameki Rock 12 Cuts 140 ml",
+   "series": "Kirameki",
+   "designer": null,
+   "model_code": "KMK-1512W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 140,
+   "capacity_as_stated": "140ml",
+   "height_mm": 78,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002983",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002983"
+   ]
+  },
+  {
+   "name": "Kirameki Rock (L) 12 Cuts 300 ml",
+   "series": "Kirameki",
+   "designer": null,
+   "model_code": "KMK-1712W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 92,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004071",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004071"
+   ]
+  },
+  {
+   "name": "Kyoku Rock 280 ml",
+   "series": "Kyoku",
+   "designer": null,
+   "model_code": "KYK-17W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280ml",
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004507",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004507"
+   ]
+  },
+  {
+   "name": "Kyoku Tumbler 290 ml",
+   "series": "Kyoku",
+   "designer": null,
+   "model_code": "KYK-9W",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "290ml",
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004509",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004509"
+   ]
+  },
+  {
+   "name": "La Fonte Tumbler (L) 360 ml",
+   "series": "La Fonte",
+   "designer": null,
+   "model_code": "LFT-12ig",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 143,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002573",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002573"
+   ]
+  },
+  {
+   "name": "Ligne Rock 320 ml",
+   "series": "Ligne",
+   "designer": null,
+   "model_code": "LGE-16W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": "320ml",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000001896",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000001896"
+   ]
+  },
+  {
+   "name": "Ligne Tumbler 420 ml",
+   "series": "Ligne",
+   "designer": null,
+   "model_code": "LGE-014T",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "420ml",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000001897",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000001897"
+   ]
+  },
+  {
+   "name": "Lirio Old Fashioned 250 ml",
+   "series": "Lirio",
+   "designer": null,
+   "model_code": "LRO-16W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250ml",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000247",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000247"
+   ]
+  },
+  {
+   "name": "Lommo Old Fashioned 260 ml",
+   "series": "Lommo",
+   "designer": null,
+   "model_code": "LMO-17W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260ml",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003509",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003509"
+   ]
+  },
+  {
+   "name": "Lommo Shot 70 ml",
+   "series": "Lommo",
+   "designer": null,
+   "model_code": "LMO-4W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 70,
+   "capacity_as_stated": "70ml",
+   "height_mm": 65,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003508",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003508"
+   ]
+  },
+  {
+   "name": "Lommo Tumbler (L) 240 ml",
+   "series": "Lommo",
+   "designer": null,
+   "model_code": "LMO-8W",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003511",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003511"
+   ]
+  },
+  {
+   "name": "Lommo Tumbler (M) 165 ml",
+   "series": "Lommo",
+   "designer": null,
+   "model_code": "LMO-6W",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 165,
+   "capacity_as_stated": "165ml",
+   "height_mm": 136,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003510",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003510"
+   ]
+  },
+  {
+   "name": "New Savanna 10 oz Rock 270 ml",
+   "series": "New Savanna",
+   "designer": null,
+   "model_code": "SVR-18",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "270ml",
+   "height_mm": 87,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000203",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000203"
+   ]
+  },
+  {
+   "name": "New Savanna 3 oz Rock 100 ml",
+   "series": "New Savanna",
+   "designer": null,
+   "model_code": "SVR-15",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 100,
+   "capacity_as_stated": "100ml",
+   "height_mm": 64,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005011",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005011"
+   ]
+  },
+  {
+   "name": "Nico Old Fashioned 240 ml",
+   "series": "Nico",
+   "designer": null,
+   "model_code": "NCO-88W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006001000351",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006001000351"
+   ]
+  },
+  {
+   "name": "Nova 10 oz Old Fashioned 280 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-18",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280ml",
+   "height_mm": 87,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002522",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002522"
+   ]
+  },
+  {
+   "name": "Nova 10 oz Tumbler 280 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-10",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280ml",
+   "height_mm": 113,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002528",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002528"
+   ]
+  },
+  {
+   "name": "Nova 12 oz Old Fashioned 360 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-19",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360ml",
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002496",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002496"
+   ]
+  },
+  {
+   "name": "Nova 12 oz Tumbler 320 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-12",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": "320ml",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002526",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002526"
+   ]
+  },
+  {
+   "name": "Nova 14 oz Tumbler 400 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-14",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "400ml",
+   "height_mm": 126,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002527",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002527"
+   ]
+  },
+  {
+   "name": "Nova 5 oz Tumbler 140 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-5",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 140,
+   "capacity_as_stated": "140ml",
+   "height_mm": 89,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002531",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002531"
+   ]
+  },
+  {
+   "name": "Nova 6 oz Old Fashioned 170 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-16",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "170ml",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002524",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002524"
+   ]
+  },
+  {
+   "name": "Nova 6 oz Tumbler 170 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-6",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "170ml",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002530",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002530"
+   ]
+  },
+  {
+   "name": "Nova 8 oz Old Fashioned 240 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-17",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 81,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002523",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002523"
+   ]
+  },
+  {
+   "name": "Nova 8 oz Tumbler 220 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-8",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "220ml",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002529",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002529"
+   ]
+  },
+  {
+   "name": "Nova Shot 50 ml",
+   "series": "Nova",
+   "designer": null,
+   "model_code": "NV-3",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 50,
+   "capacity_as_stated": "50ml",
+   "height_mm": 66,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002532",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002532"
+   ]
+  },
+  {
+   "name": "Nozomi Rock 335 ml",
+   "series": "Nozomi",
+   "designer": null,
+   "model_code": "NZM-19W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 335,
+   "capacity_as_stated": "335ml",
+   "height_mm": 91,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003512",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003512"
+   ]
+  },
+  {
+   "name": "Rund Glass (L) 400 ml",
+   "series": "Rund",
+   "designer": null,
+   "model_code": "RUD-18W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "400ml",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006005000050",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006005000050"
+   ]
+  },
+  {
+   "name": "Rund Glass (M) 290 ml",
+   "series": "Rund",
+   "designer": null,
+   "model_code": "RUD-16W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "290ml",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/006005000046",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/006005000046"
+   ]
+  },
+  {
+   "name": "Seine Cocktail 90 ml",
+   "series": "Seine",
+   "designer": null,
+   "model_code": "SE-35",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 90,
+   "capacity_as_stated": "90ml",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000005126",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000005126"
+   ]
+  },
+  {
+   "name": "Sen Glass Square Rock Glass 350 ml",
+   "series": "Sen Glass",
+   "designer": null,
+   "model_code": "SNG-18W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "350ml",
+   "height_mm": 84,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004058",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004058"
+   ]
+  },
+  {
+   "name": "Sen Glass Square Tumbler 260 ml",
+   "series": "Sen Glass",
+   "designer": null,
+   "model_code": "SNG-9W",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260ml",
+   "height_mm": 134,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004060",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004060"
+   ]
+  },
+  {
+   "name": "Sghr Recycle 10 oz Tumbler 300 ml",
+   "series": "Sghr Recycle",
+   "designer": null,
+   "model_code": "REC-NC10",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003955",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003955"
+   ]
+  },
+  {
+   "name": "Sghr Recycle 10 ozOld Fashioned Diagonal Optic 330 ml",
+   "series": "Sghr Recycle",
+   "designer": null,
+   "model_code": "REC-CE18-MN",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "330ml",
+   "height_mm": 97,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003795",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003795"
+   ]
+  },
+  {
+   "name": "Sghr Recycle 8 oz Old Fashioned 210 ml",
+   "series": "Sghr Recycle",
+   "designer": null,
+   "model_code": "REC-M416",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "210ml",
+   "height_mm": 81,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003735",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003735"
+   ]
+  },
+  {
+   "name": "Sghr Recycle 8 oz Tumbler 240 ml",
+   "series": "Sghr Recycle",
+   "designer": null,
+   "model_code": "REC-M408",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 113,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003918",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003918"
+   ]
+  },
+  {
+   "name": "Sghr Recycle Old Fashioned (S) 320 ml",
+   "series": "Sghr Recycle",
+   "designer": null,
+   "model_code": "REC-NC16",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": "320ml",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003793",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003793"
+   ]
+  },
+  {
+   "name": "Shuruto Rock 290 ml",
+   "series": "Shuruto",
+   "designer": null,
+   "model_code": "SRT-18W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "290ml",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000002232",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000002232"
+   ]
+  },
+  {
+   "name": "So-en Large Tumbler 500 ml",
+   "series": "So-en",
+   "designer": null,
+   "model_code": "SON-14S",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "500ml",
+   "height_mm": 147,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003180",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003180"
+   ]
+  },
+  {
+   "name": "So-en Tumbler 240 ml",
+   "series": "So-en",
+   "designer": null,
+   "model_code": "SON-10ig",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 72,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003168",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003168"
+   ]
+  },
+  {
+   "name": "Ten Ten Ten Rock Glass 300 ml",
+   "series": "Ten Ten Ten",
+   "designer": null,
+   "model_code": "TEN-17W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004062",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004062"
+   ]
+  },
+  {
+   "name": "Ten Ten Ten Tumbler 260 ml",
+   "series": "Ten Ten Ten",
+   "designer": null,
+   "model_code": "TEN-11W",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260ml",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004065",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004065"
+   ]
+  },
+  {
+   "name": "Tomomi Tumbler 345 ml",
+   "series": "Tomomi",
+   "designer": null,
+   "model_code": "TMM-12W",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 345,
+   "capacity_as_stated": "345ml",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000003533",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000003533"
+   ]
+  },
+  {
+   "name": "Yae Rock Glass 240 ml",
+   "series": "Yae",
+   "designer": null,
+   "model_code": "YAE-16W",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240ml",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://shop.sugahara.com/view/item/000000004287",
+   "source_urls": [
+    "https://shop.sugahara.com/view/item/000000004287"
+   ]
+  }
+ ]
+}

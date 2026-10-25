@@ -5,19 +5,22 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Caption, Tag, sheetIsDialog, useBreakpoint } from '@/components/ds';
 import { ClaimDialog } from '@/components/screens/claim/ClaimDialog';
 import { space } from '@/constants/tokens';
-import { useUserId } from '@/ctx/AuthContext';
+import { useAuth } from '@/ctx/AuthContext';
 import { useMyClaims, type Profile } from '@/hooks/useProfiles';
+import { needsOnboarding } from '@/lib/onboarding';
 
 /**
  * "Claim this page" on a bar's, maker's or supplier's page, or where its
  * claim stands. It goes to its own claim screen (/p/<id>/claim), on wide web
  * screens a dialog over the page, or for a bar to step 2 of venue setup,
  * where the team proves it's theirs. A person's page has This is me instead
- * (ThisIsMe).
+ * (ThisIsMe). Opened from Setup, a bar's goes back to Setup, which ends and
+ * opens venue setup (setUpBar in OnboardingScreen).
  */
 export function ClaimProfile({ profile, label = 'Claim this profile' }: { profile: Profile; label?: string }) {
   const router = useRouter();
-  const userId = useUserId();
+  const { user } = useAuth();
+  const userId = user?.id;
   const { data: claims } = useMyClaims(profile.id);
   const latest = claims?.[0];
   const wide = useBreakpoint() !== 'phone';
@@ -50,11 +53,21 @@ export function ClaimProfile({ profile, label = 'Claim this profile' }: { profil
         icon="checkmark"
         accessibilityHint="Prove you work here and take over this page"
         // A bar's claim is step 2 of venue setup (b03), which carries on while it's checked. A maker's stays on its own screen.
-        onPress={() => (userId && profile.kind === 'bar' ? router.push(`/venue-setup?claim=${profile.id}` as Href) : open())}
+        onPress={() => (userId && profile.kind === 'bar' ? claimBar(router, profile.id, needsOnboarding(user?.user_metadata)) : open())}
       />
       {claimDialog}
     </View>
   );
+}
+
+/**
+ * A bar's claim: venue setup at its claim step. Venue setup can't open during
+ * Setup, so from there it goes back to Setup with the bar (?run=), which ends
+ * Setup and opens it.
+ */
+export function claimBar(router: ReturnType<typeof useRouter>, profileId: string, inSetup: boolean) {
+  if (inSetup) router.dismissTo(`/onboarding?run=${profileId}` as Href);
+  else router.push(`/venue-setup?claim=${profileId}` as Href);
 }
 
 const styles = StyleSheet.create({

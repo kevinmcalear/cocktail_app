@@ -24,6 +24,12 @@ assert.match(balanceOf([line('Rye Whiskey', 60)])?.hint ?? '', /All spirit/);
 // Mostly unknown ingredients: no meters that would mislead.
 assert.equal(balanceOf([line('Fermented Plum Koji Thing', 60), line('Gin', 15)]), null);
 
+// The taste card's words (m07).
+assert.equal(sourOnly.words, 'Dry, bright and smoky. Spirit-forward.');
+assert.match(daiquiri!.words, /^Bright/);
+assert.match(balanceOf([line('Gin', 30), line('Campari', 30), line('Sweet Vermouth', 30)])!.words, /^Bitter/);
+assert.match(balanceOf([line('Fino Sherry', 60), line('Soda Water', 90)])?.words ?? '', /Light on alcohol\.$/);
+
 console.log('balance checks passed');
 
 assert.equal(tasteWord('strong', 0.2), 'light');

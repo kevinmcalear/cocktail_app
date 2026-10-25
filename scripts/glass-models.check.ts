@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { drawingFor, fillProblem, LOADS, problemWith, readFills, render, rowsOf, readSeed, type SeedModel } from './glass-models';
+import { drawingFor, fillProblem, LOADS, nameKey, problemWith, readFills, render, rowsOf, readSeed, type SeedModel } from './glass-models';
 
 // The migrations are what the seeds generate.
 for (const load of LOADS) {
@@ -11,10 +11,22 @@ for (const load of LOADS) {
   assert.doesNotMatch(file, /AUDIT: pending/, `${load.file} ships without its audit`);
 }
 
-// Every seed row loads, and each maker sits in exactly one load.
-const makers = LOADS.flatMap((l) => l.makers);
-assert.equal(new Set(makers).size, makers.length);
-for (const maker of makers) assert.ok(rowsOf([readSeed(maker)]).length > 0, maker);
+// Every seed row loads, and each seed file sits in exactly one load (a maker's later waves in their own files).
+const files = LOADS.flatMap((l) => l.files ?? l.makers);
+assert.equal(new Set(files).size, files.length);
+for (const f of files) assert.ok(rowsOf([readSeed(f)]).length > 0, f);
+// No row any load writes shares the database's key (maker, ingredient_key(name), capacity) with another:
+// a later wave must add glasses, never overwrite one an earlier load wrote.
+const keys = new Map<string, string>();
+for (const l of LOADS) {
+  for (const r of rowsOf((l.files ?? l.makers).map(readSeed))) {
+    const k = `${r.maker}\0${nameKey(r.name)}\0${r.capacity_ml ?? 0}`;
+    assert.ok(!keys.has(k), `${r.maker} ${r.name} (${l.file}) has the key of ${keys.get(k)}`);
+    keys.set(k, `${r.name} (${l.file})`);
+  }
+}
+assert.equal(nameKey("Denk'Art Nick & Nora Café"), 'denkart nick and nora cafe');
+for (const l of LOADS) assert.deepEqual([...new Set((l.files ?? l.makers).map((f) => readSeed(f).maker))].sort(), [...l.makers].sort(), `${l.file} names its makers`);
 
 const row = (m: Partial<SeedModel>): SeedModel => ({
   name: 'Glass', series: null, designer: null, model_code: null, glass: 'rocks', variant: null, capacity_ml: null, capacity_as_stated: null,
@@ -42,6 +54,9 @@ assert.match(problemWith(row({ source_urls: [] }))!, /sources/);
 assert.match(problemWith(row({ source_urls: ['http://example.com'] }))!, /https/);
 assert.match(problemWith(row({ material: 'unobtainium' }))!, /material/);
 assert.match(problemWith(row({ capacity_ml: 0 }))!, /measure/);
+assert.match(problemWith(row({ capacity_as_stated: '322 ml / 11,35 US fl. oz. full capacity (drawing)' }))!, /40/);
+assert.match(problemWith(row({ series: 'x'.repeat(81) }))!, /80/);
+assert.match(problemWith(row({ model_code: ' ' }))!, /blank/);
 assert.match(problemWith(row({ name: 'Coupe \u2014 tall' }))!, /dash/);
 
 // One row per maker, name and size: a repeat is dropped, another size stays.

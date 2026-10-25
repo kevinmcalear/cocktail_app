@@ -34,12 +34,14 @@ import { FinishStep } from './FinishStep';
 import { FoamerHint } from './FoamerHint';
 import { MethodStep } from './MethodStep';
 import { PublishStep } from './PublishStep';
+import { useNextOnceChecked } from './useNextOnceChecked';
 import { ReviewStep } from './ReviewStep';
 import { IceStep } from './IceStep';
 import { NameStepBody } from './NameStepBody';
 import { NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
+import { useDrinkTrail } from './Trail';
 import { useLineStock } from './StockToggle';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
@@ -82,8 +84,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Filled out with today's fields: a draft kept by an older version of the app may lack some.
   const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
   const step: WizardStep = kept?.step ?? 'name';
-  // On the web the page can draw before the kept draft has loaded (AsyncStorage is async there):
-  // once it has, say it was picked up. Set while rendering, like any value derived from a change.
+  // On the web the page can draw before the kept draft loads (AsyncStorage is async there): once it has, say it was picked up. Set while rendering, like any value derived from a change.
   const loaded = useSyncExternalStore(hydrated, isHydrated, () => false);
   const [seenLoad, setSeenLoad] = useState(loaded);
   const [resumed, setResumed] = useState(() => loaded && hasContent(draft));
@@ -114,6 +115,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
     setStoredStep(place, to);
   };
   const back = () => (at > 0 ? go(WIZARD_STEPS[at - 1]) : onClose());
+  const { trail, menu } = useDrinkTrail(draft.name, { menuSectionId, venueName: barId ? venueName : null, onClose });
 
   // A name passed in ("Make 'Paloma'" from search) names its own fresh draft. With a drink to start from, it names that draft (below).
   useEffect(() => {
@@ -186,6 +188,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Still asking about the name as typed (a failed or offline ask doesn't hold anything up).
   const checking = !!onBar.checking || !!onPlace.checking;
   const waits = desk ? stepWaits('name', draft, atBar, null, checking) || stepWaits('credits', draft, null, atPlace) : stepWaits(step, draft, atBar, atPlace, checking);
+  const tryNext = useNextOnceChecked(checking, stepWaits(step, draft, atBar, atPlace), next);
   if (desk) {
     return (
       <DrinkDesk
@@ -207,7 +210,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const body = (() => {
     switch (step) {
       case 'name':
-        return <NameStepBody {...{ draft, set, barId, venueName, classic, resumed }} match={atBar} onStartOver={startOver} onDone={() => canSave(draft) && !waits && next()} onStarted={() => go('ingredients')} />;
+        return <NameStepBody {...{ draft, set, barId, venueName, classic, resumed }} match={atBar} onStartOver={startOver} onDone={() => canSave(draft) && tryNext()} onStarted={() => go('ingredients')} />;
       case 'ingredients':
         return (
           <IngredientsStep
@@ -218,8 +221,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
             aliases={dropdowns?.ingredientAliases}
             coreIds={coreIds}
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
-            backBar={barId ? stock.backBar : undefined}
-            stock={stock}
+            backBar={barId ? stock.backBar : undefined} stock={stock} bar={barId ? { id: barId, name: venueName } : null} trail={trail}
           />
         );
       case 'method':
@@ -240,7 +242,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'glass':
         return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
-        return <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={venueIce} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />;
+        return <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={venueIce} venueName={barId ? venueName : null} barId={barId} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />;
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'credits':
@@ -266,7 +268,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       testID="add-drink"
       pageTitle="Add a drink"
       embedded={embedded}
-      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} onTint={(tint) => set({ tint })} {...place} />}
+      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} onTint={(tint) => set({ tint })} trail={trail} forMenu={menu} {...place} />}
       stepKey={step}
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.
@@ -283,10 +285,10 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         <WizardFooter
           nextLabel={step === 'review' ? (create.isPending ? 'Saving…' : firstRound ? 'Save as our house spec' : 'Save drink') : `Next: ${STEP_COPY[following].short.toLowerCase()}`}
           optional={copy.optional && !waits}
-          canNext={(step === 'name' || step === 'review' ? canSave(draft) : true) && !waits}
+          canNext={(step === 'name' || step === 'review' ? canSave(draft) : true) && !stepWaits(step, draft, atBar, atPlace)}
           saving={create.isPending}
           onSkip={next}
-          onNext={next}
+          onNext={tryNext}
           notice={step === 'ingredients' ? stock.note : null}
         />
       }

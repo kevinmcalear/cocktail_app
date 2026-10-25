@@ -3,6 +3,7 @@
 // lists come from the rules both run (supabase/functions/_shared/sketchRules.ts).
 import { SKETCH_CLEAR_TINT } from '../../constants/sketch';
 import { FOAMS, GARNISHES, GLASSES, ICES, METHODS, readIceLook, sketchBuild, type IceLook, type SketchLayer } from '../../supabase/functions/_shared/sketchRules';
+import { readOutline, type GlassOutline } from './outline';
 
 export type { IceLook, SketchLayer };
 export { readIceLook };
@@ -67,6 +68,12 @@ export interface SketchInputs {
    * (lib/sketch/geometry.ts GLASS_MM).
    */
   glassMm?: number | null;
+  /**
+   * The real glass's traced outline (glass_models.outline, lib/sketch/outline.ts):
+   * drawn in place of the family's shape and variant. Set by the database from
+   * the drink's glass model; missing draws the family's shape.
+   */
+  outline?: GlassOutline | null;
 }
 
 const has = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
@@ -78,6 +85,7 @@ export function readSketchInputs(raw: unknown): SketchInputs | null {
   if (!x || typeof x !== 'object') return null;
   if (!has(SKETCH_GLASSES, x.glass) || !has(SKETCH_ICES, x.ice) || !has(SKETCH_METHODS, x.method)) return null;
   if (!x.liquid || !isHex(x.liquid.hex) || typeof x.liquid.alpha !== 'number') return null;
+  const outline = readOutline(x.outline);
   return {
     v: Number(x.v) || 1,
     glass: x.glass,
@@ -98,6 +106,7 @@ export function readSketchInputs(raw: unknown): SketchInputs | null {
     ...(readBuild(x.build) ? { build: readBuild(x.build) } : {}),
     ...(readIceLook(x.iceLook) ? { iceLook: readIceLook(x.iceLook) } : {}),
     ...(typeof x.glassMm === 'number' && x.glassMm >= 40 && x.glassMm <= 400 ? { glassMm: x.glassMm } : {}),
+    ...(outline ? { outline } : {}),
   };
 }
 

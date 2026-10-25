@@ -80,7 +80,7 @@ export function TimeTree({
   bottomPad: number;
 }) {
   const ds = useDs();
-  const wideHead = useBreakpoint() === 'desktop';
+  const wideHead = useBreakpoint() !== 'phone'; // Wide from 768, like the drink pages (i05, 24 Oct 2026).
   const hues = familyHues[ds.scheme];
   const hueOf = (family: string) => hues[family as keyof typeof hues] ?? hues.trunk;
   const vertical = useRef<ComponentRef<typeof ScrollView>>(null);

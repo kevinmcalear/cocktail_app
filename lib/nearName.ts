@@ -135,3 +135,10 @@ export function nearest<T>(query: string, rows: readonly T[], nameOf: (row: T) =
     .slice(0, limit)
     .map((r) => r.row);
 }
+
+/** nearest() over the rows a search didn't already show: "Did you mean" after what matched. Nothing for an empty query. */
+export function nearAfter<T>(query: string, rows: readonly T[], shown: readonly T[], nameOf: (row: T) => string, limit = 3): T[] {
+  if (!query.trim()) return [];
+  const seen = new Set(shown);
+  return nearest(query, rows.filter((r) => !seen.has(r)), nameOf, limit);
+}

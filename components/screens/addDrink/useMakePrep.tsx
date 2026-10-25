@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { linePrep, uncombine } from '@/lib/batchLines';
 import type { WizardDraft, WizardLine, WizardPick } from '@/lib/drinkWizard';
@@ -8,6 +8,7 @@ import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalizeFirst } from '@/lib/stringUtils';
 
 import type { CatalogIngredient } from './IngredientSearch';
+import type { TrailItem } from './Trail';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { PrepCard } from './prep/PrepCard';
 
@@ -16,10 +17,14 @@ interface MakePrepArgs {
   set: (change: Partial<WizardDraft>) => void;
   ingredients: readonly CatalogIngredient[];
   aliases: readonly IngredientAlias[];
-  /** The desktop page: the prep is written under its own line, not over the page. */
-  inlinePrep?: { venueName: string | null };
+  /** On the desktop page: the card opens under its line; `onOpen` says when one is open, for the page's kit box. */
+  inlinePrep?: { venueName: string | null; onOpen?: (open: boolean) => void };
   add: (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour) => WizardLine;
   change: (key: string, c: Partial<WizardLine>) => void;
+  /** The venue the drink is for, whose Kit How? is checked against; null at home. */
+  bar?: { id: string; name: string } | null;
+  /** Where the drink is, from the menu down to it: the recipe's trail starts here. */
+  trail?: readonly TrailItem[];
 }
 
 /** What's being made: a new line, the recipe of a line in the drink (its key), or a bottle line made in house (its key, `replace`). */
@@ -41,7 +46,7 @@ interface Making {
  * steps it's the builder over the page; on the desktop page, a card under
  * its line. Done goes back to the line, which shows the prep.
  */
-export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change }: MakePrepArgs) {
+export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change, bar = null, trail }: MakePrepArgs) {
   const [making, setMaking] = useState<Making | null>(null);
   // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
   const editingKey = making?.key ?? null;
@@ -62,10 +67,16 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
   };
 
   const line = editingKey ? draft.lines.find((l) => l.key === editingKey) : null;
+  // A card is open while its line is there (a line taken out takes its card with it): the page's kit box follows.
+  const open = !!makingName && (!editingKey || !!line);
+  const onOpen = inlinePrep?.onOpen;
+  useEffect(() => onOpen?.(open), [onOpen, open]);
   const editingPrep = line && !replacing ? linePrep(line) : null;
   const combined = !!line?.combined;
   const drinkName = draft.name.trim();
   const props = {
+    bar,
+    above: trail,
     initial: editingPrep,
     technique: makingTechnique,
     picked: makingBase ? { base: makingBase } : undefined,
@@ -107,7 +118,7 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
     /** Make it house: the bottle line becomes a prep by this technique, the bottle its base; `ask` opens on What is it to check it first. */
     house: (l: WizardLine, name: string, technique: string, ask?: boolean) => setMaking({ name, key: l.key, replace: true, technique, base: { id: l.id, name: l.name }, first: ask }),
     /** The card under this line, when its prep is being written on the desktop page. */
-    card: (key: string) => (inlinePrep && makingName && key === editingKey ? <PrepCard key={key} name={makingName} venueName={inlinePrep.venueName} {...props} /> : null),
+    card: (key: string) => (inlinePrep && makingName && key === editingKey ? <PrepCard key={key} name={makingName} drinkName={drinkName} venueName={inlinePrep.venueName} {...props} /> : null),
     builder: inlinePrep ? null : <PrepBuilder name={makingName} drinkName={drinkName} {...props} />,
   };
 }

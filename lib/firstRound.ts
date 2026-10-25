@@ -152,3 +152,15 @@ export function roundView(round: FirstRound | null, kind: RoundKind): RoundView 
   const opened = current.opens && open(at) && !round.seen.includes(current.opens) ? current.opens : null;
   return { round, active: true, steps, doneCount, total: steps.length, current, hidden, opened, showDone: false };
 }
+
+/**
+ * A staff member's "Open the menu", once their own drinks are on the menu on
+ * now (find-yourself step 7): "Open the Night Garden menu", "3 of its drinks
+ * are yours". Null keeps the plain step.
+ */
+export function yourMenuStep(menus: { name: string; kind: string; itemIds: string[]; status: string }[], yours: ReadonlySet<string>): { title: string; detail: string } | null {
+  const on = menus.find((m) => m.kind === 'menu' && m.status === 'on');
+  const count = on ? on.itemIds.filter((id) => yours.has(id)).length : 0;
+  if (!on || !count) return null;
+  return { title: `Open the ${on.name} menu`, detail: `${count} of its drinks ${count === 1 ? 'is' : 'are'} yours` };
+}

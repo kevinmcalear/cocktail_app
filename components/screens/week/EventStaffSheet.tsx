@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Chip, DsText, Field, PressableScale, useDs } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
+import { NearPicks, splitNear } from '@/components/search/NearPicks';
 import { radius, space } from '@/constants/tokens';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useAddEventStaff, useRemoveEventStaff, type NewStaff } from '@/hooks/useEventStaff';
@@ -24,10 +25,21 @@ export function EventStaffSheet({ event, rows, onClose }: { event: WeekItem; row
   const remove = useRemoveEventStaff();
   const [guest, setGuest] = useState('');
   const [linked, setLinked] = useState<{ id: string; name: string } | null>(null);
-  const { data: people = [] } = usePublicPeople(linked ? '' : guest);
+  const [people, near] = splitNear(usePublicPeople(linked ? '' : guest, { near: true }).data ?? []);
   const [error, setError] = useState<string | null>(null);
 
   const taken = new Set(rows.map((r) => r.userId).filter(Boolean));
+  const personChip = (p: (typeof people)[number]) => (
+    <Chip
+      key={p.id}
+      selected={false}
+      label={p.job ? `${p.display_name}, ${p.job}` : p.display_name}
+      onPress={() => {
+        setLinked({ id: p.id, name: p.display_name });
+        setGuest(p.display_name);
+      }}
+    />
+  );
   const next = rows.reduce((n, r) => Math.max(n, r.sortOrder + 1), 0);
   const busy = add.isPending || remove.isPending;
   const team = event.barName ?? 'your team';
@@ -96,15 +108,10 @@ export function EventStaffSheet({ event, rows, onClose }: { event: WeekItem; row
               <Caption tone="accent">Unlink</Caption>
             </PressableScale>
           </View>
-        ) : people.length ? (
-          <View role="group" accessibilityLabel="Link their profile" style={styles.chips}>
-            {people.map((p) => (
-              <Chip key={p.id} selected={false} label={p.job ? `${p.display_name}, ${p.job}` : p.display_name} onPress={() => {
-                  setLinked({ id: p.id, name: p.display_name });
-                  setGuest(p.display_name);
-                }}
-              />
-            ))}
+        ) : people.length || near.length ? (
+          <View role="group" accessibilityLabel="Link their profile" style={styles.links}>
+            <View style={styles.chips}>{people.map(personChip)}</View>
+            <NearPicks found={people.length > 0} near={near} render={personChip} rowStyle={styles.chips} />
           </View>
         ) : null}
         <Caption tone="muted">Shown as you type it. Pick their profile if they have one here, so guests can open it.</Caption>
@@ -116,6 +123,7 @@ export function EventStaffSheet({ event, rows, onClose }: { event: WeekItem; row
 }
 
 const styles = StyleSheet.create({
+  links: { gap: space.xs },
   list: { gap: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1, minWidth: 0 },

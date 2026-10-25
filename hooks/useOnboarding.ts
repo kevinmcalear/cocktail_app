@@ -139,26 +139,6 @@ export function useRemoveCareerDrink() {
   });
 }
 
-/** A new venue they run, from onboarding or Settings › Venues. */
-export function useCreateOnboardingBar() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (name: string) => {
-      const { error } = await supabase.rpc('create_new_bar', {
-        p_name: name.trim(),
-        p_visibility: 10,
-        p_generic: 20,
-        p_specific: 30,
-        p_measurement: 30,
-        p_prep: 40,
-      });
-      if (error) throw new Error(error.message || SAVED);
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['bars'] }),
-    onError: () => {},
-  });
-}
-
 /** Marks setup finished so the app stops sending them back here. */
 export function useFinishOnboarding() {
   const { updateProfile } = useAuth();
