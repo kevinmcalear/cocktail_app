@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { useDebounced } from '@/hooks/useDiscover';
 import { useDropdowns } from '@/hooks/useDropdowns';
+import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { chunk } from '@/lib/commandSearchGrid';
 import { likeExactly, searchByName } from '@/lib/drinkWizard';
 import { barSection, type BarSection } from '@/lib/barSections';
@@ -129,6 +130,51 @@ export function useShelf() {
   });
 }
 
+/** The catalog's ingredients for what was typed, as Add to your bar lists them. */
+async function searchBar(query: string): Promise<FoundItem[]> {
+    // Names that start with it, and any that have it: "Gin" can't sort out of reach behind "Aged gin…".
+    const read = (pattern: string, limit: number) =>
+      supabase
+        .from('app_item_presentation')
+        .select(FOUND_SELECT)
+        .eq('item_type', 'ingredient')
+        .ilike('name', pattern)
+        .order('name')
+        .order('id')
+        .limit(limit);
+    const like = likeExactly(query);
+    // A lab ingredient goes by several names ("pectinex" is "Pectinase" in the catalog): look for them all.
+    const q = query.toLowerCase();
+    const aliases = TECHNICAL_INGREDIENTS.find((t) => t.names.some((n) => n.startsWith(q)))?.names.filter((n) => !n.includes(q)) ?? [];
+    const [starts, has, also] = await Promise.all([
+      read(`${like}%`, 50),
+      read(`%${like}%`, 150),
+      aliases.length
+        ? supabase
+            .from('app_item_presentation')
+            .select(FOUND_SELECT)
+            .eq('item_type', 'ingredient')
+            .or(aliases.map((n) => `name.ilike.${likeExactly(n)}`).join(','))
+            .limit(10)
+        : { data: [], error: null },
+    ]);
+    if (starts.error) throw starts.error;
+    if (has.error) throw has.error;
+    if (also.error) throw also.error;
+    const byId = new Map([...(starts.data ?? []), ...(has.data ?? [])].map((r) => [r.id, r]));
+    const rows = [...byId.values()] as unknown as ItemRow[];
+    // Alias matches first: their names don't contain what was typed, so searchByName would drop them.
+    const named = (also.data ?? []) as unknown as ItemRow[];
+return foundItems([...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))]);
+}
+
+/** Rows by id, as searchBar has them: the close names. */
+async function readFound(ids: string[]): Promise<FoundItem[]> {
+  const { data, error } = await supabase.from('app_item_presentation').select(FOUND_SELECT).in('id', ids);
+  if (error) throw error;
+  return foundItems((data ?? []) as unknown as ItemRow[]);
+}
+
 /**
  * Ingredients whose name has the text in it, best first, searched on the
  * server so the add sheet never waits on the whole catalog. Each says which
@@ -141,42 +187,8 @@ export function useBarSearch(text: string) {
     enabled: query.length > 0,
     placeholderData: keepPreviousData,
     meta: { persist: false },
-    queryFn: async (): Promise<FoundItem[]> => {
-      // Names that start with it, and any that have it: "Gin" can't sort out of reach behind "Aged gin…".
-      const read = (pattern: string, limit: number) =>
-        supabase
-          .from('app_item_presentation')
-          .select(FOUND_SELECT)
-          .eq('item_type', 'ingredient')
-          .ilike('name', pattern)
-          .order('name')
-          .order('id')
-          .limit(limit);
-      const like = likeExactly(query);
-      // A lab ingredient goes by several names ("pectinex" is "Pectinase" in the catalog): look for them all.
-      const q = query.toLowerCase();
-      const aliases = TECHNICAL_INGREDIENTS.find((t) => t.names.some((n) => n.startsWith(q)))?.names.filter((n) => !n.includes(q)) ?? [];
-      const [starts, has, also] = await Promise.all([
-        read(`${like}%`, 50),
-        read(`%${like}%`, 150),
-        aliases.length
-          ? supabase
-              .from('app_item_presentation')
-              .select(FOUND_SELECT)
-              .eq('item_type', 'ingredient')
-              .or(aliases.map((n) => `name.ilike.${likeExactly(n)}`).join(','))
-              .limit(10)
-          : { data: [], error: null },
-      ]);
-      if (starts.error) throw starts.error;
-      if (has.error) throw has.error;
-      if (also.error) throw also.error;
-      const byId = new Map([...(starts.data ?? []), ...(has.data ?? [])].map((r) => [r.id, r]));
-      const rows = [...byId.values()] as unknown as ItemRow[];
-      // Alias matches first: their names don't contain what was typed, so searchByName would drop them.
-      const named = (also.data ?? []) as unknown as ItemRow[];
-      return foundItems([...named, ...searchByName(query, rows, 40).filter((r) => !named.some((n) => n.id === r.id))]);
-    },
+    // "chartruse": Green Chartreuse, marked `near` (Did you mean).
+    queryFn: ({ signal }): Promise<MaybeNear<FoundItem>[]> => withNear(query, 'ingredient', searchBar(query), readFound, signal),
   });
 }
 

@@ -1,0 +1,40 @@
+{
+ "maker": "richard.brendon",
+ "models": [
+  {
+   "name": "Jancis Robinson x Richard Brendon Precision Wine Glass",
+   "series": "Jancis Robinson Collection",
+   "designer": "Richard Brendon and Jancis Robinson",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 224,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://thefinestbubble.com/glassware-jancis-robinson-x-richard-brendon-precision-wine-glass",
+   "source_urls": [
+    "https://thefinestbubble.com/glassware-jancis-robinson-x-richard-brendon-precision-wine-glass"
+   ]
+  },
+  {
+   "name": "Jancis Robinson x Richard Brendon The Wine Glass",
+   "series": "Jancis Robinson Collection",
+   "designer": "Richard Brendon and Jancis Robinson",
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 224,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://thefinestbubble.com/glassware-jancis-robinson-x-richard-brendon-mouth-blown-wine-glass",
+   "source_urls": [
+    "https://thefinestbubble.com/glassware-jancis-robinson-x-richard-brendon-mouth-blown-wine-glass",
+    "https://www.boroughkitchen.com/products/rb-jr-fine-crystal-original-wine-glasses-set-of-2"
+   ]
+  }
+ ]
+}

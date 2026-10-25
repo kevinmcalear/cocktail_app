@@ -1,18 +1,11 @@
 import assert from 'node:assert/strict';
 
 import {
-  drawingKey, GLASS_TYPE_LABEL, GLASS_TYPES, glassCapacity, glassFieldProblem, glassPromptKey, glassTitle, glassToAdd, hasGlass, isVenueGlassName, textOrNull,
+  drawingKey, GLASS_TYPE_LABEL, GLASS_TYPES, glassCapacity, glassPromptKey, glassTitle, hasGlass, isVenueGlassName,
 } from './glassware';
 
-const blank = { name: '', maker: '', designer: '', series: '', shape_note: '' };
-assert.equal(glassFieldProblem(blank), null);
-assert.deepEqual(glassFieldProblem({ ...blank, maker: 'x'.repeat(81) }), { field: 'maker', message: 'Keep it to 80 characters.' });
-assert.equal(glassFieldProblem({ ...blank, maker: `  ${'x'.repeat(80)}  ` }), null, 'trimmed before counting');
-assert.deepEqual(glassFieldProblem({ ...blank, shape_note: 'x'.repeat(501) })?.field, 'shape_note');
 assert.equal(glassTitle({ name: '  ', glass: 'nick' }), 'Nick & Nora');
 assert.equal(glassTitle({ name: 'Leopold coupe', glass: 'coupe' }), 'Leopold coupe');
-assert.equal(textOrNull('  '), null);
-assert.equal(textOrNull(' Kimura '), 'Kimura');
 for (const g of GLASS_TYPES) assert.ok(GLASS_TYPE_LABEL[g], `a label for ${g}`);
 
 // The prompt: a venue's glass is its type in its drawing; the type's first drawing is stored as null.
@@ -29,14 +22,6 @@ assert.ok(!isVenueGlassName(venue, 'Rocks'));
 assert.ok(!isVenueGlassName(venue, 'Something odd'));
 assert.equal(glassPromptKey('bar', 'coupe', 'coupe_wide'), 'bar:coupe:');
 assert.equal(glassPromptKey('bar', 'coupe', 'coupe_deep'), 'bar:coupe:coupe_deep');
-// Adding: named only when the name says more than the type; the main glass of its type when there's none.
-assert.deepEqual(glassToAdd([], 'nick', null, 'Nick & Nora'), {
-  glass: 'nick', variant: null, name: null, maker: null, maker_profile_id: null, designer: null, series: null, shape_note: null, is_default: true,
-});
-const deep = glassToAdd(venue, 'coupe', 'coupe_deep', ' Champagne coupe ');
-assert.equal(deep.name, 'Champagne coupe');
-assert.equal(deep.variant, 'coupe_deep');
-assert.equal(deep.is_default, false, 'the venue already draws its coupes in another');
 // Its size comes from the glassware item of the same name, the venue's own first.
 const items = [
   { name: 'Coupe', bar_id: null, capacity_ml: 180, iced_capacity_ml: null },

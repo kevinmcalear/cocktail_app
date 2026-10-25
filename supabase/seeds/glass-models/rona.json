@@ -1,0 +1,1638 @@
+{
+ "maker": "rona",
+ "models": [
+  {
+   "name": "Aram Cocktail 460 ml",
+   "series": "Aram",
+   "designer": null,
+   "model_code": "6508_460",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "460 ml",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/aram/",
+   "source_urls": [
+    "https://rona.glass/collection/aram/"
+   ]
+  },
+  {
+   "name": "Arte Tumbler 550 ml",
+   "series": "Arte",
+   "designer": null,
+   "model_code": "4237/UM_550",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "550 ml",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/arte/",
+   "source_urls": [
+    "https://rona.glass/collection/arte/"
+   ]
+  },
+  {
+   "name": "Bar Brandy 400 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6201_400",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "400 ml",
+   "height_mm": 138,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Champagne Flute 150 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6050_150",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 150,
+   "capacity_as_stated": "150 ml",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Champagne Flute 205 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6263_205",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 205,
+   "capacity_as_stated": "205 ml",
+   "height_mm": 227,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Champagne Flute 230 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "4245_230",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230 ml",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Cordial 70 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6001_70",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 70,
+   "capacity_as_stated": "70 ml",
+   "height_mm": 158,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Fruit spirits glass 260 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6751_260",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260 ml",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Highball 460 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "4220_460",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "460 ml",
+   "height_mm": 145,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Longdrink \"Hurricane\" 465 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6050_465",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 465,
+   "capacity_as_stated": "465 ml",
+   "height_mm": 208,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Margarita 340 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6006_340",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "340 ml",
+   "height_mm": 172,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Martini 300 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6103_300",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300 ml",
+   "height_mm": 188,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Martini 390 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6829_R_390",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "390 ml",
+   "height_mm": 190,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Old Fashioned 390 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "4220_390",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "390 ml",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Bar Single malt whiskey 200 ml",
+   "series": "Bar",
+   "designer": null,
+   "model_code": "6697_200",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "200 ml",
+   "height_mm": 122,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/bar/",
+   "source_urls": [
+    "https://rona.glass/collection/bar/"
+   ]
+  },
+  {
+   "name": "Celebration Cordial 95 ml",
+   "series": "Celebration",
+   "designer": null,
+   "model_code": "6272_95",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 95,
+   "capacity_as_stated": "95 ml",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/celebration/",
+   "source_urls": [
+    "https://rona.glass/collection/celebration/"
+   ]
+  },
+  {
+   "name": "Charisma Cordial 100 ml",
+   "series": "Charisma",
+   "designer": null,
+   "model_code": "6044_100",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 100,
+   "capacity_as_stated": "100 ml",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/charisma/",
+   "source_urls": [
+    "https://rona.glass/collection/charisma/"
+   ]
+  },
+  {
+   "name": "Classic cocktails Champagne Flute 160 ml",
+   "series": "Classic cocktails",
+   "designer": null,
+   "model_code": "6515_160",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 160,
+   "capacity_as_stated": "160 ml",
+   "height_mm": 216,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/classic-cocktails/",
+   "source_urls": [
+    "https://rona.glass/collection/classic-cocktails/",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=49"
+   ]
+  },
+  {
+   "name": "Classic cocktails Champagne saucer / Martini 250 ml",
+   "series": "Classic cocktails",
+   "designer": null,
+   "model_code": "6515_250",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250 ml",
+   "height_mm": 144,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/classic-cocktails/",
+   "source_urls": [
+    "https://rona.glass/collection/classic-cocktails/",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=49"
+   ]
+  },
+  {
+   "name": "Classic cocktails Nick&Nora 160 ml",
+   "series": "Classic cocktails",
+   "designer": null,
+   "model_code": "6515_160",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 160,
+   "capacity_as_stated": "160 ml",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/classic-cocktails/",
+   "source_urls": [
+    "https://rona.glass/collection/classic-cocktails/",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=49"
+   ]
+  },
+  {
+   "name": "Classic cocktails Paris 260 ml",
+   "series": "Classic cocktails",
+   "designer": null,
+   "model_code": "6515_260",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "260 ml",
+   "height_mm": 131,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/classic-cocktails/",
+   "source_urls": [
+    "https://rona.glass/collection/classic-cocktails/",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=49"
+   ]
+  },
+  {
+   "name": "Classic Mini Drink 240 ml",
+   "series": "Classic",
+   "designer": null,
+   "model_code": "1605_240",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240 ml",
+   "height_mm": 118,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/classic/",
+   "source_urls": [
+    "https://rona.glass/collection/classic/"
+   ]
+  },
+  {
+   "name": "Classic Spirit Glass 60 ml",
+   "series": "Classic",
+   "designer": null,
+   "model_code": "1605_60",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 60,
+   "capacity_as_stated": "60 ml",
+   "height_mm": 61,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/classic/",
+   "source_urls": [
+    "https://rona.glass/collection/classic/"
+   ]
+  },
+  {
+   "name": "Cool Mix drink 350 ml",
+   "series": "Cool",
+   "designer": null,
+   "model_code": "4218_350",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "350 ml",
+   "height_mm": 132,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/cool/",
+   "source_urls": [
+    "https://rona.glass/collection/cool/"
+   ]
+  },
+  {
+   "name": "Diverto Champagne Flute 315 ml",
+   "series": "Diverto",
+   "designer": null,
+   "model_code": "7662/0900/315",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 315,
+   "capacity_as_stated": "315 ml",
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/diverto/",
+   "source_urls": [
+    "https://rona.glass/collection/diverto/"
+   ]
+  },
+  {
+   "name": "Diverto Martini 200 ml",
+   "series": "Diverto",
+   "designer": null,
+   "model_code": "7662/2800/200",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "200 ml",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/diverto/",
+   "source_urls": [
+    "https://rona.glass/collection/diverto/"
+   ]
+  },
+  {
+   "name": "Drink Master Champagne Flute 230 ml",
+   "series": "Drink Master",
+   "designer": null,
+   "model_code": "4221_230",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230 ml",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/drink-master/",
+   "source_urls": [
+    "https://rona.glass/collection/drink-master/"
+   ]
+  },
+  {
+   "name": "Edition Liqueur 90 ml",
+   "series": "Edition",
+   "designer": null,
+   "model_code": "6050_90",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 90,
+   "capacity_as_stated": "90 ml",
+   "height_mm": 182,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/edition/",
+   "source_urls": [
+    "https://rona.glass/collection/edition/"
+   ]
+  },
+  {
+   "name": "Gala Brandy 400 ml",
+   "series": "Gala",
+   "designer": null,
+   "model_code": "2570_400",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "400 ml",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/gala/",
+   "source_urls": [
+    "https://rona.glass/collection/gala/"
+   ]
+  },
+  {
+   "name": "Gala Liquer 60 ml",
+   "series": "Gala",
+   "designer": null,
+   "model_code": "2570_60",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 60,
+   "capacity_as_stated": "60 ml",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/gala/",
+   "source_urls": [
+    "https://rona.glass/collection/gala/"
+   ]
+  },
+  {
+   "name": "Gala Martini 180 ml",
+   "series": "Gala",
+   "designer": null,
+   "model_code": "2570_180",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 180,
+   "capacity_as_stated": "180 ml",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/gala/",
+   "source_urls": [
+    "https://rona.glass/collection/gala/"
+   ]
+  },
+  {
+   "name": "Handy Long drink 450 ml",
+   "series": "Handy",
+   "designer": null,
+   "model_code": "8413_450",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "450 ml",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/handy/",
+   "source_urls": [
+    "https://rona.glass/collection/handy/"
+   ]
+  },
+  {
+   "name": "Handy Tumbler 340 ml",
+   "series": "Handy",
+   "designer": null,
+   "model_code": "8413_340",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "340 ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/handy/",
+   "source_urls": [
+    "https://rona.glass/collection/handy/"
+   ]
+  },
+  {
+   "name": "Handy Tumbler XL 445 ml",
+   "series": "Handy",
+   "designer": null,
+   "model_code": "8413_445",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 445,
+   "capacity_as_stated": "445 ml",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/handy/",
+   "source_urls": [
+    "https://rona.glass/collection/handy/"
+   ]
+  },
+  {
+   "name": "Leandros Champagne saucer 540 ml",
+   "series": "Leandros",
+   "designer": null,
+   "model_code": "64900_A_540",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 540,
+   "capacity_as_stated": "540 ml",
+   "height_mm": 180,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/leandros/",
+   "source_urls": [
+    "https://rona.glass/collection/leandros/"
+   ]
+  },
+  {
+   "name": "Leandros Martini 340 ml",
+   "series": "Leandros",
+   "designer": null,
+   "model_code": "64900_A_340",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "340 ml",
+   "height_mm": 190,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/leandros/",
+   "source_urls": [
+    "https://rona.glass/collection/leandros/"
+   ]
+  },
+  {
+   "name": "Lunar Cocktail 250 ml",
+   "series": "Lunar",
+   "designer": null,
+   "model_code": "4233_N_250",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "250 ml",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/lunar/",
+   "source_urls": [
+    "https://rona.glass/collection/lunar/"
+   ]
+  },
+  {
+   "name": "Lunar Doub. Old Fashioned 460 ml",
+   "series": "Lunar",
+   "designer": null,
+   "model_code": "4233_N_460",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "460 ml",
+   "height_mm": 103,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/lunar/",
+   "source_urls": [
+    "https://rona.glass/collection/lunar/"
+   ]
+  },
+  {
+   "name": "Lunar Highball 490 ml",
+   "series": "Lunar",
+   "designer": null,
+   "model_code": "4233_N_490",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 490,
+   "capacity_as_stated": "490 ml",
+   "height_mm": 144,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/lunar/",
+   "source_urls": [
+    "https://rona.glass/collection/lunar/"
+   ]
+  },
+  {
+   "name": "Lunar Old Fashioned 360 ml",
+   "series": "Lunar",
+   "designer": null,
+   "model_code": "4233_N_360",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360 ml",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/lunar/",
+   "source_urls": [
+    "https://rona.glass/collection/lunar/"
+   ]
+  },
+  {
+   "name": "Lunar Shot glass 70 ml",
+   "series": "Lunar",
+   "designer": null,
+   "model_code": "4233_N_70",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 70,
+   "capacity_as_stated": "70 ml",
+   "height_mm": 57,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/lunar/",
+   "source_urls": [
+    "https://rona.glass/collection/lunar/"
+   ]
+  },
+  {
+   "name": "Magnum Brandy 720 ml",
+   "series": "Magnum",
+   "designer": null,
+   "model_code": "2911_720",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 720,
+   "capacity_as_stated": "720 ml",
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/magnum/",
+   "source_urls": [
+    "https://rona.glass/collection/magnum/"
+   ]
+  },
+  {
+   "name": "Magnum Liqueur 75 ml",
+   "series": "Magnum",
+   "designer": null,
+   "model_code": "3276_75",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 75,
+   "capacity_as_stated": "75 ml",
+   "height_mm": 204,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/magnum/",
+   "source_urls": [
+    "https://rona.glass/collection/magnum/"
+   ]
+  },
+  {
+   "name": "Magnum Martini 280 ml",
+   "series": "Magnum",
+   "designer": null,
+   "model_code": "2911_280",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280 ml",
+   "height_mm": 179,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/magnum/",
+   "source_urls": [
+    "https://rona.glass/collection/magnum/"
+   ]
+  },
+  {
+   "name": "Mode Champagne saucer 425 ml",
+   "series": "Mode",
+   "designer": null,
+   "model_code": "7048_425",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 425,
+   "capacity_as_stated": "425 ml",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/mode/",
+   "source_urls": [
+    "https://rona.glass/collection/mode/"
+   ]
+  },
+  {
+   "name": "Mode Doub. Old Fashioned 410 ml",
+   "series": "Mode",
+   "designer": null,
+   "model_code": "7048_410",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 410,
+   "capacity_as_stated": "410 ml",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/mode/",
+   "source_urls": [
+    "https://rona.glass/collection/mode/"
+   ]
+  },
+  {
+   "name": "Mode Hi Ball 430 ml",
+   "series": "Mode",
+   "designer": null,
+   "model_code": "7048_430",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 430,
+   "capacity_as_stated": "430 ml",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/mode/",
+   "source_urls": [
+    "https://rona.glass/collection/mode/"
+   ]
+  },
+  {
+   "name": "Mode Shot glass 90 ml",
+   "series": "Mode",
+   "designer": null,
+   "model_code": "7084_90",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 90,
+   "capacity_as_stated": "90 ml",
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/mode/",
+   "source_urls": [
+    "https://rona.glass/collection/mode/"
+   ]
+  },
+  {
+   "name": "Mondo Champagne saucer 280 ml",
+   "series": "Mondo",
+   "designer": null,
+   "model_code": "6200_280",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280 ml",
+   "height_mm": 144,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/mondo/",
+   "source_urls": [
+    "https://rona.glass/collection/mondo/"
+   ]
+  },
+  {
+   "name": "Mondo Cordial 60 ml",
+   "series": "Mondo",
+   "designer": null,
+   "model_code": "6200_60",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 60,
+   "capacity_as_stated": "60 ml",
+   "height_mm": 134,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/mondo/",
+   "source_urls": [
+    "https://rona.glass/collection/mondo/"
+   ]
+  },
+  {
+   "name": "Mondo Martini 180 ml",
+   "series": "Mondo",
+   "designer": null,
+   "model_code": "6200_180",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 180,
+   "capacity_as_stated": "180 ml",
+   "height_mm": 158,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/mondo/",
+   "source_urls": [
+    "https://rona.glass/collection/mondo/"
+   ]
+  },
+  {
+   "name": "Nectar Long drink 550 ml",
+   "series": "Nectar",
+   "designer": null,
+   "model_code": "4932_550",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "550 ml",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/nectar/",
+   "source_urls": [
+    "https://rona.glass/collection/nectar/"
+   ]
+  },
+  {
+   "name": "Nectar Whisky 350 ml",
+   "series": "Nectar",
+   "designer": null,
+   "model_code": "4932_350",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "350 ml",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/nectar/",
+   "source_urls": [
+    "https://rona.glass/collection/nectar/"
+   ]
+  },
+  {
+   "name": "Nectar Whisky 530 ml",
+   "series": "Nectar",
+   "designer": null,
+   "model_code": "4932_530",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 530,
+   "capacity_as_stated": "530 ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/nectar/",
+   "source_urls": [
+    "https://rona.glass/collection/nectar/"
+   ]
+  },
+  {
+   "name": "Nerea Champagne saucer 450 ml",
+   "series": "Nerea",
+   "designer": null,
+   "model_code": "64954_450",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "450 ml",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/nerea/",
+   "source_urls": [
+    "https://rona.glass/collection/nerea/"
+   ]
+  },
+  {
+   "name": "Nerea Cordial 130 ml",
+   "series": "Nerea",
+   "designer": null,
+   "model_code": "64954_130",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 130,
+   "capacity_as_stated": "130 ml",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/nerea/",
+   "source_urls": [
+    "https://rona.glass/collection/nerea/"
+   ]
+  },
+  {
+   "name": "Orbital Highball / Tumbler 510 ml",
+   "series": "Orbital",
+   "designer": null,
+   "model_code": "7252_510",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 510,
+   "capacity_as_stated": "510 ml",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/orbital/",
+   "source_urls": [
+    "https://rona.glass/collection/orbital/"
+   ]
+  },
+  {
+   "name": "Orbital Tumbler 460 ml",
+   "series": "Orbital",
+   "designer": null,
+   "model_code": "7252_460",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "460 ml",
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/orbital/",
+   "source_urls": [
+    "https://rona.glass/collection/orbital/"
+   ]
+  },
+  {
+   "name": "Polaris Highball / Tumbler 530 ml",
+   "series": "Polaris",
+   "designer": null,
+   "model_code": "7251_530",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 530,
+   "capacity_as_stated": "530 ml",
+   "height_mm": 135,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/polaris/",
+   "source_urls": [
+    "https://rona.glass/collection/polaris/"
+   ]
+  },
+  {
+   "name": "Polaris Tumbler 450 ml",
+   "series": "Polaris",
+   "designer": null,
+   "model_code": "7251_450",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "450 ml",
+   "height_mm": 95,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/polaris/",
+   "source_urls": [
+    "https://rona.glass/collection/polaris/"
+   ]
+  },
+  {
+   "name": "Prestige Cordial 95 ml",
+   "series": "Prestige",
+   "designer": null,
+   "model_code": "6339_95",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 95,
+   "capacity_as_stated": "95 ml",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/prestige/",
+   "source_urls": [
+    "https://rona.glass/collection/prestige/"
+   ]
+  },
+  {
+   "name": "Prestige Tumbler 330 ml",
+   "series": "Prestige",
+   "designer": null,
+   "model_code": "6339_330",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "330 ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/prestige/",
+   "source_urls": [
+    "https://rona.glass/collection/prestige/"
+   ]
+  },
+  {
+   "name": "Select Martini 240 ml",
+   "series": "Select",
+   "designer": null,
+   "model_code": "6051_240",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "240 ml",
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/select/",
+   "source_urls": [
+    "https://rona.glass/collection/select/"
+   ]
+  },
+  {
+   "name": "Sensual Cocktail 430 ml",
+   "series": "Sensual",
+   "designer": null,
+   "model_code": "62417_T_430",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 430,
+   "capacity_as_stated": "430 ml",
+   "height_mm": 82,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/sensual/",
+   "source_urls": [
+    "https://rona.glass/collection/sensual/"
+   ]
+  },
+  {
+   "name": "Sensual Long drink 580 ml",
+   "series": "Sensual",
+   "designer": null,
+   "model_code": "62417_T_580",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 580,
+   "capacity_as_stated": "580 ml",
+   "height_mm": 148,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/sensual/",
+   "source_urls": [
+    "https://rona.glass/collection/sensual/"
+   ]
+  },
+  {
+   "name": "Sensual Martini 440 ml",
+   "series": "Sensual",
+   "designer": null,
+   "model_code": "62417_T_440",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 440,
+   "capacity_as_stated": "440 ml",
+   "height_mm": 195,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/sensual/",
+   "source_urls": [
+    "https://rona.glass/collection/sensual/"
+   ]
+  },
+  {
+   "name": "Sensual Old Fashioned 590 ml",
+   "series": "Sensual",
+   "designer": null,
+   "model_code": "62417_T_590",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 590,
+   "capacity_as_stated": "590 ml",
+   "height_mm": 94,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/sensual/",
+   "source_urls": [
+    "https://rona.glass/collection/sensual/"
+   ]
+  },
+  {
+   "name": "Sensual Snifter 670 ml",
+   "series": "Sensual",
+   "designer": null,
+   "model_code": "62417_T_670",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 670,
+   "capacity_as_stated": "670 ml",
+   "height_mm": 173,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/sensual/",
+   "source_urls": [
+    "https://rona.glass/collection/sensual/"
+   ]
+  },
+  {
+   "name": "Solar Cocktail 400 ml",
+   "series": "Solar",
+   "designer": null,
+   "model_code": "4836_400",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "400 ml",
+   "height_mm": 93,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/solar/",
+   "source_urls": [
+    "https://rona.glass/collection/solar/"
+   ]
+  },
+  {
+   "name": "Solar Doub. Old Fashioned 330 ml",
+   "series": "Solar",
+   "designer": null,
+   "model_code": "4836_330",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "330 ml",
+   "height_mm": 105,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/solar/",
+   "source_urls": [
+    "https://rona.glass/collection/solar/"
+   ]
+  },
+  {
+   "name": "Solar Highball 360 ml",
+   "series": "Solar",
+   "designer": null,
+   "model_code": "4836_360",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "360 ml",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/solar/",
+   "source_urls": [
+    "https://rona.glass/collection/solar/"
+   ]
+  },
+  {
+   "name": "Solar Long drink 390 ml",
+   "series": "Solar",
+   "designer": null,
+   "model_code": "4836_390",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "390 ml",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/solar/",
+   "source_urls": [
+    "https://rona.glass/collection/solar/"
+   ]
+  },
+  {
+   "name": "Solar Old Fashioned 290 ml",
+   "series": "Solar",
+   "designer": null,
+   "model_code": "4836_290",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "290 ml",
+   "height_mm": 98,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/solar/",
+   "source_urls": [
+    "https://rona.glass/collection/solar/"
+   ]
+  },
+  {
+   "name": "Stellar Doub. Old Fashioned 390 ml",
+   "series": "Stellar",
+   "designer": null,
+   "model_code": "4232_N_390",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "390 ml",
+   "height_mm": 102,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/stellar/",
+   "source_urls": [
+    "https://rona.glass/collection/stellar/"
+   ]
+  },
+  {
+   "name": "Stellar Highball 440 ml",
+   "series": "Stellar",
+   "designer": null,
+   "model_code": "4232_N_440",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 440,
+   "capacity_as_stated": "440 ml",
+   "height_mm": 161,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/stellar/",
+   "source_urls": [
+    "https://rona.glass/collection/stellar/"
+   ]
+  },
+  {
+   "name": "Stellar Liqueur 70 ml",
+   "series": "Stellar",
+   "designer": null,
+   "model_code": "4232_N_70",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 70,
+   "capacity_as_stated": "70 ml",
+   "height_mm": 76,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/stellar/",
+   "source_urls": [
+    "https://rona.glass/collection/stellar/"
+   ]
+  },
+  {
+   "name": "Stellar Long drink 340 ml",
+   "series": "Stellar",
+   "designer": null,
+   "model_code": "4232_N_340",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "340 ml",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/stellar/",
+   "source_urls": [
+    "https://rona.glass/collection/stellar/"
+   ]
+  },
+  {
+   "name": "Stellar Old Fashioned 280 ml",
+   "series": "Stellar",
+   "designer": null,
+   "model_code": "4232_N_280",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "280 ml",
+   "height_mm": 88,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/stellar/",
+   "source_urls": [
+    "https://rona.glass/collection/stellar/"
+   ]
+  },
+  {
+   "name": "Stellar Shot glass 50 ml",
+   "series": "Stellar",
+   "designer": null,
+   "model_code": "4232_WN_50",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 50,
+   "capacity_as_stated": "50 ml",
+   "height_mm": 104,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/stellar/",
+   "source_urls": [
+    "https://rona.glass/collection/stellar/"
+   ]
+  },
+  {
+   "name": "Tribute Cuvée 340 ml",
+   "series": "Tribute",
+   "designer": "Erik Lorincz",
+   "model_code": "7792/1100/340",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "340 ml",
+   "height_mm": 170,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/tribute/",
+   "source_urls": [
+    "https://rona.glass/collection/tribute/",
+    "https://rona.glass/wp-content/uploads/2025/12/rona_tribute_collection_erik_lorincz_rgb.pdf#page=12",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=5"
+   ]
+  },
+  {
+   "name": "Tribute Frigus 195 ml",
+   "series": "Tribute",
+   "designer": "Erik Lorincz",
+   "model_code": "7792/0800/195",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 195,
+   "capacity_as_stated": "195 ml",
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/tribute/",
+   "source_urls": [
+    "https://rona.glass/collection/tribute/",
+    "https://rona.glass/wp-content/uploads/2025/12/rona_tribute_collection_erik_lorincz_rgb.pdf#page=11",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=5"
+   ]
+  },
+  {
+   "name": "Tribute Highball 345 ml",
+   "series": "Tribute",
+   "designer": "Erik Lorincz",
+   "model_code": "4232/1276/345",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 345,
+   "capacity_as_stated": "345 ml",
+   "height_mm": 125,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/tribute/",
+   "source_urls": [
+    "https://rona.glass/collection/tribute/",
+    "https://rona.glass/wp-content/uploads/2025/12/rona_tribute_collection_erik_lorincz_rgb.pdf#page=7",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=5"
+   ]
+  },
+  {
+   "name": "Tribute Rock glass 285 ml",
+   "series": "Tribute",
+   "designer": "Erik Lorincz",
+   "model_code": "4232/1676/285",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 285,
+   "capacity_as_stated": "285 ml",
+   "height_mm": 75,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/tribute/",
+   "source_urls": [
+    "https://rona.glass/collection/tribute/",
+    "https://rona.glass/wp-content/uploads/2025/12/rona_tribute_collection_erik_lorincz_rgb.pdf#page=8",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=5"
+   ]
+  },
+  {
+   "name": "Tribute Sazerac 285 ml",
+   "series": "Tribute",
+   "designer": "Erik Lorincz",
+   "model_code": "7792/0600/285",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 285,
+   "capacity_as_stated": "285 ml",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/tribute/",
+   "source_urls": [
+    "https://rona.glass/collection/tribute/",
+    "https://rona.glass/wp-content/uploads/2025/12/rona_tribute_collection_erik_lorincz_rgb.pdf#page=9",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=5"
+   ]
+  },
+  {
+   "name": "Tribute Secco 90 ml",
+   "series": "Tribute",
+   "designer": "Erik Lorincz",
+   "model_code": "7792/2800/90",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 90,
+   "capacity_as_stated": "90 ml",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/tribute/",
+   "source_urls": [
+    "https://rona.glass/collection/tribute/",
+    "https://rona.glass/wp-content/uploads/2025/12/rona_tribute_collection_erik_lorincz_rgb.pdf#page=10",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=5"
+   ]
+  },
+  {
+   "name": "Tribute UVA 550 ml",
+   "series": "Tribute",
+   "designer": "Erik Lorincz",
+   "model_code": "7805/0100/550",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "550 ml",
+   "height_mm": 220,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/tribute/",
+   "source_urls": [
+    "https://rona.glass/collection/tribute/",
+    "https://rona.glass/wp-content/uploads/2025/12/rona_tribute_collection_erik_lorincz_rgb.pdf#page=13",
+    "https://rona.glass/wp-content/uploads/2021/10/rona_2serve_book_en_26_27.pdf#page=5"
+   ]
+  },
+  {
+   "name": "Universal Champagne 290 ml",
+   "series": "Universal",
+   "designer": null,
+   "model_code": "6650/E_290",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "290 ml",
+   "height_mm": 221,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/universal/",
+   "source_urls": [
+    "https://rona.glass/collection/universal/"
+   ]
+  },
+  {
+   "name": "Universal Gin & Tonic 780 ml",
+   "series": "Universal",
+   "designer": null,
+   "model_code": "6558_780",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 780,
+   "capacity_as_stated": "780 ml",
+   "height_mm": 224,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/universal/",
+   "source_urls": [
+    "https://rona.glass/collection/universal/"
+   ]
+  },
+  {
+   "name": "Universal Grappa 100 ml",
+   "series": "Universal",
+   "designer": null,
+   "model_code": "6050_100",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 100,
+   "capacity_as_stated": "100 ml",
+   "height_mm": 185,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/universal/",
+   "source_urls": [
+    "https://rona.glass/collection/universal/"
+   ]
+  },
+  {
+   "name": "Universal Hurricane 530 ml",
+   "series": "Universal",
+   "designer": null,
+   "model_code": "7475_530",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 530,
+   "capacity_as_stated": "530 ml",
+   "height_mm": 207,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/universal/",
+   "source_urls": [
+    "https://rona.glass/collection/universal/"
+   ]
+  },
+  {
+   "name": "Universal Martini 210 ml",
+   "series": "Universal",
+   "designer": null,
+   "model_code": "6006_210",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 210,
+   "capacity_as_stated": "210 ml",
+   "height_mm": 183,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/universal/",
+   "source_urls": [
+    "https://rona.glass/collection/universal/"
+   ]
+  },
+  {
+   "name": "Universal Nick & Nora 140 ml",
+   "series": "Universal",
+   "designer": null,
+   "model_code": "7452_140",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 140,
+   "capacity_as_stated": "140 ml",
+   "height_mm": 120,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/universal/",
+   "source_urls": [
+    "https://rona.glass/collection/universal/"
+   ]
+  },
+  {
+   "name": "Universal Rum 220 ml",
+   "series": "Universal",
+   "designer": null,
+   "model_code": "7368_220",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "220 ml",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/universal/",
+   "source_urls": [
+    "https://rona.glass/collection/universal/"
+   ]
+  },
+  {
+   "name": "Universal Saucer 350 ml",
+   "series": "Universal",
+   "designer": null,
+   "model_code": "7062_350",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "350 ml",
+   "height_mm": 160,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/universal/",
+   "source_urls": [
+    "https://rona.glass/collection/universal/"
+   ]
+  },
+  {
+   "name": "Whiskey set Whiskey set 380 ml",
+   "series": "Whiskey set",
+   "designer": null,
+   "model_code": "65130_380",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "380 ml",
+   "height_mm": 85,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://rona.glass/collection/whiskey-set/",
+   "source_urls": [
+    "https://rona.glass/collection/whiskey-set/"
+   ]
+  }
+ ]
+}

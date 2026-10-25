@@ -1,15 +1,7 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 
-import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
-import { PageVisibilityScreen } from '@/components/screens/publishing/PageVisibilityScreen';
-
-/** Venue settings › Publishing › Who sees your page. */
+/** Old link: "Who sees your page" lives in Publishing's first section now. */
 export default function PageVisibilityRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  return (
-    <VenueBrandProvider barId={id}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <PageVisibilityScreen barId={id} />
-    </VenueBrandProvider>
-  );
+  return <Redirect href={`/settings/bar/${id}/publishing`} />;
 }

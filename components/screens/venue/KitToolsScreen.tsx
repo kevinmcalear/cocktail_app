@@ -1,64 +1,107 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption } from '@/components/ds';
-import { RowDivider, SettingsSection, SwitchRow } from '@/components/screens/settings/SettingsParts';
-import { space } from '@/constants/tokens';
-import { useBarKit, useSetTools } from '@/hooks/useBarKit';
+import { Body, Caption, EquipmentThumb, useDs } from '@/components/ds';
+import { KitItemPage } from '@/components/screens/kit/KitItemPage';
+import { KitList } from '@/components/screens/kit/KitList';
+import { KitPage, useCloseKitItem, useOpenKitItem } from '@/components/screens/kit/KitPage';
+import { ToolSheet } from '@/components/screens/kit/ToolSheet';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { radius } from '@/constants/tokens';
+import { useBarKit, useRemoveTool, type KitRow } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
-import { useKit } from '@/hooks/useKit';
-import { EQUIPMENT, equipmentById } from '@/lib/techniques/equipment';
-import { toolGroups } from '@/lib/venueKit';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { equipmentById } from '@/lib/techniques/equipment';
+import { kitLine, kitSourceLine, TOOL_LOCATION_LABEL, toolName } from '@/lib/venueKit';
 
-import { VenueSubPage } from './VenueSubPage';
+const where = (t: KitRow) => (t.location === 'bar' || t.location === 'prep' ? TOOL_LOCATION_LABEL[t.location] : null);
 
-/** Kit: Tools. What's behind the bar and in the prep kitchen, as switches. Anyone with Prep changes it. */
-export function KitToolsScreen({ barId }: { barId: string }) {
+/** "Prep kitchen · bought from Harbour Supply", "Behind the bar · 6". */
+const toolLine = (t: KitRow) => kitLine([where(t), t.count ? String(t.count) : null, kitSourceLine(t)]);
+
+/**
+ * Kit: Tools (Kit and ice, steps 1 to 3). What's behind the bar and in the
+ * prep kitchen, as a list with Add: ours by key or the venue's own by name,
+ * where each is and where it came from. Anyone with Prep changes it.
+ */
+export function KitToolsScreen({ barId, openId }: { barId: string; openId?: string | null }) {
   const canEdit = (useCapabilities(barId).data ?? []).includes('prep');
-  const { data: kit = [], isLoading, error } = useBarKit(barId);
-  const set = useSetTools(barId);
-  const home = useKit().owned;
-  const [all, setAll] = useState(false);
-  const have = kit.flatMap((r) => (r.key ? [r.key] : []));
-  const fromHome = home.filter((id) => !have.includes(id) && equipmentById(id));
+  const { data: tools = [], isLoading, error } = useBarKit(barId);
+  const open = useOpenKitItem(barId, 'tools', openId);
+  const [sheet, setSheet] = useState<{ tool: KitRow | null; startAt: 0 | 1 | 2 } | null>(null);
+  const opened = openId ? (tools.find((t) => t.id === openId) ?? null) : null;
+
+  const list = error ? (
+    <Body tone="muted">Couldn’t load the tools. Check your connection and try again.</Body>
+  ) : isLoading ? (
+    <Caption tone="muted">Loading…</Caption>
+  ) : (
+    <KitList
+      sections={[{ entries: tools.map((t) => ({ id: t.id, name: toolName(t), line: toolLine(t), thumb: <ToolThumb tool={t} /> })) }]}
+      openId={openId}
+      onOpen={open}
+      addLabel="Add a tool"
+      onAdd={canEdit ? () => setSheet({ tool: null, startAt: 0 }) : undefined}
+      empty="No tools listed yet."
+    />
+  );
 
   return (
-    <VenueSubPage barId={barId} title="Tools" intro="What’s behind the bar and in the prep kitchen. Make mode checks a house prep against it and says which tool you don’t have.">
-      {isLoading ? <Caption tone="muted">Loading…</Caption> : null}
-      {error ? <Body tone="muted">Couldn’t load the tools. Check your connection and try again.</Body> : null}
-      {canEdit && fromHome.length ? (
-        <Button
-          label={`Start from your own kit (${fromHome.length} ${fromHome.length === 1 ? 'tool' : 'tools'} at home)`}
-          variant="ghost"
-          size="sm"
-          onPress={() => set.mutate({ ids: fromHome, on: true })}
-          style={styles.start}
-        />
-      ) : null}
-      {!isLoading && !error
-        ? toolGroups(have, all).map((g) => (
-            <SettingsSection key={g.title} title={g.title}>
-              {g.ids.map((id, i) => {
-                const tool = equipmentById(id)!;
-                return (
-                  <View key={id}>
-                    {i > 0 ? <RowDivider /> : null}
-                    <SwitchRow label={tool.name} detail={tool.what} value={have.includes(id)} disabled={!canEdit} onValueChange={(on) => set.mutate({ ids: [id], on })} />
-                  </View>
-                );
-              })}
-            </SettingsSection>
-          ))
-        : null}
-      {set.error ? <Caption tone="accent">Couldn’t save that. Check your connection and try again.</Caption> : null}
-      {!isLoading && !error ? (
-        <Button label={all ? 'Fewer tools' : `All ${EQUIPMENT.length} tools`} variant="ghost" size="sm" onPress={() => setAll(!all)} style={styles.start} />
-      ) : null}
-      {!canEdit ? <Caption tone="muted">You can look, but changing the kit needs Prep at this venue.</Caption> : null}
-    </VenueSubPage>
+    <>
+      <KitPage
+        barId={barId}
+        kind="tools"
+        title="Tools"
+        intro="What’s behind the bar and in the prep kitchen. Drinks, preps and ice recipes are checked against it."
+        openId={openId}
+        openName={opened ? toolName(opened) : null}
+        loading={isLoading}
+        failed={!!error}
+        list={list}
+        item={opened ? <ToolPage barId={barId} tool={opened} canEdit={canEdit} onChange={(startAt) => setSheet({ tool: opened, startAt })} /> : null}
+      />
+      <ToolSheet barId={barId} visible={!!sheet} tool={sheet?.tool} startAt={sheet?.startAt} onClose={() => setSheet(null)} />
+    </>
+  );
+}
+
+/** Ours drawn; the venue's own a plain mark. */
+function ToolThumb({ tool, size = 48 }: { tool: KitRow; size?: number }) {
+  const ds = useDs();
+  if (tool.key && equipmentById(tool.key)) return <EquipmentThumb id={tool.key} name={toolName(tool)} size={size} />;
+  return (
+    <View aria-hidden style={[styles.own, { width: size, height: size, backgroundColor: ds.c.paper }]}>
+      <IconSymbol name="hammer.fill" size={size / 2.4} color={ds.c.muted} />
+    </View>
+  );
+}
+
+/** One tool, opened (step 2): where it is and where it came from. */
+function ToolPage({ barId, tool, canEdit, onChange }: { barId: string; tool: KitRow; canEdit: boolean; onChange: (startAt: 0 | 1 | 2) => void }) {
+  const wide = useIsWideWeb();
+  const close = useCloseKitItem(barId, 'tools');
+  const remove = useRemoveTool(barId);
+  const ours = tool.key ? equipmentById(tool.key) : undefined;
+  const change = (at: 0 | 1 | 2) => (canEdit ? () => onChange(at) : undefined);
+  return (
+    <KitItemPage
+      kind="Tools"
+      name={toolName(tool)}
+      showTitle={wide}
+      thumb={<ToolThumb tool={tool} size={72} />}
+      facts={[
+        ...(ours ? [{ label: 'What it does', value: ours.what }] : []),
+        { label: 'Where it is', value: [where(tool), tool.count ? `${tool.count} of them` : null].filter(Boolean).join(' · ') || 'Not said yet', onChange: change(2) },
+        { label: 'Where it comes from', value: kitSourceLine(tool) || 'Not said yet', onChange: change(1) },
+      ]}
+      onEdit={change(0)}
+      onRemove={canEdit ? () => remove.mutate(tool.id, { onSuccess: close }) : undefined}
+      removing={remove.isPending}
+      error={remove.error ? 'Couldn’t remove it. Check your connection and try again.' : null}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  start: { alignSelf: 'flex-start', marginVertical: -space.xs },
+  own: { borderRadius: radius.control, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
 });

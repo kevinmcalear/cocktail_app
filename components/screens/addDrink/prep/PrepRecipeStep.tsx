@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Caption, IngredientThumb, PressableScale, Spec, useDs } from '@/components/ds';
@@ -7,13 +7,14 @@ import { Choice } from '@/components/screens/batch/BatchParts';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
-import { MEASURE_UNITS, partsText, prepAmounts, prepYield, slotMessage, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
-import { prepShares } from '@/lib/prepShares';
+import { MEASURE_UNITS, partsText, prepAmounts, prepSummary, prepYield, slotMessage, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
+import { capitalizeFirst } from '@/lib/stringUtils';
 
 import { IngredientSearch, type CatalogIngredient } from '../IngredientSearch';
 import { WizardChip } from '../WizardChrome';
 import { InDrink, type InDrinkPour } from './InDrink';
+import { NumberField, Shares } from './RecipeBits';
 
 interface PrepRecipeStepProps {
   draft: PrepDraft;
@@ -24,6 +25,10 @@ interface PrepRecipeStepProps {
   aliases?: readonly IngredientAlias[];
   /** The drink's pour of it, for "In Salty Boy 22.5 ml" and how many a bottle makes. */
   inDrink?: InDrinkPour;
+  /** Make a line in-house too, one level down (make-anything-steps-2, step 8): its key, once it's in the recipe, and the lines as they were if it was just added or renamed. */
+  onMake?: (key: string, before?: PrepDraftLine[]) => void;
+  /** Under a line: its own recipe, open in place on the desktop page. */
+  below?: (line: PrepDraftLine) => ReactNode;
 }
 
 const VIEWS = [
@@ -47,7 +52,7 @@ export function RecipeView({ value, onChange }: { value: RecipeViewKind; onChang
  * as "Pick the spirit" and has to be picked or taken out before the prep
  * can be added.
  */
-export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink }: PrepRecipeStepProps) {
+export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink, onMake, below }: PrepRecipeStepProps) {
   const ds = useDs();
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [noteKey, setNoteKey] = useState<string | null>(null);
@@ -67,6 +72,14 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
     const nextBase = l.key === draft.baseKey ? lines.find((x) => x.parts !== null) : null;
     set({ lines, ...(nextBase ? { baseKey: nextBase.key, baseAmount: Math.round(((amounts.find((a) => a.line.key === nextBase.key)?.amount ?? 100) * 10)) / 10 } : null) });
   };
+  // A new line made in-house: in the recipe first, then its own steps one level down.
+  const makeNew = onMake
+    ? (name: string) => {
+        const key = `n${Date.now().toString(36)}`;
+        set({ lines: [...draft.lines, { key, id: null, name: capitalizeFirst(name), parts: null, unit: 'g', amount: '' }] });
+        onMake(key, draft.lines);
+      }
+    : undefined;
   const step = draft.baseAmount >= 100 ? 50 : 10;
   const search = { ingredients, aliases };
   // As measured: the base's amount is the batch's; another part follows from it; a line of its own keeps what's typed. An emptied part waits for a number.
@@ -108,15 +121,38 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
             ) : null;
           return l.key === swapKey ? (
             <View key={l.key} style={[styles.swap, { borderBottomColor: ds.c.line }]}>
-              <IngredientSearch {...search} label={l.slot ? `Pick the ${l.slot}` : `Swap ${l.name} for…`} autoFocus onCancel={() => setSwapKey(null)} onPick={(p) => { change(l.key, { id: p.id, name: p.name, slot: undefined }); setSwapKey(null); }} />
+              <IngredientSearch
+                {...search}
+                label={l.slot ? `Pick the ${l.slot}` : `Swap ${l.name} for…`}
+                autoFocus
+                onCancel={() => setSwapKey(null)}
+                onPick={(p) => {
+                  change(l.key, { id: p.id, name: p.name, slot: undefined, prep: undefined });
+                  setSwapKey(null);
+                }}
+                onMake={
+                  onMake
+                    ? (name) => {
+                        change(l.key, { id: null, name: capitalizeFirst(name), slot: undefined });
+                        setSwapKey(null);
+                        onMake(l.key, draft.lines);
+                      }
+                    : undefined
+                }
+              />
             </View>
           ) : (
             <View key={l.key} role="listitem" style={[styles.item, { borderBottomColor: ds.c.line }]}>
               <View style={styles.line}>
                 <IngredientThumb id={l.id} name={l.name} size={36} />
                 <View style={styles.name}>
-                  <PressableScale accessibilityLabel={l.slot ? `Pick the ${l.slot}` : `${l.name}. Swap it`} onPress={() => setSwapKey(l.key)} style={styles.swapName}>
+                  <PressableScale
+                    accessibilityLabel={l.slot ? `Pick the ${l.slot}` : l.prep && onMake ? `${l.name}, made in-house. Open its recipe` : `${l.name}. Swap it`}
+                    onPress={() => (l.prep && onMake ? onMake(l.key) : setSwapKey(l.key))}
+                    style={styles.swapName}
+                  >
                     <Body numberOfLines={3} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
+                    {l.prep ? <Caption tone="accent">{`Made in-house · ${prepSummary(l.prep)}`}</Caption> : null}
                     {isBase ? <Caption tone="accent">{view === 'amounts' ? 'The base' : 'The base, everything follows it'}</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'amounts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
                   </PressableScale>
                   {l.slot ? null : noteKey === l.key ? (
@@ -174,12 +210,14 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                 </PressableScale>
               </View>
               {units}
+              {below?.(l)}
             </View>
           );
         })}
       </View>
       {waiting ? <Caption tone="accent">{waiting}</Caption> : null}
-      <IngredientSearch {...search} label="Add an ingredient" onPick={(p) => set({ lines: [...draft.lines, { key: `n${Date.now().toString(36)}`, id: p.id, name: p.name, parts: null, unit: 'g', amount: '' }] })} />
+      <IngredientSearch {...search} label="Add an ingredient" onPick={(p) => set({ lines: [...draft.lines, { key: `n${Date.now().toString(36)}`, id: p.id, name: p.name, parts: null, unit: 'g', amount: '' }] })} onMake={makeNew} />
+      {onMake ? <Caption tone="muted">Any line here can be made in-house too: it steps in one more level.</Caption> : null}
       <View style={styles.facts}>
         <View style={[styles.fact, { backgroundColor: ds.c.raised }]}>
           <Caption tone="muted">Makes about</Caption>
@@ -224,49 +262,8 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
   );
 }
 
-/** Each line's share of the recipe as one segmented bar, in the colours it's drawn in. */
-function Shares({ draft }: { draft: PrepDraft }) {
-  const shares = prepShares(draft);
-  if (shares.length < 2) return null;
-  return (
-    <View aria-label={`In it: ${shares.map((s) => `${s.name} ${Math.round(s.share * 100)}%`).join(', ')}`} style={styles.shares}>
-      {shares.map((s) => (
-        <View key={s.key} style={[styles.share, { flexGrow: s.share, backgroundColor: s.hex }]} />
-      ))}
-    </View>
-  );
-}
-
-/** A small number field (parts, or a line's own amount). */
-function NumberField({ label, value, onChange, suffix, placeholder }: { label: string; value: string; onChange: (v: number) => void; suffix?: string; placeholder?: string }) {
-  const ds = useDs();
-  const [text, setText] = useState<string | null>(null);
-  return (
-    <View style={[styles.box, { backgroundColor: ds.c.raised }]}>
-      <TextInput
-        aria-label={label}
-        value={text ?? value}
-        placeholder={placeholder}
-        placeholderTextColor={ds.c.muted}
-        keyboardType="decimal-pad"
-        onChangeText={(t) => {
-          setText(t);
-          const v = parseFloat(t.replace(',', '.'));
-          if (!Number.isNaN(v)) onChange(v);
-          else if (!t.trim()) onChange(0);
-        }}
-        onBlur={() => setText(null)}
-        style={[styles.input, type.spec, { fontFamily: fontFamilies.mono, color: ds.c.ink }]}
-      />
-      {suffix ? <Caption tone="muted" style={styles.suffix}>{suffix}</Caption> : null}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   stack: { gap: space.md },
-  shares: { flexDirection: 'row', gap: 2, height: space.sm, borderRadius: radius.mark, overflow: 'hidden' },
-  share: { flexBasis: 0 },
   item: { borderBottomWidth: StyleSheet.hairlineWidth },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: layout.minTapTarget + space.lg },
   units: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs + 2, paddingLeft: 36 + space.sm, paddingBottom: space.sm },
@@ -281,8 +278,6 @@ const styles = StyleSheet.create({
   box: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, minHeight: 40, paddingHorizontal: space.xs },
   tap: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   own: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  input: { minWidth: 56, maxWidth: 80, textAlign: 'center', paddingVertical: space.xs },
-  suffix: { paddingRight: space.sm },
   unit: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   facts: { flexDirection: 'row', gap: space.sm },
   fact: { flex: 1, borderRadius: radius.control, padding: space.md, gap: 2 },

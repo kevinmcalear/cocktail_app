@@ -21,7 +21,7 @@ import { suggestAmount } from '@/lib/specDefaults';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { CreditsStep } from './CreditsStep';
-import { DeskCost, DeskDrinkCard, DeskMenuNote, DeskTaste } from './DrinkDeskRail';
+import { DeskCost, DeskDrinkCard, DeskKit, DeskMenuNote, DeskTaste } from './DrinkDeskRail';
 import { FinishStep } from './FinishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
@@ -30,8 +30,10 @@ import type { CatalogIngredient } from './IngredientSearch';
 import { IceStep } from './IceStep';
 import { PickStep } from './PickStep';
 import { PREP_CARD_ID } from './prep/PrepCard';
+import { drinkTrail, Trail } from './Trail';
 import { PublishStep } from './PublishStep';
 import { ReviewPhotos } from './ReviewPhotos';
+import { NearNameCard } from './NearNameCard';
 import { BracketField, SameNameCard, useSameNamePicks } from './SameNameCard';
 import { StartFromClassic } from './StartFromClassic';
 import type { LineStock } from './StockToggle';
@@ -103,6 +105,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
     currency: pricing?.currency ?? 'GBP',
   });
   const [finishOpen, setFinishOpen] = useState(false);
+  // A recipe being written under its line: the rail shows the kit its ways are checked against.
+  const [prepOpen, setPrepOpen] = useState(false);
   // A classic or a riff can bring garnishes in after the page opens: they show.
   const finishing = finishOpen || draft.garnishes.length > 0;
 
@@ -147,6 +151,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
 
   const look = sketchLook(p.drawn, p.barVariants, p.barIceKinds);
   const eyebrow = menu ? ['New drink for ' + menu, place?.section].filter(Boolean).join(' · ') : barId ? `New drink at ${p.venueName}` : 'New drink';
+  const trail = drinkTrail(draft.name, { menu, venueName: barId ? p.venueName : null, onClose: p.onClose });
   const saveLabel = p.saving ? 'Saving…' : menu ? `Add to ${menu}` : 'Save drink';
 
   return (
@@ -157,7 +162,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
       <View style={[styles.header, { borderBottomColor: ds.c.line }]}>
         <Button label={menu ?? 'Back'} icon="chevron.left" variant="secondary" onPress={p.onClose} accessibilityLabel={`Back to ${menu ?? 'where you were'}. Your draft is kept`} />
         <View style={styles.flex}>
-          <Eyebrow>{eyebrow}</Eyebrow>
+          {trail ? <Trail items={trail} /> : <Eyebrow>{eyebrow}</Eyebrow>}
         </View>
         {waitNote ? <Caption tone="muted">{waitNote}</Caption> : hasContent(draft) ? <Caption tone="muted">Draft saved</Caption> : null}
         <Button label={saveLabel} onPress={p.onSave} disabled={!p.canSave || p.saving} />
@@ -191,6 +196,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
               onDifferent={() => picks.different(p.atBar!, p.venueName, rename)}
             />
           ) : null}
+          <NearNameCard wide draft={draft} set={set} barId={p.barId} venueName={p.venueName} hidden={!!p.atBar || !!p.classic} />
           {p.classic && !asking && !(same?.as === 'different' && nameWaits(draft, null)) ? <StartFromClassic set={set} match={p.classic} /> : null}
           <Eyebrow>Ingredients</Eyebrow>
           <IngredientsStep
@@ -207,7 +213,9 @@ export function DrinkDesk(p: DrinkDeskProps) {
             lineDetail={lineDetail}
             lineBelow={lineBelow}
             onNewBottle={onNewBottle}
-            inlinePrep={{ venueName: barId ? p.venueName : null }}
+            inlinePrep={{ venueName: barId ? p.venueName : null, onOpen: setPrepOpen }}
+            bar={barId ? { id: barId, name: p.venueName } : null}
+            trail={trail}
             placeholder="Add an ingredient: “30 pommeau” works too"
           />
           <Row label="Method">
@@ -218,7 +226,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             <GlassStep compact draft={draft} set={set} options={p.glasses} barId={barId} barGlasses={p.barGlasses} barVariants={p.barVariants} suggested={p.guess.glass} />
           </Row>
           <Row label="Ice">
-            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.venueIce} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} tellUs={tellUsAbout} />
+            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.venueIce} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} barId={barId} tellUs={tellUsAbout} />
           </Row>
           <Row label="Finish">
             {finishing ? (
@@ -241,6 +249,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
         <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
           <Eyebrow>The drink, as you go</Eyebrow>
           <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
+          {prepOpen ? <DeskKit bar={barId ? { id: barId, name: p.venueName } : null} /> : null}
           <DeskTaste lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
           {canCost ? <DeskCost lines={costLines} pricing={pricing} price={draft.price ?? ''} onPrice={(price) => set({ price })} /> : null}
           <DeskMenuNote sectionId={p.menuSectionId} menu={menu} lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} />

@@ -1,0 +1,759 @@
+{
+ "maker": "riedel",
+ "models": [
+  {
+   "name": "Extreme Restaurant Cabernet",
+   "series": "Extreme Restaurant",
+   "designer": null,
+   "model_code": "045401298",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 247,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-extreme-restaurant-cabernet/045401298",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-extreme-restaurant-cabernet/045401298"
+   ]
+  },
+  {
+   "name": "Extreme Restaurant Oaked Chardonnay",
+   "series": "Extreme Restaurant",
+   "designer": null,
+   "model_code": "045401297",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 227,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-extreme-restaurant-oaked-chardonnay/045401297",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-extreme-restaurant-oaked-chardonnay/045401297"
+   ]
+  },
+  {
+   "name": "Extreme Restaurant Pinot Noir",
+   "series": "Extreme Restaurant",
+   "designer": null,
+   "model_code": "045401207",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 243,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-extreme-restaurant-pinot-noir/045401207",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-extreme-restaurant-pinot-noir/045401207"
+   ]
+  },
+  {
+   "name": "Extreme Restaurant Prosecco Superiore",
+   "series": "Extreme Restaurant",
+   "designer": null,
+   "model_code": "045401285",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 322,
+   "capacity_as_stated": "322 ml",
+   "height_mm": 222,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-extreme-restaurant-prosecco-superiore/045401285",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-extreme-restaurant-prosecco-superiore/045401285"
+   ]
+  },
+  {
+   "name": "Extreme Restaurant Riesling / Sauvignon Blanc",
+   "series": "Extreme Restaurant",
+   "designer": null,
+   "model_code": "045401205",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 240,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-extreme-restaurant-riesling-sauvignon-blanc/045401205",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-extreme-restaurant-riesling-sauvignon-blanc/045401205",
+    "https://www.riedel.com/en-gb/riedel-extreme-riesling/441100015",
+    "https://cdn.riedel.com/media/0a/d3/ed/1776917514/441100015_dimensions.99d96de6.png?ts=1776917514"
+   ]
+  },
+  {
+   "name": "Extreme Restaurant Rosé Champagne Glass / Rosé Wine",
+   "series": "Extreme Restaurant",
+   "designer": null,
+   "model_code": "045401255",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-extreme-restaurant-rose-champagne-glass-rose-wine/045401255",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-extreme-restaurant-rose-champagne-glass-rose-wine/045401255"
+   ]
+  },
+  {
+   "name": "Performance Restaurant Cabernet / Merlot",
+   "series": "Performance Restaurant",
+   "designer": null,
+   "model_code": "088400698",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-performance-restaurant-cabernet-merlot/088400698",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-performance-restaurant-cabernet-merlot/088400698"
+   ]
+  },
+  {
+   "name": "Performance Restaurant Champagne Glass",
+   "series": "Performance Restaurant",
+   "designer": null,
+   "model_code": "088400628",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 375,
+   "capacity_as_stated": "375 ml",
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-performance-restaurant-champagne-glass/088400628",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-performance-restaurant-champagne-glass/088400628"
+   ]
+  },
+  {
+   "name": "Performance Restaurant Chardonnay",
+   "series": "Performance Restaurant",
+   "designer": null,
+   "model_code": "088400697",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-performance-restaurant-chardonnay/088400697",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-performance-restaurant-chardonnay/088400697"
+   ]
+  },
+  {
+   "name": "Performance Restaurant Pinot Noir",
+   "series": "Performance Restaurant",
+   "designer": null,
+   "model_code": "088400667",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-performance-restaurant-pinot-noir/088400667",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-performance-restaurant-pinot-noir/088400667"
+   ]
+  },
+  {
+   "name": "Performance Restaurant Riesling",
+   "series": "Performance Restaurant",
+   "designer": null,
+   "model_code": "088400615",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 623,
+   "capacity_as_stated": "623 ml",
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-performance-restaurant-riesling/088400615",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-performance-restaurant-riesling/088400615"
+   ]
+  },
+  {
+   "name": "Performance Restaurant Sauvignon Blanc",
+   "series": "Performance Restaurant",
+   "designer": null,
+   "model_code": "088400633",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-performance-restaurant-sauvignon-blanc/088400633",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-performance-restaurant-sauvignon-blanc/088400633"
+   ]
+  },
+  {
+   "name": "Sommeliers Bordeaux Grand Cru",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "440090100",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 860,
+   "capacity_as_stated": "860 ml",
+   "height_mm": 270,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-bordeaux-grand-cru/440090100",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-bordeaux-grand-cru/440090100"
+   ]
+  },
+  {
+   "name": "Sommeliers Burgundy Grand Cru",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "440090116",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 1050,
+   "capacity_as_stated": "1050 ml",
+   "height_mm": 248,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-burgundy-grand-cru/440090116",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-burgundy-grand-cru/440090116"
+   ]
+  },
+  {
+   "name": "Sommeliers Champagne Wine Glass",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "440090158",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 445,
+   "capacity_as_stated": "445 ml",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-champagne-wine-glass/440090158",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-champagne-wine-glass/440090158"
+   ]
+  },
+  {
+   "name": "Sommeliers Hermitage",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "440090130",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 590,
+   "capacity_as_stated": "590 ml",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-hermitage/440090130",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-hermitage/440090130"
+   ]
+  },
+  {
+   "name": "Sommeliers Montrachet",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "440090107",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 520,
+   "capacity_as_stated": "520 ml",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-montrachet/440090107",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-montrachet/440090107"
+   ]
+  },
+  {
+   "name": "Sommeliers Rheingau",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "440090101",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 230,
+   "capacity_as_stated": "230 ml",
+   "height_mm": 206,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-rheingau/440090101",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-rheingau/440090101"
+   ]
+  },
+  {
+   "name": "Sommeliers Sauternes",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "440090155",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "340 ml",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-sauternes/440090155",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-sauternes/440090155"
+   ]
+  },
+  {
+   "name": "Sommeliers Vintage Champagne Glass",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "440090128",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "330 ml",
+   "height_mm": 245,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-vintage-champagne-glass/440090128",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-vintage-champagne-glass/440090128"
+   ]
+  },
+  {
+   "name": "Sommeliers Vintage Port",
+   "series": "Sommeliers",
+   "designer": null,
+   "model_code": "440090160",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 172,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-sommeliers-vintage-port/440090160",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-sommeliers-vintage-port/440090160"
+   ]
+  },
+  {
+   "name": "Veloce Restaurant Cabernet / Merlot",
+   "series": "Veloce Restaurant",
+   "designer": null,
+   "model_code": "033000698",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 247,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veloce-restaurant-cabernet-merlot/033000698",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veloce-restaurant-cabernet-merlot/033000698"
+   ]
+  },
+  {
+   "name": "Veloce Restaurant Champagne Wine Glass",
+   "series": "Veloce Restaurant",
+   "designer": null,
+   "model_code": "033000628",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 247,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veloce-restaurant-champagne-wine-glass/033000628",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veloce-restaurant-champagne-wine-glass/033000628"
+   ]
+  },
+  {
+   "name": "Veloce Restaurant Chardonnay",
+   "series": "Veloce Restaurant",
+   "designer": null,
+   "model_code": "033000697",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 690,
+   "capacity_as_stated": "690 ml",
+   "height_mm": 247,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veloce-restaurant-chardonnay/033000697",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veloce-restaurant-chardonnay/033000697"
+   ]
+  },
+  {
+   "name": "Veloce Restaurant Pinot Noir / Nebbiolo",
+   "series": "Veloce Restaurant",
+   "designer": null,
+   "model_code": "033000607",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 763,
+   "capacity_as_stated": "763 ml / 26,91 US fl. oz. full capacity",
+   "height_mm": 247,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veloce-restaurant-pinot-noir-nebbiolo/033000607",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veloce-restaurant-pinot-noir-nebbiolo/033000607",
+    "https://www.riedel.com/en-gb/riedel-veloce-pinot-noir-nebbiolo/633000007",
+    "https://cdn.riedel.com/media/49/f2/0f/1792512741/media_633000007_dimensions.4cc0c876.png?ts=1792512741"
+   ]
+  },
+  {
+   "name": "Veloce Restaurant Riesling",
+   "series": "Veloce Restaurant",
+   "designer": null,
+   "model_code": "033000615",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 570,
+   "capacity_as_stated": "570 ml",
+   "height_mm": 247,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.riedel.com/en-gb/riedel-veloce-restaurant-riesling/033000615",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veloce-restaurant-riesling/033000615"
+   ]
+  },
+  {
+   "name": "Veloce Restaurant Sauvignon Blanc",
+   "series": "Veloce Restaurant",
+   "designer": null,
+   "model_code": "033000633",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "347 ml / 12,24 US fl. oz. full capacity",
+   "height_mm": 247,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veloce-restaurant-sauvignon-blanc/033000633",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veloce-restaurant-sauvignon-blanc/033000633",
+    "https://www.riedel.com/en-gb/riedel-veloce-sauvignon-blanc/633000033",
+    "https://cdn.riedel.com/media/6c/fc/cf/1780373416/media_633000033_dimension.4093747d.png?ts=1780373416"
+   ]
+  },
+  {
+   "name": "Veritas Restaurant Cabernet / Merlot",
+   "series": "Veritas Restaurant",
+   "designer": null,
+   "model_code": "044900698",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 667,
+   "capacity_as_stated": "667 ml",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-restaurant-cabernet-merlot/044900698",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-restaurant-cabernet-merlot/044900698"
+   ]
+  },
+  {
+   "name": "Veritas Restaurant Champagne Wine Glass",
+   "series": "Veritas Restaurant",
+   "designer": null,
+   "model_code": "044900628",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 459,
+   "capacity_as_stated": "459 ml",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-restaurant-champagne-wine-glass/044900628",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-restaurant-champagne-wine-glass/044900628"
+   ]
+  },
+  {
+   "name": "Veritas Restaurant New World Pinot Noir / Nebbiolo / Rosé Champagne Glass",
+   "series": "Veritas Restaurant",
+   "designer": null,
+   "model_code": "044900667",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-restaurant-new-world-pinot-noir-nebbiolo-rose-champagne-glass/044900667",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-restaurant-new-world-pinot-noir-nebbiolo-rose-champagne-glass/044900667"
+   ]
+  },
+  {
+   "name": "Veritas Restaurant New World Shiraz",
+   "series": "Veritas Restaurant",
+   "designer": null,
+   "model_code": "044900630",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 709,
+   "capacity_as_stated": "709 ml",
+   "height_mm": 246,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-restaurant-new-world-shiraz/044900630",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-restaurant-new-world-shiraz/044900630"
+   ]
+  },
+  {
+   "name": "Veritas Restaurant Oaked Chardonnay",
+   "series": "Veritas Restaurant",
+   "designer": null,
+   "model_code": "044900697",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 217,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-restaurant-oaked-chardonnay/044900697",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-restaurant-oaked-chardonnay/044900697"
+   ]
+  },
+  {
+   "name": "Veritas Restaurant Old World Pinot Noir",
+   "series": "Veritas Restaurant",
+   "designer": null,
+   "model_code": "044900607",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 738,
+   "capacity_as_stated": "738 ml",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-restaurant-old-world-pinot-noir/044900607",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-restaurant-old-world-pinot-noir/044900607"
+   ]
+  },
+  {
+   "name": "Veritas Restaurant Riesling / Zinfandel",
+   "series": "Veritas Restaurant",
+   "designer": null,
+   "model_code": "044900615",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-restaurant-riesling-zinfandel/044900615",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-restaurant-riesling-zinfandel/044900615"
+   ]
+  },
+  {
+   "name": "Veritas Restaurant Sauvignon Blanc",
+   "series": "Veritas Restaurant",
+   "designer": null,
+   "model_code": "044900633",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-veritas-restaurant-sauvignon-blanc/044900633",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-veritas-restaurant-sauvignon-blanc/044900633"
+   ]
+  },
+  {
+   "name": "Vinum Bordeaux Grand Cru",
+   "series": "Vinum",
+   "designer": null,
+   "model_code": "641600000",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 265,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-bordeaux-grand-cru/641600000",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-bordeaux-grand-cru/641600000"
+   ]
+  },
+  {
+   "name": "Vinum Oaked Chardonnay (Montrachet)",
+   "series": "Vinum",
+   "designer": null,
+   "model_code": "641600097",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 640,
+   "capacity_as_stated": "640 ml",
+   "height_mm": 192,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-oaked-chardonnay-montrachet/641600097",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-oaked-chardonnay-montrachet/641600097"
+   ]
+  },
+  {
+   "name": "Vinum Port",
+   "series": "Vinum",
+   "designer": null,
+   "model_code": "641600060",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-port/641600060",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-port/641600060"
+   ]
+  },
+  {
+   "name": "Vinum Restaurant Cabernet Sauvignon / Merlot",
+   "series": "Vinum Restaurant",
+   "designer": null,
+   "model_code": "041600698",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 650,
+   "capacity_as_stated": "650 ml",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-restaurant-cabernet-sauvignon-merlot/041600698",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-restaurant-cabernet-sauvignon-merlot/041600698"
+   ]
+  },
+  {
+   "name": "Vinum Restaurant Cuvée Prestige",
+   "series": "Vinum Restaurant",
+   "designer": null,
+   "model_code": "041600648",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 218,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-restaurant-cuvee-prestige/041600648",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-restaurant-cuvee-prestige/041600648"
+   ]
+  },
+  {
+   "name": "Vinum Restaurant Pinot Noir (Burgundy Red)",
+   "series": "Vinum Restaurant",
+   "designer": null,
+   "model_code": "041600607",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 725,
+   "capacity_as_stated": "725 ml",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-restaurant-pinot-noir-burgundy-red/041600607",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-restaurant-pinot-noir-burgundy-red/041600607"
+   ]
+  },
+  {
+   "name": "Vinum Restaurant Riesling Grand Cru / Zinfandel",
+   "series": "Vinum Restaurant",
+   "designer": null,
+   "model_code": "041600615",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 404,
+   "capacity_as_stated": "404 ml",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-restaurant-riesling-grand-cru-zinfandel/041600615",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-restaurant-riesling-grand-cru-zinfandel/041600615"
+   ]
+  },
+  {
+   "name": "Vinum Restaurant Syrah / Shiraz",
+   "series": "Vinum Restaurant",
+   "designer": null,
+   "model_code": "041600630",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 692,
+   "capacity_as_stated": "692 ml",
+   "height_mm": 236,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-restaurant-syrah-shiraz/041600630",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-restaurant-syrah-shiraz/041600630"
+   ]
+  },
+  {
+   "name": "Vinum Restaurant Viognier / Chardonnay",
+   "series": "Vinum Restaurant",
+   "designer": null,
+   "model_code": "041600605",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "370 ml",
+   "height_mm": 198,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.riedel.com/en-gb/riedel-vinum-restaurant-viognier-chardonnay/041600605",
+   "source_urls": [
+    "https://www.riedel.com/en-gb/riedel-vinum-restaurant-viognier-chardonnay/041600605"
+   ]
+  }
+ ]
+}

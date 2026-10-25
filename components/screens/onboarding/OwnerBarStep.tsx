@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, Field } from '@/components/ds';
+import { NearPicks, splitNear } from '@/components/search/NearPicks';
 import { ResultRow } from '@/components/search/ResultRows';
 import { AddBarForm } from '@/components/screens/home/AddBar';
 import { space } from '@/constants/tokens';
@@ -27,26 +28,29 @@ export function OwnerFindStep({ onAdd, onSkip }: { onAdd: (typed: string) => voi
   const router = useRouter();
   const [search, setSearch] = useState('');
   const found = useClaimableBars(search);
-  const bars = found.data ?? [];
+  // Close names too ("caretakers cotage"), under "Did you mean".
+  const [bars, near] = splitNear(found.data ?? []);
   const searched = search.trim().length >= 2;
+  const row = (b: ClaimableBar) => (
+    <ResultRow
+      key={b.id}
+      title={b.display_name}
+      caption={barLine(b)}
+      avatar={{ uri: b.avatar_url, bar: { profileId: b.id } }}
+      badge={b.claimed ? undefined : 'Not claimed yet'}
+      tag={b.claimed ? 'Claimed' : undefined}
+      query={search}
+      onPress={() => router.push(`/p/${b.handle || b.id}?owner=1` as Href)}
+    />
+  );
   return (
     <SetupPage footer={<Button label="Not now" variant="ghost" onPress={onSkip} />}>
       <Field label="Bar name or street" icon="magnifyingglass" value={search} onChangeText={setSearch} placeholder="Little Rye, or Smith Street" autoCorrect={false} />
-      {bars.length ? (
+      {bars.length || near.length ? (
         <View style={styles.group}>
           <SetupHead>On Cocktail</SetupHead>
-          {bars.map((b) => (
-            <ResultRow
-              key={b.id}
-              title={b.display_name}
-              caption={barLine(b)}
-              avatar={{ uri: b.avatar_url, bar: { profileId: b.id } }}
-              badge={b.claimed ? undefined : 'Not claimed yet'}
-              tag={b.claimed ? 'Claimed' : undefined}
-              query={search}
-              onPress={() => router.push(`/p/${b.handle || b.id}?owner=1` as Href)}
-            />
-          ))}
+          {bars.map(row)}
+          <NearPicks found={bars.length > 0} near={near} render={row} />
         </View>
       ) : null}
       {searched && found.data?.length === 0 ? <Caption tone="muted">No bar on Cocktail by that name or street.</Caption> : null}

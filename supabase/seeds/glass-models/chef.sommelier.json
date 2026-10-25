@@ -1,0 +1,589 @@
+{
+ "maker": "chef.sommelier",
+ "models": [
+  {
+   "name": "Cristal d'Arques Architecte 10.75 oz. Rocks / Old Fashioned Glass",
+   "series": "Cristal d'Arques Architecte",
+   "designer": null,
+   "model_code": "Q4353",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 318,
+   "capacity_as_stated": "10.75 oz.",
+   "height_mm": 98.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-cristal-darques-architecte-10-75-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q4353.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-cristal-darques-architecte-10-75-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552Q4353.html"
+   ]
+  },
+  {
+   "name": "Cristal d'Arques Macassar 12 oz. Highball Glass",
+   "series": "Cristal d'Arques Macassar",
+   "designer": null,
+   "model_code": "Q4340",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-cristal-darques-macassar-12-oz-highball-glass-by-arc-cardinal-case/552Q4340.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-cristal-darques-macassar-12-oz-highball-glass-by-arc-cardinal-case/552Q4340.html"
+   ]
+  },
+  {
+   "name": "Cristal d'Arques Rendez-Vous 12 oz. Highball Glass",
+   "series": "Cristal d'Arques Rendez-Vous",
+   "designer": null,
+   "model_code": "Q4358",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 130.2,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-cristal-darques-rendez-vous-12-oz-highball-glass-by-arc-cardinal-case/552Q4358.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-cristal-darques-rendez-vous-12-oz-highball-glass-by-arc-cardinal-case/552Q4358.html"
+   ]
+  },
+  {
+   "name": "G0036 Primary 9 oz. Rocks / Old Fashioned Glass",
+   "series": "Primary",
+   "designer": null,
+   "model_code": "G0036",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-g0036-primary-9-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552G0036.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-g0036-primary-9-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552G0036.html"
+   ]
+  },
+  {
+   "name": "G3322 Primary 12 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Primary",
+   "designer": null,
+   "model_code": "G3322",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 101.6,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-g3322-primary-12-oz-double-rocks-old-fashioned-glass-by-arc-cardinal-case/552G3322.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-g3322-primary-12-oz-double-rocks-old-fashioned-glass-by-arc-cardinal-case/552G3322.html"
+   ]
+  },
+  {
+   "name": "G3367 Lima 11.75 oz. Rocks / Old Fashioned Glass",
+   "series": "Lima",
+   "designer": null,
+   "model_code": "G3367",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-g3367-lima-11-75-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552G3367.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-g3367-lima-11-75-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552G3367.html"
+   ]
+  },
+  {
+   "name": "G3368 Lima 12.75 oz. Highball Glass",
+   "series": "Lima",
+   "designer": null,
+   "model_code": "G3368",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 377,
+   "capacity_as_stated": "12.75 oz.",
+   "height_mm": 107.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-g3368-lima-12-75-oz-hi-ball-glass-by-arc-cardinal-case/552G3368.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-g3368-lima-12-75-oz-hi-ball-glass-by-arc-cardinal-case/552G3368.html"
+   ]
+  },
+  {
+   "name": "G3658 Cabernet Sheer 7.75 oz. Highball Glass",
+   "series": "Cabernet Sheer",
+   "designer": null,
+   "model_code": "G3658",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 111.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-g3658-cabernet-sheer-7-oz-hi-ball-glass-by-arc-cardinal-case/552G3658.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-g3658-cabernet-sheer-7-oz-hi-ball-glass-by-arc-cardinal-case/552G3658.html"
+   ]
+  },
+  {
+   "name": "G3659 Cabernet Sheer 7 oz. Rocks / Old Fashioned Glass",
+   "series": "Cabernet Sheer",
+   "designer": null,
+   "model_code": "G3659",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 69.8,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-g3659-cabernet-sheer-7-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552G3659.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-g3659-cabernet-sheer-7-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552G3659.html"
+   ]
+  },
+  {
+   "name": "G3666 Cabernet Sheer 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Cabernet Sheer",
+   "designer": null,
+   "model_code": "G3666",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-g3666-cabernet-sheer-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552G3666.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-g3666-cabernet-sheer-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552G3666.html"
+   ]
+  },
+  {
+   "name": "L2356 Lima 15.5 oz. Highball Glass",
+   "series": "Lima",
+   "designer": null,
+   "model_code": "L2356",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 458,
+   "capacity_as_stated": "15.5 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-l2356-lima-15-5-oz-hi-ball-glass-by-arc-cardinal-case/552L2356.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-l2356-lima-15-5-oz-hi-ball-glass-by-arc-cardinal-case/552L2356.html"
+   ]
+  },
+  {
+   "name": "L2370 Cabernet Sheer 12.5 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Cabernet Sheer",
+   "designer": null,
+   "model_code": "L2370",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-l2370-cabernet-sheer-12-5-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552L2370.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-l2370-cabernet-sheer-12-5-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552L2370.html"
+   ]
+  },
+  {
+   "name": "L3678 Sublym 8 oz. Coupe Glass",
+   "series": "Sublym",
+   "designer": null,
+   "model_code": "L3678",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 181,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-l3678-sublym-8-oz-coupe-cocktail-glass-by-arc-cardinal-case/552L3678.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-l3678-sublym-8-oz-coupe-cocktail-glass-by-arc-cardinal-case/552L3678.html"
+   ]
+  },
+  {
+   "name": "L5641 Sequence 7.75 oz. Coupe Glass",
+   "series": "Sequence",
+   "designer": null,
+   "model_code": "L5641",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 229,
+   "capacity_as_stated": "7.75 oz.",
+   "height_mm": 149.2,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-l5641-sequence-8-25-oz-coupe-cocktail-glass-by-arc-cardinal-case/552L5641.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-l5641-sequence-8-25-oz-coupe-cocktail-glass-by-arc-cardinal-case/552L5641.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/krysta_leaflet.pdf"
+   ]
+  },
+  {
+   "name": "L5754 Sequence 11.5 oz. Highball Glass",
+   "series": "Sequence",
+   "designer": null,
+   "model_code": "L5754",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-l5754-sequence-11-5-oz-hi-ball-glass-by-arc-cardinal-case/552L5754.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-l5754-sequence-11-5-oz-hi-ball-glass-by-arc-cardinal-case/552L5754.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/krysta_leaflet.pdf"
+   ]
+  },
+  {
+   "name": "L5756 Sequence 13.5 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Sequence",
+   "designer": null,
+   "model_code": "L5756",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-l5756-sequence-13-5-oz-double-old-fashioned-glass-by-arc-cardinal-case/552L5756.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-l5756-sequence-13-5-oz-double-old-fashioned-glass-by-arc-cardinal-case/552L5756.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/krysta_leaflet.pdf"
+   ]
+  },
+  {
+   "name": "L5757 Sequence 8.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Sequence",
+   "designer": null,
+   "model_code": "L5757",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-l5757-sequence-8-5-oz-rocks-glass-by-arc-cardinal-case/552L5757.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-l5757-sequence-8-5-oz-rocks-glass-by-arc-cardinal-case/552L5757.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/krysta_leaflet.pdf"
+   ]
+  },
+  {
+   "name": "L5758 Sequence 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Sequence",
+   "designer": null,
+   "model_code": "L5758",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 84.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-l5758-sequence-10-5-oz-rocks-glass-by-arc-cardinal-case/552L5758.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-l5758-sequence-10-5-oz-rocks-glass-by-arc-cardinal-case/552L5758.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/krysta_leaflet.pdf"
+   ]
+  },
+  {
+   "name": "L8677 Primary 13.5 oz. Highball Glass",
+   "series": "Primary",
+   "designer": null,
+   "model_code": "L8677",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 130.2,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-l8677-primary-13-5-oz-hi-ball-glass-by-arc-cardinal-case/552L8677.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-l8677-primary-13-5-oz-hi-ball-glass-by-arc-cardinal-case/552L8677.html"
+   ]
+  },
+  {
+   "name": "N0834 Macaron 13.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Macaron",
+   "designer": null,
+   "model_code": "N0834",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 101.6,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-n0834-macaron-13-5-oz-rocks-glass-by-arc-cardinal-case/552N0834.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-n0834-macaron-13-5-oz-rocks-glass-by-arc-cardinal-case/552N0834.html"
+   ]
+  },
+  {
+   "name": "N6374 Specialty 6 oz. Spirit Taster",
+   "series": "Specialty",
+   "designer": null,
+   "model_code": "N6374",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-n6374-6-oz-spirit-taster-by-arc-cardinal-case/552N6374.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-n6374-6-oz-spirit-taster-by-arc-cardinal-case/552N6374.html"
+   ]
+  },
+  {
+   "name": "N6815 Cabernet 10 oz. Champagne Saucer / Coupe Glass",
+   "series": "Cabernet",
+   "designer": null,
+   "model_code": "N6815",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-n6815-cabernet-10-oz-champagne-coupe-glass-by-arc-cardinal-case/552N6815.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-n6815-cabernet-10-oz-champagne-coupe-glass-by-arc-cardinal-case/552N6815.html"
+   ]
+  },
+  {
+   "name": "N6831 Cabernet 10 oz. Martini Glass",
+   "series": "Cabernet",
+   "designer": null,
+   "model_code": "N6831",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 190.5,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-n6831-cabernet-10-oz-martini-glass-by-arc-cardinal-case/552N6831.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-n6831-cabernet-10-oz-martini-glass-by-arc-cardinal-case/552N6831.html"
+   ]
+  },
+  {
+   "name": "N6887 Cabernet 7.5 oz. Martini Glass",
+   "series": "Cabernet",
+   "designer": null,
+   "model_code": "P3882",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-n6887-cabernet-7-5-oz-martini-glass-by-arc-cardinal-case/552P3882.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-n6887-cabernet-7-5-oz-martini-glass-by-arc-cardinal-case/552P3882.html"
+   ]
+  },
+  {
+   "name": "N8172 Specialty 24 oz. Brandy Glass",
+   "series": "Specialty",
+   "designer": null,
+   "model_code": "N8172",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 710,
+   "capacity_as_stated": "24 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-n8172-specialty-24-oz-brandy-glass-by-arc-cardinal-case/552N8172.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-n8172-specialty-24-oz-brandy-glass-by-arc-cardinal-case/552N8172.html"
+   ]
+  },
+  {
+   "name": "Sequence 5.25 oz. Nick and Nora Glass",
+   "series": "Sequence",
+   "designer": null,
+   "model_code": "Q3702",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 155,
+   "capacity_as_stated": "5.25 oz.",
+   "height_mm": 142.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-sequence-5-25-oz-nick-and-nora-glass-by-arc-cardinal-case/552Q3702.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-sequence-5-25-oz-nick-and-nora-glass-by-arc-cardinal-case/552Q3702.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/krysta_leaflet.pdf"
+   ]
+  },
+  {
+   "name": "Sequence 7 oz. Coupe Glass",
+   "series": "Sequence",
+   "designer": null,
+   "model_code": "Q7785",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-sequence-7-oz-coupe-glass-by-arc-cardinal-case/552Q7785.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-sequence-7-oz-coupe-glass-by-arc-cardinal-case/552Q7785.html"
+   ]
+  },
+  {
+   "name": "Symetrie 8 oz. Coupe Glass",
+   "series": "Symetrie",
+   "designer": null,
+   "model_code": "V1171",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 181,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-symetrie-8-oz-coupe-glass-by-arc-cardinal-case/552V1171.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-symetrie-8-oz-coupe-glass-by-arc-cardinal-case/552V1171.html"
+   ]
+  },
+  {
+   "name": "U1032 Open Up 10 oz. Warm Tumbler",
+   "series": "Open Up",
+   "designer": null,
+   "model_code": "U1032",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 85.7,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-u1032-10-oz-open-up-warm-tumbler-by-arc-cardinal-case/552U1032.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-u1032-10-oz-open-up-warm-tumbler-by-arc-cardinal-case/552U1032.html"
+   ]
+  },
+  {
+   "name": "U1033 Open Up 13.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Open Up",
+   "designer": null,
+   "model_code": "U1033",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-u1033-open-up-13-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552U1033.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-u1033-open-up-13-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552U1033.html"
+   ]
+  },
+  {
+   "name": "Zephyr 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Zephyr",
+   "designer": null,
+   "model_code": "FP373",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 73,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-zephyr-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552FP373.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-zephyr-10-5-oz-rocks-old-fashioned-glass-by-arc-cardinal-case/552FP373.html"
+   ]
+  },
+  {
+   "name": "Zephyr 12 oz. Highball Glass",
+   "series": "Zephyr",
+   "designer": null,
+   "model_code": "FP375",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-zephyr-12-oz-highball-glass-by-arc-cardinal-case/552FP375.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-zephyr-12-oz-highball-glass-by-arc-cardinal-case/552FP375.html"
+   ]
+  },
+  {
+   "name": "Zephyr 13 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Zephyr",
+   "designer": null,
+   "model_code": "FP374",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/chef-sommelier-zephyr-13-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552FP374.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/chef-sommelier-zephyr-13-oz-rocks-double-old-fashioned-glass-by-arc-cardinal-case/552FP374.html"
+   ]
+  },
+  {
+   "name": "Zephyr 7.5 oz. Coupe Glass",
+   "series": "Zephyr",
+   "designer": null,
+   "model_code": "FP303",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/arcoroc-moderne-7-oz-coupe-glass-by-arc-cardinal-case/552FP303.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/arcoroc-moderne-7-oz-coupe-glass-by-arc-cardinal-case/552FP303.html"
+   ]
+  }
+ ]
+}

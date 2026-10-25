@@ -7,7 +7,9 @@ import { renderWithTamagui } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
-const mockSave = jest.fn();
+// Add opens Kit's Add a glass sheet (components/screens/kit/GlassSheet.tsx, tested there): what it's opened with is under test.
+const mockSheet = jest.fn();
+jest.mock('@/components/screens/kit/GlassSheet', () => ({ GlassSheet: (props: unknown) => (mockSheet(props), null) }));
 let mockCaps: string[] = [];
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
@@ -17,7 +19,6 @@ const mockRocks ={ id: 'bg', glass: 'rocks', variant: null, is_default: true, ba
 jest.mock('@/hooks/useBarGlassware', () => ({
   useBarGlassware: () => ({ data: [mockRocks] }),
   useBarPageId: () => ({ data: 'page-1' }),
-  useSaveBarGlass: () => ({ mutate: mockSave, isPending: false, error: null }),
   barGlassFor: (rows: BarGlass[] | undefined, glass: string) => rows?.find((r) => r.glass === glass && r.is_default) ?? null,
 }));
 
@@ -29,7 +30,7 @@ function Step() {
 }
 
 beforeEach(() => {
-  mockSave.mockReset();
+  mockSheet.mockReset();
   mockPush.mockReset();
   mockCaps = ['prep'];
   useSettingsStore.setState({ glassesNotNow: [] });
@@ -45,7 +46,7 @@ describe('Is this one of your glasses?', () => {
     expect(screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel)).toEqual(['Rocks', 'Coupe', 'Nick & Nora', 'Martini', 'Highball']);
   });
 
-  test('a glass it has asks nothing; one it lacks is added in one tap', async () => {
+  test('a glass it has asks nothing; one it lacks opens the Add sheet on that shape, from the drink', async () => {
     await renderWithTamagui(<Step />);
     await fireEvent.press(screen.getByRole('radio', { name: 'Rocks' }));
     expect(asked()).toBeNull();
@@ -53,8 +54,9 @@ describe('Is this one of your glasses?', () => {
     await fireEvent.press(screen.getByRole('radio', { name: 'Coupe' }));
     expect(asked()).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Add to our glassware' }));
-    expect(mockSave.mock.calls[0][0]).toMatchObject({ glass: 'coupe', variant: null, name: null, is_default: true });
-    await act(() => mockSave.mock.calls[0][1].onSuccess());
+    const props = mockSheet.mock.calls.at(-1)[0];
+    expect(props).toMatchObject({ visible: true, barId: 'bar-1', pageId: 'page-1', initial: { glass: 'coupe', variant: null, name: null }, from: 'From the Paloma' });
+    await act(() => props.onSaved());
     expect(screen.getByText('Coupe is in your glassware.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Your glassware' }));
     expect(mockPush).toHaveBeenCalledWith('/settings/bar/bar-1/glassware');

@@ -4,8 +4,10 @@ import { View } from 'react-native';
 
 import { Body, Button, Caption, Chip, Field } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
+import { NearPicks } from '@/components/search/NearPicks';
 import { useApplySwap, useSpecCatalog, useSwapSource, useUndoSwap } from '@/hooks/useBulk';
 import { useVenueMenus } from '@/hooks/useMenus';
+import { useNearIngredients } from '@/hooks/useNearIngredients';
 import { plainDbMessage } from '@/lib/dbError';
 import { confirmAsync } from '@/lib/dialogs';
 import type { CatalogItem } from '@/lib/match';
@@ -35,6 +37,7 @@ function Picker({
   query,
   selected,
   results,
+  pool,
   onQuery,
   onPick,
   onClear,
@@ -43,10 +46,14 @@ function Picker({
   query: string;
   selected: Pick | null;
   results: CatalogItem[];
+  /** Everything it could pick, for "Did you mean" (NearPicks). */
+  pool: readonly CatalogItem[];
   onQuery: (value: string) => void;
   onPick: (item: CatalogItem) => void;
   onClear: () => void;
 }) {
+  const near = useNearIngredients(query, pool, { skip: !!selected || !query.trim(), shown: results });
+  const choice = (item: CatalogItem) => <Choice key={item.id} label={item.name} selected={false} onPress={() => onPick(item)} />;
   if (selected) {
     return (
       <View style={{ gap: space.sm }}>
@@ -58,9 +65,8 @@ function Picker({
   return (
     <View style={{ gap: space.sm }}>
       <Field label={label} value={query} onChangeText={onQuery} placeholder="Search ingredients" autoCapitalize="none" />
-      {results.map((item) => (
-        <Choice key={item.id} label={item.name} selected={false} onPress={() => onPick(item)} />
-      ))}
+      {results.map(choice)}
+      <NearPicks found={results.length > 0} near={near} render={choice} />
     </View>
   );
 }
@@ -70,6 +76,7 @@ export function SwapSheet({ barId, onClose }: { barId: string; onClose: () => vo
   const router = useRouter();
   const source = useSwapSource(barId);
   const { catalog } = useSpecCatalog();
+  const pool = useMemo(() => catalog.filter((item) => item.barId === barId || item.barId === null), [catalog, barId]);
   const menus = useVenueMenus(barId);
   const apply = useApplySwap();
   const undo = useUndoSwap();
@@ -155,6 +162,7 @@ export function SwapSheet({ barId, onClose }: { barId: string; onClose: () => vo
         query={findQuery}
         selected={find}
         results={search(findQuery, catalog, barId)}
+        pool={pool}
         onQuery={setFindQuery}
         onPick={(item) => {
           const next = pick(item);
@@ -169,7 +177,7 @@ export function SwapSheet({ barId, onClose }: { barId: string; onClose: () => vo
           <Chip label={`Anything that’s ${find.genericName ?? find.name}`} selected={mode === 'kind'} onPress={() => setMode('kind')} />
         </View>
       ) : null}
-      <Picker label="Replace with" query={replaceQuery} selected={replace} results={search(replaceQuery, catalog, barId)} onQuery={setReplaceQuery} onPick={(item) => setReplace(pick(item))} onClear={() => setReplace(null)} />
+      <Picker label="Replace with" query={replaceQuery} selected={replace} results={search(replaceQuery, catalog, barId)} pool={pool} onQuery={setReplaceQuery} onPick={(item) => setReplace(pick(item))} onClear={() => setReplace(null)} />
       {find && replace ? (
         <View role="radiogroup" accessibilityLabel="Which drinks" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
           <Chip label="Every drink here" selected={!onMenu} onPress={() => setOnMenu(false)} />
