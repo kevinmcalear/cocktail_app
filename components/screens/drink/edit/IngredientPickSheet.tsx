@@ -128,6 +128,8 @@ export function IngredientPickSheet({
         // The name without "house" unless that's one already ("House falernum" isn't Falernum): the wizard would only offer to use it.
         onMake={(name) => onNew(sameIngredient(houseName(name), ingredients) ? capitalizeFirst(name) : houseName(name), "prep")}
         onBottle={(name) => onNew(name, "product")}
+        ownVersion={false}
+        bottleHint="Add it as a bottle: what it is and who makes it, next"
       />
       {typing ? null : loading ? (
         <Body tone="muted">Loading ingredients…</Body>

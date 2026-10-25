@@ -57,8 +57,10 @@ export interface IngredientSearchProps {
   onBottle?: (name: string, pour?: TypedPour) => void;
   /** "Just add the name" for a prep: its recipe is written later, and the save reminds you. */
   onLater?: (name: string, pour?: TypedPour) => void;
-  /** A name that sounds made (an oil, a cordial) offers making it before any bottle. */
+  /** A name that sounds made (an oil, a cordial) offers making it before any bottle. Off `ownVersion` (the ingredient wizard can't share a name): Make only for a new name. */
   makeFirst?: boolean;
+  ownVersion?: boolean;
+  /** Under "A bottle you buy", when it isn't filled in under the line (the editor's ingredient wizard). */ bottleHint?: string;
   /** Under each found ingredient: "On your shelf" (these ids), else "In 14 drinks". Off by default (it asks the server). */
   captions?: boolean;
   shelf?: ReadonlySet<string>;
@@ -79,7 +81,7 @@ export interface IngredientSearchProps {
  * and steps into the house prep steps. Return takes the top hit.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands, onHouse } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true, bottleHint } = props;
   const ds = useDs();
   const [text, setQueryState] = useState('');
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
@@ -109,7 +111,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const prepLike = looksMadeInHouse(query);
   const kind = PREP_KINDS.find((k) => k.id === guessKind(query) && k.id !== 'other')?.name.toLowerCase() ?? null;
   const done = () => setQuery('');
-  const makeRow = onMake ? (
+  const makeRow = onMake && (ownVersion || !exact) ? (
     <ResultRow
       label={`Make “${q.charAt(0).toUpperCase()}${q.slice(1)}” in-house`}
       sub={exact ? 'Your own version: steps into its recipe, then back here' : 'A recipe of your own: steps into it, then back here'}
@@ -125,7 +127,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
     <ResultRow
       label="A bottle you buy"
       a11y={`Add “${Name}”, a bottle you buy`}
-      sub={`Add “${Name}” as a bottle, right here under the line`}
+      sub={bottleHint ?? `Add “${Name}” as a bottle, right here under the line`}
       icon="make"
       onPress={() => {
         onBottle(Name, pour ?? undefined);

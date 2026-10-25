@@ -100,7 +100,8 @@ export function readHouse<T extends IngredientRow & { generic_id?: string | null
 // "House", "homemade", "in-house", "house-made": the words a spec uses for one of its own.
 const HOUSE = /\b(?:in[- ]?house|house[- ]?made|home[- ]?made|house)\b/i;
 const LEADING_HOUSE = /^(?:(?:our|the)\s+)?(?:in[- ]?house|house[- ]?made|home[- ]?made|house)\s+/i;
-const TRAILING_HOUSE = /[\s,]*\(?(?:in[- ]?house|house[- ]?made|home[- ]?made)\)?$/i;
+// At the end: "(house)" in brackets, or "house-made" with or without them ("Orgeat, house-made").
+const TRAILING_HOUSE = /[\s,]*(?:\((?:in[- ]?house|house[- ]?made|home[- ]?made|house)\)|\b(?:in[- ]?house|house[- ]?made|home[- ]?made))$/i;
 
 /** The word that says a line is made here ("house" in "house miso banana liqueur"), lower case; null when none does. Make it in-house is then offered first (call 12). */
 export const houseWord = (name: string): string | null => name.match(HOUSE)?.[0].toLowerCase() ?? null;
