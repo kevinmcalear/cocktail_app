@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAVORITES_KEY } from '@/hooks/useFavorites';
 import { STUDY_PILE_KEY } from '@/hooks/useStudyPile';
 import { AI_CONSENT_KEY } from '@/lib/aiConsent';
@@ -7,8 +8,8 @@ import { asyncStoragePersister, queryClient } from '@/lib/react-query';
 import { useAppMode } from '@/store/useAppMode';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useBringIn } from '@/store/useBringIn';
+import { useDraftSyncStore } from '@/store/useDraftSyncStore';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
-import { useIngredientWizardStore } from '@/store/useIngredientWizardStore';
 import { useLastPlace } from '@/store/useLastPlace';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
@@ -31,8 +32,8 @@ export async function clearUserData(): Promise<void> {
   useRecentActivityStore.setState({ items: [] });
   useLastPlace.getState().clear();
   useAppMode.getState().forgetVenue();
-  useDrinkWizardStore.setState({ kept: {} });
-  useIngredientWizardStore.setState({ kept: {} });
+  useDrinkWizardStore.setState({ kept: {}, cleared: [] });
+  useDraftSyncStore.setState({ seen: [] });
   useBeerWineWizardStore.setState({ kept: {} });
   useVenueSetup.setState({ runs: {}, glasses: {} });
   useNoteDrafts.setState({ drafts: {} });
@@ -42,5 +43,7 @@ export async function clearUserData(): Promise<void> {
     deviceStore.removeItem(FAVORITES_KEY),
     deviceStore.removeItem(STUDY_PILE_KEY),
     deviceStore.removeItem(AI_CONSENT_KEY),
+    // The old step-by-step ingredient wizard's kept draft (gone since A bottle you buy).
+    AsyncStorage.removeItem('ingredient-wizard'),
   ]);
 }

@@ -11,4 +11,4 @@ export { draftSlot, sectionSlots } from '@/lib/wizardSlots';
  * until it's saved. The first change gives the draft its id (the drink's id
  * once saved, and its drawing's seed).
  */
-export const useDrinkWizardStore = createWizardStore<WizardDraft, WizardStep>('drink-wizard', EMPTY_DRAFT, 'name', (d) => (d.id ? d : { ...d, id: newDraftId() }));
+export const useDrinkWizardStore = createWizardStore<WizardDraft, WizardStep>('drink-wizard', EMPTY_DRAFT, 'name', (d) => (d.id ? d : { ...d, id: newDraftId() }), { tombstones: true });

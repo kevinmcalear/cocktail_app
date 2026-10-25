@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { glassSizeLabel } from '@/lib/glass';
+import { suggestGlassModels } from '@/lib/identifyGlassware';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
@@ -90,4 +91,9 @@ export function useDrinkGlassModel(itemId: string | null | undefined) {
       return (data as unknown as { glass_model: GlassModel | null } | null)?.glass_model ?? null;
     },
   });
+}
+
+/** "Snap the glass": reads a photo of it (one AI unit) and suggests the makers' glasses it could be. */
+export function useSnapGlass() {
+  return useMutation({ mutationFn: suggestGlassModels });
 }

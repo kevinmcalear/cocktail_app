@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, homeReach, madeRows, nearestFirst, nextBottle, toMakeGroups, wantCamera, wantPins, type HadMemory, type WantBar } from './collectionStages';
+import { beatCount, beenBars, dayShort, gapLabel, hadOutRows, homeReach, madeRows, menuRowShelf, nearestFirst, nextBottle, toMakeGroups, wantCamera, wantPins, type HadMemory, type WantBar } from './collectionStages';
 import { cameraFor } from './discoverMap';
 import type { HadDrink } from './hadDrinks';
 
@@ -19,6 +19,12 @@ assert.deepEqual(homeReach('signal', shelf), { kind: 'one', need: ['Cynar'] });
 assert.deepEqual(homeReach('bird', shelf), { kind: 'two', need: ['Campari', 'pineapple juice'] });
 assert.deepEqual(homeReach('flip', shelf), { kind: 'far' });
 assert.deepEqual(homeReach(null, shelf), { kind: 'far' });
+
+// --- a home menu row's end: Ready, Need 1 or 2 and which, or nothing ---
+assert.deepEqual(menuRowShelf('sour', shelf), { label: 'Ready', ready: true, need: [] });
+assert.deepEqual(menuRowShelf('martinez', shelf), { label: 'Need 1', ready: false, need: ['Cynar'] });
+assert.deepEqual(menuRowShelf('bird', shelf), { label: 'Need 2', ready: false, need: ['Campari', 'pineapple juice'] });
+assert.equal(menuRowShelf('flip', shelf), null);
 
 // --- the gap between your version and the bar's ---
 assert.equal(gapLabel(8.9, 8.6), '+0.3');

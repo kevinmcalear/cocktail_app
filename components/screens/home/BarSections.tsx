@@ -12,6 +12,7 @@ import { itemHref } from '@/lib/itemRoutes';
 import { EQUIPMENT, EQUIPMENT_KINDS, equipmentById } from '@/lib/techniques';
 
 import { AddTile, BarTile, TileGrid } from './BarTile';
+import { HomeKitLinks } from './HomeKitLinks';
 
 export type Jumpable = BarSection | 'kit';
 
@@ -200,6 +201,7 @@ export function KitSection({ owned, opens, cols, editing, onEdit, onToggle, onAd
       <PressableScale role="link" onPress={() => router.push('/equipment' as never)} style={styles.link}>
         <Caption tone="accent">What each piece is for</Caption>
       </PressableScale>
+      <HomeKitLinks />
     </View>
   );
 }

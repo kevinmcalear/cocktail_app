@@ -163,9 +163,9 @@ test('New opens the create sheet with the draft count, and each choice goes wher
   await fireEvent.press(screen.getByRole('button', { name: 'New' }));
   expect(screen.getByText('2')).toBeTruthy();
   expect(screen.getByText('Made at Caretakers, for its library')).toBeTruthy();
-  await fireEvent.press(screen.getByRole('link', { name: 'Ingredient or prep. A bottle, or something made in house' }));
+  await fireEvent.press(screen.getByRole('link', { name: 'Something you make. A batch, syrup, infusion, cordial: anything with a recipe' }));
   // Made at the venue you're in, not your home bar.
-  expect(mockPush).toHaveBeenLastCalledWith('/add-ingredient?barId=caretakers');
+  expect(mockPush).toHaveBeenLastCalledWith('/make-recipe?barId=caretakers');
 
   await fireEvent.press(screen.getByRole('button', { name: 'New' }));
   await fireEvent.press(screen.getByRole('link', { name: 'Drafts. Pick up where you left off' }));

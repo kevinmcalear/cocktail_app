@@ -9,6 +9,7 @@ import { balanceOf, fixesFor, tasteWord } from '@/lib/balance';
 import { formatPct, margin } from '@/lib/costing';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { menuNote } from '@/lib/menuNote';
+import { recipesToFinish } from '@/lib/prepKinds';
 import { formatMoney, priceMinor } from '@/lib/money';
 import type { DraftLook } from '@/lib/sketch/draft';
 import { useMakingKit } from '@/hooks/useBarKit';
@@ -114,6 +115,21 @@ export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly Wizar
 function tasteParts(lines: readonly WizardLine[], ingredients: readonly CatalogIngredient[]) {
   const byId = new Map(ingredients.map((i) => [i.id, i]));
   return lines.map((l) => ({ name: l.name, genericName: (l.id && byId.get(byId.get(l.id)?.generic_id ?? '')?.name) || null, amount: amountOf(l.amount), unit: l.unit || null }));
+}
+
+/** Recipes still to finish in the drink, down through the ones inside (make-anything-steps-1, step 4; steps-3, step 9), and the one open now. */
+export function DeskToFinish({ lines, making }: { lines: readonly WizardLine[]; making: string | null }) {
+  const left = recipesToFinish(lines).filter((t) => !(t.depth === 0 && t.name === making));
+  if (!left.length && !making) return null;
+  return (
+    <View style={styles.kit}>
+      <Eyebrow>Recipes to finish in this drink</Eyebrow>
+      {making ? <Caption>{`${making} · recipe being made`}</Caption> : null}
+      {left.map((t) => (
+        <Caption key={`${t.depth}:${t.name}`} tone="muted">{`${'  '.repeat(t.depth)}${t.name} · recipe to finish, ${t.at}`}</Caption>
+      ))}
+    </View>
+  );
 }
 
 /** While a recipe is written under its line (make-anything-steps-1, step 4, more to it): the kit its ways are checked against, and where to change it. */

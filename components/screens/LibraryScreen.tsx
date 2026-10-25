@@ -15,6 +15,7 @@ import { FeatureNewsLine } from '@/components/screens/library/FeatureNewsLine';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { FilterRow } from '@/components/screens/library/LibraryChips';
+import { useTileLines } from '@/components/screens/library/useTileLines';
 import { FILTER_DOCK, FilterDock, PinnedTitle, type FilterSet } from '@/components/screens/library/LibraryFilters';
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
@@ -27,7 +28,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDrinkLists } from '@/hooks/useDiscover';
-import { useDropdowns } from '@/hooks/useDropdowns';
+import { useKitShelves } from '@/hooks/useKitCheck';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { usePricedItemIds } from '@/hooks/usePricing';
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
@@ -37,9 +38,8 @@ import { venueContextIds } from '@/lib/barContextFilter';
 import { itemHref, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
 import { capitalize } from '@/lib/stringUtils';
 import { matchesQuery } from '@/lib/publicDrinks';
-import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, methodWord, parseShow, PREP_GROUPS, splitFilters, tileLine, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
+import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, parseShow, PREP_GROUPS, splitFilters, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
 import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
-import type { SearchItem } from '@/types/search';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 
 // The staff list drags to reorder, with gesture and animation code the rest of the
@@ -102,7 +102,6 @@ export function LibraryScreen() {
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
   const { data: menus } = useVenueMenus(activeId);
   const staff = useStaffList(activeId);
-  const { data: specs } = useDropdowns();
   const [now] = useState(() => Date.now());
   // The first round's first step points at the Old Fashioned.
   const startHere = useFirstRound().current?.key === 'house_spec';
@@ -110,6 +109,7 @@ export function LibraryScreen() {
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
   const shelves = useVenueShelves(activeId, published);
   const prepFacts = usePrepFacts(shelves.preps);
+  const kit = useKitShelves(activeId, published);
   const byMenu = useMemo(
     () => menuDrinks((menus ?? []).filter((m) => m.barId === activeId), now, params.menu ?? null),
     [menus, activeId, now, params.menu]
@@ -135,11 +135,13 @@ export function LibraryScreen() {
       'needs-price': canCost ? published.filter((i) => i.category === 'Ingredient' && !priced.has(i.id)) : [],
       batched: published.filter((i) => i.category === 'Cocktail' && BATCHED_STYLES.includes(i.serviceStyle ?? '')),
       ...shelves,
+      ready: kit.ready.filter((i) => !rnd.has(itemIdOf(i.id))),
+      needs: kit.needs.filter((i) => !rnd.has(itemIdOf(i.id))),
     };
     // Cocktails are All's cocktails: R&D trials stay out here too.
     for (const f of TYPE_FILTERS) out[f.value] = published.filter((i) => i.category === f.category && !rnd.has(itemIdOf(i.id)));
     return out;
-  }, [published, pricedIds, canCost, byMenu, shelves]);
+  }, [published, pricedIds, canCost, byMenu, shelves, kit]);
   const onNow = useMemo(() => new Set(byMenu.onNow), [byMenu]);
   const past = useMemo(() => new Set(byMenu.past), [byMenu]);
   // Preps by what was done to them (Syrups, Cordials...): the groups this venue has.
@@ -149,15 +151,7 @@ export function LibraryScreen() {
   const shown = inView.filter((i) => !q || matchesQuery(i, q)).sort((a, b) => a.name.localeCompare(b.name));
   const shownIds = useMemo(() => shown.map((i) => i.id), [shown]);
   const { data: classicList } = useDrinkLists(!!q);
-  // "Stirred · Coupe"; R&D adds the collection; beer and wine say what they are; preps what was done, yield and keeps.
-  const glassName = (i: SearchItem) => (i.glassware_id ? (specs?.glassware.find((g) => g.id === i.glassware_id)?.name ?? null) : null);
-  const rndOf = useMemo(() => new Map(byMenu.rndMenus.flatMap((m) => m.itemIds.map((id) => [id, m.name] as const))), [byMenu]);
-  const lineOf = (i: SearchItem): string | null => {
-    if (i.category === 'Ingredient') return prepFacts[i.id]?.line ?? null;
-    if (i.category === 'Beer' || i.category === 'Wine') return tileLine(i.category, glassName(i));
-    const method = i.method_id ? methodWord(specs?.methods.find((m) => m.id === i.method_id)?.name) : null;
-    return tileLine(method, glassName(i), show === 'rnd' ? rndOf.get(i.id) : null);
-  };
+  const { glassName, lineOf } = useTileLines({ show, rndMenus: byMenu.rndMenus, prepLine: (id) => prepFacts[id]?.line ?? null, needsOf: kit.needsOf });
   const count = (value: Show) => (value === 'staff' ? (staff.data?.length ?? 0) : lists[value].length);
   const groups = filterGroups(!!activeId, canCost, extras);
   const pick = (value: Show) => router.setParams({ show: value, menu: undefined, kind: undefined });

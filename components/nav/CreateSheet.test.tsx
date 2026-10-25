@@ -31,9 +31,10 @@ test('at a venue, what you make is the venue’s', async () => {
 
 test('at home, it is yours', async () => {
   mockMine = { venueId: null, canAdd: true, label: 'Your drinks' };
-  expect(await open('Ingredient or prep')).toBe('/add-ingredient');
+  expect(await open('A bottle you buy')).toBe('/add-ingredient');
+  expect(await open('Something you make')).toBe('/make-recipe');
   expect(screen.getByText('In your home bar')).toBeTruthy();
-  expect(screen.getByText('A night in: start fresh or from a saved menu')).toBeTruthy();
+  expect(screen.getByText('For your shelf, or to pour from')).toBeTruthy();
 });
 
 test('without the right to add at the venue, drinks lock with the role that opens them, and home is one tap away', async () => {

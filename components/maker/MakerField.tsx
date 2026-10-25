@@ -2,6 +2,7 @@ import { useDeferredValue } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Field, PressableScale, useDs } from '@/components/ds';
+import { NearPicks, splitNear } from '@/components/search/NearPicks';
 import { layout, radius, space } from '@/constants/tokens';
 import { useMakerSearch, type MakerRef } from '@/hooks/useMakers';
 
@@ -30,7 +31,21 @@ export function MakerField({ label, value, page, onChange, makes, placeholder, e
   const ds = useDs();
   const term = useDeferredValue(page ? '' : value);
   const { data: makers = [] } = useMakerSearch(term, makes);
-  const offered = term.trim().length >= 2 ? makers : [];
+  const [offered, near] = splitNear(term.trim().length >= 2 ? makers : []);
+  const row = (m: MakerRef, i: number) => (
+    <PressableScale
+      key={m.id}
+      role="button"
+      accessibilityLabel={`Link ${m.display_name}’s page`}
+      onPress={() => onChange(m.display_name, m)}
+      style={[styles.row, i ? { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth } : null]}
+    >
+      <Body numberOfLines={1} style={styles.flex}>
+        {m.display_name}
+      </Body>
+      <Caption tone="muted">{`@${m.handle}`}</Caption>
+    </PressableScale>
+  );
 
   return (
     <View style={styles.stack}>
@@ -48,23 +63,11 @@ export function MakerField({ label, value, page, onChange, makes, placeholder, e
           <Caption tone="muted" style={styles.flex}>{`${page.display_name} · maker’s page`}</Caption>
           <Button label="Unlink" variant="ghost" onPress={() => onChange(value, null)} />
         </View>
-      ) : offered.length ? (
+      ) : offered.length || near.length ? (
         <>
           <View role="list" aria-label="Makers with a page" style={[styles.list, { backgroundColor: ds.c.surface }]}>
-            {offered.map((m, i) => (
-              <PressableScale
-                key={m.id}
-                role="button"
-                accessibilityLabel={`Link ${m.display_name}’s page`}
-                onPress={() => onChange(m.display_name, m)}
-                style={[styles.row, i ? { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth } : null]}
-              >
-                <Body numberOfLines={1} style={styles.flex}>
-                  {m.display_name}
-                </Body>
-                <Caption tone="muted">{`@${m.handle}`}</Caption>
-              </PressableScale>
-            ))}
+            {offered.map(row)}
+            <NearPicks found={offered.length > 0} near={near} render={(m) => row(m, 1)} />
           </View>
           <Caption tone="muted">Pick a maker to link their page, or keep what you typed.</Caption>
         </>

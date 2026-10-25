@@ -8,7 +8,8 @@ import { supabase } from '@/lib/supabase';
 
 /**
  * The bars and bar menus a home bartender keeps in Collection: bars they
- * love (loved_bars) and menus they saved (saved_menu_editions). Both are
+ * love (loved_bars) and menus they saved (saved_menu_editions: a researched
+ * menu by edition, or a venue's own menu by menu id). Both are
  * private to them. Plain JSON (the query cache is persisted).
  */
 
@@ -34,7 +35,9 @@ export interface LovedBar {
 }
 
 export interface SavedMenu {
+  /** The menu's id on its bar page: an edition's, or a venue's own menu's (fromVenue). */
   editionId: string;
+  fromVenue: boolean;
   name: string;
   barId: string;
   barHandle: string | null;
@@ -64,6 +67,7 @@ interface LovedRow {
 
 type EditionCols = Pick<MenuEdition, 'id' | 'name' | 'year' | 'month' | 'end_year' | 'end_month' | 'is_current'>;
 interface SavedRow {
+  saved_at: string;
   edition: (EditionCols & { profile: { id: string; handle: string | null; display_name: string } | null }) | null;
 }
 
@@ -156,7 +160,7 @@ export function useSetLoveAlerts() {
   });
 }
 
-/** Bar menus you saved, latest first, with their drinks' ids. */
+/** Bar menus you saved, latest first, with their drinks' ids: researched menus and venues' own. */
 export function useSavedMenus() {
   const userId = useUserId();
   return useQuery({
@@ -164,29 +168,58 @@ export function useSavedMenus() {
     enabled: !!userId,
     staleTime: 60_000,
     queryFn: async (): Promise<SavedMenu[]> => {
-      const { data, error } = await supabase
-        .from('saved_menu_editions')
-        .select('edition:profile_menu_editions!edition_id(id, name, year, month, end_year, end_month, is_current, profile:profiles!profile_id(id, handle, display_name))')
-        .order('saved_at', { ascending: false });
+      const [{ data, error }, venue] = await Promise.all([
+        supabase
+          .from('saved_menu_editions')
+          .select('saved_at, edition:profile_menu_editions!edition_id(id, name, year, month, end_year, end_month, is_current, profile:profiles!profile_id(id, handle, display_name))')
+          .not('edition_id', 'is', null)
+          .order('saved_at', { ascending: false }),
+        // A venue's own menus, as their bar pages show them (a visitor can't read menus itself).
+        supabase.rpc('my_saved_venue_menus'),
+      ]);
       if (error) throw error;
-      const editions = ((data ?? []) as unknown as SavedRow[]).flatMap((r) => (r.edition?.profile ? [r.edition] : []));
+      if (venue.error) throw venue.error;
+      const saved = ((data ?? []) as unknown as SavedRow[]).flatMap((r) => (r.edition?.profile ? [{ at: r.saved_at, e: r.edition }] : []));
+      const editions = saved.map((r) => r.e);
       const drinks = editions.length
         ? await supabase.from('profile_menu_edition_drinks').select('edition_id, item_id').in('edition_id', editions.map((e) => e.id)).order('sort_order')
         : { data: [], error: null };
       if (drinks.error) throw drinks.error;
       const rows = (drinks.data ?? []) as { edition_id: string; item_id: string }[];
+      const venueRows = (venue.data ?? []).map((v) => ({ ...v, drinkIds: ((v.drinks as { id: string }[] | null) ?? []).map((d) => d.id) }));
       // Names only unless some drink on it still shows its spec.
-      const withSpecs = new Set((await fetchPublished([...new Set(rows.map((r) => r.item_id))])).filter((p) => p.publishMode === 'spec').map((p) => p.id));
-      return editions.map((e) => ({
-        editionId: e.id,
-        name: e.name,
-        barId: e.profile!.id,
-        barHandle: e.profile!.handle,
-        barName: e.profile!.display_name,
-        dates: editionDates(e),
-        drinkIds: rows.filter((r) => r.edition_id === e.id).map((r) => r.item_id),
-        openSpecs: rows.some((r) => r.edition_id === e.id && withSpecs.has(r.item_id)),
-      }));
+      const allIds = [...new Set([...rows.map((r) => r.item_id), ...venueRows.flatMap((v) => v.drinkIds)])];
+      const withSpecs = new Set((await fetchPublished(allIds)).filter((p) => p.publishMode === 'spec').map((p) => p.id));
+      const out: (SavedMenu & { at: string })[] = [
+        ...saved.map(({ at, e }) => {
+          const ids = rows.filter((r) => r.edition_id === e.id).map((r) => r.item_id);
+          return {
+            at,
+            editionId: e.id,
+            fromVenue: false,
+            name: e.name,
+            barId: e.profile!.id,
+            barHandle: e.profile!.handle,
+            barName: e.profile!.display_name,
+            dates: editionDates(e),
+            drinkIds: ids,
+            openSpecs: ids.some((id) => withSpecs.has(id)),
+          };
+        }),
+        ...venueRows.map((v) => ({
+          at: v.saved_at,
+          editionId: v.menu_id,
+          fromVenue: true,
+          name: v.name,
+          barId: v.profile_id,
+          barHandle: v.handle,
+          barName: v.display_name,
+          dates: editionDates(v),
+          drinkIds: v.drinkIds,
+          openSpecs: v.drinkIds.some((id) => withSpecs.has(id)),
+        })),
+      ];
+      return out.sort((a, b) => b.at.localeCompare(a.at)).map(({ at: _at, ...m }) => m);
     },
   });
 }
@@ -195,10 +228,12 @@ export function useSavedMenus() {
 export function useSaveBarMenu() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ editionId, save }: { editionId: string; save: boolean }) => {
+    mutationFn: async ({ editionId, save, fromVenue = false }: { editionId: string; save: boolean; fromVenue?: boolean }) => {
+      // A venue's own menu is saved by its menu id (from_venue on the bar page).
+      const column = fromVenue ? 'menu_id' : 'edition_id';
       const { error } = save
-        ? await supabase.from('saved_menu_editions').upsert({ edition_id: editionId }, { onConflict: 'user_id,edition_id', ignoreDuplicates: true })
-        : await supabase.from('saved_menu_editions').delete().eq('edition_id', editionId);
+        ? await supabase.from('saved_menu_editions').upsert({ [column]: editionId }, { onConflict: `user_id,${column}`, ignoreDuplicates: true })
+        : await supabase.from('saved_menu_editions').delete().eq(column, editionId);
       if (error) throw new Error(error.message);
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['saved-menus'] }),
