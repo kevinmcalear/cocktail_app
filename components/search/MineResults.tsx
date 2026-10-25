@@ -167,7 +167,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
         />
       ) : null}
       {shows(show, 'people') ? <ResultGroup label="People" items={people} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={q} />} /> : null}
-      <NearResults query={q} found={found} shown={shownIds} yours={items} yoursCaption={mine.label} title="" miss={null} />
+      <NearResults query={q} found={found} shown={shownIds} yours={items} yoursCaption={mine.label} title="" miss={null} show={show} />
       {commands}
       {everywhere}
     </View>

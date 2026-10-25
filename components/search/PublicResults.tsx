@@ -287,7 +287,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
       {shown}
       {/* Did you mean (1B), or the close names last (1C). While the search is out, nothing is asked yet. */}
-      {results.isLoading && !found ? miss : <NearResults query={q} found={found} shown={[...drinks, ...bars, ...(people ?? []), ...classics, ...ingredients, ...yours].map((d) => d.id)} yours={head?.yours ?? (everywhere && atHome ? catalog.items : undefined)} yoursCaption={head?.yoursCaption} classics={everywhere ? classicList : undefined} server={{ area: area ?? ANYWHERE, kinds: everywhere ? NEAR_ALL : NEAR_AREA }} title={head?.title ?? `Nothing ${where} called “${q}”`} add={head?.add} matchLook={look} miss={<>{head?.card}{miss}</>} lead={head?.card} />}
+      {results.isLoading && !found ? miss : <NearResults query={q} found={found} shown={[...drinks, ...bars, ...(people ?? []), ...classics, ...ingredients, ...yours].map((d) => d.id)} yours={head?.yours ?? (everywhere && atHome ? catalog.items : undefined)} yoursCaption={head?.yoursCaption} classics={everywhere ? classicList : undefined} server={{ area: area ?? ANYWHERE, kinds: everywhere ? NEAR_ALL : NEAR_AREA }} title={head?.title ?? `Nothing ${where} called “${q}”`} add={head?.add} matchLook={look} show={show} miss={<>{head?.card}{miss}</>} lead={head?.card} />}
       {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
     </View>
   );

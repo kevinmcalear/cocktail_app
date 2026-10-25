@@ -147,7 +147,7 @@ export function LibraryScreen() {
   const inView = lists[show].filter((i) => !kind || prepFacts[i.id]?.group === kind.group);
   const shown = inView.filter((i) => !q || matchesQuery(i, q)).sort((a, b) => a.name.localeCompare(b.name));
   const shownIds = useMemo(() => shown.map((i) => i.id), [shown]);
-  const { data: classicList } = useDrinkLists();
+  const { data: classicList } = useDrinkLists(!!q);
   // "Stirred · Coupe"; R&D adds the collection; beer and wine say what they are; preps what was done, yield and keeps.
   const glassName = (i: SearchItem) => (i.glassware_id ? (specs?.glassware.find((g) => g.id === i.glassware_id)?.name ?? null) : null);
   const rndOf = useMemo(() => new Map(byMenu.rndMenus.flatMap((m) => m.itemIds.map((id) => [id, m.name] as const))), [byMenu]);

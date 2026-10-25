@@ -10,11 +10,13 @@ import { useSignedIn } from '@/ctx/AuthContext';
 import { useSaveSpelling, useSearchNear } from '@/hooks/useSearchNear';
 import { classicHit, mergeNear, nearIn, nearView, searchItemHit, type NearHit, type NearKind } from '@/lib/nearHits';
 import type { Area } from '@/lib/nearMe';
+import { shows, type SearchShow } from '@/lib/searchScope';
 import type { SearchItem } from '@/types/search';
 
 import { ResultGroup, ResultRow } from './ResultRows';
 
 const NONE: readonly never[] = [];
+const SHOW: Record<NearKind, Exclude<SearchShow, 'all'>> = { drink: 'drinks', bar: 'bars', person: 'people', ingredient: 'ingredients' };
 
 interface NearResultsProps {
   query: string;
@@ -39,6 +41,8 @@ interface NearResultsProps {
   /** "No": the place's own add, "add Salty Boy". Without it "No" leaves the miss. */
   add?: { label: string; onPress: () => void };
   matchLook?: MatchTextProps['look'];
+  /** The type chips' pick: only close names of that kind. */
+  show?: SearchShow;
 }
 
 /**
@@ -49,7 +53,7 @@ interface NearResultsProps {
  * close" (1B). Something found: the close names come last, "Spelled
  * differently" (1C).
  */
-export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours', classics, server, title, miss, lead, add, matchLook }: NearResultsProps) {
+export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours', classics, server, title, miss, lead, add, matchLook, show }: NearResultsProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const save = useSaveSpelling();
@@ -62,7 +66,10 @@ export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours'
     () => [...nearIn(q, yours ?? NONE, (i) => searchItemHit(i, yoursCaption)), ...nearIn(q, classics ?? NONE, classicHit)],
     [q, yours, yoursCaption, classics]
   );
-  const hits = useMemo(() => mergeNear([local, main.data ?? NONE, ingredients.data ?? NONE], new Set(shown)), [local, main.data, ingredients.data, shown]);
+  const hits = useMemo(
+    () => mergeNear([local, main.data ?? NONE, ingredients.data ?? NONE], new Set(shown)).filter((h) => shows(show, SHOW[h.kind])),
+    [local, main.data, ingredients.data, shown, show]
+  );
   const view = nearView(found, hits);
   const [dismissed, setDismissed] = useState<string | null>(null);
 
