@@ -18,7 +18,9 @@ import { layout, space } from "@/constants/tokens";
 import { useBackBarIds } from "@/hooks/useBackBar";
 import type { WizardPick } from "@/lib/drinkWizard";
 import type { IngredientRole } from "@/lib/ingredientWizard";
+import { sameIngredient } from "@/lib/ingredientNames";
 import { houseName } from "@/lib/makeItHouse";
+import { capitalizeFirst } from "@/lib/stringUtils";
 import { bottlesFor } from "@/lib/swapBottle";
 
 import type { DrinkEditor } from "./EditParts";
@@ -123,7 +125,8 @@ export function IngredientPickSheet({
         backBar={barId ? backBar : undefined}
         onPick={(p) => (p.id ? onPick(p) : onNew(p.name))}
         // A name that matches nothing: make it in-house (without "house" in its name), a bottle you buy, or just the name (owner-setup-path, step 10).
-        onMake={(name) => onNew(houseName(name), "prep")}
+        // The name without "house" unless that's one already ("House falernum" isn't Falernum): the wizard would only offer to use it.
+        onMake={(name) => onNew(sameIngredient(houseName(name), ingredients) ? capitalizeFirst(name) : houseName(name), "prep")}
         onBottle={(name) => onNew(name, "product")}
       />
       {typing ? null : loading ? (
