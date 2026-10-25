@@ -192,7 +192,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
               onDifferent={() => picks.different(p.atBar!, p.venueName, rename)}
             />
           ) : null}
-          <NearNameCard wide draft={draft} set={set} barId={p.barId} venueName={p.venueName} hidden={!!p.atBar || !!p.classic} onRename={rename} />
+          <NearNameCard wide draft={draft} set={set} barId={p.barId} venueName={p.venueName} hidden={!!p.atBar || !!p.classic} />
           {p.classic && !asking && !(same?.as === 'different' && nameWaits(draft, null)) ? <StartFromClassic set={set} match={p.classic} /> : null}
           <Eyebrow>Ingredients</Eyebrow>
           <IngredientsStep

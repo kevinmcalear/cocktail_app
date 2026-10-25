@@ -1,11 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
-import { useDebounced } from '@/hooks/useDiscover';
 import { readSameNameDrink, type SameNameDrink } from '@/hooks/useSameNameDrink';
 import { useSearchNear } from '@/hooks/useSearchNear';
-import { nearest } from '@/lib/nearName';
-import { sameName } from '@/lib/sameName';
+import { nearNamePick, type NearNamePick } from '@/lib/nearHits';
 import { supabase } from '@/lib/supabase';
 
 const DRINK = ['drink'] as const;
@@ -14,28 +12,24 @@ const DRINK = ['drink'] as const;
 const BAR_NAMES = 2000;
 
 /** A drink spelled close to a new drink's name, and whose it is. Plain JSON. */
-export interface NearNameDrink {
+export interface NearNameDrink extends Omit<NearNamePick, 'id'> {
   drink: SameNameDrink;
-  /** "Pale Moth": the bar it's from. */
-  bar: string;
-  /** "Pale Moth · Collingwood", for the card's line. */
-  place: string;
 }
 
 /**
  * A drink whose name is spelled close to the one being typed (whole-app
  * canvas, Search page, "Did you mean, everywhere": 3A), so "Salty Boy" meets
  * "Salti Boi" before there are two: the venue's own first (its names scored
- * on the device, lib/nearName), else one a bar pours anywhere
- * (public.search_near). Never the same name: useSameNameDrink has those.
- * Off with `enabled` false (an exact match, or a classic, is already shown).
+ * on the device), else one a bar pours anywhere (public.search_near, which
+ * waits for typing to pause). Never the same name: useSameNameDrink has
+ * those. Off with `enabled` false (an exact match or a classic is shown).
  */
-export function useNearNameDrink({ barId, venueName, name, enabled = true }: { barId: string | null; venueName: string | null; name: string; enabled?: boolean }) {
+export function useNearNameDrink({ barId, venueName, name, enabled = true }: { barId: string | null; venueName: string | null; name: string; enabled?: boolean }): NearNameDrink | null {
   const userId = useUserId();
-  const typed = useDebounced(name.trim(), 300);
+  const typed = name.trim();
   const on = enabled && !!userId && typed.length >= 3;
-  const { data: names } = useQuery({
-    queryKey: ['bar-cocktail-names', barId],
+  const names = useQuery({
+    queryKey: ['bar-cocktail-names', barId, userId],
     enabled: on && !!barId,
     staleTime: 60_000,
     queryFn: async ({ signal }) => {
@@ -44,18 +38,17 @@ export function useNearNameDrink({ barId, venueName, name, enabled = true }: { b
       return data ?? [];
     },
   });
-  const ours = on && names ? nearest(typed, names.filter((r) => !sameName(r.name, typed)), (r) => r.name, 1)[0] : undefined;
-  // The venue's names first: the app's are asked only once those have none close.
-  const ownChecked = !barId || !!names;
+  const ours = on ? nearNamePick(typed, names.data, undefined, venueName) : null;
+  // The app's drinks once the venue's have none close (or couldn't be read).
+  const ownChecked = !barId || names.status !== 'pending';
   const { data: hits } = useSearchNear(typed, { kinds: DRINK, enabled: on && ownChecked && !ours });
-  const app = hits?.find((h) => !sameName(h.name, typed));
-  const pick = ours ? { id: ours.id, place: venueName ?? '' } : app ? { id: app.spellingFor ?? app.id, place: app.caption ?? '' } : null;
+  const pick = ours ?? (on ? nearNamePick(typed, undefined, hits, venueName) : null);
   const { data: drink } = useQuery({
-    queryKey: ['near-name-drink', pick?.id ?? null],
+    queryKey: ['near-name-drink', pick?.id ?? null, userId],
     enabled: on && !!pick,
     staleTime: 60_000,
     queryFn: () => readSameNameDrink(pick!.id),
   });
-  if (!on || !pick || !drink || drink.id !== pick.id || typed !== name.trim()) return null;
-  return { drink, bar: pick.place.split(' · ')[0], place: pick.place } satisfies NearNameDrink;
+  if (!pick || !drink || drink.id !== pick.id) return null;
+  return { drink, bar: pick.bar, place: pick.place };
 }

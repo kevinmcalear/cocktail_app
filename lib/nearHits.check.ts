@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import type { SearchItem } from '@/types/search';
 
-import { classicHit, fromRow, mergeNear, nearIn, nearView, nearWhy, searchItemHit, type NearHit } from './nearHits';
+import { classicHit, fromRow, mergeNear, nearIn, nearNamePick, nearView, nearWhy, searchItemHit, type NearHit } from './nearHits';
 
 const hit = (id: string, name: string, score: number, known = false): NearHit => ({
   kind: 'drink',
@@ -75,5 +75,16 @@ assert.equal(nearWhy('peeny colada', 'Pina Colada'), 'sounds like “peeny colad
 assert.equal(nearWhy('salt', 'Salty Guava'), 'starts like “salt”');
 assert.equal(nearWhy('jungel bird', 'Jungle Bird'), 'spelled close to “jungel bird”');
 assert.equal(nearWhy('salty boi', 'Salty Boi'), null);
+
+// nearNamePick: the venue's own close name first, else the closest a bar pours; never the very name typed.
+{
+  const ours = [{ id: 'lr-pen', name: 'Penicillin' }, { id: 'lr-salty', name: 'Salty Boy' }];
+  const hit = (id: string, name: string, caption: string): NearHit => ({ kind: 'drink', id, name, caption, href: '', imageUrl: null, score: 2, known: false, spellingFor: id });
+  const hits = [hit('lr-salty', 'Salty Boy', 'Little Rye · Fitzroy'), hit('pm-salti', 'Salti Boi', 'Pale Moth · Collingwood')];
+  assert.deepEqual(nearNamePick('Penicilin', ours, hits, 'Little Rye'), { id: 'lr-pen', bar: 'Little Rye', place: 'Little Rye' });
+  assert.deepEqual(nearNamePick('Salty Boy', ours, undefined, 'Little Rye'), null, 'the same name is the same-name card’s');
+  assert.deepEqual(nearNamePick('Salty Boy', undefined, hits, null), { id: 'pm-salti', bar: 'Pale Moth', place: 'Pale Moth · Collingwood' });
+  assert.equal(nearNamePick('Smoke Signal', [], [], 'Little Rye'), null);
+}
 
 console.log('nearHits checks passed');

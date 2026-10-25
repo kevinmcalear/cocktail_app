@@ -48,11 +48,18 @@ test('asks "Is it the Salti Boi from Pale Moth?"; Yes opens it and keeps the spe
   expect(mockPush).toHaveBeenCalledWith('/cocktail/pm-salti');
 });
 
-test('No, a different drink keeps the name as typed and stops asking', async () => {
+test('No, a different drink keeps the name as typed and stops asking about that one', async () => {
   await renderWithTamagui(<Card />);
   await fireEvent.press(screen.getByRole('button', { name: 'No, a different drink' }));
-  expect(changed).toHaveBeenLastCalledWith(expect.objectContaining({ name: 'Salty Boy', sameAs: { id: 'pm-salti', name: 'Salti Boi', bar: 'Pale Moth', as: 'different' } }));
+  expect(changed).not.toHaveBeenCalled();
   expect(screen.queryByText('Is it the Salti Boi from Pale Moth?')).toBeNull();
+});
+
+test('Make our version with no spec to read links it and keeps their name', async () => {
+  await renderWithTamagui(<Card />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Make our version' }));
+  expect(mockStart).not.toHaveBeenCalled();
+  expect(changed).toHaveBeenLastCalledWith(expect.objectContaining({ name: 'Salti Boi', riffOf: { id: 'c-marg', name: 'Margarita' } }));
 });
 
 test('stays out of the way when the same name or a classic is already shown', async () => {
