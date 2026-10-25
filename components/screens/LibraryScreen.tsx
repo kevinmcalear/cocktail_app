@@ -10,6 +10,7 @@ import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { ResumeCard } from '@/components/screens/bringin/ResumeCard';
+import { LibrarySetupBanner } from '@/components/screens/venueSetup/SetupBanner';
 import { FeatureNewsLine } from '@/components/screens/library/FeatureNewsLine';
 import { FirstRoundCard, RoundOpened } from '@/components/screens/firstRound/FirstRoundCard';
 import { useFirstRound } from '@/hooks/useFirstRound';
@@ -171,7 +172,7 @@ export function LibraryScreen() {
       <View onLayout={(e) => setTitleEnd(e.nativeEvent.layout.y + e.nativeEvent.layout.height)}>
         <PageHeader title="Library" width="full" display action={phone || staffView ? undefined : <SearchField query={find} onQuery={setFind} placeholder="Find in Library" />} />
       </View>
-      {activeId ? <ResumeCard barId={activeId} /> : null}
+      {activeId ? (<><ResumeCard barId={activeId} /><LibrarySetupBanner barId={activeId} /></>) : null}
       <FeatureNewsLine />
       <FirstRoundCard />
       {active && canEdit ? <MatchClassicsNudge barId={active.id} /> : null}

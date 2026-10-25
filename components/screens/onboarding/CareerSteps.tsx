@@ -1,12 +1,13 @@
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, DsText, Field, Headline, PressableScale, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
-import { useSaveWorkplace, useCreateOnboardingBar } from '@/hooks/useOnboarding';
+import { useSaveWorkplace } from '@/hooks/useOnboarding';
 import { usePublicBars, type RankVenue } from '@/hooks/useRankings';
-import { barNameError, roleError, venueLabel, type JobMonth } from '@/lib/onboarding';
+import { roleError, venueLabel, type JobMonth } from '@/lib/onboarding';
 
 import { PastJobs } from '../profile/PastJobs';
 import { MonthField } from './MonthField';
@@ -47,11 +48,23 @@ function thisMonth(): JobMonth {
 
 /**
  * Where they work now (isCurrent), or a bar they used to. Closed bars stay in
- * the search. The month fields save to the job's start and end dates.
+ * the search. The month fields save to the job's start and end dates. "Add
+ * your bar" runs the whole venue setup (onAddBar: Setup ends first).
  */
-export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { personId: string | null; isCurrent: boolean; onDone: (barName?: string) => void; listJobs?: boolean }) {
-  const [adding, setAdding] = useState(false);
-  const [barName, setBarName] = useState('');
+export function PlaceStep({
+  personId,
+  isCurrent,
+  onDone,
+  onAddBar,
+  listJobs = true,
+}: {
+  personId: string | null;
+  isCurrent: boolean;
+  onDone: (barName?: string) => void;
+  onAddBar?: () => void;
+  listJobs?: boolean;
+}) {
+  const router = useRouter();
   const [bar, setBar] = useState<RankVenue | null>(null);
   const [role, setRole] = useState('');
   const [from, setFrom] = useState<JobMonth | null>(null);
@@ -60,7 +73,6 @@ export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { pe
   const [tried, setTried] = useState(false);
   const [max] = useState(thisMonth);
   const save = useSaveWorkplace();
-  const create = useCreateOnboardingBar();
 
   const reset = () => {
     setBar(null);
@@ -76,15 +88,9 @@ export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { pe
     const current = isCurrent || stillHere;
     save.mutate({ personId, barId: bar.id, title: role, isCurrent: current, ...(from ? { start: from } : null), ...(to && !current ? { end: to } : null) }, { onSuccess: () => (isCurrent ? onDone(bar.display_name) : reset()) });
   };
-  const addBar = () => {
-    setTried(true);
-    if (barNameError(barName)) return;
-    create.mutate(barName, { onSuccess: () => onDone(barName.trim()) });
-  };
+  const addBar = onAddBar ?? (() => router.push('/venue-setup' as Href));
 
-  const footer = adding ? (
-    <SetupFooter label={create.isPending ? 'Adding…' : 'Add bar'} disabled={create.isPending} onPress={addBar} skipLabel="Cancel" onSkip={() => { setAdding(false); setTried(false); }} />
-  ) : isCurrent ? (
+  const footer = isCurrent ? (
     <SetupFooter label={save.isPending ? 'Saving…' : 'Continue'} disabled={save.isPending || !bar} onPress={savePlace} onSkip={() => onDone()} />
   ) : (
     <SetupFooter onPress={() => onDone()} onSkip={() => onDone()} />
@@ -93,49 +99,40 @@ export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { pe
   const form = (
     <>
       {!isCurrent ? <Headline role="heading">Add a past job</Headline> : null}
-      {adding ? (
+      {/* Where they work now keeps the search above the bar they picked (canvas make-onboarding-work). */}
+      {bar && isCurrent ? <Field label="Search bars" value={bar.display_name} onChangeText={() => setBar(null)} autoCorrect={false} /> : null}
+      {bar ? <PickedBar bar={bar} flat={!isCurrent} onChange={() => setBar(null)} /> : <BarPick bar={null} onPick={(v) => { setBar(v); setTried(false); }} />}
+      {bar ? (
         <>
-          <Field label="Bar name" value={barName} onChangeText={setBarName} error={tried ? (barNameError(barName) ?? undefined) : undefined} autoComplete="organization" maxLength={80} />
-          {create.error ? <Caption tone="accent">{create.error.message}</Caption> : null}
-        </>
-      ) : (
-        <>
-          {/* Where they work now keeps the search above the bar they picked (canvas make-onboarding-work). */}
-          {bar && isCurrent ? <Field label="Search bars" value={bar.display_name} onChangeText={() => setBar(null)} autoCorrect={false} /> : null}
-          {bar ? <PickedBar bar={bar} flat={!isCurrent} onChange={() => setBar(null)} /> : <BarPick bar={null} onPick={(v) => { setBar(v); setTried(false); }} />}
-          {bar ? (
-            <>
-              <Field label="Your role" value={role} onChangeText={setRole} placeholder="Bartender" error={tried ? (roleError(role) ?? undefined) : undefined} maxLength={60} />
-              {isCurrent ? (
-                <MonthField label="Since" value={from} onChange={setFrom} max={max} />
-              ) : (
-                <>
-                  <View style={styles.pair}>
-                    <View style={styles.flex}>
-                      <MonthField label="From" value={from} onChange={setFrom} max={max} />
-                    </View>
-                    {stillHere ? null : (
-                      <View style={styles.flex}>
-                        <MonthField label="To" value={to} onChange={setTo} max={max} />
-                      </View>
-                    )}
-                  </View>
-                  <Check label="I still work here" value={stillHere} onChange={setStillHere} />
-                  <Button label={save.isPending ? 'Saving…' : 'Add place'} variant="secondary" onPress={savePlace} disabled={save.isPending} />
-                </>
-              )}
-              {save.error ? <Caption tone="accent">{save.error.message}</Caption> : null}
-              {!personId ? <Caption tone="accent">Add your name first.</Caption> : null}
-            </>
-          ) : null}
+          <Field label="Your role" value={role} onChangeText={setRole} placeholder="Bartender" error={tried ? (roleError(role) ?? undefined) : undefined} maxLength={60} />
           {isCurrent ? (
+            <MonthField label="Since" value={from} onChange={setFrom} max={max} />
+          ) : (
             <>
-              <Button label="Add your bar" variant="secondary" onPress={() => setAdding(true)} style={styles.compact} />
-              <Caption tone="muted">Picking a bar doesn’t open its menus. Adding a new bar makes you its admin.</Caption>
+              <View style={styles.pair}>
+                <View style={styles.flex}>
+                  <MonthField label="From" value={from} onChange={setFrom} max={max} />
+                </View>
+                {stillHere ? null : (
+                  <View style={styles.flex}>
+                    <MonthField label="To" value={to} onChange={setTo} max={max} />
+                  </View>
+                )}
+              </View>
+              <Check label="I still work here" value={stillHere} onChange={setStillHere} />
+              <Button label={save.isPending ? 'Saving…' : 'Add place'} variant="secondary" onPress={savePlace} disabled={save.isPending} />
             </>
-          ) : null}
+          )}
+          {save.error ? <Caption tone="accent">{save.error.message}</Caption> : null}
+          {!personId ? <Caption tone="accent">Add your name first.</Caption> : null}
         </>
-      )}
+      ) : null}
+      {isCurrent ? (
+        <>
+          <Button label="Add your bar" variant="secondary" onPress={addBar} style={styles.compact} />
+          <Caption tone="muted">Picking a bar doesn’t open its menus. Adding a new bar makes you its admin.</Caption>
+        </>
+      ) : null}
     </>
   );
 
@@ -144,7 +141,7 @@ export function PlaceStep({ personId, isCurrent, onDone, listJobs = true }: { pe
       {!isCurrent && personId && listJobs ? <PastJobs personId={personId} /> : null}
       {/* A past job's form sits in a raised card under the list (canvas make-onboarding-worked). */}
       {isCurrent ? form : <Surface style={styles.card}>{form}</Surface>}
-      {isCurrent || adding ? null : <Caption tone="muted">Past jobs stay hidden unless you show them. Dates are only on your profile if you turn a job on.</Caption>}
+      {isCurrent ? null : <Caption tone="muted">Past jobs stay hidden unless you show them. Dates are only on your profile if you turn a job on.</Caption>}
     </SetupPage>
   );
 }

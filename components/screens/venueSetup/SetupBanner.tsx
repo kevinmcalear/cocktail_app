@@ -5,13 +5,14 @@ import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useBarInvites } from '@/hooks/useBarInvites';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { onItsWay } from '@/lib/venueSetup';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
 /**
- * "Setup: 3 things on their way · See": Tonight's banner until venue setup is
- * finished (b03). Kept private, it stays to offer proving it's yours (prove).
+ * "Setup: 3 things on their way · See": the banner on Tonight (or Library,
+ * with Tonight off) until venue setup is finished (b03). Kept private, it stays to offer proving it's yours (prove).
  */
 export function SetupBanner({ count, prove, onPress }: { count: number; prove?: boolean; onPress?: () => void }) {
   const ds = useDs();
@@ -33,7 +34,7 @@ export function SetupBanner({ count, prove, onPress }: { count: number; prove?: 
     </>
   );
   const style = [styles.banner, { backgroundColor: ds.c.surface, borderColor: ds.c.line }];
-  if (!onPress) return <View role="img" aria-label={`The banner Tonight shows until setup is finished: Setup, ${what}`} style={style}>{body}</View>;
+  if (!onPress) return <View role="img" aria-label={`The banner shown until setup is finished: Setup, ${what}`} style={style}>{body}</View>;
   return (
     <PressableScale role="button" accessibilityLabel={`Setup: ${what}. See`} onPress={onPress} style={style}>
       {body}
@@ -42,7 +43,8 @@ export function SetupBanner({ count, prove, onPress }: { count: number; prove?: 
 }
 
 /**
- * Tonight's banner for a venue set up on this device: while setup isn't
+ * The Setup banner for a venue set up on this device, on its first tab
+ * (Tonight, or Library for the many venues with Tonight off): while setup isn't
  * finished it opens where it left off; finished but kept private (no claim,
  * no page), it opens the claim.
  */
@@ -63,6 +65,11 @@ export function TonightSetupBanner({ barId }: { barId: string }) {
   }
   const count = onItsWay({ claim: claim.data?.status === 'pending' ? 'pending' : 'none', invites: invites.length, waitingFiles: 0 });
   return <SetupBanner count={count} onPress={() => router.push(`/venue-setup?bar=${barId}` as Href)} />;
+}
+
+/** The same banner at the top of Library, for a venue with Tonight off (new venues start with it off). */
+export function LibrarySetupBanner({ barId }: { barId: string }) {
+  return useVenueFeature('tonight') ? null : <TonightSetupBanner barId={barId} />;
 }
 
 const styles = StyleSheet.create({

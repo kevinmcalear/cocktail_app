@@ -1,7 +1,7 @@
 // Checks for lib/onboarding.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { afterAgeCheck, authRedirect, barNameError, drinkNameError, handleError, inviteJobTitle, inviteStepLabel, majorityUnit, menuNameError, nameError, needsOnboarding, nextStep, roleError, splitName, venueLabel, withArticle, yearError } from './onboarding';
+import { afterAgeCheck, authRedirect, drinkNameError, handleError, inviteJobTitle, inviteStepLabel, majorityUnit, menuNameError, nameError, needsOnboarding, nextStep, roleError, splitName, venueLabel, withArticle, yearError } from './onboarding';
 
 assert.equal(needsOnboarding(null), false);
 assert.equal(needsOnboarding({}), false);
@@ -59,8 +59,6 @@ assert.equal(roleError(''), 'Add your role, like Bartender.');
 assert.equal(roleError('Bartender'), null);
 assert.match(roleError('x'.repeat(61)) ?? '', /60/);
 
-assert.equal(barNameError('  '), 'Add the bar’s name.');
-assert.equal(barNameError('Little Rye'), null);
 
 assert.equal(menuNameError(''), 'Add the menu’s name.');
 assert.equal(menuNameError('Summer list'), null);
