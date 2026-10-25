@@ -4,7 +4,7 @@ import { newDraftId } from '@/lib/drinkWizard';
 import { readSketchInputs, type SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
-// Draw my glass (supabase/migrations/20261118300000_draw_my_glass.sql): the
+// Draw my glass (supabase/migrations/20261118500000_draw_my_glass.sql): the
 // photo a venue's or a home's own glass was traced from, kept private in the
 // glass-photos bucket (Open decisions d57), and sharing it with the catalog
 // (d56, d58), which the Cocktail team checks first.
