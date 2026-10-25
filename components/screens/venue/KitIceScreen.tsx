@@ -5,10 +5,10 @@ import { IceThumb } from '@/components/ds/IceThumb';
 import { Body, Button, Caption, Chip, Field, PressableScale, Sheet, SheetScrollView, Surface, Title, useDs } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useBarKit, useRemoveKit, useSaveKit, type KitRow } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useRemoveVenueIce, useSaveVenueIce, useVenueIce, type VenueIce } from '@/hooks/useVenueIce';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
-import { ICE_KINDS, ICE_LABEL, kitSourceLine, type IceKind } from '@/lib/venueKit';
+import { ICE_KINDS, ICE_LABEL, iceDrawKind, kitSourceLine } from '@/lib/venueKit';
 
 import { VenueSubPage } from './VenueSubPage';
 
@@ -18,11 +18,10 @@ const FAILED = 'Couldn’t save that. Check your connection and try again.';
 export function KitIceScreen({ barId }: { barId: string }) {
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const canEdit = (useCapabilities(barId).data ?? []).includes('prep');
-  const { data: kit = [], isLoading, error } = useBarKit(barId);
-  const save = useSaveKit(barId);
-  const [open, setOpen] = useState<KitRow | null>(null);
-  const ices = kit.filter((r) => r.kind === 'ice');
-  const missing = ICE_KINDS.filter((k) => !ices.some((r) => r.key === k));
+  const { data: ices = [], isLoading, error } = useVenueIce(barId);
+  const save = useSaveVenueIce(barId);
+  const [open, setOpen] = useState<VenueIce | null>(null);
+  const missing = ICE_KINDS.filter((k) => !ices.some((r) => r.shape === k));
 
   return (
     <VenueSubPage barId={barId} title="Ice" intro={`The ice ${venue?.name ?? 'the venue'} pours with. The drink wizard offers these first, and a drink whose spec doesn’t say is drawn with the nearest of yours.`}>
@@ -44,7 +43,7 @@ export function KitIceScreen({ barId }: { barId: string }) {
           <Caption tone="muted">{ices.length ? 'Add another kind' : 'Add the ice you pour'}</Caption>
           <View style={styles.chips}>
             {missing.map((k) => (
-              <Chip key={k} label={ICE_LABEL[k]} selected={false} multi accessibilityLabel={`Add ${ICE_LABEL[k]}`} onPress={() => save.mutate({ kind: 'ice', key: k })} />
+              <Chip key={k} label={ICE_LABEL[k]} selected={false} multi accessibilityLabel={`Add ${ICE_LABEL[k]}`} onPress={() => save.mutate({ name: ICE_LABEL[k], shape: k })} />
             ))}
           </View>
           {save.error && !open ? <Caption tone="accent">{FAILED}</Caption> : null}
@@ -56,13 +55,13 @@ export function KitIceScreen({ barId }: { barId: string }) {
   );
 }
 
-function IceRow({ row, first, onOpen }: { row: KitRow; first: boolean; onOpen?: () => void }) {
+function IceRow({ row, first, onOpen }: { row: VenueIce; first: boolean; onOpen?: () => void }) {
   const ds = useDs();
-  const label = ICE_LABEL[row.key as IceKind] ?? row.key;
+  const label = row.name;
   const source = kitSourceLine(row);
   const body = (
     <>
-      <IceThumb kind={row.key as IceKind} />
+      <IceThumb kind={iceDrawKind(row) ?? 'cubes'} />
       <View style={styles.flex}>
         <Body numberOfLines={1}>{label}</Body>
         {source ? (
@@ -87,10 +86,10 @@ function IceRow({ row, first, onOpen }: { row: KitRow; first: boolean; onOpen?: 
   );
 }
 
-/** One kind of ice, opened: a note, and made here or from a supplier. */
-function IceSheet({ barId, row, onClose }: { barId: string; row: KitRow | null; onClose: () => void }) {
+/** One ice, opened: a note, and made here or from a supplier. */
+function IceSheet({ barId, row, onClose }: { barId: string; row: VenueIce | null; onClose: () => void }) {
   return (
-    <Sheet visible={!!row} onClose={onClose} accessibilityLabel={row ? ICE_LABEL[row.key as IceKind] : 'Ice'} keyboard>
+    <Sheet visible={!!row} onClose={onClose} accessibilityLabel={row?.name ?? 'Ice'} keyboard>
       {row ? <IceForm key={row.id} barId={barId} row={row} onDone={onClose} /> : null}
     </Sheet>
   );
@@ -98,12 +97,12 @@ function IceSheet({ barId, row, onClose }: { barId: string; row: KitRow | null; 
 
 type Source = 'here' | 'none' | string;
 
-function IceForm({ barId, row, onDone }: { barId: string; row: KitRow; onDone: () => void }) {
+function IceForm({ barId, row, onDone }: { barId: string; row: VenueIce; onDone: () => void }) {
   const suppliers = useVenueSuppliers(barId).data ?? [];
-  const save = useSaveKit(barId);
-  const remove = useRemoveKit(barId);
+  const save = useSaveVenueIce(barId);
+  const remove = useRemoveVenueIce(barId);
   const [note, setNote] = useState(row.note ?? '');
-  const [source, setSource] = useState<Source>(row.made_here ? 'here' : (row.supplier_id ?? 'none'));
+  const [source, setSource] = useState<Source>(row.source === 'made' ? 'here' : (row.supplier_id ?? 'none'));
   // A spear's length, so the drink wizard can tell when it's shorter than the glass.
   const [length, setLength] = useState(row.length_mm ? String(row.length_mm) : '');
   const mm = Number(length.trim());
@@ -112,9 +111,9 @@ function IceForm({ barId, row, onDone }: { barId: string; row: KitRow; onDone: (
   const done = { onSuccess: onDone };
   return (
     <SheetScrollView contentContainerStyle={styles.sheet}>
-      <Title>{ICE_LABEL[row.key as IceKind] ?? row.key}</Title>
+      <Title>{row.name}</Title>
       <Field label="Note" value={note} onChangeText={setNote} placeholder="Hoshizaki under the well" maxLength={120} />
-      {row.key === 'spear' ? (
+      {row.shape === 'spear' ? (
         <View style={styles.group}>
           <Field label="Length (mm)" value={length} onChangeText={setLength} placeholder="130" keyboardType="number-pad" maxLength={3} />
           <Caption tone={lengthOk ? 'muted' : 'accent'}>{lengthOk ? 'The drink wizard checks it against your glasses’ heights.' : 'A length between 20 and 400 mm.'}</Caption>
@@ -135,7 +134,15 @@ function IceForm({ barId, row, onDone }: { barId: string; row: KitRow; onDone: (
           disabled={save.isPending || remove.isPending || !lengthOk}
           onPress={() =>
             save.mutate(
-              { id: row.id, kind: 'ice', key: row.key, note: note.trim() || null, made_here: source === 'here', supplier_id: source === 'here' || source === 'none' ? null : source, ...(row.key === 'spear' ? { length_mm: length.trim() ? mm : null } : {}) },
+              {
+                // ponytail: today's sheet changes the note, the source and a spear's length; the rest is kept as it is until PR 2's Add sheet.
+                ...row,
+                note: note.trim() || null,
+                source: source === 'here' ? 'made' : source === 'none' ? null : 'bought',
+                supplier_id: source === 'here' || source === 'none' ? null : source,
+                machine: null,
+                ...(row.shape === 'spear' ? { length_mm: length.trim() ? mm : null } : {}),
+              },
               done,
             )
           }

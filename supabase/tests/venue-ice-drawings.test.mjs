@@ -1,4 +1,5 @@
-// The venue's ice in its drinks' drawings (20261019600000_venue_ice_drawings.sql):
+// The venue's ice in its drinks' drawings (20261019600000_venue_ice_drawings.sql,
+// read from item_ice since 20261110100000_kit_and_ice.sql):
 // a guessed ice gives way to the venue's nearest kind (inputs.houseIce), a spec's
 // own ice never does, and a change to the venue's Ice list redraws its drinks.
 // Runs against the local stack only: `npm run test:security`.
@@ -41,7 +42,12 @@ async function drink(key, fields, ice, from) {
 
 const houseIce = async (key) =>
   (await db.query("SELECT inputs ->> 'houseIce' AS h FROM public.item_sketches WHERE item_id = $1", [ids[key]])).rows[0].h;
-const kit = (key) => db.query("INSERT INTO public.bar_kit (bar_id, kind, key) VALUES ($1, 'ice', $2)", [ids.bar, key]);
+// One of the venue's ice (20261110100000_kit_and_ice.sql), drawn as `kind`.
+async function kit(kind, shape = kind) {
+  const { rows } = await db.query("INSERT INTO public.items (name, item_type, bar_id) VALUES ($1, 'ice', $2) RETURNING id", [`${kind} ice ${run}`, ids.bar]);
+  await db.query('INSERT INTO public.item_ice (item_id, bar_id, shape, draw_as) VALUES ($1, $2, $3, $4)', [rows[0].id, ids.bar, shape, shape === kind ? null : kind]);
+  ids[`ice-${kind}`] = rows[0].id;
+}
 
 before(async () => {
   await db.connect();
@@ -83,8 +89,19 @@ describe('the venue\'s ice in its drawings', () => {
   test('the venue having the guessed kind leaves it be; taking it away brings the nearest back', async () => {
     await kit('large');
     assert.equal(await houseIce('guessed'), null);
-    await db.query("DELETE FROM public.bar_kit WHERE bar_id = $1 AND key = 'large'", [ids.bar]);
+    await db.query('DELETE FROM public.items WHERE id = $1', [ids['ice-large']]);
     assert.equal(await houseIce('guessed'), 'cubes');
+  });
+
+  test('a block or slab is never drawn in the glass; something else is drawn as it says', async () => {
+    await db.query('DELETE FROM public.items WHERE id = $1', [ids['ice-cubes']]);
+    await db.query('DELETE FROM public.items WHERE id = $1', [ids['ice-pebble']]);
+    const { rows } = await db.query("INSERT INTO public.items (name, item_type, bar_id) VALUES ($1, 'ice', $2) RETURNING id", [`block ${run}`, ids.bar]);
+    await db.query("INSERT INTO public.item_ice (item_id, bar_id, shape) VALUES ($1, $2, 'block')", [rows[0].id, ids.bar]);
+    ids.block = rows[0].id;
+    assert.equal(await houseIce('guessed'), null, 'only a block: nothing to draw');
+    await kit('cubes', 'other');
+    assert.equal(await houseIce('guessed'), 'cubes', 'an odd ice drawn as cubes');
   });
 
   test('a writer can\'t set it: the database works it out on every write', async () => {

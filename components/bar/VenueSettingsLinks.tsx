@@ -3,6 +3,7 @@ import { useRouter, type Href } from 'expo-router';
 import { RowDivider, SettingsRow, SettingsSection } from '@/components/screens/settings/SettingsParts';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useBarKit } from '@/hooks/useBarKit';
+import { useVenueIce } from '@/hooks/useVenueIce';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -55,10 +56,8 @@ export function VenueTeamLinks({ barId, barName }: { barId: string; barName: str
 export function VenueKitLinks({ barId }: { barId: string }) {
   const router = useRouter();
   const glasses = useBarGlassware(barId).data;
-  const kit = useBarKit(barId).data;
-  const count = (kind: 'ice' | 'tool') => kit?.filter((r) => r.kind === kind).length;
-  const ice = count('ice');
-  const tools = count('tool');
+  const ice = useVenueIce(barId).data?.length;
+  const tools = useBarKit(barId).data?.length;
   const go = (page: string) => () => router.push(`/settings/bar/${barId}/${page}` as Href);
   return (
     <SettingsSection title="Kit" note="What drinks here are made with. Drawings, the drink wizard and Make mode use it. Anyone with Prep changes it.">

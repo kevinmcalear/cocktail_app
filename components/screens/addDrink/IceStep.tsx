@@ -5,11 +5,11 @@ import { Caption } from '@/components/ds';
 import { TellUs, type TellUsAbout } from '@/components/feedback/TellUs';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
-import type { KitRow } from '@/hooks/useBarKit';
+import type { VenueIce } from '@/hooks/useVenueIce';
 import { methodIceLabel, samePick, sketchLook, type StepProps, type WizardPick } from '@/lib/drinkWizard';
 import { iceBuildLine, iceKind, iceTip, QUICK_BUILDS, QUICK_LABEL, quickBuild, saysMore, whichQuick, type IceLayer } from '@/lib/iceBuild';
 import { draftSketchInputs } from '@/lib/sketch/draft';
-import { ICE_LABEL, isVenueIce, kitIceRow, kitSourceLine, type IceKind } from '@/lib/venueKit';
+import { iceDrawKind, inTheGlass, isVenueIce, kitIceRow, kitSourceLine } from '@/lib/venueKit';
 
 import { AddLayerSheet } from './AddLayerSheet';
 import { IceLayers } from './IceLayers';
@@ -26,7 +26,7 @@ interface IceStepProps extends StepProps {
   /** The desktop page's one-row pickers. */
   compact?: boolean;
   /** The venue's Kit (its ice, where each comes from, a spear's length) and glasses (their heights), for the layers and suggestions. */
-  kit?: readonly KitRow[];
+  kit?: readonly VenueIce[];
   barGlasses?: readonly BarGlass[];
   barVariants?: readonly string[];
   venueName?: string | null;
@@ -54,12 +54,12 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
   const quick = layers.length ? whichQuick(named) : null;
 
   // The venue's ice, where each comes from, and how long its spears are.
-  const kitIce = kit.filter((r) => r.kind === 'ice' && r.key in ICE_LABEL);
+  const kitIce = kit.filter(inTheGlass);
   const sourceOf = (name: string) => {
     const r = kitIceRow(kitIce, name);
     return r ? kitSourceLine(r) || null : null;
   };
-  const spearMm = kitIce.find((r) => r.key === 'spear')?.length_mm ?? null;
+  const spearMm = kitIce.find((r) => iceDrawKind(r) === 'spear')?.length_mm ?? null;
 
   // The glass as drawn, and its height when the venue's glass of that kind says.
   const look = sketchLook(draft, barVariants);
@@ -119,7 +119,7 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
           onClose={() => setAdding(false)}
           onAdd={(l) => setLayers([...layers, l])}
           options={ices}
-          venue={venueName && kitIce.length ? { name: venueName, ice: kitIce.map((r) => ({ pick: pickOf(ICE_LABEL[r.key as IceKind]), source: kitSourceLine(r) || null })) } : null}
+          venue={venueName && kitIce.length ? { name: venueName, ice: kitIce.map((r) => ({ pick: pickOf(r.name), source: kitSourceLine(r) || null })) } : null}
           below={top ? iceBuildLine([top]).replace(/^Over /, '') : null}
         />
       </View>

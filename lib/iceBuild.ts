@@ -146,7 +146,7 @@ export interface TipFacts {
   glass: string | null;
   glassName?: string | null;
   glassHeightMm?: number | null;
-  /** The venue's spear (bar_kit.length_mm). */
+  /** The venue's spear (item_ice.length_mm). */
   spearMm?: number | null;
   methods: readonly string[];
   /** The ice it's made with, by name. */

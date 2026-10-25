@@ -115,18 +115,12 @@ export function useCreateDrink() {
         // A name missing from the picker may still exist, under any spelling or
         // another name ("1:1 sugar syrup" is Simple Syrup): use that, never a copy.
         const resolved = type === 'ingredient' ? await supabase.rpc('resolve_ingredient', { p_name: pick.name }) : null;
+        const same = supabase.from('items').select('id').eq('item_type', type).ilike('name', likeExactly(pick.name));
+        // A venue's own ice (item_ice) is its Kit: drinks name the shared ice for now (kit and ice PR 6 offers the venue's).
         const found =
           resolved && !resolved.error && resolved.data
             ? { id: resolved.data as string }
-            : (
-                await supabase
-                  .from('items')
-                  .select('id')
-                  .eq('item_type', type)
-                  .ilike('name', likeExactly(pick.name))
-                  .limit(1)
-                  .maybeSingle()
-              ).data;
+            : (await (type === 'ice' ? same.is('bar_id', null) : same).limit(1).maybeSingle()).data;
         if (found) {
           made.set(key, found.id);
           return found.id;

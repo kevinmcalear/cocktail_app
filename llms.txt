@@ -15,6 +15,7 @@
 ## Reference
 
 - [docs/drink_data.md](docs/drink_data.md): which column holds each drink fact (who made it, where it came from, glass, ice), so a change puts a fact in its one home
+- [docs/kit_and_ice.md](docs/kit_and_ice.md): Kit and ice, the approved plan and its 7 PRs, and what the data is (venue ice items, item_ice, tools, glassware sources)
 - [docs/change_policy.md](docs/change_policy.md): what CI classifies as blast-radius (migrations, RLS, auth, `lib/roles.ts`) and needs the `human-approved` label on Kevin's approval
 - [docs/store-submission.md](docs/store-submission.md): App Store and Play submission notes
 - [lib/roles.ts](lib/roles.ts): role levels and what each can see

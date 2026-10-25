@@ -1,5 +1,6 @@
-// Kit and Buying (20261019000000_venue_kit.sql): a venue's ice and tools
-// (bar_kit) are read by its team and written by anyone with Prep; a supplier
+// Kit and Buying (20261019000000_venue_kit.sql, 20261110100000_kit_and_ice.sql):
+// a venue's tools (bar_kit; its ice is kit-and-ice.test.mjs) are read by its
+// team and written by anyone with Prep; a supplier
 // says what it brings, when to order by and when it delivers; and the venue's
 // glassware is written by Prep, not Brand.
 // Runs against the local stack only: `npm run test:security`.
@@ -57,54 +58,59 @@ after(async () => {
   await db.end();
 });
 
-describe('a venue\'s kit', () => {
-  test('anyone with Prep adds ice and tools; others can\'t', async () => {
-    const { error: iceError } = await users.creator.client
-      .from('bar_kit').insert({ bar_id: ids.bar, kind: 'ice', key: 'large', note: '50 mm clear cubes', supplier_id: ids.supplier });
-    assert.ifError(iceError);
-    const { error: toolError } = await users.admin.client.from('bar_kit').insert({ bar_id: ids.bar, kind: 'tool', key: 'shaker' });
+describe('a venue\'s tools', () => {
+  test('anyone with Prep adds tools, ours or its own; others can\'t', async () => {
+    const { error: ownError } = await users.creator.client
+      .from('bar_kit').insert({ bar_id: ids.bar, name: 'Bandsaw', location: 'prep', source: 'bought', supplier_id: ids.supplier });
+    assert.ifError(ownError);
+    const { error: toolError } = await users.admin.client.from('bar_kit').insert({ bar_id: ids.bar, kind: 'tool', key: 'shaker', location: 'bar', count: 6 });
     assert.ifError(toolError);
-    const { error: bartenderError } = await users.bartender.client.from('bar_kit').insert({ bar_id: ids.bar, kind: 'tool', key: 'jigger' });
+    const { error: bartenderError } = await users.bartender.client.from('bar_kit').insert({ bar_id: ids.bar, key: 'jigger' });
     assert.ok(bartenderError, 'a bartender has no Prep');
-    const { error: outsiderError } = await users.outsider.client.from('bar_kit').insert({ bar_id: ids.bar, kind: 'tool', key: 'jigger' });
+    const { error: outsiderError } = await users.outsider.client.from('bar_kit').insert({ bar_id: ids.bar, key: 'jigger' });
     assert.ok(outsiderError, 'not another venue');
+    const { error: anonError } = await anon.from('bar_kit').insert({ bar_id: ids.bar, key: 'jigger' });
+    assert.ok(anonError, 'not signed out');
   });
 
   test('the whole team reads it; other venues and signed-out visitors don\'t', async () => {
-    const { data } = await users.bartender.client.from('bar_kit').select('kind, key').eq('bar_id', ids.bar).order('key');
-    assert.deepEqual(data, [{ kind: 'ice', key: 'large' }, { kind: 'tool', key: 'shaker' }]);
+    const { data } = await users.bartender.client.from('bar_kit').select('key, name').eq('bar_id', ids.bar).order('created_at');
+    assert.deepEqual(data, [{ key: null, name: 'Bandsaw' }, { key: 'shaker', name: null }]);
     const { data: outsider } = await users.outsider.client.from('bar_kit').select('id').eq('bar_id', ids.bar);
     assert.deepEqual(outsider, []);
     const { data: anonData, error } = await anon.from('bar_kit').select('id').eq('bar_id', ids.bar);
     assert.ok(error || anonData.length === 0, 'anon reads nothing');
   });
 
-  test('keys are known ice kinds or tool ids, once each', async () => {
+  test('only tools: our ids or a name, once each, in a known place', async () => {
     for (const row of [
-      { kind: 'ice', key: 'none' },
-      { kind: 'ice', key: 'shaker' },
-      { kind: 'tool', key: 'Shaker Tins' },
-      { kind: 'glass', key: 'coupe' },
-      { kind: 'tool', key: 'shaker' },
+      { kind: 'ice', key: 'cubes' },
+      { key: 'Shaker Tins' },
+      { key: 'shaker' },
+      {},
+      { name: '  ' },
+      { key: 'jigger', location: 'cellar' },
+      { key: 'jigger', count: 0 },
+      { key: 'jigger', source: 'made' },
     ]) {
       const { error } = await service.from('bar_kit').insert({ bar_id: ids.bar, ...row });
-      assert.ok(error, `${row.kind}/${row.key} refused`);
+      assert.ok(error, `${JSON.stringify(row)} refused`);
     }
   });
 
-  test('made here or from one of the venue\'s own suppliers, never both', async () => {
-    const { error: both } = await service.from('bar_kit').insert({ bar_id: ids.bar, kind: 'ice', key: 'cubes', made_here: true, supplier_id: ids.supplier });
-    assert.ok(both, 'not both');
-    const { error: theirs } = await service.from('bar_kit').insert({ bar_id: ids.bar, kind: 'ice', key: 'cubes', supplier_id: ids.otherSupplier });
+  test('a supplier only when bought, and only the venue\'s own', async () => {
+    const { error: ours } = await service.from('bar_kit').insert({ bar_id: ids.bar, key: 'muddler', source: 'ours', supplier_id: ids.supplier });
+    assert.ok(ours, 'not ours and bought');
+    const { error: theirs } = await service.from('bar_kit').insert({ bar_id: ids.bar, key: 'muddler', source: 'bought', supplier_id: ids.otherSupplier });
     assert.ok(theirs, 'not another venue\'s supplier');
   });
 
-  test('removing a supplier keeps the kit and forgets where it came from', async () => {
+  test('removing a supplier keeps the tool and forgets where it came from', async () => {
     const spare = (await db.query('INSERT INTO public.suppliers (bar_id, name) VALUES ($1, $2) RETURNING id', [ids.bar, `Spare ${run}`])).rows[0].id;
-    await db.query('INSERT INTO public.bar_kit (bar_id, kind, key, supplier_id) VALUES ($1, $2, $3, $4)', [ids.bar, 'ice', 'spear', spare]);
+    await db.query("INSERT INTO public.bar_kit (bar_id, key, source, supplier_id) VALUES ($1, 'ice-pick', 'bought', $2)", [ids.bar, spare]);
     await db.query('DELETE FROM public.suppliers WHERE id = $1', [spare]);
-    const { rows } = await db.query('SELECT bar_id, supplier_id FROM public.bar_kit WHERE bar_id = $1 AND key = $2', [ids.bar, 'spear']);
-    assert.deepEqual(rows, [{ bar_id: ids.bar, supplier_id: null }]);
+    const { rows } = await db.query("SELECT source, supplier_id FROM public.bar_kit WHERE bar_id = $1 AND key = 'ice-pick'", [ids.bar]);
+    assert.deepEqual(rows, [{ source: 'bought', supplier_id: null }]);
   });
 });
 

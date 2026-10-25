@@ -6,7 +6,7 @@ import { TellUs } from '@/components/feedback/TellUs';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
-import type { KitRow } from '@/hooks/useBarKit';
+import type { VenueIce } from '@/hooks/useVenueIce';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { usePricingSettings } from '@/hooks/usePricing';
@@ -62,7 +62,7 @@ export interface DrinkDeskProps {
   barVariants: string[];
   barIce: string[];
   barIceKinds: string[];
-  barKit: readonly KitRow[];
+  venueIce: readonly VenueIce[];
   classic: ClassicMatch | null;
   /** The venue's drink with this name, and the credited bar's (useSameNameDrink): Save waits on a pick for each. */
   atBar: SameNameDrink | null;
@@ -218,7 +218,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             <GlassStep compact draft={draft} set={set} options={p.glasses} barId={barId} barGlasses={p.barGlasses} barVariants={p.barVariants} suggested={p.guess.glass} />
           </Row>
           <Row label="Ice">
-            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.barKit} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} tellUs={tellUsAbout} />
+            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.venueIce} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} tellUs={tellUsAbout} />
           </Row>
           <Row label="Finish">
             {finishing ? (
