@@ -9,7 +9,7 @@ import { useBarKit } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueIce } from '@/hooks/useVenueIce';
 import { ICE_EXTRA_STEPS, iceWay, type IceWayKey } from '@/lib/iceRecipes';
-import { ICE_YIELD_UNITS, newStepField } from '@/lib/prepCardForm';
+import { ICE_YIELD_UNITS } from '@/lib/prepCardForm';
 import { inTheGlass, kitHasTool, toolLabel } from '@/lib/venueKit';
 
 import { MethodEdit } from '../ingredient/edit/MethodEdit';
@@ -70,7 +70,7 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
         {picks.length ? (
           <View style={styles.group}>
             <Caption tone="muted">{from === 'block' ? 'Which block or slab?' : 'Which ice?'}</Caption>
-            <View role="radiogroup" style={styles.chips}>
+            <View role="radiogroup" accessibilityLabel={from === 'block' ? 'Which block or slab?' : 'Which ice?'} style={styles.chips}>
               {picks.map((r) => (
                 <Chip key={r.id} label={r.name} selected={wayFrom?.id === r.id} onPress={() => setWayFrom({ id: r.id, name: r.name })} />
               ))}
@@ -102,19 +102,16 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
         onChange={(steps) => edit.set({ steps })}
         tools={{ label: toolLabel, missing, onEdit: (key) => setSheet({ tools: key }) }}
       />
-      <View style={styles.group}>
-        <Caption tone="muted">Add a step</Caption>
-        <View style={styles.chips}>
-          {ICE_EXTRA_STEPS.map((x) => (
-            <Chip key={x.key} label={x.label} selected={false} onPress={() => edit.set({ steps: [...f.steps, edit.toStep(x.step)] })} />
-          ))}
-          <Chip label="Our own step" selected={false} onPress={() => edit.set({ steps: [...f.steps, newStepField()] })} />
-        </View>
+      {/* "Add a step" above is our own step; these add one of the usual ones. */}
+      <View role="group" accessibilityLabel="Add one of the usual steps" style={styles.chips}>
+        {ICE_EXTRA_STEPS.map((x) => (
+          <Chip key={x.key} label={`+ ${x.label}`} selected={false} onPress={() => edit.set({ steps: [...f.steps, edit.toStep(x.step)] })} />
+        ))}
       </View>
       <Surface>
         <SettingsRow label="Makes" value={values.makes ?? 'Add'} onPress={() => setSheet('makes')} />
         <RowDivider />
-        <SettingsRow label="Keeps" value={values.keeps ?? 'Add'} onPress={() => setSheet('keeps')} />
+        <SettingsRow label="Keeps" value={[values.keeps, values.store].filter(Boolean).join(' · ') || 'Add'} onPress={() => setSheet('keeps')} />
       </Surface>
       <View style={styles.group}>
         <Headline role="heading">Who can change it</Headline>

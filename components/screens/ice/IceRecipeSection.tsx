@@ -85,7 +85,7 @@ export function IceRecipeSection({ barId, ice, canEdit }: { barId: string; ice: 
           <Headline role="heading">What it needs</Headline>
           <View style={styles.tags}>
             {tools.map((t) => (
-              <Tag key={t} label={missing.includes(t) ? `${toolLabel(t)} · not in your kit` : toolLabel(t)} tone={missing.includes(t) ? 'warning' : 'outline'} icon="hammer.fill" />
+              <Tag key={t} label={missing.includes(t) ? `${toolLabel(t)} · not in your kit` : toolLabel(t)} tone={missing.includes(t) ? 'warning' : 'outline'} icon={missing.includes(t) ? 'xmark' : 'checkmark'} />
             ))}
           </View>
         </>
