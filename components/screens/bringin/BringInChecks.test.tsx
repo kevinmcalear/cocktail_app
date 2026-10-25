@@ -61,7 +61,7 @@ test('the recipe check shows every line in your unit, flags the hard one, and sa
   expect(screen.getByText('45 ml')).toBeTruthy();
   expect(screen.getByText('oz on the page · showing ml')).toBeTruthy();
   expect(screen.getByText('Check this: ¾ or ½? Look at the page')).toBeTruthy();
-  expect(screen.getByText('New house-made ingredient')).toBeTruthy();
+  expect(screen.getByText('New house-made')).toBeTruthy();
   expect(screen.getByDisplayValue('Little Rye')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Save drink' }));
   const [[drink]] = onSave.mock.calls;
