@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { Body, Caption } from '@/components/ds';
 import { IceThumb } from '@/components/ds/IceThumb';
 import { IceSheet, iceThumbKind } from '@/components/screens/kit/IceSheet';
-import { KitItemPage, KitItemSection } from '@/components/screens/kit/KitItemPage';
+import { KitItemPage } from '@/components/screens/kit/KitItemPage';
 import { KitList, type KitEntry } from '@/components/screens/kit/KitList';
 import { KitPage, useCloseKitItem, useOpenKitItem } from '@/components/screens/kit/KitPage';
+import { IceRecipeSection } from '@/components/screens/ice/IceRecipeSection';
+import { useIceAddMade } from '@/components/screens/ice/useIceAddMade';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -29,6 +31,8 @@ export function KitIceScreen({ barId, openId }: { barId: string; openId?: string
   // The sheet: adding (no ice), changing one, and the question it opens on.
   const [sheet, setSheet] = useState<{ ice: VenueIce | null; startAt: 0 | 1 } | null>(null);
   const opened = openId ? (ices.find((i) => i.id === openId) ?? null) : null;
+  // Adding ice made here asks how (question 3) and starts its recipe from the answer.
+  const made = useIceAddMade(barId, ices);
   const entry = (i: VenueIce): KitEntry => ({ id: i.id, name: i.name, line: iceFrom(i), thumb: <IceThumb kind={iceThumbKind(i)} /> });
 
   const list = error ? (
@@ -63,7 +67,16 @@ export function KitIceScreen({ barId, openId }: { barId: string; openId?: string
         list={list}
         item={opened ? <IcePage barId={barId} ice={opened} canEdit={canEdit} onChange={(startAt) => setSheet({ ice: opened, startAt })} /> : null}
       />
-      <IceSheet barId={barId} visible={!!sheet} ice={sheet?.ice} startAt={sheet?.startAt} onClose={() => setSheet(null)} />
+      <IceSheet
+        barId={barId}
+        visible={!!sheet}
+        ice={sheet?.ice}
+        startAt={sheet?.startAt}
+        onClose={() => (setSheet(null), made.reset())}
+        madeStep={sheet && !sheet.ice ? made.madeStep : undefined}
+        // The ice is saved either way; if its starting recipe fails, its recipe page asks again.
+        onSaved={(id, ice) => void made.onSaved(id, ice).catch(() => undefined)}
+      />
     </>
   );
 }
@@ -89,12 +102,7 @@ function IcePage({ barId, ice, canEdit, onChange }: { barId: string; ice: VenueI
       removing={remove.isPending}
       error={remove.error ? ((remove.error as { code?: string }).code === '23503' ? remove.error.message : 'Couldn’t remove it. Check your connection and try again.') : null}
     >
-      {/* ponytail: the ice recipes PR (Kit and ice, steps 7 and 8) writes how it's made here, and what it needs. */}
-      {ice.source === 'made' ? (
-        <KitItemSection title="How it’s made">
-          <Caption tone="muted">Its recipe goes here: start from a block, a mould or your cubes, and the steps that get it into the glass.</Caption>
-        </KitItemSection>
-      ) : null}
+      {ice.source === 'made' ? <IceRecipeSection barId={barId} ice={ice} canEdit={canEdit} /> : null}
     </KitItemPage>
   );
 }

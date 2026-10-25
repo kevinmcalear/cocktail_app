@@ -1,17 +1,18 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, Surface, Tag, TextLink, useDs } from '@/components/ds';
+import { Body, Button, Caption, Surface, Tag, TextLink, useDs } from '@/components/ds';
+import { KitItemSection } from '@/components/screens/kit/KitItemPage';
 import { IceThumb } from '@/components/ds/IceThumb';
 import { radius, space } from '@/constants/tokens';
-import { useBarKit, useSetTools } from '@/hooks/useBarKit';
+import { useBarKit, useSaveTool } from '@/hooks/useBarKit';
 import { useIceStartsFrom } from '@/hooks/useIceRecipe';
 import { useItemPrep } from '@/hooks/usePrepCard';
 import { useVenueIce, type VenueIce } from '@/hooks/useVenueIce';
 import { equipmentById } from '@/lib/techniques/equipment';
 import { iceDrawKind, kitHasTool, kitSourceLine, toolLabel } from '@/lib/venueKit';
 
-export const iceRecipeHref = (barId: string, iceId: string) => `/settings/bar/${barId}/ice-recipe/${iceId}` as Href;
+export const iceRecipeHref = (barId: string, iceId: string) => `/settings/bar/${barId}/kit/ice/${iceId}/recipe` as Href;
 
 /**
  * What an ice starts from (Kit and ice, steps 7 and 8): the venue's other ice
@@ -29,7 +30,11 @@ export function StartsFromCard({ barId, from, onChange }: { barId: string; from:
       <View style={styles.flex}>
         <Caption tone="muted">Starts from</Caption>
         <Body numberOfLines={1}>{name}</Body>
-        {line ? <Caption tone="muted" numberOfLines={2}>{line}</Caption> : null}
+        {line ? (
+          <Caption tone="muted" numberOfLines={2}>
+            {line}
+          </Caption>
+        ) : null}
       </View>
       {ice ? <TextLink label="Open" onPress={() => router.push(iceRecipeHref(barId, ice.id))} /> : null}
       {onChange ? <TextLink label="Change" onPress={onChange} /> : null}
@@ -49,7 +54,7 @@ export function IceRecipeSection({ barId, ice, canEdit }: { barId: string; ice: 
   const { data: card } = useItemPrep(ice.id);
   const { data: from } = useIceStartsFrom(ice.id);
   const kit = useBarKit(barId).data ?? [];
-  const addTools = useSetTools(barId);
+  const addTool = useSaveTool(barId);
   const steps = card?.steps ?? [];
   const tools = [...new Set(steps.flatMap((s) => s.equipment))];
   const missing = kit.length ? tools.filter((t) => !kitHasTool(kit, t)) : [];
@@ -58,43 +63,59 @@ export function IceRecipeSection({ barId, ice, canEdit }: { barId: string; ice: 
   if (!card) return null;
   if (!steps.length && !from) {
     return canEdit ? (
-      <View style={styles.section}>
-        <Headline role="heading">How it’s made</Headline>
+      <KitItemSection title="How it’s made">
         <Body tone="muted">No recipe yet. Start from one of the usual ways and change it to how you do it.</Body>
         <Button label="Write how it’s made" variant="secondary" onPress={edit} />
-      </View>
+      </KitItemSection>
     ) : null;
   }
   return (
     <View style={styles.section}>
       {from ? <StartsFromCard barId={barId} from={from} /> : null}
-      <View style={styles.head}>
-        <Headline role="heading">How it’s made</Headline>
-        {canEdit ? <TextLink label="Edit" onPress={edit} /> : null}
-      </View>
-      <View role="list" style={styles.steps}>
-        {steps.map((s, i) => (
-          <View key={s.position} role="listitem" style={styles.step}>
-            <Caption style={styles.n}>{String(i + 1)}</Caption>
-            <Body style={styles.flex}>{s.body}</Body>
-          </View>
-        ))}
-      </View>
+      <KitItemSection title="How it’s made">
+        <View role="list" style={styles.steps}>
+          {steps.map((s, i) => (
+            <View key={s.position} role="listitem" style={styles.step}>
+              <Caption style={styles.n}>{String(i + 1)}</Caption>
+              <Body style={styles.flex}>{s.body}</Body>
+            </View>
+          ))}
+        </View>
+        {canEdit ? <TextLink label="Change how it’s made" onPress={edit} /> : null}
+      </KitItemSection>
       {tools.length ? (
-        <>
-          <Headline role="heading">What it needs</Headline>
+        <KitItemSection title="What it needs">
           <View style={styles.tags}>
             {tools.map((t) => (
               <Tag key={t} label={missing.includes(t) ? `${toolLabel(t)} · not in your kit` : toolLabel(t)} tone={missing.includes(t) ? 'warning' : 'outline'} icon={missing.includes(t) ? 'xmark' : 'checkmark'} />
             ))}
           </View>
-        </>
+        </KitItemSection>
       ) : null}
       {canEdit && ours.length ? (
         <Surface style={styles.missing}>
           <Body>{`Not in your kit: ${ours.map(toolLabel).join(', ')}.`}</Body>
-          <Button label="Add to kit" variant="secondary" disabled={addTools.isPending} onPress={() => addTools.mutate({ ids: ours, on: true })} />
-          {addTools.error ? <Caption tone="accent">Couldn’t add that. Check your connection and try again.</Caption> : null}
+          <Button
+            label="Add to kit"
+            variant="secondary"
+            disabled={addTool.isPending}
+            onPress={() =>
+              void Promise.all(
+                ours.map((key) =>
+                  addTool.mutateAsync({
+                    key,
+                    name: null,
+                    location: null,
+                    count: null,
+                    source: null,
+                    supplier_id: null,
+                    note: null,
+                  }),
+                ),
+              ).catch(() => undefined)
+            }
+          />
+          {addTool.error ? <Caption tone="accent">Couldn’t add that. Check your connection and try again.</Caption> : null}
         </Surface>
       ) : null}
     </View>
@@ -103,8 +124,13 @@ export function IceRecipeSection({ barId, ice, canEdit }: { barId: string; ice: 
 
 const styles = StyleSheet.create({
   section: { gap: space.md },
-  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.md },
-  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.control },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    padding: space.md,
+    borderRadius: radius.control,
+  },
   flex: { flex: 1, minWidth: 0 },
   steps: { gap: space.sm },
   step: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },

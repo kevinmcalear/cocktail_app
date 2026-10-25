@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field, Headline, Surface, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
@@ -9,17 +9,17 @@ import { useBarKit } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIcesStartingFrom } from '@/hooks/useIceRecipe';
 import { useVenueIce } from '@/hooks/useVenueIce';
-import { ICE_EXTRA_STEPS, iceWay, type IceWayKey } from '@/lib/iceRecipes';
+import { ICE_EXTRA_STEPS } from '@/lib/iceRecipes';
 import { ICE_YIELD_UNITS } from '@/lib/prepCardForm';
-import { inTheGlass, kitHasTool, toolLabel } from '@/lib/venueKit';
+import { kitHasTool, toolLabel } from '@/lib/venueKit';
 
 import { MethodEdit } from '../ingredient/edit/MethodEdit';
 import { KeepsSheet, keepsValues } from '../ingredient/edit/PrepSections';
 import { RowDivider, SettingsRow } from '../settings/SettingsParts';
 import { VenueSubPage } from '../venue/VenueSubPage';
 import { IceRecipeSection, StartsFromCard } from './IceRecipeSection';
-import { IceWaysList } from './IceWaysList';
-import { StartsFromSheet, type StartsFromPick } from './StartsFromSheet';
+import { IceMadeStep, madeReady, type IceMade } from './IceMadeStep';
+import { StartsFromSheet } from './StartsFromSheet';
 import { StepToolsSheet } from './StepToolsSheet';
 import { useIceRecipeEdit } from './useIceRecipeEdit';
 
@@ -38,8 +38,7 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
   const ice = ices.find((r) => r.id === iceId) ?? null;
   const kit = useBarKit(barId).data ?? [];
   const edit = useIceRecipeEdit(barId, canEdit ? ice : null);
-  const [way, setWay] = useState<IceWayKey | null>(null);
-  const [wayFrom, setWayFrom] = useState<StartsFromPick>(null);
+  const [made, setMade] = useState<IceMade>({ way: null, from: null });
   const [own, setOwn] = useState(false);
   const [sheet, setSheet] = useState<'from' | 'makes' | 'keeps' | { tools: string } | null>(null);
   const title = ice?.name ?? 'Ice';
@@ -65,24 +64,10 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
 
   // --- No recipe yet: how do you make it? (step 6, question 3) ---
   if (!f.steps.length && !edit.startsFrom && !own && !edit.dirty) {
-    const from = way ? iceWay(way).from : null;
-    const picks = from === 'block' ? others.filter((r) => !inTheGlass(r)) : from === 'cubes' ? others.filter(inTheGlass) : [];
     return (
       <VenueSubPage barId={barId} title={title} intro="How do you make it? Start from one of these and change anything. It’s a recipe, like your house preps.">
-        <IceWaysList value={way} onChange={(k) => (setWay(k), setWayFrom(null))} />
-        {picks.length ? (
-          <View style={styles.group}>
-            <Caption tone="muted">{from === 'block' ? 'Which block or slab?' : 'Which ice?'}</Caption>
-            <View role="radiogroup" accessibilityLabel={from === 'block' ? 'Which block or slab?' : 'Which ice?'} style={styles.chips}>
-              {picks.map((r) => (
-                <Chip key={r.id} label={r.name} selected={wayFrom?.id === r.id} onPress={() => setWayFrom({ id: r.id, name: r.name })} />
-              ))}
-            </View>
-          </View>
-        ) : null}
-        {from === 'flavour' ? <Field label="Which flavour?" value={wayFrom?.name ?? ''} onChangeText={(name) => setWayFrom(name.trim() ? { id: null, name } : null)} placeholder="Coffee, tea, a juice" maxLength={60} /> : null}
-        {(from === 'block' || from === 'cubes') && !picks.length ? <Caption tone="muted">{`Add the ${from === 'block' ? 'block or slab' : 'ice'} it starts from in Kit › Ice, then pick it here. Or make it now and pick it later under Starts from.`}</Caption> : null}
-        <Button label="Make it" disabled={!way || (picks.length > 0 && !wayFrom) || (from === 'flavour' && !wayFrom)} onPress={() => way && (way === 'own' ? setOwn(true) : edit.start(way, wayFrom && { ...wayFrom, name: wayFrom.name.trim() }))} />
+        <IceMadeStep value={made} onChange={setMade} others={others} />
+        <Button label="Make it" disabled={!madeReady(made, others)} onPress={() => made.way && (made.way === 'own' ? setOwn(true) : edit.start(made.way, made.from && { ...made.from, name: made.from.name.trim() }))} />
       </VenueSubPage>
     );
   }

@@ -3,13 +3,13 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { IceRecipeScreen } from '@/components/screens/ice/IceRecipeScreen';
 
-/** How a venue's ice is made, under Kit › Ice in its settings. */
+/** How a venue's ice is made: under its page in Kit › Ice, so Back returns there. */
 export default function IceRecipeRoute() {
-  const { id, iceId } = useLocalSearchParams<{ id: string; iceId: string }>();
+  const { id, item } = useLocalSearchParams<{ id: string; item: string }>();
   return (
     <VenueBrandProvider barId={id}>
       <Stack.Screen options={{ headerShown: false }} />
-      {id && iceId ? <IceRecipeScreen barId={id} iceId={iceId} /> : null}
+      {id && item ? <IceRecipeScreen barId={id} iceId={item} /> : null}
     </VenueBrandProvider>
   );
 }
