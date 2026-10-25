@@ -12,7 +12,7 @@ import { useVenueIce, type VenueIce } from '@/hooks/useVenueIce';
 import { equipmentById } from '@/lib/techniques/equipment';
 import { iceDrawKind, kitHasTool, kitSourceLine, toolLabel } from '@/lib/venueKit';
 
-export const iceRecipeHref = (barId: string, iceId: string) => `/settings/bar/${barId}/kit/ice/${iceId}/recipe` as Href;
+export const iceRecipeHref = (barId: string, iceId: string) => `/settings/bar/${barId}/kit/ice/${iceId}?recipe=1` as Href;
 
 /**
  * What an ice starts from (Kit and ice, steps 7 and 8): the venue's other ice
