@@ -35,30 +35,30 @@ export function useBarKit(barId: string | null | undefined) {
   });
 }
 
-/** A tool's switch: on adds it, off takes it away. The list follows at once and goes back if the save fails. */
-export function useSetTools(barId: string) {
+/** A tool as the Add sheet saves it. No id adds it; ours has a key, the venue's own only a name. */
+export type ToolChange = Pick<KitRow, 'key' | 'name' | 'location' | 'count' | 'source' | 'supplier_id' | 'note'> & { id?: string };
+
+/** Add one of the venue's tools, or change one (by id). */
+export function useSaveTool(barId: string) {
   const client = useQueryClient();
-  const key = barKitKey(barId);
   return useMutation({
-    mutationFn: async ({ ids, on }: { ids: string[]; on: boolean }) => {
-      const { error } = on
-        ? await supabase.from('bar_kit').upsert(ids.map((k) => ({ bar_id: barId, kind: 'tool', key: k })), { onConflict: 'bar_id,kind,key', ignoreDuplicates: true })
-        : await supabase.from('bar_kit').delete().eq('bar_id', barId).eq('kind', 'tool').in('key', ids);
+    mutationFn: async ({ id, ...tool }: ToolChange) => {
+      const { error } = id ? await supabase.from('bar_kit').update(tool).eq('id', id) : await supabase.from('bar_kit').insert({ ...tool, bar_id: barId, kind: 'tool' });
       if (error) throw error;
     },
-    onMutate: async ({ ids, on }) => {
-      await client.cancelQueries({ queryKey: key });
-      const before = client.getQueryData<KitRow[]>(key);
-      const rest = (before ?? []).filter((r) => !(r.key && ids.includes(r.key)));
-      const now = new Date().toISOString();
-      const added = on
-        ? ids.map((k): KitRow => ({ id: `new-${k}`, bar_id: barId, kind: 'tool', key: k, name: null, location: null, count: null, source: null, note: null, supplier_id: null, supplier_name: null, sort_order: 0, created_at: now, updated_at: now }))
-        : [];
-      client.setQueryData<KitRow[]>(key, [...rest, ...added]);
-      return { before };
+    onSettled: () => client.invalidateQueries({ queryKey: barKitKey(barId) }),
+  });
+}
+
+/** Take a tool off the venue's kit. */
+export function useRemoveTool(barId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('bar_kit').delete().eq('id', id);
+      if (error) throw error;
     },
-    onError: (_e, _v, ctx) => client.setQueryData(key, ctx?.before),
-    onSettled: () => client.invalidateQueries({ queryKey: key }),
+    onSettled: () => client.invalidateQueries({ queryKey: barKitKey(barId) }),
   });
 }
 

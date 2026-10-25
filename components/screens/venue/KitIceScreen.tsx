@@ -1,170 +1,97 @@
+import { useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
 
+import { Body, Caption } from '@/components/ds';
 import { IceThumb } from '@/components/ds/IceThumb';
-import { Body, Button, Caption, Chip, Field, PressableScale, Sheet, SheetScrollView, Surface, Title, useDs } from '@/components/ds';
-import { space } from '@/constants/tokens';
+import { IceSheet, iceThumbKind } from '@/components/screens/kit/IceSheet';
+import { KitItemPage, KitItemSection } from '@/components/screens/kit/KitItemPage';
+import { KitList, type KitEntry } from '@/components/screens/kit/KitList';
+import { KitPage, useOpenKitItem } from '@/components/screens/kit/KitPage';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
-import { useRemoveVenueIce, useSaveVenueIce, useVenueIce, type VenueIce } from '@/hooks/useVenueIce';
-import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
-import { ICE_KINDS, ICE_LABEL, iceDrawKind, kitSourceLine } from '@/lib/venueKit';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { useRemoveVenueIce, useVenueIce, type VenueIce } from '@/hooks/useVenueIce';
+import { iceLooksLine, inTheGlass, kitSourceLine } from '@/lib/venueKit';
 
-import { VenueSubPage } from './VenueSubPage';
-
-const FAILED = 'Couldn’t save that. Check your connection and try again.';
-
-/** Kit: Ice. The ice a venue pours, each made here or from one of its suppliers. Anyone with Prep changes it. */
-export function KitIceScreen({ barId }: { barId: string }) {
+/**
+ * Kit: Ice (Kit and ice, steps 1 to 5). The ice a venue pours, in the glass
+ * and the blocks and slabs it cuts from, each with where it comes from. Add
+ * ice opens the shared Add sheet; one opens on its own page. Anyone with
+ * Prep changes it.
+ */
+export function KitIceScreen({ barId, openId }: { barId: string; openId?: string | null }) {
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const canEdit = (useCapabilities(barId).data ?? []).includes('prep');
   const { data: ices = [], isLoading, error } = useVenueIce(barId);
-  const save = useSaveVenueIce(barId);
-  const [open, setOpen] = useState<VenueIce | null>(null);
-  const missing = ICE_KINDS.filter((k) => !ices.some((r) => r.shape === k));
+  const open = useOpenKitItem(barId, 'ice', openId);
+  // The sheet: adding (no ice), changing one, and the question it opens on.
+  const [sheet, setSheet] = useState<{ ice: VenueIce | null; startAt: 0 | 1 } | null>(null);
+  const opened = openId ? (ices.find((i) => i.id === openId) ?? null) : null;
+  const entry = (i: VenueIce): KitEntry => ({ id: i.id, name: i.name, line: kitSourceLine(i), thumb: <IceThumb kind={iceThumbKind(i)} /> });
+
+  const list = error ? (
+    <Body tone="muted">Couldn’t load the ice. Check your connection and try again.</Body>
+  ) : isLoading ? (
+    <Caption tone="muted">Loading…</Caption>
+  ) : (
+    <KitList
+      sections={[
+        { title: 'In the glass', entries: ices.filter(inTheGlass).map(entry) },
+        { title: 'Blocks and slabs, to cut from', entries: ices.filter((i) => !inTheGlass(i)).map(entry) },
+      ]}
+      openId={openId}
+      onOpen={open}
+      addLabel="Add ice"
+      onAdd={canEdit ? () => setSheet({ ice: null, startAt: 0 }) : undefined}
+      empty="No ice listed yet."
+    />
+  );
 
   return (
-    <VenueSubPage barId={barId} title="Ice" intro={`The ice ${venue?.name ?? 'the venue'} pours with. The drink wizard offers these first, and a drink whose spec doesn’t say is drawn with the nearest of yours.`}>
-      {isLoading ? <Caption tone="muted">Loading…</Caption> : null}
-      {error ? <Body tone="muted">Couldn’t load the ice. Check your connection and try again.</Body> : null}
-      {ices.length ? (
-        <Surface style={styles.list}>
-          <View role="list">
-            {ices.map((r, i) => (
-              <IceRow key={r.id} row={r} first={i === 0} onOpen={canEdit ? () => setOpen(r) : undefined} />
-            ))}
-          </View>
-        </Surface>
-      ) : !isLoading && !error ? (
-        <Body tone="muted">No ice listed yet.</Body>
-      ) : null}
-      {canEdit && missing.length ? (
-        <View style={styles.group}>
-          <Caption tone="muted">{ices.length ? 'Add another kind' : 'Add the ice you pour'}</Caption>
-          <View style={styles.chips}>
-            {missing.map((k) => (
-              <Chip key={k} label={ICE_LABEL[k]} selected={false} multi disabled={save.isPending} accessibilityLabel={`Add ${ICE_LABEL[k]}`} onPress={() => save.mutate({ name: ICE_LABEL[k], shape: k })} />
-            ))}
-          </View>
-          {save.error && !open ? <Caption tone="accent">{FAILED}</Caption> : null}
-        </View>
-      ) : null}
-      {!canEdit ? <Caption tone="muted">You can look, but changing the kit needs Prep at this venue.</Caption> : null}
-      <IceSheet barId={barId} row={open} onClose={() => setOpen(null)} />
-    </VenueSubPage>
-  );
-}
-
-function IceRow({ row, first, onOpen }: { row: VenueIce; first: boolean; onOpen?: () => void }) {
-  const ds = useDs();
-  const label = row.name;
-  const source = kitSourceLine(row);
-  const body = (
     <>
-      <IceThumb kind={iceDrawKind(row) ?? 'cubes'} />
-      <View style={styles.flex}>
-        <Body numberOfLines={1}>{label}</Body>
-        {source ? (
-          <Caption tone="muted" numberOfLines={2}>
-            {source}
-          </Caption>
-        ) : null}
-      </View>
+      <KitPage
+        barId={barId}
+        kind="ice"
+        title="Ice"
+        intro={`The ice ${venue?.name ?? 'the venue'} pours, and how each one gets here. Drinks are drawn with it, and the wizard offers it first.`}
+        openId={openId}
+        openName={opened?.name}
+        loading={isLoading}
+        list={list}
+        item={opened ? <IcePage barId={barId} ice={opened} canEdit={canEdit} onChange={(startAt) => setSheet({ ice: opened, startAt })} /> : null}
+      />
+      <IceSheet barId={barId} visible={!!sheet} ice={sheet?.ice} startAt={sheet?.startAt} onClose={() => setSheet(null)} />
     </>
   );
-  const style = [styles.row, first ? null : { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth }];
-  return (
-    <View role="listitem" style={style}>
-      {onOpen ? (
-        <PressableScale role="button" accessibilityLabel={`Change ${label}${source ? `. ${source}` : ''}`} onPress={onOpen} style={[styles.row, styles.flex]}>
-          {body}
-        </PressableScale>
-      ) : (
-        body
-      )}
-    </View>
-  );
 }
 
-/** One ice, opened: a note, and made here or from a supplier. */
-function IceSheet({ barId, row, onClose }: { barId: string; row: VenueIce | null; onClose: () => void }) {
-  return (
-    <Sheet visible={!!row} onClose={onClose} accessibilityLabel={row?.name ?? 'Ice'} keyboard>
-      {row ? <IceForm key={row.id} barId={barId} row={row} onDone={onClose} /> : null}
-    </Sheet>
-  );
-}
-
-type Source = 'here' | 'machine' | 'none' | string;
-
-function IceForm({ barId, row, onDone }: { barId: string; row: VenueIce; onDone: () => void }) {
-  const suppliers = useVenueSuppliers(barId).data ?? [];
-  const save = useSaveVenueIce(barId);
+/** One ice, opened (step 2): what it looks like, where it comes from, and how it's made. */
+function IcePage({ barId, ice, canEdit, onChange }: { barId: string; ice: VenueIce; canEdit: boolean; onChange: (startAt: 0 | 1) => void }) {
+  const router = useRouter();
+  const wide = useIsWideWeb();
   const remove = useRemoveVenueIce(barId);
-  const [note, setNote] = useState(row.note ?? '');
-  const [source, setSource] = useState<Source>(row.source === 'made' ? 'here' : row.source === 'machine' ? 'machine' : (row.supplier_id ?? 'none'));
-  // A spear's length, so the drink wizard can tell when it's shorter than the glass.
-  const [length, setLength] = useState(row.length_mm ? String(row.length_mm) : '');
-  const mm = Number(length.trim());
-  const lengthOk = !length.trim() || (Number.isInteger(mm) && mm >= 20 && mm <= 400);
-  const options = [
-    { id: 'here', label: 'Made here' },
-    // Today's sheet doesn't add a machine; one already said stays (kit and ice PR 2 asks for it).
-    ...(row.source === 'machine' ? [{ id: 'machine', label: row.machine ? `Our machine · ${row.machine}` : 'Our machine' }] : []),
-    ...suppliers.map((s) => ({ id: s.id, label: s.name })),
-    { id: 'none', label: 'Not said' },
-  ];
-  const done = { onSuccess: onDone };
+  const from = kitSourceLine(ice);
   return (
-    <SheetScrollView contentContainerStyle={styles.sheet}>
-      <Title>{row.name}</Title>
-      <Field label="Note" value={note} onChangeText={setNote} placeholder="Hoshizaki under the well" maxLength={120} />
-      {row.shape === 'spear' ? (
-        <View style={styles.group}>
-          <Field label="Length (mm)" value={length} onChangeText={setLength} placeholder="130" keyboardType="number-pad" maxLength={3} />
-          <Caption tone={lengthOk ? 'muted' : 'accent'}>{lengthOk ? 'The drink wizard checks it against your glasses’ heights.' : 'A length between 20 and 400 mm.'}</Caption>
-        </View>
+    <KitItemPage
+      kind="Ice"
+      name={ice.name}
+      showTitle={wide}
+      thumb={<IceThumb kind={iceThumbKind(ice)} size={72} />}
+      facts={[
+        { label: 'Looks like', value: iceLooksLine(ice), onChange: canEdit ? () => onChange(0) : undefined },
+        { label: 'Where it comes from', value: from || 'Not said yet', onChange: canEdit ? () => onChange(1) : undefined },
+      ]}
+      onEdit={canEdit ? () => onChange(0) : undefined}
+      onRemove={canEdit ? () => remove.mutate(ice.id, { onSuccess: () => router.replace(`/settings/bar/${barId}/ice` as Href) }) : undefined}
+      removing={remove.isPending}
+      error={remove.error ? ((remove.error as { code?: string }).code === '23503' ? remove.error.message : 'Couldn’t remove it. Check your connection and try again.') : null}
+    >
+      {/* ponytail: the ice recipes PR (Kit and ice, steps 7 and 8) writes how it's made here, and what it needs. */}
+      {ice.source === 'made' ? (
+        <KitItemSection title="How it’s made">
+          <Caption tone="muted">Its recipe goes here: start from a block, a mould or your cubes, and the steps that get it into the glass.</Caption>
+        </KitItemSection>
       ) : null}
-      <View style={styles.group}>
-        <Caption tone="muted">Where it comes from</Caption>
-        <View role="radiogroup" accessibilityLabel="Where it comes from" style={styles.chips}>
-          {options.map((o) => (
-            <Chip key={o.id} label={o.label} selected={source === o.id} onPress={() => setSource(o.id)} />
-          ))}
-        </View>
-      </View>
-      {save.error || remove.error ? <Caption tone="accent">{FAILED}</Caption> : null}
-      <View style={styles.actions}>
-        <Button
-          label={save.isPending ? 'Saving…' : 'Save'}
-          disabled={save.isPending || remove.isPending || !lengthOk}
-          onPress={() =>
-            save.mutate(
-              {
-                // ponytail: today's sheet changes the note, the source and a spear's length; the rest is kept as it is until PR 2's Add sheet.
-                ...row,
-                note: note.trim() || null,
-                source: source === 'here' ? 'made' : source === 'machine' ? 'machine' : source === 'none' ? null : 'bought',
-                supplier_id: source === 'here' || source === 'machine' || source === 'none' ? null : source,
-                machine: source === 'machine' ? row.machine : null,
-                ...(row.shape === 'spear' ? { length_mm: length.trim() ? mm : null } : {}),
-              },
-              done,
-            )
-          }
-        />
-        <Button label="Remove" variant="ghost" disabled={save.isPending || remove.isPending} onPress={() => remove.mutate(row.id, done)} />
-      </View>
-    </SheetScrollView>
+    </KitItemPage>
   );
 }
-
-const styles = StyleSheet.create({
-  list: { paddingVertical: space.xs },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm },
-  flex: { flex: 1, minWidth: 0 },
-  group: { gap: space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  sheet: { gap: space.lg, padding: space.lg },
-  actions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
-});

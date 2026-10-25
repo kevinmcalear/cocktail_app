@@ -61,6 +61,14 @@ Built from the starting design above, with the changes noted (why in brackets).
 - **Drawings**: `private.item_sketches_set_house_ice` reads the venue's ice in the glass from `item_ice` (a `cut` or `other` ice by its `draw_as`; blocks and slabs never), and a change to `item_ice` redraws the venue's drinks. The wizard's spear length is `item_ice.length_mm`.
 - **Not yet**: drinks still name the shared ice (`useDropdowns` `iceTypes` and the wizard's lookup leave out venue ice items); PR 6 offers the venue's own. The ice picker and Kit › Ice screens stay as they were until PR 2.
 
+### PR 2: what the screens are now
+
+- **One pattern** in `components/screens/kit/`: `KitList` (drawing, name, where it comes from in one line, one Add button; Ice has "In the glass" and "Blocks and slabs, to cut from"), `KitItemPage` (drawing, facts with Change, how it connects, Remove from Kit), `KitAddSheet` (the three questions on `Sheet`, a centred dialog on the web) with `SourceQuestion` (question 2 for all three).
+- **The sheets**, each openable prefilled at any question: `IceSheet` (`ice` or `initial`, `startAt`, `madeStep` for question 3), `GlassSheet` (`glass`, `startAt`, `describe`, `onSave` to hold instead of save), `ToolSheet` (`tool` or `initialKey`, `startAt`). PR 6 opens these from the wizard and What next; PR 4 links to them from the kit check.
+- **Routes**: the lists stay at `/settings/bar/<id>/glassware|ice|tools`; one thing opens at `/settings/bar/<id>/kit/<kind>/<item id>` (its own page on a phone, beside the list on a wide screen).
+- **Gone**: `GlassForm` (Wide/Deep/Saucer, Who makes it, Designer, Series), the ice chips and the tool switches (`useSetTools`, `toolGroups`). A glass named by hand is its shape and its name; one picked from the catalog keeps its maker on the model.
+- **Left for later PRs**: ice question 3 and "How it's made" on the ice page (PR 3: `madeStep`, and the placeholder in `KitIceScreen`'s `IcePage`); "In N drinks", "Needed by" and "What it needs" (PR 4); "Glasses and ice from your drinks" (PR 6).
+
 Notes for later PRs:
 
 - PR 3: the house-prep editor (`hooks/usePrepCard.ts`) assumes ingredients (`ingredient_role`, `made_from_id` are ingredient-only, by check constraint). Ice made here uses `item_steps`, `item_prep` and `recipes` lines, not `made_from_id`. Prep-only staff still can't write recipe lines of a house prep (an ingredient), only of the venue's ice.

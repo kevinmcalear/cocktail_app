@@ -4,7 +4,7 @@
 
 import { andList } from './makers';
 import { SUPPLIES, type Supplies } from './suppliers';
-import { EQUIPMENT } from './techniques/equipment';
+import { equipmentById } from './techniques/equipment';
 
 /** The ice kinds the drawings know, less 'none'. */
 export const ICE_KINDS = ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere'] as const;
@@ -23,16 +23,67 @@ export function iceDrawKind(ice: { shape: string; draw_as: string | null }): Ice
 /** An ice that goes in the glass, not a block or slab to cut from. */
 export const inTheGlass = (ice: { shape: string }) => ice.shape !== 'block' && ice.shape !== 'slab';
 
-/** In the add-drink wizard's words (lib/drinkWizard.ts COMMON_ICE). */
-export const ICE_LABEL: Record<IceKind, string> = {
+/** A venue ice's shape in the Add sheet's words (Kit and ice, step 4): the Collins block is the spear. */
+export const ICE_SHAPE_LABEL: Record<IceShape, string> = {
   cubes: 'Cubes',
   large: 'Large cube',
-  spear: 'Spear',
+  spear: 'Collins block',
+  sphere: 'Sphere',
+  cut: 'Cut to size',
   crushed: 'Crushed',
   pebble: 'Pebble',
   shaved: 'Shaved',
-  sphere: 'Sphere',
+  other: 'Something else',
+  block: 'Block',
+  slab: 'Slab',
 };
+
+/** The shapes in the glass, in the sheet's order. */
+export const GLASS_ICE_SHAPES: readonly IceShape[] = ['cubes', 'large', 'spear', 'sphere', 'cut', 'crushed', 'pebble', 'shaved', 'other'];
+
+/**
+ * The sizes offered for a shape, in mm: a cube's side, a sphere's across, a
+ * Collins block's length (`length`). None for crushed, pebble and shaved.
+ */
+export function iceSizes(shape: IceShape): { length: boolean; mm: readonly number[] } | null {
+  if (shape === 'cubes') return { length: false, mm: [25, 32] };
+  if (shape === 'large') return { length: false, mm: [32, 45, 50, 60] };
+  if (shape === 'sphere') return { length: false, mm: [50, 60, 70] };
+  if (shape === 'spear') return { length: true, mm: [100, 120, 140] };
+  if (shape === 'cut' || shape === 'other') return { length: false, mm: [] };
+  if (shape === 'block' || shape === 'slab') return { length: true, mm: [] };
+  return null;
+}
+
+type IceLooks = { shape: IceShape; size_mm?: number | null; length_mm?: number | null; clear?: boolean | null };
+
+/** The mm the name and the list show: a Collins block's, block's or slab's length, else its size. */
+export function iceMm(ice: IceLooks): number | null {
+  const sizes = iceSizes(ice.shape);
+  return (sizes ? (sizes.length ? ice.length_mm : ice.size_mm) : null) ?? null;
+}
+
+/** The name the sheet gives an ice: "Clear cube · 50 mm", "Collins block · 120 mm", "Cubes". Empty for something else. */
+export function iceName(ice: IceLooks): string {
+  if (ice.shape === 'other') return '';
+  const base = ice.clear && ice.shape === 'large' ? 'Clear cube' : ice.clear && ice.shape !== 'block' && ice.shape !== 'slab' ? `Clear ${ICE_SHAPE_LABEL[ice.shape].toLowerCase()}` : ICE_SHAPE_LABEL[ice.shape];
+  const mm = iceMm(ice);
+  return mm ? `${base} · ${mm} mm` : base;
+}
+
+/** What an ice looks like, in one line: "Large cube · 50 mm · clear · stamped". */
+export function iceLooksLine(ice: IceLooks & { stamped?: boolean; frozen_inside?: string | null }): string {
+  const mm = iceMm(ice);
+  return [ICE_SHAPE_LABEL[ice.shape], mm ? `${mm} mm` : null, ice.clear == null ? null : ice.clear ? 'clear' : 'cloudy', ice.stamped ? 'stamped' : null, ice.frozen_inside ? `${ice.frozen_inside} inside` : null]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/** Where a tool is (bar_kit.location). */
+export const TOOL_LOCATION_LABEL: Record<'bar' | 'prep', string> = { bar: 'Behind the bar', prep: 'Prep kitchen' };
+
+/** A venue's tool by its own name, else ours (lib/techniques/equipment.ts), else its key. */
+export const toolName = (t: { name: string | null; key: string | null }) => t.name ?? (t.key ? (equipmentById(t.key)?.name ?? t.key) : 'A tool');
 
 // The kinds a guessed ice gives way to, nearest first: big cubes for cubes,
 // the crushed family for crushed. Kept in step with private.house_ice
@@ -77,27 +128,6 @@ export const isVenueIce = (names: readonly string[], name: string) => names.some
 export const kitIceRow = <T extends { name: string; shape: string }>(rows: readonly T[], name: string): T | null =>
   rows.find((r) => inTheGlass(r) && isVenueIce([r.name], name)) ?? null;
 
-/** The prep kitchen's tools shown before "All tools": the ones bars reach for first. */
-const PREP_FIRST = ['scale-fine', 'sous-vide', 'whipper', 'superbag', 'chamber-vac', 'centrifuge', 'rotovap'];
-
-export interface ToolGroup {
-  title: string;
-  ids: string[];
-}
-
-/**
- * Behind the bar (every bar tool), then the prep kitchen: the common few plus
- * whatever the venue already has, or every tool when `all`.
- */
-export function toolGroups(have: readonly string[], all: boolean): ToolGroup[] {
-  const bar = EQUIPMENT.filter((e) => e.kind === 'bar').map((e) => e.id);
-  const prep = EQUIPMENT.filter((e) => e.kind !== 'bar' && (all || PREP_FIRST.includes(e.id) || have.includes(e.id))).map((e) => e.id);
-  return [
-    { title: 'Behind the bar', ids: bar },
-    { title: 'Prep kitchen', ids: prep },
-  ];
-}
-
 // What a supplier brings uses lib/suppliers.ts's SUPPLIES, the list profiles and suppliers both check.
 export const SUPPLY_LABEL: Record<Supplies, string> = {
   bottles: 'Bottles',
@@ -119,8 +149,8 @@ export function supplierLine(s: { supplies: readonly string[]; order_by: string 
 
 const MADE: Record<string, string> = { made: 'Made here', machine: 'Our machine', ours: 'Already ours' };
 
-/** Where an ice, tool or glass comes from: "Made here · Hoshizaki under the well", "Coldwater Ice Co. · 130 mm", or just its note. */
+/** Where an ice, tool or glass comes from: "Our machine · Hoshizaki under the well", "Bought from Coldwater Ice Co. · 130 mm", or just its note. */
 export function kitSourceLine(row: { source: string | null; supplier_name: string | null; machine?: string | null; note: string | null; length_mm?: number | null }): string {
-  const from = row.source === 'bought' ? (row.supplier_name ?? 'Bought') : row.source ? (MADE[row.source] ?? null) : null;
+  const from = row.source === 'bought' ? (row.supplier_name ? `Bought from ${row.supplier_name}` : 'Bought') : row.source ? (MADE[row.source] ?? null) : null;
   return [from, row.machine, row.note, row.length_mm ? `${row.length_mm} mm` : null].filter(Boolean).join(' · ');
 }
