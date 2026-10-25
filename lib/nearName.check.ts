@@ -3,7 +3,7 @@
 // supabase/tests/near-names.test.mjs.
 import assert from 'node:assert/strict';
 
-import { nearest, nearFold, nearReason, nearScore } from './nearName';
+import { nearAfter, nearest, nearFold, nearReason, nearScore } from './nearName';
 
 // Folded as the database folds: accents off, lower case, one space.
 assert.equal(nearFold('  Piña   Colada '), 'pina colada');
@@ -74,5 +74,9 @@ const drinks = [{ name: 'Salty Dog' }, { name: 'Salti Boi' }, { name: 'Smoke Sig
 assert.deepEqual(nearest('salty boy', drinks, (d) => d.name).map((d) => d.name), ['Salty Boy Sour', 'Salti Boi', 'Salty Dog']);
 assert.deepEqual(nearest('salty boy', drinks, (d) => d.name, 1).map((d) => d.name), ['Salty Boy Sour']);
 assert.deepEqual(nearest('', drinks, (d) => d.name), []);
+
+// nearAfter: the close names a search didn't already show (a picker's "Did you mean").
+assert.deepEqual(nearAfter('salty boy', drinks, [drinks[3]], (d) => d.name).map((d) => d.name), ['Salti Boi', 'Salty Dog']);
+assert.deepEqual(nearAfter('  ', drinks, [], (d) => d.name), []);
 
 console.log('nearName checks passed');
