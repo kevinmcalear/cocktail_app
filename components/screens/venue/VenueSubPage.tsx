@@ -9,7 +9,8 @@ import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 
 type PageProps = {
-  barId: string;
+  /** The venue; null is a page under My Bar (its Kit). */
+  barId: string | null;
   title: string;
   intro?: string;
   children: ReactNode;
@@ -39,8 +40,8 @@ function Page({ barId, title, intro, children, crumb, up, wide }: PageProps) {
   const frame = usePageFrame(wide ? 'wide' : 'text');
   const gutter = useGutter();
   const tabBarInset = useTabBarInset();
-  const settings = `/settings/bar/${barId}` as Href;
-  const crumbs = [{ label: 'Venue settings', href: settings }, ...(up ? [up] : [])];
+  const settings = (barId ? `/settings/bar/${barId}` : '/bar') as Href;
+  const crumbs = [{ label: barId ? 'Venue settings' : 'My Bar', href: settings }, ...(up ? [up] : [])];
   const back = up?.href ?? settings;
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>

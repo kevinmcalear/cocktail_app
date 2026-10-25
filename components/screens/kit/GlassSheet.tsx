@@ -15,9 +15,12 @@ import { SourceQuestion, trimmed, type KitSource } from './SourceQuestion';
 const FAILED = 'Couldn’t save that. Check your connection and try again.';
 
 export interface GlassSheetProps {
-  barId: string;
+  /** The venue; null at home. */
+  barId: string | null;
   /** The venue's page, which glassware hangs off. */
   pageId: string | null;
+  /** A glass at home (My Bar): no suppliers; `onSave` saves it. */
+  home?: boolean;
   visible: boolean;
   onClose: () => void;
   /** The glass to change; null adds one. */
@@ -43,7 +46,7 @@ export function GlassSheet(props: GlassSheetProps) {
   return <GlassSheetBody key={useOpenKey(props.visible)} {...props} />;
 }
 
-function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, describe, match, onSave, onSaved, venueName, initial, from }: GlassSheetProps) {
+function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, describe, match, onSave, onSaved, venueName, initial, from, home }: GlassSheetProps) {
   const suppliers = useVenueSuppliers(barId).data ?? [];
   const known = useBarGlassware(barId).data;
   const glasses = known ?? [];
@@ -106,7 +109,7 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
     },
     {
       title: 'Where does it come from?',
-      body: <SourceQuestion kind="glass" value={src} onChange={setSrc} suppliers={suppliers} />,
+      body: <SourceQuestion kind="glass" value={src} onChange={setSrc} suppliers={suppliers} home={home} />,
       next: 'Next',
       onSkip: () => {
         setSrc(saved);
