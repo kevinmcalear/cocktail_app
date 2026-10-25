@@ -75,7 +75,7 @@ export function BarFactsList({ profile }: { profile: Profile }) {
             {r.term}
           </DsText>
           {r.url ? (
-            <PressableScale role="link" accessibilityLabel={`@${handle} on ${r.value}`} accessibilityHint={`Opens ${r.value}`} onPress={() => void Linking.openURL(r.url!)} style={styles.flex}>
+            <PressableScale role="link" accessibilityLabel={`${r.term}: ${r.value}`} accessibilityHint={`Opens ${r.value}`} onPress={() => void Linking.openURL(r.url!)} style={styles.flex}>
               <DsText variant="body" color={ds.accentText} style={styles.text}>
                 {r.value}
               </DsText>
