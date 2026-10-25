@@ -26,17 +26,18 @@ export function BarClaimScreen({ profileRef }: { profileRef: string }) {
   );
 }
 
-function ClaimPage({ profileRef }: { profileRef: string }) {
-  const ds = useDs();
+/**
+ * Where a claim stands, and the way to make one: the claim screen's body, and
+ * on wide screens the dialog over a maker's or supplier's page (ClaimDialog).
+ */
+export function ClaimBody({ profileRef, onBack }: { profileRef: string; onBack?: () => void }) {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const gutter = useGutter();
   const userId = useUserId();
   const { data: profile, isLoading, error } = useProfile(profileRef);
   const { data: claims, isLoading: claimsLoading } = useMyClaims(profile?.id);
   const latest = claims?.[0];
 
-  const body = (() => {
+  return (() => {
     if (isLoading || (profile && userId && claimsLoading)) return <Caption tone="muted">Loading…</Caption>;
     if (error) return <Body tone="muted">Couldn’t load this page. Check your connection and try again.</Body>;
     if (!profile || profile.kind === 'person') return <Body tone="muted">There’s no bar or maker page here to claim.</Body>;
@@ -48,13 +49,21 @@ function ClaimPage({ profileRef }: { profileRef: string }) {
         </View>
       );
     }
-    if (latest?.status === 'approved') return <ClaimApproved profile={profile} />;
+    if (latest?.status === 'approved') return <ClaimApproved profile={profile} onBack={onBack} />;
     if (profile.is_claimed) {
       return <Body tone="muted">{`${profile.display_name} has already been claimed. If you work there, ask one of its Admins to invite you.`}</Body>;
     }
     if (latest?.status === 'pending') return <ClaimPending claim={latest} profile={profile} />;
     return <ClaimStart profile={profile} declined={latest?.status === 'rejected' ? latest : null} />;
   })();
+}
+
+function ClaimPage({ profileRef }: { profileRef: string }) {
+  const ds = useDs();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const gutter = useGutter();
+  const { data: profile } = useProfile(profileRef);
 
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
@@ -67,7 +76,7 @@ function ClaimPage({ profileRef }: { profileRef: string }) {
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={{ paddingTop: insets.top + layout.minTapTarget + space.xl, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter }}
       >
-        <View style={styles.readable}>{body}</View>
+        <View style={styles.readable}><ClaimBody profileRef={profileRef} /></View>
       </ScrollView>
       <View style={[styles.controls, { top: insets.top + space.sm, left: gutter }]}>
         <GlassButton

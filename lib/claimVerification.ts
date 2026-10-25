@@ -125,12 +125,19 @@ export const REVIEW_REASON: Record<ReviewReason, string> = {
   site_typed: 'the website was typed in with the claim, not already on the page',
 };
 
-/** The method picker's words. */
-export const METHOD_COPY: Record<BarClaimMethod, { label: string; short: string }> = {
-  email: { label: 'Work email', short: 'Email' },
-  instagram: { label: 'Send us a message from the bar’s Instagram', short: 'Instagram' },
-  phone: { label: 'A call to the bar', short: 'Phone' },
+/** The method picker's short words (a moderator's tag). */
+export const METHOD_COPY: Record<BarClaimMethod, { short: string }> = {
+  email: { short: 'Email' },
+  instagram: { short: 'Instagram' },
+  phone: { short: 'Phone' },
 };
+
+/** The method picker's words for a page of this kind: the bar's, or the company's for a maker or supplier. */
+export function methodLabel(method: BarClaimMethod, kind: string | null | undefined): string {
+  const place = claimPlace(kind);
+  if (method === 'email') return 'Work email';
+  return method === 'instagram' ? `Send us a message from the ${place}’s Instagram` : `A call to the ${place}`;
+}
 
 /**
  * Our own Instagram account, where bars message their claim code (b19).

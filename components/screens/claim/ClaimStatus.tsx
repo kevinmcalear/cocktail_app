@@ -34,7 +34,7 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
   const [title, text] =
     claim.method === 'instagram'
       ? claim.evidence?.instagram_dm
-        ? ['Send us this code', `Message it to ${OUR_INSTAGRAM ? `@${OUR_INSTAGRAM}` : 'us'} from @${handle}, the bar’s own account. A person checks, usually within a day.`]
+        ? ['Send us this code', `Message it to ${OUR_INSTAGRAM ? `@${OUR_INSTAGRAM}` : 'us'} from @${handle}, the ${claimPlace(profile.kind)}’s own account. A person checks, usually within a day.`]
         : ['Put this code in your bio', `Add it anywhere in @${handle}’s Instagram bio and leave it there until we’ve checked, usually within a day. Then take it out.`]
       : claim.method === 'phone'
         ? ['Keep this code by the phone', `We’ll ring ${name} on a number we look up ourselves. Whoever answers reads us this code, so leave it with the team.`]
@@ -76,8 +76,8 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
   );
 }
 
-/** The page is theirs: where it stands (Menu) and where to choose who sees it. */
-export function ClaimApproved({ profile }: { profile: Profile }) {
+/** The page is theirs: where it stands (Menu) and where to choose who sees it. `onBack`: the dialog's way back to the page under it. */
+export function ClaimApproved({ profile, onBack }: { profile: Profile; onBack?: () => void }) {
   const ds = useDs();
   const router = useRouter();
   return (
@@ -94,7 +94,10 @@ export function ClaimApproved({ profile }: { profile: Profile }) {
       {profile.bar_id && profile.kind === 'bar' ? (
         <Button label="Choose who sees your page" size="lg" onPress={() => router.push(`/settings/bar/${profile.bar_id}/publishing` as Href)} />
       ) : null}
-      <Button label="Back to the page" variant="secondary" onPress={() => router.replace(`/p/${profile.handle}` as Href)} />
+      {profile.kind === 'maker' && profile.makes.includes('bottles') ? (
+        <Button label="Add photos of your bottles" size="lg" onPress={() => router.replace(`/p/${profile.handle}/bottles?welcome=1` as Href)} />
+      ) : null}
+      <Button label="Back to the page" variant="secondary" onPress={onBack ?? (() => router.replace(`/p/${profile.handle}` as Href))} />
     </View>
   );
 }
