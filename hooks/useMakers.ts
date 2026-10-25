@@ -112,7 +112,10 @@ export interface MakerRef {
 
 const MAKER_REF = 'id, handle, display_name, kind';
 
-/** Makers by name, for a picker: optionally only those that make `makes` ("ice", "glassware", "bottles"). */
+/**
+ * Makers by name, for a picker: optionally only those that make `makes` ("ice", "glassware", "bottles").
+ * A bar's page that makes glassware (a tiki bar's own mugs) is one too (20261116200000).
+ */
 export function useMakerSearch(term: string, makes?: string) {
   const q = term.trim();
   // Makers spelled close too ("steelite utpia": Steelite-Utopia), marked `near`; they need an account.
@@ -122,13 +125,13 @@ export function useMakerSearch(term: string, makes?: string) {
     enabled: q.length >= 2,
     queryFn: async ({ signal }): Promise<MaybeNear<MakerRef>[]> => {
       const read = async (ids?: string[]): Promise<MakerRef[]> => {
-        let query = supabase.from('profiles').select(MAKER_REF).eq('kind', 'maker');
+        let query = supabase.from('profiles').select(MAKER_REF).in('kind', makes === 'glassware' ? ['maker', 'bar'] : ['maker']);
         if (makes) query = query.contains('makes', [makes]);
         const { data, error } = await (ids ? query.in('id', ids) : query.ilike('display_name', `%${q.replace(/[\\%_]/g, '\\$&')}%`).order('display_name').limit(8)).abortSignal(signal);
         if (error) throw error;
         return (data ?? []) as MakerRef[];
       };
-      // Narrowed to what they make, so ask for more close ones than are kept.
+      // Narrowed to what they make, so ask for more close ones than are kept. Close spellings come from maker pages only, not bars.
       return close ? withNear(q, 'maker', read(), read, signal, makes ? 20 : 4) : read();
     },
   });
