@@ -38,7 +38,7 @@ export function OwnerSheet({ menuId, title, itemIds, current, picked, looks, onC
             onPress={() => pick(look.id)}
           />
         ))}
-        {picked || itemIds.length > 1 ? <Choice label="The sheet’s pick" detail="A brand’s own bottles go to the brand, the visiting bar’s house preps to them, the rest to the bar it’s at" selected={false} onPress={() => pick('default')} /> : null}
+        {picked || itemIds.length > 1 ? <Choice label="The sheet’s pick" detail="A brand’s own bottles go to the brand, what the visiting bar makes in-house to them, the rest to the bar it’s at" selected={false} onPress={() => pick('default')} /> : null}
       </View>
     </MenuSheet>
   );

@@ -57,11 +57,11 @@ export function drinkFacts(id: string, kind: string, facts: MineFacts, years = f
   return { caption, tag: `Past · ${menuRange({ startYear: starts[0].year, startMonth: starts[0].month, endYear: ends[0]?.year ?? starts[0].year, endMonth: ends[0]?.month ?? null, isCurrent: false })}` };
 }
 
-/** "In 6 drinks", or "Prep · in 1 drink" for a house prep; nothing when no drink uses it. */
+/** "In 6 drinks", or "Made in-house · in 1 drink" for something made in-house; nothing when no drink uses it. */
 export function ingredientFacts(id: string, facts: MineFacts): string | undefined {
   const n = facts.usedIn.get(id)?.length ?? 0;
   const count = n ? `${n} ${n === 1 ? 'drink' : 'drinks'}` : null;
-  if (facts.preps.has(id)) return count ? `Prep · in ${count}` : 'Prep';
+  if (facts.preps.has(id)) return count ? `Made in-house · in ${count}` : 'Made in-house';
   return count ? `In ${count}` : undefined;
 }
 
