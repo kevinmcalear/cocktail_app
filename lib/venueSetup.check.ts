@@ -45,8 +45,8 @@ assert.equal(startedSetup({ new: { done: ['find'] } }), '/venue-setup');
 assert.equal(startedSetup({ new: { done: [] } }), null);
 
 // Tonight's banner counts what's on its way.
-assert.equal(onItsWay({ claim: 'pending', invites: 3, waitingFiles: 1 }), 3);
-assert.equal(onItsWay({ claim: 'approved', invites: 0, waitingFiles: 0 }), 0);
+assert.equal(onItsWay({ claim: 'pending', invites: 3 }), 2);
+assert.equal(onItsWay({ claim: 'approved', invites: 0 }), 0);
 
 assert.equal(namesLine(['Sam', 'Mia', 'Tom']), 'Sam, Mia and Tom');
 assert.equal(namesLine(['Sam']), 'Sam');

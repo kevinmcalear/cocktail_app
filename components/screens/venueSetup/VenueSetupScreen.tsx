@@ -67,8 +67,12 @@ export function VenueSetupScreen() {
     seeded.current = true;
     if (params.claim && useVenueSetup.getState().runs[key]?.profileId !== params.claim) save(key, { profileId: params.claim, barId: null, name: '', done: ['find'], finished: false, held: undefined });
   }, [picked, params.claim, key, save]);
-  // Opened straight onto the claim (Venue settings, Tonight) or from the summary: Back goes there, not to the team step.
-  const [claimBack, setClaimBack] = useState<'leave' | 'done' | null>(screen === 'claim' ? 'leave' : null);
+  // Opened straight onto the claim (Venue settings, Tonight, the checklist): Back leaves, not to the team step.
+  const [claimBack, setClaimBack] = useState(screen === 'claim');
+  // At the end, setup is through: "Set up <bar>" takes over (lib/setupChecklist.ts).
+  useEffect(() => {
+    if (screen === 'done') save(keyRef.current, { finished: true });
+  }, [screen, save]);
   const [profileOverride] = useState(params.claim ?? null);
   const profileId = profileOverride ?? run?.profileId ?? null;
   const barId = run?.barId ?? (key !== 'new' ? key : null);
@@ -108,7 +112,7 @@ export function VenueSetupScreen() {
   const leaveClaim = (sent: boolean) => {
     if (sent) markDone(keyRef.current, 'claim');
     setScreen('done');
-    setClaimBack(null);
+    setClaimBack(false);
   };
   // What steps 3 and 5 kept before the claim goes onto it, then off the device.
   const afterSend = async (sent: ProfileClaim) => {
@@ -137,11 +141,11 @@ export function VenueSetupScreen() {
     mark: screen === 'done' ? <DoneMark venue={{ id: barId ?? key, name, logoUrl: logo, accent: brand?.primary_color ?? null, displayFace: faceFromDb(brand?.display_face), groundTint: null, roleLevel: 40 }} /> : undefined,
     progress: venueProgress(screen),
     onBack:
-      screen === 'intro' || (screen === 'claim' && claimBack === 'leave') || (screen === 'place' && params.claim)
+      screen === 'intro' || (screen === 'claim' && claimBack) || (screen === 'place' && params.claim)
         ? leave
         : screen === 'done'
           ? undefined
-          : () => setScreen(screen === 'claim' && claimBack === 'done' ? 'done' : previousScreen(screen)),
+          : () => setScreen(previousScreen(screen)),
     aside:
       wide && screen !== 'intro' ? (
         <SetupRail
@@ -151,7 +155,7 @@ export function VenueSetupScreen() {
           done={run?.done ?? []}
           status={status}
           onPick={(s) => {
-            setClaimBack(null);
+            setClaimBack(false);
             setScreen(s);
           }}
           onLeave={leave}
@@ -216,18 +220,8 @@ export function VenueSetupScreen() {
       {screen === 'done' && barId ? (
         <DoneStep
           barId={barId}
-          profileId={page?.id ?? profileId}
           name={name}
-          claim={claim}
-          claimState={claimState}
-          held={run?.held}
-          onProve={() => {
-            setClaimBack('done');
-            setScreen('claim');
-          }}
-          onLeave={() => save(keyRef.current, { finished: true })}
           onOpen={() => {
-            save(keyRef.current, { finished: true });
             enterVenue(barId);
             router.replace('/(tabs)' as Href);
           }}

@@ -99,9 +99,9 @@ export function startedSetup(runs: Runs): string | null {
   return key === 'new' ? '/venue-setup' : `/venue-setup?bar=${key}`;
 }
 
-/** What's still on its way, for Tonight's banner: the claim, invites nobody's taken up yet, a spec book to read. */
-export function onItsWay(p: { claim: ClaimState; invites: number; waitingFiles: number }): number {
-  return (p.claim === 'pending' ? 1 : 0) + (p.invites > 0 ? 1 : 0) + (p.waitingFiles > 0 ? 1 : 0);
+/** What's still on its way, for Tonight's banner: the claim, and invites nobody's taken up yet. */
+export function onItsWay(p: { claim: ClaimState; invites: number }): number {
+  return (p.claim === 'pending' ? 1 : 0) + (p.invites > 0 ? 1 : 0);
 }
 
 /** "Sam, Mia and Tom": names in a sentence. */

@@ -3,32 +3,26 @@ import { useRouter, type Href } from 'expo-router';
 import { SetupChromeProvider } from '@/components/screens/onboarding/SetupPage';
 import { WebHead } from '@/components/WebHead';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useAppMode } from '@/store/useAppMode';
 
 import { DoneMark } from './DoneStep';
-import { WhatNext } from './WhatNext';
+import { SetupChecklist } from './SetupChecklist';
 
-/** Venue settings' What next: the steps from the end of setup, there whenever the bar wants them. */
-export function WhatNextScreen({ barId }: { barId: string }) {
+/**
+ * "Set up <bar>" as a page: from the top of Library on a phone, the first
+ * row of the sidebar on a desktop, and Venue settings. Back goes where it
+ * came from.
+ */
+export function SetupChecklistScreen({ barId }: { barId: string }) {
   const router = useRouter();
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
-  const enterVenue = useAppMode((s) => s.enterVenue);
   const name = venue?.name ?? 'your bar';
-  const back = () => (router.canGoBack() ? router.back() : router.replace(`/settings/bar/${barId}` as Href));
+  const back = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as Href));
   return (
     <SetupChromeProvider value={{ title: '', eyebrow: venue?.name ?? null, eyebrowTone: 'accent', mark: venue ? <DoneMark venue={venue} /> : undefined, onBack: back }}>
       <WebHead>
-        <title>What next</title>
+        <title>{`Set up ${name}`}</title>
       </WebHead>
-      <WhatNext
-        barId={barId}
-        name={name}
-        openLabel={`Open ${name}`}
-        onOpen={() => {
-          enterVenue(barId);
-          router.replace('/(tabs)' as Href);
-        }}
-      />
+      <SetupChecklist barId={barId} name={name} />
     </SetupChromeProvider>
   );
 }

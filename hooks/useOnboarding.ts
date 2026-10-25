@@ -139,15 +139,19 @@ export function useRemoveCareerDrink() {
   });
 }
 
-/** Marks setup finished so the app stops sending them back here. */
+/**
+ * Marks setup finished so the app stops sending them back here. Someone
+ * setting up their own bar (`owner`) skips the first round: every tab is open
+ * and "Set up <bar>" leads instead (owner-setup call 7).
+ */
 export function useFinishOnboarding() {
   const { updateProfile } = useAuth();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (as: { owner?: boolean } | void) => {
       const { error } = await updateProfile({ onboarded: true });
       if (error) throw new Error(SAVED);
       // New people get the first round at their venue (lib/firstRound.ts). A miss only skips the intro.
-      await saveNewRound();
+      if (!as || !as.owner) await saveNewRound();
     },
     onError: () => {},
   });
