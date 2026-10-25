@@ -223,11 +223,10 @@ describe('OnboardingScreen', () => {
     expect(mockReplace).toHaveBeenCalledWith('/venue-setup');
   });
 
-  test('back from a bar page’s Claim (?run=, claimBar), the profile is saved, setup ends and the claim opens', async () => {
+  test('back from a bar page’s Claim (?run=, claimBar) before a name, the name comes first, then setup ends and the claim opens', async () => {
     mockFinish.mockImplementation(() => (mockMeta = { onboarded: true }));
-    await named();
     mockParams = { run: 'b1' };
-    await screen.rerender(<OnboardingScreen />);
+    await named();
     expect(mockSaveName).toHaveBeenCalledWith({ name: 'Jo Juniper', handle: 'jo.juniper', profileId: null }, expect.anything());
     expect(mockReplace).toHaveBeenCalledWith('/venue-setup?claim=b1');
   });

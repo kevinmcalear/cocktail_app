@@ -59,7 +59,6 @@ assert.equal(roleError(''), 'Add your role, like Bartender.');
 assert.equal(roleError('Bartender'), null);
 assert.match(roleError('x'.repeat(61)) ?? '', /60/);
 
-
 assert.equal(menuNameError(''), 'Add the menu’s name.');
 assert.equal(menuNameError('Summer list'), null);
 assert.match(menuNameError('x'.repeat(121)) ?? '', /120/);

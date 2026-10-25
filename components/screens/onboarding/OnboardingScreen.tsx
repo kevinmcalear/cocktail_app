@@ -115,15 +115,21 @@ export function OnboardingScreen() {
     );
   };
 
-  // An owner, from a bar page's Claim or "Add your bar": their profile is saved,
-  // setup ends, and venue setup takes over (it can't open while setup is unfinished).
-  const setUpBar = (claim?: string) => {
-    const end = () => {
-      setLanding((claim ? `/venue-setup?claim=${claim}` : '/venue-setup') as Href);
+  // An owner, from a bar page's Claim (?run=) or "Add your bar" ('new'): their
+  // profile is saved, setup ends, and venue setup takes over (it can't open while
+  // setup is unfinished). Kept until then, so a name to fix first doesn't lose it.
+  const [ownerBar, setOwnerBar] = useState<string | null>(null);
+  const setUpBar = (bar: string, named = draft) => {
+    if (saveProfile.isPending || finish.isPending) return;
+    setOwnerBar(bar);
+    if (!personId && !named) {
+      if (step !== 'name') setStep('name');
+      return;
+    }
+    createProfile(() => {
+      setLanding((bar === 'new' ? '/venue-setup' : `/venue-setup?claim=${bar}`) as Href);
       finish.mutate();
-    };
-    if (personId || draft) createProfile(end);
-    else end();
+    }, named);
   };
   const ranFor = useRef<string | null>(null);
   useEffect(() => {
@@ -135,6 +141,10 @@ export function OnboardingScreen() {
   const saveName = (name: string, handle: string) => {
     setDraft({ name, handle });
     setHandleTaken(false);
+    if (ownerBar) {
+      setUpBar(ownerBar, { name, handle });
+      return;
+    }
     if (!joined) {
       go('name');
       return;
@@ -249,7 +259,7 @@ export function OnboardingScreen() {
         <PlaceStep
           personId={personId}
           isCurrent
-          onAddBar={() => setUpBar()}
+          onAddBar={() => setUpBar('new')}
           onDone={(bar) => {
             if (bar) setBarName(bar);
             go('work');
@@ -272,6 +282,7 @@ export function OnboardingScreen() {
         />
       ) : null}
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
+      {ownerBar && finish.error ? <Caption tone="accent">{finish.error.message}</Caption> : null}
     </SetupChromeProvider>
   );
   // Joined: the short setup stays in the venue's colours.

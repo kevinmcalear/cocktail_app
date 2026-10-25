@@ -5,7 +5,7 @@ import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useBarInvites } from '@/hooks/useBarInvites';
-import { useVenueFeature } from '@/hooks/useVenueFeatures';
+import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { onItsWay } from '@/lib/venueSetup';
 import { useVenueSetup } from '@/store/useVenueSetup';
@@ -69,7 +69,8 @@ export function TonightSetupBanner({ barId }: { barId: string }) {
 
 /** The same banner at the top of Library, for a venue with Tonight off (new venues start with it off). */
 export function LibrarySetupBanner({ barId }: { barId: string }) {
-  return useVenueFeature('tonight') ? null : <TonightSetupBanner barId={barId} />;
+  const { ready, has } = useVenueFeatures();
+  return ready && !has('tonight') ? <TonightSetupBanner barId={barId} /> : null;
 }
 
 const styles = StyleSheet.create({
