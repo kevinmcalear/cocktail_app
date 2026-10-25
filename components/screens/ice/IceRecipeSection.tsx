@@ -5,7 +5,7 @@ import { Body, Button, Caption, Surface, Tag, TextLink, useDs } from '@/componen
 import { KitItemSection } from '@/components/screens/kit/KitItemPage';
 import { IceThumb } from '@/components/ds/IceThumb';
 import { radius, space } from '@/constants/tokens';
-import { useBarKit, useSaveTool } from '@/hooks/useBarKit';
+import { useAddTools, useBarKit } from '@/hooks/useBarKit';
 import { useIceStartsFrom } from '@/hooks/useIceRecipe';
 import { useItemPrep } from '@/hooks/usePrepCard';
 import { useVenueIce, type VenueIce } from '@/hooks/useVenueIce';
@@ -54,7 +54,7 @@ export function IceRecipeSection({ barId, ice, canEdit }: { barId: string; ice: 
   const { data: card } = useItemPrep(ice.id);
   const { data: from } = useIceStartsFrom(ice.id);
   const kit = useBarKit(barId).data ?? [];
-  const addTool = useSaveTool(barId);
+  const addTools = useAddTools(barId);
   const steps = card?.steps ?? [];
   const tools = [...new Set(steps.flatMap((s) => s.equipment))];
   const missing = kit.length ? tools.filter((t) => !kitHasTool(kit, t)) : [];
@@ -95,27 +95,8 @@ export function IceRecipeSection({ barId, ice, canEdit }: { barId: string; ice: 
       {canEdit && ours.length ? (
         <Surface style={styles.missing}>
           <Body>{`Not in your kit: ${ours.map(toolLabel).join(', ')}.`}</Body>
-          <Button
-            label="Add to kit"
-            variant="secondary"
-            disabled={addTool.isPending}
-            onPress={() =>
-              void Promise.all(
-                ours.map((key) =>
-                  addTool.mutateAsync({
-                    key,
-                    name: null,
-                    location: null,
-                    count: null,
-                    source: null,
-                    supplier_id: null,
-                    note: null,
-                  }),
-                ),
-              ).catch(() => undefined)
-            }
-          />
-          {addTool.error ? <Caption tone="accent">Couldn’t add that. Check your connection and try again.</Caption> : null}
+          <Button label="Add to kit" variant="secondary" disabled={addTools.isPending} onPress={() => addTools.mutate(ours)} />
+          {addTools.error ? <Caption tone="accent">Couldn’t add that. Check your connection and try again.</Caption> : null}
         </Surface>
       ) : null}
     </View>
