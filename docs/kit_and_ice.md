@@ -69,6 +69,14 @@ Built from the starting design above, with the changes noted (why in brackets).
 - **Gone**: `GlassForm` (Wide/Deep/Saucer, Who makes it, Designer, Series), the ice chips and the tool switches (`useSetTools`, `toolGroups`). A glass named by hand is its shape and its name; one picked from the catalog keeps its maker on the model.
 - **Left for later PRs**: ice question 3 and "How it's made" on the ice page (PR 3: `madeStep`, and the placeholder in `KitIceScreen`'s `IcePage`); "In N drinks", "Needed by" and "What it needs" (PR 4); "Glasses and ice from your drinks" (PR 6).
 
+### PR 3: what ice recipes are now
+
+- Ice made here is edited at `/settings/bar/<bar>/kit/ice/<ice>/recipe` (`components/screens/ice/IceRecipeScreen.tsx`), built from the house-prep editor's parts (`MethodEdit` with tools per step, `KeepsSheet` with pieces or kg). Kit › Ice's item page shows `IceRecipeSection` (read view: starts from, steps, what it needs, Add to kit) in place of PR 2's placeholder; `IceSheet`'s `madeStep` asks question 3 with `IceWaysList`, and after the save `startIceRecipe` (`hooks/useIceRecipe.ts`) writes the starting recipe.
+- The twelve ways are `lib/iceRecipes.ts`, in our own words, checked on the web (sources at the end of the file). A stamped ice gets a stamp step, except for crushed, cracked and shaved ways.
+- Starts from is one `recipes` line, rewritten only when it changes (so its note stays). An ice that starts from this one is never offered, so a direct loop can't be saved; PR 4 should still keep a visited set when it follows a chain back.
+- Steps and recipe lines are readable by people with Prep (or house-made) at the venue, as for house preps. The kit check (PR 4) runs for the venue's team, so it may need an RPC to read the chain for a bartender without Prep.
+- New equipment: `ice-saw`, `ice-stamp`, `ice-ball-press` (bar), `bandsaw`, `block-shaver` (specialist). No migration.
+
 Notes for later PRs:
 
 - PR 3: the house-prep editor (`hooks/usePrepCard.ts`) assumes ingredients (`ingredient_role`, `made_from_id` are ingredient-only, by check constraint). Ice made here uses `item_steps`, `item_prep` and `recipes` lines, not `made_from_id`. Prep-only staff still can't write recipe lines of a house prep (an ingredient), only of the venue's ice.
