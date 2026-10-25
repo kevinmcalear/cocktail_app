@@ -25,6 +25,24 @@ for (const l of LOADS) {
     keys.set(k, `${r.name} (${l.file})`);
   }
 }
+// Nor a glass an earlier load has under the same code, spelled a stockist's way (Nude's P67276 is a stockist's
+// 67276): wave 5 loaded Nude's Savage line twice like that, and 20261120200000 merged the five.
+const codeKey = (code: string | null) => code?.toUpperCase().replace(/[\s.-]/g, '').replace(/^[A-Z]+(?=\d)/, '') || null;
+const MERGED = new Set(['67276', '67286', '64154', '64135', '64172'].map((c) => `nude\0${c}`));
+const codes = new Map<string, string>();
+for (const l of LOADS) {
+  const here = new Map<string, string>();
+  for (const r of rowsOf((l.files ?? l.makers).map(readSeed))) {
+    const k = codeKey(r.model_code);
+    if (!k) continue;
+    const key = `${r.maker}\0${k}`;
+    assert.ok(!codes.has(key) || MERGED.has(key), `${r.maker} ${r.name} (${l.file}) is ${codes.get(key)} again`);
+    here.set(key, `${r.name} (${l.file})`);
+  }
+  for (const [k, v] of here) if (!codes.has(k)) codes.set(k, v);
+}
+assert.equal(codeKey('P67276'), '67276');
+assert.equal(codeKey('7ACR'), '7ACR');
 assert.equal(nameKey("Denk'Art Nick & Nora Café"), 'denkart nick and nora cafe');
 for (const l of LOADS) assert.deepEqual([...new Set((l.files ?? l.makers).map((f) => readSeed(f).maker))].sort(), [...l.makers].sort(), `${l.file} names its makers`);
 
