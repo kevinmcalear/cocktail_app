@@ -41,7 +41,8 @@ function DraftRow({ slot, draft, step, barId, onOpen }: { slot: string; draft: W
   const menu = useMenuSectionPlace(start.menuSectionId).data?.menu ?? null;
   const title = draft.name.trim() || 'Untitled drink';
   const at = Math.min(WIZARD_STEPS.indexOf(step) + 1, COUNTED_STEPS);
-  const where = [menu, `drink, at ${step === 'review' ? 'the review' : `${at} of ${COUNTED_STEPS}`}`].filter(Boolean).join(' · ');
+  // The desktop page has no steps: a draft never moved past its name is just a drink.
+  const where = [menu, step === 'name' ? 'drink' : `drink, at ${step === 'review' ? 'the review' : `${at} of ${COUNTED_STEPS}`}`].filter(Boolean).join(' · ');
   const left = recipesToFinish(draft.lines);
   const open = () =>
     onOpen({

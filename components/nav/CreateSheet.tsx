@@ -115,13 +115,10 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
             setTimeout(() => useBringIn.getState().openSheet(), 350);
           }}
         />
-        <Row
-          label="Drafts"
-          hint={drafts.length ? 'Pick up where you left off' : 'Nothing unfinished'}
-          icon={<IconSymbol name="doc.text" size={20} color={ds.c.ink} />}
-          trailing={drafts.length ? <Caption tone="muted">{drafts.length}</Caption> : null}
-          onPress={() => go('/drafts')}
-        />
+        {/* Drafts the older editors kept in the account; what's half made here is listed at the top. */}
+        {drafts.length ? (
+          <Row label="Drafts" hint="Pick up where you left off" icon={<IconSymbol name="doc.text" size={20} color={ds.c.ink} />} trailing={<Caption tone="muted">{drafts.length}</Caption>} onPress={() => go('/drafts')} />
+        ) : null}
         {locked ? (
           <PressableScale role="link" accessibilityLabel="Make your own drink in your home bar" onPress={makeAtHome} style={styles.home}>
             <HomeMark size={24} />
