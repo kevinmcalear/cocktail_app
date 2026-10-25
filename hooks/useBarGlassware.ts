@@ -2,9 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { removeGlassPhoto } from '@/hooks/useGlassDrawing';
 import { GLASS_MODEL_SELECT, type GlassModel } from '@/hooks/useGlassModels';
+import type { GlassOutline } from '@/lib/sketch/outline';
 import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
+import type { Json } from '@/types/db';
 import { heldGlassPlan } from '@/lib/whatNext';
 import { useVenueSetup, type HeldGlass } from '@/store/useVenueSetup';
 
@@ -39,6 +42,11 @@ export interface BarGlass {
   /** Null when not said, or this person can't see the venue's suppliers. */
   supplier_name: string | null;
   count: number | null;
+  /** Its own shape, traced from the venue's photo (Draw my glass, 20261118500000), and the capacity they typed to size it. */
+  outline: GlassOutline | null;
+  capacity_ml: number | null;
+  /** The photo it was traced from, private (the glass-photos bucket). */
+  photo_path: string | null;
   /** The bar's name, for "Little Rye uses this". */
   bar_name: string;
 }
@@ -57,7 +65,7 @@ async function fetchBarGlassware(barId: string): Promise<BarGlass[]> {
   const { data, error } = await supabase
     .from('bar_glassware')
     .select(
-      `id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, source, supplier_id, count, supplier:suppliers(name), model_id, model:glass_models!bar_glassware_model_id_fkey(${GLASS_MODEL_SELECT}), profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)`
+      `id, glass, variant, name, maker, maker_profile_id, designer, series, shape_note, source_urls, is_default, source, supplier_id, count, outline, capacity_ml, photo_path, supplier:suppliers(name), model_id, model:glass_models!bar_glassware_model_id_fkey(${GLASS_MODEL_SELECT}), profiles:profiles!bar_glassware_profile_id_fkey!inner(bar_id, display_name), maker_page:profiles!bar_glassware_maker_profile_id_fkey(handle, display_name)`
     )
     .eq('profiles.bar_id', barId)
     .order('sort_order')
@@ -118,6 +126,10 @@ export interface BarGlassInput {
   source?: 'bought' | 'ours' | null;
   supplier_id?: string | null;
   count?: number | null;
+  /** Draw my glass: its traced shape, the capacity typed (null: the height was), the photo. Left out, they stay. */
+  outline?: GlassOutline | null;
+  capacity_ml?: number | null;
+  photo_path?: string | null;
 }
 
 /**
@@ -128,17 +140,20 @@ export interface BarGlassInput {
 export function useSaveBarGlass(barId: string | null | undefined, profileId: string | null | undefined) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...row }: BarGlassInput) => {
+    mutationFn: async ({ id, ...input }: BarGlassInput) => {
+      // The outline is plain JSON; its interface just doesn't say so.
+      const row = { ...input, outline: input.outline as Json | null | undefined };
       if (row.is_default) {
         let others = supabase.from('bar_glassware').update({ is_default: false }).eq('profile_id', profileId!).eq('glass', row.glass).eq('is_default', true);
         if (id) others = others.neq('id', id);
         const { error } = await others;
         if (error) throw error;
       }
-      const { error } = id
-        ? await supabase.from('bar_glassware').update(row).eq('id', id)
-        : await supabase.from('bar_glassware').insert({ ...row, profile_id: profileId! });
+      const { data, error } = id
+        ? await supabase.from('bar_glassware').update(row).eq('id', id).select('id').single()
+        : await supabase.from('bar_glassware').insert({ ...row, profile_id: profileId! }).select('id').single();
       if (error) throw error;
+      return data.id;
     },
     onSettled: () => {
       client.invalidateQueries({ queryKey: ['bar-glassware', barId] });
@@ -152,8 +167,10 @@ export function useDeleteBarGlass(barId: string | null | undefined) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('bar_glassware').delete().eq('id', id);
+      const { data, error } = await supabase.from('bar_glassware').delete().eq('id', id).select('photo_path');
       if (error) throw error;
+      // A glass drawn from a photo takes its photo with it.
+      await removeGlassPhoto(data?.[0]?.photo_path);
     },
     onSettled: () => {
       client.invalidateQueries({ queryKey: ['bar-glassware', barId] });

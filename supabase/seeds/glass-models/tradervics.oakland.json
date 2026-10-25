@@ -1,0 +1,56 @@
+{
+ "maker": "tradervics.oakland",
+ "models": [
+  {
+   "name": "Trader Vic's Honi Honi Cup",
+   "series": "Trader Vic's",
+   "designer": null,
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 fl. oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/honi-honi-mug-trader-vics-1st-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/honi-honi-mug-trader-vics-1st-edition/"
+   ]
+  },
+  {
+   "name": "Trader Vic's La'au Mug",
+   "series": "Trader Vic's",
+   "designer": "Woody Miller",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 651,
+   "capacity_as_stated": "22 fl. oz.",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/laau-mug-trader-vics-1st-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/laau-mug-trader-vics-1st-edition/"
+   ]
+  },
+  {
+   "name": "Trader Vic's Suffering Bastard (Mai Tai Joe) Mug",
+   "series": "Trader Vic's",
+   "designer": null,
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 591,
+   "capacity_as_stated": "20 fl. oz.",
+   "height_mm": 159,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/suffering-bastard-mai-tai-joe-trader-vics-original-mug/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/suffering-bastard-mai-tai-joe-trader-vics-original-mug/"
+   ]
+  }
+ ]
+}

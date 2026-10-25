@@ -8,6 +8,7 @@ import { radius, space } from '@/constants/tokens';
 import { GLASS_SEARCH_LIMIT, glassModelMaterial, glassModelSize, useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
 import { draftSketchInputs } from '@/lib/sketch/draft';
+import type { GlassOutline } from '@/lib/sketch/outline';
 import type { SketchGlass } from '@/lib/sketch/types';
 
 // The types a bar mostly looks for first; the rest wait behind More.
@@ -17,10 +18,10 @@ export const MORE_TYPES: SketchGlass[] = ['fizz', 'spritz', 'snifter', 'julep', 
 // An empty glass, sketched (as the glass form draws it).
 const EMPTY = draftSketchInputs({ name: '', lines: [] });
 
-/** A glass drawn on paper, small. */
-export function GlassThumb({ glass, variant, size = 48 }: { glass: SketchGlass; variant: string | null; size?: number }) {
+/** A glass drawn on paper, small: in its own traced shape when it has one (Draw my glass). */
+export function GlassThumb({ glass, variant, outline, size = 48 }: { glass: SketchGlass; variant: string | null; outline?: GlassOutline | null; size?: number }) {
   const ds = useDs();
-  const inputs = useMemo(() => ({ ...EMPTY, glass, variant }), [glass, variant]);
+  const inputs = useMemo(() => ({ ...EMPTY, glass, variant, ...(outline ? { outline } : {}) }), [glass, variant, outline]);
   return (
     <View style={[styles.paper, { width: size, height: size, backgroundColor: ds.c.paper }]} aria-hidden>
       <SketchDrawing inputs={inputs} seed="bar-glass" detail="thumb" />
@@ -85,6 +86,8 @@ interface PickerProps {
   /** "Not listed? Describe it yourself". */
   onDescribe?: () => void;
   describeLabel?: string;
+  /** Draw my glass: offered beside Name your own (onDescribe) for a glass the catalog doesn't have. */
+  onDraw?: () => void;
 }
 
 /**
@@ -101,6 +104,7 @@ export function GlassModelPicker({
   onPick,
   onDescribe,
   describeLabel = 'Not listed? Describe it yourself',
+  onDraw,
 }: PickerProps) {
   const ds = useDs();
   const [term, setTerm] = useState(initialTerm);
@@ -149,7 +153,13 @@ export function GlassModelPicker({
           ))}
         </View>
       ) : looking && !isFetching ? (
-        <Body tone="muted">{error ? 'Couldn’t search the glasses. Check your connection and try again.' : 'No maker lists a glass like that yet.'}</Body>
+        <Body tone="muted">
+          {error
+            ? 'Couldn’t search the glasses. Check your connection and try again.'
+            : onDraw && search.trim()
+              ? `No glass in the catalog matches “${search.trim()}”. Close spellings were checked too.`
+              : 'No maker lists a glass like that yet.'}
+        </Body>
       ) : !looking ? (
         <Caption tone="muted">Type a maker or a name, or pick a type.</Caption>
       ) : null}
@@ -158,7 +168,21 @@ export function GlassModelPicker({
           {`From the makers’ own catalogs. ${data.length >= GLASS_SEARCH_LIMIT ? `The first ${GLASS_SEARCH_LIMIT}; type more to narrow it.` : ''}`.trim()}
         </Caption>
       ) : null}
-      {onDescribe ? <Button label={describeLabel} variant="ghost" onPress={onDescribe} style={styles.start} /> : null}
+      {onDraw ? (
+        <View style={[styles.draw, { backgroundColor: ds.c.surface }]}>
+          <View style={styles.drawHead}>
+            <IconSymbol name="camera.fill" size={20} color={ds.c.ink} />
+            <Body style={styles.flex}>Draw my glass</Body>
+          </View>
+          <Caption tone="muted">Take a photo and give us one number. We trace its real shape, the same way every glass in the catalog was drawn.</Caption>
+          <View style={styles.drawButtons}>
+            <Button label="Draw my glass" onPress={onDraw} />
+            {onDescribe ? <Button label="Name your own" variant="secondary" onPress={onDescribe} /> : null}
+          </View>
+        </View>
+      ) : onDescribe ? (
+        <Button label={describeLabel} variant="ghost" onPress={onDescribe} style={styles.start} />
+      ) : null}
     </View>
   );
 }
@@ -185,4 +209,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   start: { alignSelf: 'flex-start' },
+  draw: { gap: space.sm, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
+  drawHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  drawButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, paddingTop: space.xs },
 });

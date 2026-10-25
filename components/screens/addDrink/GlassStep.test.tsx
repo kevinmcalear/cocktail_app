@@ -11,7 +11,7 @@ jest.mock('@/components/screens/venue/GlasswarePrompt', () => ({ GlasswarePrompt
 
 const glass = (g: Partial<BarGlass>): BarGlass => ({
   id: 'g', glass: 'coupe', variant: null, name: null, maker: null, maker_profile_id: null, maker_page: null, designer: null, series: null,
-  shape_note: null, source_urls: [], model_id: null, model: null, is_default: false, source: null, supplier_id: null, supplier_name: null, count: null,
+  shape_note: null, source_urls: [], model_id: null, model: null, is_default: false, source: null, supplier_id: null, supplier_name: null, count: null, outline: null, capacity_ml: null, photo_path: null,
   bar_name: 'Little Rye', ...g,
 });
 const BAR = [
