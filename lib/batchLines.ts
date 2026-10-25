@@ -20,20 +20,22 @@ export interface LineBatch {
   bottleMl: number;
 }
 
-/** The units a pour is measured in; anything else (dashes, a barspoon, an egg) is counted per drink. */
-const POURS = new Set(['ml', 'cl', 'oz']);
+/** The units a pour is measured in, in ml; anything else (dashes, a barspoon, an egg) is counted per drink. */
+const POUR_ML: Record<string, number> = { ml: 1, cl: 10, oz: 30 };
+const POURS = new Set(Object.keys(POUR_ML));
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const num = (s: string): number | null => {
-  const n = parseFloat(tidyAmount(s));
+  // A plain decimal as it is (tidyAmount keeps two places); fractions ("3/4") through tidyAmount.
+  const n = /^\d+(\.\d+)?$/.test(s.trim()) ? parseFloat(s) : parseFloat(tidyAmount(s));
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
 /** One drink's pour of a line in ml (0.75 oz is 22.5), or null for a count, a top or no amount. */
 export function pourMl(l: Pick<WizardLine, 'amount' | 'unit'>): number | null {
   const n = num(l.amount);
-  if (n === null || !POURS.has(l.unit)) return null;
-  return num(convertPour(n, l.unit, 'ml').amount);
+  // Not rounded: a share typed from the bottle (45.714 ml) has to fill it again.
+  return n === null || !POURS.has(l.unit) ? null : n * POUR_ML[l.unit];
 }
 
 /** What one drink takes from the bottle, in ml: its pours added up. */
@@ -60,6 +62,47 @@ export function bottleAmounts(b: LineBatch): { line: WizardLine; amount: number 
     const n = num(line.amount);
     return { line, amount: n === null || !scale ? null : round1(n * scale), unit: line.unit };
   });
+}
+
+/** Units a bottle line that isn't a pour can be weighed or counted in (the batch sheet's unit chips). */
+export const BOTTLE_UNITS = ['g', 'kg', 'tsp', 'tbsp', 'bsp', 'dash', 'drop', 'each', 'pinch'] as const;
+
+const exact = (n: number) => String(Math.round(n * 1000) / 1000);
+
+/**
+ * A line's amount in the bottle, typed in the batch sheet (Kevin, 24 Oct:
+ * 70 g of red miso in the Tempus Fugit). Every other amount in the bottle
+ * stays as it is, the bottle is its pours added up, and one drink still
+ * takes the same from it, so each line's share of one drink follows (70 g
+ * over 33 and a third drinks is 2.1 g). Null is to taste, except for a pour.
+ * Pours keep their unit. The batch as it was when that would leave nothing poured.
+ */
+export function withBottleAmount(b: LineBatch, key: string, amount: number | null, unit: string): LineBatch {
+  const per = drinkMl(b.lines);
+  const at = b.lines.find((l) => l.key === key);
+  if (!at || per <= 0) return b;
+  const typed = amount !== null && amount > 0 ? amount : null;
+  // A pour emptied is a pour still being typed, never to taste: that would give its share to the others.
+  if (typed === null && pourMl(at) !== null) return b;
+  // Each line as it is in the bottle now, and the typed one as typed: ml for a pour, else its own unit.
+  const now = bottleAmounts(b);
+  const inBottle = b.lines.map((l, i) => (l.key === key ? { amount: typed, unit } : now[i]));
+  const poured = inBottle.map(({ amount: n, unit: u }) => (n !== null && POURS.has(u) ? n * POUR_ML[u] : null));
+  const bottleMl = round1(poured.reduce<number>((s, ml) => s + (ml ?? 0), 0));
+  if (bottleMl <= 0) return b;
+  const drinks = bottleMl / per;
+  return {
+    bottleMl,
+    lines: b.lines.map((l, i) => {
+      const ml = poured[i];
+      const { amount: n, unit: u } = inBottle[i];
+      if (ml !== null) {
+        const pour = POURS.has(l.unit) ? l.unit : 'ml';
+        return { ...l, ...(pour === 'ml' ? { amount: exact(ml / drinks), unit: 'ml' } : convertPour(ml / drinks, 'ml', pour)) };
+      }
+      return { ...l, unit: u, amount: n === null ? '' : exact(n / drinks) };
+    }),
+  };
 }
 
 /** Lines that can go in a bottle: not a house prep still to make here (its recipe would be lost), nor a batch. */

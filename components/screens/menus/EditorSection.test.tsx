@@ -5,11 +5,15 @@ import { renderWithTamagui } from '@/jest.setup';
 import type { EditSection } from '@/lib/menuLayout';
 import type { MenuDrink } from '@/types/menus';
 
+import { EMPTY_DRAFT } from '@/lib/drinkWizard';
+import { draftSlot, useDrinkWizardStore } from '@/store/useDrinkWizardStore';
+
 import { EditorSection } from './EditorSection';
 
 const MockView = View;
 jest.mock('expo-image', () => ({ Image: () => <MockView /> }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/components/ds/DrawnSketch', () => ({ DrawnSketch: () => null }));
 // The plain drag list: the nested one (native, inside the editor's scroll container) loops under Jest's gesture mocks.
 jest.mock('@/components/recipe/FormScrollContainer', () => ({ ...jest.requireActual('@/components/recipe/FormScrollContainer'), supportsNestableDrag: false }));
@@ -23,7 +27,7 @@ const onMoveTo = jest.fn();
 async function renderSection() {
   const onMove = jest.fn();
   await renderWithTamagui(
-    <EditorSection section={section} sections={[section, other]} onSettings={jest.fn()} onRemove={jest.fn()} onReorder={jest.fn()} onMove={onMove} onMoveTo={onMoveTo} />
+    <EditorSection barId={null} section={section} sections={[section, other]} onSettings={jest.fn()} onRemove={jest.fn()} onReorder={jest.fn()} onMove={onMove} onMoveTo={onMoveTo} />
   );
   return onMove;
 }
@@ -63,8 +67,25 @@ test('a row’s ... menu, a popover, moves a drink to another section, or to the
 
 test('one amber line says what the section needs, and no Add a drink without onAdd', async () => {
   await renderWithTamagui(
-    <EditorSection section={{ ...section, allowedTypes: ['cocktail', 'beer', 'wine'], minItems: 4, maxItems: 5 }} sections={[section]} onSettings={jest.fn()} onRemove={jest.fn()} onReorder={jest.fn()} onMove={jest.fn()} onMoveTo={jest.fn()} />
+    <EditorSection barId={null} section={{ ...section, allowedTypes: ['cocktail', 'beer', 'wine'], minItems: 4, maxItems: 5 }} sections={[section]} onSettings={jest.fn()} onRemove={jest.fn()} onReorder={jest.fn()} onMove={jest.fn()} onMoveTo={jest.fn()} />
   );
   expect(screen.getByText('4 to 5 drinks · 3 in · needs one more')).toBeTruthy();
   expect(screen.queryByText('Add a drink')).toBeNull();
+});
+
+test('a drink started for the section and not saved shows on it, and Keep going opens its draft', async () => {
+  const kept = (name: string, updatedAt: number) => ({ draft: { ...EMPTY_DRAFT, id: name, name }, step: 'ingredients' as const, updatedAt });
+  useDrinkWizardStore.setState({
+    kept: {
+      home: kept('Left at home', 3),
+      [draftSlot('home', { menuSectionId: 's1', name: 'Salty Boy' })]: kept('Salty Boy', 2),
+      [draftSlot('home', { menuSectionId: 's2', name: 'Paloma' })]: kept('Paloma', 1),
+    },
+  });
+  await renderSection();
+  expect(screen.queryByText('Left at home')).toBeNull();
+  expect(screen.queryByText('Paloma')).toBeNull();
+  fireEvent.press(screen.getByRole('button', { name: 'Salty Boy, draft. Keep going' }));
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/add-cocktail', params: { menuSectionId: 's1', name: 'salty boy' } });
+  useDrinkWizardStore.setState({ kept: {} });
 });

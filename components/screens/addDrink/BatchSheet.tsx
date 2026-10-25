@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Button, Caption, DsText, Field, IngredientThumb, PressableScale, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, DsText, Field, PressableScale, Sheet, SheetScrollView, Title, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { BATCH_BOTTLES, bottleAmounts, drinkMl, drinksPerBottle, withBatch } from '@/lib/batchLines';
 import { amountLabel, type WizardLine } from '@/lib/drinkWizard';
 import { yieldText } from '@/lib/libraryFilters';
 
+import { BatchBottleRow } from './BatchBottleRow';
 import { WizardChip } from './WizardChrome';
 
 const ml = (n: number) => `${Math.round(n * 10) / 10} ml`;
@@ -42,8 +43,10 @@ export function BatchSheet({ line, drinkName, onChange, onSave, onSplit, onClose
 function Body_({ line, drinkName, onChange, onSave, onSplit }: Omit<BatchSheetProps, 'onClose'> & { line: WizardLine }) {
   const ds = useDs();
   const batch = line.batch!;
-  const [other, setOther] = useState(!(BATCH_BOTTLES as readonly number[]).includes(batch.bottleMl));
-  const [otherText, setOtherText] = useState(other ? String(batch.bottleMl) : '');
+  // Other: picked, or a bottle the amounts typed in it add up to.
+  const [picked, setOther] = useState(false);
+  const other = picked || !(BATCH_BOTTLES as readonly number[]).includes(batch.bottleMl);
+  const [otherText, setOtherText] = useState<string | null>(null);
   const [perDrink, setPerDrink] = useState(false);
   const bottle = (bottleMl: number) => onChange(withBatch(line, { ...batch, bottleMl }));
   const per = drinkMl(batch.lines);
@@ -72,12 +75,14 @@ function Body_({ line, drinkName, onChange, onSave, onSplit }: Omit<BatchSheetPr
         {other ? (
           <Field
             label="Millilitres in the bottle"
-            value={otherText}
-            autoFocus
-            keyboardType="number-pad"
-            maxLength={5}
+            value={otherText ?? (picked && (BATCH_BOTTLES as readonly number[]).includes(batch.bottleMl) ? '' : String(batch.bottleMl))}
+            onBlur={() => setOtherText(null)}
+            autoFocus={picked}
+            keyboardType="decimal-pad"
+            maxLength={7}
             onChangeText={(t) => {
-              const digits = t.replace(/[^0-9]/g, '');
+              // A decimal too: amounts typed in the bottle can add up to 787.5.
+              const digits = t.replace(/[^0-9.]/g, '');
               setOtherText(digits);
               const n = Number(digits);
               // A bottle big enough for one drink, and no bigger than a keg: anything else waits for a real number.
@@ -90,13 +95,7 @@ function Body_({ line, drinkName, onChange, onSave, onSplit }: Omit<BatchSheetPr
       <Caption tone="muted" style={styles.eyebrow}>IN THE BOTTLE</Caption>
       <View>
         {bottleAmounts(batch).map(({ line: l, amount, unit }) => (
-          <View key={l.key} style={[styles.row, { borderBottomColor: ds.c.line }]}>
-            <IngredientThumb id={l.id} name={l.name} size={32} />
-            <Body style={styles.flex}>{l.name}</Body>
-            <DsText variant="spec" color={ds.c.muted}>
-              {amount === null ? 'to taste' : `${amount} ${unit}`}
-            </DsText>
-          </View>
+          <BatchBottleRow key={l.key} batch={batch} line={l} amount={amount} unit={unit} onBatch={(b) => onChange(withBatch(line, b))} />
         ))}
         <View style={styles.makes}>
           <Body style={styles.strong}>{`Makes ${yieldText(batch.bottleMl, 'ml')}`}</Body>
@@ -108,13 +107,13 @@ function Body_({ line, drinkName, onChange, onSave, onSplit }: Omit<BatchSheetPr
         <DsText variant="spec">{amountLabel(line)}</DsText>
       </View>
 
-      <PressableScale role="button" aria-expanded={perDrink} accessibilityLabel="Per drink amounts" onPress={() => setPerDrink(!perDrink)} haptic={false} style={styles.toggle}>
+      <PressableScale role="button" aria-expanded={perDrink} accessibilityLabel="What one drink gets" onPress={() => setPerDrink(!perDrink)} haptic={false} style={styles.toggle}>
         <Body style={styles.strong} numberOfLines={1}>
-          Per drink amounts
+          What one drink gets
         </Body>
         <IconSymbol name={perDrink ? 'chevron.up' : 'chevron.down'} size={14} color={ds.c.muted} />
         <Caption tone="muted" style={styles.flex} numberOfLines={1}>
-          only if you want them
+          from the bottle
         </Caption>
       </PressableScale>
       {perDrink ? (

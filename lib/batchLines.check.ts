@@ -1,7 +1,7 @@
 // Checks for lib/batchLines.ts: the bottle maths of a batch made by dropping lines together. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { batchCaption, batchPrep, bottleAmounts, drinkMl, drinksPerBottle, mergeLines, perDrinkLines, pourMl, splitBatch, withBatch } from './batchLines';
+import { batchCaption, batchPrep, bottleAmounts, drinkMl, drinksPerBottle, mergeLines, perDrinkLines, pourMl, splitBatch, withBatch, withBottleAmount } from './batchLines';
 import type { WizardLine } from './drinkWizard';
 import { prepAmounts, prepYield } from './prepKinds';
 
@@ -78,3 +78,41 @@ assert.deepEqual(prepAmounts(withDash).map((a) => [a.amount, a.line.unit]), [[56
 assert.equal(prepYield(withDash), 750, 'dashes count no volume');
 
 console.log('batchLines checks passed');
+
+// Kevin's miso banana liqueur (24 Oct): red miso to taste dropped on 22.5 ml Tempus Fugit, then 70 g of miso typed in the bottle.
+{
+  const miso = mergeLines([l('t', 'Tempus Fugit Crème de Banane', '22.5'), l('r', 'Red miso', '', 'g')], 1, 0, 'Salty Boy')![0].batch!;
+  assert.deepEqual(bottleAmounts(miso).map((x) => x.amount), [750, null], 'miso starts to taste');
+  const typed = withBottleAmount(miso, 'r', 70, 'g');
+  assert.deepEqual(bottleAmounts(typed).map((x) => [x.amount, x.unit]), [[750, 'ml'], [70, 'g']]);
+  assert.equal(typed.lines[1].amount, '2.1', 'one drink has 2.1 g of it');
+  assert.equal(drinkMl(typed.lines), 22.5, 'the drink still takes 22.5 ml');
+  assert.equal(withBottleAmount(typed, 'r', null, 'g').lines[1].amount, '', 'cleared is to taste again');
+  // Typed as ml instead, it's poured: an 820 ml bottle, the liqueur still 750 of it, a drink still 22.5 ml.
+  const poured = withBottleAmount(miso, 'r', 70, 'ml');
+  assert.equal(poured.bottleMl, 820);
+  assert.deepEqual(bottleAmounts(poured).map((x) => [x.amount, x.unit]), [[750, 'ml'], [70, 'ml']]);
+  assert.equal(drinkMl(poured.lines), 22.5);
+  assert.equal(withBottleAmount(miso, 'zz', 70, 'g'), miso);
+
+  // 700 ml of the liqueur instead: the bottle is 700, the miso stays 70 g, a drink still takes 22.5 ml.
+  const smaller = withBottleAmount(typed, 't', 700, 'ml');
+  assert.equal(smaller.bottleMl, 700);
+  assert.deepEqual(bottleAmounts(smaller).map((x) => x.amount), [700, 70]);
+  assert.equal(drinkMl(smaller.lines), 22.5);
+  assert.equal(withBottleAmount(typed, 't', 0, 'ml'), typed, 'nothing left poured');
+  assert.equal(withBottleAmount(typed, 't', null, 'ml'), typed, 'an emptied pour stays as it was');
+  // The liqueur weighed instead: nothing poured either.
+  assert.equal(withBottleAmount(typed, 't', 700, 'g'), typed);
+}
+
+// Two pours: 600 ml mezcal with the agave left at 187.5 is an 787.5 ml bottle; one drink is still 60 ml, in the ratio typed.
+{
+  const more = withBottleAmount(batch.batch!, 'm', 600, 'ml');
+  assert.equal(more.bottleMl, 787.5);
+  assert.deepEqual(bottleAmounts(more).map((x) => x.amount), [600, 187.5]);
+  assert.equal(drinkMl(more.lines), 60);
+  // Ounces stay ounces.
+  const oz = withBottleAmount({ lines: [l('g', 'Gin', '1.5', 'oz'), l('v', 'Vermouth', '1.5', 'oz')], bottleMl: 750 }, 'g', 375, 'ml');
+  assert.deepEqual(oz.lines.map((x) => [x.amount, x.unit]), [['1.5', 'oz'], ['1.5', 'oz']]);
+}
