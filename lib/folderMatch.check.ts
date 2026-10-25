@@ -12,6 +12,9 @@ assert.equal(nameFromFile('IMG_2231.jpg'), '');
 assert.equal(nameFromFile('DSC01234.JPG'), '');
 assert.equal(isBackLabel('HL_Rosso_back.png'), true);
 assert.equal(isBackLabel('backbar-gin.png'), false);
+assert.equal(isBackLabel('Back_Porch_Rye_front.jpg'), false);
+assert.equal(nameFromFile('HL_WhiteRum_front.png'), 'white rum');
+assert.equal(nameFromFile('JW_BlackLabel.jpg'), 'black label');
 
 const bottles = [
   { id: 'dry', name: 'Harbour Lane Dry Gin' },

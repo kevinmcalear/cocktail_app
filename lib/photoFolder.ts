@@ -26,17 +26,19 @@ export function photosFromFiles(files: ArrayLike<File> | null | undefined): Name
 }
 
 /**
- * Web (and the desktop shell): the browser's folder chooser, so a brand can
- * hand over its packshot folder as it is. Phones: many photos from the
+ * Web (and the desktop shell) at `folder`: the browser's folder chooser, so a
+ * brand can hand over its packshot folder as it is; a phone's browser, which
+ * can't choose folders, picks many images. Phones: many photos from the
  * library at once. Empty when cancelled.
  */
-export async function pickPhotoFolder(): Promise<PhotoFolder> {
+export async function pickPhotoFolder({ folder }: { folder: boolean }): Promise<PhotoFolder> {
   if (Platform.OS === 'web') {
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
       input.multiple = true;
-      input.setAttribute('webkitdirectory', '');
+      if (folder) input.setAttribute('webkitdirectory', '');
+      else input.accept = 'image/*';
       input.onchange = () => {
         const files = Array.from(input.files ?? []);
         const path = (files[0] as (File & { webkitRelativePath?: string }) | undefined)?.webkitRelativePath ?? '';

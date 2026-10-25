@@ -8,7 +8,8 @@
 import { nearMatcher } from './nearName';
 
 /** Words in file names that say nothing about which bottle it is. */
-const NOISE = new Set(['front', 'side', 'label', 'img', 'image', 'photo', 'pic', 'dsc', 'dscf', 'pxl', 'final', 'hero', 'packshot', 'pack', 'shot', 'bottle', 'copy', 'edit', 'web', 'hires', 'lores', 'white', 'transparent', 'cutout', 'jpg', 'jpeg', 'png', 'webp', 'heic']);
+// Never a word that names a product too ("Black Label", "White Rum").
+const NOISE = new Set(['front', 'side', 'img', 'image', 'photo', 'pic', 'dsc', 'dscf', 'pxl', 'final', 'hero', 'packshot', 'edit', 'web', 'hires', 'lores', 'transparent', 'cutout', 'jpg', 'jpeg', 'png', 'webp', 'heic']);
 const BACK = new Set(['back', 'rear', 'reverse']);
 
 /** A file name's words: extension off, split at _ - . spaces, case changes and digits. */
@@ -22,9 +23,12 @@ export function fileWords(fileName: string): string[] {
     .filter(Boolean);
 }
 
-/** A photo of a back label, from its file name ("HL_Rosso_back.png"). */
+/**
+ * A photo of a back label, from its file name ("HL_Rosso_back.png"). Not the
+ * first word, which is more likely the bottle's own ("Back_Porch_Rye.jpg").
+ */
 export function isBackLabel(fileName: string): boolean {
-  return fileWords(fileName).some((w) => BACK.has(w));
+  return fileWords(fileName).slice(1).some((w) => BACK.has(w));
 }
 
 /**

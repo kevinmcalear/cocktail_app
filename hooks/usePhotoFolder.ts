@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import type { MakerBottle } from '@/hooks/useMakers';
 import { useSetMakerBottlePicture } from '@/hooks/useMakerPhotos';
 import { isBackLabel, matchName, nameFromFile, trayRows, type TrayPhoto } from '@/lib/folderMatch';
 import type { NamedPhoto, PhotoFolder } from '@/lib/photoFolder';
 import { readBottlePhoto } from '@/lib/readBottle';
+import { AI_DECLINED } from '@/lib/readMenu';
 import { cutout, cutoutAvailable } from '@/modules/subject-cutout';
 
 /** How a photo found its bottle: its file name, its label, or the team's pick. */
@@ -40,36 +41,33 @@ export function usePhotoFolder(profileId: string, bottles: readonly MakerBottle[
   const [working, setWorking] = useState(false);
   const [saving, setSaving] = useState(false);
   const all = bottles.map((b) => b.id);
+  const run = useRef({ busy: false });
   const patch = (key: string, change: Partial<FolderPhoto>) => setPhotos((list) => list.map((p) => (p.key === key ? { ...p, ...change } : p)));
 
   const add = async (folder: PhotoFolder) => {
-    if (!folder.photos.length) return;
+    // One batch at a time: a second add while one runs would end it early (the tray turns them away too).
+    if (!folder.photos.length || run.current.busy) return;
+    const batch = { busy: true };
+    run.current = batch;
     if (folder.name) setName((was) => was ?? folder.name);
     const added = folder.photos.map((p) => fromFile(p, bottles, all));
     setPhotos((list) => [...list, ...added]);
     setWorking(true);
-    // Labels are read only while reading works: a day's AI limit or a "no" to Google AI stops it, and the rest ask.
+    // Labels are read until a "no" to Google AI or the day's AI limit; after that the rest ask.
     let canRead = true;
     for (const p of added) {
+      // Cancel ends the batch: no more reads (each is an AI unit) for photos that have left.
+      if (run.current !== batch) return;
       if (p.back) continue;
-      const cut = cutoutAvailable ? ((await cutout(p.uri))?.uri ?? null) : null;
-      if (p.foundBy || !canRead || !bottles.length) {
-        patch(p.key, { cut, pending: false });
-        continue;
-      }
-      // A label too hard to read says so; a read that couldn't run at all just asks.
-      let unclear = true;
-      const read = await readBottlePhoto({ uri: p.uri, mimeType: p.mimeType }).then(
-        (r) => r[0] ?? null,
-        (e: Error) => {
-          if (!/read a label/i.test(e.message)) canRead = unclear = false;
-          return null;
-        },
-      );
-      const match = read ? matchName(read.name, bottles) : null;
+      const read = !p.foundBy && canRead && bottles.length ? readLabel(p) : null;
+      const [cut, label] = await Promise.all([cutoutAvailable ? cutout(p.uri).then((c) => c?.uri ?? null) : null, read]);
+      if (run.current !== batch) return;
+      if (label?.stop) canRead = false;
+      const match = label?.name ? matchName(label.name, bottles) : null;
       // A label that fits none keeps the file name's few to ask between.
-      patch(p.key, { cut, pending: false, ...(match && 'sure' in match ? { bottleId: match.sure, foundBy: 'label' as const } : { ask: match ? match.ask : p.ask, unclear }) });
+      patch(p.key, { cut, pending: false, ...(match && 'sure' in match ? { bottleId: match.sure, foundBy: 'label' as const } : label ? { ask: match ? match.ask : p.ask, unclear: label.unclear } : {}) });
     }
+    batch.busy = false;
     setWorking(false);
   };
 
@@ -92,6 +90,7 @@ export function usePhotoFolder(profileId: string, bottles: readonly MakerBottle[
       if (ok) done.add(r.bottleId);
     }
     // A saved bottle's other photos go with it, so they don't turn ready on a second try.
+    forget(photos.filter((x) => x.bottleId && done.has(x.bottleId)));
     setPhotos((list) => list.filter((x) => !(x.bottleId && done.has(x.bottleId))));
     setSaving(false);
     return !failed;
@@ -111,11 +110,34 @@ export function usePhotoFolder(profileId: string, bottles: readonly MakerBottle[
     /** Use this one: the photo a bottle with two keeps. */
     keep: (bottleId: string, key: string) => setChosen((c) => ({ ...c, [bottleId]: key })),
     clear: () => {
+      run.current = { busy: false };
+      setWorking(false);
+      forget(photos);
       setPhotos([]);
       setChosen({});
       setName(null);
     },
   };
+}
+
+/**
+ * What a photo's label says (read-bottle), or why not: too hard to read, or a
+ * read that couldn't run. `stop` when no more should be tried: a "no" to
+ * Google AI or the day's AI limit.
+ */
+async function readLabel(p: FolderPhoto): Promise<{ name: string | null; unclear: boolean; stop: boolean }> {
+  try {
+    return { name: (await readBottlePhoto({ uri: p.uri, mimeType: p.mimeType }))[0]?.name ?? null, unclear: true, stop: false };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : '';
+    return { name: null, unclear: /read a label/i.test(message), stop: message === AI_DECLINED || /AI limit/i.test(message) };
+  }
+}
+
+/** Lets go of the browser's copies of photos that have left the tray. */
+function forget(list: readonly FolderPhoto[]) {
+  if (typeof URL === 'undefined' || !URL.revokeObjectURL) return;
+  for (const p of list) if (p.uri.startsWith('blob:')) URL.revokeObjectURL(p.uri);
 }
 
 function fromFile(p: NamedPhoto, bottles: readonly MakerBottle[], all: string[]): FolderPhoto {

@@ -9,7 +9,7 @@ import type { MakerBottlePhoto } from '@/hooks/useMakerPhotos';
 import type { usePhotoFolder } from '@/hooks/usePhotoFolder';
 import { useWebImageDrop } from '@/hooks/useWebImageDrop';
 import { traySummary } from '@/lib/folderMatch';
-import { pickPhotoFolder } from '@/lib/photoFolder';
+import { photosFromFiles, pickPhotoFolder } from '@/lib/photoFolder';
 import { cutoutAvailable } from '@/modules/subject-cutout';
 
 import { FolderTrayRow } from './FolderTrayRow';
@@ -34,9 +34,17 @@ export function FolderTray({ folder, bottles, photos, maker }: { folder: ReturnT
 
   const more = async () => {
     setError(null);
-    await pickPhotoFolder().then(folder.add, (e: Error) => setError(e.message));
+    await pickPhotoFolder({ folder: wide }).then(folder.add, (e: Error) => setError(e.message));
   };
-  const dropRef = useWebImageDrop(Platform.OS === 'web' ? (uris, files) => void folder.add({ name: null, photos: files.map((f, i) => ({ uri: uris[i], fileName: f.name, mimeType: f.type })) }) : undefined);
+  // Turned away while it reads or saves, as Add more is.
+  const dropRef = useWebImageDrop(
+    Platform.OS === 'web'
+      ? (uris, files) => {
+          uris.forEach((u) => URL.revokeObjectURL(u));
+          if (!busy) void folder.add({ name: null, photos: photosFromFiles(files) });
+        }
+      : undefined,
+  );
   const use = async () => {
     const all = await folder.use();
     if (!all) return setError('Some photos didn’t save. They’re still here to try again.');
@@ -97,7 +105,6 @@ export function FolderTray({ folder, bottles, photos, maker }: { folder: ReturnT
         <View style={styles.actions}>
           {useButton}
           <Button label="Choose more photos" variant="secondary" icon="photo" disabled={busy} onPress={() => void more()} />
-          <Button label="Cancel" variant="ghost" disabled={folder.saving} onPress={cancel} />
         </View>
       )}
     </View>
@@ -109,7 +116,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   actionsWide: { flexDirection: 'row', gap: space.sm },
-  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: 1, borderRadius: radius.card },
+  card: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: 1, borderStyle: 'dashed', borderRadius: radius.card },
   mono: { fontFamily: fontFamilies.mono },
   actions: { gap: space.sm },
 });

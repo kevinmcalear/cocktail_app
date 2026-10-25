@@ -68,7 +68,7 @@ function Page({ profileRef, welcome }: { profileRef: string; welcome: boolean })
         style={wide ? null : styles.addMany}
         onPress={() => {
           setPickError(null);
-          void pickPhotoFolder().then(folder.add, (e: Error) => setPickError(e.message));
+          void pickPhotoFolder({ folder: wide }).then(folder.add, (e: Error) => setPickError(e.message));
         }}
       />
     );

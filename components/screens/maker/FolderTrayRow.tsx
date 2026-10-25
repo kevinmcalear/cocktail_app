@@ -58,9 +58,9 @@ export function FolderTrayRow({ row, bottles, byId, maker, hasPhoto, onPick, onK
   const end = photo.pending ? (
     <ActivityIndicator />
   ) : row.kind === 'ready' ? (
-    <View style={styles.matched}>
+    <View style={styles.matched} aria-label={wide ? undefined : 'Matched'}>
       <IconSymbol name="checkmark" size={16} color={ds.accentText} />
-      <Caption color={ds.accentText}>Matched</Caption>
+      {wide ? <Caption color={ds.accentText}>Matched</Caption> : null}
     </View>
   ) : row.kind === 'another' ? (
     <Button label={wide ? 'Use this one' : 'Pick one'} variant="secondary" size="sm" accessibilityLabel={`Use ${photo.fileName} for this bottle`} onPress={onKeep} />
@@ -82,7 +82,6 @@ export function FolderTrayRow({ row, bottles, byId, maker, hasPhoto, onPick, onK
       <View style={styles.flex}>
         <Body numberOfLines={1} color={asks ? ds.accentText : 'quiet' in w && w.quiet ? ds.c.muted : ds.c.ink}>{w.title}</Body>
         {w.line ? <Caption tone="muted" numberOfLines={1}>{w.line}</Caption> : null}
-        {!wide ? <Caption tone="muted" numberOfLines={1} style={styles.mono}>{photo.fileName}</Caption> : null}
         {photo.saved === 'failed' ? <Caption tone="accent" role="alert">Couldn’t save this one. Try again.</Caption> : null}
       </View>
       {end}
@@ -95,7 +94,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.xs, borderBottomWidth: StyleSheet.hairlineWidth },
   thumb: { width: THUMB, height: THUMB, borderRadius: radius.control, borderCurve: 'continuous', overflow: 'hidden' },
   file: { width: 250, fontFamily: fontFamilies.mono },
-  mono: { fontFamily: fontFamilies.mono },
   flex: { flex: 1, minWidth: 0 },
   matched: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
 });
