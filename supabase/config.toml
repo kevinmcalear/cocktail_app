@@ -431,6 +431,10 @@ enabled = true
 [functions.upload-bar-logo]
 verify_jwt = false
 
+# Called before anyone is signed in: App Review's fixed code (REVIEW_EMAIL / REVIEW_CODE secrets).
+[functions.review-sign-in]
+verify_jwt = false
+
 # Public: phones fetch a venue's install manifest and icons before anyone signs in.
 [functions.venue-app]
 verify_jwt = false
