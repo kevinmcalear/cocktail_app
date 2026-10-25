@@ -35,6 +35,8 @@ export function FindSheet({ title, ingredients, aliases, loading, excludeId, all
   const rows = excludeId ? ingredients.filter((i) => i.id !== excludeId) : ingredients;
   return (
     <Sheet style={SHEET_PAD} visible onClose={onClose} accessibilityLabel={title} keyboard>
+      {/* Above the search, so the keyboard never covers it. */}
+      {onClear ? <TextLink label="Not a kind of anything" onPress={onClear} /> : null}
       <View style={styles.search}>
         <IngredientSearch
           ingredients={rows}
@@ -47,7 +49,6 @@ export function FindSheet({ title, ingredients, aliases, loading, excludeId, all
           onPick={(p) => (p.id ? onPick({ id: p.id, name: p.name }) : onNew?.(p.name))}
         />
       </View>
-      {onClear ? <TextLink label="Not a kind of anything" onPress={onClear} /> : null}
     </Sheet>
   );
 }
