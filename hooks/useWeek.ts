@@ -108,7 +108,7 @@ export interface EventBrandSide {
 
 /**
  * The host bar's look, and the guest bar's on a takeover (week_event_brand),
- * for the event page to wear. Null before 20261015500000 is in.
+ * for the event page to wear. Null for an event it can't find.
  */
 export function useWeekEventBrand(id: string | null | undefined) {
   const viewer = viewerScoped(useUserId());
@@ -118,8 +118,6 @@ export function useWeekEventBrand(id: string | null | undefined) {
     enabled: !!id,
     queryFn: async (): Promise<{ host: EventBrandSide; guest: EventBrandSide | null } | null> => {
       const { data, error } = await supabase.rpc('week_event_brand', { p_event_id: id! });
-      // ponytail: a database without week_event_brand; the page keeps the bar's accent alone. Drop once it's in production.
-      if (error?.code === 'PGRST202') return null;
       if (error) throw error;
       type Row = { host_accent: string | null; host_face: string | null; host_tint: string | null; guest_accent: string | null; guest_face: string | null; guest_tint: string | null };
       const r = ((data ?? []) as Row[])[0];
