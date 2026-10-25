@@ -8,7 +8,7 @@ import { hasContent } from '@/lib/drinkWizard';
 import { sectionSlots, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 /**
- * Drinks started for this section and not saved yet (Kevin, 24 Oct: "if I
+ * Drinks started for this section and not saved yet, each a Draft (Kevin, 24 Oct: "if I
  * started to make a drink, it should be on the menu"): each one's name and
  * Keep going, which opens its kept draft where it was left. Saving it puts it
  * in the section like any drink made from the menu.
@@ -27,7 +27,7 @@ export function UnfinishedDrinks({ barId, sectionKey }: { barId: string | null; 
         const title = draft.name.trim() || 'Untitled drink';
         const open = () => router.push({ pathname: '/add-cocktail', params: { menuSectionId: sectionKey, ...(barId ? { barId } : {}), ...(name ? { name } : {}) } });
         return (
-          <PressableScale key={slot} role="button" accessibilityLabel={`${title}, not finished. Keep going`} onPress={open} haptic={false} style={styles.row}>
+          <PressableScale key={slot} role="button" accessibilityLabel={`${title}, draft. Keep going`} onPress={open} haptic={false} style={styles.row}>
             <View aria-hidden style={[styles.tile, { borderColor: ds.c.lineStrong }]}>
               <IconSymbol name="pencil" size={18} color={ds.c.muted} />
             </View>
@@ -35,7 +35,7 @@ export function UnfinishedDrinks({ barId, sectionKey }: { barId: string | null; 
               <DsText variant="body" numberOfLines={1}>
                 {title}
               </DsText>
-              <Caption tone="muted">Not finished</Caption>
+              <Caption tone="muted">Draft</Caption>
             </View>
             <Caption color={ds.accentText}>Keep going</Caption>
           </PressableScale>
