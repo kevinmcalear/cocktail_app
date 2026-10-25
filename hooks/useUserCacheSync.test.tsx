@@ -11,6 +11,7 @@ const mockReset = jest.fn(() => Promise.resolve());
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => mockAuth }));
 jest.mock('@/lib/clearUserData', () => ({ clearUserData: () => mockClear() }));
 jest.mock('@/lib/react-query', () => ({ queryClient: {} }));
+jest.mock('@/hooks/useDraftSync', () => ({ useDraftSync: () => {} }));
 jest.mock('@/lib/authCache', () => ({
   ...jest.requireActual('@/lib/authCache'),
   resetUserQueries: () => mockReset(),

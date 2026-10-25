@@ -14,6 +14,10 @@ export interface WizardState<D, S extends string> {
   patch: (place: string, change: Partial<D>) => void;
   setStep: (place: string, step: S) => void;
   clear: (place: string) => void;
+  /** Places cleared here (saved, or started over) still to take out of the account's copy (hooks/useDraftSync); kept until that's done, offline too. */
+  cleared: string[];
+  /** Taken out of the account: off the cleared list. */
+  forgot: (places: string[]) => void;
 }
 
 /**
@@ -33,6 +37,8 @@ export function createWizardStore<D extends object, S extends string>(
     persist(
       (set) => ({
         kept: {},
+        cleared: [],
+        forgot: (places) => set((s) => ({ cleared: s.cleared.filter((p) => !places.includes(p)) })),
         patch: (place, change) =>
           set((s) => {
             const k = current(s, place);
@@ -42,7 +48,7 @@ export function createWizardStore<D extends object, S extends string>(
         clear: (place) =>
           set((s) => {
             const { [place]: _gone, ...rest } = s.kept;
-            return { kept: rest };
+            return { kept: rest, cleared: s.cleared.includes(place) ? s.cleared : [...s.cleared, place] };
           }),
       }),
       { name, storage: createJSONStorage(() => AsyncStorage), version: 1 }
