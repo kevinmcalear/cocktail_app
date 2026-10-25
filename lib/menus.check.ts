@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { bothPrices, printedPrice, cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
+import { bothPrices, printedPrice, cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, homeNightTag, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
@@ -260,4 +260,14 @@ assert.equal(savedLine(['Test', 'Test', 'Autumn menu']), 'Test and Autumn', 'a n
   assert.deepEqual(cut.sections.map((x) => x.drinks), [['a0', 'a1'], ['b0', 'b1'], ['c0']]);
   assert.equal(cut.more, 2);
   assert.deepEqual(previewSections([s('a', 2), s('b', 0)], 6), { sections: [s('a', 2)], more: 0 });
+}
+
+// --- a home menu page's tag ---
+{
+  const at = new Date(2026, 9, 24, 20).getTime();
+  assert.equal(homeNightTag(null, at), 'No date yet');
+  assert.equal(homeNightTag('2026-10-24', at), 'Tonight');
+  assert.equal(homeNightTag('2026-10-25', at), 'Tomorrow');
+  assert.equal(homeNightTag('2026-10-31', at, 'en-GB'), 'Sat 31 Oct · in 7 days');
+  assert.equal(homeNightTag('2026-10-01', at, 'en-GB'), 'Thu 1 Oct');
 }
