@@ -67,12 +67,20 @@ test('a line made in-house too is a prep of its own, its recipe saved after (a r
   const syrup = startPrep('syrup', 'Honey-ginger syrup');
   const batch = startPrep('batch', 'Penicillin batch');
   batch.lines.push({ key: 'hg', id: null, name: 'Honey-ginger syrup', parts: null, unit: 'ml', amount: '200', prep: syrup });
-  const own = jest.fn(async () => 'honey-ginger');
+  const own = jest.fn(async () => ({ id: 'honey-ginger', isNew: true }));
   const ensured: string[] = [];
-  await savePrepRecipe('batch-1', batch, async (p) => (ensured.push(p.name), 'other'), null, own);
+  await savePrepRecipe('batch-1', batch, async (p) => (ensured.push(p.name), 'other'), null, { own, warn: jest.fn() });
   expect(own).toHaveBeenCalledWith({ id: null, name: 'Honey-ginger syrup' });
   expect(ensured).not.toContain('Honey-ginger syrup');
   // Both are marked as preps: the batch first, then the syrup inside it.
   const roles = mockUpdates.filter(([, v]) => v.ingredient_role === 'prep').map(([, , id]) => id);
   expect(roles).toEqual(['batch-1', 'honey-ginger']);
+});
+
+test('a line made in-house that is a prep already ("My Honey syrup") keeps its own recipe', async () => {
+  mockUpdates.length = 0;
+  const batch = startPrep('batch', 'Penicillin batch');
+  batch.lines.push({ key: 'hs', id: null, name: 'Honey syrup', parts: null, unit: 'ml', amount: '200', prep: startPrep('syrup', 'Honey syrup') });
+  await savePrepRecipe('batch-2', batch, async () => 'other', null, { own: async () => ({ id: 'my-honey', isNew: false }), warn: jest.fn() });
+  expect(mockUpdates.some(([, , id]) => id === 'my-honey')).toBe(false);
 });

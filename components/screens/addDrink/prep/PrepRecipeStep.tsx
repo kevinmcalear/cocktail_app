@@ -25,8 +25,8 @@ interface PrepRecipeStepProps {
   aliases?: readonly IngredientAlias[];
   /** The drink's pour of it, for "In Salty Boy 22.5 ml" and how many a bottle makes. */
   inDrink?: InDrinkPour;
-  /** Make a line in-house too, one level down (make-anything-steps-2, step 8): its key, once it's in the recipe. */
-  onMake?: (key: string) => void;
+  /** Make a line in-house too, one level down (make-anything-steps-2, step 8): its key, once it's in the recipe, and the lines as they were if it was just added or renamed. */
+  onMake?: (key: string, before?: PrepDraftLine[]) => void;
   /** Under a line: its own recipe, open in place on the desktop page. */
   below?: (line: PrepDraftLine) => ReactNode;
 }
@@ -77,7 +77,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
     ? (name: string) => {
         const key = `n${Date.now().toString(36)}`;
         set({ lines: [...draft.lines, { key, id: null, name: capitalizeFirst(name), parts: null, unit: 'g', amount: '' }] });
-        onMake(key);
+        onMake(key, draft.lines);
       }
     : undefined;
   const step = draft.baseAmount >= 100 ? 50 : 10;
@@ -135,7 +135,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                     ? (name) => {
                         change(l.key, { id: null, name: capitalizeFirst(name), slot: undefined });
                         setSwapKey(null);
-                        onMake(l.key);
+                        onMake(l.key, draft.lines);
                       }
                     : undefined
                 }

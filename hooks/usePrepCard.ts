@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { saveItemAllergens } from '@/hooks/useAllergens';
 import { ensureIngredient } from '@/hooks/useCreateIngredient';
 import { isGarnishUnit } from '@/lib/batch';
+import { plainDbMessage } from '@/lib/dbError';
 import type { NoteLine } from '@/lib/noteRecipe';
 import { prepAmounts, prepYield, type PrepDraft } from '@/lib/prepKinds';
 import { partsRatio, prepParts } from '@/lib/prepParts';
@@ -147,19 +148,26 @@ export async function savePrepRecipe(
   prep: PrepDraft,
   ensure: (pick: { id: string | null; name: string }, type: 'ingredient') => Promise<string>,
   barId: string | null = null,
-  own?: (pick: { id: string | null; name: string }) => Promise<string>
+  /**
+   * A line made in-house too (make-anything-steps-2, step 8) becomes a prep
+   * row of its own: its id, and whether this save made it (an existing prep,
+   * "My Honey syrup", keeps its recipe). With `warn`, a recipe inside that
+   * fails is said, and the rest still saved.
+   */
+  inner?: { own: (pick: { id: string | null; name: string }) => Promise<{ id: string; isNew: boolean }>; warn: (message: string) => void }
 ) {
   const role = await supabase.from('items').update({ ingredient_role: 'prep' }).eq('id', itemId);
   if (role.error) throw role.error;
   const rows = [];
   let baseId: string | null = null;
   // Lines made in-house too (make-anything-steps-2, step 8): each a prep row of its own, its recipe saved after this one's.
-  const inside: { id: string; prep: PrepDraft }[] = [];
+  const inside: { id: string; name: string; prep: PrepDraft }[] = [];
   for (const [i, { line, amount }] of prepAmounts(prep).entries()) {
     // A stand-in nobody filled ("Spirit") is never an ingredient.
     if (!line.name.trim() || line.slot) continue;
-    const id = line.prep && own ? await own({ id: null, name: line.name }) : await ensure({ id: line.id, name: line.name }, 'ingredient');
-    if (line.prep && own) inside.push({ id, prep: line.prep });
+    const made = line.prep && inner ? await inner.own({ id: null, name: line.name }) : null;
+    const id = made ? made.id : await ensure({ id: line.id, name: line.name }, 'ingredient');
+    if (made?.isNew && id !== itemId && line.prep) inside.push({ id, name: line.name, prep: line.prep });
     if (line.key === prep.baseKey) baseId = id;
     rows.push({ recipe_item_id: itemId, ingredient_item_id: id, amount, unit: line.unit || null, preparation_notes: line.note?.trim() || null, sort_order: i });
   }
@@ -189,7 +197,13 @@ export async function savePrepRecipe(
   });
   // Allergens the maker set by hand are declared, and checked, for where it's made.
   if (prep.allergensSet) await saveItemAllergens(itemId, barId, prep.allergens ?? []);
-  for (const p of inside) await savePrepRecipe(p.id, p.prep, ensure, barId, own);
+  for (const p of inside) {
+    try {
+      await savePrepRecipe(p.id, p.prep, ensure, barId, inner);
+    } catch (e) {
+      inner!.warn(plainDbMessage(e) ?? `${p.name}’s recipe wasn’t saved. Add it on its page.`);
+    }
+  }
 }
 
 /**

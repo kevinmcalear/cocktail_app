@@ -88,8 +88,9 @@ describe('PrepBuilder', () => {
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Honey-ginger syrup');
     await fireEvent.press(screen.getByRole('button', { name: 'Make “Honey-ginger syrup” in-house' }));
     await laidOut();
-    // One level down: the trail runs Daiquiri › Penicillin batch › Honey-ginger syrup.
-    expect(screen.getByRole('link', { name: 'Up to Daiquiri' })).toBeTruthy();
+    // One level down: the trail runs Daiquiri › Penicillin batch › Honey-ginger syrup; only the level just above is a way back.
+    expect(screen.getByText('Daiquiri')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Up to Daiquiri' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Up to Penicillin batch' })).toBeTruthy();
     expect(screen.getByText('What are you making?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
@@ -105,6 +106,15 @@ describe('PrepBuilder', () => {
     await laidOut();
     expect(screen.getByRole('link', { name: 'Up to Penicillin batch' })).toBeTruthy();
     expect(screen.getByText('Sugar')).toBeTruthy();
+    // Leaving a level just started puts the recipe back as it was.
+    await fireEvent.press(screen.getByRole('link', { name: 'Up to Penicillin batch' }));
+    await laidOut();
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Lemon oleo');
+    await fireEvent.press(screen.getByRole('button', { name: 'Make “Lemon oleo” in-house' }));
+    await laidOut();
+    await fireEvent.press(screen.getByRole('link', { name: 'Up to Penicillin batch' }));
+    await laidOut();
+    expect(screen.queryByText('Lemon oleo')).toBeNull();
   });
 
   test('a clarified juice is its own kind, made the first way the kit covers', async () => {

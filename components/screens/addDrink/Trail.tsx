@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, PressableScale } from '@/components/ds';
-import { fontFamilies, space } from '@/constants/tokens';
+import { fontFamilies, layout, space } from '@/constants/tokens';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 
 /** One level of what's being made, from the menu down; `onPress` goes up to it. The last is where you are. */
@@ -69,5 +69,5 @@ const styles = StyleSheet.create({
   mono: { fontFamily: fontFamilies.monoMedium },
   here: { fontFamily: fontFamilies.monoMedium, fontWeight: '600' },
   sep: { opacity: 0.6 },
-  link: { minHeight: 32, justifyContent: 'center' },
+  link: { minHeight: layout.minTapTarget, justifyContent: 'center' },
 });

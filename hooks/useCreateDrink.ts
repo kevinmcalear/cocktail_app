@@ -205,11 +205,20 @@ export function useCreateDrink() {
       }
       const methodIds: string[] = [];
       for (const m of draft.methods) methodIds.push(await ensure(m, 'method'));
+      // Recipes made in-house inside a prep (make-anything-steps-2, step 8): rows of their own, recipes saved only on rows this save made.
+      const inner = {
+        own: async (pick: WizardPick) => {
+          const before = newIngredients.length;
+          const id = await own(pick);
+          return { id, isNew: newIngredients.length > before };
+        },
+        warn: (message: string) => warnings.push(message),
+      };
       // A prep made here: its recipe, method and keeping, on the row this save made.
       const saveOwnPreps = async () => {
         for (const p of ownPreps) {
           try {
-            await savePrepRecipe(p.id, p.prep, ensure, barId, own);
+            await savePrepRecipe(p.id, p.prep, ensure, barId, inner);
           } catch (e) {
             warnings.push(plainDbMessage(e) ?? `${capitalize(p.name)}’s recipe wasn’t saved. Add it on its page.`);
           }

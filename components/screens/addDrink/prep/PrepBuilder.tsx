@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Field, IngredientDrawing } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { prepAmounts, recipeEyebrow, withFacts, type PrepDraft, type PrepPick } from '@/lib/prepKinds';
+import { recipeEyebrow, withFacts, type PrepDraft, type PrepPick } from '@/lib/prepKinds';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 
 import type { CatalogIngredient } from '../IngredientSearch';
@@ -16,6 +16,7 @@ import type { InDrinkPour } from './InDrink';
 import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
 import { PrepRecipeStep, RecipeView } from './PrepRecipeStep';
+import { aboveRecipe, useInside } from './useInside';
 import { usePrepDraft } from './usePrepDraft';
 
 const STEPS = ['kind', 'recipe', 'method'] as const;
@@ -62,15 +63,17 @@ export interface PrepBuilderProps {
  * hands the prep back to the drink's line.
  */
 export function PrepBuilder(props: PrepBuilderProps) {
+  // Android's back goes to the Modal, not the steps: it goes back on the level showing, one level at a time.
+  const back = useRef(props.onClose);
   return (
-    <Modal visible={!!props.name} animationType="slide" presentationStyle="fullScreen" onRequestClose={props.onClose}>
+    <Modal visible={!!props.name} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => back.current()}>
       {/* A native Modal is its own root: the method step's drag needs gestures inside it. */}
-      <GestureHandlerRootView style={styles.root}>{props.name ? <Builder {...props} name={props.name} /> : null}</GestureHandlerRootView>
+      <GestureHandlerRootView style={styles.root}>{props.name ? <Builder {...props} name={props.name} backRef={back} /> : null}</GestureHandlerRootView>
     </Modal>
   );
 }
 
-function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above }: PrepBuilderProps & { name: string }) {
+function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, backRef }: PrepBuilderProps & { name: string; backRef: RefObject<() => void> }) {
   const [step, setStep] = useState<Step>(!first && (initial || technique) ? 'recipe' : 'kind');
   const [direction, setDirection] = useState<1 | -1>(1);
   const [name, setName] = useState(started);
@@ -87,34 +90,17 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   const shown = name.trim() || started;
   const next = () => (step === 'method' ? onDone(withFacts(draft), shown) : go(STEPS[at + 1]));
   const ready = named && (step === 'kind' || !slotsOpen);
+  const trail = trailInto(aboveRecipe(above ?? [{ label: drinkName || 'Your drink' }]), onClose, name.trim() || started);
   // A line of this recipe being made in-house too, one level down (make-anything-steps-2, step 8).
-  const [inside, setInside] = useState<string | null>(null);
-  const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], onClose, name.trim() || started);
+  const inside = useInside(draft, setDraft, name.trim() || started);
+  // The level showing takes Android's back: this one, unless a level below it is open.
+  useEffect(() => {
+    if (!inside.props) backRef.current = back;
+  });
 
   const drink = drinkName || 'your drink';
   const intro = 'Start from a step or write your own. A time you write becomes a timer when you make it.';
-  const nested = inside ? draft.lines.find((l) => l.key === inside) : null;
-  if (nested) {
-    const amount = prepAmounts(draft).find((a) => a.line.key === nested.key)?.amount ?? null;
-    return (
-      <Builder
-        key={nested.key}
-        name={nested.name || 'New recipe'}
-        drinkName={shown}
-        initial={nested.prep ?? null}
-        inDrink={{ name: shown, amount: amount === null ? '' : String(amount), unit: nested.unit }}
-        ingredients={ingredients}
-        aliases={aliases}
-        bar={bar}
-        above={trail}
-        onDone={(prep, n) => {
-          setDraft({ ...draft, lines: draft.lines.map((l) => (l.key === nested.key ? { ...l, id: null, name: n, prep, slot: undefined } : l)) });
-          setInside(null);
-        }}
-        onClose={() => setInside(null)}
-      />
-    );
-  }
+  if (inside.props) return <Builder key={inside.line!.key} {...inside.props} ingredients={ingredients} aliases={aliases} bar={bar} above={trail} backRef={backRef} />;
   const from = combinedFrom?.length ? `From ${combinedFrom.slice(0, -1).join(', ')} and ${combinedFrom.at(-1)}` : null;
   return (
     <WizardFrame
@@ -164,7 +150,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
           <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => go('recipe')} bar={bar} />
         </View>
       ) : step === 'recipe' ? (
-        <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} inDrink={inDrink} onMake={setInside} />
+        <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} inDrink={inDrink} onMake={inside.open} />
       ) : (
         <PrepMethodStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} />
       )}
