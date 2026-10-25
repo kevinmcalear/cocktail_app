@@ -67,7 +67,7 @@ export function MethodEdit({ steps, onChange, summary, heading = 'Method', place
             {tools ? (
               <PressableScale role="button" accessibilityLabel={`Tools for step ${i + 1}: ${item.tools.map(tools.label).join(', ') || 'none'}. Change them`} onPress={() => tools.onEdit(item.key)} style={styles.tools}>
                 {item.tools.map((t) => (
-                  <Tag key={t} label={tools.missing(t) ? `${tools.label(t)} · not in your kit` : tools.label(t)} tone={tools.missing(t) ? 'warning' : 'outline'} icon="hammer.fill" />
+                  <Tag key={t} label={tools.missing(t) ? `${tools.label(t)} · not in your kit` : tools.label(t)} tone={tools.missing(t) ? 'warning' : 'outline'} icon={tools.missing(t) ? 'xmark' : 'checkmark'} />
                 ))}
                 <Tag label={item.tools.length ? 'Change' : 'Tools'} tone="outline" icon="plus" />
               </PressableScale>
