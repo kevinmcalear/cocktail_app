@@ -1421,6 +1421,104 @@ export type Database = {
           },
         ]
       }
+      home_glassware: {
+        Row: {
+          count: number | null
+          created_at: string
+          glass: string
+          id: string
+          is_default: boolean
+          model_id: string | null
+          name: string | null
+          source: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          count?: number | null
+          created_at?: string
+          glass: string
+          id?: string
+          is_default?: boolean
+          model_id?: string | null
+          name?: string | null
+          source?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Update: {
+          count?: number | null
+          created_at?: string
+          glass?: string
+          id?: string
+          is_default?: boolean
+          model_id?: string | null
+          name?: string | null
+          source?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_glassware_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "glass_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_ice: {
+        Row: {
+          clear: boolean | null
+          created_at: string
+          draw_as: string | null
+          frozen_inside: string | null
+          id: string
+          length_mm: number | null
+          machine: string | null
+          name: string
+          note: string | null
+          shape: string
+          size_mm: number | null
+          source: string | null
+          stamped: boolean
+          user_id: string
+        }
+        Insert: {
+          clear?: boolean | null
+          created_at?: string
+          draw_as?: string | null
+          frozen_inside?: string | null
+          id?: string
+          length_mm?: number | null
+          machine?: string | null
+          name: string
+          note?: string | null
+          shape: string
+          size_mm?: number | null
+          source?: string | null
+          stamped?: boolean
+          user_id?: string
+        }
+        Update: {
+          clear?: boolean | null
+          created_at?: string
+          draw_as?: string | null
+          frozen_inside?: string | null
+          id?: string
+          length_mm?: number | null
+          machine?: string | null
+          name?: string
+          note?: string | null
+          shape?: string
+          size_mm?: number | null
+          source?: string | null
+          stamped?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       home_kit_items: {
         Row: {
           added_at: string

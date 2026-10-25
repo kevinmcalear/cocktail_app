@@ -21,13 +21,20 @@ const CHOICES = {
   made: { icon: 'hammer.fill', title: 'We make it', detail: 'Freeze it, cut it, smash it or stamp it here.' },
 } as const;
 
+/** At home (Kit and ice, step 13): no suppliers, a shop; the machine and the making in a home bar's words. */
+const HOME_DETAIL: Partial<Record<keyof typeof CHOICES, string>> = {
+  bought: 'From a shop.',
+  machine: 'A clear ice maker like a Klaris, or the freezer’s ice maker.',
+  made: 'Freeze it in a cooler, a mould or a tray kit.',
+};
+
 /**
  * Question 2 of the Add sheet: where does it come from? Glassware and tools
  * are bought or already ours; ice is bought, from our machine, or made here
  * (Kit and ice, step 5). Bought picks one of the venue's suppliers and says
  * which cut ice to order. A note, when it helps ("bagged").
  */
-export function SourceQuestion({ kind, value, onChange, suppliers }: { kind: 'ice' | 'glass' | 'tool'; value: KitSource; onChange: (v: KitSource) => void; suppliers: readonly VenueSupplier[] }) {
+export function SourceQuestion({ kind, value, onChange, suppliers, home }: { kind: 'ice' | 'glass' | 'tool'; value: KitSource; onChange: (v: KitSource) => void; suppliers: readonly VenueSupplier[]; home?: boolean }) {
   const options = kind === 'ice' ? (['bought', 'machine', 'made'] as const) : (['bought', 'ours'] as const);
   const cutters = suppliers.filter((s) => s.cuts_to_order).map((s) => s.name);
   const set = (patch: Partial<KitSource>) => onChange({ ...value, ...patch });
@@ -36,7 +43,7 @@ export function SourceQuestion({ kind, value, onChange, suppliers }: { kind: 'ic
       <View role="radiogroup" aria-label="Where it comes from" style={styles.stack}>
         {options.map((o) => {
           const c = CHOICES[o];
-          const detail = o === 'bought' && kind === 'ice' && cutters.length ? `${c.detail} ${cutters.join(', ')} ${cutters.length > 1 ? 'cut' : 'cuts'} to order.` : c.detail;
+          const detail = home ? (HOME_DETAIL[o] ?? c.detail) : o === 'bought' && kind === 'ice' && cutters.length ? `${c.detail} ${cutters.join(', ')} ${cutters.length > 1 ? 'cut' : 'cuts'} to order.` : c.detail;
           return (
             <KitChoice
               key={o}
@@ -49,7 +56,7 @@ export function SourceQuestion({ kind, value, onChange, suppliers }: { kind: 'ic
           );
         })}
       </View>
-      {value.source === 'bought' ? (
+      {value.source === 'bought' && !home ? (
         suppliers.length ? (
           <KitChipGroup label="From which supplier">
             {suppliers.map((s) => (

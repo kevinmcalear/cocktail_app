@@ -9,23 +9,27 @@ import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 export type KitKind = 'glassware' | 'ice' | 'tools';
 
-/** Where one thing in the kit opens: /settings/bar/<venue>/kit/ice/<id>. */
-export const kitItemHref = (barId: string, kind: KitKind, id: string) => `/settings/bar/${barId}/kit/${kind}/${id}` as Href;
+/** A kit list: /settings/bar/<venue>/ice, or My Bar's /kit/ice (null venue). */
+export const kitListHref = (barId: string | null, kind: KitKind) => (barId ? `/settings/bar/${barId}/${kind}` : `/kit/${kind}`) as Href;
+
+/** Where one thing in the kit opens: /settings/bar/<venue>/kit/ice/<id>, or My Bar's /kit/ice/<id>. */
+export const kitItemHref = (barId: string | null, kind: KitKind, id: string) => (barId ? `/settings/bar/${barId}/kit/${kind}/${id}` : `/kit/${kind}/${id}`) as Href;
 
 /** Opens one thing in the kit: a page of its own on a phone, beside the list on a wide screen. */
-export function useOpenKitItem(barId: string, kind: KitKind, openId: string | null | undefined) {
+export function useOpenKitItem(barId: string | null, kind: KitKind, openId: string | null | undefined) {
   const router = useRouter();
   return (id: string) => (openId ? router.replace(kitItemHref(barId, kind, id)) : router.push(kitItemHref(barId, kind, id)));
 }
 
 /** After Remove: back to the list it was opened from, or to the list when it was opened by a link. */
-export function useCloseKitItem(barId: string, kind: KitKind) {
+export function useCloseKitItem(barId: string | null, kind: KitKind) {
   const router = useRouter();
-  return () => (router.canGoBack() ? router.back() : router.replace(`/settings/bar/${barId}/${kind}` as Href));
+  return () => (router.canGoBack() ? router.back() : router.replace(kitListHref(barId, kind)));
 }
 
 interface KitPageProps {
-  barId: string;
+  /** The venue; null is My Bar's Kit. */
+  barId: string | null;
   kind: KitKind;
   /** "Ice". */
   title: string;
@@ -49,7 +53,7 @@ interface KitPageProps {
  */
 export function KitPage({ barId, kind, title, intro, openId, openName, list, item, loading, failed }: KitPageProps) {
   const wide = useIsWideWeb();
-  const listHref = `/settings/bar/${barId}/${kind}` as Href;
+  const listHref = kitListHref(barId, kind);
   const gone = loading || item ? null : <Body tone="muted">{failed ? 'Couldn’t load it. Check your connection and try again.' : 'That’s not in the kit any more.'}</Body>;
   if (openId && !wide) {
     return (
