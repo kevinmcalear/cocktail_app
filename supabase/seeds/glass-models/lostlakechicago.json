@@ -1,0 +1,22 @@
+{
+ "maker": "lostlakechicago",
+ "models": [
+  {
+   "name": "Lost Lake Rum Barrel Mug",
+   "series": "Lost Lake",
+   "designer": "Drew Ryan",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 591,
+   "capacity_as_stated": "20 fl. oz.",
+   "height_mm": 121,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/rum-barrel-lost-lake-2nd-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/rum-barrel-lost-lake-2nd-edition/"
+   ]
+  }
+ ]
+}

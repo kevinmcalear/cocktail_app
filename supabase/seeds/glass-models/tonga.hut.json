@@ -1,0 +1,39 @@
+{
+ "maker": "tonga.hut",
+ "models": [
+  {
+   "name": "Tonga Hut 60th Anniversary Moai Mug",
+   "series": "Tonga Hut",
+   "designer": "Shag",
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": null,
+   "capacity_as_stated": null,
+   "height_mm": 229,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/60th-anniversary-mug-tonga-hut-60th-anniversary-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/60th-anniversary-mug-tonga-hut-60th-anniversary-edition/"
+   ]
+  },
+  {
+   "name": "Tonga Hut Drooling Bastard Mug",
+   "series": "Tonga Hut",
+   "designer": null,
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 887,
+   "capacity_as_stated": "30 fl. oz.",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "ceramic",
+   "product_url": "https://thesearchfortiki.com/tiki-mug/drooling-bastard-tonga-hut-6th-edition/",
+   "source_urls": [
+    "https://thesearchfortiki.com/tiki-mug/drooling-bastard-tonga-hut-6th-edition/"
+   ]
+  }
+ ]
+}

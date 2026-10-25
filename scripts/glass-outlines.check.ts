@@ -30,13 +30,22 @@ for (const load of LOADS) {
       catalog.set(seed.maker, rows);
     }
   }
+  // What it fixes names an outline an earlier load gave: a replacement is in its seeds, and a cleared glass is untraced after it.
+  const keyOf = (x: { maker: string; name: string; capacity_ml: number | null }) => `${x.maker}\0${nameKey(x.name)}\0${x.capacity_ml ?? 0}`;
+  const own = new Set(readSeeds(load.dir).flatMap((s) => s.outlines.map((o) => keyOf({ maker: s.maker, ...o }))));
+  for (const x of load.replaces ?? []) assert.ok(seen.has(keyOf(x)) && own.has(keyOf(x)), `${load.file} replaces ${x.name}, which no earlier load outlined or it doesn't trace`);
+  for (const x of load.clear ?? []) {
+    assert.ok(seen.has(keyOf(x)) && !own.has(keyOf(x)), `${load.file} clears ${x.name}, which no earlier load outlined or it traces again`);
+    seen.delete(keyOf(x));
+  }
   for (const s of readSeeds(load.dir)) {
     // A maker loaded by a migration that isn't generated from a seed has no rows here to check against.
     const rows = catalog.get(s.maker);
     assert.ok(rows || !seeded.has(s.maker), `${s.maker}'s glasses load after ${load.file}`);
     for (const o of s.outlines) {
       const k = `${s.maker}\0${nameKey(o.name)}\0${o.capacity_ml ?? 0}`;
-      assert.ok(!seen.has(k), `${s.maker} ${o.name} twice`);
+      const replaced = (load.replaces ?? []).some((x) => x.maker === s.maker && nameKey(x.name) === nameKey(o.name) && (x.capacity_ml ?? 0) === (o.capacity_ml ?? 0));
+      assert.ok(seen.has(k) === replaced, replaced ? `${s.maker} ${o.name} replaces an outline no earlier load gave` : `${s.maker} ${o.name} twice`);
       seen.add(k);
       if (rows) assert.ok(rows.has(`${nameKey(o.name)}\0${o.capacity_ml ?? 0}`), `${s.maker} ${o.name} ${o.capacity_ml} is not in the catalog before ${load.file}`);
       assert.equal(outlineProblem(o.outline), null, `${s.maker} ${o.name}`);
