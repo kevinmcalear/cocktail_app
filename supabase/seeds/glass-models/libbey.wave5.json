@@ -1,0 +1,1065 @@
+{
+ "maker": "libbey",
+ "models": [
+  {
+   "name": "Beers Stacking Craft Beer 16.75 oz.",
+   "series": "Beers",
+   "designer": null,
+   "model_code": "1009",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 495,
+   "capacity_as_stated": "16.75 oz.",
+   "height_mm": 145,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Oktoberfest Mug, .5L 22.3 oz.",
+   "series": "Oktoberfest",
+   "designer": null,
+   "model_code": "1009318",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 659,
+   "capacity_as_stated": "22.3 oz.",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1009318",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1009318",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Infinium Belgian Beer Glass 13 oz.",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "109298",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 oz.",
+   "height_mm": 143,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/109298",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/109298",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Pub Heat-Treated English Pub Glass 20 oz.",
+   "series": "Pub",
+   "designer": null,
+   "model_code": "14801HT",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 591,
+   "capacity_as_stated": "20 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/14801ht",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/14801ht",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Pub Heat-Treated English Pub Glass 16 oz.",
+   "series": "Pub",
+   "designer": null,
+   "model_code": "14806HT",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/14806ht",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/14806ht",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Gibraltar Footed Pilsner 14 oz.",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "15429",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 197,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15429",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15429",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Restaurant Basics Stacking Mixing Glass 16 oz.",
+   "series": "Restaurant Basics",
+   "designer": null,
+   "model_code": "15790",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/15790",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/15790",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Giant Beers Pilsner 16 oz.",
+   "series": "Giant Beers",
+   "designer": null,
+   "model_code": "1604",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 216,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1604",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1604",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Giant Beers Beer, Rounded 23 oz.",
+   "series": "Giant Beers",
+   "designer": null,
+   "model_code": "1611",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 680,
+   "capacity_as_stated": "23 oz.",
+   "height_mm": 226,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1611",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1611",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Schooners Suprema Schooner 20.5 oz.",
+   "series": "Schooners",
+   "designer": null,
+   "model_code": "1700157",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 606,
+   "capacity_as_stated": "20.5 oz.",
+   "height_mm": 190,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1700157",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1700157",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Schooners Schooner 18 oz.",
+   "series": "Schooners",
+   "designer": null,
+   "model_code": "1785473",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 532,
+   "capacity_as_stated": "18 oz.",
+   "height_mm": 182,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/1785473",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/1785473",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Hourglass Pilsner 15 oz.",
+   "series": "Hourglass",
+   "designer": null,
+   "model_code": "183",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/183",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/183",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Pub Heavy Base Glass 16 oz.",
+   "series": "Pub",
+   "designer": null,
+   "model_code": "194",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/194",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/194",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Pub Straight Sided Pub Glass 20 oz.",
+   "series": "Pub",
+   "designer": null,
+   "model_code": "196",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 591,
+   "capacity_as_stated": "20 oz.",
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/196",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/196",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Can Glass Tumbler 16 oz.",
+   "series": "Glass Can",
+   "designer": null,
+   "model_code": "209",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 133,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/209",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/209",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Flare Pilsner 16 oz.",
+   "series": "Flare",
+   "designer": null,
+   "model_code": "247",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 213,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/247",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/247",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Super Stems Thistle Glass 15 oz.",
+   "series": "Super Stems",
+   "designer": null,
+   "model_code": "3402",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 219,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/libbey-super-stems-15-oz-customizable-thistle-cocktail-glass-case/5513402L.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/libbey-super-stems-15-oz-customizable-thistle-cocktail-glass-case/5513402L.html",
+    "https://www.webstaurantstore.com/documents/pdf/customization/libbey_customization.pdf"
+   ]
+  },
+  {
+   "name": "Embassy Beer 14 oz.",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3730",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 187,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3730",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3730",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Embassy Pilsner 16 oz.",
+   "series": "Embassy",
+   "designer": null,
+   "model_code": "3804",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 194,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3804",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3804",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Belgian Beer 13 oz.",
+   "series": "Belgian",
+   "designer": null,
+   "model_code": "3807",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 oz.",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3807",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3807",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Belgian Beer 16 oz.",
+   "series": "Belgian",
+   "designer": null,
+   "model_code": "3808",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3808",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3808",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Specialty Glassware Footed Ale 12 oz.",
+   "series": "Specialty Glasses",
+   "designer": null,
+   "model_code": "3812",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 165,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3812",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3812",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Belgian Stacking Belgian Beer Taster 5 oz.",
+   "series": "Belgian",
+   "designer": null,
+   "model_code": "3816",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 148,
+   "capacity_as_stated": "5 oz.",
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3816",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3816",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Belgian Stacking Belgian Beer 10 oz.",
+   "series": "Belgian",
+   "designer": null,
+   "model_code": "3817",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 131,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3817",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3817",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Catalina Pilsner 12 oz.",
+   "series": "Catalina",
+   "designer": null,
+   "model_code": "3828",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 229,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3828",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3828",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Teardrop Beer 14.75 oz.",
+   "series": "Teardrop",
+   "designer": null,
+   "model_code": "3915",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 436,
+   "capacity_as_stated": "14.75 oz.",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/3915",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/3915",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Pub Pub Glass 16 oz.",
+   "series": "Pub",
+   "designer": null,
+   "model_code": "4808",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/4808",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/4808",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Beer Mug Mug 21 oz.",
+   "series": "Beer Mug",
+   "designer": null,
+   "model_code": "5001",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 621,
+   "capacity_as_stated": "21 oz.",
+   "height_mm": 229,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5001",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5001",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Beer Mug 15 oz.",
+   "series": "Beer Mug",
+   "designer": null,
+   "model_code": "5011",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5011",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5011",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Beer Mug Tankard 16 oz.",
+   "series": "Beer Mug",
+   "designer": null,
+   "model_code": "5092",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5092",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5092",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Restaurant Basics Mixing Glass 16 oz.",
+   "series": "Restaurant Basics",
+   "designer": null,
+   "model_code": "5139",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5139",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5139",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Paneled Beer Mug 12 oz",
+   "series": null,
+   "designer": null,
+   "model_code": "5206",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 149,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/libbey-5206-12-oz-stein-case/5515206.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/libbey-5206-12-oz-stein-case/5515206.html"
+   ]
+  },
+  {
+   "name": "Hoffman House Footed Goblet 12 oz.",
+   "series": "Hoffman House",
+   "designer": null,
+   "model_code": "5212",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 156,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5212",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5212",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Gibraltar Super Mug 34 oz.",
+   "series": "Gibraltar",
+   "designer": null,
+   "model_code": "5262",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 1005,
+   "capacity_as_stated": "34 oz.",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5262",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5262",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Pinnacle Beer 16 oz.",
+   "series": "Pinnacle",
+   "designer": null,
+   "model_code": "527",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 229,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/527",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/527",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Thumbprint Stein Mug 19.5 oz.",
+   "series": "Beer Mug",
+   "designer": null,
+   "model_code": "5303",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 577,
+   "capacity_as_stated": "19.5 oz.",
+   "height_mm": 143,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5303",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5303",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Dimple Stein Beer Mug 19.25 oz.",
+   "series": "Beer Mug",
+   "designer": null,
+   "model_code": "5355",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 569,
+   "capacity_as_stated": "19.25 oz.",
+   "height_mm": 124,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5355",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5355",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Beer Mug 22 oz.",
+   "series": "Beer Mug",
+   "designer": null,
+   "model_code": "5360",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 651,
+   "capacity_as_stated": "22 oz.",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/5360",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/5360",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Circa Beer Belgian Ale 13 oz.",
+   "series": "Circa",
+   "designer": null,
+   "model_code": "9170",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 oz.",
+   "height_mm": 144,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/9170",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/9170",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Munique Beer 16.5 oz.",
+   "series": "Munique",
+   "designer": null,
+   "model_code": "920284",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 488,
+   "capacity_as_stated": "16.5 oz.",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/920284",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/920284",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Infinium Classic Pilsner 16 oz.",
+   "series": "Infinium",
+   "designer": null,
+   "model_code": "99103",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz.",
+   "height_mm": 241,
+   "rim_mm": null,
+   "material": "plastic",
+   "product_url": "https://libbeyfoodservice.com/product/99103",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/99103",
+    "https://libbeyfoodservice.com/products/beverageware?type=Beer"
+   ]
+  },
+  {
+   "name": "Perception Red Wine, 13.5-Ounce",
+   "series": "Perception",
+   "designer": null,
+   "model_code": "3014",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz",
+   "height_mm": 197,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/perception-red-wine/3014",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/perception-red-wine/3014"
+   ]
+  },
+  {
+   "name": "Perception Red Wine, 10-Ounce",
+   "series": "Perception",
+   "designer": null,
+   "model_code": "3056",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz",
+   "height_mm": 181,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/perception-red-wine/3056",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/perception-red-wine/3056"
+   ]
+  },
+  {
+   "name": "Perception Tall Goblet, 14-Ounce",
+   "series": "Perception",
+   "designer": null,
+   "model_code": "3011",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/perception-tall-goblet/3011",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/perception-tall-goblet/3011"
+   ]
+  },
+  {
+   "name": "Perception Tall Wine, 20-Ounce",
+   "series": "Perception",
+   "designer": null,
+   "model_code": "3060",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 591,
+   "capacity_as_stated": "20 oz",
+   "height_mm": 226,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/perception-tall-wine/3060",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/perception-tall-wine/3060"
+   ]
+  },
+  {
+   "name": "Perception Wine, 11-Ounce",
+   "series": "Perception",
+   "designer": null,
+   "model_code": "3057",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz",
+   "height_mm": 200,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/perception-wine/3057",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/perception-wine/3057"
+   ]
+  },
+  {
+   "name": "Perception Wine, 8-Ounce",
+   "series": "Perception",
+   "designer": null,
+   "model_code": "3065",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz",
+   "height_mm": 184,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/perception-wine/3065",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/perception-wine/3065"
+   ]
+  },
+  {
+   "name": "Renaissance Goblet, 16-Ounce",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9131",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz",
+   "height_mm": 190,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-goblet/9131",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-goblet/9131"
+   ]
+  },
+  {
+   "name": "Renaissance Red Wine, 24-Ounce",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9126",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 710,
+   "capacity_as_stated": "24 oz",
+   "height_mm": 226,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-red-wine/9126",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-red-wine/9126"
+   ]
+  },
+  {
+   "name": "Renaissance Wine, 13.25-Ounce",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9122",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 392,
+   "capacity_as_stated": "13.25 oz",
+   "height_mm": 216,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-wine/9122",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-wine/9122"
+   ]
+  },
+  {
+   "name": "Renaissance Wine, 16-Ounce",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9123",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz",
+   "height_mm": 229,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-wine/9123",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-wine/9123"
+   ]
+  },
+  {
+   "name": "Renaissance Wine, 20-Ounce",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9124",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 591,
+   "capacity_as_stated": "20 oz",
+   "height_mm": 238,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-wine/9124",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-wine/9124"
+   ]
+  },
+  {
+   "name": "Renaissance Wine, 26-Ounce",
+   "series": "Renaissance",
+   "designer": null,
+   "model_code": "9125",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 769,
+   "capacity_as_stated": "26 oz",
+   "height_mm": 248,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-wine/9125",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/reserve-by-libbey/renaissance-wine/9125"
+   ]
+  },
+  {
+   "name": "Vina Balloon, 18.25-Ounce",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7505",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 540,
+   "capacity_as_stated": "18.25 oz",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/vina-balloon/7505",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/vina-balloon/7505"
+   ]
+  },
+  {
+   "name": "Vina Diamond Tall Wine, 12.5-Ounce",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7516",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz",
+   "height_mm": 219,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/vina-diamond-tall-wine/7516",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/vina-diamond-tall-wine/7516"
+   ]
+  },
+  {
+   "name": "Vina Goblet, 16-Ounce",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7513",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz",
+   "height_mm": 162,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/vina-goblet/7513",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/vina-goblet/7513"
+   ]
+  },
+  {
+   "name": "Vina Tall Wine, 12-Ounce",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7502",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz",
+   "height_mm": 207,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/vina-tall-wine/7502",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/vina-tall-wine/7502"
+   ]
+  },
+  {
+   "name": "Vina Tall Wine, 16-Ounce",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7510",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "16 oz",
+   "height_mm": 229,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/vina-tall-wine/7510",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/vina-tall-wine/7510"
+   ]
+  },
+  {
+   "name": "Vina Wine, 12-Ounce",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7519",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz",
+   "height_mm": 216,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/vina-wine/7519",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/vina-wine/7519"
+   ]
+  },
+  {
+   "name": "Vina Wine, 10.5-Ounce",
+   "series": "Vina",
+   "designer": null,
+   "model_code": "7531",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 310,
+   "capacity_as_stated": "10.5 oz",
+   "height_mm": 194,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://libbeyfoodservice.com/product/libbey/vina-wine/7531",
+   "source_urls": [
+    "https://libbeyfoodservice.com/product/libbey/vina-wine/7531"
+   ]
+  }
+ ]
+}

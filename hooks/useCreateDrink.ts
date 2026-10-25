@@ -19,7 +19,8 @@ import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import type { ImageAngle } from '@/lib/itemImages';
 import { formatPrice } from '@/lib/menus';
-import type { PrepDraft } from '@/lib/prepKinds';
+import { priceText } from '@/lib/money';
+import { recipesToFinish, type PrepDraft } from '@/lib/prepKinds';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
 import { prepCardFor } from '@/lib/techniques/makeIt';
@@ -68,10 +69,19 @@ type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
  * again doesn't leave a copy; the draft stays on the device until this
  * succeeds.
  */
-/** A draft saved before prices were typed text kept the number (WizardDraft.priceMinor). */
-function legacyPriceMinor(draft: WizardDraft): number | null {
+/**
+ * The drink's typed price. A draft saved before prices were typed text
+ * (20261103100000) kept the number only (WizardDraft.priceMinor), so that
+ * becomes the price in the bar's currency.
+ */
+async function draftPrice(draft: WizardDraft, barId: string): Promise<string | null> {
+  const typed = formatPrice(draft.price);
   const minor = (draft as { priceMinor?: unknown }).priceMinor;
-  return typeof minor === 'number' ? minor : null;
+  if (typed || typeof minor !== 'number' || !Number.isFinite(minor)) return typed;
+  // The currency decides the units (yen have none); not knowing it keeps the draft to try again.
+  const { data, error } = await supabase.from('bars').select('currency').eq('id', barId).maybeSingle();
+  if (error) throw error;
+  return priceText(minor, data?.currency ?? '');
 }
 
 export function useCreateDrink() {
@@ -190,7 +200,8 @@ export function useCreateDrink() {
         const ownPrep = (!!prep || !!line.later) && !(line.id && live.has(line.id));
         const ingredientId = ownPrep ? await own(line) : await ensure(line, 'ingredient');
         const isNew = newIngredients.length > madeBefore;
-        if (line.later && !prep && isNew) later.push(capitalize(line.name));
+        // Recipes left to finish, in it and inside its recipes: what's done is saved, and the notice says what's left.
+        if (isNew) later.push(...recipesToFinish([line]).map((r) => capitalize(r.name)));
         if (prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep });
         else if (line.technique && isNew) preps.push({ id: ingredientId, technique: line.technique });
         if (line.bottle && barId && !ownPrep) bottles.push({ itemId: ingredientId, name: capitalizeFirst(line.name), bottle: line.bottle, isNew });
@@ -205,11 +216,20 @@ export function useCreateDrink() {
       }
       const methodIds: string[] = [];
       for (const m of draft.methods) methodIds.push(await ensure(m, 'method'));
+      // Recipes made in-house inside a prep (make-anything-steps-2, step 8): rows of their own, recipes saved only on rows this save made.
+      const inner = {
+        own: async (pick: WizardPick) => {
+          const before = newIngredients.length;
+          const id = await own(pick);
+          return { id, isNew: newIngredients.length > before };
+        },
+        warn: (message: string) => warnings.push(message),
+      };
       // A prep made here: its recipe, method and keeping, on the row this save made.
       const saveOwnPreps = async () => {
         for (const p of ownPreps) {
           try {
-            await savePrepRecipe(p.id, p.prep, ensure, barId);
+            await savePrepRecipe(p.id, p.prep, ensure, barId, inner);
           } catch (e) {
             warnings.push(plainDbMessage(e) ?? `${capitalize(p.name)}’s recipe wasn’t saved. Add it on its page.`);
           }
@@ -272,10 +292,7 @@ export function useCreateDrink() {
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
         origin_year: draft.originYear ?? null,
-        price: barId ? formatPrice(draft.price) : null,
-        // ponytail: a draft saved before 20261103100000 has the number only;
-        // the database turns it into the typed price. Drop with price_minor.
-        ...(barId && !formatPrice(draft.price) && legacyPriceMinor(draft) != null ? { price_minor: legacyPriceMinor(draft) } : {}),
+        price: barId ? await draftPrice(draft, barId) : null,
         // You can claim your own credit; anyone else's starts as suggested.
         credit_status: creatorId && creatorId === myProfileId && !otherBar ? 'claimed' : null,
       };
@@ -303,8 +320,8 @@ export function useCreateDrink() {
       // the default drawing that way and refuses a null one.
       if (sketch) {
         // The database adds the build from the drink's own (20261029500000), and an older one refuses the key.
-        // The ice's look and the glass's height are the venue's, not the drink's, so they aren't sent either.
-        const { variant, build: _build, iceLook: _look, glassMm: _mm, ...rest } = sketch;
+        // The ice's look, the glass's height and its traced outline are the venue's, not the drink's, so they aren't sent either.
+        const { variant, build: _build, iceLook: _look, glassMm: _mm, outline: _outline, ...rest } = sketch;
         await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: variant ? { ...rest, variant } : rest });
       }
 

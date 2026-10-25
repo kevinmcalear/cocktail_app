@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient, type Query } from '@tanstack/rea
 import { useUserId } from '@/ctx/AuthContext';
 import { LINEAGE_COLUMNS, PROFILE_COLUMNS } from '@/hooks/useLineage';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
+import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { viewerScoped } from '@/lib/authCache';
 import { sortAwards, type Award } from '@/lib/awards';
 import type { ClaimEvidence, ClaimMethod, PersonClaimMethod } from '@/lib/claimVerification';
@@ -216,11 +217,11 @@ export async function originalsByIds(ids: string[]): Promise<Original[]> {
  * own), plus the ones credited to my profile when I have one. My own view;
  * other people see only what's credited (useProfileOriginals).
  */
-export function useMyMadeDrinks(profileId: string | null | undefined) {
+export function useMyMadeDrinks(profileId: string | null | undefined, enabled = true) {
   const userId = useUserId();
   return useQuery({
     queryKey: ['my-made', userId, profileId ?? null],
-    enabled: !!userId,
+    enabled: !!userId && enabled,
     queryFn: async (): Promise<Original[]> => {
       const { data, error } = await supabase
         .from('items')
@@ -487,12 +488,17 @@ export interface NewClaim {
   method?: PersonClaimMethod;
   /** The six digits the app showed before sending (lib/claimVerification newClaimCode). */
   code?: string | null;
+  /** "<bar> confirms you": the bar page whose Admin checks it, sent as a note (20261113310000). */
+  confirm_bar?: string | null;
 }
 
 /** A claim of mine on someone's page (a person, not a bar), waiting or approved: the newest, or null. */
 export interface MyPersonClaim {
   id: string;
   status: 'pending' | 'approved';
+  created_at: string;
+  /** The bar page asked to confirm it ("<bar> confirms you"), if any. */
+  confirm_bar: string | null;
   profile: { id: string; handle: string; display_name: string };
 }
 
@@ -505,15 +511,15 @@ export function useMyPersonClaim() {
     queryFn: async (): Promise<MyPersonClaim | null> => {
       const { data, error } = await supabase
         .from('profile_claims')
-        .select('id, status, created_at, profile:profiles!inner(id, handle, display_name, kind)')
+        .select('id, status, created_at, evidence, profile:profiles!inner(id, handle, display_name, kind)')
         .eq('user_id', userId!)
         .eq('profile.kind', 'person')
         .in('status', ['pending', 'approved'])
         .order('created_at', { ascending: false })
         .limit(1);
       if (error) throw error;
-      const row = (data ?? [])[0] as unknown as { id: string; status: 'pending' | 'approved'; profile: { id: string; handle: string; display_name: string } } | undefined;
-      return row ? { id: row.id, status: row.status, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
+      const row = (data ?? [])[0] as unknown as { id: string; status: 'pending' | 'approved'; created_at: string; evidence: { confirm_bar?: string } | null; profile: { id: string; handle: string; display_name: string } } | undefined;
+      return row ? { id: row.id, status: row.status, created_at: row.created_at, confirm_bar: row.evidence?.confirm_bar ?? null, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
     },
   });
 }
@@ -533,6 +539,7 @@ export function useClaimProfile() {
         p_method: method,
         p_note: claim.message.trim().slice(0, 1000) || null,
         p_code: method === 'instagram' ? (claim.code ?? null) : null,
+        ...(claim.confirm_bar ? { p_confirm_bar: claim.confirm_bar } : {}),
       });
       if (error) throw error;
       return data as ProfileClaim;
@@ -653,6 +660,8 @@ export interface PositionProfile {
   handle: string;
   display_name: string;
   avatar_url: string | null;
+  /** A bar page's venue on Cocktail: set once the bar is claimed. */
+  bar_id: string | null;
 }
 
 export interface Position {
@@ -675,7 +684,7 @@ export interface Position {
   bar: PositionProfile;
 }
 
-const POSITION_PROFILE = 'id, handle, display_name, avatar_url';
+const POSITION_PROFILE = 'id, handle, display_name, avatar_url, bar_id';
 
 export interface PublicPerson {
   id: string;
@@ -696,32 +705,36 @@ type PersonRow = Omit<PublicPerson, 'job' | 'current_bar' | 'worked'> & {
 };
 
 /** Public people by name, so someone can find a profile we already have. */
-export function usePublicPeople(search: string) {
+export function usePublicPeople(search: string, { near = false }: { near?: boolean } = {}) {
   const term = search.replace(/[%_\\]/g, '').trim();
+  // A picker asks for close names too ("dayle degrof": Dale DeGroff), marked `near`; they need an account.
+  const userId = useUserId();
+  const close = near && !!userId;
   return useQuery({
-    queryKey: ['public-people', term],
+    queryKey: ['public-people', term, close],
     enabled: term.length >= 2,
-    queryFn: async (): Promise<PublicPerson[]> => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(title, is_current, is_shown, is_hidden, person_accepted, bar_accepted, bar:profiles!bar_profile_id(display_name))')
-        .eq('kind', 'person')
-        .eq('is_public', true)
-        .ilike('display_name', `%${term}%`)
-        .order('display_name')
-        .limit(8);
-      if (error) throw error;
-      return ((data ?? []) as unknown as PersonRow[]).map(({ jobs, ...p }) => {
-        // Jobs both sides confirmed, as the profile shows them.
-        const confirmed = (jobs ?? []).filter((j) => j.person_accepted && j.bar_accepted && j.bar);
-        const now = confirmed.find((j) => j.is_current);
-        return {
-          ...p,
-          current_bar: now?.bar?.display_name ?? null,
-          job: now ? [now.title, now.bar!.display_name].filter(Boolean).join(', ') : null,
-          worked: workedBars(confirmed.filter((j) => !j.is_hidden && (j.is_current || j.is_shown))),
-        };
-      });
+    queryFn: async ({ signal }): Promise<MaybeNear<PublicPerson>[]> => {
+      const read = async (ids?: string[]): Promise<PublicPerson[]> => {
+        const q = supabase
+          .from('profiles')
+          .select('id, handle, display_name, city, is_claimed, jobs:profile_positions!person_profile_id(title, is_current, is_shown, is_hidden, person_accepted, bar_accepted, bar:profiles!bar_profile_id(display_name))')
+          .eq('kind', 'person')
+          .eq('is_public', true);
+        const { data, error } = await (ids ? q.in('id', ids) : q.ilike('display_name', `%${term}%`).order('display_name').limit(8)).abortSignal(signal);
+        if (error) throw error;
+        return ((data ?? []) as unknown as PersonRow[]).map(({ jobs, ...p }) => {
+          // Jobs both sides confirmed, as the profile shows them.
+          const confirmed = (jobs ?? []).filter((j) => j.person_accepted && j.bar_accepted && j.bar);
+          const now = confirmed.find((j) => j.is_current);
+          return {
+            ...p,
+            current_bar: now?.bar?.display_name ?? null,
+            job: now ? [now.title, now.bar!.display_name].filter(Boolean).join(', ') : null,
+            worked: workedBars(confirmed.filter((j) => !j.is_hidden && (j.is_current || j.is_shown))),
+          };
+        });
+      };
+      return close ? withNear(term, 'person', read(), read, signal) : read();
     },
   });
 }

@@ -597,7 +597,7 @@ export function draftFromSpec(spec: SourceSpec, usual: string): Partial<WizardDr
  */
 export function savedNotice(warnings: readonly string[], later: readonly string[]): { title: string; body: string } | null {
   const one = later.length === 1;
-  const remind = later.length ? `${later.join(', ')} ${one ? 'has' : 'have'} no recipe yet. Write ${one ? 'it on its page' : 'them on their pages'} when you’re ready.` : null;
+  const remind = later.length ? `${later.join(', ')} ${one ? 'has a recipe' : 'have recipes'} to finish. What you’ve done is kept: finish ${one ? 'it on its page' : 'them on their pages'} when you’re ready.` : null;
   if (!warnings.length && !remind) return null;
-  return { title: warnings.length ? 'Saved, with one thing to fix' : 'A recipe to write', body: [...warnings, ...(remind ? [remind] : [])].join('\n\n') };
+  return { title: warnings.length ? 'Saved, with one thing to fix' : later.length === 1 ? 'A recipe to finish' : 'Recipes to finish', body: [...warnings, ...(remind ? [remind] : [])].join('\n\n') };
 }

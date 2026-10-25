@@ -1,0 +1,150 @@
+import { useState } from 'react';
+
+import { Field } from '@/components/ds';
+import { useBarGlassware, useSaveBarGlass, type BarGlass, type BarGlassInput } from '@/hooks/useBarGlassware';
+import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
+import { GLASS_TYPE_LABEL } from '@/lib/glassware';
+import { kitCount } from '@/lib/venueKit';
+import { variantsOf } from '@/lib/sketch/geometry';
+import type { SketchGlass } from '@/lib/sketch/types';
+
+import { GlassWhich, type GlassWhichValue } from './GlassWhich';
+import { KitAddSheet, useOpenKey, type KitQuestion } from './KitAddSheet';
+import { SourceQuestion, trimmed, type KitSource } from './SourceQuestion';
+
+const FAILED = 'Couldn’t save that. Check your connection and try again.';
+
+export interface GlassSheetProps {
+  /** The venue; null at home. */
+  barId: string | null;
+  /** The venue's page, which glassware hangs off. */
+  pageId: string | null;
+  /** A glass at home (My Bar): no suppliers; `onSave` saves it. */
+  home?: boolean;
+  visible: boolean;
+  onClose: () => void;
+  /** The glass to change; null adds one. */
+  glass?: BarGlass | null;
+  /** The question it opens on: 0 which glass, 1 where it comes from, 2 how many. */
+  startAt?: 0 | 1 | 2;
+  /** Opens on naming your own instead of the catalog search. */
+  describe?: boolean;
+  /** A glass in the Kit with no real glass yet: opens on the catalog search to match it. */
+  match?: boolean;
+  /** Instead of saving to the page (What next holds glasses until the page is checked). */
+  /** Instead of saving to the page: holds it (What next) or saves it elsewhere (My Bar, which the sheet waits for). */
+  onSave?: (row: BarGlassInput) => void | Promise<unknown>;
+  onSaved?: () => void;
+  venueName?: string;
+  /** A new glass a drink named ("Small Rocks"): its shape starts the search, its name is what you call it. */
+  initial?: { glass: SketchGlass; variant?: string | null; name?: string | null };
+  /** Where it was named: "From the Paloma", "2 drinks". */
+  from?: string;
+}
+
+/** Add a glass, or change one: which glass it is, where it comes from, how many. */
+export function GlassSheet(props: GlassSheetProps) {
+  return <GlassSheetBody key={useOpenKey(props.visible)} {...props} />;
+}
+
+function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, describe, match, onSave, onSaved, venueName, initial, from, home }: GlassSheetProps) {
+  const suppliers = useVenueSuppliers(barId).data ?? [];
+  const known = useBarGlassware(barId).data;
+  const glasses = known ?? [];
+  const save = useSaveBarGlass(barId, pageId);
+  const [step, setStep] = useState<number>(startAt);
+  // An onSave that's waited for: saving, or failed.
+  const [own, setOwn] = useState<'saving' | 'failed' | null>(null);
+  const [which, setWhich] = useState<GlassWhichValue>(() => ({
+    mode: glass && !match ? (glass.model ? 'picked' : 'own') : describe ? 'own' : 'find',
+    model: glass?.model ?? null,
+    glass: glass?.glass ?? initial?.glass ?? 'coupe',
+    variant: glass?.variant ?? initial?.variant ?? null,
+    // A real glass's own name isn't the venue's: the list says it under the type.
+    name: glass?.name && glass.name !== glass.model?.name ? glass.name : (initial?.name ?? ''),
+  }));
+  // What it said before: Skip leaves it so.
+  const [saved] = useState<KitSource>(() => ({ source: glass?.source ?? null, supplier_id: glass?.supplier_id ?? null }));
+  const [src, setSrc] = useState<KitSource>(saved);
+  const [count, setCount] = useState(glass?.count ? String(glass.count) : '');
+  const { n, ok: countOk } = kitCount(count);
+
+  const finish = (source: KitSource, howMany: number | null) => {
+    const shapes = variantsOf(which.glass);
+    const model = which.mode === 'picked' ? which.model : null;
+    // A real glass keeps its maker, series and designer on the model; one named by hand keeps what it had.
+    const kept = model || glass?.model ? null : glass;
+    const row: BarGlassInput = {
+      id: glass?.id,
+      glass: which.glass,
+      variant: shapes.some((s) => s.key === which.variant) ? which.variant : null,
+      name: trimmed(which.name),
+      maker: kept?.maker ?? null,
+      maker_profile_id: kept?.maker_profile_id ?? null,
+      designer: kept?.designer ?? null,
+      series: kept?.series ?? null,
+      shape_note: kept?.shape_note ?? null,
+      model_id: model?.id ?? null,
+      // The first of its type is the one its drinks are drawn in; one moved to another type is only its main when that type has none.
+      is_default: glass?.glass === which.glass ? glass.is_default : !glasses.some((g) => g.id !== glass?.id && g.glass === which.glass && g.is_default),
+      source: source.source === 'bought' || source.source === 'ours' ? source.source : null,
+      supplier_id: source.source === 'bought' ? source.supplier_id : null,
+      count: howMany,
+    };
+    const done = () => {
+      onSaved?.();
+      onClose();
+    };
+    if (onSave) {
+      const saving = onSave(row);
+      if (!saving) return done();
+      setOwn('saving');
+      return void saving.then(done, () => setOwn('failed'));
+    }
+    save.mutate(row, { onSuccess: done });
+  };
+
+  const questions: KitQuestion[] = [
+    {
+      title: 'Which glass is it?',
+      intro: which.mode === 'own' ? 'Its shape and what you call it. Drinks are drawn in it.' : 'Find the one you pour into. Its size and drawing come with it.',
+      body: <GlassWhich value={which} onChange={setWhich} venueModelIds={glasses.flatMap((g) => (g.model_id ? [g.model_id] : []))} venueName={venueName} shape={initial?.glass ?? (match ? glass?.glass : null)} />,
+      next: 'Next',
+      canNext: which.mode !== 'find',
+    },
+    {
+      title: 'Where does it come from?',
+      body: <SourceQuestion kind="glass" value={src} onChange={setSrc} suppliers={suppliers} home={home} />,
+      next: 'Next',
+      onSkip: () => {
+        setSrc(saved);
+        setStep(2);
+      },
+    },
+    {
+      title: 'How many?',
+      intro: 'If you know. Nothing to make, so that’s it.',
+      body: <Field label="How many" value={count} onChangeText={setCount} placeholder="24" keyboardType="number-pad" maxLength={4} error={countOk ? undefined : 'A whole number, 1 to 9999.'} />,
+      next: glass ? 'Save' : 'Add the glass',
+      // Whether it's the main glass of its type needs the venue's glasses (none to know before the page is checked).
+      canNext: countOk && (!!known || !pageId),
+      onSkip: () => finish(src, glass?.count ?? null),
+    },
+  ];
+  const title = trimmed(which.name) ?? GLASS_TYPE_LABEL[which.glass];
+
+  return (
+    <KitAddSheet
+      visible={visible}
+      onClose={onClose}
+      label={glass ? `Change ${title}` : 'Add a glass'}
+      step={step}
+      total={3}
+      question={questions[step]}
+      onNext={() => (step < 2 ? setStep(step + 1) : finish(src, n))}
+      saving={save.isPending || own === 'saving'}
+      error={save.error || own === 'failed' ? FAILED : null}
+      answered={glass ? undefined : { what: (which.mode === 'picked' && which.model?.name) || title, from, onChange: () => setStep(0) }}
+    />
+  );
+}

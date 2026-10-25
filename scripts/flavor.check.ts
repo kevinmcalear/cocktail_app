@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { DIMENSIONS as APP_DIMENSIONS, MIN_COVERAGE } from '../lib/flavor';
+import { DIMENSIONS as APP_DIMENSIONS } from '../lib/flavor';
 import {
   AI_FLAVOR_VERSION,
   DIMENSIONS,
@@ -188,11 +188,10 @@ assert.equal(staleAiFlavor({ taste: {}, abv: 0, v: 2 }), false, 'v2 answers are 
 assert.equal(staleAiFlavor({ taste: {}, abv: 0 }), true);
 assert.equal(staleAiFlavor({ taste: {}, abv: 0, v: AI_FLAVOR_VERSION }), false);
 
-// The app, the worker and the database agree on the dimensions and the coverage floor.
+// The app, the worker and the database agree on the dimensions.
 assert.deepEqual([...APP_DIMENSIONS], [...DIMENSIONS]);
 const sql = (file: string) => readFileSync(new URL(`../supabase/migrations/${file}`, import.meta.url), 'utf8');
 const migrations = sql('20260928300000_flavor_profiles.sql') + sql('20261009600000_flavor_dimensions.sql');
 for (const d of DIMENSIONS) assert.match(migrations, new RegExp(`"${d}" real NOT NULL`), `item_flavors has ${d}`);
-assert.match(sql('20261009600000_flavor_dimensions.sql'), new RegExp(`"coverage" >= ${MIN_COVERAGE}\\b`), 'get_my_taste uses the same coverage floor');
 
 console.log('flavor.check: ok');

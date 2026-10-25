@@ -29,7 +29,7 @@ function HistoryPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const wide = useBreakpoint() === 'desktop';
+  const wide = useBreakpoint() !== 'phone'; // Wide from 768, like the drink pages (i05, 24 Oct 2026).
   const params = useLocalSearchParams<{ focus?: string; view?: string }>();
   const [view, setView] = useState<HistoryView>(params.view === 'timeline' ? 'timeline' : 'tree');
   const { data: nodes = [], isLoading, isError } = useDrinkTree();

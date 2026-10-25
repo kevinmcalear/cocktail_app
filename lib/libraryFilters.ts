@@ -6,7 +6,8 @@ import type { MenuSummary } from '@/types/menus';
 export type Show =
   | 'all' | 'on-menu' | 'staff' | 'past' | 'rnd'
   | 'batched' | 'preps' | 'garnishes' | 'bottles'
-  | 'cocktails' | 'ingredients' | 'beer' | 'wine' | 'needs-price';
+  | 'cocktails' | 'ingredients' | 'beer' | 'wine' | 'needs-price'
+  | 'ready' | 'needs';
 
 /**
  * Which drinks: only at a venue. Classics is the ranked list that used to be
@@ -15,8 +16,8 @@ export type Show =
  */
 export const LIST_FILTERS: { value: Show; label: string }[] = [
   { value: 'all', label: 'All' },
-  { value: 'staff', label: 'Classics' },
   { value: 'on-menu', label: 'On menu' },
+  { value: 'staff', label: 'Classics' },
   { value: 'past', label: 'Old drinks' },
   { value: 'rnd', label: 'R&D' },
 ];
@@ -28,7 +29,7 @@ export const LIST_FILTERS: { value: Show; label: string }[] = [
  */
 export const SHELF_FILTERS: { value: Show; label: string }[] = [
   { value: 'batched', label: 'Batched' },
-  { value: 'preps', label: 'Preps' },
+  { value: 'preps', label: 'Made in-house' },
   { value: 'garnishes', label: 'Garnishes' },
   { value: 'bottles', label: 'Bottles' },
 ];
@@ -42,13 +43,19 @@ export const TYPE_FILTERS: { value: Show; label: string; category?: ItemCategory
 ];
 export const NEEDS_PRICE = { value: 'needs-price' as Show, label: 'Needs a price' };
 
+/** The kit check (Kit and ice, step 11): drinks the venue can make with its Kit, and the rest. Only at a venue. */
+export const KIT_FILTERS: { value: Show; label: string }[] = [
+  { value: 'ready', label: 'Ready here' },
+  { value: 'needs', label: 'Needs something' },
+];
+
 /** "All" is the drinks: cocktails, beer and wine. Ingredients have their own filter. */
 export const DRINK_CATEGORIES: readonly ItemCategory[] = ['Cocktail', 'Beer', 'Wine'];
 
-const SHOWS = new Set<string>([...LIST_FILTERS, ...SHELF_FILTERS, ...TYPE_FILTERS, NEEDS_PRICE].map((f) => f.value));
+const SHOWS = new Set<string>([...LIST_FILTERS, ...SHELF_FILTERS, ...TYPE_FILTERS, NEEDS_PRICE, ...KIT_FILTERS].map((f) => f.value));
 
 /**
- * The filters past All, Classics, On menu, Old drinks, Beer and Wine: a venue
+ * The filters past All, On menu, Classics, Old drinks, Beer and Wine: a venue
  * shows them once it switches on More library filters (the libraryExtras
  * feature, lib/venueFeatures.ts).
  */
@@ -65,6 +72,7 @@ export function parseShow(param: string | string[] | undefined, atVenue: boolean
   // Without a venue there are no menus, staff list or shelves.
   if (!atVenue && (LIST_FILTERS.some((f) => f.value === show) || show === 'batched')) return 'cocktails';
   if (!atVenue && SHELF_FILTERS.some((f) => f.value === show)) return 'ingredients';
+  if (!atVenue && KIT_FILTERS.some((f) => f.value === show)) return 'cocktails';
   // At a venue the shelves replace Ingredients; old links land on Bottles.
   if (atVenue && show === 'ingredients') return 'bottles';
   return show;
@@ -170,12 +178,13 @@ export function venueShelves(
 
 /**
  * The groups of the chip row, in order (desktop draws a thin line between
- * them). A venue starts with All, Classics, On menu, Old drinks, then Beer and
+ * them). A venue starts with All, On menu, Classics, Old drinks (the phone's
+ * order, decided 24 Oct 2026), then Beer and
  * Wine; `extras` adds R&D, the shelves, Cocktails and Needs a price.
  */
 export function filterGroups(atVenue: boolean, canCost: boolean, extras = true): { value: Show; label: string }[][] {
   const types = atVenue ? TYPE_FILTERS.filter((f) => f.value !== 'ingredients') : TYPE_FILTERS;
-  const groups = atVenue ? [LIST_FILTERS, SHELF_FILTERS] : [];
+  const groups = atVenue ? [LIST_FILTERS, SHELF_FILTERS, KIT_FILTERS] : [];
   const all = [...groups, [...types, ...(canCost ? [NEEDS_PRICE] : [])]];
   if (!atVenue || extras) return all;
   return all.map((g) => g.filter((f) => !EXTRA_FILTERS.has(f.value))).filter((g) => g.length);
@@ -189,6 +198,7 @@ const MORE: { title: string; values: Show[] }[] = [
   { title: 'Shelves', values: ['garnishes', 'bottles'] },
   { title: 'Kind', values: ['cocktails', 'ingredients', 'beer', 'wine'] },
   { title: 'Costs', values: ['needs-price'] },
+  { title: 'Kit', values: ['ready', 'needs'] },
 ];
 
 /**

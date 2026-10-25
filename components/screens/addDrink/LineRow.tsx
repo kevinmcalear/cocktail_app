@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
-import { prepSummary } from '@/lib/prepKinds';
+import { prepSummary, toFinishSummary } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
@@ -105,7 +105,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
               haptic={false}
               role="button"
               aria-expanded={recipe ? undefined : open}
-              accessibilityLabel={`${line.name}, ${amountLabel}${line.prep ? `. Made in-house: ${prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}` : ''}`}
+              accessibilityLabel={`${line.name}, ${amountLabel}${line.prep ? (line.prep.at ? `. Recipe to finish: ${toFinishSummary(line.prep)}` : `. Made in-house: ${prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}`) : ''}`}
               accessibilityHint={recipe ? 'Opens its recipe' : 'Shows swap, note and more'}
               style={[stacked ? styles.nameStacked : styles.name, line.prep ? styles.prepName : null]}
             >
@@ -115,9 +115,10 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                   <Caption tone="accent">Let go to combine</Caption>
                 ) : line.prep ? (
                   <>
-                    <Caption tone="accent">Made in-house</Caption>
+                    {/* Left for later (make-anything-steps-3, step 9): a tap picks up where it was left. */}
+                    <Caption tone="accent">{line.prep.at ? 'Recipe to finish' : 'Made in-house'}</Caption>
                     <Caption tone="muted" numberOfLines={2}>
-                      {prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}
+                      {line.prep.at ? toFinishSummary(line.prep) : prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}
                     </Caption>
                   </>
                 ) : null}

@@ -1,0 +1,509 @@
+{
+ "maker": "rastal",
+ "models": [
+  {
+   "name": "Teku Mug 55.00 cl",
+   "series": "Teku",
+   "designer": null,
+   "model_code": null,
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 550,
+   "capacity_as_stated": "55.00 cl (18.6 US fl.oz.)",
+   "height_mm": 123,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/1092-teku-mug/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/1092-teku-mug/",
+    "https://rastal.com/en/product-search/1092-teku-mug.pdf"
+   ]
+  },
+  {
+   "name": "Harmony 45 Tumbler 45.00 cl",
+   "series": "Harmony",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45.00 cl (15.2 US fl.oz.)",
+   "height_mm": 145,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/982-harmony-45/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/982-harmony-45/",
+    "https://rastal.com/en/product-search/982-harmony-45.pdf"
+   ]
+  },
+  {
+   "name": "Classic Tankard 48.80 cl",
+   "series": "Classic",
+   "designer": null,
+   "model_code": null,
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 488,
+   "capacity_as_stated": "48.80 cl (16.5 US fl.oz.)",
+   "height_mm": 196,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/classic-tankard-tankards-48-8cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/classic-tankard-tankards-48-8cl/",
+    "https://rastal.com/en/product-search/classic-tankard-tankards-48-8cl.pdf"
+   ]
+  },
+  {
+   "name": "Conical Tumbler (1 UK Pint) 56.80 cl",
+   "series": "Conical",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 568,
+   "capacity_as_stated": "56.80 cl (19.2 US fl.oz.)",
+   "height_mm": 154,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/conical-1-uk-pint-tumbler-56-8cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/conical-1-uk-pint-tumbler-56-8cl/",
+    "https://rastal.com/en/product-search/conical-1-uk-pint-tumbler-56-8cl.pdf"
+   ]
+  },
+  {
+   "name": "Craft Master Bowl Goblet 49.70 cl",
+   "series": "Craft Master",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 497,
+   "capacity_as_stated": "49.70 cl (16.8 US fl.oz.)",
+   "height_mm": 179,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/craft-master-bowl-goblet-49-7cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/craft-master-bowl-goblet-49-7cl/",
+    "https://rastal.com/en/product-search/craft-master-bowl-goblet-49-7cl.pdf"
+   ]
+  },
+  {
+   "name": "Craft Master One Tumbler (1 UK Pint) 56.80 cl",
+   "series": "Craft Master",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 568,
+   "capacity_as_stated": "56.80 cl (19.2 US fl.oz.)",
+   "height_mm": 178,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/craft-master-one-1-uk-pint-tumbler-56-8cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/craft-master-one-1-uk-pint-tumbler-56-8cl/",
+    "https://rastal.com/en/product-search/craft-master-one-1-uk-pint-tumbler-56-8cl.pdf"
+   ]
+  },
+  {
+   "name": "Craft Master One Tumbler 38.00 cl",
+   "series": "Craft Master",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "38.00 cl (12.8 US fl.oz.)",
+   "height_mm": 155,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/craft-master-one-tumbler-38cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/craft-master-one-tumbler-38cl/",
+    "https://rastal.com/en/product-search/craft-master-one-tumbler-38cl.pdf"
+   ]
+  },
+  {
+   "name": "Craft Master One Tumbler 47.30 cl",
+   "series": "Craft Master",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "47.30 cl (16.0 US fl.oz.)",
+   "height_mm": 168,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/craft-master-one-tumbler-47-3cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/craft-master-one-tumbler-47-3cl/",
+    "https://rastal.com/en/product-search/craft-master-one-tumbler-47-3cl.pdf"
+   ]
+  },
+  {
+   "name": "Craft Master Pure Tumbler 41.50 cl",
+   "series": "Craft Master",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 415,
+   "capacity_as_stated": "41.50 cl (14.0 US fl.oz.)",
+   "height_mm": 112,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/craft-master-pure-tumbler-41-5cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/craft-master-pure-tumbler-41-5cl/",
+    "https://rastal.com/en/product-search/craft-master-pure-tumbler-41-5cl.pdf"
+   ]
+  },
+  {
+   "name": "Craft Master Taste Goblet 37.00 cl",
+   "series": "Craft Master",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "37.00 cl (12.5 US fl.oz.)",
+   "height_mm": 158,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/craft-master-taste-goblet-37cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/craft-master-taste-goblet-37cl/",
+    "https://rastal.com/en/product-search/craft-master-taste-goblet-37cl.pdf"
+   ]
+  },
+  {
+   "name": "Craft Master Two Tumbler 47.30 cl",
+   "series": "Craft Master",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 473,
+   "capacity_as_stated": "47.30 cl (16.0 US fl.oz.)",
+   "height_mm": 173,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/craft-master-two-tumbler-47-3cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/craft-master-two-tumbler-47-3cl/",
+    "https://rastal.com/en/product-search/craft-master-two-tumbler-47-3cl.pdf"
+   ]
+  },
+  {
+   "name": "Draft Goblet (1 UK Pint) 56.80 cl",
+   "series": "Draft",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 568,
+   "capacity_as_stated": "56.80 cl (19.2 US fl.oz.)",
+   "height_mm": 208,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/draft-1-uk-pint-goblet-56-8cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/draft-1-uk-pint-goblet-56-8cl/",
+    "https://rastal.com/en/product-search/draft-1-uk-pint-goblet-56-8cl.pdf"
+   ]
+  },
+  {
+   "name": "Harmony 35 Stem Glass 34.70 cl",
+   "series": "Harmony",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "34.70 cl (11.7 US fl.oz.)",
+   "height_mm": 210,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/harmony-35-stem-glasses-35cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/harmony-35-stem-glasses-35cl/",
+    "https://rastal.com/en/product-search/harmony-35-stem-glasses-35cl.pdf"
+   ]
+  },
+  {
+   "name": "Harmony 40 Tumbler 40.00 cl",
+   "series": "Harmony",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40.00 cl (13.5 US fl.oz.)",
+   "height_mm": 103,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/harmony-40-tumbler-40cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/harmony-40-tumbler-40cl/",
+    "https://rastal.com/en/product-search/harmony-40-tumbler-40cl.pdf"
+   ]
+  },
+  {
+   "name": "Isar Tankard 128.00 cl",
+   "series": "Isar",
+   "designer": null,
+   "model_code": null,
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 1280,
+   "capacity_as_stated": "128.00 cl (43.3 US fl.oz.)",
+   "height_mm": 201,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/isar-tankards-128cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/isar-tankards-128cl/",
+    "https://rastal.com/en/product-search/isar-tankards-128cl.pdf"
+   ]
+  },
+  {
+   "name": "Kölsch Stange 18.00 cl",
+   "series": "Kölsch",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 180,
+   "capacity_as_stated": "18.00 cl (6.1 US fl.oz.)",
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/koelsch-stange-tumbler-18cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/koelsch-stange-tumbler-18cl/",
+    "https://rastal.com/en/product-search/koelsch-stange-tumbler-18cl.pdf"
+   ]
+  },
+  {
+   "name": "Nonic Tumbler (1 UK Pint) 56.80 cl",
+   "series": "Nonic",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 568,
+   "capacity_as_stated": "56.80 cl (19.2 US fl.oz.)",
+   "height_mm": 151,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/nonic-1-uk-pint-tumbler-56-8cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/nonic-1-uk-pint-tumbler-56-8cl/",
+    "https://rastal.com/en/product-search/nonic-1-uk-pint-tumbler-56-8cl.pdf"
+   ]
+  },
+  {
+   "name": "Pilsener Goblet 38.10 cl",
+   "series": "Pilsener",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 381,
+   "capacity_as_stated": "38.10 cl (12.9 US fl.oz.)",
+   "height_mm": 181,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/pilsener-goblet-38-1cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/pilsener-goblet-38-1cl/",
+    "https://rastal.com/en/product-search/pilsener-goblet-38-1cl.pdf"
+   ]
+  },
+  {
+   "name": "Teku Goblet 33.00 cl",
+   "series": "Teku",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "33.00 cl (11.2 US fl.oz.)",
+   "height_mm": 186,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/teku-goblet-33cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/teku-goblet-33cl/",
+    "https://rastal.com/en/product-search/teku-goblet-33cl.pdf"
+   ]
+  },
+  {
+   "name": "Teku Goblet 42.50 cl",
+   "series": "Teku",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 425,
+   "capacity_as_stated": "42.50 cl (14.4 US fl.oz.)",
+   "height_mm": 196,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/teku-goblet-42-5cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/teku-goblet-42-5cl/",
+    "https://rastal.com/en/product-search/teku-goblet-42-5cl.pdf"
+   ]
+  },
+  {
+   "name": "Teku Taster Tumbler 19.40 cl",
+   "series": "Teku",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 194,
+   "capacity_as_stated": "19.40 cl (6.6 US fl.oz.)",
+   "height_mm": 67,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/teku-taster-becher-19-4cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/teku-taster-becher-19-4cl/",
+    "https://rastal.com/en/product-search/teku-taster-becher-19-4cl.pdf"
+   ]
+  },
+  {
+   "name": "Tulip Tumbler (1 UK Pint) 56.80 cl",
+   "series": "Tulip",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 568,
+   "capacity_as_stated": "56.80 cl (19.2 US fl.oz.)",
+   "height_mm": 161,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/tulip-1-uk-pint-tumbler-56-8cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/tulip-1-uk-pint-tumbler-56-8cl/",
+    "https://rastal.com/en/product-search/tulip-1-uk-pint-tumbler-56-8cl.pdf"
+   ]
+  },
+  {
+   "name": "Weissach Wheat Beer Glas 64.50 cl",
+   "series": "Weissach",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 645,
+   "capacity_as_stated": "64.50 cl (21.8 US fl.oz.)",
+   "height_mm": 243,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/weissach-wheatbeer-glasses-64-5cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/weissach-wheatbeer-glasses-64-5cl/",
+    "https://rastal.com/en/product-search/weissach-wheatbeer-glasses-64-5cl.pdf"
+   ]
+  },
+  {
+   "name": "Willi Tumbler (1 UK Pint) 56.80 cl",
+   "series": "Willi",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 568,
+   "capacity_as_stated": "56.80 cl (19.2 US fl.oz.)",
+   "height_mm": 171,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/willi-1-uk-pint-tumbler-56-8cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/willi-1-uk-pint-tumbler-56-8cl/",
+    "https://rastal.com/en/product-search/willi-1-uk-pint-tumbler-56-8cl.pdf"
+   ]
+  },
+  {
+   "name": "Willi Tumbler 26.50 cl",
+   "series": "Willi",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 265,
+   "capacity_as_stated": "26.50 cl (9.0 US fl.oz.)",
+   "height_mm": 137,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/willi-tumbler-26-5cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/willi-tumbler-26-5cl/",
+    "https://rastal.com/en/product-search/willi-tumbler-26-5cl.pdf"
+   ]
+  },
+  {
+   "name": "Willi Tumbler 33.00 cl",
+   "series": "Willi",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "33.00 cl (11.2 US fl.oz.)",
+   "height_mm": 143,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/willi-tumbler-33cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/willi-tumbler-33cl/",
+    "https://rastal.com/en/product-search/willi-tumbler-33cl.pdf"
+   ]
+  },
+  {
+   "name": "Willi Tumbler 48.00 cl",
+   "series": "Willi",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 480,
+   "capacity_as_stated": "48.00 cl (16.2 US fl.oz.)",
+   "height_mm": 166,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/willi-tumbler-48cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/willi-tumbler-48cl/",
+    "https://rastal.com/en/product-search/willi-tumbler-48cl.pdf"
+   ]
+  },
+  {
+   "name": "Willi Tumbler 63.50 cl",
+   "series": "Willi",
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 635,
+   "capacity_as_stated": "63.50 cl (21.5 US fl.oz.)",
+   "height_mm": 185,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://rastal.com/en/product-search/willi-tumbler-63-5cl/",
+   "source_urls": [
+    "https://rastal.com/en/product-search/willi-tumbler-63-5cl/",
+    "https://rastal.com/en/product-search/willi-tumbler-63-5cl.pdf"
+   ]
+  }
+ ]
+}

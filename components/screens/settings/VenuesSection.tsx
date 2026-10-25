@@ -12,6 +12,8 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useHereVenue } from '@/hooks/useMode';
 import { roleLabel } from '@/lib/roles';
 import { teamLine } from '@/lib/shellNav';
+import { startedSetup } from '@/lib/venueSetup';
+import { useVenueSetup } from '@/store/useVenueSetup';
 
 const LOGO = 32;
 
@@ -34,10 +36,15 @@ function TeamRow() {
   );
 }
 
-/** My team where you are, the venues you belong to, each opening its own settings page, and setting up a new one (venue setup, b03). */
+/**
+ * My team where you are, the venues you belong to, each opening its own
+ * settings page, and setting up a new one (venue setup, b03): a setup already
+ * started opens where it stopped instead of making a second bar (owner-setup call 5).
+ */
 export function VenuesSection() {
   const router = useRouter();
   const { venues, isLoading } = useActiveVenue();
+  const started = startedSetup(useVenueSetup((s) => s.runs));
 
   return (
     <SettingsSection title="Venues" note="Each venue has its own brand, roles and team.">
@@ -56,7 +63,7 @@ export function VenuesSection() {
         </View>
       ))}
       {venues.length > 0 || isLoading ? <RowDivider /> : null}
-      <SettingsRow label="Create a venue" icon="plus" role="button" trailing={<View />} onPress={() => router.push('/venue-setup' as Href)} />
+      <SettingsRow label="Create a venue" icon="plus" role="button" trailing={<View />} onPress={() => router.push((started ?? '/venue-setup') as Href)} />
     </SettingsSection>
   );
 }

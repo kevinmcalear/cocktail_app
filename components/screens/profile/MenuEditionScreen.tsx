@@ -40,8 +40,7 @@ export function MenuEditionScreen({ profileRef, editionId }: { profileRef: strin
       <Display>{edition.name}</Display>
       <Caption tone="muted">{[menuRange(dates), drinks.length ? plural(drinks.length, 'drink') : null].filter(Boolean).join(' · ')}</Caption>
       {edition.theme ? <Body tone="muted">{edition.theme}</Body> : null}
-      {/* ponytail: a venue's own menu can't be saved until saved_menu_editions takes a menu id. */}
-      {edition.from_venue ? null : <SaveMenuButton editionId={edition.id} drinkIds={edition.drinks.map((d) => d.id)} />}
+      <SaveMenuButton editionId={edition.id} drinkIds={edition.drinks.map((d) => d.id)} fromVenue={edition.from_venue} />
       {drinks.length ? (
         <MenuSections sections={editionSections(edition, drinks)} variant="page" hrefFor={(d) => (readable.has(d.id) ? `/cocktail/${d.id}` : null)} />
       ) : (

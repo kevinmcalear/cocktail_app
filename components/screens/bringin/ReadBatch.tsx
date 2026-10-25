@@ -174,7 +174,7 @@ function SheetBody({ line, batch, drinkName, files, onBottle, onSeparate, onClos
         <Body style={styles.flex}>{`In ${drinkName.trim() || 'this drink'}`}</Body>
         <DsText variant="spec">{amountLabel(line)}</DsText>
       </View>
-      <Caption tone="muted">Saved as a house prep when you save the import, like a batch you made by hand.</Caption>
+      <Caption tone="muted">Saved as made in-house when you save the import, like a batch you made by hand.</Caption>
       <View style={styles.actions}>
         <Button label="Looks right" size="lg" onPress={onClose} />
         <Button label="Keep as separate lines" variant="ghost" onPress={onSeparate} />

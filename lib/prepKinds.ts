@@ -12,10 +12,12 @@
  */
 import type { Allergen } from './allergens';
 import { asLike, keepFor, nameParts, partsFor, prepFacts, slotIngredient, splitName } from './techniques/template';
+import { techniqueById } from './techniques';
+import { byKit } from './techniques/kitFirst';
 import type { Technique } from './techniques/types';
 
-/** 'batch' is a drink's pours bottled ahead (lib/batchLines): where combining two lines starts. 'wash' is a fat or milk wash. */
-export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other' | 'batch' | 'wash';
+/** 'batch' is a drink's pours bottled ahead (lib/batchLines): where combining two lines starts. 'wash' is a fat or milk wash; 'clarified' and 'distillate' are made one of the library's clarifying or distilling ways. */
+export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other' | 'batch' | 'wash' | 'clarified' | 'distillate';
 
 export interface PrepDraftLine {
   key: string;
@@ -37,6 +39,8 @@ export interface PrepDraftLine {
   removed?: boolean;
   /** How it goes in ("Sliced, seeds in for more heat"): saved as the line's preparation note. */
   note?: string;
+  /** Made in-house too, one level down (make-anything-steps-2, step 8): its own recipe, saved as its own prep. */
+  prep?: PrepDraft;
 }
 
 export interface PrepDraftStep {
@@ -44,8 +48,15 @@ export interface PrepDraftStep {
   timer_seconds: number | null;
 }
 
+/** The three steps of a recipe made in-house, in order (make-anything-steps-1 and 2, steps 4 to 6). */
+export const RECIPE_STEPS = ['kind', 'recipe', 'method'] as const;
+export type RecipeStep = (typeof RECIPE_STEPS)[number];
+const STEP_NAMES: Record<RecipeStep, string> = { kind: 'what it is', recipe: 'what goes in', method: 'how it’s made' };
+
 export interface PrepDraft {
   kind: PrepKindId;
+  /** Left for later at this step (make-anything-steps-3, step 9): a recipe to finish, picked up where it was left. */
+  at?: RecipeStep;
   /** Shrubs: made cold (days, brighter) or hot (an hour, jammier). */
   hot?: boolean;
   /** The kind's way it's made (KIND_WAYS): a shrub cold, hot or as an oleo shrub. */
@@ -98,12 +109,14 @@ export const PREP_KINDS: PrepKind[] = [
   { id: 'oleo', name: 'Oleo saccharum', ratio: 'Peels and sugar' },
   { id: 'infusion', name: 'Infusion', ratio: 'A spirit plus a flavour' },
   { id: 'wash', name: 'Wash', ratio: 'Fat, milk or butter' },
+  { id: 'clarified', name: 'Clarified', ratio: 'Agar, centrifuge, milk' },
+  { id: 'distillate', name: 'Distillate', ratio: 'Rotovap, hydrosols' },
   { id: 'super', name: 'Super juice', ratio: 'Peels, acids, water' },
-  { id: 'other', name: 'Something else', ratio: 'Start blank' },
+  { id: 'other', name: 'Something else', ratio: 'Every technique, or write your own' },
 ];
 
 /** What is it, as the board draws it (make-anything-steps-1, step 4): rich syrup and oleo saccharum are ways of a syrup. */
-export const KIND_TILES: PrepKindId[] = ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'super', 'other'];
+export const KIND_TILES: PrepKindId[] = ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'clarified', 'distillate', 'super', 'other'];
 
 /** The tile a kind is picked under: a rich syrup is a syrup. */
 export const tileOf = (kind: PrepKindId): PrepKindId => (kind === 'rich' || kind === 'oleo' ? 'syrup' : kind);
@@ -116,9 +129,11 @@ const KIND_WORDS: [RegExp, PrepKindId][] = [
   [/\bshrub\b/i, 'shrub'],
   [/\bcordial\b/i, 'cordial'],
   [/\boleo\b/i, 'oleo'],
-  // Not tinctures or bitters: those are their own technique (strong spirit, kept a year). A house liqueur is a spirit with a flavour in it.
+  // Not tinctures or bitters by name: Tincture is a way of an infusion, made from its own technique (strong spirit, kept a year). A house liqueur is a spirit with a flavour in it.
   [/\b(infused|infusion|liqueur)\b/i, 'infusion'],
   [/\bsyrup\b|\bgomme\b/i, 'syrup'],
+  [/\bclarified\b/i, 'clarified'],
+  [/\b(distillate|hydrosol)\b/i, 'distillate'],
   [/\bbatch\b/i, 'batch'],
 ];
 
@@ -141,6 +156,12 @@ export interface PrepWay {
   fills?: string;
   /** A way that is its own kind (a rich syrup under Syrup). */
   kind?: PrepKindId;
+  /** Its row in How?, when the technique's own name doesn't fit ("Fat wash", not "Fat washing"). */
+  label?: string;
+  /** Made from its technique's own parts (an oil is herbs and oil, not a spirit and a flavour): picking it starts what goes in again, unless lines were combined. */
+  own?: boolean;
+  /** How it's said after a kind's name, when its name doesn't read there: "Infusion, tincture" says "a tincture". */
+  words?: string;
 }
 
 const SYRUP_WAYS: PrepWay[] = [
@@ -160,16 +181,52 @@ export const KIND_WAYS: Partial<Record<PrepKindId, PrepWay[]>> = {
     { id: 'cold', name: 'Cold', time: 'Days', kit: [], note: 'a jar, then strain', how: 'It rests in a jar in the fridge, tasted every day, then it’s strained.', technique: 'cold-infusion', fills: 'a jar, rest, strain' },
     { id: 'sous-vide', name: 'Sous vide', time: 'Hours', kit: [], note: 'sealed bag in a water bath, then strain', how: 'It’s sealed in a bag and held in a water bath, then chilled and strained.', technique: 'sous-vide-infusion', fills: 'seal, water bath, strain' },
     { id: 'nitrous', name: 'Nitrous', time: 'Minutes', kit: [], note: 'a cream whipper', how: 'It’s charged in a cream whipper, vented fast, then strained.', technique: 'nitrous-infusion', fills: 'charge, rest, vent, strain' },
+    // The rest of the library's infusions (make-anything-steps-1, step 4, more to it): How? lists each by its technique, your kit first.
+    { id: 'oil', name: 'Oil', own: true, time: '1 day', kit: [], words: 'an infused oil', how: 'The herbs are blanched, blended hot into the oil, chilled fast and strained.', technique: 'infused-oil', fills: 'blanch, blend hot, chill, strain' },
+    { id: 'vacuum', name: 'Vacuum', own: true, time: 'Minutes', kit: [], how: 'A chamber vacuum pushes the liquid into the fruit; serve the fruit or strain the liquid.', technique: 'vacuum-infusion', fills: 'seal at full vacuum, strain' },
+    { id: 'microwave', name: 'Microwave', time: '3 min', kit: [], how: 'It’s heated a few minutes with the flavour in, cooled with the lid on, then strained.', technique: 'microwave-infusion', fills: 'heat, cool covered, strain' },
+    { id: 'tincture', name: 'Tincture', own: true, time: '2 weeks', kit: [], words: 'a tincture', how: 'Dried botanicals steep in strong spirit for two weeks, then it’s strained into dropper bottles.', technique: 'tincture', fills: 'steep, shake, strain into droppers' },
+  ],
+  clarified: [
+    { id: 'agar-freeze', name: 'Agar freeze-thaw', time: '1 to 2 days', kit: [], how: 'Set with agar, frozen, then thawed through a cloth.', technique: 'agar-freeze-thaw', fills: 'set with agar, freeze, thaw through a cloth' },
+    { id: 'gelatin', name: 'Gelatin freeze-thaw', time: '2 days', kit: [], how: 'Set with gelatin, frozen, then thawed through a cloth in the fridge.', technique: 'gelatin-freeze-thaw', fills: 'set with gelatin, freeze, thaw through a cloth' },
+    { id: 'agar-quick', name: 'Quick agar', time: '30 min', kit: [], how: 'Agar set into it, broken up, then drained through a cloth.', technique: 'agar-quick', fills: 'set with agar, break up, drain' },
+    { id: 'centrifuge', name: 'Centrifuge', time: 'Under 1 hour', kit: [], how: 'Enzymes, then a spin, then poured off clear.', technique: 'centrifuge', fills: 'enzymes, rest, spin, pour off' },
+  ],
+  distillate: [
+    { id: 'rotovap', name: 'Rotary evaporation', time: 'Hours', kit: [], how: 'Distilled under vacuum at low heat, so the fresh flavour comes over.', technique: 'rotovap', fills: 'its specialist notes' },
   ],
   wash: [
-    { id: 'fat', name: 'Fat', time: 'Overnight', kit: [], note: 'butter, bacon or an oil, frozen off', how: 'The fat sits in the spirit, then it’s frozen and lifted off.', technique: 'fat-wash', fills: 'mix, rest, freeze, strain' },
-    { id: 'milk', name: 'Milk', time: 'Overnight', kit: [], note: 'the curds filter it clear', how: 'Milk curdles in it, and the curds filter it clear.', technique: 'milk-wash', fills: 'curdle, rest, filter' },
-    { id: 'vegan', name: 'Vegan', time: 'A weekend', kit: [], note: 'coconut or soy milk', how: 'A plant milk curdles in it and filters it clear.', technique: 'vegan-wash', fills: 'curdle, rest, filter' },
+    { id: 'fat', name: 'Fat', label: 'Fat wash', time: 'Overnight', kit: [], note: 'butter, bacon or an oil, frozen off', how: 'The fat sits in the spirit, then it’s frozen and lifted off.', technique: 'fat-wash', fills: 'mix, rest, freeze, strain' },
+    { id: 'milk', name: 'Milk', label: 'Milk wash', time: 'Overnight', kit: [], note: 'the curds filter it clear', how: 'Milk curdles in it, and the curds filter it clear.', technique: 'milk-wash', fills: 'curdle, rest, filter' },
+    { id: 'vegan', name: 'Vegan', label: 'Vegan wash', time: 'A weekend', kit: [], note: 'coconut or soy milk', how: 'A plant milk curdles in it and filters it clear.', technique: 'vegan-wash', fills: 'curdle, rest, filter' },
   ],
   syrup: SYRUP_WAYS,
   rich: SYRUP_WAYS,
   oleo: SYRUP_WAYS,
 };
+
+/** Kinds whose ways are the library's techniques, each with its own parts: picking the kind starts from one. */
+export const FROM_TECHNIQUE: PrepKindId[] = ['wash', 'clarified', 'distillate'];
+
+/**
+ * A kind's ways that come from the library, the ones the kit covers first
+ * (make-anything-steps-1, step 4, more to it), each in its own order:
+ * nothing is hidden, the rest just follow. Syrups' and shrubs' ways are
+ * recipes, not techniques, and come back as they are under `have`.
+ */
+export function waysByKit(kind: PrepKindId, kit: ReadonlySet<string> | null): { have: PrepWay[]; need: PrepWay[] } {
+  const ways = KIND_WAYS[kind] ?? [];
+  if (!ways.every((w) => w.fills)) return { have: ways, need: [] };
+  const split = byKit(ways.map((w) => ({ w, equipment: techniqueById(w.technique)?.equipment ?? [] })), kit);
+  return { have: split.have.map((x) => x.w), need: split.need.map((x) => x.w) };
+}
+
+/** The way a kind starts as: the first the kit covers, else its first. */
+export function kitFirstWay(kind: PrepKindId, kit: ReadonlySet<string> | null): PrepWay | undefined {
+  const { have, need } = waysByKit(kind, kit);
+  return have[0] ?? need[0];
+}
 
 /** The way a draft is made, when its kind has ways: a shrub or an infusion without one is cold. */
 export function wayOf(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'technique'>): PrepWay | null {
@@ -193,8 +250,36 @@ export function prepPhrase(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'techniqu
   const way = wayOf(d);
   if ((d.technique && !way) || d.kind === 'other') return null;
   const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name.toLowerCase() ?? '';
+  if (way?.words) return way.words;
   const words = way && !way.kind ? (way.id === 'oleo' ? way.name.toLowerCase() : `${way.name.toLowerCase()} ${kind}`) : kind;
   return `${/^[aeiou]/.test(words) ? 'an' : 'a'} ${words}`;
+}
+
+/** "Infusion · 1 of 3 done": a recipe to finish, under its line (make-anything-steps-3, step 9), counting the steps before the one it was left at. */
+export function toFinishSummary(d: PrepDraft): string {
+  const kind = d.kind === 'other' ? null : PREP_KINDS.find((k) => k.id === d.kind)?.name;
+  return [kind, `${RECIPE_STEPS.indexOf(d.at ?? 'kind')} of ${RECIPE_STEPS.length} done`].filter(Boolean).join(' · ');
+}
+
+/** Where a recipe left on one page (the desktop card) picks up: no name yet, what it is; a part still to pick, what goes in; else how it's made. */
+export function stepToFinish(d: PrepDraft): RecipeStep {
+  return !d.lines.some((l) => l.name.trim()) ? 'kind' : openSlots(d).length ? 'recipe' : 'method';
+}
+
+/** "at what goes in": where a recipe to finish picks up. */
+export const pickUpAt = (d: Pick<PrepDraft, 'at'>): string => `at ${STEP_NAMES[d.at ?? 'kind']}`;
+
+/**
+ * Every recipe still to finish in what's being made, down through the
+ * recipes inside it (make-anything-steps-3, steps 9 and 10): its name, where
+ * it picks up, and how deep. A line left with no recipe at all (Later on its
+ * first step) counts too.
+ */
+export function recipesToFinish(lines: readonly { name: string; later?: boolean; prep?: PrepDraft }[], depth = 0): { name: string; at: string; depth: number }[] {
+  return lines.flatMap((l) => [
+    ...(l.prep?.at || l.later ? [{ name: l.name, at: l.prep ? pickUpAt(l.prep) : 'nothing written yet', depth }] : []),
+    ...(l.prep ? recipesToFinish(l.prep.lines, depth + 1) : []),
+  ]);
 }
 
 /** Under a house prep's line in the drink (make-anything-steps-2, step 7): "Infusion, sous vide · Tempus Fugit, red miso · 4 steps". */
@@ -344,9 +429,13 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
         s('Add the water and blend until smooth.'),
         s('Strain through a fine cloth, bottle and keep cold.'),
       ], 3 * DAY, fridge, 90, ['Blend', 'Strain']);
-    case 'other':
     case 'batch':
+      // A batch is the drink's pours: its name ("Penicillin batch") says which drink, not what goes in.
+      return draft([slotLine('Main ingredient', 'main ingredient', 1, 'ml', 1)], 750, [], null, fridge, null, []);
+    case 'other':
     case 'wash':
+    case 'clarified':
+    case 'distillate':
       return draft([flavour ? line(flavour, 1, 'g') : slotLine('Main ingredient', 'main ingredient', 1, 'g'), ...extras], 100, [], null, fridge, null, []);
   }
 }

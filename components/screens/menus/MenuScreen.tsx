@@ -16,13 +16,14 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
-import { cardWhen, groupMenus, homeMenuLine, isOneNightMenu, menuDateLine, menuStatus, newDrinkIds, plural } from '@/lib/menus';
+import { useMyBar } from '@/hooks/useHomeBar';
+import { shelfReady } from '@/lib/collectionMenus';
+import { groupMenus, homeNightTag, isOneNightMenu, menuDateLine, menuStatus, newDrinkIds, plural } from '@/lib/menus';
 import type { MenuStatus } from '@/types/menus';
 
 import { HomeNightSheet } from './HomeNight';
 import { MenuMoreSheet } from './MenuMoreSheet';
-import { MenuPaperHead } from './MenuPaperHead';
-import { MenuPageRowView, menuPageRows } from './MenuSections';
+import { MenuPageRowView, menuPageRows, type MenuPageRow } from './MenuSections';
 import { MenuVisual } from './MenuVisual';
 import { ShareMenuSheet } from './ShareMenuSheet';
 
@@ -86,11 +87,11 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const status = menuStatus(menu, now);
   const venue = venues.find((v) => v.id === menu.barId);
   const drinkCount = menu.sections.reduce((n, s) => n + s.drinks.length, 0);
-  // Its cover photo, or with none, its first drinks' own pictures (sketches where there's no photo).
+  // Every drink on the menu: the band's pictures, the NEW diff and the shelf count. Don't trim it for the band.
   const pictures = menu.sections.flatMap((s) => s.drinks);
-  // A home menu opens on a small paper card (MenuPaperHead), not the venue's picture band.
+  // Both modes open on the drink band (menus-one-look); paper is only for what guests see.
   const home = !menu.barId;
-  const hero = !home && (!!menu.coverUrl || pictures.length > 0);
+  const hero = !!menu.coverUrl || pictures.length > 0;
   const go = (href: string) => router.push(href as Href);
   const canEdit = menu.barId ? Array.isArray(caps.data) && caps.data.includes('menus') : menu.createdBy === userId;
   // NEW: a venue's drinks no menu that has finished had.
@@ -110,7 +111,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
         contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}
         renderItem={({ item }) => (
           <View style={[styles.body, column]}>
-            <MenuPageRowView row={item} newIds={fresh} firstGap={space.sm} />
+            {home ? <HomeMenuRow row={item} newIds={fresh} /> : <MenuPageRowView row={item} newIds={fresh} firstGap={space.sm} />}
           </View>
         )}
         ListHeaderComponent={
@@ -125,22 +126,18 @@ export function MenuScreen({ menuId }: { menuId: string }) {
             <View style={[styles.body, styles.head, column, { marginTop: hero ? -84 : 0 }]}>
               {sidebar ? <Crumbs trail={[home ? { label: 'Collection', href: '/collection' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
               {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
-              {/* A home menu isn't on a venue's calendar: its night is in the line below. */}
-              {menu.barId ? (
+              {home ? (
+                // A home menu isn't on a venue's calendar: its tag is its night, tinted like the list's date tile (BandMenu).
+                <Tag label={homeNightTag(menu.menuDate, now)} tone={status === 'on' ? 'success' : status === 'upcoming' ? 'accent' : 'default'} dot={status === 'on'} style={{ backgroundColor: ds.c.ground }} />
+              ) : (
                 <Tag label={[menu.kind === 'rnd' ? 'R&D' : STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} dot={status === 'on'} style={{ backgroundColor: ds.c.ground }} />
-              ) : null}
-              {home ? <MenuPaperHead name={menu.name} when={cardWhen(menu)} pictures={pictures} /> : <Display>{menu.name}</Display>}
-              <Caption tone="muted">
-                {[
-                  venue?.name ?? (home ? (menu.sharedAt ? 'Shared with a link' : 'Just yours') : null),
-                  // The paper card already says the night.
-                  home ? (menu.guestCount ? plural(menu.guestCount, 'guest') : null) : homeMenuLine(menu, now),
-                  plural(drinkCount, 'drink'),
-                  plural(menu.sections.length, 'section'),
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </Caption>
+              )}
+              <Display>{menu.name}</Display>
+              {home ? (
+                <HomeMeta itemIds={pictures.map((d) => d.id)} drinks={drinkCount} guests={menu.guestCount} shared={!!menu.sharedAt} />
+              ) : (
+                <Caption tone="muted">{[venue?.name, plural(drinkCount, 'drink'), plural(menu.sections.length, 'section')].filter(Boolean).join(' · ')}</Caption>
+              )}
               <View style={styles.actions}>
                 {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
                 {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
@@ -165,6 +162,21 @@ export function MenuScreen({ menuId }: { menuId: string }) {
       {more ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setMore(false)} /> : null}
     </View>
   );
+}
+
+/** A home menu's row: its end says what your shelf makes, Ready or Need 1 (menus-one-look, BandMenu). */
+// ponytail: each row reads useMyBar (shared queries, one memo per row) so a venue menu never loads a shelf; hoist it into a home-only list if long menus get slow.
+function HomeMenuRow({ row, newIds }: { row: MenuPageRow; newIds?: ReadonlySet<string> }) {
+  const bar = useMyBar();
+  return <MenuPageRowView row={row} newIds={newIds} firstGap={space.sm} shelf={bar.isLoading ? null : bar} />;
+}
+
+/** "4 drinks, 3 you can make · 8 guests": a home menu's count, what your shelf makes, who's coming, and whether a link is out. */
+function HomeMeta({ itemIds, drinks, guests, shared }: { itemIds: string[]; drinks: number; guests: number | null; shared: boolean }) {
+  const bar = useMyBar();
+  const { ready } = shelfReady(itemIds, bar.canMakeIds, bar.oneAway);
+  const count = [plural(drinks, 'drink'), ready ? `${ready} you can make` : null].filter(Boolean).join(', ');
+  return <Caption tone="muted">{[count, guests ? plural(guests, 'guest') : null, shared ? 'Shared with a link' : null].filter(Boolean).join(' · ')}</Caption>;
 }
 
 const styles = StyleSheet.create({

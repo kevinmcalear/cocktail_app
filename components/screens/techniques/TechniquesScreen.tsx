@@ -5,11 +5,12 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Body, Button, Caption, Chip, PressableScale, Spec, Surface, useDs } from '@/components/ds';
 import { FoamPicker } from '@/components/techniques/FoamPicker';
 import { LinkRow, Section, TechniqueRow } from '@/components/techniques/bits';
+import { usePageFrame } from '@/components/nav/PageFrame';
 import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { TechniqueSheet } from '@/components/techniques/TechniqueSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { useKit } from '@/hooks/useKit';
+import { useKitHere } from '@/hooks/useBarKit';
 import { canMake, groupById, GROUPS, searchTechniques, TECHNIQUES, type Technique } from '@/lib/techniques';
 import { membersLine } from '@/lib/techniques/facts';
 
@@ -29,7 +30,7 @@ const FILTERS: { value: Filter; label: string; test: (t: Technique, kit: Readonl
 export function TechniquesScreen({ group, foam = false }: { group?: string; foam?: boolean }) {
   const ds = useDs();
   const router = useRouter();
-  const { kit } = useKit();
+  const kit = useKitHere();
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Filter[]>([]);
   const [foamOpen, setFoamOpen] = useState(foam);
@@ -121,9 +122,10 @@ export function TechniquesScreen({ group, foam = false }: { group?: string; foam
 function KitBar({ tools }: { tools: number }) {
   const ds = useDs();
   const router = useRouter();
+  const { column } = usePageFrame();
   return (
     // A floating ink pill, cream words (prep-tech-index).
-    <PressableScale role="link" accessibilityLabel={`My kit, ${tools} ${tools === 1 ? 'tool' : 'tools'}. Edit`} onPress={() => router.push('/equipment' as never)} style={[styles.kit, { backgroundColor: ds.c.ink }]}>
+    <PressableScale role="link" accessibilityLabel={`My kit, ${tools} ${tools === 1 ? 'tool' : 'tools'}. Edit`} onPress={() => router.push('/equipment' as never)} style={[styles.kit, column, { backgroundColor: ds.c.ink }]}>
       <IconSymbol name="hammer.fill" size={18} color={ds.c.ground} />
       <Body color={ds.c.ground} style={[styles.flex, styles.strong]}>{tools ? `My kit · ${tools} ${tools === 1 ? 'tool' : 'tools'}` : 'My kit · tell us what you have'}</Body>
       <Body color={ds.c.ground}>Edit</Body>
@@ -140,6 +142,6 @@ const styles = StyleSheet.create({
   group: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.lg, paddingVertical: space.sm },
   icon: { width: 36, height: 36, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0, gap: 2 },
-  kit: { flexDirection: 'row', alignItems: 'center', gap: space.md, width: '100%', maxWidth: 760, alignSelf: 'center', minHeight: layout.minTapTarget + space.md, paddingHorizontal: space.xl, borderRadius: radius.pill, borderCurve: 'continuous' },
+  kit: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: layout.minTapTarget + space.md, paddingHorizontal: space.xl, borderRadius: radius.pill, borderCurve: 'continuous' },
   strong: { fontFamily: fontFamilies.bodySemiBold },
 });

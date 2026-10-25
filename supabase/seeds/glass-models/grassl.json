@@ -1,0 +1,41 @@
+{
+ "maker": "grassl",
+ "models": [
+  {
+   "name": "Vigneron Cru",
+   "series": "Vigneron",
+   "designer": null,
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 670,
+   "capacity_as_stated": "670ml",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://grasslglass.com/",
+   "source_urls": [
+    "https://grasslglass.com/",
+    "https://grasslglass.com/api/products.php?beta=true&lang=en"
+   ]
+  },
+  {
+   "name": "Vigneron Liberté",
+   "series": "Vigneron",
+   "designer": null,
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "460ml",
+   "height_mm": 230,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://grasslglass.com/",
+   "source_urls": [
+    "https://grasslglass.com/",
+    "https://grasslglass.com/api/products.php?beta=true&lang=en"
+   ]
+  }
+ ]
+}

@@ -1,40 +1,29 @@
-import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { Body, Button, Headline, useDs } from '@/components/ds';
-import { radius, space } from '@/constants/tokens';
+import { Body } from '@/components/ds';
+import { fontFamilies } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
-import { isUnclaimed, useMyPersonClaim, type Profile } from '@/hooks/useProfiles';
-import { needsOnboarding } from '@/lib/onboarding';
-
-import { claimBar } from './ClaimProfile';
+import { useMyPersonClaim } from '@/hooks/useProfiles';
 
 /**
- * "See your name? Tap it." under a bar's header (find-yourself step 2), for
- * anyone signed in who hasn't claimed a person's page: the credits below are
- * links to it. While the bar is unclaimed, "I run Pale Moth" opens venue
- * setup at its claim step (from Setup, by way of Setup: claimBar).
+ * "Worked here? See your name? Tap it." under a bar's menus (owner-setup
+ * step 3; find-yourself step 2), for anyone signed in who hasn't claimed a
+ * person's page: the credits are links to it. Claiming the bar itself is
+ * BarClaimCard's, under its name.
  */
-export function SeeYourName({ profile }: { profile: Profile }) {
-  const ds = useDs();
-  const router = useRouter();
+export function SeeYourName() {
   const { user } = useAuth();
   const { data: claim, isPending } = useMyPersonClaim();
   if (!user || isPending || claim) return null;
-  const runIt = isUnclaimed(profile);
   return (
-    <View style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.lineStrong }]}>
-      <View style={styles.text}>
-        <Headline role="heading">See your name? Tap it.</Headline>
-        <Body tone="muted">Every drink credited to you is on your page, from every bar.</Body>
-      </View>
-      {runIt ? <Button label={`I run ${profile.display_name}`} variant="secondary" dense onPress={() => claimBar(router, profile.id, needsOnboarding(user.user_metadata))} style={styles.button} /> : null}
-    </View>
+    <Body tone="muted">
+      {'Worked here? '}
+      <Body style={styles.strong}>See your name? Tap it.</Body>
+      {' Every drink credited to you is on your page, from every bar.'}
+    </Body>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous', borderWidth: 1 },
-  text: { flexGrow: 1, flexShrink: 1, flexBasis: 220, gap: space.xs },
-  button: { alignSelf: 'flex-start' },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
 });

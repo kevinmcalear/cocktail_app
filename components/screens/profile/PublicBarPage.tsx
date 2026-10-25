@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, useBreakpoint } from '@/components/ds';
+import { Body, Button, Caption, Headline, Segmented, useBreakpoint } from '@/components/ds';
 import { BarWeek } from '@/components/screens/week/BarWeek';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
@@ -21,10 +21,12 @@ import { OnTheMenu } from '../bar/OnTheMenu';
 import { SpecLockPanel } from '../drink/SpecLockPanel';
 import { Kicker, PublicPage, SignInBand } from '../published/PublicChrome';
 import { BarMatches } from './BarMatches';
+import { BAR_TABS, PEOPLE_ONLY, type BarTab } from './BarProfile';
 import { BarRankings } from './BarRankings';
 import { BarYours, useYouHere } from './BarYours';
+import { BarClaimCard } from './BarClaimCard';
 import { ClaimProfile } from './ClaimProfile';
-import { ClassicsTheyPour } from './ClassicsTheyPour';
+import { ClassicsTheyPour, usePouredSplit } from './ClassicsTheyPour';
 import { LockedOriginals } from './LockedOriginals';
 import { Positions } from './Positions';
 import { PublicBarActions, PublicBarHeader } from './PublicBarHeader';
@@ -32,20 +34,22 @@ import { PublicBarFacts } from './PublicBarFacts';
 import { MenuNow } from './MenuNow';
 import { SeeYourName } from './SeeYourName';
 import { PublicMenus } from './PublicMenus';
-import { MenuCredits, OriginalsGrid } from './ProfileSections';
+import { BarStats, MenuCredits, OriginalsGrid } from './ProfileSections';
 
-/** Their drinks shown before "All 12 originals". */
+/** Their drinks shown before "All 12 originals": two on the wide page, four in a phone's Originals tab (as signed in). */
 const FIRST_ORIGINALS = 2;
+const FIRST_ORIGINALS_TAB = 4;
 /** Award lines shown before "Show all". */
 const FIRST_AWARDS = 4;
 
+
 /**
- * A bar's page signed out (ppl-pub-bar-desktop, -phone): one page, no tabs.
- * Wide: Top drinks, Their drinks and Classics they pour beside hours,
- * location and Instagram, This week, menus, people and awards. Phone: hours and the
- * actions under the name, then This week, Menus, Top drinks, Their drinks,
- * Classics they pour and People. Love and Report ask to sign in; the
- * sign-in band closes it.
+ * A bar's page signed out (ppl-pub-bar-desktop, -phone). Wide, one page: Top
+ * drinks, Their drinks and Classics they pour beside hours, location and
+ * Instagram, This week, menus, people and awards. Phone: hours and the
+ * actions under the name, its numbers, This week, then Menus, Originals, Top
+ * drinks and People as tabs, as signed in (p01). Love and Report ask to sign
+ * in; the sign-in band closes it.
  * `signedIn`: the same desktop page inside the app (ppl-pub-bar-desktop is the
  * only desktop bar page drawn): no site nav or sign-in band, Love and Report
  * work, your drinks here over Top drinks, a search's matches under the name.
@@ -61,19 +65,24 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
   const runs = drinkRunTags(useMenuEditions(profile.id).data ?? []);
   const { data: credits = [] } = useMenuCredits(signedIn ? originals.map((d) => d.id) : []);
   const [allOriginals, setAllOriginals] = useState(false);
+  const [tab, setTab] = useState<BarTab>('menus');
   const unclaimed = isUnclaimed(profile);
   const specsLocked = pageLocksSpecs(profile.page_visibility, false);
   // Private: facts, hours, people and awards; no drinks, menus or scores (ppl-bar-private).
   const drinksShown = pageShowsDrinks(profile.page_visibility, useActiveVenue().venues.some((v) => v.id === profile.bar_id));
   const place = [barPlace(facts?.bar_type ?? 'Bar', [profile.locality, profile.city].filter(Boolean).join(', ')), signedIn && here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ');
 
-  const section = (title: string, body: ReactNode, kicker = false) => (
+  // On a phone the tab names Menus, Top drinks and People, so those drop their own heading.
+  const section = (title: string, body: ReactNode, kicker = false, named = false) => (
     <View style={styles.section}>
-      {kicker ? <Kicker>{title}</Kicker> : <Headline role="heading">{title}</Headline>}
+      {named && !wide ? null : kicker ? <Kicker>{title}</Kicker> : <Headline role="heading">{title}</Headline>}
       {body}
     </View>
   );
-  const shown = allOriginals ? originals : originals.slice(0, FIRST_ORIGINALS);
+  const shown = allOriginals ? originals : originals.slice(0, wide ? FIRST_ORIGINALS : FIRST_ORIGINALS_TAB);
+  // Copies poured as a classic aren't originals: the phone's count is the bar's own, as signed in.
+  const { own } = usePouredSplit(profile.id, originals);
+  const shownTab: BarTab = drinksShown ? tab : 'people';
   const drinksSection = section(
     'Their drinks',
     isLoading ? (
@@ -85,7 +94,7 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
         ) : (
           <OriginalsGrid originals={shown} selfId={profile.id} columns={1} layout="rows" ownerName={profile.display_name} runs={runs} emptyText="No drinks credited to this bar yet." />
         )}
-        {originals.length > FIRST_ORIGINALS && !allOriginals ? (
+        {originals.length > shown.length && !allOriginals ? (
           <Button label={`All ${originals.length} originals`} variant="secondary" onPress={() => setAllOriginals(true)} style={styles.start} />
         ) : null}
       </>
@@ -95,8 +104,10 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
   const classics = !drinksShown || originals.some((d) => d.riff_of_id) ? null : <StaffClassics barId={profile.bar_id} />;
   const facts_ = <PublicBarFacts profileId={profile.id} instagram={profile.instagram} />;
   const week = <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />;
-  const menus = drinksShown ? section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide) : null;
-  const people = section('People', <Positions profile={profile} currentUntitled emptyText={`Nobody is listed at ${profile.display_name} yet.`} />, true);
+  const menus = drinksShown ? section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide, true) : null;
+  // "See your name? Tap it." sits under the menus, or on its own where a private page has none (owner-setup step 3).
+  const seeName = signedIn ? <SeeYourName /> : null;
+  const people = section('People', <Positions profile={profile} currentUntitled emptyText={`Nobody is listed at ${profile.display_name} yet.`} />, true, true);
   const awards = <PublicAwards profileId={profile.id} />;
   const topSection = section(
     'Top drinks',
@@ -104,6 +115,8 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
       {signedIn ? <BarYours profileId={profile.id} drinkIds={originals.map((d) => d.id)} /> : null}
       <BarRankings bar={profile} />
     </>,
+    false,
+    true,
   );
   // Why the specs are kept back, with Claim: in the main column under the drinks it explains (ppl-bar-unclaimed).
   const top = drinksShown ? topSection : null;
@@ -111,8 +124,6 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
     <SpecLockPanel title="Drinks stay with the bar" note={privatePageNote(profile.display_name, signedIn)} />
   ) : specsLocked ? (
     <SpecLockPanel note={specLockNote(profile.display_name, unclaimed, false)} action={unclaimed ? <ClaimProfile profile={profile} label="Work here? Claim this page" /> : null} />
-  ) : unclaimed ? (
-    <ClaimProfile profile={profile} />
   ) : null;
   const body = (
     <>
@@ -121,7 +132,8 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
         {wide ? null : facts_}
         <PublicBarActions profile={profile} signedIn={signedIn} />
       </View>
-      {signedIn ? <SeeYourName profile={profile} /> : null}
+      {/* Claiming it comes before its menus (owner-setup call 3). */}
+      <BarClaimCard profile={profile} />
       {signedIn ? <BarMatches barProfileId={profile.id} /> : null}
       {/* Opened from a search: the menu it's pouring follows the matches (disc-search-bar). */}
       {signedIn && searched ? <OnTheMenu profileId={profile.id} /> : null}
@@ -140,20 +152,33 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
             {facts_}
             {week}
             {menus}
+            {seeName}
             {people}
             {awards}
           </View>
         </View>
       ) : (
         <View style={styles.stack}>
+          <BarStats profile={profile} originals={drinksShown ? own.length : null} />
           {week}
-          {menus}
-          {top}
-          {theirDrinks}
-          {classics}
-          {lock}
-          {people}
-          {awards}
+          <Segmented accessibilityLabel="Bar sections" stretch accent options={drinksShown ? BAR_TABS : PEOPLE_ONLY} value={shownTab} onChange={setTab} />
+          {shownTab === 'people' ? (
+            <>
+              {people}
+              {awards}
+            </>
+          ) : shownTab === 'menus' ? (
+            menus
+          ) : shownTab === 'originals' ? (
+            <>
+              {theirDrinks}
+              {classics}
+            </>
+          ) : (
+            top
+          )}
+          {/* Why the drinks are kept back, under the drinks it explains (or under People on a private page). */}
+          {shownTab === 'originals' || shownTab === 'rankings' || !drinksShown ? lock : null}
         </View>
       )}
     </>

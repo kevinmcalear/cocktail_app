@@ -20,7 +20,7 @@ export const VENUE_FEATURES = [
   { key: 'history', label: 'History', detail: 'Every classic’s family tree, in the menu and search', atHome: true },
   { key: 'flavorMap', label: 'Flavor map', detail: 'What goes with what, from search', atHome: true },
   { key: 'techniques', label: 'Techniques', detail: 'Foams, clarifying, infusions and their kit, from search', atHome: true },
-  { key: 'libraryExtras', label: 'More library filters', detail: 'R&D, Batched, Preps, Garnishes, Bottles, Cocktails and Needs a price in Library', atHome: true },
+  { key: 'libraryExtras', label: 'More library filters', detail: 'R&D, Batched, Made in-house, Garnishes, Bottles, Cocktails and Needs a price in Library', atHome: true },
 ] as const satisfies readonly { key: string; label: string; detail: string; atHome: boolean; tryIt?: string }[];
 
 export type VenueFeatureKey = (typeof VENUE_FEATURES)[number]['key'];

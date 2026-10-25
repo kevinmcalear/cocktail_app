@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useKit } from '@/hooks/useKit';
+import { useCapabilities } from '@/hooks/useCapabilities';
+import { useMode } from '@/hooks/useMode';
 import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
 
@@ -35,30 +39,45 @@ export function useBarKit(barId: string | null | undefined) {
   });
 }
 
-/** A tool's switch: on adds it, off takes it away. The list follows at once and goes back if the save fails. */
-export function useSetTools(barId: string) {
+/** A tool as the Add sheet saves it. No id adds it; ours has a key, the venue's own only a name. */
+export type ToolChange = Pick<KitRow, 'key' | 'name' | 'location' | 'count' | 'source' | 'supplier_id' | 'note'> & { id?: string };
+
+/** Add one of the venue's tools, or change one (by id). */
+export function useSaveTool(barId: string) {
   const client = useQueryClient();
-  const key = barKitKey(barId);
   return useMutation({
-    mutationFn: async ({ ids, on }: { ids: string[]; on: boolean }) => {
-      const { error } = on
-        ? await supabase.from('bar_kit').upsert(ids.map((k) => ({ bar_id: barId, kind: 'tool', key: k })), { onConflict: 'bar_id,kind,key', ignoreDuplicates: true })
-        : await supabase.from('bar_kit').delete().eq('bar_id', barId).eq('kind', 'tool').in('key', ids);
+    mutationFn: async ({ id, ...tool }: ToolChange) => {
+      const { error } = id ? await supabase.from('bar_kit').update(tool).eq('id', id) : await supabase.from('bar_kit').insert({ ...tool, bar_id: barId, kind: 'tool' });
       if (error) throw error;
     },
-    onMutate: async ({ ids, on }) => {
-      await client.cancelQueries({ queryKey: key });
-      const before = client.getQueryData<KitRow[]>(key);
-      const rest = (before ?? []).filter((r) => !(r.key && ids.includes(r.key)));
-      const now = new Date().toISOString();
-      const added = on
-        ? ids.map((k): KitRow => ({ id: `new-${k}`, bar_id: barId, kind: 'tool', key: k, name: null, location: null, count: null, source: null, note: null, supplier_id: null, supplier_name: null, sort_order: 0, created_at: now, updated_at: now }))
-        : [];
-      client.setQueryData<KitRow[]>(key, [...rest, ...added]);
-      return { before };
+    onSettled: () => client.invalidateQueries({ queryKey: barKitKey(barId) }),
+  });
+}
+
+/** Add our tools by equipment id (an ice recipe's "Add to kit"); ones the venue already has are left as they are. */
+export function useAddTools(barId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('bar_kit').upsert(
+        ids.map((key) => ({ bar_id: barId, kind: 'tool', key })),
+        { onConflict: 'bar_id,kind,key', ignoreDuplicates: true },
+      );
+      if (error) throw error;
     },
-    onError: (_e, _v, ctx) => client.setQueryData(key, ctx?.before),
-    onSettled: () => client.invalidateQueries({ queryKey: key }),
+    onSettled: () => client.invalidateQueries({ queryKey: barKitKey(barId) }),
+  });
+}
+
+/** Take a tool off the venue's kit. */
+export function useRemoveTool(barId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('bar_kit').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: barKitKey(barId) }),
   });
 }
 
@@ -75,4 +94,46 @@ export function useToolsFor(barId: string | null, venueName: string | null): { l
     return tools.length ? { label: `${venueName ?? 'the venue'}’s kit`, have: tools } : null;
   }
   return home.length ? { label: 'your kit', have: home } : null;
+}
+
+/**
+ * The tools "you have" where you are (Kit and ice, step 11): the venue's in
+ * venue mode, your kit at home otherwise. The technique library checks
+ * against it; a recipe being made uses useMakingKit.
+ */
+export function useKitHere(): ReadonlySet<string> {
+  const { active } = useActiveVenue();
+  const venue = useMode().mode === 'venue' ? active : null;
+  const rows = useBarKit(venue?.id ?? null).data;
+  const home = useKit().kit;
+  return useMemo(() => {
+    const ours = (rows ?? []).flatMap((r) => (r.key ? [r.key] : []));
+    // A venue with no tools listed (or still loading) isn't checked against: your own kit stands in, as the kit check skips it.
+    return venue && ours.length ? new Set(ours) : home;
+  }, [venue, rows, home]);
+}
+
+/**
+ * The kit a recipe being made is checked against (make-anything-steps-1,
+ * step 4, more to it): the Kit of the venue the drink is for, else My Bar's.
+ * `kit` is null while the venue's list loads, so nothing dims early. `add`
+ * is "I have this": it puts the pieces on that list, and is null for someone
+ * who can't change a venue's Kit (it takes Prep); `edit` is where the list
+ * is changed, null likewise.
+ */
+export function useMakingKit(bar: { id: string; name: string } | null): { kit: ReadonlySet<string> | null; where: string; add: ((ids: string[]) => void) | null; edit: string | null } {
+  const tools = useBarKit(bar?.id);
+  const caps = useCapabilities(bar?.id).data;
+  const home = useKit();
+  const addTools = useAddTools(bar?.id ?? '');
+  if (bar) {
+    const canEdit = !!caps?.includes('prep');
+    return {
+      kit: tools.data ? new Set(tools.data.flatMap((r) => (r.kind === 'tool' && r.key ? [r.key] : []))) : null,
+      where: `${bar.name}’s Kit`,
+      add: canEdit ? (ids) => addTools.mutate(ids) : null,
+      edit: canEdit ? `/settings/bar/${bar.id}/tools` : null,
+    };
+  }
+  return { kit: home.kit, where: 'My Bar', add: (ids) => ids.filter((id) => !home.kit.has(id)).forEach((id) => home.toggle(id)), edit: '/equipment' };
 }

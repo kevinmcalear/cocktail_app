@@ -1,7 +1,7 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, withFacts, withMethod } from './prepKinds';
+import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, withFacts, withMethod } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
 import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
@@ -16,7 +16,7 @@ assert.equal(guessKind('Lime super juice'), 'super');
 assert.equal(guessKind('Chamomile infused gin'), 'infusion');
 assert.equal(guessKind('Miso banana liqueur'), 'infusion', 'a house liqueur is a spirit with a flavour in it');
 assert.equal(guessKind('Salty Boy batch'), 'batch');
-assert.equal(guessKind('Clarified grapefruit'), null);
+assert.equal(guessKind('Clarified grapefruit'), 'clarified');
 assert.deepEqual(flavourWords('Pineapple chili shrub'), ['Pineapple', 'Chili']);
 assert.deepEqual(flavourWords('Rich simple syrup'), []);
 
@@ -55,7 +55,7 @@ assert.equal(wayOf({ kind: 'shrub', hot: true }), wayOf({ kind: 'shrub', way: 'h
 assert.equal(wayOf(startPrep('syrup', 'Simple syrup'))?.id, 'simple');
 assert.equal(wayOf(startPrep('rich', 'Rich syrup'))?.id, 'rich');
 assert.equal(tileOf('oleo'), 'syrup');
-assert.deepEqual(KIND_TILES, ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'super', 'other'], 'as the board draws them');
+assert.deepEqual(KIND_TILES, ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'clarified', 'distillate', 'super', 'other'], 'as the board draws them');
 assert.ok(KIND_TILES.every((k) => PREP_KINDS.some((p) => p.id === k)));
 assert.equal(prepPhrase(shrub), 'a cold shrub');
 assert.equal(prepPhrase(oleo), 'an oleo shrub');
@@ -123,8 +123,6 @@ assert.deepEqual(miso.allergens, ['soya']);
 assert.deepEqual(withFacts({ ...miso, lines: miso.lines.filter((l) => l.name !== 'Miso') }).allergens, []);
 // A spirit named keeps the rest as one "with what".
 assert.deepEqual(startPrep('infusion', 'Brown butter infused bourbon').lines.map((l) => l.name), ['Bourbon', 'Brown butter']);
-// A batch's kind word isn't a line either.
-assert.deepEqual(startPrep('batch', 'Negroni batch').lines.map((l) => l.name), ['Negroni']);
 
 // Fat wash from a typed name: White rum the base, coconut the flavour and Coconut Oil the fat, lifted off so it isn't in the yield.
 const t = (id: string) => techniqueById(id)!;
@@ -275,7 +273,8 @@ assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
   assert.equal(sv.storage, 'Fridge, sealed bottle');
   assert.deepEqual(kindOfTechnique('sous-vide-infusion'), { kind: 'infusion', way: 'sous-vide' });
   assert.deepEqual(kindOfTechnique('fat-wash'), { kind: 'wash', way: 'fat' });
-  assert.equal(kindOfTechnique('agar-quick'), null);
+  assert.deepEqual(kindOfTechnique('agar-quick'), { kind: 'clarified', way: 'agar-quick' }, 'a clarified juice is a kind now');
+  assert.equal(kindOfTechnique('tepache'), null, 'a ferment is Something else');
   assert.equal(prepSummary({ ...sv, steps: [...steps, ...steps] }), 'Infusion, sous vide · Miso, banana · 4 steps', 'a stand-in spirit is not named');
   // A kind picked for two lines combined keeps them, with the kind's own method.
   const syrup = keepLines(startPrep('syrup', 'X'), sv);
@@ -284,3 +283,22 @@ assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
   assert.match(syrup.steps[0].body, /sugar and water/);
 }
 console.log('prepKinds technique checks passed');
+
+// A batch named for its drink starts with one line to pick, not the name's words.
+{
+  const b = startPrep('batch', 'Penicillin batch');
+  assert.deepEqual(b.lines.map((l) => l.slot), ['main ingredient']);
+}
+
+// Recipes left to finish, down through the ones inside (make-anything-steps-3, steps 9 and 10).
+{
+  const syrup = { ...startPrep('syrup', 'Honey-ginger syrup'), at: 'recipe' as const };
+  const batch = startPrep('batch', 'Penicillin batch');
+  batch.lines.push({ key: 'hg', id: null, name: 'Honey-ginger syrup', parts: null, unit: 'ml', amount: '', prep: syrup });
+  assert.equal(toFinishSummary(syrup), 'Syrup · 1 of 3 done');
+  assert.equal(stepToFinish(startPrep('infusion', 'Infusion')), 'recipe', 'a spirit still to pick');
+  assert.deepEqual(recipesToFinish([{ name: 'Penicillin batch', prep: batch }, { name: 'Shrub', later: true }]), [
+    { name: 'Honey-ginger syrup', at: 'at what goes in', depth: 1 },
+    { name: 'Shrub', at: 'nothing written yet', depth: 0 },
+  ]);
+}

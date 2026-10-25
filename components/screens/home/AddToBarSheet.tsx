@@ -5,6 +5,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Body, Field, FieldButton, IngredientThumb } from '@/components/ds';
 import { Eyebrow } from '@/components/screens/addDrink/WizardChrome';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
+import { NearPicks, splitNear } from '@/components/search/NearPicks';
 import { space } from '@/constants/tokens';
 import { useBarIdeas, useBarSearch, type FoundItem } from '@/hooks/useHomeBar';
 import { SECTIONS, type BarSection } from '@/lib/barSections';
@@ -69,7 +70,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
   const found = useBarSearch(filter === 'kit' ? '' : query);
   const ideas = useBarIdeas(filter === 'kit' ? [] : IDEAS[filter]);
   // Results for older text stay up while the new search runs, so only an empty list waits.
-  const rows = typed ? (found.data ?? []).filter((r) => filter === 'all' || r.section === filter) : [];
+  const [rows, near] = splitNear(typed ? (found.data ?? []).filter((r) => filter === 'all' || r.section === filter) : []);
   const groups = ORDER.flatMap((section) => {
     const items = rows.filter((r) => r.section === section);
     return items.length ? [{ section, items }] : [];
@@ -78,7 +79,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
   // background (RAIL: a tap shows something within 100 ms).
   const filled = useDeferredValue(visible);
   // While typing, each chip counts its matches; otherwise what's on the bar.
-  const all = typed && filter !== 'kit' ? (found.data ?? []) : null;
+  const all = typed && filter !== 'kit' ? (found.data ?? []).filter((r) => !r.near) : null;
   const chipCounts = all ? Object.fromEntries(ORDER.map((sec) => [sec, all.filter((r) => r.section === sec).length])) : counts;
   const total = all ? all.length : SHELF_SECTIONS.reduce((n, sec) => n + (counts[sec] ?? 0), 0);
   const snap = () => {
@@ -89,6 +90,18 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
     onClose();
     router.push(itemHref('Ingredient', id) as never);
   };
+  const result = (item: FoundItem) => (
+    <Result
+      key={item.id}
+      name={item.name}
+      sub={item.section === 'preps' && onShelf.has(item.id) ? 'In your fridge' : foundLine(item)}
+      query={typed}
+      thumb={<IngredientThumb id={item.id} name={item.name} size={48} />}
+      has={onShelf.has(item.id)}
+      onToggle={(on) => onToggle(item, on)}
+      extra={item.section === 'preps' ? <RecipeLink name={item.name} onPress={() => openRecipe(item.id)} /> : null}
+    />
+  );
 
   return (
     <MenuSheet
@@ -141,7 +154,7 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
           </View>
         ) : found.error && !rows.length ? (
           <Body tone="muted">Couldn’t search right now. Check your connection and try again.</Body>
-        ) : !rows.length ? (
+        ) : !rows.length && !near.length ? (
           found.isFetching || found.isPending ? (
             <Body tone="muted">Looking…</Body>
           ) : (
@@ -158,20 +171,12 @@ export function AddToBarSheet({ visible, filter, onFilter, onShelf, counts, onTo
                   <Eyebrow>{SECTIONS[g.section].title}</Eyebrow>
                 </View>
               ) : null}
-              {g.items.map((item) => (
-                <Result
-                  key={item.id}
-                  name={item.name}
-                  sub={item.section === 'preps' && onShelf.has(item.id) ? 'In your fridge' : foundLine(item)}
-                  query={typed}
-                  thumb={<IngredientThumb id={item.id} name={item.name} size={48} />}
-                  has={onShelf.has(item.id)}
-                  onToggle={(on) => onToggle(item, on)}
-                  extra={item.section === 'preps' ? <RecipeLink name={item.name} onPress={() => openRecipe(item.id)} /> : null}
-                />
-              ))}
+              {g.items.map(result)}
             </View>
-          )), <SnapRow key="snap" onSnap={snap} />]
+          )),
+          <NearPicks key="near" found={rows.length > 0} near={near} render={result} labelStyle={styles.heading}>
+            <SnapRow onSnap={snap} />
+          </NearPicks>]
         )}
       </View>
     </MenuSheet>

@@ -20,6 +20,7 @@ import { Stat, Stats } from './ProfileSections';
 import { TopFour, fourSlots } from './TopFour';
 import { useShareLink } from './useShareLink';
 import { YouTabs } from './YouTabs';
+import { ItsYou, YourBarCard } from './YourBarCard';
 
 /**
  * You: your own profile, whether or not you've made a public one. Every
@@ -70,6 +71,7 @@ function You() {
       </WebHead>
       <ScrollView contentContainerStyle={padding}>
         <View style={[styles.body, { paddingHorizontal: gutter }]}>
+          {profile ? <ItsYou drinks={madeCount} /> : null}
           <View style={styles.header}>
             <CurrentUserAvatar size={96} />
             <Title role="heading" align="center">
@@ -92,6 +94,8 @@ function You() {
             <Stat value={stats.bars} label={stats.bars === 1 ? 'bar' : 'bars'} />
             <Stat value={madeCount} label={madeCount === 1 ? 'original' : 'originals'} />
           </Stats>
+
+          {profile ? <YourBarCard positions={positions} /> : null}
 
           <TasteCard />
 

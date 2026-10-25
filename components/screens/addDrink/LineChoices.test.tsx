@@ -27,7 +27,7 @@ const labels = (group: ReturnType<typeof screen.getByLabelText>) => within(group
 describe('A line that matched nothing (owner-setup-path, step 10)', () => {
   test('says "house": Make it in-house first, and it opens the recipe by its name without "house"', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={draftWith(MEZCAL, 'House miso banana liqueur')} set={set} ingredients={[MEZCAL]} venueName="Little Rye" />);
+    await renderWithTamagui(<IngredientsStep draft={draftWith(MEZCAL, 'House miso banana liqueur')} set={set} ingredients={[MEZCAL]} bar={{ id: "rye", name: "Little Rye" }} />);
 
     const group = screen.getByLabelText('What House miso banana liqueur is');
     expect(within(group).getByText('Not at Little Rye yet. It says “house”, so:')).toBeTruthy();
@@ -47,7 +47,7 @@ describe('A line that matched nothing (owner-setup-path, step 10)', () => {
 
   test('says nothing about house: A bottle we buy first, and it marks the line a bottle', async () => {
     const set = jest.fn();
-    await renderWithTamagui(<IngredientsStep draft={draftWith('Yuzu sake')} set={set} ingredients={[MEZCAL]} venueName="Little Rye" />);
+    await renderWithTamagui(<IngredientsStep draft={draftWith('Yuzu sake')} set={set} ingredients={[MEZCAL]} bar={{ id: "rye", name: "Little Rye" }} />);
 
     const group = screen.getByLabelText('What Yuzu sake is');
     expect(within(group).getByText('Not at Little Rye yet. What is it?')).toBeTruthy();

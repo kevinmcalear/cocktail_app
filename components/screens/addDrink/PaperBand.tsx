@@ -9,6 +9,8 @@ import { ViewAsPill } from '@/components/ViewAsBanner';
 import { backbar, fontFamilies, layout, radius, space, springs } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 
+import { Trail, type TrailItem } from './Trail';
+
 export interface PaperBandProps {
   /** Where it's at: "2 of 9", or a word ("Review") with the bar full. */
   progress: { now: number; of: number; label: string };
@@ -16,6 +18,8 @@ export interface PaperBandProps {
   first: boolean;
   /** On the first step, back goes to this instead of closing: a chevron with its name ("Ash Garden"). */
   backTo?: string;
+  /** Where you are, from the menu down (make-anything-overview, rule 3), under the progress. */
+  trail?: readonly TrailItem[];
   onBack: () => void;
   /** Space above the controls (the status bar on a phone). */
   top: number;
@@ -45,7 +49,7 @@ export interface PaperBandProps {
  * The paper band at the top of every add wizard: back, progress, and a
  * drawing of the thing being added that redraws as it's filled in.
  */
-export function PaperBand({ progress, first, backTo, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go', action }: PaperBandProps) {
+export function PaperBand({ progress, first, backTo, onBack, top, side, rounded, folded, size: sizeProp, art, artKey, artLabel, tag, note = 'Updates as you go', action, trail }: PaperBandProps) {
   const ds = useDs();
   const ink = ds.c.sketchInk;
   const reduceMotion = useReducedMotion();
@@ -100,6 +104,11 @@ export function PaperBand({ progress, first, backTo, onBack, top, side, rounded,
           {progress.label}
         </Caption>
       </View>
+      {trail ? (
+        <View style={styles.trail}>
+          <Trail items={trail} color={ink} />
+        </View>
+      ) : null}
       {folded ? null : (
         <>
           <Animated.View style={[styles.drawing, { width: size, height: size }, bounce]} aria-label={artLabel}>
@@ -137,6 +146,7 @@ function Layer({ from, to, children }: { from: number; to: number; children: Rea
 }
 
 const styles = StyleSheet.create({
+  trail: { alignSelf: 'stretch', marginTop: space.xs },
   band: { paddingBottom: space.md, alignItems: 'center' },
   rounded: { borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
   controls: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.md },

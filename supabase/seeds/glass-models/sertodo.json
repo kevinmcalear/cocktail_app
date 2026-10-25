@@ -1,0 +1,22 @@
+{
+ "maker": "sertodo",
+ "models": [
+  {
+   "name": "Tequilero Copper Shot Cup",
+   "series": null,
+   "designer": null,
+   "model_code": "C-SHT-TQ",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 fluid ounce",
+   "height_mm": 64,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://ggfieldshop.com/products/tequilero-copper-shot-cup",
+   "source_urls": [
+    "https://ggfieldshop.com/products/tequilero-copper-shot-cup"
+   ]
+  }
+ ]
+}

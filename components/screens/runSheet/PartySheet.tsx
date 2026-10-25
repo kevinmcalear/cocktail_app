@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { Button, Caption, Field } from '@/components/ds';
 import { AddBarForm } from '@/components/screens/home/AddBar';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
+import { NearPicks, splitNear } from '@/components/search/NearPicks';
 import { space } from '@/constants/tokens';
 import { usePartySearch, useRemoveParty, useSaveParty } from '@/hooks/useRunSheet';
 import { plainDbMessage } from '@/lib/dbError';
@@ -21,6 +22,19 @@ export function PartySheet({ menuId, kind, party, venue, sortOrder, onClose }: {
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const search = usePartySearch(profileId ? '' : name, kind);
+  const [plain, near] = splitNear(search.data ?? []);
+  const choice = (p: (typeof plain)[number]) => (
+    <Choice
+      key={p.id}
+      label={p.display_name}
+      detail={[p.place, `@${p.handle}`, kind === 'guest' && !p.claimed ? 'Not claimed yet' : null].filter(Boolean).join(' · ')}
+      selected={false}
+      onPress={() => {
+        setName(p.display_name);
+        setProfileId(p.id);
+      }}
+    />
+  );
   const save = useSaveParty(menuId);
   const remove = useRemoveParty(menuId);
   const done = { onSuccess: onClose, onError: (e: unknown) => setError(plainDbMessage(e) ?? 'That didn’t save. Try again.') };
@@ -35,8 +49,8 @@ export function PartySheet({ menuId, kind, party, venue, sortOrder, onClose }: {
         kind === 'brand'
           ? 'A bottle this brand makes goes to them on the sheet.'
           : venue
-            ? 'The bar you’re taking over for the night. Everything starts with them except the house preps for your drinks. Their drinks are credited to them.'
-            : 'The bar taking over for the night. Their house preps start with them, and their drinks are credited to them.'
+            ? 'The bar you’re taking over for the night. Everything starts with them except what’s made in-house for your drinks. Their drinks are credited to them.'
+            : 'The bar taking over for the night. What they make in-house starts with them, and their drinks are credited to them.'
       }
       save={{ label: 'Save', disabled: !name.trim() || save.isPending, onPress: () => save.mutate({ id: party?.id, kind, name, profileId, sortOrder, isVenue: venue }, done) }}
       footer={
@@ -65,19 +79,9 @@ export function PartySheet({ menuId, kind, party, venue, sortOrder, onClose }: {
         {kind === 'guest' && party?.profileId && !profileId ? (
           <Caption tone="accent">Saving like this unlinks their page and takes its credit off their drinks. Pick their page again to keep it.</Caption>
         ) : null}
-        {search.data?.length ? <Caption tone="muted">On Cocktail: is it one of these?</Caption> : null}
-        {(search.data ?? []).map((p) => (
-          <Choice
-            key={p.id}
-            label={p.display_name}
-            detail={[p.place, `@${p.handle}`, kind === 'guest' && !p.claimed ? 'Not claimed yet' : null].filter(Boolean).join(' · ')}
-            selected={false}
-            onPress={() => {
-              setName(p.display_name);
-              setProfileId(p.id);
-            }}
-          />
-        ))}
+        {plain.length ? <Caption tone="muted">On Cocktail: is it one of these?</Caption> : null}
+        {plain.map(choice)}
+        <NearPicks found={plain.length > 0} near={near} render={choice} />
         {kind === 'guest' && !profileId && name.trim().length >= 2 && !search.isFetching ? (
           adding ? (
             <AddBarForm

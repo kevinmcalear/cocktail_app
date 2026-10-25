@@ -8,30 +8,41 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 
-type PageProps = { barId: string; title: string; intro?: string; children: ReactNode; crumb?: boolean };
+type PageProps = {
+  /** The venue; null is a page under My Bar (its Kit). */
+  barId: string | null;
+  title: string;
+  intro?: string;
+  children: ReactNode;
+  crumb?: boolean;
+  /** Up a level to somewhere else than Venue settings: a glass's page goes back to Glassware. */
+  up?: { label: string; href: Href };
+  /** The wide page's width: Kit's list with the open thing beside it. */
+  wide?: boolean;
+};
 
 /**
  * A page under a venue's settings (Ice, Tools, Suppliers): its title, the
  * "Venue settings" crumb, an intro and the content. Features sits beside
  * Venue settings in the menus, so it has no crumb (`crumb={false}`).
  */
-export function VenueSubPage({ barId, title, intro, children, crumb = true }: PageProps) {
+export function VenueSubPage(props: PageProps) {
   return (
     <BackbarTheme>
-      <Page barId={barId} title={title} intro={intro} crumb={crumb}>
-        {children}
-      </Page>
+      <Page {...props} crumb={props.crumb ?? true} />
     </BackbarTheme>
   );
 }
 
-function Page({ barId, title, intro, children, crumb }: PageProps) {
+function Page({ barId, title, intro, children, crumb, up, wide }: PageProps) {
   const ds = useDs();
   const router = useRouter();
-  const frame = usePageFrame('text');
+  const frame = usePageFrame(wide ? 'wide' : 'text');
   const gutter = useGutter();
   const tabBarInset = useTabBarInset();
-  const settings = `/settings/bar/${barId}` as Href;
+  const settings = (barId ? `/settings/bar/${barId}` : '/bar') as Href;
+  const crumbs = [{ label: barId ? 'Venue settings' : 'My Bar', href: settings }, ...(up ? [up] : [])];
+  const back = up?.href ?? settings;
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <WebHead>
@@ -44,7 +55,7 @@ function Page({ barId, title, intro, children, crumb }: PageProps) {
       >
         <View style={[frame.column, styles.readable]}>
           {/* On wide web the sidebar is the way around: the "Venue settings" crumb, no Back. */}
-          <SubPageHead title={title} crumbs={crumb ? [{ label: 'Venue settings', href: settings }] : undefined} onBack={() => (router.canGoBack() ? router.back() : router.replace(settings))} />
+          <SubPageHead title={title} crumbs={crumb ? crumbs : undefined} onBack={() => (router.canGoBack() ? router.back() : router.replace(back))} />
           {intro ? <Body tone="muted">{intro}</Body> : null}
           {children}
         </View>

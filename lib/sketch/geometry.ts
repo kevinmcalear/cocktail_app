@@ -2,6 +2,7 @@
 // 100 by 100 drawing, glass centred on x = 50.
 
 import { SKETCH } from '../../constants/sketch';
+import type { GlassMaterial } from './outline';
 import type { SketchGlass } from './types';
 
 export type Pt = [number, number];
@@ -25,6 +26,16 @@ export interface GlassShape {
   frost?: boolean;
   face?: boolean;
   handle?: boolean;
+  /** Not clear glass: what it's made of, in the colour of the maker's photo (lib/sketch/material.ts). */
+  material?: GlassMaterial;
+  /** A wrap around part of the body, top to bottom: rattan, leather, a metal holder. */
+  sleeve?: { from: number; to: number; color: string; weave: boolean };
+  /** A stem traced from the photo, top to bottom: [y, half-width]. Without it the stem is drawn from stemW and flare. */
+  stemProf?: Pt[];
+  /** A foot traced from the photo, top to bottom: [y, half-width]; it ends at the foot's rim. */
+  footProf?: Pt[];
+  /** A handle traced from the photo: where it joins the body, and how far past the body it reaches. */
+  handleAt?: { from: number; to: number; reach: number };
 }
 
 // Modern bar glassware: the coupe after Nude's Savage coupe (Rémy Savage).

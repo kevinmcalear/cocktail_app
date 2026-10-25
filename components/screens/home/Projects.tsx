@@ -104,7 +104,7 @@ export function Projects({ ready, away, drinks, onKit, onLab }: ProjectsProps) {
       <Sheet visible={!!showing} onClose={() => setShowing(null)} accessibilityLabel={showing ? `The drinks with ${showing.name}` : 'The drinks'}>
         <ScrollView contentContainerStyle={styles.sheet}>
           <Title>{showing?.name ?? ''}</Title>
-          <Caption tone="muted">Drinks with a house prep made this way.</Caption>
+          <Caption tone="muted">Drinks with something made in-house this way.</Caption>
           {(showing ? (drinks?.[showing.id] ?? []) : []).map((d) => (
             <DrinkRow key={d.id} name={d.name} itemId={d.id} imageUrl={d.imageUrl} glass={null} href={itemHref('Cocktail', d.id)} />
           ))}

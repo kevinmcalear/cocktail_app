@@ -41,7 +41,9 @@ import { NameStepBody } from './NameStepBody';
 import { NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
+import { useDrinkTrail } from './Trail';
 import { useLineStock } from './StockToggle';
+import { useVenueLines } from './useDeskLines';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
 import { WizardFrame } from './WizardFrame';
@@ -83,8 +85,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Filled out with today's fields: a draft kept by an older version of the app may lack some.
   const draft: WizardDraft = { ...EMPTY_DRAFT, ...kept?.draft };
   const step: WizardStep = kept?.step ?? 'name';
-  // On the web the page can draw before the kept draft has loaded (AsyncStorage is async there):
-  // once it has, say it was picked up. Set while rendering, like any value derived from a change.
+  // On the web the page can draw before the kept draft loads (AsyncStorage is async there): once it has, say it was picked up. Set while rendering, like any value derived from a change.
   const loaded = useSyncExternalStore(hydrated, isHydrated, () => false);
   const [seenLoad, setSeenLoad] = useState(loaded);
   const [resumed, setResumed] = useState(() => loaded && hasContent(draft));
@@ -115,6 +116,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
     setStoredStep(place, to);
   };
   const back = () => (at > 0 ? go(WIZARD_STEPS[at - 1]) : onClose());
+  const { trail, menu } = useDrinkTrail(draft.name, { menuSectionId, venueName: barId ? venueName : null, onClose });
 
   // A name passed in ("Make 'Paloma'" from search) names its own fresh draft. With a drink to start from, it names that draft (below).
   useEffect(() => {
@@ -160,6 +162,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const tellUsAbout = { drinkName: draft.name, barId, barName: barId ? venueName : null, draftId: draft.id ?? null };
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const stock = useLineStock({ barId, venueName, drinkName: draft.name.trim(), ingredients, lines: draft.lines, pinned: !desk });
+  const venueLines = useVenueLines({ draft, set, barId: desk ? null : barId, venueName, ingredients, coreIds });
   const copy = STEP_COPY[step];
   const methods = choiceList(COMMON_METHODS, dropdowns?.methods ?? []);
   const glasses = choiceList(COMMON_GLASSES, dropdowns?.glassware ?? []);
@@ -213,15 +216,12 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'ingredients':
         return (
           <IngredientsStep
-            draft={draft}
-            set={set}
-            ingredients={ingredients}
+            draft={draft} set={set} ingredients={ingredients}
             loading={!dropdowns?.ingredients}
             aliases={dropdowns?.ingredientAliases}
             coreIds={coreIds}
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
-            backBar={barId ? stock.backBar : undefined}
-            stock={stock} venueName={barId ? venueName : null}
+            backBar={barId ? stock.backBar : undefined} stock={stock} {...venueLines.lines} bar={barId ? { id: barId, name: venueName } : null} trail={trail}
           />
         );
       case 'method':
@@ -242,7 +242,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'glass':
         return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
-        return <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={venueIce} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />;
+        return <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={venueIce} venueName={barId ? venueName : null} barId={barId} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />;
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'credits':
@@ -255,7 +255,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         return (
           <>
             {firstRound ? <RoundStrip onSkip={onClose} /> : null}
-            <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} />
+            <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} cost={venueLines.cost} />
           </>
         );
     }
@@ -268,7 +268,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       testID="add-drink"
       pageTitle="Add a drink"
       embedded={embedded}
-      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} onTint={(tint) => set({ tint })} {...place} />}
+      band={(place) => <SketchHeader draft={drawn} step={step} onBack={back} barVariants={barVariants} barIce={barIceKinds} onTint={(tint) => set({ tint })} trail={trail} forMenu={menu} {...place} />}
       stepKey={step}
       direction={direction}
       // Naming a new drink it's "New drink"; a kept draft picked up again goes by its name.

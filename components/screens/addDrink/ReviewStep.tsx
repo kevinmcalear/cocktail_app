@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
@@ -6,6 +7,7 @@ import { layout, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useBarPublishing } from '@/hooks/usePublishing';
 import { amountLabel, draftIceLine, finishLabel, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
+import { recipesToFinish } from '@/lib/prepKinds';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -20,6 +22,18 @@ function credits(d: WizardDraft, hasProfile: boolean): string {
   return capitalizeFirst([[by, withThem].filter(Boolean).join(' '), where, riff].filter(Boolean).join(', '));
 }
 
+/**
+ * Everything in it (make-anything-steps-3, step 10): each line, a recipe made
+ * in-house said done or to finish, then what's left to finish down through
+ * the recipes inside, or that nothing is.
+ */
+function ingredientsText(d: WizardDraft): string {
+  const lines = d.lines.map((l) => [`${amountLabel(l)} ${l.name}`.trim(), l.prep ? (l.prep.at ? 'recipe to finish' : 'recipe done') : l.later ? 'recipe to finish' : ''].filter(Boolean).join(' · '));
+  if (!d.lines.some((l) => l.prep || l.later)) return lines.join('\n');
+  const left = recipesToFinish(d.lines);
+  return [...lines, left.length ? `Left to finish: ${left.map((t) => `${t.name}, ${t.at}`).join('; ')}` : 'Nothing left to finish'].join('\n');
+}
+
 interface ReviewStepProps extends StepProps {
   onJump: (s: WizardStep) => void;
   /** The venue it's added at, and its name ("Little Rye"); null at home. */
@@ -28,10 +42,12 @@ interface ReviewStepProps extends StepProps {
   hasProfile: boolean;
   barVariants: readonly string[];
   barIce?: readonly string[];
+  /** A venue's cost card, price and GP (m01): first on review, as the board draws it. */
+  cost?: ReactNode;
 }
 
 /** The photo slots, then every answer on one screen; tap a row to go back and change it. */
-export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, barVariants, barIce }: ReviewStepProps) {
+export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, barVariants, barIce, cost }: ReviewStepProps) {
   const venue = useBarPublishing(barId).data;
   const caps = useCapabilities(barId).data;
   // A venue's drink takes photos from those who may add them; at home it's yours.
@@ -40,7 +56,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
   const followed = !venue ? 'Same as the venue' : venue.profile ? `${PUBLISH_COPY[venue.barDefault].label}, ${venueName}’s default` : 'Private for now';
   const rows: [WizardStep, string][] = [
     ['name', draft.name.trim()],
-    ['ingredients', draft.lines.map((l) => `${amountLabel(l)} ${l.name}`.trim()).join('\n')],
+    ['ingredients', ingredientsText(draft)],
     ['method', draft.methods.map((m) => m.name).join(', then ')],
     ['glass', draft.glass?.name ?? ''],
     ['ice', draftIceLine(draft)],
@@ -51,6 +67,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
   ];
   return (
     <View style={styles.review}>
+      {cost}
       {canPhoto ? (
         <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, barVariants, barIce))} seed={draft.id ?? 'new-drink'} />
       ) : null}

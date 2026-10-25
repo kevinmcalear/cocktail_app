@@ -1,0 +1,1009 @@
+{
+ "maker": "nude",
+ "models": [
+  {
+   "name": "Bar/Giani Martini Glass",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 190.0,
+   "capacity_as_stated": "190",
+   "height_mm": 177,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.diffordsguide.com/glassware/471/nude-bar-giani-martini-glass",
+   "source_urls": [
+    "https://www.diffordsguide.com/glassware/471/nude-bar-giani-martini-glass",
+    "https://eu.nudeglass.com/products/bar-giani-set-of-6-martini-glasses"
+   ]
+  },
+  {
+   "name": "Bar/Giani Spritz Cocktail Glass",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 330.0,
+   "capacity_as_stated": "330",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.diffordsguide.com/glassware/473/nude-bar-giani-spritz-cocktail-glass",
+   "source_urls": [
+    "https://www.diffordsguide.com/glassware/473/nude-bar-giani-spritz-cocktail-glass"
+   ]
+  },
+  {
+   "name": "Bar/Giani Old Fashioned Cocktail Glass",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 330.0,
+   "capacity_as_stated": "330",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.diffordsguide.com/glassware/474/nude-bar-giani-old-fashioned-cocktail-glass",
+   "source_urls": [
+    "https://www.diffordsguide.com/glassware/474/nude-bar-giani-old-fashioned-cocktail-glass"
+   ]
+  },
+  {
+   "name": "Bar/Giani Long Drink Cocktail Glass",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 375.0,
+   "capacity_as_stated": "375",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": null,
+   "product_url": "https://www.diffordsguide.com/glassware/475/nude-bar-giani-long-drink-cocktail-glass",
+   "source_urls": [
+    "https://www.diffordsguide.com/glassware/475/nude-bar-giani-long-drink-cocktail-glass"
+   ]
+  },
+  {
+   "name": "Stem Zero Vertigo 23 oz. Red Wine Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "32017",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 680,
+   "capacity_as_stated": "23 oz.",
+   "height_mm": 228.6,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-stem-zero-vertigo-23-oz-red-wine-glass-pack/543P32017.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-stem-zero-vertigo-23-oz-red-wine-glass-pack/543P32017.html"
+   ]
+  },
+  {
+   "name": "Stem Zero Vertigo 15.75 oz. Flute Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "32030",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 466,
+   "capacity_as_stated": "15.75 oz.",
+   "height_mm": 247.6,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-stem-zero-vertigo-15-75-oz-flute-glass-pack/543P32030.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-stem-zero-vertigo-15-75-oz-flute-glass-pack/543P32030.html"
+   ]
+  },
+  {
+   "name": "Stem Zero Trio 9.75 oz. Flute Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "32250",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 288,
+   "capacity_as_stated": "9.75 oz.",
+   "height_mm": 234.9,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-stem-zero-trio-9-75-oz-flute-glass-pack/543P32250.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-stem-zero-trio-9-75-oz-flute-glass-pack/543P32250.html"
+   ]
+  },
+  {
+   "name": "Mirage 14 oz. Rocks / Double Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64001",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64001-024-mirage-13-5-oz-whiskey-glass-case/543P64001.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64001-024-mirage-13-5-oz-whiskey-glass-case/543P64001.html"
+   ]
+  },
+  {
+   "name": "Mirage 10 oz. Long Drink Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64002",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 139.7,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64002-024-mirage-10-oz-highball-glass-case/543P64002.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64002-024-mirage-10-oz-highball-glass-case/543P64002.html"
+   ]
+  },
+  {
+   "name": "Mirage 16.25 oz. Highball Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64003",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 481,
+   "capacity_as_stated": "16.25 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64003-024-mirage-16-25-oz-highball-glass-case/543P64003.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64003-024-mirage-16-25-oz-highball-glass-case/543P64003.html"
+   ]
+  },
+  {
+   "name": "Finesse 2 oz. Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64008",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 69.8,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-finesse-2-oz-shot-glass-case/543P64008.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-finesse-2-oz-shot-glass-case/543P64008.html"
+   ]
+  },
+  {
+   "name": "Finesse 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64009",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-finesse-10-oz-rocks-old-fashioned-glass-case/543P64009.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-finesse-10-oz-rocks-old-fashioned-glass-case/543P64009.html"
+   ]
+  },
+  {
+   "name": "Finesse 13.75 oz. Rocks / Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64010",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 407,
+   "capacity_as_stated": "13.75 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-finesse-13-25-oz-rocks-double-old-fashioned-glass-case/543P64010.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-finesse-13-25-oz-rocks-double-old-fashioned-glass-case/543P64010.html"
+   ]
+  },
+  {
+   "name": "Finesse 12.25 oz. Long Drink Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64011",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 362,
+   "capacity_as_stated": "12.25 oz.",
+   "height_mm": 139.7,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-finesse-11-75-oz-highball-glass-case/543P64011.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-finesse-11-75-oz-highball-glass-case/543P64011.html"
+   ]
+  },
+  {
+   "name": "Finesse 15.75 oz. Highball Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64012",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 466,
+   "capacity_as_stated": "15.75 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-finesse-14-75-oz-highball-glass-case/543P64012.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-finesse-14-75-oz-highball-glass-case/543P64012.html"
+   ]
+  },
+  {
+   "name": "Reserva 2 oz. Shot Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64013",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 59,
+   "capacity_as_stated": "2 oz.",
+   "height_mm": 73.0,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64013-024-rocks-s-2-oz-shot-glass-case/543P64013.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64013-024-rocks-s-2-oz-shot-glass-case/543P64013.html"
+   ]
+  },
+  {
+   "name": "Reserva 10 oz. Rocks / Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64014",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 85.7,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64014-024-rocks-s-10-oz-rocks-old-fashioned-glass-case/543P64014.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64014-024-rocks-s-10-oz-rocks-old-fashioned-glass-case/543P64014.html"
+   ]
+  },
+  {
+   "name": "Reserva 12.25 oz. Long Drink Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64016",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 362,
+   "capacity_as_stated": "12.25 oz.",
+   "height_mm": 146.0,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64016-024-rocks-s-11-75-oz-highball-glass-case/543P64016.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64016-024-rocks-s-11-75-oz-highball-glass-case/543P64016.html"
+   ]
+  },
+  {
+   "name": "Pure 23.75 oz. Tumbler",
+   "series": null,
+   "designer": null,
+   "model_code": "64026",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 702,
+   "capacity_as_stated": "23.75 oz.",
+   "height_mm": 114.3,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-pure-23-75-oz-stemless-bourgogne-wine-glass-case/543P64026.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-pure-23-75-oz-stemless-bourgogne-wine-glass-case/543P64026.html"
+   ]
+  },
+  {
+   "name": "Savor 5 oz. Sake Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64073",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 148,
+   "capacity_as_stated": "5 oz.",
+   "height_mm": 120.6,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64073-024-savor-5-oz-sake-glass-case/543P64073.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64073-024-savor-5-oz-sake-glass-case/543P64073.html"
+   ]
+  },
+  {
+   "name": "Hepburn 13.5 oz. Rocks / Double Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64082",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64082-024-hepburn-12-75-oz-rocks-old-fashioned-glass-case/543P64082.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64082-024-hepburn-12-75-oz-rocks-old-fashioned-glass-case/543P64082.html"
+   ]
+  },
+  {
+   "name": "Pure 12.5 oz. Tumbler",
+   "series": null,
+   "designer": null,
+   "model_code": "64090",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "12.5 oz.",
+   "height_mm": 104.8,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-pure-12-5-oz-stemless-white-wine-glass-case/543P64090.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-pure-12-5-oz-stemless-white-wine-glass-case/543P64090.html"
+   ]
+  },
+  {
+   "name": "Big Top 9.5 oz. Rocks / Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64122",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 281,
+   "capacity_as_stated": "9.5 oz.",
+   "height_mm": 79.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64122-024-big-top-9-25-oz-rocks-old-fashioned-glass-case/543P64122.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64122-024-big-top-9-25-oz-rocks-old-fashioned-glass-case/543P64122.html"
+   ]
+  },
+  {
+   "name": "Big Top 10.5 oz. Highball Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64132",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 146.0,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64132-024-big-top-10-25-oz-highball-glass-case/543P64132.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64132-024-big-top-10-25-oz-highball-glass-case/543P64132.html"
+   ]
+  },
+  {
+   "name": "Savage 11 oz. Highball Glass",
+   "series": null,
+   "designer": "Rémy Savage",
+   "model_code": "64135",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 146.0,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64135-024-savage-11-25-oz-highball-glass-case/543P64135.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64135-024-savage-11-25-oz-highball-glass-case/543P64135.html"
+   ]
+  },
+  {
+   "name": "Big Top 11.25 oz. Rocks / Double Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64142",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 333,
+   "capacity_as_stated": "11.25 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64142-024-big-top-10-75-oz-rocks-double-old-fashioned-glass-case/543P64142.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64142-024-big-top-10-75-oz-rocks-double-old-fashioned-glass-case/543P64142.html"
+   ]
+  },
+  {
+   "name": "Big Top 12 oz. Highball Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64152",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 161.9,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64152-024-big-top-11-5-oz-highball-glass-case/543P64152.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64152-024-big-top-11-5-oz-highball-glass-case/543P64152.html"
+   ]
+  },
+  {
+   "name": "Savage 10 oz. Rocks / Old Fashioned Glass",
+   "series": null,
+   "designer": "Rémy Savage",
+   "model_code": "64154",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 296,
+   "capacity_as_stated": "10 oz.",
+   "height_mm": 79.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64154-024-savage-10-oz-rocks-old-fashioned-glass-case/543P64154.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64154-024-savage-10-oz-rocks-old-fashioned-glass-case/543P64154.html"
+   ]
+  },
+  {
+   "name": "Savor 12 oz. Whiskey Tasting Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64160",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 111.1,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-savor-from-steelite-international-12-oz-whiskey-tasting-glass-case/543P64160.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-savor-from-steelite-international-12-oz-whiskey-tasting-glass-case/543P64160.html"
+   ]
+  },
+  {
+   "name": "Big Top 15 oz. Highball Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "64162",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 444,
+   "capacity_as_stated": "15 oz.",
+   "height_mm": 177.8,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64162-024-big-top-14-5-oz-highball-glass-case/543P64162.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64162-024-big-top-14-5-oz-highball-glass-case/543P64162.html"
+   ]
+  },
+  {
+   "name": "Savage 8.75 oz. Tumbler",
+   "series": null,
+   "designer": "Rémy Savage",
+   "model_code": "64172",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-64172-024-savage-8-75-oz-water-glass-case/543P64172.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-64172-024-savage-8-75-oz-water-glass-case/543P64172.html"
+   ]
+  },
+  {
+   "name": "Reserva 7.25 oz. Taster Wine Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "66020",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 214,
+   "capacity_as_stated": "7.25 oz.",
+   "height_mm": 158.8,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-reserva-from-steelite-international-7-25-oz-taster-wine-glass-case/543P66020.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-reserva-from-steelite-international-7-25-oz-taster-wine-glass-case/543P66020.html"
+   ]
+  },
+  {
+   "name": "Climats 17 oz. Wine Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "66076",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 503,
+   "capacity_as_stated": "17 oz.",
+   "height_mm": 231.8,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-climats-16-75-oz-all-purpose-wine-glass-case/543P66076.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-climats-16-75-oz-all-purpose-wine-glass-case/543P66076.html"
+   ]
+  },
+  {
+   "name": "Mirage 14.5 oz. Wine Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "66092",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 429,
+   "capacity_as_stated": "14.5 oz.",
+   "height_mm": 200.0,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-mirage-from-steelite-international-14-5-oz-wine-glass-case/543P66092.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-mirage-from-steelite-international-14-5-oz-wine-glass-case/543P66092.html"
+   ]
+  },
+  {
+   "name": "Savor 10.5 oz. Martini Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "66114",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 184.1,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-savor-from-steelite-international-10-5-oz-martini-glass-case/543P66114.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-savor-from-steelite-international-10-5-oz-martini-glass-case/543P66114.html"
+   ]
+  },
+  {
+   "name": "Gintonica 20.5 oz. Gin and Tonic Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "66300",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 606,
+   "capacity_as_stated": "20.5 oz.",
+   "height_mm": 184.1,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-66300-024-vintage-19-75-oz-gin-and-tonic-glass-case/543P66300.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-66300-024-vintage-19-75-oz-gin-and-tonic-glass-case/543P66300.html"
+   ]
+  },
+  {
+   "name": "Reserva 8.25 oz. Martini Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67025",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 244,
+   "capacity_as_stated": "8.25 oz.",
+   "height_mm": 168.3,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-reserva-from-steelite-international-8-25-oz-martini-glass-case/543P67025.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-reserva-from-steelite-international-8-25-oz-martini-glass-case/543P67025.html"
+   ]
+  },
+  {
+   "name": "Apero 12 oz. Cocktail Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67043",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 190.5,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-apero-from-steelite-international-12-oz-cocktail-glass-case/543P67043.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-apero-from-steelite-international-12-oz-cocktail-glass-case/543P67043.html"
+   ]
+  },
+  {
+   "name": "Reserva 5.75 oz. Flute Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67076",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "5.75 oz.",
+   "height_mm": 228.6,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67076-024-reserva-5-75-oz-flute-glass-case/543P67076.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67076-024-reserva-5-75-oz-flute-glass-case/543P67076.html"
+   ]
+  },
+  {
+   "name": "Reserva 26.5 oz. Wine Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67080",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 784,
+   "capacity_as_stated": "26.5 oz.",
+   "height_mm": 254.0,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-reserva-from-steelite-international-26-5-oz-wine-glass-case/543P67080.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-reserva-from-steelite-international-26-5-oz-wine-glass-case/543P67080.html"
+   ]
+  },
+  {
+   "name": "Refine 11.25 oz. White Wine Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67090",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 333,
+   "capacity_as_stated": "11.25 oz.",
+   "height_mm": 190.5,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67090-024-refine-10-75-oz-white-wine-glass-case/543P67090.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67090-024-refine-10-75-oz-white-wine-glass-case/543P67090.html"
+   ]
+  },
+  {
+   "name": "Refine 15.5 oz. All-Purpose Wine Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67091",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 458,
+   "capacity_as_stated": "15.5 oz.",
+   "height_mm": 215.9,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67091-024-refine-14-75-oz-all-purpose-wine-glass-case/543P67091.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67091-024-refine-14-75-oz-all-purpose-wine-glass-case/543P67091.html"
+   ]
+  },
+  {
+   "name": "Refine 21.5 oz. Red Wine Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67092",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 636,
+   "capacity_as_stated": "21.5 oz.",
+   "height_mm": 238.1,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67092-012-refine-20-25-oz-red-wine-glass-case/543P67092.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67092-012-refine-20-25-oz-red-wine-glass-case/543P67092.html"
+   ]
+  },
+  {
+   "name": "Refine 7 oz. Flute Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67094",
+   "glass": "flute",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 222.2,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67094-024-refine-6-75-oz-flute-glass-case/543P67094.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67094-024-refine-6-75-oz-flute-glass-case/543P67094.html"
+   ]
+  },
+  {
+   "name": "Refine 6 oz. Nick and Nora Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67095",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 149.2,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-refine-6-oz-nick-and-nora-glass-case/543P67095.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-refine-6-oz-nick-and-nora-glass-case/543P67095.html"
+   ]
+  },
+  {
+   "name": "Reserva 14.25 oz. Stemmed Beer Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67101",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 421,
+   "capacity_as_stated": "14.25 oz.",
+   "height_mm": 168.3,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-reserva-from-steelite-international-14-25-oz-stemmed-beer-glass-case/543P67101.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-reserva-from-steelite-international-14-25-oz-stemmed-beer-glass-case/543P67101.html"
+   ]
+  },
+  {
+   "name": "Hepburn 7 oz. Coupe Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67104",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67104-012-hepburn-6-5-oz-coupe-glass-pack/543P67104.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67104-012-hepburn-6-5-oz-coupe-glass-pack/543P67104.html"
+   ]
+  },
+  {
+   "name": "Primeur 8.5 oz. Coupe Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67105",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 146.0,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67105-012-primeur-8-oz-coupe-glass-case/543P67105.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67105-012-primeur-8-oz-coupe-glass-case/543P67105.html"
+   ]
+  },
+  {
+   "name": "Savage 4 oz. Pony Glass",
+   "series": null,
+   "designer": "Rémy Savage",
+   "model_code": "67276",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 118,
+   "capacity_as_stated": "4 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67276-024-savage-4-5-oz-pony-glass-case/543P67276.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67276-024-savage-4-5-oz-pony-glass-case/543P67276.html"
+   ]
+  },
+  {
+   "name": "Savage 6 oz. Coupetini Glass",
+   "series": null,
+   "designer": "Rémy Savage",
+   "model_code": "67286",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 177,
+   "capacity_as_stated": "6 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67286-024-savage-5-75-oz-coupetini-glass-case/543P67286.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67286-024-savage-5-75-oz-coupetini-glass-case/543P67286.html"
+   ]
+  },
+  {
+   "name": "Savage 7.5 oz. Coupe Glass",
+   "series": null,
+   "designer": "Rémy Savage",
+   "model_code": "67296",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 174.6,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67296-024-savage-7-5-oz-coupe-glass-case/543P67296.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67296-024-savage-7-5-oz-coupe-glass-case/543P67296.html"
+   ]
+  },
+  {
+   "name": "Big Top 9.5 oz. Coupe Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67306",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 281,
+   "capacity_as_stated": "9.5 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67306-024-big-top-8-oz-coupe-glass-case/543P67306.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67306-024-big-top-8-oz-coupe-glass-case/543P67306.html"
+   ]
+  },
+  {
+   "name": "Refine 18.5 oz. Wine Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "67316",
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 547,
+   "capacity_as_stated": "18.5 oz.",
+   "height_mm": 225.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-67316-024-refine-17-oz-all-purpose-wine-glass-case/543P67316.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-67316-024-refine-17-oz-all-purpose-wine-glass-case/543P67316.html"
+   ]
+  },
+  {
+   "name": "Hemingway 11 oz. Rocks / Double Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "68002",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 98.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-68002-024-hemingway-11-25-oz-rocks-double-old-fashioned-glass-case/543P68002.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-68002-024-hemingway-11-25-oz-rocks-double-old-fashioned-glass-case/543P68002.html"
+   ]
+  },
+  {
+   "name": "Hemingway 10.5 oz. Highball Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "68003",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-68003-024-hemingway-10-5-oz-highball-glass-case/543P68003.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-68003-024-hemingway-10-5-oz-highball-glass-case/543P68003.html"
+   ]
+  },
+  {
+   "name": "Wayne 8.75 oz. Rocks / Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "68174",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 259,
+   "capacity_as_stated": "8.75 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-68174-024-wayne-8-5-oz-rocks-old-fashioned-glass-case/543P68174.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-68174-024-wayne-8-5-oz-rocks-old-fashioned-glass-case/543P68174.html"
+   ]
+  },
+  {
+   "name": "Wayne 11.5 oz. Rocks / Old Fashioned Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "68184",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz.",
+   "height_mm": 98.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-68184-024-wayne-11-25-oz-rocks-double-old-fashioned-glass-case/543P68184.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-68184-024-wayne-11-25-oz-rocks-double-old-fashioned-glass-case/543P68184.html"
+   ]
+  },
+  {
+   "name": "Wayne 12.75 oz. Highball Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "68194",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 377,
+   "capacity_as_stated": "12.75 oz.",
+   "height_mm": 158.8,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-68194-024-wayne-12-25-oz-highball-glass-case/543P68194.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-68194-024-wayne-12-25-oz-highball-glass-case/543P68194.html"
+   ]
+  },
+  {
+   "name": "Hemingway 55 oz. Glass Ice Bucket",
+   "series": null,
+   "designer": null,
+   "model_code": "68308",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 1627,
+   "capacity_as_stated": "55 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/nude-hemingway-55-oz-glass-ice-bucket-case/543P68308.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/nude-hemingway-55-oz-glass-ice-bucket-case/543P68308.html"
+   ]
+  }
+ ]
+}

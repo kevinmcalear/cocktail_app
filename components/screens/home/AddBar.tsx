@@ -4,8 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, DsText, Field, GlassButton, Headline, PressableScale, Sheet, SheetScrollView, Title, useDs, useSheetClose } from '@/components/ds';
 import { layout, radius, space } from '@/constants/tokens';
-import { DuplicateVenueError, useAddressSearch, useAddVenue, type AddedVenue } from '@/hooks/useDiscover';
+import { PickList, splitNear } from '@/components/search/NearPicks';
+import { DuplicateVenueError, useAddressSearch, useAddVenue, useDebounced, type AddedVenue } from '@/hooks/useDiscover';
+import { usePublicBars } from '@/hooks/useRankings';
 import { ADDRESS_MIN_CHARS, type VenueAddress } from '@/lib/nearMe';
+import { sameName } from '@/lib/sameName';
 
 interface AddBarFormProps {
   /** What they searched for, as a starting name. */
@@ -14,6 +17,8 @@ interface AddBarFormProps {
   onCancel?: () => void;
   /** Offered when the bar turns out to be on Cocktail already. */
   onOpenExisting?: (profileId: string) => void;
+  /** The button: "Add bar", or "Set it up" for an owner adding their own. */
+  submitLabel?: string;
 }
 
 /**
@@ -21,13 +26,17 @@ interface AddBarFormProps {
  * (so it lands on the map). It goes up public and unclaimed; the bar can
  * claim it later and moderators can fix or remove it.
  */
-export function AddBarForm({ initialName = '', onAdded, onCancel, onOpenExisting }: AddBarFormProps) {
+export function AddBarForm({ initialName = '', onAdded, onCancel, onOpenExisting, submitLabel = 'Add bar' }: AddBarFormProps) {
   const ds = useDs();
   const [name, setName] = useState(initialName);
   const [search, setSearch] = useState('');
   const [address, setAddress] = useState<VenueAddress | null>(null);
   const found = useAddressSearch(address ? '' : search);
   const add = useAddVenue();
+  // Already here by that name, or one spelled close ("lanturn room": The Lantern Room): use its page instead.
+  const settled = useDebounced(name.trim(), 300);
+  const [named, close] = splitNear(usePublicBars(onOpenExisting && !address ? settled : '', { near: true }).data ?? []);
+  const here = [...named.filter((b) => sameName(b.display_name, settled)), ...close].map((b) => ({ id: b.id, label: [b.display_name, b.locality || b.city].filter(Boolean).join(' · '), near: b.near }));
   const dupe = add.error instanceof DuplicateVenueError ? add.error : null;
 
   const pick = (a: VenueAddress) => {
@@ -61,6 +70,12 @@ export function AddBarForm({ initialName = '', onAdded, onCancel, onOpenExisting
   return (
     <View style={styles.form}>
       <Field label="Bar name" value={name} onChangeText={setName} placeholder="Harbour Room" maxLength={80} autoCorrect={false} />
+      {here.length && onOpenExisting ? (
+        <>
+          <Caption tone="muted">Is it already here? Tap it to use its page.</Caption>
+          <PickList rows={here} empty="" onPick={onOpenExisting} />
+        </>
+      ) : null}
       {address ? (
         <View style={[styles.chosen, { backgroundColor: ds.c.raised }]}>
           <View style={styles.flex}>
@@ -97,7 +112,7 @@ export function AddBarForm({ initialName = '', onAdded, onCancel, onOpenExisting
       <Caption tone="muted">It shows to everyone as not claimed yet, until the bar claims it.</Caption>
       <View style={styles.actions}>
         {onCancel ? <Button label="Cancel" variant="ghost" onPress={onCancel} /> : null}
-        <Button label={add.isPending ? 'Adding…' : 'Add bar'} disabled={!address || !name.trim() || add.isPending} onPress={submit} />
+        <Button label={add.isPending ? 'Adding…' : submitLabel} disabled={!address || !name.trim() || add.isPending} onPress={submit} />
       </View>
     </View>
   );

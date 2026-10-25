@@ -1,16 +1,20 @@
+import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Caption, DsText, Field, Headline, SketchTintPicker, Spec, Surface, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Caption, DsText, Field, Headline, PressableScale, SketchTintPicker, Spec, Surface, Title, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
-import { radius, space } from '@/constants/tokens';
+import { fontFamilies, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { balanceOf, fixesFor, tasteWord } from '@/lib/balance';
 import { formatPct, margin } from '@/lib/costing';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { menuNote } from '@/lib/menuNote';
+import { recipesToFinish } from '@/lib/prepKinds';
 import { formatMoney, priceMinor } from '@/lib/money';
 import type { DraftLook } from '@/lib/sketch/draft';
+import { useMakingKit } from '@/hooks/useBarKit';
 import { useMenuDrinkSpecs } from '@/hooks/useDrinkDesk';
+import { equipmentById } from '@/lib/techniques';
 import type { PricingSettings } from '@/hooks/usePricing';
 
 import { inputsFor } from './SketchHeader';
@@ -39,6 +43,7 @@ export function DeskDrinkCard({ draft, look, seed, onTint }: { draft: WizardDraf
             {name}
           </Title>
           {what ? <Body color={ds.c.sketchInk}>{what.charAt(0).toUpperCase() + what.slice(1)}</Body> : <Caption color={ds.c.sketchInk}>Draws itself as you write the spec.</Caption>}
+          {what ? <Caption color={withAlpha(ds.c.sketchInk, 0.7)} style={styles.guests}>What guests see</Caption> : null}
         </View>
       </View>
       {/* On paper: the light scheme's ink, so the picked swatch's ring shows. */}
@@ -72,7 +77,8 @@ export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly Wizar
         <Caption tone="muted">{lines.length ? 'Not enough we know in it yet to say.' : 'Fills in as you add ingredients.'}</Caption>
       ) : (
         <>
-          {balance.hint ? <Headline>{balance.hint}</Headline> : null}
+          {/* What guests would taste (m07, 24 Oct 2026); the balance hint stays as the reason for the fixes. */}
+          <Headline style={styles.words}>{balance.words}</Headline>
           {DIMS.map(([dim, label]) => {
             const word = tasteWord(dim, balance[dim]);
             // Lit as the word reads: "none" is no segment, anything more at least one.
@@ -91,6 +97,7 @@ export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly Wizar
               </View>
             );
           })}
+          {balance.hint ? <Caption tone="muted">{balance.hint}</Caption> : null}
           {fixes.length ? (
             <View role="group" aria-label="To balance it" style={styles.chips}>
               {fixes.map((name) => (
@@ -108,6 +115,49 @@ export function DeskTaste({ lines, ingredients, onAdd }: { lines: readonly Wizar
 function tasteParts(lines: readonly WizardLine[], ingredients: readonly CatalogIngredient[]) {
   const byId = new Map(ingredients.map((i) => [i.id, i]));
   return lines.map((l) => ({ name: l.name, genericName: (l.id && byId.get(byId.get(l.id)?.generic_id ?? '')?.name) || null, amount: amountOf(l.amount), unit: l.unit || null }));
+}
+
+/** Recipes still to finish in the drink, down through the ones inside (make-anything-steps-1, step 4; steps-3, step 9), and the one open now. */
+export function DeskToFinish({ lines, making }: { lines: readonly WizardLine[]; making: string | null }) {
+  const left = recipesToFinish(lines).filter((t) => !(t.depth === 0 && t.name === making));
+  if (!left.length && !making) return null;
+  return (
+    <View style={styles.kit}>
+      <Eyebrow>Recipes to finish in this drink</Eyebrow>
+      {making ? <Caption>{`${making} · recipe being made`}</Caption> : null}
+      {left.map((t) => (
+        <Caption key={`${t.depth}:${t.name}`} tone="muted">{`${'  '.repeat(t.depth)}${t.name} · recipe to finish, ${t.at}`}</Caption>
+      ))}
+    </View>
+  );
+}
+
+/** While a recipe is written under its line (make-anything-steps-1, step 4, more to it): the kit its ways are checked against, and where to change it. */
+export function DeskKit({ bar }: { bar: { id: string; name: string } | null }) {
+  const ds = useDs();
+  const router = useRouter();
+  const { kit, where, edit } = useMakingKit(bar);
+  // A tool the library doesn't list (a venue's "ice-ball-press") reads as words.
+  const names = [...(kit ?? [])].map((id) => equipmentById(id)?.name ?? id.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase()));
+  return (
+    <View style={styles.kit}>
+      <Eyebrow>{`Your kit, from ${where}`}</Eyebrow>
+      <View style={styles.kitList}>
+        {names.length
+          ? names.map((n) => (
+              <View key={n} style={[styles.kitTag, { borderColor: ds.c.lineStrong }]}>
+                <Caption>{n}</Caption>
+              </View>
+            ))
+          : <Caption tone="muted">Nothing on it yet: every way shows, dimmed until you add its kit.</Caption>}
+      </View>
+      {edit ? (
+        <PressableScale role="link" onPress={() => router.push(edit as never)} accessibilityLabel="Change your kit" style={styles.kitEdit}>
+          <Body tone="accent">Change your kit</Body>
+        </PressableScale>
+      ) : null}
+    </View>
+  );
 }
 
 /** On the way to a menu: how the drink sits among its others ("On Winter menu it’s the lightest drink, and the only sherry one"). */
@@ -179,12 +229,18 @@ export function DeskCost({ lines, pricing, price, onPrice }: { lines: DeskCostLi
 }
 
 const styles = StyleSheet.create({
+  kit: { gap: space.sm },
+  kitList: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  kitTag: { paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth },
+  kitEdit: { alignSelf: 'flex-start', paddingVertical: space.xs },
   paper: { padding: space.lg, borderRadius: radius.card + 6 },
   drink: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   colour: { gap: space.xs, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },
   sketch: { width: 130, height: 160 },
   flex: { flex: 1 },
   card: { gap: space.sm },
+  words: { fontFamily: fontFamilies.instrument },
+  guests: { fontFamily: fontFamilies.mono, letterSpacing: 1, textTransform: 'uppercase' },
   meter: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   meterLabel: { width: 64 },
   meterWord: { width: 72 },

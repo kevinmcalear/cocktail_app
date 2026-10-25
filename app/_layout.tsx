@@ -131,10 +131,8 @@ function RootLayoutNav() {
               name="add-cocktail"
               options={{ presentation: "modal", headerShown: false }}
             />
-            <Stack.Screen
-              name="add-ingredient"
-              options={{ presentation: "modal", headerShown: false }}
-            />
+            <Stack.Screen name="add-ingredient" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="make-recipe" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen
               name="add-beer"
               options={{ presentation: "modal", headerShown: false }}
@@ -227,6 +225,7 @@ function RootLayoutNav() {
             <Stack.Screen name="menus/[id]/run-sheet/index" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/run-sheet/print" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/releases/[releaseId]" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/bar/[id]/kit/[kind]/[item]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
           {/* Over the page, beside the sidebar: Bring in's sheet, drop dialog and reading tray. */}

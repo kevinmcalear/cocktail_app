@@ -11,10 +11,14 @@ import type { SearchItem } from '@/types/search';
 
 import { itemHref } from './itemRoutes';
 import { itemIdOf } from './libraryFilters';
-import { nearMatcher, nearReason } from './nearName';
+import { nearest, nearMatcher, nearReason } from './nearName';
+import { sameName } from './sameName';
 import { searchItemHref } from './openSearchItem';
 
 export type NearKind = 'drink' | 'bar' | 'person' | 'ingredient';
+
+/** What a picker can ask public.search_near for: the search's kinds, and makers (20261114300000). */
+export type PickKind = NearKind | 'maker';
 
 /** A close name. Plain JSON. */
 export interface NearHit {
@@ -155,4 +159,27 @@ export function nearView(found: number, hits: readonly NearHit[]): NearView {
   const known = hits.filter((h) => h.known);
   if (known.length) return { kind: 'known', known, also: hits.filter((h) => !h.known) };
   return { kind: 'ask', best: hits[0], also: hits.slice(1) };
+}
+
+/** The drink a new drink's name is spelled close to (canvas 3A), and whose it is. */
+export interface NearNamePick {
+  id: string;
+  /** "Pale Moth". */
+  bar: string;
+  /** "Pale Moth · Collingwood", for the card's line. */
+  place: string;
+}
+
+/**
+ * Which drink the name step asks about: the venue's own close name first
+ * (its names, scored here), else the closest one a bar pours (search_near
+ * hits). Never one with the very name typed: the same-name card has those.
+ */
+export function nearNamePick(typed: string, ours: readonly { id: string; name: string }[] | undefined, hits: readonly NearHit[] | undefined, venueName: string | null): NearNamePick | null {
+  const own = ours ? nearest(typed, ours.filter((r) => !sameName(r.name, typed)), (r) => r.name, 1)[0] : undefined;
+  if (own) return { id: own.id, bar: venueName ?? '', place: venueName ?? '' };
+  const app = hits?.find((h) => h.kind === 'drink' && !sameName(h.name, typed));
+  if (!app) return null;
+  const place = app.caption ?? '';
+  return { id: app.spellingFor ?? app.id, bar: place.split(' · ')[0], place };
 }

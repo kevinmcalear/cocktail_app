@@ -1,7 +1,7 @@
 /**
- * "This is your bar. What next?" (board eddie-oct22-wave2, fix 15): the
- * first steps after venue setup. Which 20 classics to offer, the glasses
- * grouped the way the step lists them, and the one-line setup summary.
+ * The steps "Set up <bar>" opens in place (lib/setupChecklist.ts): which 20
+ * classics to offer, the glasses grouped the way the step lists them, the
+ * glasses held until the page is checked, and the brands step's groups.
  */
 
 /** How many classics the menu step offers. */
@@ -52,27 +52,6 @@ export function groupGlasses<T extends { series: string | null; maker: { display
   return groups;
 }
 
-/** "Set up · 3 invites sent · page private until it's checked": wave 1's summary in a line. */
-export function setupLine(p: { invites: number; claim: 'none' | 'pending' | 'approved'; waitingFiles: number }): string {
-  return [
-    'Set up',
-    p.invites ? (p.invites === 1 ? 'one invite sent' : `${p.invites} invites sent`) : null,
-    p.waitingFiles ? 'spec book being read' : null,
-    p.claim === 'pending' ? 'claim being checked' : p.claim === 'none' ? 'page private until it’s checked' : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-}
-
-/** "Cocktail Kingdom, Libbey": who makes the bar's glasses, first seen first. A catalog glass's maker is its model's. */
-export function glassMakers(
-  glasses: readonly { maker: string | null; maker_page: { display_name: string } | null; model?: { maker: { display_name: string } | null } | null }[],
-  max = 2
-): string {
-  const makers = [...new Set(glasses.map((g) => g.model?.maker?.display_name ?? g.maker_page?.display_name ?? g.maker).filter((m): m is string => !!m))];
-  return makers.length > max ? `${makers.slice(0, max).join(', ')} and more` : makers.join(', ');
-}
-
 /**
  * Glasses held on the device before the venue's page was checked, as they
  * go onto the page: each catalog glass once (one already there is `skip`),
@@ -104,12 +83,26 @@ export function heldNotOnPage<T extends { model_id?: string | null }>(held: read
   return held.filter((h) => !h.model_id || !onPage.some((g) => g.model_id === h.model_id));
 }
 
-/** The kinds the brands step starts from, as drawn: a title, and the catalog kinds under it. */
+/**
+ * The kinds the brands step starts from, as drawn (owner setup step 8, call
+ * 10): a whole back bar, one chip each. Vermouth covers sweet and dry; a
+ * bitter aperitivo sits under Liqueur.
+ */
 export const BRAND_GROUPS: readonly { title: string; kinds: readonly string[] }[] = [
-  { title: 'Mezcal', kinds: ['Mezcal'] },
   { title: 'Gin', kinds: ['Gin'] },
-  { title: 'Bitter and amaro', kinds: ['Bitter aperitivo', 'Amaro'] },
+  { title: 'Vodka', kinds: ['Vodka'] },
+  { title: 'Rum', kinds: ['Rum'] },
+  { title: 'Tequila', kinds: ['Tequila'] },
+  { title: 'Mezcal', kinds: ['Mezcal'] },
   { title: 'Whiskey', kinds: ['Whiskey'] },
+  { title: 'Brandy', kinds: ['Brandy'] },
+  { title: 'Vermouth', kinds: ['Vermouth'] },
+  { title: 'Amaro', kinds: ['Amaro'] },
+  { title: 'Liqueur', kinds: ['Liqueur'] },
+  { title: 'Bitters', kinds: ['Bitters'] },
+  { title: 'Wine', kinds: ['Wine'] },
+  { title: 'Beer', kinds: ['Beer'] },
+  { title: 'Non-alcoholic', kinds: ['Non-alcoholic spirit'] },
 ];
 
 /** "Any mezcal", "Any bitter aperitivo": the plain thing, when the brand doesn't matter. */
@@ -136,7 +129,13 @@ export function brandGroups<T extends { id: string; name: string | null; generic
 ): BrandGroup<T>[] {
   const byId = new Map(ingredients.map((i) => [i.id, i]));
   const fold = (s: string | null) => (s ?? '').trim().toLowerCase();
-  const kindByName = new Map(ingredients.filter((i) => i.ingredient_role !== 'product').map((i) => [fold(i.name), i]));
+  // A kind by its name; when two rows share one (a stray "Amaro" beside the real kind), the generic wins.
+  const kindByName = new Map<string, T>();
+  for (const i of ingredients) {
+    if (i.ingredient_role === 'product') continue;
+    const had = kindByName.get(fold(i.name));
+    if (!had || (had.ingredient_role !== 'generic' && i.ingredient_role === 'generic')) kindByName.set(fold(i.name), i);
+  }
   const groups: BrandGroup<T>[] = starts.map((s) => ({ title: s.title, kinds: s.kinds.map((k) => kindByName.get(fold(k))).filter((k): k is T => !!k), picked: [] }));
   const groupOf = new Map<string, BrandGroup<T>>();
   for (const g of groups) for (const k of g.kinds) groupOf.set(k.id, g);
