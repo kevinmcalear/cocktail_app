@@ -333,14 +333,13 @@ export function directionsUrl(place: BarPlace | null | undefined, apple: boolean
 export function guestBarGuess(name: string, description?: string | null): string | null {
   for (const text of [name, description?.split('\n')[0] ?? '']) {
     const m = /\b(?:from|at|of)\s+(.+)$/i.exec(text.trim());
-    const guess = m?.[1].replace(/[.,!:;)\s]+$/, '').trim();
-    if (guess && guess.length >= 2) return guess;
+    // Up to the next joining word or a break: "Pale Moth at Little Rye" is Pale Moth.
+    const guess = m?.[1].split(/\s+(?:at|from|of|on|with|for)\s+|\s[-–·|]\s|[.,!:;()]/i)[0].trim();
+    if (guess && guess.length >= 2 && !/^\d/.test(guess)) return guess;
   }
   return null;
 }
 
-/** Bar names as the same name: case, a leading "The" and spacing don't count. */
-export const sameBarName = (a: string, b: string) => {
-  const norm = (s: string) => s.toLowerCase().replace(/^the\s+/, '').replace(/\s+/g, ' ').trim();
-  return norm(a) === norm(b);
-};
+/** A bar's name to compare or search by: case, a leading "The" and spacing don't count. */
+export const barNameKey = (s: string) => s.toLowerCase().replace(/^the\s+/, '').replace(/\s+/g, ' ').trim();
+export const sameBarName = (a: string, b: string) => barNameKey(a) === barNameKey(b);

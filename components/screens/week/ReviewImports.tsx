@@ -9,7 +9,7 @@ import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useDropImport, useKeepImport, useLinkImportGuest, useNewFromCalendars, useReviewImports, useTeamWords, type ImportedEvent } from '@/hooks/useCalendars';
 import { useBarProfile, usePublicBars } from '@/hooks/useRankings';
-import { EVENT_KINDS, guestBarGuess, sameBarName } from '@/lib/week';
+import { barNameKey, EVENT_KINDS, guestBarGuess, sameBarName } from '@/lib/week';
 
 const WHO = [
   { value: 'team', label: 'Team only' },
@@ -147,7 +147,8 @@ export function ReviewImports() {
  */
 function GuestCreditLine({ event, host }: { event: ImportedEvent; host: string | null }) {
   const guess = event.guest_profile_id ? '' : (guestBarGuess(event.name, event.description) ?? '');
-  const { data: found = [] } = usePublicBars(guess);
+  // Searched without a leading "The", which a bar's page may leave off.
+  const { data: found = [] } = usePublicBars(barNameKey(guess));
   const linked = useBarProfile(null, event.guest_profile_id).data;
   const link = useLinkImportGuest();
   if (event.guest_profile_id) return linked ? <Caption tone="muted">{`Linked to ${linked.display_name}, so it’s credited.`}</Caption> : null;
@@ -157,6 +158,7 @@ function GuestCreditLine({ event, host }: { event: ImportedEvent; host: string |
     <View style={styles.credit}>
       <Caption style={styles.flex}>{`Link to ${bar.display_name} so it’s credited?`}</Caption>
       <Button label="Link" variant="ghost" accessibilityLabel={`Link ${event.name} to ${bar.display_name}`} onPress={() => link.mutate({ id: event.id, profileId: bar.id })} disabled={link.isPending} />
+      {link.error ? <Caption tone="accent">{`Couldn’t link it: ${link.error.message}`}</Caption> : null}
     </View>
   );
 }
@@ -185,6 +187,6 @@ const styles = StyleSheet.create({
   quiet: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.card, borderWidth: 1, borderStyle: 'dashed' },
   dupeText: { flexGrow: 1, flexShrink: 1, flexBasis: 240, minWidth: 0 },
   dupeActions: { flexDirection: 'row', gap: space.xs },
-  credit: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  credit: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
 });

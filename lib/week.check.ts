@@ -128,6 +128,9 @@ assert.equal(guestBarGuess('Mara Q. from The Lantern Room'), 'The Lantern Room')
 assert.equal(guestBarGuess('Guest shift', 'Mara Q. at Pale Moth.\nWalk-ins only'), 'Pale Moth');
 assert.equal(guestBarGuess('Pale Moth × Little Rye'), null, 'x names the host as often as the guest');
 assert.equal(guestBarGuess('Mara Q. guest shift'), null);
+assert.equal(guestBarGuess('Mara from Pale Moth at Little Rye'), 'Pale Moth');
+assert.equal(guestBarGuess('Guest shift at 9pm'), null);
+assert.equal(guestBarGuess('Mara Q. (from Pale Moth)'), 'Pale Moth');
 assert.equal(guestBarGuess('Staff training'), null);
 assert.ok(sameBarName('The Lantern Room', 'lantern  room'));
 assert.ok(!sameBarName('Lantern Room', 'Lantern Rooms'));
