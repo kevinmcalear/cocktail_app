@@ -5120,6 +5120,38 @@ export type Database = {
           },
         ]
       }
+      venue_join_requests: {
+        Row: {
+          bar_id: string
+          created_at: string
+          declined_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bar_id: string
+          created_at?: string
+          declined_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Update: {
+          bar_id?: string
+          created_at?: string
+          declined_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_join_requests_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venue_level_overrides: {
         Row: {
           bar_id: string
@@ -5615,6 +5647,7 @@ export type Database = {
       accept_profile_position: {
         Args: { p_id: string }
         Returns: {
+          added_in_app: boolean
           bar_accepted: boolean
           bar_profile_id: string
           created_at: string
@@ -5735,6 +5768,10 @@ export type Database = {
         }
       }
       am_i_moderator: { Args: never; Returns: boolean }
+      answer_join_request: {
+        Args: { p_accept: boolean; p_id: string }
+        Returns: undefined
+      }
       approve_profile_claim: {
         Args: { p_claim_id: string; p_code?: string }
         Returns: {
@@ -6527,6 +6564,17 @@ export type Database = {
       is_card_public: { Args: { p_item_id: string }; Returns: boolean }
       is_made_log_shown: { Args: { p_made_id: string }; Returns: boolean }
       is_spec_locked: { Args: { p_item_id: string }; Returns: boolean }
+      join_requests: {
+        Args: { p_bar_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          id: string
+          name: string
+          profile_handle: string
+          user_id: string
+        }[]
+      }
       maker_bottle_photos: {
         Args: { p_profile_id: string }
         Returns: {
@@ -6799,6 +6847,22 @@ export type Database = {
         Args: { p_item: string; p_lines: Json }
         Returns: undefined
       }
+      request_to_join_venue: {
+        Args: { p_bar_profile_id: string }
+        Returns: {
+          bar_id: string
+          created_at: string
+          declined_at: string | null
+          id: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "venue_join_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       resolve_ingredient: { Args: { p_name: string }; Returns: string }
       resolve_report: {
         Args: {
@@ -6980,6 +7044,7 @@ export type Database = {
           material: string | null
           model_code: string | null
           name: string
+          outline: Json | null
           product_url: string | null
           rim_mm: number | null
           series: string | null
