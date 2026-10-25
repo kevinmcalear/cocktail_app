@@ -120,6 +120,7 @@ describe("who can picture a maker's bottle", () => {
     assert.equal((await setPicture('brand', ids.gin, 'photo', ids.elsewhere)).error?.code, '22023');
     assert.equal((await setPicture('brand', ids.gin, 'photo', ids.rossoPhoto)).error?.code, '22023');
     assert.equal((await setPicture('brand', ids.gin, 'photo')).error?.code, '22023', 'Photo with no photo yet');
+    assert.equal((await setPicture('brand', ids.gin, 'drawing', ids.ginPhoto)).error?.code, '22023', 'a new photo with Drawing');
   });
 });
 

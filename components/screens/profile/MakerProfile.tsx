@@ -32,7 +32,7 @@ export function MakerProfile({ profile, columns }: { profile: Profile; columns: 
   const router = useRouter();
   const signedIn = useSignedIn();
   const unclaimed = isUnclaimed(profile);
-  const onTeam = useOnMakerTeam(profile.bar_id);
+  const { onTeam } = useOnMakerTeam(profile.bar_id);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
   const serves = servesLine(profile.serves);
   // Bottles for a bottle house, credited drinks for an ice or glass maker; both when it makes both.

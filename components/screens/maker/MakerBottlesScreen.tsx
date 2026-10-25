@@ -36,7 +36,7 @@ function Page({ profileRef, welcome }: { profileRef: string; welcome: boolean })
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const { data: profile, isLoading } = useProfile(profileRef);
-  const onTeam = useOnMakerTeam(profile?.bar_id);
+  const { onTeam, loading: teamLoading } = useOnMakerTeam(profile?.bar_id);
   const { data: bottles = [], isLoading: bottlesLoading } = useMakerBottles(profile?.id);
   const { data: photos = {} } = useMakerBottlePhotos(profile?.id, onTeam);
   const { data: uses = {} } = useBottleUses(bottles.map((b) => b.id));
@@ -48,7 +48,7 @@ function Page({ profileRef, welcome }: { profileRef: string; welcome: boolean })
   const back = () => (router.canGoBack() ? router.back() : router.replace(`/p/${profileRef}` as Href));
 
   const body = (() => {
-    if (isLoading) return <Caption tone="muted">Loading…</Caption>;
+    if (isLoading || teamLoading) return <Caption tone="muted">Loading…</Caption>;
     if (!profile || profile.kind !== 'maker') return <Body tone="muted">There’s no maker page here.</Body>;
     if (!onTeam) return <Body tone="muted">{`Only ${profile.display_name}’s own team can add photos of its bottles.`}</Body>;
     return (

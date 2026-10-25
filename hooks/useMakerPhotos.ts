@@ -13,9 +13,9 @@ export interface MakerBottlePhoto {
 }
 
 /** Whether you're on the team that runs this maker page (Drink Creator and up, as set_maker_bottle_picture checks). */
-export function useOnMakerTeam(barId: string | null | undefined): boolean {
-  const { data: bars } = useBars();
-  return !!barId && !!bars?.some((b) => b.bar_id === barId && b.role_level >= 35);
+export function useOnMakerTeam(barId: string | null | undefined): { onTeam: boolean; loading: boolean } {
+  const { data: bars, isPending } = useBars();
+  return { onTeam: !!barId && !!bars?.some((b) => b.bar_id === barId && b.role_level >= 35), loading: !!barId && isPending };
 }
 
 /** The team's photos on its bottles, waiting ones included, by bottle id. Empty for anyone off the team. */
@@ -69,7 +69,7 @@ export function useSetMakerBottlePicture(profileId: string) {
       if (error) throw new Error(error.code === '42501' ? "Only the maker's own team can change this bottle's picture." : "Couldn't save its picture.");
     },
     onSuccess: async (_, { itemId }) => {
-      await Promise.all([qc.invalidateQueries({ queryKey: ['maker-bottle-photos', profileId] }), forgetIngredientChain(qc, itemId)]);
+      await Promise.all([qc.invalidateQueries({ queryKey: ['maker-bottle-photos', profileId] }), qc.invalidateQueries({ queryKey: ['ingredient', itemId] }), forgetIngredientChain(qc, itemId)]);
     },
   });
 }
@@ -85,11 +85,11 @@ export interface WaitingMakerPhoto {
 }
 
 /** Moderators: bottle photos waiting for a check, oldest first. Empty for everyone else. */
-export function useMakerPhotosWaiting() {
+export function useMakerPhotosWaiting(enabled = true) {
   const userId = useUserId();
   return useQuery({
     queryKey: ['maker-photos-waiting', userId],
-    enabled: !!userId,
+    enabled: !!userId && enabled,
     // A moderation queue: always refetch rather than trust the persisted cache.
     staleTime: 0,
     queryFn: async (): Promise<WaitingMakerPhoto[]> => {
@@ -109,7 +109,12 @@ export function useCheckMakerPhoto() {
       if (error) throw error;
     },
     onSuccess: async (_, { itemId }) => {
-      await Promise.all([qc.invalidateQueries({ queryKey: ['maker-photos-waiting'] }), qc.invalidateQueries({ queryKey: ['maker-bottle-photos'] }), forgetIngredientChain(qc, itemId)]);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['maker-photos-waiting'] }),
+        qc.invalidateQueries({ queryKey: ['maker-bottle-photos'] }),
+        qc.invalidateQueries({ queryKey: ['ingredient', itemId] }),
+        forgetIngredientChain(qc, itemId),
+      ]);
     },
   });
 }

@@ -128,6 +128,9 @@ BEGIN
     IF p_picture = 'none' THEN
         RAISE EXCEPTION 'A bottle shows its drawing or a photo.' USING ERRCODE = '22023';
     END IF;
+    IF p_image_id IS NOT NULL AND p_picture <> 'photo' THEN
+        RAISE EXCEPTION 'A new photo comes with Photo.' USING ERRCODE = '22023';
+    END IF;
     SELECT maker_profile_id INTO v_maker FROM public.items WHERE id = p_item_id;
 
     IF p_image_id IS NOT NULL THEN

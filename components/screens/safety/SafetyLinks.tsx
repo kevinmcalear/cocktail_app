@@ -32,7 +32,7 @@ export function SafetyLinks({ row }: { row: (props: LinkRowProps) => ReactNode }
   // Only moderators can read other people's claims (RLS), so this is 0 for everyone else.
   const claimCount = usePendingClaims().data?.length ?? 0;
   // Likewise: only moderators get waiting bottle photos back.
-  const photoCount = useMakerPhotosWaiting().data?.length ?? 0;
+  const photoCount = useMakerPhotosWaiting(isModerator).data?.length ?? 0;
   const go = (path: string) => () => router.push(path as Href);
   return (
     <>
