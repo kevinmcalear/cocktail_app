@@ -18,12 +18,14 @@ import { FILTER_DOCK, FilterDock, PinnedTitle, type FilterSet } from '@/componen
 import { LibraryEmpty } from '@/components/screens/library/LibraryEmpty';
 import { LibraryPanes } from '@/components/screens/library/LibraryPanes';
 import { LibraryTile } from '@/components/screens/library/LibraryTile';
+import { NearResults } from '@/components/search/NearResults';
 import { SearchField } from '@/components/search/SearchField';
 import { SwapSheet } from '@/components/screens/library/SwapSheet';
 import { layout, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useDrinkLists } from '@/hooks/useDiscover';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { usePricedItemIds } from '@/hooks/usePricing';
@@ -31,7 +33,8 @@ import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import { useStaffList } from '@/hooks/useStaffList';
 import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { venueContextIds } from '@/lib/barContextFilter';
-import { itemHref, type ItemCategory } from '@/lib/itemRoutes';
+import { itemHref, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
+import { capitalize } from '@/lib/stringUtils';
 import { matchesQuery } from '@/lib/publicDrinks';
 import { BATCHED_STYLES, DRINK_CATEGORIES, filterGroups, itemIdOf, menuDrinks, methodWord, parseShow, PREP_GROUPS, splitFilters, tileLine, TYPE_FILTERS, type Show } from '@/lib/libraryFilters';
 import { usePrepFacts, useVenueShelves } from '@/hooks/useVenueShelves';
@@ -43,6 +46,8 @@ import { usePrefetchCocktail } from '@/hooks/useCocktails';
 const StaffList = lazy(() => import('@/components/screens/library/StaffList').then((m) => ({ default: m.StaffList })));
 
 const COLUMNS = { phone: 2, tablet: 3, desktop: 5 } as const;
+const NO_IDS: string[] = [];
+const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person', 'ingredient'] } as const;
 
 /**
  * Library: the venue's spec book. All its drinks, Classics (the staff list,
@@ -141,6 +146,8 @@ export function LibraryScreen() {
   const kind = show === 'preps' ? prepKinds.find((g) => g.value === params.kind) : undefined;
   const inView = lists[show].filter((i) => !kind || prepFacts[i.id]?.group === kind.group);
   const shown = inView.filter((i) => !q || matchesQuery(i, q)).sort((a, b) => a.name.localeCompare(b.name));
+  const shownIds = useMemo(() => shown.map((i) => i.id), [shown]);
+  const { data: classicList } = useDrinkLists();
   // "Stirred · Coupe"; R&D adds the collection; beer and wine say what they are; preps what was done, yield and keeps.
   const glassName = (i: SearchItem) => (i.glassware_id ? (specs?.glassware.find((g) => g.id === i.glassware_id)?.name ?? null) : null);
   const rndOf = useMemo(() => new Map(byMenu.rndMenus.flatMap((m) => m.itemIds.map((id) => [id, m.name] as const))), [byMenu]);
@@ -221,10 +228,13 @@ export function LibraryScreen() {
   );
 
   const found = find.trim();
-  const empty = venuesLoading || isLoading ? null : q ? <Caption tone="muted">{`Nothing here called “${found}”.`}</Caption> : <LibraryEmpty barId={activeId} noDrinks={!published.length} canAdd={canEdit} />;
+  // Did you mean (whole-app canvas, Search page): nothing here asks about the closest name, here or everywhere; "No" adds it here.
+  const ask = <NearResults query={found} found={0} shown={NO_IDS} yours={inView} yoursCaption="Here" classics={classicList} server={EVERYWHERE} title={`Nothing here called “${found}”`} miss={<Caption tone="muted">{`Nothing here called “${found}”.`}</Caption>} add={canEdit ? { label: `add ${capitalize(found)}`, onPress: () => router.push(newDrinkHref(capitalize(found), activeId) as never) } : undefined} />;
+  const empty = venuesLoading || isLoading ? null : q ? ask : <LibraryEmpty barId={activeId} noDrinks={!published.length} canAdd={canEdit} />;
   // Past this list: the one search, everywhere, with what was typed.
   const foot = q ? (
     <View style={styles.foot}>
+      {shown.length ? <NearResults query={found} found={shown.length} shown={shownIds} yours={inView} yoursCaption="Here" title="" miss={null} /> : null}
       <Button label={`Search everywhere for “${found}”`} icon="magnifyingglass" variant="secondary" onPress={() => openSearch({ query: found, scope: 'everywhere' })} />
     </View>
   ) : null;

@@ -6822,6 +6822,27 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      search_near: {
+        Args: {
+          p_city?: string
+          p_country_code?: string
+          p_kinds?: string[]
+          p_latitude?: number
+          p_limit?: number
+          p_longitude?: number
+          p_query: string
+          p_radius_km?: number
+        }
+        Returns: {
+          handle: string
+          id: string
+          kind: string
+          known: boolean
+          name: string
+          place: string
+          score: number
+        }[]
+      }
       set_content_hidden: {
         Args: {
           p_hidden: boolean

@@ -25,7 +25,7 @@ import { countryName } from '@/lib/countries';
 import { findCities, findDrinks, foldName, type City } from '@/lib/discover';
 import { barInArea, distanceKm, findBars, type DiscoverBar } from '@/lib/discoverDrinks';
 import { isStrong } from '@/lib/discoverMatch';
-import { findKinds, kindCaption, STYLES } from '@/lib/drinkStyles';
+import { findKinds, kindCaption, STYLES, styleTakesIn } from '@/lib/drinkStyles';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { areaLabel, formatDistance, usesMiles, type Area } from '@/lib/nearMe';
@@ -33,13 +33,17 @@ import { openSearchItem } from '@/lib/openSearchItem';
 import { completions, groupCatalog, shows, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 import { foldIntoClassics, gatherVariations } from '@/lib/servedAt';
 import { capitalize } from '@/lib/stringUtils';
+import type { SearchItem } from '@/types/search';
 
 import { BrowseChips, ClassicRow, StyleCard } from './ClassicRow';
+import { NearResults } from './NearResults';
 import { BarResultRow, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
 
 const ANYWHERE: Area = { kind: 'anywhere' };
 const NO_IDS: string[] = [];
+const NEAR_ALL = ['drink', 'bar', 'person', 'ingredient'] as const;
+const NEAR_AREA = ['drink', 'bar', 'person'] as const;
 
 interface PublicResultsProps {
   query: string;
@@ -65,6 +69,8 @@ interface PublicResultsProps {
   onShowBar?: (barId: string | null) => void;
   /** Discover: a city the search names moves the area there. Elsewhere it opens Discover on it. */
   onPlace?: (city: City) => void;
+  /** The place searched first found nothing (MineResults): its card leads, and Did you mean takes its title, add and drinks. */
+  head?: { title: string; card: ReactNode; add?: { label: string; onPress: () => void }; yours: readonly SearchItem[]; yoursCaption: string };
 }
 
 /**
@@ -75,7 +81,7 @@ interface PublicResultsProps {
  * ends with its score (b02) and lights the searched word. Bars' drinks need
  * an account; the rest is public.
  */
-export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, onCounts, typeAhead, onAddBar, onShowBar, onPlace }: PublicResultsProps) {
+export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, mine, show, onCounts, typeAhead, onAddBar, onShowBar, onPlace, head }: PublicResultsProps) {
   const router = useRouter();
   const signedIn = useSignedIn();
   const q = query.trim();
@@ -227,6 +233,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
     <ResultGroup key="ingredients" label="Ingredients" items={ingredients} render={(i) => <ResultRow key={i.id} title={i.name} ingredient={{ id: i.id }} query={q} matchLook={look} onPress={() => router.push(itemHref('Ingredient', i.id) as never)} />} />
   );
 
+  const miss = signedIn ? <>{<Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption>}{!results.isLoading && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}</> : null;
   // Each door's order, as its board draws it.
   let groups: ReactNode[];
   if (onKind && area) {
@@ -253,6 +260,7 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
   return (
     <View style={styles.results}>
       {typeAhead ? <Completions query={q} names={finish} onPick={typeAhead} /> : null}
+      {head && (found || results.isLoading) ? head.card : null}
       {/* A place the search names leads everything, as a map search reads it. */}
       {shows(show, 'bars') ? placeGroup : null}
       {top ? (
@@ -278,17 +286,11 @@ export function PublicResults({ query, area, kinds = [], onKind, onEverywhere, m
       <ResultGroup label="Filter by" items={onKind ? named.filter((k) => k !== style) : []} render={(k) => <ResultRow key={k.id} title={k.label} caption={kindCaption(k.id)} icon="line.3.horizontal.decrease" onPress={() => onKind?.(k.id)} />} />
       {!signedIn ? <ListNote>Sign in to search the drinks bars pour.</ListNote> : null}
       {shown}
-      {!found && signedIn ? <Caption tone="muted">{results.isLoading ? 'Searching…' : `Nothing ${where} called “${q}”.`}</Caption> : null}
-      {!found && signedIn && !results.isLoading && onAddBar ? <AddBarPrompt onPress={onAddBar} /> : null}
+      {/* Did you mean (1B), or the close names last (1C). While the search is out, nothing is asked yet. */}
+      {results.isLoading && !found ? miss : <NearResults query={q} found={found} shown={[...drinks, ...bars, ...(people ?? []), ...classics, ...ingredients, ...yours].map((d) => d.id)} yours={head?.yours ?? (everywhere && atHome ? catalog.items : undefined)} yoursCaption={head?.yoursCaption} classics={everywhere ? classicList : undefined} server={{ area: area ?? ANYWHERE, kinds: everywhere ? NEAR_ALL : NEAR_AREA }} title={head?.title ?? `Nothing ${where} called “${q}”`} add={head?.add} matchLook={look} miss={<>{head?.card}{miss}</>} lead={head?.card} />}
       {area && onEverywhere ? <Button label={`Search everywhere for “${q}”`} variant="secondary" onPress={onEverywhere} /> : null}
     </View>
   );
-}
-
-/** "Gibsons, Vespers and riffs too": what a style takes in besides its name. */
-function styleTakesIn(id: string): string {
-  const rest = STYLES.find((s) => s.id === id)?.classics.slice(1, 3) ?? [];
-  return rest.length ? `${rest.map((c) => (c.endsWith('s') ? c : `${c}s`)).join(', ')} and riffs too` : 'and its riffs too';
 }
 
 const styles = StyleSheet.create({
