@@ -12,7 +12,6 @@ const mockSend = () => {
 
 jest.mock('@react-native-community/netinfo', () => jest.requireActual('@react-native-community/netinfo/jest/netinfo-mock'));
 jest.mock('@/hooks/useCocktails', () => ({ updateCocktailFn: () => mockSend(), deleteCocktailFn: () => mockSend() }));
-jest.mock('@/hooks/useIngredients', () => ({ updateIngredientFn: () => mockSend(), addIngredientFn: () => mockSend() }));
 
 /** The persisted cache blob, as the app's persister would save it. */
 function memoryPersister(): Persister & { saved: () => PersistedClient | undefined } {

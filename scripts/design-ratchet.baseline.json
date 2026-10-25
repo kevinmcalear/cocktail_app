@@ -4,13 +4,9 @@
     "components/BarAssignmentAccordion.tsx": 6,
     "components/CategoryTree.tsx": 2,
     "components/ErrorScreen.tsx": 14,
-    "components/ImageCarousel.tsx": 5,
-    "components/IngredientPickerSheet.tsx": 7,
     "components/auth/EmailLinkGate.tsx": 1,
     "components/drink/drinkImages.ts": 9,
-    "components/ui/AdaptiveSheetModal.tsx": 1,
     "components/ui/CustomIcons.tsx": 1,
-    "components/ui/GlassView.tsx": 3,
     "components/ui/PictureTag.tsx": 4,
     "components/ui/UserAvatar.tsx": 6,
     "hooks/useBarEditor.ts": 4,
@@ -18,14 +14,14 @@
     "hooks/useCocktailEditor.ts": 5,
     "hooks/useCocktails.ts": 1,
     "hooks/useDrafts.ts": 1,
-    "hooks/useIngredients.ts": 7,
+    "hooks/useIngredients.ts": 1,
     "hooks/useSearchCatalog.ts": 14,
     "lib/draftProgress.ts": 28,
-    "lib/drafts.ts": 16,
+    "lib/drafts.ts": 13,
     "lib/platformKeys.ts": 1,
     "lib/recipeUtils.ts": 2
   },
   "longFiles": {
-    "components/ui/CustomIcons.tsx": 500
+    "components/ui/CustomIcons.tsx": 484
   }
 }
