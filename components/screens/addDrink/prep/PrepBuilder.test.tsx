@@ -143,6 +143,20 @@ describe('PrepBuilder', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  test('on its own page (New › Something you make): your recipes, and Save it', async () => {
+    const onDone = jest.fn();
+    await renderWithTamagui(<PrepBuilder page name="" drinkName="" above={[]} ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
+    await laidOut();
+    expect(screen.getByRole('button', { name: 'Back to Your recipes' })).toBeTruthy();
+    expect(screen.getByText('SOMETHING YOU MAKE')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Honey syrup');
+    await fireEvent.press(screen.getByRole('radio', { name: /^Syrup, / }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save it' }));
+    expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ kind: 'syrup' }), 'Honey syrup');
+  });
+
   test('a clarified juice is its own kind, made the first way the kit covers', async () => {
     await open('Clarified grapefruit');
     expect(screen.getByRole('radio', { name: /^Clarified, /, checked: true })).toBeTruthy();
