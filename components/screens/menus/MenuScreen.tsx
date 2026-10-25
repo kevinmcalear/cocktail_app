@@ -87,7 +87,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const status = menuStatus(menu, now);
   const venue = venues.find((v) => v.id === menu.barId);
   const drinkCount = menu.sections.reduce((n, s) => n + s.drinks.length, 0);
-  // Its cover photo, or with none, its first drinks' own pictures (sketches where there's no photo).
+  // Every drink on the menu: the band's pictures, the NEW diff and the shelf count. Don't trim it for the band.
   const pictures = menu.sections.flatMap((s) => s.drinks);
   // Both modes open on the drink band (menus-one-look); paper is only for what guests see.
   const home = !menu.barId;
@@ -127,14 +127,14 @@ export function MenuScreen({ menuId }: { menuId: string }) {
               {sidebar ? <Crumbs trail={[home ? { label: 'Collection', href: '/collection' } : { label: 'Menus', href: '/menus/all' }]} /> : null}
               {/* A solid ground behind it: it sits on the photo, which can be light or dark. */}
               {home ? (
-                // A home menu isn't on a venue's calendar: its tag is its night.
+                // A home menu isn't on a venue's calendar: its tag is its night, tinted like the list's date tile (BandMenu).
                 <Tag label={homeNightTag(menu.menuDate, now)} tone={status === 'on' ? 'success' : status === 'upcoming' ? 'accent' : 'default'} dot={status === 'on'} style={{ backgroundColor: ds.c.ground }} />
               ) : (
                 <Tag label={[menu.kind === 'rnd' ? 'R&D' : STATUS_LABEL[status], menuDateLine(menu, now)].filter(Boolean).join(' ')} tone={STATUS_TONE[status]} dot={status === 'on'} style={{ backgroundColor: ds.c.ground }} />
               )}
               <Display>{menu.name}</Display>
               {home ? (
-                <HomeMeta itemIds={pictures.map((d) => d.id)} guests={menu.guestCount} />
+                <HomeMeta itemIds={pictures.map((d) => d.id)} drinks={drinkCount} guests={menu.guestCount} shared={!!menu.sharedAt} />
               ) : (
                 <Caption tone="muted">{[venue?.name, plural(drinkCount, 'drink'), plural(menu.sections.length, 'section')].filter(Boolean).join(' · ')}</Caption>
               )}
@@ -164,12 +164,12 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   );
 }
 
-/** "4 drinks, 3 you can make · 8 guests": a home menu's count, what your shelf makes, and who's coming. */
-function HomeMeta({ itemIds, guests }: { itemIds: string[]; guests: number | null }) {
+/** "4 drinks, 3 you can make · 8 guests": a home menu's count, what your shelf makes, who's coming, and whether a link is out. */
+function HomeMeta({ itemIds, drinks, guests, shared }: { itemIds: string[]; drinks: number; guests: number | null; shared: boolean }) {
   const bar = useMyBar();
-  const { ready, total } = shelfReady(itemIds, bar.canMakeIds, bar.oneAway);
-  const count = [plural(total, 'drink'), ready ? `${ready} you can make` : null].filter(Boolean).join(', ');
-  return <Caption tone="muted">{[count, guests ? plural(guests, 'guest') : null].filter(Boolean).join(' · ')}</Caption>;
+  const { ready } = shelfReady(itemIds, bar.canMakeIds, bar.oneAway);
+  const count = [plural(drinks, 'drink'), ready ? `${ready} you can make` : null].filter(Boolean).join(', ');
+  return <Caption tone="muted">{[count, guests ? plural(guests, 'guest') : null, shared ? 'Shared with a link' : null].filter(Boolean).join(' · ')}</Caption>;
 }
 
 const styles = StyleSheet.create({

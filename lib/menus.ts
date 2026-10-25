@@ -161,7 +161,7 @@ export function homeMenuLine(menu: { menuDate: string | null; guestCount: number
 
 /**
  * A home menu page's tag (menus-one-look BandMenu): "Tonight", "Tomorrow",
- * "Fri 31 Oct · in 7 days", "Fri 31 Oct" once past, or "No date yet".
+ * "Sat 31 Oct · in 7 days", "Sat 31 Oct" once past, or "No date yet".
  */
 export function homeNightTag(menuDate: string | null, now: number, locale?: string): string {
   if (!menuDate) return 'No date yet';
