@@ -1,33 +1,47 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { FILE, outlineProblem, readSeeds, render } from './glass-outlines';
-import { readSeed } from './glass-models';
+import { LOADS, outlineProblem, readSeeds, render } from './glass-outlines';
+import { hasSeed, LOADS as MODEL_LOADS, nameKey, readFills, readSeed } from './glass-models';
 
-// The migration is what the seeds generate.
-const file = readFileSync(FILE, 'utf8');
-assert.equal(render(), file, `${FILE} drifted from supabase/seeds/glass-outlines; run node --import tsx scripts/glass-outlines.ts`);
+// Each migration is what its seeds generate.
 const longDash = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`);
-assert.doesNotMatch(file, longDash, `${FILE} has a long dash`);
+for (const load of LOADS) {
+  const file = readFileSync(load.file, 'utf8');
+  assert.equal(render(load), file, `${load.file} drifted from ${load.dir}; run node --import tsx scripts/glass-outlines.ts`);
+  assert.doesNotMatch(file, longDash, `${load.file} has a long dash`);
+  assert.doesNotMatch(file, /AUDIT: pending/, `${load.file} ships without its audit`);
+}
 
-// Every outline names a catalog glass, once, and stores numbers, colours and a page only.
-const seeds = readSeeds();
+// Every outline names a catalog glass that exists when its load runs (rows and filled capacities from
+// the catalog loads before it), once across the loads, keyed as the database keys it; and it stores
+// numbers, colours and a page only.
 const seen = new Set<string>();
-const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-for (const s of seeds) {
-  let catalog: Set<string> | null = null;
-  try {
-    catalog = new Set(readSeed(s.maker).models.map((m) => `${key(m.name)}\0${m.capacity_ml ?? 0}`));
-  } catch {
-    // A maker whose rows were loaded from a migration that isn't generated from a seed.
+const seeded = new Set(MODEL_LOADS.flatMap((m) => (m.files ?? m.makers).filter(hasSeed).map((f) => readSeed(f).maker)));
+for (const load of LOADS) {
+  const before = MODEL_LOADS.filter((m) => m.file < load.file);
+  const fills = new Map(before.flatMap((m) => (m.fills ? readFills(m.fills).fills : [])).map((f) => [f.model_code, f.capacity_ml]));
+  const catalog = new Map<string, Set<string>>();
+  for (const m of before) {
+    for (const f of (m.files ?? m.makers).filter(hasSeed)) {
+      const seed = readSeed(f);
+      const rows = catalog.get(seed.maker) ?? new Set<string>();
+      for (const r of seed.models) rows.add(`${nameKey(r.name)}\0${r.capacity_ml ?? (r.model_code && fills.get(r.model_code)) ?? 0}`);
+      catalog.set(seed.maker, rows);
+    }
   }
-  for (const o of s.outlines) {
-    const k = `${s.maker}\0${key(o.name)}\0${o.capacity_ml ?? 0}`;
-    assert.ok(!seen.has(k), `${s.maker} ${o.name} twice`);
-    seen.add(k);
-    if (catalog) assert.ok(catalog.has(`${key(o.name)}\0${o.capacity_ml ?? 0}`), `${s.maker} ${o.name} ${o.capacity_ml} is not in its catalog seed`);
-    assert.equal(outlineProblem(o.outline), null, `${s.maker} ${o.name}`);
-    for (const v of Object.values(o.outline)) if (typeof v === 'string') assert.match(v, /^(https:\/\/\S+|#[0-9a-f]{6})$/);
+  for (const s of readSeeds(load.dir)) {
+    // A maker loaded by a migration that isn't generated from a seed has no rows here to check against.
+    const rows = catalog.get(s.maker);
+    assert.ok(rows || !seeded.has(s.maker), `${s.maker}'s glasses load after ${load.file}`);
+    for (const o of s.outlines) {
+      const k = `${s.maker}\0${nameKey(o.name)}\0${o.capacity_ml ?? 0}`;
+      assert.ok(!seen.has(k), `${s.maker} ${o.name} twice`);
+      seen.add(k);
+      if (rows) assert.ok(rows.has(`${nameKey(o.name)}\0${o.capacity_ml ?? 0}`), `${s.maker} ${o.name} ${o.capacity_ml} is not in the catalog before ${load.file}`);
+      assert.equal(outlineProblem(o.outline), null, `${s.maker} ${o.name}`);
+      for (const v of Object.values(o.outline)) if (typeof v === 'string') assert.match(v, /^(https:\/\/\S+|#[0-9a-f]{6})$/);
+    }
   }
 }
 

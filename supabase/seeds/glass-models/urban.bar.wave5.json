@@ -1,0 +1,95 @@
+{
+ "maker": "urban.bar",
+ "models": [
+  {
+   "name": "Verdot Crystal Stemmed Beer Glass 46cl",
+   "series": "Verdot",
+   "designer": null,
+   "model_code": "UB3245",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "46cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/verdot-crystal-stemmed-beer-glass-46cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/verdot-crystal-stemmed-beer-glass-46cl",
+    "https://www.urbanbar.com/collections/beer-glasses/products.json"
+   ]
+  },
+  {
+   "name": "Steel Tankard 45cl",
+   "series": "Steel Tankard",
+   "designer": null,
+   "model_code": "UB3923",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": "45cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "metal",
+   "product_url": "https://www.urbanbar.com/products/steel-tankard-45cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/steel-tankard-45cl",
+    "https://www.urbanbar.com/collections/beer-glasses/products.json"
+   ]
+  },
+  {
+   "name": "1910 Stemmed Beer Glass 46cl",
+   "series": "1910",
+   "designer": null,
+   "model_code": "UB4545",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "46cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-1910-stemmed-beer-glass-46cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-1910-stemmed-beer-glass-46cl",
+    "https://www.urbanbar.com/collections/beer-glasses/products.json"
+   ]
+  },
+  {
+   "name": "Ginza Tall Cuts Pilsner Glass 46cl",
+   "series": "Ginza",
+   "designer": null,
+   "model_code": "UB4832",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 460,
+   "capacity_as_stated": "46cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/crystal-ginza-tall-cuts-pilsner-glass-46cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/crystal-ginza-tall-cuts-pilsner-glass-46cl",
+    "https://www.urbanbar.com/collections/beer-glasses/products.json"
+   ]
+  },
+  {
+   "name": "Urbino Beer Glass 54cl",
+   "series": "Urbino",
+   "designer": null,
+   "model_code": "UB5425",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 540,
+   "capacity_as_stated": "54cl",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.urbanbar.com/products/urbino-beer-glass-54cl",
+   "source_urls": [
+    "https://www.urbanbar.com/products/urbino-beer-glass-54cl",
+    "https://www.urbanbar.com/collections/beer-glasses/products.json"
+   ]
+  }
+ ]
+}

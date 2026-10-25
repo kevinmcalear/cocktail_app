@@ -1,0 +1,56 @@
+{
+ "maker": "john.jenkins",
+ "models": [
+  {
+   "name": "Soho Tumbler OF",
+   "series": "Soho",
+   "designer": null,
+   "model_code": "106948",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "300ml / 11oz",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.johnjenkins.co.uk/soho-tumbler-of.html",
+   "source_urls": [
+    "https://www.johnjenkins.co.uk/soho-tumbler-of.html"
+   ]
+  },
+  {
+   "name": "Soho Tumbler HB",
+   "series": "Soho",
+   "designer": null,
+   "model_code": "107097",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": "350ml / 12oz",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.johnjenkins.co.uk/soho-tumbler-highball.html",
+   "source_urls": [
+    "https://www.johnjenkins.co.uk/soho-tumbler-highball.html"
+   ]
+  },
+  {
+   "name": "Soho Shot Glass",
+   "series": "Soho",
+   "designer": null,
+   "model_code": "107554",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 50,
+   "capacity_as_stated": "50ml / 2oz",
+   "height_mm": null,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.johnjenkins.co.uk/soho-shot-glass.html",
+   "source_urls": [
+    "https://www.johnjenkins.co.uk/soho-shot-glass.html"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,39 @@
+{
+ "maker": "sophienwald",
+ "models": [
+  {
+   "name": "Phoenix Blanc",
+   "series": "Phoenix",
+   "designer": null,
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "volume: 420 ml",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.sophienwald.com/en/collections/phoenix/sophienwald-phoenix-blanc-white-wine-glass",
+   "source_urls": [
+    "https://www.sophienwald.com/en/collections/phoenix/sophienwald-phoenix-blanc-white-wine-glass"
+   ]
+  },
+  {
+   "name": "Phoenix Bourgogne",
+   "series": "Phoenix",
+   "designer": null,
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 710,
+   "capacity_as_stated": "volume: 710 ml",
+   "height_mm": 225,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.sophienwald.com/en/collections/phoenix/sophienwald-phoenix-bourgogne-red-wine-glass",
+   "source_urls": [
+    "https://www.sophienwald.com/en/collections/phoenix/sophienwald-phoenix-bourgogne-red-wine-glass"
+   ]
+  }
+ ]
+}
