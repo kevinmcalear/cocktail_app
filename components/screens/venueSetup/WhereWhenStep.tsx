@@ -110,6 +110,9 @@ interface Props {
   /** Typed before there's a claim, kept with the setup. */
   held: HeldSetup | undefined;
   onHold: (change: HeldSetup) => void;
+  /** Making the venue as this step finishes failed. */
+  venueError?: string | null;
+  making?: boolean;
   onDone: () => void;
 }
 
@@ -120,7 +123,7 @@ interface Props {
  * there's a claim they're kept with the setup and go onto the claim when it's
  * sent (the last step).
  */
-export function WhereWhenStep({ profileId, name, claim, writable, held: kept, onHold, onDone }: Props) {
+export function WhereWhenStep({ profileId, name, claim, writable, held: kept, onHold, venueError, making, onDone }: Props) {
   const ds = useDs();
   const facts = useBarFacts(profileId).data;
   const profile = useProfile(profileId).data;
@@ -142,7 +145,7 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
   // A waiting claim's Instagram (typed into it, else kept from setup) goes on only where the page has none.
   const instagram = ig ?? (pending ? (pageIg ?? claim?.evidence?.typed?.instagram ?? claim?.setup?.instagram) : holding ? (kept?.instagram ?? pageIg) : pageIg) ?? '';
   const igProblem = instagramProblem(instagram);
-  const error = problem ?? (saveFacts.error ?? saveSetup.error ?? saveInstagram.error)?.message ?? null;
+  const error = problem ?? (saveFacts.error ?? saveSetup.error ?? saveInstagram.error)?.message ?? venueError ?? null;
 
   const save = (change: BarFactsChange) => {
     const withZone = change.hours && !facts?.timezone ? { ...change, timezone: deviceZone() } : change;
@@ -168,7 +171,7 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
   const address = facts ? [facts.address_line, facts.locality ?? facts.city].filter(Boolean).join(', ') : '';
 
   return (
-    <SetupPage footer={<SetupFooter label="Looks right" pending={saveInstagram.isPending} onPress={looksRight} skipLabel="Skip" onSkip={onDone} />}>
+    <SetupPage footer={<SetupFooter label="Looks right" pending={saveInstagram.isPending || making} onPress={looksRight} skipLabel="Skip" onSkip={onDone} />}>
       {/* The facts in one card (canvas make-venue-place, and the Instagram row from eddie-oct22-wave1). */}
       <View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
       <FactRow icon="mappin.and.ellipse" label="Address" canEdit={false} editing={false} onEdit={() => {}} editor={null}>
@@ -222,6 +225,11 @@ export function WhereWhenStep({ profileId, name, claim, writable, held: kept, on
             ? 'Change any of it later in Venue settings.'
             : `Kept with your setup. They go on ${name}’s page once we’ve checked it’s yours (the last step).`}
       </Caption>
+      {/* No role step for whoever sets the bar up (owner-setup call 4): one line says it. */}
+      <View style={[styles.admin, { backgroundColor: ds.c.raised }]}>
+        <DsText variant="body" style={styles.editLabel}>You’re the Admin</DsText>
+        <Caption tone="muted">The owner can do everything here, and can hand it over later in My team.</Caption>
+      </View>
     </SetupPage>
   );
 }
@@ -239,4 +247,5 @@ const styles = StyleSheet.create({
   times: { flexDirection: 'row', gap: space.md },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm },
   hoursRow: { flexDirection: 'row', gap: space.md },
+  admin: { gap: space.xs, padding: space.lg, borderRadius: radius.card, borderCurve: 'continuous' },
 });

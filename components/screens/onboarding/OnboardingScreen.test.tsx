@@ -80,7 +80,7 @@ async function named() {
 
 async function newCareer() {
   await named();
-  await fireEvent.press(screen.getByRole('button', { name: 'Yes, I work in hospitality' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at a bar' }));
   await fireEvent.press(screen.getByRole('button', { name: 'None of these' }));
 }
 
@@ -95,7 +95,7 @@ describe('OnboardingScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(mockSaveName).not.toHaveBeenCalled();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at home' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'I love drinks' }));
     expect(mockSaveName).toHaveBeenCalledWith({ name: 'Jo Juniper', handle: 'jo.juniper', profileId: null }, expect.anything());
     expect(screen.queryByText('Where do you work?')).toBeNull();
     expect(screen.getByText('What do you like to drink?')).toBeTruthy();
@@ -132,11 +132,11 @@ describe('OnboardingScreen', () => {
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
     expect(screen.getByText('Your handle is @jo.juniper. You can change it on You.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    expect(screen.getByText('Do you work in hospitality?')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Yes, I work in hospitality' }));
+    expect(screen.getByText('What brings you here?')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at a bar' }));
     expect(screen.getByText('Step 3 of 10')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
-    expect(screen.getByText('Do you work in hospitality?')).toBeTruthy();
+    expect(screen.getByText('What brings you here?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByLabelText('Name').props.value).toBe('Jo Juniper');
   });
@@ -146,7 +146,7 @@ describe('OnboardingScreen', () => {
     await renderWithTamagui(<OnboardingScreen />);
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at home' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'I love drinks' }));
     for (const [i, name] of ['Love it', 'Love it', 'Love it', 'Love it', 'Love it'].entries()) await fireEvent.press(screen.getAllByRole('radio', { name })[i]);
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
@@ -159,7 +159,7 @@ describe('OnboardingScreen', () => {
     // "This is me" on their page sent it (PersonClaimSheet); the find step then says so (find-yourself).
     mockPersonClaim = { id: 'c1', status: 'pending', profile: { id: 'existing', handle: 'jo.juniper', display_name: 'Jo Juniper' } };
     await named();
-    await fireEvent.press(screen.getByRole('button', { name: 'Yes, I work in hospitality' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at a bar' }));
     expect(screen.getByText('Claim sent') && screen.getByText('Step 3 of 6')).toBeTruthy(); // the claim skips the career steps
     await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
     expect(mockSaveName).not.toHaveBeenCalled();
@@ -254,7 +254,7 @@ describe('OnboardingScreen', () => {
     expect(mockSaveWork).toHaveBeenCalledWith({ personId: 'p1', barId: 'bp', title: 'Bartender' }, expect.anything());
 
     expect(await screen.findByText('Step 2 of 3')).toBeTruthy();
-    expect(screen.queryByText('Do you work in hospitality?')).toBeNull();
+    expect(screen.queryByText('What brings you here?')).toBeNull();
     expect(screen.getByRole('radio', { name: 'oz', checked: true })).toBeTruthy();
     expect(screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel)).toEqual(['oz', 'ml', 'g']);
     expect(screen.getByText('Caretakers writes its specs in oz. You can still read them in ml any time.')).toBeTruthy();
@@ -287,7 +287,7 @@ describe('OnboardingScreen', () => {
     expect(screen.queryByLabelText('Password')).toBeNull();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    expect(screen.getByText('Do you work in hospitality?')).toBeTruthy();
+    expect(screen.getByText('What brings you here?')).toBeTruthy();
   });
 
   test('a finished account leaves setup', async () => {

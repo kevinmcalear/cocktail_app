@@ -17,6 +17,9 @@ assert.deepEqual(stepProgress('taste', false, ['name', 'hospitality', 'find']), 
 // Home cooks: taste and units are steps 3 and 4, never after "Step 4 of 4".
 assert.deepEqual(stepProgress('taste', false, ['name', 'hospitality']), { at: 3, of: 5, label: 'Step 3 of 5' });
 assert.deepEqual(stepProgress('units', false, ['name', 'hospitality', 'taste']), { at: 4, of: 5, label: 'Step 4 of 5' });
+// The owner's path: name, why, find your bar, then its page or adding it.
+assert.deepEqual(stepProgress('bar', false, ['name', 'hospitality'], 'new'), { at: 3, of: 4, label: 'Step 3 of 4' });
+assert.deepEqual(stepProgress('addbar', false, ['name', 'hospitality', 'bar']), { at: 4, of: 4, label: 'Step 4 of 4' });
 // Bring in: the bar alone; its title carries "Last step".
 assert.deepEqual(stepProgress('bring', false, ['name', 'hospitality', 'taste', 'units']), { at: 5, of: 5, label: null });
 // A declined invite isn't a step.
