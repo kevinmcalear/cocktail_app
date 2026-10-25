@@ -32,3 +32,14 @@ export function sectionSlots<K extends { updatedAt: number }>(kept: Record<strin
     .map(([slot, k]) => ({ slot, name: slot === start ? null : slot.slice(start.length + NAME.length), kept: k }))
     .sort((a, b) => b.kept.updatedAt - a.kept.updatedAt);
 }
+
+/**
+ * What a slot was opened with, so New's Drafts can open it again
+ * (make-anything-steps-1, step 1): the place ('home' or a venue's id), and
+ * the menu section, drink and name it was started from.
+ */
+export function slotStart(slot: string): SlotStart & { place: string } {
+  const [place, ...rest] = slot.split('|');
+  const part = (key: string) => rest.find((r) => r.startsWith(`${key}:`))?.slice(key.length + 1) ?? null;
+  return { place, menuSectionId: part('menu'), from: part('from'), name: part('name') };
+}

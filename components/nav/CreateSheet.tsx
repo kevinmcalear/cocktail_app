@@ -13,6 +13,7 @@ import { useSearchMine } from '@/hooks/useSearchMine';
 import { roleLabel } from '@/lib/roles';
 import { useBringIn } from '@/store/useBringIn';
 
+import { NewDrafts } from './NewDrafts';
 import { HomeMark } from './VenueMarks';
 
 // The same five things the old create button made, and where each is made.
@@ -62,7 +63,8 @@ function LockedRow({ barId }: { barId: string }) {
 }
 
 /**
- * New: make a drink, ingredient, beer, wine or menu, or carry on with a draft.
+ * New: what you left half made at the top (Drafts), then make a drink,
+ * ingredient, beer, wine or menu, or carry on with an older draft.
  * The subtitle says where it's made. A dialog on desktop, like every other sheet.
  */
 export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
@@ -92,6 +94,13 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
   return (
     <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle} plain>
       <View>
+        <NewDrafts
+          barId={venueId ?? null}
+          onOpen={(params) => {
+            onClose();
+            router.push({ pathname: '/add-cocktail', params });
+          }}
+        />
         {locked && venueId ? <LockedRow barId={venueId} /> : null}
         {made.map((c) => (
           <Row key={c.label} label={c.label} hint={venueId ? c.hint : c.homeHint} icon={c.symbol ? <IconSymbol name={c.symbol} size={20} color={ds.c.ink} /> : <CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(hrefOf(c))} />

@@ -5,6 +5,7 @@ import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { hasContent } from '@/lib/drinkWizard';
+import { recipesToFinish } from '@/lib/prepKinds';
 import { sectionSlots, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 /**
@@ -25,9 +26,12 @@ export function UnfinishedDrinks({ barId, sectionKey }: { barId: string | null; 
     <View>
       {drafts.map(({ slot, name, kept: { draft } }) => {
         const title = draft.name.trim() || 'Untitled drink';
+        // What's left inside it (make-anything-steps-3, step 9): "Draft · Miso banana liqueur recipe to finish".
+        const left = recipesToFinish(draft.lines);
+        const sub = left.length ? `Draft · ${left[0].name} recipe to finish${left.length > 1 ? `, and ${left.length - 1} more` : ''}` : 'Draft';
         const open = () => router.push({ pathname: '/add-cocktail', params: { menuSectionId: sectionKey, ...(barId ? { barId } : {}), ...(name ? { name } : {}) } });
         return (
-          <PressableScale key={slot} role="button" accessibilityLabel={`${title}, draft. Keep going`} onPress={open} haptic={false} style={styles.row}>
+          <PressableScale key={slot} role="button" accessibilityLabel={`${title}, ${sub.toLowerCase()}. Keep going`} onPress={open} haptic={false} style={styles.row}>
             <View aria-hidden style={[styles.tile, { borderColor: ds.c.lineStrong }]}>
               <IconSymbol name="pencil" size={18} color={ds.c.muted} />
             </View>
@@ -35,7 +39,9 @@ export function UnfinishedDrinks({ barId, sectionKey }: { barId: string | null; 
               <DsText variant="body" numberOfLines={1}>
                 {title}
               </DsText>
-              <Caption tone="muted">Draft</Caption>
+              <Caption tone="muted" numberOfLines={2}>
+                {sub}
+              </Caption>
             </View>
             <Caption color={ds.accentText}>Keep going</Caption>
           </PressableScale>

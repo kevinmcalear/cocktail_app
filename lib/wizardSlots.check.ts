@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { draftSlot, sectionSlots } from './wizardSlots';
+import { draftSlot, sectionSlots, slotStart } from './wizardSlots';
 
 // A plain New drink keeps the place's one draft, as before.
 assert.equal(draftSlot('home', {}), 'home');
@@ -29,3 +29,10 @@ assert.deepEqual(
 assert.deepEqual(sectionSlots(kept, 'home', 's2'), []);
 // Opening it again with the name it was started with is the same slot.
 for (const { slot, name } of sectionSlots(kept, 'home', 's1')) assert.equal(draftSlot('home', { menuSectionId: 's1', name }), slot);
+
+// New's Drafts open a slot with what it was started from.
+{
+  const slot = draftSlot('bar-1', { menuSectionId: 'sec-9', name: 'Salty Boy' });
+  assert.deepEqual(slotStart(slot), { place: 'bar-1', menuSectionId: 'sec-9', from: null, name: 'salty boy' });
+  assert.deepEqual(slotStart('home'), { place: 'home', menuSectionId: null, from: null, name: null });
+}

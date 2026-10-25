@@ -210,8 +210,8 @@ assert.equal(iceLine('Spear', 'Cubes', ['Shake']), 'Shaken with cubes, over a sp
 
 // After a save: nothing to say, the preps still to write, or the warnings first.
 assert.equal(savedNotice([], []), null);
-assert.deepEqual(savedNotice([], ['Shrub']), { title: 'A recipe to write', body: 'Shrub has no recipe yet. Write it on its page when you’re ready.' });
+assert.deepEqual(savedNotice([], ['Shrub']), { title: 'A recipe to finish', body: 'Shrub has a recipe to finish. What you’ve done is kept: finish it on its page when you’re ready.' });
 assert.deepEqual(savedNotice(['Check the glass.'], ['Shrub', 'Cordial']), {
   title: 'Saved, with one thing to fix',
-  body: 'Check the glass.\n\nShrub, Cordial have no recipe yet. Write them on their pages when you’re ready.',
+  body: 'Check the glass.\n\nShrub, Cordial have recipes to finish. What you’ve done is kept: finish them on their pages when you’re ready.',
 });

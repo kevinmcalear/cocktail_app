@@ -4,7 +4,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Field, IngredientDrawing } from '@/components/ds';
 import { space } from '@/constants/tokens';
-import { recipeEyebrow, withFacts, type PrepDraft, type PrepPick } from '@/lib/prepKinds';
+import { confirmAsync } from '@/lib/dialogs';
+import { RECIPE_STEPS, recipeEyebrow, withFacts, type PrepDraft, type PrepPick, type RecipeStep } from '@/lib/prepKinds';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 
 import type { CatalogIngredient } from '../IngredientSearch';
@@ -16,11 +17,11 @@ import type { InDrinkPour } from './InDrink';
 import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
 import { PrepRecipeStep, RecipeView } from './PrepRecipeStep';
-import { aboveRecipe, useInside } from './useInside';
+import { useInside } from './useInside';
 import { usePrepDraft } from './usePrepDraft';
 
-const STEPS = ['kind', 'recipe', 'method'] as const;
-type Step = (typeof STEPS)[number];
+const STEPS = RECIPE_STEPS;
+type Step = RecipeStep;
 const TITLES: Record<Step, string> = { kind: 'What are you making?', recipe: 'What goes in?', method: 'How it’s made' };
 
 export interface PrepBuilderProps {
@@ -44,8 +45,15 @@ export interface PrepBuilderProps {
   aliases?: readonly IngredientAlias[];
   /** Its recipe, and its name as typed on What is it. */
   onDone: (draft: PrepDraft, name: string) => void;
-  /** Leave the recipe for later: the drink gets the name now, and a reminder. Without it, the first step's Skip goes on to the recipe. */
-  onLater?: () => void;
+  /**
+   * Leave it for now (make-anything-steps-3, step 9): what's done so far, with
+   * the step it was left at, goes on the line as a recipe to finish. Without
+   * it (a finished recipe opened again) leaving keeps it as it was, and the
+   * first step's Skip goes on to the recipe.
+   */
+  onLater?: (draft: PrepDraft, name: string) => void;
+  /** A recipe to finish picks up at the step it was left at. */
+  startAt?: RecipeStep;
   /** Back out: the drink keeps going without it. */
   onClose: () => void;
   /** The venue the drink is for, whose Kit How? is checked against; null at home. */
@@ -73,12 +81,12 @@ export function PrepBuilder(props: PrepBuilderProps) {
   );
 }
 
-function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, backRef }: PrepBuilderProps & { name: string; backRef: RefObject<() => void> }) {
-  const [step, setStep] = useState<Step>(!first && (initial || technique) ? 'recipe' : 'kind');
+function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, backRef, startAt }: PrepBuilderProps & { name: string; backRef: RefObject<() => void> }) {
+  const [step, setStep] = useState<Step>(startAt ?? (!first && (initial || technique) ? 'recipe' : 'kind'));
   const [direction, setDirection] = useState<1 | -1>(1);
   const [name, setName] = useState(started);
   const combined = !!combinedFrom?.length;
-  const { draft, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar }, () => {
+  const { draft, current, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar }, () => {
     if (step === 'kind') setStep('recipe');
   });
   const at = STEPS.indexOf(step);
@@ -86,11 +94,24 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
     setDirection(STEPS.indexOf(to) >= at ? 1 : -1);
     setStep(to);
   };
-  const back = () => (at > 0 ? go(STEPS[at - 1]) : onClose());
   const shown = name.trim() || started;
+  const drink = drinkName || 'your drink';
+  // Leaving keeps what's done on the line, a recipe to finish; lines just combined go back to two, and a finished recipe stays as it was.
+  const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: step }, shown) : null;
+  const leave = keep ?? onClose;
+  const ask = () =>
+    keep
+      ? void confirmAsync({
+          title: 'Leave it for now?',
+          message: `What you’ve done is kept. ${drinkName || 'The drink'} shows it as Recipe to finish, and New lists it under Drafts, with the way back.`,
+          confirmText: 'Leave it for now',
+          cancelText: 'Keep going',
+        }).then((yes) => yes && keep())
+      : onClose();
+  const back = () => (at > 0 ? go(STEPS[at - 1]) : ask());
   const next = () => (step === 'method' ? onDone(withFacts(draft), shown) : go(STEPS[at + 1]));
   const ready = named && (step === 'kind' || !slotsOpen);
-  const trail = trailInto(aboveRecipe(above ?? [{ label: drinkName || 'Your drink' }]), onClose, name.trim() || started);
+  const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], leave, shown);
   // A line of this recipe being made in-house too, one level down (make-anything-steps-2, step 8).
   const inside = useInside(draft, setDraft, name.trim() || started);
   // The level showing takes Android's back: this one, unless a level below it is open.
@@ -98,7 +119,6 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
     if (!inside.props) backRef.current = back;
   });
 
-  const drink = drinkName || 'your drink';
   const intro = 'Start from a step or write your own. A time you write becomes a timer when you make it.';
   if (inside.props) return <Builder key={inside.line!.key} {...inside.props} ingredients={ingredients} aliases={aliases} bar={bar} above={trail} backRef={backRef} />;
   const from = combinedFrom?.length ? `From ${combinedFrom.slice(0, -1).join(', ')} and ${combinedFrom.at(-1)}` : null;
@@ -136,10 +156,10 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
         <WizardFooter
           nextLabel={step === 'kind' ? 'Next: what goes in' : step === 'recipe' ? 'Next: how it’s made' : `Add it to ${drinkName || 'the drink'}`}
           optional={step === 'kind'}
-          skipLabel={onLater ? 'Later' : 'Skip'}
+          skipLabel={keep ? 'Later' : 'Skip'}
           canNext={ready && !!name.trim()}
           saving={false}
-          onSkip={onLater ?? (() => go('recipe'))}
+          onSkip={keep ?? (() => go('recipe'))}
           onNext={next}
         />
       }

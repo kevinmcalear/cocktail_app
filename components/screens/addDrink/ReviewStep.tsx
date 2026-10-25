@@ -6,6 +6,7 @@ import { layout, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useBarPublishing } from '@/hooks/usePublishing';
 import { amountLabel, draftIceLine, finishLabel, sketchLook, STEP_COPY, type StepProps, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
+import { recipesToFinish } from '@/lib/prepKinds';
 import { PUBLISH_COPY } from '@/lib/publishing';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { draftSketchInputs } from '@/lib/sketch/draft';
@@ -18,6 +19,18 @@ function credits(d: WizardDraft, hasProfile: boolean): string {
   const riff = d.riffOf ? `riff on ${d.riffOf.name}` : '';
   const where = [d.place ? `first made at ${d.place.name}` : '', d.originYear ? `in ${d.originYear}` : ''].filter(Boolean).join(' ');
   return capitalizeFirst([[by, withThem].filter(Boolean).join(' '), where, riff].filter(Boolean).join(', '));
+}
+
+/**
+ * Everything in it (make-anything-steps-3, step 10): each line, a recipe made
+ * in-house said done or to finish, then what's left to finish down through
+ * the recipes inside, or that nothing is.
+ */
+function ingredientsText(d: WizardDraft): string {
+  const lines = d.lines.map((l) => [`${amountLabel(l)} ${l.name}`.trim(), l.prep ? (l.prep.at ? 'recipe to finish' : 'recipe done') : l.later ? 'recipe to finish' : ''].filter(Boolean).join(' · '));
+  if (!d.lines.some((l) => l.prep || l.later)) return lines.join('\n');
+  const left = recipesToFinish(d.lines);
+  return [...lines, left.length ? `Left to finish: ${left.map((t) => `${t.name}, ${t.at}`).join('; ')}` : 'Nothing left to finish'].join('\n');
 }
 
 interface ReviewStepProps extends StepProps {
@@ -40,7 +53,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
   const followed = !venue ? 'Same as the venue' : venue.profile ? `${PUBLISH_COPY[venue.barDefault].label}, ${venueName}’s default` : 'Private for now';
   const rows: [WizardStep, string][] = [
     ['name', draft.name.trim()],
-    ['ingredients', draft.lines.map((l) => `${amountLabel(l)} ${l.name}`.trim()).join('\n')],
+    ['ingredients', ingredientsText(draft)],
     ['method', draft.methods.map((m) => m.name).join(', then ')],
     ['glass', draft.glass?.name ?? ''],
     ['ice', draftIceLine(draft)],

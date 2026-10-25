@@ -19,7 +19,7 @@ import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import type { ImageAngle } from '@/lib/itemImages';
 import { formatPrice } from '@/lib/menus';
-import type { PrepDraft } from '@/lib/prepKinds';
+import { recipesToFinish, type PrepDraft } from '@/lib/prepKinds';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
 import { prepCardFor } from '@/lib/techniques/makeIt';
@@ -190,7 +190,8 @@ export function useCreateDrink() {
         const ownPrep = (!!prep || !!line.later) && !(line.id && live.has(line.id));
         const ingredientId = ownPrep ? await own(line) : await ensure(line, 'ingredient');
         const isNew = newIngredients.length > madeBefore;
-        if (line.later && !prep && isNew) later.push(capitalize(line.name));
+        // Recipes left to finish, in it and inside its recipes: what's done is saved, and the notice says what's left.
+        if (isNew) later.push(...recipesToFinish([line]).map((r) => capitalize(r.name)));
         if (prep && isNew) ownPreps.push({ id: ingredientId, name: line.name, prep });
         else if (line.technique && isNew) preps.push({ id: ingredientId, technique: line.technique });
         if (line.bottle && barId && !ownPrep) bottles.push({ itemId: ingredientId, name: capitalizeFirst(line.name), bottle: line.bottle, isNew });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { useMakingKit } from '@/hooks/useBarKit';
 import { useCatalogRecipe } from '@/hooks/usePrepCard';
@@ -53,7 +53,10 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
   const [version, setVersion] = useState(0);
   // A name the catalog has a sourced recipe for starts from it, until the maker changes anything.
   const [touched, setTouched] = useState(false);
+  // The draft as last set, for leaving straight after a level below put its recipe on a line (the trail's higher levels).
+  const latest = useRef(draft);
   const setDraft = (d: PrepDraft) => {
+    latest.current = d;
     setTouched(true);
     setDraftState(d);
   };
@@ -99,6 +102,8 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
   };
   return {
     draft,
+    /** The draft as it is right now, even mid-event: what leaving keeps. */
+    current: () => (touched ? latest.current : draft),
     setDraft,
     view,
     setView,

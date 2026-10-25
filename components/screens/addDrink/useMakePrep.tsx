@@ -17,8 +17,8 @@ interface MakePrepArgs {
   set: (change: Partial<WizardDraft>) => void;
   ingredients: readonly CatalogIngredient[];
   aliases: readonly IngredientAlias[];
-  /** On the desktop page: the card opens under its line; `onOpen` says when one is open, for the page's kit box. */
-  inlinePrep?: { venueName: string | null; onOpen?: (open: boolean) => void };
+  /** On the desktop page: the card opens under its line; `onOpen` says which recipe is open (null when none), for the page's rail. */
+  inlinePrep?: { venueName: string | null; onOpen?: (making: string | null) => void };
   add: (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour) => WizardLine;
   change: (key: string, c: Partial<WizardLine>) => void;
   /** The venue the drink is for, whose Kit How? is checked against; null at home. */
@@ -70,14 +70,25 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
   // A card is open while its line is there (a line taken out takes its card with it): the page's kit box follows.
   const open = !!makingName && (!editingKey || !!line);
   const onOpen = inlinePrep?.onOpen;
-  useEffect(() => onOpen?.(open), [onOpen, open]);
+  const openName = open ? makingName : null;
+  useEffect(() => onOpen?.(openName), [onOpen, openName]);
   const editingPrep = line && !replacing ? linePrep(line) : null;
   const combined = !!line?.combined;
   const drinkName = draft.name.trim();
+  const put = (prep: PrepDraft, name: string | undefined, later: boolean) => {
+    const named = name?.trim() || makingName || '';
+    const l = later || undefined;
+    if (editingKey && replacing) change(editingKey, { id: null, name: named, prep, technique: prep.technique, later: l, bottle: undefined });
+    else if (editingKey) change(editingKey, { name: named, prep, technique: prep.technique, later: l, batch: undefined, combined: undefined });
+    else if (named) add({ id: null, name: named }, prep, later, makingPour);
+    setMaking(null);
+  };
   const props = {
     bar,
     above: trail,
     initial: editingPrep,
+    // A recipe to finish picks up where it was left.
+    startAt: editingPrep?.at,
     technique: makingTechnique,
     picked: makingBase ? { base: makingBase } : undefined,
     first,
@@ -92,20 +103,10 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
       setMaking(null);
     },
     onDone: (prep: PrepDraft, name?: string) => {
-      const named = name?.trim() || makingName || '';
-      if (editingKey && replacing) change(editingKey, { id: null, name: named, prep, technique: prep.technique, later: undefined, bottle: undefined });
-      else if (editingKey) change(editingKey, { name: named, prep, technique: prep.technique, later: undefined, batch: undefined, combined: undefined });
-      else if (named) add({ id: null, name: named }, prep, false, makingPour);
-      setMaking(null);
+      put({ ...prep, at: undefined }, name, false);
     },
-    // A recipe already written isn't dropped for a name.
-    onLater: editingPrep
-      ? undefined
-      : () => {
-          if (editingKey) change(editingKey, { id: null, name: makingName ?? '', prep: undefined, technique: undefined, later: true, bottle: undefined });
-          else if (makingName) add({ id: null, name: makingName }, undefined, true, makingPour);
-          setMaking(null);
-        },
+    // Left for now (make-anything-steps-3, step 9): what's done goes on the line, a recipe to finish. A finished recipe opened again stays as it was.
+    onLater: editingPrep && !editingPrep.at ? undefined : (prep: PrepDraft, name: string) => put(prep, name, true),
   };
 
   return {
