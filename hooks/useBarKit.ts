@@ -50,6 +50,21 @@ export function useSaveTool(barId: string) {
   });
 }
 
+/** Add our tools by equipment id (an ice recipe's "Add to kit"); ones the venue already has are left as they are. */
+export function useAddTools(barId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('bar_kit').upsert(
+        ids.map((key) => ({ bar_id: barId, kind: 'tool', key })),
+        { onConflict: 'bar_id,kind,key', ignoreDuplicates: true },
+      );
+      if (error) throw error;
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: barKitKey(barId) }),
+  });
+}
+
 /** Take a tool off the venue's kit. */
 export function useRemoveTool(barId: string) {
   const client = useQueryClient();
