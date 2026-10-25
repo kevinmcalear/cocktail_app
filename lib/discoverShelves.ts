@@ -1,7 +1,8 @@
 /**
- * Discover's shelves (option B on top of A, Kevin 15 Oct): short rows over
- * "All drinks near you", each named for its reason, one drink per bar, and
- * none with under three drinks. Pure; checked by lib/discoverShelves.check.ts.
+ * Discover's shelves (option B on top of A, Kevin 15 Oct; reordered with Top
+ * bars and Top-rated, 24 Oct): short rows over "All drinks near you", each
+ * named for its reason, one drink per bar, and none with under three drinks.
+ * Pure; checked by lib/discoverShelves.check.ts.
  */
 import type { DiscoverDrink } from './discoverDrinks';
 import { kindLabel, STYLES } from './drinkStyles';
@@ -105,17 +106,30 @@ export function waysTitle(style: string, n: number): string {
 }
 
 /**
- * The shelves to show, in order, each one drink per bar, leaving out any
- * under SHELF_MIN. `where`: "near you", "in Brooklyn". `around`: the mixed
- * list; `styled`: `style`'s drinks here, mixed; `zero`: the zero-proof ones.
+ * The drinks people have scored, best first, one per bar: the Top-rated
+ * shelf. ponytail: scores the mixed list's first page, so it's the best of
+ * what loaded; the upgrade is discover_list ordered by score.
  */
-export function pickShelves({ where, around, style, styled, zero }: { where: string; around: readonly DiscoverDrink[]; style: string | null; styled: readonly DiscoverDrink[]; zero: readonly DiscoverDrink[] }): Shelf[] {
+export function topRated(drinks: readonly DiscoverDrink[], scores: Readonly<Record<string, number>>): DiscoverDrink[] {
+  return onePerBar([...drinks].filter((d) => scores[d.id] !== undefined).sort((a, b) => scores[b.id] - scores[a.id]));
+}
+
+/**
+ * The shelves to show, in order, each one drink per bar, leaving out any
+ * under SHELF_MIN (disc-map-browse, approved 24 Oct): menus around you (For
+ * your taste once you have one), top-rated, the style most bars pour, then
+ * Low & no. Top bars sits after the first; it's bars, so the screen adds it.
+ * `where`: "near you", "in Brooklyn". `around`: the mixed list; `rated`: its
+ * scored drinks (topRated); `styled`: `style`'s drinks here; `zero`: Low & no.
+ */
+export function pickShelves({ where, around, rated = [], style, styled, zero }: { where: string; around: readonly DiscoverDrink[]; rated?: readonly DiscoverDrink[]; style: string | null; styled: readonly DiscoverDrink[]; zero: readonly DiscoverDrink[] }): Shelf[] {
   const near = where === 'near you';
   const ways = style ? onePerBar(styled) : [];
   const shelves: Shelf[] = [
     { key: 'around', title: `On menus ${near ? 'around you' : where}`, note: 'One from each bar', kind: null, drinks: onePerBar(around) },
+    { key: 'rated', title: `Top-rated ${near ? 'around you' : where}`, note: 'Scored by the people who ranked them', kind: null, drinks: [...rated] },
     { key: 'style', title: style ? waysTitle(style, ways.length) : '', note: `The style poured most ${near ? 'around here' : where}`, kind: style, drinks: ways },
-    { key: 'zero', title: `Zero-proof ${where}`, note: 'From bars here that pour one', kind: ZERO, drinks: onePerBar(zero) },
+    { key: 'zero', title: `Low & no ${where}`, note: 'From bars here that pour one', kind: ZERO, drinks: onePerBar(zero) },
   ];
   return shelves.filter((s) => s.drinks.length >= SHELF_MIN);
 }

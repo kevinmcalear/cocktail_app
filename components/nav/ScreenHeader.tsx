@@ -24,9 +24,10 @@ import { VenueSwitcher } from './VenueSwitcher';
  *
  * `center` (phones) fills the middle of the row, between the logo and you,
  * and the title becomes a heading only screen readers hear (Discover's
- * search pill).
+ * search pill). `you={false}`: you step aside, so the middle has the room
+ * (Discover's pill while it holds a search).
  */
-export function ScreenHeader({ title, display, actions, center }: { title?: string; display?: boolean; actions?: ReactNode; center?: ReactNode }) {
+export function ScreenHeader({ title, display, actions, center, you = true }: { title?: string; display?: boolean; actions?: ReactNode; center?: ReactNode; you?: boolean }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
@@ -63,9 +64,11 @@ export function ScreenHeader({ title, display, actions, center }: { title?: stri
       ) : null}
       <View style={styles.end}>
         {actions}
-        <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => router.push('/you')} style={styles.avatar}>
-          <CurrentUserAvatar size={32} />
-        </PressableScale>
+        {you ? (
+          <PressableScale role="link" accessibilityLabel="You: your profile and settings" onPress={() => router.push('/you')} style={styles.avatar}>
+            <CurrentUserAvatar size={32} />
+          </PressableScale>
+        ) : null}
       </View>
     </View>
   );

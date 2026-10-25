@@ -85,7 +85,7 @@ test('a drink started for the section and not saved shows on it, and Keep going 
   await renderSection();
   expect(screen.queryByText('Left at home')).toBeNull();
   expect(screen.queryByText('Paloma')).toBeNull();
-  fireEvent.press(screen.getByRole('button', { name: 'Salty Boy, not finished. Keep going' }));
+  fireEvent.press(screen.getByRole('button', { name: 'Salty Boy, draft. Keep going' }));
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/add-cocktail', params: { menuSectionId: 's1', name: 'salty boy' } });
   useDrinkWizardStore.setState({ kept: {} });
 });

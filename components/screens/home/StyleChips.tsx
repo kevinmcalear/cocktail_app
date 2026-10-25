@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Chip, DsText, GlassSurface, PressableScale, useDs } from '@/components/ds';
@@ -48,16 +48,7 @@ export function StyleChips({ kinds, onChange, drinks, onGlass }: StyleChipsProps
     const a11y = on ? `${label}, on. Clear` : label;
     const x = on ? <IconSymbol name="xmark" size={11} color={ds.c.ground} /> : null;
     if (!onGlass) return <Chip key={id} multi quiet label={label} selected={on} trailing={x} accessibilityLabel={a11y} onPress={() => toggle(id)} />;
-    return (
-      <PressableScale key={id} role="checkbox" aria-checked={on} accessibilityLabel={a11y} onPress={() => toggle(id)} hitSlop={4}>
-        <GlassSurface interactive tint={on ? ds.c.ink : undefined} style={styles.pill}>
-          <DsText variant="label" color={on ? ds.c.ground : ds.c.ink} style={on ? styles.picked : null}>
-            {label}
-          </DsText>
-          {x}
-        </GlassSurface>
-      </PressableScale>
-    );
+    return <GlassChip key={id} label={label} on={on} trailing={x} accessibilityLabel={a11y} onPress={() => toggle(id)} />;
   });
   if (!onGlass) {
     return (
@@ -73,12 +64,31 @@ export function StyleChips({ kinds, onChange, drinks, onGlass }: StyleChipsProps
   );
 }
 
+/**
+ * A chip over the phone map, in glass: the drink chips and the options row
+ * (DiscoverOptions.tsx). On, it's ink with the ground's text. `role`: checkbox
+ * for a toggle, button for one that opens a menu.
+ */
+export function GlassChip({ label, on = false, trailing, accessibilityLabel = label, role = 'checkbox', onPress }: { label: string; on?: boolean; trailing?: ReactNode; accessibilityLabel?: string; role?: 'checkbox' | 'button'; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role={role} aria-checked={role === 'checkbox' ? on : undefined} accessibilityLabel={accessibilityLabel} onPress={onPress} hitSlop={4}>
+      <GlassSurface interactive tint={on ? ds.c.ink : undefined} style={styles.pill}>
+        <DsText variant="label" color={on ? ds.c.ground : ds.c.ink} style={on ? styles.picked : null}>
+          {label}
+        </DsText>
+        {trailing}
+      </GlassSurface>
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   // Runs to the screen's edges over the map, so the row reads as one that scrolls.
   edge: { marginHorizontal: -space.lg, flexGrow: 0 },
   row: { gap: space.sm, paddingHorizontal: space.lg },
-  // 36 tall with a 4-point hit slop makes the 44-point target, as the map's layer chips.
+  // 36 tall with a 4-point hit slop makes the 44-point target.
   pill: { minHeight: layout.minTapTarget - space.sm, paddingHorizontal: space.md + 2, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   picked: { fontFamily: fontFamilies.bodySemiBold },
 });

@@ -1,13 +1,13 @@
-import { useItemFlavors, useMyTaste } from '@/hooks/useFlavor';
+import { useItemFlavors, useItemScores, useMyTaste } from '@/hooks/useFlavor';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
 import type { DiscoverDrink, DrinkFilter } from '@/lib/discoverDrinks';
-import { byTaste, FIRST_PAGE, pickShelves, topStyle, type Shelf } from '@/lib/discoverShelves';
+import { byTaste, FIRST_PAGE, pickShelves, topRated, topStyle, type Shelf } from '@/lib/discoverShelves';
 import { areaLabel } from '@/lib/nearMe';
 
 /**
  * Discover's shelves over the mixed list (lib/discoverShelves.ts): menus
- * around you (closest to your taste once you have one), then the style most bars here pour, and
- * zero-proof. The two extra lists are discover_list mixed and on now, asked
+ * around you (For your taste once you have one), top-rated, then the style
+ * most bars here pour, and Low & no. The two extra lists are discover_list mixed and on now, asked
  * once the main list has painted (`around` has drinks), and saved like it.
  */
 export function useDiscoverShelves(filter: DrinkFilter, around: DiscoverDrink[], enabled: boolean): Shelf[] {
@@ -21,12 +21,13 @@ export function useDiscoverShelves(filter: DrinkFilter, around: DiscoverDrink[],
     page.map((d) => d.id),
     ready && hasTaste,
   );
+  const scores = useItemScores(ready ? page.map((d) => d.id) : []).data;
   const style = ready ? topStyle(around) : null;
   const opts = { onNow: true, mix: true };
   const styled = useDiscoverList({ ...filter, kinds: style ? [style] : [] }, { ...opts, enabled: !!style });
   const zero = useDiscoverList({ ...filter, kinds: ['zero-proof'] }, { ...opts, enabled: ready });
   if (!ready) return [];
-  const shelves = pickShelves({ where: areaLabel(filter.area), around, style, styled: styled.drinks, zero: zero.drinks });
+  const shelves = pickShelves({ where: areaLabel(filter.area), around, rated: scores ? topRated(page, scores) : [], style, styled: styled.drinks, zero: zero.drinks });
   if (!hasTaste || !taste || !flavors.data) return shelves;
-  return shelves.map((s) => (s.key === 'around' ? { ...s, note: 'Based on your taste', taste: true, drinks: byTaste(page, taste, flavors.data) } : s));
+  return shelves.map((s) => (s.key === 'around' ? { ...s, title: 'For your taste', note: 'Based on your taste', taste: true, drinks: byTaste(page, taste, flavors.data) } : s));
 }
