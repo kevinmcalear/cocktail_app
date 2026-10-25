@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 
 import { EQUIPMENT } from './techniques/equipment';
-import { houseIce, ICE_KINDS, isVenueIce, kitIceRow, kitSourceLine, supplierLine, toolGroups, venueIceNames } from './venueKit';
+import { houseIce, iceDrawKind, ICE_KINDS, isVenueIce, kitIceRow, kitSourceLine, supplierLine, toolGroups, venueIceKinds, venueIceNames } from './venueKit';
 
-// The database's bar_kit_key_check list, less nothing: keep them in step.
+// The drawings' kinds less 'none' (item_ice.draw_as, private.house_ice): keep them in step.
 assert.deepEqual([...ICE_KINDS], ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere']);
 
 // Every bar tool behind the bar; the prep kitchen's common few are real ids.
@@ -19,16 +19,32 @@ assert.equal(supplierLine({ supplies: ['glassware', 'bottles'], order_by: 'Tue 2
 assert.equal(supplierLine({ supplies: [], order_by: null, delivers: 'Wed and Fri' }), 'Delivers Wed and Fri');
 assert.equal(supplierLine({ supplies: [], order_by: null, delivers: null }), '');
 
-assert.equal(kitSourceLine({ made_here: true, note: 'Hoshizaki under the well', supplier_name: null }), 'Made here · Hoshizaki under the well');
-assert.equal(kitSourceLine({ made_here: false, note: null, supplier_name: 'Coldwater Ice Co.' }), 'Coldwater Ice Co.');
-assert.equal(kitSourceLine({ made_here: false, note: null, supplier_name: null }), '');
-assert.equal(kitSourceLine({ made_here: false, note: 'Collins spears', supplier_name: 'Coldwater Ice Co.', length_mm: 130 }), 'Coldwater Ice Co. · Collins spears · 130 mm');
+assert.equal(kitSourceLine({ source: 'made', note: 'cut from our block', supplier_name: null }), 'Made here · cut from our block');
+assert.equal(kitSourceLine({ source: 'machine', machine: 'Hoshizaki under the well', note: null, supplier_name: null }), 'Our machine · Hoshizaki under the well');
+assert.equal(kitSourceLine({ source: 'bought', note: null, supplier_name: 'Coldwater Ice Co.' }), 'Coldwater Ice Co.');
+assert.equal(kitSourceLine({ source: 'bought', note: null, supplier_name: null }), 'Bought', 'a supplier this person can\'t see');
+assert.equal(kitSourceLine({ source: 'ours', note: null, supplier_name: null }), 'Already ours');
+assert.equal(kitSourceLine({ source: null, note: null, supplier_name: null }), '');
+assert.equal(kitSourceLine({ source: 'bought', note: 'Collins spears', supplier_name: 'Coldwater Ice Co.', length_mm: 130 }), 'Coldwater Ice Co. · Collins spears · 130 mm');
 
-// The wizard's Ice step: the venue's ice by the wizard's names, tools left out.
-const names = venueIceNames([{ kind: 'ice', key: 'large' }, { kind: 'tool', key: 'shaker' }, { kind: 'ice', key: 'cubes' }]);
-assert.deepEqual(names, ['Large cube', 'Cubes']);
+// The wizard's Ice step: the venue's ice in the glass by its names, blocks and slabs left out.
+const ice = [
+  { name: 'Large cube', shape: 'large', draw_as: null },
+  { name: 'Block', shape: 'block', draw_as: null },
+  { name: 'Cubes', shape: 'cubes', draw_as: null },
+  { name: 'Prism cube', shape: 'other', draw_as: 'large' },
+  { name: 'Odd ice', shape: 'other', draw_as: null },
+];
+const names = venueIceNames(ice);
+assert.deepEqual(names, ['Large cube', 'Cubes', 'Prism cube', 'Odd ice']);
 assert.ok(isVenueIce(names, ' large cube'));
 assert.ok(!isVenueIce(names, 'Crushed'));
+
+// Drawings: the kinds the venue's ice is drawn as (as private.item_sketches_set_house_ice reads them).
+assert.deepEqual(venueIceKinds(ice), ['large', 'cubes', 'large']);
+assert.equal(iceDrawKind({ shape: 'spear', draw_as: null }), 'spear');
+assert.equal(iceDrawKind({ shape: 'cut', draw_as: 'large' }), 'large');
+assert.equal(iceDrawKind({ shape: 'slab', draw_as: null }), null);
 
 // Drawings: a guessed ice gives way to the venue's nearest kind.
 assert.equal(houseIce('cubes', ['large', 'crushed']), 'large');
@@ -38,7 +54,7 @@ assert.equal(houseIce('cubes', ['cubes', 'large']), null, 'the venue has it');
 assert.equal(houseIce('none', ['cubes']), null, 'no ice stays no ice');
 assert.equal(houseIce('cubes', []), null, 'no ice listed');
 
-// A Kit row by the wizard's name for its ice.
-assert.equal(kitIceRow([{ kind: 'tool', key: 'spear' }, { kind: 'ice', key: 'spear' }], 'spear')?.kind, 'ice');
-assert.equal(kitIceRow([{ kind: 'ice', key: 'large' }], 'Large Cube')?.key, 'large');
-assert.equal(kitIceRow([{ kind: 'ice', key: 'large' }], 'Pebble'), null);
+// The venue's ice by a wizard pick's name; never a block or slab.
+assert.equal(kitIceRow([{ name: 'Spear', shape: 'slab' }, { name: 'Spear', shape: 'spear' }], 'spear')?.shape, 'spear');
+assert.equal(kitIceRow(ice, 'Large Cube')?.shape, 'large');
+assert.equal(kitIceRow(ice, 'Pebble'), null);

@@ -59,6 +59,8 @@ classic, then the styles.
 | The ice it's served over | `items.ice_id` |
 | The ice it's made with (shaken with, blended with) | `items.method_ice_id` |
 | How the ice sits, layer by layer | `items.ice_build`; its top layer is `ice_id` |
+| The ice a venue has, what it looks like and where it comes from | Ice items of the venue with `item_ice` (shape, size, clear, bought, our machine or made here); see [kit_and_ice.md](kit_and_ice.md). Drinks still name the shared ice |
+| How long a venue's spear or Collins block is | `item_ice.length_mm` |
 
 ## Bars
 

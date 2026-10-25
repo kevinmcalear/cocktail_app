@@ -48,6 +48,21 @@ export const GLASS_SHAPES: Record<SketchGlass, GlassShape> = {
   ceramic: { rim: 38, prof: [[38, 20], [60, 21], [84, 17]], top: 41, base: 82, stemmed: false, opaque: SKETCH.ceramicGlaze },
 };
 
+/**
+ * A usual glass of each kind, rim to foot in mm, for drawing ice to scale when
+ * the venue's glass doesn't say (its glass_models.height_mm).
+ */
+export const GLASS_MM: Record<SketchGlass, number> = {
+  coupe: 150, nick: 155, martini: 175, rocks: 85, highball: 150, collins: 165, fizz: 115, flute: 225,
+  wine: 210, spritz: 200, snifter: 130, julep: 110, tiki: 160, mug: 100, ceramic: 95, beer: 165,
+};
+
+/** Drawing units per mm in this glass: its drawn height over its real one. */
+export function unitsPerMm(g: GlassShape, glass: SketchGlass, glassMm?: number | null): number {
+  const ground = g.stemmed ? g.foot![0] : bottomOf(g);
+  return (ground - g.rim) / (glassMm && glassMm >= 40 && glassMm <= 400 ? glassMm : GLASS_MM[glass]);
+}
+
 export interface GlassVariant {
   /** Stored in drawing inputs and bar glassware: '<glass>_<name>'. */
   key: string;

@@ -77,11 +77,7 @@ export function useDiscoverList(filter: DrinkFilter, { barId = null, enabled = t
     queryFn: async ({ pageParam, signal }): Promise<ListPage> => {
       const params = { ...where, p_bar_id: barId, ...kinds, p_query: search || null, ...near, ...pageParam, p_limit: pageSize };
       const asked = { ...params, ...(onNow ? { p_on_now: true } : {}), ...(mix ? { p_mix: true } : {}) };
-      let { data, error } = await supabase.rpc('discover_list', asked).abortSignal(signal);
-      // ponytail: a database without 20261028100000 doesn't know p_mix; ask unmixed (one bar can fill the list then). Drop once it's in production.
-      if (error?.code === 'PGRST202' && mix) ({ data, error } = await supabase.rpc('discover_list', { ...params, ...(onNow ? { p_on_now: true } : {}) }).abortSignal(signal));
-      // ponytail: a database without 20261019200000 doesn't know p_on_now; ask without it (past drinks too then). Drop once it's in production.
-      if (error?.code === 'PGRST202' && onNow) ({ data, error } = await supabase.rpc('discover_list', params).abortSignal(signal));
+      const { data, error } = await supabase.rpc('discover_list', asked).abortSignal(signal);
       if (error) throw error;
       const rows = (data ?? []) as DrinkRow[];
       const first = rows[0];
@@ -120,14 +116,7 @@ async function readBars(params: Record<string, unknown>, signal: AbortSignal): P
       if (after) q = q.gt('id', after);
       return q.order('id').limit(size).abortSignal(signal);
     });
-  try {
-    return (await read(params)).map(toDiscoverBar);
-  } catch (error) {
-    // ponytail: a database without 20261016200000 doesn't know p_on_now; ask without it (no "on now" then). Drop once it's in production.
-    if ((error as { code?: string } | null)?.code !== 'PGRST202' || !('p_on_now' in params)) throw error;
-    const { p_on_now: _, ...rest } = params;
-    return (await read(rest)).map(toDiscoverBar);
-  }
+  return (await read(params)).map(toDiscoverBar);
 }
 
 /**

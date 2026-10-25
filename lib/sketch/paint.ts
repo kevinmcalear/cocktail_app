@@ -9,14 +9,14 @@
 // every platform.
 
 import { SKETCH } from '../../constants/sketch';
-import { band, ell, glassShape, hw, type Pt } from './geometry';
+import { band, ell, glassShape, hw, unitsPerMm, type Pt } from './geometry';
 import { paintGarnish } from './garnish';
 import { paintBuild, paintIce } from './ice';
 import { makePainter, type LineOpts, type Painter } from './painter';
 import { gauss, hashString, mixHex, rng, type Rng } from './random';
 import { GLASS_BANDS, SceneBuilder, type Scene, type StageName } from './scene';
 import { CRUMB, DEFAULT_SKETCH_STYLE, LIFT, SKETCH_STYLES, SMUDGE, type SketchStyleKey } from './styles';
-import { liquidOf, type SketchFoam, type SketchInputs } from './types';
+import { liquidOf, readIceLook, type SketchFoam, type SketchInputs } from './types';
 
 const FOAM: Record<SketchFoam, { depth: number; rise: number; bubbles: number }> = {
   cap: { depth: 7.5, rise: 2.4, bubbles: 70 },
@@ -194,7 +194,9 @@ export function paintSketch(inputs: SketchInputs, { seed, style = DEFAULT_SKETCH
   stage('ice', g.rim);
   const Rt0 = hw(g, g.top);
   P.line(ell(50, g.top, Rt0, Rt0 * e, Math.PI + 0.3, Math.PI * 2 - 0.4, 24), { weight: 0.5, alpha: 0.5, gaps: 1.5 });
-  const iced = build ? paintBuild(P, build, inputs.glass) : paintIce(P, ice, inputs.glass);
+  // Ice sizes are drawn to scale against the glass's real height.
+  const upm = unitsPerMm(g, inputs.glass, inputs.glassMm);
+  const iced = build ? paintBuild(P, build, inputs.glass, upm) : paintIce(P, ice, inputs.glass, readIceLook(inputs.iceLook), upm);
   if (inputs.fizz && !g.opaque) {
     stage('fizz', floor);
     const n = P.clipInner();

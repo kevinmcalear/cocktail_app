@@ -4,7 +4,6 @@ import { Alert, Platform } from 'react-native';
 import { useBreakpoint } from '@/components/ds';
 
 import { useBarGlassware } from '@/hooks/useBarGlassware';
-import { useBarKit } from '@/hooks/useBarKit';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDropdowns } from '@/hooks/useDropdowns';
@@ -13,6 +12,7 @@ import { useShelf } from '@/hooks/useHomeBar';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useHoldUpdates } from '@/hooks/useOtaUpdates';
 import { useSameNameDrink } from '@/hooks/useSameNameDrink';
+import { useVenueIce } from '@/hooks/useVenueIce';
 import { suggestClassic } from '@/lib/classics';
 import { stepWaits, versionHeading } from '@/lib/sameName';
 import { plainDbMessage } from '@/lib/dbError';
@@ -23,7 +23,7 @@ import {
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { iceWhy, serveGuess } from '@/lib/specDefaults';
 import { toastDone } from '@/lib/toast';
-import { venueIceNames } from '@/lib/venueKit';
+import { venueIceKinds, venueIceNames } from '@/lib/venueKit';
 import { draftSlot, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { CreditsStep } from './CreditsStep';
@@ -97,9 +97,9 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const create = useCreateDrink();
   const roundDone = useFirstRound().done;
   const barGlasses = useBarGlassware(barId).data;
-  const barKit = useBarKit(barId).data ?? [];
-  const barIce = venueIceNames(barKit);
-  const barIceKinds = barKit.filter((r) => r.kind === 'ice').map((r) => r.key);
+  const venueIce = useVenueIce(barId).data ?? [];
+  const barIce = venueIceNames(venueIce);
+  const barIceKinds = venueIceKinds(venueIce);
   const barVariants = (barGlasses ?? []).filter((g) => g.is_default && g.variant).map((g) => g.variant as string);
   const shelfIds = useShelf().data;
   const venueName = useActiveVenue().venues.find((v) => v.id === barId)?.name ?? 'the venue';
@@ -189,7 +189,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   if (desk) {
     return (
       <DrinkDesk
-        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, barKit, classic, resumed, atBar, atPlace }}
+        {...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, venueIce, classic, resumed, atBar, atPlace }}
         loading={!dropdowns?.ingredients}
         aliases={dropdowns?.ingredientAliases}
         shelf={barId ? undefined : new Set(shelfIds ?? [])}
@@ -240,7 +240,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'glass':
         return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
-        return <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={barKit} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />;
+        return <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={venueIce} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />;
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'credits':
