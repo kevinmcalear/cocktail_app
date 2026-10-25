@@ -42,7 +42,7 @@ assert.equal(readSketchInputs({ ...base, outline: { height_mm: 100 } })?.outline
 // Every loaded outline paints, and differently from the family's glass.
 const plain = sceneToSvg(paintSketch(base as SketchInputs, { seed: 'check', detail: 'thumb' }));
 let n = 0;
-for (const f of readdirSync('supabase/seeds/glass-outlines')) {
+for (const f of (readdirSync('supabase/seeds/glass-outlines', { recursive: true }) as string[]).filter((f) => f.endsWith('.json'))) {
   const { outlines } = JSON.parse(readFileSync(`supabase/seeds/glass-outlines/${f}`, 'utf8')) as { outlines: { outline: unknown }[] };
   for (const o of outlines.filter((_, i) => i % 10 === 0)) {
     const outline = readOutline(o.outline);
