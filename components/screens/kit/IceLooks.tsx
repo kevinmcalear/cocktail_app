@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Chip, Field } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
 import { IceThumb } from '@/components/ds/IceThumb';
-import { space } from '@/constants/tokens';
+import { radius, space } from '@/constants/tokens';
 import { GLASS_ICE_SHAPES, ICE_KINDS, ICE_SHAPE_LABEL, iceDrawKind, iceName, iceSizes, type IceKind, type IceShape } from '@/lib/venueKit';
 
 import { KitChipGroup } from './KitAddSheet';
@@ -32,6 +32,7 @@ export const mmOk = (n: number | null) => n == null || (Number.isInteger(n) && n
  * wait behind More. A block or slab to cut from is picked under the shapes.
  */
 export function IceLooks({ value, onChange }: { value: IceLooksValue; onChange: (v: IceLooksValue) => void }) {
+  const ds = useDs();
   const sizes = iceSizes(value.shape);
   const mm = sizes ? (sizes.length ? value.length_mm : value.size_mm) : null;
   const [typing, setTyping] = useState(mm != null && !sizes?.mm.includes(mm));
@@ -50,7 +51,19 @@ export function IceLooks({ value, onChange }: { value: IceLooksValue; onChange: 
     <View style={styles.stack}>
       <View role="radiogroup" aria-label="What it looks like" style={styles.tiles}>
         {GLASS_ICE_SHAPES.map((s) => (
-          <Chip key={s} label={ICE_SHAPE_LABEL[s]} selected={value.shape === s} onPress={() => pickShape(s)} leading={<IceThumb kind={iceDrawKind({ shape: s, draw_as: null }) ?? 'cubes'} size={32} />} />
+          <PressableScale
+            key={s}
+            role="radio"
+            aria-checked={value.shape === s}
+            accessibilityLabel={ICE_SHAPE_LABEL[s]}
+            onPress={() => pickShape(s)}
+            style={[styles.tile, { borderColor: value.shape === s ? ds.c.ink : ds.c.line, backgroundColor: value.shape === s ? ds.c.raised : 'transparent' }]}
+          >
+            <IceThumb kind={iceDrawKind({ shape: s, draw_as: null }) ?? 'cubes'} size={40} />
+            <Caption numberOfLines={2} style={styles.center}>
+              {ICE_SHAPE_LABEL[s]}
+            </Caption>
+          </PressableScale>
         ))}
       </View>
       <KitChipGroup label="Or to cut from">
@@ -119,7 +132,10 @@ export function IceLooks({ value, onChange }: { value: IceLooksValue; onChange: 
 const styles = StyleSheet.create({
   stack: { gap: space.md },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  // Three across, as the board draws them.
+  tile: { flexBasis: '30%', flexGrow: 1, alignItems: 'center', gap: space.xs, paddingVertical: space.sm, borderWidth: 1, borderRadius: radius.card, borderCurve: 'continuous' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
   start: { alignSelf: 'flex-start' },
+  center: { textAlign: 'center' },
 });
