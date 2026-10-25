@@ -28,5 +28,6 @@ const stamped = iceWaySteps('cut', { size_mm: 50, stamped: true });
 assert.deepEqual(stamped.at(-2)?.tools, ['ice-stamp']);
 assert.equal(iceWaySteps('stamp', { stamped: true }).filter((s) => s.tools.includes('ice-stamp')).length, 1);
 assert.equal(iceWaySteps('own', { stamped: true }).length, 0);
+for (const k of ['lewis', 'crack', 'shave'] as const) assert.ok(!iceWaySteps(k, { stamped: true }).some((s) => s.tools.includes('ice-stamp')), `${k} isn't stamped`);
 
 console.log('iceRecipes: ok');

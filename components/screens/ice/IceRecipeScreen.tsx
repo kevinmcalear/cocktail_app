@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Headline, Surface, useDs } from '@/components/ds';
+import { Body, Button, Caption, Chip, Field, Headline, Surface, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarKit } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useIcesStartingFrom } from '@/hooks/useIceRecipe';
 import { useVenueIce } from '@/hooks/useVenueIce';
 import { ICE_EXTRA_STEPS, iceWay, type IceWayKey } from '@/lib/iceRecipes';
 import { ICE_YIELD_UNITS } from '@/lib/prepCardForm';
@@ -42,7 +43,9 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
   const [own, setOwn] = useState(false);
   const [sheet, setSheet] = useState<'from' | 'makes' | 'keeps' | { tools: string } | null>(null);
   const title = ice?.name ?? 'Ice';
-  const others = ices.filter((r) => r.id !== iceId);
+  // Never offer an ice that starts from this one: the chain would loop.
+  const after = useIcesStartingFrom(canEdit ? iceId : null).data ?? [];
+  const others = ices.filter((r) => r.id !== iceId && !after.includes(r.id));
 
   if (!ice || !canEdit) {
     return (
@@ -55,13 +58,13 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
   if (!f) {
     return (
       <VenueSubPage barId={barId} title={title}>
-        <Caption tone="muted">Loading…</Caption>
+        <Caption tone="muted">{edit.loadError ? 'Couldn’t load how it’s made. Check your connection and try again.' : 'Loading…'}</Caption>
       </VenueSubPage>
     );
   }
 
   // --- No recipe yet: how do you make it? (step 6, question 3) ---
-  if (!f.steps.length && !edit.startsFrom && !own) {
+  if (!f.steps.length && !edit.startsFrom && !own && !edit.dirty) {
     const from = way ? iceWay(way).from : null;
     const picks = from === 'block' ? others.filter((r) => !inTheGlass(r)) : from === 'cubes' ? others.filter(inTheGlass) : [];
     return (
@@ -77,7 +80,9 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
             </View>
           </View>
         ) : null}
-        <Button label="Make it" disabled={!way} onPress={() => way && (way === 'own' ? setOwn(true) : edit.start(way, wayFrom))} />
+        {from === 'flavour' ? <Field label="Which flavour?" value={wayFrom?.name ?? ''} onChangeText={(name) => setWayFrom(name.trim() ? { id: null, name } : null)} placeholder="Coffee, tea, a juice" maxLength={60} /> : null}
+        {(from === 'block' || from === 'cubes') && !picks.length ? <Caption tone="muted">{`Add the ${from === 'block' ? 'block or slab' : 'ice'} it starts from in Kit › Ice, then pick it here. Or make it now and pick it later under Starts from.`}</Caption> : null}
+        <Button label="Make it" disabled={!way || (picks.length > 0 && !wayFrom) || (from === 'flavour' && !wayFrom)} onPress={() => way && (way === 'own' ? setOwn(true) : edit.start(way, wayFrom && { ...wayFrom, name: wayFrom.name.trim() }))} />
       </VenueSubPage>
     );
   }
@@ -105,7 +110,7 @@ export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string
       {/* "Add a step" above is our own step; these add one of the usual ones. */}
       <View role="group" accessibilityLabel="Add one of the usual steps" style={styles.chips}>
         {ICE_EXTRA_STEPS.map((x) => (
-          <Chip key={x.key} label={`+ ${x.label}`} selected={false} onPress={() => edit.set({ steps: [...f.steps, edit.toStep(x.step)] })} />
+          <Button key={x.key} label={x.label} icon="plus" variant="secondary" size="sm" accessibilityLabel={`Add a step: ${x.label}`} onPress={() => edit.set({ steps: [...f.steps, edit.toStep(x.step)] })} />
         ))}
       </View>
       <Surface>

@@ -150,10 +150,13 @@ export function fillIceStep(s: IceStep, ice: { size_mm?: number | null; frozen_i
   return { ...s, body: s.body.replace('{size}', size).replace('{inside}', inside) };
 }
 
+// Ways that stamp already, or make ice too small or loose to stamp.
+const UNSTAMPED = new Set<IceWayKey>(['stamp', 'lewis', 'crack', 'shave']);
+
 /** A way's starting steps for this ice, with a stamp step when the ice is stamped and the way doesn't stamp already. */
 export function iceWaySteps(key: IceWayKey, ice: { size_mm?: number | null; stamped?: boolean; frozen_inside?: string | null }): IceStep[] {
   const steps = iceWay(key).steps.map((s) => fillIceStep(s, ice));
-  if (ice.stamped && key !== 'stamp' && steps.length) steps.splice(steps.length - 1, 0, ICE_EXTRA_STEPS[0].step);
+  if (ice.stamped && !UNSTAMPED.has(key) && steps.length) steps.splice(steps.length - 1, 0, ICE_EXTRA_STEPS[0].step);
   return steps;
 }
 
