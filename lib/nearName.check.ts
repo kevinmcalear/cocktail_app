@@ -48,6 +48,9 @@ assert.equal(nearScore('jungel bird', 'Jungle Bird'), 12);
 assert.equal(nearScore('no', 'Negroni'), null);
 assert.equal(nearScore('boulevardeir', 'Boulevardier'), 2);
 assert.equal(nearScore('boulevadeir', 'Boulevardier'), null); // three off
+// Lengths count characters, as SQL does: an emoji is one, so seven typed allow the whole name one slip.
+assert.equal(nearScore('ab🍸cdef', 'ax🍸cdeg'), null);
+assert.equal(nearScore('ab🍸cdef', 'ax🍸cdef'), 11);
 // Too long to compare letter by letter is simply not close.
 assert.equal(nearScore('x'.repeat(300), 'x'.repeat(299)), null);
 

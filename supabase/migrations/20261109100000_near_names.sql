@@ -37,8 +37,11 @@ CREATE FUNCTION "public"."near_score"("p_query" "text", "p_name" "text")
     SELECT btrim(regexp_replace(public.discover_fold(p_query), '\s+', ' ', 'g')) AS q,
            btrim(regexp_replace(public.discover_fold(p_name), '\s+', ' ', 'g')) AS n
   ),
+  -- Each typed word's slips and sound, once rather than per word of the name.
   typed AS (
-    SELECT w FROM f, regexp_split_to_table(f.q, '[^a-z0-9]+') w WHERE w <> ''
+    SELECT w, CASE WHEN length(w) >= 8 THEN 2 ELSE 1 END AS slips,
+           CASE WHEN length(w) BETWEEN 3 AND 64 THEN extensions.dmetaphone(w) ELSE '' END AS sound
+    FROM f, regexp_split_to_table(f.q, '[^a-z0-9]+') w WHERE w <> ''
   ),
   named AS (
     SELECT w FROM f, regexp_split_to_table(f.n, '[^a-z0-9]+') w WHERE w <> ''
@@ -50,11 +53,8 @@ CREATE FUNCTION "public"."near_score"("p_query" "text", "p_name" "text")
           WHEN length(t.w) >= 3 AND left(nw.w, length(t.w)) = t.w THEN 1
           WHEN length(t.w) BETWEEN 3 AND 64 AND length(nw.w) <= 64
                AND (length(t.w) > 3 OR left(t.w, 1) = left(nw.w, 1))
-               AND extensions.levenshtein_less_equal(t.w, nw.w, CASE WHEN length(t.w) >= 8 THEN 2 ELSE 1 END)
-                   <= CASE WHEN length(t.w) >= 8 THEN 2 ELSE 1 END THEN 2
-          WHEN length(t.w) BETWEEN 3 AND 64 AND length(nw.w) <= 64
-               AND extensions.dmetaphone(t.w) <> ''
-               AND extensions.dmetaphone(t.w) = extensions.dmetaphone(nw.w) THEN 3
+               AND extensions.levenshtein_less_equal(t.w, nw.w, t.slips) <= t.slips THEN 2
+          WHEN t.sound <> '' AND length(nw.w) <= 64 AND t.sound = extensions.dmetaphone(nw.w) THEN 3
         END)
       FROM named nw
     ) AS score
@@ -63,9 +63,11 @@ CREATE FUNCTION "public"."near_score"("p_query" "text", "p_name" "text")
   SELECT CASE
     WHEN NOT EXISTS (SELECT 1 FROM typed) THEN NULL
     WHEN NOT EXISTS (SELECT 1 FROM words WHERE score IS NULL) THEN (SELECT sum(score)::integer FROM words)
-    WHEN length(f.q) <= 255 AND length(f.n) <= 255
-         AND extensions.levenshtein_less_equal(f.q, f.n, greatest(1, length(f.q) / 4)) <= greatest(1, length(f.q) / 4)
-      THEN 10 + extensions.levenshtein_less_equal(f.q, f.n, greatest(1, length(f.q) / 4))
+    WHEN length(f.q) <= 255 AND length(f.n) <= 255 THEN (
+      SELECT 10 + x.d
+      FROM (SELECT extensions.levenshtein_less_equal(f.q, f.n, greatest(1, length(f.q) / 4)) AS d) x
+      WHERE x.d <= greatest(1, length(f.q) / 4)
+    )
   END
   FROM f;
 $$;
@@ -101,11 +103,30 @@ CREATE POLICY "item_spellings_select" ON "public"."item_spellings"
         OR EXISTS (SELECT 1 FROM "public"."items" i WHERE i."id" = "item_spellings"."item_id")
     );
 
--- Saved as yourself, for a drink you can see, and only a close spelling of it.
+CREATE INDEX "item_spellings_saved_by_idx" ON "public"."item_spellings" ("saved_by", "created_at");
+
+-- How many spellings you saved in the last day. Definer: who saved a
+-- spelling isn't readable, not even your own.
+-- ponytail: its own 200 rather than a line in private.daily_limit, which
+-- other open PRs also change; move it there once they land.
+CREATE FUNCTION "private"."spelling_room"() RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+  SELECT count(*) < 200 FROM public.item_spellings
+  WHERE saved_by = (SELECT auth.uid()) AND created_at > now() - interval '1 day';
+$$;
+
+REVOKE ALL ON FUNCTION "private"."spelling_room"() FROM PUBLIC, "anon";
+GRANT EXECUTE ON FUNCTION "private"."spelling_room"() TO "authenticated", "service_role";
+
+-- Saved as yourself, for a drink you can see, only a close spelling of it,
+-- and 200 a day at most.
 CREATE POLICY "item_spellings_insert" ON "public"."item_spellings"
     FOR INSERT TO "authenticated"
     WITH CHECK (
         "saved_by" = (SELECT "auth"."uid"())
+        AND "private"."spelling_room"()
         AND EXISTS (
             SELECT 1 FROM "public"."items" i
             WHERE i."id" = "item_spellings"."item_id"
@@ -120,8 +141,9 @@ GRANT INSERT ("item_id", "spelling") ON TABLE "public"."item_spellings" TO "auth
 GRANT ALL ON TABLE "public"."item_spellings" TO "service_role";
 
 -- "Yes, that's it": keeps what was typed as another spelling of the item.
--- False (and nothing kept) when signed out, when it is the item's own name,
--- or when it isn't close to the name of an item the caller can see.
+-- True when it is kept (now, or by someone before). False, and nothing kept,
+-- when signed out, past the day's 200, when it is the item's own name, or
+-- when it isn't close to the name of an item the caller can see.
 CREATE FUNCTION "public"."save_spelling"("p_item_id" "uuid", "p_typed" "text")
     RETURNS boolean
     LANGUAGE "plpgsql" SECURITY INVOKER
@@ -130,7 +152,7 @@ CREATE FUNCTION "public"."save_spelling"("p_item_id" "uuid", "p_typed" "text")
 DECLARE
   v_spelling text := btrim(regexp_replace(public.discover_fold(p_typed), '\s+', ' ', 'g'));
 BEGIN
-  IF (SELECT auth.uid()) IS NULL OR v_spelling = '' OR length(v_spelling) > 80 THEN
+  IF (SELECT auth.uid()) IS NULL OR v_spelling = '' OR length(v_spelling) > 80 OR NOT private.spelling_room() THEN
     RETURN false;
   END IF;
   IF NOT EXISTS (

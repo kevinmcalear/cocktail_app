@@ -88,6 +88,15 @@ describe('near_score', () => {
     );
   });
 
+  test('counts characters as the app does', async () => {
+    const pairs = [['ab🍸cdef', 'ax🍸cdeg'], ['ab🍸cdef', 'ax🍸cdef'], ['  Piña   Colada ', 'pina colada'], ['jungel bird', 'Jungle Bird']];
+    const { rows } = await db.query('SELECT public.near_score(q, n) AS score FROM unnest($1::text[], $2::text[]) AS p(q, n)', [
+      pairs.map((p) => p[0]),
+      pairs.map((p) => p[1]),
+    ]);
+    assert.deepEqual(rows.map((r) => r.score), pairs.map(([q, n]) => nearScore(q, n)));
+  });
+
   test('anyone may call it, signed out too', async () => {
     const { data, error } = await anon.rpc('near_score', { p_query: 'negorni', p_name: 'Negroni' });
     assert.equal(error, null);
@@ -135,6 +144,22 @@ describe('saved spellings', () => {
     assert.ok(theirs.error, 'saved_by cannot be set');
     const unfolded = await saver.client.from('item_spellings').insert({ item_id: ids.classic, spelling: `Salti Boy ${run}` });
     assert.ok(unfolded.error, 'only folded spellings');
+  });
+
+  test('200 a day at most', async () => {
+    await db.query(
+      `INSERT INTO public.item_spellings (item_id, spelling, saved_by)
+       SELECT $1, 'cap ' || g || ' ${run}', $2 FROM generate_series(1, 199) g`,
+      [ids.classic, saver.id]
+    );
+    try {
+      const { data } = await saver.client.rpc('save_spelling', { p_item_id: ids.classic, p_typed: `salti boy ${run}` });
+      assert.equal(data, false, 'the 201st is not kept');
+      const direct = await saver.client.from('item_spellings').insert({ item_id: ids.classic, spelling: `salty boi ${run}` });
+      assert.ok(direct.error, 'nor written directly');
+    } finally {
+      await db.query(`DELETE FROM public.item_spellings WHERE item_id = $1 AND spelling LIKE 'cap %'`, [ids.classic]);
+    }
   });
 
   test('a published drink’s spellings show to anyone, without who saved them', async () => {

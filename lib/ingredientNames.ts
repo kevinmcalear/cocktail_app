@@ -43,8 +43,8 @@ export function sameIngredient<T extends IngredientRow>(name: string, rows: read
   return alias ? (rows.find((r) => r.id === alias.item_id) ?? null) : null;
 }
 
-/** Edit distance, stopping early once it's past `max`. */
-export function distance(a: string, b: string, max: number): number {
+/** Edit distance, stopping early once it's past `max`. Strings, or arrays of characters. */
+export function distance(a: ArrayLike<string>, b: ArrayLike<string>, max: number): number {
   if (Math.abs(a.length - b.length) > max) return max + 1;
   let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
   for (let i = 1; i <= a.length; i++) {
