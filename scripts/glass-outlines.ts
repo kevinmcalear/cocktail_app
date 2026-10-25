@@ -20,6 +20,8 @@ export interface OutlineLoad {
   file: string;
   dir: string;
   header: (count: number) => string;
+  /** Only glasses with no outline yet: a later load never redraws one an earlier load traced. */
+  onlyUntraced?: boolean;
 }
 
 export const LOADS: OutlineLoad[] = [
@@ -46,6 +48,7 @@ export const LOADS: OutlineLoad[] = [
   {
     file: 'supabase/migrations/20261113300000_glass_outlines_wave5.sql',
     dir: join(DIR, 'wave5'),
+    onlyUntraced: true,
     header: (count) => `-- Glass outlines, load 2: wave 5's glasses, after 20261113200000 (which
 -- adds them) and load 1 (20261113110000).
 --
@@ -61,7 +64,7 @@ export const LOADS: OutlineLoad[] = [
 --     traced widest diameter against the maker's published one (831
 --     glasses), median 2.1% off, 81% within 5%. Flagged traces and every
 --     Toyo-Sasaki glass were checked by eye on contact sheets.
---   * A glass loads 1 already outlined is left as it is. A second run
+--   * A glass load 1 already outlined is left as it is. A second run
 --     changes nothing.`,
   },
 ];
@@ -113,7 +116,7 @@ ${rows.join(',\n')}
  WHERE m.maker_profile_id = p.id
    AND public.ingredient_key(m.name) = public.ingredient_key(o.name)
    AND coalesce(m.capacity_ml, 0) = coalesce(o.capacity_ml::numeric, 0)
-   AND m.outline IS DISTINCT FROM o.outline::jsonb;
+   AND m.outline IS DISTINCT FROM o.outline::jsonb${load.onlyUntraced ? '\n   AND m.outline IS NULL' : ''};
 `;
 }
 

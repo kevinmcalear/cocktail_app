@@ -4,7 +4,7 @@
 //
 //   node --import tsx scripts/glass-models.ts           write the migrations
 //   node --import tsx scripts/glass-models.ts --print   print them instead
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { GLASS_VARIANTS } from '../lib/sketch/geometry';
@@ -284,6 +284,7 @@ export function problemWith(m: SeedModel): string | null {
   if ((m.height_mm ?? 0) >= 1000 || (m.rim_mm ?? 0) >= 500) return 'a measure out of range';
   if ((m.capacity_as_stated?.length ?? 0) > 40 || (m.model_code?.trim().length ?? 0) > 40) return 'a size or code over 40 letters';
   if ((m.series?.trim().length ?? 0) > 80 || (m.designer?.trim().length ?? 0) > 80) return 'a series or designer over 80 letters';
+  if ([m.series, m.designer, m.model_code, m.capacity_as_stated].some((v) => v !== null && v !== undefined && !v.trim())) return 'a blank series, designer, code or size';
   const urls = [...m.source_urls, ...(m.product_url ? [m.product_url] : [])];
   if (!m.source_urls.length || m.source_urls.length > 10) return 'sources';
   if (urls.some((u) => !/^https:\/\/[^\s]+$/.test(u) || u.length > 500)) return 'a source that is not an https page';
@@ -294,6 +295,17 @@ export function problemWith(m: SeedModel): string | null {
 const q = (s: string | null | undefined) => (s == null ? 'NULL' : `$q$${s}$q$`);
 const n = (x: number | null | undefined) => (x == null ? 'NULL' : String(x));
 const arr = (xs: string[]) => `ARRAY[${xs.map(q).join(', ')}]::text[]`;
+
+const FROM = 'àáâãäåāçćčèéêëēěìíîïīñńòóôõöøōùúûüūýÿžš';
+const TO = 'aaaaaaaccceeeeeeiiiiinnooooooouuuuuyyzs';
+/** public.ingredient_key in JS: the name glass_models' unique key and the outline loads match on. */
+export function nameKey(name: string): string {
+  const mapped = [...name.toLowerCase()].map((c) => (FROM.includes(c) ? TO[FROM.indexOf(c)] : c)).join('');
+  return mapped.replace(/[œæ'’‘`´]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9:]+/g, ' ').trim();
+}
+
+/** Whether a seed file exists (a maker loaded by a migration that isn't generated from one has none). */
+export const hasSeed = (name: string) => existsSync(join(DIR, `${name}.json`));
 
 export function readSeed(handle: string): Seed {
   return JSON.parse(readFileSync(join(DIR, `${handle}.json`), 'utf8')) as Seed;
