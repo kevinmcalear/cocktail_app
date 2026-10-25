@@ -1,0 +1,426 @@
+{
+ "logos": [
+  {
+   "handle": "anchor.hocking",
+   "file": "anchor.hocking.effffff.png",
+   "source": "https://www.anchorhocking.com/wp-content/uploads/2022/01/AH_Logo-2.svg",
+   "page": "https://www.anchorhocking.com/"
+  },
+  {
+   "handle": "arc",
+   "file": "arc.effffff.png",
+   "source": "https://www.arc-intl.com/files/themes/arc-intl/img/svg/logo-arc-1825.svg",
+   "page": "https://www.arc-intl.com/en/"
+  },
+  {
+   "handle": "arcoroc",
+   "file": "arcoroc.effffff.png",
+   "source": "https://pro.latabledarc.com/cdn/shop/files/arcoroc-marque.jpg",
+   "page": "https://pro.latabledarc.com/pages/arcoroc",
+   "note": "cropped to the wordmark card on the brand photo"
+  },
+  {
+   "handle": "bargeek",
+   "file": "bargeek.effffff.png",
+   "source": "https://bargeek.com.au/cdn/shop/files/BG-barGEEK_logo.png",
+   "page": "https://bargeek.com.au/"
+  },
+  {
+   "handle": "barproducts.com",
+   "file": "barproducts.com.e010101.png",
+   "source": "https://barproducts.com/cdn/shop/files/bpc-logo3.jpg",
+   "page": "https://barproducts.com/"
+  },
+  {
+   "handle": "bobo",
+   "file": "bobo.effffff.png",
+   "source": "https://bobo.store/cdn/shop/files/BOBO_glasslogotype-ONLYONPRODUCT_black_v4.svg",
+   "page": "https://bobo.store/"
+  },
+  {
+   "handle": "bormioli.rocco",
+   "file": "bormioli.rocco.effffff.png",
+   "source": "https://bormioliluigi.com/assets/img/logos/logo_bormioli_rocco_air.svg",
+   "page": "https://bormioliluigi.com/glassware/en/"
+  },
+  {
+   "handle": "coast.to.coast.imports",
+   "file": "coast.to.coast.imports.effffff.png",
+   "source": "https://d1mv2b9v99cq0i.cloudfront.net/eyJidWNrZXQiOiJ3ZWItbmluamEtaW1hZ2VzIiwia2V5IjoiY29hc3QyY29hc3RcL2NvbnRlbnQtaW1hZ2VcL0NvYXN0dG9Db2FzdEltcG9ydHNfTG9nb18yMDI1X1N0YWNrZWQucG5nIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo1MDAsImhlaWdodCI6MzMwLCJmaXQiOiJpbnNpZGUifX0sInZlcnNpb24iOiIifQ==",
+   "page": "https://www.ctcimports.com.au/"
+  },
+  {
+   "handle": "cocktail.kingdom",
+   "file": "cocktail.kingdom.e020912.png",
+   "source": "https://cocktailkingdom.com/cdn/shop/files/CK-PB-logo_300px.png",
+   "page": "https://cocktailkingdom.com/"
+  },
+  {
+   "handle": "crown.glassware",
+   "file": "crown.glassware.effffff.png",
+   "source": "https://www.trenton.com.au/brands-2024/image-thumb__35062__brand-widget/crown-glassware@2x.png",
+   "page": "https://www.trenton.com.au/our-brands"
+  },
+  {
+   "handle": "duralex",
+   "file": "duralex.effffff.png",
+   "source": "https://www.duralexusa.com/cdn/shop/files/logo-duralex.svg",
+   "page": "https://www.duralexusa.com/"
+  },
+  {
+   "handle": "false.idol",
+   "file": "false.idol.ed0c7c7.png",
+   "source": "https://graph.facebook.com/falseidoltiki/picture?type=large",
+   "page": "https://www.facebook.com/falseidoltiki"
+  },
+  {
+   "handle": "gabriel.glas",
+   "file": "gabriel.glas.e000000.png",
+   "source": "https://www.gabriel-glas.com/wp-content/uploads/2022/01/logo.png",
+   "page": "https://www.gabriel-glas.com/"
+  },
+  {
+   "handle": "grassl",
+   "file": "grassl.effffff.png",
+   "source": "https://grasslglass.com/assets/img/logo.png",
+   "page": "https://grasslglass.com/"
+  },
+  {
+   "handle": "hale.pele",
+   "file": "hale.pele.e131932.png",
+   "source": "https://images.squarespace-cdn.com/content/v1/59249b59c6fc08d043657ca4/1497048043759-EYHTCNBF9XAA56EUMP93/Hale+Pele+Type+%2B+Mark+logo+%28website+blkout+02%29.png",
+   "page": "https://www.halepele.com/"
+  },
+  {
+   "handle": "hay",
+   "file": "hay.effffff.png",
+   "source": "https://www.hay.com/b20.0.0.0/Frontend/CSS/haybrand.css (base64 SVG data URI for .site-header__logo, decoded unchanged)",
+   "page": "https://www.hay.com/"
+  },
+  {
+   "handle": "john.jenkins",
+   "file": "john.jenkins.effffff.png",
+   "source": "https://www.johnjenkins.co.uk/static/version1784619264/frontend/Tjb/Johnjenkins/en_GB/images/john-jenkins-logo.svg",
+   "page": "https://www.johnjenkins.co.uk/"
+  },
+  {
+   "handle": "josephinenhutte",
+   "file": "josephinenhutte.effffff.png",
+   "source": "https://josephinen.com/cdn/shop/files/josephinenhutte-logo-dark.svg",
+   "page": "https://josephinen.com/"
+  },
+  {
+   "handle": "karakter",
+   "file": "karakter.effffff.png",
+   "source": "inline SVG in the page header",
+   "page": "https://www.karakter-copenhagen.com/"
+  },
+  {
+   "handle": "ken.hands.agencies",
+   "file": "ken.hands.agencies.e1258b8.png",
+   "source": "https://kha.com.au/wp-content/uploads/2024/11/KH-LOGO-2024-WEB-1.png",
+   "page": "https://kha.com.au/"
+  },
+  {
+   "handle": "kilner",
+   "file": "kilner.effffff.png",
+   "source": "https://www.kilnerjar.co.uk/static/version1792494175/frontend/WilliamsCommerce/kilner/en_GB/images/logo.svg",
+   "page": "https://www.kilnerjar.co.uk/"
+  },
+  {
+   "handle": "kinto",
+   "file": "kinto.effffff.png",
+   "source": "https://kinto.co.jp/cdn/shop/t/470/assets/sprite.svg",
+   "page": "https://kinto.co.jp/"
+  },
+  {
+   "handle": "krosno",
+   "file": "krosno.effffff.png",
+   "source": "https://krosno.com/cdn/shop/files/Warstwa_1_1.svg",
+   "page": "https://krosno.com/"
+  },
+  {
+   "handle": "latitude29nola",
+   "file": "latitude29nola.effffff.png",
+   "source": "https://latitude29nola.com/img/logotype-2023.png",
+   "page": "https://latitude29nola.com/"
+  },
+  {
+   "handle": "lav",
+   "file": "lav.effffff.png",
+   "source": "https://www.lav.com.tr/cdn/shop/files/5f53ec40-121c-40e2-8aec-0682d98db9bc.jpg",
+   "page": "https://www.lav.com.tr/"
+  },
+  {
+   "handle": "libbey",
+   "file": "libbey.effffff.png",
+   "source": "https://www.libbey.com/static/images/logo.png",
+   "page": "https://www.libbey.com/"
+  },
+  {
+   "handle": "lsa.international",
+   "file": "lsa.international.effffff.png",
+   "source": "https://www.lsa-international.com/cdn/shop/files/logo-black.svg",
+   "page": "https://www.lsa-international.com/en-us"
+  },
+  {
+   "handle": "luigi.bormioli",
+   "file": "luigi.bormioli.effffff.png",
+   "source": "https://bormioliluigi.com/assets/img/logos/logo_luigi_bormioli_air.svg",
+   "page": "https://bormioliluigi.com/glassware/en/"
+  },
+  {
+   "handle": "mamo",
+   "file": "mamo.effffff.png",
+   "source": "https://mamo.nyc/cdn/shop/t/5/assets/logo.svg",
+   "page": "https://mamo.nyc/"
+  },
+  {
+   "handle": "maxwell.williams",
+   "file": "maxwell.williams.effffff.png",
+   "source": "inline SVG in the page header",
+   "page": "https://maxwellandwilliams.com.au/"
+  },
+  {
+   "handle": "munktiki",
+   "file": "munktiki.efefefe.png",
+   "source": "https://images.squarespace-cdn.com/content/v1/54cd986fe4b0c7b754d381ce/1422847579860-S1X0T31Y6ZRKRTYZBZWM/munktikius.jpg",
+   "page": "https://www.munktiki.com/about",
+   "note": "cropped to the wordmark (the banner also has the founders' photos)"
+  },
+  {
+   "handle": "nachtmann",
+   "file": "nachtmann.effffff.png",
+   "source": "https://cdn.nachtmann.com/media/a0/f2/1b/1778141010/nachtmann-logo.svg?ts=1778141010",
+   "page": "https://www.nachtmann.com/en-int"
+  },
+  {
+   "handle": "nadir",
+   "file": "nadir.e00144b.png",
+   "source": "https://nadir.com.br/wp-content/uploads/elementor/thumbs/Logo_2026_br-rpvpifb043s9vyet0ahb0nyrnp5plci81bod0ogns2.png",
+   "page": "https://nadir.com.br/"
+  },
+  {
+   "handle": "obakki",
+   "file": "obakki.effffff.png",
+   "source": "https://obakki.com/cdn/shop/files/Obakki-WordmarkOnly-Black_200x60_34f1689d-af86-46a4-9f0b-d4efd81b770b.png",
+   "page": "https://obakki.com/"
+  },
+  {
+   "handle": "ocean",
+   "file": "ocean.effffff.png",
+   "source": "https://www.ocean-glassware.com/wp-content/themes/ocean/assets/images/OceanLogo.png",
+   "page": "https://www.ocean-glassware.com/"
+  },
+  {
+   "handle": "olympia",
+   "file": "olympia.e111111.png",
+   "source": "https://catering-brands-directory.com/wp-content/uploads/2025/07/Olympia-Logo-White.png",
+   "page": "https://catering-brands-directory.com/olympia/"
+  },
+  {
+   "handle": "onis",
+   "file": "onis.ef3eee4.png",
+   "source": "https://onis.eu/cdn/shop/files/TEST5.jpg",
+   "page": "https://onis.eu/"
+  },
+  {
+   "handle": "polysafe",
+   "file": "polysafe.effffff.png",
+   "source": "https://polysafe.com.au/images/logo/logo-green.png",
+   "page": "https://polysafe.com.au/"
+  },
+  {
+   "handle": "rastal",
+   "file": "rastal.effffff.png",
+   "source": "https://rastal.com/_assets/81d0b948db0cf3e65b80b413188c632d/Images/rastal_logo.svg",
+   "page": "https://rastal.com/"
+  },
+  {
+   "handle": "rcr",
+   "file": "rcr.eed6051.png",
+   "source": "https://www.rcrcrystal.com/wp-content/uploads/2021/08/logo-CRISTALLERIA-ITALIANA-vettoriale.jpg",
+   "page": "https://www.rcrcrystal.com/"
+  },
+  {
+   "handle": "rcr.cristalleria.italiana",
+   "file": "rcr.cristalleria.italiana.eed6051.png",
+   "source": "https://www.rcrcrystal.com/wp-content/uploads/2021/08/logo-CRISTALLERIA-ITALIANA-vettoriale.jpg",
+   "page": "https://www.rcrcrystal.com/"
+  },
+  {
+   "handle": "richard.brendon",
+   "file": "richard.brendon.effffff.png",
+   "source": "inline SVG in the page header",
+   "page": "https://richardbrendon.com/"
+  },
+  {
+   "handle": "riedel",
+   "file": "riedel.e000000.png",
+   "source": "https://cdn.riedel.com/media/0e/9f/5c/1778141010/riedel-logo.svg?ts=1778141010",
+   "page": "https://www.riedel.com/en-us"
+  },
+  {
+   "handle": "rona",
+   "file": "rona.ea32638.png",
+   "source": "https://rona.glass/wp-content/uploads/2019/07/rona_logo_rgb.png",
+   "page": "https://rona.glass/"
+  },
+  {
+   "handle": "royal.leerdam",
+   "file": "royal.leerdam.e030303.png",
+   "source": "https://www.royalleerdam.com/cdn/shop/files/royalleerdam_logo.jpg",
+   "page": "https://www.royalleerdam.com/"
+  },
+  {
+   "handle": "sahm",
+   "file": "sahm.effffff.png",
+   "source": "https://sahm.de/wp-content/uploads/2026/04/logoblau.png",
+   "page": "https://sahm.de/"
+  },
+  {
+   "handle": "schott.zwiesel",
+   "file": "schott.zwiesel.effffff.png",
+   "source": "https://www.zwieselfortessa.com/assets/img/logos/partner2.svg",
+   "page": "https://www.zwieselfortessa.com/"
+  },
+  {
+   "handle": "sertodo",
+   "file": "sertodo.effffff.png",
+   "source": "https://sertodo.com/cdn/shop/files/Sertodo_Copper_1.svg",
+   "page": "https://sertodo.com/"
+  },
+  {
+   "handle": "sghr.sugahara",
+   "file": "sghr.sugahara.effffff.png",
+   "source": "https://www.sugahara.com/wp-content/themes/sghr/assets/images/logo.svg",
+   "page": "https://www.sugahara.com/"
+  },
+  {
+   "handle": "sip.and.guzzle",
+   "file": "sip.and.guzzle.effffff.png",
+   "source": "https://sipandguzzle.net/cdn/shop/files/sg_logo5.png",
+   "page": "https://sipandguzzle.net/"
+  },
+  {
+   "handle": "sophienwald",
+   "file": "sophienwald.e0f1312.png",
+   "source": "https://www.sophienwald.com/assets/images/9/sophienwald-handmade-logo-3ed959be.svg",
+   "page": "https://www.sophienwald.com/en/"
+  },
+  {
+   "handle": "spiegelau",
+   "file": "spiegelau.effffff.png",
+   "source": "https://cdn.spiegelau.com/media/10/c4/99/1782214002/spiegelau_footer-logo.svg?ts=1782214002",
+   "page": "https://www.spiegelau.com/en-int"
+  },
+  {
+   "handle": "steelite.utopia",
+   "file": "steelite.utopia.effffff.png",
+   "source": "https://www.steelite-utopia.com/assets/images/logo-share-black.png",
+   "page": "https://www.steelite-utopia.com/ (og:image)"
+  },
+  {
+   "handle": "stolzle.lausitz",
+   "file": "stolzle.lausitz.effffff.png",
+   "source": "https://stoelzle-lausitz.com/cdn/shop/files/stoelzle-lausitz_logo_long.png",
+   "page": "https://stoelzle-lausitz.com/en-us"
+  },
+  {
+   "handle": "svev",
+   "file": "svev.effffff.png",
+   "source": "https://images.squarespace-cdn.com/content/v1/67bb1b33cb4968452d81da27/9be1fe93-ca99-4838-86fe-d4e2a5b7a600/Logo_Svev_honeycomb.png?format=1500w",
+   "page": "https://svevglass.com/"
+  },
+  {
+   "handle": "threedotsandadash",
+   "file": "threedotsandadash.e6fc7b4.png",
+   "source": "https://storage.googleapis.com/threedots_2023_bucket/wp-content/themes/lettuce/images/logos/logo-white-text.png",
+   "page": "https://www.threedotschicago.com/"
+  },
+  {
+   "handle": "tiki.farm",
+   "file": "tiki.farm.effffff.png",
+   "source": "https://www.tikifarm.com/cdn/shop/files/tiki-farm-logo-end-2024.jpg",
+   "page": "https://www.tikifarm.com/"
+  },
+  {
+   "handle": "tomkin",
+   "file": "tomkin.effffff.png",
+   "source": "https://tomkin.com.au/cdn/shop/files/TOMKIN_AUSTRALIA_LOGO_2021_2f9d9c45-0734-481e-9da3-7b813a8c62de.png",
+   "page": "https://tomkin.com.au/"
+  },
+  {
+   "handle": "tonga.hut",
+   "file": "tonga.hut.effffff.png",
+   "source": "https://www.tongahut.com/uploads/1/5/5/0/155052637/tonga-hut-logo-red.png",
+   "page": "https://www.tongahut.com/"
+  },
+  {
+   "handle": "tossware",
+   "file": "tossware.e004b26.png",
+   "source": "https://www.tossware.com/cdn/shop/files/Group_cee1b9e8-e264-4777-9541-2a4c5f966656.svg",
+   "page": "https://www.tossware.com/"
+  },
+  {
+   "handle": "toyo.sasaki.glass",
+   "file": "toyo.sasaki.glass.efcfcfc.png",
+   "source": "https://www.toyo.sasaki.co.jp/wp-content/themes/them_toyo/common/en_img/header_logo_a.png",
+   "page": "https://www.toyo.sasaki.co.jp/e/"
+  },
+  {
+   "handle": "tradervics.oakland",
+   "file": "tradervics.oakland.e111111.png",
+   "source": "https://tradervics.com/cdn/shop/files/tv-logo.png",
+   "page": "https://tradervics.com/"
+  },
+  {
+   "handle": "trenton.international",
+   "file": "trenton.international.effffff.png",
+   "source": "https://www.trenton.com.au/site-images/_logo-trenton/trenton-logo-charcoal-grey.png",
+   "page": "https://www.trenton.com.au/"
+  },
+  {
+   "handle": "uberbartools",
+   "file": "uberbartools.effffff.png",
+   "source": "https://www.uberbartools.com.au/cdn/shop/files/Uber_Logo_black_daef572a-6bb5-40d0-a118-8cd108c69208.png",
+   "page": "https://www.uberbartools.com.au/"
+  },
+  {
+   "handle": "umezawa",
+   "file": "umezawa.effffff.png",
+   "source": "https://umezawa-u.co.jp/wp/wp-content/uploads/2022/08/logo-01-8t.webp",
+   "page": "https://umezawa-u.co.jp/"
+  },
+  {
+   "handle": "urban.bar",
+   "file": "urban.bar.effffff.png",
+   "source": "https://www.urbanbar.com/cdn/shop/t/52/assets/urban-bar-logo.png",
+   "page": "https://www.urbanbar.com/"
+  },
+  {
+   "handle": "viski",
+   "file": "viski.effffff.png",
+   "source": "https://viski.com/cdn/shop/files/Stiletto_ViskiLogo_V2_8ed2ce2c-91ec-4c2b-8f8e-638887309e08.png",
+   "page": "https://viski.com/"
+  },
+  {
+   "handle": "weck",
+   "file": "weck.e003900.png",
+   "source": "inline SVG in the page header",
+   "page": "https://weck.de/de-de"
+  },
+  {
+   "handle": "zalto",
+   "file": "zalto.effffff.png",
+   "source": "inline SVG in the page header",
+   "page": "https://www.zaltoglas.at/"
+  },
+  {
+   "handle": "zwiesel.fortessa",
+   "file": "zwiesel.fortessa.effffff.png",
+   "source": "https://www.zwieselfortessa.us/site/ZwieselFortessa_Logo_header_resized_small.png",
+   "page": "https://www.zwieselfortessa.us/"
+  }
+ ]
+}
