@@ -2755,7 +2755,6 @@ export type Database = {
           override_visibility_level: number | null
           picture: Database["public"]["Enums"]["item_picture"]
           price: string | null
-          price_minor: number | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at: string | null
           riff_of_id: string | null
@@ -2821,7 +2820,6 @@ export type Database = {
           override_visibility_level?: number | null
           picture?: Database["public"]["Enums"]["item_picture"]
           price?: string | null
-          price_minor?: number | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at?: string | null
           riff_of_id?: string | null
@@ -2887,7 +2885,6 @@ export type Database = {
           override_visibility_level?: number | null
           picture?: Database["public"]["Enums"]["item_picture"]
           price?: string | null
-          price_minor?: number | null
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at?: string | null
           riff_of_id?: string | null
@@ -3189,7 +3186,6 @@ export type Database = {
           price: string | null
           serves: number | null
           sort_order: number | null
-          template_section_id: string | null
         }
         Insert: {
           created_at?: string
@@ -3201,7 +3197,6 @@ export type Database = {
           price?: string | null
           serves?: number | null
           sort_order?: number | null
-          template_section_id?: string | null
         }
         Update: {
           created_at?: string
@@ -3213,7 +3208,6 @@ export type Database = {
           price?: string | null
           serves?: number | null
           sort_order?: number | null
-          template_section_id?: string | null
         }
         Relationships: [
           {
@@ -3250,13 +3244,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "menu_run_parties"
             referencedColumns: ["id", "menu_id"]
-          },
-          {
-            foreignKeyName: "menu_drinks_template_section_id_fkey"
-            columns: ["template_section_id"]
-            isOneToOne: false
-            referencedRelation: "template_sections"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -3428,7 +3415,6 @@ export type Database = {
           min_items: number
           name: string
           sort_order: number
-          template_section_id: string | null
         }
         Insert: {
           allowed_types?: string[]
@@ -3439,7 +3425,6 @@ export type Database = {
           min_items?: number
           name: string
           sort_order?: number
-          template_section_id?: string | null
         }
         Update: {
           allowed_types?: string[]
@@ -3450,7 +3435,6 @@ export type Database = {
           min_items?: number
           name?: string
           sort_order?: number
-          template_section_id?: string | null
         }
         Relationships: [
           {
@@ -3460,20 +3444,12 @@ export type Database = {
             referencedRelation: "menus"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "menu_sections_template_section_id_fkey"
-            columns: ["template_section_id"]
-            isOneToOne: false
-            referencedRelation: "template_sections"
-            referencedColumns: ["id"]
-          },
         ]
       }
       menu_templates: {
         Row: {
           created_at: string | null
           created_by: string | null
-          description: string | null
           id: string
           name: string
           updated_at: string | null
@@ -3481,7 +3457,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
-          description?: string | null
           id?: string
           name: string
           updated_at?: string | null
@@ -3489,7 +3464,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
-          description?: string | null
           id?: string
           name?: string
           updated_at?: string | null
@@ -3516,7 +3490,6 @@ export type Database = {
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
           shared_at: string | null
           starts_at: string | null
-          template_id: string | null
           updated_at: string
         }
         Insert: {
@@ -3538,7 +3511,6 @@ export type Database = {
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
           shared_at?: string | null
           starts_at?: string | null
-          template_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -3560,7 +3532,6 @@ export type Database = {
           publish_mode?: Database["public"]["Enums"]["item_publish_mode"] | null
           shared_at?: string | null
           starts_at?: string | null
-          template_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3569,13 +3540,6 @@ export type Database = {
             columns: ["bar_id"]
             isOneToOne: false
             referencedRelation: "bars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "menus_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "menu_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -4348,29 +4312,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "new_recipes_ingredient_item_id_fkey"
+            foreignKeyName: "recipes_ingredient_item_id_fkey"
             columns: ["ingredient_item_id"]
             isOneToOne: false
             referencedRelation: "app_item_presentation"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_ingredient_item_id_fkey"
+            foreignKeyName: "recipes_ingredient_item_id_fkey"
             columns: ["ingredient_item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "new_recipes_recipe_item_id_fkey"
-            columns: ["recipe_item_id"]
-            isOneToOne: false
-            referencedRelation: "app_item_presentation"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "new_recipes_recipe_item_id_fkey"
-            columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
@@ -4385,6 +4335,20 @@ export type Database = {
           {
             foreignKeyName: "recipes_parent_ingredient_id_fkey"
             columns: ["parent_ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_recipe_item_id_fkey"
+            columns: ["recipe_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipes_recipe_item_id_fkey"
+            columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
@@ -5267,7 +5231,6 @@ export type Database = {
           picture: Database["public"]["Enums"]["item_picture"] | null
           picture_url: string | null
           price: string | null
-          price_minor: number | null
           serve_abv: number | null
           serve_ml: number | null
           service_style: string | null
@@ -5448,7 +5411,6 @@ export type Database = {
             override_visibility_level: number | null
             picture: Database["public"]["Enums"]["item_picture"]
             price: string | null
-            price_minor: number | null
             publish_mode:
               | Database["public"]["Enums"]["item_publish_mode"]
               | null
@@ -5493,14 +5455,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "new_recipes_recipe_item_id_fkey"
+            foreignKeyName: "recipes_recipe_item_id_fkey"
             columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "app_item_presentation"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "new_recipes_recipe_item_id_fkey"
+            foreignKeyName: "recipes_recipe_item_id_fkey"
             columns: ["recipe_item_id"]
             isOneToOne: false
             referencedRelation: "items"
@@ -6181,7 +6143,6 @@ export type Database = {
           override_visibility_level: number | null
           picture: Database["public"]["Enums"]["item_picture"]
           price: string | null
-          price_minor: number | null
           publish_mode: Database["public"]["Enums"]["item_publish_mode"] | null
           published_at: string | null
           riff_of_id: string | null
@@ -6334,24 +6295,6 @@ export type Database = {
           display_name: string
           handle: string
           profile_id: string
-        }[]
-      }
-      get_my_taste: {
-        Args: never
-        Returns: {
-          bitter: number
-          botanical: number
-          creamy: number
-          drinks: number
-          fruity: number
-          herbal: number
-          savory: number
-          smoky: number
-          sour: number
-          spiced: number
-          spicy: number
-          strong: number
-          sweet: number
         }[]
       }
       get_pair_drinks: {

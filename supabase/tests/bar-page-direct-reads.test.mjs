@@ -27,7 +27,7 @@ const db = new pg.Client({ connectionString: status.DB_URL });
 
 const users = {};
 const ids = {};
-const FIGURES = 'serve_ml, serve_abv, dilution_pct, price, price_minor';
+const FIGURES = 'serve_ml, serve_abv, dilution_pct, price';
 
 async function makeUser(label) {
   const email = `${label}-${run}@security-test.local`;
@@ -96,7 +96,6 @@ before(async () => {
     serve_abv: 21.4,
     dilution_pct: 22,
     price: '$18',
-    price_minor: 1800,
   })).id;
   const image = await serviceInsert('images', { url: `${status.API_URL}/storage/v1/object/public/drinks/cocktails/hush-${run}.jpg` });
   await serviceInsert('item_images', { item_id: ids.drink, image_id: image.id, angle: 'hero', sort_order: 0 });
@@ -116,7 +115,7 @@ after(async () => {
 describe('a credited drink\'s figures', () => {
   test('are never on the row', async () => {
     const { rows } = await db.query(`SELECT ${FIGURES} FROM public.items WHERE id = $1`, [ids.drink]);
-    assert.deepEqual(rows[0], { serve_ml: null, serve_abv: null, dilution_pct: null, price: null, price_minor: null });
+    assert.deepEqual(rows[0], { serve_ml: null, serve_abv: null, dilution_pct: null, price: null });
   });
 
   test('stay with the bar while its page shows names and descriptions', async () => {
@@ -126,7 +125,7 @@ describe('a credited drink\'s figures', () => {
     assert.equal(direct.creator_profile_id, ids.person, 'so does the maker');
     assert.equal(direct.serve_ml, null);
     const viaView = await presented(users.stranger.client);
-    assert.deepEqual([viaView.serve_ml, viaView.serve_abv, viaView.dilution_pct, viaView.price, viaView.price_minor], [null, null, null, null, null]);
+    assert.deepEqual([viaView.serve_ml, viaView.serve_abv, viaView.dilution_pct, viaView.price], [null, null, null, null]);
     const { data, error } = await users.stranger.client.from('credited_drink_details').select('item_id').eq('item_id', ids.drink);
     assert.ifError(error);
     assert.equal(data.length, 0);
@@ -136,12 +135,7 @@ describe('a credited drink\'s figures', () => {
     await setPage('description');
     for (const who of ['team', 'catalogAdmin']) {
       const row = await presented(users[who].client);
-      assert.deepEqual(
-        // The typed price only: a credited drink keeps no number on items (20261103100000).
-        [Number(row.serve_ml), Number(row.serve_abv), Number(row.dilution_pct), row.price, row.price_minor],
-        [95, 21.4, 22, '$18', null],
-        who
-      );
+      assert.deepEqual([Number(row.serve_ml), Number(row.serve_abv), Number(row.dilution_pct), row.price], [95, 21.4, 22, '$18'], who);
     }
   });
 
@@ -156,15 +150,11 @@ describe('a credited drink\'s figures', () => {
     await db.query("UPDATE public.items SET price = '20' WHERE id = $1", [ids.drink]);
     let { rows } = await db.query('SELECT serve_ml, price FROM public.credited_drink_details WHERE item_id = $1', [ids.drink]);
     assert.deepEqual([Number(rows[0].serve_ml), rows[0].price], [95, '20']);
-    // An app from before 20261103100000 writes the number: it lands as the typed price, out of sight.
-    await db.query('UPDATE public.items SET price_minor = 2150 WHERE id = $1', [ids.drink]);
-    ({ rows } = await db.query('SELECT price FROM public.credited_drink_details WHERE item_id = $1', [ids.drink]));
-    assert.equal(rows[0].price, '21.50');
     await db.query('UPDATE public.items SET price = NULL WHERE id = $1', [ids.drink]);
     ({ rows } = await db.query('SELECT serve_ml, price FROM public.credited_drink_details WHERE item_id = $1', [ids.drink]));
     assert.deepEqual([Number(rows[0].serve_ml), rows[0].price], [95, null]);
-    const row = await db.query('SELECT price, price_minor FROM public.items WHERE id = $1', [ids.drink]);
-    assert.deepEqual(row.rows[0], { price: null, price_minor: null });
+    const row = await db.query('SELECT price FROM public.items WHERE id = $1', [ids.drink]);
+    assert.deepEqual(row.rows[0], { price: null });
   });
 
   test('are worked out from the spec, and again when the dilution changes', async () => {

@@ -70,17 +70,11 @@ before(async () => {
   ids.martini = (await serviceInsert('items', { name: `House Martini ${run}`, item_type: 'cocktail', bar_id: ids.bar })).id;
   ids.boloTie = (await serviceInsert('items', { name: `Bolo Tie ${run}`, item_type: 'cocktail', bar_id: ids.bar })).id;
   ids.pilsner = (await serviceInsert('items', { name: `Pilsner ${run}`, item_type: 'beer', bar_id: ids.bar })).id;
-
-  ids.template = (await serviceInsert('menu_templates', { name: `Classic ${run}` })).id;
-  ids.stirredTemplateSection = (
-    await serviceInsert('template_sections', { template_id: ids.template, name: 'Stirred', sort_order: 0, allowed_types: ['cocktail'] })
-  ).id;
 });
 
 after(async () => {
   const like = `%${run}%`;
   await db.query('DELETE FROM public.menus WHERE name LIKE $1', [like]);
-  await db.query('DELETE FROM public.menu_templates WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.bars WHERE name LIKE $1', [like]);
   for (const user of Object.values(users)) await service.auth.admin.deleteUser(user.id);
@@ -178,35 +172,6 @@ describe('menu sections', () => {
     assert.ifError(error);
     assert.equal(data.length, 0);
   });
-
-  test('a legacy insert naming a template section lands in the menu’s own copy of it', async () => {
-    const menu = await newMenu('Legacy', { template_id: ids.template });
-    const { error } = await users.maker.client
-      .from('menu_drinks')
-      .insert([
-        { menu_id: menu, template_section_id: ids.stirredTemplateSection, item_id: ids.martini, sort_order: 0 },
-        { menu_id: menu, template_section_id: ids.stirredTemplateSection, item_id: ids.boloTie, sort_order: 1 },
-      ]);
-    assert.ifError(error);
-    const { rows } = await db.query(
-      'SELECT s.name, s.allowed_types, count(d.id)::int AS drinks FROM public.menu_sections s JOIN public.menu_drinks d ON d.menu_section_id = s.id WHERE s.menu_id = $1 GROUP BY s.id',
-      [menu]
-    );
-    assert.deepEqual(rows, [{ name: 'Stirred', allowed_types: ['cocktail'], drinks: 2 }]);
-  });
-});
-
-test('a legacy insert with no section at all lands in the menu’s first section', async () => {
-  const menu = await newMenu('No section');
-  const { error } = await users.maker.client.from('menu_drinks').insert({ menu_id: menu, item_id: ids.martini, sort_order: 0 });
-  assert.ifError(error);
-  const { error: secondError } = await users.maker.client.from('menu_drinks').insert({ menu_id: menu, item_id: ids.boloTie, sort_order: 1 });
-  assert.ifError(secondError);
-  const { rows } = await db.query(
-    'SELECT s.name, count(d.id)::int AS drinks FROM public.menu_sections s JOIN public.menu_drinks d ON d.menu_section_id = s.id WHERE s.menu_id = $1 GROUP BY s.id',
-    [menu]
-  );
-  assert.deepEqual(rows, [{ name: 'Drinks', drinks: 2 }]);
 });
 
 describe('menu dates', () => {
