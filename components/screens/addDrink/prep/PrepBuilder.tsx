@@ -60,6 +60,8 @@ export interface PrepBuilderProps {
   bar?: { id: string; name: string } | null;
   /** Where it's made, from the menu down to the drink (make-anything-overview, rule 3); its own name is added below them. */
   above?: readonly TrailItem[];
+  /** Its own page (New › Something you make), not over a drink: no Modal, and "Your recipes" where the drink would be. */
+  page?: boolean;
 }
 
 /**
@@ -73,6 +75,7 @@ export interface PrepBuilderProps {
 export function PrepBuilder(props: PrepBuilderProps) {
   // Android's back goes to the Modal, not the steps: it goes back on the level showing, one level at a time.
   const back = useRef(props.onClose);
+  if (props.page) return props.name === null ? null : <Builder {...props} name={props.name} backRef={back} />;
   return (
     <Modal visible={!!props.name} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => back.current()}>
       {/* A native Modal is its own root: the method step's drag needs gestures inside it. */}
@@ -81,7 +84,7 @@ export function PrepBuilder(props: PrepBuilderProps) {
   );
 }
 
-function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, backRef, startAt }: PrepBuilderProps & { name: string; backRef: RefObject<() => void> }) {
+function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, backRef, startAt, page }: PrepBuilderProps & { name: string; backRef: RefObject<() => void> }) {
   const [step, setStep] = useState<Step>(startAt ?? (!first && (initial || technique) ? 'recipe' : 'kind'));
   const [direction, setDirection] = useState<1 | -1>(1);
   const [name, setName] = useState(started);
@@ -121,25 +124,25 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
     <WizardFrame
       testID="add-prep"
       overNav
-      pageTitle={`New prep: ${shown}`}
+      pageTitle={`Made in-house: ${shown || 'something you make'}`}
       band={(place) => (
         <PaperBand
           progress={{ now: at + 1, of: STEPS.length, label: `${at + 1} of ${STEPS.length}` }}
           trail={trail}
           first={at === 0}
-          backTo={drink}
+          backTo={page ? 'Your recipes' : drink}
           onBack={back}
           art={<IngredientDrawing name={shown} />}
           artKey={shown}
           artLabel={`Drawing of ${shown}`}
           tag="Made in-house"
-          note={`For ${drinkName || 'your drink'}`}
+          note={page ? 'Your recipes' : `For ${drinkName || 'your drink'}`}
           {...place}
         />
       )}
       stepKey={step}
       direction={direction}
-      eyebrow={(step === 'kind' && from) || (step === 'recipe' && recipeEyebrow(draft)) || shown}
+      eyebrow={(step === 'kind' && from) || (step === 'recipe' && recipeEyebrow(draft)) || (page && step === 'kind' ? 'Something you make' : shown)}
       title={TITLES[step]}
       intro={step === 'method' ? intro : step === 'recipe' ? fromCatalog : undefined}
       aside={step === 'recipe' ? <RecipeView value={view} onChange={setView} /> : null}
@@ -149,7 +152,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
       }}
       footer={
         <WizardFooter
-          nextLabel={step === 'kind' ? 'Next: what goes in' : step === 'recipe' ? 'Next: how it’s made' : `Add it to ${drinkName || 'the drink'}`}
+          nextLabel={step === 'kind' ? 'Next: what goes in' : step === 'recipe' ? 'Next: how it’s made' : page ? 'Save it' : `Add it to ${drinkName || 'the drink'}`}
           optional={step === 'kind'}
           skipLabel={keep ? 'Later' : 'Skip'}
           canNext={ready && !!name.trim()}

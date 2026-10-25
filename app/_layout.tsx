@@ -131,10 +131,8 @@ function RootLayoutNav() {
               name="add-cocktail"
               options={{ presentation: "modal", headerShown: false }}
             />
-            <Stack.Screen
-              name="add-ingredient"
-              options={{ presentation: "modal", headerShown: false }}
-            />
+            <Stack.Screen name="add-ingredient" options={{ presentation: "modal", headerShown: false }} />
+            <Stack.Screen name="make-recipe" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen
               name="add-beer"
               options={{ presentation: "modal", headerShown: false }}

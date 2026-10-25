@@ -31,6 +31,9 @@ export function NewDrafts({ barId, onOpen }: { barId: string | null; onOpen: (pa
       {drafts.map(([slot, k]) => (
         <DraftRow key={slot} slot={slot} draft={k.draft} step={k.step} barId={barId} onOpen={onOpen} />
       ))}
+      <Caption tone="muted" style={[styles.head, styles.start]}>
+        START SOMETHING
+      </Caption>
     </View>
   );
 }
@@ -69,5 +72,6 @@ function DraftRow({ slot, draft, step, barId, onOpen }: { slot: string; draft: W
 const styles = StyleSheet.create({
   list: { marginBottom: space.md },
   head: { letterSpacing: 0.6, marginBottom: space.xs },
+  start: { marginTop: space.md },
   row: { gap: 2, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
 });

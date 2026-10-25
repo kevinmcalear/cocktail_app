@@ -1,21 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { guessRole, ingredientSteps, INGREDIENT_COPY, kindGuesses, suggestedAbv } from './ingredientWizard';
-
-// A bottle has a maker and a strength; a house prep a recipe; something else neither.
-assert.deepEqual(ingredientSteps('product'), ['name', 'what', 'kind', 'maker', 'strength', 'notes', 'review']);
-assert.deepEqual(ingredientSteps('prep'), ['name', 'what', 'kind', 'recipe', 'strength', 'notes', 'review']);
-assert.deepEqual(ingredientSteps('other'), ['name', 'what', 'kind', 'notes', 'review']);
-assert.deepEqual(ingredientSteps(null), ingredientSteps('other'));
-for (const s of ingredientSteps('product')) assert.ok(INGREDIENT_COPY[s].title);
-
-// What it is, from the name and maker.
-assert.equal(guessRole('House Grenadine Syrup', ''), 'prep');
-assert.equal(guessRole('Banana-Infused Bourbon', 'Michter’s'), 'prep', 'an infusion is a prep even with a maker');
-assert.equal(guessRole('Tanqueray No. Ten', 'Tanqueray'), 'product');
-assert.equal(guessRole('Blood Orange Juice', ''), 'other');
-assert.equal(guessRole('Kevin’s Thing', ''), null);
-assert.equal(guessRole('Pistachio Orgeat', ''), 'prep', 'house syrups by name');
+import { kindGuesses, suggestedAbv } from './ingredientWizard';
 
 // Kinds: core names inside it, longest first, never itself.
 const core = [

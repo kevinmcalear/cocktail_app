@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { useAppStore } from '@/store/useAppStore';
 
-import { AddIngredientWizard } from './AddIngredientWizard';
+import { AddBottle } from './AddBottle';
 
 interface Props {
   isInline?: boolean;
@@ -13,9 +13,10 @@ interface Props {
 }
 
 /**
- * /add-ingredient without a draft: the wizard. Opened from an editor to make
- * a missing ingredient (`attachTo`), the new one, or the existing one picked
- * instead of a copy, is handed back to that editor.
+ * /add-ingredient without a draft: A bottle you buy, the short form; It's
+ * something you make goes to the house recipe steps (/make-recipe). Opened
+ * from an editor to make a missing ingredient (`attachTo`), the new one, or
+ * the existing one picked instead of a copy, is handed back to that editor.
  */
 export function AddIngredientRoute({ isInline, barIdProp, onClose, onSave }: Props) {
   const router = useRouter();
@@ -23,8 +24,9 @@ export function AddIngredientRoute({ isInline, barIdProp, onClose, onSave }: Pro
   const setRecentlyCreatedItem = useAppStore((s) => s.setRecentlyCreatedItem);
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
   const wizard = (
-    <AddIngredientWizard
+    <AddBottle
       barId={(barIdProp !== undefined ? barIdProp : params.barId) || null}
+      onMake={(name) => router.replace({ pathname: '/make-recipe', params: { ...(name ? { name } : {}), ...(params.barId ? { barId: params.barId } : {}), ...(params.attachTo ? { attachTo: params.attachTo } : {}) } })}
       initialName={params.name}
       embedded={!!isInline}
       onClose={onClose ?? goBack}

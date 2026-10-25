@@ -8,7 +8,6 @@ import { useAppMode } from '@/store/useAppMode';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useBringIn } from '@/store/useBringIn';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
-import { useIngredientWizardStore } from '@/store/useIngredientWizardStore';
 import { useLastPlace } from '@/store/useLastPlace';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
@@ -32,7 +31,6 @@ export async function clearUserData(): Promise<void> {
   useLastPlace.getState().clear();
   useAppMode.getState().forgetVenue();
   useDrinkWizardStore.setState({ kept: {} });
-  useIngredientWizardStore.setState({ kept: {} });
   useBeerWineWizardStore.setState({ kept: {} });
   useVenueSetup.setState({ runs: {}, glasses: {} });
   useNoteDrafts.setState({ drafts: {} });
