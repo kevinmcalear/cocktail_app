@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
@@ -28,10 +29,12 @@ interface ReviewStepProps extends StepProps {
   hasProfile: boolean;
   barVariants: readonly string[];
   barIce?: readonly string[];
+  /** A venue's cost card, price and GP (m01): first on review, as the board draws it. */
+  cost?: ReactNode;
 }
 
 /** The photo slots, then every answer on one screen; tap a row to go back and change it. */
-export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, barVariants, barIce }: ReviewStepProps) {
+export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, barVariants, barIce, cost }: ReviewStepProps) {
   const venue = useBarPublishing(barId).data;
   const caps = useCapabilities(barId).data;
   // A venue's drink takes photos from those who may add them; at home it's yours.
@@ -51,6 +54,7 @@ export function ReviewStep({ draft, set, onJump, barId, venueName, hasProfile, b
   ];
   return (
     <View style={styles.review}>
+      {cost}
       {canPhoto ? (
         <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, barVariants, barIce))} seed={draft.id ?? 'new-drink'} />
       ) : null}

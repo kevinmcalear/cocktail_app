@@ -1,6 +1,8 @@
 import { useState } from 'react';
 
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDraftPacks, useLineMakers, useSetLineSupplier } from '@/hooks/useDrinkDesk';
+import { usePricingSettings } from '@/hooks/usePricing';
 import { useVenueIngredients } from '@/hooks/useVenueIngredients';
 import { useSupplierSuggestionData, useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { perDrinkLines } from '@/lib/batchLines';
@@ -10,9 +12,9 @@ import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { formatMoney, parseMoney } from '@/lib/money';
 import { prepCostMinor } from '@/lib/prepCost';
 import { bottleKindRow } from '@/lib/newBottle';
-import { pickSuppliers, regionHeading } from '@/lib/suppliers';
+import { pickSuppliers, regionHeading, venueParts } from '@/lib/suppliers';
 
-import type { DeskCostLine } from './DrinkDeskRail';
+import { DeskCost, type DeskCostLine } from './DrinkDeskRail';
 import type { CatalogIngredient } from './IngredientSearch';
 import { NewBottleCard } from './NewBottleCard';
 import { LineSupplier, SupplierPickList } from './SupplierPick';
@@ -29,6 +31,8 @@ interface DeskLinesArgs {
   /** Costs: pack prices. */
   canCost: boolean;
   currency: string;
+  /** "Pommeau, adding" in the cost lines while its card is open (the desktop rail sits beside it). */
+  adding?: boolean;
 }
 
 /**
@@ -36,7 +40,7 @@ interface DeskLinesArgs {
  * chip that opens the pick under the line, board make-create-desktop step 7)
  * and what the pour costs; and the cost lines for the rail.
  */
-export function useDeskLines({ draft, set, barId, venueName, ingredients, coreIds, canBuy, canCost, currency }: DeskLinesArgs) {
+export function useDeskLines({ draft, set, barId, venueName, ingredients, coreIds, canBuy, canCost, currency, adding = true }: DeskLinesArgs) {
   // A batch costs what one drink's own pours do.
   const costed = [...perDrinkLines(draft.lines), ...draft.garnishes];
   // A house prep being written costs from its parts, so their packs are read too (m08).
@@ -62,7 +66,7 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
   };
   // The pick (or a new bottle's card) open under one line.
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const costLines: DeskCostLine[] = costed.map((l) => ({ key: l.key, name: l.bottle && l.key === openKey ? `${l.name}, adding` : l.name, minor: cost(l) }));
+  const costLines: DeskCostLine[] = costed.map((l) => ({ key: l.key, name: adding && l.bottle && l.key === openKey ? `${l.name}, adding` : l.name, minor: cost(l) }));
   const price = (l: WizardLine) => {
     const minor = cost(l);
     return minor != null ? formatMoney(minor, currency) : null;
@@ -132,4 +136,23 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
   /** A new bottle just added from the field: its card opens under its line. */
   const onNewBottle = canBuy ? (key: string) => setOpenKey(key) : undefined;
   return { costLines, lineDetail, lineBelow, onNewBottle };
+}
+
+/**
+ * The same venue parts on a phone (m01, decided 24 Oct 2026): who brings
+ * each line and a new bottle's card under it on the ingredients step, and
+ * what it costs on review. Prep or Costs see suppliers; Costs see prices.
+ * Null `barId` (at home, or the desktop page, which has its own) turns it off.
+ */
+export function useVenueLines(args: Omit<DeskLinesArgs, 'canBuy' | 'canCost' | 'currency'>) {
+  const { canBuy, canCost } = venueParts(args.barId, useCapabilities(args.barId).data);
+  const pricing = usePricingSettings(canCost ? args.barId : null).data ?? null;
+  // On review the card isn't on screen, so nothing reads "adding".
+  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({ ...args, canBuy, canCost, currency: pricing?.currency ?? 'GBP', adding: false });
+  return {
+    /** For IngredientsStep. */
+    lines: { lineDetail, lineBelow, onNewBottle },
+    /** For review: the cost card, with the price and GP. */
+    cost: canCost ? <DeskCost lines={costLines} pricing={pricing} price={args.draft.price ?? ''} onPrice={(price) => args.set({ price })} /> : null,
+  };
 }

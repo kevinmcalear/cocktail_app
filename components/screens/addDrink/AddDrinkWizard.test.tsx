@@ -53,6 +53,8 @@ jest.mock('@/hooks/useSameNameDrink', () => ({ useSameNameDrink: () => ({ data: 
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/useDrinkDesk', () => ({ ...jest.requireActual('@/hooks/useDrinkDesk'), useMenuSectionPlace: () => ({ data: undefined }) }));
+// A venue's suppliers and costs (m01) read their own hooks; these tests are about the steps.
+jest.mock('./useDeskLines', () => ({ ...jest.requireActual('./useDeskLines'), useVenueLines: () => ({ lines: {}, cost: null }) }));
 beforeEach(() => {
   mockCreate.mockReset();
   mockStart.mockReset();
