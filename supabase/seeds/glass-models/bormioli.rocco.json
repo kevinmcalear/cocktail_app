@@ -1,0 +1,2364 @@
+{
+ "maker": "bormioli.rocco",
+ "models": [
+  {
+   "name": "America '20s Rocks 30 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q949",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl - 10 1/4 oz",
+   "height_mm": 84.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1048/rocks-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1048/rocks-america-20s",
+    "https://www.webstaurantstore.com/rocks-10oz-america-20s-borm-rocco-2dz-case/57649202Q949.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s D.O.F. 37 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q947",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "37 cl - 12 1/2 oz",
+   "height_mm": 92.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1015/d-o-f-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1015/d-o-f-america-20s",
+    "https://www.webstaurantstore.com/dof-12-75oz-america-20s-borm-rocco-3dz-case/57649202Q947.html"
+   ]
+  },
+  {
+   "name": "America '20s Long Drink 40 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q950",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl - 13 1/2 oz",
+   "height_mm": 158.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1047/long-drink-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1047/long-drink-america-20s",
+    "https://www.webstaurantstore.com/long-drink-13-5oz-america-20s-borm-rocco-2dz-case/57649202Q950.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Sling Cocktail Glass 300 40 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q959",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 400,
+   "capacity_as_stated": "40 cl - 13 1/2 oz",
+   "height_mm": 224.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1179/sling-cocktail-glass-300-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1179/sling-cocktail-glass-300-america-20s",
+    "https://www.webstaurantstore.com/cocktail-13-5oz-america-20s-borm-rocco-2dz-case/57649202Q959.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/america_20s_sling_cocktails.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Sling Cocktail Glass 400 51 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q960",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 510,
+   "capacity_as_stated": "51 cl - 17 1/4 oz",
+   "height_mm": 239.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1180/sling-cocktail-glass-400-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1180/sling-cocktail-glass-400-america-20s",
+    "https://www.webstaurantstore.com/cocktail-17-25oz-america-20s-borm-rocco-cs18-case/57649202Q960.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/america_20s_sling_cocktails.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Cognac 65 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q954",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 650,
+   "capacity_as_stated": "65 cl - 22 oz",
+   "height_mm": 165.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1050/cognac-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1050/cognac-america-20s",
+    "https://www.webstaurantstore.com/cognac-21-75oz-america-20s-borm-rocco-1dz-pack/57649202Q954.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Gin Tonic 74.5 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q945",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 745,
+   "capacity_as_stated": "74.5 cl - 25 1/4 oz",
+   "height_mm": 226.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1010/gin-tonic-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1010/gin-tonic-america-20s",
+    "https://www.webstaurantstore.com/g-t-25-25oz-america-20s-borm-rocco-1dz-pack/57649202Q945.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Martini Small 15.5 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q951",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 155,
+   "capacity_as_stated": "15.5 cl - 5 1/4 oz",
+   "height_mm": 157.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1069/martini-small-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1069/martini-small-america-20s",
+    "https://www.webstaurantstore.com/martini-4-5oz-america-20s-borm-rocco-2dz-case/57649202Q951.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Nick&Nora 14 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q952",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 140,
+   "capacity_as_stated": "14 cl - 4 3/4 oz",
+   "height_mm": 158.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1066/nick-amp-nora-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1066/nick-amp-nora-america-20s",
+    "https://www.webstaurantstore.com/nick-nora-4-75oz-america-20s-borm-rocco-2dz-case/57649202Q952.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Cocktail Coupe 22 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q942",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "22 cl - 7 1/2 oz",
+   "height_mm": 160.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1013/cocktail-coupe-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1013/cocktail-coupe-america-20s",
+    "https://www.webstaurantstore.com/bormioli-rocco-america-20s-from-steelite-international-7-75-oz-coupe-glass-case/57649202Q942.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Martini 24.5 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q944",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 245,
+   "capacity_as_stated": "24.5 cl - 8 1/4 oz",
+   "height_mm": 185.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1012/martini-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1012/martini-america-20s",
+    "https://www.webstaurantstore.com/martini-7-75oz-america-20s-borm-rocco-1dz-pack/57649202Q944.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Cocktail Glass 25 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q943",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "25 cl - 8 1/2 oz",
+   "height_mm": 202.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1011/cocktail-glass-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1011/cocktail-glass-america-20s",
+    "https://www.webstaurantstore.com/cocktail-8-5oz-america-20s-borm-rocco-1dz-pack/57649202Q943.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Fizz 27.5 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q957",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 275,
+   "capacity_as_stated": "27.5 cl - 9 1/4 oz",
+   "height_mm": 140.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1068/fizz-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1068/fizz-america-20s",
+    "https://www.webstaurantstore.com/coupe-9-25oz-america-20s-borm-rocco-2dz-case/57649202Q957.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-america_20s.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Sling Cocktail Glass 200 27.5 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": "49202Q958",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 275,
+   "capacity_as_stated": "27.5 cl - 9 1/4 oz",
+   "height_mm": 205.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1178/sling-cocktail-glass-200-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1178/sling-cocktail-glass-200-america-20s",
+    "https://www.webstaurantstore.com/cocktail-9-5oz-america-20s-borm-rocco-2dz-case/57649202Q958.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/america_20s_sling_cocktails.pdf"
+   ]
+  },
+  {
+   "name": "America '20s Cooler 49 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 490,
+   "capacity_as_stated": "49 cl - 16 1/2 oz",
+   "height_mm": 162.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1014/cooler-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1014/cooler-america-20s"
+   ]
+  },
+  {
+   "name": "America '20s Cordial 8 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 80,
+   "capacity_as_stated": "8 cl - 2 3/4 oz",
+   "height_mm": 150.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1067/cordial-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1067/cordial-america-20s"
+   ]
+  },
+  {
+   "name": "America '20s Shot 8 cl",
+   "series": "America '20s",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 80,
+   "capacity_as_stated": "8 cl - 2 3/4 oz",
+   "height_mm": 80.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1049/shot-america-20s",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1049/shot-america-20s"
+   ]
+  },
+  {
+   "name": "Aura 10.75 oz. Rocks / Old Fashioned Glass",
+   "series": "Aura",
+   "designer": null,
+   "model_code": "4977Q638",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 318,
+   "capacity_as_stated": "10.75 oz.",
+   "height_mm": 101.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-aura-from-steelite-international-10-75-oz-rocks-old-fashioned-glass-case/5764977Q638.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-aura-from-steelite-international-10-75-oz-rocks-old-fashioned-glass-case/5764977Q638.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/aura.pdf"
+   ]
+  },
+  {
+   "name": "Aura 8 oz. Rocks / Old Fashioned Glass",
+   "series": "Aura",
+   "designer": null,
+   "model_code": "4977Q637",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-aura-from-steelite-international-8-oz-rocks-old-fashioned-glass-case/5764977Q637.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-aura-from-steelite-international-8-oz-rocks-old-fashioned-glass-case/5764977Q637.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/aura.pdf"
+   ]
+  },
+  {
+   "name": "Barglass Hi-ball 37.5 cl",
+   "series": "Barglass",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 375,
+   "capacity_as_stated": "37.5 cl - 12 3/4 oz",
+   "height_mm": 145.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/981/hi-ball-barglass",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/981/hi-ball-barglass"
+   ]
+  },
+  {
+   "name": "Barglass Shot 5 cl",
+   "series": "Barglass",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 50,
+   "capacity_as_stated": "5 cl - 1 3/4 oz",
+   "height_mm": 70.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/984/shot-barglass",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/984/shot-barglass"
+   ]
+  },
+  {
+   "name": "Barglass Whisky 28 cl",
+   "series": "Barglass",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "28 cl - 9 1/2 oz",
+   "height_mm": 95.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/982/whisky-barglass",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/982/whisky-barglass"
+   ]
+  },
+  {
+   "name": "Barshine Rocks 30.5 cl",
+   "series": "Barshine",
+   "designer": null,
+   "model_code": "4909Q103",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 305,
+   "capacity_as_stated": "30.5 cl - 10 1/4 oz",
+   "height_mm": 92.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1120/rocks-barshine",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1120/rocks-barshine",
+    "https://www.webstaurantstore.com/bormioli-rocco-barshine-from-steelite-international-10-5-oz-rocks-old-fashioned-glass-case/5764909Q103.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_barshine.pdf"
+   ]
+  },
+  {
+   "name": "Barshine D.O.F. 39.5 cl",
+   "series": "Barshine",
+   "designer": null,
+   "model_code": "4909Q102",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 395,
+   "capacity_as_stated": "39.5 cl - 13 1/4 oz",
+   "height_mm": 100.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1117/d-o-f-barshine",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1117/d-o-f-barshine",
+    "https://www.webstaurantstore.com/bormioli-rocco-barshine-from-steelite-international-13-5-oz-rocks-double-old-fashioned-glass-case/5764909Q102.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_barshine.pdf"
+   ]
+  },
+  {
+   "name": "Barshine Long Drink 38 cl",
+   "series": "Barshine",
+   "designer": null,
+   "model_code": "4909Q106",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "38 cl - 12 3/4 oz",
+   "height_mm": 120.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1119/long-drink-barshine",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1119/long-drink-barshine",
+    "https://www.webstaurantstore.com/bormioli-rocco-barshine-from-steelite-international-13-oz-long-drink-glass-case/5764909Q106.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_barshine.pdf"
+   ]
+  },
+  {
+   "name": "Barshine Shot 6.8 cl",
+   "series": "Barshine",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 68,
+   "capacity_as_stated": "6.8 cl - 2 1/4 oz",
+   "height_mm": 64.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1235/shot-barshine",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1235/shot-barshine"
+   ]
+  },
+  {
+   "name": "Bartender Julep 36.5 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "4908Q104",
+   "glass": "julep",
+   "variant": null,
+   "capacity_ml": 365,
+   "capacity_as_stated": "36.5 cl - 12 1/4 oz",
+   "height_mm": 115.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1196/julep-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1196/julep-bartender",
+    "https://www.webstaurantstore.com/bormioli-rocco-bartender-from-steelite-international-12-25-oz-julep-glass-case/5764908Q104.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/5764908q104_bormioli_rocco_bartender.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Mojito 38 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "4908Q105",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "38 cl - 12 3/4 oz",
+   "height_mm": 117.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1195/mojito-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1195/mojito-bartender",
+    "https://www.webstaurantstore.com/bormioli-rocco-bartender-from-steelite-international-12-75-oz-mojito-glass-case/5764908Q105.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/5764908q104_bormioli_rocco_bartender.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Sour 45.5 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "4908Q107",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 455,
+   "capacity_as_stated": "45.5 cl - 15 3/8 oz",
+   "height_mm": 117.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/997/sour-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/997/sour-bartender",
+    "https://www.webstaurantstore.com/bormioli-rocco-bartender-from-steelite-international-15-5-oz-sour-pineapple-glass-case/5764908Q107.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/5764908q104_bormioli_rocco_bartender.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Sweet 44 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "4908Q108",
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 440,
+   "capacity_as_stated": "44 cl - 15 oz",
+   "height_mm": 117.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/996/sweet-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/996/sweet-bartender",
+    "https://www.webstaurantstore.com/bormioli-rocco-bartender-from-steelite-international-15-oz-sweet-pineapple-glass-case/5764908Q108.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/5764908q104_bormioli_rocco_bartender.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Cocktail Glass 30.5 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 305,
+   "capacity_as_stated": "30.5 cl - 10 1/4 oz",
+   "height_mm": 165.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/38/cocktail-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/38/cocktail-glass-bartender"
+   ]
+  },
+  {
+   "name": "Bartender Martini Mini Glass 17 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "17 cl - 5 3/4 oz",
+   "height_mm": 151.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/37/martini-mini-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/37/martini-mini-glass-bartender"
+   ]
+  },
+  {
+   "name": "Bartender Moscow Mule 54.5 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": null,
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 545,
+   "capacity_as_stated": "54.5 cl - 18 1/2 oz",
+   "height_mm": 106.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1194/moscow-mule-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1194/moscow-mule-bartender"
+   ]
+  },
+  {
+   "name": "Bartender Tiki 58 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": null,
+   "glass": "tiki",
+   "variant": null,
+   "capacity_ml": 580,
+   "capacity_as_stated": "58 cl - 19 1/2 oz",
+   "height_mm": 165.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1233/tiki-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1233/tiki-bartender"
+   ]
+  },
+  {
+   "name": "Bistro Bar Bar Glass 13.5 cl",
+   "series": "Bistro Bar",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 135,
+   "capacity_as_stated": "13.5 cl - 4 1/2 oz",
+   "height_mm": 137.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/65/bar-glass-bistro-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/65/bar-glass-bistro-bar"
+   ]
+  },
+  {
+   "name": "Bloom Cocktail 24.5 cl",
+   "series": "Bloom",
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 245,
+   "capacity_as_stated": "24.5 cl - 8 1/4 oz",
+   "height_mm": 164.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1211/cocktail-bloom",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1211/cocktail-bloom"
+   ]
+  },
+  {
+   "name": "Bloom Fizz 28 cl",
+   "series": "Bloom",
+   "designer": null,
+   "model_code": null,
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 280,
+   "capacity_as_stated": "28 cl - 9 1/2 oz",
+   "height_mm": 144.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1210/fizz-bloom",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1210/fizz-bloom"
+   ]
+  },
+  {
+   "name": "Bloom Nick & Nora 15.5 cl",
+   "series": "Bloom",
+   "designer": null,
+   "model_code": null,
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 155,
+   "capacity_as_stated": "15.5 cl - 5 1/4 oz",
+   "height_mm": 142.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1212/nick-amp-nora-bloom",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1212/nick-amp-nora-bloom"
+   ]
+  },
+  {
+   "name": "Cassiopea 11.25 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Cassiopea",
+   "designer": null,
+   "model_code": "4998Q119",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 333,
+   "capacity_as_stated": "11.25 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-cassiopea-from-steelite-international-11-25-oz-rocks-double-old-fashioned-glass-case/5764998Q119.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-cassiopea-from-steelite-international-11-25-oz-rocks-double-old-fashioned-glass-case/5764998Q119.html"
+   ]
+  },
+  {
+   "name": "Cassiopea D.O.F. 41 cl",
+   "series": "Cassiopea",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 410,
+   "capacity_as_stated": "41 cl - 13 3/4 oz",
+   "height_mm": 107.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/106/d-o-f-cassiopea",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/106/d-o-f-cassiopea"
+   ]
+  },
+  {
+   "name": "Cortina Long Drink 32 31 cl",
+   "series": "Cortina",
+   "designer": null,
+   "model_code": "4915Q062",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 310,
+   "capacity_as_stated": "31 cl - 10 1/2 oz",
+   "height_mm": 166.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/153/long-drink-32-cortina",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/153/long-drink-32-cortina",
+    "https://www.webstaurantstore.com/long-drink-10-25oz-cortina-borm-rocco-4dz-case/5764915Q062.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_aurum-capri_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Cortina 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Cortina",
+   "designer": null,
+   "model_code": "4959Q537",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/rocks-10-5oz-cortina-borm-rocco-3dz-case/5764959Q537.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/rocks-10-5oz-cortina-borm-rocco-3dz-case/5764959Q537.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_aurum-capri_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Cortina D.O.F 40.5 cl",
+   "series": "Cortina",
+   "designer": null,
+   "model_code": "4915Q061",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 405,
+   "capacity_as_stated": "40.5 cl - 13 3/4 oz",
+   "height_mm": 98.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/150/d-o-f-cortina",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/150/d-o-f-cortina",
+    "https://www.webstaurantstore.com/dof-13-5oz-cortina-borm-rocco-1dz-pack/5764915Q061.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_aurum-capri_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Cortina 8.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Cortina",
+   "designer": null,
+   "model_code": "4915Q065",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/rocks-8-5oz-cortina-borm-rocco-4dz-case/5764915Q065.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/rocks-8-5oz-cortina-borm-rocco-4dz-case/5764915Q065.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_aurum-capri_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Cortina Long Drink 31 27.5 cl",
+   "series": "Cortina",
+   "designer": null,
+   "model_code": "4915Q063",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 275,
+   "capacity_as_stated": "27.5 cl - 9 1/4 oz",
+   "height_mm": 141.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/152/long-drink-31-cortina",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/152/long-drink-31-cortina",
+    "https://www.webstaurantstore.com/highball-9-5oz-cortina-borm-rocco-4dz-case/5764915Q063.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_aurum-capri_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Cortina Whisky 21.5 cl",
+   "series": "Cortina",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 215,
+   "capacity_as_stated": "21.5 cl - 7 1/4 oz",
+   "height_mm": 143.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/156/whisky-cortina",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/156/whisky-cortina"
+   ]
+  },
+  {
+   "name": "Diamond D.O.F. 39 cl",
+   "series": "Diamond",
+   "designer": null,
+   "model_code": "4990Q783",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl - 13 1/4 oz",
+   "height_mm": 103.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/176/d-o-f-diamond",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/176/d-o-f-diamond",
+    "https://www.webstaurantstore.com/dof-13-5oz-diamond-borm-rocco-6pk-pack/5764990Q783.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-capri-riflessi-diamond-pulsar-c13-10-jun-2019.pdf"
+   ]
+  },
+  {
+   "name": "Dublino Shot Glass 1 1/4 oz 3.4 cl",
+   "series": "Dublino",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 34,
+   "capacity_as_stated": "3.4 cl - 1 1/4 oz",
+   "height_mm": 70.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/190/shot-glass-1-1-4-oz-dublino",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/190/shot-glass-1-1-4-oz-dublino"
+   ]
+  },
+  {
+   "name": "Dublino Shot Glass 2 oz 5.7 cl",
+   "series": "Dublino",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 57,
+   "capacity_as_stated": "5.7 cl - 2 oz",
+   "height_mm": 90.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/191/shot-glass-2-oz-dublino",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/191/shot-glass-2-oz-dublino"
+   ]
+  },
+  {
+   "name": "Bartender Stone D.O.F Glass 39 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49131Q153",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl - 13 1/4 oz",
+   "height_mm": 107.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/42/stone-d-o-f-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/42/stone-d-o-f-glass-bartender",
+    "https://www.webstaurantstore.com/dof-13-5oz-este-borm-rocco-2dz-case/57649131Q153.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_glit-mat-iris_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Este Long Drink Glass 29 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49131Q151",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 290,
+   "capacity_as_stated": "29 cl - 9 3/4 oz",
+   "height_mm": 140.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/45/este-long-drink-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/45/este-long-drink-glass-bartender",
+    "https://www.webstaurantstore.com/long-drink-9-75oz-este-borm-rocco-2dz-case/57649131Q151.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_glit-mat-iris_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Exclusiva Negroni 35.5 cl",
+   "series": "Exclusiva",
+   "designer": null,
+   "model_code": "49910Q743",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "35.5 cl - 12 oz",
+   "height_mm": 89.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1201/negroni-exclusiva",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1201/negroni-exclusiva",
+    "https://www.webstaurantstore.com/bormioli-rocco-exclusiva-from-steelite-international-12-oz-rocks-double-old-fashioned-glass-case/57649910Q743.html"
+   ]
+  },
+  {
+   "name": "Exclusiva Rum 21.5 cl",
+   "series": "Exclusiva",
+   "designer": null,
+   "model_code": "49910Q745",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 215,
+   "capacity_as_stated": "21.5 cl - 7 1/4 oz",
+   "height_mm": 59.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1202/rum-exclusiva",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1202/rum-exclusiva",
+    "https://www.webstaurantstore.com/bormioli-rocco-exclusiva-from-steelite-international-7-25-oz-rocks-old-fashioned-glass-case/57649910Q745.html"
+   ]
+  },
+  {
+   "name": "Exclusiva D.O.F. 41 cl",
+   "series": "Exclusiva",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 410,
+   "capacity_as_stated": "41 cl - 13 3/4 oz",
+   "height_mm": 100.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400859/d-o-f-exclusiva",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400859/d-o-f-exclusiva"
+   ]
+  },
+  {
+   "name": "Exclusiva Gin Fizz 50 cl",
+   "series": "Exclusiva",
+   "designer": null,
+   "model_code": null,
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 500,
+   "capacity_as_stated": "50 cl - 17 oz",
+   "height_mm": 120.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1200/gin-fizz-exclusiva",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1200/gin-fizz-exclusiva"
+   ]
+  },
+  {
+   "name": "Exclusiva Long Drink 46.5 cl",
+   "series": "Exclusiva",
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 465,
+   "capacity_as_stated": "46.5 cl - 15 3/4 oz",
+   "height_mm": 143.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/400858/long-drink-exclusiva",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/400858/long-drink-exclusiva"
+   ]
+  },
+  {
+   "name": "Exclusiva Tom Collins 47.5 cl",
+   "series": "Exclusiva",
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 475,
+   "capacity_as_stated": "47.5 cl - 16 oz",
+   "height_mm": 163.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1226/tom-collins-exclusiva",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1226/tom-collins-exclusiva"
+   ]
+  },
+  {
+   "name": "Florian White Russian 30 cl",
+   "series": "Florian",
+   "designer": null,
+   "model_code": "49206Q103",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl - 10 1/4 oz",
+   "height_mm": 104.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1127/white-russian-florian",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1127/white-russian-florian",
+    "https://www.webstaurantstore.com/bormioli-rocco-florian-from-steelite-international-10-1-oz-rocks-old-fashioned-glass-case/57649206Q103.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_florian_and_florian_lucent_blue.pdf"
+   ]
+  },
+  {
+   "name": "Florian Negroni 37.5 cl",
+   "series": "Florian",
+   "designer": null,
+   "model_code": "49206Q102",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 375,
+   "capacity_as_stated": "37.5 cl - 12 3/4 oz",
+   "height_mm": 113.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1124/negroni-florian",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1124/negroni-florian",
+    "https://www.webstaurantstore.com/bormioli-rocco-florian-from-steelite-international-12-6-oz-rocks-double-old-fashioned-glass-case/57649206Q102.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_florian_and_florian_lucent_blue.pdf"
+   ]
+  },
+  {
+   "name": "Florian Espresso Martini 24 cl",
+   "series": "Florian",
+   "designer": null,
+   "model_code": "49206Q112",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 240,
+   "capacity_as_stated": "24 cl - 8 oz",
+   "height_mm": 164.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1122/espresso-martini-florian",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1122/espresso-martini-florian",
+    "https://www.webstaurantstore.com/bormioli-rocco-florian-from-steelite-international-8-1-oz-coupe-glass-case/57649206Q112.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_florian_and_florian_lucent_blue.pdf"
+   ]
+  },
+  {
+   "name": "Florian Whiskey Sour 24.5 cl",
+   "series": "Florian",
+   "designer": null,
+   "model_code": "49206Q114",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 245,
+   "capacity_as_stated": "24.5 cl - 8 1/4 oz",
+   "height_mm": 197.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1123/whiskey-sour-florian",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1123/whiskey-sour-florian",
+    "https://www.webstaurantstore.com/bormioli-rocco-florian-from-steelite-international-8-25-oz-cocktail-glass-case/57649206Q114.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_florian_and_florian_lucent_blue.pdf"
+   ]
+  },
+  {
+   "name": "Florian Gin Tonic 53.5 cl",
+   "series": "Florian",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 535,
+   "capacity_as_stated": "53.5 cl - 18 1/8 oz",
+   "height_mm": 221.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1126/gin-tonic-florian",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1126/gin-tonic-florian"
+   ]
+  },
+  {
+   "name": "Florian Long Island Ice Tea 43 cl",
+   "series": "Florian",
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 430,
+   "capacity_as_stated": "43 cl - 14 1/2 oz",
+   "height_mm": 141.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1121/long-island-ice-tea-florian",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1121/long-island-ice-tea-florian"
+   ]
+  },
+  {
+   "name": "Florian Spritz 38 cl",
+   "series": "Florian",
+   "designer": null,
+   "model_code": null,
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 380,
+   "capacity_as_stated": "38 cl - 12 3/4 oz",
+   "height_mm": 208.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1128/spritz-florian",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1128/spritz-florian"
+   ]
+  },
+  {
+   "name": "Galassia 10.25 oz. Rocks / Old Fashioned Glass",
+   "series": "Galassia",
+   "designer": null,
+   "model_code": "4919Q103",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 303,
+   "capacity_as_stated": "10.25 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-galassia-from-steelite-international-10-25-oz-rocks-old-fashioned-glass-case/5764919Q103.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-galassia-from-steelite-international-10-25-oz-rocks-old-fashioned-glass-case/5764919Q103.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_galassia-luna-manon_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Galassia Long Drink 41.5 cl",
+   "series": "Galassia",
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 415,
+   "capacity_as_stated": "41.5 cl - 14 oz",
+   "height_mm": 140.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/321/long-drink-galassia",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/321/long-drink-galassia"
+   ]
+  },
+  {
+   "name": "Glit 13.25 oz. Long Drink Glass",
+   "series": "Glit",
+   "designer": null,
+   "model_code": "49138Q508",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 392,
+   "capacity_as_stated": "13.25 oz.",
+   "height_mm": 120.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-glit-from-steelite-international-13-25-oz-long-drink-glass-case/57649138Q508.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-glit-from-steelite-international-13-25-oz-long-drink-glass-case/57649138Q508.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-este-lounge-stone-glit-mat-iris-silk-c13-10-jun-2019.pdf"
+   ]
+  },
+  {
+   "name": "Globo Cognac 24.4 cl",
+   "series": "Globo",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 244,
+   "capacity_as_stated": "24.4 cl - 8 1/4 oz",
+   "height_mm": 115.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/358/cognac-globo",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/358/cognac-globo"
+   ]
+  },
+  {
+   "name": "Graphics D.O.F. 38.5 cl",
+   "series": "Graphics",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 385,
+   "capacity_as_stated": "38.5 cl - 13 oz",
+   "height_mm": 105.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1240/d-o-f-graphics",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1240/d-o-f-graphics"
+   ]
+  },
+  {
+   "name": "Habana 7.5 oz. Tumbler",
+   "series": "Habana",
+   "designer": null,
+   "model_code": "49142Q775",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-habana-from-steelite-international-7-5-oz-tumbler-case/57649142Q775.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-habana-from-steelite-international-7-5-oz-tumbler-case/57649142Q775.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/57649142q775_bormioli_rocco_giara_habana.pdf"
+   ]
+  },
+  {
+   "name": "Inalto Uno D.O.F. 44.5 cl",
+   "series": "Inalto Uno",
+   "designer": null,
+   "model_code": "49105Q771",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 445,
+   "capacity_as_stated": "44.5 cl - 15 oz",
+   "height_mm": 102.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/391/d-o-f-inalto-uno",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/391/d-o-f-inalto-uno",
+    "https://www.webstaurantstore.com/dof-14-75oz-inalto-uno-borm-rocco-2dz-case/57649105Q771.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-inalto-c13-13-oct-2020.pdf"
+   ]
+  },
+  {
+   "name": "Inventa 10.25 oz. Coupe Glass",
+   "series": "Inventa",
+   "designer": null,
+   "model_code": "49121Q174",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 303,
+   "capacity_as_stated": "10.25 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/coupe-10-25oz-inventa-borm-rocco-1dz-pack/57649121Q174.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/coupe-10-25oz-inventa-borm-rocco-1dz-pack/57649121Q174.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-inventa-fiore-c13-13-oct-2020.pdf"
+   ]
+  },
+  {
+   "name": "Iris Long Drink Glass 39.5 cl",
+   "series": "Iris",
+   "designer": null,
+   "model_code": "49132Q519",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 395,
+   "capacity_as_stated": "39.5 cl - 13 1/4 oz",
+   "height_mm": 120.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/412/long-drink-glass-iris",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/412/long-drink-glass-iris",
+    "https://www.webstaurantstore.com/bormioli-rocco-iris-from-steelite-international-13-25-oz-long-drink-glass-case/57649132Q519.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_glit-mat-iris_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Iris Rocks Glass 29.5 cl",
+   "series": "Iris",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 295,
+   "capacity_as_stated": "29.5 cl - 10 oz",
+   "height_mm": 85.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/411/rocks-glass-iris",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/411/rocks-glass-iris"
+   ]
+  },
+  {
+   "name": "Kaleido Long Drink Glass 36.5 cl",
+   "series": "Kaleido",
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 365,
+   "capacity_as_stated": "36.5 cl - 12 1/4 oz",
+   "height_mm": 143.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/416/long-drink-glass-kaleido",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/416/long-drink-glass-kaleido"
+   ]
+  },
+  {
+   "name": "Kalix 12.75 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Kalix",
+   "designer": null,
+   "model_code": "4970Q717",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 377,
+   "capacity_as_stated": "12.75 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/dof-12-75oz-kalix-borm-rocco-1dz-pack/5764970Q717.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/dof-12-75oz-kalix-borm-rocco-1dz-pack/5764970Q717.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-kalix-sara-c13-13-oct-2020.pdf"
+   ]
+  },
+  {
+   "name": "Kalix 9.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Kalix",
+   "designer": null,
+   "model_code": "4970Q718",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 281,
+   "capacity_as_stated": "9.5 oz.",
+   "height_mm": 85.7,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/rocks-9-5oz-kalix-borm-rocco-1dz-pack/5764970Q718.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/rocks-9-5oz-kalix-borm-rocco-1dz-pack/5764970Q718.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli-rocco-kalix-sara-c13-13-oct-2020.pdf"
+   ]
+  },
+  {
+   "name": "Line Long Drink 39 cl",
+   "series": "Line",
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl - 13 1/4 oz",
+   "height_mm": 120.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/429/long-drink-line",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/429/long-drink-line"
+   ]
+  },
+  {
+   "name": "Bartender Lounge D.O.F. Glass 39 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49134Q520",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl - 13 1/4 oz",
+   "height_mm": 107.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/41/lounge-d-o-f-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/41/lounge-d-o-f-glass-bartender",
+    "https://www.webstaurantstore.com/bormioli-rocco-lounge-from-steelite-international-13-5-oz-rocks-double-old-fashioned-glass-case/57649134Q520.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_glit-mat-iris_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Luna D.O.F. Glass 34 cl",
+   "series": "Luna",
+   "designer": null,
+   "model_code": "4926Q172",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "34 cl - 11 1/2 oz",
+   "height_mm": 108.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/438/d-o-f-glass-luna",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/438/d-o-f-glass-luna",
+    "https://www.webstaurantstore.com/bormioli-rocco-luna-from-steelite-international-115-oz-rocks-double-old-fashioned-glass-case/5764926Q172.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_galassia-luna-manon_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Luna Rocks 26 cl",
+   "series": "Luna",
+   "designer": null,
+   "model_code": "4926Q173",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 260,
+   "capacity_as_stated": "26 cl - 8 3/4 oz",
+   "height_mm": 97.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/439/rocks-luna",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/439/rocks-luna",
+    "https://www.webstaurantstore.com/rocks-8-75oz-luna-borm-rocco-1dz-pack/5764926Q173.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_galassia-luna-manon_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Luna Long Drink 34 cl",
+   "series": "Luna",
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "34 cl - 11 1/2 oz",
+   "height_mm": 137.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/440/long-drink-luna",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/440/long-drink-luna"
+   ]
+  },
+  {
+   "name": "Manon 11.75 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Manon",
+   "designer": null,
+   "model_code": "4928Q191",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 107.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-manon-from-steelite-international-1175-oz-rocks-double-old-fashioned-glass-case/5764928Q191.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-manon-from-steelite-international-1175-oz-rocks-double-old-fashioned-glass-case/5764928Q191.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_galassia-luna-manon_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Manon 9.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Manon",
+   "designer": null,
+   "model_code": "4928Q192",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 281,
+   "capacity_as_stated": "9.5 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/rocks-9-5oz-manon-borm-rocco-cs30-case/5764928Q192.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/rocks-9-5oz-manon-borm-rocco-cs30-case/5764928Q192.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_galassia-luna-manon_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Mat Long Drink Glass 39.5 cl",
+   "series": "Mat",
+   "designer": null,
+   "model_code": "49135Q524",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 395,
+   "capacity_as_stated": "39.5 cl - 13 1/4 oz",
+   "height_mm": 120.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/468/long-drink-glass-mat",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/468/long-drink-glass-mat",
+    "https://www.webstaurantstore.com/bormioli-rocco-mat-from-steelite-international-13-25-oz-long-drink-glass-case/57649135Q524.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_glit-mat-iris_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Mat Rocks Glass 29.5 cl",
+   "series": "Mat",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 295,
+   "capacity_as_stated": "29.5 cl - 10 oz",
+   "height_mm": 85.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/467/rocks-glass-mat",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/467/rocks-glass-mat"
+   ]
+  },
+  {
+   "name": "Bartender Novecento D.O.F. Glass 37 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49170Q905",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "37 cl - 12 1/2 oz",
+   "height_mm": 101.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/55/novecento-d-o-f-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/55/novecento-d-o-f-glass-bartender",
+    "https://www.webstaurantstore.com/dof-12-5oz-novecento-borm-rocco-2dz-case/57649170Q905.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/novencento.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Novecento Hi-Ball Glass 40.5 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49170Q906",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 405,
+   "capacity_as_stated": "40.5 cl - 13 3/4 oz",
+   "height_mm": 135.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/54/novecento-hi-ball-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/54/novecento-hi-ball-glass-bartender",
+    "https://www.webstaurantstore.com/highball-13-75oz-novecento-borm-rocco-2dz-case/57649170Q906.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/novencento.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Nick&Nora Glass 15.5 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49170Q904",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 155,
+   "capacity_as_stated": "15.5 cl - 5 1/4 oz",
+   "height_mm": 155.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/50/nick-amp-nora-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/50/nick-amp-nora-glass-bartender",
+    "https://www.webstaurantstore.com/nick-nora-5-25oz-novecento-borm-rocco-2dz-case/57649170Q904.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/novencento.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Novecento Fizz Stemglass 22 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49170Q902",
+   "glass": "fizz",
+   "variant": null,
+   "capacity_ml": 220,
+   "capacity_as_stated": "22 cl - 7 1/2 oz",
+   "height_mm": 124.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/53/novecento-fizz-stemglass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/53/novecento-fizz-stemglass-bartender",
+    "https://www.webstaurantstore.com/cocktail-7-5oz-novecento-borm-rocco-2dz-case/57649170Q902.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/novencento.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Novecento Cocktail Stemlass 25 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49170Q901",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": "25 cl - 8 1/2 oz",
+   "height_mm": 155.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/52/novecento-cocktail-stemlass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/52/novecento-cocktail-stemlass-bartender",
+    "https://www.webstaurantstore.com/coupe-8-5oz-novecento-borm-rocco-2dz-case/57649170Q901.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/novencento.pdf"
+   ]
+  },
+  {
+   "name": "Bartender Martini Novecento Cup 23.5 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49170Q903",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 235,
+   "capacity_as_stated": "23.5 cl - 8 oz",
+   "height_mm": 155.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/51/martini-novecento-cup-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/51/martini-novecento-cup-bartender",
+    "https://www.webstaurantstore.com/martini-8oz-novecento-borm-rocco-2dz-case/57649170Q903.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/novencento.pdf"
+   ]
+  },
+  {
+   "name": "Officina 11.25 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Officina",
+   "designer": null,
+   "model_code": "49119Q147",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 333,
+   "capacity_as_stated": "11.25 oz.",
+   "height_mm": 85.7,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-officina-from-steelite-international-11-25-oz-rocks-double-old-fashioned-glass-case/57649119Q147.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-officina-from-steelite-international-11-25-oz-rocks-double-old-fashioned-glass-case/57649119Q147.html"
+   ]
+  },
+  {
+   "name": "Officina 11 oz. Tumbler",
+   "series": "Officina",
+   "designer": null,
+   "model_code": "49119Q069",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 123.8,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-officina-from-steelite-international-11-oz-tumbler-case/57649119Q069.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-officina-from-steelite-international-11-oz-tumbler-case/57649119Q069.html"
+   ]
+  },
+  {
+   "name": "Officina 1825 D.O.F Glass 30 cl",
+   "series": "Officina 1825",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl - 10 1/4 oz",
+   "height_mm": 83.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/563/d-o-f-glass-officina-1825",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/563/d-o-f-glass-officina-1825"
+   ]
+  },
+  {
+   "name": "Oxford Bar Rocks glass 31.2 cl",
+   "series": "Oxford Bar",
+   "designer": null,
+   "model_code": "4952Q8003",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 312,
+   "capacity_as_stated": "31.2 cl - 10 1/2 oz",
+   "height_mm": 99.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1102/rocks-glass-oxford-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1102/rocks-glass-oxford-bar",
+    "https://www.webstaurantstore.com/bormioli-rocco-oxford-bar-from-steelite-international-10-5-oz-rocks-old-fashioned-glass-case/5764952Q8003.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/oxford.pdf"
+   ]
+  },
+  {
+   "name": "Oxford Bar DOF Glass 37.4 cl",
+   "series": "Oxford Bar",
+   "designer": null,
+   "model_code": "4952Q8002",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 374,
+   "capacity_as_stated": "37.4 cl - 12 5/8 oz",
+   "height_mm": 104.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1101/dof-glass-oxford-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1101/dof-glass-oxford-bar",
+    "https://www.webstaurantstore.com/bormioli-rocco-oxford-bar-from-steelite-international-12-6-oz-rocks-double-old-fashioned-glass-case/5764952Q8002.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/oxford.pdf"
+   ]
+  },
+  {
+   "name": "Oxford Bar Beverage glass 39.5 cl",
+   "series": "Oxford Bar",
+   "designer": null,
+   "model_code": "4952Q8001",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 395,
+   "capacity_as_stated": "39.5 cl - 13 1/4 oz",
+   "height_mm": 143.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1100/beverage-glass-oxford-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1100/beverage-glass-oxford-bar",
+    "https://www.webstaurantstore.com/bormioli-rocco-oxford-bar-from-steelite-international-13-25-oz-highball-glass-case/5764952Q8001.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/oxford.pdf"
+   ]
+  },
+  {
+   "name": "Oxford Bar Shot glass 3.8 cl",
+   "series": "Oxford Bar",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 38,
+   "capacity_as_stated": "3.8 cl - 1 1/4 oz",
+   "height_mm": 59.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/1103/shot-glass-oxford-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/1103/shot-glass-oxford-bar"
+   ]
+  },
+  {
+   "name": "Bartender Gin Cocktail Glass 75.5 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "4935Q527",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 755,
+   "capacity_as_stated": "75.5 cl - 25 1/2 oz",
+   "height_mm": 218.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/39/gin-cocktail-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/39/gin-cocktail-glass-bartender",
+    "https://www.webstaurantstore.com/bormioli-rocco-premium-from-steelite-international-25-5-oz-gin-and-tonic-glass-case/5764935Q527.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/premium.pdf"
+   ]
+  },
+  {
+   "name": "Premium Cognac Glass 64.5 cl",
+   "series": "Premium",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 645,
+   "capacity_as_stated": "64.5 cl - 21 3/4 oz",
+   "height_mm": 162.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/644/cognac-glass-premium",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/644/cognac-glass-premium"
+   ]
+  },
+  {
+   "name": "Pulsar D.O.F. Glass 39 cl",
+   "series": "Pulsar",
+   "designer": null,
+   "model_code": "49106Q792",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl - 13 1/4 oz",
+   "height_mm": 103.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/667/d-o-f-glass-pulsar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/667/d-o-f-glass-pulsar",
+    "https://www.webstaurantstore.com/bormioli-rocco-pulsar-from-steelite-international-13-5-oz-rocks-double-old-fashioned-glass-case/57649106Q792.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_diamond-pulsar-hosteria.pdf"
+   ]
+  },
+  {
+   "name": "Riserva D.O.F. Glass 39 cl",
+   "series": "Riserva",
+   "designer": null,
+   "model_code": "4938Q308",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl - 13 1/4 oz",
+   "height_mm": 98.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/733/d-o-f-glass-riserva",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/733/d-o-f-glass-riserva",
+    "https://www.webstaurantstore.com/dof-13-5oz-riserva-borm-rocco-3dz-case/5764938Q308.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/riserva.pdf"
+   ]
+  },
+  {
+   "name": "Riserva Cognac Glass 53 cl",
+   "series": "Riserva",
+   "designer": null,
+   "model_code": "4938Q325",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 530,
+   "capacity_as_stated": "53 cl - 18 oz",
+   "height_mm": 149.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/739/cognac-glass-riserva",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/739/cognac-glass-riserva",
+    "https://www.webstaurantstore.com/snifter-18oz-riserva-borm-rocco-2dz-case/5764938Q325.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/riserva.pdf"
+   ]
+  },
+  {
+   "name": "Riserva 8.5 oz. Cognac Glass",
+   "series": "Riserva",
+   "designer": null,
+   "model_code": "4961Q544",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 107.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-riserva-from-steelite-international-8-5-oz-cognac-glass-case/5764961Q544.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-riserva-from-steelite-international-8-5-oz-cognac-glass-case/5764961Q544.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/riserva.pdf"
+   ]
+  },
+  {
+   "name": "Riserva Grappa Glass 8 cl",
+   "series": "Riserva",
+   "designer": null,
+   "model_code": null,
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 80,
+   "capacity_as_stated": "8 cl - 2 3/4 oz",
+   "height_mm": 163.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/742/grappa-glass-riserva",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/742/grappa-glass-riserva"
+   ]
+  },
+  {
+   "name": "Rock Bar D.O.F. Glass 39 cl",
+   "series": "Rock Bar",
+   "designer": null,
+   "model_code": "4939Q332",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl - 13 1/4 oz",
+   "height_mm": 100.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/753/d-o-f-glass-rock-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/753/d-o-f-glass-rock-bar",
+    "https://www.webstaurantstore.com/bormioli-rocco-rock-bar-from-steelite-international-13-25-oz-rocks-double-old-fashioned-glass-case/5764939Q332.html"
+   ]
+  },
+  {
+   "name": "Rock Bar Rocks Glass 27 cl",
+   "series": "Rock Bar",
+   "designer": null,
+   "model_code": "4939Q3336",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "27 cl - 9 1/4 oz",
+   "height_mm": 92.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/750/rocks-glass-rock-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/750/rocks-glass-rock-bar",
+    "https://www.webstaurantstore.com/bormioli-rocco-rock-bar-from-steelite-international-9-oz-rocks-old-fashioned-glass-case/5764939Q3336.html"
+   ]
+  },
+  {
+   "name": "Rock Bar Bicchiere Slim 36.9 cl",
+   "series": "Rock Bar",
+   "designer": null,
+   "model_code": null,
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 369,
+   "capacity_as_stated": "36.9 cl - 12 1/2 oz",
+   "height_mm": 144.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/757/bicchiere-slim-rock-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/757/bicchiere-slim-rock-bar"
+   ]
+  },
+  {
+   "name": "Rock Bar Long Drink Glass 37 cl",
+   "series": "Rock Bar",
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "37 cl - 12 1/2 oz",
+   "height_mm": 120.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/755/long-drink-glass-rock-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/755/long-drink-glass-rock-bar"
+   ]
+  },
+  {
+   "name": "Rock Bar Lounge Long Drink Glass 37 cl",
+   "series": "Rock Bar Lounge",
+   "designer": null,
+   "model_code": null,
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 370,
+   "capacity_as_stated": "37 cl - 12 1/2 oz",
+   "height_mm": 120.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/759/long-drink-glass-rock-bar-lounge",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/759/long-drink-glass-rock-bar-lounge"
+   ]
+  },
+  {
+   "name": "Rock Bar Lounge Rocks Glass 27 cl",
+   "series": "Rock Bar Lounge",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 270,
+   "capacity_as_stated": "27 cl - 9 1/4 oz",
+   "height_mm": 89.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/760/rocks-glass-rock-bar-lounge",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/760/rocks-glass-rock-bar-lounge"
+   ]
+  },
+  {
+   "name": "Rock Bar Shot Glass 7 cl",
+   "series": "Rock Bar",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 70,
+   "capacity_as_stated": "7 cl - 2 1/4 oz",
+   "height_mm": 63.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/756/shot-glass-rock-bar",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/756/shot-glass-rock-bar"
+   ]
+  },
+  {
+   "name": "Romantic 11.5 oz. Highball Glass",
+   "series": "Romantic",
+   "designer": null,
+   "model_code": "49123Q079",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz.",
+   "height_mm": 120.6,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-romantic-from-steelite-international-11-5-oz-highball-glass-case/57649123Q079.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-romantic-from-steelite-international-11-5-oz-highball-glass-case/57649123Q079.html"
+   ]
+  },
+  {
+   "name": "Sestriere D.O.F Glass 36 cl",
+   "series": "Sestriere",
+   "designer": null,
+   "model_code": "4940Q342",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 360,
+   "capacity_as_stated": "36 cl - 12 1/4 oz",
+   "height_mm": 100.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/783/d-o-f-glass-sestriere",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/783/d-o-f-glass-sestriere",
+    "https://www.webstaurantstore.com/bormioli-rocco-sestriere-from-steelite-international-12-25-oz-rocks-double-old-fashioned-glass-case/5764940Q342.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/aura.pdf"
+   ]
+  },
+  {
+   "name": "Sestriere 13.25 oz. Highball Glass",
+   "series": "Sestriere",
+   "designer": null,
+   "model_code": "4940Q341",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 392,
+   "capacity_as_stated": "13.25 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-sestriere-from-steelite-international-13-25-oz-highball-glass-case/5764940Q341.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-sestriere-from-steelite-international-13-25-oz-highball-glass-case/5764940Q341.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/aura.pdf"
+   ]
+  },
+  {
+   "name": "Sestriere 8 oz. Rocks / Old Fashioned Glass",
+   "series": "Sestriere",
+   "designer": null,
+   "model_code": "4940Q343",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 237,
+   "capacity_as_stated": "8 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-sestriere-from-steelite-international-8-oz-rocks-old-fashioned-glass-case/5764940Q343.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-sestriere-from-steelite-international-8-oz-rocks-old-fashioned-glass-case/5764940Q343.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/aura.pdf"
+   ]
+  },
+  {
+   "name": "Silk Glass D.O.F 39 cl",
+   "series": "Silk",
+   "designer": null,
+   "model_code": "49145Q183",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl - 13 1/4 oz",
+   "height_mm": 102.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/787/glass-d-o-f-silk",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/787/glass-d-o-f-silk",
+    "https://www.webstaurantstore.com/bormioli-rocco-silk-from-steelite-international-13-25-oz-rocks-double-old-fashioned-glass-case/57649145Q183.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_rock_bar-silk-sorgente.pdf"
+   ]
+  },
+  {
+   "name": "Sorgente D.O.F. Glass 42 cl",
+   "series": "Sorgente",
+   "designer": null,
+   "model_code": "4942Q362",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 420,
+   "capacity_as_stated": "42 cl - 14 1/4 oz",
+   "height_mm": 105.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/799/d-o-f-glass-sorgente",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/799/d-o-f-glass-sorgente",
+    "https://www.webstaurantstore.com/bormioli-rocco-sorgente-from-steelite-international-14-25-oz-rocks-double-old-fashioned-glass-case/5764942Q362.html"
+   ]
+  },
+  {
+   "name": "Sorgente Rocks Glass 30 cl",
+   "series": "Sorgente",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": "30 cl - 10 1/4 oz",
+   "height_mm": 107.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/797/rocks-glass-sorgente",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/797/rocks-glass-sorgente"
+   ]
+  },
+  {
+   "name": "Sorgente Shot Glass 7 cl",
+   "series": "Sorgente",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 70,
+   "capacity_as_stated": "7 cl - 2 1/4 oz",
+   "height_mm": 73.5,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/798/shot-glass-sorgente",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/798/shot-glass-sorgente"
+   ]
+  },
+  {
+   "name": "Bartender Este D.O.F. 39 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "49136Q528",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 390,
+   "capacity_as_stated": "39 cl - 13 1/4 oz",
+   "height_mm": 107.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/40/este-d-o-f-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/40/este-d-o-f-bartender",
+    "https://www.webstaurantstore.com/bormioli-rocco-stone-from-steelite-international-13-5-oz-rocks-double-old-fashioned-glass-case/57649136Q528.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/bormioli_rocco_glit-mat-iris_and_more.pdf"
+   ]
+  },
+  {
+   "name": "Vega 3.75 oz. Tempered Glass Tumbler",
+   "series": "Vega",
+   "designer": null,
+   "model_code": "4997Q755",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 111,
+   "capacity_as_stated": "3.75 oz.",
+   "height_mm": 79.4,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-vega-from-steelite-international-3-75-oz-tempered-glass-tumbler-case/5764997Q755.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-vega-from-steelite-international-3-75-oz-tempered-glass-tumbler-case/5764997Q755.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/5764997q755_bormioli_rocco_vega.pdf"
+   ]
+  },
+  {
+   "name": "Ypsilon Long Drink Glass 30.8 cl",
+   "series": "Ypsilon",
+   "designer": null,
+   "model_code": "4945Q411",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 308,
+   "capacity_as_stated": "30.8 cl - 10 1/2 oz",
+   "height_mm": 160.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/919/long-drink-glass-ypsilon",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/919/long-drink-glass-ypsilon",
+    "https://www.webstaurantstore.com/long-drink-10-75oz-ypsilon-borm-rocco-1dz-pack/5764945Q411.html"
+   ]
+  },
+  {
+   "name": "Bartender Margarita Stemlass 33 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "4945Q406",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 330,
+   "capacity_as_stated": "33 cl - 11 1/4 oz",
+   "height_mm": 174.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/48/margarita-stemlass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/48/margarita-stemlass-bartender",
+    "https://www.webstaurantstore.com/margarita-11-25oz-ypsilon-borm-rocco-6pk-pack/5764945Q406.html"
+   ]
+  },
+  {
+   "name": "Ypsilon 11.25 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Ypsilon",
+   "designer": null,
+   "model_code": "4945Q410",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 333,
+   "capacity_as_stated": "11.25 oz.",
+   "height_mm": 114.3,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/dof-11-25oz-ypsilon-borm-rocco-1dz-pack/5764945Q410.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/dof-11-25oz-ypsilon-borm-rocco-1dz-pack/5764945Q410.html"
+   ]
+  },
+  {
+   "name": "Ypsilon After Dinner Glass 15 cl",
+   "series": "Ypsilon",
+   "designer": null,
+   "model_code": "4945Q408",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 150,
+   "capacity_as_stated": "15 cl - 5 oz",
+   "height_mm": 95.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/917/after-dinner-glass-ypsilon",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/917/after-dinner-glass-ypsilon",
+    "https://www.webstaurantstore.com/tumbler-5oz-ypsilon-borm-rocco-1dz-pack/5764945Q408.html"
+   ]
+  },
+  {
+   "name": "Bartender Martini Glass 24.5 cl",
+   "series": "Bartender",
+   "designer": null,
+   "model_code": "4945Q404",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 245,
+   "capacity_as_stated": "24.5 cl - 8 1/4 oz",
+   "height_mm": 182.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/36/martini-glass-bartender",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/36/martini-glass-bartender",
+    "https://www.webstaurantstore.com/martini-8-25oz-ypsilon-borm-rocco-1dz-pack/5764945Q404.html"
+   ]
+  },
+  {
+   "name": "Ypsilon Pre Dinner Glass 25.5 cl",
+   "series": "Ypsilon",
+   "designer": null,
+   "model_code": "4945Q407",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 255,
+   "capacity_as_stated": "25.5 cl - 8 1/2 oz",
+   "height_mm": 107.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/918/pre-dinner-glass-ypsilon",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/918/pre-dinner-glass-ypsilon",
+    "https://www.webstaurantstore.com/tumbler-8-5oz-ypsilon-borm-rocco-1dz-pack/5764945Q407.html"
+   ]
+  },
+  {
+   "name": "Ypsilon Shot Glass 7 cl",
+   "series": "Ypsilon",
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 70,
+   "capacity_as_stated": "7 cl - 2 1/4 oz",
+   "height_mm": 107.0,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://bormioliluigi.com/glassware/en/product/912/shot-glass-ypsilon",
+   "source_urls": [
+    "https://bormioliluigi.com/glassware/en/product/912/shot-glass-ypsilon"
+   ]
+  },
+  {
+   "name": "Zeno 13.25 oz. Rocks / Old Fashioned Glass",
+   "series": "Zeno",
+   "designer": null,
+   "model_code": "4946Q434",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 392,
+   "capacity_as_stated": "13.25 oz.",
+   "height_mm": 107.9,
+   "rim_mm": null,
+   "material": "glass",
+   "product_url": "https://www.webstaurantstore.com/bormioli-rocco-zeno-from-steelite-international-13-25-oz-rocks-old-fashioned-glass-case/5764946Q434.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/bormioli-rocco-zeno-from-steelite-international-13-25-oz-rocks-old-fashioned-glass-case/5764946Q434.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/aura.pdf"
+   ]
+  }
+ ]
+}

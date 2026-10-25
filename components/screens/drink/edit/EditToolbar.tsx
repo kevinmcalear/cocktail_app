@@ -11,6 +11,8 @@ export interface EditToolbarProps {
   onRedo: () => void;
   onDone: () => void;
   saving: boolean;
+  /** Unsaved steps so far; desktop's badge reads "Editing · 3 changes". */
+  changes?: number;
   /** Desktop: a row in the page's header with Done as a pill, not glass over the hero. */
   wide?: boolean;
   /** Desktop's header: the More button, before Done. */
@@ -34,12 +36,12 @@ function HistoryButtons({ canUndo, canRedo, onUndo, onRedo, ink }: Pick<EditTool
 
 /**
  * Editing's toolbar (drink-edit-phone, drink-edit-desktop): undo and redo,
- * "Editing", and Done, which saves. On phones it floats in glass over the
+ * "Editing" (with the unsaved change count on desktop), and Done, which saves. On phones it floats in glass over the
  * hero; on desktop it's the header row.
  */
 export function EditToolbar(props: EditToolbarProps) {
   const ds = useDs();
-  const { onDone, saving, wide, more, media = 'photo' } = props;
+  const { onDone, saving, wide, more, media = 'photo', changes = 0 } = props;
   const scheme = media === 'paper' ? 'light' : 'dark';
   const ink = backbar[scheme].ink;
   const done = (
@@ -71,7 +73,7 @@ export function EditToolbar(props: EditToolbarProps) {
     return (
       <View style={styles.wideRow}>
         <View style={[styles.badge, { backgroundColor: ds.c.raised }]}>
-          <Caption tone="muted">Editing</Caption>
+          <Caption tone="muted">{changes ? `Editing · ${changes} ${changes === 1 ? 'change' : 'changes'}` : 'Editing'}</Caption>
         </View>
         <View style={styles.push} />
         <HistoryButtons {...props} ink={ds.c.ink} />

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { usePageFrame } from '@/components/nav/PageFrame';
 import { BackbarTheme, Caption, dragDismissesKeyboard, GlassButton, Title, useDs, useGutter } from '@/components/ds';
 import { fontFamilies, layout, space } from '@/constants/tokens';
 
@@ -30,11 +31,13 @@ function Frame({ eyebrow, title, intro, children, footer }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
+  // Left beside the side nav on wide web, like every page (i04, 24 Oct 2026).
+  const { column } = usePageFrame();
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <ScrollView
         {...dragDismissesKeyboard}
-        contentContainerStyle={[styles.page, { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl + (footer ? layout.minTapTarget + space.xl : 0), paddingHorizontal: gutter }]}
+        contentContainerStyle={[styles.page, column, { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl + (footer ? layout.minTapTarget + space.xl : 0), paddingHorizontal: gutter }]}
       >
         <View style={styles.header}>
           {eyebrow ? (
@@ -65,7 +68,7 @@ function Frame({ eyebrow, title, intro, children, footer }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  page: { width: '100%', maxWidth: 760, alignSelf: 'center', gap: space.xl },
+  page: { gap: space.xl },
   header: { gap: space.sm },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1 },
   back: { position: 'absolute' },

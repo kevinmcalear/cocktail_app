@@ -1,0 +1,1066 @@
+{
+ "maker": "stolzle.lausitz",
+ "models": [
+  {
+   "name": "11.75 oz. Glencairn Mixer Whiskey Glass",
+   "series": "Glencairn",
+   "designer": null,
+   "model_code": "Z3560015",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 347,
+   "capacity_as_stated": "11.75 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-11-75-oz-glencairn-mixer-whiskey-glass-pack/5503560015.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-11-75-oz-glencairn-mixer-whiskey-glass-pack/5503560015.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_glencairn.pdf"
+   ]
+  },
+  {
+   "name": "13.25 oz. Stemmed Belgian Beer / Tulip Glass",
+   "series": "Belgian Tulip",
+   "designer": null,
+   "model_code": "Z3080019",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 392,
+   "capacity_as_stated": "13.25 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-13-75-oz-belgian-beer-tulip-glass-pack/550F1729.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-13-75-oz-belgian-beer-tulip-glass-pack/550F1729.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_beer_glasses.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/customization/custom_decorating.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/customization/libbey_customization.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/glass_master_bartenders_guide.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/libbey_beer_glass_info.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/libbeybeerclassics_catalog.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/warranty/safedge_warranty.pdf"
+   ]
+  },
+  {
+   "name": "13.5 oz. Imperial Stemmed Beer Glass",
+   "series": "Imperial",
+   "designer": null,
+   "model_code": "Z3660019",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 197,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-13-25-oz-imperial-stemmed-beer-glass-pack/550F1716.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-13-25-oz-imperial-stemmed-beer-glass-pack/550F1716.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_beer_glasses.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf"
+   ]
+  },
+  {
+   "name": "13.75 oz. Stemmed Pilsner Glass",
+   "series": "Pilsner",
+   "designer": null,
+   "model_code": "Z1030019",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 407,
+   "capacity_as_stated": "13.75 oz.",
+   "height_mm": 235,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-13-75-oz-stemmed-pilsner-glass-pack/5501030019.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-13-75-oz-stemmed-pilsner-glass-pack/5501030019.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_beer_glasses.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf"
+   ]
+  },
+  {
+   "name": "14 oz. Stemmed Beer Glass",
+   "series": "Stemmed Beer",
+   "designer": null,
+   "model_code": "Z1200019",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 190,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-14-oz-stemmed-beer-glass-case/5501200019T.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-14-oz-stemmed-beer-glass-case/5501200019T.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_beer_glasses.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf"
+   ]
+  },
+  {
+   "name": "14 oz. Wheat Beer Glass",
+   "series": "Wheat Beer",
+   "designer": null,
+   "model_code": "Z4730050",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 414,
+   "capacity_as_stated": "14 oz.",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-14-oz-wheat-beer-glass-case/5504730050.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-14-oz-wheat-beer-glass-case/5504730050.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_beer_glasses.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf"
+   ]
+  },
+  {
+   "name": "16.5 oz. Stemmed Belgian Beer / Tulip Glass",
+   "series": "Belgian Tulip",
+   "designer": null,
+   "model_code": "Z3080050",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 488,
+   "capacity_as_stated": "16.5 oz.",
+   "height_mm": 152,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-16-5-oz-belgian-beer-tulip-glass-pack/550F1730.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-16-5-oz-belgian-beer-tulip-glass-pack/550F1730.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_beer_glasses.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/customization/custom_decorating.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/customization/libbey_customization.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/inventory_level_guide_drinkware.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/libbeybelgianbeers_5513807_catalog.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/warranty/libbey_safedge_rim__foot_guarantee.pdf"
+   ]
+  },
+  {
+   "name": "21.75 oz. Imperial Stemmed Beer Glass",
+   "series": "Imperial",
+   "designer": null,
+   "model_code": "Z3660052",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 643,
+   "capacity_as_stated": "21.75 oz.",
+   "height_mm": 229,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-21-75-oz-imperial-stemmed-beer-glass-case/550F1718.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-21-75-oz-imperial-stemmed-beer-glass-case/550F1718.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_beer_glasses.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf"
+   ]
+  },
+  {
+   "name": "23.5 oz. Wheat Beer Glass",
+   "series": "Wheat Beer",
+   "designer": null,
+   "model_code": "Z4730052",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 695,
+   "capacity_as_stated": "23.5 oz.",
+   "height_mm": 248,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-23-5-oz-wheat-beer-glass-case/5504730052.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-23-5-oz-wheat-beer-glass-case/5504730052.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_beer_glasses.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf"
+   ]
+  },
+  {
+   "name": "6.5 oz. Glencairn Whiskey Glass",
+   "series": "Glencairn",
+   "designer": null,
+   "model_code": "Z35500316PK",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 192,
+   "capacity_as_stated": "6.5 oz.",
+   "height_mm": 114.3,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-6-5-oz-glencairn-whiskey-glass-case/5503550031CS.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-6-5-oz-glencairn-whiskey-glass-case/5503550031CS.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_glencairn.pdf"
+   ]
+  },
+  {
+   "name": "7.75 oz. Champagne Saucer / Coupe Glass",
+   "series": null,
+   "designer": null,
+   "model_code": "Z2730008",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 229,
+   "capacity_as_stated": "7.75 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-8-oz-champagne-saucer-coupe-glass-pack/5502730008.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-from-global-tableware-collective-8-oz-champagne-saucer-coupe-glass-pack/5502730008.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_coupes.pdf"
+   ]
+  },
+  {
+   "name": "Bierstiefel 17.5 oz. Beer Boot Glass",
+   "series": "Bierstiefel",
+   "designer": null,
+   "model_code": "Z5500052",
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 517,
+   "capacity_as_stated": "17.5 oz.",
+   "height_mm": 194,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-bierstiefel-from-global-tableware-collective-17-5-oz-beer-boot-glass-case/550708047B.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-bierstiefel-from-global-tableware-collective-17-5-oz-beer-boot-glass-case/550708047B.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_bierstiefel.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf"
+   ]
+  },
+  {
+   "name": "Classic 6.75 oz. Euro Brandy Glass",
+   "series": "Classic",
+   "designer": null,
+   "model_code": "Z2000030",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "6.75 oz.",
+   "height_mm": 177.8,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-classic-from-global-tableware-collective-6-5-oz-euro-brandy-glass-pack/5502000030.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-classic-from-global-tableware-collective-6-5-oz-euro-brandy-glass-pack/5502000030.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_classic011625.pdf"
+   ]
+  },
+  {
+   "name": "Experience 11.5 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Experience",
+   "designer": null,
+   "model_code": "Z3510016",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 340,
+   "capacity_as_stated": "11.5 oz.",
+   "height_mm": 101.6,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-experience-from-global-tableware-collective-11-5-oz-rocks-double-old-fashioned-glass-pack/5503510016.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-experience-from-global-tableware-collective-11-5-oz-rocks-double-old-fashioned-glass-pack/5503510016.html"
+   ]
+  },
+  {
+   "name": "Experience 12 oz. Highball Glass",
+   "series": "Experience",
+   "designer": null,
+   "model_code": "Z3510013",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 139.7,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-experience-from-global-tableware-collective-12-75-oz-tumbler-pack/5503510013.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-experience-from-global-tableware-collective-12-75-oz-tumbler-pack/5503510013.html"
+   ]
+  },
+  {
+   "name": "Experience 8.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Experience",
+   "designer": null,
+   "model_code": "Z3510009",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-experience-from-global-tableware-collective-9-25-oz-rocks-old-fashioned-glass-pack/5503510009T.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-experience-from-global-tableware-collective-9-25-oz-rocks-old-fashioned-glass-pack/5503510009T.html"
+   ]
+  },
+  {
+   "name": "Grand Cuvée 12 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Grand Cuvée",
+   "designer": null,
+   "model_code": "Z2100016",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 355,
+   "capacity_as_stated": "12 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-grand-cuv-233-e-from-global-tableware-collective-13-oz-rocks-double-old-fashioned-glass-pack/5502100016.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-grand-cuv-233-e-from-global-tableware-collective-13-oz-rocks-double-old-fashioned-glass-pack/5502100016.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_grand_cuvee011625.pdf"
+   ]
+  },
+  {
+   "name": "Grand Cuvée 15.75 oz. Longdrink / Collins Glass",
+   "series": "Grand Cuvée",
+   "designer": null,
+   "model_code": "Z2100012",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 466,
+   "capacity_as_stated": "15.75 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-grand-cuv-233-e-from-global-tableware-collective-15-75-oz-longdrink-collins-glass-pack/5502100012.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-grand-cuv-233-e-from-global-tableware-collective-15-75-oz-longdrink-collins-glass-pack/5502100012.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_grand_cuvee011625.pdf"
+   ]
+  },
+  {
+   "name": "Isar 17.5 oz. Oktoberfest Beer Mug",
+   "series": "Isar",
+   "designer": null,
+   "model_code": "Z5000052",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 517,
+   "capacity_as_stated": "17.5 oz.",
+   "height_mm": 159,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-isar-from-global-tableware-collective-17-5-oz-oktoberfest-beer-mug-case/550708067B.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-isar-from-global-tableware-collective-17-5-oz-oktoberfest-beer-mug-case/550708067B.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_isar.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf"
+   ]
+  },
+  {
+   "name": "Isar 35 oz. Oktoberfest Beer Mug",
+   "series": "Isar",
+   "designer": null,
+   "model_code": "Z5000053",
+   "glass": "mug",
+   "variant": null,
+   "capacity_ml": 1035,
+   "capacity_as_stated": "35 oz.",
+   "height_mm": 203,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-isar-from-global-tableware-collective-35-oz-oktoberfest-beer-mug-case/550808067B.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-isar-from-global-tableware-collective-35-oz-oktoberfest-beer-mug-case/550808067B.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_isar.pdf",
+    "https://www.webstaurantstore.com/documents/pdf/handling_guide_stolzle.pdf"
+   ]
+  },
+  {
+   "name": "Kyoto 10.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Kyoto",
+   "designer": null,
+   "model_code": "Z3460014",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 85.7,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-10-5-oz-rocks-old-fashioned-glass-case/550Z3460014.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-10-5-oz-rocks-old-fashioned-glass-case/550Z3460014.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/550z3460025_stolzle_kyoto.pdf"
+   ]
+  },
+  {
+   "name": "Kyoto 10.75 oz. Coupe Cocktail Glass",
+   "series": "Kyoto",
+   "designer": null,
+   "model_code": "Z3460025",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 318,
+   "capacity_as_stated": "10.75 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-10-75-oz-coupe-cocktail-glass-case/550Z3460025.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-10-75-oz-coupe-cocktail-glass-case/550Z3460025.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/550z3460025_stolzle_kyoto.pdf"
+   ]
+  },
+  {
+   "name": "Kyoto 13.5 oz. Long Drink Glass",
+   "series": "Kyoto",
+   "designer": null,
+   "model_code": "Z3460009",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 399,
+   "capacity_as_stated": "13.5 oz.",
+   "height_mm": 142.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-13-5-oz-long-drink-glass-case/550Z3460009.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-13-5-oz-long-drink-glass-case/550Z3460009.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/550z3460009_stolzle_kyoto.pdf"
+   ]
+  },
+  {
+   "name": "Kyoto 14.5 oz. Long Drink Glass",
+   "series": "Kyoto",
+   "designer": null,
+   "model_code": "Z3460010",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 429,
+   "capacity_as_stated": "14.5 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-14-5-oz-long-drink-glass-case/550Z3460010.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-14-5-oz-long-drink-glass-case/550Z3460010.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/550z3460010_stolzle_kyoto.pdf"
+   ]
+  },
+  {
+   "name": "Kyoto 14.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Kyoto",
+   "designer": null,
+   "model_code": "Z3460015",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 429,
+   "capacity_as_stated": "14.5 oz.",
+   "height_mm": 95.2,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-14-5-oz-rocks-old-fashioned-glass-case/550Z3460015.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-14-5-oz-rocks-old-fashioned-glass-case/550Z3460015.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/550z3460025_stolzle_kyoto.pdf"
+   ]
+  },
+  {
+   "name": "Kyoto 15.5 oz. Long Drink Glass",
+   "series": "Kyoto",
+   "designer": null,
+   "model_code": "Z3460012",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 458,
+   "capacity_as_stated": "15.5 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-15-5-oz-long-drink-glass-case/550Z3460012.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-15-5-oz-long-drink-glass-case/550Z3460012.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/550z3460012_stolzle_kyoto.pdf"
+   ]
+  },
+  {
+   "name": "Kyoto 17.75 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Kyoto",
+   "designer": null,
+   "model_code": "Z3460016",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 525,
+   "capacity_as_stated": "17.75 oz.",
+   "height_mm": 107.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-17-75-oz-rocks-double-old-fashioned-glass-case/550Z3460016.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-17-75-oz-rocks-double-old-fashioned-glass-case/550Z3460016.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/550z3460025_stolzle_kyoto.pdf"
+   ]
+  },
+  {
+   "name": "Kyoto 6.5 oz. Nick and Nora Glass",
+   "series": "Kyoto",
+   "designer": null,
+   "model_code": "Z3460005",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 192,
+   "capacity_as_stated": "6.5 oz.",
+   "height_mm": 161.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-6-5-oz-nick-and-nora-glass-case/550Z3460005.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-kyoto-from-global-tableware-collective-6-5-oz-nick-and-nora-glass-case/550Z3460005.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/550z3460025_stolzle_kyoto.pdf"
+   ]
+  },
+  {
+   "name": "Nadine 7.5 oz. Martini Glass",
+   "series": "Nadine",
+   "designer": null,
+   "model_code": "Z1770025",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 222,
+   "capacity_as_stated": "7.5 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-nadine-from-global-tableware-collective-7-5-oz-martini-glass-pack/550911357227.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-nadine-from-global-tableware-collective-7-5-oz-martini-glass-pack/550911357227.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_nadine011625.pdf"
+   ]
+  },
+  {
+   "name": "New York 10.75 oz. Rocks / Old Fashioned Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z3500017",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 318,
+   "capacity_as_stated": "10.75 oz.",
+   "height_mm": 92.1,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-10-75-oz-rocks-old-fashioned-glass-case/5503500017.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-10-75-oz-rocks-old-fashioned-glass-case/5503500017.html"
+   ]
+  },
+  {
+   "name": "New York 11 oz. Collins Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z3500013",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-10-5-oz-collins-glass-pack/5503500013.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-10-5-oz-collins-glass-pack/5503500013.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_bar_club_manhattan.pdf"
+   ]
+  },
+  {
+   "name": "New York 11 oz. Highball Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z3500009",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-12-25-oz-tumbler-pack/5503500009.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-12-25-oz-tumbler-pack/5503500009.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_bar_club_manhattan.pdf"
+   ]
+  },
+  {
+   "name": "New York 12.75 oz. Highball Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z3500010",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 377,
+   "capacity_as_stated": "12.75 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-12-oz-tumbler-pack/5503500010.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-12-oz-tumbler-pack/5503500010.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_bar_club_manhattan.pdf"
+   ]
+  },
+  {
+   "name": "New York 14.25 oz. Longdrink / Collins Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z3500012",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 421,
+   "capacity_as_stated": "14.25 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-14-oz-longdrink-collins-glass-pack/5503500012.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-14-oz-longdrink-collins-glass-pack/5503500012.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_bar_club_manhattan.pdf"
+   ]
+  },
+  {
+   "name": "New York 14.5 oz. Rocks / Double Old Fashioned Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z3500016",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 429,
+   "capacity_as_stated": "14.5 oz.",
+   "height_mm": 107.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-14-75-oz-rocks-double-old-fashioned-glass-pack/5503500016.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-14-75-oz-rocks-double-old-fashioned-glass-pack/5503500016.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_bar_club_manhattan.pdf"
+   ]
+  },
+  {
+   "name": "New York 15.5 oz. Highball Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z3500022",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 458,
+   "capacity_as_stated": "15.5 oz.",
+   "height_mm": 177.8,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-14-25-oz-tall-tumbler-pack/5503500022.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-14-25-oz-tall-tumbler-pack/5503500022.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_bar_club_manhattan.pdf"
+   ]
+  },
+  {
+   "name": "New York 17.75 oz. Highball Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z3500023",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 525,
+   "capacity_as_stated": "17.75 oz.",
+   "height_mm": 158.8,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-18-75-oz-highball-glass-case/5503500023.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-18-75-oz-highball-glass-case/5503500023.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_bar_club_manhattan.pdf"
+   ]
+  },
+  {
+   "name": "New York 8.5 oz. Martini Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z2050025",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-8-5-oz-martini-glass-pack/5502050025.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-8-5-oz-martini-glass-pack/5502050025.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_stems.pdf"
+   ]
+  },
+  {
+   "name": "New York 8.5 oz. Rocks / Old Fashioned Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z3500046",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 251,
+   "capacity_as_stated": "8.5 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-8-75-oz-rocks-old-fashioned-glass-pack/5503500046.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-8-75-oz-rocks-old-fashioned-glass-pack/5503500046.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_bar_club_manhattan.pdf"
+   ]
+  },
+  {
+   "name": "New York 9 oz. Martini Glass",
+   "series": "New York",
+   "designer": null,
+   "model_code": "Z1400025",
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 266,
+   "capacity_as_stated": "9 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-8-75-oz-martini-glass-pack/5503810025.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-new-york-from-global-tableware-collective-8-75-oz-martini-glass-pack/5503810025.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_new_york_stems.pdf"
+   ]
+  },
+  {
+   "name": "Power 9.25 oz. Champagne Saucer / Coupe Glass",
+   "series": "Power",
+   "designer": null,
+   "model_code": "Z1590008",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 274,
+   "capacity_as_stated": "9.25 oz.",
+   "height_mm": 165.1,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-power-from-global-tableware-collective-9-25-oz-champagne-saucer-coupe-glass-case/550Z1590008.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-power-from-global-tableware-collective-9-25-oz-champagne-saucer-coupe-glass-case/550Z1590008.html"
+   ]
+  },
+  {
+   "name": "Quatrophil Swing 10.25 oz. Champagne Saucer / Coupe Glass",
+   "series": "Quatrophil",
+   "designer": null,
+   "model_code": "Z2310040",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 303,
+   "capacity_as_stated": "10.25 oz.",
+   "height_mm": 177.8,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-swing-10-25-oz-champagne-saucer-coupe-glass-case/5502310040T.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-swing-10-25-oz-champagne-saucer-coupe-glass-case/5502310040T.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_quatrophil011625.pdf"
+   ]
+  },
+  {
+   "name": "Quatrophil Twist 7.75 oz. Champagne Saucer / Coupe Glass",
+   "series": "Quatrophil",
+   "designer": null,
+   "model_code": "Z2310041",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 229,
+   "capacity_as_stated": "7.75 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-twist-7-75-oz-champagne-saucer-coupe-glass-case/5502310041T.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-twist-7-75-oz-champagne-saucer-coupe-glass-case/5502310041T.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_quatrophil011625.pdf"
+   ]
+  },
+  {
+   "name": "Revolution 13.75 oz. Longdrink / Collins Glass",
+   "series": "Revolution",
+   "designer": null,
+   "model_code": "Z3580012",
+   "glass": "collins",
+   "variant": null,
+   "capacity_ml": 407,
+   "capacity_as_stated": "13.75 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-revolution-from-global-tableware-collective-13-75-oz-longdrink-collins-glass-pack/5503580012.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-revolution-from-global-tableware-collective-13-75-oz-longdrink-collins-glass-pack/5503580012.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_revolution011625.pdf"
+   ]
+  },
+  {
+   "name": "Revolution 13 oz. Rocks / Old Fashioned Glass",
+   "series": "Revolution",
+   "designer": null,
+   "model_code": "Z3580015",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 384,
+   "capacity_as_stated": "13 oz.",
+   "height_mm": 101.6,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-revolution-from-global-tableware-collective-13-oz-rocks-old-fashioned-glass-pack/5503580015.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-revolution-from-global-tableware-collective-13-oz-rocks-old-fashioned-glass-pack/5503580015.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_revolution011625.pdf"
+   ]
+  },
+  {
+   "name": "Revolution 16.5 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Revolution",
+   "designer": null,
+   "model_code": "Z3580016",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 488,
+   "capacity_as_stated": "16.5 oz.",
+   "height_mm": 107.9,
+   "rim_mm": null,
+   "material": "crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-revolution-from-global-tableware-collective-16-5-oz-rocks-double-old-fashioned-glass-pack/5503580016.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-revolution-from-global-tableware-collective-16-5-oz-rocks-double-old-fashioned-glass-pack/5503580016.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_revolution011625.pdf"
+   ]
+  },
+  {
+   "name": "Specialty 14.75 oz. Brandy Snifter",
+   "series": "Specialty",
+   "designer": null,
+   "model_code": "Z2050018",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 436,
+   "capacity_as_stated": "14.75 oz.",
+   "height_mm": 139.7,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-15-oz-brandy-snifter-pack/5502050018.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-15-oz-brandy-snifter-pack/5502050018.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_specialty011625.pdf"
+   ]
+  },
+  {
+   "name": "Specialty 19 oz. Brandy Snifter",
+   "series": "Specialty",
+   "designer": null,
+   "model_code": "Z1030018",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 562,
+   "capacity_as_stated": "19 oz.",
+   "height_mm": 133.3,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-19-oz-brandy-snifter-pack/5501030018.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-19-oz-brandy-snifter-pack/5501030018.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_specialty011625.pdf"
+   ]
+  },
+  {
+   "name": "Specialty 20.5 oz. Brandy Snifter",
+   "series": "Specialty",
+   "designer": null,
+   "model_code": "Z1400018",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 606,
+   "capacity_as_stated": "20.5 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-21-5-oz-brandy-snifter-pack/5501400018.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-21-5-oz-brandy-snifter-pack/5501400018.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_specialty011625.pdf"
+   ]
+  },
+  {
+   "name": "Specialty 26.5 oz. Copa Gin and Tonic Glass",
+   "series": "Specialty",
+   "designer": null,
+   "model_code": "Z1600037",
+   "glass": "spritz",
+   "variant": null,
+   "capacity_ml": 784,
+   "capacity_as_stated": "26.5 oz.",
+   "height_mm": 215.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-26-5-oz-copa-gin-and-tonic-glass-pack/5501600037T.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-26-5-oz-copa-gin-and-tonic-glass-pack/5501600037T.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_specialty011625.pdf"
+   ]
+  },
+  {
+   "name": "Specialty 5.75 oz. Nick and Nora Glass",
+   "series": "Specialty",
+   "designer": null,
+   "model_code": "Z4790005",
+   "glass": "nick",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": "5.75 oz.",
+   "height_mm": 152.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-5-75-oz-nick-and-nora-glass-pack/5504790005T.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-5-75-oz-nick-and-nora-glass-pack/5504790005T.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_specialty011625.pdf"
+   ]
+  },
+  {
+   "name": "Specialty 6.75 oz. Margarita Glass",
+   "series": "Specialty",
+   "designer": null,
+   "model_code": "Z1400024",
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": "6.75 oz.",
+   "height_mm": 171.4,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-11-5-oz-margarita-glass-case/5501400024T.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-11-5-oz-margarita-glass-case/5501400024T.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_specialty011625.pdf"
+   ]
+  },
+  {
+   "name": "Specialty 7 oz. Spirit Taster",
+   "series": "Specialty",
+   "designer": null,
+   "model_code": "Z1540031",
+   "glass": "snifter",
+   "variant": null,
+   "capacity_ml": 207,
+   "capacity_as_stated": "7 oz.",
+   "height_mm": 177.8,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-7-oz-spirit-taster-pack/5501540031.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-specialty-from-global-tableware-collective-7-oz-spirit-taster-pack/5501540031.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_specialty011625.pdf"
+   ]
+  },
+  {
+   "name": "Weinland 10.5 oz. Highball Glass",
+   "series": "Weinland",
+   "designer": null,
+   "model_code": "Z1000009",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 311,
+   "capacity_as_stated": "10.5 oz.",
+   "height_mm": 127,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-11-oz-tumbler-pack/5501000009.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-11-oz-tumbler-pack/5501000009.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_weinland011625.pdf"
+   ]
+  },
+  {
+   "name": "Weinland 11 oz. Rocks / Double Old Fashioned Glass",
+   "series": "Weinland",
+   "designer": null,
+   "model_code": "Z1000016",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 325,
+   "capacity_as_stated": "11 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-11-oz-rocks-double-old-fashioned-glass-pack/5501000016.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-11-oz-rocks-double-old-fashioned-glass-pack/5501000016.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_weinland011625.pdf"
+   ]
+  },
+  {
+   "name": "Weinland 13.75 oz. Highball Glass",
+   "series": "Weinland",
+   "designer": null,
+   "model_code": "Z1000012",
+   "glass": "highball",
+   "variant": null,
+   "capacity_ml": 407,
+   "capacity_as_stated": "13.75 oz.",
+   "height_mm": 146,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-13-75-oz-tall-tumbler-pack/5501000012.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-13-75-oz-tall-tumbler-pack/5501000012.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_weinland011625.pdf"
+   ]
+  },
+  {
+   "name": "Weinland 6.5 oz. Rocks / Old Fashioned Glass",
+   "series": "Weinland",
+   "designer": null,
+   "model_code": "Z1000014",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 192,
+   "capacity_as_stated": "6.5 oz.",
+   "height_mm": 82.5,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-6-75-oz-rocks-old-fashioned-glass-pack/5501000014.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-6-75-oz-rocks-old-fashioned-glass-pack/5501000014.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_weinland011625.pdf"
+   ]
+  },
+  {
+   "name": "Weinland 9.25 oz. Rocks / Old Fashioned Glass",
+   "series": "Weinland",
+   "designer": null,
+   "model_code": "Z1000015",
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 274,
+   "capacity_as_stated": "9.25 oz.",
+   "height_mm": 88.9,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-9-75-oz-rocks-old-fashioned-glass-pack/5501000015.html",
+   "source_urls": [
+    "https://www.webstaurantstore.com/stolzle-weinland-from-global-tableware-collective-9-75-oz-rocks-old-fashioned-glass-pack/5501000015.html",
+    "https://www.webstaurantstore.com/documents/pdf/brochure/stolzle_weinland011625.pdf"
+   ]
+  }
+ ]
+}

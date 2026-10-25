@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Chip, DsText, Field, PressableScale, useDs } from '@/components/ds';
+import { NearPicks, splitNear } from '@/components/search/NearPicks';
 import { radius, space } from '@/constants/tokens';
 import { useBarProfile, usePublicBars } from '@/hooks/useRankings';
 
@@ -20,7 +21,10 @@ export function EventGuest({ value, onChange, placeholder, bare }: { value: Gues
   const ds = useDs();
   const [search, setSearch] = useState(value.name);
   const picked = useBarProfile(null, value.profileId).data;
-  const { data: found = [] } = usePublicBars(value.profileId ? '' : search);
+  const [found, near] = splitNear(usePublicBars(value.profileId ? '' : search, { near: true }).data ?? []);
+  const chip = (b: (typeof found)[number]) => (
+    <Chip key={b.id} selected={false} label={b.locality ? `${b.display_name}, ${b.locality}` : b.display_name} onPress={() => onChange({ profileId: b.id, name: '' })} />
+  );
 
   if (value.profileId) {
     const name = picked?.display_name ?? 'Guest bar';
@@ -56,11 +60,10 @@ export function EventGuest({ value, onChange, placeholder, bare }: { value: Gues
         autoCorrect={false}
         bare={bare}
       />
-      {found.length ? (
-        <View role="list" accessibilityLabel="Bars with a page here" style={styles.chips}>
-          {found.map((b) => (
-            <Chip key={b.id} selected={false} label={b.locality ? `${b.display_name}, ${b.locality}` : b.display_name} onPress={() => onChange({ profileId: b.id, name: '' })} />
-          ))}
+      {found.length || near.length ? (
+        <View role="list" accessibilityLabel="Bars with a page here" style={styles.wrap}>
+          {found.length ? <View style={styles.chips}>{found.map(chip)}</View> : null}
+          <NearPicks found={found.length > 0} near={near} render={chip} rowStyle={styles.chips} />
         </View>
       ) : null}
       {search.trim().length >= 2 ? <Caption tone="muted">Pick their bar to link its page and credit its drinks, or keep the name as typed.</Caption> : null}

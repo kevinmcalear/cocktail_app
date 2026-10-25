@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useKit } from '@/hooks/useKit';
+import { useCapabilities } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
 import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
@@ -97,8 +98,8 @@ export function useToolsFor(barId: string | null, venueName: string | null): { l
 
 /**
  * The tools "you have" where you are (Kit and ice, step 11): the venue's in
- * venue mode, your kit at home otherwise. The technique library and the
- * wizard's prep step check against it.
+ * venue mode, your kit at home otherwise. The technique library checks
+ * against it; a recipe being made uses useMakingKit.
  */
 export function useKitHere(): ReadonlySet<string> {
   const { active } = useActiveVenue();
@@ -110,4 +111,29 @@ export function useKitHere(): ReadonlySet<string> {
     // A venue with no tools listed (or still loading) isn't checked against: your own kit stands in, as the kit check skips it.
     return venue && ours.length ? new Set(ours) : home;
   }, [venue, rows, home]);
+}
+
+/**
+ * The kit a recipe being made is checked against (make-anything-steps-1,
+ * step 4, more to it): the Kit of the venue the drink is for, else My Bar's.
+ * `kit` is null while the venue's list loads, so nothing dims early. `add`
+ * is "I have this": it puts the pieces on that list, and is null for someone
+ * who can't change a venue's Kit (it takes Prep); `edit` is where the list
+ * is changed, null likewise.
+ */
+export function useMakingKit(bar: { id: string; name: string } | null): { kit: ReadonlySet<string> | null; where: string; add: ((ids: string[]) => void) | null; edit: string | null } {
+  const tools = useBarKit(bar?.id);
+  const caps = useCapabilities(bar?.id).data;
+  const home = useKit();
+  const addTools = useAddTools(bar?.id ?? '');
+  if (bar) {
+    const canEdit = !!caps?.includes('prep');
+    return {
+      kit: tools.data ? new Set(tools.data.flatMap((r) => (r.kind === 'tool' && r.key ? [r.key] : []))) : null,
+      where: `${bar.name}’s Kit`,
+      add: canEdit ? (ids) => addTools.mutate(ids) : null,
+      edit: canEdit ? `/settings/bar/${bar.id}/tools` : null,
+    };
+  }
+  return { kit: home.kit, where: 'My Bar', add: (ids) => ids.filter((id) => !home.kit.has(id)).forEach((id) => home.toggle(id)), edit: '/equipment' };
 }

@@ -44,7 +44,8 @@ export function GlassPickSheet({ editor, itemId, onClose }: { editor: Editor; it
   const current = model && !oursIds.has(model.id) && !searching ? [model] : [];
   const makers = [...current, ...found.filter((m) => !oursIds.has(m.id) && m.id !== current[0]?.id)];
   const shown = searching || all ? makers : makers.slice(0, FEW);
-  const matches = (m: GlassModel) => !searching || `${m.maker?.display_name ?? ''} ${m.name} ${m.series ?? ''}`.toLowerCase().includes(search.toLowerCase());
+  // The venue's own glasses as typed, or as the forgiving search found them ("nick and nora" for Nick & Nora).
+  const matches = (m: GlassModel) => !searching || found.some((f) => f.id === m.id) || `${m.maker?.display_name ?? ''} ${m.name} ${m.series ?? ''}`.toLowerCase().includes(search.toLowerCase());
 
   const pickModel = (m: GlassModel) => {
     if (!('setGlassModel' in editor)) return;

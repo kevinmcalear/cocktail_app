@@ -1,0 +1,245 @@
+{
+ "maker": "bobo",
+ "models": [
+  {
+   "name": "Ballon",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 200,
+   "capacity_as_stated": null,
+   "height_mm": 110,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/ballon",
+   "source_urls": [
+    "https://bobo.store/products/ballon"
+   ]
+  },
+  {
+   "name": "Bistro",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": null,
+   "height_mm": 150,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/bistro",
+   "source_urls": [
+    "https://bobo.store/products/bistro"
+   ]
+  },
+  {
+   "name": "Boobette",
+   "series": null,
+   "designer": "Emil Åreng, Erik Andersson, Mathin Lundgren",
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 170,
+   "capacity_as_stated": null,
+   "height_mm": 140,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/boobette",
+   "source_urls": [
+    "https://bobo.store/products/boobette"
+   ]
+  },
+  {
+   "name": "Draft",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": null,
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/draft",
+   "source_urls": [
+    "https://bobo.store/products/draft"
+   ]
+  },
+  {
+   "name": "Drajja",
+   "series": null,
+   "designer": "Emil Åreng, Erik Andersson",
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 120,
+   "capacity_as_stated": null,
+   "height_mm": 175,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/drajja",
+   "source_urls": [
+    "https://bobo.store/products/drajja",
+    "https://www.diffordsguide.com/glassware/484/bobo-drajja"
+   ]
+  },
+  {
+   "name": "Dry",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "martini",
+   "variant": null,
+   "capacity_ml": 120,
+   "capacity_as_stated": null,
+   "height_mm": 130,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/dry",
+   "source_urls": [
+    "https://bobo.store/products/dry"
+   ]
+  },
+  {
+   "name": "Jackson",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 300,
+   "capacity_as_stated": null,
+   "height_mm": 90,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/jackson",
+   "source_urls": [
+    "https://bobo.store/products/jackson"
+   ]
+  },
+  {
+   "name": "Lowballer",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 320,
+   "capacity_as_stated": null,
+   "height_mm": 80,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/lowballer",
+   "source_urls": [
+    "https://bobo.store/products/lowballer",
+    "https://www.diffordsguide.com/glassware/485/bobo-lowballer"
+   ]
+  },
+  {
+   "name": "Middy",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 250,
+   "capacity_as_stated": null,
+   "height_mm": 100,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/middy",
+   "source_urls": [
+    "https://bobo.store/products/middy"
+   ]
+  },
+  {
+   "name": "Nubbe",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "rocks",
+   "variant": null,
+   "capacity_ml": 40,
+   "capacity_as_stated": null,
+   "height_mm": 169,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/nubbe",
+   "source_urls": [
+    "https://bobo.store/products/nubbe"
+   ]
+  },
+  {
+   "name": "Oak",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 650,
+   "capacity_as_stated": null,
+   "height_mm": 205,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/oak",
+   "source_urls": [
+    "https://bobo.store/products/oak"
+   ]
+  },
+  {
+   "name": "Schooner",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "beer",
+   "variant": null,
+   "capacity_ml": 350,
+   "capacity_as_stated": null,
+   "height_mm": 115,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/schooner",
+   "source_urls": [
+    "https://bobo.store/products/schooner"
+   ]
+  },
+  {
+   "name": "Shakerato",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "coupe",
+   "variant": null,
+   "capacity_ml": 120,
+   "capacity_as_stated": null,
+   "height_mm": 122,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/shakerato",
+   "source_urls": [
+    "https://bobo.store/products/shakerato"
+   ]
+  },
+  {
+   "name": "Steel",
+   "series": null,
+   "designer": null,
+   "model_code": null,
+   "glass": "wine",
+   "variant": null,
+   "capacity_ml": 450,
+   "capacity_as_stated": null,
+   "height_mm": 205,
+   "rim_mm": null,
+   "material": "lead-free crystal",
+   "product_url": "https://bobo.store/products/steel",
+   "source_urls": [
+    "https://bobo.store/products/steel"
+   ]
+  }
+ ]
+}

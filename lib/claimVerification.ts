@@ -28,6 +28,8 @@ export interface ClaimEvidence {
   review_reason?: ReviewReason | null;
   /** An Instagram claim checked by a message from the bar's account, not its bio (20261014900000). */
   instagram_dm?: boolean;
+  /** A person claim that asked this bar page's Admin to confirm it (20261113310000). */
+  confirm_bar?: string;
   /** What the claimant typed because the page had none (20261031200000). A person checks it. */
   typed?: TypedDetails;
 }

@@ -152,7 +152,7 @@ function useAllMenus(enabled: boolean) {
       // ponytail: every menu; Prep filters is_active
       const { data, error } = await supabase
         .from('menus')
-        .select('id, name, template_id, bar_id, is_active, created_at, cover_url, cover_position')
+        .select('id, name, bar_id, is_active, created_at, cover_url, cover_position')
         .order('created_at');
       if (error) throw error;
       return data ?? [];
@@ -171,13 +171,18 @@ function useIngredientExtras(enabled: boolean) {
     enabled,
     meta: { persist: false },
     queryFn: async () => {
+      // A page at a time: the server sends 1,000 rows at most, and there are thousands of aliases
+      // (one past the first 1,000 left "Del Maguey Vida mezcal" a new bottle in a pasted spec).
       const [aliases, core] = await Promise.all([
-        supabase.from('ingredient_aliases').select('key, item_id').range(0, 9999),
-        supabase.from('items').select('id').eq('is_core', true).range(0, 9999),
+        allRows((from, to) => supabase.from('ingredient_aliases').select('key, item_id').order('key').range(from, to)).catch(() => []),
+        allRowsById<{ id: string }>((after, size) => {
+          const page = supabase.from('items').select('id').eq('is_core', true);
+          return (after ? page.gt('id', after) : page).order('id').limit(size);
+        }).catch(() => []),
       ]);
       return {
-        ingredientAliases: aliases.error ? [] : (aliases.data ?? []),
-        coreIngredientIds: core.error ? [] : (core.data ?? []).map((r) => r.id as string),
+        ingredientAliases: aliases,
+        coreIngredientIds: core.map((r) => r.id),
       };
     },
   });

@@ -40,7 +40,7 @@ export function pull(e: Pick<RankedFlavor, 'score' | 'sentiment'>): number {
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
-/** One entry per drink, at your best score for it (as get_my_taste did). */
+/** One entry per drink, at your best score for it. */
 function perDrink(entries: readonly RankedFlavor[]): RankedFlavor[] {
   const best = new Map<string, RankedFlavor>();
   for (const e of entries) {

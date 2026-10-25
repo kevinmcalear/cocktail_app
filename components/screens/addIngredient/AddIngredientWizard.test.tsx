@@ -11,6 +11,7 @@ const mockSaved = jest.fn();
 
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
 jest.mock('@/hooks/useDropdowns', () => ({
   useDropdowns: () => ({
     data: {

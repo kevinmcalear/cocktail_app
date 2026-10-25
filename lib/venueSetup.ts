@@ -55,6 +55,17 @@ export function resumeScreen(done: readonly VenueStep[]): VenueScreen {
 }
 
 /**
+ * Where setup opens: the claim (from a bar page's Claim, or &step=claim), the
+ * first step not done for a venue (?bar=), where a setup left before its
+ * venue was made stopped (the 'new' run), or the intro.
+ */
+export function startScreen(p: { bar?: string; claim?: string; step?: string }, runs: Record<string, { done: readonly VenueStep[] } | undefined>): VenueScreen {
+  if (p.claim || (p.bar && p.step === 'claim')) return 'claim';
+  if (p.bar) return resumeScreen(runs[p.bar]?.done ?? []);
+  return runs.new?.done.length ? resumeScreen(runs.new.done) : 'intro';
+}
+
+/**
  * Where the claim step leads, sent or kept private. It's the last step, so
  * the summary; but opened straight from a bar page's Claim, setup carries on
  * from the first step not done.

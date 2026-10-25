@@ -8,6 +8,7 @@ import { IngredientsStep } from './IngredientsStep';
 
 // Pairings and counts come from the database; these tests are about reading what's typed.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
+jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [] }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }) }));
 jest.mock('@/hooks/useIngredientUse', () => ({ useIngredientUse: () => ({ data: 0 }) }));
@@ -15,8 +16,7 @@ jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) })
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: jest.fn(), isPending: false }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
-// The prep step checks the kit where you are (hooks/useBarKit.ts useKitHere): at home here, the same empty kit.
-jest.mock('@/hooks/useBarKit', () => ({ ...jest.requireActual('@/hooks/useBarKit'), useKitHere: () => new Set() }));
+jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrepCard'), useCatalogRecipe: () => ({ data: null }) }));
 
 const laidOut = () => fireEvent(screen.getByTestId('add-prep'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
@@ -71,7 +71,7 @@ describe('typing a line the way you’d write it', () => {
     expect(latest().lines.map((l) => l.id)).toEqual(['bacardi']);
     expect(screen.getByText('What are you making?')).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Wash, /, checked: true })).toBeTruthy();
-    expect(screen.getByRole('radio', { name: /^Fat\. /, checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Fat wash\. Overnight\. Nothing special/, checked: true })).toBeTruthy();
     // Under the lines, it waits to be answered.
     expect(screen.getByText('You wrote coconut fat-washed. Make the Bacardí Carta Blanca that way?')).toBeTruthy();
   });

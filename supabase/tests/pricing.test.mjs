@@ -96,32 +96,18 @@ describe('pricing settings', () => {
 });
 
 describe('drink price', () => {
-  test('a plain typed price carried over to minor units, and reads with the drink', async () => {
-    const { data, error } = await users.employee.client.from('app_item_presentation').select('price, price_minor').eq('id', ids.drink).single();
+  // 20261113900000: the typed price is the drink's one price; there is no number beside it.
+  test('the typed price is kept as typed and reads with the drink', async () => {
+    for (const price of ['23', '$19.50', '14 / 60', 'MP', null, '12.50']) {
+      const set = await users.creator.client.from('items').update({ price }).eq('id', ids.drink).select('price').single();
+      assert.ifError(set.error);
+      assert.equal(set.data.price, price);
+    }
+    const { data, error } = await users.employee.client.from('app_item_presentation').select('price').eq('id', ids.drink).single();
     assert.ifError(error);
-    // The backfill in the migration ran before this fixture existed; a fresh row starts empty.
     assert.equal(data.price, '12.50');
-    const set = await users.creator.client.from('items').update({ price_minor: 1250 }).eq('id', ids.drink).select('price_minor').single();
-    assert.ifError(set.error);
-    assert.equal(set.data.price_minor, 1250);
-    assert.ok((await service.from('items').update({ price_minor: -1 }).eq('id', ids.drink)).error, 'a negative price is refused');
-  });
-
-  // 20261103100000: the typed price is the drink's one price; the number follows it for older apps.
-  test('the number follows the typed price, and an older app\'s number becomes the typed price', async () => {
-    const write = async (patch) => {
-      const { data, error } = await users.creator.client.from('items').update(patch).eq('id', ids.drink).select('price, price_minor').single();
-      assert.ifError(error);
-      return [data.price, data.price_minor];
-    };
-    assert.deepEqual(await write({ price: '23' }), ['23', 2300]);
-    assert.deepEqual(await write({ price: '$19.50' }), ['$19.50', 1950]);
-    assert.deepEqual(await write({ price: '14 / 60' }), ['14 / 60', 1400], 'the glass price, first');
-    assert.deepEqual(await write({ price: 'MP' }), ['MP', null], 'market price has no number');
-    assert.deepEqual(await write({ price_minor: 1850 }), ['18.50', 1850]);
-    assert.deepEqual(await write({ price_minor: 2000 }), ['20', 2000]);
-    assert.deepEqual(await write({ price: null }), [null, null]);
-    assert.deepEqual(await write({ price: '12.50' }), ['12.50', 1250]);
+    const old = await users.creator.client.from('items').update({ price_minor: 1250 }).eq('id', ids.drink);
+    assert.ok(old.error, 'the number is gone');
   });
 });
 

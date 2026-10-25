@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { usePageFrame } from '@/components/nav/PageFrame';
 import { BackbarTheme, Body, Button, Caption, GlassButton, Headline, PressableScale, RowScore, scoreWords, Title, useDs, useGutter } from '@/components/ds';
 import { familyHues, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
@@ -29,6 +30,7 @@ function BookPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
+  const { column } = usePageFrame();
   const { key } = useLocalSearchParams<{ key: string }>();
   const { data, isLoading, error } = useBook(key);
   const source = data?.source;
@@ -43,6 +45,7 @@ function BookPage() {
       <ScrollView
         contentContainerStyle={[
           styles.page,
+          column,
           { paddingTop: insets.top + layout.minTapTarget + space.lg, paddingBottom: insets.bottom + space.xxxl, paddingHorizontal: gutter },
         ]}
       >
@@ -129,7 +132,7 @@ function BookPage() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  page: { width: '100%', maxWidth: 760, alignSelf: 'center', gap: space.lg },
+  page: { gap: space.lg },
   header: { gap: space.sm },
   eyebrow: { fontFamily: fontFamilies.mono, letterSpacing: 1.2 },
   top: { flexDirection: 'row', alignItems: 'center', gap: space.lg },

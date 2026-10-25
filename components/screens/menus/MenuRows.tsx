@@ -8,7 +8,7 @@ import { STATUS } from '@/constants/palette';
 import { displayFaces, displayName, fontFamilies, radius, space } from '@/constants/tokens';
 import { readableAccent, withAlpha } from '@/lib/color';
 import { comingUpLine, draftLine, homeMenuLine, menuDateLine, menuStatus, plural, previousLine } from '@/lib/menus';
-import type { MenuSummary } from '@/types/menus';
+import type { MenuPicture, MenuSummary } from '@/types/menus';
 
 import { MenuVisual } from './MenuVisual';
 
@@ -66,28 +66,50 @@ function Trailing({ menu, status }: { menu: MenuSummary; status: RowStatus }) {
  * to the line, as on a row.
  */
 export function MenuCard({ menu, now, note }: { menu: MenuSummary; now: number; note?: string }) {
-  const ds = useDs();
   const router = useRouter();
   const status = statusOf(menu, now);
   const line = [lineFor(menu, status, now), note].filter(Boolean).join(' · ');
   return (
-    <PressableScale
-      role="link"
-      accessibilityLabel={`${menu.name}, ${status === 'on' ? 'on now, ' : ''}${line}`}
+    <MenuCardFrame
+      label={`${menu.name}, ${status === 'on' ? 'on now, ' : ''}${line}`}
       onPress={() => router.push(menuHref(menu.id))}
-      style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}
-    >
-      <MenuVisual name={menu.name} coverUrl={menu.coverUrl} coverPosition={menu.coverPosition} pictures={menu.pictures} height={112} />
+      name={menu.name}
+      coverUrl={menu.coverUrl}
+      coverPosition={menu.coverPosition}
+      pictures={menu.pictures}
+      line={line}
+      trailing={<Trailing menu={menu} status={status} />}
+    />
+  );
+}
+
+interface MenuCardFrameProps {
+  label: string;
+  onPress: () => void;
+  name: string;
+  coverUrl: string | null;
+  coverPosition?: number;
+  pictures: MenuPicture[];
+  line: string;
+  trailing?: ReactNode;
+}
+
+/** The one menu card: the drink band, the name in the display face, one line, then what ends it. A bar's menu on now draws through it too. */
+export function MenuCardFrame({ label, onPress, name, coverUrl, coverPosition, pictures, line, trailing }: MenuCardFrameProps) {
+  const ds = useDs();
+  return (
+    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+      <MenuVisual name={name} coverUrl={coverUrl} coverPosition={coverPosition} pictures={pictures} height={112} />
       <View style={styles.cardBody}>
         <View style={styles.flex}>
           <Headline numberOfLines={1} style={[displayName.card, { fontFamily: displayFaces[ds.displayFace].regular }]}>
-            {menu.name}
+            {name}
           </Headline>
           <Caption tone="muted" numberOfLines={1}>
             {line}
           </Caption>
         </View>
-        <Trailing menu={menu} status={status} />
+        {trailing}
       </View>
     </PressableScale>
   );
@@ -188,15 +210,20 @@ export function MenuListRow({ menu, now, note }: { menu: MenuSummary; now: numbe
 
 /** A past menu: a plain divided line, its name in the display face and its dates and count in mono. */
 export function MenuPastLine({ menu }: { menu: MenuSummary }) {
-  const ds = useDs();
   const router = useRouter();
   const line = previousLine(menu);
+  return <MenuLine name={menu.name} line={line} label={`${menu.name}, ${line} drinks`} onPress={() => router.push(menuHref(menu.id))} />;
+}
+
+/** The one menu line: the name in the display face, then mono dates (or a green "On now", `live`). Past menus anywhere, and a drink's menus. */
+export function MenuLine({ name, line, label, live, onPress }: { name: string; line: string; label: string; live?: boolean; onPress: () => void }) {
+  const ds = useDs();
   return (
-    <PressableScale role="link" accessibilityLabel={`${menu.name}, ${line} drinks`} onPress={() => router.push(menuHref(menu.id))} style={[styles.past, { borderBottomColor: ds.c.line }]}>
+    <PressableScale role="link" accessibilityLabel={label} onPress={onPress} style={[styles.past, { borderBottomColor: ds.c.line }]}>
       <Headline numberOfLines={1} style={[styles.flex, { fontFamily: displayFaces[ds.displayFace].regular }]}>
-        {menu.name}
+        {name}
       </Headline>
-      <Caption tone="muted" style={styles.mono}>
+      <Caption tone={live ? undefined : 'muted'} color={live ? readableAccent(STATUS.success, ds.c.ground) : undefined} numberOfLines={1} style={styles.mono}>
         {line}
       </Caption>
     </PressableScale>

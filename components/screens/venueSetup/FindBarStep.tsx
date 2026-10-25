@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DrinkImage, DsText, Field, Headline, PressableScale, Tag, useDs } from '@/components/ds';
 import { AddBarForm } from '@/components/screens/home/AddBar';
+import { NearPicks, splitNear } from '@/components/search/NearPicks';
 import { SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { Monogram, SetupHead } from '@/components/screens/onboarding/SetupParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -74,7 +75,8 @@ export function FindBarStep({ onPicked, onSkip }: { onPicked: (bar: { id: string
   const [adding, setAdding] = useState(false);
   const found = useClaimableBars(search);
   const total = useBarPageCount().data;
-  const list = found.data ?? [];
+  const [list, near] = splitNear(found.data ?? []);
+  const card = (b: ClaimableBar) => <BarCard key={b.id} bar={b} selected={picked?.id === b.id} onPick={() => setPicked(b)} />;
 
   if (adding) {
     return (
@@ -89,11 +91,10 @@ export function FindBarStep({ onPicked, onSkip }: { onPicked: (bar: { id: string
   return (
     <SetupPage footer={<SetupFooter label={picked ? `Claim ${picked.display_name}` : 'Claim your bar'} disabled={!picked} onPress={() => picked && onPicked({ id: picked.id, name: picked.display_name })} onSkip={onSkip} />}>
       <Field label="Search bars on Cocktail" icon="magnifyingglass" value={search} onChangeText={(t) => { setSearch(t); setPicked(null); }} placeholder="Little Rye, Fitzroy" autoCorrect={false} />
-      {list.length ? (
+      {list.length || near.length ? (
         <View role="radiogroup" accessibilityLabel="Bars that match" style={styles.list}>
-          {list.map((b) => (
-            <BarCard key={b.id} bar={b} selected={picked?.id === b.id} onPick={() => setPicked(b)} />
-          ))}
+          {list.map(card)}
+          <NearPicks found={list.length > 0} near={near} render={card} />
         </View>
       ) : null}
       {search.trim().length >= 2 && found.data?.length === 0 ? <Body tone="muted">No bar pages by that name.</Body> : null}

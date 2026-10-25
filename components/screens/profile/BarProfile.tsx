@@ -30,18 +30,19 @@ import { BarHeader, BarStats, MenuCredits, OriginalsGrid } from './ProfileSectio
 import { PublicBarFacts } from './PublicBarFacts';
 import { SeeYourName } from './SeeYourName';
 
-type Tab = 'menus' | 'originals' | 'rankings' | 'people';
+export type BarTab = 'menus' | 'originals' | 'rankings' | 'people';
 /** A bar's page leads with its menus. */
 /** Originals shown before "All 12 originals". */
 const FIRST_ORIGINALS = 4;
 
-const TABS = [
+/** A bar page's tabs on a phone, signed in or out (p01). */
+export const BAR_TABS = [
   { value: 'menus', label: 'Menus' },
   { value: 'originals', label: 'Originals' },
   { value: 'rankings', label: 'Top drinks' },
   { value: 'people', label: 'People' },
 ] as const;
-const PEOPLE_ONLY = TABS.filter((t) => t.value === 'people');
+export const PEOPLE_ONLY = BAR_TABS.filter((t) => t.value === 'people');
 
 /**
  * A bar's page on a phone, signed in (ppl-bar-top, -menus, -originals,
@@ -52,7 +53,7 @@ const PEOPLE_ONLY = TABS.filter((t) => t.value === 'people');
  * the drawn desktop page (PublicBarPage signed in).
  */
 export function BarProfile({ profile, columns }: { profile: Profile; columns: number }) {
-  const [tab, setTab] = useState<Tab>('menus');
+  const [tab, setTab] = useState<BarTab>('menus');
   const [awardsOpen, setAwardsOpen] = useState(false);
   const [allOriginals, setAllOriginals] = useState(false);
   const facts = useBarFacts(profile.id).data;
@@ -68,7 +69,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
   const specsLocked = pageLocksSpecs(profile.page_visibility, onTeam);
   // Private: facts, hours, people and awards; no drinks, menus or scores (ppl-bar-private).
   const drinksShown = pageShowsDrinks(profile.page_visibility, onTeam);
-  const shownTab: Tab = drinksShown ? tab : 'people';
+  const shownTab: BarTab = drinksShown ? tab : 'people';
   // The neighbourhood, else the city: "Cocktail bar · Fitzroy" (ppl-bar-top).
   const place = profile.locality || profile.city;
   const searched = !!useLocalSearchParams<{ q?: string }>().q;
@@ -113,7 +114,7 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
 
       <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />
 
-      <Segmented accessibilityLabel="Bar sections" stretch accent options={drinksShown ? TABS : PEOPLE_ONLY} value={shownTab} onChange={setTab} />
+      <Segmented accessibilityLabel="Bar sections" stretch accent options={drinksShown ? BAR_TABS : PEOPLE_ONLY} value={shownTab} onChange={setTab} />
       {shownTab === 'menus' ? (
         <View style={styles.tab}>
           {/* The menu on now, each drink with who made it, while the specs stay with the bar (find-yourself). */}

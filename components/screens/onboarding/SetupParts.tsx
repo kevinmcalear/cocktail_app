@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, PressableScale, useDs } from '@/components/ds';
-import { fontFamilies, radius, space } from '@/constants/tokens';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 
 /** "Little Rye" -> "LR": the first letters of the first two words ("Cellar & Co" -> "CC", the "&" isn't one). */
 export function initials(name: string): string {
@@ -72,6 +73,20 @@ export function RadioCard({ label, detail, selected, disabled, onPress, children
   );
 }
 
+/** One answer to a question step: a bold line, a muted one, and a chevron. */
+export function Answer({ label, detail, onPress }: { label: string; detail: string; onPress: () => void }) {
+  const ds = useDs();
+  return (
+    <PressableScale role="button" accessibilityLabel={label} accessibilityHint={detail} onPress={onPress} style={[styles.answer, { backgroundColor: ds.c.raised }]}>
+      <View style={styles.answerText}>
+        <DsText variant="headline">{label}</DsText>
+        <Caption tone="muted">{detail}</Caption>
+      </View>
+      <IconSymbol name="chevron.right" size={18} color={ds.c.muted} />
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
   head: { letterSpacing: 1.2, fontFamily: fontFamilies.bodyMedium, marginTop: space.sm },
   mark: { borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
@@ -79,4 +94,6 @@ const styles = StyleSheet.create({
   dot: { width: 22, height: 22, borderRadius: radius.pill, marginTop: 1 },
   flex: { flex: 1, minWidth: 0, gap: space.xs },
   strong: { fontFamily: fontFamilies.bodySemiBold },
+  answer: { minHeight: layout.minTapTarget + space.xxl, borderRadius: radius.card, borderCurve: 'continuous', paddingHorizontal: space.xl, paddingVertical: space.md, flexDirection: 'row', alignItems: 'center', gap: space.md },
+  answerText: { flex: 1, minWidth: 0 },
 });

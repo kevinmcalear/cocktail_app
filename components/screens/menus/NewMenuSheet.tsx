@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Button, Caption, Field, GlassButton } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, Field, GlassButton, useBreakpoint } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { savedLine } from '@/lib/menus';
 import type { MenuSummary } from '@/types/menus';
@@ -25,10 +25,13 @@ interface NewMenuSheetProps {
   now: number;
 }
 
-/** New menu: one page on the web at 900 px and up (NewMenuDesk), steps on narrower screens and phones. */
+/**
+ * New menu: one page on the web from 768 px (NewMenuDesk), where the rest of
+ * the app goes wide (l02, 24 Oct 2026); steps on phones.
+ */
 export function NewMenuSheet(props: NewMenuSheetProps) {
-  const { width } = useWindowDimensions();
-  const wide = Platform.OS === 'web' && width >= 900;
+  const breakpoint = useBreakpoint();
+  const wide = Platform.OS === 'web' && breakpoint !== 'phone';
   return wide ? <NewMenuDesk onClose={props.onClose} menus={props.menus} now={props.now} /> : <NewMenuSteps {...props} />;
 }
 
