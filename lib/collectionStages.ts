@@ -36,6 +36,17 @@ export function homeReach(itemId: string | null, shelf: ShelfMatch): HomeReach {
 /** "Need Cynar", "Need Campari and pineapple juice". */
 export const needLine = (need: readonly string[]) => `Need ${need.join(' and ')}`;
 
+/**
+ * The end of a home menu's drink row (menus-one-look, BandMenu): "Ready", or
+ * "Need 1" / "Need 2" and which bottles. Nothing when the shelf is further off.
+ */
+export function menuRowShelf(itemId: string, shelf: ShelfMatch): { label: string; ready: boolean; need: string[] } | null {
+  const reach = homeReach(itemId, shelf);
+  if (reach.kind === 'ready') return { label: 'Ready', ready: true, need: [] };
+  if (reach.kind === 'far' || !reach.need.length) return null;
+  return { label: `Need ${reach.need.length}`, ready: false, need: reach.need };
+}
+
 /** "+0.3", "−0.7", "0.0": your version's score against the bar's. */
 export function gapLabel(you: number, bar: number): string {
   const gap = Math.round((you - bar) * 10) / 10;

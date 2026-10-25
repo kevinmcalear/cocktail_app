@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PressableScale, Spec, useDs } from '@/components/ds';
 import { displayFaces, displayName, fontFamilies, space } from '@/constants/tokens';
+import type { ShelfMatch } from '@/lib/collectionStages';
 import { drinkIdFromHref, itemHref, type ItemCategory } from '@/lib/itemRoutes';
 import { printedPrice } from '@/lib/menus';
 import type { SketchInputs } from '@/lib/sketch/types';
@@ -12,6 +13,7 @@ import { usePrefetchCocktail } from '@/hooks/useCocktails';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { DrinkCode } from './DrinkCode';
+import { RowEnd, rowEndLabel } from './RowEnd';
 
 const CATEGORY: Record<MenuDrink['kind'], ItemCategory> = { cocktail: 'Cocktail', beer: 'Beer', wine: 'Wine' };
 
@@ -115,12 +117,6 @@ interface MenuSectionsProps {
   foot?: ReactNode;
 }
 
-/** A page row's price, in mono at the row's end. */
-function RowPrice({ drink }: { drink: MenuDrink }) {
-  const price = printedPrice(drink);
-  return price ? <Spec>{price}</Spec> : null;
-}
-
 /** A section's name, small in capitals, with how many drinks it has on the page. Centred, with no count, on the card. */
 export function SectionHead({ name, count }: { name: string; count: number | null }) {
   const page = count !== null;
@@ -144,8 +140,9 @@ export const menuDrinkHref = (d: MenuDrink) => itemHref(CATEGORY[d.kind], d.id);
 /**
  * A drink's row on a menu page: its picture, its line and price, opening `href` (still when null).
  * `sketch`: a still row's drawing inputs, for a bundled sample drink with no id to draw from.
+ * `shelf`: a home menu's, so the row's end says Ready or Need 1 instead.
  */
-export function MenuDrinkRow({ drink: d, href, isNew = false, sketch }: { drink: MenuDrink; href: string | null; isNew?: boolean; sketch?: SketchInputs | null }) {
+export function MenuDrinkRow({ drink: d, href, isNew = false, sketch, shelf }: { drink: MenuDrink; href: string | null; isNew?: boolean; sketch?: SketchInputs | null; shelf?: ShelfMatch | null }) {
   const ds = useDs();
   const router = useRouter();
   const prefetch = usePrefetchCocktail();
@@ -154,14 +151,14 @@ export function MenuDrinkRow({ drink: d, href, isNew = false, sketch }: { drink:
       <View style={[styles.row, { borderBottomColor: ds.c.line }]}>
         <DrinkThumb drink={d} drawable={false} sketch={sketch} />
         <DrinkLine drink={d} centered={false} isNew={isNew} />
-        <RowPrice drink={d} />
+        <RowEnd drink={d} shelf={shelf} />
       </View>
     );
   }
   return (
     <PressableScale
       role="link"
-      accessibilityLabel={[d.name, isNew ? 'new' : null, printedPrice(d), d.line].filter(Boolean).join(', ')}
+      accessibilityLabel={[d.name, isNew ? 'new' : null, rowEndLabel(d, shelf), d.line].filter(Boolean).join(', ')}
       onPressIn={() => {
         const id = drinkIdFromHref(href);
         if (id) prefetch(id, { name: d.name, imageUrl: d.isSketch ? null : d.imageUrl });
@@ -171,7 +168,7 @@ export function MenuDrinkRow({ drink: d, href, isNew = false, sketch }: { drink:
     >
       <DrinkThumb drink={d} drawable />
       <DrinkLine drink={d} centered={false} isNew={isNew} />
-      <RowPrice drink={d} />
+      <RowEnd drink={d} shelf={shelf} />
     </PressableScale>
   );
 }
@@ -184,12 +181,12 @@ export function menuPageRows(sections: Pick<MenuSectionDetail, 'id' | 'name' | '
     .flatMap((s, i) => [{ key: `${prefix}s-${s.id}`, head: s.name, count: s.drinks.length, first: i === 0 }, ...s.drinks.map((d) => ({ key: `${prefix}${s.id}-${d.id}`, drink: d }))]);
 }
 
-/** One `menuPageRows` row, spaced as MenuSections spaces them; `firstGap` sits above the first head. */
-export function MenuPageRowView({ row, newIds, firstGap = 0 }: { row: MenuPageRow; newIds?: ReadonlySet<string>; firstGap?: number }) {
+/** One `menuPageRows` row, spaced as MenuSections spaces them; `firstGap` sits above the first head; `shelf` as on MenuDrinkRow. */
+export function MenuPageRowView({ row, newIds, firstGap = 0, shelf }: { row: MenuPageRow; newIds?: ReadonlySet<string>; firstGap?: number; shelf?: ShelfMatch | null }) {
   if ('drink' in row) {
     return (
       <View style={styles.pageRow}>
-        <MenuDrinkRow drink={row.drink} href={menuDrinkHref(row.drink)} isNew={!!newIds?.has(row.drink.id)} />
+        <MenuDrinkRow drink={row.drink} href={menuDrinkHref(row.drink)} isNew={!!newIds?.has(row.drink.id)} shelf={shelf} />
       </View>
     );
   }
