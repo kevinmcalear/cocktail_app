@@ -113,19 +113,6 @@ export function menuName(name: string): string {
   return /\bmenu$/i.test(name.trim()) ? name.trim() : `${name.trim()} menu`;
 }
 
-/**
- * The card on a bar's drink: when it was on the menu, and whether it's on
- * now, so nobody asks for one that came off. "On the menu Mar 2024 to Jan
- * 2025" over "Night Garden menu · not on at Little Rye now".
- */
-export function drinkMenuCard(bar: string, edition: string, d: MenuDates): { title: string; detail: string } {
-  const start = shortDate(d.startYear, d.startMonth);
-  const state = menuState(d);
-  if (state === 'current') return { title: `On the menu now, since ${start}`, detail: `${menuName(edition)} · on at ${bar} now` };
-  if (state === 'unknown') return { title: `On the menu from ${start}`, detail: `${menuName(edition)} at ${bar} · end date unknown` };
-  return { title: `On the menu ${menuRange(d)}`, detail: `${menuName(edition)} · not on at ${bar} now` };
-}
-
 /** A bar's drink in search: "on now", "Past · Mar 2024 to Jan 2025", or nothing when the record doesn't say. */
 export function searchMenuTag(d: MenuDates | null): { onNow: boolean; past?: string } | undefined {
   if (!d) return undefined;
@@ -198,4 +185,16 @@ export function drinkRunTags(editions: readonly MenuEdition[]): Record<string, s
     for (const d of e.drinks) if (!(d.id in tags) || words === 'on now') tags[d.id] = words;
   }
   return tags;
+}
+
+/** A bar's menu on now, under its band: "8 drinks · since Sep 2025" (menus-one-look). */
+export function editionCardLine(e: Pick<MenuEdition, 'year' | 'month' | 'drinks'>): string {
+  const count = new Set(e.drinks.map((d) => d.id)).size;
+  return [count ? `${count} ${count === 1 ? 'drink' : 'drinks'}` : null, `since ${shortDate(e.year, e.month)}`].filter(Boolean).join(' · ');
+}
+
+/** A bar's past menu as a line: "Mar 2024 to Aug 2025 · 10", the count left off when the drinks aren't known. */
+export function editionPastLine(e: Pick<MenuEdition, 'year' | 'month' | 'end_year' | 'end_month' | 'is_current' | 'drinks'>): string {
+  const count = new Set(e.drinks.map((d) => d.id)).size;
+  return [menuRange(editionDates(e)), count ? String(count) : null].filter(Boolean).join(' · ');
 }

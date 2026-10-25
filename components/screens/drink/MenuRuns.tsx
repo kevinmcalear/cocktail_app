@@ -1,57 +1,57 @@
 import { useRouter, type Href } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { Body, Caption, PressableScale, useDs } from '@/components/ds';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { radius, space } from '@/constants/tokens';
+import { MenuGroup } from '@/components/screens/menus/MenuGroupList';
+import { MenuLine } from '@/components/screens/menus/MenuRows';
 import type { DrinkMenuRun } from '@/hooks/useProfiles';
-import { drinkMenuCard } from '@/lib/menuEditions';
+import { menuRange, menuState } from '@/lib/menuEditions';
+
+/** Your venue's menu this drink is on now, with its price there. */
+export interface OwnMenu {
+  menuId: string;
+  name: string;
+  venueName: string | null;
+  price: string | null;
+}
 
 /**
- * "On the menu Mar 2024 to Jan 2025 · Night Garden menu · not on at Little
- * Rye now": when a bar's drink was on its menus, so nobody walks up and asks
- * for one that came off. Opens the menu. Ranking and saving stay open; this
- * only says when. Nothing for a drink no menu lists.
+ * On the menu (menus-one-look, BandElsewhere): the menus a drink is on, or
+ * was, as lines: the name, then "On now" or when it ran, so nobody walks up
+ * and asks for one that came off. Your own venue's menu first. Each opens
+ * the menu. Nothing for a drink no menu lists.
  */
-export function MenuRuns({ runs }: { runs: DrinkMenuRun[] }) {
+export function MenuRuns({ runs, own }: { runs: DrinkMenuRun[]; own?: OwnMenu | null }) {
   const router = useRouter();
-  if (!runs.length) return null;
+  if (!runs.length && !own) return null;
+  // Name the bar only when the drink is on more than one bar's menus.
+  const bars = new Set(runs.map((r) => r.barId)).size;
   return (
-    <View style={styles.runs}>
-      {runs.map((r) => {
-        const { title, detail } = drinkMenuCard(r.barName, r.editionName, r);
-        return <MenuCard key={r.barId} title={title} detail={detail} onPress={() => router.push(`/p/${r.barId}/menus/${r.editionId}` as Href)} />;
-      })}
-    </View>
-  );
-}
-
-/** A menu the drink is on: calendar, what and where, opening the menu ("On the menu now · Autumn menu at Little Rye"). */
-export function MenuCard({ title, detail, onPress }: { title: string; detail: string; onPress: () => void }) {
-  const ds = useDs();
-  return (
-    <PressableScale role="link" accessibilityLabel={`${title}. ${detail}. Open the menu`} onPress={onPress} style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-      <IconSymbol name="calendar" size={22} color={ds.accentText} />
-      <View style={styles.text}>
-        <Body>{title}</Body>
-        <Caption tone="muted">{detail}</Caption>
+    <MenuGroup title="On the menu">
+      <View role="list">
+        {own ? (
+          <MenuLine
+            name={own.name}
+            line={['On now', own.price].filter(Boolean).join(' · ')}
+            live
+            label={[own.name, own.venueName, 'on now', own.price ? `${own.price} there` : null].filter(Boolean).join(', ')}
+            onPress={() => router.push(`/menus/${own.menuId}` as Href)}
+          />
+        ) : null}
+        {runs.map((r) => {
+          const live = menuState(r) === 'current';
+          const line = live ? 'On now' : menuRange(r);
+          return (
+            <MenuLine
+              key={r.barId}
+              name={bars > 1 ? `${r.editionName}, ${r.barName}` : r.editionName}
+              line={line}
+              live={live}
+              label={`${r.editionName} at ${r.barName}, ${line}. Open the menu`}
+              onPress={() => router.push(`/p/${r.barId}/menus/${r.editionId}` as Href)}
+            />
+          );
+        })}
       </View>
-      <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />
-    </PressableScale>
+    </MenuGroup>
   );
 }
-
-const styles = StyleSheet.create({
-  runs: { gap: space.sm },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    paddingVertical: space.md,
-    paddingHorizontal: space.lg,
-    borderRadius: radius.card,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  text: { flex: 1, minWidth: 0, gap: 2 },
-});

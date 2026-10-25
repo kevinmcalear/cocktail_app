@@ -31,7 +31,7 @@ import { ForTheFloor } from './ForTheFloor';
 import { HistorySection } from './HistorySection';
 import { JourneyStrip } from './JourneyStrip';
 import { MakeLine } from './MakeLine';
-import { MenuCard, MenuRuns } from './MenuRuns';
+import { MenuRuns } from './MenuRuns';
 import { PeoplePhotos } from './PeoplePhotos';
 import { ScoreCaption, ScoreMark } from './ScoreCaption';
 import { ServedAt } from './ServedAt';
@@ -155,14 +155,7 @@ export function useDrinkSections(p: DrinkBodyProps) {
       home && signedIn && live ? (
         <JourneyStrip itemId={item.id} name={item.name} saved={p.toMake.saved} onToggleSaved={p.toMake.toggle} onRank={p.actions.rank} onMade={p.actions.made} madeTimes={p.actions.madeTimes} lines={lines} />
       ) : null,
-    menus: (
-      <>
-        {home && onMenu ? (
-          <MenuCard title="On the menu now" detail={[[onMenu.name, p.venueName].filter(Boolean).join(' at '), onMenu.price ? `${onMenu.price} there` : null].filter(Boolean).join(' · ')} onPress={() => router.push(`/menus/${onMenu.menuId}` as Href)} />
-        ) : null}
-        <MenuRuns runs={menuRuns} />
-      </>
-    ),
+    menus: <MenuRuns runs={menuRuns} own={home && onMenu ? { menuId: onMenu.menuId, name: onMenu.name, venueName: p.venueName ?? null, price: onMenu.price ?? null } : null} />,
     banner: live ? <VersionBanner itemId={item.id} inline={p.wide} venueName={barName} /> : null,
     description: short ? null : description,
     // The floor's talking points: for floor roles below Bartender, and editors who write them. A Bartender has the spec (board drink-phone-venue).
