@@ -12,6 +12,8 @@
 --     (Libbey's pages: 133 is 5 in tall, 125 is 4.75 in). It gets its own
 --     trace: 127 mm tall, 69.8 mm across (its page: 2.75 in). Item 125 has
 --     no catalog row: the catalog keys a glass by maker, name and size.
+--   * Honi Honi's page names no height, so its outline is scaled from its
+--     capacity (97 mm, inside the page's 3 3/4 x 4 x 3 in).
 --   * Three outlines are taken away: Urban Bar's Castello Coupe 22cl,
 --     Fluet Old Fashioned 1910 34cl and Gili Old Fashioned 30cl. Their
 --     traces were scaled from capacity because their heights looked wrong,
@@ -48,7 +50,7 @@ UPDATE public.glass_models m
 ($q$urban.bar$q$, $q$Fluet Old Fashioned 1910 34cl$q$, 340),
 ($q$urban.bar$q$, $q$Gili Old Fashioned Glass 30cl$q$, 300)
   ) c(maker, name, capacity_ml)
-  JOIN public.profiles p ON p.kind = 'maker' AND p.handle = c.maker
+  JOIN public.profiles p ON p.kind IN ('maker', 'bar') AND p.handle = c.maker
  WHERE m.maker_profile_id = p.id
    AND public.ingredient_key(m.name) = public.ingredient_key(c.name)
    AND coalesce(m.capacity_ml, 0) = coalesce(c.capacity_ml::numeric, 0)

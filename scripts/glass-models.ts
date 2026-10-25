@@ -425,9 +425,12 @@ export function rowsOf(seeds: Seed[]) {
   return rows;
 }
 
+/** Which pages a load's glasses may name as maker: makers', and bars' that make glassware (20261116200000) when it says so. */
+export const makerPages = (bars?: boolean) => (bars ? "p.kind IN ('maker', 'bar')" : "p.kind = 'maker'");
+
 export function render(load: Load): string {
   const rows = rowsOf((load.files ?? load.makers).map(readSeed));
-  const who = load.bars ? "p.kind IN ('maker', 'bar')" : "p.kind = 'maker'";
+  const who = makerPages(load.bars);
   const shapes = [...new Set(rows.map((r) => SHAPE_NAME[r.glass]!))].sort();
   const values = rows
     .map(

@@ -12,6 +12,7 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { readOutline, type GlassOutline } from '../lib/sketch/outline';
+import { makerPages } from './glass-models';
 
 const DIR = 'supabase/seeds/glass-outlines';
 
@@ -97,6 +98,8 @@ export const LOADS: OutlineLoad[] = [
 --     (Libbey's pages: 133 is 5 in tall, 125 is 4.75 in). It gets its own
 --     trace: 127 mm tall, 69.8 mm across (its page: 2.75 in). Item 125 has
 --     no catalog row: the catalog keys a glass by maker, name and size.
+--   * Honi Honi's page names no height, so its outline is scaled from its
+--     capacity (97 mm, inside the page's 3 3/4 x 4 x 3 in).
 --   * Three outlines are taken away: Urban Bar's Castello Coupe 22cl,
 --     Fluet Old Fashioned 1910 34cl and Gili Old Fashioned 30cl. Their
 --     traces were scaled from capacity because their heights looked wrong,
@@ -135,7 +138,7 @@ export function outlineProblem(o: unknown): string | null {
 const q = (s: string | null | undefined) => (s == null ? 'NULL' : `$q$${s}$q$`);
 
 export function render(load: OutlineLoad, seeds = readSeeds(load.dir)): string {
-  const who = load.bars ? "p.kind IN ('maker', 'bar')" : "p.kind = 'maker'";
+  const who = makerPages(load.bars);
   const cleared = (load.clear ?? []).map((c) => `(${[q(c.maker), q(c.name), c.capacity_ml ?? 'NULL'].join(', ')})`);
   const rows = seeds.flatMap((s) =>
     s.outlines.map((o) => {
@@ -166,7 +169,7 @@ UPDATE public.glass_models m
   FROM (VALUES
 ${cleared.join(',\n')}
   ) c(maker, name, capacity_ml)
-  JOIN public.profiles p ON p.kind = 'maker' AND p.handle = c.maker
+  JOIN public.profiles p ON ${who} AND p.handle = c.maker
  WHERE m.maker_profile_id = p.id
    AND public.ingredient_key(m.name) = public.ingredient_key(c.name)
    AND coalesce(m.capacity_ml, 0) = coalesce(c.capacity_ml::numeric, 0)

@@ -30,6 +30,14 @@ for (const load of LOADS) {
       catalog.set(seed.maker, rows);
     }
   }
+  // What it fixes names an outline an earlier load gave: a replacement is in its seeds, and a cleared glass is untraced after it.
+  const keyOf = (x: { maker: string; name: string; capacity_ml: number | null }) => `${x.maker}\0${nameKey(x.name)}\0${x.capacity_ml ?? 0}`;
+  const own = new Set(readSeeds(load.dir).flatMap((s) => s.outlines.map((o) => keyOf({ maker: s.maker, ...o }))));
+  for (const x of load.replaces ?? []) assert.ok(seen.has(keyOf(x)) && own.has(keyOf(x)), `${load.file} replaces ${x.name}, which no earlier load outlined or it doesn't trace`);
+  for (const x of load.clear ?? []) {
+    assert.ok(seen.has(keyOf(x)) && !own.has(keyOf(x)), `${load.file} clears ${x.name}, which no earlier load outlined or it traces again`);
+    seen.delete(keyOf(x));
+  }
   for (const s of readSeeds(load.dir)) {
     // A maker loaded by a migration that isn't generated from a seed has no rows here to check against.
     const rows = catalog.get(s.maker);
