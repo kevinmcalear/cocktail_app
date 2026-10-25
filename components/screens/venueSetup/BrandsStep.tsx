@@ -9,16 +9,19 @@ import { space } from '@/constants/tokens';
 import { useBackBarStock, useStockMutations } from '@/hooks/useBackBar';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { isStockable } from '@/lib/backBar';
+import { looksMadeInHouse } from '@/lib/techniques/makeIt';
 import { anyKind, brandGroups } from '@/lib/whatNext';
 
 import { StepFooter } from './GlassesStep';
 
 /**
  * Step 2, your brands: tap what the venue stocks, a brand or the plain thing
- * ("just the Irish whiskey"). Search finds a brand or a kind (a kind lists
- * its bottles); the starting kinds, each with its "Any" and what's picked
- * under it, sit below. Saved on the back bar's stock list (fix 12), so the
- * back bar and every "On your back bar" read it straight away.
+ * ("just rum"). One chip per kind of bottle starts it (a whole back bar, call
+ * 10); search finds a brand or a kind (a kind lists its bottles), and what's
+ * picked sits below under its kind. Search holds bottles only: a recipe like
+ * a banana-infused rum is made in-house, not stocked. Saved on the back bar's
+ * stock list (fix 12), so the back bar and every "On your back bar" read it
+ * straight away.
  */
 export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: string; step: string; onBack: () => void; onNext: () => void; onSkip: () => void }) {
   const chrome = useSetupChrome();
@@ -29,10 +32,14 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
   const { add, remove } = useStockMutations(barId);
   const [typing, setTyping] = useState(false);
   const all = dropdowns?.ingredients;
-  // Bottles only: no juice, garnish or the venue's own preps (as the line's bottle offers).
+  // Bottles only: no juice, garnish, the venue's own preps or anything made in-house (an infusion, a wash).
   const bottles = useMemo(() => {
     const byId = new Map((all ?? []).map((i) => [i.id, i]));
-    return (all ?? []).filter((i) => isStockable({ name: i.name ?? '', kind: i.generic_id ? byId.get(i.generic_id)?.name : null, role: i.ingredient_role, ownPrep: i.bar_id === barId }));
+    return (all ?? []).filter(
+      (i) =>
+        isStockable({ name: i.name ?? '', kind: i.generic_id ? byId.get(i.generic_id)?.name : null, role: i.ingredient_role, ownPrep: i.bar_id === barId }) &&
+        (i.ingredient_role === 'product' || !looksMadeInHouse(i.name ?? ''))
+    );
   }, [all, barId]);
   const coreIds = useMemo(() => new Set(dropdowns?.coreIngredientIds ?? []), [dropdowns?.coreIngredientIds]);
   const stocked = new Set(stock.map((r) => r.item_id));
@@ -43,7 +50,7 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
     if (stocked.has(item.id)) remove.mutate(item.id);
     else add.mutate({ item: { id: item.id, name: item.name ?? '' }, source: 'setup' });
   };
-  const chip = (item: { id: string; name: string | null }, label: string) => {
+  const chip = (item: { id: string; name: string | null }, label: string, a11y = label) => {
     const on = stocked.has(item.id);
     return (
       <Chip
@@ -51,7 +58,7 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
         multi
         label={label}
         selected={on}
-        accessibilityLabel={on ? `${label}, on your back bar` : label}
+        accessibilityLabel={on ? `${a11y}, on your back bar` : a11y}
         leading={on ? <IconSymbol name="checkmark" size={14} color={ds.c.ground} /> : undefined}
         onPress={() => toggle(item)}
       />
@@ -61,7 +68,7 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
   const count = stock.length;
   return (
     <SetupChromeProvider
-      value={{ ...chrome, title: 'What’s on your shelves?', intro: 'Tap what you stock. The plain thing is fine too: “just the Irish whiskey”.', mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack }}
+      value={{ ...chrome, title: 'What’s on your shelves?', intro: 'Tap what you stock. The plain thing is fine: “just rum”.', mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack }}
     >
       <SetupPage footer={<StepFooter skip="Skip" onSkip={onSkip} label={count ? `${count} on your back bar · Next` : 'Next'} onPress={onNext} />}>
         <IngredientSearch
@@ -82,17 +89,24 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
         {typing ? null : !all ? (
           <Caption tone="muted">Loading…</Caption>
         ) : (
-          groups.map((g, i) => (
-            <View key={`${g.title}-${i}`} style={styles.group}>
-              <Caption tone="muted" role="heading">
-                {g.title}
-              </Caption>
-              <View role="group" aria-label={g.title} style={styles.wrap}>
-                {g.kinds.map((k) => chip(k, anyKind(k.name ?? '')))}
-                {g.picked.map((p) => chip(p, p.name ?? ''))}
-              </View>
+          <>
+            <View role="group" aria-label="Kinds of bottle" style={styles.wrap}>
+              {groups.flatMap((g) => g.kinds.map((k) => chip(k, g.kinds.length === 1 ? g.title : (k.name ?? ''), anyKind(k.name ?? ''))))}
             </View>
-          ))
+            {groups
+              .filter((g) => g.picked.length)
+              .map((g, i) => (
+                <View key={`${g.title}-${i}`} style={styles.group}>
+                  <Caption tone="muted" role="heading">
+                    {g.title}
+                  </Caption>
+                  <View role="group" aria-label={g.title} style={styles.wrap}>
+                    {g.picked.map((p) => chip(p, p.name ?? ''))}
+                  </View>
+                </View>
+              ))}
+            <Caption tone="muted">Infusions, washes and syrups you make aren’t bottles: they’re recipes, made in-house with your drinks.</Caption>
+          </>
         )}
       </SetupPage>
     </SetupChromeProvider>
