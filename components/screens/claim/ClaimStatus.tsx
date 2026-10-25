@@ -94,6 +94,9 @@ export function ClaimApproved({ profile }: { profile: Profile }) {
       {profile.bar_id && profile.kind === 'bar' ? (
         <Button label="Choose who sees your page" size="lg" onPress={() => router.push(`/settings/bar/${profile.bar_id}/publishing` as Href)} />
       ) : null}
+      {profile.kind === 'maker' && profile.makes.includes('bottles') ? (
+        <Button label="Add photos of your bottles" size="lg" onPress={() => router.replace(`/p/${profile.handle}/bottles?welcome=1` as Href)} />
+      ) : null}
       <Button label="Back to the page" variant="secondary" onPress={() => router.replace(`/p/${profile.handle}` as Href)} />
     </View>
   );

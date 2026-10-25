@@ -1967,6 +1967,7 @@ export type Database = {
       item_images: {
         Row: {
           angle: Database["public"]["Enums"]["image_angle"]
+          checked_at: string | null
           created_at: string
           id: string
           image_id: string | null
@@ -1979,6 +1980,7 @@ export type Database = {
         }
         Insert: {
           angle?: Database["public"]["Enums"]["image_angle"]
+          checked_at?: string | null
           created_at?: string
           id?: string
           image_id?: string | null
@@ -1991,6 +1993,7 @@ export type Database = {
         }
         Update: {
           angle?: Database["public"]["Enums"]["image_angle"]
+          checked_at?: string | null
           created_at?: string
           id?: string
           image_id?: string | null
@@ -5741,6 +5744,10 @@ export type Database = {
         }[]
       }
       can_edit_item: { Args: { p_item_id: string }; Returns: boolean }
+      check_maker_photo: {
+        Args: { p_item_id: string; p_keep: boolean }
+        Returns: undefined
+      }
       claim_item_flavor_job: {
         Args: never
         Returns: {
@@ -6374,6 +6381,14 @@ export type Database = {
       is_card_public: { Args: { p_item_id: string }; Returns: boolean }
       is_made_log_shown: { Args: { p_made_id: string }; Returns: boolean }
       is_spec_locked: { Args: { p_item_id: string }; Returns: boolean }
+      maker_bottle_photos: {
+        Args: { p_profile_id: string }
+        Returns: {
+          checked: boolean
+          item_id: string
+          url: string
+        }[]
+      }
       maker_credit_requests: {
         Args: { p_bar_id: string }
         Returns: {
@@ -6383,6 +6398,18 @@ export type Database = {
           item_id: string
           makes: string
           profile_id: string
+        }[]
+      }
+      maker_photos_waiting: {
+        Args: never
+        Returns: {
+          added_at: string
+          item_id: string
+          maker_handle: string
+          maker_id: string
+          maker_name: string
+          name: string
+          url: string
         }[]
       }
       menu_name_key: { Args: { p_name: string }; Returns: string }
@@ -6790,6 +6817,14 @@ export type Database = {
         Returns: undefined
       }
       set_item_picture: {
+        Args: {
+          p_image_id?: string
+          p_item_id: string
+          p_picture: Database["public"]["Enums"]["item_picture"]
+        }
+        Returns: undefined
+      }
+      set_maker_bottle_picture: {
         Args: {
           p_image_id?: string
           p_item_id: string

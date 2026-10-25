@@ -1,11 +1,12 @@
 import { useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Headline, IngredientThumb, PressableScale, TextLink, useDs } from '@/components/ds';
+import { Body, Button, Caption, Headline, IngredientThumb, PressableScale, Surface, TextLink, useDs } from '@/components/ds';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { useMakerBottles, useMakerDrinks, type MakerBottle } from '@/hooks/useMakers';
+import { useOnMakerTeam } from '@/hooks/useMakerPhotos';
 import { isUnclaimed, useProfile, type Profile } from '@/hooks/useProfiles';
 import { itemHref } from '@/lib/itemRoutes';
 import { makesLine, servesLine } from '@/lib/makers';
@@ -31,6 +32,7 @@ export function MakerProfile({ profile, columns }: { profile: Profile; columns: 
   const router = useRouter();
   const signedIn = useSignedIn();
   const unclaimed = isUnclaimed(profile);
+  const onTeam = useOnMakerTeam(profile.bar_id);
   const place = [profile.locality, profile.city].filter(Boolean).join(', ');
   const serves = servesLine(profile.serves);
   // Bottles for a bottle house, credited drinks for an ice or glass maker; both when it makes both.
@@ -66,7 +68,15 @@ export function MakerProfile({ profile, columns }: { profile: Profile; columns: 
 
       <Awards profileId={profile.id} />
 
-      {unclaimed ? <ClaimProfile profile={profile} label="Make this? Claim this page" /> : null}
+      {unclaimed && signedIn && bottles.length ? (
+        <Surface style={styles.claim}>
+          <Headline role="heading">Make this? Claim this page</Headline>
+          <Body tone="muted">{`Add real photos of your ${bottles.length} ${bottles.length === 1 ? 'bottle' : 'bottles'}, and see the drinks and bars that use them.`}</Body>
+          <ClaimProfile profile={profile} label="Claim this page" />
+        </Surface>
+      ) : unclaimed ? (
+        <ClaimProfile profile={profile} label="Make this? Claim this page" />
+      ) : null}
 
       {!signedIn ? (
         <View style={styles.section}>
@@ -77,7 +87,10 @@ export function MakerProfile({ profile, columns }: { profile: Profile; columns: 
 
       {signedIn && (bottles.length > 0 || bottlesLoading) ? (
         <View style={styles.section}>
-          <Headline role="heading">Bottles</Headline>
+          <View style={styles.titleRow}>
+            <Headline role="heading" style={styles.flex}>Bottles</Headline>
+            {onTeam ? <Button label="Your bottles" icon="camera" variant="secondary" size="sm" accessibilityHint="Add or change photos of your bottles" onPress={() => router.push(`/p/${profile.handle}/bottles` as Href)} /> : null}
+          </View>
           {bottlesLoading ? <Caption tone="muted">Loading bottles…</Caption> : <BottleList bottles={bottles} />}
         </View>
       ) : null}
@@ -135,6 +148,8 @@ const styles = StyleSheet.create({
   body: { gap: space.xl },
   head: { gap: space.sm },
   section: { gap: space.md },
+  claim: { gap: space.sm },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm, borderBottomWidth: StyleSheet.hairlineWidth },
 });
