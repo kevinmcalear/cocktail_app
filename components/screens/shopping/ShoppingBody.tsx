@@ -69,7 +69,7 @@ export function ShoppingBody({ back, column = false }: { back?: ReactNode; colum
           {column ? <Title>Shopping</Title> : <Display>Shopping</Display>}
           {rows.length ? <Caption tone="muted">{shoppingSummary(open.length, listOpens(open, bar.oneAway, bar.twoAway))}</Caption> : null}
         </View>
-        <ShoppingAdd onShelf={bar.shelfIds} onAdd={add} onAddMadeFrom={(item, pantry) => edit.addMadeFrom.mutate({ item, onShelf: bar.shelfIds, pantry })} />
+        <ShoppingAdd onShelf={bar.shelfIds} onAdd={add} onAddMadeFrom={(item, pantry) => edit.addMadeFrom.mutate({ item, onShelf: bar.shelfIds, pantry }, { onSuccess: (n) => (n ? undefined : toast.show({ title: item.name, detail: 'You have everything it’s made from, or it’s on the list already.' })) })} />
         {open.length ? <Segmented options={MODES} value={mode} onChange={setMode} accessibilityLabel="Group the list" variant="ink" choice stretch /> : null}
         {!isLoading && !rows.length ? <Body tone="muted">Nothing on your list. Add something above, or tap Add to shopping on a drink you’re a bottle short of.</Body> : null}
 
@@ -124,12 +124,10 @@ export function ShoppingBody({ back, column = false }: { back?: ReactNode; colum
 
 /**
  * The list beside the shelf on a desktop-wide My Bar (shopping desk-mybar,
- * d55): a card with its own scroll, there while the list has anything on it.
+ * d55): a card with its own scroll, the Add box ready when the list is empty.
  */
 export function ShoppingColumn({ bottom, gutter }: { bottom: number; gutter: number }) {
   const ds = useDs();
-  const rows = useShoppingList().data ?? [];
-  if (!rows.length) return null;
   return (
     <ScrollView style={[styles.column, { marginRight: gutter }]} contentContainerStyle={{ paddingBottom: bottom }} keyboardShouldPersistTaps="handled">
       <View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>

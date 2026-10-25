@@ -62,8 +62,9 @@ assert.deepEqual(menuShopping([{ id: 'signal' }, { id: 'toronto' }, { id: 'sour'
   { itemId: 'rye', name: 'Rye whiskey', forItemId: 'toronto' },
 ]);
 
-// --- a juice adds the fruit it's squeezed from ---
+// --- a juice, peel or zest adds the fruit it comes from ---
 assert.equal(juiceFruit('Lemon juice')?.label, 'Lemons');
 assert.equal(juiceFruit('pink grapefruit juice')?.label, 'Grapefruit');
+assert.equal(juiceFruit('Lime Peel')?.label, 'Limes');
 assert.equal(juiceFruit('Lime cordial'), null);
 assert.equal(juiceFruit('Pineapple juice'), null);

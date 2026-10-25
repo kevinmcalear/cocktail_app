@@ -33,7 +33,7 @@ export function ShoppingAdd({ onShelf, onAdd, onAddMadeFrom }: { onShelf: Readon
     if (fruit && fruitId) {
       const low = onShelf.has(fruitId);
       return {
-        note: `Squeezed from ${fruit.label.toLowerCase()}, so ${low ? 'it can mark yours running low' : `adds ${fruit.label}`}`,
+        note: `From ${fruit.label.toLowerCase()}, so ${low ? 'it can mark yours running low' : `adds ${fruit.label}`}`,
         label: low ? 'Running low' : 'Add',
         say: low ? `Mark ${fruit.label} running low` : `Add ${fruit.label} for ${f.name}`,
         onPress: () => add({ itemId: fruitId, name: fruit.label, source: low ? 'running_low' : 'hand', forItemId: low ? null : f.id }),

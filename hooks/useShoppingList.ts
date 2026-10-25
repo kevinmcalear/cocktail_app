@@ -39,15 +39,25 @@ async function shoppingRows(raw: Raw[]): Promise<ShoppingRow[]> {
   });
 }
 
-/** What a house-made thing's recipe calls for, optional lines left out. */
-async function readMadeFrom(itemId: string): Promise<{ id: string; name: string }[]> {
-  const { data, error } = await supabase.from('app_recipe_presentation').select('display_ingredient_id, is_optional').eq('recipe_item_id', itemId);
+/**
+ * What a house-made thing's recipe calls for, optional lines left out. A part
+ * that is house-made too (a cordial's simple syrup) is read for its own parts,
+ * up to `depth` levels down.
+ */
+async function readMadeFrom(itemIds: string[], depth = 2): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabase.from('app_recipe_presentation').select('recipe_item_id, display_ingredient_id, is_optional').in('recipe_item_id', itemIds);
   if (error) throw error;
   const ids = [...new Set((data ?? []).flatMap((r) => (r.display_ingredient_id && !r.is_optional ? [r.display_ingredient_id] : [])))];
   if (!ids.length) return [];
-  const names = await supabase.from('app_item_presentation').select('id, name').in('id', ids);
+  const [names, made] = await Promise.all([
+    supabase.from('app_item_presentation').select('id, name').in('id', ids),
+    depth > 1 ? supabase.from('app_recipe_presentation').select('recipe_item_id').in('recipe_item_id', ids) : Promise.resolve({ data: [], error: null }),
+  ]);
   if (names.error) throw names.error;
-  return (names.data ?? []).flatMap((r) => (r.id && r.name ? [{ id: r.id, name: r.name }] : []));
+  if (made.error) throw made.error;
+  const madeHere = new Set((made.data ?? []).map((r) => r.recipe_item_id as string));
+  const bought = (names.data ?? []).flatMap((r) => (r.id && r.name && !madeHere.has(r.id) ? [{ id: r.id, name: r.name }] : []));
+  return madeHere.size ? [...bought, ...(await readMadeFrom([...madeHere], depth - 1))] : bought;
 }
 
 /** The list: what's still to get, then what's ticked and not yet cleared (Got it), oldest first. */
@@ -196,7 +206,7 @@ export function useShoppingEdit() {
   const addMadeFrom = useMutation({
     mutationFn: async ({ item, onShelf, pantry }: { item: { id: string; name: string }; onShelf: ReadonlySet<string>; pantry: readonly { id: string; name: string }[] }): Promise<number> => {
       // A juice in the recipe is bought as its fruit, as when it's added by hand.
-      const parts = (await readMadeFrom(item.id)).map((p) => {
+      const parts = (await readMadeFrom([item.id])).map((p) => {
         const fruit = juiceFruit(p.name);
         const id = fruit && pantry.find((x) => x.name.toLowerCase() === fruit.name.toLowerCase())?.id;
         return fruit && id ? { id, name: fruit.label } : p;

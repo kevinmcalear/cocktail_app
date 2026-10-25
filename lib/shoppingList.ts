@@ -124,11 +124,11 @@ export function menuShopping(drinks: readonly { id: string }[], oneAway: readonl
 }
 
 /**
- * The fruit a citrus juice is squeezed from, as the pantry names it ("Lemon"
- * for lemon juice): nobody buys lemon juice for a home bar (d54). Null for
- * anything else.
+ * The fruit a citrus juice, peel or zest comes from, as the pantry names it
+ * ("Lemon" for lemon juice): nobody buys lemon juice for a home bar (d54).
+ * Null for anything else.
  */
 export function juiceFruit(name: string): (typeof PANTRY)[number] | null {
-  const m = /^(?:fresh |pink |ruby )?(lemon|lime|orange|grapefruit)s? juice$/i.exec(name.trim());
+  const m = /^(?:fresh |pink |ruby )?(lemon|lime|orange|grapefruit)s? (?:juice|peel|zest)$/i.exec(name.trim());
   return m ? (PANTRY.find((p) => p.name.toLowerCase() === m[1].toLowerCase()) ?? null) : null;
 }
