@@ -25,6 +25,8 @@ export interface ToolSheetProps {
   /** The question it opens on: 0 which tool, 1 where it comes from, 2 where it is. */
   startAt?: 0 | 1 | 2;
   onSaved?: () => void;
+  /** Why it's wanted: "2 drinks are blended". */
+  from?: string;
 }
 
 /** Add a tool, or change one: which tool, where it comes from, where it is. */
@@ -32,7 +34,7 @@ export function ToolSheet(props: ToolSheetProps) {
   return <ToolSheetBody key={useOpenKey(props.visible)} {...props} />;
 }
 
-function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0, onSaved }: ToolSheetProps) {
+function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0, onSaved, from }: ToolSheetProps) {
   const suppliers = useVenueSuppliers(barId).data ?? [];
   const have = (useBarKit(barId).data ?? []).flatMap((r) => (r.key && r.id !== tool?.id ? [r.key] : []));
   const save = useSaveTool(barId);
@@ -140,6 +142,7 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
       question={questions[step]}
       onNext={() => (step < 2 ? setStep(step + 1) : finish(src, location, n))}
       saving={save.isPending}
+      answered={tool ? undefined : { what: own ? name.trim() || 'Your own tool' : ((key && equipmentById(key)?.name) ?? 'A tool'), from, onChange: () => setStep(0) }}
       error={save.error ? ((save.error as { code?: string }).code === '23505' ? 'That tool is already in the kit. Open it there to change it.' : FAILED) : null}
     />
   );

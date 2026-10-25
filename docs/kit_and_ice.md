@@ -69,6 +69,13 @@ Built from the starting design above, with the changes noted (why in brackets).
 - **Gone**: `GlassForm` (Wide/Deep/Saucer, Who makes it, Designer, Series), the ice chips and the tool switches (`useSetTools`, `toolGroups`). A glass named by hand is its shape and its name; one picked from the catalog keeps its maker on the model.
 - **Left for later PRs**: ice question 3 and "How it's made" on the ice page (PR 3: `madeStep`, and the placeholder in `KitIceScreen`'s `IcePage`); "In N drinks", "Needed by" and "What it needs" (PR 4); "Glasses and ice from your drinks" (PR 6).
 
+### PR 6: the same sheet everywhere
+
+- `KitPrompt` (components/screens/kit): "not in your kit, add it?" with Add, Not now and the list. `GlasswarePrompt` (glass picks) and `IcePrompt` (the wizard's ice step) build on it; Add opens `GlassSheet` / `IceSheet` filled in, with "From the <drink>" and Change above question 2.
+- What next › From your drinks (`FromDrinksStep`, `hooks/useKitFromDrinks.ts`, `lib/kitFromDrinks.ts`): glasses, ice and tools the venue's drinks name that aren't in its Kit. Glasses by their drawn shape (Add, or Match for one with no real glass), ice by drawing kind, tools from blended drinks and the venue's own ice recipes' steps.
+- Small cubes under a short Collins block: the wizard's ice tip from #702 already offers it (glass height from the venue's glass, block length from `item_ice.length_mm`).
+- Not yet: drinks still name the shared ice, so a drink can't name the venue's own "Clear cube · 50 mm" (see the PR 1 note), and "15 drinks over ice don't say which · Pick" needs a way to change many drinks at once.
+
 Notes for later PRs:
 
 - PR 3: the house-prep editor (`hooks/usePrepCard.ts`) assumes ingredients (`ingredient_role`, `made_from_id` are ingredient-only, by check constraint). Ice made here uses `item_steps`, `item_prep` and `recipes` lines, not `made_from_id`. Prep-only staff still can't write recipe lines of a house prep (an ingredient), only of the venue's ice.

@@ -6,6 +6,7 @@ import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
 import { kitCount } from '@/lib/venueKit';
 import { variantsOf } from '@/lib/sketch/geometry';
+import type { SketchGlass } from '@/lib/sketch/types';
 
 import { GlassWhich, type GlassWhichValue } from './GlassWhich';
 import { KitAddSheet, useOpenKey, type KitQuestion } from './KitAddSheet';
@@ -25,10 +26,16 @@ export interface GlassSheetProps {
   startAt?: 0 | 1 | 2;
   /** Opens on naming your own instead of the catalog search. */
   describe?: boolean;
+  /** A glass in the Kit with no real glass yet: opens on the catalog search to match it. */
+  match?: boolean;
   /** Instead of saving to the page (What next holds glasses until the page is checked). */
   onSave?: (row: BarGlassInput) => void;
   onSaved?: () => void;
   venueName?: string;
+  /** A new glass a drink named ("Small Rocks"): its shape starts the search, its name is what you call it. */
+  initial?: { glass: SketchGlass; variant?: string | null; name?: string | null };
+  /** Where it was named: "From the Paloma", "2 drinks". */
+  from?: string;
 }
 
 /** Add a glass, or change one: which glass it is, where it comes from, how many. */
@@ -36,19 +43,19 @@ export function GlassSheet(props: GlassSheetProps) {
   return <GlassSheetBody key={useOpenKey(props.visible)} {...props} />;
 }
 
-function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, describe, onSave, onSaved, venueName }: GlassSheetProps) {
+function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, describe, match, onSave, onSaved, venueName, initial, from }: GlassSheetProps) {
   const suppliers = useVenueSuppliers(barId).data ?? [];
   const known = useBarGlassware(barId).data;
   const glasses = known ?? [];
   const save = useSaveBarGlass(barId, pageId);
   const [step, setStep] = useState<number>(startAt);
   const [which, setWhich] = useState<GlassWhichValue>(() => ({
-    mode: glass ? (glass.model ? 'picked' : 'own') : describe ? 'own' : 'find',
+    mode: glass && !match ? (glass.model ? 'picked' : 'own') : describe ? 'own' : 'find',
     model: glass?.model ?? null,
-    glass: glass?.glass ?? 'coupe',
-    variant: glass?.variant ?? null,
+    glass: glass?.glass ?? initial?.glass ?? 'coupe',
+    variant: glass?.variant ?? initial?.variant ?? null,
     // A real glass's own name isn't the venue's: the list says it under the type.
-    name: glass?.name && glass.name !== glass.model?.name ? glass.name : '',
+    name: glass?.name && glass.name !== glass.model?.name ? glass.name : (initial?.name ?? ''),
   }));
   // What it said before: Skip leaves it so.
   const [saved] = useState<KitSource>(() => ({ source: glass?.source ?? null, supplier_id: glass?.supplier_id ?? null }));
@@ -93,7 +100,7 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
     {
       title: 'Which glass is it?',
       intro: which.mode === 'own' ? 'Its shape and what you call it. Drinks are drawn in it.' : 'Find the one you pour into. Its size and drawing come with it.',
-      body: <GlassWhich value={which} onChange={setWhich} venueModelIds={glasses.flatMap((g) => (g.model_id ? [g.model_id] : []))} venueName={venueName} />,
+      body: <GlassWhich value={which} onChange={setWhich} venueModelIds={glasses.flatMap((g) => (g.model_id ? [g.model_id] : []))} venueName={venueName} shape={initial?.glass ?? (match ? glass?.glass : null)} />,
       next: 'Next',
       canNext: which.mode !== 'find',
     },
@@ -129,6 +136,7 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
       onNext={() => (step < 2 ? setStep(step + 1) : finish(src, n))}
       saving={save.isPending}
       error={save.error ? FAILED : null}
+      answered={glass ? undefined : { what: (which.mode === 'picked' && which.model?.name) || title, from, onChange: () => setStep(0) }}
     />
   );
 }

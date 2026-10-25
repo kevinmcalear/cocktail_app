@@ -244,7 +244,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'glass':
         return <GlassStep draft={draft} set={set} options={glasses} barId={barId} barGlasses={barGlasses} barVariants={barVariants} suggested={guess.glass} />;
       case 'ice':
-        return <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={venueIce} venueName={barId ? venueName : null} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />;
+        return <IceStep {...{ draft, set, ices, barIce, barGlasses, barVariants }} kit={venueIce} venueName={barId ? venueName : null} barId={barId} suggested={guess.ice} why={iceWhy(sketchLook(draft, barVariants))} tellUs={tellUsAbout} />;
       case 'garnish':
         return <FinishStep draft={draft} set={set} ingredients={ingredients} loading={!dropdowns?.ingredients} aliases={dropdowns?.ingredientAliases} coreIds={coreIds} />;
       case 'credits':

@@ -226,7 +226,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             <GlassStep compact draft={draft} set={set} options={p.glasses} barId={barId} barGlasses={p.barGlasses} barVariants={p.barVariants} suggested={p.guess.glass} />
           </Row>
           <Row label="Ice">
-            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.venueIce} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} tellUs={tellUsAbout} />
+            <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.venueIce} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={barId ? p.venueName : null} barId={barId} tellUs={tellUsAbout} />
           </Row>
           <Row label="Finish">
             {finishing ? (

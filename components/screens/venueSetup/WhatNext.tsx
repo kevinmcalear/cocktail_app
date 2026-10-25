@@ -9,6 +9,7 @@ import { space } from '@/constants/tokens';
 import { useBackBarStock } from '@/hooks/useBackBar';
 import { useBarGlassware, useBarPageId, useFlushHeldGlasses, useHeldGlasses } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
+import { useKitFromDrinks } from '@/hooks/useKitFromDrinks';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useBarClassics, useTopClassics } from '@/hooks/useWhatNext';
 import { groupMenus } from '@/lib/menus';
@@ -16,11 +17,14 @@ import { glassMakers, heldNotOnPage } from '@/lib/whatNext';
 import { useAppMode } from '@/store/useAppMode';
 
 import { BrandsStep } from './BrandsStep';
+import { FromDrinksStep, fromDrinksCount } from './FromDrinksStep';
 import { GlassesStep } from './GlassesStep';
 import { MenuStep } from './MenuStep';
 import { BackBarShelf, DeeperRow, StepRow } from './WhatNextParts';
 
 type Step = 'glasses' | 'brands' | 'menu';
+/** What next's steps, and From your drinks (Kit and ice, step 12), which isn't numbered. */
+type At = Step | 'drinks';
 
 const STEP_WORD: Record<Step, string> = { glasses: 'Glasses', brands: 'Brands', menu: 'Menu' };
 const ORDER: Step[] = ['glasses', 'brands', 'menu'];
@@ -63,6 +67,8 @@ export function WhatNext({
   const libraryQuery = useBarClassics(barId, top.classics);
   const caps = capsQuery.data ?? [];
   const pageId = pageQuery.data ?? null;
+  // Only Prep adds to the Kit: nobody else loads what the drinks name.
+  const fromDrinks = fromDrinksCount(useKitFromDrinks(caps.includes('prep') ? barId : null), pageId);
   // On the page, then held on this device until it's checked (a held one already saved isn't counted twice).
   const onPage = glassQuery.data ?? [];
   const glasses = [...onPage, ...heldNotOnPage(held, onPage).map((h) => ({ ...h, id: h.key, maker_page: null }))];
@@ -77,7 +83,7 @@ export function WhatNext({
   const [shown, setShown] = useState(false);
   const loading = !shown && (capsQuery.isLoading || pageQuery.isLoading || glassQuery.isLoading || stockQuery.isLoading || top.isLoading || libraryQuery.isLoading || menusQuery.isLoading);
   if (!loading && !shown) setShown(true);
-  const [at, setAt] = useState<Step | null>(null);
+  const [at, setAt] = useState<At | null>(null);
   const [skipped, setSkipped] = useState<Step[]>([]);
   // Glassware hangs off the venue's page: before it's checked, picks wait on this device (GlassesStep).
   const can: Record<Step, boolean> = { glasses: caps.includes('prep'), brands: caps.includes('edit_drinks') || caps.includes('prep'), menu: caps.includes('edit_drinks') };
@@ -103,6 +109,9 @@ export function WhatNext({
   }
   if (at === 'glasses') {
     return <GlassesStep barId={barId} pageId={pageId} name={name} step={label('glasses')} onBack={() => setAt(null)} onNext={() => next('glasses')} onSkip={() => (skip('glasses'), next('glasses'))} />;
+  }
+  if (at === 'drinks') {
+    return <FromDrinksStep barId={barId} pageId={pageId} name={name} onBack={() => setAt(null)} />;
   }
   if (at === 'brands') {
     return <BrandsStep barId={barId} step={label('brands')} onBack={() => setAt(null)} onNext={() => next('brands')} onSkip={() => (skip('brands'), next('brands'))} />;
@@ -175,6 +184,9 @@ export function WhatNext({
             onSkip={can.menu ? () => skip('menu') : undefined}
           />
         </View>
+        {fromDrinks && can.glasses ? (
+          <DeeperRow title="From your drinks" line={`${fromDrinks} ${fromDrinks === 1 ? 'thing your drinks name isn’t' : 'things your drinks name aren’t'} in your Kit`} onPress={() => setAt('drinks')} />
+        ) : null}
         {summary}
         {filled ? (
           <View>
