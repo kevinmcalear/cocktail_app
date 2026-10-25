@@ -38,7 +38,7 @@ Apple rejects template apps submitted on a client's behalf. Supported model:
 | Internal test build for phones | `eas build --profile preview --platform all` (iOS devices must be registered first: `eas device:create`) |
 | Store build | `eas build --profile production --platform ios` / `--platform android` |
 | Upload to App Store Connect / TestFlight | `eas submit --profile production --platform ios` |
-| Ship a JS-only fix to installed apps | `eas update --channel production --environment production --message "…"`, then `npm run sentry:sourcemaps` (see below) |
+| Ship a JS-only fix to installed apps | `eas update --channel production --environment production --message "…"`, then `eas env:exec production "npm run sentry:sourcemaps"` (see below) |
 
 **Owner-only steps the first time:**
 
@@ -56,11 +56,12 @@ Both are off until their public keys are set, and both are in every 1.3.0 binary
 | JS errors, native crashes (Sentry) | `EXPO_PUBLIC_SENTRY_DSN` in the EAS `production` environment, then an `eas update` | 1.3.0 binaries (iOS 9, Android 8) after they download the OTA, so from their second launch |
 | Usage events (PostHog) | `EXPO_PUBLIC_POSTHOG_KEY` (and `EXPO_PUBLIC_POSTHOG_HOST` for the EU cloud) in EAS `production`, then an `eas update` | same |
 | Web | the same variables in Vercel (Production), then a redeploy | babyvom.it |
-| Readable OTA stack traces | `npm run sentry:sourcemaps` straight after each `eas update`, with `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and `SENTRY_PROJECT` in the shell. It uploads the maps `eas update` left in `dist/`; debug IDs match them to events. | every OTA from then on |
+| Readable OTA stack traces | `eas env:exec production "npm run sentry:sourcemaps"` straight after each `eas update`: `env:exec` passes `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and `SENTRY_PROJECT` from the EAS production environment (the token is stored as *sensitive*, not *secret*, because a secret can't be read outside EAS's build servers). It uploads the maps `eas update` left in `dist/`; debug IDs match them to events. | every OTA from then on |
 | Readable traces for the store build's own bundle, iOS debug symbols | the `@sentry/react-native` config plugin, added for `APP_VARIANT=production` in `app.config.ts`. It uploads during the EAS build with `SENTRY_AUTH_TOKEN` (secret), `SENTRY_ORG` and `SENTRY_PROJECT` from the EAS `production` environment. | the next store build only |
 
 - The plugin only adds build steps (an Xcode upload phase and a Gradle upload task). No native runtime code changes, so OTAs on `runtimeVersion` 1.3.0 stay safe for builds 9 and 8, even though the fingerprint now differs.
-- `eas.json` sets `SENTRY_ALLOW_FAILURE=true` on the production profile: a missing token or a Sentry outage logs a warning instead of failing a store build. Check the build log for `sentry-cli` warnings after the first build with the token.
+- A failed upload fails the store build on purpose: `SENTRY_ALLOW_FAILURE` once shipped iOS build 10 with no JS bundle (`scripts/sentryBuild.check.ts` keeps it out). If the token is revoked or Sentry is down on build day, set `SENTRY_DISABLE_AUTO_UPLOAD=true` for that one build.
+- **Setting the token (owner only, once):** create an organization token at sentry.io > Settings > cocktail-z3 > Auth Tokens, then run `eas env:create --environment production --name SENTRY_AUTH_TOKEN --visibility sensitive` and paste it when asked. For web maps later, `npx vercel env add SENTRY_AUTH_TOKEN production` the same way.
 - On builds 9 and 8, errors before the first OTA lands come from the embedded bundle, whose maps were never uploaded, so they show minified frames. Native iOS crashes on those builds show unsymbolicated frames unless their dSYMs are uploaded by hand.
 - What's sent: the account id (never email or name), app version and EAS Update id, device model and OS. Breadcrumbs drop console logs and query strings, and email addresses are replaced before sending (`lib/monitoringScrub.ts`). PostHog events are the eight in `lib/analytics.ts` plus screen views by route pattern, with GeoIP off (the SDK default).
 
