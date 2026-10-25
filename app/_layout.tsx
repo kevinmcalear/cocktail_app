@@ -219,7 +219,6 @@ function RootLayoutNav() {
             <Stack.Screen name="settings/bar/[id]/dilution" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/pricing" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/calendars" options={{ headerShown: false }} />
-            <Stack.Screen name="settings/bar/[id]/ice-recipe/[iceId]" options={{ headerShown: false }} />
             <Stack.Screen name="study/[deck]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/all" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/index" options={{ headerShown: false }} />
