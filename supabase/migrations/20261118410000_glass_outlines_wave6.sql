@@ -1,4 +1,4 @@
--- Glass outlines, load 3, after 20261118300000 (the tiki bars' mugs) and
+-- Glass outlines, load 3, after 20261118400000 (the tiki bars' mugs) and
 -- loads 1 and 2. Kevin, 25 Oct 2026 (Open decisions): d60 "check each
 -- maker's page, fix whichever is wrong", d61 "check them, then load".
 --

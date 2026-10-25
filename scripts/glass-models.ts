@@ -212,14 +212,14 @@ export const LOADS: Load[] = [
 --     Sahm, Monotaro and Bar Times pages blocked or down).`,
   },
   {
-    file: 'supabase/migrations/20261118300000_glass_models_bar_mugs.sql',
+    file: 'supabase/migrations/20261118400000_glass_models_bar_mugs.sql',
     makers: ['false.idol', 'latitude29nola', 'lostlakechicago', 'maxs.south.seas.hideaway', 'tonga.hut', 'tradervics.oakland'],
     bars: true,
     header: `
 -- Glass models, wave 6: the tiki bars' own mugs, after 20261117100000.
 -- Kevin, 25 Oct 2026 (Open decisions): d61 "check them, then load", d62 a
 -- tiki mug's maker is the bar that sells it (20261116200000 lets a bar page
--- make glassware). 20261118310000 loads their traced outlines.
+-- make glassware). 20261118410000 loads their traced outlines.
 --
 --   * 9 mugs under the bars that sell them: False Idol's Hei Tiki, Latitude
 --     29's Bumatay, Lost Lake's Rum Barrel, Max's South Seas Hideaway's Pau

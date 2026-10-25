@@ -75,7 +75,7 @@ export const LOADS: OutlineLoad[] = [
 --     changes nothing.`,
   },
   {
-    file: 'supabase/migrations/20261118310000_glass_outlines_wave6.sql',
+    file: 'supabase/migrations/20261118410000_glass_outlines_wave6.sql',
     dir: join(DIR, 'wave6'),
     bars: true,
     replaces: [{ maker: 'libbey', name: 'Heavy Base Hi-Ball', capacity_ml: 266 }],
@@ -84,7 +84,7 @@ export const LOADS: OutlineLoad[] = [
       { maker: 'urban.bar', name: 'Fluet Old Fashioned 1910 34cl', capacity_ml: 340 },
       { maker: 'urban.bar', name: 'Gili Old Fashioned Glass 30cl', capacity_ml: 300 },
     ],
-    header: (count) => `-- Glass outlines, load 3, after 20261118300000 (the tiki bars' mugs) and
+    header: (count) => `-- Glass outlines, load 3, after 20261118400000 (the tiki bars' mugs) and
 -- loads 1 and 2. Kevin, 25 Oct 2026 (Open decisions): d60 "check each
 -- maker's page, fix whichever is wrong", d61 "check them, then load".
 --
