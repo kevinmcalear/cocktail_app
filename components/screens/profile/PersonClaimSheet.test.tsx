@@ -10,6 +10,7 @@ const mockDismissTo = jest.fn();
 let mockMeta: { onboarded?: boolean } = {};
 jest.mock('expo-router', () => ({ useRouter: () => ({ dismissTo: mockDismissTo }) }));
 jest.mock('@/ctx/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta } }) }));
+jest.mock('./useShareLink', () => ({ useShareLink: () => jest.fn() }));
 jest.mock('@/hooks/useProfiles', () => ({ useClaimProfile: () => ({ mutate: mockClaim, isPending: false, error: null }) }));
 
 const ash = { id: 'ash', kind: 'person', handle: 'ash.okafor', display_name: 'Ash Okafor', instagram: 'ash.okafor', website: null, social_links: null } as unknown as Profile;
@@ -54,4 +55,13 @@ test('past Setup, a sent claim stays on the page', async () => {
   expect(screen.getByText('Your 1 drink and where you have worked move to your account. Nothing new goes public.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
   expect(mockDismissTo).not.toHaveBeenCalled();
+});
+
+test('on a phone that isn’t theirs, the claim opens on their own phone from a QR code', async () => {
+  await renderWithTamagui(<PersonClaimSheet profile={ash} bar={null} stats={{ drinks: 0, menus: 0 }} visible onClose={jest.fn()} />);
+  expect(screen.getByText('Where you have worked moves to your account. Nothing new goes public.')).toBeTruthy();
+  expect(screen.queryByLabelText('QR code that opens Ash Okafor’s claim on your phone')).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Not your phone? Claim it on yours' }));
+  expect(screen.getByLabelText('QR code that opens Ash Okafor’s claim on your phone')).toBeTruthy();
+  expect(screen.getByText('Scan with your phone. It opens this claim there, after you sign in with your own email.')).toBeTruthy();
 });

@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,6 +8,7 @@ import { layout, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
 import { isUnclaimed, useProfile, type Profile } from '@/hooks/useProfiles';
 import { recentEntry, useTrackRecent } from '@/hooks/useTrackRecent';
+import { saveClaimReturn } from '@/lib/claimReturn';
 import { siteOrigin } from '@/lib/venueLink';
 
 import { LoveBarButton } from '../kept/LoveBarButton';
@@ -48,7 +50,12 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
   // A person's page is for people who've signed in; a bar's opens to anyone.
   const gated = profile?.kind === 'person' && !signedIn;
   // Opened from a search: the way back carries it ("martini", disc-search-bar).
-  const q = useLocalSearchParams<{ q?: string }>().q;
+  const { q, claim } = useLocalSearchParams<{ q?: string; claim?: string }>();
+  // "Claim it on your phone" opened signed out: the claim opens again once they've signed in.
+  const claimAfterSignIn = profile && gated && claim === '1' && isUnclaimed(profile) ? profile.handle : null;
+  useEffect(() => {
+    if (claimAfterSignIn) void saveClaimReturn(claimAfterSignIn);
+  }, [claimAfterSignIn]);
   const searched = typeof q === 'string' && q.trim() ? q.trim() : null;
   // A bar you open shows in Search's Recent.
   useTrackRecent(profile?.kind === 'bar', profile ? recentEntry('bar', profile.id, profile.display_name, { href: `/p/${profile.handle || profile.id}`, imageUrl: profile.avatar_url, barId: null }) : null);
@@ -79,7 +86,8 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
   );
 
   let body;
-  if (profile && gated) body = <SignInCard text={`Sign in to see ${profile.display_name}’s profile: the drinks they’ve made, where they’ve worked and what they’re drinking.`} />;
+  if (profile && claimAfterSignIn) body = <SignInCard title={`Claim ${profile.display_name}`} text="Sign in with your own email. The claim opens here once you have." />;
+  else if (profile && gated) body = <SignInCard text={`Sign in to see ${profile.display_name}’s profile: the drinks they’ve made, where they’ve worked and what they’re drinking.`} />;
   else if (profile) {
     const columns = breakpoint === 'phone' ? 2 : breakpoint === 'tablet' ? 3 : 4;
     body =

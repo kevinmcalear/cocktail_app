@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Field, useDs } from '@/components/ds';
@@ -8,6 +8,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useMyPersonClaim, usePublicPeople, useWaiting } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
+import { takeClaimReturn } from '@/lib/claimReturn';
 import { closedLabel } from '@/lib/discoverDrinks';
 import { waitingLine } from '@/lib/findYourself';
 
@@ -20,7 +21,8 @@ import { SetupFooter, SetupPage } from './SetupPage';
  * and people we already have, each row saying what is waiting there. Each
  * opens its real page (public pages are open during Setup, and Back returns
  * here as it was), where "This is me" claims a person's page and comes back
- * to "Claim sent". Claiming does not make a second profile.
+ * to "Claim sent". Claiming does not make a second profile. A new account
+ * that came from "Claim it on your phone" goes straight to that claim.
  */
 export function FindStep({
   name,
@@ -46,6 +48,11 @@ export function FindStep({
     bars.map((b) => b.id),
     people.map((p) => p.id)
   );
+  useEffect(() => {
+    void takeClaimReturn().then((path) => {
+      if (path) router.push(path as Href);
+    });
+  }, [router]);
   const chevron = <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />;
 
   // Back from "This is me" on a page they opened from here (find-yourself step 5).

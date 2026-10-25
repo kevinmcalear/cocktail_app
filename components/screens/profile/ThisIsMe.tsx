@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +14,8 @@ import { PersonClaimSheet } from './PersonClaimSheet';
  * "This is me" / "Not me" on an unclaimed person's page (find-yourself step
  * 3): a card beside the page on a wide screen ("Are you Ash?"), pinned to the
  * bottom on a phone. This is me opens the claim sheet; Not me puts it away.
- * Once a claim is sent it says so instead.
+ * Once a claim is sent it says so instead. Opened from "Claim it on your
+ * phone" (/p/<handle>?claim=1), the sheet is already open.
  */
 export function ThisIsMe({ profile, pinned = false }: { profile: Profile; pinned?: boolean }) {
   const ds = useDs();
@@ -21,14 +23,14 @@ export function ThisIsMe({ profile, pinned = false }: { profile: Profile; pinned
   const gutter = useGutter();
   const made = useMadeBy(profile);
   const { data: claims } = useMyClaims(profile.id);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(useLocalSearchParams<{ claim?: string }>().claim === '1');
   const [notMe, setNotMe] = useState(false);
   const first = profile.display_name.split(' ')[0];
   const bar = made.positions.find((p) => p.is_current)?.bar.display_name ?? made.groups.find((g) => g.barName)?.barName ?? null;
   const latest = claims?.[0];
   if (notMe) return null;
-  const sheet = <PersonClaimSheet profile={profile} bar={bar} stats={made.stats} visible={open} onClose={() => setOpen(false)} />;
   const sent = latest?.status === 'pending';
+  const sheet = <PersonClaimSheet profile={profile} bar={bar} stats={made.stats} visible={open && !sent} onClose={() => setOpen(false)} />;
   const buttons = sent ? (
     <View style={styles.sent} role="status">
       <Tag label="Claim sent" />
