@@ -55,10 +55,16 @@ export function nearestModels<T extends { capacity_ml: number | null }>(models: 
     return [...models].sort((a, b) => off(a) - off(b)).slice(0, 3);
 }
 
+// The app's GLASS_MODEL_SELECT (hooks/useGlassModels.ts): a suggestion opens like a searched glass.
+const GLASS_MODEL_SELECT =
+    "id, maker_profile_id, shape_item_id, glass, variant, name, series, designer, model_code, capacity_ml, height_mm, rim_mm, material, product_url, maker:profiles!glass_models_maker_profile_id_fkey(handle, display_name)";
+
 /**
  * Real glasses the photo could be (glass_models): one vision call reads the
  * type, a maker's mark and the size; the database does the matching. No icon
- * is drawn in this mode. Off in the app until Kevin OKs the AI calls (15 Oct 2026).
+ * is drawn in this mode. "Snap the glass" in Which glass is it? (Kevin's OK,
+ * Open decisions d10, 25 Oct 2026). One AI unit per live read, given back if
+ * the read fails.
  */
 async function suggestModels(caller: Awaited<ReturnType<typeof requireUser>>, imageBase64: string, mimeType: string) {
     let read: { glass: string; maker_mark: string | null; capacity_ml: number | null; confidence: number };
@@ -66,15 +72,18 @@ async function suggestModels(caller: Awaited<ReturnType<typeof requireUser>>, im
         read = { glass: "coupe", maker_mark: null, capacity_ml: 180, confidence: 0.5 };
     } else {
         await consumeAiQuota(caller, "identify-glassware");
-        read = JSON.parse(await describeImagesAsJson([{ base64: imageBase64, mimeType }], MODEL_PROMPT, MODEL_SCHEMA));
+        try {
+            read = JSON.parse(await describeImagesAsJson([{ base64: imageBase64, mimeType }], MODEL_PROMPT, MODEL_SCHEMA));
+        } catch (err) {
+            await refundAiQuota(caller, "identify-glassware");
+            throw err;
+        }
     }
     const glass = GLASS_TYPES.includes(read.glass) ? read.glass : null;
     const mark = typeof read.maker_mark === "string" ? read.maker_mark.replace(/[^\p{L}\p{N}&' .-]/gu, " ").trim().slice(0, 60) : "";
-    type Found = { id: string; name: string; capacity_ml: number | null; glass: string; variant: string | null; maker: unknown };
+    type Found = { id: string; capacity_ml: number | null };
     const search = async (q: string): Promise<Found[]> => {
-        const { data, error } = await caller.admin.rpc("search_glass_models", { p_query: q, p_glass: glass, p_limit: 100 }).select(
-            "id, name, capacity_ml, glass, variant, maker:profiles!glass_models_maker_profile_id_fkey(handle, display_name)",
-        );
+        const { data, error } = await caller.admin.rpc("search_glass_models", { p_query: q, p_glass: glass, p_limit: 100 }).select(GLASS_MODEL_SELECT);
         if (error) throw error;
         return (data ?? []) as unknown as Found[];
     };
