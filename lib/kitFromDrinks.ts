@@ -11,7 +11,8 @@ import { venueIceKinds, type IceKind } from './venueKit';
 
 export interface DrinkKit {
   glass: string | null;
-  ice: string | null;
+  /** Its ice layers and what it's shaken with (lib/kitCheck.ts CheckDrink). */
+  ice: readonly string[];
   methods: readonly string[];
 }
 
@@ -33,7 +34,7 @@ export interface FromDrinks {
 }
 
 /** The shape a glass name is drawn as; null for a name the drawings don't know ("Custom"). */
-function glassOf(name: string): SketchGlass | null {
+export function glassOf(name: string): SketchGlass | null {
   const inputs = draftSketchInputs({ name: '', lines: [], glass: name });
   return inputs.from.glass === 'data' ? inputs.glass : null;
 }
@@ -64,7 +65,7 @@ export function kitFromDrinks(drinks: readonly DrinkKit[], have: KitHave): FromD
 
   const kinds = new Set(venueIceKinds(have.ice));
   const ice: FromDrinks['ice'] = [];
-  for (const [name, n] of count(drinks.map((d) => d.ice))) {
+  for (const [name, n] of count(drinks.flatMap((d) => [...new Set(d.ice)]))) {
     const kind = iceKind(name);
     if (!kind || kind === 'none' || kinds.has(kind) || ice.some((i) => i.kind === kind)) continue;
     ice.push({ name, kind, drinks: n });
