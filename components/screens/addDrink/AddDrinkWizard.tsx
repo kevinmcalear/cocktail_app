@@ -255,7 +255,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         return (
           <>
             {firstRound ? <RoundStrip onSkip={onClose} /> : null}
-            <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} />{venueLines.cost}
+            <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} cost={venueLines.cost} />
           </>
         );
     }

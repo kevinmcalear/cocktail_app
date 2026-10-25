@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { byRegion, pickSuppliers, regionHeading, suggestSuppliers, suppliesLine, venueRegions, withoutSupplier, type VenueIngredient } from './suppliers';
+import { byRegion, pickSuppliers, regionHeading, suggestSuppliers, suppliesLine, venueParts, venueRegions, withoutSupplier, type VenueIngredient } from './suppliers';
 
 assert.equal(suppliesLine(['glassware', 'bottles']), 'Supplies bottles and glassware');
 assert.equal(suppliesLine(['equipment']), 'Supplies bar equipment');
@@ -91,3 +91,9 @@ assert.deepEqual(none.choices.map((c) => [c.id, c.sub]), [['A', 'Brings one of y
 assert.equal(none.suggested, null);
 
 console.log('suppliers: ok');
+
+// Who sees the buying parts while adding a drink (m01).
+assert.deepEqual(venueParts('bar', ['costs']), { canBuy: true, canCost: true });
+assert.deepEqual(venueParts('bar', ['prep']), { canBuy: true, canCost: false });
+assert.deepEqual(venueParts('bar', ['menus']), { canBuy: false, canCost: false });
+assert.deepEqual(venueParts(null, ['costs', 'prep']), { canBuy: false, canCost: false }, 'at home: nothing');

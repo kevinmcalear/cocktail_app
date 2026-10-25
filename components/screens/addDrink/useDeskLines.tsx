@@ -11,7 +11,7 @@ import { density } from '@/lib/drinkMath';
 import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { formatMoney, parseMoney } from '@/lib/money';
 import { bottleKindRow } from '@/lib/newBottle';
-import { pickSuppliers, regionHeading } from '@/lib/suppliers';
+import { pickSuppliers, regionHeading, venueParts } from '@/lib/suppliers';
 
 import { DeskCost, type DeskCostLine } from './DrinkDeskRail';
 import type { CatalogIngredient } from './IngredientSearch';
@@ -30,6 +30,8 @@ interface DeskLinesArgs {
   /** Costs: pack prices. */
   canCost: boolean;
   currency: string;
+  /** "Pommeau, adding" in the cost lines while its card is open (the desktop rail sits beside it). */
+  adding?: boolean;
 }
 
 /**
@@ -37,7 +39,7 @@ interface DeskLinesArgs {
  * chip that opens the pick under the line, board make-create-desktop step 7)
  * and what the pour costs; and the cost lines for the rail.
  */
-export function useDeskLines({ draft, set, barId, venueName, ingredients, coreIds, canBuy, canCost, currency }: DeskLinesArgs) {
+export function useDeskLines({ draft, set, barId, venueName, ingredients, coreIds, canBuy, canCost, currency, adding = true }: DeskLinesArgs) {
   // A batch costs what one drink's own pours do.
   const costed = [...perDrinkLines(draft.lines), ...draft.garnishes];
   const ids = costed.flatMap((l) => (l.id ? [l.id] : []));
@@ -53,7 +55,7 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
   };
   // The pick (or a new bottle's card) open under one line.
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const costLines: DeskCostLine[] = costed.map((l) => ({ key: l.key, name: l.bottle && l.key === openKey ? `${l.name}, adding` : l.name, minor: cost(l) }));
+  const costLines: DeskCostLine[] = costed.map((l) => ({ key: l.key, name: adding && l.bottle && l.key === openKey ? `${l.name}, adding` : l.name, minor: cost(l) }));
   const price = (l: WizardLine) => {
     const minor = cost(l);
     return minor != null ? formatMoney(minor, currency) : null;
@@ -132,11 +134,10 @@ export function useDeskLines({ draft, set, barId, venueName, ingredients, coreId
  * Null `barId` (at home, or the desktop page, which has its own) turns it off.
  */
 export function useVenueLines(args: Omit<DeskLinesArgs, 'canBuy' | 'canCost' | 'currency'>) {
-  const caps = useCapabilities(args.barId).data;
-  const canCost = !!args.barId && !!caps?.includes('costs');
-  const canBuy = canCost || (!!args.barId && !!caps?.includes('prep'));
+  const { canBuy, canCost } = venueParts(args.barId, useCapabilities(args.barId).data);
   const pricing = usePricingSettings(canCost ? args.barId : null).data ?? null;
-  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({ ...args, canBuy, canCost, currency: pricing?.currency ?? 'GBP' });
+  // On review the card isn't on screen, so nothing reads "adding".
+  const { costLines, lineDetail, lineBelow, onNewBottle } = useDeskLines({ ...args, canBuy, canCost, currency: pricing?.currency ?? 'GBP', adding: false });
   return {
     /** For IngredientsStep. */
     lines: { lineDetail, lineBelow, onNewBottle },
