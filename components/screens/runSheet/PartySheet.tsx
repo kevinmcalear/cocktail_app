@@ -35,8 +35,8 @@ export function PartySheet({ menuId, kind, party, venue, sortOrder, onClose }: {
         kind === 'brand'
           ? 'A bottle this brand makes goes to them on the sheet.'
           : venue
-            ? 'The bar you’re taking over for the night. Everything starts with them except the house preps for your drinks. Their drinks are credited to them.'
-            : 'The bar taking over for the night. Their house preps start with them, and their drinks are credited to them.'
+            ? 'The bar you’re taking over for the night. Everything starts with them except what’s made in-house for your drinks. Their drinks are credited to them.'
+            : 'The bar taking over for the night. What they make in-house starts with them, and their drinks are credited to them.'
       }
       save={{ label: 'Save', disabled: !name.trim() || save.isPending, onPress: () => save.mutate({ id: party?.id, kind, name, profileId, sortOrder, isVenue: venue }, done) }}
       footer={

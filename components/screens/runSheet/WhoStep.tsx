@@ -60,8 +60,8 @@ export function WhoStep({ menuId, sheet, looks, breakDown, onBreakDown, wide }: 
         ))}
       </View>
       <View style={styles.toggle}>
-        <Body style={{ flex: 1 }}>Break house preps into what they’re made from</Body>
-        <Switch value={breakDown} onValueChange={onBreakDown} label="Break house preps into what they’re made from" />
+        <Body style={{ flex: 1 }}>Break what’s made in-house into what it’s made from</Body>
+        <Switch value={breakDown} onValueChange={onBreakDown} label="Break what’s made in-house into what it’s made from" />
       </View>
       {!sheet.groups.length ? <Body tone="muted">Set some serves first: the list fills in from them.</Body> : null}
       {sheet.groups.map((g) => {

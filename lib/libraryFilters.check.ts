@@ -109,7 +109,7 @@ assert.equal(itemIdOf('0000-3'), '0000-3');
 {
   assert.deepEqual(filterGroups(true, false).map((g) => g.map((f) => f.label)), [
     ['All', 'Classics', 'On menu', 'Old drinks', 'R&D'],
-    ['Batched', 'Preps', 'Garnishes', 'Bottles'],
+    ['Batched', 'Made in-house', 'Garnishes', 'Bottles'],
     ['Cocktails', 'Beer', 'Wine'],
   ]);
   assert.deepEqual(filterGroups(false, true).map((g) => g.map((f) => f.label)), [['Cocktails', 'Ingredients', 'Beer', 'Wine', 'Needs a price']]);
@@ -143,7 +143,7 @@ assert.equal(methodWord(null), null);
 // A phone's chip row: four out front, the rest in the filter menu by section.
 {
   const split = splitFilters(filterGroups(true, true, true));
-  assert.deepEqual(split.front.map((f) => f.label), ['All', 'On menu', 'Classics', 'Preps']);
+  assert.deepEqual(split.front.map((f) => f.label), ['All', 'On menu', 'Classics', 'Made in-house']);
   assert.deepEqual(split.more.map((s) => [s.title, s.filters.map((f) => f.label)]), [
     ['Drinks', ['Old drinks', 'R&D', 'Batched']],
     ['Shelves', ['Garnishes', 'Bottles']],

@@ -10,13 +10,13 @@ export function barSubtitle(ready: number, preps: number): string {
   return parts.join(' · ');
 }
 
-/** The desktop header's line: "4 bottles · 6 in the fridge · 2 on the lab shelf · 2 house preps · 3 pieces of kit". */
+/** The desktop header's line: "4 bottles · 6 in the fridge · 2 on the lab shelf · 2 made in-house · 3 pieces of kit". */
 export function shelfCountsLine(c: { bottles: number; fridge: number; lab: number; preps: number; kit: number }): string {
   return [
     c.bottles ? plural(c.bottles, 'bottle') : null,
     c.fridge ? `${c.fridge} in the fridge` : null,
     c.lab ? `${c.lab} on the lab shelf` : null,
-    c.preps ? plural(c.preps, 'house prep') : null,
+    c.preps ? `${c.preps} made in-house` : null,
     c.kit ? plural(c.kit, 'piece of kit', 'pieces of kit') : null,
   ]
     .filter(Boolean)

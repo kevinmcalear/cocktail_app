@@ -44,7 +44,7 @@ export function MakeFirst({ preps, short, onMade, onAdd }: { preps: PrepToMake[]
   const ds = useDs();
   return (
     <View style={styles.list}>
-      <Caption tone="muted">Preps you can make from what’s on your bar, and the drinks each one opens up. Most drinks first.</Caption>
+      <Caption tone="muted">What you can make in-house from what’s on your bar, and the drinks each one opens up. Most drinks first.</Caption>
       {preps.map((p) => {
         const named = p.drinks.slice(0, NAMED).map((d) => d.name);
         const more = p.drinks.length - named.length;
@@ -64,7 +64,7 @@ export function MakeFirst({ preps, short, onMade, onAdd }: { preps: PrepToMake[]
             </Body>
             <View style={styles.actions}>
               <Button label="Recipe" variant="ink" onPress={() => router.push(itemHref('Ingredient', p.id) as never)} style={styles.flex} />
-              <Button label="I made it" variant="secondary" accessibilityHint="Puts it with your house preps" onPress={() => onMade(p.id)} style={styles.flex} />
+              <Button label="I made it" variant="secondary" accessibilityHint="Puts it with what you make in-house" onPress={() => onMade(p.id)} style={styles.flex} />
             </View>
           </Surface>
         );
