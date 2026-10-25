@@ -1,5 +1,5 @@
 // Close names for the main search (supabase/migrations/20261109200000_search_near.sql):
-// drinks and bars in the area, people, makers (20261113600000) and ingredients; only what the plain
+// drinks and bars in the area, people, makers (20261114300000) and ingredients; only what the plain
 // search misses; a saved spelling comes back known; nothing the caller can't
 // see, and nothing from a bar they hid. Local stack only: `npm run test:security`.
 import assert from 'node:assert/strict';
@@ -115,7 +115,7 @@ describe('search_near', () => {
     assert.equal(ingredient?.kind, 'ingredient');
   });
 
-  test('makers when asked (20261113600000)', async () => {
+  test('makers when asked (20261114300000)', async () => {
     const without = await rows(users.viewer.client, 'kimora glass');
     assert.equal(without.some((r) => r.id === ids.maker), false, 'makers only when asked');
     const maker = (await rows(users.viewer.client, 'kimora glass', { p_kinds: ['maker'] })).find((r) => r.id === ids.maker);
