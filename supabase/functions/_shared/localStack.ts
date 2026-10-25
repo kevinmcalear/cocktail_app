@@ -24,3 +24,9 @@ export const LOCAL_CALENDAR_SYNC_SECRET = "local-calendar-sync-secret";
 
 /** The pair-notes secret on a local stack. */
 export const LOCAL_PAIR_NOTES_SECRET = "local-pair-notes-secret";
+
+/** The App Review account on a local stack (review-sign-in; production sets REVIEW_EMAIL). */
+export const LOCAL_REVIEW_EMAIL = "app-review@example.test";
+
+/** The App Review account's fixed code on a local stack (production sets REVIEW_CODE). */
+export const LOCAL_REVIEW_CODE = "424242";

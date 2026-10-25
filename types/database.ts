@@ -6730,6 +6730,7 @@ export type Database = {
           score: number
         }[]
       }
+      give_back_review_code_try: { Args: { p_id: number }; Returns: undefined }
       ingredient_key: { Args: { p_name: string }; Returns: string }
       ingredient_used_in: {
         Args: { p_ingredient_id: string; p_limit?: number }
@@ -7413,6 +7414,7 @@ export type Database = {
         Args: { p_bar_id: string; p_email: string; p_sender: string }
         Returns: string
       }
+      take_review_code_try: { Args: never; Returns: number }
       top_ranked_classics: {
         Args: { p_limit?: number }
         Returns: {
