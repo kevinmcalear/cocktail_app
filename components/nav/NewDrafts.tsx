@@ -2,22 +2,25 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, PressableScale, useDs } from '@/components/ds';
 import { fontFamilies, space } from '@/constants/tokens';
+import { useAuth } from '@/ctx/AuthContext';
 import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { COUNTED_STEPS, hasContent, WIZARD_STEPS, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { recipesToFinish } from '@/lib/prepKinds';
 import { slotStart } from '@/lib/wizardSlots';
+import { useDraftSyncStore } from '@/store/useDraftSyncStore';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 /**
  * Drafts, at the top of New (make-anything-steps-1, step 1): one entry per
  * drink started here and not saved, newest first, with where it's going and
  * the step it was left at, and the recipes still to finish inside it under
- * it. A tap goes straight back to it.
- * ponytail: the drafts are kept on this device (store/useDrinkWizardStore);
- * keeping them in the account is PR 5 of the plan.
+ * it. A tap goes straight back to it. Signed in, they're kept in the
+ * account too (hooks/useDraftSync), so another phone or the web lists them.
  */
 export function NewDrafts({ barId, onOpen }: { barId: string | null; onOpen: (params: Record<string, string>) => void }) {
   const kept = useDrinkWizardStore((s) => s.kept);
+  const signedIn = !!useAuth().session;
+  const seen = useDraftSyncStore((s) => s.seen);
   const place = wizardPlace(barId);
   const drafts = Object.entries(kept)
     .filter(([slot, k]) => slotStart(slot).place === place && hasContent(k.draft))
@@ -31,6 +34,8 @@ export function NewDrafts({ barId, onOpen }: { barId: string | null; onOpen: (pa
       {drafts.map(([slot, k]) => (
         <DraftRow key={slot} slot={slot} draft={k.draft} step={k.step} barId={barId} onOpen={onOpen} />
       ))}
+      {/* Said only once each has reached the account. */}
+      {signedIn && drafts.every(([slot]) => seen.includes(slot)) ? <Caption tone="muted">Kept in your account, so your other phone and the web see them too.</Caption> : null}
       <Caption tone="muted" style={[styles.head, styles.start]}>
         START SOMETHING
       </Caption>

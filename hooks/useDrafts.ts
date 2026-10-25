@@ -15,6 +15,8 @@ export function useDrafts() {
             const { data, error } = await supabase
                 .from('drafts')
                 .select('*')
+                // The drink wizard's own drafts (hooks/useDraftSync) are listed at the top of New, not here.
+                .neq('entity_type', 'drink_wizard')
                 .order('updated_at', { ascending: false });
 
             if (error) throw error;

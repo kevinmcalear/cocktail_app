@@ -13,8 +13,8 @@ import { sectionSlots, useDrinkWizardStore, wizardPlace } from '@/store/useDrink
  * started to make a drink, it should be on the menu"): each one's name and
  * Keep going, which opens its kept draft where it was left. Saving it puts it
  * in the section like any drink made from the menu.
- * ponytail: the draft is kept on this device (store/useDrinkWizardStore), so
- * another device doesn't show it; a server-side draft would.
+ * Kept on the device and, signed in, in the account (hooks/useDraftSync), so
+ * another device shows it too.
  */
 export function UnfinishedDrinks({ barId, sectionKey }: { barId: string | null; sectionKey: string }) {
   const ds = useDs();

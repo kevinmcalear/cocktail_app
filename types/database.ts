@@ -869,6 +869,7 @@ export type Database = {
           draft_data: Json
           entity_type: string
           id: string
+          slot: string | null
           updated_at: string | null
           user_id: string
         }
@@ -878,6 +879,7 @@ export type Database = {
           draft_data: Json
           entity_type: string
           id?: string
+          slot?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -887,6 +889,7 @@ export type Database = {
           draft_data?: Json
           entity_type?: string
           id?: string
+          slot?: string | null
           updated_at?: string | null
           user_id?: string
         }

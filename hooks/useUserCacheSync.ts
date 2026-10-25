@@ -2,6 +2,7 @@ import { useIsRestoring } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { useAuth } from '@/ctx/AuthContext';
+import { useDraftSync } from '@/hooks/useDraftSync';
 import { cacheActionOnAuth, resetUserQueries } from '@/lib/authCache';
 import { clearUserData } from '@/lib/clearUserData';
 import { queryClient } from '@/lib/react-query';
@@ -23,6 +24,8 @@ import { queryClient } from '@/lib/react-query';
  * back in afterwards.
  */
 export function useUserCacheSync() {
+  // Drinks half made in the wizard, kept in the account for the same user (hooks/useDraftSync).
+  useDraftSync();
   const { session, user, loading } = useAuth();
   const userId = session?.user.id ?? null;
   const provisionalId = loading ? (user?.id ?? null) : null;

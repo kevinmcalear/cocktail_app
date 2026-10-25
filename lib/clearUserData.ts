@@ -8,6 +8,7 @@ import { asyncStoragePersister, queryClient } from '@/lib/react-query';
 import { useAppMode } from '@/store/useAppMode';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
 import { useBringIn } from '@/store/useBringIn';
+import { useDraftSyncStore } from '@/store/useDraftSyncStore';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useLastPlace } from '@/store/useLastPlace';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
@@ -31,7 +32,8 @@ export async function clearUserData(): Promise<void> {
   useRecentActivityStore.setState({ items: [] });
   useLastPlace.getState().clear();
   useAppMode.getState().forgetVenue();
-  useDrinkWizardStore.setState({ kept: {} });
+  useDrinkWizardStore.setState({ kept: {}, cleared: [] });
+  useDraftSyncStore.setState({ seen: [] });
   useBeerWineWizardStore.setState({ kept: {} });
   useVenueSetup.setState({ runs: {}, glasses: {} });
   useNoteDrafts.setState({ drafts: {} });
