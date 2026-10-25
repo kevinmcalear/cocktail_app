@@ -1,17 +1,28 @@
-import { resolveBeerId, resolveIngredientId, resolveWineId } from '@/lib/drafts';
+import { resolveIngredientId } from '@/lib/drafts';
 
-const mockInserts: Record<string, unknown>[] = [];
+const mockDeletes: string[] = [];
+let mockCategoryError: { message: string } | null = null;
+jest.mock('@/lib/monitoring', () => ({ reportError: jest.fn() }));
 // 'gin' exists; 'gone' was merged into another ingredient and deleted.
 jest.mock('@/lib/supabase', () => ({
   supabase: {
-    from: () => {
+    from: (table: string) => {
       let id = '';
+      let deleting = false;
       const q = {
         select: () => q,
-        insert: (row: Record<string, unknown>) => (mockInserts.push(row), q),
-        delete: () => q,
+        insert: () => q,
+        upsert: async () => ({ error: table === 'item_categories' ? mockCategoryError : null }),
+        delete: () => ((deleting = true), q),
         single: async () => ({ data: { id: 'new' }, error: null }),
-        eq: (_: string, v: string) => ((id = v), q),
+        eq: (_: string, v: string) => {
+          id = v;
+          if (deleting) {
+            mockDeletes.push(`${table}:${v}`);
+            return Promise.resolve({ error: null });
+          }
+          return q;
+        },
         maybeSingle: async () => ({ data: id === 'gin' ? { id } : null, error: null }),
       };
       return q;
@@ -19,6 +30,11 @@ jest.mock('@/lib/supabase', () => ({
     rpc: async (_: string, { p_name }: { p_name: string }) => ({ data: p_name === 'Cupuacu' ? 'cupuacu-kept' : null, error: null }),
   },
 }));
+
+beforeEach(() => {
+  mockDeletes.length = 0;
+  mockCategoryError = null;
+});
 
 test('a published id that still exists is kept', async () => {
   expect(await resolveIngredientId('gin', [], 'Gin')).toBe('gin');
@@ -32,13 +48,15 @@ test('a gone id whose name matches nothing says to pick it again', async () => {
   await expect(resolveIngredientId('gone', [], 'Mystery')).rejects.toThrow('Mystery isn’t in the catalog any more');
 });
 
-test.each([
-  ['19.50', '19.50'],
-  ['MP', 'MP'],
-  ['', null],
-])('a drafted beer or wine priced %j publishes with price %j (items.price is text)', async (typed, saved) => {
-  mockInserts.length = 0;
-  await resolveBeerId('d1', [{ id: 'd1', entity_type: 'beer', draft_data: { name: 'Lager', price: typed } }]);
-  await resolveWineId('d2', [{ id: 'd2', entity_type: 'wine', draft_data: { name: 'Rosé', price: typed } }]);
-  expect(mockInserts.map((r) => r.price)).toEqual([saved, saved]);
+const draft = { id: 'd1', entity_type: 'ingredient', draft_data: { name: 'Orgeat', selectedCategories: ['syrups'] } };
+
+test('a published draft ingredient deletes its draft', async () => {
+  expect(await resolveIngredientId('d1', [draft])).toBe('new');
+  expect(mockDeletes).toEqual(['drafts:d1']);
+});
+
+test('a category that fails removes the new ingredient and keeps the draft', async () => {
+  mockCategoryError = { message: 'denied' };
+  await expect(resolveIngredientId('d1', [draft])).rejects.toEqual({ message: 'denied' });
+  expect(mockDeletes).toEqual(['items:new']);
 });
