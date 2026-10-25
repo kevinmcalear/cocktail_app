@@ -29,7 +29,13 @@ function whenHydrated(run: () => void): () => void {
   };
 }
 
+/** When each slot was last sent: a read begun before that doesn't know about it yet. */
+const sentAt = new Map<string, number>();
+/** True while the account's drafts are put on the device: those changes aren't sent back. */
+let applying = false;
+
 async function push(userId: string, slot: string, k: KeptDraft) {
+  sentAt.set(slot, Date.now());
   const place = slot.split('|')[0];
   const { error } = await supabase.from('drafts').upsert(
     { user_id: userId, entity_type: KIND, slot, bar_id: place === 'home' ? null : place, draft_data: forAccount(k) as unknown as Json, updated_at: new Date(k.updatedAt).toISOString() },
@@ -39,14 +45,23 @@ async function push(userId: string, slot: string, k: KeptDraft) {
   useDraftSyncStore.setState((s) => ({ seen: s.seen.includes(slot) ? s.seen : [...s.seen, slot] }));
 }
 
-/** Drafts cleared here (saved, or started over) come out of the account too; ones that fail wait for the next change. */
+/**
+ * Drafts cleared here (saved, or started over) come out of the account too,
+ * never a newer one another device started in the same slot; ones that fail
+ * wait for the next change. A draft the account never had (cleared while
+ * signed out) has nothing to take out.
+ */
 async function forget(userId: string) {
-  const { cleared } = useDrinkWizardStore.getState();
-  if (!cleared.length) return;
-  const { error } = await supabase.from('drafts').delete().eq('user_id', userId).eq('entity_type', KIND).in('slot', cleared);
-  if (error) return;
-  useDrinkWizardStore.getState().forgot(cleared);
-  useDraftSyncStore.setState((s) => ({ seen: s.seen.filter((x) => !cleared.includes(x)) }));
+  const { cleared, forgot } = useDrinkWizardStore.getState();
+  const { seen } = useDraftSyncStore.getState();
+  const never = cleared.filter((c) => !seen.includes(c.place)).map((c) => c.place);
+  if (never.length) forgot(never);
+  for (const c of cleared.filter((x) => seen.includes(x.place))) {
+    const { error } = await supabase.from('drafts').delete().eq('user_id', userId).eq('entity_type', KIND).eq('slot', c.place).lte('updated_at', new Date(c.at).toISOString());
+    if (error) continue;
+    forgot([c.place]);
+    useDraftSyncStore.setState((s) => ({ seen: s.seen.filter((x) => x !== c.place) }));
+  }
 }
 
 /**
@@ -65,10 +80,13 @@ export function useDraftSync() {
     queryKey: ['wizard-drafts', userId],
     enabled: !!userId,
     staleTime: 0,
-    queryFn: async (): Promise<Record<string, KeptDraft>> => {
+    // Back to the front, read again: another device may have started or saved one.
+    refetchOnWindowFocus: true,
+    queryFn: async (): Promise<{ at: number; drafts: Record<string, KeptDraft> }> => {
+      const at = Date.now();
       const { data, error } = await supabase.from('drafts').select('slot, draft_data').eq('user_id', userId!).eq('entity_type', KIND);
       if (error) throw error;
-      return Object.fromEntries((data ?? []).flatMap((r) => (r.slot ? [[r.slot, r.draft_data as unknown as KeptDraft]] : [])));
+      return { at, drafts: Object.fromEntries((data ?? []).flatMap((r) => (r.slot ? [[r.slot, r.draft_data as unknown as KeptDraft]] : []))) };
     },
   });
 
@@ -78,11 +96,13 @@ export function useDraftSync() {
     if (!userId || !data) return;
     return whenHydrated(() => {
       const { kept, cleared } = useDrinkWizardStore.getState();
-      const merged = mergeDrafts(kept as Record<string, KeptDraft>, data, { seen: useDraftSyncStore.getState().seen, cleared });
+      const sentSince = [...sentAt].filter(([, t]) => t >= data.at).map(([slot]) => slot);
+      const merged = mergeDrafts(kept as Record<string, KeptDraft>, data.drafts, { seen: useDraftSyncStore.getState().seen, cleared, sentSince });
+      applying = true;
       useDrinkWizardStore.setState({ kept: merged.kept });
-      useDraftSyncStore.setState({ seen: merged.seen });
-      void forget(userId);
-      for (const slot of merged.push) void push(userId, slot, merged.kept[slot]).catch(() => {});
+      applying = false;
+      useDraftSyncStore.setState((s) => ({ seen: [...new Set([...merged.seen, ...sentSince.filter((x) => s.seen.includes(x))])] }));
+      void forget(userId).then(() => Promise.all(merged.push.map((slot) => push(userId, slot, merged.kept[slot]).catch(() => {}))));
     });
   }, [userId, data]);
 
@@ -92,14 +112,18 @@ export function useDraftSync() {
     const dirty = new Set<string>();
     let timer: ReturnType<typeof setTimeout> | null = null;
     const unsubscribe = useDrinkWizardStore.subscribe((s, prev) => {
+      if (applying) return;
       for (const [slot, k] of Object.entries(s.kept)) if (k !== prev.kept[slot]) dirty.add(slot);
       if (!dirty.size && s.cleared === prev.cleared) return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
-        const { kept } = useDrinkWizardStore.getState();
-        for (const slot of dirty) if (kept[slot] && hasContent(kept[slot].draft)) void push(userId, slot, kept[slot] as KeptDraft).catch(() => {});
+        const slots = [...dirty];
         dirty.clear();
-        void forget(userId);
+        // Cleared first: a slot started over and typed in again is taken out, then sent, in that order.
+        void forget(userId).then(() => {
+          const { kept } = useDrinkWizardStore.getState();
+          for (const slot of slots) if (kept[slot] && hasContent(kept[slot].draft)) void push(userId, slot, kept[slot] as KeptDraft).catch(() => {});
+        });
       }, SETTLE_MS);
     });
     return () => {

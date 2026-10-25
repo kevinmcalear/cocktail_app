@@ -7,6 +7,7 @@ import { useMenuSectionPlace } from '@/hooks/useDrinkDesk';
 import { COUNTED_STEPS, hasContent, WIZARD_STEPS, type WizardDraft, type WizardStep } from '@/lib/drinkWizard';
 import { recipesToFinish } from '@/lib/prepKinds';
 import { slotStart } from '@/lib/wizardSlots';
+import { useDraftSyncStore } from '@/store/useDraftSyncStore';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 /**
@@ -19,6 +20,7 @@ import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 export function NewDrafts({ barId, onOpen }: { barId: string | null; onOpen: (params: Record<string, string>) => void }) {
   const kept = useDrinkWizardStore((s) => s.kept);
   const signedIn = !!useAuth().session;
+  const seen = useDraftSyncStore((s) => s.seen);
   const place = wizardPlace(barId);
   const drafts = Object.entries(kept)
     .filter(([slot, k]) => slotStart(slot).place === place && hasContent(k.draft))
@@ -32,7 +34,8 @@ export function NewDrafts({ barId, onOpen }: { barId: string | null; onOpen: (pa
       {drafts.map(([slot, k]) => (
         <DraftRow key={slot} slot={slot} draft={k.draft} step={k.step} barId={barId} onOpen={onOpen} />
       ))}
-      {signedIn ? <Caption tone="muted">Kept in your account, so your other phone and the web see them too.</Caption> : null}
+      {/* Said only once each has reached the account. */}
+      {signedIn && drafts.every(([slot]) => seen.includes(slot)) ? <Caption tone="muted">Kept in your account, so your other phone and the web see them too.</Caption> : null}
     </View>
   );
 }
