@@ -21,6 +21,7 @@ import { capitalize } from '@/lib/stringUtils';
 import type { SearchItem } from '@/types/search';
 
 import { PublicResults } from './PublicResults';
+import { NearResults } from './NearResults';
 import { EverywhereRow, MissCard, PersonResultRow, ResultGroup, ResultRow } from './ResultRows';
 import { Completions, TopHit } from './SearchParts';
 
@@ -87,20 +88,31 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
     if (isLoading) return <Caption tone="muted">Searching…</Caption>;
     const where = mine.venueId ? mine.label : 'your drinks';
     const add = () => router.push(newDrinkHref(capitalize(q), mine.venueId) as never);
+    const title = `Nothing ${mine.venueId ? `at ${mine.label}` : 'in your drinks'} called “${q}”`;
     return (
       <View style={styles.results}>
-        <MissCard
-          title={`Nothing ${mine.venueId ? `at ${mine.label}` : 'in your drinks'} called “${q}”`}
-          detail="Here’s what everywhere else has."
-          action={mine.canAdd ? { label: `Add ${capitalize(q)} to ${where}`, onPress: add } : undefined}
+        {/* Everywhere's results follow; with nothing there either, this card becomes Did you mean. */}
+        <PublicResults
+          query={q}
+          area={null}
+          mine={mine}
+          show={show}
+          onCounts={onCounts}
+          head={{
+            title,
+            card: <MissCard title={title} detail="Here’s what everywhere else has." action={mine.canAdd ? { label: `Add ${capitalize(q)} to ${where}`, onPress: add } : undefined} />,
+            add: mine.canAdd ? { label: `add ${capitalize(q)}`, onPress: add } : undefined,
+            yours: items,
+            yoursCaption: mine.label,
+          }}
         />
-        <PublicResults query={q} area={null} mine={mine} show={show} onCounts={onCounts} />
         {commands}
       </View>
     );
   }
 
   const label = `Search everywhere for “${q}”`;
+  const shownIds = [...groups.drinks, ...groups.ingredients].map((i) => i.id);
   const everywhere = palette ? <EverywhereRow label={label} onPress={onEverywhere} /> : <Button label={label} variant="secondary" onPress={onEverywhere} />;
   const drinkRow = (i: SearchItem) => {
     const why = i.isDraft ? { caption: 'Draft' } : drinkFacts(i.id, i.category ?? 'Cocktail', facts);
@@ -155,6 +167,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
         />
       ) : null}
       {shows(show, 'people') ? <ResultGroup label="People" items={people} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} query={q} />} /> : null}
+      <NearResults query={q} found={found} shown={shownIds} yours={items} yoursCaption={mine.label} title="" miss={null} show={show} />
       {commands}
       {everywhere}
     </View>
