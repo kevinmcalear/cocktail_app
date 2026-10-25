@@ -46,6 +46,11 @@ classes:
       - "change-policy.yml"
       - "scripts/change-policy/**"
       - ".github/workflows/change-policy.yml"
+      # CI, deploy and build config. A workflow can read production secrets,
+      # and these decide what ships where.
+      - ".github/workflows/**"
+      - "eas.json"
+      - "vercel.json"
 
   - id: backend
     label: Edge functions

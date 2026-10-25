@@ -29,6 +29,9 @@ test('every listed blast-radius path routes to blast-radius', () => {
     'change-policy.yml',
     'scripts/change-policy/classify.mjs',
     '.github/workflows/change-policy.yml',
+    '.github/workflows/ci.yml',
+    'eas.json',
+    'vercel.json',
   ]) {
     assert.equal(classOf(f), 'blast-radius', f);
   }
@@ -43,7 +46,7 @@ test('everything else routes to app, including dotfiles', () => {
   assert.equal(classOf('app/(tabs)/index.tsx'), 'app');
   assert.equal(classOf('lib/rolesHelpers.ts'), 'app');
   assert.equal(classOf('docs/change_policy.md'), 'app');
-  assert.equal(classOf('.github/workflows/ci.yml'), 'app');
+  assert.equal(classOf('.github/ISSUE_TEMPLATE/bug.yml'), 'app');
   assert.equal(classOf('supabase/tests/security.test.mjs'), 'app');
 });
 
