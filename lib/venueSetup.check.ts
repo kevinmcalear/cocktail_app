@@ -1,7 +1,7 @@
 // Checks for lib/venueSetup.ts (venue setup, b03 and b19). Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { afterClaim, inviteRowError, namesLine, nextScreen, normalizeWebsite, onItsWay, previousScreen, resumeScreen, sendInvitesLabel, venueProgress } from './venueSetup';
+import { afterClaim, inviteRowError, namesLine, nextScreen, normalizeWebsite, onItsWay, previousScreen, resumeScreen, sendInvitesLabel, startScreen, venueProgress } from './venueSetup';
 
 // Intro, eight steps, summary. Proving it's yours is the last step.
 assert.equal(nextScreen('intro'), 'find');
@@ -23,6 +23,13 @@ assert.equal(resumeScreen([]), 'find');
 assert.equal(resumeScreen(['find', 'role']), 'place');
 assert.equal(resumeScreen(['find', 'role', 'place', 'look', 'visibility', 'bring', 'team']), 'claim');
 assert.equal(resumeScreen(['find', 'role', 'place', 'look', 'visibility', 'bring', 'team', 'claim']), 'done');
+// Where setup opens: a claim first, then a venue's run, then a run left before its venue was made.
+assert.equal(startScreen({ claim: 'p1' }, {}), 'claim');
+assert.equal(startScreen({ bar: 'b1', step: 'claim' }, {}), 'claim');
+assert.equal(startScreen({ bar: 'b1' }, { b1: { done: ['find', 'role'] } }), 'place');
+assert.equal(startScreen({}, { new: { done: ['find'] } }), 'role');
+assert.equal(startScreen({}, { new: { done: [] } }), 'intro');
+assert.equal(startScreen({}, {}), 'intro');
 
 // After the claim: the summary, unless it was opened from a bar page before any setup.
 assert.equal(afterClaim(['find', 'role', 'place'], false), 'done');

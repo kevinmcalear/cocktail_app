@@ -176,13 +176,6 @@ export function roleError(role: string): string | null {
   return null;
 }
 
-export function barNameError(name: string): string | null {
-  const trimmed = name.trim();
-  if (!trimmed) return 'Add the bar’s name.';
-  if (trimmed.length > 80) return 'Keep the name to 80 characters.';
-  return null;
-}
-
 /** A menu they worked on (1 to 120 characters, the profile_worked_menus check). */
 export function menuNameError(name: string): string | null {
   const trimmed = name.trim();

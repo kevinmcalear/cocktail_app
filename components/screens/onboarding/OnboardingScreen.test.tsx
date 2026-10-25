@@ -6,10 +6,10 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { forgetSetupProgress, OnboardingScreen } from './OnboardingScreen';
 
-const [mockReplace, mockSaveName, mockSaveWork, mockCreateBar, mockFinish] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
+const [mockReplace, mockSaveName, mockSaveWork, mockFinish] = [jest.fn(), jest.fn(), jest.fn(), jest.fn()];
 const [mockSaveMenu, mockSaveDrink, mockAccept, mockDecline, mockSaveTaste] = [jest.fn(), jest.fn(), jest.fn(), jest.fn(), jest.fn()];
 let mockMeta: { onboarded?: boolean } = { onboarded: false };
-let mockInvitedAt: string | undefined;
+let [mockInvitedAt, mockParams]: [string | undefined, { run?: string }] = [undefined, {}];
 type Invite = { id: string; bar_id: string; bar_name: string; bar_slug: string; bar_logo_url: null; bar_color: string | null; bar_display_face: null; bar_ground_tint: null; bar_profile_id: string | null; role_level: number; name: string | null; invited_by_name: string | null };
 let mockInvites: Invite[] = [];
 const caretakers: Invite = { id: 'i1', bar_id: 'venue', bar_name: 'Caretakers', bar_slug: 'caretakers', bar_logo_url: null, bar_color: '#D0643B', bar_display_face: null, bar_ground_tint: null, bar_profile_id: 'bp', role_level: 30, name: 'Sam Rivera', invited_by_name: 'Ada' };
@@ -17,7 +17,7 @@ let mockPersonClaim: { id: string; status: 'pending'; profile: { id: string; han
 let mockPeople: { id: string; handle: string; display_name: string; city: string | null; is_claimed: boolean }[] = [];
 let mockBars: { id: string; display_name: string; locality: string | null; postcode: null; city: string; country_code: string; is_closed?: boolean; is_claimed?: boolean }[] = [];
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => mockParams }));
 jest.mock('@/ctx/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'me', user_metadata: mockMeta, invited_at: mockInvitedAt }, loading: false }),
 }));
@@ -30,7 +30,6 @@ jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: null, is
 jest.mock('@/hooks/useOnboarding', () => ({
   useSaveOnboardingName: () => ({ mutate: mockSaveName, isPending: false, error: null }),
   useSaveWorkplace: () => ({ mutate: mockSaveWork, isPending: false, error: null }),
-  useCreateOnboardingBar: () => ({ mutate: mockCreateBar, isPending: false, error: null }),
   useSaveWorkedMenu: () => ({ mutate: mockSaveMenu, isPending: false, error: null }),
   useSaveCareerDrink: () => ({ mutate: mockSaveDrink, isPending: false, error: null }),
   useRemoveWorkedMenu: () => ({ mutate: jest.fn(), isPending: false, error: null }),
@@ -63,11 +62,11 @@ beforeEach(() => {
   mockMeta = { onboarded: false };
   mockInvitedAt = undefined;
   mockInvites = [];
-  for (const m of [mockReplace, mockAccept, mockDecline, mockSaveName, mockSaveWork, mockCreateBar, mockFinish, mockSaveMenu, mockSaveDrink, mockSaveTaste]) m.mockReset();
+  for (const m of [mockReplace, mockAccept, mockDecline, mockSaveName, mockSaveWork, mockFinish, mockSaveMenu, mockSaveDrink, mockSaveTaste]) m.mockReset();
   mockPeople = [];
   mockBars = [attaboy];
   forgetSetupProgress();
-  mockPersonClaim = null;
+  [mockPersonClaim, mockParams] = [null, {}];
   mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSuccess?.());
   mockSaveName.mockImplementation((_input, opts) => opts?.onSuccess?.('p1'));
   useSettingsStore.setState({ specUnit: 'ml', defaultUnit: 'ml' });
@@ -143,9 +142,7 @@ describe('OnboardingScreen', () => {
   });
 
   test('bringing something in finishes setup and lands on Bring in', async () => {
-    mockFinish.mockImplementation(() => {
-      mockMeta = { onboarded: true };
-    });
+    mockFinish.mockImplementation(() => (mockMeta = { onboarded: true }));
     await renderWithTamagui(<OnboardingScreen />);
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
@@ -219,17 +216,19 @@ describe('OnboardingScreen', () => {
     expect(mockSaveDrink).toHaveBeenCalledWith({ personId: 'p1', barId: 'closed', name: 'Gold Rush' }, expect.anything());
   });
 
-  test('adding a bar creates the venue', async () => {
-    mockCreateBar.mockImplementation((_name, opts) => opts?.onSuccess?.());
+  test('adding a bar ends setup and opens venue setup', async () => {
+    mockFinish.mockImplementation(() => (mockMeta = { onboarded: true }));
     await newCareer();
     await fireEvent.press(screen.getByRole('button', { name: 'Add your bar' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Add bar' }));
-    expect(screen.getByText('Add the bar’s name.')).toBeTruthy();
-    expect(mockCreateBar).not.toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith('/venue-setup');
+  });
 
-    await fireEvent.changeText(screen.getByLabelText('Bar name'), 'Little Rye');
-    await fireEvent.press(screen.getByRole('button', { name: 'Add bar' }));
-    expect(mockCreateBar).toHaveBeenCalledWith('Little Rye', expect.anything());
+  test('back from a bar page’s Claim (?run=, claimBar) before a name, the name comes first, then setup ends and the claim opens', async () => {
+    mockFinish.mockImplementation(() => (mockMeta = { onboarded: true }));
+    mockParams = { run: 'b1' };
+    await named();
+    expect(mockSaveName).toHaveBeenCalledWith({ name: 'Jo Juniper', handle: 'jo.juniper', profileId: null }, expect.anything());
+    expect(mockReplace).toHaveBeenCalledWith('/venue-setup?claim=b1');
   });
 
   test('an invitee accepts, names themselves (no password), picks units, and their job is saved', async () => {

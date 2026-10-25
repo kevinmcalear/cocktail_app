@@ -5,7 +5,7 @@ import type { ClaimState, VenueScreen } from '@/lib/venueSetup';
 export function setupCopy(screen: VenueScreen, bar: string, claim: ClaimState = 'none'): { title: string; intro: string } {
   switch (screen) {
     case 'intro':
-      return { title: `Bring your bar to ${BRAND.productName}`, intro: 'Set up your venue in about ten minutes. Stop at any step and pick it up later from Tonight.' };
+      return { title: `Bring your bar to ${BRAND.productName}`, intro: 'Set up your venue in about ten minutes. Stop at any step and pick it up later from the Setup banner.' };
     case 'find':
       return { title: 'Find your bar', intro: 'Most bars are already here. Claim yours and keep its awards, drinks and rankings.' };
     case 'claim':
@@ -30,8 +30,8 @@ export function setupCopy(screen: VenueScreen, bar: string, claim: ClaimState = 
         title: `${bar} is set up`,
         intro:
           claim === 'none'
-            ? 'Your team can use everything now. When you’re ready, prove it’s yours from Tonight’s banner or Venue settings.'
-            : 'Here’s what’s done and what’s still on its way. Tonight shows a small banner until it’s all in.',
+            ? 'Your team can use everything now. When you’re ready, prove it’s yours from the Setup banner or Venue settings.'
+            : 'Here’s what’s done and what’s still on its way. A small Setup banner stays at the top of the app until it’s all in.',
       };
   }
 }
