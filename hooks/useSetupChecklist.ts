@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { useBackBarStock } from '@/hooks/useBackBar';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useBarGlassware, useHeldGlasses } from '@/hooks/useBarGlassware';
+import { useBarKit } from '@/hooks/useBarKit';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useVenueMenus } from '@/hooks/useMenus';
+import { useVenueIce } from '@/hooks/useVenueIce';
 import { groupMenus } from '@/lib/menus';
-import { barSetUp, checklist, type Checklist, type ChecklistKey } from '@/lib/setupChecklist';
+import { barSetUp, checklist, kitNote, type Checklist, type ChecklistKey } from '@/lib/setupChecklist';
 import { heldNotOnPage } from '@/lib/whatNext';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
@@ -22,6 +24,10 @@ export function useSetupChecklist(barId: string) {
   const save = useVenueSetup((s) => s.save);
   const onPage = useBarGlassware(barId);
   const held = useHeldGlasses(barId);
+  const iceList = useVenueIce(barId);
+  const toolList = useBarKit(barId);
+  const ice = iceList.data?.length ?? 0;
+  const tools = toolList.data?.length ?? 0;
   const stock = useBackBarStock(barId);
   const menus = useVenueMenus(barId);
   const invites = useBarInvites(barId);
@@ -35,12 +41,12 @@ export function useSetupChecklist(barId: string) {
   const bottles = stock.data?.length ?? 0;
   const team = (invites.data?.length ?? 0) + Math.max(0, (members.data?.length ?? 1) - 1);
   const list: Checklist = checklist(
-    { bar: run ? barSetUp(run) : true, kit: glasses > 0, bottles: bottles > 0, menu: current.length > 0, drinks: !!withDrinks, team: team > 0 },
+    { bar: run ? barSetUp(run) : true, kit: glasses + ice + tools > 0, bottles: bottles > 0, menu: current.length > 0, drinks: !!withDrinks, team: team > 0 },
     // Venue setup's team step passed with nobody invited counts as skipped here.
     [...(run?.skipped ?? []), ...(run?.done.includes('team') ? ['team'] : [])]
   );
   const notes: Partial<Record<ChecklistKey, string>> = {
-    kit: glasses ? `${glasses} ${glasses === 1 ? 'glass' : 'glasses'} so far` : undefined,
+    kit: kitNote(glasses, ice, tools),
     bottles: bottles ? `${bottles} on your shelves` : undefined,
     menu: current[0]?.name,
     drinks: withDrinks ? `${withDrinks.itemIds.length} on ${withDrinks.name}` : undefined,
@@ -52,7 +58,7 @@ export function useSetupChecklist(barId: string) {
     notes,
     /** The menu First drinks opens: the one with drinks, else the newest. */
     menuId: (withDrinks ?? current[0])?.id ?? null,
-    loading: onPage.isLoading || stock.isLoading || menus.isLoading || invites.isLoading || members.isLoading,
+    loading: onPage.isLoading || iceList.isLoading || toolList.isLoading || stock.isLoading || menus.isLoading || invites.isLoading || members.isLoading,
     skip: (key: ChecklistKey) => save(barId, { skipped: [...new Set([...(run?.skipped ?? []), key])] }),
   };
 }

@@ -1,29 +1,22 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useDeferredValue, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Chip, Field } from '@/components/ds';
-import { FIRST_TYPES, MORE_TYPES } from '@/components/glass/GlassModelPicker';
-import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
+import { Body, Button, Caption, Surface, useDs } from '@/components/ds';
+import { GlassModelPicker, GlassThumb } from '@/components/glass/GlassModelPicker';
 import { GlassSheet } from '@/components/screens/kit/GlassSheet';
-import { space } from '@/constants/tokens';
+import { SectionHeading } from '@/components/screens/settings/SettingsParts';
+import { fontFamilies, space } from '@/constants/tokens';
 import { useBarGlassware, useDeleteBarGlass, useHeldGlasses, useSaveBarGlass } from '@/hooks/useBarGlassware';
-import { useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
+import type { GlassModel } from '@/hooks/useGlassModels';
+import { useIsWideWeb } from '@/hooks/useIsWideWeb';
+import { anyLine, kindOf, kindRow, type GlassKind } from '@/lib/glassKinds';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
-import { heldNotOnPage } from '@/lib/whatNext';
 import type { SketchGlass } from '@/lib/sketch/types';
+import { heldNotOnPage } from '@/lib/whatNext';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
-import { GlassShelfRows } from './GlassShelfRows';
-
-/** "coupe", "Nick & Nora", "rocks": a shape in a sentence. */
-const shapeWord = (g: SketchGlass) => (g === 'nick' ? GLASS_TYPE_LABEL.nick : GLASS_TYPE_LABEL[g].toLowerCase());
-
-/**
- * A catalog glass as a Glassware row (the main one is decided when it's
- * saved). Its maker, series and designer stay on the model (20261103230000).
- */
-const fromModel = (m: GlassModel) => ({ glass: m.glass, variant: m.variant, name: m.name, maker: null, maker_profile_id: null, designer: null, series: null, shape_note: null, model_id: m.id });
+import { GlassKindGrid } from './GlassKindGrid';
 
 /** Skip and the main button side by side, as the board pins them. */
 export function StepFooter({ skip, onSkip, label, onPress, disabled }: { skip: string; onSkip: () => void; label: string; onPress: () => void; disabled?: boolean }) {
@@ -35,16 +28,34 @@ export function StepFooter({ skip, onSkip, label, onPress, disabled }: { skip: s
   );
 }
 
+/** A glass on the list: on the venue's page (`id`), or held on the device until the page is checked. */
+interface Listed {
+  key: string;
+  id: string | null;
+  glass: SketchGlass;
+  variant: string | null;
+  name: string | null;
+  model_id?: string | null;
+  /** "Urban Bar Retro Coupette 15cl": the real glass, when there is one. */
+  real: string | null;
+  is_default: boolean;
+}
+
+/** What the venue calls it: its own name ("Double rocks"), else its kind. */
+const titleOf = (l: Listed) => l.name ?? kindOf(l)?.label ?? GLASS_TYPE_LABEL[l.glass];
+/** "coupe", "Nick & Nora": the kind in a sentence. */
+const kindWord = (l: Listed) => (l.glass === 'nick' && !l.name ? GLASS_TYPE_LABEL.nick : titleOf(l).toLowerCase());
+
 /**
- * Step 1, your glasses: search the makers' catalogs by maker, range or name,
- * or browse a shape ("Every coupe", by maker). A + puts a glass on the
- * shelf the way Venue settings' Glassware saves one (the first of its type
- * is the main one); a check takes it off. Glassware hangs off the venue's
- * page, so before it's checked (no `pageId`) picks are held on the device
- * and go onto the page once it is (useFlushHeldGlasses).
+ * Kit › Glassware in setup (owner-setup step 6, call 9): kinds first. Tap
+ * Coupe and "any coupe" is on the list at once, drawn, with no model and no
+ * count; the real glass is optional and comes after (Add the model). Glassware
+ * hangs off the venue's page, so before it's checked (no `pageId`) glasses are
+ * held on the device and go onto the page once it is (useFlushHeldGlasses).
  */
-export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip }: { barId: string; pageId: string | null; name: string; step: string; onBack: () => void; onNext: () => void; onSkip: () => void }) {
-  const chrome = useSetupChrome();
+export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: string | null; name: string }) {
+  const ds = useDs();
+  const wide = useIsWideWeb();
   const client = useQueryClient();
   const glasses = useBarGlassware(barId).data ?? [];
   const held = useHeldGlasses(barId);
@@ -52,155 +63,176 @@ export function GlassesStep({ barId, pageId, name, step, onBack, onNext, onSkip 
   const dropGlass = useVenueSetup((s) => s.dropGlass);
   const save = useSaveBarGlass(barId, pageId);
   const remove = useDeleteBarGlass(barId);
-  const [term, setTerm] = useState('');
-  const search = useDeferredValue(term).trim();
-  const [shape, setShape] = useState<SketchGlass | null>(null);
-  const [describing, setDescribing] = useState(false);
-  const [more, setMore] = useState(false);
-  const [maker, setMaker] = useState<string | null>(null);
-  // Taps not saved yet: a + shows its check straight away.
+  // Taps not saved yet, by kind: a tile shows its tick straight away.
   const [pending, setPending] = useState<Record<string, boolean>>({});
+  // Kinds tapped on this visit: "Just added".
+  const [added, setAdded] = useState<string[]>([]);
   const [failed, setFailed] = useState(false);
-  const found = useGlassModelSearch(search, null, { enabled: !shape && !describing });
-  const every = useGlassModelSearch('', shape, { enabled: !!shape, limit: 100 });
+  const [describing, setDescribing] = useState(false);
+  // The glass whose model is being picked; on a wide screen the newest kind on its own, until Not now.
+  const [modelFor, setModelFor] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
 
-  const onShelf = (m: GlassModel) => pending[m.id] ?? (glasses.some((g) => g.model_id === m.id) || held.some((g) => g.model_id === m.id));
-  const toggle = async (m: GlassModel) => {
-    if (m.id in pending) return;
-    const on = onShelf(m);
-    const kept = held.find((g) => g.model_id === m.id);
-    if (on && kept) return dropGlass(barId, kept.key);
+  const listed: Listed[] = [
+    ...glasses.map((g) => ({ key: g.id, id: g.id, glass: g.glass, variant: g.variant, name: g.name && g.name !== g.model?.name ? g.name : null, model_id: g.model_id, real: g.model ? [g.model.maker?.display_name, g.model.name].filter(Boolean).join(' ') : null, is_default: g.is_default })),
+    // A held catalog glass keeps its maker and name to show meanwhile.
+    ...heldNotOnPage(held, glasses).map((h) => ({ ...h, id: null, name: h.model_id ? null : h.name, real: h.model_id ? [h.maker, h.name].filter(Boolean).join(' ') : null })),
+  ];
+  const mine = (k: GlassKind) => listed.filter((l) => !l.model_id && kindOf(l)?.key === k.key);
+  const on = (k: GlassKind) => pending[k.key] ?? listed.some((l) => kindOf(l)?.key === k.key);
+
+  const toggle = async (k: GlassKind) => {
+    if (k.key in pending) return;
+    const own = mine(k);
+    // On the list only as a real glass: that stays (Kit › Glassware takes it off).
+    if (on(k) && !own.length) return;
     if (!pageId) {
-      // Held with its maker's name, to show it until it's saved (the save leaves it on the model).
-      if (!on) holdGlass(barId, { key: m.id, ...fromModel(m), maker: m.maker?.display_name ?? null, is_default: false });
+      if (own.length) for (const l of own) dropGlass(barId, l.key);
+      else {
+        holdGlass(barId, { key: `kind-${k.key}`, ...kindRow(k, listed) });
+        setAdded((a) => [...a, k.key]);
+        setDismissed(false);
+      }
       return;
     }
-    setPending((p) => ({ ...p, [m.id]: !on }));
+    setPending((p) => ({ ...p, [k.key]: !own.length }));
     setFailed(false);
     try {
-      const mine = glasses.find((g) => g.model_id === m.id);
-      if (on && mine) await remove.mutateAsync(mine.id);
-      else if (!on) {
-        const main = !glasses.some((g) => g.glass === m.glass && g.is_default);
-        await save.mutateAsync({ ...fromModel(m), is_default: main });
+      if (own.length) for (const l of own) await remove.mutateAsync(l.id!);
+      else {
+        await save.mutateAsync(kindRow(k, glasses));
+        setAdded((a) => [...a, k.key]);
+        // A new kind brings the wide screen's model card back for it.
+        setDismissed(false);
       }
       await client.refetchQueries({ queryKey: ['bar-glassware', barId] });
     } catch {
       setFailed(true);
     } finally {
-      setPending(({ [m.id]: _done, ...rest }) => rest);
+      setPending(({ [k.key]: _done, ...rest }) => rest);
     }
   };
 
-  const describe = () => setDescribing(true);
+  // The real glass for one on its own: the row becomes that glass, keeping whether it's the main one.
+  const pick = (l: Listed, m: GlassModel) => {
+    const is_default = m.glass === l.glass ? l.is_default : !listed.some((o) => o.key !== l.key && o.glass === m.glass && o.is_default);
+    const row = { glass: m.glass, variant: m.variant, name: null, maker: null, maker_profile_id: null, designer: null, series: null, shape_note: null, model_id: m.id, is_default };
+    setFailed(false);
+    if (l.id) save.mutate({ id: l.id, ...row }, { onError: () => setFailed(true) });
+    else {
+      // Held under the model's id: the kind's key is free for that kind again.
+      dropGlass(barId, l.key);
+      holdGlass(barId, { key: m.id, ...row, name: m.name, maker: m.maker?.display_name ?? null });
+    }
+    setModelFor(null);
+    setDismissed(true);
+  };
 
-  const count = glasses.length + heldNotOnPage(held, glasses).length;
-  // Described by hand and waiting for the page: listed here so one can come off.
-  const own = held.filter((g) => !g.model_id);
-  const page = (title: string, back: () => void, footer: ReactNode, body: ReactNode) => (
-    <SetupChromeProvider value={{ ...chrome, title, intro: undefined, mark: undefined, eyebrow: null, progress: null, topLabel: step, noBack: false, onBack: back }}>
-      <SetupPage footer={footer}>
-        {body}
-        <GlassSheet
-          barId={barId}
-          pageId={pageId}
-          visible={describing}
-          describe
-          venueName={name}
-          onClose={() => setDescribing(false)}
-          // Before the page is checked, held on the device like a catalog pick.
-          onSave={pageId ? undefined : (row) => holdGlass(barId, { ...row, key: `own-${Date.now()}` })}
-        />
-        {pageId ? null : <Caption tone="muted">{`Kept with your setup. They go on ${name}’s page once we’ve checked it’s yours.`}</Caption>}
-        {failed ? (
-          <Caption tone="accent" role="alert">
-            Couldn’t change your shelf. Check your connection and try again.
-          </Caption>
-        ) : null}
-      </SetupPage>
-    </SetupChromeProvider>
-  );
+  const newest = [...listed].reverse().find((l) => !l.model_id);
+  const target = listed.find((l) => !l.model_id && l.key === (modelFor ?? (wide && !dismissed ? newest?.key : null)));
 
-  if (shape) {
-    const models = every.data ?? [];
-    const makers = [...new Set(models.map((m) => m.maker?.display_name).filter((n): n is string => !!n))];
-    const shown = maker ? models.filter((m) => m.maker?.display_name === maker) : models;
-    return page(
-      `Every ${shapeWord(shape)}`,
-      () => setShape(null),
-      <StepFooter skip="Not listed? Name your own" onSkip={describe} label="Done" onPress={() => setShape(null)} />,
-      <>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <View role="radiogroup" aria-label="Maker" style={styles.chips}>
-            <Chip label="All makers" selected={!maker} onPress={() => setMaker(null)} />
-            {makers.map((n) => (
-              <Chip key={n} label={n} selected={maker === n} onPress={() => setMaker(n)} />
-            ))}
-          </View>
-        </ScrollView>
-        {every.isLoading ? <Caption tone="muted">Loading…</Caption> : null}
-        {every.error ? <Body tone="muted">Couldn’t load the glasses. Check your connection and try again.</Body> : null}
-        {!every.isLoading && !every.error && !models.length ? <Body tone="muted">{`No maker lists a ${shapeWord(shape)} yet.`}</Body> : null}
-        <GlassShelfRows models={shown} by="maker" onShelf={onShelf} onToggle={(m) => void toggle(m)} />
-      </>
-    );
-  }
-
-  const results = found.data ?? [];
-  const looking = search.length >= 2;
-  return page(
-    'Which glasses do you pour into?',
-    onBack,
-    <StepFooter skip="Skip" onSkip={onSkip} label={count ? `${count} on your shelf · Next` : 'Next'} onPress={onNext} />,
-    <>
-      <Field label="Search glasses by maker, range or name" icon="magnifyingglass" value={term} onChangeText={setTerm} placeholder="Maker, range or name" autoCorrect={false} maxLength={80} />
-      <View style={styles.stack}>
-        <Caption tone="muted">Or browse by shape</Caption>
-        <View style={styles.wrap}>
-          {(more ? [...FIRST_TYPES, ...MORE_TYPES] : FIRST_TYPES.slice(0, 5)).map((g) => (
-            <Button
-              key={g}
-              label={GLASS_TYPE_LABEL[g]}
-              variant="secondary"
-              size="sm"
-              accessibilityLabel={`Every ${shapeWord(g)}`}
-              onPress={() => {
-                setMaker(null);
-                setShape(g);
-              }}
-            />
-          ))}
-          {more ? null : <Button label="More" variant="secondary" size="sm" accessibilityLabel="More shapes" onPress={() => setMore(true)} />}
-        </View>
-      </View>
-      {own.length ? (
-        <View role="group" aria-label="Described by you" style={styles.wrap}>
-          {own.map((g) => {
-            const label = g.name ?? GLASS_TYPE_LABEL[g.glass];
-            return <Chip key={g.key} multi selected label={label} accessibilityLabel={`${label} is on your shelf. Remove`} onPress={() => dropGlass(barId, g.key)} />;
+  const list = listed.length ? (
+    <View style={styles.stack}>
+      <SectionHeading>{`Added · ${listed.length}`}</SectionHeading>
+      <Surface style={styles.card}>
+        <View role="list">
+          {listed.map((l, i) => {
+            const line = l.real ?? anyLine(l);
+            const just = !l.model_id && added.includes(kindOf(l)?.key ?? '');
+            return (
+              <View key={l.key} role="listitem" style={[styles.row, i ? { borderTopColor: ds.c.line, borderTopWidth: StyleSheet.hairlineWidth } : null]}>
+                <GlassThumb glass={l.glass} variant={l.variant} size={52} />
+                <View style={styles.flex}>
+                  <Body numberOfLines={1}>{titleOf(l)}</Body>
+                  <Caption tone="muted" numberOfLines={2}>
+                    {just ? `Just added · ${line.charAt(0).toLowerCase()}${line.slice(1)}` : line}
+                  </Caption>
+                </View>
+                {l.model_id ? null : <Button label="Add the model" variant="ghost" size="sm" accessibilityLabel={`Add the model for ${titleOf(l)}`} onPress={() => setModelFor(l.key)} />}
+              </View>
+            );
           })}
         </View>
-      ) : null}
-      {looking && results.length ? <GlassShelfRows models={results} by="range" onShelf={onShelf} onToggle={(m) => void toggle(m)} /> : null}
-      {looking && !results.length && !found.isFetching ? (
-        found.error ? (
-          <Body tone="muted">Couldn’t search the glasses. Check your connection and try again.</Body>
-        ) : (
-          <View style={styles.stack}>
-            <Body tone="muted">{`No ${search} glasses in the catalogue yet. Name yours and it’s yours straight away; we add the range when we can.`}</Body>
-            <Button label="Name your own" variant="secondary" onPress={describe} style={styles.start} />
+      </Surface>
+    </View>
+  ) : null;
+
+  const model = target ? (
+    <Surface style={styles.model}>
+      <Body style={styles.strong}>{`Which ${kindWord(target)} exactly? Optional`}</Body>
+      <GlassModelPicker
+        key={target.key}
+        // Search first, as drawn; glasses of its kind come first in what it finds.
+        preferGlass={target.glass}
+        venueModelIds={listed.flatMap((l) => (l.model_id ? [l.model_id] : []))}
+        venueName={name}
+        onPick={(m) => pick(target, m)}
+      />
+      <Button
+        label="Not now"
+        variant="ghost"
+        onPress={() => {
+          setModelFor(null);
+          setDismissed(true);
+        }}
+        style={styles.start}
+      />
+    </Surface>
+  ) : null;
+
+  const kinds = (
+    <View style={styles.stack}>
+      <SectionHeading>What do you pour into? Tap all that apply</SectionHeading>
+      <GlassKindGrid on={on} fixed={(k) => on(k) && !mine(k).length} onToggle={(k) => void toggle(k)} onOther={() => setDescribing(true)} />
+    </View>
+  );
+
+  return (
+    <>
+      {wide ? (
+        <View style={styles.columns}>
+          <View style={styles.left}>
+            {list}
+            {model}
           </View>
-        )
+          <View style={styles.flex}>{kinds}</View>
+        </View>
+      ) : (
+        <>
+          {list}
+          {model}
+          {kinds}
+        </>
+      )}
+      {pageId ? null : <Caption tone="muted">{`Kept with your setup. They go on ${name}’s page once we’ve checked it’s yours.`}</Caption>}
+      {failed ? (
+        <Caption tone="accent" role="alert">
+          Couldn’t change your glasses. Check your connection and try again.
+        </Caption>
       ) : null}
+      <GlassSheet
+        barId={barId}
+        pageId={pageId}
+        visible={describing}
+        describe
+        venueName={name}
+        onClose={() => setDescribing(false)}
+        // Before the page is checked, held on the device like the rest.
+        onSave={pageId ? undefined : (row) => holdGlass(barId, { ...row, key: `own-${Date.now()}` })}
+      />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   footer: { flexDirection: 'row', gap: space.sm },
-  flex: { flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
   stack: { gap: space.sm },
-  chips: { flexDirection: 'row', gap: space.xs },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  card: { paddingVertical: space.xs },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 68, paddingVertical: space.sm, paddingHorizontal: space.xs },
+  model: { gap: space.md, padding: space.lg },
+  strong: { fontFamily: fontFamilies.bodyMedium },
   start: { alignSelf: 'flex-start' },
+  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.xl },
+  left: { flex: 1, minWidth: 0, maxWidth: 360, gap: space.lg },
 });

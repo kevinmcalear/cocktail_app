@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { BackbarTheme, Body, useDs, useGutter } from '@/components/ds';
@@ -21,12 +21,16 @@ type PageProps = {
   wide?: boolean;
 };
 
+/** Inside another page (setup's Kit tabs): just the content, under that page's own title. */
+export const SubPageInline = createContext(false);
+
 /**
  * A page under a venue's settings (Ice, Tools, Suppliers): its title, the
  * "Venue settings" crumb, an intro and the content. Features sits beside
  * Venue settings in the menus, so it has no crumb (`crumb={false}`).
  */
 export function VenueSubPage(props: PageProps) {
+  if (useContext(SubPageInline)) return props.children;
   return (
     <BackbarTheme>
       <Page {...props} crumb={props.crumb ?? true} />

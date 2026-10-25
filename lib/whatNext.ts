@@ -31,27 +31,6 @@ export function haveClassics(classics: readonly { id: string; name: string }[], 
   return new Set(classics.filter((c) => riffs.has(c.id) || names.has(fold(c.name))).map((c) => c.id));
 }
 
-export interface GlassGroup<T> {
-  /** "Cocktail Kingdom · Leopold", or "Libbey" for a shape's list. */
-  title: string;
-  models: T[];
-}
-
-/**
- * Glasses in runs of the same maker (and range, for a search), in the order
- * they came: "Cocktail Kingdom · Leopold · 4" over its four.
- */
-export function groupGlasses<T extends { series: string | null; maker: { display_name: string } | null }>(models: readonly T[], by: 'range' | 'maker'): GlassGroup<T>[] {
-  const groups: GlassGroup<T>[] = [];
-  for (const m of models) {
-    const title = [m.maker?.display_name ?? 'Other makers', by === 'range' ? m.series : null].filter(Boolean).join(' · ');
-    const last = groups[groups.length - 1];
-    if (last?.title === title) last.models.push(m);
-    else groups.push({ title, models: [m] });
-  }
-  return groups;
-}
-
 /**
  * Glasses held on the device before the venue's page was checked, as they
  * go onto the page: each catalog glass once (one already there is `skip`),
