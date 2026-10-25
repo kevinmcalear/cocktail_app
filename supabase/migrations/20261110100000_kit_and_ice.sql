@@ -290,7 +290,9 @@ BEGIN
     IF auth.uid() IS NULL OR NOT EXISTS (SELECT 1 FROM public.item_ice x WHERE x.item_id = p_id) OR NOT private.can_edit_venue_ice(p_id) THEN
         RAISE EXCEPTION 'Changing a venue''s ice needs Prep there.' USING ERRCODE = 'insufficient_privilege';
     END IF;
-    SELECT d.name INTO v_used FROM public.items d
+    -- Named only when it's the venue's own drink or ice; anything else the caller may not see.
+    SELECT CASE WHEN d.bar_id IS NOT DISTINCT FROM (SELECT x.bar_id FROM public.item_ice x WHERE x.item_id = p_id) THEN d.name ELSE 'A drink elsewhere' END
+    INTO v_used FROM public.items d
     WHERE d.id <> p_id
       AND (d.ice_id = p_id OR d.method_ice_id = p_id OR d.ice_build @> jsonb_build_array(jsonb_build_object('ice', p_id::text))
            OR EXISTS (SELECT 1 FROM public.recipes r WHERE r.recipe_item_id = d.id AND r.ingredient_item_id = p_id))

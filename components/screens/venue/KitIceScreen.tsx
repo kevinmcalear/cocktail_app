@@ -43,7 +43,7 @@ export function KitIceScreen({ barId }: { barId: string }) {
           <Caption tone="muted">{ices.length ? 'Add another kind' : 'Add the ice you pour'}</Caption>
           <View style={styles.chips}>
             {missing.map((k) => (
-              <Chip key={k} label={ICE_LABEL[k]} selected={false} multi accessibilityLabel={`Add ${ICE_LABEL[k]}`} onPress={() => save.mutate({ name: ICE_LABEL[k], shape: k })} />
+              <Chip key={k} label={ICE_LABEL[k]} selected={false} multi disabled={save.isPending} accessibilityLabel={`Add ${ICE_LABEL[k]}`} onPress={() => save.mutate({ name: ICE_LABEL[k], shape: k })} />
             ))}
           </View>
           {save.error && !open ? <Caption tone="accent">{FAILED}</Caption> : null}
@@ -95,19 +95,25 @@ function IceSheet({ barId, row, onClose }: { barId: string; row: VenueIce | null
   );
 }
 
-type Source = 'here' | 'none' | string;
+type Source = 'here' | 'machine' | 'none' | string;
 
 function IceForm({ barId, row, onDone }: { barId: string; row: VenueIce; onDone: () => void }) {
   const suppliers = useVenueSuppliers(barId).data ?? [];
   const save = useSaveVenueIce(barId);
   const remove = useRemoveVenueIce(barId);
   const [note, setNote] = useState(row.note ?? '');
-  const [source, setSource] = useState<Source>(row.source === 'made' ? 'here' : (row.supplier_id ?? 'none'));
+  const [source, setSource] = useState<Source>(row.source === 'made' ? 'here' : row.source === 'machine' ? 'machine' : (row.supplier_id ?? 'none'));
   // A spear's length, so the drink wizard can tell when it's shorter than the glass.
   const [length, setLength] = useState(row.length_mm ? String(row.length_mm) : '');
   const mm = Number(length.trim());
   const lengthOk = !length.trim() || (Number.isInteger(mm) && mm >= 20 && mm <= 400);
-  const options = [{ id: 'here', label: 'Made here' }, ...suppliers.map((s) => ({ id: s.id, label: s.name })), { id: 'none', label: 'Not said' }];
+  const options = [
+    { id: 'here', label: 'Made here' },
+    // Today's sheet doesn't add a machine; one already said stays (kit and ice PR 2 asks for it).
+    ...(row.source === 'machine' ? [{ id: 'machine', label: row.machine ? `Our machine · ${row.machine}` : 'Our machine' }] : []),
+    ...suppliers.map((s) => ({ id: s.id, label: s.name })),
+    { id: 'none', label: 'Not said' },
+  ];
   const done = { onSuccess: onDone };
   return (
     <SheetScrollView contentContainerStyle={styles.sheet}>
@@ -138,9 +144,9 @@ function IceForm({ barId, row, onDone }: { barId: string; row: VenueIce; onDone:
                 // ponytail: today's sheet changes the note, the source and a spear's length; the rest is kept as it is until PR 2's Add sheet.
                 ...row,
                 note: note.trim() || null,
-                source: source === 'here' ? 'made' : source === 'none' ? null : 'bought',
-                supplier_id: source === 'here' || source === 'none' ? null : source,
-                machine: null,
+                source: source === 'here' ? 'made' : source === 'machine' ? 'machine' : source === 'none' ? null : 'bought',
+                supplier_id: source === 'here' || source === 'machine' || source === 'none' ? null : source,
+                machine: source === 'machine' ? row.machine : null,
                 ...(row.shape === 'spear' ? { length_mm: length.trim() ? mm : null } : {}),
               },
               done,
