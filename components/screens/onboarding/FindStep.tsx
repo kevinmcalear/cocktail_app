@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, Field, useDs } from '@/components/ds';
@@ -8,7 +8,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
 import { useMyPersonClaim, usePublicPeople, useWaiting } from '@/hooks/useProfiles';
 import { usePublicBars } from '@/hooks/useRankings';
-import { takeClaimReturn } from '@/lib/claimReturn';
+import { useClaimReturn } from '@/lib/claimReturn';
 import { closedLabel } from '@/lib/discoverDrinks';
 import { waitingLine } from '@/lib/findYourself';
 
@@ -41,18 +41,15 @@ export function FindStep({
   const ds = useDs();
   const router = useRouter();
   const [search, setSearch] = useState(name);
-  const { data: claim } = useMyPersonClaim();
+  const { data: claim, isSuccess: checked } = useMyPersonClaim();
+  // Not while a claim they sent waits: Setup claims one page.
+  useClaimReturn(checked && !claim);
   const { data: bars = [] } = usePublicBars(search);
   const { data: people = [] } = usePublicPeople(search);
   const { data: waiting } = useWaiting(
     bars.map((b) => b.id),
     people.map((p) => p.id)
   );
-  useEffect(() => {
-    void takeClaimReturn().then((path) => {
-      if (path) router.push(path as Href);
-    });
-  }, [router]);
   const chevron = <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />;
 
   // Back from "This is me" on a page they opened from here (find-yourself step 5).

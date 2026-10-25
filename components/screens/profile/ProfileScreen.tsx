@@ -52,7 +52,7 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
   // Opened from a search: the way back carries it ("martini", disc-search-bar).
   const { q, claim } = useLocalSearchParams<{ q?: string; claim?: string }>();
   // "Claim it on your phone" opened signed out: the claim opens again once they've signed in.
-  const claimAfterSignIn = profile && gated && claim === '1' && isUnclaimed(profile) ? profile.handle : null;
+  const claimAfterSignIn = profile && gated && claim === '1' && isUnclaimed(profile) ? profile.handle || profile.id : null;
   useEffect(() => {
     if (claimAfterSignIn) void saveClaimReturn(claimAfterSignIn);
   }, [claimAfterSignIn]);
@@ -86,7 +86,7 @@ function ProfilePage({ profileRef, checking }: { profileRef: string | string[] |
   );
 
   let body;
-  if (profile && claimAfterSignIn) body = <SignInCard title={`Claim ${profile.display_name}`} text="Sign in with your own email. The claim opens here once you have." />;
+  if (profile && claimAfterSignIn) body = <SignInCard title={`Claim ${profile.display_name}`} text="Sign in with your own email. The claim opens here once you have." replace />;
   else if (profile && gated) body = <SignInCard text={`Sign in to see ${profile.display_name}’s profile: the drinks they’ve made, where they’ve worked and what they’re drinking.`} />;
   else if (profile) {
     const columns = breakpoint === 'phone' ? 2 : breakpoint === 'tablet' ? 3 : 4;

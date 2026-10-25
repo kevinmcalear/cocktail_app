@@ -99,14 +99,14 @@ export function PersonClaimSheet({ profile, bar, stats, visible, onClose }: { pr
           ) : (
             <View style={styles.stacked}>
               <Button label={claim.isPending ? 'Sending…' : 'Send claim'} size="lg" disabled={claim.isPending} onPress={send} />
-              <Button label="Not your phone? Claim it on yours" variant="ghost" icon="phone" onPress={() => setElsewhere((on) => !on)} />
-              {elsewhere ? <ClaimOnYourPhone handle={profile.handle} name={profile.display_name} /> : null}
+              <Button label="Not your phone? Claim it on yours" variant="ghost" icon="phone" expanded={elsewhere} onPress={() => setElsewhere((on) => !on)} />
+              {elsewhere ? <ClaimOnYourPhone profileRef={profile.handle || profile.id} name={profile.display_name} /> : null}
             </View>
           )}
         </View>
         {wide ? (
           <View style={[styles.side, { borderLeftColor: ds.c.line }]}>
-            <ClaimOnYourPhone handle={profile.handle} name={profile.display_name} title="Not your computer?" />
+            <ClaimOnYourPhone profileRef={profile.handle || profile.id} name={profile.display_name} title="Not your computer?" />
           </View>
         ) : null}
       </SheetScrollView>

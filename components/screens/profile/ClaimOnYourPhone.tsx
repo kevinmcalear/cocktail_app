@@ -13,9 +13,10 @@ import { useShareLink } from './useShareLink';
  * phone that isn't theirs (find-yourself step 4): a QR code and a link that
  * open this claim on their own phone, after they sign in with their own email.
  */
-export function ClaimOnYourPhone({ handle, name, title }: { handle: string; name: string; title?: string }) {
+/** ref: the page's handle, or its id when it has none. */
+export function ClaimOnYourPhone({ profileRef, name, title }: { profileRef: string; name: string; title?: string }) {
   const ds = useDs();
-  const url = `${siteOrigin()}${claimPath(handle)}`;
+  const url = `${siteOrigin()}${claimPath(profileRef)}`;
   const share = useShareLink(url, `Claim ${name}`);
   return (
     <View style={styles.panel}>

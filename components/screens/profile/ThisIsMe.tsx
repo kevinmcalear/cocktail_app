@@ -1,5 +1,5 @@
-import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,15 +22,20 @@ export function ThisIsMe({ profile, pinned = false }: { profile: Profile; pinned
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
   const made = useMadeBy(profile);
-  const { data: claims } = useMyClaims(profile.id);
+  const { data: claims, isLoading } = useMyClaims(profile.id);
+  const router = useRouter();
   const [open, setOpen] = useState(useLocalSearchParams<{ claim?: string }>().claim === '1');
+  // The link opens it once: Back, a reload or a resize doesn't open it again.
+  useEffect(() => {
+    if (open) router.setParams({ claim: undefined });
+  }, [open, router]);
   const [notMe, setNotMe] = useState(false);
   const first = profile.display_name.split(' ')[0];
   const bar = made.positions.find((p) => p.is_current)?.bar.display_name ?? made.groups.find((g) => g.barName)?.barName ?? null;
   const latest = claims?.[0];
   if (notMe) return null;
   const sent = latest?.status === 'pending';
-  const sheet = <PersonClaimSheet profile={profile} bar={bar} stats={made.stats} visible={open && !sent} onClose={() => setOpen(false)} />;
+  const sheet = <PersonClaimSheet profile={profile} bar={bar} stats={made.stats} visible={open && !isLoading && !sent} onClose={() => setOpen(false)} />;
   const buttons = sent ? (
     <View style={styles.sent} role="status">
       <Tag label="Claim sent" />
