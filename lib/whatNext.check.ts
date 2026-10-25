@@ -1,7 +1,7 @@
 // Checks for lib/whatNext.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { anyKind, brandGroups, classicsToAdd, glassMakers, groupGlasses, haveClassics, heldGlassPlan, heldNotOnPage, setupLine, topClassics } from './whatNext';
+import { anyKind, brandGroups, classicsToAdd, groupGlasses, haveClassics, heldGlassPlan, heldNotOnPage, topClassics } from './whatNext';
 
 const ids = (xs: { id: string }[]) => xs.map((x) => x.id);
 
@@ -52,18 +52,6 @@ assert.deepEqual(
     ['Libbey', 1],
   ]
 );
-
-// --- setupLine ---
-assert.equal(setupLine({ invites: 3, claim: 'none', waitingFiles: 0 }), 'Set up · 3 invites sent · page private until it’s checked');
-assert.equal(setupLine({ invites: 1, claim: 'pending', waitingFiles: 2 }), 'Set up · one invite sent · spec book being read · claim being checked');
-assert.equal(setupLine({ invites: 0, claim: 'approved', waitingFiles: 0 }), 'Set up');
-
-// --- glassMakers ---
-const row = (maker: string | null, page?: string) => ({ maker, maker_page: page ? { display_name: page } : null });
-assert.equal(glassMakers([row('Cocktail Kingdom'), row('Cocktail Kingdom'), row(null, 'Libbey')]), 'Cocktail Kingdom, Libbey');
-assert.equal(glassMakers([row('A'), row('B'), row('C')]), 'A, B and more');
-assert.equal(glassMakers([row(null)]), '');
-assert.equal(glassMakers([{ maker: null, maker_page: null, model: { maker: { display_name: 'Libbey' } } }]), 'Libbey', 'a catalog glass: its model’s maker');
 
 // --- heldGlassPlan: each catalog glass once, first of a type the main one ---
 const held = [

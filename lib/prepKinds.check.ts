@@ -1,7 +1,7 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, withFacts, withMethod } from './prepKinds';
+import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, withFacts, withMethod } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
 import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
@@ -288,4 +288,17 @@ console.log('prepKinds technique checks passed');
 {
   const b = startPrep('batch', 'Penicillin batch');
   assert.deepEqual(b.lines.map((l) => l.slot), ['main ingredient']);
+}
+
+// Recipes left to finish, down through the ones inside (make-anything-steps-3, steps 9 and 10).
+{
+  const syrup = { ...startPrep('syrup', 'Honey-ginger syrup'), at: 'recipe' as const };
+  const batch = startPrep('batch', 'Penicillin batch');
+  batch.lines.push({ key: 'hg', id: null, name: 'Honey-ginger syrup', parts: null, unit: 'ml', amount: '', prep: syrup });
+  assert.equal(toFinishSummary(syrup), 'Syrup · 1 of 3 done');
+  assert.equal(stepToFinish(startPrep('infusion', 'Infusion')), 'recipe', 'a spirit still to pick');
+  assert.deepEqual(recipesToFinish([{ name: 'Penicillin batch', prep: batch }, { name: 'Shrub', later: true }]), [
+    { name: 'Honey-ginger syrup', at: 'at what goes in', depth: 1 },
+    { name: 'Shrub', at: 'nothing written yet', depth: 0 },
+  ]);
 }

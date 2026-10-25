@@ -26,11 +26,13 @@ export function Kbd({ children }: { children: string }) {
 }
 
 /** One sidebar row: icon and label, lit when it's the page you're on. `look` gives Search its fill and New its outline. */
-export function NavRow({ label, icon, current, hint, role = 'link', look, isNew, onPress }: {
+export function NavRow({ label, icon, current, hint, badge, role = 'link', look, isNew, onPress }: {
   label: string;
   icon: IconName;
   current: boolean;
   hint?: string;
+  /** "3 of 6" in the accent: how far "Set up <bar>" has got. */
+  badge?: string;
   role?: 'link' | 'button';
   look?: 'filled' | 'outlined';
   /** A tab the venue just switched on, not opened yet: an accent dot (hooks/useFeatureNews.ts). */
@@ -42,7 +44,7 @@ export function NavRow({ label, icon, current, hint, role = 'link', look, isNew,
     <PressableScale
       role={role}
       {...currentProps(current)}
-      accessibilityLabel={isNew ? `${label}, new` : label}
+      accessibilityLabel={[label, isNew ? 'new' : null, badge ? `${badge} done` : null].filter(Boolean).join(', ')}
       onPress={onPress}
       style={[
         styles.row,
@@ -57,6 +59,7 @@ export function NavRow({ label, icon, current, hint, role = 'link', look, isNew,
       </DsText>
       {isNew ? <View style={[styles.dot, { backgroundColor: ds.accentFill.fill }]} /> : null}
       {hint ? <Kbd>{hint}</Kbd> : null}
+      {badge ? <Caption color={ds.accentText} style={[styles.badge, { backgroundColor: withAlpha(ds.accentText, 0.14) }]}>{badge}</Caption> : null}
     </PressableScale>
   );
 }
@@ -114,6 +117,7 @@ export function YouFooter({ venue }: { venue: Venue | null }) {
 
 const MARK = 32;
 const styles = StyleSheet.create({
+  badge: { paddingHorizontal: space.sm, borderRadius: radius.pill, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 40, paddingHorizontal: space.md, borderRadius: radius.control },
   label: { flex: 1 },
   strong: { fontFamily: fontFamilies.bodySemiBold },

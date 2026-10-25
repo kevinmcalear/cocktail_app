@@ -53,6 +53,8 @@ jest.mock('@/hooks/useSameNameDrink', () => ({ useSameNameDrink: () => ({ data: 
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/useDrinkDesk', () => ({ ...jest.requireActual('@/hooks/useDrinkDesk'), useMenuSectionPlace: () => ({ data: undefined }) }));
+// A venue's suppliers and costs (m01) read their own hooks; these tests are about the steps.
+jest.mock('./useDeskLines', () => ({ ...jest.requireActual('./useDeskLines'), useVenueLines: () => ({ lines: {}, cost: null }) }));
 beforeEach(() => {
   mockCreate.mockReset();
   mockStart.mockReset();
@@ -63,11 +65,9 @@ beforeEach(() => {
   useDrinkWizardStore.setState({ kept: {} });
   useSettingsStore.setState({ defaultUnit: 'ml' });
 });
-
 // iOS draws the screen after its first layout (the keyboard offset needs it).
 const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
 const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / }));
-
 describe('AddDrinkWizard', () => {
   // One walk through the wizard, in three parts so none runs near Jest's 5 s limit on a busy CI runner.
   test('a name, then ingredients by quick add, stepper, typing and search', async () => {

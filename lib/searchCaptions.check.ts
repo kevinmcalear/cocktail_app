@@ -25,7 +25,7 @@ assert.deepEqual(drinkFacts('late', 'Cocktail', facts), { caption: 'Classics · 
 assert.deepEqual(drinkFacts('new', 'Beer', facts), { caption: 'Beer' });
 
 assert.equal(ingredientFacts('campari', facts), 'In 6 drinks');
-assert.equal(ingredientFacts('batch', facts), 'Prep · in 1 drink');
+assert.equal(ingredientFacts('batch', facts), 'Made in-house · in 1 drink');
 assert.equal(ingredientFacts('salt', facts), undefined);
 
 assert.equal(menuFacts('autumn', ['neg', 'boul', 'plum'], facts), 'On now · 2 of these drinks');

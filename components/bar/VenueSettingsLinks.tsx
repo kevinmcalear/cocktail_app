@@ -118,7 +118,7 @@ export function VenueSettingsLinks({ barId }: { barId: string }) {
           <RowDivider />
         </>
       ) : null}
-      <SettingsRow icon="sparkles" label="What next" detail="Your glasses and your menu, a step at a time" onPress={go('what-next')} />
+      <SettingsRow icon="sparkles" label="Setup checklist" detail="Kit, bottles, first menu, first drinks, team" onPress={go('what-next')} />
       <RowDivider />
       <SettingsRow
         icon="globe"

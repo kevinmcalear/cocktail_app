@@ -13,17 +13,19 @@ import { useSearchMine } from '@/hooks/useSearchMine';
 import { roleLabel } from '@/lib/roles';
 import { useBringIn } from '@/store/useBringIn';
 
+import { NewDrafts } from './NewDrafts';
 import { HomeMark } from './VenueMarks';
 
-// The same five things the old create button made, and where each is made.
+// What New starts, as the board orders it (make-anything-steps-1, step 1), and where each is made.
 // `atVenue`: made at the venue you're in, so it needs its bar and the right to add there.
 // `homeHint`: what it says at home, where it lands in your own drinks and shelf.
 const CREATE: { label: string; hint: string; homeHint: string; icon: string; symbol?: IconName; href: string; atVenue?: boolean }[] = [
-  { label: 'Drink', hint: 'A cocktail and its spec', homeHint: 'A cocktail and its spec, in your drinks', icon: 'TabDrinks', href: '/add-cocktail', atVenue: true },
-  { label: 'Ingredient or prep', hint: 'A bottle, or something made in house', homeHint: 'A bottle for your shelf, or something you make', icon: 'TabIngredients', href: '/add-ingredient', atVenue: true },
-  { label: 'Beer', hint: 'For the list or a menu', homeHint: 'For your shelf or a home menu', icon: 'Beer', href: '/add-beer', atVenue: true },
-  { label: 'Wine', hint: 'For the list or a menu', homeHint: 'For your shelf or a home menu', icon: 'Wine', href: '/add-wine', atVenue: true },
-  { label: 'Menu', hint: 'Start fresh or copy one', homeHint: 'A night in: start fresh or from a saved menu', icon: 'TabMenus', symbol: 'text.alignleft', href: '/menus/all?new=1' },
+  { label: 'Menu', hint: 'A night, a list, a season', homeHint: 'A night, a list, a season', icon: 'TabMenus', symbol: 'text.alignleft', href: '/menus/all?new=1' },
+  { label: 'Drink', hint: 'A cocktail and everything in it', homeHint: 'A cocktail and everything in it', icon: 'TabDrinks', href: '/add-cocktail', atVenue: true },
+  { label: 'Something you make', hint: 'A batch, syrup, infusion, cordial: anything with a recipe', homeHint: 'A batch, syrup, infusion, cordial: anything with a recipe', icon: 'TabIngredients', symbol: 'flask', href: '/make-recipe', atVenue: true },
+  { label: 'A bottle you buy', hint: 'For the back bar, or to pour from', homeHint: 'For your shelf, or to pour from', icon: 'TabIngredients', href: '/add-ingredient', atVenue: true },
+  { label: 'Beer', hint: 'For the list or a menu', homeHint: 'For your shelf or a menu', icon: 'Beer', href: '/add-beer', atVenue: true },
+  { label: 'Wine', hint: 'For the list or a menu', homeHint: 'For your shelf or a menu', icon: 'Wine', href: '/add-wine', atVenue: true },
 ];
 
 function Row({ icon, label, hint, trailing, onPress }: { icon: React.ReactNode; label: string; hint: string; trailing?: React.ReactNode; onPress: () => void }) {
@@ -62,7 +64,9 @@ function LockedRow({ barId }: { barId: string }) {
 }
 
 /**
- * New: make a drink, ingredient, beer, wine or menu, or carry on with a draft.
+ * New: what you left half made at the top (Drafts), then start a menu, a
+ * drink, something you make, a bottle you buy, a beer or a wine, or carry on
+ * with an older draft.
  * The subtitle says where it's made. A dialog on desktop, like every other sheet.
  */
 export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
@@ -92,6 +96,13 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
   return (
     <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle} plain>
       <View>
+        <NewDrafts
+          barId={venueId ?? null}
+          onOpen={(params) => {
+            onClose();
+            router.push({ pathname: '/add-cocktail', params });
+          }}
+        />
         {locked && venueId ? <LockedRow barId={venueId} /> : null}
         {made.map((c) => (
           <Row key={c.label} label={c.label} hint={venueId ? c.hint : c.homeHint} icon={c.symbol ? <IconSymbol name={c.symbol} size={20} color={ds.c.ink} /> : <CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(hrefOf(c))} />
@@ -106,13 +117,10 @@ export function CreateSheet({ visible, onClose }: { visible: boolean; onClose: (
             setTimeout(() => useBringIn.getState().openSheet(), 350);
           }}
         />
-        <Row
-          label="Drafts"
-          hint={drafts.length ? 'Pick up where you left off' : 'Nothing unfinished'}
-          icon={<IconSymbol name="doc.text" size={20} color={ds.c.ink} />}
-          trailing={drafts.length ? <Caption tone="muted">{drafts.length}</Caption> : null}
-          onPress={() => go('/drafts')}
-        />
+        {/* Drafts the older editors kept in the account; what's half made here is listed at the top. */}
+        {drafts.length ? (
+          <Row label="Drafts" hint="Pick up where you left off" icon={<IconSymbol name="doc.text" size={20} color={ds.c.ink} />} trailing={<Caption tone="muted">{drafts.length}</Caption>} onPress={() => go('/drafts')} />
+        ) : null}
         {locked ? (
           <PressableScale role="link" accessibilityLabel="Make your own drink in your home bar" onPress={makeAtHome} style={styles.home}>
             <HomeMark size={24} />

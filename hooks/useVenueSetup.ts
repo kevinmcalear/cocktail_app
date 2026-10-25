@@ -32,7 +32,7 @@ type Row = Omit<ClaimableBar, 'claimed' | 'awards' | 'drinks'> & {
   drinks: { count: number }[] | null;
 };
 
-/** Bar pages by name for setup's search, claimed ones too (they show dimmed). */
+/** Bar pages by name or street for setup's search, claimed ones too (they show dimmed). */
 export function useClaimableBars(search: string) {
   const term = search.replace(/[%_\\,()]/g, '').trim();
   // Close names too ("lanturn room": The Lantern Room), marked `near`.
@@ -50,7 +50,9 @@ export function useClaimableBars(search: string) {
           .eq('kind', 'bar')
           .eq('is_public', true)
           .limit(3, { referencedTable: 'sample' });
-        const { data, error } = await (ids ? q.in('id', ids) : q.ilike('display_name', `%${term}%`).order('display_name').limit(6)).abortSignal(signal);
+        // By name or street; the term is stripped of the filter syntax's commas and brackets above.
+        const byTerm = () => q.or(`display_name.ilike.%${term}%,address_line.ilike.%${term}%`).order('display_name').limit(6);
+        const { data, error } = await (ids ? q.in('id', ids) : byTerm()).abortSignal(signal);
         if (error) throw error;
         return ((data ?? []) as unknown as Row[]).map(({ is_claimed, bar_id, awards, drinks, ...b }) => ({
           ...b,

@@ -1,7 +1,6 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
-import { BringStep } from '@/components/screens/onboarding/BringStep';
 import { Body, BrandProvider, Caption } from '@/components/ds';
 import { SetupChromeProvider, SetupFooter, SetupPage } from '@/components/screens/onboarding/SetupPage';
 import { BrandSetup } from '@/components/screens/venue/BrandScreen';
@@ -11,14 +10,12 @@ import { useVenueBrand } from '@/hooks/useVenueBrand';
 import type { ProfileClaim } from '@/hooks/useProfiles';
 import { useCreateSetupVenue, usePushHeldSetup, useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { faceFromDb, normalizeHex, usableGroundTint } from '@/lib/brand';
-import { afterClaim, nextScreen, previousScreen, startScreen, venueProgress, type ClaimState, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
-import type { ReadFile } from '@/lib/readAnything';
+import { nextScreen, openRun, previousScreen, venueProgress, type ClaimState, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
 import { useAppMode } from '@/store/useAppMode';
 import { useVenueSetup } from '@/store/useVenueSetup';
 
 import { DoneMark, DoneStep } from './DoneStep';
 import { FindBarStep } from './FindBarStep';
-import { RoleStep } from './RoleStep';
 import { SetupClaimStep } from './SetupClaimStep';
 import { SetupIntro } from './SetupIntro';
 import { SetupRail } from './SetupRail';
@@ -27,15 +24,16 @@ import { TeamStep } from './TeamStep';
 import { VisibilityStep } from './VisibilityStep';
 import { WhereWhenStep } from './WhereWhenStep';
 
-const BRANDED: VenueScreen[] = ['look', 'visibility', 'bring', 'team', 'done'];
-const VENUE_BRING = ['Spec book PDF', 'Printed menu', 'Google Doc', 'Airtable link', 'Back bar photo'];
+const BRANDED: VenueScreen[] = ['look', 'visibility', 'team', 'done'];
 
 /**
- * Venue setup as a guided flow (b03): intro, eight steps, a summary. Opened
- * from Settings › Venues, a bar page's Claim, or the Setup banner on Tonight
- * or Library (?bar=, to pick it up; &step=claim to prove it's yours). Each step is one of the app's
- * own pieces: the bar facts, the Brand editor, the Publishing choice, Bring
- * in, invites, the claim methods. Proving it's yours is last, and every step
+ * Venue setup as a guided flow (b03): intro, finding the bar, five steps, a
+ * summary. Opened from Settings › Venues (the setup already started, if
+ * there is one), a bar page's Claim or Setup's owner path (?claim=, straight
+ * to Where and when), or the Setup banner on Tonight or Library (?bar=, to
+ * pick it up; &step=claim to prove it's yours). Each step is one of the app's
+ * own pieces: the bar facts, the Brand editor, the Publishing choice,
+ * invites, the claim methods. Proving it's yours is last, and every step
  * before it works without a claim (Eddie call, 22 Oct).
  */
 export function VenueSetupScreen() {
@@ -43,23 +41,38 @@ export function VenueSetupScreen() {
   const router = useRouter();
   const wide = useIsWideWeb();
   const { runs, save, markDone, rekey, hold } = useVenueSetup();
-  const [key, setKey] = useState(params.bar ?? 'new');
+  const [opened] = useState(() => openRun(params, runs));
+  const [key, setKey] = useState(opened.key);
   // The run's key moves from 'new' to the venue mid-step (ensureVenue); steps finishing then use the new one.
   const keyRef = useRef(key);
   const run = runs[key];
-  const [screen, setScreen] = useState<VenueScreen>(() => startScreen(params, runs));
+  const [screen, setScreen] = useState<VenueScreen>(opened.screen);
   // Opened cold, the saved runs load after the first render: pick up from them once they do, unless they've moved on.
-  const [first] = useState(screen);
   const hydrated = useSyncExternalStore(useVenueSetup.persist.onFinishHydration, useVenueSetup.persist.hasHydrated, () => false);
-  const [picked, setPicked] = useState(hydrated);
+  const [picked, setPicked] = useState(false);
   if (!picked && hydrated) {
     setPicked(true);
-    if (screen === first) setScreen(startScreen(params, runs));
+    const at = screen === opened.screen ? openRun(params, runs) : { key, screen };
+    setKey(at.key);
+    setScreen(at.screen);
   }
-  // Opened from a bar page's Claim: once the claim's sent (or kept), setup carries on from the start.
-  const [fromPage, setFromPage] = useState(!!params.claim);
-  // Opened straight onto the claim (a bar page, Venue settings, Tonight) or from the summary: Back goes there, not to step 7.
-  const [claimBack, setClaimBack] = useState<'leave' | 'done' | null>(screen === 'claim' ? 'leave' : null);
+  useEffect(() => {
+    keyRef.current = key;
+  }, [key]);
+  // A claimed bar with no run of its own starts one, already found; a run left for another bar starts over.
+  // Once, as setup opens: later the run moves from 'new' to its venue (ensureVenue), which mustn't start another.
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!picked || seeded.current) return;
+    seeded.current = true;
+    if (params.claim && useVenueSetup.getState().runs[key]?.profileId !== params.claim) save(key, { profileId: params.claim, barId: null, name: '', done: ['find'], finished: false, held: undefined });
+  }, [picked, params.claim, key, save]);
+  // Opened straight onto the claim (Venue settings, Tonight, the checklist): Back leaves, not to the team step.
+  const [claimBack, setClaimBack] = useState(screen === 'claim');
+  // At the end, setup is through: "Set up <bar>" takes over (lib/setupChecklist.ts).
+  useEffect(() => {
+    if (screen === 'done') save(keyRef.current, { finished: true });
+  }, [screen, save]);
   const [profileOverride] = useState(params.claim ?? null);
   const profileId = profileOverride ?? run?.profileId ?? null;
   const barId = run?.barId ?? (key !== 'new' ? key : null);
@@ -75,7 +88,6 @@ export function VenueSetupScreen() {
   const createVenue = useCreateSetupVenue();
   const pushHeld = usePushHeldSetup();
   const enterVenue = useAppMode((s) => s.enterVenue);
-  const [waitingFiles, setWaitingFiles] = useState(0);
   const name = profile?.display_name ?? run?.name ?? '';
   const claimState: ClaimState = page || claim?.status === 'approved' ? 'approved' : claim?.status === 'pending' ? 'pending' : 'none';
   const writable = !!page;
@@ -96,12 +108,11 @@ export function VenueSetupScreen() {
     return id;
   };
 
-  // After the claim: the summary, or the setup from the start when it was opened from a bar page.
+  // After the claim, the last step: the summary.
   const leaveClaim = (sent: boolean) => {
     if (sent) markDone(keyRef.current, 'claim');
-    setScreen(claimBack === 'done' ? 'done' : afterClaim(useVenueSetup.getState().runs[keyRef.current]?.done ?? [], fromPage));
-    setFromPage(false);
-    setClaimBack(null);
+    setScreen('done');
+    setClaimBack(false);
   };
   // What steps 3 and 5 kept before the claim goes onto it, then off the device.
   const afterSend = async (sent: ProfileClaim) => {
@@ -115,7 +126,6 @@ export function VenueSetupScreen() {
   const status: Partial<Record<VenueStep, string>> = {
     find: name,
     claim: claimState === 'pending' ? 'Being checked, usually within a day' : claimState === 'approved' ? 'Approved' : undefined,
-    role: 'Admin',
     place: 'Typed by you',
   };
   // From the Look step on, setup wears the venue's own brand (canvas make-venue-look to make-venue-done).
@@ -131,11 +141,11 @@ export function VenueSetupScreen() {
     mark: screen === 'done' ? <DoneMark venue={{ id: barId ?? key, name, logoUrl: logo, accent: brand?.primary_color ?? null, displayFace: faceFromDb(brand?.display_face), groundTint: null, roleLevel: 40 }} /> : undefined,
     progress: venueProgress(screen),
     onBack:
-      screen === 'intro' || (screen === 'claim' && claimBack === 'leave')
+      screen === 'intro' || (screen === 'claim' && claimBack) || (screen === 'place' && params.claim)
         ? leave
         : screen === 'done'
           ? undefined
-          : () => setScreen(screen === 'claim' && claimBack === 'done' ? 'done' : previousScreen(screen)),
+          : () => setScreen(previousScreen(screen)),
     aside:
       wide && screen !== 'intro' ? (
         <SetupRail
@@ -145,7 +155,7 @@ export function VenueSetupScreen() {
           done={run?.done ?? []}
           status={status}
           onPick={(s) => {
-            setClaimBack(null);
+            setClaimBack(false);
             setScreen(s);
           }}
           onLeave={leave}
@@ -178,10 +188,20 @@ export function VenueSetupScreen() {
         />
       ) : null}
       {screen === 'claim' && !profileId ? <FindBarStep onPicked={(bar) => save(key, { profileId: bar.id, name: bar.name })} onSkip={leave} /> : null}
-      {screen === 'role' ? <RoleStep name={name} pending={claimState === 'pending'} error={createVenue.error?.message} onDone={needVenue(() => finish('role'))} /> : null}
       {(screen === 'place' || screen === 'visibility') && !settled ? <SetupPage>{null}</SetupPage> : null}
       {screen === 'place' && settled ? (
-        <WhereWhenStep profileId={page?.id ?? profileId} name={name || 'your bar'} claim={claim} writable={writable} held={run?.held} onHold={(c) => hold(keyRef.current, c)} onDone={() => finish('place')} />
+        // The venue is made here, with them as its Admin (the role step's one line), so the steps after it have one.
+        <WhereWhenStep
+          profileId={page?.id ?? profileId}
+          name={name || 'your bar'}
+          claim={claim}
+          writable={writable}
+          held={run?.held}
+          onHold={(c) => hold(keyRef.current, c)}
+          venueError={createVenue.error?.message ?? null}
+          making={createVenue.isPending}
+          onDone={needVenue(() => finish('place'))}
+        />
       ) : null}
       {screen === 'look' && barId ? (
         <BrandSetup
@@ -196,36 +216,14 @@ export function VenueSetupScreen() {
       {screen === 'visibility' && settled ? (
         <VisibilityStep barId={barId} name={name} claim={claim} writable={writable} held={run?.held} onHold={(c) => hold(keyRef.current, c)} onDone={() => finish('visibility')} />
       ) : null}
-      {screen === 'bring' ? (
-        <BringStep
-          examples={VENUE_BRING}
-          note="Photos and PDFs are read by AI. Clean text is read on your phone. You check every drink before it’s saved, and anything from here starts private to your team."
-          barId={barId}
-          onFiles={(files: ReadFile[]) => setWaitingFiles((n) => n + files.length)}
-          onPaste={() => router.push('/bring-in' as Href)}
-          later="Bring more in later from the + button."
-          footer={<SetupFooter onPress={() => finish('bring')} onSkip={() => setScreen('team')} />}
-        />
-      ) : null}
       {screen === 'team' && barId ? <TeamStep barId={barId} name={name} pending={claimState === 'pending'} onDone={() => finish('team')} /> : null}
       {screen === 'done' && barId ? (
         <DoneStep
           barId={barId}
-          profileId={page?.id ?? profileId}
           name={name}
-          claim={claim}
-          claimState={claimState}
-          held={run?.held}
-          waitingFiles={waitingFiles}
-          onProve={() => {
-            setClaimBack('done');
-            setScreen('claim');
-          }}
-          onLeave={() => save(keyRef.current, { finished: true })}
           onOpen={() => {
-            save(keyRef.current, { finished: true });
             enterVenue(barId);
-            router.replace((waitingFiles ? '/bring-in' : '/(tabs)') as Href);
+            router.replace('/(tabs)' as Href);
           }}
         />
       ) : null}

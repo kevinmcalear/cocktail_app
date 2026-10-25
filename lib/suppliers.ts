@@ -174,3 +174,12 @@ export function pickSuppliers(
     why,
   };
 }
+
+/**
+ * Who sees a venue's buying parts while adding a drink: Costs sees suppliers
+ * and prices, Prep sees suppliers only, and at home (no venue) neither.
+ */
+export function venueParts(barId: string | null, caps: readonly string[] | undefined): { canBuy: boolean; canCost: boolean } {
+  const canCost = !!barId && !!caps?.includes('costs');
+  return { canCost, canBuy: canCost || (!!barId && !!caps?.includes('prep')) };
+}

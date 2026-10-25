@@ -84,6 +84,21 @@ Built from the starting design above, with the changes noted (why in brackets).
 - Small cubes under a short Collins block: the wizard's ice tip from #702 already offers it (glass height from the venue's glass, block length from `item_ice.length_mm`).
 - Not yet: drinks still name the shared ice, so a drink can't name the venue's own "Clear cube · 50 mm" (see the PR 1 note), and "15 drinks over ice don't say which · Pick" needs a way to change many drinks at once.
 
+### PR 4: the kit check
+
+- `lib/kitCheck.ts` (+ check): a drink's glass (by drawn shape), each ice it needs (its build's layers and what it's shaken with, by drawing kind) and the tools its methods name (`methodTools`: Shake is tins and a strainer, Stir a mixing glass and a strainer, Blend a blender), against the venue's Kit. An ice the venue makes is followed back through what it starts from (a visited set, so a loop ends) and its steps' tools are checked too. A part of the Kit with nothing listed isn't checked. "Needs a sphere and a block ice shaver"; the nearest ice the venue has (`houseIce`).
+- `hooks/useKitCheck.ts`: the venue's Kit with its ice recipes, a drink as the check reads it, `useDrinkKitCheck`, `useVenueKitChecks`, `useKitShelves`. Ice recipes are read as house preps are, so without Prep an ice's own tools aren't followed.
+- The drink page's "Can <venue> make it?" (`components/screens/drink/KitCheckSection.tsx`) in venue mode, for the venue's drinks and the catalog's; Add opens Kit's sheets filled in.
+- Library: Ready here and Needs something (`KIT_FILTERS`, in the filter menu's Kit section), each tile saying what it needs.
+- The technique library and the wizard's prep step read `useKitHere()` (hooks/useBarKit.ts): the venue's tools in venue mode, your home kit otherwise.
+
+### PR 7: home
+
+- Migration `20261117100000_home_glassware_ice.sql`: `home_glassware` (glass, variant, name, model_id, source bought/ours, count, is_default one per type) and `home_ice` (item_ice's facts less suppliers), each the owner's own (RLS as `home_kit_items`). Tested in `supabase/tests/home-glassware-ice.test.mjs`.
+- `hooks/useHomeKit.ts` reads them in the venue's shapes (`BarGlass`, `VenueIce`), so My Bar › Kit › Glassware and Ice (`/kit/glassware`, `/kit/ice`, `components/screens/home/HomeKitScreens.tsx`) are the same `KitPage`, `KitList`, `KitItemPage` and sheets: `GlassSheet` with `home` and `onSave`, `IceSheet` with `barId={null}` and `save`; "where it comes from" says a shop, no suppliers.
+- My Bar's Kit section has a row each for Glassware and Ice (optional, quiet: no prompt).
+- Not yet: drinks at home aren't drawn in your glasses or with your ice (the drawings read a venue's glassware and ice; home needs its own path through lib/sketch and the stored drawings), and "My Bar asks once, after your first few drinks".
+
 Notes for later PRs:
 
 - PR 3: the house-prep editor (`hooks/usePrepCard.ts`) assumes ingredients (`ingredient_role`, `made_from_id` are ingredient-only, by check constraint). Ice made here uses `item_steps`, `item_prep` and `recipes` lines, not `made_from_id`. Prep-only staff still can't write recipe lines of a house prep (an ingredient), only of the venue's ice.

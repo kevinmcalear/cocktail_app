@@ -10,7 +10,7 @@ import { TechniquePage } from '@/components/techniques/TechniquePage';
 import { TechniqueSheet } from '@/components/techniques/TechniqueSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
-import { useKit } from '@/hooks/useKit';
+import { useKitHere } from '@/hooks/useBarKit';
 import { canMake, groupById, GROUPS, searchTechniques, TECHNIQUES, type Technique } from '@/lib/techniques';
 import { membersLine } from '@/lib/techniques/facts';
 
@@ -30,7 +30,7 @@ const FILTERS: { value: Filter; label: string; test: (t: Technique, kit: Readonl
 export function TechniquesScreen({ group, foam = false }: { group?: string; foam?: boolean }) {
   const ds = useDs();
   const router = useRouter();
-  const { kit } = useKit();
+  const kit = useKitHere();
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Filter[]>([]);
   const [foamOpen, setFoamOpen] = useState(foam);

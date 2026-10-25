@@ -59,9 +59,25 @@ export function useDrinkTrail(name: string, { menuSectionId, venueName, onClose 
   return { menu, trail: drinkTrail(name, { menu, venueName, onClose }) };
 }
 
-/** The trail one level down: the level you were on becomes a way back up. */
-export function trailInto(items: readonly TrailItem[], back: () => void, here: string): TrailItem[] {
-  return [...items.slice(0, -1), ...(items.length ? [{ ...items[items.length - 1], onPress: back }] : []), { label: here }];
+/**
+ * The trail one level down. `leave` leaves this level, keeping what's done
+ * (make-anything-overview, rule 4): the level just above is `leave`, and
+ * every level higher up leaves this one first, then goes on up from there.
+ */
+export function trailInto(items: readonly TrailItem[], leave: () => void, here: string): TrailItem[] {
+  const up = items.slice(0, -1).map((t) => {
+    const go = t.onPress;
+    return go
+      ? {
+          ...t,
+          onPress: () => {
+            leave();
+            go();
+          },
+        }
+      : t;
+  });
+  return [...up, ...(items.length ? [{ ...items[items.length - 1], onPress: leave }] : []), { label: here }];
 }
 
 const styles = StyleSheet.create({

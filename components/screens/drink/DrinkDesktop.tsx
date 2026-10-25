@@ -66,6 +66,7 @@ export function DrinkDesktop({ sections: s, children, hero, heroActions, actions
               {s.journey}
               {s.myNote}
               {s.floor}
+              {s.kit}
             </View>
           ) : null}
           {shown === 'service' ? <View style={styles.tab}>{s.service}</View> : null}

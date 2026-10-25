@@ -17,6 +17,8 @@ interface AddBarFormProps {
   onCancel?: () => void;
   /** Offered when the bar turns out to be on Cocktail already. */
   onOpenExisting?: (profileId: string) => void;
+  /** The button: "Add bar", or "Set it up" for an owner adding their own. */
+  submitLabel?: string;
 }
 
 /**
@@ -24,7 +26,7 @@ interface AddBarFormProps {
  * (so it lands on the map). It goes up public and unclaimed; the bar can
  * claim it later and moderators can fix or remove it.
  */
-export function AddBarForm({ initialName = '', onAdded, onCancel, onOpenExisting }: AddBarFormProps) {
+export function AddBarForm({ initialName = '', onAdded, onCancel, onOpenExisting, submitLabel = 'Add bar' }: AddBarFormProps) {
   const ds = useDs();
   const [name, setName] = useState(initialName);
   const [search, setSearch] = useState('');
@@ -110,7 +112,7 @@ export function AddBarForm({ initialName = '', onAdded, onCancel, onOpenExisting
       <Caption tone="muted">It shows to everyone as not claimed yet, until the bar claims it.</Caption>
       <View style={styles.actions}>
         {onCancel ? <Button label="Cancel" variant="ghost" onPress={onCancel} /> : null}
-        <Button label={add.isPending ? 'Adding…' : 'Add bar'} disabled={!address || !name.trim() || add.isPending} onPress={submit} />
+        <Button label={add.isPending ? 'Adding…' : submitLabel} disabled={!address || !name.trim() || add.isPending} onPress={submit} />
       </View>
     </View>
   );

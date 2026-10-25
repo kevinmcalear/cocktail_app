@@ -104,6 +104,8 @@ export function useSaveIceRecipe(iceId: string) {
       void client.invalidateQueries({ queryKey: iceStartsFromKey(iceId) });
       void client.invalidateQueries({ queryKey: ['item-prep', iceId] });
       void client.invalidateQueries({ queryKey: ['ices-starting-from'] });
+      // The kit check follows an ice's recipe for its tools (hooks/useKitCheck.ts).
+      void client.invalidateQueries({ queryKey: ['venue-ice-recipes'] });
       // A flavour typed by name may be a new ingredient of the venue's.
       void client.invalidateQueries({ queryKey: ['venue-ingredients'] });
     },

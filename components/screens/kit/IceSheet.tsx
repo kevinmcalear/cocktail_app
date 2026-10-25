@@ -10,8 +10,12 @@ import { SourceQuestion, trimmed, type KitSource } from './SourceQuestion';
 
 const FAILED = 'Couldn’t save that. Check your connection and try again.';
 
+/** How the sheet saves: the venue's (save_venue_ice), or another's (My Bar's ice). */
+type IceSave = { mutate: (ice: VenueIceChange, opts: { onSuccess: (id: string, ice: VenueIceChange) => void }) => void; isPending: boolean; error: unknown };
+
 export interface IceSheetProps {
-  barId: string;
+  /** The venue; null is at home (no suppliers, `save` given). */
+  barId: string | null;
   visible: boolean;
   onClose: () => void;
   /** The ice to change; null adds one. */
@@ -30,6 +34,8 @@ export interface IceSheetProps {
   madeStep?: (ice: VenueIceChange) => ReactNode;
   /** Where it was named: "From the Old Fashioned". */
   from?: string;
+  /** Saves somewhere else than the venue's ice (My Bar). */
+  save?: IceSave;
 }
 
 /** Add ice, or change one: what it looks like, where it comes from, and how you make it when you do. */
@@ -52,9 +58,10 @@ function startLooks(from: Partial<VenueIceChange> | null | undefined): IceLooksV
   return from?.name && from.name !== iceName(v) ? { ...v, name: from.name } : v;
 }
 
-function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved, madeStep, from: named }: IceSheetProps & { startAt: 0 | 1 }) {
+function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved, madeStep, from: named, save: saveTo }: IceSheetProps & { startAt: 0 | 1 }) {
   const suppliers = useVenueSuppliers(barId).data ?? [];
-  const save = useSaveVenueIce(barId);
+  const venueSave = useSaveVenueIce(barId ?? '');
+  const save: IceSave = saveTo ?? venueSave;
   const from = ice ?? initial;
   const [step, setStep] = useState<number>(startAt);
   const [looks, setLooks] = useState(() => startLooks(from));
@@ -98,7 +105,7 @@ function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved,
     },
     {
       title: 'Where does it come from?',
-      body: <SourceQuestion kind="ice" value={src} onChange={setSrc} suppliers={suppliers} />,
+      body: <SourceQuestion kind="ice" value={src} onChange={setSrc} suppliers={suppliers} home={!barId} />,
       next: third ? 'Next' : ice ? 'Save' : 'Add ice',
       onSkip: () => finish(saved),
     },

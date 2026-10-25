@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Chip, Field } from '@/components/ds';
 import { GlassModelCard } from '@/components/glass/GlassModelCard';
 import { GlassModelPicker } from '@/components/glass/GlassModelPicker';
+import { GlassSnap } from '@/components/glass/GlassSnap';
 import { space } from '@/constants/tokens';
 import type { GlassModel } from '@/hooks/useGlassModels';
 import { GLASS_TYPE_LABEL, GLASS_TYPES } from '@/lib/glassware';
@@ -22,20 +23,23 @@ export interface GlassWhichValue {
 
 /**
  * Question 1 of Add a glass (Kit and ice, step 3): its shape, then the real
- * glass from the catalog (maker, name or code). Not there? Name your own:
- * its shape and its name, drawn as that shape.
+ * glass from the catalog (maker, name or code), or Snap the glass for the
+ * three closest to a photo. Not there? Name your own: its shape and its name,
+ * drawn as that shape.
  */
 export function GlassWhich({ value, onChange, venueModelIds, venueName, shape }: { value: GlassWhichValue; onChange: (v: GlassWhichValue) => void; venueModelIds?: readonly string[]; venueName?: string; /** The search starts on this shape (a drink named it). */ shape?: SketchGlass | null }) {
   const set = (patch: Partial<GlassWhichValue>) => onChange({ ...value, ...patch });
+  const pick = (m: GlassModel) => onChange({ ...value, mode: 'picked', model: m, glass: m.glass, variant: m.variant });
 
   if (value.mode === 'find') {
     return (
       <View style={styles.stack}>
+        <GlassSnap onPick={pick} />
         <GlassModelPicker
           venueModelIds={venueModelIds}
           venueName={venueName}
           initialGlass={shape ?? null}
-          onPick={(m) => onChange({ ...value, mode: 'picked', model: m, glass: m.glass, variant: m.variant })}
+          onPick={pick}
           onDescribe={() => set({ mode: 'own', model: null })}
           describeLabel="Not there? Name your own"
         />

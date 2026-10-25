@@ -89,9 +89,9 @@ describe('PrepBuilder', () => {
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Honey-ginger syrup');
     await fireEvent.press(screen.getByRole('button', { name: 'Make “Honey-ginger syrup” in-house' }));
     await laidOut();
-    // One level down: the trail runs Daiquiri › Penicillin batch › Honey-ginger syrup; only the level just above is a way back.
-    expect(screen.getByText('Daiquiri')).toBeTruthy();
-    expect(screen.queryByRole('link', { name: 'Up to Daiquiri' })).toBeNull();
+    // One level down: the trail runs Daiquiri › Penicillin batch › Honey-ginger syrup.
+    expect(screen.getByRole('link', { name: 'Up to Daiquiri' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Up to Penicillin batch' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Up to Penicillin batch' })).toBeTruthy();
     expect(screen.getByText('What are you making?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
@@ -107,7 +107,7 @@ describe('PrepBuilder', () => {
     await laidOut();
     expect(screen.getByRole('link', { name: 'Up to Penicillin batch' })).toBeTruthy();
     expect(screen.getByText('Sugar')).toBeTruthy();
-    // Leaving a level just started puts the recipe back as it was.
+    // Going up the trail keeps what's done: a level just started stays as a recipe to finish, picked up where it was left.
     await fireEvent.press(screen.getByRole('link', { name: 'Up to Penicillin batch' }));
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Lemon oleo');
@@ -115,7 +115,46 @@ describe('PrepBuilder', () => {
     await laidOut();
     await fireEvent.press(screen.getByRole('link', { name: 'Up to Penicillin batch' }));
     await laidOut();
-    expect(screen.queryByText('Lemon oleo')).toBeNull();
+    expect(screen.getByText(/^Recipe to finish · Oleo saccharum · 0 of 3 done/)).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Lemon oleo, a recipe to finish. Pick it up'));
+    await laidOut();
+    expect(screen.getByText('What are you making?')).toBeTruthy();
+  });
+
+  test('leaving asks first, and keeps what is done as a recipe to finish', async () => {
+    const onLater = jest.fn();
+    const onClose = jest.fn();
+    await renderWithTamagui(<PrepBuilder name="Pineapple chili shrub" drinkName="Daiquiri" ingredients={[]} onDone={jest.fn()} onLater={onLater} onClose={onClose} />);
+    await laidOut();
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent.press(screen.getByRole('link', { name: 'Up to Daiquiri' }));
+    expect(onLater).toHaveBeenCalledWith(expect.objectContaining({ kind: 'shrub', at: 'recipe' }), 'Pineapple chili shrub');
+    onLater.mockClear();
+    await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Back to Daiquiri' }));
+    expect(screen.getByText(/^What you’ve done is kept\. Daiquiri shows it as Recipe to finish/)).toBeTruthy();
+    // A new one can also go.
+    expect(screen.getByRole('button', { name: 'Don’t keep it' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
+    expect(screen.queryByText('Leave it for now?')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Back to Daiquiri' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Leave it for now' }));
+    expect(onLater).toHaveBeenCalledWith(expect.objectContaining({ at: 'kind' }), 'Pineapple chili shrub');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  test('on its own page (New › Something you make): your recipes, and Save it', async () => {
+    const onDone = jest.fn();
+    await renderWithTamagui(<PrepBuilder page name="" drinkName="" above={[]} ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
+    await laidOut();
+    expect(screen.getByRole('button', { name: 'Back to Your recipes' })).toBeTruthy();
+    expect(screen.getByText('SOMETHING YOU MAKE')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Honey syrup');
+    await fireEvent.press(screen.getByRole('radio', { name: /^Syrup, / }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Save it' }));
+    expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ kind: 'syrup' }), 'Honey syrup');
   });
 
   test('a clarified juice is its own kind, made the first way the kit covers', async () => {

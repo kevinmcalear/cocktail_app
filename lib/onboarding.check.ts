@@ -15,6 +15,11 @@ assert.equal(afterAgeCheck({}), '/(tabs)');
 assert.equal(nextStep('name'), 'hospitality');
 assert.equal(nextStep('hospitality', 'yes'), 'find');
 assert.equal(nextStep('hospitality', 'no'), 'taste');
+// Setting up a bar: find it (or add it), then venue setup. No career steps, taste or units.
+assert.equal(nextStep('hospitality', 'owner'), 'bar');
+assert.equal(nextStep('bar'), 'done');
+assert.equal(nextStep('bar', 'new'), 'addbar');
+assert.equal(nextStep('addbar'), 'done');
 assert.equal(nextStep('find', 'claim'), 'taste');
 assert.equal(nextStep('find', 'new'), 'work');
 assert.equal(nextStep('work'), 'past');
