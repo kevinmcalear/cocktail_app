@@ -64,7 +64,7 @@ export function PrepUsedIn({ name, drinks, used, yieldAmount, yieldUnit, isPrep,
             {preps.map((p) => {
               // "Made in-house · 100 ml in a batch", or "to taste" with no amount (prep-prep-phone).
               const q = toQuantity(p.amount, p.unit);
-              return <Row key={p.id} id={p.id} kind="ingredient" name={p.name} source={`Made in-house · ${q ? `${formatQuantity(q)} in a batch` : 'to taste'}`} chevron />;
+              return <Row key={p.id} id={p.id} kind="ingredient" name={p.name} source={`House-made · ${q ? `${formatQuantity(q)} in a batch` : 'to taste'}`} chevron />;
             })}
           </View>
         </View>

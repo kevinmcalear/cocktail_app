@@ -15,7 +15,7 @@ export const SECTIONS: Record<BarSection | 'kit', { title: string; short: string
   bottles: { title: 'Bottles', short: 'Bottles', add: 'Add bottles', addSub: 'Search or snap', note: '', blurb: 'Spirits, liqueurs, wine, beer and bitters.', empty: 'Spirits, liqueurs, wine and bitters.' },
   fridge: { title: 'Fridge & pantry', short: 'Fridge', add: 'Add to fridge', addSub: 'Milk, pineapple…', note: 'Counted as on hand, so a sour isn’t blocked by a lemon.', blurb: 'Tap the staples you keep. Anything else (milk, pineapple, coffee) comes in from Add.', empty: '' },
   lab: { title: 'Lab shelf', short: 'Lab', add: 'Add to lab', addSub: 'Acids, enzymes', note: 'Acids, enzymes and texture: for cordials, clarifying and foams.', blurb: 'Acids, enzymes and texture: for cordials, acid-adjusting, clarifying and foams.', empty: 'Acids and enzymes, for when you get curious.' },
-  preps: { title: 'Made in-house', short: 'Made in-house', add: 'Make something', addSub: 'Or open a recipe', note: 'What you’ve made and have in the fridge. They count like bottles.', blurb: 'What you’ve made and have in the fridge. They count like bottles.', empty: 'Syrups and cordials you make yourself.' },
+  preps: { title: 'House-made', short: 'House-made', add: 'Make something', addSub: 'Or open a recipe', note: 'What you’ve made and have in the fridge. They count like bottles.', blurb: 'What you’ve made and have in the fridge. They count like bottles.', empty: 'Syrups and cordials you make yourself.' },
   kit: { title: 'Kit', short: 'Kit', add: 'Add kit', addSub: 'Tools, scales', note: 'Pots, jars, a fridge and a freezer are taken as given.', blurb: 'Pots, jars, strainers, a fridge and a freezer are taken as given.', empty: 'Scales, whippers and beyond.' },
 };
 

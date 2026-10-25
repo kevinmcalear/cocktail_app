@@ -43,7 +43,7 @@ export function pourersOf(
   const rows = hits.map((hit) => {
     const house = hit.drink.itemType === 'ingredient';
     const at = house
-      ? { rank: 4, detail: 'Made in-house · changes with the drinks' }
+      ? { rank: 4, detail: 'House-made · changes with the drinks' }
       : (where.get(hit.drink.id) ?? { rank: 2, detail: hit.changes.map((change) => `${change.amount} ${change.from}`.trim()).join(', ') });
     return { hit, house, detail: at.detail, rank: at.rank };
   });

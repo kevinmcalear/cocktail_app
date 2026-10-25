@@ -29,7 +29,7 @@ export type GroupKey = 'spirits' | 'fresh' | 'preps' | 'mixers' | 'garnish' | 'b
 export const GROUPS: { key: GroupKey; title: string }[] = [
   { key: 'spirits', title: 'Spirits and liqueurs' },
   { key: 'fresh', title: 'Juices and fresh' },
-  { key: 'preps', title: 'Made in-house' },
+  { key: 'preps', title: 'House-made' },
   { key: 'mixers', title: 'Mixers' },
   { key: 'garnish', title: 'Garnish' },
   { key: 'beerWine', title: 'Beer and wine' },

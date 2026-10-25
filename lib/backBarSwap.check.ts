@@ -45,7 +45,7 @@ assert.equal(rows[0].detail, 'On the Autumn menu');
 assert.equal(rows[2].detail, 'Coming up on the Summer menu');
 assert.equal(rows[3].detail, 'R&D');
 assert.equal(rows[4].house, true);
-assert.equal(rows[4].detail, 'Made in-house · changes with the drinks');
+assert.equal(rows[4].detail, 'House-made · changes with the drinks');
 assert.equal(rows[0].hit.changes[0].to, 'Montelobos Espadín');
 
 // A drink on no menu says what it pours.

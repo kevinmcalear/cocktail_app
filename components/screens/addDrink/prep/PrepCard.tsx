@@ -52,7 +52,7 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
             </PressableScale>
           ) : null}
         </View>
-        <Body>{`Made in-house: ${shown}`}</Body>
+        <Body>{`House-made: ${shown}`}</Body>
         <Caption tone="muted">{`${venueName ? `Private to ${venueName}. ` : ''}Made from parts you buy, so it costs itself.`}</Caption>
       </View>
       <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />
