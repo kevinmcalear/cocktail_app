@@ -2,9 +2,10 @@
 // and as the add-drink wizard works them out live (lib/sketch/draft.ts). The
 // lists come from the rules both run (supabase/functions/_shared/sketchRules.ts).
 import { SKETCH_CLEAR_TINT } from '../../constants/sketch';
-import { FOAMS, GARNISHES, GLASSES, ICES, METHODS, sketchBuild, type SketchLayer } from '../../supabase/functions/_shared/sketchRules';
+import { FOAMS, GARNISHES, GLASSES, ICES, METHODS, readIceLook, sketchBuild, type IceLook, type SketchLayer } from '../../supabase/functions/_shared/sketchRules';
 
-export type { SketchLayer };
+export type { IceLook, SketchLayer };
+export { readIceLook };
 
 export const SKETCH_GLASSES = GLASSES;
 export const SKETCH_ICES = ICES;
@@ -54,6 +55,18 @@ export interface SketchInputs {
    * over "ice". Set by the database from items.ice_build; missing is one ice.
    */
   build?: SketchLayer[] | null;
+  /**
+   * The one ice's look when there is no build (a build's layers carry their
+   * own): size in mm, clear or cloudy, a stamp, something frozen inside.
+   * Missing draws as before.
+   */
+  iceLook?: IceLook | null;
+  /**
+   * The glass's real height, rim to foot, mm (glass_models.height_mm), for
+   * drawing ice sizes to scale. Missing is a usual glass of its kind
+   * (lib/sketch/geometry.ts GLASS_MM).
+   */
+  glassMm?: number | null;
 }
 
 const has = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
@@ -83,13 +96,15 @@ export function readSketchInputs(raw: unknown): SketchInputs | null {
     // Only when there is one: Auto rows read back as they were stored.
     ...(isHex(x.tint) ? { tint: x.tint.toLowerCase() } : {}),
     ...(readBuild(x.build) ? { build: readBuild(x.build) } : {}),
+    ...(readIceLook(x.iceLook) ? { iceLook: readIceLook(x.iceLook) } : {}),
+    ...(typeof x.glassMm === 'number' && x.glassMm >= 40 && x.glassMm <= 400 ? { glassMm: x.glassMm } : {}),
   };
 }
 
 /** A stored build, kept only as far as this app can paint it. */
 function readBuild(raw: unknown): SketchLayer[] | null {
   if (!Array.isArray(raw)) return null;
-  const named = raw.filter((l) => l && typeof l === 'object' && has(SKETCH_ICES, l.kind) && l.kind !== 'none').map((l) => ({ name: String(l.kind), n: l.n, to: l.to }));
+  const named = raw.filter((l) => l && typeof l === 'object' && has(SKETCH_ICES, l.kind) && l.kind !== 'none').map((l) => ({ name: String(l.kind), n: l.n, to: l.to, ...readIceLook(l) }));
   return sketchBuild(named);
 }
 

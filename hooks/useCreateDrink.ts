@@ -309,7 +309,8 @@ export function useCreateDrink() {
       // the default drawing that way and refuses a null one.
       if (sketch) {
         // The database adds the build from the drink's own (20261029500000), and an older one refuses the key.
-        const { variant, build: _build, ...rest } = sketch;
+        // The ice's look and the glass's height are the venue's, not the drink's, so they aren't sent either.
+        const { variant, build: _build, iceLook: _look, glassMm: _mm, ...rest } = sketch;
         await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: variant ? { ...rest, variant } : rest });
       }
 
