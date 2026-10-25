@@ -133,7 +133,7 @@ export function OnboardingScreen() {
     }
     createProfile(() => {
       setLanding((bar === 'new' ? '/venue-setup' : `/venue-setup?claim=${bar}`) as Href);
-      finish.mutate();
+      finish.mutate({ owner: true });
     }, named);
   };
   const ranFor = useRef<string | null>(null);

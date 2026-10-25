@@ -17,6 +17,7 @@ import { navCurrent } from '@/lib/shellNav';
 import { WeekNav } from '@/components/screens/week/WeekNav';
 import { useFeatureNewsDots } from '@/hooks/useFeatureNews';
 import { RoundNav } from '@/components/screens/firstRound/RoundElsewhere';
+import { SetupNav } from '@/components/screens/venueSetup/SetupBanner';
 
 import { CreateSheet } from './CreateSheet';
 import { useNavPlaces, type Place } from './navPlaces';
@@ -61,7 +62,8 @@ function SideNav() {
   // A page that isn't a row (a drink, the add wizard) keeps the row it came from lit.
   const rows = [...places.tabs, places.history, ...places.work, ...places.venuePlaces, places.week].filter((p): p is Place => !!p);
   const [last, setLast] = useState<string | null>(null);
-  const current = navCurrent(pathname, rows, last);
+  // "Set up <bar>" lives under Venue settings' path but is its own row (SetupNav).
+  const current = pathname.endsWith('/what-next') ? null : navCurrent(pathname, rows, last);
   if (current !== last) setLast(current);
 
   // ponytail: ⌘K, the eight ball key and N live on the always-mounted side nav. ⌘K toggles the search over this page;
@@ -123,6 +125,8 @@ function Sidebar({ current, go, searching, onSearch, onNew, dots }: SideNavProps
   return (
     <View role="navigation" accessibilityLabel="Main" style={[styles.nav, { backgroundColor: ds.c.ground, borderRightColor: ds.c.line, paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + space.lg }]}>
       <MarksRow />
+      {/* "Set up <bar>" first, until it's done (owner-setup call 6). */}
+      <SetupNav />
       <NavRow label="Search" icon="magnifyingglass" role="button" look="filled" hint={keys ? (isApplePlatform() ? '⌘K' : 'Ctrl K') : undefined} current={searching} onPress={onSearch} />
       {nav.map(row)}
       {work.map(row)}

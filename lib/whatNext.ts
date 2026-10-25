@@ -1,7 +1,7 @@
 /**
- * "This is your bar. What next?" (board eddie-oct22-wave2, fix 15): the
- * first steps after venue setup. Which 20 classics to offer, the glasses
- * grouped the way the step lists them, and the one-line setup summary.
+ * The steps "Set up <bar>" opens in place (lib/setupChecklist.ts): which 20
+ * classics to offer, the glasses grouped the way the step lists them, the
+ * glasses held until the page is checked, and the brands step's groups.
  */
 
 /** How many classics the menu step offers. */
@@ -50,27 +50,6 @@ export function groupGlasses<T extends { series: string | null; maker: { display
     else groups.push({ title, models: [m] });
   }
   return groups;
-}
-
-/** "Set up · 3 invites sent · page private until it's checked": wave 1's summary in a line. */
-export function setupLine(p: { invites: number; claim: 'none' | 'pending' | 'approved'; waitingFiles: number }): string {
-  return [
-    'Set up',
-    p.invites ? (p.invites === 1 ? 'one invite sent' : `${p.invites} invites sent`) : null,
-    p.waitingFiles ? 'spec book being read' : null,
-    p.claim === 'pending' ? 'claim being checked' : p.claim === 'none' ? 'page private until it’s checked' : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-}
-
-/** "Cocktail Kingdom, Libbey": who makes the bar's glasses, first seen first. A catalog glass's maker is its model's. */
-export function glassMakers(
-  glasses: readonly { maker: string | null; maker_page: { display_name: string } | null; model?: { maker: { display_name: string } | null } | null }[],
-  max = 2
-): string {
-  const makers = [...new Set(glasses.map((g) => g.model?.maker?.display_name ?? g.maker_page?.display_name ?? g.maker).filter((m): m is string => !!m))];
-  return makers.length > max ? `${makers.slice(0, max).join(', ')} and more` : makers.join(', ');
 }
 
 /**
