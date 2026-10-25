@@ -15,22 +15,22 @@ export interface OwnMenu {
 }
 
 /**
- * On the menu (menus-one-look, BandElsewhere): the menus a drink is on, or
- * was, as lines: the name, then "On now" or when it ran, so nobody walks up
- * and asks for one that came off. Your own venue's menu first. Each opens
- * the menu. Nothing for a drink no menu lists.
+ * On the menu (menus-one-look, BandElsewhere), as lines: your venue's menu
+ * it's on now, then each bar whose menus it was on, with "On now" or when
+ * it ran, so nobody walks up and asks for one that came off. Each opens the
+ * menu (a bar's latest with it). Nothing for a drink no menu lists.
  */
 export function MenuRuns({ runs, own }: { runs: DrinkMenuRun[]; own?: OwnMenu | null }) {
   const router = useRouter();
   if (!runs.length && !own) return null;
-  // Name the bar only when the drink is on more than one bar's menus.
-  const bars = new Set(runs.map((r) => r.barId)).size;
+  // Name your venue only when another bar's menus are listed too.
+  const others = runs.length > 0;
   return (
     <MenuGroup title="On the menu">
-      <View role="list">
+      <View>
         {own ? (
           <MenuLine
-            name={own.name}
+            name={others && own.venueName ? `${own.name}, ${own.venueName}` : own.name}
             line={['On now', own.price].filter(Boolean).join(' · ')}
             live
             label={[own.name, own.venueName, 'on now', own.price ? `${own.price} there` : null].filter(Boolean).join(', ')}
@@ -43,7 +43,8 @@ export function MenuRuns({ runs, own }: { runs: DrinkMenuRun[]; own?: OwnMenu | 
           return (
             <MenuLine
               key={r.barId}
-              name={bars > 1 ? `${r.editionName}, ${r.barName}` : r.editionName}
+              // A run spans every menu at the bar it was on, so the line names the bar, not one menu.
+              name={r.barName}
               line={line}
               live={live}
               label={`${r.editionName} at ${r.barName}, ${line}. Open the menu`}

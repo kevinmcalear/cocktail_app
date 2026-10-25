@@ -6,7 +6,6 @@ import {
   editionCardLine,
   editionPastLine,
   editionDates,
-  editionDrinkLine,
   editionMenuDrinks,
   editionSections,
   menuOrder,
@@ -83,9 +82,6 @@ assert.equal(timelineDates(run(2023, 7, 2023, 8)), 'Jul 2023 to Aug 2023 · 1 mo
 assert.equal(timelineDates(run(2019, null, 2021, null)), '2019 to 2021');
 assert.equal(timelineDates(run(2025, 9, null, null, true)), 'On now · since Sep 2025');
 assert.equal(timelineDates(run(2021, null, null, null)), '2021 · end date unknown');
-assert.equal(editionDrinkLine(['Plum Negroni', 'Lavender Static', 'Rye Garden', 'Cold Brew']), 'Plum Negroni, Lavender Static, Rye Garden and 1 more');
-assert.equal(editionDrinkLine(['Plum Negroni']), 'Plum Negroni');
-assert.equal(editionDrinkLine([]), 'Drinks not listed in our sources');
 
 assert.deepEqual(runDates({ start_year: 2022, start_month: 2, end_year: null, end_month: null, is_current: true }), run(2022, 2, null, null, true));
 assert.deepEqual(withPastMenuTag(['Stirred'], [run(2024, 3, 2025, 1)]), ['Stirred', 'Past menu']);

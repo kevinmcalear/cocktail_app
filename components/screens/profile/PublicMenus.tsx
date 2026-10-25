@@ -36,13 +36,13 @@ export function PublicMenus({ profileId, name }: { profileId: string; name: stri
           name={now.name}
           coverUrl={null}
           // ponytail: an edition's drinks carry no photo, so the band draws their sketches; add image_url to menu editions to show photos.
-          pictures={now.drinks.map((d) => ({ id: d.id, name: d.name, imageUrl: null, isSketch: false }))}
+          pictures={[...new Map(now.drinks.map((d) => [d.id, { id: d.id, name: d.name, imageUrl: null, isSketch: false }])).values()]}
           line={editionCardLine(now)}
           trailing={<Tag label="On now" tone="success" dot />}
         />
       ) : null}
       {shown.length ? (
-        <View role="list">
+        <View>
           {shown.map((m) => (
             <MenuLine key={m.id} name={m.name} line={editionPastLine(m)} label={`${m.name}. ${editionPastLine(m)}. Open the menu`} onPress={() => open(m)} />
           ))}

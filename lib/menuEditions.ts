@@ -1,3 +1,4 @@
+import { plural } from '@/lib/menus';
 import type { MenuDrink } from '@/types/menus';
 
 /** A cocktail on a menu edition: the bar's own drink, not a bare name. */
@@ -127,12 +128,6 @@ export function menuOrder(d: MenuDates | null): number {
   return { current: 0, unknown: 1, past: 2 }[menuState(d)];
 }
 
-/** "Plum Negroni, Lavender Static and 10 more"; "Drinks not listed in our sources" when there are none. */
-export function editionDrinkLine(names: string[], shown = 3): string {
-  if (!names.length) return 'Drinks not listed in our sources';
-  if (names.length <= shown) return names.join(', ');
-  return `${names.slice(0, shown).join(', ')} and ${names.length - shown} more`;
-}
 
 /** Newest menu first; a menu with only a year sorts after the dated ones that year. */
 export function sortEditions<T extends Pick<MenuEdition, 'year' | 'month' | 'name'>>(rows: T[]): T[] {
@@ -190,7 +185,7 @@ export function drinkRunTags(editions: readonly MenuEdition[]): Record<string, s
 /** A bar's menu on now, under its band: "8 drinks · since Sep 2025" (menus-one-look). */
 export function editionCardLine(e: Pick<MenuEdition, 'year' | 'month' | 'drinks'>): string {
   const count = new Set(e.drinks.map((d) => d.id)).size;
-  return [count ? `${count} ${count === 1 ? 'drink' : 'drinks'}` : null, `since ${shortDate(e.year, e.month)}`].filter(Boolean).join(' · ');
+  return [count ? plural(count, 'drink') : null, `since ${shortDate(e.year, e.month)}`].filter(Boolean).join(' · ');
 }
 
 /** A bar's past menu as a line: "Mar 2024 to Aug 2025 · 10", the count left off when the drinks aren't known. */
