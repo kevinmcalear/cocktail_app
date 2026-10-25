@@ -7,9 +7,12 @@
 --     typed, lower is closer, null when it isn't close. Both are folded as
 --     Discover folds them (public.discover_fold, spaces collapsed). Every
 --     typed word has to land on a word of the name: the same word (0), the
---     start of one (1, three letters or more), a letter off (2; two letters
---     at eight or more; a three-letter word keeps its first letter), or the
---     same sound (3, double metaphone). The score adds those up. Failing
+--     start of one (1, three letters or more), a letter off (1, or two
+--     letters at eight or more, scoring 2; a three-letter word keeps its
+--     first letter), or the same sound (double metaphone: 3, or 4 for a
+--     three-letter word, where "tie" sounds like "tai" but "boy" also sounds
+--     like "bee"). The score adds those up, so "salti boi" (2) is closer to
+--     "salty boy" than the sound-alike "soldier boy" (3). Failing
 --     that, the whole name a letter or two off for every four typed
 --     (10 + the distance) catches swapped letters ("jungel bird").
 --     lib/nearName.ts is the same rule for lists the app already holds;
@@ -51,12 +54,15 @@ CREATE FUNCTION "public"."near_score"("p_query" "text", "p_name" "text")
       SELECT min(CASE
           WHEN nw.w = t.w THEN 0
           WHEN length(t.w) >= 3 AND left(nw.w, length(t.w)) = t.w THEN 1
-          WHEN length(t.w) BETWEEN 3 AND 64 AND length(nw.w) <= 64
-               AND (length(t.w) > 3 OR left(t.w, 1) = left(nw.w, 1))
-               AND extensions.levenshtein_less_equal(t.w, nw.w, t.slips) <= t.slips THEN 2
-          WHEN t.sound <> '' AND length(nw.w) <= 64 AND t.sound = extensions.dmetaphone(nw.w) THEN 3
+          WHEN e.d <= t.slips THEN e.d
+          WHEN t.sound <> '' AND length(nw.w) <= 64 AND t.sound = extensions.dmetaphone(nw.w) THEN CASE WHEN length(t.w) >= 4 THEN 3 ELSE 4 END
         END)
       FROM named nw
+      -- How many letters off, when it may be a slip.
+      CROSS JOIN LATERAL (
+        SELECT CASE WHEN length(t.w) BETWEEN 3 AND 64 AND length(nw.w) <= 64 AND (length(t.w) > 3 OR left(t.w, 1) = left(nw.w, 1))
+                    THEN extensions.levenshtein_less_equal(t.w, nw.w, t.slips) END AS d
+      ) e
     ) AS score
     FROM typed t
   )

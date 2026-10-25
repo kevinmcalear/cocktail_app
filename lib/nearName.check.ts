@@ -38,10 +38,16 @@ const far: [string, string][] = [
 ];
 for (const [typed, name] of far) assert.equal(nearScore(typed, name), null, `${typed} ↛ ${name}`);
 
-// Scores: exact words, then starts, then a slip, then a sound; the whole-name check last.
+// Scores: exact words, then a start or a slip (by how many letters), then a sound; the whole-name check last.
 assert.equal(nearScore('salty boy', 'Salty Boy'), 0);
 assert.equal(nearScore('salt', 'Salty Boy'), 1);
-assert.equal(nearScore('salti boy', 'Salty Boy'), 2);
+assert.equal(nearScore('salti boy', 'Salty Boy'), 1);
+assert.equal(nearScore('salty boy', 'Salti Boi'), 2);
+// Two slips beat a sound-alike: Salti Boi before Soldier Boy.
+assert.equal(nearScore('salty boy', 'Soldier Boy'), 3);
+// A short word's sound counts for less: "boy" sounds like "bee" (1 + 4), last of all.
+assert.equal(nearScore('salty boy', 'Bee Pollen Salt Rim'), 5);
+assert.equal(nearScore('mai tie', 'Mai Tai'), 4);
 assert.equal(nearScore('peeny', 'Pina Colada'), 3);
 assert.equal(nearScore('jungel bird', 'Jungle Bird'), 12);
 // Short words only match as typed; long ones may be two letters off.

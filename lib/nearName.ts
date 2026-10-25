@@ -42,14 +42,19 @@ function wordScore(t: Typed, word: string): number | null {
   if (t.word.length < 3) return null;
   if (word.startsWith(t.word)) return 1;
   if (t.word.length > 64 || word.length > 64) return null;
-  if ((t.word.length > 3 || t.word[0] === word[0]) && distance(t.word, word, t.slips) <= t.slips) return 2;
-  return t.sound && t.sound === sound(word) ? 3 : null;
+  if (t.word.length > 3 || t.word[0] === word[0]) {
+    const d = distance(t.word, word, t.slips);
+    if (d <= t.slips) return d;
+  }
+  if (t.sound === '' || t.sound !== sound(word)) return null;
+  // "tie" sounds like "tai", but "boy" sounds like "bee" too: a short word's sound counts for less.
+  return t.word.length >= 4 ? 3 : 4;
 }
 
 /**
  * The rule for one query, to run over many names: lower is closer, null when
  * the name isn't close. Every typed word lands on a word of the name: the same
- * word (0), its start (1), a letter or two off (2) or the same sound (3),
+ * word (0), its start (1), a letter or two off (1 or 2) or the same sound (3; 4 for a three-letter word),
  * added up. Failing that, the whole name a letter off for every four typed:
  * 10 plus the distance ("jungel bird"). Lengths count characters, as SQL does.
  */
