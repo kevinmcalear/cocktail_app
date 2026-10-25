@@ -123,6 +123,10 @@
       "destination": "/settings/bar/[id]/tools"
     },
     {
+      "source": "/settings/bar/:id/kit/:kind/:item",
+      "destination": "/settings/bar/[id]/kit/[kind]/[item]"
+    },
+    {
       "source": "/settings/bar/:id/suppliers",
       "destination": "/settings/bar/[id]/suppliers"
     },
