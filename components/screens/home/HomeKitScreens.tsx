@@ -45,7 +45,7 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
         barId={null}
         kind="glassware"
         title="Glassware"
-        intro="The glasses you have at home. Optional: add yours and your drinks are drawn in them."
+        intro="The glasses you have at home, and where they came from. Optional."
         openId={openId}
         openName={opened ? glassName(opened) : null}
         loading={isLoading}
@@ -94,8 +94,7 @@ export function HomeGlasswareScreen({ openId }: { openId?: string | null }) {
         glass={sheet?.glass}
         startAt={sheet?.startAt}
         onClose={() => setSheet(null)}
-        // ponytail: saved after the sheet closes; a failure shows on the page, not in the sheet. Await it there if it matters.
-        onSave={(row) => save.mutate({ ...row, is_default: !glasses.some((g) => g.id !== row.id && g.glass === row.glass && g.is_default) })}
+        onSave={(row) => save.mutateAsync({ ...row, is_default: !glasses.some((g) => g.id !== row.id && g.glass === row.glass && g.is_default) })}
       />
     </>
   );
@@ -122,7 +121,7 @@ export function HomeIceScreen({ openId }: { openId?: string | null }) {
         barId={null}
         kind="ice"
         title="Ice"
-        intro="The ice you make or buy at home. Optional: add yours and your drinks are drawn with it."
+        intro="The ice you make or buy at home. Optional."
         openId={openId}
         openName={opened?.name}
         loading={isLoading}

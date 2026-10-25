@@ -32,7 +32,8 @@ export interface GlassSheetProps {
   /** A glass in the Kit with no real glass yet: opens on the catalog search to match it. */
   match?: boolean;
   /** Instead of saving to the page (What next holds glasses until the page is checked). */
-  onSave?: (row: BarGlassInput) => void;
+  /** Instead of saving to the page: holds it (What next) or saves it elsewhere (My Bar, which the sheet waits for). */
+  onSave?: (row: BarGlassInput) => void | Promise<unknown>;
   onSaved?: () => void;
   venueName?: string;
   /** A new glass a drink named ("Small Rocks"): its shape starts the search, its name is what you call it. */
@@ -52,6 +53,8 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
   const glasses = known ?? [];
   const save = useSaveBarGlass(barId, pageId);
   const [step, setStep] = useState<number>(startAt);
+  // An onSave that's waited for: saving, or failed.
+  const [own, setOwn] = useState<'saving' | 'failed' | null>(null);
   const [which, setWhich] = useState<GlassWhichValue>(() => ({
     mode: glass && !match ? (glass.model ? 'picked' : 'own') : describe ? 'own' : 'find',
     model: glass?.model ?? null,
@@ -93,8 +96,10 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
       onClose();
     };
     if (onSave) {
-      onSave(row);
-      return done();
+      const saving = onSave(row);
+      if (!saving) return done();
+      setOwn('saving');
+      return void saving.then(done, () => setOwn('failed'));
     }
     save.mutate(row, { onSuccess: done });
   };
@@ -137,8 +142,8 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
       total={3}
       question={questions[step]}
       onNext={() => (step < 2 ? setStep(step + 1) : finish(src, n))}
-      saving={save.isPending}
-      error={save.error ? FAILED : null}
+      saving={save.isPending || own === 'saving'}
+      error={save.error || own === 'failed' ? FAILED : null}
       answered={glass ? undefined : { what: (which.mode === 'picked' && which.model?.name) || title, from, onChange: () => setStep(0) }}
     />
   );

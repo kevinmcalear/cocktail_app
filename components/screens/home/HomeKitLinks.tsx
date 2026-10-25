@@ -2,6 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { View } from 'react-native';
 
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
+import { useSignedIn } from '@/ctx/AuthContext';
 import { useHomeGlassware, useHomeIce } from '@/hooks/useHomeKit';
 
 /**
@@ -12,11 +13,13 @@ export function HomeKitLinks() {
   const router = useRouter();
   const glasses = useHomeGlassware().data?.length;
   const ice = useHomeIce().data?.length;
+  // On your account only: signed out there's nowhere to keep them.
+  if (!useSignedIn()) return null;
   return (
     <View role="group" aria-label="Glassware and ice">
-      <SettingsRow icon="wineglass" label="Glassware" detail="Optional · drinks drawn in your glasses" value={glasses ? String(glasses) : undefined} onPress={() => router.push('/kit/glassware' as Href)} />
+      <SettingsRow icon="wineglass" label="Glassware" detail="Optional · the glasses you have" value={glasses ? String(glasses) : undefined} onPress={() => router.push('/kit/glassware' as Href)} />
       <RowDivider />
-      <SettingsRow icon="snowflake" label="Ice" detail="Optional · drinks drawn with your ice" value={ice ? String(ice) : undefined} onPress={() => router.push('/kit/ice' as Href)} />
+      <SettingsRow icon="snowflake" label="Ice" detail="Optional · the ice you make or buy" value={ice ? String(ice) : undefined} onPress={() => router.push('/kit/ice' as Href)} />
     </View>
   );
 }
