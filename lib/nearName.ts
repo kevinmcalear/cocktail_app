@@ -36,29 +36,37 @@ interface Typed {
   sound: string;
 }
 
+/**
+ * Which part of the rule matched, from closest to loosest: the same word, its
+ * start, a slip of a letter or two, the same sound, or the whole name a few
+ * letters off. A name's reason is its loosest word's.
+ */
+export type NearHow = 'same' | 'start' | 'slip' | 'sound' | 'whole';
+
+const LOOSENESS: Record<NearHow, number> = { same: 0, start: 1, slip: 2, sound: 3, whole: 4 };
+
+interface Near {
+  score: number;
+  how: NearHow;
+}
+
 /** How close one typed word is to one word of the name, or null. */
-function wordScore(t: Typed, word: string): number | null {
-  if (word === t.word) return 0;
+function wordScore(t: Typed, word: string): Near | null {
+  if (word === t.word) return { score: 0, how: 'same' };
   if (t.word.length < 3) return null;
-  if (word.startsWith(t.word)) return 1;
+  if (word.startsWith(t.word)) return { score: 1, how: 'start' };
   if (t.word.length > 64 || word.length > 64) return null;
   if (t.word.length > 3 || t.word[0] === word[0]) {
     const d = distance(t.word, word, t.slips);
-    if (d <= t.slips) return d;
+    if (d <= t.slips) return { score: d, how: 'slip' };
   }
   if (t.sound === '' || t.sound !== sound(word)) return null;
   // "tie" sounds like "tai", but "boy" sounds like "bee" too: a short word's sound counts for less.
-  return t.word.length >= 4 ? 3 : 4;
+  return { score: t.word.length >= 4 ? 3 : 4, how: 'sound' };
 }
 
-/**
- * The rule for one query, to run over many names: lower is closer, null when
- * the name isn't close. Every typed word lands on a word of the name: the same
- * word (0), its start (1), a letter or two off (1 or 2) or the same sound (3; 4 for a three-letter word),
- * added up. Failing that, the whole name a letter off for every four typed:
- * 10 plus the distance ("jungel bird"). Lengths count characters, as SQL does.
- */
-export function nearMatcher(query: string): (name: string) => number | null {
+/** The rule for one query, with which part matched; nearMatcher's scores. */
+function matcher(query: string): (name: string) => Near | null {
   const q = [...nearFold(query)];
   const typed: Typed[] = words(q.join('')).map((word) => ({
     word,
@@ -71,23 +79,42 @@ export function nearMatcher(query: string): (name: string) => number | null {
     const n = nearFold(name);
     const named = words(n);
     let total = 0;
+    let how: NearHow = 'same';
     for (const t of typed) {
-      let best: number | null = null;
+      let best: Near | null = null;
       for (const w of named) {
         const s = wordScore(t, w);
-        if (s !== null && (best === null || s < best)) best = s;
+        if (s !== null && (best === null || s.score < best.score)) best = s;
       }
       if (best === null) return whole(q, [...n], slips);
-      total += best;
+      total += best.score;
+      if (LOOSENESS[best.how] > LOOSENESS[how]) how = best.how;
     }
-    return total;
+    return { score: total, how };
   };
 }
 
-function whole(q: string[], n: string[], slips: number): number | null {
+/**
+ * The rule for one query, to run over many names: lower is closer, null when
+ * the name isn't close. Every typed word lands on a word of the name: the same
+ * word (0), its start (1), a letter or two off (1 or 2) or the same sound (3; 4 for a three-letter word),
+ * added up. Failing that, the whole name a letter off for every four typed:
+ * 10 plus the distance ("jungel bird"). Lengths count characters, as SQL does.
+ */
+export function nearMatcher(query: string): (name: string) => number | null {
+  const match = matcher(query);
+  return (name) => match(name)?.score ?? null;
+}
+
+/** Why a name is close to what was typed (NearHow), or null when it isn't. */
+export function nearReason(query: string, name: string): NearHow | null {
+  return matcher(query)(name)?.how ?? null;
+}
+
+function whole(q: string[], n: string[], slips: number): Near | null {
   if (q.length > 255 || n.length > 255) return null;
   const d = distance(q, n, slips);
-  return d <= slips ? 10 + d : null;
+  return d <= slips ? { score: 10 + d, how: 'whole' } : null;
 }
 
 /** nearMatcher for one name. */

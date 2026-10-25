@@ -2,13 +2,14 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, useDs, type MatchTextProps } from '@/components/ds';
+import { Body, Button, Caption, RowScore, scoreWords, useDs, type MatchTextProps } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useSignedIn } from '@/ctx/AuthContext';
+import { useItemScores } from '@/hooks/useFlavor';
 import { useSaveSpelling, useSearchNear } from '@/hooks/useSearchNear';
-import { classicHit, mergeNear, nearIn, nearView, searchItemHit, type NearHit, type NearKind } from '@/lib/nearHits';
+import { classicHit, mergeNear, nearIn, nearView, nearWhy, searchItemHit, type NearHit, type NearKind } from '@/lib/nearHits';
 import type { Area } from '@/lib/nearMe';
 import { shows, type SearchShow } from '@/lib/searchScope';
 import type { SearchItem } from '@/types/search';
@@ -71,32 +72,51 @@ export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours'
     [local, main.data, ingredients.data, shown, show]
   );
   const view = nearView(found, hits);
+  // Drinks end with their score, as every drink row in search does (b02).
+  const { data: scores } = useItemScores(hits.flatMap((h) => (h.kind === 'drink' && h.spellingFor ? [h.spellingFor] : [])));
   const [dismissed, setDismissed] = useState<string | null>(null);
 
   const open = (h: NearHit) => router.push(h.href as never);
-  const row = (h: NearHit) =>
-    h.kind === 'drink' ? (
-      <DrinkRow key={h.id} name={h.name} itemId={h.spellingFor} imageUrl={h.imageUrl} glass={null} caption={h.caption ?? undefined} onPress={() => open(h)} />
-    ) : (
-      <ResultRow
+  // The row the card asks about says where it is; the others say why they're close too.
+  const row = (h: NearHit, asked = false) => {
+    const caption = [h.caption, asked ? null : nearWhy(q, h.name)].filter(Boolean).join(' · ') || undefined;
+    if (h.kind !== 'drink') return otherRow(h, caption);
+    const score = h.spellingFor ? scores?.[h.spellingFor] : undefined;
+    const said = scoreWords(score);
+    return (
+      <DrinkRow
         key={h.id}
-        title={h.name}
-        caption={h.caption ?? undefined}
-        avatar={h.kind === 'bar' ? { uri: null, bar: { profileId: h.id } } : h.kind === 'person' ? { uri: null } : undefined}
-        ingredient={h.kind === 'ingredient' ? { id: h.id } : undefined}
-        matchLook={matchLook}
+        name={h.name}
+        itemId={h.spellingFor}
+        imageUrl={h.imageUrl}
+        glass={null}
+        caption={caption}
+        trailing={<RowScore score={score} />}
+        label={said ? [h.name, caption, said].filter(Boolean).join('. ') : undefined}
         onPress={() => open(h)}
       />
     );
+  };
+  const otherRow = (h: NearHit, caption: string | undefined) => (
+    <ResultRow
+      key={h.id}
+      title={h.name}
+      caption={caption}
+      avatar={h.kind === 'bar' ? { uri: null, bar: { profileId: h.id } } : h.kind === 'person' ? { uri: null } : undefined}
+      ingredient={h.kind === 'ingredient' ? { id: h.id } : undefined}
+      matchLook={matchLook}
+      onPress={() => open(h)}
+    />
+  );
 
   if (view.kind === 'none') return found ? null : <>{miss}</>;
-  if (view.kind === 'listed') return <ResultGroup label="Spelled differently" items={view.hits} render={row} />;
+  if (view.kind === 'listed') return <ResultGroup label="Spelled differently" items={view.hits} render={(h) => row(h)} />;
   if (view.kind === 'known') {
     return (
       <View style={styles.groups}>
         {lead}
-        <ResultGroup label={`Also spelled “${q}”`} items={view.known} render={row} />
-        <ResultGroup label="Also close" items={view.also} render={row} />
+        <ResultGroup label={`Also spelled “${q}”`} items={view.known} render={(h) => row(h)} />
+        <ResultGroup label="Also close" items={view.also} render={(h) => row(h)} />
       </View>
     );
   }
@@ -110,14 +130,14 @@ export function NearResults({ query, found, shown, yours, yoursCaption = 'Yours'
   };
   return (
     <View style={styles.groups}>
-      <AskCard title={title} name={best.name} best={row(best)}>
+      <AskCard title={title} name={best.name} best={row(best, true)}>
         <View style={styles.buttons}>
           <Button label="Yes, that’s it" size="sm" onPress={yes} />
           <Button label={add ? `No, ${add.label}` : 'No'} variant="secondary" size="sm" icon={add ? 'plus' : undefined} onPress={add ? add.onPress : () => setDismissed(q)} />
         </View>
         {spellingFor ? <Caption tone="muted">{`Yes keeps “${q}” as another spelling, so it finds ${best.name} next time.`}</Caption> : null}
       </AskCard>
-      <ResultGroup label="Also close" items={view.also} render={row} />
+      <ResultGroup label="Also close" items={view.also} render={(h) => row(h)} />
     </View>
   );
 }
