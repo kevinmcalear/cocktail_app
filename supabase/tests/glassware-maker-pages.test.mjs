@@ -57,13 +57,14 @@ describe('glassware maker pages', () => {
     assert.deepEqual(rows, [{ handle: 'arcoroc', part_of: 'arc' }, { handle: 'chef.sommelier', part_of: 'arc' }]);
   });
 
-  test('the tiki bars are public bar pages on the map', async () => {
+  test('the tiki bars are public bar pages on the map, making their own mugs', async () => {
     const { data, error } = await anon.from('profiles').select('handle, kind, latitude, longitude, makes').in('handle', NEW_BARS);
     assert.ifError(error);
     assert.deepEqual(data.map((p) => p.handle).sort(), [...NEW_BARS].sort());
     for (const p of data) {
       assert.equal(p.kind, 'bar', p.handle);
-      assert.deepEqual(p.makes, [], p.handle);
+      // Each sells its own mugs, so its page makes glassware (20261116200000).
+      assert.deepEqual(p.makes, ['glassware'], p.handle);
       assert.ok(p.latitude && p.longitude, p.handle);
     }
   });

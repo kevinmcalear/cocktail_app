@@ -42,7 +42,7 @@ export function IngredientTags({ isPrep, actions, venueName, shared, mine, role,
   const ds = useDs();
   const router = useRouter();
   const lead: { label: string; accent?: boolean }[] = isPrep
-    ? [{ label: 'House prep', accent: true }]
+    ? [{ label: 'Made in-house', accent: true }]
     : [technical ? 'Technical ingredient' : role === 'product' ? 'Bottle' : role === 'generic' ? 'Style' : null].filter((t): t is string => !!t).map((label) => ({ label }));
   const whose = isPrep ? (venueName ?? (mine ? 'Your recipe' : shared ? 'Shared recipe' : null)) : venueName;
   if (!lead.length && !actions.length && !whose) return null;

@@ -15,10 +15,14 @@ export const MEASURE_UNITS: { id: MeasureUnit; label: string }[] = [
   { id: 'g', label: 'g' },
 ];
 
-export type OnboardingStep = 'invite' | 'name' | 'hospitality' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'taste' | 'units' | 'bring';
+/**
+ * 'hospitality' is "What brings you here?" (owner-setup step 1). An owner goes
+ * on to 'bar' ("Find your bar") and, for a bar not on Cocktail yet, 'addbar'.
+ */
+export type OnboardingStep = 'invite' | 'name' | 'hospitality' | 'bar' | 'addbar' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'taste' | 'units' | 'bring';
 
-/** What the person picked on a step that branches. */
-export type StepChoice = 'yes' | 'no' | 'claim' | 'new';
+/** What the person picked on a step that branches: 'owner' is "I'm setting up a bar". */
+export type StepChoice = 'yes' | 'no' | 'claim' | 'new' | 'owner';
 
 export type AuthTarget = '/auth/login' | '/age-check' | '/onboarding' | '/(tabs)';
 
@@ -35,7 +39,10 @@ export function afterAgeCheck(metadata: unknown): '/onboarding' | '/(tabs)' {
 }
 
 /**
- * The next screen. Hospitality looks for an existing profile first. A claim
+ * The next screen. "What brings you here?" picks the path. Setting up a bar
+ * (owner-setup call 2): find the bar, or add it, then setup ends and venue
+ * setup takes over, with no career steps, taste or units. Making drinks at a
+ * bar looks for an existing profile first. A claim
  * skips the career steps (they don't own that profile until it's approved).
  * Otherwise: current job, earlier jobs, menus, drinks. Everyone then says what
  * they like to drink (their taste, see lib/flavor.ts) and picks units. Last,
@@ -50,7 +57,9 @@ export function nextStep(step: OnboardingStep, choice: StepChoice = 'no', joined
   }
   if (step === 'invite') return 'name';
   if (step === 'name') return 'hospitality';
-  if (step === 'hospitality') return choice === 'yes' ? 'find' : 'taste';
+  if (step === 'hospitality') return choice === 'owner' ? 'bar' : choice === 'yes' ? 'find' : 'taste';
+  if (step === 'bar') return choice === 'new' ? 'addbar' : 'done';
+  if (step === 'addbar') return 'done';
   if (step === 'find') return choice === 'claim' ? 'taste' : 'work';
   if (step === 'work') return 'past';
   if (step === 'past') return 'menus';

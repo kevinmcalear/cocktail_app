@@ -52,7 +52,7 @@ export function KitToolsScreen({ barId, openId }: { barId: string; openId?: stri
         barId={barId}
         kind="tools"
         title="Tools"
-        intro="What’s behind the bar and in the prep kitchen. Drinks, preps and ice recipes are checked against it."
+        intro="What’s behind the bar and in the prep kitchen. Drinks, what you make in-house and ice recipes are checked against it."
         openId={openId}
         openName={opened ? toolName(opened) : null}
         loading={isLoading}

@@ -48,8 +48,15 @@ export interface PrepDraftStep {
   timer_seconds: number | null;
 }
 
+/** The three steps of a recipe made in-house, in order (make-anything-steps-1 and 2, steps 4 to 6). */
+export const RECIPE_STEPS = ['kind', 'recipe', 'method'] as const;
+export type RecipeStep = (typeof RECIPE_STEPS)[number];
+const STEP_NAMES: Record<RecipeStep, string> = { kind: 'what it is', recipe: 'what goes in', method: 'how it’s made' };
+
 export interface PrepDraft {
   kind: PrepKindId;
+  /** Left for later at this step (make-anything-steps-3, step 9): a recipe to finish, picked up where it was left. */
+  at?: RecipeStep;
   /** Shrubs: made cold (days, brighter) or hot (an hour, jammier). */
   hot?: boolean;
   /** The kind's way it's made (KIND_WAYS): a shrub cold, hot or as an oleo shrub. */
@@ -246,6 +253,33 @@ export function prepPhrase(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'techniqu
   if (way?.words) return way.words;
   const words = way && !way.kind ? (way.id === 'oleo' ? way.name.toLowerCase() : `${way.name.toLowerCase()} ${kind}`) : kind;
   return `${/^[aeiou]/.test(words) ? 'an' : 'a'} ${words}`;
+}
+
+/** "Infusion · 1 of 3 done": a recipe to finish, under its line (make-anything-steps-3, step 9), counting the steps before the one it was left at. */
+export function toFinishSummary(d: PrepDraft): string {
+  const kind = d.kind === 'other' ? null : PREP_KINDS.find((k) => k.id === d.kind)?.name;
+  return [kind, `${RECIPE_STEPS.indexOf(d.at ?? 'kind')} of ${RECIPE_STEPS.length} done`].filter(Boolean).join(' · ');
+}
+
+/** Where a recipe left on one page (the desktop card) picks up: no name yet, what it is; a part still to pick, what goes in; else how it's made. */
+export function stepToFinish(d: PrepDraft): RecipeStep {
+  return !d.lines.some((l) => l.name.trim()) ? 'kind' : openSlots(d).length ? 'recipe' : 'method';
+}
+
+/** "at what goes in": where a recipe to finish picks up. */
+export const pickUpAt = (d: Pick<PrepDraft, 'at'>): string => `at ${STEP_NAMES[d.at ?? 'kind']}`;
+
+/**
+ * Every recipe still to finish in what's being made, down through the
+ * recipes inside it (make-anything-steps-3, steps 9 and 10): its name, where
+ * it picks up, and how deep. A line left with no recipe at all (Later on its
+ * first step) counts too.
+ */
+export function recipesToFinish(lines: readonly { name: string; later?: boolean; prep?: PrepDraft }[], depth = 0): { name: string; at: string; depth: number }[] {
+  return lines.flatMap((l) => [
+    ...(l.prep?.at || l.later ? [{ name: l.name, at: l.prep ? pickUpAt(l.prep) : 'nothing written yet', depth }] : []),
+    ...(l.prep ? recipesToFinish(l.prep.lines, depth + 1) : []),
+  ]);
 }
 
 /** Under a house prep's line in the drink (make-anything-steps-2, step 7): "Infusion, sous vide · Tempus Fugit, red miso · 4 steps". */

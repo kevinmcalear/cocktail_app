@@ -13,7 +13,7 @@ import { useAgeGate } from '../safety/AgeGate';
  * Signed in only; saving needs a confirmed age, like the menu page itself.
  * `paired`: the outlined half beside Open the menu on a bar's menu card (ppl-bar-menus).
  */
-export function SaveMenuButton({ editionId, drinkIds, paired = false }: { editionId: string; drinkIds: string[]; paired?: boolean }) {
+export function SaveMenuButton({ editionId, drinkIds, paired = false, fromVenue = false }: { editionId: string; drinkIds: string[]; paired?: boolean; /** A venue's own menu (from_venue), saved by its menu id. */ fromVenue?: boolean }) {
   const signedIn = useSignedIn();
   const saved = useSavedMenus().data?.some((m) => m.editionId === editionId) ?? false;
   const save = useSaveBarMenu();
@@ -30,7 +30,7 @@ export function SaveMenuButton({ editionId, drinkIds, paired = false }: { editio
         variant={on || paired ? 'secondary' : 'primary'}
         dense={paired}
         accessibilityHint={on ? 'Removes this menu from your Collection' : 'Keeps this menu in your Collection'}
-        onPress={() => (on ? save.mutate({ editionId, save: false }) : age.gate(() => save.mutate({ editionId, save: true })))}
+        onPress={() => (on ? save.mutate({ editionId, save: false, fromVenue }) : age.gate(() => save.mutate({ editionId, save: true, fromVenue })))}
       />
       {ready ? <Caption tone="muted">{`${ready} of ${drinkIds.length} ready from your shelf`}</Caption> : null}
       {save.error ? <Caption tone="accent">{save.error.message}</Caption> : null}

@@ -5,7 +5,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { VenueMark } from '@/components/nav/VenueMarks';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
-import { STEP_NAMES, VENUE_STEPS, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
+import { RAIL_STEPS, STEP_LINES, STEP_NAMES, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
 
 const WIDTH = 300;
 
@@ -28,7 +28,7 @@ export function SetupRail({ name, logoUrl, at, done, status, onPick, onLeave }: 
         </View>
       </View>
       <View role="list" style={styles.steps}>
-        {VENUE_STEPS.map((s, i) => {
+        {RAIL_STEPS.map((s, i) => {
           const current = s === at;
           const ticked = done.includes(s);
           return (
@@ -38,10 +38,9 @@ export function SetupRail({ name, logoUrl, at, done, status, onPick, onLeave }: 
               </View>
               <View style={styles.flex}>
                 <DsText variant="body" style={current ? styles.strong : null}>{STEP_NAMES[s]}</DsText>
-                {ticked && status[s] ? <Caption tone="muted" numberOfLines={1}>{status[s]}</Caption> : null}
+                {/* What it covers, until it's done (owner-setup-path step 4); proving it's yours says it's last (eddie-oct22-wave1). */}
+                <Caption tone="muted" numberOfLines={2}>{(ticked && status[s]) || STEP_LINES[s]}</Caption>
               </View>
-              {/* Proving it's yours comes last (eddie-oct22-wave1). */}
-              {s === 'claim' && !ticked ? <Caption tone="muted">Last</Caption> : null}
             </PressableScale>
           );
         })}

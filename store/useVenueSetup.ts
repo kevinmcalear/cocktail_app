@@ -29,10 +29,12 @@ export interface SetupRun {
   barId: string | null;
   name: string;
   done: VenueStep[];
-  /** Saw the summary and opened Tonight. Tonight stops showing the banner. */
+  /** Got to the end of venue setup ("Set up <bar>"). Tonight stops showing the banner. */
   finished: boolean;
   /** Typed before the claim, waiting for it (cleared once it's sent). */
   held?: HeldSetup;
+  /** Rows of "Set up <bar>" skipped for now (lib/setupChecklist.ts). */
+  skipped?: string[];
 }
 
 interface VenueSetupState {

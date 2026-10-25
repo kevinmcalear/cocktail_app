@@ -4,7 +4,9 @@ import type { OnboardingStep } from '@/lib/onboarding';
 export const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
   invite: { title: 'You’re invited' },
   name: { title: 'Your name', intro: 'How you show up on your profile and on drinks.' },
-  hospitality: { title: 'Do you work in hospitality?' },
+  hospitality: { title: 'What brings you here?', intro: 'So we start you in the right place. You can do the rest later.' },
+  bar: { title: 'Find your bar', intro: 'Its name, or the street it’s on.' },
+  addbar: { title: 'Add your bar', intro: 'Its name and address, once. Then set it up.' },
   find: {
     title: 'Find your bar or your name',
     intro: 'Most bars and bartenders are already here, with their menus and who made each drink.',

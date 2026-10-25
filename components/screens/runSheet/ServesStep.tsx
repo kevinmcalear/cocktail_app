@@ -133,9 +133,9 @@ export function ServesStep({ data, total, summaries }: { data: RunSheetData; tot
         {guest ? (
           <Caption tone="muted">
             {(atTheirs
-              ? `Everything starts with ${guest.name} except the house preps for your drinks and a brand’s own bottles. Change any of it on Who.`
+              ? `Everything starts with ${guest.name} except what’s made in-house for your drinks and a brand’s own bottles. Change any of it on Who.`
               : data.drinks.some((d) => d.partyId === guest.id)
-                ? `Everything starts with you except ${guest.name}’s house preps and a brand’s own bottles. Change any of it on Who.`
+                ? `Everything starts with you except what ${guest.name} makes in-house and a brand’s own bottles. Change any of it on Who.`
                 : `Everything starts with you. Give ${guest.name} what they bring on Who.`) + whose}
           </Caption>
         ) : null}

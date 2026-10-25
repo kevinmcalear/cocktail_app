@@ -351,9 +351,8 @@ export interface PartyPage {
 /** Pages to link a party to: bars for the guest venue, makers for a brand. Never makes one. */
 export function usePartySearch(term: string, kind: 'guest' | 'brand') {
   const q = term.trim();
-  // Bars it may have meant too ("lanturn room": The Lantern Room), marked `near`.
-  const userId = useUserId();
-  const close = kind === 'guest' && !!userId;
+  // Pages it may have meant too ("lanturn room": The Lantern Room), marked `near`.
+  const close = !!useUserId();
   return useQuery({
     queryKey: ['run-sheet-party-search', kind, q, close],
     enabled: q.length >= 2,
@@ -368,7 +367,7 @@ export function usePartySearch(term: string, kind: 'guest' | 'brand') {
         type Row = { id: string; display_name: string; handle: string; locality: string | null; city: string | null; is_claimed: boolean; bar_id: string | null };
         return ((data ?? []) as Row[]).map((r) => ({ id: r.id, display_name: r.display_name, handle: r.handle, place: r.city ?? r.locality, claimed: r.is_claimed || !!r.bar_id }));
       };
-      return close ? withNear(q, 'bar', read(), read, signal) : read();
+      return close ? withNear(q, kind === 'guest' ? 'bar' : 'maker', read(), read, signal) : read();
     },
   });
 }

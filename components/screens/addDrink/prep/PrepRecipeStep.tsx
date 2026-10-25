@@ -7,7 +7,7 @@ import { Choice } from '@/components/screens/batch/BatchParts';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
-import { MEASURE_UNITS, partsText, prepAmounts, prepSummary, prepYield, slotMessage, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
+import { MEASURE_UNITS, partsText, prepAmounts, prepSummary, prepYield, slotMessage, toFinishSummary, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { capitalizeFirst } from '@/lib/stringUtils';
 
@@ -147,12 +147,12 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                 <IngredientThumb id={l.id} name={l.name} size={36} />
                 <View style={styles.name}>
                   <PressableScale
-                    accessibilityLabel={l.slot ? `Pick the ${l.slot}` : l.prep && onMake ? `${l.name}, made in-house. Open its recipe` : `${l.name}. Swap it`}
+                    accessibilityLabel={l.slot ? `Pick the ${l.slot}` : l.prep && onMake ? `${l.name}, ${l.prep.at ? 'a recipe to finish. Pick it up' : 'made in-house. Open its recipe'}` : `${l.name}. Swap it`}
                     onPress={() => (l.prep && onMake ? onMake(l.key) : setSwapKey(l.key))}
                     style={styles.swapName}
                   >
                     <Body numberOfLines={3} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
-                    {l.prep ? <Caption tone="accent">{`Made in-house · ${prepSummary(l.prep)}`}</Caption> : null}
+                    {l.prep ? <Caption tone="accent">{l.prep.at ? `Recipe to finish · ${toFinishSummary(l.prep)}` : `Made in-house · ${prepSummary(l.prep)}`}</Caption> : null}
                     {isBase ? <Caption tone="accent">{view === 'amounts' ? 'The base' : 'The base, everything follows it'}</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'amounts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
                   </PressableScale>
                   {l.slot ? null : noteKey === l.key ? (

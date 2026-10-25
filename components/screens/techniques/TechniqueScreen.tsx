@@ -11,7 +11,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { equipmentById, groupById, techniqueById } from '@/lib/techniques';
 import { factTiles, swapLine } from '@/lib/techniques/facts';
-import { useKit } from '@/hooks/useKit';
+import { useKitHere } from '@/hooks/useBarKit';
 
 const GATE = {
   safety: 'This can hurt someone. Read every warning before you start.',
@@ -22,7 +22,7 @@ const GATE = {
 export function TechniqueScreen({ id }: { id: string }) {
   const ds = useDs();
   const router = useRouter();
-  const { kit } = useKit();
+  const kit = useKitHere();
   const [done, setDone] = useState<number[]>([]);
   const t = techniqueById(id);
   if (!t) {
