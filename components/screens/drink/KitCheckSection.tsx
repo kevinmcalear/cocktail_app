@@ -60,9 +60,14 @@ export function KitCheckSection({ itemId, barId, drink }: { itemId: string; barI
           </View>
         ))}
         {check.tools ? (
-          <CheckRow label="Tools" value={toolNames(check.tools.needed)} ok={!check.tools.missing.length} line={check.tools.missing.length ? `Not in your kit: ${toolNames(check.tools.missing)}` : 'All yours'}>
-            {check.tools.missing.length ? add('Add to kit', { kind: 'tool', key: check.tools.missing[0] }) : null}
-          </CheckRow>
+          <View style={styles.stack}>
+            <CheckRow label="Tools" value={toolNames(check.tools.needed)} ok={!check.tools.missing.length} line={check.tools.missing.length ? 'Not all in your kit' : 'All yours'} />
+            {check.tools.missing.map((t) => (
+              <CheckRow key={t} label="Not in your kit" value={equipmentById(t)?.name ?? t} ok={false} line={`For the ${drink}`}>
+                {add('Add to kit', { kind: 'tool', key: t })}
+              </CheckRow>
+            ))}
+          </View>
         ) : null}
       </Surface>
       <Caption tone="muted">

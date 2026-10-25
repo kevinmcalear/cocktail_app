@@ -56,7 +56,8 @@ export function useVenueDrinks(barId: string | null | undefined) {
   return useQuery({
     queryKey: ['venue-drink-kit', barId],
     enabled: !!barId,
-    staleTime: 10 * 60_000,
+    // A minute: drink saves don't refresh it, so a changed or new drink is checked again soon after.
+    staleTime: 60_000,
     queryFn: async (): Promise<CheckedDrink[]> => {
       // ponytail: one page of a venue's drinks; past 1000 the rest aren't checked. A paged read if a venue gets there.
       const { data, error } = await supabase.from('items').select(DRINK_COLUMNS).eq('bar_id', barId!).eq('item_type', 'cocktail').limit(1000);

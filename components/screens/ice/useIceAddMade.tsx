@@ -33,6 +33,7 @@ export function useIceAddMade(barId: string, ices: readonly VenueIce[]) {
     await startIceRecipe({ ...ice, id }, way, fromId);
     void client.invalidateQueries({ queryKey: ['item-prep', id] });
     void client.invalidateQueries({ queryKey: iceStartsFromKey(id) });
+    void client.invalidateQueries({ queryKey: ['venue-ice-recipes'] });
     router.push(iceRecipeHref(barId, id));
   };
 
