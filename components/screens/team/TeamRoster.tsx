@@ -23,6 +23,7 @@ import { agoLabel, joinedLabel, memberRoleName, personName, rosterGroups, TEAM_M
 import { useTeamSort } from '@/store/useTeamSort';
 
 import { InviteSheet, type InviteNote } from './InviteSheet';
+import { JoinRequests } from './JoinRequests';
 import { MemberSheet } from './MemberSheet';
 
 const AVATAR = 44;
@@ -188,6 +189,7 @@ export function TeamRoster({ barId, barName, role, inviting, onCloseInvite }: {
         </View>
       ) : null}
 
+      {manage ? <JoinRequests barId={barId} barName={barName} /> : null}
       {manage ? <JobRequests venueId={barId} title="Job requests" /> : null}
       {manage ? <MakerCreditRequests venueId={barId} /> : null}
 
