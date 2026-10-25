@@ -37,6 +37,12 @@ export function checklist(done: Readonly<Record<ChecklistKey, boolean>>, skipped
   return { rows, done: count, total: rows.length, next, finished: next === null };
 }
 
+/** "2 glasses, 1 ice, 3 tools so far": what the Kit row has, the empty ones left out. */
+export function kitNote(glasses: number, ice: number, tools: number): string | undefined {
+  const parts = [glasses ? `${glasses} ${glasses === 1 ? 'glass' : 'glasses'}` : null, ice ? `${ice} ice` : null, tools ? `${tools} ${tools === 1 ? 'tool' : 'tools'}` : null].filter(Boolean);
+  return parts.length ? `${parts.join(', ')} so far` : undefined;
+}
+
 const WORDS = ['None', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];
 
 /** "Three of six done. Each one brings you back here." */

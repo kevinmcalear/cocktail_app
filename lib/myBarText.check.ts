@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 
 import { barSubtitle, footLine, foundLine, groupLine, keepsFor, lastedLine, needsLine, pairName, prepMeta, shelfCountsLine, sourceCaption, prepUseBy, shortBottle, tickNames, usesLine } from './myBarText';
 
-assert.equal(barSubtitle(7, 2), '7 drinks ready · 2 preps you can make now');
+assert.equal(barSubtitle(7, 2), '7 drinks ready · 2 house-made ingredients you can make now');
 assert.equal(barSubtitle(1, 0), '1 drink ready');
-assert.equal(barSubtitle(0, 1), 'Nothing ready yet · 1 prep you can make now');
+assert.equal(barSubtitle(0, 1), 'Nothing ready yet · 1 house-made ingredient you can make now');
 
-assert.equal(shelfCountsLine({ bottles: 4, fridge: 6, lab: 2, preps: 2, kit: 3 }), '4 bottles · 6 in the fridge · 2 on the lab shelf · 2 made in-house · 3 pieces of kit');
-assert.equal(shelfCountsLine({ bottles: 1, fridge: 0, lab: 0, preps: 1, kit: 1 }), '1 bottle · 1 made in-house · 1 piece of kit');
+assert.equal(shelfCountsLine({ bottles: 4, fridge: 6, lab: 2, preps: 2, kit: 3 }), '4 bottles · 6 in the fridge · 2 on the lab shelf · 2 house-made · 3 pieces of kit');
+assert.equal(shelfCountsLine({ bottles: 1, fridge: 0, lab: 0, preps: 1, kit: 1 }), '1 bottle · 1 house-made · 1 piece of kit');
 
 assert.equal(keepsFor(24 * 14), '2 weeks');
 assert.equal(keepsFor(24 * 7), 'about a week');

@@ -13,7 +13,7 @@ import { useAppMode } from '@/store/useAppMode';
 
 import { BrandsStep } from './BrandsStep';
 import { FromDrinksStep, fromDrinksCount } from './FromDrinksStep';
-import { GlassesStep } from './GlassesStep';
+import { KitStep } from './KitStep';
 import { MenuStep } from './MenuStep';
 import { ChecklistRow, ClaimNote, FromDrinksRow } from './SetupChecklistParts';
 import { TeamStep } from './TeamStep';
@@ -45,7 +45,8 @@ export function SetupChecklist({ barId, name, footer }: { barId: string; name: s
     router.push(page as Href);
   };
 
-  if (at === 'kit') return <GlassesStep barId={barId} pageId={pageId} name={name} step={step('kit')} onBack={back} onNext={back} onSkip={() => (skip('kit'), back())} />;
+  // Done with nothing in the kit leaves it for later, like Skip.
+  if (at === 'kit') return <KitStep barId={barId} pageId={pageId} name={name} step={step('kit')} onBack={back} onDone={() => (list.rows.some((r) => r.key === 'kit' && r.state === 'done') ? null : skip('kit'), back())} />;
   if (at === 'bottles') return <BrandsStep barId={barId} step={step('bottles')} onBack={back} onNext={back} onSkip={() => (skip('bottles'), back())} />;
   if (at === 'fromDrinks') return <FromDrinksStep barId={barId} pageId={pageId} name={name} onBack={back} />;
   if (at === 'menu') {

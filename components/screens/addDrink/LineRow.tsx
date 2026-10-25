@@ -70,10 +70,10 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
   const status = line.id
     ? null
     : line.later
-        ? { text: 'Made in-house, recipe to write', accent: true }
+        ? { text: 'House-made, recipe to write', accent: true }
         : line.technique
-          ? { text: `Made in-house: ${techniqueById(line.technique)?.name ?? 'your recipe'}`, accent: true }
-          : { text: 'New, added when you save', accent: false };
+          ? { text: `House-made: ${techniqueById(line.technique)?.name ?? 'your recipe'}`, accent: true }
+          : { text: line.bottle ? 'A bottle you buy, added when you save' : 'New, added when you save', accent: false };
   // The bottle, then remove: beside the name on a phone, so the controls under it keep their width.
   const ends = (
     <>
@@ -105,7 +105,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
               haptic={false}
               role="button"
               aria-expanded={recipe ? undefined : open}
-              accessibilityLabel={`${line.name}, ${amountLabel}${line.prep ? (line.prep.at ? `. Recipe to finish: ${toFinishSummary(line.prep)}` : `. Made in-house: ${prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}`) : ''}`}
+              accessibilityLabel={`${line.name}, ${amountLabel}${line.prep ? (line.prep.at ? `. Recipe to finish: ${toFinishSummary(line.prep)}` : `. House-made: ${prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}`) : ''}`}
               accessibilityHint={recipe ? 'Opens its recipe' : 'Shows swap, note and more'}
               style={[stacked ? styles.nameStacked : styles.name, line.prep ? styles.prepName : null]}
             >
@@ -116,7 +116,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                 ) : line.prep ? (
                   <>
                     {/* Left for later (make-anything-steps-3, step 9): a tap picks up where it was left. */}
-                    <Caption tone="accent">{line.prep.at ? 'Recipe to finish' : 'Made in-house'}</Caption>
+                    <Caption tone="accent">{line.prep.at ? 'Recipe to finish' : 'House-made'}</Caption>
                     <Caption tone="muted" numberOfLines={2}>
                       {line.prep.at ? toFinishSummary(line.prep) : prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}
                     </Caption>

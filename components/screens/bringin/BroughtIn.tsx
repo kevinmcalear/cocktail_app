@@ -113,7 +113,7 @@ export function BroughtIn({ view }: { view: BroughtInView }) {
               </Caption>
               {view.menuId ? <Made label={view.title} count={1} onPress={() => go(`/menus/${view.menuId}/edit`)} /> : null}
               {drinks ? <Made label="Drinks" detail={drinkDetail} count={drinks} onPress={view.drinkIds.length === 1 ? () => go(`/cocktail/${view.drinkIds[0]}`) : undefined} /> : null}
-              {s.preps.length ? <Made label="Made in-house" detail={names(s.preps)} count={s.preps.length} /> : null}
+              {s.preps.length ? <Made label="House-made" detail={names(s.preps)} count={s.preps.length} /> : null}
               {s.ingredients.length ? <Made label="Ingredients" detail={names(s.ingredients)} count={s.ingredients.length} /> : null}
               {s.bottles ? <Made label="Bottles" detail={view.barId ? 'in the venue’s ingredients' : 'on My Bar'} count={s.bottles} /> : null}
             </View>

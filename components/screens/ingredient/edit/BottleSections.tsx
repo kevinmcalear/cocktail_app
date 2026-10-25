@@ -23,7 +23,7 @@ export function WhatItIs({ form, set, onKind }: { form: IngredientForm; set: (pa
   return (
     <View style={styles.section}>
       <Headline role="heading">What it is</Headline>
-      <KindOf name={form.generic?.name ?? null} onPick={onKind} onClear={() => set({ generic: null })} />
+      <KindOf name={form.generic?.name ?? null} onPick={onKind} />
       <View style={styles.row}>
         <View style={styles.grow}>
           <Field label="Maker" value={form.brandMaker} onChangeText={(v) => handleCapitalizedChange(v, form.brandMaker, (brandMaker) => set({ brandMaker }))} onBlur={() => set({ brandMaker: capitalize(form.brandMaker) })} placeholder="e.g. Campari" maxLength={80} />

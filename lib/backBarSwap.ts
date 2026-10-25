@@ -7,7 +7,7 @@ import type { MenuSummary } from '@/types/menus';
 export interface PourRow {
   hit: SwapHit;
   house: boolean;
-  /** "On the Autumn menu", "R&D", "House prep · changes with the drinks". */
+  /** "On the Autumn menu", "R&D", "House-made · changes with the drinks". */
   detail: string;
 }
 
@@ -43,18 +43,18 @@ export function pourersOf(
   const rows = hits.map((hit) => {
     const house = hit.drink.itemType === 'ingredient';
     const at = house
-      ? { rank: 4, detail: 'Made in-house · changes with the drinks' }
+      ? { rank: 4, detail: 'House-made · changes with the drinks' }
       : (where.get(hit.drink.id) ?? { rank: 2, detail: hit.changes.map((change) => `${change.amount} ${change.from}`.trim()).join(', ') });
     return { hit, house, detail: at.detail, rank: at.rank };
   });
   return rows.sort((a, b) => a.rank - b.rank).map(({ hit, house, detail }) => ({ hit, house, detail }));
 }
 
-/** "3 drinks and 1 prep", "4 drinks", "1 prep". */
+/** "3 drinks and 1 house-made ingredient", "4 drinks", "1 house-made ingredient". */
 export function pourCount(rows: PourRow[]): string {
   const preps = rows.filter((row) => row.house).length;
   const drinks = rows.length - preps;
-  return andList([drinks ? plural(drinks, 'drink') : '', preps ? plural(preps, 'prep') : ''].filter(Boolean));
+  return andList([drinks ? plural(drinks, 'drink') : '', preps ? plural(preps, 'house-made ingredient') : ''].filter(Boolean));
 }
 
 /** The question over the swap: "Your Naked and Famous uses this. Swap it?" */

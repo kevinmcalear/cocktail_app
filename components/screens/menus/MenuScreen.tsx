@@ -17,7 +17,9 @@ import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useVenueFeatures } from '@/hooks/useVenueFeatures';
 import { useMyBar } from '@/hooks/useHomeBar';
+import { useShoppingEdit } from '@/hooks/useShoppingList';
 import { shelfReady } from '@/lib/collectionMenus';
+import { menuShopping } from '@/lib/shoppingList';
 import { groupMenus, homeNightTag, isOneNightMenu, menuDateLine, menuStatus, newDrinkIds, plural } from '@/lib/menus';
 import type { MenuStatus } from '@/types/menus';
 
@@ -140,7 +142,8 @@ export function MenuScreen({ menuId }: { menuId: string }) {
               )}
               <View style={styles.actions}>
                 {canEdit ? <MenuAction label="Edit" icon="pencil" primary onPress={() => go(`/menus/${menu.id}/edit`)} /> : null}
-                {canEdit && !menu.barId ? <MenuAction label="Date and guests" icon="calendar" onPress={() => setNight(true)} /> : null}
+                {/* A home menu: Shopping list in Date and guests' place (d35); the night moves into More. */}
+                {canEdit && home ? <ShoppingAction drinks={pictures} /> : null}
                 <MenuAction label="Share" icon="square.and.arrow.up" onPress={() => (shareable ? setSharing(true) : go(`/menus/${menu.id}/card`))} />
                 {has('study') && status === 'on' ? <MenuAction label="Study" icon="book" onPress={() => go('/study/tonight')} /> : null}
                 {has('prep') && (status === 'on' || status === 'upcoming') ? <MenuAction label="Prep" icon="flask" onPress={() => go('/prep')} /> : null}
@@ -154,12 +157,12 @@ export function MenuScreen({ menuId }: { menuId: string }) {
       />
       <View style={[styles.topBar, { top: insets.top + space.sm, paddingHorizontal: gutter }]}>
         {sidebar ? <View /> : <GlassButton icon="chevron.left" accessibilityLabel={home ? 'Back' : 'Back to Menus'} onPress={back} onMedia={!!hero} />}
-        {canEdit ? <GlassButton icon="ellipsis" accessibilityLabel="More: duplicate, take off, file under R&D, delete" onPress={() => setMore(true)} onMedia={!!hero} /> : null}
+        {canEdit ? <GlassButton icon="ellipsis" accessibilityLabel={home ? 'More: date and guests, duplicate, delete' : 'More: duplicate, take off, file under R&D, delete'} onPress={() => setMore(true)} onMedia={!!hero} /> : null}
       </View>
       {night ? <HomeNightSheet menu={menu} onClose={() => setNight(false)} /> : null}
       {sharing ? <ShareMenuSheet menu={menu} onClose={() => setSharing(false)} /> : null}
       {/* Going on and off is the venue calendar (startsAt, endsAt): a home menu's night doesn't change it. */}
-      {more ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setMore(false)} /> : null}
+      {more ? <MenuMoreSheet menu={menu} status={status} visible onClose={() => setMore(false)} onNight={home ? () => setNight(true) : undefined} /> : null}
     </View>
   );
 }
@@ -169,6 +172,21 @@ export function MenuScreen({ menuId }: { menuId: string }) {
 function HomeMenuRow({ row, newIds }: { row: MenuPageRow; newIds?: ReadonlySet<string> }) {
   const bar = useMyBar();
   return <MenuPageRowView row={row} newIds={newIds} firstGap={space.sm} shelf={bar.isLoading ? null : bar} />;
+}
+
+/** Shopping list: what this menu's drinks are one or two bottles short of goes on the list, then the list opens. */
+function ShoppingAction({ drinks }: { drinks: { id: string }[] }) {
+  const router = useRouter();
+  const bar = useMyBar();
+  const edit = useShoppingEdit();
+  const open = () => {
+    // Before My Bar's match is in, there's nothing to say what the menu is short of.
+    if (bar.isLoading) return;
+    const adds = menuShopping(drinks, bar.oneAway, bar.twoAway).map((a) => ({ ...a, source: 'menu' as const }));
+    if (adds.length) edit.add.mutate(adds);
+    router.push('/shopping' as Href);
+  };
+  return <MenuAction label="Shopping list" icon="basket" onPress={open} />;
 }
 
 /** "4 drinks, 3 you can make · 8 guests": a home menu's count, what your shelf makes, who's coming, and whether a link is out. */

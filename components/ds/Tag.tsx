@@ -13,7 +13,7 @@ export type TagTone = 'default' | 'accent' | 'outline' | 'paper' | 'success' | '
 
 /**
  * A small label. `paper` is pencil ink on the house paper (the wizard band's
- * "House prep"). Drawn pictures carry no tag: drawings are obviously drawings.
+ * "House-made"). Drawn pictures carry no tag: drawings are obviously drawings.
  * Status tones are never the only signal: the label says what it means.
  * `outline` is a hairline pill in muted ink ("Need Cynar", a lock and
  * "Names only"); `icon` sits before the label, or `dot`, a small dot in the

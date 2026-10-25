@@ -18,6 +18,8 @@ interface PasteSpecPanelProps {
   ingredients: readonly CatalogIngredient[];
   aliases?: readonly IngredientAlias[];
   coreIds?: ReadonlySet<string>;
+  /** The catalog is still loading: nothing is added yet, or every line would be read as new. */
+  loading?: boolean;
   /** The back bar's (or shelf's) bottles: a wash starts from one of these first. */
   have?: ReadonlySet<string>;
   haveLabel: string;
@@ -33,7 +35,7 @@ interface PasteSpecPanelProps {
  * rising in a sheet over the wizard trips Reanimated's layout-animation assert
  * (debug build, 23 Oct); a sheet can come back once that's fixed.
  */
-export function PasteSpecPanel({ onClose, drinkName, ingredients, aliases, coreIds, have, haveLabel, onAdd }: PasteSpecPanelProps) {
+export function PasteSpecPanel({ onClose, drinkName, ingredients, aliases, coreIds, loading, have, haveLabel, onAdd }: PasteSpecPanelProps) {
   const ds = useDs();
   const [text, setText] = useState('');
   // Read behind the typing: each line is matched against the whole catalog.
@@ -72,8 +74,8 @@ export function PasteSpecPanel({ onClose, drinkName, ingredients, aliases, coreI
       )}
       <View style={styles.buttons}>
         <Button
-          label={n ? `Add ${n} ${n === 1 ? 'line' : 'lines'}` : 'Add the lines'}
-          disabled={!n}
+          label={loading ? 'Loading ingredients…' : n ? `Add ${n} ${n === 1 ? 'line' : 'lines'}` : 'Add the lines'}
+          disabled={!n || loading}
           onPress={() => {
             onAdd(rows);
             onClose();

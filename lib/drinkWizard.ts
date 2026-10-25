@@ -59,6 +59,8 @@ export interface WizardLine extends WizardPick {
   combined?: WizardLine[];
   /** A new bottle you buy, filled in under its line on the desktop page (lib/newBottle): saved with the drink. */
   bottle?: NewBottle;
+  /** "Just the name" for a line that matched nothing: a new ingredient by its name, no longer offered a recipe or a bottle (LineChoices). */
+  named?: boolean;
 }
 
 /** What a new bottle is and how the venue buys it, as typed on its card. Set once for the venue when the drink is saved. */

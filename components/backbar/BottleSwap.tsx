@@ -53,10 +53,10 @@ export function PourList({ replaceWith, rows, unticked, onToggle, onChange, canE
           {`EVERYTHING THAT POURS IT · ${rows.length}`}
         </Caption>
       ) : (
-        <Body tone="muted">No drinks or preps pour it.</Body>
+        <Body tone="muted">No drinks or house-made ingredients pour it.</Body>
       )}
       {canEditDrinks ? (
-        <View role="group" aria-label="Drinks and preps to swap" style={styles.rows}>
+        <View role="group" aria-label="Drinks and house-made ingredients to swap" style={styles.rows}>
           {rows.map((row) => (
             <Choice
               key={row.hit.drink.id}

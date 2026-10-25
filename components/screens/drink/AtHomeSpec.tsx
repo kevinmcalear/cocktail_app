@@ -8,6 +8,8 @@ import { shelfCaption } from '@/lib/shelfCheck';
 import type { PresentationRecipe, SpecLine } from '@/lib/spec';
 import type { DatabaseItem } from '@/types/types';
 
+import { AddToShopping } from '../shopping/AddToShopping';
+
 import { SpecSection } from './SpecSection';
 
 interface AtHomeSpecProps {
@@ -24,16 +26,16 @@ interface AtHomeSpecProps {
 /**
  * The spec at home (board drink-phone-home): "At home · You have 4 of 5",
  * the lines you don't have marked, the method, and the bottle on your shelf
- * closest to the one you're missing. "Add Cynar to shopping" waits for the
- * shopping list (decision b37, later).
+ * closest to the one you're missing, and "Add Cynar to shopping" (AddToShopping).
  */
 export function AtHomeSpec({ item, lines, recipes, method, make, onSwap }: AtHomeSpecProps) {
-  const { check, missingName, closest } = useShelfCheck(item.id, lines);
+  const { check, missingName, closest, buy } = useShelfCheck(item.id, lines);
   return (
     <SpecSection itemId={item.id} barId={item.bar_id} recipes={recipes} heading="At home" caption={check ? shelfCaption(check) : null} missing={check?.missing ?? []} make={make}>
       {method ? <Body>{method}</Body> : null}
       {check?.missing.length ? (
         <View style={styles.swap}>
+          <AddToShopping drinkId={item.id} buy={buy} />
           <Button label="Swap it for…" variant="secondary" accessibilityHint="Log your version with what you used instead" onPress={onSwap} style={styles.button} />
           {closest && missingName ? <Caption tone="muted">{`On your shelf, ${closest} is closest to ${missingName}.`}</Caption> : null}
         </View>

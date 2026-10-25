@@ -40,7 +40,7 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
   const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())), shown);
   const word = (draft.technique ? techniqueById(draft.technique)?.name : draft.kind !== 'other' ? PREP_KINDS.find((k) => k.id === draft.kind)?.name : null)?.toLowerCase();
   return (
-    <View nativeID={nested ? undefined : PREP_CARD_ID} role="group" aria-label={`Made in-house: ${shown}`} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+    <View nativeID={nested ? undefined : PREP_CARD_ID} role="group" aria-label={`House-made: ${shown}`} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
       <View style={styles.head}>
         <View style={styles.trailRow}>
           <View style={styles.flex}>
@@ -52,7 +52,7 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
             </PressableScale>
           ) : null}
         </View>
-        <Body>{`Made in-house: ${shown}`}</Body>
+        <Body>{`House-made: ${shown}`}</Body>
         <Caption tone="muted">{`${venueName ? `Private to ${venueName}. ` : ''}Made from parts you buy, so it costs itself.`}</Caption>
       </View>
       <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />

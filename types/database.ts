@@ -4681,6 +4681,71 @@ export type Database = {
           },
         ]
       }
+      shopping_list_items: {
+        Row: {
+          added_at: string
+          cleared_at: string | null
+          for_item_id: string | null
+          got_at: string | null
+          id: string
+          item_id: string | null
+          name: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          cleared_at?: string | null
+          for_item_id?: string | null
+          got_at?: string | null
+          id?: string
+          item_id?: string | null
+          name: string
+          source?: string
+          user_id?: string
+        }
+        Update: {
+          added_at?: string
+          cleared_at?: string | null
+          for_item_id?: string | null
+          got_at?: string | null
+          id?: string
+          item_id?: string | null
+          name?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_list_items_for_item_id_fkey"
+            columns: ["for_item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_for_item_id_fkey"
+            columns: ["for_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopping_list_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       source_recipe_lines: {
         Row: {
           amount_ml: number | null
@@ -6665,6 +6730,7 @@ export type Database = {
           score: number
         }[]
       }
+      give_back_review_code_try: { Args: { p_id: number }; Returns: undefined }
       ingredient_key: { Args: { p_name: string }; Returns: string }
       ingredient_used_in: {
         Args: { p_ingredient_id: string; p_limit?: number }
@@ -7348,6 +7414,7 @@ export type Database = {
         Args: { p_bar_id: string; p_email: string; p_sender: string }
         Returns: string
       }
+      take_review_code_try: { Args: never; Returns: number }
       top_ranked_classics: {
         Args: { p_limit?: number }
         Returns: {

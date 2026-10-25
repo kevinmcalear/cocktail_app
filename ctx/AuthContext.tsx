@@ -3,7 +3,7 @@ import { isFirstSignIn, type AuthProblem } from '@/lib/authCode';
 import { getAuthRedirectTo } from '@/lib/authRedirect';
 import type { FeatureNewsSeen } from '@/lib/featureNews';
 import { forgetStoredSession, readStoredUser, supabase } from '@/lib/supabase';
-import { isAuthRetryableFetchError, Session, User } from '@supabase/supabase-js';
+import { FunctionsHttpError, isAuthRetryableFetchError, Session, User } from '@supabase/supabase-js';
 import { onlineManager } from '@tanstack/react-query';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -177,7 +177,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const verifyCode = async (email: string, code: string) => {
-    const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    let { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    // App Review can't receive our emails: its one account types a fixed code
+    // instead, which review-sign-in swaps for a one-time link token. Anyone
+    // else keeps the wrong-code answer the emailed code gave.
+    if (error && error.code !== 'over_request_rate_limit') {
+      const { data: review, error: reviewError } = await supabase.functions.invoke<{ token_hash?: string }>(
+        'review-sign-in',
+        { body: { email, code } },
+      );
+      // Locked after too many wrong tries: say so, or the right code would read as wrong.
+      if (reviewError instanceof FunctionsHttpError && reviewError.context.status === 429) {
+        return { error: { message: 'Too many tries. Wait 15 minutes, then try again.' } };
+      }
+      if (review?.token_hash) {
+        // 'email' takes both kinds the function can hand back: a magic link
+        // token, or a sign-up one when it just made the account.
+        ({ data, error } = await supabase.auth.verifyOtp({ token_hash: review.token_hash, type: 'email' }));
+      }
+    }
     if (!error && data.user && isFirstSignIn(data.user)) track('sign_up');
     return { error: asProblem(error) };
   };

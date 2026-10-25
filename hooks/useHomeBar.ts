@@ -93,7 +93,7 @@ export interface FoundItem extends BarItem {
   origin: string | null;
 }
 
-const SHELF_KEY = ['home-bar'];
+export const SHELF_KEY = ['home-bar'];
 const NONE: string[] = [];
 const ITEM_SELECT = 'id, name, item_type, glassware_id, item_images(angle, sort_order, is_generated, images(url))';
 const SHELF_SELECT = `${ITEM_SELECT}, brand_maker, abv, generic_id, ingredient_role, recipes:app_recipe_presentation!recipe_item_id(id)`;
@@ -169,7 +169,7 @@ return foundItems([...named, ...searchByName(query, rows, 40).filter((r) => !nam
 }
 
 /** Rows by id, as searchBar has them: the close names. */
-async function readFound(ids: string[]): Promise<FoundItem[]> {
+export async function readFound(ids: string[]): Promise<FoundItem[]> {
   const { data, error } = await supabase.from('app_item_presentation').select(FOUND_SELECT).in('id', ids);
   if (error) throw error;
   return foundItems((data ?? []) as unknown as ItemRow[]);
