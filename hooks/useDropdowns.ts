@@ -49,7 +49,9 @@ function useSpecLists() {
         methods: specs.filter((item) => item.item_type === 'method'),
         glassware: specs.filter((item) => item.item_type === 'glassware'),
         families: specs.filter((item) => item.item_type === 'family'),
-        iceTypes: specs.filter((item) => item.item_type === 'ice'),
+        // The shared ice. A venue's own ice items (item_ice) are its Kit, read with useVenueIce.
+        // ponytail: drinks name the shared ice until the wizard offers the venue's own (kit and ice PR 6).
+        iceTypes: specs.filter((item) => item.item_type === 'ice' && !item.bar_id),
         categories: categoriesRes.data || [],
       };
     },

@@ -19,8 +19,6 @@ export function usePrivateNote(itemId: string | null | undefined) {
     enabled: !!itemId && !!userId,
     queryFn: async (): Promise<PrivateNote | null> => {
       const { data, error } = await supabase.from('item_private_notes').select('body, updated_at').eq('item_id', itemId!).maybeSingle();
-      // ponytail: a database without 20261025100000 has no table yet (PGRST205); read as no note. Drop once it's in production.
-      if (error?.code === 'PGRST205') return null;
       if (error) throw error;
       return data ? { body: data.body as string, updatedAt: data.updated_at as string } : null;
     },

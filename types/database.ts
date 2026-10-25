@@ -63,6 +63,7 @@ export type Database = {
       }
       bar_glassware: {
         Row: {
+          count: number | null
           created_at: string
           designer: string | null
           glass: string
@@ -76,11 +77,14 @@ export type Database = {
           series: string | null
           shape_note: string | null
           sort_order: number
+          source: string | null
           source_urls: string[]
+          supplier_id: string | null
           updated_at: string
           variant: string | null
         }
         Insert: {
+          count?: number | null
           created_at?: string
           designer?: string | null
           glass: string
@@ -94,11 +98,14 @@ export type Database = {
           series?: string | null
           shape_note?: string | null
           sort_order?: number
+          source?: string | null
           source_urls?: string[]
+          supplier_id?: string | null
           updated_at?: string
           variant?: string | null
         }
         Update: {
+          count?: number | null
           created_at?: string
           designer?: string | null
           glass?: string
@@ -112,7 +119,9 @@ export type Database = {
           series?: string | null
           shape_note?: string | null
           sort_order?: number
+          source?: string | null
           source_urls?: string[]
+          supplier_id?: string | null
           updated_at?: string
           variant?: string | null
         }
@@ -136,6 +145,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bar_glassware_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -187,40 +203,46 @@ export type Database = {
       bar_kit: {
         Row: {
           bar_id: string
+          count: number | null
           created_at: string
           id: string
-          key: string
+          key: string | null
           kind: string
-          length_mm: number | null
-          made_here: boolean
+          location: string | null
+          name: string | null
           note: string | null
           sort_order: number
+          source: string | null
           supplier_id: string | null
           updated_at: string
         }
         Insert: {
           bar_id: string
+          count?: number | null
           created_at?: string
           id?: string
-          key: string
-          kind: string
-          length_mm?: number | null
-          made_here?: boolean
+          key?: string | null
+          kind?: string
+          location?: string | null
+          name?: string | null
           note?: string | null
           sort_order?: number
+          source?: string | null
           supplier_id?: string | null
           updated_at?: string
         }
         Update: {
           bar_id?: string
+          count?: number | null
           created_at?: string
           id?: string
-          key?: string
+          key?: string | null
           kind?: string
-          length_mm?: number | null
-          made_here?: boolean
+          location?: string | null
+          name?: string | null
           note?: string | null
           sort_order?: number
+          source?: string | null
           supplier_id?: string | null
           updated_at?: string
         }
@@ -1964,6 +1986,76 @@ export type Database = {
           },
         ]
       }
+      item_ice: {
+        Row: {
+          bar_id: string
+          clear: boolean | null
+          draw_as: string | null
+          frozen_inside: string | null
+          item_id: string
+          length_mm: number | null
+          machine: string | null
+          note: string | null
+          shape: string
+          size_mm: number | null
+          source: string | null
+          stamped: boolean
+          supplier_id: string | null
+        }
+        Insert: {
+          bar_id: string
+          clear?: boolean | null
+          draw_as?: string | null
+          frozen_inside?: string | null
+          item_id: string
+          length_mm?: number | null
+          machine?: string | null
+          note?: string | null
+          shape: string
+          size_mm?: number | null
+          source?: string | null
+          stamped?: boolean
+          supplier_id?: string | null
+        }
+        Update: {
+          bar_id?: string
+          clear?: boolean | null
+          draw_as?: string | null
+          frozen_inside?: string | null
+          item_id?: string
+          length_mm?: number | null
+          machine?: string | null
+          note?: string | null
+          shape?: string
+          size_mm?: number | null
+          source?: string | null
+          stamped?: boolean
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_ice_item_id_bar_id_fkey"
+            columns: ["item_id", "bar_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id", "bar_id"]
+          },
+          {
+            foreignKeyName: "item_ice_item_id_bar_id_fkey"
+            columns: ["item_id", "bar_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id", "bar_id"]
+          },
+          {
+            foreignKeyName: "item_ice_supplier_id_bar_id_fkey"
+            columns: ["supplier_id", "bar_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id", "bar_id"]
+          },
+        ]
+      }
       item_images: {
         Row: {
           angle: Database["public"]["Enums"]["image_angle"]
@@ -2489,21 +2581,60 @@ export type Database = {
           },
         ]
       }
+      item_spellings: {
+        Row: {
+          created_at: string
+          item_id: string
+          saved_by: string | null
+          spelling: string
+        }
+        Insert: {
+          created_at?: string
+          item_id: string
+          saved_by?: string | null
+          spelling: string
+        }
+        Update: {
+          created_at?: string
+          item_id?: string
+          saved_by?: string | null
+          spelling?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_spellings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "app_item_presentation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_spellings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       item_steps: {
         Row: {
           body: string
+          equipment: string[]
           item_id: string
           position: number
           timer_seconds: number | null
         }
         Insert: {
           body: string
+          equipment?: string[]
           item_id: string
           position: number
           timer_seconds?: number | null
         }
         Update: {
           body?: string
+          equipment?: string[]
           item_id?: string
           position?: number
           timer_seconds?: number | null
@@ -4783,6 +4914,7 @@ export type Database = {
         Row: {
           bar_id: string
           created_at: string
+          cuts_to_order: boolean
           delivers: string | null
           id: string
           name: string
@@ -4795,6 +4927,7 @@ export type Database = {
         Insert: {
           bar_id: string
           created_at?: string
+          cuts_to_order?: boolean
           delivers?: string | null
           id?: string
           name: string
@@ -4807,6 +4940,7 @@ export type Database = {
         Update: {
           bar_id?: string
           created_at?: string
+          cuts_to_order?: boolean
           delivers?: string | null
           id?: string
           name?: string
@@ -6518,6 +6652,7 @@ export type Database = {
           ticket_url: string
         }[]
       }
+      near_score: { Args: { p_name: string; p_query: string }; Returns: number }
       next_pair_notes: {
         Args: { p_limit?: number }
         Returns: {
@@ -6635,6 +6770,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      remove_venue_ice: { Args: { p_id: string }; Returns: undefined }
       resolve_ingredient: { Args: { p_name: string }; Returns: string }
       resolve_report: {
         Args: {
@@ -6755,6 +6891,29 @@ export type Database = {
         Returns: undefined
       }
       save_pair_notes: { Args: { p_notes: Json }; Returns: number }
+      save_spelling: {
+        Args: { p_item_id: string; p_typed: string }
+        Returns: boolean
+      }
+      save_venue_ice: {
+        Args: {
+          p_bar_id: string
+          p_clear?: boolean
+          p_draw_as?: string
+          p_frozen_inside?: string
+          p_id?: string
+          p_length_mm?: number
+          p_machine?: string
+          p_name: string
+          p_note?: string
+          p_shape: string
+          p_size_mm?: number
+          p_source?: string
+          p_stamped?: boolean
+          p_supplier_id?: string
+        }
+        Returns: string
+      }
       schedule_menu: {
         Args: {
           p_menu_id: string
@@ -6807,6 +6966,27 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      search_near: {
+        Args: {
+          p_city?: string
+          p_country_code?: string
+          p_kinds?: string[]
+          p_latitude?: number
+          p_limit?: number
+          p_longitude?: number
+          p_query: string
+          p_radius_km?: number
+        }
+        Returns: {
+          handle: string
+          id: string
+          kind: string
+          known: boolean
+          name: string
+          place: string
+          score: number
+        }[]
       }
       set_content_hidden: {
         Args: {
@@ -7002,6 +7182,25 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      venue_ice: {
+        Args: { p_bar_id: string }
+        Returns: {
+          clear: boolean
+          draw_as: string
+          frozen_inside: string
+          id: string
+          length_mm: number
+          machine: string
+          name: string
+          note: string
+          shape: string
+          size_mm: number
+          source: string
+          stamped: boolean
+          supplier_id: string
+          supplier_name: string
+        }[]
       }
       week_event: {
         Args: { p_event_id: string }

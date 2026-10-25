@@ -17,7 +17,7 @@ wins, so a single risky file routes the whole PR to the stricter lane.
 
 | Class | Matches | Requires |
 | --- | --- | --- |
-| **blast-radius** | `supabase/migrations/**`, any `.sql` file (RLS policies live in SQL), `supabase/config.toml`, `supabase/functions/_shared/auth.ts`, `supabase/functions/delete-account/**`, `lib/roles.ts`, sign-in and session code (`app/auth/**`, `components/auth/**`, `ctx/AuthContext.tsx`, `lib/*auth*`, `lib/createSessionFromUrl.ts`), and the policy's own files | Kevin approves it, and the `human-approved` label goes on (see [Approval](#approval)). The check fails until then. Never auto-merged. |
+| **blast-radius** | `supabase/migrations/**`, any `.sql` file (RLS policies live in SQL), `supabase/config.toml`, `supabase/functions/_shared/auth.ts`, `supabase/functions/delete-account/**`, `lib/roles.ts`, sign-in and session code (`app/auth/**`, `components/auth/**`, `ctx/AuthContext.tsx`, `lib/*auth*`, `lib/createSessionFromUrl.ts`), CI and deploy config (`.github/workflows/**`, `eas.json`, `vercel.json`), and the policy's own files | Kevin approves it, and the `human-approved` label goes on (see [Approval](#approval)). The check fails until then. Never auto-merged. |
 | **backend** | other `supabase/functions/**` | CI's edge function typecheck, then deploy the changed function(s) after merge. They do not ship with the app. |
 | **app** | everything else | Green CI. Auto-eligible. |
 

@@ -9,7 +9,7 @@ import { AddDrinkWizard } from './AddDrinkWizard';
 const mockCreate = jest.fn();
 const mockSaved = jest.fn();
 let mockBarGlasses: unknown[] = [];
-let mockBarKit: unknown[] = [];
+let mockVenueIce: unknown[] = [];
 
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
@@ -39,7 +39,7 @@ jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 // "Is this one of your glasses?" (components/screens/venue/GlasswarePrompt.test.tsx) asks no one here: nobody has brand.
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: mockBarGlasses }), useBarPageId: () => ({ data: 'page-1' }), useSaveBarGlass: () => ({ mutate: jest.fn() }) }));
-jest.mock('@/hooks/useBarKit', () => ({ useBarKit: () => ({ data: mockBarKit }) }));
+jest.mock('@/hooks/useVenueIce', () => ({ useVenueIce: () => ({ data: mockVenueIce }) }));
 jest.mock('@/hooks/useBackBar', () => ({
   useBackBarIds: () => new Set(),
   useBackBarParts: () => ({ fixed: new Map(), stocked: new Map(), ids: new Set() }),
@@ -56,7 +56,7 @@ beforeEach(() => {
   mockStart.mockReset();
   mockSaved.mockReset();
   mockBarGlasses = [];
-  mockBarKit = [];
+  mockVenueIce = [];
   mockClosest = null;
   useDrinkWizardStore.setState({ kept: {} });
   useSettingsStore.setState({ defaultUnit: 'ml' });
@@ -224,7 +224,7 @@ describe('AddDrinkWizard', () => {
   });
 
   test('the ice step offers the venue\'s own ice first', async () => {
-    mockBarKit = [{ kind: 'ice', key: 'shaved' }, { kind: 'tool', key: 'shaker' }, { kind: 'ice', key: 'large' }];
+    mockVenueIce = [{ name: 'Shaved', shape: 'shaved', draw_as: null }, { name: 'Block', shape: 'block', draw_as: null }, { name: 'Large cube', shape: 'large', draw_as: null }];
     useDrinkWizardStore.getState().patch('bar-1', { name: 'Julep' });
     useDrinkWizardStore.getState().setStep('bar-1', 'ice');
     await renderWithTamagui(<AddDrinkWizard barId="bar-1" onClose={jest.fn()} onSaved={mockSaved} />);

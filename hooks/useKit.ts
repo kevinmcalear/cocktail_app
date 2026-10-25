@@ -22,11 +22,8 @@ export function useKit(): { owned: string[]; kit: ReadonlySet<string>; toggle: (
   const remote = useQuery({
     queryKey: KIT_KEY,
     enabled: !!session,
-    // null: no table yet (an app ahead of its database), so the device's list stays in charge.
-    queryFn: async (): Promise<string[] | null> => {
+    queryFn: async (): Promise<string[]> => {
       const { data, error } = await supabase.from('home_kit_items').select('equipment_id').order('added_at');
-      // ponytail: drop the missing-table case once 20261010410000 is in production.
-      if (error?.code === 'PGRST205' || error?.code === '42P01') return null;
       if (error) throw error;
       const ids = (data ?? []).map((r: { equipment_id: string }) => r.equipment_id);
       // Move this device's kit up once; after that the account's list rules.
@@ -49,8 +46,8 @@ export function useKit(): { owned: string[]; kit: ReadonlySet<string>; toggle: (
       if (error) throw error;
     },
     onMutate: ({ id, have }) => {
-      const before = client.getQueryData<string[] | null>(KIT_KEY);
-      client.setQueryData<string[] | null>(KIT_KEY, (ids) => [...(ids ?? []).filter((i) => i !== id), ...(have ? [id] : [])]);
+      const before = client.getQueryData<string[]>(KIT_KEY);
+      client.setQueryData<string[]>(KIT_KEY, (ids) => [...(ids ?? []).filter((i) => i !== id), ...(have ? [id] : [])]);
       return { before };
     },
     onError: (_e, _v, ctx) => client.setQueryData(KIT_KEY, ctx?.before),

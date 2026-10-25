@@ -7,10 +7,10 @@ import { IceLayers } from '@/components/screens/addDrink/IceLayers';
 import { WizardChip } from '@/components/screens/addDrink/WizardChrome';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useBarKit } from '@/hooks/useBarKit';
+import { useVenueIce } from '@/hooks/useVenueIce';
 import { samePick, type WizardPick } from '@/lib/drinkWizard';
 import { iceBuildLine, QUICK_BUILDS, QUICK_LABEL, quickBuild, saysMore, whichQuick, type IceLayer } from '@/lib/iceBuild';
-import { ICE_LABEL, kitIceRow, kitSourceLine, type IceKind } from '@/lib/venueKit';
+import { inTheGlass, kitIceRow, kitSourceLine } from '@/lib/venueKit';
 
 type Option = { id: string; name: string };
 
@@ -35,7 +35,7 @@ export function IceBuildSheet({ options, layers, onChange, addIce, barId, madeWi
   const [adding, setAdding] = useState(false);
   const [failed, setFailed] = useState(false);
   const venue = useActiveVenue().venues.find((v) => v.id === barId) ?? null;
-  const kitIce = (useBarKit(barId).data ?? []).filter((r) => r.kind === 'ice' && r.key in ICE_LABEL);
+  const kitIce = (useVenueIce(barId).data ?? []).filter(inTheGlass);
   const byId = (id: string): WizardPick | null => options.find((o) => o.id === id) ?? null;
   const pickOf = (name: string): WizardPick => options.find((o) => samePick(o, { id: null, name })) ?? { id: null, name };
   // A layer whose ice is gone (merged, or not this person's to see) drops out, and is saved without it.
@@ -83,7 +83,7 @@ export function IceBuildSheet({ options, layers, onChange, addIce, barId, madeWi
           onClose={() => setAdding(false)}
           onAdd={(l) => void save([...picks, l])}
           options={options}
-          venue={venue && kitIce.length ? { name: venue.name, ice: kitIce.map((r) => ({ pick: pickOf(ICE_LABEL[r.key as IceKind]), source: kitSourceLine(r) || null })) } : null}
+          venue={venue && kitIce.length ? { name: venue.name, ice: kitIce.map((r) => ({ pick: pickOf(r.name), source: kitSourceLine(r) || null })) } : null}
           below={top ? iceBuildLine([top]).replace(/^Over /, '') : null}
         />
       ) : (
