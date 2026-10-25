@@ -23,15 +23,27 @@ export function ShoppingAdd({ onShelf, shelfKinds, onAdd }: { onShelf: ReadonlyS
   const query = text.trim();
   const found = (useBarSearch(query).data ?? []).slice(0, SHOWN);
   // Recipes two deep, and what each thing in them is a kind of: a cordial's lime juice and peel come from limes.
-  const made = usePrepDetails(found.flatMap((f) => (f.section === 'preps' && !onShelf.has(f.id) ? [f.id] : []))).data ?? {};
-  const deeper = usePrepDetails(Object.values(made).flatMap((d) => d.lines.map((l) => l.id))).data ?? {};
+  const madeQuery = usePrepDetails(found.flatMap((f) => (f.section === 'preps' && !onShelf.has(f.id) ? [f.id] : [])));
+  const made = madeQuery.data ?? {};
+  const deeperQuery = usePrepDetails(Object.values(made).flatMap((d) => d.lines.map((l) => l.id)));
+  const deeper = deeperQuery.data ?? {};
   const recipes = { ...deeper, ...made };
   const lines = Object.values(recipes).flatMap((d) => d.lines);
   const things = [...found, ...lines];
-  const kinds = useKindsOf(things.map((t) => t.id)).data ?? {};
+  const kindsQuery = useKindsOf(things.map((t) => t.id), true);
+  const kinds = kindsQuery.data ?? {};
   const staples = staplesFrom(things, kinds, usePantryItems().data ?? []);
   // A recipe's "Gin" is covered by any gin on the shelf.
   const have = new Set([...onShelf, ...lines.flatMap((l) => (l.generic && shelfKinds.has(l.name.toLowerCase()) ? [l.id] : []))]);
+  // A tap while a row's recipe or kinds are still on their way would list the thing itself. Only while a fetch runs:
+  // a failed lookup leaves it a plain row.
+  const pending = (f: { id: string; section: string }) => {
+    const own = made[f.id]?.lines ?? [];
+    return (
+      (kindsQuery.isFetching && [f, ...own].some((t) => !(t.id in kinds))) ||
+      (f.section === 'preps' && ((madeQuery.isFetching && !made[f.id]) || (deeperQuery.isFetching && own.some((l) => !(l.id in deeper)))))
+    );
+  };
   const add = (adds: Add[]) => {
     onAdd(adds);
     setText('');
@@ -52,6 +64,7 @@ export function ShoppingAdd({ onShelf, shelfKinds, onAdd }: { onShelf: ReadonlyS
         <View style={[styles.results, { borderColor: ds.c.line }]}>
           {found.map((f) => {
             const r = handRow(f, { onShelf, have, recipes, staples });
+            const loading = !onShelf.has(f.id) && pending(f);
             return (
               <View key={f.id} style={[styles.result, { borderBottomColor: ds.c.line }]}>
                 <IngredientThumb id={f.id} name={f.name} size={36} />
@@ -63,7 +76,7 @@ export function ShoppingAdd({ onShelf, shelfKinds, onAdd }: { onShelf: ReadonlyS
                     {r.note}
                   </Caption>
                 </View>
-                <Button label={r.label} size="sm" variant="secondary" accessibilityLabel={r.say} onPress={() => add(r.adds)} />
+                <Button label={r.label} size="sm" variant="secondary" disabled={loading} accessibilityLabel={r.say} onPress={() => add(r.adds)} />
               </View>
             );
           })}

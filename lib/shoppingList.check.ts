@@ -112,3 +112,5 @@ assert.equal(handRow({ id: 'cordial', name: 'Lime cordial', section: 'preps' }, 
 // Nothing loaded yet: a plain row that adds the thing itself.
 assert.deepEqual(handRow({ id: 'cordial', name: 'Lime cordial', section: 'preps' }, { onShelf: new Set(), have: new Set(), recipes: {}, staples: {} }).adds, [{ itemId: 'cordial', name: 'Lime cordial', source: 'hand' }]);
 assert.equal(handRow({ id: 'gin', name: 'Gin', section: 'bottles' }, ctx(['gin'])).label, 'Running low');
+// A recipe's generic Lemon covered by a bottle of that kind is not lemons on the shelf: still Add Lemons.
+assert.equal(handRow(juice, { onShelf: new Set(), have: new Set(['lemon']), recipes, staples }).label, 'Add');

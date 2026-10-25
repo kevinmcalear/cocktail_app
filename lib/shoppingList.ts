@@ -200,7 +200,8 @@ export function handRow(
 ): HandRow {
   if (onShelf.has(f.id)) return { note: 'On your shelf', label: 'Running low', say: `Mark ${f.name} running low`, adds: [{ itemId: f.id, name: f.name, source: 'running_low' }] };
   const staple = staples[f.id];
-  if (staple && have.has(staple.id)) {
+  // The staple itself on the shelf, not a bottle that only covers its kind in a recipe.
+  if (staple && onShelf.has(staple.id)) {
     const name = shopName(staple.name);
     return { note: `From ${name.toLowerCase()}, so it can mark yours running low`, label: 'Running low', say: `Mark ${name} running low`, adds: [{ itemId: staple.id, name, source: 'running_low' }] };
   }

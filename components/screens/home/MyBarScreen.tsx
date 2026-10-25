@@ -46,9 +46,10 @@ export function MyBarScreen() {
   const wide = breakpoint === 'desktop';
   const window = useWindowDimensions();
   const portrait = window.height > window.width;
-  // A desktop's shelf column shares the width with the shopping list (shopping desk-mybar): three tiles to a row, four on a wide screen.
+  // A desktop's shelf column shares the row with What to make and the shopping list (shopping desk-mybar): three tiles to a row,
+  // four once the window is wide enough that the shelf's share (after the sidebar and the list) still gives each tile about 120px.
   const tileCols = useTileCols();
-  const cols = wide ? (window.width >= 1600 ? 4 : 3) : tileCols;
+  const cols = wide ? (window.width >= 1760 ? 4 : 3) : tileCols;
   const [adding, setAdding] = useState<AddFilter | null>(null);
   const [snapping, setSnapping] = useState(false);
   const [opened, setOpened] = useState<ShelfItem | null>(null);
