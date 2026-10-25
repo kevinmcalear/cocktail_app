@@ -24,7 +24,7 @@ export default async function middleware(request: Request): Promise<Response | u
     if (kind === 'p') {
       const bar = await fetchPreviewBar(db, key);
       if (!bar) return undefined;
-      const drawn = await drawingsKey(db, pictureDrinks(bar).map((d) => d.id));
+      const { key: drawn } = await pictureDrinks(db, bar);
       return new Response(previewHtml(barPreviewMeta(bar, url.origin, key, drawn)), {
         headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' },
       });

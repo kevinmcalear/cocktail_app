@@ -8,7 +8,7 @@ import { ImageResponse } from '@vercel/og';
 
 import { SKETCH } from '../constants/sketch';
 import { barKicker, fetchPreviewBar, onNowLine, pictureDrinks, scoreLine, type PreviewBar } from '../lib/barPreview';
-import { fetchPreviewDrinks, fetchSketchInputs, supabaseFromEnv } from '../lib/menuPreview';
+import { supabaseFromEnv } from '../lib/menuPreview';
 import { GLASS, googleFont, h, img, photo, type El, type Picture } from '../lib/ogCard';
 import { paintSketch } from '../lib/sketch/paint';
 import { sceneToSvg } from '../lib/sketch/svg';
@@ -30,22 +30,18 @@ const initials = (name: string) =>
     .map((w) => w[0]!.toUpperCase())
     .join('');
 
-/** Each drink's photo, else its own sketch; a drink with neither is left out. */
-async function pictures(db: Parameters<typeof fetchSketchInputs>[0], b: PreviewBar): Promise<Picture[]> {
-  const ids = pictureDrinks(b).map((d) => d.id);
-  if (!ids.length) return [];
-  const [drinks, sketches] = await Promise.all([fetchPreviewDrinks(db, ids), fetchSketchInputs<SketchInputs>(db, ids)]);
+/** Each drink's photo, else its own sketch (pictureDrinks keeps only drinks with one). */
+async function pictures(db: Parameters<typeof pictureDrinks>[0], b: PreviewBar): Promise<Picture[]> {
+  const { drinks, sketches } = await pictureDrinks(db, b);
   const out = await Promise.all(
-    ids.map(async (id): Promise<Picture | null> => {
-      const d = drinks.find((x) => x.id === id);
-      if (!d) return null;
+    drinks.map(async (d): Promise<Picture | null> => {
       if (d.image_url && !d.image_is_generated) {
         const src = await photo(d.image_url);
         if (src) return { src, kind: 'photo' };
       }
-      const row = sketches.find((s) => s.item_id === id);
+      const row = sketches.find((x) => x.item_id === d.id);
       // Seeded with the drink's id, so it's the same drawing the app shows.
-      return row ? { src: `data:image/svg+xml;base64,${btoa(sceneToSvg(paintSketch(row.inputs, { seed: id }), { size: 512 }))}`, kind: 'sketch' } : null;
+      return row ? { src: `data:image/svg+xml;base64,${btoa(sceneToSvg(paintSketch(row.inputs as SketchInputs, { seed: d.id }), { size: 512 }))}`, kind: 'sketch' } : null;
     })
   );
   return out.filter((p): p is Picture => !!p);
@@ -61,7 +57,8 @@ function card(b: PreviewBar, pics: Picture[], logo: string | null): El {
       'div',
       { width: 640, flexDirection: 'column', padding: '64px 0 88px 72px' },
       h('div', { fontFamily: 'Geist Mono', fontSize: 22, letterSpacing: 3, color: MUTED }, barKicker(b).toUpperCase()),
-      h('div', { fontFamily: 'Instrument Serif', fontSize: b.name.length > 16 ? 96 : 132, lineHeight: 0.98, letterSpacing: -2, marginTop: 18 }, b.name),
+      // Two lines at most: a long name steps down, and anything past that is cut off above the line under it.
+      h('div', { fontFamily: 'Instrument Serif', fontSize: b.name.length > 28 ? 72 : b.name.length > 16 ? 96 : 132, lineHeight: 0.98, letterSpacing: -2, marginTop: 18, maxHeight: 2 * 132 * 0.98, overflow: 'hidden' }, b.name),
       line ? h('div', { fontSize: 27, lineHeight: 1.35, color: PENCIL, marginTop: 26, maxHeight: 110, overflow: 'hidden' }, line) : null,
       h('div', { flexGrow: 1 }),
       h(

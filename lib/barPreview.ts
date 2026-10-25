@@ -4,7 +4,8 @@
 // Plain fetches and relative imports only: these run on Vercel, outside the
 // app's bundle.
 
-import { isUuid, type PreviewMeta } from './menuPreview';
+import { fetchPreviewDrinks, fetchSketchInputs, select, versionHash, type PreviewDrink, type PreviewMeta } from './menuPreview';
+import { parseProfileRef } from './profiles';
 
 interface Supabase {
   url: string;
@@ -30,16 +31,7 @@ export interface PreviewBar {
   rankers: number;
 }
 
-// A handle as profiles keep it (juniper.jo, dante.westvillage).
-const HANDLE = /^[a-z0-9._-]{2,40}$/i;
-
 const headers = (db: Supabase) => ({ apikey: db.anonKey, Authorization: `Bearer ${db.anonKey}`, 'Content-Type': 'application/json' });
-
-async function get<T>(db: Supabase, path: string): Promise<T[]> {
-  const res = await fetch(`${db.url}/rest/v1/${path}`, { headers: headers(db) });
-  if (!res.ok) throw new Error(`${path.split('?')[0]} ${res.status}`);
-  return (await res.json()) as T[];
-}
 
 async function rpc<T>(db: Supabase, name: string, body: object): Promise<T> {
   const res = await fetch(`${db.url}/rest/v1/rpc/${name}`, { method: 'POST', headers: headers(db), body: JSON.stringify(body) });
@@ -69,14 +61,17 @@ interface ScoreRow {
 
 /** The bar behind /p/<key>, signed out; null for a person's page, a private one, or nothing. */
 export async function fetchPreviewBar(db: Supabase, key: string | null | undefined): Promise<PreviewBar | null> {
-  const by = isUuid(key) ? `id=eq.${key}` : key && HANDLE.test(key) ? `handle=eq.${encodeURIComponent(key)}` : null;
-  if (!by) return null;
-  const [p] = await get<ProfileRow>(db, `profiles?select=id,handle,display_name,bar_type,locality,city,avatar_url,page_visibility&kind=eq.bar&is_public=eq.true&${by}&limit=1`);
+  // As the page reads /p/<ref>: an id, or a handle in any case, with or without "@".
+  const ref = parseProfileRef(key);
+  if (!ref) return null;
+  const by = 'id' in ref ? `id=eq.${ref.id}` : `handle=eq.${ref.handle}`;
+  const [p] = await select<ProfileRow>(db, `profiles?select=id,handle,display_name,bar_type,locality,city,avatar_url,page_visibility&kind=eq.bar&is_public=eq.true&${by}&limit=1`);
   if (!p) return null;
   // The same calls the bar page makes: its menus (moderation and private pages applied) and its score.
   const [editions, scores] = await Promise.all([
     rpc<EditionRow[] | null>(db, 'get_menu_editions', { p_profile_id: p.id }),
-    rpc<ScoreRow[] | ScoreRow | null>(db, 'get_venue_score', { p_venue_profile_id: p.id }),
+    // A score that won't load leaves the line out, not the whole preview.
+    rpc<ScoreRow[] | ScoreRow | null>(db, 'get_venue_score', { p_venue_profile_id: p.id }).catch(() => null),
   ]);
   const now = (editions ?? []).find((e) => e.is_current) ?? null;
   const score = (Array.isArray(scores) ? scores[0] : scores) ?? null;
@@ -117,20 +112,41 @@ export function scoreLine(b: Pick<PreviewBar, 'score' | 'rankers'>): string | nu
   return `${b.score.toFixed(1)} bar score · ${b.rankers === 1 ? '1 person' : `${b.rankers} people`} ranked`;
 }
 
-/** The drinks the image draws: the first two on the menu, never on a locked page. */
-export const pictureDrinks = (b: Pick<PreviewBar, 'menu' | 'visibility'>) => (b.visibility === 'locked' ? [] : (b.menu?.drinks ?? []).slice(0, 2));
+/** How far down the menu the image looks for drinks it can draw. */
+const LOOK = 8;
 
-/** Changes whenever what the image shows changes. */
+/**
+ * The drinks the image draws: the first two on the menu that anyone can see
+ * and that have a photo or a drawing, never on a locked page. `key` changes
+ * when what they show does (a photo added, a drawing recoloured), for the
+ * image's version.
+ */
+export async function pictureDrinks(db: Supabase, b: Pick<PreviewBar, 'menu' | 'visibility'>): Promise<{ drinks: PreviewDrink[]; sketches: { item_id: string; inputs: unknown }[]; key: string }> {
+  const ids = b.visibility === 'locked' ? [] : (b.menu?.drinks ?? []).slice(0, LOOK).map((d) => d.id);
+  if (!ids.length) return { drinks: [], sketches: [], key: '' };
+  const [rows, sketches] = await Promise.all([fetchPreviewDrinks(db, ids), fetchSketchInputs<{ variant?: string | null; tint?: string | null; ice?: string }>(db, ids)]);
+  const photo = (d: PreviewDrink) => !!d.image_url && !d.image_is_generated;
+  const drinks = ids
+    .map((id) => rows.find((d) => d.id === id))
+    .filter((d): d is PreviewDrink => !!d && (photo(d) || sketches.some((s) => s.item_id === d.id)))
+    .slice(0, 2);
+  const key = drinks
+    .map((d) => {
+      const x = sketches.find((s) => s.item_id === d.id)?.inputs;
+      return `${d.id}:${photo(d) ? d.image_url : ''}:${x?.variant ?? ''}:${x?.tint ?? ''}:${x?.ice ?? ''}`;
+    })
+    .join(',');
+  return { drinks, sketches: sketches.filter((s) => drinks.some((d) => d.id === s.item_id)), key };
+}
+
+/** Changes whenever what the image shows changes. `drawn` is pictureDrinks' key. */
 export function barVersion(b: PreviewBar, drawn = ''): string {
-  const text = [b.name, barKicker(b), b.logoUrl, onNowLine(b), scoreLine(b), pictureDrinks(b).map((d) => d.id).join(','), drawn].join('|');
-  let h = 5381;
-  for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
-  return h.toString(36);
+  return versionHash([b.name, barKicker(b), b.logoUrl, onNowLine(b), scoreLine(b), drawn].join('|'));
 }
 
 /**
  * Title "Little Rye"; description "Cocktail bar in Fitzroy, Melbourne. On now: Field Notes. 9.1 bar score. On Cocktail."
- * `link` is what the shared link named the bar by: its handle, or its id. `drawn` is drawingsKey's.
+ * `link` is what the shared link named the bar by: its handle, or its id. `drawn` is pictureDrinks' key.
  */
 export function barPreviewMeta(b: PreviewBar, origin: string, link: string = b.handle ?? b.id, drawn = ''): PreviewMeta {
   const place = barPlace(b);

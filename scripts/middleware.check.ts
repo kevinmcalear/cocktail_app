@@ -75,6 +75,8 @@ assert.deepEqual(config.matcher, ['/m/:id', '/d/:id', '/p/:id']);
   assert.ok(barHtml.includes('content="Cocktail bar in Fitzroy, Melbourne. On now: Field Notes. 9.1 bar score. On Cocktail."'));
   assert.ok(barHtml.includes('<meta property="og:url" content="https://babyvom.it/p/little.rye">'));
   assert.ok(barHtml.includes(`https://babyvom.it/api/bar-og?id=${BAR}&amp;v=`));
+  // A handle as people type it, as the page reads it: any case, with "@".
+  assert.ok(await ask('/p/@Little.Rye'));
   // A person's page, or a handle nobody has: the page's own tags.
   assert.equal(await ask('/p/juniper.jo'), undefined);
   calls.length = 0;
