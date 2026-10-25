@@ -57,6 +57,14 @@ export function useShoppingList() {
   return useQuery(listQuery);
 }
 
+const NO_IDS: ReadonlySet<string> = new Set();
+const lowIds = (rows: ShoppingRow[]) => new Set(rows.flatMap((r) => (r.itemId && r.source === 'running_low' && !r.gotAt ? [r.itemId] : [])));
+
+/** The shelf items marked running low: open rows on the list, for My Bar's Low badge. */
+export function useRunningLow(): ReadonlySet<string> {
+  return useQuery({ ...listQuery, select: lowIds }).data ?? NO_IDS;
+}
+
 /** Things ticked and cleared before, newest first, one per thing: "Bought before". */
 export function useBoughtBefore() {
   return useQuery({

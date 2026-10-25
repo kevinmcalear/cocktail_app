@@ -12,7 +12,7 @@ import { barSubtitle, shelfCountsLine } from '@/lib/myBarText';
 import type { ShelfSort } from '@/lib/pantry';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
-import { ShoppingBasket, ToBuyStrip } from '../shopping/ToBuy';
+import { ShoppingBasket, ShoppingColumn, ToBuyStrip } from '../shopping/ToBuy';
 import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
 import { useTileCols } from './BarTile';
 import { KitSection, LabSection, MoreSections, OpenShelfItem, PrepsSection, SectionChips, type Jumpable } from './BarSections';
@@ -237,7 +237,8 @@ export function MyBarScreen() {
           />
         ) : split ? (
           <>
-            <ScreenHeader actions={<ShoppingBasket />} />
+            {/* The list is a column here (shopping desk-mybar), so no basket. */}
+            <ScreenHeader />
             <View style={[styles.deskHead, { paddingHorizontal: gutter }]}>
               <View style={styles.deskTitle}>
                 <Title>My Bar</Title>
@@ -247,7 +248,8 @@ export function MyBarScreen() {
             </View>
             <View style={styles.columns}>
               {list(rows.slice(0, cut), styles.shelfColumn, { paddingLeft: gutter, paddingRight: space.xl, paddingBottom: bottom })}
-              {list(pairDrinks(rows.slice(cut)), styles.makeColumn, { paddingLeft: space.xl, paddingRight: gutter, paddingBottom: bottom })}
+              {list(pairDrinks(rows.slice(cut)), styles.makeColumn, { paddingLeft: space.xl, paddingRight: space.xl, paddingBottom: bottom })}
+              <ShoppingColumn gutter={gutter} bottom={bottom} />
             </View>
           </>
         ) : (

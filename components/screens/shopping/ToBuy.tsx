@@ -1,5 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Caption, DsText, IngredientThumb, PressableScale, Tag, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -7,6 +7,8 @@ import { layout, radius, space } from '@/constants/tokens';
 import { useMyBar } from '@/hooks/useHomeBar';
 import { useShoppingEdit, useShoppingList } from '@/hooks/useShoppingList';
 import { listOpens } from '@/lib/shoppingList';
+
+import { ShoppingList } from './ShoppingList';
 
 const STRIP = 6;
 
@@ -64,6 +66,18 @@ export function ToBuyStrip() {
   );
 }
 
+/** A desktop's list, a column beside My Bar's shelf (shopping desk-mybar): tick things off and watch the shelf fill up. */
+export function ShoppingColumn({ gutter, bottom }: { gutter: number; bottom: number }) {
+  const ds = useDs();
+  return (
+    <ScrollView keyboardShouldPersistTaps="handled" style={styles.column} contentContainerStyle={{ paddingRight: gutter, paddingBottom: bottom }}>
+      <View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
+        <ShoppingList column />
+      </View>
+    </ScrollView>
+  );
+}
+
 /** One away's bottle to buy (shopping In 3): To buy puts it on the list; On list once it's there. */
 export function ToBuyButton({ bottles }: { bottles: readonly { id?: string; name: string }[] }) {
   const rows = useShoppingList().data ?? [];
@@ -85,4 +99,6 @@ const styles = StyleSheet.create({
   grow: { flex: 1, minWidth: 0, gap: 1 },
   openList: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   thumbs: { flexDirection: 'row', gap: space.sm, overflow: 'hidden' },
+  column: { width: 360, flexGrow: 0, flexShrink: 0 },
+  card: { gap: space.lg, padding: space.xl, borderRadius: radius.card, borderWidth: 1 },
 });

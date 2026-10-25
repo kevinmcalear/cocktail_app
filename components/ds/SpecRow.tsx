@@ -24,6 +24,8 @@ export interface SpecRowProps {
   note?: string;
   /** A word about this line for this person, as a tag: "Not on your shelf". */
   flag?: string;
+  /** On the shopping list (shopping In 2): an accent "On your list" tag with a tick, in place of the flag. */
+  listed?: boolean;
   /** A small line under the name, e.g. the ingredient's "40% ABV". */
   detail?: string;
   /** Service mode reads bigger (1.25). */
@@ -47,8 +49,9 @@ export interface SpecRowProps {
  * When the amount has its own action, the line splits into two sibling
  * controls (amount, then ingredient) so no button sits inside another.
  */
-export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, flag, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
+export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional, note, flag: flagged, listed, detail, scale = 1, dense, onPress, onPressAmount, alignAmount }: SpecRowProps) {
   const ds = useDs();
+  const flag = listed ? 'On your list' : flagged;
   const big = (t: (typeof type)['spec']) => (scale === 1 ? undefined : { fontSize: t.fontSize * scale, lineHeight: t.lineHeight * scale });
   const showAmount = amount.length > 0 || !!alignAmount;
   const split = !!onPressAmount && amount.length > 0;
@@ -65,7 +68,7 @@ export function SpecRow({ amount, ingredient, ingredientId, houseMade, optional,
         <View style={styles.tags}>
           {houseMade ? <Tag label="House-made" tone="accent" /> : null}
           {optional ? <Tag label="Optional" /> : null}
-          {flag ? <Tag label={flag} /> : null}
+          {flag ? <Tag label={flag} tone={listed ? 'accent' : undefined} icon={listed ? 'checkmark' : undefined} /> : null}
         </View>
       ) : null}
     </>

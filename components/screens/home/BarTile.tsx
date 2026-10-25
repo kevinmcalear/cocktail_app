@@ -17,7 +17,7 @@ interface BarTileProps {
   name: string;
   /** One line under the name: "In 12 drinks", "Made yesterday". */
   meta?: string | null;
-  /** Muted; ink when it matters (a prep's use-by close, kit that opens projects); accent only for a tick. */
+  /** Muted; ink when it matters (a prep's use-by close, kit that opens projects); accent only for a tick or running low. */
   metaTone?: 'muted' | 'accent' | 'ink';
   /** The drawing, filling the square (IngredientDrawing). */
   picture: ReactNode;
@@ -35,13 +35,15 @@ interface BarTileProps {
   onLongPress?: () => void;
   /** The Add tile: dashed like a suggestion, but its label reads in ink. */
   add?: boolean;
+  /** Running low (on the shopping list): a "Low" mark in the square's corner. */
+  low?: boolean;
 }
 
 /**
  * One thing on your bar, the same everywhere on My Bar and in Add to your
  * bar: its drawing on the house paper, the name, and a line about it.
  */
-export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role, checked, accessibilityLabel, accessibilityHint, ghost, badge, onLongPress, add }: BarTileProps) {
+export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role, checked, accessibilityLabel, accessibilityHint, ghost, badge, onLongPress, add, low }: BarTileProps) {
   const ds = useDs();
   // A desktop fits five tiles to a row, so names take the smaller line (a long word never breaks mid-way).
   const dense = useBreakpoint() === 'desktop';
@@ -58,6 +60,13 @@ export function BarTile({ name, meta, metaTone = 'muted', picture, onPress, role
       <View style={[styles.square, ghost ? [styles.ghost, { borderColor: ds.c.lineStrong }] : null, checked ? { borderColor: ds.accentText } : null]}>
         <View style={[styles.picture, ghost ? styles.faded : null]}>{picture}</View>
         {badge ? <TileBadge badge={badge} onPaper={!ghost} /> : null}
+        {low ? (
+          <View aria-hidden style={[styles.low, { backgroundColor: ds.c.ground }]}>
+            <Caption tone="accent" style={styles.lowText}>
+              Low
+            </Caption>
+          </View>
+        ) : null}
       </View>
       <View style={styles.text}>
         <DsText variant={dense ? 'caption' : 'body'} numberOfLines={2} tone={ghost && !add ? 'muted' : 'ink'} style={styles.name}>
@@ -125,6 +134,8 @@ const styles = StyleSheet.create({
   ghost: { borderStyle: 'dashed', borderWidth: 1.5 },
   picture: { flex: 1, borderRadius: radius.control - 2, overflow: 'hidden' },
   faded: { opacity: 0.4 },
+  low: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 7, paddingVertical: 2, borderRadius: radius.pill },
+  lowText: { fontFamily: fontFamilies.bodySemiBold },
   badge: { position: 'absolute', top: 7, right: 7, width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   text: { gap: 1 },
   name: { fontFamily: fontFamilies.bodyMedium },

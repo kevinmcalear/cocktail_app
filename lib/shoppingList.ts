@@ -4,6 +4,7 @@
  * Share sends. Pure helpers (lib/shoppingList.check.ts).
  */
 import type { BarSection } from '@/lib/barSections';
+import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import type { AwayGroup } from '@/lib/toMake';
 
 export type ShoppingSource = 'hand' | 'drink' | 'menu' | 'one_away' | 'running_low' | 'again';
@@ -43,12 +44,16 @@ export function drinkNames(drinks: readonly { name?: string }[]): string {
   return names.length > 2 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', ');
 }
 
-/** Why it's on the list: "Running low", "For Smoke Signal", "Opens 4 drinks: Boulevardier, Fanciulli +2", "Added by you". */
+/**
+ * Why it's on the list: "Running low", "For Smoke Signal", "Opens 4 drinks: Boulevardier, Fanciulli +2", "Added by you".
+ * Added by hand for a house-made thing (Lemons for lemon juice): the drinks it opens, else that thing ("For Lemon juice").
+ */
 export function whyLine(row: Pick<ShoppingRow, 'source' | 'forName'>, opens: readonly { name?: string }[]): string {
   if (row.source === 'running_low') return 'Running low';
-  if (row.forName) return `For ${row.forName}`;
+  if (row.forName && row.source !== 'hand') return `For ${row.forName}`;
   if (opens.length > 1) return `Opens ${opens.length} drinks: ${drinkNames(opens)}`;
   if (opens.length === 1 && opens[0].name) return `For ${opens[0].name}`;
+  if (row.forName) return `For ${row.forName}`;
   if (row.source === 'again') return 'Bought before';
   return 'Added by you';
 }
@@ -56,9 +61,9 @@ export function whyLine(row: Pick<ShoppingRow, 'source' | 'forName'>, opens: rea
 /** What a group is called when the list goes by drink: the drink, Restock, or Added by you. */
 function drinkGroup(row: ShoppingRow, opens: readonly { name?: string }[]): string {
   if (row.source === 'running_low') return 'Restock';
-  if (row.forName) return row.forName;
+  if (row.forName && row.source !== 'hand') return row.forName;
   if (opens.length) return drinkNames(opens);
-  return 'Added by you';
+  return row.forName ?? 'Added by you';
 }
 
 export type ShoppingMode = 'shop' | 'drink';
@@ -120,4 +125,34 @@ export function menuShopping(drinks: readonly { id: string }[], oneAway: readonl
     for (const b of group?.bottles ?? []) if (b.id && !out.some((o) => o.itemId === b.id)) out.push({ itemId: b.id, name: b.name, forItemId: d.id });
   }
   return out;
+}
+
+/** A pantry staple as the list says it ("Limes", not "Lime"); anything else as it's named. */
+export function shopName(name: string): string {
+  return PANTRY.find((p) => p.name.toLowerCase() === name.toLowerCase())?.label ?? name;
+}
+
+type Lines = Readonly<Record<string, { lines: readonly { id: string; name: string }[] } | undefined>>;
+
+/**
+ * What to buy to make a house-made thing: its recipe's parts you don't have,
+ * a part that's house-made itself by its own parts (two deep). Water never.
+ * Lemon juice gives Lemons; lime cordial gives Limes and Sugar.
+ */
+export function madeFrom(id: string, recipes: Lines, onShelf: ReadonlySet<string>, depth = 0): { id: string; name: string }[] {
+  const out: { id: string; name: string }[] = [];
+  for (const l of recipes[id]?.lines ?? []) {
+    if (onShelf.has(l.id) || l.name === PANTRY_WATER) continue;
+    const parts = depth < 1 && recipes[l.id]?.lines.length ? madeFrom(l.id, recipes, onShelf, depth + 1) : [{ id: l.id, name: shopName(l.name) }];
+    for (const p of parts) if (!out.some((o) => o.id === p.id)) out.push(p);
+  }
+  return out;
+}
+
+/** Add by hand's line for a house-made thing: "Squeezed from limes, so adds Limes", "House-made: adds Limes and Sugar". */
+export function madeFromLine(name: string, parts: readonly { name: string }[]): string {
+  if (!parts.length) return 'House-made. You have what goes in it';
+  if (parts.length === 1 && /\bjuice\b/i.test(name)) return `Squeezed from ${parts[0].name.toLowerCase()}, so adds ${parts[0].name}`;
+  const names = parts.map((p) => p.name);
+  return `House-made: adds ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]}`;
 }
