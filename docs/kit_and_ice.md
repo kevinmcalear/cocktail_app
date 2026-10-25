@@ -94,7 +94,7 @@ Built from the starting design above, with the changes noted (why in brackets).
 
 ### PR 7: home
 
-- Migration `20261113500000_home_glassware_ice.sql`: `home_glassware` (glass, variant, name, model_id, source bought/ours, count, is_default one per type) and `home_ice` (item_ice's facts less suppliers), each the owner's own (RLS as `home_kit_items`). Tested in `supabase/tests/home-glassware-ice.test.mjs`.
+- Migration `20261117100000_home_glassware_ice.sql`: `home_glassware` (glass, variant, name, model_id, source bought/ours, count, is_default one per type) and `home_ice` (item_ice's facts less suppliers), each the owner's own (RLS as `home_kit_items`). Tested in `supabase/tests/home-glassware-ice.test.mjs`.
 - `hooks/useHomeKit.ts` reads them in the venue's shapes (`BarGlass`, `VenueIce`), so My Bar › Kit › Glassware and Ice (`/kit/glassware`, `/kit/ice`, `components/screens/home/HomeKitScreens.tsx`) are the same `KitPage`, `KitList`, `KitItemPage` and sheets: `GlassSheet` with `home` and `onSave`, `IceSheet` with `barId={null}` and `save`; "where it comes from" says a shop, no suppliers.
 - My Bar's Kit section has a row each for Glassware and Ice (optional, quiet: no prompt).
 - Not yet: drinks at home aren't drawn in your glasses or with your ice (the drawings read a venue's glassware and ice; home needs its own path through lib/sketch and the stored drawings), and "My Bar asks once, after your first few drinks".

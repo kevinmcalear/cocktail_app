@@ -1,4 +1,4 @@
-// My Bar's glassware and ice (20261113500000_home_glassware_ice.sql): each
+// My Bar's glassware and ice (20261117100000_home_glassware_ice.sql): each
 // person's own, like home_kit_items. Others and anon read and write none;
 // one main glass of a type; machine only for our machine.
 // Runs against the local stack only: `npm run test:security`.

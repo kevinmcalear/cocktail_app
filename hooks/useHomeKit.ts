@@ -8,7 +8,7 @@ import type { SketchGlass } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
 // My Bar's glassware and ice (home_glassware, home_ice:
-// supabase/migrations/20261113500000_home_glassware_ice.sql): optional, the
+// supabase/migrations/20261117100000_home_glassware_ice.sql): optional, the
 // owner's own. Read in the venue's shapes (BarGlass, VenueIce) so Kit's list,
 // page and sheets show them as they show a venue's.
 
