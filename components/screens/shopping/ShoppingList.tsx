@@ -38,9 +38,8 @@ export function ShoppingList({ column, back }: { column?: boolean; back?: ReactN
   // Back from the shop: once something is ticked here and nothing is left to get.
   const [tickedHere, setTickedHere] = useState(false);
   const [doneClosed, setDoneClosed] = useState(false);
-  // What the shelf made when the list opened, so Back from the shop can say what's new.
+  // What the shelf made before this trip's first tick, so Back from the shop can say what's new.
   const [madeBefore, setMadeBefore] = useState<string[] | null>(null);
-  if (!madeBefore && !bar.isLoading) setMadeBefore([...bar.canMakeIds]);
 
   const open = rows.filter((r) => !r.gotAt);
   const got = rows.filter((r) => r.gotAt);
@@ -52,12 +51,16 @@ export function ShoppingList({ column, back }: { column?: boolean; back?: ReactN
 
   const add = (a: Add) => edit.add.mutate([a]);
   const toggle = (row: ShoppingRow, on: boolean) => {
+    if (on && !tickedHere) setMadeBefore([...bar.canMakeIds]);
     edit.tick.mutate({ row, got: on });
     if (!on) return;
     setTickedHere(true);
     toast.show({ title: row.name, detail: gotLine(row, opens(row)), action: { label: 'Undo', onPress: () => edit.tick.mutate({ row, got: false }) } });
   };
-  if (doneClosed && open.length) setDoneClosed(false);
+  if (doneClosed && open.length) {
+    setDoneClosed(false);
+    setTickedHere(false);
+  }
   const done = tickedHere && !doneClosed && !open.length && got.length > 0;
   const ready = madeBefore ? bar.canMake.filter((d) => !madeBefore.includes(d.id)) : [];
 
@@ -86,7 +89,11 @@ export function ShoppingList({ column, back }: { column?: boolean; back?: ReactN
           </View>
         </>
       )}
-      <ShoppingAdd onShelf={bar.shelfIds} onAdd={(adds) => edit.add.mutate(adds)} />
+      <ShoppingAdd
+        onShelf={bar.shelfIds}
+        shelfKinds={new Set(bar.shelf.flatMap((b) => (b.kind ? [b.kind.toLowerCase()] : [])))}
+        onAdd={(adds) => edit.add.mutate(adds, { onSuccess: (n) => (n ? undefined : toast.show({ title: `${adds.map((a) => a.name).join(' and ')} ${adds.length === 1 ? 'is' : 'are'} on your list already.` })) })}
+      />
       {open.length && !column ? <Segmented options={MODES} value={mode} onChange={setMode} accessibilityLabel="Group the list" variant="ink" choice stretch /> : null}
       {!isLoading && !rows.length ? <Body tone="muted">Nothing on your list. Add something above, or tap Add to shopping on a drink you’re a bottle short of.</Body> : null}
 

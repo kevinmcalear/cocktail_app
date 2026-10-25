@@ -17,7 +17,7 @@ const SHOWN = 5;
  * A house-made thing adds what it's made from, each for it ("For Lime cordial"):
  * lemon juice adds Lemons.
  */
-export function ShoppingAdd({ onShelf, onAdd }: { onShelf: ReadonlySet<string>; onAdd: (adds: Add[]) => void }) {
+export function ShoppingAdd({ onShelf, shelfKinds, onAdd }: { onShelf: ReadonlySet<string>; shelfKinds: ReadonlySet<string>; onAdd: (adds: Add[]) => void }) {
   const ds = useDs();
   const [text, setText] = useState('');
   const query = text.trim();
@@ -26,9 +26,14 @@ export function ShoppingAdd({ onShelf, onAdd }: { onShelf: ReadonlySet<string>; 
   const made = usePrepDetails(found.flatMap((f) => (f.section === 'preps' && !onShelf.has(f.id) ? [f.id] : []))).data ?? {};
   const deeper = usePrepDetails(Object.values(made).flatMap((d) => d.lines.map((l) => l.id))).data ?? {};
   const recipes = { ...deeper, ...made };
-  const things = [...found, ...Object.values(recipes).flatMap((d) => d.lines)];
+  const lines = Object.values(recipes).flatMap((d) => d.lines);
+  const things = [...found, ...lines];
   const kinds = useKindsOf(things.map((t) => t.id)).data ?? {};
   const staples = staplesFrom(things, kinds, usePantryItems().data ?? []);
+  // A recipe's "Gin" is covered by any gin on the shelf.
+  const have = new Set([...onShelf, ...lines.flatMap((l) => (l.generic && shelfKinds.has(l.name.toLowerCase()) ? [l.id] : []))]);
+  // What it's made from is known: its kind, and for a house-made thing its recipe and its parts' kinds.
+  const known = (f: { id: string; section: string }) => f.id in kinds && (f.section !== 'preps' || (!!made[f.id] && made[f.id].lines.every((l) => l.id in recipes && l.id in kinds)));
   const add = (adds: Add[]) => {
     onAdd(adds);
     setText('');
@@ -48,9 +53,12 @@ export function ShoppingAdd({ onShelf, onAdd }: { onShelf: ReadonlySet<string>; 
       {query ? (
         <View style={[styles.results, { borderColor: ds.c.line }]}>
           {found.map((f) => {
-            const have = onShelf.has(f.id);
-            const parts = !have && (staples[f.id] || made[f.id]?.lines.length) ? madeFrom(f.id, recipes, onShelf, staples) : null;
-            const adds: Add[] = parts?.length ? parts.map((p) => ({ itemId: p.id, name: p.name, source: 'hand', forItemId: f.id })) : [{ itemId: f.id, name: f.name, source: have ? 'running_low' : 'hand' }];
+            const mine = onShelf.has(f.id);
+            const waiting = !mine && !known(f);
+            const from = !mine && (staples[f.id] || made[f.id]?.lines.length) ? madeFrom(f.id, recipes, have, staples) : null;
+            // Everything it's made from is on the shelf: then it's listed as itself.
+            const parts = from?.length ? from : null;
+            const adds: Add[] = parts?.length ? parts.map((p) => ({ itemId: p.id, name: p.name, source: 'hand', forItemId: f.id })) : [{ itemId: f.id, name: f.name, source: mine ? 'running_low' : 'hand' }];
             return (
               <View key={f.id} style={[styles.result, { borderBottomColor: ds.c.line }]}>
                 <IngredientThumb id={f.id} name={f.name} size={36} />
@@ -59,14 +67,15 @@ export function ShoppingAdd({ onShelf, onAdd }: { onShelf: ReadonlySet<string>; 
                     {f.name}
                   </DsText>
                   <Caption tone="muted" numberOfLines={2}>
-                    {have ? 'On your shelf' : parts ? madeFromLine(f.name, parts, !!staples[f.id]) : shopFor(f.section)}
+                    {mine ? 'On your shelf' : parts ? madeFromLine(f.name, parts, !!staples[f.id]) : shopFor(f.section)}
                   </Caption>
                 </View>
                 <Button
-                  label={have ? 'Running low' : 'Add'}
+                  label={mine ? 'Running low' : 'Add'}
+                  disabled={waiting}
                   size="sm"
                   variant="secondary"
-                  accessibilityLabel={have ? `Mark ${f.name} running low` : parts?.length ? `Add ${parts.map((p) => p.name).join(' and ')} for ${f.name}` : `Add ${f.name}`}
+                  accessibilityLabel={mine ? `Mark ${f.name} running low` : parts?.length ? `Add ${parts.map((p) => p.name).join(' and ')} for ${f.name}` : `Add ${f.name}`}
                   onPress={() => add(adds)}
                 />
               </View>
