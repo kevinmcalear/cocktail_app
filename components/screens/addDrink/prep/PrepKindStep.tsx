@@ -54,7 +54,8 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onCha
               aria-checked={on}
               accessibilityLabel={`${k.name}, ${k.ratio}${k.id === named ? ', from the name' : ''}`}
               onPress={() => onKind(k.id)}
-              style={[styles.kind, { width: `${100 / columns - 2}%`, backgroundColor: ds.c.surface, borderColor: on ? ds.accentText : 'transparent' }]}
+              // A short last row widens to fill it: the board's eight kinds leave no gap.
+              style={[styles.kind, { flexBasis: `${100 / columns - 4}%`, flexGrow: 1, backgroundColor: ds.c.surface, borderColor: on ? ds.accentText : 'transparent' }]}
             >
               <View style={styles.row}>
                 <Body>{k.name}</Body>

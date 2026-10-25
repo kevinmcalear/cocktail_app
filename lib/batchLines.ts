@@ -82,6 +82,13 @@ export function batchLine(key: string, name: string, lines: WizardLine[], bottle
   return { key, id: null, name, ...lineAmount(lines), batch: { lines, bottleMl } };
 }
 
+/** Whether `from` dropped on `onto` would combine: both plain lines, and something measured to fill a bottle with. */
+export function combinable(lines: readonly WizardLine[], from: number, onto: number): boolean {
+  const a = lines[from];
+  const b = lines[onto];
+  return !!a && !!b && from !== onto && canCombine(a) && canCombine(b) && drinkMl([a, b]) > 0;
+}
+
 /**
  * Drops `from` on `onto`: the two become one house prep line where `onto`
  * was, named after the drink ("Salty Boy batch"), its recipe the bottle
@@ -90,11 +97,10 @@ export function batchLine(key: string, name: string, lines: WizardLine[], bottle
  * when they can't: a house prep already, the same line, or nothing measured.
  */
 export function combineLines(lines: readonly WizardLine[], from: number, onto: number, drinkName: string): WizardLine[] | null {
+  if (!combinable(lines, from, onto)) return null;
   const a = lines[from];
   const b = lines[onto];
-  if (!a || !b || from === onto || !canCombine(a) || !canCombine(b)) return null;
   const inner = from < onto ? [a, b] : [b, a];
-  if (drinkMl(inner) <= 0) return null;
   const merged: WizardLine = { key: b.key, id: null, name: `${drinkName.trim() || 'House'} batch`, ...lineAmount(inner), prep: batchPrep({ lines: inner, bottleMl: DEFAULT_BOTTLE }), combined: inner };
   return lines.flatMap((l, i) => (i === onto ? [merged] : i === from ? [] : [l]));
 }

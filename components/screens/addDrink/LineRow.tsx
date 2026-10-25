@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
-import { leadText, prepSummary } from '@/lib/prepKinds';
+import { prepSummary } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
@@ -69,9 +69,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
   // What the line is, when it isn't a bottle that already exists: shown with its actions, not under every row.
   const status = line.id
     ? null
-    : line.prep
-      ? { text: ['House-made', from ? `from ${from.name}` : null, leadText(line.prep.leadMinutes) ?? 'your recipe'].filter(Boolean).join(', '), accent: false }
-      : line.later
+    : line.later
         ? { text: 'House prep, recipe to write', accent: true }
         : line.technique
           ? { text: `House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`, accent: true }

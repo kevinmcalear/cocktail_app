@@ -16,7 +16,7 @@ interface TypedLineCardProps {
   reading: HouseReading<CatalogIngredient>;
   /** The pour typed before it ("60 ml"), if any. */
   pour: TypedPour | null;
-  /** Looks right (check false): the line, made house straight away. Check it: the line, then "What did you do to it?". */
+  /** Looks right (check false): the line, made house straight away. Check it: the line, then the house prep steps on What is it. */
   onAdd: (bottle: WizardPick, check: boolean) => void;
 }
 

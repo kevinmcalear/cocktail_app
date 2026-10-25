@@ -39,9 +39,11 @@ function firstDraft(name: string, picked: PrepStart['picked'], technique: string
  */
 export function usePrepDraft({ name: started, initial, picked, technique, combined, nameNow }: PrepStart, onSeeded?: () => void) {
   const name = nameNow?.trim() || started;
+  // A recipe already written (or lines just combined) keeps what goes in when another kind is picked.
+  const keep = combined || !!initial;
   const [draft, setDraftState] = useState<PrepDraft>(() => initial ?? firstDraft(started, picked, technique));
   // Amounts typed as they go in (make-anything-steps-2, step 5) for lines combined from the drink's own.
-  const [view, setView] = useState<RecipeViewKind>(combined ? 'amounts' : 'parts');
+  const [view, setView] = useState<RecipeViewKind>(combined || initial?.kind === 'batch' ? 'amounts' : 'parts');
   // Goes up when the draft starts over (a kind, a technique, the catalog's recipe): steps that keep their own rows remount.
   const [version, setVersion] = useState(0);
   // A name the catalog has a sourced recipe for starts from it, until the maker changes anything.
@@ -74,18 +76,18 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
     const k = way?.kind ?? kind;
     const t = way?.fills ? techniqueById(way.technique) : null;
     const method = (d: PrepDraft) => (t && way ? withMethod(d, t, { ...prepCardFor(t), steps: methodOf(t) }, way.id) : d);
-    const wash = k === 'wash' && !combined ? techniqueById((way ?? KIND_WAYS.wash?.[0])?.technique) : null;
+    const wash = k === 'wash' && !keep ? techniqueById((way ?? KIND_WAYS.wash?.[0])?.technique) : null;
     if (wash) return restart(prepFromTechnique(wash, name, prepCardFor(wash), picked));
     // The same kind made another way: what goes in stays.
     if (t && draft.kind === k) return restart(method(draft));
     const fresh = startPrep(k, name, way?.id);
-    restart(method(combined ? keepLines(fresh, draft) : fresh));
+    restart(method(keep ? keepLines(fresh, draft) : fresh));
   };
   const pickTechnique = (id: string) => {
     const t = techniqueById(id);
     if (!t) return;
     const fresh = prepFromTechnique(t, name, prepCardFor(t), picked);
-    restart(combined ? keepLines(fresh, draft) : fresh);
+    restart(keep ? keepLines(fresh, draft) : fresh);
   };
   return {
     draft,

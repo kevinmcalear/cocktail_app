@@ -99,8 +99,11 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
 
   return {
     make,
-    /** Open a line's recipe again, or the steps for two lines just combined. */
-    edit: (l: WizardLine) => setMaking({ name: l.name, key: l.key, first: !!l.combined }),
+    /** Open a line's recipe again, or the steps for two lines just combined. Lines combined and left unfinished under another card go back. */
+    edit: (l: WizardLine) => {
+      if (combined && editingKey && editingKey !== l.key) set({ lines: uncombine(draft.lines, editingKey) });
+      setMaking({ name: l.name, key: l.key, first: !!l.combined });
+    },
     /** Make it house: the bottle line becomes a prep by this technique, the bottle its base; `ask` opens on What is it to check it first. */
     house: (l: WizardLine, name: string, technique: string, ask?: boolean) => setMaking({ name, key: l.key, replace: true, technique, base: { id: l.id, name: l.name }, first: ask }),
     /** The card under this line, when its prep is being written on the desktop page. */

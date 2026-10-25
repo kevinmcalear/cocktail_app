@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { useDragMergeDwell } from '@/hooks/useDragMergeDwell';
-import { combineLines } from '@/lib/batchLines';
+import { combinable, combineLines } from '@/lib/batchLines';
 import { overIndex } from '@/lib/dropIndex';
 import type { StepProps, WizardLine } from '@/lib/drinkWizard';
 
@@ -22,7 +22,7 @@ export function useCombineDrop({ draft, set, enabled, heights, onCombined }: Ste
     const over = overIndex(from, dy, heights());
     setHeld(from);
     // Only a line it can combine with lights up; anything else is a plain reorder.
-    dwell.hover(over !== null && combineLines(lines, from, over, draft.name) ? over : null);
+    dwell.hover(over !== null && combinable(lines, from, over) ? over : null);
   };
   const onDrop = (from: number): boolean => {
     setHeld(null);

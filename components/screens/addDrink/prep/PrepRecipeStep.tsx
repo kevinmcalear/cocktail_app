@@ -117,7 +117,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                 <View style={styles.name}>
                   <PressableScale accessibilityLabel={l.slot ? `Pick the ${l.slot}` : `${l.name}. Swap it`} onPress={() => setSwapKey(l.key)} style={styles.swapName}>
                     <Body numberOfLines={3} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
-                    {isBase ? <Caption tone="accent">The base, everything follows it</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'amounts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
+                    {isBase ? <Caption tone="accent">{view === 'amounts' ? 'The base' : 'The base, everything follows it'}</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'amounts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
                   </PressableScale>
                   {l.slot ? null : noteKey === l.key ? (
                     <TextInput
@@ -143,7 +143,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                   <View style={styles.own}>
                     <NumberField label={`${l.name}, as measured, ${l.unit || 'no unit'}`} value={amount === null ? '' : String(amount)} onChange={(v) => measure(l, v)} placeholder="to taste" />
                     <PressableScale role="button" aria-expanded={unitKey === l.key} accessibilityLabel={`Unit for ${l.name}: ${l.unit || 'none'}`} onPress={() => setUnitKey(unitKey === l.key ? null : l.key)} style={[styles.pill, { borderColor: unitKey === l.key ? ds.c.ink : ds.c.lineStrong }]}>
-                      <Caption>{l.unit || '—'}</Caption>
+                      <Caption>{l.unit || 'unit'}</Caption>
                       <IconSymbol name={unitKey === l.key ? 'chevron.up' : 'chevron.down'} size={12} color={ds.c.muted} />
                     </PressableScale>
                   </View>
@@ -165,7 +165,7 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                   <View style={styles.own}>
                     <NumberField label={`How much ${l.name}`} value={l.amount} onChange={(v) => change(l.key, { amount: v > 0 ? String(v) : '' })} placeholder="to taste" />
                     <PressableScale accessibilityLabel={`Unit: ${l.unit || 'none'}. Change`} onPress={() => change(l.key, { unit: UNITS[(UNITS.indexOf(l.unit as (typeof UNITS)[number]) + 1) % UNITS.length] })} style={styles.unit}>
-                      <Caption>{l.unit || '—'}</Caption>
+                      <Caption>{l.unit || 'unit'}</Caption>
                     </PressableScale>
                   </View>
                 )}
