@@ -2,9 +2,10 @@ import { useState } from 'react';
 
 import { Button, Segmented } from '@/components/ds';
 import { SetupChromeProvider, SetupPage, useSetupChrome } from '@/components/screens/onboarding/SetupPage';
-import { KitInline, type KitKind } from '@/components/screens/kit/KitPage';
+import type { KitKind } from '@/components/screens/kit/KitPage';
 import { KitIceScreen } from '@/components/screens/venue/KitIceScreen';
 import { KitToolsScreen } from '@/components/screens/venue/KitToolsScreen';
+import { SubPageInline } from '@/components/screens/venue/VenueSubPage';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 import { GlassesStep } from './GlassesStep';
@@ -35,7 +36,7 @@ export function KitStep({ barId, pageId, name, step, onBack, onDone }: { barId: 
         {tab === 'glassware' ? (
           <GlassesStep barId={barId} pageId={pageId} name={name} />
         ) : (
-          <KitInline.Provider value>{tab === 'ice' ? <KitIceScreen barId={barId} /> : <KitToolsScreen barId={barId} />}</KitInline.Provider>
+          <SubPageInline.Provider value>{tab === 'ice' ? <KitIceScreen barId={barId} /> : <KitToolsScreen barId={barId} />}</SubPageInline.Provider>
         )}
       </SetupPage>
     </SetupChromeProvider>
