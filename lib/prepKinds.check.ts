@@ -115,6 +115,16 @@ assert.deepEqual(chamomile.lines.map((l) => l.name), ['Gin', 'Chamomile']);
 assert.equal(chamomile.keepsHours, 14 * 24);
 assert.equal(chamomile.storage, 'Fridge, sealed bottle');
 assert.deepEqual(openSlots(startPrep('infusion', 'Infusion')).map((l) => l.slot), ['spirit', 'flavour']);
+// A house liqueur from its name: its flavours, a line each, never the liqueur in its own recipe (owner walkthrough, 25 Oct).
+const miso = startPrep('infusion', 'Miso banana liqueur');
+assert.deepEqual(miso.lines.map((l) => l.name), ['Spirit', 'Miso', 'Banana']);
+assert.deepEqual(miso.allergens, ['soya']);
+// Taking the miso out takes its allergen with it.
+assert.deepEqual(withFacts({ ...miso, lines: miso.lines.filter((l) => l.name !== 'Miso') }).allergens, []);
+// A spirit named keeps the rest as one "with what".
+assert.deepEqual(startPrep('infusion', 'Brown butter infused bourbon').lines.map((l) => l.name), ['Bourbon', 'Brown butter']);
+// A batch's kind word isn't a line either.
+assert.deepEqual(startPrep('batch', 'Negroni batch').lines.map((l) => l.name), ['Negroni']);
 
 // Fat wash from a typed name: White rum the base, coconut the flavour and Coconut Oil the fat, lifted off so it isn't in the yield.
 const t = (id: string) => techniqueById(id)!;
@@ -266,7 +276,7 @@ assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
   assert.deepEqual(kindOfTechnique('sous-vide-infusion'), { kind: 'infusion', way: 'sous-vide' });
   assert.deepEqual(kindOfTechnique('fat-wash'), { kind: 'wash', way: 'fat' });
   assert.equal(kindOfTechnique('agar-quick'), null);
-  assert.equal(prepSummary({ ...sv, steps: [...steps, ...steps] }), 'Infusion, sous vide · Miso banana liqueur · 4 steps', 'a stand-in spirit is not named');
+  assert.equal(prepSummary({ ...sv, steps: [...steps, ...steps] }), 'Infusion, sous vide · Miso, banana · 4 steps', 'a stand-in spirit is not named');
   // A kind picked for two lines combined keeps them, with the kind's own method.
   const syrup = keepLines(startPrep('syrup', 'X'), sv);
   assert.equal(syrup.kind, 'syrup');

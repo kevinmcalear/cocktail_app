@@ -218,7 +218,8 @@ export function recipeEyebrow(d: PrepDraft): string | null {
   const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name ?? '';
   const head = way && !way.kind ? (way.id === 'oleo' ? way.name : `${kind}, ${way.name.toLowerCase()}`) : kind;
   const parted = d.lines.filter((l) => l.parts !== null && !l.slot);
-  const equal = parted.length > 1 && parted.every((l) => l.parts === parted[0].parts && l.unit === parted[0].unit);
+  // Parts of the base: flavours "to taste" beside a spirit still to pick aren't equal parts of anything.
+  const equal = parted.length > 1 && parted.some((l) => l.key === d.baseKey) && parted.every((l) => l.parts === parted[0].parts && l.unit === parted[0].unit);
   const by = parted[0]?.unit === 'g' ? 'by weight' : parted[0]?.unit === 'ml' ? 'by volume' : null;
   return equal && by ? `${head} · equal parts ${by}` : head;
 }
@@ -324,11 +325,14 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
       // The spirit the name gives ("Chamomile infused gin"), or one to pick.
       const named = nameParts(name, { starts: 'spirit', withWhat: 'flavour' });
       const spirit = named.base ? line(named.base, 1, 'ml', 0.95) : slotLine('Spirit', 'spirit', 1, 'ml', 0.95);
-      const with_ = named.adjunct ? line(named.adjunct, 0.1, 'g', 0) : slotLine('Flavour', 'flavour', 0.1, 'g', 0);
+      // With a spirit named, the rest is one "with what" ("Brown butter infused bourbon"). A house
+      // liqueur names only its flavours ("Miso banana liqueur"): a line for each, never the liqueur itself.
+      const flavours = !named.adjunct ? [] : named.base ? [named.adjunct] : named.adjunct.split(' ').map((w) => w[0].toUpperCase() + w.slice(1));
+      const withs = flavours.length ? flavours.map((f) => line(f, 0.1, 'g', 0)) : [slotLine('Flavour', 'flavour', 0.1, 'g', 0)];
       // ponytail: no source gives a keep for an infused spirit; 2 weeks cold is
       // the fat wash's (the shortest sourced keep for a strained spirit). Fresh
       // fruit or dairy in it could be less: the maker sets the real one.
-      return draft([spirit, with_], 700, [
+      return draft([spirit, ...withs], 700, [
         s('Add the flavour to the spirit in a clean jar.'),
         s('Leave to infuse, tasting now and then.', DAY * 3600),
         s('Strain and bottle.'),

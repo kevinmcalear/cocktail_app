@@ -127,14 +127,14 @@ describe('OnboardingScreen', () => {
 
   test('every step after the first has Back to the one before, and the bar counts the main path', async () => {
     await renderWithTamagui(<OnboardingScreen />);
-    expect(screen.getByText('Step 1 of 4')).toBeTruthy();
+    expect(screen.getByText('Step 1 of 5')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
     expect(screen.getByText('Your handle is @jo.juniper. You can change it on You.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByText('Do you work in hospitality?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Yes, I work in hospitality' }));
-    expect(screen.getByText('Step 2 of 4')).toBeTruthy();
+    expect(screen.getByText('Step 3 of 10')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByText('Do you work in hospitality?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
@@ -160,10 +160,10 @@ describe('OnboardingScreen', () => {
     mockPersonClaim = { id: 'c1', status: 'pending', profile: { id: 'existing', handle: 'jo.juniper', display_name: 'Jo Juniper' } };
     await named();
     await fireEvent.press(screen.getByRole('button', { name: 'Yes, I work in hospitality' }));
-    expect(screen.getByText('Claim sent')).toBeTruthy();
+    expect(screen.getByText('Claim sent') && screen.getByText('Step 3 of 6')).toBeTruthy(); // the claim skips the career steps
     await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
     expect(mockSaveName).not.toHaveBeenCalled();
-    expect(screen.getByText('What do you like to drink?')).toBeTruthy();
+    expect(screen.getByText('What do you like to drink?') && screen.getByText('Step 4 of 6')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
     expect(mockSaveTaste).not.toHaveBeenCalled();
     expect(screen.getByText('How do you measure?')).toBeTruthy();
@@ -200,7 +200,7 @@ describe('OnboardingScreen', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByText('Menus you worked on')).toBeTruthy();
-    expect(screen.getByText('Step 4 of 4')).toBeTruthy();
+    expect(screen.getByText('Step 6 of 10')).toBeTruthy();
     await fireEvent.changeText(screen.getByLabelText('Bar'), 'Mi');
     await fireEvent.press(screen.getByRole('radio', { name: 'Milk & Honey, New York, closed' }));
     await fireEvent.changeText(screen.getByLabelText('Menu name'), 'Opening list');

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { useCatalogRecipe } from '@/hooks/usePrepCard';
-import { guessKind, keepLines, KIND_WAYS, openSlots, prepFromCatalog, prepFromTechnique, prepPhrase, sourceSite, startPrep, withMethod, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
+import { guessKind, keepLines, KIND_WAYS, openSlots, prepFromCatalog, prepFromTechnique, prepPhrase, sourceSite, startPrep, withFacts, withMethod, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
 import { methodOf, prepCardFor, waysToMake } from '@/lib/techniques/makeIt';
 import { techniqueById } from '@/lib/techniques';
 
@@ -48,9 +48,10 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
   const [version, setVersion] = useState(0);
   // A name the catalog has a sourced recipe for starts from it, until the maker changes anything.
   const [touched, setTouched] = useState(false);
+  // What it contains follows its lines: a line taken out takes its allergen with it (hand-set allergens stay).
   const setDraft = (d: PrepDraft) => {
     setTouched(true);
-    setDraftState(d);
+    setDraftState(withFacts(d));
   };
   const restart = (d: PrepDraft) => {
     setDraft(d);
