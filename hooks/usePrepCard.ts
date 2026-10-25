@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { saveItemAllergens } from '@/hooks/useAllergens';
 import { ensureIngredient } from '@/hooks/useCreateIngredient';
+import { DROPDOWNS_QUERY_KEY } from '@/hooks/useDropdowns';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { isGarnishUnit } from '@/lib/batch';
 import { plainDbMessage } from '@/lib/dbError';
@@ -429,7 +430,9 @@ export function useCatalogRecipe(name: string | null | undefined) {
  * Something you make, saved from its own page (New › Something you make,
  * make-anything-steps-3, step 11): a house prep row of its own, its recipe,
  * method and keeping, and any recipe made in-house inside it as a prep of
- * its own. A name that's taken says so.
+ * its own. A name that's taken becomes your version at home ("My Honey
+ * syrup", as the drink's save does); at a venue it says so. If anything
+ * fails, the rows this save made go again.
  */
 export function useCreatePrep() {
   const qc = useQueryClient();
@@ -437,32 +440,39 @@ export function useCreatePrep() {
     mutationFn: async ({ name, prep, barId }: { name: string; prep: PrepDraft; barId: string | null }): Promise<{ id: string; warnings: string[] }> => {
       const made = new Map<string, string>();
       const warnings: string[] = [];
-      const row = async (n: string) => {
-        const { data, error } = await supabase.from('items').insert({ item_type: 'ingredient', name: capitalizeFirst(n.trim()), bar_id: barId, ingredient_role: 'prep' }).select('id').single();
-        return { data, error };
+      const rows: string[] = [];
+      const insert = (row: { name: string; generic_id?: string }) => supabase.from('items').insert({ ...row, item_type: 'ingredient', bar_id: barId, ingredient_role: 'prep' }).select('id').single();
+      // A new prep row, or the one that already has the name (`isNew` false: it keeps its own recipe).
+      const prepRow = async (raw: string): Promise<{ id: string; isNew: boolean }> => {
+        const n = capitalizeFirst(raw.trim());
+        let { data, error } = await insert({ name: n });
+        const taken = existingIngredientId(error);
+        if (taken && !barId) ({ data, error } = await insert({ name: `My ${n}`, generic_id: taken }));
+        const yours = taken ? (barId ? taken : existingIngredientId(error)) : null;
+        if (yours) return { id: yours, isNew: false };
+        if (error || !data) throw error ?? new Error(`Couldn’t add ${n}.`);
+        rows.push(data.id as string);
+        return { id: data.id as string, isNew: true };
       };
-      const { data, error } = await row(name);
-      if (existingIngredientId(error)) throw new Error(`${capitalizeFirst(name.trim())} is already here. Search for it instead.`);
-      if (error || !data) throw error ?? new Error('Couldn’t save it.');
-      const id = data.id as string;
+      const top = await prepRow(name);
+      if (!top.isNew) throw new Error(`${capitalizeFirst(name.trim())} is already ${barId ? 'here' : 'yours'}. Search for it instead.`);
       const ensure = (pick: { id: string | null; name: string }) => ensureIngredient(pick, barId, made);
-      // A recipe inside it: a row of its own, or the prep that already has its name (which keeps its own recipe).
       const own = async (pick: { id: string | null; name: string }) => {
-        const inner = await row(pick.name);
-        const taken = existingIngredientId(inner.error);
-        if (taken) return { id: taken, isNew: false };
-        if (inner.error || !inner.data) throw inner.error ?? new Error(`Couldn’t add ${pick.name}.`);
-        return { id: inner.data.id as string, isNew: true };
+        const r = await prepRow(pick.name);
+        if (!r.isNew) warnings.push(`${capitalizeFirst(pick.name)} is already here, so it uses that one. Change its recipe on its page.`);
+        return r;
       };
       try {
-        await savePrepRecipe(id, prep, ensure, barId, { own, warn: (m) => warnings.push(m) });
+        await savePrepRecipe(top.id, prep, ensure, barId, { own, warn: (m) => warnings.push(m) });
       } catch (e) {
-        await supabase.from('items').delete().eq('id', id);
+        await supabase.from('items').delete().in('id', rows);
         throw e;
       }
-      useRecentActivityStore.getState().push(recentEntry('ingredient', id, capitalizeFirst(name.trim()), { barId }));
+      useRecentActivityStore.getState().push(recentEntry('ingredient', top.id, capitalizeFirst(name.trim()), { barId }));
       void qc.invalidateQueries({ queryKey: ['ingredients'] });
-      return { id, warnings };
+      void qc.invalidateQueries({ queryKey: DROPDOWNS_QUERY_KEY });
+      if (barId) void qc.invalidateQueries({ queryKey: ['bar', barId] });
+      return { id: top.id, warnings };
     },
   });
 }

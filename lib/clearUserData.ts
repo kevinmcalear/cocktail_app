@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FAVORITES_KEY } from '@/hooks/useFavorites';
 import { STUDY_PILE_KEY } from '@/hooks/useStudyPile';
 import { AI_CONSENT_KEY } from '@/lib/aiConsent';
@@ -40,5 +41,7 @@ export async function clearUserData(): Promise<void> {
     deviceStore.removeItem(FAVORITES_KEY),
     deviceStore.removeItem(STUDY_PILE_KEY),
     deviceStore.removeItem(AI_CONSENT_KEY),
+    // The old step-by-step ingredient wizard's kept draft (gone since A bottle you buy).
+    AsyncStorage.removeItem('ingredient-wizard'),
   ]);
 }

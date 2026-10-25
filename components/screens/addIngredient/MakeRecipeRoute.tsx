@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRef } from 'react';
 import { Alert } from 'react-native';
 
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
@@ -25,6 +26,8 @@ export function MakeRecipeRoute() {
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const create = useCreatePrep();
   const setRecentlyCreatedItem = useAppStore((s) => s.setRecentlyCreatedItem);
+  // One save at a time: a quick second tap lands before the screen knows it's saving.
+  const saving = useRef(false);
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
   return (
     <VenueBrandProvider>
@@ -38,7 +41,8 @@ export function MakeRecipeRoute() {
         aliases={dropdowns?.ingredientAliases}
         onClose={goBack}
         onDone={(prep, n) => {
-          if (create.isPending) return;
+          if (saving.current) return;
+          saving.current = true;
           create.mutate(
             { name: n, prep, barId: barId || null },
             {
@@ -51,7 +55,10 @@ export function MakeRecipeRoute() {
                 }
                 router.replace(`/ingredient/${id}`);
               },
-              onError: (e) => Alert.alert('Couldn’t save it', plainDbMessage(e) ?? e.message),
+              onError: (e) => {
+                saving.current = false;
+                Alert.alert('Couldn’t save it', plainDbMessage(e) ?? e.message);
+              },
             }
           );
         }}

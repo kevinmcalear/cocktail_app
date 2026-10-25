@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Field, IngredientDrawing } from '@/components/ds';
 import { space } from '@/constants/tokens';
+import { confirmDiscardChanges } from '@/lib/dialogs';
 import { RECIPE_STEPS, recipeEyebrow, withFacts, type PrepDraft, type PrepPick, type RecipeStep } from '@/lib/prepKinds';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 
@@ -102,7 +103,8 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   // Leaving keeps what's done on the line, a recipe to finish; lines just combined go back to two, and a finished recipe stays as it was.
   const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: step }, shown) : null;
   // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
-  const leave = keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose()));
+  // On its own page there's no drink to keep it on: leaving lets it go, asked first if anything was written.
+  const leave = page ? () => void confirmDiscardChanges(changed()).then((go) => go && onClose()) : (keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())));
   const [asking, setAsking] = useState(false);
   const ask = () => (keep ? setAsking(true) : leave());
   const back = () => (at > 0 ? go(STEPS[at - 1]) : ask());

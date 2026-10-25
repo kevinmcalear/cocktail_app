@@ -56,4 +56,13 @@ describe('AddBottle', () => {
     await fireEvent.press(screen.getByRole('link', { name: 'It’s something you make: the house recipe steps' }));
     expect(onMake).toHaveBeenCalledWith('House Grenadine');
   });
+
+  test('something else (a plain ingredient from a spec editor) is just its name', async () => {
+    await renderWithTamagui(<AddBottle initialName="Fresh lime juice" onClose={jest.fn()} onSaved={jest.fn()} onMake={jest.fn()} />);
+    await laidOut();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Something else' }));
+    expect(screen.queryByLabelText('Who makes it')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Save it' }));
+    expect(mockCreate).toHaveBeenCalledWith({ draft: expect.objectContaining({ name: 'Fresh lime juice', role: 'other' }), barId: null }, expect.anything());
+  });
 });

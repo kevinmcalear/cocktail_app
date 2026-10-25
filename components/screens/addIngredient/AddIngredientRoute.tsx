@@ -23,10 +23,18 @@ export function AddIngredientRoute({ isInline, barIdProp, onClose, onSave }: Pro
   const params = useLocalSearchParams<{ barId?: string; name?: string; attachTo?: string }>();
   const setRecentlyCreatedItem = useAppStore((s) => s.setRecentlyCreatedItem);
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
+  const barId = (barIdProp !== undefined ? barIdProp : params.barId) || null;
   const wizard = (
     <AddBottle
-      barId={(barIdProp !== undefined ? barIdProp : params.barId) || null}
-      onMake={(name) => router.replace({ pathname: '/make-recipe', params: { ...(name ? { name } : {}), ...(params.barId ? { barId: params.barId } : {}), ...(params.attachTo ? { attachTo: params.attachTo } : {}) } })}
+      barId={barId}
+      // Something you make: the recipe steps for the same place, in the workspace's stack too (they're a page of their own).
+      onMake={(name) => {
+        const to = { pathname: '/make-recipe' as const, params: { ...(name ? { name } : {}), ...(barId ? { barId } : {}), ...(params.attachTo ? { attachTo: params.attachTo } : {}) } };
+        if (isInline) {
+          onClose?.();
+          router.push(to);
+        } else router.replace(to);
+      }}
       initialName={params.name}
       embedded={!!isInline}
       onClose={onClose ?? goBack}
