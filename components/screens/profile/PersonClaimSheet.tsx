@@ -26,13 +26,29 @@ export function personClaimError(error: unknown): string {
  * "Claim Ash Okafor" (find-yourself step 4): one sheet, pick how we check,
  * send (start_person_claim). A code messaged from the page's Instagram comes
  * first when the page has one; "Something else" is a note a person checks;
- * "<bar> confirms you" waits for the bar to be claimed. Someone who already
+ * "<bar> confirms you" works once the bar is claimed (confirmBar, its page):
+ * its Admin confirms it on the Team screen. Someone who already
  * has a page gets this one merged into theirs when it's approved.
  * From Setup, a sent claim goes back to Setup's "Claim sent".
  * On a computer, "Not your computer?" sits beside it with a QR code for their
  * own phone; on a phone, "Not your phone? Claim it on yours" shows that below.
  */
-export function PersonClaimSheet({ profile, bar, stats, visible, onClose }: { profile: Profile; bar: string | null; stats: { drinks: number; menus: number }; visible: boolean; onClose: () => void }) {
+export function PersonClaimSheet({
+  profile,
+  bar,
+  confirmBar = null,
+  stats,
+  visible,
+  onClose,
+}: {
+  profile: Profile;
+  bar: string | null;
+  /** The claimed bar page that can confirm them; null while the bar isn't claimed. */
+  confirmBar?: string | null;
+  stats: { drinks: number; menus: number };
+  visible: boolean;
+  onClose: () => void;
+}) {
   const ds = useDs();
   const router = useRouter();
   const { user } = useAuth();
@@ -42,13 +58,15 @@ export function PersonClaimSheet({ profile, bar, stats, visible, onClose }: { pr
   const claim = useClaimProfile();
   const [note, setNote] = useState('');
   const handle = pageInstagram(profile);
-  const [method, setMethod] = useState<PersonClaimMethod>(handle ? 'instagram' : 'note');
+  const [method, setMethod] = useState<PersonClaimMethod | 'bar'>(handle ? 'instagram' : 'note');
   // Made before sending, so the sheet can show it first (as a bar's claim does).
   const [code] = useState(newClaimCode);
   const moves = [stats.drinks ? plural(stats.drinks, 'drink') : null, stats.menus ? plural(stats.menus, 'menu') : null, 'where you have worked'].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' and $1');
   const send = () =>
     claim.mutate(
-      { profile_id: profile.id, message: note, method, code: method === 'instagram' ? code : null },
+      method === 'bar' && confirmBar
+        ? { profile_id: profile.id, message: '', method: 'note', confirm_bar: confirmBar }
+        : { profile_id: profile.id, message: note, method: method === 'bar' ? 'note' : method, code: method === 'instagram' ? code : null },
       {
         onSuccess: () => {
           onClose();
@@ -77,7 +95,16 @@ export function PersonClaimSheet({ profile, bar, stats, visible, onClose }: { pr
             >
               {method === 'instagram' ? <ClaimCode code={code} note={`Send it in a message from @${handle} once you've sent the claim. A person checks it.`} /> : null}
             </MethodCard>
-            <MethodCard icon="checkmark" label={`${bar ?? 'The bar'} confirms you`} pill="Same day" detail={`Once ${bar ?? 'the bar'} is claimed, its Admin confirms you with one tap.`} on={false} available={false} onPress={() => {}} />
+            <MethodCard
+              icon="checkmark"
+              label={`${bar ?? 'The bar'} confirms you`}
+              pill="Same day"
+              detail={confirmBar ? `${bar ?? 'The bar'}’s Admin confirms you with one tap.` : `Once ${bar ?? 'the bar'} is claimed, its Admin confirms you with one tap.`}
+              on={method === 'bar'}
+              available={!!confirmBar}
+              disabled={claim.isPending}
+              onPress={() => setMethod('bar')}
+            />
             <MethodCard icon="link" label="Something else" pill="A day or two" detail="A link that shows it is you, like a staff page or a press piece. A person checks." on={method === 'note'} available disabled={claim.isPending} onPress={() => setMethod('note')}>
               {method === 'note' ? (
                 <View style={styles.note}>

@@ -81,3 +81,45 @@ export function useAnswerJoinRequest(barId: string) {
     onError: () => {},
   });
 }
+
+/** A person claim asking the venue to confirm who they are ("<bar> confirms you", person_claims_to_confirm). */
+export interface ClaimToConfirm {
+  id: string;
+  created_at: string;
+  page_id: string;
+  page_handle: string;
+  page_name: string;
+  claimant_name: string;
+  /** Their own person page, when they have one. */
+  claimant_handle: string | null;
+}
+
+/** Claims on people's pages waiting on the venue's Admins. */
+export function useClaimsToConfirm(barId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['claims-to-confirm', barId],
+    enabled,
+    staleTime: 0,
+    queryFn: async (): Promise<ClaimToConfirm[]> => {
+      const { data, error } = await supabase.rpc('person_claims_to_confirm', { p_bar_id: barId });
+      if (error) throw error;
+      return (data ?? []) as ClaimToConfirm[];
+    },
+  });
+}
+
+/** One tap: the page is theirs (confirm_person_claim). */
+export function useConfirmPersonClaim(barId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (claimId: string) => {
+      const { error } = await supabase.rpc('confirm_person_claim', { p_claim_id: claimId });
+      if (error) throw new Error(wordy(error));
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['claims-to-confirm', barId] });
+      await qc.invalidateQueries({ queryKey: ['profile-positions'] });
+    },
+    onError: () => {},
+  });
+}

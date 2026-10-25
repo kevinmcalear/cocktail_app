@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Caption, DsText, Headline, TextLink, useDs } from '@/components/ds';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { space } from '@/constants/tokens';
-import { useAnswerJoinRequest, useJoinRequests } from '@/hooks/useJoinRequests';
+import { useAnswerJoinRequest, useClaimsToConfirm, useConfirmPersonClaim, useJoinRequests } from '@/hooks/useJoinRequests';
 
 /**
  * People asking to join the team (find-yourself step 6), on the Team screen
@@ -43,6 +43,46 @@ export function JoinRequests({ barId, barName }: { barId: string; barName: strin
       {answer.error ? (
         <Caption tone="accent" role="alert">
           {answer.error.message}
+        </Caption>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * People claiming a page that lists them at this bar, who asked the bar to
+ * confirm it's them (find-yourself step 4, "<bar> confirms you"). For the
+ * venue's Admins: Confirm hands them the page. Anything else is a
+ * moderator's to check. Nothing when none wait.
+ */
+export function ClaimsToConfirm({ barId, barName, admin }: { barId: string; barName: string; admin: boolean }) {
+  const ds = useDs();
+  const router = useRouter();
+  const claims = useClaimsToConfirm(barId, admin).data ?? [];
+  const confirm = useConfirmPersonClaim(barId);
+  if (!admin || !claims.length) return null;
+
+  return (
+    <View style={styles.section}>
+      <Headline role="heading">Confirm who they are</Headline>
+      <Caption tone="muted">{`They say they’re someone ${barName}’s page lists. Confirm only people you know worked here: their page and its drinks become theirs. Not sure? Leave it and a person checks.`}</Caption>
+      <View role="list" aria-label="Confirm who they are">
+        {claims.map((c) => (
+          <View key={c.id} role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>
+            <UserAvatar uri={null} name={c.claimant_name} size={40} />
+            <View style={styles.flex}>
+              <DsText variant="headline" numberOfLines={2}>{`${c.claimant_name} says they’re ${c.page_name}`}</DsText>
+              <TextLink label={`See ${c.page_name}’s page`} onPress={() => router.push(`/p/${c.page_handle}` as Href)} />
+              <View style={styles.actions}>
+                <Button label="Confirm" disabled={confirm.isPending} accessibilityLabel={`Confirm ${c.claimant_name} is ${c.page_name}`} onPress={() => confirm.mutate(c.id)} />
+              </View>
+            </View>
+          </View>
+        ))}
+      </View>
+      {confirm.error ? (
+        <Caption tone="accent" role="alert">
+          {confirm.error.message}
         </Caption>
       ) : null}
     </View>

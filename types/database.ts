@@ -5943,6 +5943,69 @@ export type Database = {
         Args: { p_item_id: string; p_makes: string; p_profile_id: string }
         Returns: string
       }
+      confirm_person_claim: {
+        Args: { p_claim_id: string }
+        Returns: {
+          address_line: string | null
+          avatar_url: string | null
+          awards_mode: string
+          bar_id: string | null
+          bar_type: string | null
+          bars_mode: string
+          bio: string | null
+          city: string | null
+          claimed_at: string | null
+          closed_year: number | null
+          country_code: string | null
+          created_at: string
+          created_by: string | null
+          display_name: string
+          had_mode: string
+          handle: string
+          headline_position_id: string | null
+          hours: Json | null
+          hours_updated_at: string | null
+          id: string
+          instagram: string | null
+          is_claimed: boolean | null
+          is_closed: boolean
+          is_public: boolean
+          kind: Database["public"]["Enums"]["profile_kind"]
+          latitude: number | null
+          locality: string | null
+          longitude: number | null
+          made_mode: string
+          makes: string[]
+          moderated_at: string | null
+          opened_year: number | null
+          page_visibility:
+            | Database["public"]["Enums"]["bar_page_visibility"]
+            | null
+          part_of_profile_id: string | null
+          phone: string | null
+          postcode: string | null
+          region: string | null
+          serves: string[]
+          shares_bars: boolean
+          shares_made: boolean
+          shares_rankings: boolean
+          shows_city: boolean
+          shows_dates: boolean
+          shows_photo: boolean
+          social_links: string[] | null
+          supplies: string[]
+          tagline: string | null
+          timezone: string | null
+          user_id: string | null
+          website: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       consume_ai_quota: {
         Args: { p_daily_limit: number; p_fn: string; p_user_id: string }
         Returns: boolean
@@ -6711,6 +6774,18 @@ export type Database = {
           together: number
         }[]
       }
+      person_claims_to_confirm: {
+        Args: { p_bar_id: string }
+        Returns: {
+          claimant_handle: string
+          claimant_name: string
+          created_at: string
+          id: string
+          page_handle: string
+          page_id: string
+          page_name: string
+        }[]
+      }
       pin_profile_drink: {
         Args: { p_entry_id: string; p_pin: boolean }
         Returns: string
@@ -7145,6 +7220,7 @@ export type Database = {
       start_person_claim: {
         Args: {
           p_code?: string
+          p_confirm_bar?: string
           p_method?: Database["public"]["Enums"]["claim_method"]
           p_note?: string
           p_profile_id: string

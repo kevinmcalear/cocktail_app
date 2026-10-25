@@ -487,6 +487,8 @@ export interface NewClaim {
   method?: PersonClaimMethod;
   /** The six digits the app showed before sending (lib/claimVerification newClaimCode). */
   code?: string | null;
+  /** "<bar> confirms you": the bar page whose Admin checks it, sent as a note (20261113310000). */
+  confirm_bar?: string | null;
 }
 
 /** A claim of mine on someone's page (a person, not a bar), waiting or approved: the newest, or null. */
@@ -534,6 +536,7 @@ export function useClaimProfile() {
         p_method: method,
         p_note: claim.message.trim().slice(0, 1000) || null,
         p_code: method === 'instagram' ? (claim.code ?? null) : null,
+        ...(claim.confirm_bar ? { p_confirm_bar: claim.confirm_bar } : {}),
       });
       if (error) throw error;
       return data as ProfileClaim;

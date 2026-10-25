@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, Headline, Tag, useDs, useGutter } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
-import { useMyClaims, type Profile } from '@/hooks/useProfiles';
+import { useMyClaims, useProfile, type Profile } from '@/hooks/useProfiles';
 
 import { useMadeBy } from './MadeBy';
 import { PersonClaimSheet } from './PersonClaimSheet';
@@ -31,15 +31,19 @@ export function ThisIsMe({ profile, pinned = false }: { profile: Profile; pinned
   }, [open, router]);
   const [notMe, setNotMe] = useState(false);
   const first = profile.display_name.split(' ')[0];
-  const bar = made.positions.find((p) => p.is_current)?.bar.display_name ?? made.groups.find((g) => g.barName)?.barName ?? null;
+  const job = made.positions.find((p) => p.is_current) ?? made.positions[0];
+  const bar = job?.bar.display_name ?? made.groups.find((g) => g.barName)?.barName ?? null;
+  // "<bar> confirms you" works once that bar is claimed (it has a venue).
+  const barPage = useProfile(job?.bar.id ?? null).data;
+  const confirmBar = barPage?.kind === 'bar' && barPage.bar_id ? barPage.id : null;
   const latest = claims?.[0];
   if (notMe) return null;
   const sent = latest?.status === 'pending';
-  const sheet = <PersonClaimSheet profile={profile} bar={bar} stats={made.stats} visible={open && !isLoading && !sent} onClose={() => setOpen(false)} />;
+  const sheet = <PersonClaimSheet profile={profile} bar={bar} confirmBar={confirmBar} stats={made.stats} visible={open && !isLoading && !sent} onClose={() => setOpen(false)} />;
   const buttons = sent ? (
     <View style={styles.sent} role="status">
       <Tag label="Claim sent" />
-      <Caption tone="muted">A person checks it, usually within a day.</Caption>
+      <Caption tone="muted">{latest?.evidence?.confirm_bar ? `${bar ?? 'The bar'}’s Admin confirms it on their Team screen.` : 'A person checks it, usually within a day.'}</Caption>
     </View>
   ) : (
     <>
