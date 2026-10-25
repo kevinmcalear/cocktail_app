@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { useMyBar } from '@/hooks/useHomeBar';
 import { checkShelf, type ShelfVerdict } from '@/lib/shelfCheck';
@@ -20,12 +20,16 @@ function useKindOf(itemId: string | null) {
   });
 }
 
-/** Each spec line's kind (generic) id, so a bottle to buy that's a kind still marks its line. */
-function useKindsOf(ids: string[]) {
+/**
+ * Each item's kind (generic) id: a spec line's, so a bottle to buy that's a kind still marks its line; what Add by hand's juice is squeezed from.
+ * `keep`: show the last answer while a new set loads (Add by hand, as you type); a drink page never shows another drink's.
+ */
+export function useKindsOf(ids: string[], keep = false) {
   const sorted = [...new Set(ids)].sort();
   return useQuery({
     queryKey: ['kinds-of', sorted],
     enabled: sorted.length > 0,
+    placeholderData: keep ? keepPreviousData : undefined,
     staleTime: 60 * 60 * 1000,
     queryFn: async (): Promise<Record<string, string | null>> => {
       const { data, error } = await supabase.from('items').select('id, generic_id').in('id', sorted);

@@ -12,7 +12,7 @@ import { barSubtitle, shelfCountsLine } from '@/lib/myBarText';
 import type { ShelfSort } from '@/lib/pantry';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
-import { ShoppingBasket, ToBuyStrip } from '../shopping/ToBuy';
+import { ShoppingBasket, ShoppingColumn, ToBuyStrip } from '../shopping/ToBuy';
 import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
 import { useTileCols } from './BarTile';
 import { KitSection, LabSection, MoreSections, OpenShelfItem, PrepsSection, SectionChips, type Jumpable } from './BarSections';
@@ -46,9 +46,10 @@ export function MyBarScreen() {
   const wide = breakpoint === 'desktop';
   const window = useWindowDimensions();
   const portrait = window.height > window.width;
-  // A desktop's shelf column fits five tiles to a row (home-mybar-desktop).
+  // A desktop's shelf column shares the row with What to make and the shopping list (shopping desk-mybar): three tiles to a row,
+  // four once the window is wide enough that the shelf's share (after the sidebar and the list) still gives each tile about 120px.
   const tileCols = useTileCols();
-  const cols = wide ? 5 : tileCols;
+  const cols = wide ? (window.width >= 1760 ? 4 : 3) : tileCols;
   const [adding, setAdding] = useState<AddFilter | null>(null);
   const [snapping, setSnapping] = useState(false);
   const [opened, setOpened] = useState<ShelfItem | null>(null);
@@ -237,7 +238,8 @@ export function MyBarScreen() {
           />
         ) : split ? (
           <>
-            <ScreenHeader actions={<ShoppingBasket />} />
+            {/* The list is a column here (shopping desk-mybar), so no basket. */}
+            <ScreenHeader />
             <View style={[styles.deskHead, { paddingHorizontal: gutter }]}>
               <View style={styles.deskTitle}>
                 <Title>My Bar</Title>
@@ -247,7 +249,8 @@ export function MyBarScreen() {
             </View>
             <View style={styles.columns}>
               {list(rows.slice(0, cut), styles.shelfColumn, { paddingLeft: gutter, paddingRight: space.xl, paddingBottom: bottom })}
-              {list(pairDrinks(rows.slice(cut)), styles.makeColumn, { paddingLeft: space.xl, paddingRight: gutter, paddingBottom: bottom })}
+              {list(pairDrinks(rows.slice(cut)), styles.makeColumn, { paddingLeft: space.xl, paddingRight: space.xl, paddingBottom: bottom })}
+              <ShoppingColumn gutter={gutter} bottom={bottom} />
             </View>
           </>
         ) : (

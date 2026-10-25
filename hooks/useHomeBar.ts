@@ -332,7 +332,8 @@ export interface PrepDetail {
 
 /**
  * Card facts for these preps (Make first, One thing short, your house preps'
- * use-by, what each lab bottle goes into), in URL-sized batches.
+ * use-by, what each lab bottle goes into, what Add to shopping puts on the
+ * list), in URL-sized batches. A bought thing comes back with no lines.
  */
 export function usePrepDetails(prepIds: readonly string[]) {
   const ids = [...new Set(prepIds)].sort();

@@ -6,6 +6,7 @@ import { Caption, Chip, EquipmentDrawing, EquipmentThumb, Headline, IngredientDr
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import type { ShelfItem } from '@/hooks/useHomeBar';
+import { useRunningLow } from '@/hooks/useShoppingList';
 import { madeLine, SECTIONS, type BarSection } from '@/lib/barSections';
 import { prepUseBy } from '@/lib/myBarText';
 import { itemHref } from '@/lib/itemRoutes';
@@ -89,18 +90,21 @@ export const usedLine = (uses: number, what = 'drink') => (uses ? `In ${uses} ${
 
 /**
  * A shelf item's tile: opens the bottle sheet (or its page), or while editing
- * takes it off on a tap. A long press starts editing (`onHold`). Memo-free on
+ * takes it off on a tap. A long press starts editing (`onHold`). Running low
+ * marks it Low, and says it's on your list (shopping B1). Memo-free on
  * purpose: a section re-renders as a whole when the shelf changes.
  */
 export function ShelfTile({ item, meta, metaTone = 'muted', editing, onRemove, onHold }: { item: ShelfItem; meta?: string | null; metaTone?: 'muted' | 'ink'; editing: boolean; onRemove: (id: string) => void; onHold?: () => void }) {
   const router = useRouter();
   const open = use(OpenShelfItem);
-  const line = meta === undefined ? usedLine(item.uses) : meta;
+  const low = useRunningLow().has(item.id);
+  const line = low ? 'Running low · on your list' : meta === undefined ? usedLine(item.uses) : meta;
   return (
     <BarTile
       name={item.name}
       meta={line}
-      metaTone={metaTone}
+      metaTone={low ? 'accent' : metaTone}
+      low={low}
       picture={<IngredientDrawing id={item.id} name={item.name} lazy />}
       role={editing ? 'button' : 'link'}
       accessibilityLabel={editing ? `Take ${item.name} off your bar` : [item.name, line].filter(Boolean).join(', ')}

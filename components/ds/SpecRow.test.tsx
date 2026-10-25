@@ -35,3 +35,15 @@ test('without an amount action the whole line is one button that reads the amoun
 
   expect(screen.getAllByRole('button').map(label)).toEqual(['2 oz, Rye']);
 });
+
+test('a line on the shopping list says so in place of its flag, out loud too', async () => {
+  await renderWithTamagui(
+    <BackbarTheme>
+      <SpecRow amount="20 ml" ingredient="Cynar" flag="Not on your shelf" listed onPress={jest.fn()} />
+    </BackbarTheme>
+  );
+
+  expect(screen.getAllByRole('button').map(label)).toEqual(['20 ml, Cynar, On your list']);
+  expect(screen.getByText('On your list')).toBeTruthy();
+  expect(screen.queryByText('Not on your shelf')).toBeNull();
+});
