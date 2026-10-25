@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { readFound, SHELF_KEY, useShelfEdit } from '@/hooks/useHomeBar';
 import { barSection } from '@/lib/barSections';
 import { PANTRY_WATER } from '@/lib/pantry';
-import type { ShoppingRow, ShoppingSource } from '@/lib/shoppingList';
+import { juiceFruit, type ShoppingRow, type ShoppingSource } from '@/lib/shoppingList';
 import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
 
@@ -194,9 +194,14 @@ export function useShoppingEdit() {
    * how many went on.
    */
   const addMadeFrom = useMutation({
-    mutationFn: async ({ item, onShelf }: { item: { id: string; name: string }; onShelf: ReadonlySet<string> }): Promise<number> => {
-      const parts = await readMadeFrom(item.id);
-      const needed = parts.filter((p) => !onShelf.has(p.id) && p.name.toLowerCase() !== PANTRY_WATER.toLowerCase());
+    mutationFn: async ({ item, onShelf, pantry }: { item: { id: string; name: string }; onShelf: ReadonlySet<string>; pantry: readonly { id: string; name: string }[] }): Promise<number> => {
+      // A juice in the recipe is bought as its fruit, as when it's added by hand.
+      const parts = (await readMadeFrom(item.id)).map((p) => {
+        const fruit = juiceFruit(p.name);
+        const id = fruit && pantry.find((x) => x.name.toLowerCase() === fruit.name.toLowerCase())?.id;
+        return fruit && id ? { id, name: fruit.label } : p;
+      });
+      const needed = parts.filter((p, i) => !onShelf.has(p.id) && p.name.toLowerCase() !== PANTRY_WATER.toLowerCase() && parts.findIndex((x) => x.id === p.id) === i);
       return add.mutateAsync(needed.map((p) => ({ itemId: p.id, name: p.name, source: 'hand' as const, forItemId: item.id })));
     },
   });

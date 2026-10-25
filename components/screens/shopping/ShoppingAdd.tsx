@@ -16,7 +16,7 @@ const SHOWN = 5;
  * your shelf already can be marked running low; a juice adds its fruit and a
  * house-made thing what it's made from; typed words just get crossed off.
  */
-export function ShoppingAdd({ onShelf, onAdd, onAddMadeFrom }: { onShelf: ReadonlySet<string>; onAdd: (add: Add) => void; onAddMadeFrom: (item: { id: string; name: string }) => void }) {
+export function ShoppingAdd({ onShelf, onAdd, onAddMadeFrom }: { onShelf: ReadonlySet<string>; onAdd: (add: Add) => void; onAddMadeFrom: (item: { id: string; name: string }, pantry: readonly { id: string; name: string }[]) => void }) {
   const ds = useDs();
   const [text, setText] = useState('');
   const query = text.trim();
@@ -46,7 +46,7 @@ export function ShoppingAdd({ onShelf, onAdd, onAddMadeFrom }: { onShelf: Readon
         label: 'Add',
         say: `Add what ${f.name} needs`,
         onPress: () => {
-          onAddMadeFrom(f);
+          onAddMadeFrom(f, pantry);
           setText('');
         },
       };

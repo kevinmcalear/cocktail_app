@@ -69,7 +69,7 @@ export function ShoppingBody({ back, column = false }: { back?: ReactNode; colum
           {column ? <Title>Shopping</Title> : <Display>Shopping</Display>}
           {rows.length ? <Caption tone="muted">{shoppingSummary(open.length, listOpens(open, bar.oneAway, bar.twoAway))}</Caption> : null}
         </View>
-        <ShoppingAdd onShelf={bar.shelfIds} onAdd={add} onAddMadeFrom={(item) => edit.addMadeFrom.mutate({ item, onShelf: bar.shelfIds })} />
+        <ShoppingAdd onShelf={bar.shelfIds} onAdd={add} onAddMadeFrom={(item, pantry) => edit.addMadeFrom.mutate({ item, onShelf: bar.shelfIds, pantry })} />
         {open.length ? <Segmented options={MODES} value={mode} onChange={setMode} accessibilityLabel="Group the list" variant="ink" choice stretch /> : null}
         {!isLoading && !rows.length ? <Body tone="muted">Nothing on your list. Add something above, or tap Add to shopping on a drink you’re a bottle short of.</Body> : null}
 
