@@ -196,7 +196,18 @@ export const LOADS: Load[] = [
 --   * Held: Difford's Guide rows that repeat a maker's own, tiki mugs whose
 --     factory has no maker page, ceramic cups that aren't a glass type, and
 --     what isn't a drinking glass (carafes, a punch bowl, a serving dish).
---   * AUDIT: pending`,
+--   * Audit: two independent re-checks against the cited pages. The first
+--     (100 random rows and 10 Toyo-Sasaki) found 17 wrong: Rona's material
+--     on 11 rows (its pages call the glass crystalline and lead-free), a
+--     Krosno material, a series, a carafe (now held), the Palace Goblet's
+--     size (its page: 48 cl, 212 mm), a capacity read off a sibling's
+--     drawing (now empty), a Toyo-Sasaki row matched to its cut version and
+--     a material. A fresh 60 found 7 wrong, all labels: Tritan stored as
+--     lead-free crystal, lead-free glass as glass, a page id as a model
+--     code, a byline as a series. Each fault is fixed by rule on every row,
+--     not only the ones sampled; every capacity and height the audits could
+--     read matched its page. 26 rows could not be checked (Krosno, Rona,
+--     Sahm, Monotaro and Bar Times pages blocked or down).`,
   },
 ];
 

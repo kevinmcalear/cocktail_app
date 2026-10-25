@@ -46,7 +46,7 @@
    "capacity_as_stated": "1 oz.",
    "height_mm": 50.8,
    "rim_mm": null,
-   "material": "glass",
+   "material": "lead-free crystal",
    "product_url": "https://www.webstaurantstore.com/arcoroc-00016-1-oz-shot-glass-by-arc-cardinal-case/55200016.html",
    "source_urls": [
     "https://www.webstaurantstore.com/arcoroc-00016-1-oz-shot-glass-by-arc-cardinal-case/55200016.html"
@@ -672,7 +672,7 @@
   },
   {
    "name": "CA030 Mix Collection 6 oz. Coupe Cocktail Glass",
-   "series": "by Chris Adams and Arc Cardinal",
+   "series": "Mix Collection",
    "designer": "Chris Adams",
    "model_code": "CA030",
    "glass": "coupe",
@@ -689,7 +689,7 @@
   },
   {
    "name": "CA031 Mix Collection 6 oz. Tall Coupe Cocktail Glass",
-   "series": "by Chris Adams and Arc Cardinal",
+   "series": "Mix Collection",
    "designer": "Chris Adams",
    "model_code": "CA031",
    "glass": "coupe",
