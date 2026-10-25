@@ -8,7 +8,7 @@ import { sketchBuild, sketchFromDrink } from '../../supabase/functions/_shared/s
 
 import { houseIce } from '../venueKit';
 
-import type { SketchInputs } from './types';
+import type { IceLook, SketchInputs } from './types';
 
 export interface DraftLine {
   name: string;
@@ -33,7 +33,10 @@ export interface DraftLook {
   /** The venue's ice kinds ('cubes', 'large'), for when the ice is only guessed (bar_kit). */
   barIce?: readonly string[];
   /** How the ice sits, bottom first, by name (lib/iceBuild.ts); `ice` is its top layer. */
-  build?: readonly { name: string; n?: number | null; to?: string | null }[] | null;
+  build?: readonly ({ name: string; n?: number | null; to?: string | null } & IceLook)[] | null;
+  /** The one ice's look and the glass's height, mm, when the venue's ice and glass say (types.ts SketchInputs). */
+  iceLook?: IceLook | null;
+  glassMm?: number | null;
   /** The colour picked for the drawing, or Auto (null): painted over the spec's own (types.ts liquidOf). */
   tint?: string | null;
 }
@@ -60,5 +63,8 @@ export function draftSketchInputs(draft: DraftLook): SketchInputs {
   // And its ice: a guessed one gives way to the venue's nearest kind.
   const ice = inputs.from.ice === 'data' ? null : houseIce(inputs.ice, draft.barIce ?? []);
   const build = sketchBuild(draft.build);
-  return { ...inputs, ice: ice ?? inputs.ice, variant, ...(build ? { build } : {}), ...(draft.tint ? { tint: draft.tint } : {}) };
+  return {
+    ...inputs, ice: ice ?? inputs.ice, variant, ...(build ? { build } : {}), ...(draft.tint ? { tint: draft.tint } : {}),
+    ...(draft.iceLook ? { iceLook: draft.iceLook } : {}), ...(draft.glassMm ? { glassMm: draft.glassMm } : {}),
+  };
 }

@@ -2,10 +2,11 @@
 // paint lifted out, never a rendered block.
 
 import { box, ell, hull, hw, restOn, type IceBox, type Pt } from './geometry';
+import { edgeParts, liftLook, markBox, markSphere, onFace, type BoxLook } from './iceLook';
 import type { LineOpts, Painter } from './painter';
 import { gauss } from './random';
 import { SKETCH_PAPER } from './styles';
-import type { SketchGlass, SketchIce, SketchLayer } from './types';
+import { readIceLook, type IceLook, type SketchGlass, type SketchIce, type SketchLayer } from './types';
 
 export interface IceResult {
   /** The highest point of the drink or its ice, for garnish to sit on. */
@@ -33,7 +34,8 @@ function jitter(P: Painter, b0: IceBox): IceBox {
 }
 
 /** Lifts a little paint where the block sits: soft and blotchy, more above the drink. */
-function liftBox(P: Painter, b0: IceBox) {
+function liftBox(P: Painter, b0: IceBox, look?: IceLook | null) {
+  if (look) return liftLook(P, b0.V, look);
   const H = hull(b0.V);
   P.glaze(H, SKETCH_PAPER, 0.26, 3, 0.14);
   const above = P.clipAbove(P.g.top + 0.3);
@@ -42,7 +44,7 @@ function liftBox(P: Painter, b0: IceBox) {
 }
 
 /** The block's wobbly outline and a few loose shading strokes. */
-function drawBox(P: Painter, b0: IceBox, kind: 'large' | 'cubes' | 'spear') {
+function drawBox(P: Painter, b0: IceBox, kind: 'large' | 'cubes' | 'spear', look?: BoxLook | null) {
   const { r, S } = P;
   const V = b0.V;
   const edges = new Map<string, number>();
@@ -58,7 +60,17 @@ function drawBox(P: Painter, b0: IceBox, kind: 'large' | 'cubes' | 'spear') {
   for (const [key, n] of edges) {
     const [a, c] = key.split('-').map(Number);
     if (n === 2 && r() < 0.3) continue;
-    P.line(roughEdge(P, V[a], V[c], kind === 'spear' ? 0.03 : 0.07), { weight: n === 1 ? 0.75 : 0.5, alpha: n === 1 ? 0.85 : 0.6, passes: n === 1 ? S.passes : 1, wob: 1.8, over: 3.5, gaps: 0.7 });
+    const o = { weight: n === 1 ? 0.75 : 0.5, alpha: n === 1 ? 0.85 : 0.6, passes: n === 1 ? S.passes : 1, wob: 1.8, over: 3.5, gaps: 0.7 };
+    if (!look) {
+      P.line(roughEdge(P, V[a], V[c], kind === 'spear' ? 0.03 : 0.07), o);
+      continue;
+    }
+    // A join between stacked pieces: an edge of the face another piece rests on.
+    const seam = !!look.seam && onFace(a, look.seam) && onFace(c, look.seam);
+    for (const [A, C, k] of edgeParts(V[a], V[c], look, seam)) {
+      if (Math.hypot(C[0] - A[0], C[1] - A[1]) < 0.4) continue;
+      P.line(roughEdge(P, A, C, kind === 'spear' ? 0.03 : 0.07), { ...o, alpha: o.alpha * k, passes: seam && k < 1 ? 1 : o.passes });
+    }
   }
   // a few loose shading strokes on the side away from the light
   const side = b0.faces.filter((x) => x.vis && !x.top).sort((x, y) => y.n[0] - x.n[0])[0];
@@ -71,10 +83,10 @@ function drawBox(P: Painter, b0: IceBox, kind: 'large' | 'cubes' | 'spear') {
       const A: Pt = [p[0][0] + (p[1][0] - p[0][0]) * t, p[0][1] + (p[1][1] - p[0][1]) * t];
       const C: Pt = [p[3][0] + (p[2][0] - p[3][0]) * t, p[3][1] + (p[2][1] - p[3][1]) * t];
       const u2 = u + 0.2 + r() * 0.25;
-      P.line([[A[0] + (C[0] - A[0]) * u, A[1] + (C[1] - A[1]) * u], [A[0] + (C[0] - A[0]) * u2, A[1] + (C[1] - A[1]) * u2]], { weight: 0.35, alpha: 0.4, passes: 1, over: 1, gaps: 0, wob: 0.6 });
+      P.line([[A[0] + (C[0] - A[0]) * u, A[1] + (C[1] - A[1]) * u], [A[0] + (C[0] - A[0]) * u2, A[1] + (C[1] - A[1]) * u2]], { weight: 0.35, alpha: look?.clear ? 0.22 : 0.4, passes: 1, over: 1, gaps: 0, wob: 0.6 });
     }
   }
-  if (kind === 'large' && r() < 0.8) {
+  if (kind === 'large' && look?.clear !== true && r() < 0.8) {
     const fr = b0.faces.filter((x) => x.vis && !x.top)[0];
     if (fr) {
       const p = fr.q.map((i) => V[i]);
@@ -85,6 +97,7 @@ function drawBox(P: Painter, b0: IceBox, kind: 'large' | 'cubes' | 'spear') {
       P.line(roughEdge(P, A, B, 0.12), { weight: 0.3, alpha: 0.35, passes: 1, over: 0, wob: 1.2 });
     }
   }
+  if (look) markBox(P, b0, look);
 }
 
 function chunk(P: Painter, cx: number, cy: number, rad: number, round: boolean): Pt[] {
@@ -98,19 +111,63 @@ function chunk(P: Painter, cx: number, cy: number, rad: number, round: boolean):
   });
 }
 
-export function paintIce(P: Painter, ice: SketchIce, glass: SketchGlass): IceResult {
+/**
+ * A piece's size across, in glass units, as near `want` as the glass allows
+ * where it sits. A bowl narrows to nothing at its floor, so it's measured
+ * where the piece's top reaches too.
+ */
+const across = (g: Painter['g'], floor: number, want: number) => Math.max(4, Math.min(want, Math.max(hw(g, floor), hw(g, floor - want)) * 2 - 3));
+
+/**
+ * Cubes of a known size (glass units), to scale: as many to a row as fit the
+ * glass, rows a little sunk into each other, up to `count` or the `upTo`
+ * height. Front rows last, so they draw over the back.
+ */
+function sizedCubes(P: Painter, floor: number, s: number, count: number, upTo: number): IceBox[] {
+  const { r, g } = P;
+  const list: IceBox[] = [];
+  const size = across(g, floor, s);
+  let placed = 0;
+  for (let y = floor - 0.4, row = 0; placed < count && y > upTo - size * 0.3 && y > g.rim - size; y -= size * 0.78, row++) {
+    const room = hw(g, y) - size / 2 - 0.8;
+    // Rows alternate an odd and an even count, so pieces sit over the gaps below.
+    const most = Math.max(0, Math.floor(room / (size * 0.5)));
+    const k = Math.min(most + 1, row % 2 ? 3 : 2);
+    for (let i = 0; i < k && placed < count; i++, placed++) {
+      const x = k === 1 ? 50 : 50 + (i - (k - 1) / 2) * Math.min(size, (room * 2) / (k - 1));
+      list.push(restOn(box(x + gauss(r) * 0.6, 0, size, size * 0.95, size, r() * 1.5, gauss(r) * 0.12, 0.32), y + gauss(r) * 0.5));
+    }
+  }
+  const topOf = (b: IceBox) => Math.min(...b.V.map((v) => v[1]));
+  return list.sort((a, b) => topOf(a) - topOf(b)).map((bx) => jitter(P, bx));
+}
+
+/**
+ * One ice in the glass. With the venue's look (lib/sketch/iceLook.ts) its
+ * pieces are drawn to scale (upm: drawing units per mm, geometry.ts
+ * unitsPerMm), clear or cloudy, stamped, with what's frozen inside; without
+ * one, as before.
+ */
+export function paintIce(P: Painter, ice: SketchIce, glass: SketchGlass, look: IceLook | null = null, upm = 0): IceResult {
   const { r, g, e, Rr } = P;
   const late: IceResult['late'] = [];
   const lateIn: IceResult['lateIn'] = [];
   let crown = g.top;
   const base = g.base ?? P.bot;
+  const bl: BoxLook | null = look ? { ...look, surface: g.top } : null;
 
   if (ice === 'large') {
     const n = P.clipInner();
-    const s = 24 + gauss(r);
+    const s = look?.mm ? across(g, base, look.mm * upm) : 24 + gauss(r);
     const block = jitter(P, restOn(box(50 + gauss(r), 0, s, s * 0.96, s, 0.5 + gauss(r) * 0.15, gauss(r) * 0.05, 0.3), base - 0.4));
-    liftBox(P, block);
-    drawBox(P, block, 'large');
+    liftBox(P, block, look);
+    drawBox(P, block, 'large', bl);
+    P.end(n);
+  } else if (ice === 'cubes' && look?.mm) {
+    const n = P.clipInner();
+    const blocks = sizedCubes(P, base, look.mm * upm, 12, g.top);
+    for (const bx of blocks) liftBox(P, bx, look);
+    for (const bx of blocks) drawBox(P, bx, 'cubes', bl);
     P.end(n);
   } else if (ice === 'cubes') {
     const n = P.clipInner();
@@ -129,28 +186,32 @@ export function paintIce(P: Painter, ice: SketchIce, glass: SketchGlass): IceRes
     }
     list.sort((a, b) => Math.min(...a.V.map((v) => v[1])) - Math.min(...b.V.map((v) => v[1])));
     const blocks = list.map((bx) => jitter(P, bx));
-    for (const bx of blocks) liftBox(P, bx);
-    for (const bx of blocks) drawBox(P, bx, 'cubes');
+    for (const bx of blocks) liftBox(P, bx, look);
+    for (const bx of blocks) drawBox(P, bx, 'cubes', bl);
     P.end(n);
   } else if (ice === 'spear') {
     const n = P.clipInner();
     const top = g.top - 6.5;
-    const spear = jitter(P, restOn(box(50 + gauss(r) * 0.8, 0, 13, base - top, 10.5, 0.55 + gauss(r) * 0.1, gauss(r) * 0.025, 0.3), base - 0.4));
-    liftBox(P, spear);
-    drawBox(P, spear, 'spear');
+    const w = look?.mm ? across(g, base, look.mm * upm) : 13;
+    const len = look?.lengthMm ? Math.min(look.lengthMm * upm, base - g.rim + 4) : base - top;
+    const spear = jitter(P, restOn(box(50 + gauss(r) * 0.8, 0, w, len, look?.mm ? w * 0.81 : 10.5, 0.55 + gauss(r) * 0.1, gauss(r) * 0.025, 0.3), base - 0.4));
+    liftBox(P, spear, look);
+    drawBox(P, spear, 'spear', bl);
     P.end(n);
   } else if (ice === 'sphere') {
     const n = P.clipInner();
-    const rad = Math.min(12, hw(g, base) - 3);
+    const rad = look?.mm ? across(g, base, look.mm * upm) / 2 : Math.min(12, hw(g, base) - 3);
     const cy = base - rad - 0.3;
     const cx = 50 + gauss(r) * 0.8;
     const ball = ell(cx, cy, rad, rad, 0, Math.PI * 2, 28);
-    P.glaze(ball, SKETCH_PAPER, 0.28, 3, 0.06);
+    const clear = look?.clear === true;
+    P.glaze(ball, SKETCH_PAPER, clear ? 0.12 : 0.28, 3, 0.06);
     const above = P.clipAbove(g.top + 0.3);
-    P.glaze(ball, SKETCH_PAPER, 0.45, 3, 0.06);
+    P.glaze(ball, SKETCH_PAPER, clear ? 0.35 : 0.45, 3, 0.06);
     P.end(above);
-    P.line(ball.map(([x, y]) => [x + gauss(r) * 0.25, y + gauss(r) * 0.25] as Pt), { weight: 0.75, alpha: 0.85, wob: 1.4, over: 3, gaps: 0.4 });
+    P.line(ball.map(([x, y]) => [x + gauss(r) * 0.25, y + gauss(r) * 0.25] as Pt), { weight: 0.75, alpha: clear && cy - rad > g.top ? 0.75 : 0.85, wob: 1.4, over: 3, gaps: 0.4 });
     P.line(ell(cx - rad * 0.25, cy - rad * 0.3, rad * 0.55, rad * 0.45, Math.PI * 1.05, Math.PI * 1.6, 10), { weight: 0.35, alpha: 0.45, passes: 1, over: 0 });
+    if (look) markSphere(P, cx, cy, rad, look);
     P.end(n);
   } else if (ice === 'crushed' || ice === 'pebble' || ice === 'shaved') {
     const round = ice === 'pebble';
@@ -215,12 +276,28 @@ function cubeBlocks(P: Painter, glass: SketchGlass, floor: number, count: number
   return list;
 }
 
+const PIECES: SketchLayer['kind'][] = ['cubes', 'large', 'spear', 'sphere'];
+
+/** A layer's look (types.ts IceLook), for pieces only; loose ice draws as it always has. */
+const lookOf = (L: SketchLayer): IceLook | null => (PIECES.includes(L.kind) ? readIceLook(L) : null);
+
+/** Small pieces stacked one on another, for a spear to stand on. */
+function cubeColumn(P: Painter, floor: number, s: number, count: number): IceBox[] {
+  const { r, g } = P;
+  const size = across(g, floor, s);
+  const list: IceBox[] = [];
+  for (let i = 0, y = floor - 0.4; i < count && y > g.rim; i++, y -= size * 0.97) {
+    list.push(jitter(P, restOn(box(50 + gauss(r) * 0.4, 0, size, size * 0.95, size, 0.55 + gauss(r) * 0.1, gauss(r) * 0.04, 0.3), y)));
+  }
+  return list.reverse();
+}
+
 /**
  * Pieces stack from the base (a spear rests on what's under it), loose ice
  * fills from the top of the pieces to its height (around a single block, from
  * the base), and Mounded rises over the rim.
  */
-export function paintBuild(P: Painter, layers: readonly SketchLayer[], glass: SketchGlass): IceResult {
+export function paintBuild(P: Painter, layers: readonly SketchLayer[], glass: SketchGlass, upm = 0): IceResult {
   const { r, g, e, Rr } = P;
   const late: IceResult['late'] = [];
   const lateIn: IceResult['lateIn'] = [];
@@ -229,31 +306,47 @@ export function paintBuild(P: Painter, layers: readonly SketchLayer[], glass: Sk
   let floor = base;
   let looseFrom = base;
   const topOf = (b: IceBox) => Math.min(...b.V.map((v) => v[1]));
-  for (const L of layers) {
-    if (L.kind === 'cubes') {
+  layers.forEach((L, i) => {
+    // The layer's look, if the venue's ice gave one. In a stack (pieces under a spear) the faces they meet on are joins.
+    const look = lookOf(L);
+    const seam = layers[i + 1]?.kind === 'spear' ? 'top' : L.kind === 'spear' && !!layers[i - 1] && PIECES.includes(layers[i - 1].kind) ? 'bottom' : undefined;
+    const bl: BoxLook | null = look ? { ...look, surface: g.top, seam } : null;
+    if (L.kind === 'cubes' && look?.mm) {
+      const n = P.clipInner();
+      // Under a spear, a column of small pieces it stands on (Eddie's stack); else rows to scale.
+      const blocks = layers[i + 1]?.kind === 'spear' ? cubeColumn(P, floor, look.mm * upm, L.n ?? 1) : sizedCubes(P, floor, look.mm * upm, L.n ?? 3, g.rim);
+      for (const bx of blocks) liftBox(P, bx, look);
+      for (const bx of blocks) drawBox(P, bx, 'cubes', bl);
+      P.end(n);
+      const t = Math.min(...blocks.map(topOf));
+      floor = t + 2.5;
+      looseFrom = t + 4;
+    } else if (L.kind === 'cubes') {
       const n = P.clipInner();
       const list = cubeBlocks(P, glass, floor, L.n ?? 3).sort((a, b) => topOf(a) - topOf(b));
       const blocks = list.map((bx) => jitter(P, bx));
-      for (const bx of blocks) liftBox(P, bx);
-      for (const bx of blocks) drawBox(P, bx, 'cubes');
+      for (const bx of blocks) liftBox(P, bx, look);
+      for (const bx of blocks) drawBox(P, bx, 'cubes', bl);
       P.end(n);
       const t = Math.min(...blocks.map(topOf));
       floor = t + 2.5;
       looseFrom = t + 4;
     } else if (L.kind === 'spear') {
       const n = P.clipInner();
-      const len = Math.min(floor - (g.top - 6.5), (base - g.top) * 0.82);
-      const spear = jitter(P, restOn(box(50 + gauss(r) * 0.8, 0, 13, len, 10.5, 0.55 + gauss(r) * 0.1, gauss(r) * 0.025, 0.3), floor - 0.4));
-      liftBox(P, spear);
-      drawBox(P, spear, 'spear');
+      // Its own length when the venue says, standing up past the rim at most a little.
+      const len = look?.lengthMm ? Math.min(look.lengthMm * upm, floor - g.rim + 4) : Math.min(floor - (g.top - 6.5), (base - g.top) * 0.82);
+      const w = look?.mm ? across(g, floor, look.mm * upm) : 13;
+      const spear = jitter(P, restOn(box(50 + gauss(r) * 0.8, 0, w, len, look?.mm ? w * 0.81 : 10.5, 0.55 + gauss(r) * 0.1, gauss(r) * 0.025, 0.3), floor - 0.4));
+      liftBox(P, spear, look);
+      drawBox(P, spear, 'spear', bl);
       P.end(n);
       floor = topOf(spear);
     } else if (L.kind === 'large') {
       const n = P.clipInner();
-      const s = Math.min(24, hw(g, floor) * 2 - 8) + gauss(r);
+      const s = look?.mm ? across(g, floor, look.mm * upm) : Math.min(24, hw(g, floor) * 2 - 8) + gauss(r);
       const block = jitter(P, restOn(box(50 + gauss(r), 0, s, s * 0.96, s, 0.5 + gauss(r) * 0.15, gauss(r) * 0.05, 0.3), floor - 0.4));
-      liftBox(P, block);
-      drawBox(P, block, 'large');
+      liftBox(P, block, look);
+      drawBox(P, block, 'large', bl);
       P.end(n);
       floor = topOf(block);
     } else if (L.kind === 'crushed' || L.kind === 'pebble' || L.kind === 'shaved') {
@@ -305,6 +398,6 @@ export function paintBuild(P: Painter, layers: readonly SketchLayer[], glass: Sk
         late.push([top, { weight: 0.75, alpha: 0.9, wob: 2, gaps: 0.4 }]);
       }
     }
-  }
+  });
   return { crown, late, lateIn };
 }

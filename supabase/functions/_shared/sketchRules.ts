@@ -58,13 +58,48 @@ export interface SketchInputs {
   coverage: number;
 }
 
-/** One layer of ice in the glass, bottom first, as the drawing paints it (lib/iceBuild.ts). */
-export interface SketchLayer {
+/**
+ * What a venue knows about one ice, so the drawing can show it as it is
+ * (Kit and ice, step 10). Every field is optional and a missing one draws as
+ * before. Only pieces use them (cubes, large, spear, sphere); loose ice
+ * ignores them.
+ */
+export interface IceLook {
+  /** Across one piece, mm: a cube's side, a sphere's diameter, a spear's or Collins block's width. Drawn to scale against the glass. */
+  mm?: number;
+  /** A spear's or Collins block's length, mm. */
+  lengthMm?: number;
+  /** True for clear ice, false for cloudy (a white core); missing draws as before. */
+  clear?: boolean;
+  /** A stamp pressed into the top face. */
+  stamp?: boolean;
+  /** Something frozen inside (a flower, a slice of citrus), drawn as a small prism. */
+  inside?: boolean;
+}
+
+/** One layer of ice in the glass, bottom first, as the drawing paints it (lib/iceBuild.ts), with what the venue knows about that ice. */
+export interface SketchLayer extends IceLook {
   kind: Exclude<Ice, 'none'>;
   /** Pieces: how many. */
   n?: number;
   /** Loose ice: how high. */
   to?: 'half' | 'rim' | 'mound';
+}
+
+const mmIn = (v: unknown, lo: number, hi: number) => (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? Math.round(v) : undefined);
+
+/** An ice's look as far as it makes sense, or null when it says nothing: sizes in range, flags only when said. */
+export function readIceLook(raw: unknown): IceLook | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const x = raw as Record<string, unknown>;
+  const look: IceLook = {
+    ...(mmIn(x.mm, 5, 120) ? { mm: mmIn(x.mm, 5, 120) } : {}),
+    ...(mmIn(x.lengthMm, 20, 300) ? { lengthMm: mmIn(x.lengthMm, 20, 300) } : {}),
+    ...(typeof x.clear === 'boolean' ? { clear: x.clear } : {}),
+    ...(x.stamp === true ? { stamp: true } : {}),
+    ...(x.inside === true ? { inside: true } : {}),
+  };
+  return Object.keys(look).length ? look : null;
 }
 
 /**
@@ -73,12 +108,13 @@ export interface SketchLayer {
  * does the same for saved drinks (private.ice_build_kinds,
  * 20261029500000_ice_builds.sql).
  */
-export function sketchBuild(layers: readonly { name: string; n?: number | null; to?: string | null }[] | null | undefined): SketchLayer[] | null {
+export function sketchBuild(layers: readonly ({ name: string; n?: number | null; to?: string | null } & IceLook)[] | null | undefined): SketchLayer[] | null {
   const out: SketchLayer[] = [];
   for (const l of layers ?? []) {
     const kind = iceFromName(l.name);
     if (!kind || kind === 'none') continue;
-    out.push({ kind, ...(l.n ? { n: Math.min(12, Math.max(1, Math.round(l.n))) } : {}), ...(l.to === 'half' || l.to === 'rim' || l.to === 'mound' ? { to: l.to } : {}) });
+    // The ice's look rides along when the layer has one (venue ice, lib/sketch/types.ts IceLook).
+    out.push({ kind, ...(l.n ? { n: Math.min(12, Math.max(1, Math.round(l.n))) } : {}), ...(l.to === 'half' || l.to === 'rim' || l.to === 'mound' ? { to: l.to } : {}), ...readIceLook(l) });
   }
   return out.length ? out.slice(0, 6) : null;
 }
