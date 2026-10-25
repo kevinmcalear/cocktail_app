@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { ICE_EXTRA_STEPS, ICE_WAY_KEYS, ICE_WAYS, iceWaySteps } from './iceRecipes';
+import { downstreamIce, ICE_EXTRA_STEPS, ICE_WAY_KEYS, ICE_WAYS, iceWaySteps } from './iceRecipes';
 import { equipmentById } from './techniques/equipment';
 
 // Kevin's twelve ways: six common first, six behind "More ways", ending with our own.
@@ -29,5 +29,11 @@ assert.deepEqual(stamped.at(-2)?.tools, ['ice-stamp']);
 assert.equal(iceWaySteps('stamp', { stamped: true }).filter((s) => s.tools.includes('ice-stamp')).length, 1);
 assert.equal(iceWaySteps('own', { stamped: true }).length, 0);
 for (const k of ['lewis', 'crack', 'shave'] as const) assert.ok(!iceWaySteps(k, { stamped: true }).some((s) => s.tools.includes('ice-stamp')), `${k} isn't stamped`);
+
+// A chain is walked all the way: B from A, C from B, so editing A never offers B or C; a saved loop still ends.
+const chain = [{ ice: 'B', from: 'A' }, { ice: 'C', from: 'B' }, { ice: 'D', from: 'water' }];
+assert.deepEqual(downstreamIce(chain, 'A').sort(), ['B', 'C']);
+assert.deepEqual(downstreamIce(chain, 'C'), []);
+assert.deepEqual(downstreamIce([...chain, { ice: 'A', from: 'C' }], 'A').sort(), ['B', 'C']);
 
 console.log('iceRecipes: ok');

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { savePrepCard, type PrepCardInput } from '@/hooks/usePrepCard';
-import { iceWaySteps, type IceWayKey } from '@/lib/iceRecipes';
+import { downstreamIce, iceWaySteps, type IceWayKey } from '@/lib/iceRecipes';
 import { supabase } from '@/lib/supabase';
 
 // How a venue's ice is made (Kit and ice, steps 7 and 8; docs/kit_and_ice.md):
@@ -42,15 +42,20 @@ export function useIceStartsFrom(iceId: string | null | undefined) {
   });
 }
 
-/** The venue's other ice that start from this one: never offered as what it starts from, so a chain can't loop. */
-export function useIcesStartingFrom(iceId: string | null | undefined) {
+/**
+ * The venue's ice that start from this one, directly or down a chain (B from
+ * this, C from B): never offered as what it starts from, so a chain can't loop.
+ * `iceIds` are the venue's ice (useVenueIce).
+ */
+export function useIcesStartingFrom(iceId: string | null | undefined, iceIds: readonly string[]) {
   return useQuery({
-    queryKey: ['ices-starting-from', iceId],
-    enabled: !!iceId,
+    queryKey: ['ices-starting-from', iceId, [...iceIds].sort()],
+    enabled: !!iceId && iceIds.length > 0,
     queryFn: async (): Promise<string[]> => {
-      const { data, error } = await supabase.from('recipes').select('recipe_item_id, item:items!recipe_item_id!inner(item_type)').eq('ingredient_item_id', iceId!).eq('item.item_type', 'ice');
+      const { data, error } = await supabase.from('recipes').select('recipe_item_id, ingredient_item_id').in('recipe_item_id', [...iceIds]);
       if (error) throw error;
-      return (data ?? []).flatMap((r) => (r.recipe_item_id ? [r.recipe_item_id] : []));
+      const lines = (data ?? []).flatMap((r) => (r.recipe_item_id && r.ingredient_item_id ? [{ ice: r.recipe_item_id, from: r.ingredient_item_id }] : []));
+      return downstreamIce(lines, iceId!);
     },
   });
 }

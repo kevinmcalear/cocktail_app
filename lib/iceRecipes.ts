@@ -160,6 +160,17 @@ export function iceWaySteps(key: IceWayKey, ice: { size_mm?: number | null; stam
   return steps;
 }
 
+/** Every ice that starts from this one down any chain (each line: an ice and what it starts from). Loops already saved end the walk. */
+export function downstreamIce(lines: readonly { ice: string; from: string }[], id: string): string[] {
+  const found = new Set<string>();
+  const queue = [id];
+  while (queue.length) {
+    const at = queue.shift()!;
+    for (const l of lines) if (l.from === at && !found.has(l.ice) && l.ice !== id) (found.add(l.ice), queue.push(l.ice));
+  }
+  return [...found];
+}
+
 // Sources, checked 25 Oct 2026:
 // Tempering, scoring and splitting a block: abarabove.com/podcast/mtp180-clear-ice-from-clinebell-to-glass,
 //   alcademics.com/cutting-up-a-slab-of-ice-using-an-ice-pick-or-bread-knife
