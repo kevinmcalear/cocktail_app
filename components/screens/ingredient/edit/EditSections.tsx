@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { useWhereItLives } from '@/components/backbar/WhereItLives';
-import { Body, Caption, FieldButton, Headline, PressableScale, Sheet, Switch, useDs } from '@/components/ds';
+import { Body, Caption, Headline, PressableScale, Sheet, Switch, useDs } from '@/components/ds';
 import { PublishSection } from '@/components/screens/publishing/PublishSection';
 import { RowDivider, SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, fontFamilies, layout, radius, space, type } from '@/constants/tokens';
+import { displayFaces, fontFamilies, radius, space, type } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useItemPublishing } from '@/hooks/usePublishing';
@@ -45,24 +45,12 @@ export function NameField({ value, onChange }: { value: string; onChange: (name:
   );
 }
 
-/** What it's a kind of ("Tanqueray" is a kind of Gin): opens the search; x clears it. */
-export function KindOf({ name, onPick, onClear }: { name: string | null; onPick: () => void; onClear: () => void }) {
+/** What it's a kind of ("Tanqueray" is a kind of Gin): a row that opens the search, as drawn (ingredient-edit). Clearing it is in that sheet. */
+export function KindOf({ name, onPick }: { name: string | null; onPick: () => void }) {
   const ds = useDs();
   return (
-    <View style={styles.kind}>
-      <Caption tone="muted">Kind of</Caption>
-      <View>
-        <PressableScale role="button" accessibilityLabel={name ? `Kind of ${name}. Change it` : 'Choose what it’s a kind of'} onPress={onPick} style={[styles.kindBox, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
-          <Body tone={name ? undefined : 'muted'} numberOfLines={1}>
-            {name ?? 'e.g. Gin, Sweet Vermouth'}
-          </Body>
-        </PressableScale>
-        {name ? (
-          <View style={styles.clear}>
-            <FieldButton icon="xmark.circle.fill" label="Clear what it’s a kind of" onPress={onClear} />
-          </View>
-        ) : null}
-      </View>
+    <View style={[styles.kindBox, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+      <SettingsRow role="button" label="Kind of" value={name ?? 'Add'} onPress={onPick} />
     </View>
   );
 }
@@ -139,9 +127,7 @@ const styles = StyleSheet.create({
   section: { gap: space.sm },
   nameBox: { gap: space.xs },
   name: { ...type.display, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: space.xs },
-  kind: { gap: space.xs },
-  kindBox: { minHeight: layout.minTapTarget, borderRadius: radius.control, borderWidth: 1, paddingHorizontal: space.md, paddingRight: layout.minTapTarget, justifyContent: 'center' },
-  clear: { position: 'absolute', top: 0, bottom: 0, right: 0, justifyContent: 'center' },
+  kindBox: { borderRadius: radius.control, borderWidth: 1, paddingHorizontal: space.md },
   add: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 52, paddingHorizontal: space.md, borderRadius: radius.control, borderWidth: 1.5, borderStyle: 'dashed' },
   medium: { fontFamily: fontFamilies.bodyMedium },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingTop: space.xs },

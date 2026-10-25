@@ -72,7 +72,7 @@ describe('EditBody', () => {
     expect(screen.queryByText(/^Recipe/)).toBeNull();
     expect(screen.queryByText('Method')).toBeNull();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Choose what it’s a kind of' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Kind of, Add' }));
     expect(onSheet).toHaveBeenLastCalledWith('kind');
 
     await fireEvent.changeText(screen.getByLabelText('Maker'), 'tanqueray');

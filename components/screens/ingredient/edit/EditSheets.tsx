@@ -55,6 +55,7 @@ export function EditSheets({ edit, selfId, name, sheet, onSheet, pad, onPad, swa
           loading={!editor.dropdowns?.ingredients}
           excludeId={selfId}
           allowNew={sheet !== 'kind'}
+          onClear={sheet === 'kind' && form.generic ? () => (close(), set({ generic: null })) : undefined}
           onClose={close}
           onNew={(n) => void makeNew(n)}
           onPick={(p) => {

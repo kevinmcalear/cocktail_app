@@ -18,7 +18,7 @@ type Pick = { id: string; name: string };
  * (`allowNew` off: a kind of must already exist). The ingredient itself is
  * left out, so a recipe never holds itself.
  */
-export function FindSheet({ title, ingredients, aliases, loading, excludeId, allowNew = true, onPick, onNew, onClose }: {
+export function FindSheet({ title, ingredients, aliases, loading, excludeId, allowNew = true, onPick, onNew, onClear, onClose }: {
   title: string;
   ingredients: readonly { id: string; name: string | null }[];
   aliases?: readonly IngredientAlias[];
@@ -28,6 +28,8 @@ export function FindSheet({ title, ingredients, aliases, loading, excludeId, all
   onPick: (pick: Pick) => void;
   /** A name nothing matches: make it as a new ingredient. */
   onNew?: (name: string) => void;
+  /** What it's a kind of, once set: take it off. */
+  onClear?: () => void;
   onClose: () => void;
 }) {
   const rows = excludeId ? ingredients.filter((i) => i.id !== excludeId) : ingredients;
@@ -45,6 +47,7 @@ export function FindSheet({ title, ingredients, aliases, loading, excludeId, all
           onPick={(p) => (p.id ? onPick({ id: p.id, name: p.name }) : onNew?.(p.name))}
         />
       </View>
+      {onClear ? <TextLink label="Not a kind of anything" onPress={onClear} /> : null}
     </Sheet>
   );
 }
