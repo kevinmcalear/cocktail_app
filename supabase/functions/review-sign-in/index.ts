@@ -3,11 +3,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { HttpError, serveJson } from "../_shared/http.ts";
 import { isLocalStack, LOCAL_REVIEW_CODE, LOCAL_REVIEW_EMAIL } from "../_shared/localStack.ts";
 
-/** Wrong codes allowed per window before the account stops taking any. */
-const MAX_FAILS = 5;
-const WINDOW_MS = 15 * 60 * 1000;
-
 const WRONG = "That code doesn't match.";
+const LOCKED = "Too many tries. Wait 15 minutes, then try again.";
 
 /**
  * App Review (Apple and Google) can't receive our sign-in emails, so its one
@@ -35,40 +32,24 @@ serveJson("review-sign-in", async (req) => {
   const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", {
     auth: { persistSession: false },
   });
+  // Every try is taken under a lock in the database before the code is
+  // compared, so many requests at once can't each get a guess: 5 per 15
+  // minutes (take_review_code_try), which makes the six digits take years.
+  const { data: tryId, error: tryError } = await admin.rpc("take_review_code_try");
+  if (tryError) throw tryError;
+  if (tryId === null) throw new HttpError(429, LOCKED);
+  if (!sameCode(code, reviewCode)) throw new HttpError(401, WRONG);
+
+  const { error: backError } = await admin.rpc("give_back_review_code_try", { p_id: tryId });
+  if (backError) throw backError;
   // Makes the account if it doesn't exist yet; setup and the age check still
-  // run, as for anyone new. The token only leaves here with the right code.
+  // run, as for anyone new.
   const { data, error } = await admin.auth.admin.generateLink({
     type: "magiclink",
     email: reviewEmail,
     options: { data: { onboarded: false } },
   });
   if (error) throw error;
-
-  // Wrong tries are counted on the account itself, so guessing the six
-  // digits takes years: MAX_FAILS per window, then nothing until it ends.
-  const meta = data.user.app_metadata ?? {};
-  const since = Date.parse(meta.review_code_since ?? "");
-  const inWindow = Number.isFinite(since) && Date.now() - since < WINDOW_MS;
-  const fails = inWindow ? Number(meta.review_code_fails) || 0 : 0;
-  if (fails >= MAX_FAILS) throw new HttpError(429, "Too many tries. Wait 15 minutes, then try again.");
-
-  if (!sameCode(code, reviewCode)) {
-    const { error: countError } = await admin.auth.admin.updateUserById(data.user.id, {
-      app_metadata: {
-        review_code_fails: fails + 1,
-        review_code_since: inWindow ? meta.review_code_since : new Date().toISOString(),
-      },
-    });
-    if (countError) throw countError;
-    throw new HttpError(401, WRONG);
-  }
-
-  if (fails > 0) {
-    const { error: resetError } = await admin.auth.admin.updateUserById(data.user.id, {
-      app_metadata: { review_code_fails: 0, review_code_since: null },
-    });
-    if (resetError) throw resetError;
-  }
   return { token_hash: data.properties.hashed_token };
 });
 

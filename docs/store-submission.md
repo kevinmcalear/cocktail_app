@@ -77,9 +77,9 @@ Both are off until their public keys are set, and both are in every 1.3.0 binary
   1. Sign up the review account in the app with an address we own, and finish setup and the age check.
   2. Make it Admin of "Demo Bar (App Review)" (the demo venue: sample drinks and a menu, hidden from Discover and search).
   3. Pick a random six-digit code and set both secrets: `supabase secrets set REVIEW_EMAIL=<address> REVIEW_CODE=<code>`. Never put either in the repo, a PR or a chat.
-  4. Deploy the function (human-gated): `supabase functions deploy review-sign-in --use-api`.
+  4. Deploy the function (human-gated) once its migration (`20261110100000_review_code_tries`, which counts the tries) is applied: `supabase functions deploy review-sign-in --use-api`.
   5. In *App Review Information*, give the address and the code with this note: "Enter the email, tap Continue, then type the code. You don't need the email we send." Also explain that venues are invite-only, and mention the age check.
-  - Five wrong codes lock the account for 15 minutes. To retire the way in, unset either secret.
+  - Five wrong codes in 15 minutes lock the way in until the oldest drops out of the window, however many arrive at once. To retire the way in, unset either secret.
 - **Export compliance:** already answered in the build (`ITSAppUsesNonExemptEncryption = false`).
 - **Sign in with Apple:** not required. The app only offers email sign-in (guideline 4.8).
 - **Privacy "nutrition label".** Declare these data types. Tracking: **No**.

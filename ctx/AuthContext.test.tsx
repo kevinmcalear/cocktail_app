@@ -1,4 +1,4 @@
-import { AuthApiError, AuthRetryableFetchError } from '@supabase/supabase-js';
+import { AuthApiError, AuthRetryableFetchError, FunctionsHttpError } from '@supabase/supabase-js';
 import { onlineManager } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -19,6 +19,8 @@ let mockStoredReads = 0;
 const mockGetSession = jest.fn();
 const mockSignOut = jest.fn();
 const mockClear = jest.fn(() => Promise.resolve());
+const mockVerifyOtp = jest.fn();
+const mockInvoke = jest.fn();
 
 jest.mock('@/lib/supabase', () => ({
   readStoredUser: () =>
@@ -34,11 +36,13 @@ jest.mock('@/lib/supabase', () => ({
     auth: {
       getSession: () => mockGetSession(),
       signOut: () => mockSignOut(),
+      verifyOtp: (params: unknown) => mockVerifyOtp(params),
       onAuthStateChange: (cb: Listener) => {
         listener = cb;
         return { data: { subscription: { unsubscribe: () => {} } } };
       },
     },
+    functions: { invoke: (name: string, options: unknown) => mockInvoke(name, options) },
   },
 }));
 jest.mock('@/lib/analytics', () => ({ track: () => {} }));
@@ -52,6 +56,8 @@ beforeEach(() => {
   mockStoredReads = 0;
   mockClear.mockClear();
   mockSignOut.mockReset();
+  mockVerifyOtp.mockReset();
+  mockInvoke.mockReset();
   mockGetSession.mockReset().mockImplementation(
     () =>
       new Promise((resolve) => {
@@ -241,4 +247,69 @@ test('a refresh that gets through after an offline sign-out is forgotten, not si
   await act(async () => listener('TOKEN_REFRESHED', sessionOf('u2')));
   expect(pick(result.current)).toEqual({ user: 'u2', session: 'u2', loading: false });
   await unmount();
+});
+
+// --- App Review's fixed code (review-sign-in) ---
+
+const wrongCode = () => ({ data: { user: null, session: null }, error: new AuthApiError('Token has expired or is invalid', 403, 'otp_expired') });
+const signedIn = () => ({ data: { user: { id: 'u1' }, session: sessionOf('u1') }, error: null });
+const httpError = (status: number) => ({ data: null, error: new FunctionsHttpError({ status } as Response) });
+
+test('a right emailed code signs in without asking review-sign-in', async () => {
+  const { result } = await launch(null);
+  mockVerifyOtp.mockResolvedValueOnce(signedIn());
+  let answer: { error: unknown } = { error: 'unset' };
+  await act(async () => {
+    answer = await result.current.verifyCode('a@example.test', '123456');
+  });
+  expect(answer.error).toBeNull();
+  expect(mockInvoke).not.toHaveBeenCalled();
+});
+
+test("a code the email didn't send is tried as the review code, and its token signs in", async () => {
+  const { result } = await launch(null);
+  mockVerifyOtp.mockResolvedValueOnce(wrongCode()).mockResolvedValueOnce(signedIn());
+  mockInvoke.mockResolvedValueOnce({ data: { token_hash: 'th' }, error: null });
+  let answer: { error: unknown } = { error: 'unset' };
+  await act(async () => {
+    answer = await result.current.verifyCode('review@example.test', '424242');
+  });
+  expect(answer.error).toBeNull();
+  expect(mockInvoke).toHaveBeenCalledWith('review-sign-in', { body: { email: 'review@example.test', code: '424242' } });
+  expect(mockVerifyOtp).toHaveBeenLastCalledWith({ token_hash: 'th', type: 'email' });
+});
+
+test("anyone else's wrong code keeps the emailed code's answer", async () => {
+  const { result } = await launch(null);
+  mockVerifyOtp.mockResolvedValueOnce(wrongCode());
+  mockInvoke.mockResolvedValueOnce(httpError(401));
+  let answer: { error: { code?: string } | null } = { error: null };
+  await act(async () => {
+    answer = await result.current.verifyCode('a@example.test', '000000');
+  });
+  expect(answer.error?.code).toBe('otp_expired');
+  expect(mockVerifyOtp).toHaveBeenCalledTimes(1);
+});
+
+test('a locked review account says so instead of wrong code', async () => {
+  const { result } = await launch(null);
+  mockVerifyOtp.mockResolvedValueOnce(wrongCode());
+  mockInvoke.mockResolvedValueOnce(httpError(429));
+  let answer: { error: { message: string } | null } = { error: null };
+  await act(async () => {
+    answer = await result.current.verifyCode('review@example.test', '424242');
+  });
+  expect(answer.error?.message).toMatch(/too many tries/i);
+});
+
+test('rate limited by Auth: review-sign-in is not asked', async () => {
+  const { result } = await launch(null);
+  mockVerifyOtp.mockResolvedValueOnce({
+    data: { user: null, session: null },
+    error: new AuthApiError('Too many requests', 429, 'over_request_rate_limit'),
+  });
+  await act(async () => {
+    await result.current.verifyCode('a@example.test', '000000');
+  });
+  expect(mockInvoke).not.toHaveBeenCalled();
 });

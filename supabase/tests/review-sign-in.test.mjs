@@ -10,9 +10,10 @@
 
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { after, before, describe, test } from 'node:test';
+import { after, before, beforeEach, describe, test } from 'node:test';
 
 import { createClient } from '@supabase/supabase-js';
+import pg from 'pg';
 
 const status = JSON.parse(
   execSync('supabase status -o json', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
@@ -70,9 +71,26 @@ async function removeReviewUser() {
   if (user) await service.auth.admin.deleteUser(user.id);
 }
 
+/** The review code's tries in the window (private.rate_events), or clears them. */
+async function tries({ clear = false } = {}) {
+  const db = new pg.Client({ connectionString: status.DB_URL });
+  await db.connect();
+  try {
+    if (clear) await db.query(`DELETE FROM private.rate_events WHERE kind = 'review_code'`);
+    const { rows } = await db.query(`SELECT count(*)::int AS n FROM private.rate_events WHERE kind = 'review_code'`);
+    return rows[0].n;
+  } finally {
+    await db.end();
+  }
+}
+
 describe('review-sign-in function', { skip }, () => {
   before(removeReviewUser);
-  after(removeReviewUser);
+  beforeEach(() => tries({ clear: true }));
+  after(async () => {
+    await removeReviewUser();
+    await tries({ clear: true });
+  });
 
   test('any other email gets the wrong-code answer, and no account is made', async () => {
     const res = await signIn('someone-else@example.test', REVIEW_CODE);
@@ -81,10 +99,13 @@ describe('review-sign-in function', { skip }, () => {
     assert.equal(await reviewUser(), null);
   });
 
-  test('a wrong code is refused with the same answer', async () => {
+  test('a wrong code is refused with the same answer, makes no account and counts as a try', async () => {
+    await removeReviewUser();
     const res = await signIn(REVIEW_EMAIL, '000000');
     assert.equal(res.status, 401);
     assert.deepEqual(await res.json(), { error: "That code doesn't match." });
+    assert.equal(await reviewUser(), null);
+    assert.equal(await tries(), 1);
   });
 
   test('the right code gives a token that signs in as the review account, new accounts still run setup', async () => {
@@ -126,8 +147,7 @@ describe('review-sign-in function', { skip }, () => {
     assert.equal(user.user_metadata.onboarded, undefined);
   });
 
-  test('five wrong codes lock the account, even against the right one', async () => {
-    await removeReviewUser();
+  test('five wrong codes lock the review account, even against the right one', async () => {
     for (let i = 0; i < 5; i++) {
       const res = await signIn(REVIEW_EMAIL, `11111${i}`);
       assert.equal(res.status, 401);
@@ -138,16 +158,26 @@ describe('review-sign-in function', { skip }, () => {
     await locked.body?.cancel();
   });
 
-  test('the right code clears earlier wrong tries', async () => {
-    await removeReviewUser();
-    for (let i = 0; i < 2; i++) {
+  test('wrong codes sent all at once still get only five guesses', async () => {
+    const answers = await Promise.all(
+      Array.from({ length: 20 }, async (_, i) => {
+        const res = await signIn(REVIEW_EMAIL, String(100000 + i));
+        await res.body?.cancel();
+        return res.status;
+      })
+    );
+    assert.equal(answers.filter((s) => s === 401).length, 5);
+    assert.equal(answers.filter((s) => s === 429).length, 15);
+  });
+
+  test("the right code gives its try back, so it doesn't count toward the lock", async () => {
+    for (let i = 0; i < 4; i++) {
       const res = await signIn(REVIEW_EMAIL, '999999');
       await res.body?.cancel();
     }
     const res = await signIn(REVIEW_EMAIL, REVIEW_CODE);
     assert.equal(res.status, 200);
     await res.body?.cancel();
-    const user = await reviewUser();
-    assert.equal(user.app_metadata.review_code_fails, 0);
+    assert.equal(await tries(), 4);
   });
 });
