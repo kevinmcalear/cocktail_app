@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, DsText, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
-import { useKit } from '@/hooks/useKit';
+import { useKitHere } from '@/hooks/useBarKit';
 import { guessKind, keepsText, KIND_TILES, KIND_WAYS, PREP_KINDS, prepAmounts, tileOf, wayOf, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { equipmentById, missingKit, techniqueById } from '@/lib/techniques';
@@ -31,7 +31,7 @@ interface PrepKindStepProps {
  */
 export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onChangeAmount }: PrepKindStepProps) {
   const ds = useDs();
-  const { kit } = useKit();
+  const kit = useKitHere();
   const columns = useBreakpoint() === 'phone' ? 2 : 3;
   const guess = guessKind(name);
   const named = guess ? tileOf(guess) : null;

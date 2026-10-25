@@ -8,6 +8,8 @@ import { PrepBuilder } from './PrepBuilder';
 // The paper band's View as pill reads the signed-in person's prefs; off here.
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
+// The prep step checks the kit where you are (hooks/useBarKit.ts useKitHere): at home here, the same empty kit.
+jest.mock('@/hooks/useBarKit', () => ({ ...jest.requireActual('@/hooks/useBarKit'), useKitHere: () => new Set() }));
 // The catalog's sourced recipes: only Grapefruit cordial has one here.
 jest.mock('@/hooks/usePrepCard', () => ({
   ...jest.requireActual('@/hooks/usePrepCard'),

@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import { kitFromDrinks } from './kitFromDrinks';
 
 const drinks = [
-  { glass: 'Small Rocks', ice: 'Sphere', methods: ['Stirred'] },
-  { glass: 'Small Rocks', ice: 'Sphere', methods: [] },
-  { glass: 'Rocks', ice: null, methods: [] },
-  { glass: 'Custom', ice: null, methods: [] },
-  { glass: 'Coupe', ice: null, methods: ['Shaken'] },
-  { glass: 'Flute', ice: null, methods: [] },
-  { glass: 'Highball', ice: 'Cubes', methods: ['Blended'] },
-  { glass: null, ice: 'Large cube', methods: [] },
+  { glass: 'Small Rocks', ice: ['Sphere'], methods: ['Stirred'] },
+  { glass: 'Small Rocks', ice: ['Sphere'], methods: [] },
+  { glass: 'Rocks', ice: [], methods: [] },
+  { glass: 'Custom', ice: [], methods: [] },
+  { glass: 'Coupe', ice: [], methods: ['Shaken'] },
+  { glass: 'Flute', ice: [], methods: [] },
+  { glass: 'Highball', ice: ['Cubes'], methods: ['Blended'] },
+  { glass: null, ice: ['Large cube'], methods: [] },
 ];
 const out = kitFromDrinks(drinks, {
   glasses: [

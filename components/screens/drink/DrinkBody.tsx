@@ -22,6 +22,7 @@ export function DrinkBody({ sections: s, home }: { sections: DrinkSections; home
         {s.spec}
       </View>
       {s.intro}
+      {s.kit}
       {s.journey}
       {s.myNote}
       {s.floor}

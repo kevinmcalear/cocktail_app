@@ -18,6 +18,8 @@ jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) })
 jest.mock('@/hooks/useStartFromClassic', () => ({ useStartFromClassic: () => ({ mutate: jest.fn(), isPending: false }) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [] }) }));
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
+// The prep step checks the kit where you are (hooks/useBarKit.ts useKitHere): at home here, the same empty kit.
+jest.mock('@/hooks/useBarKit', () => ({ ...jest.requireActual('@/hooks/useBarKit'), useKitHere: () => new Set() }));
 jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrepCard'), useCatalogRecipe: () => ({ data: null }) }));
 
 // The prep builder draws after its first layout, as the wizard does on iOS.

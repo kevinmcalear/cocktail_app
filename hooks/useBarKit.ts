@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
+import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useKit } from '@/hooks/useKit';
+import { useMode } from '@/hooks/useMode';
 import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
 
@@ -90,4 +93,17 @@ export function useToolsFor(barId: string | null, venueName: string | null): { l
     return tools.length ? { label: `${venueName ?? 'the venue'}’s kit`, have: tools } : null;
   }
   return home.length ? { label: 'your kit', have: home } : null;
+}
+
+/**
+ * The tools "you have" where you are (Kit and ice, step 11): the venue's in
+ * venue mode, your kit at home otherwise. The technique library and the
+ * wizard's prep step check against it.
+ */
+export function useKitHere(): ReadonlySet<string> {
+  const { active } = useActiveVenue();
+  const venue = useMode().mode === 'venue' ? active : null;
+  const rows = useBarKit(venue?.id ?? null).data;
+  const home = useKit().kit;
+  return useMemo(() => (venue ? new Set((rows ?? []).flatMap((r) => (r.key ? [r.key] : []))) : home), [venue, rows, home]);
 }

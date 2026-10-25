@@ -84,6 +84,14 @@ Built from the starting design above, with the changes noted (why in brackets).
 - Small cubes under a short Collins block: the wizard's ice tip from #702 already offers it (glass height from the venue's glass, block length from `item_ice.length_mm`).
 - Not yet: drinks still name the shared ice, so a drink can't name the venue's own "Clear cube · 50 mm" (see the PR 1 note), and "15 drinks over ice don't say which · Pick" needs a way to change many drinks at once.
 
+### PR 4: the kit check
+
+- `lib/kitCheck.ts` (+ check): a drink's glass (by drawn shape), each ice it needs (its build's layers and what it's shaken with, by drawing kind) and the tools its methods name (`methodTools`: Shake is tins and a strainer, Stir a mixing glass and a strainer, Blend a blender), against the venue's Kit. An ice the venue makes is followed back through what it starts from (a visited set, so a loop ends) and its steps' tools are checked too. A part of the Kit with nothing listed isn't checked. "Needs a sphere and a block ice shaver"; the nearest ice the venue has (`houseIce`).
+- `hooks/useKitCheck.ts`: the venue's Kit with its ice recipes, a drink as the check reads it, `useDrinkKitCheck`, `useVenueKitChecks`, `useKitShelves`. Ice recipes are read as house preps are, so without Prep an ice's own tools aren't followed.
+- The drink page's "Can <venue> make it?" (`components/screens/drink/KitCheckSection.tsx`) in venue mode, for the venue's drinks and the catalog's; Add opens Kit's sheets filled in.
+- Library: Ready here and Needs something (`KIT_FILTERS`, in the filter menu's Kit section), each tile saying what it needs.
+- The technique library and the wizard's prep step read `useKitHere()` (hooks/useBarKit.ts): the venue's tools in venue mode, your home kit otherwise.
+
 Notes for later PRs:
 
 - PR 3: the house-prep editor (`hooks/usePrepCard.ts`) assumes ingredients (`ingredient_role`, `made_from_id` are ingredient-only, by check constraint). Ice made here uses `item_steps`, `item_prep` and `recipes` lines, not `made_from_id`. Prep-only staff still can't write recipe lines of a house prep (an ingredient), only of the venue's ice.
