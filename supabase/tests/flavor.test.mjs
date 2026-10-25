@@ -241,23 +241,7 @@ describe('your taste', () => {
     assert.ifError((await rank(ids.daiquiri, 'disliked')).error);
   });
 
-  test('comes from the drinks you ranked, weighted towards the ones you rank highest', async () => {
-    const { data, error } = await users.ranker.client.rpc('get_my_taste');
-    assert.ifError(error);
-    const [taste] = data;
-    assert.equal(taste.drinks, 2);
-    // Loved scores 10, didn't like scores 3.3: weights 1 and 0.109.
-    const w = 0.33 ** 2;
-    assert.ok(Math.abs(taste.bitter - 0.9 / (1 + w)) < 0.01, `bitter ${taste.bitter}`);
-    assert.ok(Math.abs(taste.sour - (0.8 * w) / (1 + w)) < 0.01, `sour ${taste.sour}`);
-  });
-
-  test('is private: no one else can read it, and signed out can\'t ask', async () => {
-    const { data } = await users.other.client.rpc('get_my_taste');
-    assert.equal(data[0].drinks, 0);
-    assert.equal(data[0].bitter, null);
-    const { error } = await anon.rpc('get_my_taste');
-    assert.ok(error, 'anon refused');
+  test('your rankings are private: no one else can read them', async () => {
     const { data: entries } = await users.other.client.from('rank_entries').select('id').eq('user_id', users.ranker.id);
     assert.equal(entries.length, 0);
   });

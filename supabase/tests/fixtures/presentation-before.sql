@@ -57,7 +57,6 @@ CREATE TEMP VIEW old_published_items WITH (security_invoker='false') AS
             i.capacity_ml,
             i.iced_capacity_ml,
             i.ice_per_serve_g,
-            i.price_minor,
             i.sketch_variant,
                 CASE
                     WHEN ((eff.mode = 'spec'::public.item_publish_mode) AND (pg.page <> 'open'::public.bar_page_visibility)) THEN 'description'::public.item_publish_mode

@@ -48,8 +48,7 @@ export function moneyFieldValue(minor: number | null | undefined, currency: stri
 /**
  * A drink's price as the bar typed it ("19", "$19.50", "14 / 60"), as minor
  * units: the first number in it, so a glass / bottle price reads as the
- * glass. Null for "MP", blanks and words. Same rule as the database's
- * private.price_minor_of (20261103100000).
+ * glass. Null for "MP", blanks and words.
  */
 export function priceMinor(price: string | null | undefined, currency: string | null | undefined): number | null {
   const first = price?.match(/\d[\d,]*(?:\.\d+)?/)?.[0];
