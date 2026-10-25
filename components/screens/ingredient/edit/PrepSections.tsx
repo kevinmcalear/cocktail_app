@@ -74,7 +74,7 @@ export function KeepsRows({ fields, wide, onOpen }: { fields: PrepFields; wide: 
 }
 
 /** One of How it keeps' small sheets. Changes land as they're made (and undo); Done closes it. */
-export function KeepsSheet({ field, fields, set, onClose }: { field: KeepsField; fields: PrepFields; set: (patch: Partial<PrepFields>) => void; onClose: () => void }) {
+export function KeepsSheet({ field, fields, set, onClose, units = YIELD_UNITS }: { field: KeepsField; fields: PrepFields; set: (patch: Partial<PrepFields>) => void; onClose: () => void; /** What Makes offers (ice: pieces or kg). */ units?: readonly string[] }) {
   const toggle = (a: string) => set({ actions: fields.actions.includes(a) ? fields.actions.filter((x) => x !== a) : [...fields.actions, a] });
   return (
     <Sheet visible onClose={onClose} accessibilityLabel={LABELS[field]} keyboard style={styles.sheetPad} header={<Headline role="heading">{LABELS[field]}</Headline>}>
@@ -82,7 +82,7 @@ export function KeepsSheet({ field, fields, set, onClose }: { field: KeepsField;
         {field === 'makes' ? (
           <>
             <Field label="One batch makes" value={fields.yieldAmount} onChangeText={(yieldAmount) => set({ yieldAmount })} placeholder="750" keyboardType="decimal-pad" />
-            <Choice label="Unit" options={YIELD_UNITS.map((u) => ({ value: u, label: u }))} value={fields.yieldUnit} onChange={(yieldUnit) => set({ yieldUnit })} />
+            <Choice label="Unit" options={units.map((u) => ({ value: u, label: u }))} value={fields.yieldUnit} onChange={(yieldUnit) => set({ yieldUnit })} />
           </>
         ) : field === 'keeps' ? (
           <>
