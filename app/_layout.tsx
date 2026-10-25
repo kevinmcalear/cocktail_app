@@ -228,6 +228,8 @@ function RootLayoutNav() {
             <Stack.Screen name="menus/[id]/run-sheet/print" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/releases/[releaseId]" options={{ headerShown: false }} />
             <Stack.Screen name="settings/bar/[id]/kit/[kind]/[item]" options={{ headerShown: false }} />
+            <Stack.Screen name="kit/[kind]" options={{ headerShown: false }} />
+            <Stack.Screen name="kit/[kind]/[item]" options={{ headerShown: false }} />
             <Stack.Screen name="menus/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
           </Stack>
           {/* Over the page, beside the sidebar: Bring in's sheet, drop dialog and reading tray. */}
