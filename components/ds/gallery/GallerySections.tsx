@@ -21,6 +21,7 @@ import { TimeField } from '../TimeField';
 import { Body, Caption, DsText, Headline, Title } from '../Text';
 import { useDs } from '../theme';
 import { AnimatedDrawings, GlassVariants, SketchTints } from './GlassVariants';
+import { IceLooks } from './IceLooks';
 import { IconSet } from './IconSet';
 import { KitDrawings } from './KitDrawings';
 import { LogoMarks } from './LogoMarks';
@@ -204,6 +205,10 @@ export function GallerySections() {
 
       <Section title="Sketch colour">
         <SketchTints />
+      </Section>
+
+      <Section title="Drawn ice">
+        <IceLooks />
       </Section>
 
       <Section title="Drawn kit">
