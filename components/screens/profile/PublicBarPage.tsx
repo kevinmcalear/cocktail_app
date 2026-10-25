@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, useBreakpoint } from '@/components/ds';
+import { Body, Button, Caption, Headline, Segmented, useBreakpoint } from '@/components/ds';
 import { BarWeek } from '@/components/screens/week/BarWeek';
 import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
@@ -32,20 +32,30 @@ import { PublicBarFacts } from './PublicBarFacts';
 import { MenuNow } from './MenuNow';
 import { SeeYourName } from './SeeYourName';
 import { PublicMenus } from './PublicMenus';
-import { MenuCredits, OriginalsGrid } from './ProfileSections';
+import { BarStats, MenuCredits, OriginalsGrid } from './ProfileSections';
 
 /** Their drinks shown before "All 12 originals". */
 const FIRST_ORIGINALS = 2;
 /** Award lines shown before "Show all". */
 const FIRST_AWARDS = 4;
 
+type Tab = 'menus' | 'originals' | 'rankings' | 'people';
+// The signed-in phone page's tabs (BarProfile), Menus first (p01, 24 Oct 2026).
+const TABS = [
+  { value: 'menus', label: 'Menus' },
+  { value: 'originals', label: 'Originals' },
+  { value: 'rankings', label: 'Top drinks' },
+  { value: 'people', label: 'People' },
+] as const;
+const PEOPLE_ONLY = TABS.filter((t) => t.value === 'people');
+
 /**
- * A bar's page signed out (ppl-pub-bar-desktop, -phone): one page, no tabs.
- * Wide: Top drinks, Their drinks and Classics they pour beside hours,
- * location and Instagram, This week, menus, people and awards. Phone: hours and the
- * actions under the name, then This week, Menus, Top drinks, Their drinks,
- * Classics they pour and People. Love and Report ask to sign in; the
- * sign-in band closes it.
+ * A bar's page signed out (ppl-pub-bar-desktop, -phone). Wide, one page: Top
+ * drinks, Their drinks and Classics they pour beside hours, location and
+ * Instagram, This week, menus, people and awards. Phone: hours and the
+ * actions under the name, its numbers, This week, then Menus, Originals, Top
+ * drinks and People as tabs, as signed in (p01). Love and Report ask to sign
+ * in; the sign-in band closes it.
  * `signedIn`: the same desktop page inside the app (ppl-pub-bar-desktop is the
  * only desktop bar page drawn): no site nav or sign-in band, Love and Report
  * work, your drinks here over Top drinks, a search's matches under the name.
@@ -61,15 +71,18 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
   const runs = drinkRunTags(useMenuEditions(profile.id).data ?? []);
   const { data: credits = [] } = useMenuCredits(signedIn ? originals.map((d) => d.id) : []);
   const [allOriginals, setAllOriginals] = useState(false);
+  const [tab, setTab] = useState<Tab>('menus');
   const unclaimed = isUnclaimed(profile);
   const specsLocked = pageLocksSpecs(profile.page_visibility, false);
   // Private: facts, hours, people and awards; no drinks, menus or scores (ppl-bar-private).
   const drinksShown = pageShowsDrinks(profile.page_visibility, useActiveVenue().venues.some((v) => v.id === profile.bar_id));
   const place = [barPlace(facts?.bar_type ?? 'Bar', [profile.locality, profile.city].filter(Boolean).join(', ')), signedIn && here.count ? `you’ve had ${plural(here.count, 'drink')} here` : null].filter(Boolean).join(' · ');
 
+  // On a phone the tabs name each part, so the parts drop their own heading.
+  const tabbed = !wide;
   const section = (title: string, body: ReactNode, kicker = false) => (
     <View style={styles.section}>
-      {kicker ? <Kicker>{title}</Kicker> : <Headline role="heading">{title}</Headline>}
+      {tabbed ? null : kicker ? <Kicker>{title}</Kicker> : <Headline role="heading">{title}</Headline>}
       {body}
     </View>
   );
@@ -146,14 +159,25 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
         </View>
       ) : (
         <View style={styles.stack}>
+          <BarStats profile={profile} originals={drinksShown ? originals.length : null} />
           {week}
-          {menus}
-          {top}
-          {theirDrinks}
-          {classics}
+          <Segmented accessibilityLabel="Bar sections" stretch accent options={drinksShown ? TABS : PEOPLE_ONLY} value={drinksShown ? tab : 'people'} onChange={setTab} />
+          {!drinksShown || tab === 'people' ? (
+            <>
+              {people}
+              {awards}
+            </>
+          ) : tab === 'menus' ? (
+            menus
+          ) : tab === 'originals' ? (
+            <>
+              {theirDrinks}
+              {classics}
+            </>
+          ) : (
+            top
+          )}
           {lock}
-          {people}
-          {awards}
         </View>
       )}
     </>
