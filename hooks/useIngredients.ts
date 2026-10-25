@@ -1,8 +1,7 @@
 import { useViewAs } from '@/hooks/useViewAs';
-import { INGREDIENTS_KEY } from '@/hooks/useDropdowns';
 import { supabase } from '@/lib/supabase';
 import { resolvePresentationIngredient, sortRecipesByOrder } from '@/lib/recipeUtils';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useDebounced } from '@/hooks/useDiscover';
 import { batchedDrinkName, nameKey, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
 
@@ -136,105 +135,6 @@ export function useIngredient(id?: string | string[]) {
             };
         },
         enabled: !!id,
-    });
-}
-
-export const updateIngredientFn = async ({ id, updates }: { id: string, updates: any }) => {
-    const { data, error } = await supabase
-        .from('items')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-        
-    if (error) throw error;
-    return data;
-};
-
-export const addIngredientFn = async (newIngredient: any) => {
-    const { data, error } = await supabase
-        .from('items')
-        .insert({ ...newIngredient, item_type: 'ingredient' })
-        .select()
-        .single();
-        
-    if (error) throw error;
-    return data;
-};
-
-// Mutations
-export function useUpdateIngredient() {
-    const queryClient = useQueryClient();
-    
-    return useMutation({
-        mutationKey: ['updateIngredient'],
-        mutationFn: updateIngredientFn,
-        onMutate: async (newVariables) => {
-            await queryClient.cancelQueries({ queryKey: INGREDIENTS_KEY });
-            await queryClient.cancelQueries({ queryKey: ['ingredient', newVariables.id] });
-
-            const previousIngredients = queryClient.getQueryData(INGREDIENTS_KEY);
-            const previousIngredient = queryClient.getQueryData(['ingredient', newVariables.id]);
-
-            queryClient.setQueryData(INGREDIENTS_KEY, (old: any) => 
-                old ? old.map((i: any) => i.id === newVariables.id ? { ...i, ...newVariables.updates } : i) : old
-            );
-            
-            // To optimistically update the individual ingredient query, we must match its shape
-            queryClient.setQueryData(['ingredient', newVariables.id], (old: any) => {
-                if (!old) return old;
-                return {
-                   ...old,
-                   ingredient: { ...old.ingredient, ...newVariables.updates }
-                };
-            });
-
-            return { previousIngredients, previousIngredient, id: newVariables.id };
-        },
-        onError: (err, newVariables, context) => {
-            if (context?.previousIngredients) {
-                queryClient.setQueryData(INGREDIENTS_KEY, context.previousIngredients);
-            }
-            if (context?.previousIngredient) {
-                queryClient.setQueryData(['ingredient', context.id], context.previousIngredient);
-            } else {
-                queryClient.invalidateQueries({ queryKey: INGREDIENTS_KEY });
-                queryClient.invalidateQueries({ queryKey: ['ingredient', newVariables.id] });
-            }
-        },
-        onSettled: (data, error, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['ingredient', variables.id] });
-            queryClient.invalidateQueries({ queryKey: INGREDIENTS_KEY });
-        }
-    });
-}
-
-export function useAddIngredient() {
-    const queryClient = useQueryClient();
-    
-    return useMutation({
-        mutationKey: ['addIngredient'],
-        mutationFn: addIngredientFn,
-        onMutate: async (newIngredient) => {
-            await queryClient.cancelQueries({ queryKey: INGREDIENTS_KEY });
-            const previousIngredients = queryClient.getQueryData(INGREDIENTS_KEY);
-            
-            queryClient.setQueryData(INGREDIENTS_KEY, (old: any) => 
-                old ? [...old, { ...newIngredient, id: 'temp-id-' + Date.now() }] : old
-            );
-            
-            return { previousIngredients };
-        },
-        onError: (err, newVariables, context) => {
-            if (context?.previousIngredients) {
-                queryClient.setQueryData(INGREDIENTS_KEY, context.previousIngredients);
-            } else {
-                queryClient.invalidateQueries({ queryKey: INGREDIENTS_KEY });
-            }
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: INGREDIENTS_KEY });
-        }
     });
 }
 

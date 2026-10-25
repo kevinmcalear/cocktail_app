@@ -8,7 +8,7 @@ import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
 export function PictureTag({ label, style }: { label: string | null; style?: ViewStyle }) {
   if (!label) return null;
   return (
-    <View style={[styles.tag, style]} pointerEvents="none" accessibilityRole="text" accessibilityLabel={label}>
+    <View style={[styles.tag, style]} pointerEvents="none" role="note" aria-label={label}>
       <Text style={styles.text}>{label}</Text>
     </View>
   );

@@ -10,6 +10,7 @@ import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { useDrafts } from "@/hooks/useDrafts";
 import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
+import { saveDrinkSpec } from "@/hooks/useVersions";
 import {
     resolveIngredientId,
     updateMenuDraftsWithPublishedId,
@@ -293,50 +294,47 @@ export function useCocktailDraftEditor({
 
     const pickImage = async () => addImages(await pickDrinkPhotos({ cutout: true }));
 
-    const uploadImage = async (uri: string, cocktailId: string): Promise<string | null> => {
-        try {
-            if (uri.startsWith("http")) {
-                const { data: imgData } = await supabase
-                    .from("images")
-                    .select("id")
-                    .eq("url", uri)
-                    .limit(1)
-                    .single();
-                if (imgData) return imgData.id;
-
-                const { data: newImgData, error: newImgError } = await supabase
-                    .from("images")
-                    .insert({ url: uri })
-                    .select()
-                    .single();
-                if (!newImgError && newImgData) return newImgData.id;
-                return null;
-            }
-
-            const ext = imageExtFromUri(uri);
-            const fileName = `cocktails/${cocktailId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-            const base64 = await uriToBase64(uri);
-            const arrayBuffer = decode(base64);
-            const { error: uploadError } = await supabase.storage
-                .from("drinks")
-                .upload(fileName, arrayBuffer, {
-                    contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
-                    upsert: false,
-                    cacheControl: UPLOAD_CACHE_SECONDS,
-                });
-            if (uploadError) return null;
-
-            const { data: publicUrlData } = supabase.storage.from("drinks").getPublicUrl(fileName);
-            const { data: imgData, error: imgError } = await supabase
+    /** The photo's images row. Throws when it can't be saved, so publishing keeps the draft (and its photo). */
+    const uploadImage = async (uri: string, cocktailId: string): Promise<string> => {
+        if (uri.startsWith("http")) {
+            const { data: imgData } = await supabase
                 .from("images")
-                .insert({ url: publicUrlData.publicUrl })
+                .select("id")
+                .eq("url", uri)
+                .limit(1)
+                .maybeSingle();
+            if (imgData) return imgData.id;
+
+            const { data: newImgData, error: newImgError } = await supabase
+                .from("images")
+                .insert({ url: uri })
                 .select()
                 .single();
-            if (imgError || !imgData) return null;
-            return imgData.id;
-        } catch {
-            return null;
+            if (newImgError || !newImgData) throw newImgError ?? new Error("Couldn't save a photo.");
+            return newImgData.id;
         }
+
+        const ext = imageExtFromUri(uri);
+        const fileName = `cocktails/${cocktailId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+        const base64 = await uriToBase64(uri);
+        const arrayBuffer = decode(base64);
+        const { error: uploadError } = await supabase.storage
+            .from("drinks")
+            .upload(fileName, arrayBuffer, {
+                contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
+                upsert: false,
+                cacheControl: UPLOAD_CACHE_SECONDS,
+            });
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage.from("drinks").getPublicUrl(fileName);
+        const { data: imgData, error: imgError } = await supabase
+            .from("images")
+            .insert({ url: publicUrlData.publicUrl })
+            .select()
+            .single();
+        if (imgError || !imgData) throw imgError ?? new Error("Couldn't save a photo.");
+        return imgData.id;
     };
 
     /** Finds or creates a shared method, glass, family or ice by name. The picker selects the id it returns. */
@@ -440,37 +438,35 @@ export function useCocktailDraftEditor({
             if (cocktailError || !cocktail) throw cocktailError;
             const cocktailId = cocktail.id;
 
-            for (let i = 0; i < localImages.length; i++) {
-                const imgId = await uploadImage(localImages[i].url, cocktailId);
-                if (imgId) {
-                    await supabase.from("item_images").insert({
+            // Every write throws, and a half-made drink is removed again, so a
+            // failed publish keeps the draft and trying again doesn't leave a copy.
+            try {
+                for (let i = 0; i < localImages.length; i++) {
+                    const imgId = await uploadImage(localImages[i].url, cocktailId);
+                    const { error } = await supabase.from("item_images").insert({
                         item_id: cocktailId,
                         image_id: imgId,
                         sort_order: i,
                     });
+                    if (error) throw error;
                 }
-            }
 
-            for (const [index, item] of resolvedRecipeItems.entries()) {
-                await supabase.from("recipes").insert({
-                    recipe_item_id: cocktailId,
-                    ingredient_item_id: item.ingredient_id,
-                    amount: parseFloat(item.amount) || null,
-                    unit: item.unit || null,
-                    preparation_notes: item.preparation_notes || null,
-                    is_optional: item.is_optional || false,
-                    sort_order: index,
-                });
-            }
-
-            if (methodIds.length) {
-                await supabase.from("item_methods").insert(
-                    methodIds.map((methodItemId, index) => ({
-                        item_id: cocktailId,
-                        method_item_id: methodItemId,
-                        sort_order: index,
-                    }))
+                // Lines and methods, in order, in one transaction (its first version).
+                await saveDrinkSpec(
+                    cocktailId,
+                    resolvedRecipeItems.map((item) => ({
+                        ingredient_item_id: item.ingredient_id,
+                        amount: parseFloat(item.amount) || null,
+                        unit: item.unit || null,
+                        preparation_notes: item.preparation_notes || null,
+                        is_optional: item.is_optional || false,
+                    })),
+                    methodIds,
+                    null
                 );
+            } catch (e) {
+                await supabase.from("items").delete().eq("id", cocktailId);
+                throw e;
             }
 
             queryClient.invalidateQueries({ queryKey: ["cocktails"] });
