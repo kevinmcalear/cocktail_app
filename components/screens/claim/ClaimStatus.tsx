@@ -34,7 +34,7 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
   const [title, text] =
     claim.method === 'instagram'
       ? claim.evidence?.instagram_dm
-        ? ['Send us this code', `Message it to ${OUR_INSTAGRAM ? `@${OUR_INSTAGRAM}` : 'us'} from @${handle}, the bar’s own account. A person checks, usually within a day.`]
+        ? ['Send us this code', `Message it to ${OUR_INSTAGRAM ? `@${OUR_INSTAGRAM}` : 'us'} from @${handle}, the ${claimPlace(profile.kind)}’s own account. A person checks, usually within a day.`]
         : ['Put this code in your bio', `Add it anywhere in @${handle}’s Instagram bio and leave it there until we’ve checked, usually within a day. Then take it out.`]
       : claim.method === 'phone'
         ? ['Keep this code by the phone', `We’ll ring ${name} on a number we look up ourselves. Whoever answers reads us this code, so leave it with the team.`]
