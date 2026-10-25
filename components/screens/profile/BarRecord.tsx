@@ -144,13 +144,10 @@ function EditionRow({ edition: m, last, href }: { edition: MenuEdition; last: bo
             {drinks}
           </Body>
           <View style={styles.nowActions}>
-            <Button label="Open the menu" variant="secondary" accessibilityLabel={`Open the ${m.name} menu`} dense onPress={() => router.push(href as Href)} style={m.from_venue ? null : styles.grow} />
-            {/* ponytail: a venue's own menu can't be saved until saved_menu_editions takes a menu id. */}
-            {m.from_venue ? null : (
-              <View style={styles.grow}>
-                <SaveMenuButton editionId={m.id} drinkIds={m.drinks.map((d) => d.id)} paired />
-              </View>
-            )}
+            <Button label="Open the menu" variant="secondary" accessibilityLabel={`Open the ${m.name} menu`} dense onPress={() => router.push(href as Href)} style={styles.grow} />
+            <View style={styles.grow}>
+              <SaveMenuButton editionId={m.id} drinkIds={m.drinks.map((d) => d.id)} paired fromVenue={m.from_venue} />
+            </View>
           </View>
         </View>
       ) : (

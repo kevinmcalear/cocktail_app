@@ -4573,17 +4573,23 @@ export type Database = {
       }
       saved_menu_editions: {
         Row: {
-          edition_id: string
+          edition_id: string | null
+          id: string
+          menu_id: string | null
           saved_at: string
           user_id: string
         }
         Insert: {
-          edition_id: string
+          edition_id?: string | null
+          id?: string
+          menu_id?: string | null
           saved_at?: string
           user_id?: string
         }
         Update: {
-          edition_id?: string
+          edition_id?: string | null
+          id?: string
+          menu_id?: string | null
           saved_at?: string
           user_id?: string
         }
@@ -4593,6 +4599,13 @@ export type Database = {
             columns: ["edition_id"]
             isOneToOne: false
             referencedRelation: "profile_menu_editions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_menu_editions_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "menus"
             referencedColumns: ["id"]
           },
         ]
@@ -6624,6 +6637,23 @@ export type Database = {
         Returns: {
           item_id: string
           name: string
+        }[]
+      }
+      my_saved_venue_menus: {
+        Args: never
+        Returns: {
+          display_name: string
+          drinks: Json
+          end_month: number
+          end_year: number
+          handle: string
+          is_current: boolean
+          menu_id: string
+          month: number
+          name: string
+          profile_id: string
+          saved_at: string
+          year: number
         }[]
       }
       my_week: {
