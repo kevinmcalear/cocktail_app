@@ -4,8 +4,9 @@
 // 20261009960000_my_bar_garnish.sql, the preps behind them from
 // 20261010400000_my_bar_preps.sql, only drinks with a spec from
 // 20261010510000_my_bar_ready_specs.sql), the kit list from
-// 20261010410000_home_kit.sql, and the preps one thing short and finished
-// bottles from 20261014400000_my_bar_short_and_finished.sql. The can-make cases are
+// 20261010410000_home_kit.sql, the preps one thing short and finished
+// bottles from 20261014400000_my_bar_short_and_finished.sql, and the shopping
+// list from 20261116100000_shopping_list.sql. The can-make cases are
 // the ones lib/canMake.check.ts held when this ran on the phone. Both
 // functions run as the caller, so they must return nothing the caller
 // couldn't already read. Local stack only: `npm run test:security`.
@@ -170,6 +171,7 @@ after(async () => {
   const like = `%${run}%`;
   for (const user of Object.values(users)) await db.query('DELETE FROM public.home_bar_items WHERE user_id = $1', [user.id]);
   for (const user of Object.values(users)) await db.query('DELETE FROM public.home_kit_items WHERE user_id = $1', [user.id]);
+  for (const user of Object.values(users)) await db.query('DELETE FROM public.shopping_list_items WHERE user_id = $1', [user.id]);
   const { rows } = await db.query('SELECT id FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM public.items WHERE name LIKE $1', [like]);
   await db.query('DELETE FROM private.item_flavor_jobs WHERE item_id = ANY($1)', [rows.map((r) => r.id)]);
@@ -435,6 +437,32 @@ describe('home_kit_items', () => {
     await users.other.client.from('home_kit_items').delete().eq('equipment_id', 'scale-fine');
     const { count } = await db.query("SELECT count(*)::int AS count FROM public.home_kit_items WHERE user_id = $1 AND equipment_id = 'scale-fine'", [users.home.id]).then((r) => r.rows[0]);
     assert.equal(count, 1, 'another person\'s delete takes nothing');
+  });
+});
+
+describe('shopping_list_items', () => {
+  test('a list is private to its owner, and signed-out callers get nothing', async () => {
+    const { error } = await users.home.client.from('shopping_list_items').insert({ item_id: ids.campari, name: 'Campari', source: 'one_away' });
+    assert.ifError(error);
+    const mine = await users.home.client.from('shopping_list_items').select('name');
+    assert.deepEqual(mine.data.map((r) => r.name), ['Campari']);
+    assert.deepEqual((await users.other.client.from('shopping_list_items').select('name')).data, []);
+    const { data: anonRows, error: anonError } = await anon.from('shopping_list_items').select('name');
+    assert.ok(anonError || !anonRows.length, 'anon reads nothing');
+  });
+
+  test('nobody writes into someone else\'s list, a bottle is on the open list once, and only a ticked row clears', async () => {
+    assert.ok((await users.other.client.from('shopping_list_items').insert({ user_id: users.home.id, name: 'Limes' })).error);
+    assert.ok((await anon.from('shopping_list_items').insert({ name: 'Limes' })).error);
+    assert.ok((await users.home.client.from('shopping_list_items').insert({ item_id: ids.campari, name: 'Campari' })).error, 'listed once');
+    assert.ok((await users.home.client.from('shopping_list_items').insert({ name: '   ' })).error, 'a name');
+    assert.ok((await users.home.client.from('shopping_list_items').insert({ name: 'Limes', source: 'nonsense' })).error, 'a known source');
+    assert.ok((await users.home.client.from('shopping_list_items').update({ cleared_at: new Date().toISOString() }).eq('name', 'Campari')).error, 'clear needs a tick');
+    await users.other.client.from('shopping_list_items').delete().eq('name', 'Campari');
+    await users.other.client.from('shopping_list_items').update({ got_at: new Date().toISOString() }).eq('name', 'Campari');
+    const { rows } = await db.query("SELECT got_at FROM public.shopping_list_items WHERE user_id = $1 AND name = 'Campari'", [users.home.id]);
+    assert.equal(rows.length, 1, 'another person\'s delete takes nothing');
+    assert.equal(rows[0].got_at, null, 'another person\'s tick changes nothing');
   });
 });
 

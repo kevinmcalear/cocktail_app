@@ -12,6 +12,7 @@ import { barSubtitle, shelfCountsLine } from '@/lib/myBarText';
 import type { ShelfSort } from '@/lib/pantry';
 
 import { BottlePhotoSheet } from '../bottles/BottlePhotoSheet';
+import { ShoppingBasket, ToBuyStrip } from '../shopping/ToBuy';
 import { AddToBarSheet, type AddFilter } from './AddToBarSheet';
 import { useTileCols } from './BarTile';
 import { KitSection, LabSection, MoreSections, OpenShelfItem, PrepsSection, SectionChips, type Jumpable } from './BarSections';
@@ -126,11 +127,12 @@ export function MyBarScreen() {
       case 'top':
         return split ? null : (
           <View>
-            <ScreenHeaderSpacer title="My Bar" />
+            <ScreenHeaderSpacer title="My Bar" actions={<ShoppingBasket />} />
             <View style={styles.top}>
               <Caption tone="muted">{bar.isLoading ? 'Checking your shelf…' : barSubtitle(bar.canMake.length, toMake.length)}</Caption>
               {bar.error ? <Body tone="muted">Couldn’t load your bar. Try again in a moment.</Body> : null}
             </View>
+            <ToBuyStrip />
           </View>
         );
       case 'filters':
@@ -235,7 +237,7 @@ export function MyBarScreen() {
           />
         ) : split ? (
           <>
-            <ScreenHeader />
+            <ScreenHeader actions={<ShoppingBasket />} />
             <View style={[styles.deskHead, { paddingHorizontal: gutter }]}>
               <View style={styles.deskTitle}>
                 <Title>My Bar</Title>
