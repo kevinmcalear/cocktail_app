@@ -36,7 +36,8 @@ for (const load of LOADS) {
     assert.ok(rows || !seeded.has(s.maker), `${s.maker}'s glasses load after ${load.file}`);
     for (const o of s.outlines) {
       const k = `${s.maker}\0${nameKey(o.name)}\0${o.capacity_ml ?? 0}`;
-      assert.ok(!seen.has(k), `${s.maker} ${o.name} twice`);
+      const replaced = (load.replaces ?? []).some((x) => x.maker === s.maker && nameKey(x.name) === nameKey(o.name) && (x.capacity_ml ?? 0) === (o.capacity_ml ?? 0));
+      assert.ok(seen.has(k) === replaced, replaced ? `${s.maker} ${o.name} replaces an outline no earlier load gave` : `${s.maker} ${o.name} twice`);
       seen.add(k);
       if (rows) assert.ok(rows.has(`${nameKey(o.name)}\0${o.capacity_ml ?? 0}`), `${s.maker} ${o.name} ${o.capacity_ml} is not in the catalog before ${load.file}`);
       assert.equal(outlineProblem(o.outline), null, `${s.maker} ${o.name}`);

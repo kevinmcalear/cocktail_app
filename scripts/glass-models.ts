@@ -65,6 +65,8 @@ interface Load {
   fills?: string;
   /** Seed files to read, when they aren't all named for their makers (a maker's later wave). */
   files?: string[];
+  /** Its makers may be bar pages that make glassware (20261116200000), as well as makers' pages. */
+  bars?: boolean;
 }
 
 export const LOADS: Load[] = [
@@ -208,6 +210,32 @@ export const LOADS: Load[] = [
 --     not only the ones sampled; every capacity and height the audits could
 --     read matched its page. 26 rows could not be checked (Krosno, Rona,
 --     Sahm, Monotaro and Bar Times pages blocked or down).`,
+  },
+  {
+    file: 'supabase/migrations/20261118300000_glass_models_bar_mugs.sql',
+    makers: ['false.idol', 'latitude29nola', 'lostlakechicago', 'maxs.south.seas.hideaway', 'tonga.hut', 'tradervics.oakland'],
+    bars: true,
+    header: `
+-- Glass models, wave 6: the tiki bars' own mugs, after 20261117100000.
+-- Kevin, 25 Oct 2026 (Open decisions): d61 "check them, then load", d62 a
+-- tiki mug's maker is the bar that sells it (20261116200000 lets a bar page
+-- make glassware). 20261118310000 loads their traced outlines.
+--
+--   * 9 mugs under the bars that sell them: False Idol's Hei Tiki, Latitude
+--     29's Bumatay, Lost Lake's Rum Barrel, Max's South Seas Hideaway's Pau
+--     Meli, Tonga Hut's 60th Anniversary Moai and Drooling Bastard, and
+--     Trader Vic's Honi Honi, La'au and Suffering Bastard (on the Oakland
+--     page, Trader Vic's only one here).
+--   * Facts from The Search for Tiki's page for each mug, as wave 5's mugs
+--     (its maker pages are bars, or say nothing); no copied text or photos.
+--     Heights in inches converted to mm. Honi Honi's page gives three sizes
+--     without saying which is the height, so it has none.
+--   * Held: Trader Vic's Las Vegas Covered Wahine (no page for that bar).
+--     Of the 1,131 traces #825 didn't load, wave 5 (20261113400000) loaded
+--     the rest but these, a punch bowl, Krosno's Xno Martini 60 (its pages
+--     answer 429; not bypassed) and 105 Difford's Guide repeats.
+--   * Audit: every row checked against its cited page (all 9): names, bars,
+--     designers, capacities and heights all match.`,
   },
 ];
 
@@ -399,6 +427,7 @@ export function rowsOf(seeds: Seed[]) {
 
 export function render(load: Load): string {
   const rows = rowsOf((load.files ?? load.makers).map(readSeed));
+  const who = load.bars ? "p.kind IN ('maker', 'bar')" : "p.kind = 'maker'";
   const shapes = [...new Set(rows.map((r) => SHAPE_NAME[r.glass]!))].sort();
   const values = rows
     .map(
@@ -427,7 +456,7 @@ DO $$
 DECLARE v_missing text;
 BEGIN
   SELECT string_agg(DISTINCT g.maker, ', ') INTO v_missing FROM glass_in g
-   WHERE NOT EXISTS (SELECT 1 FROM public.profiles p WHERE p.kind = 'maker' AND p.handle = g.maker AND 'glassware' = ANY (p.makes));
+   WHERE NOT EXISTS (SELECT 1 FROM public.profiles p WHERE ${who} AND p.handle = g.maker AND 'glassware' = ANY (p.makes));
   IF v_missing IS NOT NULL THEN RAISE EXCEPTION 'No glassware maker page for: %', v_missing; END IF;
 END;
 $$;
@@ -439,7 +468,7 @@ SELECT p.id,
        g.glass, g.variant, g.name, g.series, g.designer, g.model_code, g.capacity_ml, g.capacity_as_stated, g.height_mm, g.rim_mm,
        g.material, g.product_url, g.source_urls
   FROM glass_in g
-  JOIN public.profiles p ON p.kind = 'maker' AND p.handle = g.maker
+  JOIN public.profiles p ON ${who} AND p.handle = g.maker
 ON CONFLICT (maker_profile_id, public.ingredient_key(name), coalesce(capacity_ml, 0)) DO UPDATE SET
     shape_item_id = EXCLUDED.shape_item_id, glass = EXCLUDED.glass, variant = EXCLUDED.variant, series = EXCLUDED.series,
     designer = EXCLUDED.designer, model_code = EXCLUDED.model_code, capacity_as_stated = EXCLUDED.capacity_as_stated,

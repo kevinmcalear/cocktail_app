@@ -22,6 +22,12 @@ export interface OutlineLoad {
   header: (count: number) => string;
   /** Only glasses with no outline yet: a later load never redraws one an earlier load traced. */
   onlyUntraced?: boolean;
+  /** Its makers may be bar pages that make glassware (20261116200000). */
+  bars?: boolean;
+  /** Glasses an earlier load outlined wrongly, whose outline this load replaces. */
+  replaces?: { maker: string; name: string; capacity_ml: number | null }[];
+  /** Glasses whose outline is taken away: the trace disagrees with the maker's own sizes. */
+  clear?: { maker: string; name: string; capacity_ml: number | null }[];
 }
 
 export const LOADS: OutlineLoad[] = [
@@ -67,6 +73,39 @@ export const LOADS: OutlineLoad[] = [
 --   * A glass load 1 already outlined is left as it is. A second run
 --     changes nothing.`,
   },
+  {
+    file: 'supabase/migrations/20261118310000_glass_outlines_wave6.sql',
+    dir: join(DIR, 'wave6'),
+    bars: true,
+    replaces: [{ maker: 'libbey', name: 'Heavy Base Hi-Ball', capacity_ml: 266 }],
+    clear: [
+      { maker: 'urban.bar', name: 'Castello Coupe Glass 22cl', capacity_ml: 220 },
+      { maker: 'urban.bar', name: 'Fluet Old Fashioned 1910 34cl', capacity_ml: 340 },
+      { maker: 'urban.bar', name: 'Gili Old Fashioned Glass 30cl', capacity_ml: 300 },
+    ],
+    header: (count) => `-- Glass outlines, load 3, after 20261118300000 (the tiki bars' mugs) and
+-- loads 1 and 2. Kevin, 25 Oct 2026 (Open decisions): d60 "check each
+-- maker's page, fix whichever is wrong", d61 "check them, then load".
+--
+--   * ${count} outlines: 7 of wave 6's mugs, and one fix. False Idol's Hei
+--     Tiki has none (its trace was scaled from capacity to 125 mm; its page
+--     says 7 in), nor Tonga Hut's 60th Anniversary Moai (traced 176 mm wide
+--     on a 70 mm rim, the worst fit of the set).
+--   * The fix:
+--     Libbey's Heavy Base Hi-Ball 9 oz (item 133), which load 2 gave the
+--     trace of item 125, a different glass of the same name and size
+--     (Libbey's pages: 133 is 5 in tall, 125 is 4.75 in). It gets its own
+--     trace: 127 mm tall, 69.8 mm across (its page: 2.75 in). Item 125 has
+--     no catalog row: the catalog keys a glass by maker, name and size.
+--   * Three outlines are taken away: Urban Bar's Castello Coupe 22cl,
+--     Fluet Old Fashioned 1910 34cl and Gili Old Fashioned 30cl. Their
+--     traces were scaled from capacity because their heights looked wrong,
+--     but Urban Bar's pages confirm the catalog (16.3, 7.5 and 16 cm tall,
+--     11, 8.5 and 7 cm wide) and the traced shapes don't fit those sizes
+--     (the Castello was traced as a stemless bowl). They are drawn as their
+--     family glass until a trace fits.
+--   * A second run changes nothing.`,
+  },
 ];
 
 export interface OutlineSeed {
@@ -96,6 +135,8 @@ export function outlineProblem(o: unknown): string | null {
 const q = (s: string | null | undefined) => (s == null ? 'NULL' : `$q$${s}$q$`);
 
 export function render(load: OutlineLoad, seeds = readSeeds(load.dir)): string {
+  const who = load.bars ? "p.kind IN ('maker', 'bar')" : "p.kind = 'maker'";
+  const cleared = (load.clear ?? []).map((c) => `(${[q(c.maker), q(c.name), c.capacity_ml ?? 'NULL'].join(', ')})`);
   const rows = seeds.flatMap((s) =>
     s.outlines.map((o) => {
       const problem = outlineProblem(o.outline);
@@ -112,12 +153,27 @@ UPDATE public.glass_models m
   FROM (VALUES
 ${rows.join(',\n')}
   ) o(maker, name, capacity_ml, outline)
-  JOIN public.profiles p ON p.kind = 'maker' AND p.handle = o.maker
+  JOIN public.profiles p ON ${who} AND p.handle = o.maker
  WHERE m.maker_profile_id = p.id
    AND public.ingredient_key(m.name) = public.ingredient_key(o.name)
    AND coalesce(m.capacity_ml, 0) = coalesce(o.capacity_ml::numeric, 0)
    AND m.outline IS DISTINCT FROM o.outline::jsonb${load.onlyUntraced ? '\n   AND m.outline IS NULL' : ''};
-`;
+${
+  cleared.length
+    ? `
+UPDATE public.glass_models m
+   SET outline = NULL
+  FROM (VALUES
+${cleared.join(',\n')}
+  ) c(maker, name, capacity_ml)
+  JOIN public.profiles p ON p.kind = 'maker' AND p.handle = c.maker
+ WHERE m.maker_profile_id = p.id
+   AND public.ingredient_key(m.name) = public.ingredient_key(c.name)
+   AND coalesce(m.capacity_ml, 0) = coalesce(c.capacity_ml::numeric, 0)
+   AND m.outline IS NOT NULL;
+`
+    : ''
+}`;
 }
 
 if (process.argv[1]?.endsWith('glass-outlines.ts')) {
