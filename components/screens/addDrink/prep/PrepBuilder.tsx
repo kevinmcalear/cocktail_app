@@ -48,6 +48,8 @@ export interface PrepBuilderProps {
   onLater?: () => void;
   /** Back out: the drink keeps going without it. */
   onClose: () => void;
+  /** The venue the drink is for, whose Kit How? is checked against; null at home. */
+  bar?: { id: string; name: string } | null;
 }
 
 /**
@@ -67,12 +69,12 @@ export function PrepBuilder(props: PrepBuilderProps) {
   );
 }
 
-function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose }: PrepBuilderProps & { name: string }) {
+function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null }: PrepBuilderProps & { name: string }) {
   const [step, setStep] = useState<Step>(!first && (initial || technique) ? 'recipe' : 'kind');
   const [direction, setDirection] = useState<1 | -1>(1);
   const [name, setName] = useState(started);
   const combined = !!combinedFrom?.length;
-  const { draft, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined }, () => {
+  const { draft, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar }, () => {
     if (step === 'kind') setStep('recipe');
   });
   const at = STEPS.indexOf(step);
@@ -133,7 +135,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
       {step === 'kind' ? (
         <View style={styles.stack}>
           <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />
-          <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => go('recipe')} />
+          <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => go('recipe')} bar={bar} />
         </View>
       ) : step === 'recipe' ? (
         <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} inDrink={inDrink} />

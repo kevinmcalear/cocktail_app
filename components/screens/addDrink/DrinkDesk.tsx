@@ -21,7 +21,7 @@ import { suggestAmount } from '@/lib/specDefaults';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { CreditsStep } from './CreditsStep';
-import { DeskCost, DeskDrinkCard, DeskMenuNote, DeskTaste } from './DrinkDeskRail';
+import { DeskCost, DeskDrinkCard, DeskKit, DeskMenuNote, DeskTaste } from './DrinkDeskRail';
 import { FinishStep } from './FinishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
@@ -104,6 +104,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
     currency: pricing?.currency ?? 'GBP',
   });
   const [finishOpen, setFinishOpen] = useState(false);
+  // A recipe being written under its line: the rail shows the kit its ways are checked against.
+  const [prepOpen, setPrepOpen] = useState(false);
   // A classic or a riff can bring garnishes in after the page opens: they show.
   const finishing = finishOpen || draft.garnishes.length > 0;
 
@@ -209,7 +211,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
             lineDetail={lineDetail}
             lineBelow={lineBelow}
             onNewBottle={onNewBottle}
-            inlinePrep={{ venueName: barId ? p.venueName : null }}
+            inlinePrep={{ venueName: barId ? p.venueName : null, onOpen: setPrepOpen }}
+            bar={barId ? { id: barId, name: p.venueName } : null}
             placeholder="Add an ingredient: “30 pommeau” works too"
           />
           <Row label="Method">
@@ -243,6 +246,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
         <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
           <Eyebrow>The drink, as you go</Eyebrow>
           <DeskDrinkCard draft={draft} look={look} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
+          {prepOpen ? <DeskKit bar={barId ? { id: barId, name: p.venueName } : null} /> : null}
           <DeskTaste lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
           {canCost ? <DeskCost lines={costLines} pricing={pricing} price={draft.price ?? ''} onPrice={(price) => set({ price })} /> : null}
           <DeskMenuNote sectionId={p.menuSectionId} menu={menu} lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} />

@@ -222,6 +222,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
             backBar={barId ? stock.backBar : undefined}
             stock={stock}
+            bar={barId ? { id: barId, name: venueName } : null}
           />
         );
       case 'method':

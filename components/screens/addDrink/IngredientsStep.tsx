@@ -57,7 +57,9 @@ interface IngredientsStepProps extends StepProps {
   /** The desktop page: "Add “X”, a bottle you buy" adds the line with its card open under it (this line's key). */
   onNewBottle?: (key: string) => void;
   /** The desktop page: a house prep is written under its own line, not over the page. */
-  inlinePrep?: { venueName: string | null };
+  inlinePrep?: { venueName: string | null; onOpen?: (open: boolean) => void };
+  /** The venue the drink is for, whose Kit a recipe's ways are checked against; null at home. */
+  bar?: { id: string; name: string } | null;
 }
 
 /**
@@ -69,7 +71,7 @@ interface IngredientsStepProps extends StepProps {
  * (make-anything-overview): from the search, or by holding one line over
  * another to combine them.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep, bar }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
@@ -115,7 +117,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     setRemoved({ line, at: draft.lines.indexOf(line) });
     set({ lines: draft.lines.filter((x) => x.key !== line.key) });
   };
-  const prep = useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change });
+  const prep = useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change, bar });
   // Lines typed or pasted as made house ask first, then the drink's name does.
   const typed = useTypedHouse({ draft, set, lineFor, add: (pick, pour) => add(pick, undefined, false, pour), makeHouse });
   const nudge = typed.next ?? nameNudge;

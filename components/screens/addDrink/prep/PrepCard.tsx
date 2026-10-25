@@ -22,11 +22,11 @@ export const PREP_CARD_ID = 'prep-card-open';
  * what goes in and how it's made, the builder's own steps on one card. Add
  * hands it to the line; Just the name leaves its recipe for later.
  */
-export function PrepCard({ name: started, venueName, initial, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose }: Omit<PrepBuilderProps, 'name' | 'drinkName'> & { name: string; venueName: string | null }) {
+export function PrepCard({ name: started, venueName, initial, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null }: Omit<PrepBuilderProps, 'name' | 'drinkName'> & { name: string; venueName: string | null }) {
   const ds = useDs();
   const [name, setName] = useState(started);
   const combined = !!combinedFrom?.length;
-  const { draft, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, version, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined });
+  const { draft, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, version, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar });
   const set = (c: Partial<typeof draft>) => setDraft({ ...draft, ...c });
   const shown = name.trim() || started;
   const word = (draft.technique ? techniqueById(draft.technique)?.name : draft.kind !== 'other' ? PREP_KINDS.find((k) => k.id === draft.kind)?.name : null)?.toLowerCase();
@@ -38,7 +38,7 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
       </View>
       <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />
       <Eyebrow>What is it</Eyebrow>
-      <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => {}} />
+      <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => {}} bar={bar} />
       <View style={styles.recipeHead}>
         <Eyebrow>{recipeEyebrow(draft) || 'What goes in'}</Eyebrow>
         <RecipeView value={view} onChange={setView} />
