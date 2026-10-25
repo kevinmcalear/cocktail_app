@@ -6771,6 +6771,10 @@ export type Database = {
         Returns: undefined
       }
       remove_venue_ice: { Args: { p_id: string }; Returns: undefined }
+      replace_recipe_lines: {
+        Args: { p_item: string; p_lines: Json }
+        Returns: undefined
+      }
       resolve_ingredient: { Args: { p_name: string }; Returns: string }
       resolve_report: {
         Args: {
