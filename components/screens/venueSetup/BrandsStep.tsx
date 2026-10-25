@@ -9,10 +9,12 @@ import { space } from '@/constants/tokens';
 import { useBackBarStock, useStockMutations } from '@/hooks/useBackBar';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { isStockable } from '@/lib/backBar';
-import { looksMadeInHouse } from '@/lib/techniques/makeIt';
-import { anyKind, brandGroups } from '@/lib/whatNext';
+import { useRecipeIds } from '@/hooks/useWhatNext';
+import { anyKind, BRAND_GROUPS, brandGroups } from '@/lib/whatNext';
 
 import { StepFooter } from './GlassesStep';
+
+const STARTERS = new Set(BRAND_GROUPS.map((g) => g.title));
 
 /**
  * Step 2, your brands: tap what the venue stocks, a brand or the plain thing
@@ -32,15 +34,17 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
   const { add, remove } = useStockMutations(barId);
   const [typing, setTyping] = useState(false);
   const all = dropdowns?.ingredients;
-  // Bottles only: no juice, garnish, the venue's own preps or anything made in-house (an infusion, a wash).
+  const recipeRows = useRecipeIds().data;
+  // Bottles only: no juice, garnish, the venue's own preps or anything with a recipe (an infusion, a wash).
   const bottles = useMemo(() => {
     const byId = new Map((all ?? []).map((i) => [i.id, i]));
+    const recipes = new Set(recipeRows ?? []);
     return (all ?? []).filter(
       (i) =>
         isStockable({ name: i.name ?? '', kind: i.generic_id ? byId.get(i.generic_id)?.name : null, role: i.ingredient_role, ownPrep: i.bar_id === barId }) &&
-        (i.ingredient_role === 'product' || !looksMadeInHouse(i.name ?? ''))
+        (i.ingredient_role === 'product' || !recipes.has(i.id))
     );
-  }, [all, barId]);
+  }, [all, barId, recipeRows]);
   const coreIds = useMemo(() => new Set(dropdowns?.coreIngredientIds ?? []), [dropdowns?.coreIngredientIds]);
   const stocked = new Set(stock.map((r) => r.item_id));
   // Oldest first, so a chip stays where it was as more go on.
@@ -91,16 +95,18 @@ export function BrandsStep({ barId, step, onBack, onNext, onSkip }: { barId: str
         ) : (
           <>
             <View role="group" aria-label="Kinds of bottle" style={styles.wrap}>
-              {groups.flatMap((g) => g.kinds.map((k) => chip(k, g.kinds.length === 1 ? g.title : (k.name ?? ''), anyKind(k.name ?? ''))))}
+              {groups.filter((g) => STARTERS.has(g.title)).flatMap((g) => g.kinds.map((k) => chip(k, g.title, anyKind(k.name ?? ''))))}
             </View>
+            {/* What's picked, under its kind; a kind that isn't a starter (a sake) comes with its own Any. */}
             {groups
-              .filter((g) => g.picked.length)
+              .filter((g) => g.picked.length || !STARTERS.has(g.title))
               .map((g, i) => (
                 <View key={`${g.title}-${i}`} style={styles.group}>
                   <Caption tone="muted" role="heading">
                     {g.title}
                   </Caption>
                   <View role="group" aria-label={g.title} style={styles.wrap}>
+                    {STARTERS.has(g.title) ? null : g.kinds.map((k) => chip(k, anyKind(k.name ?? '')))}
                     {g.picked.map((p) => chip(p, p.name ?? ''))}
                   </View>
                 </View>

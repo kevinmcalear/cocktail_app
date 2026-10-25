@@ -88,14 +88,15 @@ export function MenuStep({
   onMade: (menuId: string) => void;
 }) {
   const chrome = useSetupChrome();
-  const [way, setWay] = useState<Way>('own');
+  const [way, pickWay] = useState<Way>('own');
   const { classics, isLoading, error } = useTopClassics();
   const library = useBarClassics(barId, classics);
   const have = new Set(library.data ?? []);
   const add = useAddClassics(barId);
   const create = useCreateMenu();
   const page = useVenuePage(barId).data;
-  const ideas = menuNameIdeas({ at: new Date(), southern: isSouthern(page?.latitude, page?.timezone) });
+  const [today] = useState(() => new Date());
+  const ideas = menuNameIdeas({ at: today, southern: isSouthern(page?.latitude, page?.timezone) });
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
   const [unticked, setUnticked] = useState<Set<string>>(() => new Set());
@@ -108,6 +109,7 @@ export function MenuStep({
       else next.add(id);
       return next;
     });
+  const setWay = (w: Way) => (pickWay(w), setNameError(null));
   const makeOwn = () => {
     if (!name.trim()) return setNameError('Give the menu a name.');
     setNameError(null);

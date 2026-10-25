@@ -11,6 +11,7 @@ import { useBarGlassware, useBarPageId, useFlushHeldGlasses, useHeldGlasses } fr
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useBarClassics, useTopClassics } from '@/hooks/useWhatNext';
+import { groupMenus } from '@/lib/menus';
 import { glassMakers, heldNotOnPage } from '@/lib/whatNext';
 import { useAppMode } from '@/store/useAppMode';
 
@@ -67,7 +68,10 @@ export function WhatNext({
   const glasses = [...onPage, ...heldNotOnPage(held, onPage).map((h) => ({ ...h, id: h.key, maker_page: null }))];
   const stock = stockQuery.data ?? [];
   const inLibrary = (libraryQuery.data ?? []).length;
-  const menus = (menusQuery.data ?? []).length;
+  // A menu on now, coming up or a draft: a claimed bar's past menus (its history) aren't a first menu.
+  const [now] = useState(() => Date.now());
+  const menuGroups = groupMenus(menusQuery.data ?? [], now);
+  const menus = menuGroups.on.length + menuGroups.upcoming.length + menuGroups.draft.length;
   // What's there decides which steps show and whether it's filled in: wait for it, not a flash of the wrong one.
   // Once shown, it stays: a later key change (the rankings arriving) never puts Loading back.
   const [shown, setShown] = useState(false);
