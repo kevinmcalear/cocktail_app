@@ -20,7 +20,8 @@ export interface IceSheetProps {
   initial?: Partial<VenueIceChange>;
   /** The question it opens on: 0 what it looks like, 1 where it comes from. */
   startAt?: 0 | 1;
-  onSaved?: () => void;
+  /** After the save, with the ice's id (new or the same) and what was saved. */
+  onSaved?: (id: string, ice: VenueIceChange) => void;
   /**
    * Question 3 for ice made here, how do you make it (Kit and ice, step 6):
    * the ice recipes PR fills it. Without it, made-here ice is saved at
@@ -78,8 +79,8 @@ function IceSheetBody({ barId, visible, onClose, ice, initial, startAt, onSaved,
   });
   const finish = (source: KitSource) =>
     save.mutate(change(source), {
-      onSuccess: () => {
-        onSaved?.();
+      onSuccess: (id, saved) => {
+        onSaved?.(id, saved);
         onClose();
       },
     });

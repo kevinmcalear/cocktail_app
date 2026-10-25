@@ -168,3 +168,10 @@ export function kitSourceLine(row: { source: string | null; supplier_name: strin
   const from = row.source === 'bought' ? (row.supplier_name ? `Bought from ${row.supplier_name}` : 'Bought') : row.source ? (MADE[row.source] ?? null) : null;
   return [from, row.machine, row.note, row.length_mm ? `${row.length_mm} mm` : null].filter(Boolean).join(' · ');
 }
+
+/** A tool a step names, by name: ours (an equipment id) or the venue's own, as typed. */
+export const toolLabel = (tool: string) => equipmentById(tool)?.name ?? tool;
+
+/** Whether the venue's tools have one a step names: ours by id, its own by name. */
+export const kitHasTool = (rows: readonly { key: string | null; name: string | null }[], tool: string) =>
+  rows.some((r) => r.key === tool || (!!r.name && r.name.trim().toLowerCase() === tool.trim().toLowerCase()));
