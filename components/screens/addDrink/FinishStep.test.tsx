@@ -42,8 +42,8 @@ describe('FinishStep', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Make “Mint oil” in house' }));
     await laidOut();
     expect(screen.getByRole('radio', { name: /^Herb, chile and garlic oils/, checked: true })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: recipe' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
     expect(screen.getByText('About 4 days')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Coconut Fat-Washed Daiquiri' }));
 

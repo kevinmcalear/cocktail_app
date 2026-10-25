@@ -2,13 +2,12 @@ import { useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, useDs } from '@/components/ds';
-import type { TellUsAbout } from '@/components/feedback/TellUs';
 import { radius, space } from '@/constants/tokens';
 import { useExpiring } from '@/hooks/useExpiring';
-import { perDrinkLines } from '@/lib/batchLines';
+import { linePrep, perDrinkLines } from '@/lib/batchLines';
 import { guessUnit, newLine, pickByName, typedUnit, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { dropIndex } from '@/lib/dropIndex';
-import { houseNudge, houseWays } from '@/lib/makeItHouse';
+import { houseNudge } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import type { TypedPour } from '@/lib/paste';
 import { bottleKindRow, guessBottleKind } from '@/lib/newBottle';
@@ -16,25 +15,22 @@ import type { PrepDraft } from '@/lib/prepKinds';
 import { suggestAmount, tidyAmount } from '@/lib/specDefaults';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import type { Technique } from '@/lib/techniques';
-import { startsFrom } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
-import { BatchLineRow } from './BatchLineRow';
 import { DragRow } from './DragRow';
 import { BalanceCard } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { IngredientSuggestions } from './IngredientSuggestions';
 import { LineRow } from './LineRow';
-import { MakeItHouseSheet } from './MakeItHouseSheet';
 import { PasteSpecPanel } from './PasteSpecPanel';
 import type { LineStock } from './StockToggle';
-import { useBatchDrop } from './useBatchDrop';
+import { useCombineDrop } from './useCombineDrop';
 import { useMakePrep } from './useMakePrep';
 import { useTypedHouse } from './useTypedHouse';
 import { WizardNotice } from './WizardChrome';
 
-/** How long "Removed … Undo", and "Shrub added", stay. */
+/** How long "Removed … Undo" stays. */
 const UNDO_MS = 10000;
 
 interface IngredientsStepProps extends StepProps {
@@ -56,8 +52,6 @@ interface IngredientsStepProps extends StepProps {
   lineBelow?: (line: WizardLine) => ReactNode;
   /** Each bottle line's back bar (or shelf) toggle, and its hint and note (StockToggle). */
   stock?: LineStock;
-  /** Make it house's "Tell us": the drink and bar a note would come from. */
-  tellUs?: TellUsAbout;
   /** The add field's hint, when it says more than "Add an ingredient" (the desktop page's "30 pommeau" works too). */
   placeholder?: string;
   /** The desktop page: "Add “X”, a bottle you buy" adds the line with its card open under it (this line's key). */
@@ -68,17 +62,18 @@ interface IngredientsStepProps extends StepProps {
 
 /**
  * The spec so far, each line editable where it is; a field to find an
- * ingredient (or add a new one); and suggestions: the common ones, what
- * goes with what's in it, a classic to start from, and a one-tap fix when
- * it's out of balance. Each new line starts at a likely pour.
+ * ingredient, add a new one or make one in house; and suggestions: the
+ * common ones, what goes with what's in it, a classic to start from, and a
+ * one-tap fix when it's out of balance. Each new line starts at a likely
+ * pour. Making anything in house is the one recipe flow
+ * (make-anything-overview): from the search, or by holding one line over
+ * another to combine them.
  */
-export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, tellUs, placeholder, onNewBottle, inlinePrep }: IngredientsStepProps) {
+export function IngredientsStep({ draft, set, ingredients, loading, aliases = [], coreIds, forDrink = true, shelf, backBar, balance = true, lineDetail, lineBelow, stock, placeholder, onNewBottle, inlinePrep }: IngredientsStepProps) {
   const ds = useDs();
   const [typing, setTyping] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [removed, setRemoved] = useExpiring<{ line: WizardLine; at: number }>(UNDO_MS);
-  /** The bottle line "What did you do to it?" is open for. */
-  const [houseKey, setHouseKey] = useState<string | null>(null);
   const [nudgeOff, setNudgeOff] = useState(false);
   const [pasting, setPasting] = useState(false);
   const [toFinish, setToFinish] = useExpiring<string>(UNDO_MS);
@@ -86,14 +81,12 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     const row = id ? ingredients.find((i) => i.id === id) : null;
     return row?.generic_id ? ingredients.find((i) => i.id === row.generic_id)?.name ?? null : null;
   };
-  // Bottles a technique can change (a spirit, a juice), and what the drink's name says about one.
-  const changeable = (l: WizardLine) => !!l.id && !!(startsFrom(l.name) ?? startsFrom(generic(l.id) ?? ''));
+  // What the drink's name says about one of its bottles ("Coconut Fat-Washed Daiquiri").
   const nameNudge = forDrink && !nudgeOff ? houseNudge(draft.name, draft.lines.map((l) => ({ ...l, styleName: generic(l.id) }))) : null;
-  const houseLine = houseKey ? draft.lines.find((l) => l.key === houseKey) ?? null : null;
-  const makeHouse = (line: WizardLine, t: Technique, adjunct: string | null) => {
-    setHouseKey(null);
+  // A bottle made in house by a technique; `ask` opens on What is it, to check how first.
+  const makeHouse = (line: WizardLine, t: Technique, adjunct: string | null, ask?: boolean) => {
     typed.drop(line.key);
-    prep.house(line, nameFor(t, { base: line.name, adjunct }), t.id);
+    prep.house(line, nameFor(t, { base: line.name, adjunct }), t.id, ask);
   };
 
   // A pour typed with the name ("30 pommeau") is the line's; otherwise it starts at a likely one.
@@ -122,9 +115,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     setRemoved({ line, at: draft.lines.indexOf(line) });
     set({ lines: draft.lines.filter((x) => x.key !== line.key) });
   };
-  const prep = useMakePrep({ draft, ingredients, aliases, inlinePrep, add, change });
+  const prep = useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change });
   // Lines typed or pasted as made house ask first, then the drink's name does.
-  const typed = useTypedHouse({ draft, set, lineFor, add: (pick, pour) => add(pick, undefined, false, pour), makeHouse, ask: setHouseKey });
+  const typed = useTypedHouse({ draft, set, lineFor, add: (pick, pour) => add(pick, undefined, false, pour), makeHouse });
   const nudge = typed.next ?? nameNudge;
   const make = prep.make;
   const undo = () => {
@@ -143,9 +136,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     set({ lines });
   };
   const rowHeights = () => draft.lines.map((l) => heights.current[l.key] ?? 0);
-  // Held over another line for the dwell, it batches with it (board fix 9); otherwise it lands where it's let go.
-  const batches = useBatchDrop({ draft, set, enabled: forDrink, heights: rowHeights });
-  const drop = (from: number, dy: number) => batches.onDrop(from) || move(from, dropIndex(from, dy, rowHeights()));
+  // Held over another line for the dwell, the two combine into a house prep and its steps open; otherwise it lands where it's let go.
+  const combine = useCombineDrop({ draft, set, enabled: forDrink, heights: rowHeights, onCombined: prep.edit });
+  const drop = (from: number, dy: number) => combine.onDrop(from) || move(from, dropIndex(from, dy, rowHeights()));
   // The taste and what goes with it read one drink's own lines, not the batch.
   const poured = perDrinkLines(draft.lines);
   const search = { ingredients, aliases, coreIds, loading, shelf, backBar, brands: true };
@@ -169,7 +162,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       {draft.lines.length ? (
         <View role="list" aria-label="In the drink">
           {draft.lines.map((l, i) => (
-            <DragRow key={l.key} index={i} onDrop={drop} onMove={forDrink ? batches.onMove : undefined} onHeight={(h) => (heights.current[l.key] = h)}>
+            <DragRow key={l.key} index={i} onDrop={drop} onMove={forDrink ? combine.onMove : undefined} onHeight={(h) => (heights.current[l.key] = h)}>
               {(grip, lifted) =>
                 // The lines keep their size while the next one is searched: folding them read as squeezed (Eddie, 16 Oct).
                 l.key === swapKey ? (
@@ -194,20 +187,18 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                       }
                     />
                   </View>
-                ) : l.batch ? (
-                  <BatchLineRow line={l} grip={grip} lifted={lifted} dropTarget={batches.target === i} onMove={(by) => move(i, i + by)} onOpen={() => batches.open(l.key)} onRemove={() => remove(l)} />
                 ) : (
                   <LineRow
-                    line={l}
+                    // A batch read from a file shows, and opens, as the house prep it saves as.
+                    line={l.batch ? { ...l, prep: linePrep(l) } : l}
                     grip={grip}
                     lifted={lifted}
-                    dropTarget={batches.target === i}
+                    dropTarget={combine.target === i ? combine.holding : null}
                     onMove={(by) => move(i, i + by)}
                     onChange={(c) => change(l.key, c)}
                     onRemove={() => remove(l)}
                     onSwap={() => setSwapKey(l.key)}
                     onEditPrep={() => prep.edit(l)}
-                    onMakeHouse={forDrink && changeable(l) ? () => setHouseKey(l.key) : undefined}
                     detail={lineDetail?.(l)}
                     below={
                       <>
@@ -224,8 +215,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         </View>
       ) : null}
       {stock?.footer}
-      {draft.lines.length > 1 ? <Caption tone="muted">{forDrink ? 'Hold a line over another to batch them. Hold a grip and move it to reorder.' : 'Hold a grip and move it to reorder.'}</Caption> : null}
-      {batches.sheets}
+      {draft.lines.length > 1 ? <Caption tone="muted">{forDrink ? 'Hold a line by its grip and move it over another. Let go to combine them; move away to just reorder.' : 'Hold a grip and move it to reorder.'}</Caption> : null}
 
       {nudge ? (
         <View style={[styles.nudge, { backgroundColor: ds.c.surface }]}>
@@ -265,17 +255,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
       />
       {forDrink && !typing ? <Button label="Paste a whole spec" variant="ghost" size="sm" style={styles.paste} onPress={() => setPasting(true)} /> : null}
       {toFinish ? <WizardNotice>{`${toFinish} went to the finish.`}</WizardNotice> : null}
-      {/* In the flow under the field, so it never covers the balance or Goes with (canvas make-create-prep-back). */}
-      {prep.made ? <WizardNotice>{prep.made}</WizardNotice> : null}
       {prep.builder}
-      <MakeItHouseSheet
-        bottle={houseLine?.name ?? null}
-        ways={houseLine ? houseWays(houseLine.name, generic(houseLine.id)) : []}
-        nudge={typed.forLine(houseKey) ?? (nameNudge && nameNudge.key === houseKey ? nameNudge : null)}
-        onPick={(t, adjunct) => houseLine && makeHouse(houseLine, t, adjunct)}
-        onClose={() => setHouseKey(null)}
-        tellUs={tellUs}
-      />
 
       {/* The balance sits right under the field, then what goes with it (Flavor Atlas order). */}
       {forDrink && balance && !typing ? <BalanceCard lines={poured} ingredients={ingredients} onAdd={(name) => add(pickByName(name, ingredients))} /> : null}

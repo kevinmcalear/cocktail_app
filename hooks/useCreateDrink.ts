@@ -10,7 +10,7 @@ import { recentEntry } from '@/hooks/useTrackRecent';
 import { useRefreshSpecs } from '@/hooks/useBulk';
 import { saveDrinkSpec, type SpecLineInput } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
-import { batchPrep } from '@/lib/batchLines';
+import { linePrep } from '@/lib/batchLines';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { creatorProfileId, likeExactly, specLines, type WizardDraft, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
@@ -190,8 +190,8 @@ export function useCreateDrink() {
       const bottles: { itemId: string; name: string; bottle: NonNullable<WizardLine['bottle']>; isNew: boolean }[] = [];
       for (const { line, amount } of specLines(draft)) {
         const madeBefore = newIngredients.length;
-        // A batch made by dropping lines together is a house prep of the kind Batch: the bottle's recipe.
-        const prep = line.batch ? batchPrep(line.batch) : line.prep;
+        // Its recipe, or a batch read from a file as a house prep of the kind Batch: the bottle's recipe.
+        const prep = linePrep(line);
         // A prep added by name only is still a house prep of its own, its recipe to come.
         const ownPrep = (!!prep || !!line.later) && !(line.id && live.has(line.id));
         const ingredientId = ownPrep ? await own(line) : await ensure(line, 'ingredient');

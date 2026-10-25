@@ -1,22 +1,19 @@
 import { useState } from 'react';
 
-import { useExpiring } from '@/hooks/useExpiring';
+import { linePrep, uncombine } from '@/lib/batchLines';
 import type { WizardDraft, WizardLine, WizardPick } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import type { TypedPour } from '@/lib/paste';
-import { PREP_KINDS, type PrepDraft } from '@/lib/prepKinds';
+import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalizeFirst } from '@/lib/stringUtils';
-import { techniqueById } from '@/lib/techniques';
 
 import type { CatalogIngredient } from './IngredientSearch';
 import { PrepBuilder } from './prep/PrepBuilder';
 import { PrepCard } from './prep/PrepCard';
 
-/** How long "Shrub saved to your preps…" stays. */
-const NOTICE_MS = 10000;
-
 interface MakePrepArgs {
   draft: WizardDraft;
+  set: (change: Partial<WizardDraft>) => void;
   ingredients: readonly CatalogIngredient[];
   aliases: readonly IngredientAlias[];
   /** The desktop page: the prep is written under its own line, not over the page. */
@@ -25,22 +22,27 @@ interface MakePrepArgs {
   change: (key: string, c: Partial<WizardLine>) => void;
 }
 
-// What the prep is, for "Shrub added": its kind, its technique, else its name.
-const prepWord = (prep: PrepDraft, name: string) =>
-  (prep.technique ? techniqueById(prep.technique)?.name : prep.kind !== 'other' ? PREP_KINDS.find((k) => k.id === prep.kind)?.name : null) ?? name;
+/** What's being made: a new line, the recipe of a line in the drink (its key), or a bottle line made in house (its key, `replace`). */
+interface Making {
+  name: string;
+  key?: string;
+  replace?: boolean;
+  technique?: string;
+  base?: WizardPick;
+  pour?: TypedPour;
+  /** Opens on What is it, not the recipe: two lines just combined, or a typed line to check. */
+  first?: boolean;
+}
 
 /**
- * A house prep being made from the ingredient lines: a new one, the recipe of
- * a line in the drink, or a line swapped for one (Make it house). In the steps
- * it's the builder over the page; on the desktop page, a card under its line.
+ * A house prep being made from the ingredient lines, in the one recipe flow
+ * (make-anything-overview): a new one from the search, two lines combined,
+ * the recipe of a line in the drink, or a bottle made in house. In the
+ * steps it's the builder over the page; on the desktop page, a card under
+ * its line. Done goes back to the line, which shows the prep.
  */
-export function useMakePrep({ draft, ingredients, aliases, inlinePrep, add, change }: MakePrepArgs) {
-  /**
-   * A new line, the recipe of a line in the drink (its key), or a line swapped
-   * for one (its key, `replace`). Make it house on a bottle also brings the
-   * technique and the bottle as its base.
-   */
-  const [making, setMaking] = useState<{ name: string; key?: string; replace?: boolean; technique?: string; base?: WizardPick; pour?: TypedPour } | null>(null);
+export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change }: MakePrepArgs) {
+  const [making, setMaking] = useState<Making | null>(null);
   // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
   const editingKey = making?.key ?? null;
   const makingName = making?.name ?? null;
@@ -48,8 +50,7 @@ export function useMakePrep({ draft, ingredients, aliases, inlinePrep, add, chan
   const makingTechnique = making?.technique ?? null;
   const makingBase = making?.base ?? null;
   const makingPour = making?.pour;
-  /** A prep just made: "Shrub saved to your preps…" for a moment. */
-  const [made, setMade] = useExpiring<string>(NOTICE_MS);
+  const first = !!making?.first;
 
   // Shown the way it saves ("coconut fat washed rum" is "Coconut fat washed rum").
   const make = (name: string, key?: string, pour?: TypedPour) => {
@@ -60,22 +61,31 @@ export function useMakePrep({ draft, ingredients, aliases, inlinePrep, add, chan
     } else setMaking({ name: capitalizeFirst(name), key, replace: !!key, pour });
   };
 
-  const editingPrep = editingKey && !replacing ? draft.lines.find((l) => l.key === editingKey)?.prep : null;
+  const line = editingKey ? draft.lines.find((l) => l.key === editingKey) : null;
+  const editingPrep = line && !replacing ? linePrep(line) : null;
+  const combined = !!line?.combined;
+  const drinkName = draft.name.trim();
   const props = {
     initial: editingPrep,
     technique: makingTechnique,
     picked: makingBase ? { base: makingBase } : undefined,
+    first,
+    combinedFrom: line?.combined?.map((l) => l.name),
+    // What the drink pours of it, for "In Salty Boy 22.5 ml" and how many a bottle makes.
+    inDrink: line && !replacing ? { name: drinkName, amount: line.amount, unit: line.unit } : undefined,
     ingredients,
     aliases,
-    onClose: () => setMaking(null),
-    onDone: (prep: PrepDraft) => {
-      if (editingKey && replacing) change(editingKey, { id: null, name: makingName ?? '', prep, technique: prep.technique, later: undefined, bottle: undefined });
-      else if (editingKey) change(editingKey, { prep, technique: prep.technique, later: undefined });
-      else if (makingName) add({ id: null, name: makingName }, prep, false, makingPour);
+    // Backing out of two lines just combined puts them back.
+    onClose: () => {
+      if (combined && editingKey) set({ lines: uncombine(draft.lines, editingKey) });
       setMaking(null);
-      // The prep is saved with the drink, not before, so this says when rather than "saved" (canvas make-create-house-line).
-      if (!editingKey) setMade(`${prepWord(prep, makingName ?? 'The prep')} saved to your preps when you save the drink. Its page is ready then.`);
-      else if (replacing) setMade(`Saved to your bar’s preps when you save the drink. Next time, type “${(makingName ?? '').split(/[\s-]/)[0].toLowerCase()}”.`);
+    },
+    onDone: (prep: PrepDraft, name?: string) => {
+      const named = name?.trim() || makingName || '';
+      if (editingKey && replacing) change(editingKey, { id: null, name: named, prep, technique: prep.technique, later: undefined, bottle: undefined });
+      else if (editingKey) change(editingKey, { name: named, prep, technique: prep.technique, later: undefined, batch: undefined, combined: undefined });
+      else if (named) add({ id: null, name: named }, prep, false, makingPour);
+      setMaking(null);
     },
     // A recipe already written isn't dropped for a name.
     onLater: editingPrep
@@ -89,13 +99,12 @@ export function useMakePrep({ draft, ingredients, aliases, inlinePrep, add, chan
 
   return {
     make,
-    /** Open a line's recipe again. */
-    edit: (l: WizardLine) => setMaking({ name: l.name, key: l.key }),
-    /** Make it house: the bottle line becomes a prep by this technique, the bottle its base. */
-    house: (line: WizardLine, name: string, technique: string) => setMaking({ name, key: line.key, replace: true, technique, base: { id: line.id, name: line.name } }),
-    made,
+    /** Open a line's recipe again, or the steps for two lines just combined. */
+    edit: (l: WizardLine) => setMaking({ name: l.name, key: l.key, first: !!l.combined }),
+    /** Make it house: the bottle line becomes a prep by this technique, the bottle its base; `ask` opens on What is it to check it first. */
+    house: (l: WizardLine, name: string, technique: string, ask?: boolean) => setMaking({ name, key: l.key, replace: true, technique, base: { id: l.id, name: l.name }, first: ask }),
     /** The card under this line, when its prep is being written on the desktop page. */
     card: (key: string) => (inlinePrep && makingName && key === editingKey ? <PrepCard key={key} name={makingName} venueName={inlinePrep.venueName} {...props} /> : null),
-    builder: inlinePrep ? null : <PrepBuilder name={makingName} drinkName={draft.name.trim()} {...props} />,
+    builder: inlinePrep ? null : <PrepBuilder name={makingName} drinkName={drinkName} {...props} />,
   };
 }

@@ -1,17 +1,16 @@
 /**
- * A batch made in the add-drink wizard by dropping one line on another
- * (Eddie, 22 Oct): the drink keeps one line ("Ash Garden batch, 60 ml") and
- * the bottle's recipe is worked out from the drink's own amounts. The
- * per-drink lines stay inside the batch line, so costing, allergens, strength
- * and the drawing keep using them, and Split back into lines gets them back.
- * Saved as a house prep of the kind Batch (lib/prepKinds). Pure, plain JSON.
+ * The drink's pours bottled ahead. In the add-drink wizard, dropping one line
+ * on another combines them into a house prep (make-anything-overview, 24
+ * Oct): one line ("Salty Boy batch, 22.5 ml") whose recipe starts as the
+ * bottle the drink's own amounts fill, of the kind Batch, then opens in the
+ * house prep steps like any other. A menu brought in from a file reads its
+ * batch the same way (lib/bringInDraft, `batch` on the line). Pure, plain JSON.
  */
 import { convertPour, type WizardLine } from './drinkWizard';
-import { withFacts, type PrepDraft } from './prepKinds';
+import { prepAmounts, prepYield, withFacts, type PrepDraft } from './prepKinds';
 import { tidyAmount } from './specDefaults';
 
-/** The bottles the sheet offers, in ml; 750 is where it starts. */
-export const BATCH_BOTTLES = [700, 750, 1000] as const;
+/** The bottle a batch starts as, in ml. */
 export const DEFAULT_BOTTLE = 750;
 
 /** A batch: the drink's own lines, as they were, and the bottle it fills. */
@@ -25,6 +24,7 @@ const POUR_ML: Record<string, number> = { ml: 1, cl: 10, oz: 30 };
 const POURS = new Set(Object.keys(POUR_ML));
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
+const exact = (n: number) => String(Math.round(n * 1000) / 1000);
 const num = (s: string): number | null => {
   // A plain decimal as it is (tidyAmount keeps two places); fractions ("3/4") through tidyAmount.
   const n = /^\d+(\.\d+)?$/.test(s.trim()) ? parseFloat(s) : parseFloat(tidyAmount(s));
@@ -64,49 +64,8 @@ export function bottleAmounts(b: LineBatch): { line: WizardLine; amount: number 
   });
 }
 
-/** Units a bottle line that isn't a pour can be weighed or counted in (the batch sheet's unit chips). */
-export const BOTTLE_UNITS = ['g', 'kg', 'tsp', 'tbsp', 'bsp', 'dash', 'drop', 'each', 'pinch'] as const;
-
-const exact = (n: number) => String(Math.round(n * 1000) / 1000);
-
-/**
- * A line's amount in the bottle, typed in the batch sheet (Kevin, 24 Oct:
- * 70 g of red miso in the Tempus Fugit). Every other amount in the bottle
- * stays as it is, the bottle is its pours added up, and one drink still
- * takes the same from it, so each line's share of one drink follows (70 g
- * over 33 and a third drinks is 2.1 g). Null is to taste, except for a pour.
- * Pours keep their unit. The batch as it was when that would leave nothing poured.
- */
-export function withBottleAmount(b: LineBatch, key: string, amount: number | null, unit: string): LineBatch {
-  const per = drinkMl(b.lines);
-  const at = b.lines.find((l) => l.key === key);
-  if (!at || per <= 0) return b;
-  const typed = amount !== null && amount > 0 ? amount : null;
-  // A pour emptied is a pour still being typed, never to taste: that would give its share to the others.
-  if (typed === null && pourMl(at) !== null) return b;
-  // Each line as it is in the bottle now, and the typed one as typed: ml for a pour, else its own unit.
-  const now = bottleAmounts(b);
-  const inBottle = b.lines.map((l, i) => (l.key === key ? { amount: typed, unit } : now[i]));
-  const poured = inBottle.map(({ amount: n, unit: u }) => (n !== null && POURS.has(u) ? n * POUR_ML[u] : null));
-  const bottleMl = round1(poured.reduce<number>((s, ml) => s + (ml ?? 0), 0));
-  if (bottleMl <= 0) return b;
-  const drinks = bottleMl / per;
-  return {
-    bottleMl,
-    lines: b.lines.map((l, i) => {
-      const ml = poured[i];
-      const { amount: n, unit: u } = inBottle[i];
-      if (ml !== null) {
-        const pour = POURS.has(l.unit) ? l.unit : 'ml';
-        return { ...l, ...(pour === 'ml' ? { amount: exact(ml / drinks), unit: 'ml' } : convertPour(ml / drinks, 'ml', pour)) };
-      }
-      return { ...l, unit: u, amount: n === null ? '' : exact(n / drinks) };
-    }),
-  };
-}
-
-/** Lines that can go in a bottle: not a house prep still to make here (its recipe would be lost), nor a batch. */
-export function canBatch(l: WizardLine): boolean {
+/** Lines that can be combined: not a house prep (its recipe would be lost), nor one still to write or a batch. */
+export function canCombine(l: WizardLine): boolean {
   return !l.batch && !l.prep && !l.technique && !l.later;
 }
 
@@ -118,49 +77,53 @@ function lineAmount(lines: readonly WizardLine[]): { amount: string; unit: strin
   return oz ? convertPour(ml, 'ml', 'oz') : { amount: String(ml), unit: 'ml' };
 }
 
-/** A batch line from these lines, keeping `key`; its name and bottle stay when it's a batch already. */
+/** A batch line from these lines, keeping `key` (a menu brought in from a file). */
 export function batchLine(key: string, name: string, lines: WizardLine[], bottleMl = DEFAULT_BOTTLE): WizardLine {
   return { key, id: null, name, ...lineAmount(lines), batch: { lines, bottleMl } };
 }
 
 /**
- * Drops `from` on `onto`. Two plain lines become one batch where `onto` was,
- * in the spec's order, named after the drink ("Ash Garden batch"). A line
- * dropped on a batch (or a batch on a line) goes in the bottle. Null when
- * they can't batch: two batches, a house prep still to make, or nothing
- * measured to fill a bottle with.
+ * Drops `from` on `onto`: the two become one house prep line where `onto`
+ * was, named after the drink ("Salty Boy batch"), its recipe the bottle
+ * their pours fill (batchPrep), in the spec's order. The lines stay on it
+ * (`combined`) until its recipe is done, so backing out puts them back. Null
+ * when they can't: a house prep already, the same line, or nothing measured.
  */
-export function mergeLines(lines: readonly WizardLine[], from: number, onto: number, drinkName: string): WizardLine[] | null {
+export function combineLines(lines: readonly WizardLine[], from: number, onto: number, drinkName: string): WizardLine[] | null {
   const a = lines[from];
   const b = lines[onto];
-  if (!a || !b || from === onto || (a.batch && b.batch)) return null;
-  const batch = b.batch ? b : a.batch ? a : null;
-  const other = batch === b ? a : b;
-  if (!canBatch(other) || (!batch && !canBatch(a))) return null;
-  const inner = batch ? [...batch.batch!.lines, other] : from < onto ? [a, b] : [b, a];
+  if (!a || !b || from === onto || !canCombine(a) || !canCombine(b)) return null;
+  const inner = from < onto ? [a, b] : [b, a];
   if (drinkMl(inner) <= 0) return null;
-  const merged = batch ? batchLine(batch.key, batch.name, inner, batch.batch!.bottleMl) : batchLine(b.key, `${drinkName.trim() || 'House'} batch`, inner);
+  const merged: WizardLine = { key: b.key, id: null, name: `${drinkName.trim() || 'House'} batch`, ...lineAmount(inner), prep: batchPrep({ lines: inner, bottleMl: DEFAULT_BOTTLE }), combined: inner };
   return lines.flatMap((l, i) => (i === onto ? [merged] : i === from ? [] : [l]));
 }
 
-/** Split back into lines: the batch's own lines, where it was. */
-export function splitBatch(lines: readonly WizardLine[], key: string): WizardLine[] {
-  return lines.flatMap((l) => (l.key === key && l.batch ? l.batch.lines : [l]));
+/** Backing out of a combine: the lines it was made from, where it was. */
+export function uncombine(lines: readonly WizardLine[], key: string): WizardLine[] {
+  return lines.flatMap((l) => (l.key === key && l.combined ? l.combined : [l]));
 }
 
-/** A batch with a new bottle or a line taken out: its amount follows. */
-export function withBatch(line: WizardLine, batch: LineBatch): WizardLine {
-  return { ...line, ...lineAmount(batch.lines), batch };
+/** A line's house prep recipe: its own, or a batch's read from a file. */
+export function linePrep(l: Pick<WizardLine, 'prep' | 'batch'>): PrepDraft | undefined {
+  return l.prep ?? (l.batch ? batchPrep(l.batch) : undefined);
 }
 
-/** Every line as one drink pours it: a batch's own lines instead of the batch. For the drawing, the cost and the taste. */
+/**
+ * Every line as one drink pours it: a batch's own lines instead of the
+ * batch, each its share of the bottle (750 ml of mezcal and agave in a 60 ml
+ * pour is 45 and 15). For the drawing, the cost and the taste. Any other
+ * house prep stays one line, as a bottle would.
+ */
 export function perDrinkLines<L extends WizardLine>(lines: readonly L[]): WizardLine[] {
-  return lines.flatMap((l) => (l.batch ? l.batch.lines : [l]));
-}
-
-/** "Batch · mezcal, agave syrup", under the batch line's name. */
-export function batchCaption(b: LineBatch): string {
-  return `Batch · ${b.lines.map((l) => l.name.toLowerCase()).join(', ')}`;
+  return lines.flatMap((l): WizardLine[] => {
+    if (l.batch) return l.batch.lines;
+    const made = l.prep?.kind === 'batch' ? prepYield(l.prep) : null;
+    const pour = pourMl(l);
+    if (!l.prep || !made || pour === null) return [l];
+    const share = pour / made;
+    return prepAmounts(l.prep).map(({ line: p, amount }) => ({ key: p.key, id: p.id, name: p.name, unit: p.unit, amount: amount === null ? '' : exact(amount * share) }));
+  });
 }
 
 /**

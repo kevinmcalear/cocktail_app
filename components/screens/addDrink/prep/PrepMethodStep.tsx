@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
 import { dragGripStyle } from '@/components/recipe/FormScrollContainer';
+import type { GlyphName } from '@/components/ui/glyphs';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { dropIndex } from '@/lib/dropIndex';
@@ -30,10 +31,22 @@ const GRIP = layout.minTapTarget + space.lg;
 
 type Tile = 'keeps' | 'store' | 'start';
 
+/** Steps to start from (make-anything-steps-2, step 6). No temperature or time: those are the maker's to write. */
+const STARTERS: { label: string; icon: GlyphName; body: string }[] = [
+  { label: 'Mix', icon: 'arrow.clockwise', body: 'Mix everything together.' },
+  { label: 'Sous vide', icon: 'thermometer.medium', body: 'Seal it in a bag and hold it in a water bath.' },
+  { label: 'Infuse', icon: 'leaf.fill', body: 'Leave it to infuse, tasting now and then.' },
+  { label: 'Rest', icon: 'clock', body: 'Let it rest.' },
+  { label: 'Strain', icon: 'line.3.horizontal.decrease', body: 'Strain through a fine sieve.' },
+  { label: 'Chill', icon: 'snowflake', body: 'Chill it.' },
+  { label: 'Bottle', icon: 'flask', body: 'Bottle it and write the date on it.' },
+];
+
 /**
- * New prep, the method: the steps as text rows, each led by its grip (dots
- * and number: drag it, or arrow keys on the web, to move the step) with its
- * timer as a pill with a clock. Tap a step to change it; a time written in it ("for 2 hours")
+ * New prep, the method: steps to start from (Mix, Sous vide, Strain), then
+ * the steps as text rows, each led by its grip (dots and number: drag it, or
+ * arrow keys on the web, to move the step) with its timer as a pill with a
+ * clock. Tap a step to change it; a time written in it ("for 2 hours")
  * becomes its timer. Then Keeps, Store and Start as three tiles, suggested
  * for the kind: tap one for its choices. A technique's safety notes come first.
  */
@@ -132,6 +145,24 @@ export function PrepMethodStep({ draft, set, phrase }: { draft: PrepDraft; set: 
           ))}
         </View>
       ) : null}
+      <View role="group" aria-label="Start from a step" style={styles.chips}>
+        {STARTERS.map((st) => (
+          <PressableScale
+            key={st.label}
+            role="button"
+            accessibilityLabel={`Add a step: ${st.label}`}
+            onPress={() => {
+              const s = row(st.body, timerFromText(st.body));
+              changeSteps([...steps, s]);
+              setEditing(s.key);
+            }}
+            style={[styles.starter, { borderColor: ds.c.lineStrong }]}
+          >
+            <IconSymbol name={st.icon} size={14} color={ds.c.ink} />
+            <Caption>{st.label}</Caption>
+          </PressableScale>
+        ))}
+      </View>
       <View role="list" aria-label="Steps">
         {steps.map(renderStep)}
       </View>
@@ -209,5 +240,6 @@ const styles = StyleSheet.create({
   tiles: { flexDirection: 'row', gap: space.sm },
   tile: { flex: 1, gap: 2, padding: space.md, borderRadius: radius.control, borderWidth: 2 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  starter: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: layout.minTapTarget - 8, paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
   watch: { borderRadius: radius.control, padding: space.md, gap: space.xs },
 });

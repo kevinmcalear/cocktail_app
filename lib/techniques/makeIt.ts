@@ -200,3 +200,8 @@ export function prepCardFor(t: Technique): TechniquePrepCard {
   steps.push({ body: `How it works, and how much for any batch: ${t.name} in Techniques.`, timer_seconds: null });
   return { actions: [actionFor(t)], leadMinutes: t.totalMinutes, leadNote: t.time, steps };
 }
+
+/** A technique's own steps, then where to read more, without the usual batch's amounts: the method a kind's way fills in (lib/prepKinds withMethod). */
+export function methodOf(t: Technique): TechniquePrepCard['steps'] {
+  return prepCardFor(t).steps.slice(t.base && t.parts ? 1 : 0);
+}

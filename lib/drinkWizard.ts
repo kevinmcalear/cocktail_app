@@ -53,8 +53,11 @@ export interface WizardLine extends WizardPick {
   note?: string;
   /** A house prep added by name only ("Just add the name", or Later in the prep builder): its recipe is to write, and the save reminds you. */
   later?: boolean;
-  /** A batch made by dropping one line on another (lib/batchLines): the drink's own lines and the bottle, saved as a Batch prep. */
-  batch?: LineBatch;  /** A new bottle you buy, filled in under its line on the desktop page (lib/newBottle): saved with the drink. */
+  /** A batch read from a file (lib/bringInDraft): the drink's own lines and the bottle, saved as a Batch prep. */
+  batch?: LineBatch;
+  /** The lines this house prep was combined from (lib/batchLines combineLines), until its recipe is done: backing out puts them back. */
+  combined?: WizardLine[];
+  /** A new bottle you buy, filled in under its line on the desktop page (lib/newBottle): saved with the drink. */
   bottle?: NewBottle;
 }
 

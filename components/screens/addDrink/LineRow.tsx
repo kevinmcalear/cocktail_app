@@ -6,7 +6,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space, type } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
 import { convertPour, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
-import { leadText } from '@/lib/prepKinds';
+import { leadText, prepSummary } from '@/lib/prepKinds';
 import { tidyAmount } from '@/lib/specDefaults';
 import { techniqueById } from '@/lib/techniques';
 
@@ -22,10 +22,8 @@ interface LineRowProps {
   onRemove: () => void;
   /** Swap it for another ingredient, keeping the amount (behind a tap on the name). */
   onSwap: () => void;
-  /** A new house prep made here: open its recipe again. */
+  /** A new house prep made here: open its recipe again (a tap on the line, for a prep). */
   onEditPrep?: () => void;
-  /** A bottle already in the drink: say what you did to it (a fat wash, an infusion). */
-  onMakeHouse?: () => void;
   /** The units to pick from; the finish offers drops, sprays, rinses and the garnish counts. */
   units?: readonly string[];
   /** Under the name on the desktop page: who brings it and what this pour costs ("Bluestone Trade · $1.28"). */
@@ -38,8 +36,8 @@ interface LineRowProps {
   onMove?: (by: -1 | 1) => void;
   /** Being dragged: lifted over the lines under it. */
   lifted?: boolean;
-  /** Another line is held over this one: let go to batch them (lib/batchLines). */
-  dropTarget?: boolean;
+  /** Another line is held over this one (its name): let go to combine them into a house prep (lib/batchLines). */
+  dropTarget?: string | null;
   /** Just before remove: the bottle that puts it on the back bar or your shelf (StockToggle); null for a line without one. */
   stock?: ReactNode;
 }
@@ -47,11 +45,14 @@ interface LineRowProps {
 /**
  * One spec line, kept short: the ingredient, its amount (type it, or − and +
  * through the pours bartenders use), its unit (tap to change) and remove.
- * Tapping the name opens the rest: swap, a note, make it house, the recipe.
+ * Tapping the name opens the rest: swap, a note, the recipe to write. A
+ * house prep says so under its name (Made in house, its kind and way, what
+ * goes in, its steps), and a tap opens its recipe (make-anything-steps-2,
+ * step 7). Held over by another line, it offers to combine them.
  * On a phone the controls sit under the name, and the bottle and remove
  * beside it; on a wider screen they all share its line, on the right.
  */
-export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHouse, units: unitList = QUICK_UNITS, detail, below, grip, onMove, lifted, dropTarget, stock }: LineRowProps) {
+export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: unitList = QUICK_UNITS, detail, below, grip, onMove, lifted, dropTarget, stock }: LineRowProps) {
   const ds = useDs();
   // A phone stacks the name over the controls. Explicit, not flexWrap: Yoga on iOS shrank the name to "Rye wh…" beside them instead of wrapping (Eddie, 16 Oct).
   // So does a narrow column (the desktop page's spec), where the bottle left the name a few letters.
@@ -61,6 +62,8 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
   const [noting, setNoting] = useState(!!line.note);
   const [open, setOpen] = useState(false);
   const from = line.prep?.madeFrom ?? null;
+  // A house prep opens its recipe; anything else, what else it can do.
+  const recipe = line.prep && onEditPrep ? onEditPrep : null;
   const top = line.unit === 'top';
   const amountLabel = top ? 'Top' : line.amount ? `${line.amount} ${line.unit}` : `no amount, ${line.unit}`;
   // What the line is, when it isn't a bottle that already exists: shown with its actions, not under every row.
@@ -84,6 +87,15 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
   );
   return (
     <View role="listitem" onLayout={(e) => setNarrow(e.nativeEvent.layout.width < NARROW)} style={[styles.wrap, { borderBottomColor: ds.c.line, backgroundColor: lifted ? ds.c.raised : undefined }, dropTarget ? [styles.target, { borderColor: ds.accentText, backgroundColor: withAlpha(ds.accentText, 0.1) }] : null]}>
+      {/* Over the line, not in it, so the rows under the finger keep their place (make-anything-steps-1, step 3). */}
+      {dropTarget ? (
+        <View role="alert" style={[styles.popup, { backgroundColor: ds.c.ink }]}>
+          <Caption color={ds.c.ground} style={styles.strong}>
+            Combine into a house prep
+          </Caption>
+          <Caption color={ds.c.ground} numberOfLines={1}>{`${dropTarget} + ${line.name}`}</Caption>
+        </View>
+      ) : null}
       <View style={styles.row}>
         {grip?.(<LineGrip name={line.name} onMove={onMove} />)}
         <IngredientThumb id={line.id} name={line.name} size={40} />
@@ -91,17 +103,29 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
           <View style={stacked ? styles.headStacked : styles.head}>
             {/* The name opens what else the line can do; closed, the row is the ingredient and its pour (board make-create-ingredients). */}
             <PressableScale
-              onPress={() => setOpen(!open)}
+              onPress={recipe ?? (() => setOpen(!open))}
               haptic={false}
               role="button"
-              aria-expanded={open}
-              accessibilityLabel={`${line.name}, ${amountLabel}`}
-              accessibilityHint="Shows swap, note and more"
-              style={stacked ? styles.nameStacked : styles.name}
+              aria-expanded={recipe ? undefined : open}
+              accessibilityLabel={`${line.name}, ${amountLabel}${line.prep ? `. Made in house: ${prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}` : ''}`}
+              accessibilityHint={recipe ? 'Opens its recipe' : 'Shows swap, note and more'}
+              style={[stacked ? styles.nameStacked : styles.name, line.prep ? styles.prepName : null]}
             >
-              <Body numberOfLines={2}>{line.name}</Body>
-              {dropTarget ? <Caption tone="accent">Drop to batch</Caption> : null}
-              {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
+              <View style={styles.flex}>
+                <Body numberOfLines={2}>{line.name}</Body>
+                {dropTarget ? (
+                  <Caption tone="accent">Let go to combine</Caption>
+                ) : line.prep ? (
+                  <>
+                    <Caption tone="accent">Made in house</Caption>
+                    <Caption tone="muted" numberOfLines={2}>
+                      {prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}
+                    </Caption>
+                  </>
+                ) : null}
+                {line.unit === 'discard' ? <Caption tone="accent">Expressed, then discarded</Caption> : null}
+              </View>
+              {recipe ? <IconSymbol name="chevron.right" size={14} color={ds.c.muted} /> : null}
             </PressableScale>
             {/* Beside the name's button, not in it: the detail can be a button of its own (the supplier chip). */}
             {stacked ? ends : detail}
@@ -154,12 +178,10 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
           {status ? <Caption tone={status.accent ? 'accent' : 'muted'}>{status.text}</Caption> : null}
           {/* The recipe links lead in the accent; the rest stay quiet (the accent is for the one primary action). */}
           <View style={styles.links}>
-            {line.prep && onEditPrep ? <TextAction label="Edit the recipe" a11y={`Edit the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
             {line.later && !line.prep && onEditPrep ? <TextAction label="Write the recipe" a11y={`Write the recipe for ${line.name}`} onPress={onEditPrep} accent /> : null}
             <TextAction label="Swap" a11y={`Swap ${line.name} for another ingredient`} onPress={onSwap} />
             {from ? <TextAction label={`Back to ${from.name}`} a11y={`Back to plain ${from.name}`} onPress={() => onChange({ id: from.id, name: from.name, prep: undefined, technique: undefined })} /> : null}
             {noting ? null : <TextAction label="Note" a11y={`Add a note to ${line.name}`} onPress={() => { setNoting(true); setOpen(false); }} />}
-            {!line.prep && !line.technique && line.id && onMakeHouse ? <TextAction label="Make it house" a11y={`Make ${line.name} house: wash, infuse, clarify`} onPress={onMakeHouse} /> : null}
           </View>
         </View>
       ) : null}
@@ -197,7 +219,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, onMakeHo
   );
 }
 
-/** A small text button under the line: Edit the recipe (accent); Swap, Note and Make it house (quiet). */
+/** A small text button under the line: Write the recipe (accent); Swap and Note (quiet). */
 function TextAction({ label, a11y, onPress, accent }: { label: string; a11y: string; onPress: () => void; accent?: boolean }) {
   return (
     <PressableScale onPress={onPress} role="button" accessibilityLabel={a11y} style={styles.link}>
@@ -233,6 +255,11 @@ const styles = StyleSheet.create({
   head: { flex: 1 },
   headStacked: { flexDirection: 'row', alignItems: 'flex-start' },
   name: { minHeight: layout.minTapTarget, justifyContent: 'center' },
+  prepName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  flex: { flex: 1, minWidth: 0 },
+  strong: { fontFamily: fontFamilies.bodySemiBold },
+  // Above the row it would combine with, as the board draws it.
+  popup: { position: 'absolute', bottom: '100%', left: space.lg, right: space.lg, zIndex: 2, marginBottom: -space.xs, gap: 2, paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.control },
   nameStacked: { flex: 1, minHeight: layout.minTapTarget, justifyContent: 'center' },
   controls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   stepper: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, height: layout.minTapTarget },

@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, useDs } from '@/components/ds';
+import { Body, Button, Caption, Field, useDs } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
 import { PREP_KINDS, recipeEyebrow, withFacts } from '@/lib/prepKinds';
 import { techniqueById } from '@/lib/techniques';
@@ -17,35 +18,39 @@ export const PREP_CARD_ID = 'prep-card-open';
 
 /**
  * A house prep written under its own line on the desktop page (board
- * make-create-desktop, step 6), not over the page: what it is, the recipe
- * and how it's made, the builder's own steps on one card. Add hands it to
- * the line; Just the name leaves its recipe for later.
+ * make-anything-steps-1, step 4), not over the page: its name, what it is,
+ * what goes in and how it's made, the builder's own steps on one card. Add
+ * hands it to the line; Just the name leaves its recipe for later.
  */
-export function PrepCard({ name, venueName, initial, picked, technique, ingredients, aliases, onDone, onLater, onClose }: Omit<PrepBuilderProps, 'name' | 'drinkName'> & { name: string; venueName: string | null }) {
+export function PrepCard({ name: started, venueName, initial, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose }: Omit<PrepBuilderProps, 'name' | 'drinkName'> & { name: string; venueName: string | null }) {
   const ds = useDs();
-  const { draft, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, version, phrase, named, slotsOpen } = usePrepDraft({ name, initial, picked, technique });
+  const [name, setName] = useState(started);
+  const combined = !!combinedFrom?.length;
+  const { draft, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, version, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined });
   const set = (c: Partial<typeof draft>) => setDraft({ ...draft, ...c });
+  const shown = name.trim() || started;
   const word = (draft.technique ? techniqueById(draft.technique)?.name : draft.kind !== 'other' ? PREP_KINDS.find((k) => k.id === draft.kind)?.name : null)?.toLowerCase();
   return (
-    <View nativeID={PREP_CARD_ID} role="group" aria-label={`House prep: ${name}`} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+    <View nativeID={PREP_CARD_ID} role="group" aria-label={`Made in house: ${shown}`} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
       <View style={styles.head}>
-        <Body>{`House prep: ${name}`}</Body>
+        <Body>{`Made in house: ${shown}`}</Body>
         <Caption tone="muted">{`${venueName ? `Private to ${venueName}. ` : ''}Made from parts you buy, so it costs itself.`}</Caption>
       </View>
-      <Eyebrow>What are you making</Eyebrow>
-      <PrepKindStep name={name} draft={draft} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => {}} />
+      <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />
+      <Eyebrow>What is it</Eyebrow>
+      <PrepKindStep name={shown} draft={draft} combined={combined} onKind={pickKind} onTechnique={pickTechnique} onChangeAmount={() => {}} />
       <View style={styles.recipeHead}>
-        <Eyebrow>{recipeEyebrow(draft) || 'Recipe'}</Eyebrow>
+        <Eyebrow>{recipeEyebrow(draft) || 'What goes in'}</Eyebrow>
         <RecipeView value={view} onChange={setView} />
       </View>
       {fromCatalog ? <Caption tone="muted">{fromCatalog}</Caption> : null}
-      <PrepRecipeStep key={`recipe-${version}`} draft={draft} view={view} set={set} ingredients={ingredients} aliases={aliases} />
-      <Eyebrow>How</Eyebrow>
+      <PrepRecipeStep key={`recipe-${version}`} draft={draft} view={view} set={set} ingredients={ingredients} aliases={aliases} inDrink={inDrink} />
+      <Eyebrow>How it’s made</Eyebrow>
       <PrepMethodStep key={`method-${version}`} draft={draft} set={set} phrase={phrase} />
       {slotsOpen ? <Caption tone="accent">Pick the parts still marked, or take them out, to add it.</Caption> : null}
       <View style={styles.buttons}>
-        <Button label={word ? `Add the ${word}` : `Add ${name}`} disabled={!named || slotsOpen} onPress={() => onDone(withFacts(draft))} />
-        {/* A recipe already written can't go back to a name; leaving keeps it as it was. */}
+        <Button label={word ? `Add the ${word}` : `Add ${shown}`} disabled={!named || slotsOpen || !name.trim()} onPress={() => onDone(withFacts(draft), shown)} />
+        {/* A recipe already written can't go back to a name; leaving keeps it as it was (two lines combined go back to two). */}
         {onLater ? <Button label="Just the name for now" variant="secondary" onPress={onLater} /> : <Button label="Keep it as it was" variant="secondary" onPress={onClose} />}
       </View>
     </View>

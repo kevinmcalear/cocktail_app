@@ -15,9 +15,8 @@ interface TypedHouseOptions {
   lineFor: (pick: WizardPick, pour?: TypedPour) => WizardLine;
   /** Adds one line (the step's own add). */
   add: (pick: WizardPick, pour?: TypedPour) => WizardLine;
-  makeHouse: (line: WizardLine, t: Technique, adjunct: string | null) => void;
-  /** Opens "What did you do to it?" for this line. */
-  ask: (key: string) => void;
+  /** Opens the recipe steps for the line made this way; `ask` opens them on What is it, to check how first. */
+  makeHouse: (line: WizardLine, t: Technique, adjunct: string | null, ask?: boolean) => void;
 }
 
 /**
@@ -25,20 +24,17 @@ interface TypedHouseOptions {
  * the bottle goes in, then each asks once, like the name nudge, until it's
  * made house or put off (canvas make-create-finish-oil, steps 2 to 5).
  */
-export function useTypedHouse({ draft, set, lineFor, add, makeHouse, ask }: TypedHouseOptions) {
+export function useTypedHouse({ draft, set, lineFor, add, makeHouse }: TypedHouseOptions) {
   const [asks, setAsks] = useState<HouseNudge[]>([]);
   const drop = (key: string) => setAsks((list) => list.filter((a) => a.key !== key));
-  /** What was typed for this line, for the sheet's "From what you typed". */
-  const forLine = (key: string | null) => asks.find((a) => a.key === key) ?? null;
   // The first still to answer: its line is in and isn't house yet.
   const next = asks.find((a) => draft.lines.some((l) => l.key === a.key && !l.prep)) ?? null;
 
-  /** One typed line: Looks right makes it house now; Check it asks how first. */
+  /** One typed line: Looks right opens its recipe; Check it opens on What is it, with the way it read picked, and asks under the lines until it's made. */
   const typed = (pick: WizardPick, reading: HouseReading<CatalogIngredient>, check: boolean, pour?: TypedPour) => {
     const line = add(pick, pour);
-    if (!check) return makeHouse(line, reading.technique, reading.adjunct);
-    setAsks((list) => [...list, { key: line.key, technique: reading.technique, adjunct: reading.adjunct, phrase: reading.phrase, from: 'typed' }]);
-    ask(line.key);
+    makeHouse(line, reading.technique, reading.adjunct, check);
+    if (check) setAsks((list) => [...list, { key: line.key, technique: reading.technique, adjunct: reading.adjunct, phrase: reading.phrase, from: 'typed' }]);
   };
 
   /** A pasted spec, in order: its lines, its finish, and a question for each house line. Returns the finish's names. */
@@ -63,5 +59,5 @@ export function useTypedHouse({ draft, set, lineFor, add, makeHouse, ask }: Type
     return finish.map((l) => l.name);
   };
 
-  return { next, forLine, drop, typed, paste };
+  return { next, drop, typed, paste };
 }

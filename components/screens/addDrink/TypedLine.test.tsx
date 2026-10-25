@@ -54,20 +54,22 @@ describe('typing a line the way you’d write it', () => {
     await laidOut();
     expect(screen.getByLabelText('Bacardí Carta Blanca. Swap it')).toBeTruthy();
     expect(screen.getByLabelText('Coconut Oil. Swap it')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
     const [line] = latest().lines;
     expect(line).toMatchObject({ name: 'Coconut fat-washed Bacardí Carta Blanca', amount: '60', unit: 'ml', technique: 'fat-wash' });
     expect(line.prep?.madeFrom).toEqual({ id: 'bacardi', name: 'Bacardí Carta Blanca' });
   });
 
-  test('Check it adds the bottle and opens “What did you do to it?” with what you typed on top', async () => {
+  test('Check it adds the bottle and opens the house prep steps on What is it, the way you typed picked', async () => {
     await renderWithTamagui(<Step />);
     await type('coconut fat-washed bacardi');
     await fireEvent.press(screen.getByRole('button', { name: 'Check how Bacardí Carta Blanca was made' }));
+    await laidOut();
     expect(latest().lines.map((l) => l.id)).toEqual(['bacardi']);
-    expect(screen.getByText('What did you do to it?')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'From what you typed: coconut fat-washed' })).toBeTruthy();
+    expect(screen.getByText('What are you making?')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Wash, /, checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Fat\. /, checked: true })).toBeTruthy();
     // Under the lines, it waits to be answered.
     expect(screen.getByText('You wrote coconut fat-washed. Make the Bacardí Carta Blanca that way?')).toBeTruthy();
   });

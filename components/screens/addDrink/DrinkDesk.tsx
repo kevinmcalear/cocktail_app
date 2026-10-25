@@ -209,7 +209,6 @@ export function DrinkDesk(p: DrinkDeskProps) {
             onNewBottle={onNewBottle}
             inlinePrep={{ venueName: barId ? p.venueName : null }}
             placeholder="Add an ingredient: “30 pommeau” works too"
-            tellUs={tellUsAbout}
           />
           <Row label="Method">
             <PickStep label="Method" ownLabel="Your own method" multi compact options={p.methods} selected={draft.methods} onChange={(methods) => set({ methods })} suggested={p.guess.method} />

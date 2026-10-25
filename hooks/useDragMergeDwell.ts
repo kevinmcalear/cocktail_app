@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
-/** Long enough to feel meant, short enough not to wait: then the row lights up "Drop to batch". */
+/** Long enough to feel meant, short enough not to wait: then the row offers to combine. */
 export const MERGE_DWELL_MS = 700;
 
 /**

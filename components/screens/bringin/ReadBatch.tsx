@@ -67,7 +67,7 @@ function TextLink({ label, muted, onPress }: { label: string; muted?: boolean; o
   );
 }
 
-// As the board draws it: 750 ml, 1 L, Other (a 700 ml bottle is Other here, one of the chips in the wizard's BatchSheet).
+// As the board draws it: 750 ml, 1 L, Other (a 700 ml bottle is Other here).
 const BOTTLES = [750, 1000];
 
 interface ReadBatchSheetProps {

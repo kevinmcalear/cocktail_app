@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Caption, DsText, PressableScale, Spec, useBreakpoint, useDs } from '@/components/ds';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import { useKit } from '@/hooks/useKit';
-import { guessKind, keepsText, KIND_WAYS, PREP_KINDS, prepAmounts, wayOf, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
+import { guessKind, keepsText, KIND_TILES, KIND_WAYS, PREP_KINDS, prepAmounts, tileOf, wayOf, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { equipmentById, missingKit, techniqueById } from '@/lib/techniques';
 import { waysToMake } from '@/lib/techniques/makeIt';
@@ -12,6 +12,8 @@ import { waysToMake } from '@/lib/techniques/makeIt';
 interface PrepKindStepProps {
   name: string;
   draft: PrepDraft;
+  /** Two lines just combined: says it starts as Batch, and why the name may suggest another. */
+  combined?: boolean;
   onKind: (kind: PrepKindId, way?: string) => void;
   onTechnique: (id: string) => void;
   /** "· change" on the amounts: the base's amount is set on the recipe step. */
@@ -19,18 +21,22 @@ interface PrepKindStepProps {
 }
 
 /**
- * New prep, first step: what kind it is (each with its ratio, the one the
- * name suggests marked), then "How?": the kind's ways (a shrub cold, hot or
- * as an oleo shrub) or, for a name a library technique makes ("Clarified
- * grapefruit"), those techniques, each with its time, kit and how sure the
- * sources are. Under them, what the picked way takes and how it keeps.
+ * New prep, first step (make-anything-steps-1, step 4): what kind it is
+ * (each with what goes in it, the one the name suggests marked), then
+ * "How?": the kind's ways (an infusion cold, sous vide or by nitrous; a
+ * shrub cold, hot or as an oleo shrub) or, for a name a library technique
+ * makes ("Clarified grapefruit"), those techniques, each with its time, kit
+ * and how sure the sources are. A way that fills the method says so. Under
+ * them, what the picked way takes and how it keeps.
  */
-export function PrepKindStep({ name, draft, onKind, onTechnique, onChangeAmount }: PrepKindStepProps) {
+export function PrepKindStep({ name, draft, combined, onKind, onTechnique, onChangeAmount }: PrepKindStepProps) {
   const ds = useDs();
   const { kit } = useKit();
   const columns = useBreakpoint() === 'phone' ? 2 : 3;
   const guess = guessKind(name);
-  const picked = draft.technique ? null : draft.kind;
+  const named = guess ? tileOf(guess) : null;
+  // A technique the kinds don't list (a clarified juice) lights no kind.
+  const picked = draft.technique && !wayOf(draft) ? null : tileOf(draft.kind);
   const kindWays = picked ? KIND_WAYS[picked] : undefined;
   const techniques = kindWays ? [] : waysToMake(name);
   const way = wayOf(draft);
@@ -38,20 +44,21 @@ export function PrepKindStep({ name, draft, onKind, onTechnique, onChangeAmount 
   return (
     <View style={styles.stack}>
       <View role="radiogroup" accessibilityLabel="Kind of prep" style={styles.grid}>
-        {PREP_KINDS.map((k) => {
+        {KIND_TILES.map((id) => {
+          const k = PREP_KINDS.find((x) => x.id === id)!;
           const on = k.id === picked;
           return (
             <PressableScale
               key={k.id}
               role="radio"
               aria-checked={on}
-              accessibilityLabel={`${k.name}, ${k.ratio}${k.id === guess ? ', from the name' : ''}`}
+              accessibilityLabel={`${k.name}, ${k.ratio}${k.id === named ? ', from the name' : ''}`}
               onPress={() => onKind(k.id)}
               style={[styles.kind, { width: `${100 / columns - 2}%`, backgroundColor: ds.c.surface, borderColor: on ? ds.accentText : 'transparent' }]}
             >
               <View style={styles.row}>
                 <Body>{k.name}</Body>
-                {k.id === guess ? <Caption tone="accent">from the name</Caption> : null}
+                {k.id === named ? <Caption tone="accent">from the name</Caption> : null}
               </View>
               <Caption tone="muted">{k.ratio}</Caption>
             </PressableScale>
@@ -71,7 +78,7 @@ export function PrepKindStep({ name, draft, onKind, onTechnique, onChangeAmount 
                 sub={[w.time, w.kit.join(', '), w.note].filter(Boolean).join(' · ')}
                 tip={w.tip}
                 on={way?.id === w.id}
-                onPress={() => onKind(draft.kind, w.id)}
+                onPress={() => onKind(picked!, w.id)}
               />
             ))}
             {techniques.map((t) => {
@@ -91,8 +98,10 @@ export function PrepKindStep({ name, draft, onKind, onTechnique, onChangeAmount 
               );
             })}
           </View>
+          {way?.fills ? <Caption tone="muted">{`${way.name} fills in the method: ${way.fills}.`}</Caption> : null}
         </View>
       ) : null}
+      {combined ? <Caption tone="muted">Dropping two lines together starts as Batch. Naming it changes the suggestion; you pick.</Caption> : null}
 
       {draft.kind !== 'other' || draft.technique ? <Amounts draft={draft} how={way?.how ?? null} onChange={onChangeAmount} /> : null}
     </View>

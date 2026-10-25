@@ -213,7 +213,6 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
           <IngredientsStep
             draft={draft}
             set={set}
-            tellUs={tellUsAbout}
             ingredients={ingredients}
             loading={!dropdowns?.ingredients}
             aliases={dropdowns?.ingredientAliases}

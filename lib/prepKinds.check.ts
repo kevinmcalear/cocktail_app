@@ -1,7 +1,7 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { flavourWords, guessKind, keepsText, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, wayOf, withFacts } from './prepKinds';
+import { flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, slotMessage, sourceSite, startPrep, tileOf, wayOf, withFacts, withMethod } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
 import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
@@ -14,6 +14,8 @@ assert.equal(guessKind('Honey syrup'), 'syrup');
 assert.equal(guessKind('Lemon oleo saccharum'), 'oleo');
 assert.equal(guessKind('Lime super juice'), 'super');
 assert.equal(guessKind('Chamomile infused gin'), 'infusion');
+assert.equal(guessKind('Miso banana liqueur'), 'infusion', 'a house liqueur is a spirit with a flavour in it');
+assert.equal(guessKind('Salty Boy batch'), 'batch');
 assert.equal(guessKind('Clarified grapefruit'), null);
 assert.deepEqual(flavourWords('Pineapple chili shrub'), ['Pineapple', 'Chili']);
 assert.deepEqual(flavourWords('Rich simple syrup'), []);
@@ -49,7 +51,12 @@ assert.match(oleo.steps[0].body, /^Muddle/);
 // The ways and how they read: a shrub is cold unless picked otherwise.
 assert.equal(wayOf(shrub)?.id, 'cold');
 assert.equal(wayOf({ kind: 'shrub', hot: true }), wayOf({ kind: 'shrub', way: 'hot' }), 'a draft kept before ways still reads hot');
-assert.equal(wayOf(startPrep('syrup', 'Simple syrup')), null);
+// Rich syrup and oleo saccharum are ways of a syrup: the kind is the way.
+assert.equal(wayOf(startPrep('syrup', 'Simple syrup'))?.id, 'simple');
+assert.equal(wayOf(startPrep('rich', 'Rich syrup'))?.id, 'rich');
+assert.equal(tileOf('oleo'), 'syrup');
+assert.deepEqual(KIND_TILES, ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'super', 'other'], 'as the board draws them');
+assert.ok(KIND_TILES.every((k) => PREP_KINDS.some((p) => p.id === k)));
 assert.equal(prepPhrase(shrub), 'a cold shrub');
 assert.equal(prepPhrase(oleo), 'an oleo shrub');
 assert.equal(prepPhrase(startPrep('rich', 'Rich syrup')), 'a rich syrup');
@@ -241,4 +248,29 @@ for (const tech of [t('fat-wash'), t('milk-wash'), t('nitrous-infusion'), t('col
 }
 assert.equal(sourceSite('https://www.imbibemagazine.com/recipe/gomme-syrup-recipe'), 'imbibemagazine.com');
 assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
+
+// An infusion's How?: cold unless picked; sous vide fills the method from the technique and keeps what goes in.
+{
+  const inf = startPrep('infusion', 'Miso banana liqueur');
+  assert.equal(wayOf(inf)?.id, 'cold');
+  assert.equal(prepPhrase(inf), 'a cold infusion');
+  const steps = [{ body: 'Seal it.', timer_seconds: null }, { body: 'Water bath.', timer_seconds: 7200 }];
+  const sv = withMethod(inf, { id: 'sous-vide-infusion', keepsHours: 14 * 24, storage: 'fridge', equipment: ['sous-vide'] }, { steps, leadMinutes: 120, actions: ['Infuse'] }, 'sous-vide');
+  assert.equal(wayOf(sv)?.id, 'sous-vide');
+  assert.equal(prepPhrase(sv), 'a sous vide infusion');
+  assert.equal(recipeEyebrow(sv), 'Infusion, sous vide');
+  assert.deepEqual(sv.lines, inf.lines, 'what goes in stays');
+  assert.deepEqual(sv.steps, steps);
+  assert.equal(sv.technique, 'sous-vide-infusion');
+  assert.equal(sv.storage, 'Fridge, sealed bottle');
+  assert.deepEqual(kindOfTechnique('sous-vide-infusion'), { kind: 'infusion', way: 'sous-vide' });
+  assert.deepEqual(kindOfTechnique('fat-wash'), { kind: 'wash', way: 'fat' });
+  assert.equal(kindOfTechnique('agar-quick'), null);
+  assert.equal(prepSummary({ ...sv, steps: [...steps, ...steps] }), 'Infusion, sous vide · Miso banana liqueur · 4 steps', 'a stand-in spirit is not named');
+  // A kind picked for two lines combined keeps them, with the kind's own method.
+  const syrup = keepLines(startPrep('syrup', 'X'), sv);
+  assert.equal(syrup.kind, 'syrup');
+  assert.deepEqual(syrup.lines, sv.lines);
+  assert.match(syrup.steps[0].body, /sugar and water/);
+}
 console.log('prepKinds technique checks passed');
