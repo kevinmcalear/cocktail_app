@@ -24,6 +24,7 @@ import { AllowLocation } from '@/components/screens/home/DiscoverArea';
 import { BarAway, BrowseShelves, DrinksHere } from '@/components/screens/home/DrinksAtBars';
 import { PickedBar } from '@/components/screens/home/SelectedBar';
 import { StyleChips } from '@/components/screens/home/StyleChips';
+import { FirstOpenSheet } from '@/components/screens/home/FirstOpenSheet';
 import { MatchingBars, TopBarsList } from '@/components/screens/home/TopBars';
 import { SearchBody, type SearchArea } from '@/components/search/SearchPanel';
 import { HomeWeekStrip } from '@/components/screens/week/HomeWeekStrip';
@@ -76,7 +77,7 @@ export function DiscoverScreen() {
   // The tapped pin: wide screens show it at the top of the list; the phone map's pill turns into its back arrow.
   const [picked, setPicked] = useState<MapPin | null>(null);
   const [hover, setHover] = useState<{ id: string; cam: ReturnType<typeof cameraOn>; area: Area } | null>(null);
-  const [topBars, setTopBars] = useState(false); // Top bars' See all, listed in the sheet (phones) or the list (wide).
+  const [topBars, setTopBars] = useState<string | null>(null); // Top bars' See all (phones: the sheet; wide: the list), for the search it opened on.
   const listRef = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
   const onPick = (pin: MapPin | null) => (setHover(null), setPicked(pin), pin && listRef.current?.scrollTo({ y: 0, animated: true }));
   const viewport = useRef<Viewport | null>(null);
@@ -89,7 +90,7 @@ export function DiscoverScreen() {
   const sortKey = `${search.trim()}|${kinds.join()}`;
   const [sort, setSort] = useState<{ key: string; layer: MapLayer } | null>(null);
   const layer = sort?.key === sortKey ? sort.layer : !searching && kinds.length ? 'best' : 'drinks';
-  const showTopBars = topBars && !searching && !kinds.length;
+  const showTopBars = topBars === sortKey && !searching && !kinds.length;
   const shownArea = searching && scope === 'everywhere' ? ANYWHERE : area;
   const filter = { kinds, search, area: shownArea, notHad: signedIn && notHad };
   const results = useDiscoverResults(filter, !locating || searching, !searching && !showPast, !searching);
@@ -149,12 +150,12 @@ export function DiscoverScreen() {
   const filtersOn = (searching ? kinds.length : 0) + (showClosed ? 1 : 0) + (showPast ? 1 : 0) + (filter.notHad ? 1 : 0);
   const where = { area, preferNear, onArea, onNearMe, onThisArea };
   const onFilters = () => setSheet('filters');
-  const back = phoneMap && picked ? { name: picked.name, onBack: () => setPicked(null) } : phoneMap && showTopBars ? { name: 'Top bars', onBack: () => setTopBars(false) } : null;
+  const back = phoneMap && picked ? { name: picked.name, onBack: () => setPicked(null) } : phoneMap && showTopBars ? { name: 'Top bars', onBack: () => setTopBars(null) } : null;
   const header = <DiscoverHeader query={pillQuery} onSearch={openSearch} onClear={onClear} place={<PlaceToken {...where} />} filters={filtersOn} onFilters={onFilters} bar={back} />;
   const order = { value: layer, options: sortOptions({ searching, best: !!drink, nearest: !!from }), onChange: (next: MapLayer) => setSort({ key: sortKey, layer: next }) };
   const options = (onGlass: boolean) => <OptionChips sort={order} notHad={unhad && { on: notHad, onChange: setNotHad }} past={{ on: showPast, onChange: setShowPast }} onGlass={onGlass} />;
   const chips = (onGlass: boolean) => (searching || kinds.length ? options(onGlass) : <StyleChips onGlass={onGlass} kinds={kinds} onChange={setKinds} drinks={results.drinks} />);
-  const browse = !filter.notHad && !showPast ? <>{signedIn && home ? <HomeWeekStrip /> : null}<BrowseShelves filter={filter} around={results.drinks} enabled={signedIn && !results.isLoading} onKind={addKind} onTopBars={() => setTopBars(true)} onShowBar={showBar} /></> : null;
+  const browse = !filter.notHad && !showPast ? <>{signedIn && home ? <HomeWeekStrip /> : null}<BrowseShelves filter={filter} around={results.drinks} enabled={signedIn && !results.isLoading} onKind={addKind} onTopBars={() => setTopBars(sortKey)} onShowBar={showBar} /></> : null;
   // Wide screens search in the list pane itself, so the map beside it stays live; the scopes stay while searching (disc-desk-search).
   const controls = split && (sheet === 'search' || searching) ? (
     <DiscoverSearchHead {...searchProps} filters={filtersOn} onFilters={onFilters} />
@@ -169,7 +170,7 @@ export function DiscoverScreen() {
   );
 
   const filterProps = { kinds, onChange: setKinds, bars: signedIn && results.totals ? results.totals.bars : null, closed, past, notHad: unhad, onClose: close };
-  const overlay = sheet === 'filters' ? <FiltersSheet {...filterProps} /> : sheet === 'add' ? <AddBarSheet onClose={close} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null;
+  const overlay = <>{sheet === 'filters' ? <FiltersSheet {...filterProps} /> : sheet === 'add' ? <AddBarSheet onClose={close} onAdded={(v) => openBar(v.handle)} onOpenExisting={openBar} /> : null}<FirstOpenSheet area={area} /></>;
 
   // Phones: the map fills the screen, under the header as it is under the tab bar, with the results in a sheet over it.
   if (phoneMap) {
@@ -245,7 +246,7 @@ export function DiscoverScreen() {
           <SearchBody query={search} scope={searchScope} onScope={setScope} mine={mine} area={searchArea} onAddBar={signedIn ? () => setSheet('add') : undefined} onShowBar={showBar} />
         ) : showTopBars ? (
           <View style={styles.topBars}>
-            <BackPill name={`Top bars ${areaLabel(area)}`} onBack={() => setTopBars(false)} onOpen={() => setTopBars(false)} />
+            <BackPill name={`Top bars ${areaLabel(area)}`} onBack={() => setTopBars(null)} onOpen={() => setTopBars(null)} />
             <TopBarsList area={area} onShowBar={showBar} />
           </View>
         ) : (
@@ -255,7 +256,7 @@ export function DiscoverScreen() {
             more={results.more}
             isLoading={results.isLoading}
             signedIn={signedIn}
-            filter={filter} onNow={!showPast} order={{ layer, drink, from }} onKind={addKind} onTopBars={() => (setTopBars(true), listRef.current?.scrollTo({ y: 0, animated: false }))} onShowBar={showBar}
+            filter={filter} onNow={!showPast} order={{ layer, drink, from }} onKind={addKind} onTopBars={() => (setTopBars(sortKey), listRef.current?.scrollTo({ y: 0, animated: false }))} onShowBar={showBar}
             empty={`${kinds.length ? 'No drinks match your filters' : 'No drinks'}${filter.notHad ? ' you haven’t had' : ''} at bars ${areaLabel(area)} yet.${area.kind === 'anywhere' ? '' : ' Try Anywhere.'}`}
           />
         )}

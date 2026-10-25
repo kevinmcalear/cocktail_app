@@ -63,8 +63,9 @@ export function SheetLine({ animatedIndex, title, count, onOpen, onMeasure }: Sh
       </View>
       {title ? (
         <View style={styles.row}>
-          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.big, big]}>
-            <Title role="heading" numberOfLines={1}>
+          {/* The line below says the same to a screen reader, and opens the sheet. */}
+          <Animated.View pointerEvents="none" aria-hidden style={[StyleSheet.absoluteFill, styles.big, big]}>
+            <Title numberOfLines={1}>
               {title}
             </Title>
           </Animated.View>

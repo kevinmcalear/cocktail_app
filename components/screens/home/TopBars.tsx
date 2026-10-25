@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, Headline, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
-import { FirstOpenSheet } from '@/components/screens/home/FirstOpenSheet';
 import { AreaRankList, EarlyList, ListNote } from '@/components/screens/rankings/RankingLists';
 import { BarResultRow } from '@/components/search/ResultRows';
 import { radius, space } from '@/constants/tokens';
@@ -36,9 +35,7 @@ export function TopBarsShelf({ area, onSeeAll, onShowBar }: { area: Area; onSeeA
   const ranked = data?.ranked ?? [];
   const rows = (ranked.length ? ranked : (data?.early ?? [])).slice(0, SHELF);
   const title = `Top bars ${areaLabel(area)}`;
-  // The first time someone opens Discover, these same bars ask to be loved or hidden (disc-first-open).
-  const ask = <FirstOpenSheet area={area} />;
-  if (rows.length < 3) return ask;
+  if (rows.length < 3) return null;
   const cards = rows.map((r) => (
     <View role="listitem" key={r.venue_profile_id}>
       <BarCard row={r} onShowBar={onShowBar} />
@@ -71,7 +68,6 @@ export function TopBarsShelf({ area, onSeeAll, onShowBar }: { area: Area; onSeeA
           </View>
         </ScrollView>
       )}
-      {ask}
     </View>
   );
 }

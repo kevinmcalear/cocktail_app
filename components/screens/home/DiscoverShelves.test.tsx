@@ -8,8 +8,6 @@ import { BarAway } from './DrinksAtBars';
 import { DiscoverShelves, gridColumns, TileGrid } from './DiscoverShelves';
 
 const mockPush = jest.fn();
-// Top bars' first-open ask has its own test (FirstOpenSheet.test.tsx).
-jest.mock('@/components/screens/home/FirstOpenSheet', () => ({ FirstOpenSheet: () => null }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/hooks/useCocktails', () => ({ usePrefetchCocktail: () => () => {} }));
 jest.mock('@/hooks/useBarBrands', () => ({ useBarBrand: () => null }));

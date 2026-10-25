@@ -46,8 +46,6 @@ jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, u
 jest.mock('@/hooks/useBarFacts', () => ({ useBarFacts: () => ({ data: null }) }));
 jest.mock('@/hooks/useBarBrands', () => ({ useBarBrand: () => null }));
 jest.mock('@/components/screens/kept/LoveBarButton', () => ({ LoveBarButton: () => null }));
-// The first-open ask has its own test (FirstOpenSheet.test.tsx).
-jest.mock('@/components/screens/home/FirstOpenSheet', () => ({ FirstOpenSheet: () => null }));
 // The hero's Collect and Rank have their own tests; here they only need to be there.
 jest.mock('@/components/screens/published/CollectButton', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -235,14 +233,14 @@ test('phones: the sheet says what the map shows, the shelves lead only while bro
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
   const shelves = <Text>the shelves</Text>;
   await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', '', { browse: shelves, title: 'Drinks anywhere' });
-  expect(screen.getByRole('heading', { name: 'Drinks anywhere' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Drinks anywhere, 1 bar. Show the list' })).toBeTruthy();
   expect(screen.getByText('the shelves')).toBeTruthy();
   expect(screen.getByRole('heading', { name: 'All drinks anywhere' })).toBeTruthy();
   await renderPane([drink('d1', 'Dirty Martini', ['martini'])], { id: 'martini', name: 'Martini' }, 'sheet', '', { browse: shelves, kinds: ['martini'], layer: 'best' });
   expect(screen.queryByText('the shelves')).toBeNull();
   // Top bars' See all lists the bars in the sheet, in place of the drinks.
   await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', '', { topBars: true });
-  expect(screen.getByRole('heading', { name: 'Top bars anywhere' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: /^Top bars anywhere/ })).toBeTruthy();
   expect(screen.getByText('No bars anywhere on Cocktail yet.')).toBeTruthy();
   expect(screen.queryByText('Dirty Martini')).toBeNull();
 });
