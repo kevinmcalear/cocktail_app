@@ -83,15 +83,20 @@ export function useGlassShare(of: ShareOf | null) {
   });
 }
 
-/** Share it (in review), or Stop sharing while it's in review. */
+/** Share it (in review; a declined share is replaced), or Stop sharing while it's in review. */
 export function useSetGlassShared(of: ShareOf) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (shared: boolean) => {
       const [col, id] = Object.entries(of)[0];
-      const { error } = shared
-        ? await supabase.from('glass_shares').insert(of as { bar_glass_id?: string; home_glass_id?: string })
-        : await supabase.from('glass_shares').delete().eq(col, id).eq('status', 'in_review');
+      const { error: cleared } = await supabase
+        .from('glass_shares')
+        .delete()
+        .eq(col, id)
+        .eq('status', shared ? 'declined' : 'in_review');
+      if (cleared) throw cleared;
+      if (!shared) return;
+      const { error } = await supabase.from('glass_shares').insert(of as { bar_glass_id?: string; home_glass_id?: string });
       if (error) throw error;
     },
     onSettled: () => client.invalidateQueries({ queryKey: shareKey(of) }),

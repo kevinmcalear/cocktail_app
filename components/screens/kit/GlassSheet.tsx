@@ -91,8 +91,10 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
   // Looks right: keep the photo, then the glass with its outline. A redraw lets go of the old photo once saved.
   const saveDrawn = async (d: DrawnGlass) => {
     setOwn('saving');
+    let uploaded: string | null = null;
     try {
-      const photo_path = d.photo ? await uploadGlassPhoto(folder!, d.photo.jpeg) : (glass?.photo_path ?? null);
+      if (d.photo) uploaded = await uploadGlassPhoto(folder!, d.photo.jpeg);
+      const photo_path = uploaded ?? glass?.photo_path ?? null;
       const row: BarGlassInput = {
         id: glass?.id,
         glass: d.glass,
@@ -113,6 +115,8 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
       if (d.photo && glass?.photo_path) void removeGlassPhoto(glass.photo_path);
       finished(typeof id === 'string' ? id : glass?.id, true);
     } catch {
+      // Not saved: the photo just kept would point at nothing.
+      void removeGlassPhoto(uploaded);
       setOwn('failed');
     }
   };

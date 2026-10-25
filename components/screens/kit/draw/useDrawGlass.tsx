@@ -1,9 +1,8 @@
 import { Image } from 'expo-image';
-import { useRef, useState, type ComponentRef } from 'react';
+import { useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, TextLink, useDs } from '@/components/ds';
-import { useMenuPhotoDrop } from '@/components/screens/menus/useMenuPhotoDrop';
 import { radius, space } from '@/constants/tokens';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { NEVER_GUESSES, readSize, TRACE_FAIL, type SizeBy } from '@/lib/drawGlass';
@@ -13,7 +12,7 @@ import type { GlassOutline } from '@/lib/sketch/outline';
 import type { SketchGlass } from '@/lib/sketch/types';
 
 import type { KitQuestion } from '../KitAddSheet';
-import { CompareStep, PhotoChip, PhotoTips, SizeStep, TracingStep, type SizeValue } from './DrawSteps';
+import { CompareStep, PhotoChip, PhotoDrop, PhotoTips, SizeStep, TracingStep, type SizeValue } from './DrawSteps';
 
 /** What Draw my glass hands back on Looks right. */
 export interface DrawnGlass {
@@ -87,7 +86,6 @@ export function useDrawGlass({ first, home, photoUrl, onBack, onDone }: DrawGlas
     setWhy(null);
     setError(null);
   };
-  const drop = useRef<ComponentRef<typeof View>>(null);
   const uri = photo?.uri ?? (initial.outline ? photoUrl : null) ?? null;
   const n = readSize(size.by, size.number);
   const sizeTo = (by: SizeBy, v: number): TraceSize => (by === 'height' ? { height_mm: v } : { capacity_ml: v });
@@ -136,18 +134,16 @@ export function useDrawGlass({ first, home, photoUrl, onBack, onDone }: DrawGlas
     }
   };
 
-  const dragging = useMenuPhotoDrop(drop, (photos) => {
-    const first = photos[0];
-    if (!first) return;
+  const dropped = (uri: string) => {
     setError(null);
-    readGlassPhoto(first.uri).then(
+    readGlassPhoto(uri).then(
       (p) => {
         setPhoto(p);
         setStep('size');
       },
       (e: unknown) => setError(e instanceof Error ? e.message : 'Couldn’t open that photo. Try another.'),
     );
-  });
+  };
 
   const errorLine = error ? (
     <Caption tone="accent" role="alert">
@@ -166,12 +162,7 @@ export function useDrawGlass({ first, home, photoUrl, onBack, onDone }: DrawGlas
       intro: 'On a plain background, side on. One glass, nothing in it.',
       body: (
         <View style={styles.stack}>
-          {wide ? (
-            <View ref={drop} style={[styles.drop, { borderColor: dragging ? ds.accentText : ds.c.lineStrong, backgroundColor: ds.c.surface }]}>
-              <Body>Drop a photo of the glass here</Body>
-              <Caption tone="muted">JPG or PNG. A phone photo is sharpest.</Caption>
-            </View>
-          ) : null}
+          {wide ? <PhotoDrop onPhoto={dropped} /> : null}
           <PhotoTips />
           {camera ? <TextLink label="Choose from your photos" onPress={() => void take('library')} /> : null}
           {errorLine}
@@ -262,8 +253,4 @@ export function useDrawGlass({ first, home, photoUrl, onBack, onDone }: DrawGlas
   return { question, begin };
 }
 
-const styles = StyleSheet.create({
-  stack: { gap: space.md },
-  drop: { alignItems: 'center', justifyContent: 'center', gap: space.xs, minHeight: 160, padding: space.lg, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: radius.card },
-  photo: { width: '100%', height: 220, borderRadius: radius.card },
-});
+const styles = StyleSheet.create({ stack: { gap: space.md }, photo: { width: '100%', height: 220, borderRadius: radius.card } });

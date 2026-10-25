@@ -6,7 +6,7 @@ import { GlassSheet } from '@/components/screens/kit/GlassSheet';
 import { DrinksDrawnIn, drawnLine, GlassPhoto, RedrawLinks, SavedNote, ShareGlass, tracedFacts } from '@/components/screens/kit/draw/TracedGlass';
 import { KitItemPage } from '@/components/screens/kit/KitItemPage';
 import { KitList } from '@/components/screens/kit/KitList';
-import { KitPage, useCloseKitItem, useOpenKitItem } from '@/components/screens/kit/KitPage';
+import { KitPage, useCloseKitItem, useJustDrawn, useOpenDrawnGlass, useOpenKitItem } from '@/components/screens/kit/KitPage';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarGlassware, useBarPageId, useDeleteBarGlass, useSaveBarGlass, type BarGlass } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -38,7 +38,8 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
   const open = useOpenKitItem(barId, 'glassware', openId);
   const [sheet, setSheet] = useState<{ glass: BarGlass | null; startAt: 0 | 1 | 2; draw?: 'photo' | 'size' } | null>(null);
   // A glass just drawn from a photo: its page opens saying so (Draw my glass, step 6).
-  const [drawn, setDrawn] = useState<string | null>(null);
+  const justDrawn = useJustDrawn();
+  const openDrawn = useOpenDrawnGlass(barId, openId);
   const opened = openId ? (glasses.find((g) => g.id === openId) ?? null) : null;
 
   const list = error ? (
@@ -88,7 +89,7 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
               others={glasses}
               canEdit={canEdit}
               venueName={venue?.name ?? 'the venue'}
-              justDrawn={drawn === opened.id}
+              justDrawn={justDrawn}
               onChange={(startAt, draw) => setSheet({ glass: opened, startAt, draw })}
             />
           ) : null
@@ -104,9 +105,7 @@ export function GlasswareScreen({ barId, openId }: { barId: string; openId?: str
         venueName={venue?.name}
         onClose={() => setSheet(null)}
         onSaved={(id, wasDrawn) => {
-          if (!wasDrawn || !id) return;
-          setDrawn(id);
-          if (id !== openId) open(id);
+          if (wasDrawn && id) openDrawn(id);
         }}
       />
     </>

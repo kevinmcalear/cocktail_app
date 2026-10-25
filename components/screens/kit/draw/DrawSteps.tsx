@@ -1,10 +1,11 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Svg, { Polyline } from 'react-native-svg';
 
 import { Body, Caption, Chip, Field, Segmented, Spec, Switch, TextLink, useDs } from '@/components/ds';
 import { GlassThumb, FIRST_TYPES, MORE_TYPES } from '@/components/glass/GlassModelPicker';
+import { useMenuPhotoDrop } from '@/components/screens/menus/useMenuPhotoDrop';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { aboutMl, inches, mmText, ounces, readSize, type SizeBy } from '@/lib/drawGlass';
@@ -41,6 +42,19 @@ export function PhotoTips() {
           </View>
         </View>
       ))}
+    </View>
+  );
+}
+
+/** Desktop: drop a photo on it. Its own component, so the drop listeners attach when it's on screen. */
+export function PhotoDrop({ onPhoto }: { onPhoto: (uri: string) => void }) {
+  const ds = useDs();
+  const zone = useRef<ComponentRef<typeof View>>(null);
+  const dragging = useMenuPhotoDrop(zone, (photos) => photos[0] && onPhoto(photos[0].uri));
+  return (
+    <View ref={zone} style={[styles.drop, { borderColor: dragging ? ds.accentText : ds.c.lineStrong, backgroundColor: ds.c.surface }]}>
+      <Body>Drop a photo of the glass here</Body>
+      <Caption tone="muted">JPG or PNG. A phone photo is sharpest.</Caption>
     </View>
   );
 }
@@ -174,7 +188,7 @@ export function CompareStep({
             <View style={[styles.frame, { width: box, height: box, backgroundColor: ds.c.surface }]}>
               <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="contain" accessibilityLabel="Your photo of the glass" />
               {over && traced && photoSize ? (
-                <Svg style={StyleSheet.absoluteFill} viewBox={`0 0 ${photoSize.width} ${photoSize.height}`} preserveAspectRatio="xMidYMid meet" aria-hidden>
+                <Svg width={box} height={box} style={StyleSheet.absoluteFill} viewBox={`0 0 ${photoSize.width} ${photoSize.height}`} preserveAspectRatio="xMidYMid meet" aria-hidden>
                   {[traced.overlay.left, traced.overlay.right].map((pts, i) => (
                     <Polyline
                       key={i}
@@ -227,6 +241,7 @@ export function CompareStep({
 
 const styles = StyleSheet.create({
   stack: { gap: space.sm },
+  drop: { alignItems: 'center', justifyContent: 'center', gap: space.xs, minHeight: 160, padding: space.lg, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: radius.card },
   flex: { flex: 1, minWidth: 0 },
   tip: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   tipNo: { width: 24, height: 24, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
