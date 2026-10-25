@@ -105,13 +105,13 @@ export function useMakingKit(bar: { id: string; name: string } | null): { kit: R
   const tools = useBarKit(bar?.id);
   const caps = useCapabilities(bar?.id).data;
   const home = useKit();
-  const setTools = useSetTools(bar?.id ?? '');
+  const addTools = useAddTools(bar?.id ?? '');
   if (bar) {
     const canEdit = !!caps?.includes('prep');
     return {
       kit: tools.data ? new Set(tools.data.flatMap((r) => (r.kind === 'tool' && r.key ? [r.key] : []))) : null,
       where: `${bar.name}’s Kit`,
-      add: canEdit ? (ids) => setTools.mutate({ ids, on: true }) : null,
+      add: canEdit ? (ids) => addTools.mutate(ids) : null,
       edit: canEdit ? `/settings/bar/${bar.id}/tools` : null,
     };
   }
