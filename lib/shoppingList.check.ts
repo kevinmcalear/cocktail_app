@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { gotLine, listOpens, madeFrom, madeFromLine, staplesFrom, menuShopping, opensWith, shoppingGroups, shoppingSummary, shoppingText, shopFor, shopName, whyLine, type ShoppingRow } from './shoppingList';
+import { gotLine, handRow, listOpens, madeFrom, madeFromLine, staplesFrom, menuShopping, opensWith, shoppingGroups, shoppingSummary, shoppingText, shopFor, shopName, whyLine, type ShoppingRow } from './shoppingList';
 
 const oneAway = [
   { bottles: [{ id: 'vermouth', name: 'Sweet vermouth' }], drinks: [{ id: 'blvd', name: 'Boulevardier' }, { id: 'fan', name: 'Fanciulli' }, { id: 'amer', name: 'Americano' }, { id: 'mt', name: 'Milano-Torino' }] },
@@ -100,3 +100,15 @@ assert.deepEqual(madeFrom('oleo', recipes, new Set(), staples), [{ id: 'sugar', 
 assert.equal(whyLine({ source: 'hand', forName: 'Lemon juice' }, [{ name: 'Hanky Panky' }, { name: 'Daiquiri' }]), 'Opens 2 drinks: Hanky Panky, Daiquiri');
 assert.equal(whyLine({ source: 'hand', forName: 'Lemon juice' }, []), 'For Lemon juice');
 assert.equal(whyLine({ source: 'drink', forName: 'Smoke Signal' }, [{ name: 'Hanky Panky' }, { name: 'Daiquiri' }]), 'For Smoke Signal');
+
+// --- an Add by hand row ---
+const ctx = (shelf: string[]) => ({ onShelf: new Set(shelf), have: new Set(shelf), recipes, staples });
+const juice = { id: 'lemon-juice', name: 'Lemon juice', section: 'fridge' as const };
+assert.deepEqual(handRow(juice, ctx([])), { note: 'Squeezed from lemons, so adds Lemons', label: 'Add', say: 'Add Lemons for Lemon juice', adds: [{ itemId: 'lemon', name: 'Lemons', source: 'hand', forItemId: 'lemon-juice' }] });
+// Lemons on the shelf: lemon juice marks them running low, it never lists "Lemon juice".
+assert.deepEqual(handRow(juice, ctx(['lemon'])), { note: 'From lemons, so it can mark yours running low', label: 'Running low', say: 'Mark Lemons running low', adds: [{ itemId: 'lemon', name: 'Lemons', source: 'running_low' }] });
+assert.equal(handRow({ id: 'cordial', name: 'Lime cordial', section: 'preps' }, ctx([])).note, 'House-made: adds Sugar and Limes');
+assert.equal(handRow({ id: 'cordial', name: 'Lime cordial', section: 'preps' }, ctx(['sugar', 'lime'])).adds[0].itemId, 'cordial');
+// Nothing loaded yet: a plain row that adds the thing itself.
+assert.deepEqual(handRow({ id: 'cordial', name: 'Lime cordial', section: 'preps' }, { onShelf: new Set(), have: new Set(), recipes: {}, staples: {} }).adds, [{ itemId: 'cordial', name: 'Lime cordial', source: 'hand' }]);
+assert.equal(handRow({ id: 'gin', name: 'Gin', section: 'bottles' }, ctx(['gin'])).label, 'Running low');

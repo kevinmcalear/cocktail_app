@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { useMyBar } from '@/hooks/useHomeBar';
 import { checkShelf, type ShelfVerdict } from '@/lib/shelfCheck';
@@ -26,6 +26,8 @@ export function useKindsOf(ids: string[]) {
   return useQuery({
     queryKey: ['kinds-of', sorted],
     enabled: sorted.length > 0,
+    // The last answer stays while a new set loads, so Add by hand's rows don't flicker as you type.
+    placeholderData: keepPreviousData,
     staleTime: 60 * 60 * 1000,
     queryFn: async (): Promise<Record<string, string | null>> => {
       const { data, error } = await supabase.from('items').select('id, generic_id').in('id', sorted);

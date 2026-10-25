@@ -6,7 +6,7 @@ import { space } from '@/constants/tokens';
 import { useBarSearch, usePantryItems, usePrepDetails } from '@/hooks/useHomeBar';
 import { useKindsOf } from '@/hooks/useShelfCheck';
 import type { ShoppingAdd as Add } from '@/hooks/useShoppingList';
-import { madeFrom, madeFromLine, shopFor, staplesFrom } from '@/lib/shoppingList';
+import { handRow, staplesFrom } from '@/lib/shoppingList';
 
 const SHOWN = 5;
 
@@ -15,7 +15,7 @@ const SHOWN = 5;
  * the catalog knows its shop and goes on your shelf when you tick it; one on
  * your shelf already can be marked running low; typed words just get crossed off.
  * A house-made thing adds what it's made from, each for it ("For Lime cordial"):
- * lemon juice adds Lemons.
+ * lemon juice adds Lemons, or marks yours running low (handRow).
  */
 export function ShoppingAdd({ onShelf, shelfKinds, onAdd }: { onShelf: ReadonlySet<string>; shelfKinds: ReadonlySet<string>; onAdd: (adds: Add[]) => void }) {
   const ds = useDs();
@@ -32,8 +32,6 @@ export function ShoppingAdd({ onShelf, shelfKinds, onAdd }: { onShelf: ReadonlyS
   const staples = staplesFrom(things, kinds, usePantryItems().data ?? []);
   // A recipe's "Gin" is covered by any gin on the shelf.
   const have = new Set([...onShelf, ...lines.flatMap((l) => (l.generic && shelfKinds.has(l.name.toLowerCase()) ? [l.id] : []))]);
-  // What it's made from is known: its kind, and for a house-made thing its recipe and its parts' kinds.
-  const known = (f: { id: string; section: string }) => f.id in kinds && (f.section !== 'preps' || (!!made[f.id] && made[f.id].lines.every((l) => l.id in recipes && l.id in kinds)));
   const add = (adds: Add[]) => {
     onAdd(adds);
     setText('');
@@ -53,12 +51,7 @@ export function ShoppingAdd({ onShelf, shelfKinds, onAdd }: { onShelf: ReadonlyS
       {query ? (
         <View style={[styles.results, { borderColor: ds.c.line }]}>
           {found.map((f) => {
-            const mine = onShelf.has(f.id);
-            const waiting = !mine && !known(f);
-            const from = !mine && (staples[f.id] || made[f.id]?.lines.length) ? madeFrom(f.id, recipes, have, staples) : null;
-            // Everything it's made from is on the shelf: then it's listed as itself.
-            const parts = from?.length ? from : null;
-            const adds: Add[] = parts?.length ? parts.map((p) => ({ itemId: p.id, name: p.name, source: 'hand', forItemId: f.id })) : [{ itemId: f.id, name: f.name, source: mine ? 'running_low' : 'hand' }];
+            const r = handRow(f, { onShelf, have, recipes, staples });
             return (
               <View key={f.id} style={[styles.result, { borderBottomColor: ds.c.line }]}>
                 <IngredientThumb id={f.id} name={f.name} size={36} />
@@ -67,17 +60,10 @@ export function ShoppingAdd({ onShelf, shelfKinds, onAdd }: { onShelf: ReadonlyS
                     {f.name}
                   </DsText>
                   <Caption tone="muted" numberOfLines={2}>
-                    {mine ? 'On your shelf' : parts ? madeFromLine(f.name, parts, !!staples[f.id]) : shopFor(f.section)}
+                    {r.note}
                   </Caption>
                 </View>
-                <Button
-                  label={mine ? 'Running low' : 'Add'}
-                  disabled={waiting}
-                  size="sm"
-                  variant="secondary"
-                  accessibilityLabel={mine ? `Mark ${f.name} running low` : parts?.length ? `Add ${parts.map((p) => p.name).join(' and ')} for ${f.name}` : `Add ${f.name}`}
-                  onPress={() => add(adds)}
-                />
+                <Button label={r.label} size="sm" variant="secondary" accessibilityLabel={r.say} onPress={() => add(r.adds)} />
               </View>
             );
           })}

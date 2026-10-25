@@ -179,3 +179,35 @@ export function madeFromLine(name: string, parts: readonly { name: string }[], s
   const names = parts.map((p) => p.name);
   return `House-made: adds ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]}`;
 }
+
+export interface HandRow {
+  note: string;
+  label: 'Add' | 'Running low';
+  /** What a screen reader says the button does. */
+  say: string;
+  adds: { itemId: string; name: string; source: 'hand' | 'running_low'; forItemId?: string }[];
+}
+
+/**
+ * One Add by hand result (shopping In 4, d54): a thing on your shelf can run
+ * low; a juice whose fruit you have marks the fruit running low; anything made
+ * adds what it's made from; the rest goes on as itself. Works from whatever has
+ * loaded: with no recipe or kind yet it's a plain row.
+ */
+export function handRow(
+  f: { id: string; name: string; section: BarSection },
+  { onShelf, have, recipes, staples }: { onShelf: ReadonlySet<string>; have: ReadonlySet<string>; recipes: Lines; staples: Readonly<Record<string, Part>> }
+): HandRow {
+  if (onShelf.has(f.id)) return { note: 'On your shelf', label: 'Running low', say: `Mark ${f.name} running low`, adds: [{ itemId: f.id, name: f.name, source: 'running_low' }] };
+  const staple = staples[f.id];
+  if (staple && have.has(staple.id)) {
+    const name = shopName(staple.name);
+    return { note: `From ${name.toLowerCase()}, so it can mark yours running low`, label: 'Running low', say: `Mark ${name} running low`, adds: [{ itemId: staple.id, name, source: 'running_low' }] };
+  }
+  const made = !!recipes[f.id]?.lines.length;
+  const parts = staple || made ? madeFrom(f.id, recipes, have, staples) : [];
+  if (parts.length) {
+    return { note: madeFromLine(f.name, parts, !!staple), label: 'Add', say: `Add ${parts.map((p) => p.name).join(' and ')} for ${f.name}`, adds: parts.map((p) => ({ itemId: p.id, name: p.name, source: 'hand', forItemId: f.id })) };
+  }
+  return { note: made ? madeFromLine(f.name, []) : shopFor(f.section), label: 'Add', say: `Add ${f.name}`, adds: [{ itemId: f.id, name: f.name, source: 'hand' }] };
+}
