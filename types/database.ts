@@ -1241,6 +1241,7 @@ export type Database = {
           material: string | null
           model_code: string | null
           name: string
+          outline: Json | null
           product_url: string | null
           rim_mm: number | null
           series: string | null
@@ -1263,6 +1264,7 @@ export type Database = {
           material?: string | null
           model_code?: string | null
           name: string
+          outline?: Json | null
           product_url?: string | null
           rim_mm?: number | null
           series?: string | null
@@ -1285,6 +1287,7 @@ export type Database = {
           material?: string | null
           model_code?: string | null
           name?: string
+          outline?: Json | null
           product_url?: string | null
           rim_mm?: number | null
           series?: string | null
