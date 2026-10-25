@@ -65,11 +65,9 @@ beforeEach(() => {
   useDrinkWizardStore.setState({ kept: {} });
   useSettingsStore.setState({ defaultUnit: 'ml' });
 });
-
 // iOS draws the screen after its first layout (the keyboard offset needs it).
 const laidOut = () => fireEvent(screen.getByTestId('add-drink'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
 const next = () => fireEvent.press(screen.getByRole('button', { name: /^Next: / }));
-
 describe('AddDrinkWizard', () => {
   // One walk through the wizard, in three parts so none runs near Jest's 5 s limit on a busy CI runner.
   test('a name, then ingredients by quick add, stepper, typing and search', async () => {

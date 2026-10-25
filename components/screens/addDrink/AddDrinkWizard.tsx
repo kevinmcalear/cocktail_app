@@ -216,15 +216,12 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
       case 'ingredients':
         return (
           <IngredientsStep
-            draft={draft}
-            set={set}
-            ingredients={ingredients}
+            draft={draft} set={set} ingredients={ingredients}
             loading={!dropdowns?.ingredients}
             aliases={dropdowns?.ingredientAliases}
             coreIds={coreIds}
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
-            backBar={barId ? stock.backBar : undefined} stock={stock} {...venueLines.lines}
-            bar={barId ? { id: barId, name: venueName } : null} trail={trail}
+            backBar={barId ? stock.backBar : undefined} stock={stock} {...venueLines.lines} bar={barId ? { id: barId, name: venueName } : null} trail={trail}
           />
         );
       case 'method':
