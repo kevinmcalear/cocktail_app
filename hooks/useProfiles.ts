@@ -216,11 +216,11 @@ export async function originalsByIds(ids: string[]): Promise<Original[]> {
  * own), plus the ones credited to my profile when I have one. My own view;
  * other people see only what's credited (useProfileOriginals).
  */
-export function useMyMadeDrinks(profileId: string | null | undefined) {
+export function useMyMadeDrinks(profileId: string | null | undefined, enabled = true) {
   const userId = useUserId();
   return useQuery({
     queryKey: ['my-made', userId, profileId ?? null],
-    enabled: !!userId,
+    enabled: !!userId && enabled,
     queryFn: async (): Promise<Original[]> => {
       const { data, error } = await supabase
         .from('items')
@@ -493,6 +493,7 @@ export interface NewClaim {
 export interface MyPersonClaim {
   id: string;
   status: 'pending' | 'approved';
+  created_at: string;
   profile: { id: string; handle: string; display_name: string };
 }
 
@@ -512,8 +513,8 @@ export function useMyPersonClaim() {
         .order('created_at', { ascending: false })
         .limit(1);
       if (error) throw error;
-      const row = (data ?? [])[0] as unknown as { id: string; status: 'pending' | 'approved'; profile: { id: string; handle: string; display_name: string } } | undefined;
-      return row ? { id: row.id, status: row.status, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
+      const row = (data ?? [])[0] as unknown as { id: string; status: 'pending' | 'approved'; created_at: string; profile: { id: string; handle: string; display_name: string } } | undefined;
+      return row ? { id: row.id, status: row.status, created_at: row.created_at, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
     },
   });
 }

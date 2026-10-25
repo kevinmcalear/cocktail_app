@@ -41,7 +41,11 @@ export function useAskToJoin() {
       const { error } = await supabase.rpc('request_to_join_venue', { p_bar_profile_id: barProfileId });
       if (error) throw new Error(wordy(error));
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['join-request'] }),
+    // Either way: "already on this team" means their venues are out of date too.
+    onSettled: async () => {
+      await qc.invalidateQueries({ queryKey: ['join-request'] });
+      await qc.invalidateQueries({ queryKey: ['bars'] });
+    },
     // Shown inline under the button, not as the global toast.
     onError: () => {},
   });

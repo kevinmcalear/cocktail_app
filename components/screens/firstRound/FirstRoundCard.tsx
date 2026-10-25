@@ -41,7 +41,7 @@ export function FirstRoundCard() {
   const [now] = useState(() => Date.now());
   const menus = useVenueMenus(round.active && (round.current?.key === 'menu' || round.current?.key === 'open_menu') ? (round.venue?.id ?? null) : null).data;
   const profileId = useMyProfile().data?.id;
-  const mine = useMyMadeDrinks(round.current?.key === 'open_menu' ? profileId : null).data;
+  const mine = useMyMadeDrinks(profileId, round.active && round.current?.key === 'open_menu' && !!profileId).data;
   const markMenu = !!menus && round.current?.key === 'menu' && onAMenu(round.round, menus.filter((m) => m.barId === round.venue?.id));
   const { done } = round;
   // Admins can switch more on, as the role they're viewing as (the Features row and page check the same).
@@ -69,13 +69,17 @@ export function FirstRoundCard() {
   if (!round.active || !round.current) return null;
 
   const full = open ?? round.doneCount === 0;
+  // "3 of its drinks are yours" on a staff member's first step (find-yourself step 7).
+  const yours = menus && mine ? yourMenuStep(menus.filter((m) => m.barId === venue.id).map((m) => ({ ...m, status: menuStatus(m, now) })), new Set(mine.map((d) => d.id))) : null;
+  const steps = yours ? round.steps.map((s) => (s.key === 'open_menu' ? { ...s, ...yours } : s)) : round.steps;
+  const current = steps.find((s) => s.key === round.current?.key) ?? round.current;
   if (!full) {
     return (
-      <PressableScale role="button" accessibilityLabel={`${progressLine(round.doneCount, round.total)}. ${nextLine(round.current)}. Show the steps`} onPress={() => setOpen(true)}>
+      <PressableScale role="button" accessibilityLabel={`${progressLine(round.doneCount, round.total)}. ${nextLine(current)}. Show the steps`} onPress={() => setOpen(true)}>
         <Surface raised style={[frame, styles.strip]}>
           <View style={styles.grow}>
             <Caption tone="muted">{progressLine(round.doneCount, round.total)}</Caption>
-            <Body style={styles.medium}>{nextLine(round.current)}</Body>
+            <Body style={styles.medium}>{nextLine(current)}</Body>
           </View>
           <RoundBars done={round.doneCount} total={round.total} />
         </Surface>
@@ -84,9 +88,6 @@ export function FirstRoundCard() {
   }
 
   const make = round.kind === 'make';
-  // "3 of its drinks are yours" on a staff member's first step (find-yourself step 7).
-  const yours = menus && mine ? yourMenuStep(menus.filter((m) => m.barId === venue.id).map((m) => ({ ...m, status: menuStatus(m, now) })), new Set(mine.map((d) => d.id))) : null;
-  const steps = yours ? round.steps.map((s) => (s.key === 'open_menu' ? { ...s, ...yours } : s)) : round.steps;
   return (
     <Surface raised style={frame}>
       <CloseButton label="Hide the first round for now" onPress={() => setOpen(false)} />

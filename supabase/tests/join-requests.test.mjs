@@ -61,7 +61,6 @@ before(async () => {
   await db.connect();
   for (const label of ['ash', 'admin', 'bartender', 'stranger', 'eager']) users[label] = await makeUser(label);
   await bar('Moth');
-  await bar('Rye');
   await bar('Unclaimed', false);
   for (let i = 0; i < 5; i++) await bar(`Many${i}`);
   await db.query('INSERT INTO public.user_bars (user_id, bar_id, role_level) VALUES ($1, $2, 40), ($3, $2, 30)', [users.admin.id, ids.Moth.bar, users.bartender.id]);
@@ -144,12 +143,4 @@ describe('who sees and answers', () => {
     assert.equal(list.data.length, 0, 'declined requests leave the list');
   });
 
-  test('the asker can withdraw a waiting request, but not someone else', async () => {
-    const asked = await ask('ash', 'Rye');
-    assert.ifError(asked.error);
-    await users.stranger.client.rpc('withdraw_join_request', { p_id: asked.data.id });
-    assert.ok(await one('SELECT id FROM public.venue_join_requests WHERE id = $1', [asked.data.id]));
-    await users.ash.client.rpc('withdraw_join_request', { p_id: asked.data.id });
-    assert.equal(await one('SELECT id FROM public.venue_join_requests WHERE id = $1', [asked.data.id]), undefined);
-  });
 });

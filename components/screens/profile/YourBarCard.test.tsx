@@ -14,6 +14,7 @@ jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('./useShareLink', () => ({ useShareLink: () => jest.fn() }));
 jest.mock('../home/BarMark', () => ({ BarMark: () => null }));
 jest.mock('@/hooks/useProfiles', () => ({ useProfile: () => ({ data: mockBar }), useMyPersonClaim: () => ({ data: null }) }));
+jest.mock('@/ctx/AuthContext', () => ({ useUserId: () => 'me' }));
 jest.mock('@/hooks/useBars', () => ({ useBars: () => ({ data: mockVenues }) }));
 jest.mock('@/hooks/useJoinRequests', () => ({ useMyJoinRequest: () => ({ data: mockAsked }), useAskToJoin: () => ({ mutate: mockAsk, isPending: false, error: null }) }));
 
@@ -45,6 +46,10 @@ test('a claimed bar: ask to join, then it says you asked', async () => {
   mockAsked = { declined_at: null };
   await renderWithTamagui(<YourBarCard positions={[job]} />);
   expect(screen.getByText('You asked to join Pale Moth’s team')).toBeTruthy();
+
+  mockAsked = { declined_at: '2026-10-25T12:00:00Z' };
+  await renderWithTamagui(<YourBarCard positions={[job]} />);
+  expect(screen.getByText('Pale Moth’s team said no')).toBeTruthy();
 });
 
 test('nothing once you are on the team, or with no current job', async () => {

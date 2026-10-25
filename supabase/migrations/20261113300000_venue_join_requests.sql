@@ -8,9 +8,9 @@
 --                         request; declining keeps it with declined_at, so
 --                         the same person can't ask that venue again.
 --
--- Rows change only through request_to_join_venue(), answer_join_request() and
--- withdraw_join_request(). The person reads their own; a venue's team
--- managers read theirs through join_requests(), which adds who is asking.
+-- Rows change only through request_to_join_venue() and answer_join_request().
+-- The person reads their own; a venue's team managers read theirs through
+-- join_requests(), which adds who is asking.
 
 CREATE TABLE "public"."venue_join_requests" (
     "id" uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
@@ -58,6 +58,8 @@ BEGIN
         RAISE EXCEPTION 'You''re already on this team.';
     END IF;
 
+    -- One request at a time per person, so a double tap can't pass the cap below twice.
+    PERFORM pg_advisory_xact_lock(hashtextextended('request_to_join_venue:' || auth.uid()::text, 0));
     SELECT * INTO v_row FROM public.venue_join_requests WHERE bar_id = v_bar AND user_id = auth.uid();
     IF v_row.id IS NOT NULL THEN
         IF v_row.declined_at IS NOT NULL THEN
@@ -74,14 +76,6 @@ BEGIN
     RETURNING * INTO v_row;
     RETURN v_row;
 END;
-$$;
-
--- Take back a request that's still waiting.
-CREATE FUNCTION "public"."withdraw_join_request"("p_id" uuid) RETURNS void
-    LANGUAGE sql SECURITY DEFINER
-    SET "search_path" TO ''
-    AS $$
-  DELETE FROM public.venue_join_requests WHERE id = p_id AND user_id = auth.uid() AND declined_at IS NULL;
 $$;
 
 -- --- Answering ---
@@ -136,10 +130,8 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION "public"."request_to_join_venue"(uuid) FROM "public", "anon";
-REVOKE ALL ON FUNCTION "public"."withdraw_join_request"(uuid) FROM "public", "anon";
 REVOKE ALL ON FUNCTION "public"."join_requests"(uuid) FROM "public", "anon";
 REVOKE ALL ON FUNCTION "public"."answer_join_request"(uuid, boolean) FROM "public", "anon";
 GRANT EXECUTE ON FUNCTION "public"."request_to_join_venue"(uuid) TO "authenticated", "service_role";
-GRANT EXECUTE ON FUNCTION "public"."withdraw_join_request"(uuid) TO "authenticated", "service_role";
 GRANT EXECUTE ON FUNCTION "public"."join_requests"(uuid) TO "authenticated", "service_role";
 GRANT EXECUTE ON FUNCTION "public"."answer_join_request"(uuid, boolean) TO "authenticated", "service_role";

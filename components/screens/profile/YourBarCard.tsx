@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, useDs } from '@/components/ds';
 import { fontFamilies, radius, space } from '@/constants/tokens';
 import { useBars } from '@/hooks/useBars';
+import { useUserId } from '@/ctx/AuthContext';
 import { useAskToJoin, useMyJoinRequest } from '@/hooks/useJoinRequests';
 import { useMyPersonClaim, useProfile, type Position } from '@/hooks/useProfiles';
 import { deviceStore } from '@/lib/deviceStore';
@@ -14,7 +15,8 @@ import { siteOrigin } from '@/lib/venueLink';
 import { BarMark } from '../home/BarMark';
 import { useShareLink } from './useShareLink';
 
-const SEEN_KEY = 'its-you-seen';
+/** Long enough to open You after the approval; an old claim isn't news. */
+const NEWS_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
  * "It's you. 5 drinks are now credited to your account." at the top of You,
@@ -22,24 +24,27 @@ const SEEN_KEY = 'its-you-seen';
  * (find-yourself step 6).
  */
 export function ItsYou({ drinks }: { drinks: number }) {
+  const userId = useUserId();
   const claim = useMyPersonClaim().data;
-  const approved = claim?.status === 'approved' ? claim.id : null;
+  const [now] = useState(() => Date.now());
+  const approved = claim?.status === 'approved' && now - Date.parse(claim.created_at) < NEWS_MS ? claim.id : null;
+  const seenKey = `its-you-seen-${userId}`;
   const [show, setShow] = useState(false);
   useEffect(() => {
     if (!approved) return;
     let live = true;
     void deviceStore
-      .getItem(SEEN_KEY)
+      .getItem(seenKey)
       .then((seen) => {
         if (!live || seen === approved) return;
         setShow(true);
-        return deviceStore.setItem(SEEN_KEY, approved);
+        return deviceStore.setItem(seenKey, approved);
       })
       .catch(() => {});
     return () => {
       live = false;
     };
-  }, [approved]);
+  }, [approved, seenKey]);
   if (!show) return null;
   return (
     <Body role="status" align="center" tone="accent">
@@ -81,7 +86,8 @@ export function YourBarCard({ positions }: { positions: Position[] }) {
       </View>
     );
   } else if (asked?.declined_at) {
-    return null;
+    title = `${name}’s team said no`;
+    body = `Ask ${name}’s Admin for an invite if that was a mistake.`;
   } else if (asked) {
     title = `You asked to join ${name}’s team`;
     body = `${name}’s Admin answers. You get the venue app once they say yes.`;

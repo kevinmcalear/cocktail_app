@@ -7325,7 +7325,6 @@ export type Database = {
           user_id: string
         }[]
       }
-      withdraw_join_request: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
       allergen:
