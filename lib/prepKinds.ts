@@ -391,8 +391,10 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
         s('Add the water and blend until smooth.'),
         s('Strain through a fine cloth, bottle and keep cold.'),
       ], 3 * DAY, fridge, 90, ['Blend', 'Strain']);
-    case 'other':
     case 'batch':
+      // A batch is the drink's pours: its name ("Penicillin batch") says which drink, not what goes in.
+      return draft([slotLine('Main ingredient', 'main ingredient', 1, 'ml', 1)], 750, [], null, fridge, null, []);
+    case 'other':
     case 'wash':
     case 'clarified':
     case 'distillate':
