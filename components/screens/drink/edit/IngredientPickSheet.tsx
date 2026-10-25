@@ -127,6 +127,7 @@ export function IngredientPickSheet({
         // The name without "house", unless that is one already ("House falernum" isn’t Falernum).
         onMake={(name) => onNew(sameIngredient(houseName(name), ingredients) ? capitalizeFirst(name) : houseName(name), true)}
         onBottle={(name) => onNew(name)}
+        ownVersion={false}
       />
       {typing ? null : loading ? (
         <Body tone="muted">Loading ingredients…</Body>
