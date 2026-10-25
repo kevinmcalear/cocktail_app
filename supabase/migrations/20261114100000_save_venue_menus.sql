@@ -16,7 +16,12 @@
 -- can't read public.menus, so my_saved_venue_menus() lists the caller's saved
 -- venue menus through get_menu_editions too: one that stops showing (the page
 -- goes Private, the menu goes back to a draft) drops out of Collection until
--- it shows again.
+-- it shows again; its row stays, so it comes back with the menu.
+--
+-- ponytail: both read get_menu_editions whole, so "shown" has one home; that
+-- costs a full menu list per check and inherits its 200-row limit. Fine at a
+-- few saves per person; a bar page's visibility helper of its own is the
+-- upgrade if Collection gets slow.
 
 ALTER TABLE "public"."saved_menu_editions" DROP CONSTRAINT "saved_menu_editions_pkey";
 
