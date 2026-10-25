@@ -103,7 +103,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
           art={<IngredientDrawing name={shown} />}
           artKey={shown}
           artLabel={`Drawing of ${shown}`}
-          tag="Made in house"
+          tag="Made in-house"
           note={`For ${drinkName || 'your drink'}`}
           {...place}
         />

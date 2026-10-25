@@ -46,7 +46,7 @@ interface LineRowProps {
  * One spec line, kept short: the ingredient, its amount (type it, or − and +
  * through the pours bartenders use), its unit (tap to change) and remove.
  * Tapping the name opens the rest: swap, a note, the recipe to write. A
- * house prep says so under its name (Made in house, its kind and way, what
+ * house prep says so under its name (Made in-house, its kind and way, what
  * goes in, its steps), and a tap opens its recipe (make-anything-steps-2,
  * step 7). Held over by another line, it offers to combine them.
  * On a phone the controls sit under the name, and the bottle and remove
@@ -70,9 +70,9 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
   const status = line.id
     ? null
     : line.later
-        ? { text: 'House prep, recipe to write', accent: true }
+        ? { text: 'Made in-house, recipe to write', accent: true }
         : line.technique
-          ? { text: `House prep: ${techniqueById(line.technique)?.name ?? 'made in house'}`, accent: true }
+          ? { text: `Made in-house: ${techniqueById(line.technique)?.name ?? 'your recipe'}`, accent: true }
           : { text: 'New, added when you save', accent: false };
   // The bottle, then remove: beside the name on a phone, so the controls under it keep their width.
   const ends = (
@@ -89,7 +89,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
       {dropTarget ? (
         <View role="alert" style={[styles.popup, { backgroundColor: ds.c.ink }]}>
           <Caption color={ds.c.ground} style={styles.strong}>
-            Combine into a house prep
+            Combine and make it in-house
           </Caption>
           <Caption color={ds.c.ground} numberOfLines={1}>{`${dropTarget} + ${line.name}`}</Caption>
         </View>
@@ -105,7 +105,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
               haptic={false}
               role="button"
               aria-expanded={recipe ? undefined : open}
-              accessibilityLabel={`${line.name}, ${amountLabel}${line.prep ? `. Made in house: ${prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}` : ''}`}
+              accessibilityLabel={`${line.name}, ${amountLabel}${line.prep ? `. Made in-house: ${prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}` : ''}`}
               accessibilityHint={recipe ? 'Opens its recipe' : 'Shows swap, note and more'}
               style={[stacked ? styles.nameStacked : styles.name, line.prep ? styles.prepName : null]}
             >
@@ -115,7 +115,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
                   <Caption tone="accent">Let go to combine</Caption>
                 ) : line.prep ? (
                   <>
-                    <Caption tone="accent">Made in house</Caption>
+                    <Caption tone="accent">Made in-house</Caption>
                     <Caption tone="muted" numberOfLines={2}>
                       {prepSummary(line.prep, techniqueById(line.prep.technique)?.name)}
                     </Caption>

@@ -222,7 +222,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
           <Body>{`${nudge.from === 'typed' ? 'You wrote' : 'The name says'} ${nudge.phrase}. Make the ${draft.lines.find((l) => l.key === nudge.key)?.name} that way?`}</Body>
           <View style={styles.nudgeButtons}>
             <Button
-              label="Make it house"
+              label="Make it in-house"
               onPress={() => {
                 const line = draft.lines.find((l) => l.key === nudge.key);
                 if (line) makeHouse(line, nudge.technique, nudge.adjunct);

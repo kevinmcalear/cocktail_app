@@ -31,9 +31,9 @@ export function PrepCard({ name: started, venueName, initial, combinedFrom, inDr
   const shown = name.trim() || started;
   const word = (draft.technique ? techniqueById(draft.technique)?.name : draft.kind !== 'other' ? PREP_KINDS.find((k) => k.id === draft.kind)?.name : null)?.toLowerCase();
   return (
-    <View nativeID={PREP_CARD_ID} role="group" aria-label={`Made in house: ${shown}`} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
+    <View nativeID={PREP_CARD_ID} role="group" aria-label={`Made in-house: ${shown}`} style={[styles.card, { backgroundColor: ds.c.raised, borderColor: ds.c.line }]}>
       <View style={styles.head}>
-        <Body>{`Made in house: ${shown}`}</Body>
+        <Body>{`Made in-house: ${shown}`}</Body>
         <Caption tone="muted">{`${venueName ? `Private to ${venueName}. ` : ''}Made from parts you buy, so it costs itself.`}</Caption>
       </View>
       <Field label="Name" value={name} onChangeText={setName} maxLength={80} returnKeyType="done" />

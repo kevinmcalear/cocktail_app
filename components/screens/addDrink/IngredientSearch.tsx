@@ -111,7 +111,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const done = () => setQuery('');
   const makeRow = onMake ? (
     <ResultRow
-      label={`Make “${q.charAt(0).toUpperCase()}${q.slice(1)}” in house`}
+      label={`Make “${q.charAt(0).toUpperCase()}${q.slice(1)}” in-house`}
       sub={exact ? 'Your own version: steps into its recipe, then back here' : 'A recipe of your own: steps into it, then back here'}
       icon="make"
       onPress={() => {

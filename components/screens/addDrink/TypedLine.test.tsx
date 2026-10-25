@@ -48,7 +48,7 @@ describe('typing a line the way you’d write it', () => {
     expect(screen.getByText('60 ml')).toBeTruthy();
     expect(screen.getByText('Fat washing')).toBeTruthy();
     expect(screen.getByText('Coconut')).toBeTruthy();
-    expect(screen.getByText('Adds Coconut fat-washed Bacardí Carta Blanca, a house prep with the fat washing recipe filled in.')).toBeTruthy();
+    expect(screen.getByText('Adds Coconut fat-washed Bacardí Carta Blanca, made in-house with the fat washing recipe filled in.')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Looks right: add Coconut fat-washed Bacardí Carta Blanca' }));
     await laidOut();
@@ -97,7 +97,7 @@ describe('pasting a whole spec', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Paste a whole spec' }));
     await fireEvent.changeText(screen.getByLabelText('The spec'), 'Daiquiri\n2 oz coconut fat-washed Bacardi\n1 oz lime juice\n.5 oz simple syrup\n3 drops mint oil on top\nShake, fine strain');
     expect(screen.getByText('The drink’s name')).toBeTruthy();
-    expect(screen.getByText('Make it house: fat washing')).toBeTruthy();
+    expect(screen.getByText('Make it in-house: fat washing')).toBeTruthy();
     expect(screen.getByText('Finish')).toBeTruthy();
     expect(screen.getByText('Set in its own step')).toBeTruthy();
 

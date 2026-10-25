@@ -56,7 +56,7 @@ export function TypedLineCard({ reading, pour, onAdd }: TypedLineCardProps) {
           </View>
         </View>
       ) : null}
-      <Body>{`Adds ${made}, a house prep with the ${technique.name.toLowerCase()} recipe filled in.`}</Body>
+      <Body>{`Adds ${made}, made in-house with the ${technique.name.toLowerCase()} recipe filled in.`}</Body>
       <View style={styles.buttons}>
         <Button label="Looks right" size="sm" accessibilityLabel={`Looks right: add ${made}`} onPress={() => onAdd(pick, false)} />
         <Button label="Check it" size="sm" variant="secondary" accessibilityLabel={`Check how ${pick.name} was made`} onPress={() => onAdd(pick, true)} />
