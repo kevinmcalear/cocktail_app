@@ -105,5 +105,9 @@ export function useKitHere(): ReadonlySet<string> {
   const venue = useMode().mode === 'venue' ? active : null;
   const rows = useBarKit(venue?.id ?? null).data;
   const home = useKit().kit;
-  return useMemo(() => (venue ? new Set((rows ?? []).flatMap((r) => (r.key ? [r.key] : []))) : home), [venue, rows, home]);
+  return useMemo(() => {
+    const ours = (rows ?? []).flatMap((r) => (r.key ? [r.key] : []));
+    // A venue with no tools listed (or still loading) isn't checked against: your own kit stands in, as the kit check skips it.
+    return venue && ours.length ? new Set(ours) : home;
+  }, [venue, rows, home]);
 }

@@ -25,9 +25,24 @@ type DrinkRow = {
 
 export type CheckedDrink = CheckDrink & { id: string };
 
+/** A build's layers are ice item ids (lib/iceBuild.ts toStored). */
+const layerIds = (r: DrinkRow) => (Array.isArray(r.ice_build) ? r.ice_build : []).flatMap((l) => (typeof l.ice === 'string' ? [l.ice] : []));
+
+/** The drinks as the check reads them, their builds' ice by name (one read for every layer). */
+async function drinksOf(rows: DrinkRow[]): Promise<CheckedDrink[]> {
+  const ids = [...new Set(rows.flatMap(layerIds))];
+  const names = new Map<string, string>();
+  if (ids.length) {
+    const { data, error } = await supabase.from('items').select('id, name').in('id', ids);
+    if (error) throw error;
+    for (const i of data ?? []) names.set(i.id, i.name);
+  }
+  return rows.map((r) => drinkOf(r, names));
+}
+
 /** A drink row as the check reads it: every ice layer (else its one ice) and what it's shaken or stirred with. */
-function drinkOf(r: DrinkRow): CheckedDrink {
-  const layers = (Array.isArray(r.ice_build) ? r.ice_build : []).flatMap((l) => (typeof l.ice === 'string' ? [l.ice] : []));
+function drinkOf(r: DrinkRow, names: ReadonlyMap<string, string>): CheckedDrink {
+  const layers = layerIds(r).flatMap((id) => (names.has(id) ? [names.get(id)!] : []));
   return {
     id: r.id,
     glass: r.glass?.name ?? null,
@@ -46,7 +61,7 @@ export function useVenueDrinks(barId: string | null | undefined) {
       // ponytail: one page of a venue's drinks; past 1000 the rest aren't checked. A paged read if a venue gets there.
       const { data, error } = await supabase.from('items').select(DRINK_COLUMNS).eq('bar_id', barId!).eq('item_type', 'cocktail').limit(1000);
       if (error) throw error;
-      return ((data ?? []) as unknown as DrinkRow[]).map(drinkOf);
+      return drinksOf((data ?? []) as unknown as DrinkRow[]);
     },
   });
 }
@@ -56,17 +71,18 @@ function useDrink(itemId: string | null) {
   return useQuery({
     queryKey: ['drink-kit', itemId],
     enabled: !!itemId,
-    staleTime: 10 * 60_000,
+    // Short: a drink changed on its own page should check again when it's opened.
+    staleTime: 30_000,
     queryFn: async (): Promise<CheckedDrink | null> => {
       const { data, error } = await supabase.from('items').select(DRINK_COLUMNS).eq('id', itemId!).maybeSingle();
       if (error) throw error;
-      return data ? drinkOf(data as unknown as DrinkRow) : null;
+      return data ? ((await drinksOf([data as unknown as DrinkRow]))[0] ?? null) : null;
     },
   });
 }
 
 /** The venue's ice it makes: the tools each one's steps name, and the ice it starts from. */
-function useIceRecipes(barId: string | null | undefined, ids: readonly string[]) {
+export function useIceRecipes(barId: string | null | undefined, ids: readonly string[]) {
   return useQuery({
     queryKey: ['venue-ice-recipes', barId, ids],
     enabled: !!barId && ids.length > 0,

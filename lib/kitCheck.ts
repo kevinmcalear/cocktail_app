@@ -6,8 +6,8 @@
 // drink as missing something.
 
 import { iceKind } from './iceBuild';
+import { glassOf } from './kitFromDrinks';
 import { andList } from './makers';
-import { draftSketchInputs } from './sketch/draft';
 import type { SketchGlass } from './sketch/types';
 import { equipmentById } from './techniques/equipment';
 import { GLASS_TYPE_LABEL } from './glassware';
@@ -75,7 +75,9 @@ const ICE_WORDS: Record<IceKind, string> = {
   pebble: 'pebble ice',
   shaved: 'shaved ice',
 };
-const glassWord = (g: SketchGlass) => `a ${g === 'nick' ? GLASS_TYPE_LABEL.nick : GLASS_TYPE_LABEL[g].toLowerCase()}`;
+/** A glass in a sentence: "coupe", "Nick & Nora". */
+export const glassNoun = (g: SketchGlass) => (g === 'nick' ? GLASS_TYPE_LABEL.nick : GLASS_TYPE_LABEL[g].toLowerCase());
+const glassWord = (g: SketchGlass) => `a ${glassNoun(g)}`;
 const toolWord = (id: string) => {
   const name = (equipmentById(id)?.name ?? id).toLowerCase();
   // "shaker tins", "hawthorne and julep strainers" are plural by their last word; "a mixing glass and bar spoon".
@@ -96,14 +98,9 @@ function recipeMissing(id: string, kit: CheckKit): string[] {
 
 /** Can the venue make it: each part, and what it needs. */
 export function kitCheck(drink: CheckDrink, kit: CheckKit): KitCheck {
-  const inputs = drink.glass ? draftSketchInputs({ name: '', lines: [], glass: drink.glass }) : null;
-  const glass =
-    inputs && inputs.from.glass === 'data' && kit.glasses.length
-      ? (() => {
-          const mine = kit.glasses.find((g) => g.glass === inputs.glass);
-          return { name: drink.glass!, glass: inputs.glass, ok: !!mine, yours: mine ? (mine.name ?? GLASS_TYPE_LABEL[mine.glass]) : null };
-        })()
-      : null;
+  const shape = drink.glass ? glassOf(drink.glass) : null;
+  const mine = shape ? kit.glasses.find((g) => g.glass === shape) : undefined;
+  const glass = shape && kit.glasses.length ? { name: drink.glass!, glass: shape, ok: !!mine, yours: mine ? (mine.name ?? GLASS_TYPE_LABEL[mine.glass]) : null } : null;
 
   const kinds = venueIceKinds(kit.ice);
   const ice: IceCheck[] = [];
@@ -118,7 +115,8 @@ export function kitCheck(drink: CheckDrink, kit: CheckKit): KitCheck {
       ok: !!row,
       yours: row?.name ?? null,
       nearest: near ? (kit.ice.find((r) => inTheGlass(r) && iceDrawKind(r) === near)?.name ?? null) : null,
-      missing: row?.source === 'made' ? recipeMissing(row.id, kit) : [],
+      // Tools with nothing listed aren't checked, an ice's recipe tools included.
+      missing: row?.source === 'made' && kit.tools.length ? recipeMissing(row.id, kit) : [],
     });
   }
 

@@ -134,8 +134,8 @@ export function LibraryScreen() {
       'needs-price': canCost ? published.filter((i) => i.category === 'Ingredient' && !priced.has(i.id)) : [],
       batched: published.filter((i) => i.category === 'Cocktail' && BATCHED_STYLES.includes(i.serviceStyle ?? '')),
       ...shelves,
-      ready: kit.ready,
-      needs: kit.needs,
+      ready: kit.ready.filter((i) => !rnd.has(itemIdOf(i.id))),
+      needs: kit.needs.filter((i) => !rnd.has(itemIdOf(i.id))),
     };
     // Cocktails are All's cocktails: R&D trials stay out here too.
     for (const f of TYPE_FILTERS) out[f.value] = published.filter((i) => i.category === f.category && !rnd.has(itemIdOf(i.id)));

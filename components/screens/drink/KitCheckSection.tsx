@@ -13,8 +13,7 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarPageId } from '@/hooks/useBarGlassware';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDrinkKitCheck } from '@/hooks/useKitCheck';
-import { GLASS_TYPE_LABEL } from '@/lib/glassware';
-import type { IceCheck } from '@/lib/kitCheck';
+import { glassNoun, type IceCheck } from '@/lib/kitCheck';
 import { equipmentById } from '@/lib/techniques/equipment';
 import { ICE_SHAPE_LABEL } from '@/lib/venueKit';
 
@@ -45,7 +44,7 @@ export function KitCheckSection({ itemId, barId, drink }: { itemId: string; barI
       <Surface style={styles.card}>
         {check.glass ? (
           <CheckRow label="Glass" value={check.glass.name} ok={check.glass.ok} line={check.glass.ok ? `Yours: ${check.glass.yours}` : 'Not in your glassware'}>
-            {check.glass.ok ? null : add(`Add ${GLASS_TYPE_LABEL[check.glass.glass].toLowerCase()}`, { kind: 'glass' })}
+            {check.glass.ok ? null : add(`Add ${glassNoun(check.glass.glass)}`, { kind: 'glass' })}
           </CheckRow>
         ) : null}
         {check.ice.map((i) => (

@@ -41,6 +41,8 @@ assert.deepEqual(aviation.tools?.missing, ['shaker']);
 assert.equal(aviation.needs, 'Needs a coupe and shaker tins');
 
 // Nothing listed is nothing checked; a glass the drawings don't know isn't checked.
+// A made ice's recipe tools aren't checked against a Kit with no tools.
+assert.deepEqual(kitCheck({ glass: 'Rocks', ice: ['Large cube'], methods: [] }, { ...kit, tools: [] }).ice[0].missing, []);
 const empty = kitCheck({ glass: 'Coupe', ice: ['Sphere'], methods: ['Shake'] }, { glasses: [], ice: [], tools: [], recipes: new Map() });
 assert.deepEqual([empty.glass, empty.ice, empty.tools, empty.ready], [null, [], null, true]);
 assert.equal(kitCheck({ glass: 'Custom', ice: [], methods: [] }, kit).glass, null);

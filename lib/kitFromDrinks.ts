@@ -34,7 +34,7 @@ export interface FromDrinks {
 }
 
 /** The shape a glass name is drawn as; null for a name the drawings don't know ("Custom"). */
-function glassOf(name: string): SketchGlass | null {
+export function glassOf(name: string): SketchGlass | null {
   const inputs = draftSketchInputs({ name: '', lines: [], glass: name });
   return inputs.from.glass === 'data' ? inputs.glass : null;
 }
