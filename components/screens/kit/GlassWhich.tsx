@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Chip, Field } from '@/components/ds';
+import { Button, Caption, Chip, Field } from '@/components/ds';
 import { GlassModelCard } from '@/components/glass/GlassModelCard';
 import { GlassModelPicker } from '@/components/glass/GlassModelPicker';
 import { GlassSnap } from '@/components/glass/GlassSnap';
@@ -28,9 +28,14 @@ export interface GlassWhichValue {
  * (components/screens/kit/draw), or Name your own: its shape and its name,
  * drawn as that shape.
  */
-export function GlassWhich({ value, onChange, venueModelIds, venueName, shape, onDraw }: { value: GlassWhichValue; onChange: (v: GlassWhichValue) => void; venueModelIds?: readonly string[]; venueName?: string; /** The search starts on this shape (a drink named it). */ shape?: SketchGlass | null; /** Draw my glass, beside Name your own, where the sheet can keep a photo. */ onDraw?: () => void }) {
+export function GlassWhich({ value, onChange, venueModelIds, venueName, shape, onDraw, keepShape }: { value: GlassWhichValue; onChange: (v: GlassWhichValue) => void; venueModelIds?: readonly string[]; venueName?: string; /** The search starts on this shape (a drink named it). */ shape?: SketchGlass | null; /** Draw my glass, beside Name your own, where the sheet can keep a photo. */ onDraw?: () => void; /** The glass already has a job (the venue's Coupe, or the glass a drink named): a real glass picked for it keeps that type, whatever the catalog files it under. */ keepShape?: boolean }) {
   const set = (patch: Partial<GlassWhichValue>) => onChange({ ...value, ...patch });
-  const pick = (m: GlassModel) => onChange({ ...value, mode: 'picked', model: m, glass: m.glass, variant: m.variant });
+  const pick = (m: GlassModel) => {
+    // A Savage Pony picked for the venue's Coupe stays its Coupe (and its drawing, for a glass not traced yet):
+    // its coupe drinks are drawn in the Pony's own outline.
+    const glass = keepShape ? value.glass : m.glass;
+    onChange({ ...value, mode: 'picked', model: m, glass, variant: glass === m.glass ? m.variant : value.variant });
+  };
 
   if (value.mode === 'find') {
     return (
@@ -56,7 +61,8 @@ export function GlassWhich({ value, onChange, venueModelIds, venueName, shape, o
   if (value.mode === 'picked' && value.model) {
     return (
       <View style={styles.stack}>
-        <GlassModelCard model={value.model} variant={value.variant} />
+        <GlassModelCard model={value.model} variant={value.glass === value.model.glass ? value.variant : null} />
+        {value.glass !== value.model.glass ? <Caption tone="muted">{`Your ${GLASS_TYPE_LABEL[value.glass]} drinks are drawn in it.`}</Caption> : null}
         <Button label="Another glass" variant="secondary" onPress={() => set({ mode: 'find' })} style={styles.start} />
         {nameField}
       </View>

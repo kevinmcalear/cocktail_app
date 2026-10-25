@@ -173,7 +173,7 @@ function GlassSheetBody({ barId, pageId, visible, onClose, glass, startAt = 0, d
     {
       title: 'Which glass is it?',
       intro: which.mode === 'own' ? 'Its shape and what you call it. Drinks are drawn in it.' : 'Find the one you pour into. Its size and drawing come with it.',
-      body: <GlassWhich value={which} onChange={setWhich} venueModelIds={glasses.flatMap((g) => (g.model_id ? [g.model_id] : []))} venueName={venueName} shape={initial?.glass ?? (match ? glass?.glass : null)} onDraw={canDraw ? startDrawing : undefined} />,
+      body: <GlassWhich value={which} onChange={setWhich} venueModelIds={glasses.flatMap((g) => (g.model_id ? [g.model_id] : []))} venueName={venueName} shape={initial?.glass ?? (match ? glass?.glass : null)} onDraw={canDraw ? startDrawing : undefined} keepShape={!!glass || !!initial} />,
       next: 'Next',
       canNext: which.mode !== 'find',
     },

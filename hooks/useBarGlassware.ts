@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { useCapabilities } from '@/hooks/useCapabilities';
@@ -133,6 +133,19 @@ export interface BarGlassInput {
 }
 
 /**
+ * After a venue's glasses change: the list, and the drinks drawn in them. The
+ * database redraws the venue's drinks on any change (refresh_sketch_variant),
+ * but phones hold drawings for ten minutes, so the glass just picked wouldn't
+ * show until then.
+ */
+function invalidateGlassware(client: QueryClient, barId: string | null | undefined) {
+  client.invalidateQueries({ queryKey: ['bar-glassware', barId] });
+  client.invalidateQueries({ queryKey: ['maker-glass-bars'] });
+  client.invalidateQueries({ queryKey: ['item-sketch'] });
+  client.invalidateQueries({ queryKey: ['drinks-drawn-in', barId] });
+}
+
+/**
  * Add or change one of the venue's glasses. Only one glass of a type is the
  * main one (a unique index), so marking this one first unmarks the others.
  * The database checks the venue's Prep permission and the maker page.
@@ -155,10 +168,7 @@ export function useSaveBarGlass(barId: string | null | undefined, profileId: str
       if (error) throw error;
       return data.id;
     },
-    onSettled: () => {
-      client.invalidateQueries({ queryKey: ['bar-glassware', barId] });
-      client.invalidateQueries({ queryKey: ['maker-glass-bars'] });
-    },
+    onSettled: () => invalidateGlassware(client, barId),
   });
 }
 
@@ -172,10 +182,7 @@ export function useDeleteBarGlass(barId: string | null | undefined) {
       // A glass drawn from a photo takes its photo with it.
       await removeGlassPhoto(data?.[0]?.photo_path);
     },
-    onSettled: () => {
-      client.invalidateQueries({ queryKey: ['bar-glassware', barId] });
-      client.invalidateQueries({ queryKey: ['maker-glass-bars'] });
-    },
+    onSettled: () => invalidateGlassware(client, barId),
   });
 }
 

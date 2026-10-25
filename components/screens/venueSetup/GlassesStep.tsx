@@ -113,10 +113,10 @@ export function GlassesStep({ barId, pageId, name }: { barId: string; pageId: st
     }
   };
 
-  // The real glass for one on its own: the row becomes that glass, keeping whether it's the main one.
+  // The real glass for one on its own: the row becomes that glass and keeps its job (a Pony picked for the Coupe
+  // stays the Coupe, whatever the catalog files it under) and whether it's the main one.
   const pick = (l: Listed, m: GlassModel) => {
-    const is_default = m.glass === l.glass ? l.is_default : !listed.some((o) => o.key !== l.key && o.glass === m.glass && o.is_default);
-    const row = { glass: m.glass, variant: m.variant, name: null, maker: null, maker_profile_id: null, designer: null, series: null, shape_note: null, model_id: m.id, is_default };
+    const row = { glass: l.glass, variant: m.glass === l.glass ? m.variant : l.variant, name: null, maker: null, maker_profile_id: null, designer: null, series: null, shape_note: null, model_id: m.id, is_default: l.is_default };
     setFailed(false);
     if (l.id) save.mutate({ id: l.id, ...row }, { onError: () => setFailed(true) });
     else {
