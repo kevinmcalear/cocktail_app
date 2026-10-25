@@ -42,7 +42,7 @@ export interface BarGlass {
   /** Null when not said, or this person can't see the venue's suppliers. */
   supplier_name: string | null;
   count: number | null;
-  /** Its own shape, traced from the venue's photo (Draw my glass, 20261118300000), and the capacity they typed to size it. */
+  /** Its own shape, traced from the venue's photo (Draw my glass, 20261118500000), and the capacity they typed to size it. */
   outline: GlassOutline | null;
   capacity_ml: number | null;
   /** The photo it was traced from, private (the glass-photos bucket). */
