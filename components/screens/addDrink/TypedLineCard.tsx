@@ -16,7 +16,7 @@ interface TypedLineCardProps {
   reading: HouseReading<CatalogIngredient>;
   /** The pour typed before it ("60 ml"), if any. */
   pour: TypedPour | null;
-  /** Looks right (check false): the line, made house straight away. Check it: the line, then "What did you do to it?". */
+  /** Looks right (check false): the line, made house straight away. Check it: the line, then the house prep steps on What is it. */
   onAdd: (bottle: WizardPick, check: boolean) => void;
 }
 
@@ -56,7 +56,7 @@ export function TypedLineCard({ reading, pour, onAdd }: TypedLineCardProps) {
           </View>
         </View>
       ) : null}
-      <Body>{`Adds ${made}, a house prep with the ${technique.name.toLowerCase()} recipe filled in.`}</Body>
+      <Body>{`Adds ${made}, made in-house with the ${technique.name.toLowerCase()} recipe filled in.`}</Body>
       <View style={styles.buttons}>
         <Button label="Looks right" size="sm" accessibilityLabel={`Looks right: add ${made}`} onPress={() => onAdd(pick, false)} />
         <Button label="Check it" size="sm" variant="secondary" accessibilityLabel={`Check how ${pick.name} was made`} onPress={() => onAdd(pick, true)} />

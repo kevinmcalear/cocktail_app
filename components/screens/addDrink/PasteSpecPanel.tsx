@@ -43,7 +43,7 @@ export function PasteSpecPanel({ onClose, drinkName, ingredients, aliases, coreI
   const tag = (r: SpecRow) => {
     if (r.kind === 'skip') return r.note ?? 'Skipped';
     if (r.kind === 'finish') return 'Finish';
-    if (r.house) return `Make it house: ${techniqueById(r.house.technique)?.name.toLowerCase() ?? 'house prep'}`;
+    if (r.house) return `Make it in-house: ${techniqueById(r.house.technique)?.name.toLowerCase() ?? 'your recipe'}`;
     return r.pick.id ? (have?.has(r.pick.id) ? haveLabel : 'In the catalog') : 'New, added when you save';
   };
   return (

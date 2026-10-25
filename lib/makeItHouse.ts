@@ -1,19 +1,15 @@
 /**
- * "Make it house" on a drink's line: the bottle you'd reach for, then what
- * you did to it. Which techniques can change a line, and the nudge when the
- * drink's own name already says ("Coconut Fat-Washed Daiquiri"). Pure: the
- * wizard (IngredientsStep) opens the prep builder from these.
+ * A bottle in the drink made in house by a technique: the nudge when the
+ * drink's own name already says ("Coconut Fat-Washed Daiquiri"), and a line
+ * typed the way a spec says it ("coconut fat-washed bacardi"). Pure: the
+ * wizard (IngredientsStep) opens the house prep steps from these.
  */
 import { searchIngredients, type IngredientAlias, type IngredientRow } from '@/lib/ingredientNames';
 import { capitalize } from '@/lib/stringUtils';
-import { TECHNIQUES, type Technique } from '@/lib/techniques';
+import type { Technique } from '@/lib/techniques';
 import { FITS, looksMadeInHouse, startsFrom, waysToMake } from '@/lib/techniques/makeIt';
 import { nameParts, splitName } from '@/lib/techniques/template';
 import type { BaseKind } from '@/lib/techniques/types';
-
-/** The order the sheet lists them in: the ones bars reach for first, then by group, the rare ones last. */
-const FIRST = ['fat-wash', 'milk-wash', 'cold-infusion', 'nitrous-infusion', 'sous-vide-infusion'];
-const GROUP_ORDER = ['wash', 'infuse', 'clarify', 'preserve', 'carbonate', 'distil'] as const;
 
 /** Made from the produce, not from a line in the drink: offered from the search instead. */
 const SCRATCH = new Set(['infused-oil', 'tepache']);
@@ -24,25 +20,6 @@ const SCRATCH = new Set(['infused-oil', 'tepache']);
  */
 const changes = (t: Technique) =>
   !t.method && !SCRATCH.has(t.id) && t.group !== 'foam' && t.group !== 'texture' && t.group !== 'syrup' && !!t.starts && !['none', 'water', 'sugar', 'fat'].includes(t.starts);
-
-/**
- * What a line can be made into, best fit first. A spirit lists the washes and
- * infusions, a juice the clarifying; a line that says neither lists them all.
- */
-export function houseWays(lineName: string, styleName?: string | null): Technique[] {
-  const kind = startsFrom(lineName) ?? (styleName ? startsFrom(styleName) : null);
-  const fits = kind ? FITS[kind] ?? [kind] : null;
-  return TECHNIQUES.filter((t) => changes(t) && (!fits || fits.includes(t.starts as BaseKind) || t.starts === 'liquid')).sort(
-    (a, b) => rank(a) - rank(b),
-  );
-}
-
-const rank = (t: Technique) => {
-  const first = FIRST.indexOf(t.id);
-  if (first !== -1) return first;
-  const g = GROUP_ORDER.indexOf(t.group as (typeof GROUP_ORDER)[number]);
-  return FIRST.length + (g === -1 ? GROUP_ORDER.length : g);
-};
 
 export interface HouseNudge {
   /** The line to make house. */

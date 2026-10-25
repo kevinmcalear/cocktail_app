@@ -14,8 +14,8 @@ import type { Allergen } from './allergens';
 import { asLike, keepFor, nameParts, partsFor, prepFacts, slotIngredient, splitName } from './techniques/template';
 import type { Technique } from './techniques/types';
 
-/** 'batch' is a drink's lines in a bottle (lib/batchLines), made by dropping lines together, never picked here. */
-export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other' | 'batch';
+/** 'batch' is a drink's pours bottled ahead (lib/batchLines): where combining two lines starts. 'wash' is a fat or milk wash. */
+export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other' | 'batch' | 'wash';
 
 export interface PrepDraftLine {
   key: string;
@@ -90,15 +90,23 @@ export interface PrepKind {
 }
 
 export const PREP_KINDS: PrepKind[] = [
-  { id: 'syrup', name: 'Syrup', ratio: 'Sugar and water, 1 : 1' },
+  { id: 'batch', name: 'Batch', ratio: 'The drink’s pours, bottled ahead' },
+  { id: 'syrup', name: 'Syrup', ratio: 'Sugar and water' },
   { id: 'rich', name: 'Rich syrup', ratio: 'Sugar and water, 2 : 1' },
   { id: 'shrub', name: 'Shrub', ratio: 'Fruit, sugar, vinegar' },
   { id: 'cordial', name: 'Cordial', ratio: 'Juice, sugar, acid' },
   { id: 'oleo', name: 'Oleo saccharum', ratio: 'Peels and sugar' },
-  { id: 'infusion', name: 'Infusion', ratio: 'Spirit plus a flavour' },
+  { id: 'infusion', name: 'Infusion', ratio: 'A spirit plus a flavour' },
+  { id: 'wash', name: 'Wash', ratio: 'Fat, milk or butter' },
   { id: 'super', name: 'Super juice', ratio: 'Peels, acids, water' },
   { id: 'other', name: 'Something else', ratio: 'Start blank' },
 ];
+
+/** What is it, as the board draws it (make-anything-steps-1, step 4): rich syrup and oleo saccharum are ways of a syrup. */
+export const KIND_TILES: PrepKindId[] = ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'super', 'other'];
+
+/** The tile a kind is picked under: a rich syrup is a syrup. */
+export const tileOf = (kind: PrepKindId): PrepKindId => (kind === 'rich' || kind === 'oleo' ? 'syrup' : kind);
 
 const DAY = 24;
 const WEEK = 7 * DAY;
@@ -108,9 +116,10 @@ const KIND_WORDS: [RegExp, PrepKindId][] = [
   [/\bshrub\b/i, 'shrub'],
   [/\bcordial\b/i, 'cordial'],
   [/\boleo\b/i, 'oleo'],
-  // Not tinctures or bitters: those are their own technique (strong spirit, kept a year).
-  [/\b(infused|infusion)\b/i, 'infusion'],
+  // Not tinctures or bitters: those are their own technique (strong spirit, kept a year). A house liqueur is a spirit with a flavour in it.
+  [/\b(infused|infusion|liqueur)\b/i, 'infusion'],
   [/\bsyrup\b|\bgomme\b/i, 'syrup'],
+  [/\bbatch\b/i, 'batch'],
 ];
 
 /** One way to make a kind (a cold shrub), as "How?" lists them under the kinds. */
@@ -128,7 +137,17 @@ export interface PrepWay {
   how: string;
   /** The library technique whose sources grade it (lib/techniques). */
   technique: string;
+  /** Picking it fills in the method from the technique (its steps, keep and kit), in these words: "seal, water bath, strain". */
+  fills?: string;
+  /** A way that is its own kind (a rich syrup under Syrup). */
+  kind?: PrepKindId;
 }
+
+const SYRUP_WAYS: PrepWay[] = [
+  { id: 'simple', name: 'Simple', kind: 'syrup', time: '20 min', kit: ['Pan'], note: '1 : 1', how: 'Sugar dissolved in as much water, warm, never boiled.', technique: 'syrup-by-weight' },
+  { id: 'rich', name: 'Rich', kind: 'rich', time: '20 min', kit: ['Pan'], note: '2 : 1, keeps longer', how: 'Twice the sugar to the water, warm, never boiled.', technique: 'syrup-by-weight' },
+  { id: 'oleo', name: 'Oleo saccharum', kind: 'oleo', time: 'A few hours', kit: ['Muddler'], note: 'peels and sugar, no water', how: 'The peels are muddled with the sugar until their oil turns it to syrup.', technique: 'syrup-by-weight' },
+];
 
 export const KIND_WAYS: Partial<Record<PrepKindId, PrepWay[]>> = {
   shrub: [
@@ -136,22 +155,56 @@ export const KIND_WAYS: Partial<Record<PrepKindId, PrepWay[]>> = {
     { id: 'hot', name: 'Hot', time: 'An hour', kit: ['Pot', 'fine strainer'], note: 'jammier', how: 'The fruit cooks down with the sugar, then the vinegar goes in once it’s cool.', technique: 'shrub' },
     { id: 'oleo', name: 'Oleo shrub', time: '2 days', kit: ['Jar', 'muddler'], tip: 'Best with citrus peel in it', how: 'The fruit and peel are muddled with the sugar until it turns to syrup, then the vinegar goes in.', technique: 'shrub' },
   ],
+  // As the board draws them (make-anything-steps-1, step 4): days, hours or minutes, each one of the library's infusions.
+  infusion: [
+    { id: 'cold', name: 'Cold', time: 'Days', kit: [], note: 'a jar, then strain', how: 'It rests in a jar in the fridge, tasted every day, then it’s strained.', technique: 'cold-infusion', fills: 'a jar, rest, strain' },
+    { id: 'sous-vide', name: 'Sous vide', time: 'Hours', kit: [], note: 'sealed bag in a water bath, then strain', how: 'It’s sealed in a bag and held in a water bath, then chilled and strained.', technique: 'sous-vide-infusion', fills: 'seal, water bath, strain' },
+    { id: 'nitrous', name: 'Nitrous', time: 'Minutes', kit: [], note: 'a cream whipper', how: 'It’s charged in a cream whipper, vented fast, then strained.', technique: 'nitrous-infusion', fills: 'charge, rest, vent, strain' },
+  ],
+  wash: [
+    { id: 'fat', name: 'Fat', time: 'Overnight', kit: [], note: 'butter, bacon or an oil, frozen off', how: 'The fat sits in the spirit, then it’s frozen and lifted off.', technique: 'fat-wash', fills: 'mix, rest, freeze, strain' },
+    { id: 'milk', name: 'Milk', time: 'Overnight', kit: [], note: 'the curds filter it clear', how: 'Milk curdles in it, and the curds filter it clear.', technique: 'milk-wash', fills: 'curdle, rest, filter' },
+    { id: 'vegan', name: 'Vegan', time: 'A weekend', kit: [], note: 'coconut or soy milk', how: 'A plant milk curdles in it and filters it clear.', technique: 'vegan-wash', fills: 'curdle, rest, filter' },
+  ],
+  syrup: SYRUP_WAYS,
+  rich: SYRUP_WAYS,
+  oleo: SYRUP_WAYS,
 };
 
-/** The way a draft is made, when its kind has ways: a shrub without one is cold. */
+/** The way a draft is made, when its kind has ways: a shrub or an infusion without one is cold. */
 export function wayOf(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'technique'>): PrepWay | null {
-  const ways = d.technique ? undefined : KIND_WAYS[d.kind];
+  const ways = KIND_WAYS[d.kind];
   if (!ways) return null;
+  if (ways[0].kind) return ways.find((w) => w.kind === d.kind) ?? null;
   return ways.find((w) => w.id === (d.way ?? (d.hot ? 'hot' : 'cold'))) ?? ways[0];
 }
 
-/** "a cold shrub", "a rich syrup", "an oleo shrub"; null for a technique or something else. */
+/** The kind and way a library technique is ("sous-vide-infusion" is an infusion, sous vide); null when no way fills from it. */
+export function kindOfTechnique(id: string): { kind: PrepKindId; way: string } | null {
+  for (const [kind, ways] of Object.entries(KIND_WAYS) as [PrepKindId, PrepWay[]][]) {
+    const w = ways.find((x) => x.fills && x.technique === id);
+    if (w) return { kind, way: w.id };
+  }
+  return null;
+}
+
+/** "a cold shrub", "a sous vide infusion", "a rich syrup", "an oleo shrub"; null for something else. */
 export function prepPhrase(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'technique'>): string | null {
-  if (d.technique || d.kind === 'other') return null;
-  const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name.toLowerCase() ?? '';
   const way = wayOf(d);
-  const words = way ? (way.id === 'oleo' ? way.name.toLowerCase() : `${way.name.toLowerCase()} ${kind}`) : kind;
+  if ((d.technique && !way) || d.kind === 'other') return null;
+  const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name.toLowerCase() ?? '';
+  const words = way && !way.kind ? (way.id === 'oleo' ? way.name.toLowerCase() : `${way.name.toLowerCase()} ${kind}`) : kind;
   return `${/^[aeiou]/.test(words) ? 'an' : 'a'} ${words}`;
+}
+
+/** Under a house prep's line in the drink (make-anything-steps-2, step 7): "Infusion, sous vide · Tempus Fugit, red miso · 4 steps". */
+export function prepSummary(d: PrepDraft, techniqueName?: string | null): string {
+  const way = wayOf(d);
+  const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name;
+  const head = d.kind === 'other' ? (techniqueName ?? null) : way && !way.kind ? `${kind}, ${way.name.toLowerCase()}` : kind;
+  const names = d.lines.filter((l) => !l.slot && l.name.trim()).map((l, i) => (i ? l.name.toLowerCase() : l.name));
+  const steps = d.steps.length ? `${d.steps.length} ${d.steps.length === 1 ? 'step' : 'steps'}` : null;
+  return [head, names.join(', ') || null, steps].filter(Boolean).join(' · ');
 }
 
 /**
@@ -160,10 +213,10 @@ export function prepPhrase(d: Pick<PrepDraft, 'kind' | 'way' | 'hot' | 'techniqu
  * something else (the name shows instead).
  */
 export function recipeEyebrow(d: PrepDraft): string | null {
-  if (d.technique || d.kind === 'other') return null;
-  const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name ?? '';
   const way = wayOf(d);
-  const head = way ? (way.id === 'oleo' ? way.name : `${kind}, ${way.name.toLowerCase()}`) : kind;
+  if ((d.technique && !way) || d.kind === 'other') return null;
+  const kind = PREP_KINDS.find((k) => k.id === d.kind)?.name ?? '';
+  const head = way && !way.kind ? (way.id === 'oleo' ? way.name : `${kind}, ${way.name.toLowerCase()}`) : kind;
   const parted = d.lines.filter((l) => l.parts !== null && !l.slot);
   const equal = parted.length > 1 && parted.every((l) => l.parts === parted[0].parts && l.unit === parted[0].unit);
   const by = parted[0]?.unit === 'g' ? 'by weight' : parted[0]?.unit === 'ml' ? 'by volume' : null;
@@ -222,7 +275,7 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
   const shrubWay = kind === 'shrub' ? (way ?? 'cold') : undefined;
   const hot = shrubWay === 'hot';
   const draft = (lines: PrepDraftLine[], baseAmount: number, steps: PrepDraftStep[], keepsHours: number | null, storage: string, leadMinutes: number | null, actions: string[]): PrepDraft =>
-    withFacts({ kind, hot: kind === 'shrub' ? hot : undefined, way: shrubWay, baseKey: lines[0].key, baseAmount, lines, steps, keepsHours, storage, leadMinutes, actions });
+    withFacts({ kind, hot: kind === 'shrub' ? hot : undefined, way: shrubWay ?? way, baseKey: lines[0].key, baseAmount, lines, steps, keepsHours, storage, leadMinutes, actions });
   const s = (body: string, timer_seconds: number | null = null) => ({ body, timer_seconds });
   const fridge = 'Fridge, sealed bottle';
   switch (kind) {
@@ -289,6 +342,7 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
       ], 3 * DAY, fridge, 90, ['Blend', 'Strain']);
     case 'other':
     case 'batch':
+    case 'wash':
       return draft([flavour ? line(flavour, 1, 'g') : slotLine('Main ingredient', 'main ingredient', 1, 'g'), ...extras], 100, [], null, fridge, null, []);
   }
 }
@@ -417,27 +471,17 @@ export function prepFromTechnique(
   picked: { base?: PrepPick | null; adjunct?: PrepPick | null } = {},
 ): PrepDraft {
   const blank = startPrep('other', name);
-  const finish = (lines: PrepDraftLine[], baseKey: string, baseAmount: number, steps: PrepDraftStep[]): PrepDraft => {
-    const keep = keepFor(t, { adjunct: adjunct?.name ?? null, name });
-    const minutes = keep.hours !== null && keep.hours < 1 ? Math.round(keep.hours * 60) : null;
-    return withFacts({
+  const finish = (lines: PrepDraftLine[], baseKey: string, baseAmount: number, steps: PrepDraftStep[]): PrepDraft =>
+    withFacts({
       ...blank,
+      // A wash or an infusion the kinds list: picked under its kind, with its way lit.
+      ...kindOfTechnique(t.id),
       baseKey,
       baseAmount,
       lines,
-      steps,
-      keepsHours: minutes ? null : keep.hours,
-      keepsMinutes: minutes,
-      storage: keep.storage ? STORE_TEXT[keep.storage] : blank.storage,
-      leadMinutes: card.leadMinutes,
-      actions: card.actions,
-      technique: t.id,
+      ...techniqueMethod(t, { ...card, steps }, { adjunct: adjunct?.name ?? null, name }),
       madeFrom: picked.base ? { id: picked.base.id ?? null, name: picked.base.name } : null,
-      equipment: t.equipment ?? [],
-      gate: t.gate,
-      watch: t.watch,
     });
-  };
   const named = t.starts ? nameParts(name, t) : { base: null, adjunct: null, extra: [] };
   const adjunct: PrepPick | null = picked.adjunct ?? (named.adjunct ? { name: named.adjunct } : null);
   if (!t.base && !t.starts) return finish(blank.lines, blank.baseKey, blank.baseAmount, card.steps);
@@ -480,6 +524,40 @@ export function prepFromTechnique(
   // The card's first step gives the usual batch's amounts ("For 750 ml spirit: 60 ml melted fat."), as the canvas keeps it.
   return finish(all, all[0].key, t.base ? (t.base.amounts[Math.min(1, t.base.amounts.length - 1)] ?? 100) : 100, card.steps);
 }
+
+/** The steps a library technique gives, its lead time and its tags (lib/techniques/makeIt prepCardFor, structurally). */
+export type TechniqueCard = { steps: PrepDraftStep[]; leadMinutes: number; actions: string[] };
+
+/** How a library technique says it's made: its steps, keep, storage, lead time, kit and safety notes. */
+export function techniqueMethod(t: TechniqueBatch, card: TechniqueCard, picked: { adjunct?: string | null; name?: string } = {}) {
+  const keep = keepFor(t, picked);
+  const minutes = keep.hours !== null && keep.hours < 1 ? Math.round(keep.hours * 60) : null;
+  return {
+    steps: card.steps,
+    keepsHours: minutes ? null : keep.hours,
+    keepsMinutes: minutes,
+    storage: keep.storage ? STORE_TEXT[keep.storage] : STORES[0],
+    leadMinutes: card.leadMinutes,
+    actions: card.actions,
+    technique: t.id,
+    equipment: t.equipment ?? [],
+    gate: t.gate,
+    watch: t.watch,
+  } satisfies Partial<PrepDraft>;
+}
+
+/** A way picked that fills in the method (an infusion, sous vide): what goes in stays, how it's made comes from the technique. */
+export function withMethod(d: PrepDraft, t: TechniqueBatch, card: TechniqueCard, way: string): PrepDraft {
+  return withFacts({ ...d, way, ...techniqueMethod(t, card) });
+}
+
+/** A kind picked for lines that were combined: the kind's method and keep, with the lines as they were. */
+export function keepLines(fresh: PrepDraft, from: PrepDraft): PrepDraft {
+  return withFacts({ ...fresh, lines: from.lines, baseKey: from.baseKey, baseAmount: from.baseAmount, madeFrom: from.madeFrom });
+}
+
+/** Units a line of a recipe is measured in, as it goes in (make-anything-steps-2, step 5). */
+export const MEASURE_UNITS = ['ml', 'g', 'kg', 'tsp', 'tbsp', 'bsp', 'dash', 'drop', 'each', 'pinch'] as const;
 
 /** A shared catalog recipe, as useCatalogRecipe reads it (structurally). */
 export interface CatalogRecipeLike {

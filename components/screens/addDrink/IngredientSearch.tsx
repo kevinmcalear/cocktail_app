@@ -74,8 +74,9 @@ export interface IngredientSearchProps {
  * Find an ingredient, or add a new one. A name that is already an
  * ingredient, by another spelling or alias, offers that one and not a copy;
  * a likely misspelling asks "Did you mean…?" first, and a name nothing
- * matches shows the closest ones. Making it in house is always offered
- * (your own version when the name exists). Return takes the top hit.
+ * matches shows the closest ones. Making it in house is always offered,
+ * under the bottles that match (your own version when the name exists),
+ * and steps into the house prep steps. Return takes the top hit.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
   const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, captions, shelf, backBar, brands, onHouse } = props;
@@ -110,8 +111,8 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const done = () => setQuery('');
   const makeRow = onMake ? (
     <ResultRow
-      label={`Make “${q.charAt(0).toUpperCase()}${q.slice(1)}” in house`}
-      sub={exact ? 'Your own version, with your recipe. We’ll start you off.' : 'Your own house prep. We’ll start you off.'}
+      label={`Make “${q.charAt(0).toUpperCase()}${q.slice(1)}” in-house`}
+      sub={exact ? 'Your own version: steps into its recipe, then back here' : 'A recipe of your own: steps into it, then back here'}
       icon="make"
       onPress={() => {
         onMake(q, pour ?? undefined);
@@ -122,8 +123,9 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const Name = `${q.charAt(0).toUpperCase()}${q.slice(1)}`;
   const bottleRow = onBottle ? (
     <ResultRow
-      label={`Add “${Name}”, a bottle you buy`}
-      sub="Opens right here, under the line"
+      label="A bottle you buy"
+      a11y={`Add “${Name}”, a bottle you buy`}
+      sub={`Add “${Name}” as a bottle, right here under the line`}
       icon="make"
       onPress={() => {
         onBottle(Name, pour ?? undefined);
@@ -221,6 +223,10 @@ export function IngredientSearch(props: IngredientSearchProps) {
             <Caption tone="muted" style={styles.label}>
               Nothing called that yet. Closest:
             </Caption>
+          ) : !results.length && !near && !exact && !loading && allowNew ? (
+            <Caption tone="muted" style={styles.label}>
+              No bottle by that name.
+            </Caption>
           ) : null}
           {closest.map((r) => found(r))}
           {lead ? makeRow : null}
@@ -234,12 +240,10 @@ export function IngredientSearch(props: IngredientSearchProps) {
             makeRow
           ) : !allowNew ? null : (
             <>
-              {makeRow && prepLike && !lead ? makeRow : null}
-              {/* A bottle you buy, then making it, then the name alone (board make-create-desktop, step 4). */}
+              {/* Making it in house, under the bottles that match, then a bottle you buy, then the name alone (make-anything-steps-1, step 3). */}
+              {lead ? null : makeRow}
               {bottleRow}
-              {bottleRow && !prepLike ? makeRow : null}
               {newRow}
-              {makeRow && !prepLike && !bottleRow ? makeRow : null}
             </>
           )}
         </View>

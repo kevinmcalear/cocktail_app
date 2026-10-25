@@ -1,6 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
+import { startPrep } from '@/lib/prepKinds';
 
 import { PrepBuilder } from './PrepBuilder';
 
@@ -40,11 +41,13 @@ const open = async (name: string, onDone = jest.fn(), onLater?: () => void) => {
 };
 
 describe('PrepBuilder', () => {
-  test('a technique name leads with its ways, the likeliest picked; Skip goes on to the recipe', async () => {
+  test('a technique name is picked under its kind, with its way lit; Skip goes on to the recipe', async () => {
     await open('Coconut fat washed white rum');
-    expect(screen.getByRole('radio', { name: /^Fat washing/, checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Wash, /, checked: true })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Fat\. /, checked: true })).toBeTruthy();
+    expect(screen.getByText('Fat fills in the method: mix, rest, freeze, strain.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Skip' }));
-    expect(screen.getByText('The recipe')).toBeTruthy();
+    expect(screen.getByText('What goes in?')).toBeTruthy();
     expect(screen.getByText('White rum')).toBeTruthy();
     expect(screen.getByText('Coconut Oil')).toBeTruthy();
     expect(screen.getByText('Taken out before bottling')).toBeTruthy();
@@ -52,15 +55,15 @@ describe('PrepBuilder', () => {
 
   test('a stand-in has to be picked or taken out before it can be added', async () => {
     const onDone = await open('Fat-washed rum');
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: recipe' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     expect(screen.getByRole('button', { name: 'Pick the fat' })).toBeTruthy();
     expect(screen.getByText('Pick the fat, or take it out, to go on.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Next: method' })).toBeDisabled();
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
-    expect(screen.getByText('The recipe')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Next: how it’s made' })).toBeDisabled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
+    expect(screen.getByText('What goes in?')).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Remove Melted fat' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
     expect(screen.getByText('About 2 weeks')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
     const prep = onDone.mock.calls[0][0];
@@ -82,7 +85,7 @@ describe('PrepBuilder', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'All steps' }));
     expect(screen.getByText('1. Muddle the fruit, and any citrus peel, with the sugar.')).toBeTruthy();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: recipe' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
     expect(screen.getByText('Daiquiri › New prep · 2 of 3')).toBeTruthy();
     expect(screen.getByText('OLEO SHRUB · EQUAL PARTS BY WEIGHT')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /^Allergens: none/ }));
@@ -90,8 +93,9 @@ describe('PrepBuilder', () => {
     // The chili starts with the canvas's note (make-create-prep-recipe); it can still be changed.
     await fireEvent.press(screen.getByRole('button', { name: 'Note on Fresno chili: Sliced, seeds in for more heat. Change it' }));
     await fireEvent.changeText(screen.getByLabelText('Note on Fresno chili'), 'Sliced, seeds in');
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
-    expect(screen.getByText(/^An oleo shrub, filled in from the recipe\./)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
+    expect(screen.getByText('Suggested for an oleo shrub. Tap one to change it.')).toBeTruthy();
+    expect(screen.getByText('Start from a step or write your own. A time you write becomes a timer when you make it.')).toBeTruthy();
     expect(screen.getByText('1 day')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /^Store: Fridge/ }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Freezer' }));
@@ -107,9 +111,9 @@ describe('PrepBuilder', () => {
 
   test('a name the catalog has a sourced recipe for opens on that recipe, with where it comes from', async () => {
     const onDone = await open('Grapefruit cordial');
-    expect(screen.getByText('The recipe')).toBeTruthy();
+    expect(screen.getByText('What goes in?')).toBeTruthy();
     expect(screen.getByText('Started from the catalog recipe, checked on starchefs.com and sunset.com. Change anything.')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
     const prep = onDone.mock.calls[0][0];
     expect(prep.lines.map((l: { id: string }) => l.id)).toEqual(['gj', 'su', 'ca']);
@@ -121,5 +125,29 @@ describe('PrepBuilder', () => {
     await open('Lime cordial', jest.fn(), onLater);
     await fireEvent.press(screen.getByRole('button', { name: 'Later' }));
     expect(onLater).toHaveBeenCalled();
+  });
+
+  test('the name can change on What is it, and the prep is added under it', async () => {
+    const onDone = await open('Lime cordial');
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Makrut lime cordial');
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add a step: Strain' }));
+    expect(screen.getByLabelText(/^Step \d+$/).props.value).toBe('Strain through a fine sieve.');
+    await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
+    expect(onDone.mock.calls[0][1]).toBe('Makrut lime cordial');
+    expect(onDone.mock.calls[0][0].steps.at(-1).body).toBe('Strain through a fine sieve.');
+  });
+
+  test('a recipe already written keeps what goes in when another kind is picked', async () => {
+    const onDone = jest.fn();
+    await renderWithTamagui(<PrepBuilder name="Pineapple shrub" drinkName="Daiquiri" initial={startPrep('shrub', 'Pineapple shrub')} first ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
+    await laidOut();
+    await fireEvent.press(screen.getByRole('radio', { name: /^Syrup, / }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
+    expect(onDone.mock.calls[0][0].kind).toBe('syrup');
+    expect(onDone.mock.calls[0][0].lines.map((l: { name: string }) => l.name)).toEqual(['Pineapple', 'White sugar', 'Apple cider vinegar']);
   });
 });

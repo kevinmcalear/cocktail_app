@@ -37,13 +37,13 @@ describe('FinishStep', () => {
     await fireEvent.changeText(screen.getByLabelText('Add to the finish'), 'mint oil');
     // Made first, before the bottle that only shares the words.
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
-    expect(rows.indexOf('Make “Mint oil” in house')).toBeLessThan(rows.indexOf('Agrumato Mint Oil'));
+    expect(rows.indexOf('Make “Mint oil” in-house')).toBeLessThan(rows.indexOf('Agrumato Mint Oil'));
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Make “Mint oil” in house' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Make “Mint oil” in-house' }));
     await laidOut();
     expect(screen.getByRole('radio', { name: /^Herb, chile and garlic oils/, checked: true })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: recipe' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: method' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
     expect(screen.getByText('About 4 days')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Add it to Coconut Fat-Washed Daiquiri' }));
 
