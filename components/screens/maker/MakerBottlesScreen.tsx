@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Caption, Chip, Display, GlassButton, Surface, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Caption, Chip, Display, DsText, GlassButton, PressableScale, Surface, useDs, useGutter } from '@/components/ds';
+import { NoteSheet } from '@/components/feedback/NoteSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { WebHead } from '@/components/WebHead';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
@@ -42,6 +43,7 @@ function Page({ profileRef, welcome }: { profileRef: string; welcome: boolean })
   const { data: uses = {} } = useBottleUses(bottles.map((b) => b.id));
   const [filter, setFilter] = useState<Filter>('all');
   const [open, setOpen] = useState<MakerBottle | null>(null);
+  const [tellUs, setTellUs] = useState(false);
 
   const withPhoto = bottles.filter((b) => photos[b.id]).length;
   const shown = bottles.filter((b) => (filter === 'all' ? true : filter === 'have' ? !!photos[b.id] : !photos[b.id]));
@@ -74,6 +76,18 @@ function Page({ profileRef, welcome }: { profileRef: string; welcome: boolean })
             <MakerBottleRow key={b.id} bottle={b} photo={photos[b.id] ?? null} uses={uses[b.id] ?? 0} onPicture={() => setOpen(b)} />
           ))}
         </View>
+        <PressableScale role="button" accessibilityLabel="A bottle missing or wrong? Tell us" onPress={() => setTellUs(true)} style={styles.tellUs}>
+          <IconSymbol name="flag" size={16} color={ds.accentText} />
+          <DsText variant="label" color={ds.accentText}>A bottle missing or wrong? Tell us</DsText>
+        </PressableScale>
+        {tellUs ? (
+          <NoteSheet
+            visible
+            onClose={() => setTellUs(false)}
+            about={{ screen: 'Your bottles', barId: profile.bar_id, barName: profile.display_name }}
+            ask={{ title: 'What’s missing or wrong?', field: 'Which bottle, and what to fix' }}
+          />
+        ) : null}
         {open ? <BottlePhotoSheet profileId={profile.id} bottle={open} current={photos[open.id] ?? null} onClose={() => setOpen(null)} /> : null}
       </View>
     );
@@ -120,5 +134,6 @@ const styles = StyleSheet.create({
   welcome: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: 1, borderRadius: radius.card },
   tick: { width: 32, height: 32, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1, minWidth: 0 },
+  tellUs: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space.sm, minHeight: layout.minTapTarget },
   bold: { fontFamily: fontFamilies.bodySemiBold },
 });

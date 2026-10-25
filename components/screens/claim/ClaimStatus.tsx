@@ -76,8 +76,8 @@ export function ClaimPending({ claim, profile }: { claim: ProfileClaim; profile:
   );
 }
 
-/** The page is theirs: where it stands (Menu) and where to choose who sees it. */
-export function ClaimApproved({ profile }: { profile: Profile }) {
+/** The page is theirs: where it stands (Menu) and where to choose who sees it. `onBack`: the dialog's way back to the page under it. */
+export function ClaimApproved({ profile, onBack }: { profile: Profile; onBack?: () => void }) {
   const ds = useDs();
   const router = useRouter();
   return (
@@ -97,7 +97,7 @@ export function ClaimApproved({ profile }: { profile: Profile }) {
       {profile.kind === 'maker' && profile.makes.includes('bottles') ? (
         <Button label="Add photos of your bottles" size="lg" onPress={() => router.replace(`/p/${profile.handle}/bottles?welcome=1` as Href)} />
       ) : null}
-      <Button label="Back to the page" variant="secondary" onPress={() => router.replace(`/p/${profile.handle}` as Href)} />
+      <Button label="Back to the page" variant="secondary" onPress={onBack ?? (() => router.replace(`/p/${profile.handle}` as Href))} />
     </View>
   );
 }
