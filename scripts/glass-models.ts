@@ -173,14 +173,14 @@ export const LOADS: Load[] = [
 --     snippets, are left empty.`,
   },
   {
-    file: 'supabase/migrations/20261113200000_glass_models_wave5.sql',
+    file: 'supabase/migrations/20261113400000_glass_models_wave5.sql',
     makers: ['arcoroc', 'chef.sommelier', 'bormioli.rocco', 'krosno', 'rona', 'stolzle.lausitz', 'rastal', 'sahm', 'sghr.sugahara', 'toyo.sasaki.glass', 'zalto', 'gabriel.glas', 'grassl', 'josephinenhutte', 'richard.brendon', 'sophienwald', 'sertodo', 'tiki.farm', 'munktiki', 'nude', 'bobo', 'kimura.glass', 'kinto', 'john.jenkins', 'libbey', 'urban.bar', 'luigi.bormioli', 'riedel', 'schott.zwiesel', 'spiegelau', 'cocktail.kingdom'],
     files: ['arcoroc', 'chef.sommelier', 'bormioli.rocco', 'krosno', 'rona', 'stolzle.lausitz', 'rastal', 'sahm', 'sghr.sugahara', 'toyo.sasaki.glass', 'zalto', 'gabriel.glas', 'grassl', 'josephinenhutte', 'richard.brendon', 'sophienwald', 'sertodo', 'tiki.farm', 'munktiki', 'nude.wave5', 'bobo.wave5', 'kimura.glass.wave5', 'kinto.wave5', 'john.jenkins.wave5', 'libbey.wave5', 'urban.bar.wave5', 'luigi.bormioli.wave5', 'riedel.wave5', 'schott.zwiesel.wave5', 'spiegelau.wave5', 'cocktail.kingdom.wave5'],
     header: `
 -- Glass models, wave 5: beer, wine and the makers bars buy from, after
 -- 20261113110000 (traced outlines) and 20261112100000 (the maker pages).
 -- Kevin, 24 Oct 2026: every glass a bar might own, drawn as itself, "beer
--- and wine glasses too". 20261113300000 loads their traced outlines.
+-- and wine glasses too". 20261113410000 loads their traced outlines.
 --
 --   * New glasses from the 19 makers whose pages 20261112100000 added
 --     (Bormioli Rocco, Arcoroc, Chef & Sommelier, Rona, Krosno, Stolzle,

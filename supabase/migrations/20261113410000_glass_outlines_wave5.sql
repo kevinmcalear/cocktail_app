@@ -1,4 +1,4 @@
--- Glass outlines, load 2: wave 5's glasses, after 20261113200000 (which
+-- Glass outlines, load 2: wave 5's glasses, after 20261113400000 (which
 -- adds them) and load 1 (20261113110000).
 --
 --   * 1046 glasses get their traced outline: wave 5's new glasses, and

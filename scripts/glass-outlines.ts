@@ -46,10 +46,10 @@ export const LOADS: OutlineLoad[] = [
 --     (20261113100000 refresh_sketches). A second run changes nothing.`,
   },
   {
-    file: 'supabase/migrations/20261113300000_glass_outlines_wave5.sql',
+    file: 'supabase/migrations/20261113410000_glass_outlines_wave5.sql',
     dir: join(DIR, 'wave5'),
     onlyUntraced: true,
-    header: (count) => `-- Glass outlines, load 2: wave 5's glasses, after 20261113200000 (which
+    header: (count) => `-- Glass outlines, load 2: wave 5's glasses, after 20261113400000 (which
 -- adds them) and load 1 (20261113110000).
 --
 --   * ${count} glasses get their traced outline: wave 5's new glasses, and

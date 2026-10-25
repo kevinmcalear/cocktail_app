@@ -1,7 +1,7 @@
 -- Glass models, wave 5: beer, wine and the makers bars buy from, after
 -- 20261113110000 (traced outlines) and 20261112100000 (the maker pages).
 -- Kevin, 24 Oct 2026: every glass a bar might own, drawn as itself, "beer
--- and wine glasses too". 20261113300000 loads their traced outlines.
+-- and wine glasses too". 20261113410000 loads their traced outlines.
 --
 --   * New glasses from the 19 makers whose pages 20261112100000 added
 --     (Bormioli Rocco, Arcoroc, Chef & Sommelier, Rona, Krosno, Stolzle,
