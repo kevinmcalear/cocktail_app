@@ -57,7 +57,7 @@ interface IngredientsStepProps extends StepProps {
   /** The desktop page: "Add “X”, a bottle you buy" adds the line with its card open under it (this line's key). */
   onNewBottle?: (key: string) => void;
   /** The desktop page: a house prep is written under its own line, not over the page. */
-  inlinePrep?: { venueName: string | null };
+  inlinePrep?: { venueName: string | null; onOpen?: (open: boolean) => void };
 }
 
 /**

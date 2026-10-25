@@ -1,6 +1,7 @@
+import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Caption, DsText, Field, Headline, SketchTintPicker, Spec, Surface, Title, useDs } from '@/components/ds';
+import { BackbarTheme, Body, Caption, DsText, Field, Headline, PressableScale, SketchTintPicker, Spec, Surface, Title, useDs } from '@/components/ds';
 import { SketchDrawing } from '@/components/ds/SketchDrawing';
 import { radius, space } from '@/constants/tokens';
 import { withAlpha } from '@/lib/color';
@@ -10,7 +11,9 @@ import { amountOf, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { menuNote } from '@/lib/menuNote';
 import { formatMoney, priceMinor } from '@/lib/money';
 import type { DraftLook } from '@/lib/sketch/draft';
+import { useMakingKit } from '@/hooks/useBarKit';
 import { useMenuDrinkSpecs } from '@/hooks/useDrinkDesk';
+import { equipmentById } from '@/lib/techniques';
 import type { PricingSettings } from '@/hooks/usePricing';
 
 import { inputsFor } from './SketchHeader';
@@ -111,6 +114,31 @@ function tasteParts(lines: readonly WizardLine[], ingredients: readonly CatalogI
 }
 
 /** On the way to a menu: how the drink sits among its others ("On Winter menu it’s the lightest drink, and the only sherry one"). */
+/** While a recipe is written under its line (make-anything-steps-1, step 4, more to it): the kit its ways are checked against, and where to change it. */
+export function DeskKit() {
+  const ds = useDs();
+  const router = useRouter();
+  const { kit, where, edit } = useMakingKit();
+  const names = [...kit].map((id) => equipmentById(id)?.name ?? id);
+  return (
+    <View style={styles.kit}>
+      <Eyebrow>{`Your kit, from ${where}`}</Eyebrow>
+      <View style={styles.kitList}>
+        {names.length
+          ? names.map((n) => (
+              <View key={n} style={[styles.kitTag, { borderColor: ds.c.lineStrong }]}>
+                <Caption>{n}</Caption>
+              </View>
+            ))
+          : <Caption tone="muted">Nothing on it yet: every way shows, dimmed until you add its kit.</Caption>}
+      </View>
+      <PressableScale role="link" onPress={() => router.push(edit as never)} accessibilityLabel="Change your kit" style={styles.kitEdit}>
+        <Body tone="accent">Change your kit</Body>
+      </PressableScale>
+    </View>
+  );
+}
+
 export function DeskMenuNote({ sectionId, menu, lines, ingredients }: { sectionId: string | null | undefined; menu: string | null; lines: readonly WizardLine[]; ingredients: readonly CatalogIngredient[] }) {
   const others = useMenuDrinkSpecs(menu ? sectionId : null).data;
   const note = menu && others ? menuNote(menu, tasteParts(lines, ingredients), others) : null;
@@ -179,6 +207,10 @@ export function DeskCost({ lines, pricing, price, onPrice }: { lines: DeskCostLi
 }
 
 const styles = StyleSheet.create({
+  kit: { gap: space.sm },
+  kitList: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  kitTag: { paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radius.control, borderWidth: StyleSheet.hairlineWidth },
+  kitEdit: { alignSelf: 'flex-start', paddingVertical: space.xs },
   paper: { padding: space.lg, borderRadius: radius.card + 6 },
   drink: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   colour: { gap: space.xs, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth },

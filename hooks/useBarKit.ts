@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useKit } from '@/hooks/useKit';
+import { useHereVenue } from '@/hooks/useMode';
 import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
 
@@ -75,4 +76,26 @@ export function useToolsFor(barId: string | null, venueName: string | null): { l
     return tools.length ? { label: `${venueName ?? 'the venue'}’s kit`, have: tools } : null;
   }
   return home.length ? { label: 'your kit', have: home } : null;
+}
+
+/**
+ * The kit a recipe being made is checked against (make-anything-steps-1,
+ * step 4, more to it): the venue's Kit when you're working at one, else My
+ * Bar's. `add` is "I have this": it puts the piece on that list; `edit` is
+ * where the list is changed.
+ */
+export function useMakingKit(): { kit: ReadonlySet<string>; where: string; add: (id: string) => void; edit: string } {
+  const venue = useHereVenue();
+  const tools = useBarKit(venue?.id).data;
+  const home = useKit();
+  const setTools = useSetTools(venue?.id ?? '');
+  if (venue) {
+    return {
+      kit: new Set((tools ?? []).flatMap((r) => (r.kind === 'tool' && r.key ? [r.key] : []))),
+      where: `${venue.name}’s Kit`,
+      add: (id) => setTools.mutate({ ids: [id], on: true }),
+      edit: `/settings/bar/${venue.id}/tools`,
+    };
+  }
+  return { kit: home.kit, where: 'My Bar', add: (id) => (home.kit.has(id) ? undefined : home.toggle(id)), edit: '/equipment' };
 }

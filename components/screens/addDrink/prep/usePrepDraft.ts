@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
+import { useMakingKit } from '@/hooks/useBarKit';
 import { useCatalogRecipe } from '@/hooks/usePrepCard';
-import { guessKind, keepLines, KIND_WAYS, openSlots, prepFromCatalog, prepFromTechnique, prepPhrase, sourceSite, startPrep, withMethod, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
+import { FROM_TECHNIQUE, guessKind, keepLines, KIND_WAYS, kitFirstWay, openSlots, prepFromCatalog, prepFromTechnique, prepPhrase, sourceSite, startPrep, withMethod, type PrepDraft, type PrepKindId, type PrepPick } from '@/lib/prepKinds';
 import { methodOf, prepCardFor, waysToMake } from '@/lib/techniques/makeIt';
 import { techniqueById } from '@/lib/techniques';
 
@@ -26,7 +27,8 @@ function firstDraft(name: string, picked: PrepStart['picked'], technique: string
   const chosen = techniqueById(technique);
   if (chosen) return prepFromTechnique(chosen, name, prepCardFor(chosen), picked);
   const kind = guessKind(name);
-  const way = kind ? null : waysToMake(name)[0];
+  // A kind made one of the library's ways (a clarified juice) starts from the way its name points to, else its first.
+  const way = kind && !FROM_TECHNIQUE.includes(kind) ? null : (waysToMake(name)[0] ?? techniqueById(KIND_WAYS[kind ?? 'other']?.[0]?.technique));
   return way ? prepFromTechnique(way, name, prepCardFor(way), picked) : startPrep(kind ?? 'other', name);
 }
 
@@ -38,6 +40,7 @@ function firstDraft(name: string, picked: PrepStart['picked'], technique: string
  * recipe arrives, so the builder can move on to the recipe.
  */
 export function usePrepDraft({ name: started, initial, picked, technique, combined, nameNow }: PrepStart, onSeeded?: () => void) {
+  const { kit } = useMakingKit();
   const name = nameNow?.trim() || started;
   // A recipe already written (or lines just combined) keeps what goes in when another kind is picked.
   const keep = combined || !!initial;
@@ -68,16 +71,17 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
   /**
    * A kind, or one of its ways. A way that fills the method (an infusion,
    * sous vide) keeps what goes in and takes the technique's steps; a new
-   * kind starts its own parts, except for lines that were combined. A wash
-   * starts from its technique's parts.
+   * kind starts its own parts, except for lines that were combined. A wash,
+   * a clarified juice or a distillate starts from its technique's parts: the
+   * way picked, else the first one the kit covers.
    */
   const pickKind = (kind: PrepKindId, wayId?: string) => {
     const way = KIND_WAYS[kind]?.find((w) => w.id === wayId);
     const k = way?.kind ?? kind;
     const t = way?.fills ? techniqueById(way.technique) : null;
     const method = (d: PrepDraft) => (t && way ? withMethod(d, t, { ...prepCardFor(t), steps: methodOf(t) }, way.id) : d);
-    const wash = k === 'wash' && !keep ? techniqueById((way ?? KIND_WAYS.wash?.[0])?.technique) : null;
-    if (wash) return restart(prepFromTechnique(wash, name, prepCardFor(wash), picked));
+    const own = FROM_TECHNIQUE.includes(k) && !keep ? techniqueById((way ?? kitFirstWay(k, kit))?.technique) : null;
+    if (own) return restart(prepFromTechnique(own, name, prepCardFor(own), picked));
     // The same kind made another way: what goes in stays.
     if (t && draft.kind === k) return restart(method(draft));
     const fresh = startPrep(k, name, way?.id);

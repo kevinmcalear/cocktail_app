@@ -17,7 +17,8 @@ interface MakePrepArgs {
   ingredients: readonly CatalogIngredient[];
   aliases: readonly IngredientAlias[];
   /** The desktop page: the prep is written under its own line, not over the page. */
-  inlinePrep?: { venueName: string | null };
+  /** On the desktop page: the card opens under its line; `onOpen` says when one is open, for the page's kit box. */
+  inlinePrep?: { venueName: string | null; onOpen?: (open: boolean) => void };
   add: (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour) => WizardLine;
   change: (key: string, c: Partial<WizardLine>) => void;
 }
@@ -42,7 +43,11 @@ interface Making {
  * its line. Done goes back to the line, which shows the prep.
  */
 export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change }: MakePrepArgs) {
-  const [making, setMaking] = useState<Making | null>(null);
+  const [making, setMakingState] = useState<Making | null>(null);
+  const setMaking = (m: Making | null) => {
+    setMakingState(m);
+    inlinePrep?.onOpen?.(!!m);
+  };
   // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
   const editingKey = making?.key ?? null;
   const makingName = making?.name ?? null;

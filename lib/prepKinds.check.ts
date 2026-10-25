@@ -16,7 +16,7 @@ assert.equal(guessKind('Lime super juice'), 'super');
 assert.equal(guessKind('Chamomile infused gin'), 'infusion');
 assert.equal(guessKind('Miso banana liqueur'), 'infusion', 'a house liqueur is a spirit with a flavour in it');
 assert.equal(guessKind('Salty Boy batch'), 'batch');
-assert.equal(guessKind('Clarified grapefruit'), null);
+assert.equal(guessKind('Clarified grapefruit'), 'clarified');
 assert.deepEqual(flavourWords('Pineapple chili shrub'), ['Pineapple', 'Chili']);
 assert.deepEqual(flavourWords('Rich simple syrup'), []);
 
@@ -55,7 +55,7 @@ assert.equal(wayOf({ kind: 'shrub', hot: true }), wayOf({ kind: 'shrub', way: 'h
 assert.equal(wayOf(startPrep('syrup', 'Simple syrup'))?.id, 'simple');
 assert.equal(wayOf(startPrep('rich', 'Rich syrup'))?.id, 'rich');
 assert.equal(tileOf('oleo'), 'syrup');
-assert.deepEqual(KIND_TILES, ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'super', 'other'], 'as the board draws them');
+assert.deepEqual(KIND_TILES, ['batch', 'infusion', 'syrup', 'cordial', 'shrub', 'wash', 'clarified', 'distillate', 'super', 'other'], 'as the board draws them');
 assert.ok(KIND_TILES.every((k) => PREP_KINDS.some((p) => p.id === k)));
 assert.equal(prepPhrase(shrub), 'a cold shrub');
 assert.equal(prepPhrase(oleo), 'an oleo shrub');
@@ -265,7 +265,8 @@ assert.equal(sourceSite('http://blog.khymos.org/x?y=1'), 'blog.khymos.org');
   assert.equal(sv.storage, 'Fridge, sealed bottle');
   assert.deepEqual(kindOfTechnique('sous-vide-infusion'), { kind: 'infusion', way: 'sous-vide' });
   assert.deepEqual(kindOfTechnique('fat-wash'), { kind: 'wash', way: 'fat' });
-  assert.equal(kindOfTechnique('agar-quick'), null);
+  assert.deepEqual(kindOfTechnique('agar-quick'), { kind: 'clarified', way: 'agar-quick' }, 'a clarified juice is a kind now');
+  assert.equal(kindOfTechnique('tepache'), null, 'a ferment is Something else');
   assert.equal(prepSummary({ ...sv, steps: [...steps, ...steps] }), 'Infusion, sous vide · Miso banana liqueur · 4 steps', 'a stand-in spirit is not named');
   // A kind picked for two lines combined keeps them, with the kind's own method.
   const syrup = keepLines(startPrep('syrup', 'X'), sv);
