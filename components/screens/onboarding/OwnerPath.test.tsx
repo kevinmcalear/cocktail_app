@@ -52,7 +52,7 @@ test('setting up a bar: find it and open its page, or add it, and venue setup ta
 
   await fireEvent.changeText(screen.getByLabelText('Bar name or street'), 'Little Rye');
   await fireEvent.press(screen.getByRole('link', { name: /^Little Rye\. Not claimed yet\. 214 Smith St, Fitzroy · on Cocktail, 12 drinks/ }));
-  expect(mockPush).toHaveBeenCalledWith('/p/little-rye');
+  expect(mockPush).toHaveBeenCalledWith('/p/little-rye?owner=1');
 
   await fireEvent.press(screen.getByRole('link', { name: /My bar isn’t here/ }));
   expect(screen.getByText('Add your bar')).toBeTruthy();

@@ -23,6 +23,7 @@ import { Kicker, PublicPage, SignInBand } from '../published/PublicChrome';
 import { BarMatches } from './BarMatches';
 import { BarRankings } from './BarRankings';
 import { BarYours, useYouHere } from './BarYours';
+import { BarClaimCard } from './BarClaimCard';
 import { ClaimProfile } from './ClaimProfile';
 import { ClassicsTheyPour } from './ClassicsTheyPour';
 import { LockedOriginals } from './LockedOriginals';
@@ -96,6 +97,8 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
   const facts_ = <PublicBarFacts profileId={profile.id} instagram={profile.instagram} />;
   const week = <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />;
   const menus = drinksShown ? section('Menus', <PublicMenus profileId={profile.id} name={profile.display_name} />, wide) : null;
+  // "See your name? Tap it." sits under the menus, or on its own where a private page has none (owner-setup step 3).
+  const seeName = signedIn ? <SeeYourName /> : null;
   const people = section('People', <Positions profile={profile} currentUntitled emptyText={`Nobody is listed at ${profile.display_name} yet.`} />, true);
   const awards = <PublicAwards profileId={profile.id} />;
   const topSection = section(
@@ -111,8 +114,6 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
     <SpecLockPanel title="Drinks stay with the bar" note={privatePageNote(profile.display_name, signedIn)} />
   ) : specsLocked ? (
     <SpecLockPanel note={specLockNote(profile.display_name, unclaimed, false)} action={unclaimed ? <ClaimProfile profile={profile} label="Work here? Claim this page" /> : null} />
-  ) : unclaimed ? (
-    <ClaimProfile profile={profile} />
   ) : null;
   const body = (
     <>
@@ -121,7 +122,8 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
         {wide ? null : facts_}
         <PublicBarActions profile={profile} signedIn={signedIn} />
       </View>
-      {signedIn ? <SeeYourName profile={profile} /> : null}
+      {/* Claiming it comes before its menus (owner-setup call 3). */}
+      <BarClaimCard profile={profile} />
       {signedIn ? <BarMatches barProfileId={profile.id} /> : null}
       {/* Opened from a search: the menu it's pouring follows the matches (disc-search-bar). */}
       {signedIn && searched ? <OnTheMenu profileId={profile.id} /> : null}
@@ -140,6 +142,7 @@ export function PublicBarPage({ profile, signedIn = false }: { profile: Profile;
             {facts_}
             {week}
             {menus}
+            {seeName}
             {people}
             {awards}
           </View>

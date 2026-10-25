@@ -28,6 +28,7 @@ import { MenuNow } from './MenuNow';
 import { Positions } from './Positions';
 import { BarHeader, BarStats, MenuCredits, OriginalsGrid } from './ProfileSections';
 import { PublicBarFacts } from './PublicBarFacts';
+import { BarClaimCard } from './BarClaimCard';
 import { SeeYourName } from './SeeYourName';
 
 type Tab = 'menus' | 'originals' | 'rankings' | 'people';
@@ -93,8 +94,8 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
           )
         }
       />
-      {/* Your name may be on its drinks: the credits below open your page (find-yourself). */}
-      <SeeYourName profile={profile} />
+      {/* Claiming it comes before its menus (owner-setup call 3). */}
+      <BarClaimCard profile={profile} />
       {/* Hours, the address and Instagram, then Directions, Call and Website three across (b32: claimed or not), and where the hours came from. */}
       <PublicBarFacts profileId={profile.id} instagram={profile.instagram} />
 
@@ -108,8 +109,6 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       {awardsOpen ? <Awards profileId={profile.id} /> : null}
 
       <BarFactsList profile={profile} />
-
-      {unclaimed && !specsLocked ? <ClaimProfile profile={profile} /> : null}
 
       <BarWeek barId={profile.bar_id} profileId={profile.id} barName={profile.display_name} />
 
@@ -152,6 +151,8 @@ export function BarProfile({ profile, columns }: { profile: Profile; columns: nu
       ) : (
         <Positions profile={profile} emptyText={`Nobody is listed at ${profile.display_name} yet.`} />
       )}
+      {/* Your name may be on its drinks: the credits open your page (find-yourself), under the menus (owner-setup step 3). */}
+      <SeeYourName />
       {!drinksShown ? (
         <SpecLockPanel title="Drinks stay with the bar" note={privatePageNote(profile.display_name, true)} />
       ) : specsLocked ? (
