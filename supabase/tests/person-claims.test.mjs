@@ -160,7 +160,7 @@ describe('starting a person claim', () => {
     const direct = await users.stranger.client.from('profile_claims').insert({ profile_id: ids.Ash, message: 'This is me' });
     assert.ok(direct.error, 'no direct person claim');
     const privileges = await one(
-      `SELECT has_function_privilege('anon', 'public.start_person_claim(uuid, public.claim_method, text, text)', 'execute') AS anon_start,
+      `SELECT has_function_privilege('anon', 'public.start_person_claim(uuid, public.claim_method, text, text, uuid)', 'execute') AS anon_start,
               has_function_privilege('authenticated', 'private.merge_person_profile(uuid, uuid, uuid, uuid)', 'execute') AS user_merge,
               has_function_privilege('authenticated', 'private.hand_over_claim(uuid, uuid)', 'execute') AS user_hand_over,
               has_table_privilege('authenticated', 'private.profile_merges', 'select') AS user_merges,

@@ -65,3 +65,12 @@ test('on a phone that isn’t theirs, the claim opens on their own phone from a 
   expect(screen.getByLabelText('QR code that opens Ash Okafor’s claim on your phone')).toBeTruthy();
   expect(screen.getByText('Scan with your phone. It opens this claim there, after you sign in with your own email.')).toBeTruthy();
 });
+
+test('once the bar is claimed, it can confirm you', async () => {
+  await renderWithTamagui(<PersonClaimSheet profile={ash} bar="Pale Moth" confirmBar="moth-page" stats={{ drinks: 1, menus: 0 }} visible onClose={jest.fn()} />);
+  const option = screen.getByRole('radio', { name: /^Pale Moth confirms you/ });
+  expect(option).not.toBeDisabled();
+  await fireEvent.press(option);
+  await fireEvent.press(screen.getByRole('button', { name: 'Send claim' }));
+  expect(mockClaim).toHaveBeenCalledWith({ profile_id: 'ash', message: '', method: 'note', confirm_bar: 'moth-page' }, expect.anything());
+});

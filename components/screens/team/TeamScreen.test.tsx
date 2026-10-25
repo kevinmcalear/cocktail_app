@@ -12,7 +12,7 @@ const mockSendAsync = jest.fn();
 let mockRole = 40;
 
 jest.mock('@/components/screens/profile/JobRequests', () => ({ JobRequests: () => null, MyJobRequests: () => null }));
-jest.mock('./JoinRequests', () => ({ JoinRequests: () => null }));
+jest.mock('./JoinRequests', () => ({ JoinRequests: () => null, ClaimsToConfirm: () => null }));
 jest.mock('@/components/maker/MakerCreditRequests', () => ({ MakerCreditRequests: () => null }));
 let mockParams: { invite?: string } = {};
 jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: jest.fn(), back: jest.fn(), canGoBack: () => false }), useLocalSearchParams: () => mockParams }));
