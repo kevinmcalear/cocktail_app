@@ -30,6 +30,12 @@ export interface KitQuestion {
   canNext?: boolean;
   /** Questions after the first can always be skipped. */
   onSkip?: () => void;
+  /** In place of Skip: "Back", "Choose another photo". */
+  secondary?: { label: string; onPress: () => void };
+  /** After "1 of 3": "Draw my glass". */
+  note?: string;
+  /** The main button's own action, in place of the sheet's onNext (a question with steps of its own). */
+  onNext?: () => void;
 }
 
 export interface KitAddSheetProps {
@@ -66,7 +72,7 @@ export function KitAddSheet({ visible, onClose, label, step, total, question, on
               <View key={i} style={[styles.dot, { backgroundColor: i <= step ? ds.accentText : ds.c.lineStrong }]} />
             ))}
           </View>
-          <Caption tone="muted" style={styles.flex}>{`${step + 1} of ${total}`}</Caption>
+          <Caption tone="muted" style={styles.flex}>{`${step + 1} of ${total}${question.note ? ` · ${question.note}` : ''}`}</Caption>
           <CloseButton />
         </View>
         {answered && step > 0 ? (
@@ -89,8 +95,12 @@ export function KitAddSheet({ visible, onClose, label, step, total, question, on
           </Caption>
         ) : null}
         <View style={styles.footer}>
-          {question.onSkip ? <Button label="Skip" variant="secondary" disabled={saving} onPress={question.onSkip} /> : null}
-          <Button label={saving ? 'Saving…' : question.next} disabled={saving || question.canNext === false} onPress={onNext} style={styles.flex} />
+          {question.secondary ? (
+            <Button label={question.secondary.label} variant="secondary" disabled={saving} onPress={question.secondary.onPress} />
+          ) : question.onSkip ? (
+            <Button label="Skip" variant="secondary" disabled={saving} onPress={question.onSkip} />
+          ) : null}
+          <Button label={saving ? 'Saving…' : question.next} disabled={saving || question.canNext === false} onPress={question.onNext ?? onNext} style={styles.flex} />
         </View>
       </SheetScrollView>
     </Sheet>

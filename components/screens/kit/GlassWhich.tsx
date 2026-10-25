@@ -24,10 +24,11 @@ export interface GlassWhichValue {
 /**
  * Question 1 of Add a glass (Kit and ice, step 3): its shape, then the real
  * glass from the catalog (maker, name or code), or Snap the glass for the
- * three closest to a photo. Not there? Name your own: its shape and its name,
+ * three closest to a photo. Not there? Draw my glass from a photo of it
+ * (components/screens/kit/draw), or Name your own: its shape and its name,
  * drawn as that shape.
  */
-export function GlassWhich({ value, onChange, venueModelIds, venueName, shape }: { value: GlassWhichValue; onChange: (v: GlassWhichValue) => void; venueModelIds?: readonly string[]; venueName?: string; /** The search starts on this shape (a drink named it). */ shape?: SketchGlass | null }) {
+export function GlassWhich({ value, onChange, venueModelIds, venueName, shape, onDraw }: { value: GlassWhichValue; onChange: (v: GlassWhichValue) => void; venueModelIds?: readonly string[]; venueName?: string; /** The search starts on this shape (a drink named it). */ shape?: SketchGlass | null; /** Draw my glass, beside Name your own, where the sheet can keep a photo. */ onDraw?: () => void }) {
   const set = (patch: Partial<GlassWhichValue>) => onChange({ ...value, ...patch });
   const pick = (m: GlassModel) => onChange({ ...value, mode: 'picked', model: m, glass: m.glass, variant: m.variant });
 
@@ -42,6 +43,7 @@ export function GlassWhich({ value, onChange, venueModelIds, venueName, shape }:
           onPick={pick}
           onDescribe={() => set({ mode: 'own', model: null })}
           describeLabel="Not there? Name your own"
+          onDraw={onDraw}
         />
         {value.model ? <Button label="Keep the one I had" variant="ghost" onPress={() => set({ mode: 'picked' })} style={styles.start} /> : null}
       </View>
