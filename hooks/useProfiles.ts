@@ -657,6 +657,8 @@ export interface PositionProfile {
   handle: string;
   display_name: string;
   avatar_url: string | null;
+  /** A bar page's venue on Cocktail: set once the bar is claimed. */
+  bar_id: string | null;
 }
 
 export interface Position {
@@ -679,7 +681,7 @@ export interface Position {
   bar: PositionProfile;
 }
 
-const POSITION_PROFILE = 'id, handle, display_name, avatar_url';
+const POSITION_PROFILE = 'id, handle, display_name, avatar_url, bar_id';
 
 export interface PublicPerson {
   id: string;

@@ -58,7 +58,9 @@ export function PersonClaimSheet({
   const claim = useClaimProfile();
   const [note, setNote] = useState('');
   const handle = pageInstagram(profile);
-  const [method, setMethod] = useState<PersonClaimMethod | 'bar'>(handle ? 'instagram' : 'note');
+  const [chosen, setMethod] = useState<PersonClaimMethod | 'bar'>(handle ? 'instagram' : 'note');
+  // The bar can't confirm any more (its page changed): back to the first way that works.
+  const method = chosen === 'bar' && !confirmBar ? (handle ? 'instagram' : 'note') : chosen;
   // Made before sending, so the sheet can show it first (as a bar's claim does).
   const [code] = useState(newClaimCode);
   const moves = [stats.drinks ? plural(stats.drinks, 'drink') : null, stats.menus ? plural(stats.menus, 'menu') : null, 'where you have worked'].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' and $1');

@@ -62,18 +62,17 @@ before(async () => {
   ids.venue = (await one('INSERT INTO public.bars (name) VALUES ($1) RETURNING id', [`Confirm Bar ${run}`])).id;
   ids.otherVenue = (await one('INSERT INTO public.bars (name) VALUES ($1) RETURNING id', [`Other Bar ${run}`])).id;
   bars.push(ids.venue, ids.otherVenue);
-  // The bar page was claimed an hour ago; Unclaimed has no venue.
+  // Moth is claimed, with a venue; Unclaimed has none.
   await page('Moth', 'bar', { bar_id: ids.venue });
-  await db.query("UPDATE public.profiles SET claimed_at = now() - interval '1 hour' WHERE id = $1", [ids.Moth]);
   await page('Unclaimed', 'bar');
   await page('Ash', 'person');
   await page('Late', 'person');
   await page('Admins', 'person');
+  await page('Rival', 'person');
   await job('Ash', 'Moth', '2 days');
   await job('Admins', 'Moth', '2 days');
+  await job('Rival', 'Moth', '2 days');
   await job('Ash', 'Unclaimed', '2 days');
-  // Listed after the bar was claimed: its Admin could have added it.
-  await job('Late', 'Moth', '1 minute');
   await db.query('INSERT INTO public.user_bars (user_id, bar_id, role_level) VALUES ($1, $2, 40), ($3, $2, 30), ($4, $5, 40)', [
     users.admin.id,
     ids.venue,
@@ -93,7 +92,20 @@ after(async () => {
 });
 
 describe('asking the bar', () => {
-  test('only a claimed bar the page listed before it was claimed', async () => {
+  test('a job the bar’s Admin adds in the app is marked so, whatever they send', async () => {
+    const forged = await users.admin.client
+      .from('profile_positions')
+      .insert({ person_profile_id: ids.Late, bar_profile_id: ids.Moth, title: 'Bartender', is_current: true, added_in_app: false });
+    assert.ok(forged.error, 'nobody writes the flag');
+    const { error } = await users.admin.client.from('profile_positions').insert({ person_profile_id: ids.Late, bar_profile_id: ids.Moth, title: 'Bartender', is_current: true });
+    assert.ifError(error);
+    const row = await one('SELECT added_in_app FROM public.profile_positions WHERE person_profile_id = $1', [ids.Late]);
+    assert.equal(row.added_in_app, true);
+    await db.query('UPDATE public.profile_positions SET added_in_app = false WHERE person_profile_id = $1', [ids.Late]);
+    assert.equal((await one('SELECT added_in_app FROM public.profile_positions WHERE person_profile_id = $1', [ids.Late])).added_in_app, true, 'and it stays marked');
+  });
+
+  test('only a claimed bar, at a job we found rather than one added in the app', async () => {
     assert.match((await claim('jo', 'Ash', { p_confirm_bar: ids.Unclaimed })).error?.message ?? '', /can't confirm you yet/);
     assert.match((await claim('jo', 'Late', { p_confirm_bar: ids.Moth })).error?.message ?? '', /can't confirm you yet/);
   });
@@ -148,6 +160,18 @@ describe('the bar confirms', () => {
     const list = await users.admin.client.rpc('person_claims_to_confirm', { p_bar_id: ids.venue });
     assert.equal(list.data.length, 0);
     assert.match((await users.admin.client.rpc('confirm_person_claim', { p_claim_id: mine.data.id })).error?.message ?? '', /isn't waiting on you/);
+  });
+
+  test('with someone else’s claim waiting on the page, a moderator decides', async () => {
+    const theirs = await claim('stranger', 'Rival');
+    assert.ifError(theirs.error);
+    const asked = await claim('jo', 'Rival', { p_confirm_bar: ids.Moth });
+    assert.ifError(asked.error);
+    const list = await users.admin.client.rpc('person_claims_to_confirm', { p_bar_id: ids.venue });
+    assert.equal(list.data.length, 0);
+    assert.match((await users.admin.client.rpc('confirm_person_claim', { p_claim_id: asked.data.id })).error?.message ?? '', /isn't waiting on you/);
+    assert.equal((await one('SELECT status FROM public.profile_claims WHERE id = $1', [theirs.data.id])).status, 'pending');
+    await db.query("UPDATE public.profile_claims SET status = 'rejected' WHERE id = ANY($1)", [[theirs.data.id, asked.data.id]]);
   });
 
   test('a claim that didn’t ask the bar isn’t the bar’s to confirm', async () => {

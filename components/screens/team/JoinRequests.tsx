@@ -73,6 +73,7 @@ export function ClaimsToConfirm({ barId, barName, admin }: { barId: string; barN
             <View style={styles.flex}>
               <DsText variant="headline" numberOfLines={2}>{`${c.claimant_name} says they’re ${c.page_name}`}</DsText>
               <TextLink label={`See ${c.page_name}’s page`} onPress={() => router.push(`/p/${c.page_handle}` as Href)} />
+              {c.claimant_handle ? <TextLink label={`Their own page, @${c.claimant_handle}`} tone="ink" onPress={() => router.push(`/p/${c.claimant_handle}` as Href)} /> : null}
               <View style={styles.actions}>
                 <Button label="Confirm" disabled={confirm.isPending} accessibilityLabel={`Confirm ${c.claimant_name} is ${c.page_name}`} onPress={() => confirm.mutate(c.id)} />
               </View>

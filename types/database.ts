@@ -3833,6 +3833,7 @@ export type Database = {
       }
       profile_positions: {
         Row: {
+          added_in_app: boolean
           bar_accepted: boolean
           bar_profile_id: string
           created_at: string
@@ -3850,6 +3851,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          added_in_app?: boolean
           bar_accepted?: boolean
           bar_profile_id: string
           created_at?: string
@@ -3867,6 +3869,7 @@ export type Database = {
           title: string
         }
         Update: {
+          added_in_app?: boolean
           bar_accepted?: boolean
           bar_profile_id?: string
           created_at?: string

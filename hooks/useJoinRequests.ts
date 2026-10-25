@@ -118,6 +118,8 @@ export function useConfirmPersonClaim(barId: string) {
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['claims-to-confirm', barId] });
+      // The page is theirs now, or merged into theirs and gone.
+      await qc.invalidateQueries({ queryKey: ['profile'] });
       await qc.invalidateQueries({ queryKey: ['profile-positions'] });
     },
     onError: () => {},
