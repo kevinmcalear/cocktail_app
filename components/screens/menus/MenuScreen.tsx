@@ -180,6 +180,8 @@ function ShoppingAction({ drinks }: { drinks: { id: string }[] }) {
   const bar = useMyBar();
   const edit = useShoppingEdit();
   const open = () => {
+    // Before My Bar's match is in, there's nothing to say what the menu is short of.
+    if (bar.isLoading) return;
     const adds = menuShopping(drinks, bar.oneAway, bar.twoAway).map((a) => ({ ...a, source: 'menu' as const }));
     if (adds.length) edit.add.mutate(adds);
     router.push('/shopping' as Href);

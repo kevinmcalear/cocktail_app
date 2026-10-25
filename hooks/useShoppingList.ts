@@ -7,6 +7,9 @@ import { supabase } from '@/lib/supabase';
 import type { Row } from '@/types/db';
 
 const KEY = ['shopping-list'];
+// ponytail: rows whose tick put the bottle on the shelf, this session only, so Undo never takes off a bottle you
+// already had; after a restart an untick leaves the shelf alone. A got_shelved column would make it durable.
+const shelvedByTick = new Set<string>();
 type Raw = Pick<Row<'shopping_list_items'>, 'id' | 'item_id' | 'name' | 'source' | 'for_item_id' | 'got_at' | 'cleared_at'>;
 
 /** Rows with where each is bought, its picture and the drink it's for, from the catalog. */
@@ -101,20 +104,31 @@ export function useShoppingEdit() {
       const listed = (a: ShoppingAdd) => open.some((r) => (a.itemId ? r.itemId === a.itemId : !r.itemId && r.name.toLowerCase() === a.name.trim().toLowerCase()));
       const rows = adds.filter((a, i) => !listed(a) && adds.findIndex((b) => (a.itemId ? b.itemId === a.itemId : b.name === a.name)) === i);
       if (!rows.length) return 0;
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .insert(rows.map((a) => ({ item_id: a.itemId ?? null, name: a.name.trim(), source: a.source, for_item_id: a.forItemId ?? null })));
-      // 23505: someone else's tap listed it first (another device).
-      if (error && error.code !== '23505') throw error;
-      return rows.length;
+      const insert = (batch: ShoppingAdd[]) =>
+        supabase.from('shopping_list_items').insert(batch.map((a) => ({ item_id: a.itemId ?? null, name: a.name.trim(), source: a.source, for_item_id: a.forItemId ?? null })));
+      const { error } = await insert(rows);
+      if (!error) return rows.length;
+      if (error.code !== '23505') throw error;
+      // 23505: another device listed one of them first, which fails the whole insert. One at a time, skipping those.
+      const one = await Promise.all(rows.map((a) => insert([a])));
+      const failed = one.find((r) => r.error && r.error.code !== '23505');
+      if (failed?.error) throw failed.error;
+      return one.filter((r) => !r.error).length;
     },
     onSettled,
   });
 
   const tick = useMutation({
     mutationFn: async ({ row, got }: { row: ShoppingRow; got: boolean }) => {
-      // A running-low bottle is on the shelf already; anything else goes on (or comes back off) with the tick.
-      if (row.itemId && row.source !== 'running_low') await (got ? shelf.add : shelf.remove).mutateAsync(row.itemId);
+      // A running-low bottle is on the shelf already; anything else goes on with the tick, and comes back off
+      // with Undo only when this tick put it there.
+      if (row.itemId && row.source !== 'running_low') {
+        const had = (client.getQueryData<string[]>(SHELF_KEY) ?? []).includes(row.itemId);
+        if (got && !had) {
+          await shelf.add.mutateAsync(row.itemId);
+          shelvedByTick.add(row.id);
+        } else if (!got && shelvedByTick.delete(row.id)) await shelf.remove.mutateAsync(row.itemId);
+      }
       const { error } = await supabase.from('shopping_list_items').update({ got_at: got ? new Date().toISOString() : null }).eq('id', row.id);
       if (error) throw error;
     },

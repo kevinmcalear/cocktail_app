@@ -40,7 +40,9 @@ export function ShoppingScreen() {
   const edit = useShoppingEdit();
   const [mode, setMode] = useState<ShoppingMode>('shop');
   const [sharing, setSharing] = useState(false);
-  const [done, setDone] = useState(false);
+  // Back from the shop: once something is ticked here and nothing is left to get.
+  const [tickedHere, setTickedHere] = useState(false);
+  const [doneClosed, setDoneClosed] = useState(false);
   // What the shelf made when the page opened, so Back from the shop can say what's new.
   const [madeBefore, setMadeBefore] = useState<string[] | null>(null);
   if (!madeBefore && !bar.isLoading) setMadeBefore([...bar.canMakeIds]);
@@ -57,10 +59,11 @@ export function ShoppingScreen() {
   const toggle = (row: ShoppingRow, on: boolean) => {
     edit.tick.mutate({ row, got: on });
     if (!on) return;
+    setTickedHere(true);
     toast.show({ title: row.name, detail: gotLine(row, opens(row)), action: { label: 'Undo', onPress: () => edit.tick.mutate({ row, got: false }) } });
-    // The last thing ticked: back from the shop.
-    if (open.length === 1) setDone(true);
   };
+  if (doneClosed && open.length) setDoneClosed(false);
+  const done = tickedHere && !doneClosed && !open.length && got.length > 0;
   const back = () => (router.canGoBack() ? router.back() : router.navigate('/bar' as Href));
   const ready = madeBefore ? bar.canMake.filter((d) => !madeBefore.includes(d.id)) : [];
 
@@ -127,7 +130,7 @@ export function ShoppingScreen() {
         ) : null}
       </ScrollView>
       <ShareShoppingSheet text={shoppingText(shoppingGroups(open, 'shop', bar.oneAway))} visible={sharing} onClose={() => setSharing(false)} />
-      <ShoppingDoneSheet got={got} ready={ready} visible={done} onClose={() => setDone(false)} />
+      <ShoppingDoneSheet got={got} ready={ready} visible={done} onClose={() => setDoneClosed(true)} />
     </View>
   );
 }
