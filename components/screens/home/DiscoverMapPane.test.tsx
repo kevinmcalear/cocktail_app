@@ -4,6 +4,7 @@ import { renderWithTamagui } from '@/jest.setup';
 import type { DiscoverBar, DiscoverDrink, DrinkFilter } from '@/lib/discoverDrinks';
 import type { Area } from '@/lib/nearMe';
 
+import type { MapLayer } from './DiscoverControls';
 import { DiscoverMapPane } from './DiscoverMapPane';
 import { PickedBar } from './SelectedBar';
 
@@ -45,6 +46,8 @@ jest.mock('@/hooks/useSpecMatches', () => ({ useVersionLabel: () => undefined, u
 jest.mock('@/hooks/useBarFacts', () => ({ useBarFacts: () => ({ data: null }) }));
 jest.mock('@/hooks/useBarBrands', () => ({ useBarBrand: () => null }));
 jest.mock('@/components/screens/kept/LoveBarButton', () => ({ LoveBarButton: () => null }));
+// The first-open ask has its own test (FirstOpenSheet.test.tsx).
+jest.mock('@/components/screens/home/FirstOpenSheet', () => ({ FirstOpenSheet: () => null }));
 // The hero's Collect and Rank have their own tests; here they only need to be there.
 jest.mock('@/components/screens/published/CollectButton', () => {
   const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
@@ -58,9 +61,9 @@ const mockSnap = jest.fn();
 jest.mock('@gorhom/bottom-sheet', () => {
   const { forwardRef, useImperativeHandle } = jest.requireActual<typeof import('react')>('react');
   const { FlatList, ScrollView, View } = jest.requireActual<typeof import('react-native')>('react-native');
-  const BottomSheet = forwardRef(function BottomSheet({ children }: { children: React.ReactNode }, ref) {
+  const BottomSheet = forwardRef(function BottomSheet({ children, handleComponent: Handle }: { children: React.ReactNode; handleComponent?: React.ComponentType<{ animatedIndex: { value: number } }> }, ref) {
     useImperativeHandle(ref, () => ({ snapToIndex: mockSnap }));
-    return <View>{children}</View>;
+    return <View>{Handle ? <Handle animatedIndex={{ value: 1 }} /> : null}{children}</View>;
   });
   return { __esModule: true, default: BottomSheet, BottomSheetScrollView: ScrollView, BottomSheetFlatList: FlatList };
 });
@@ -97,14 +100,10 @@ function drink(id: string, name: string, styles: string[] = [], match: DiscoverD
 
 const more = { total: null, hasMore: false, loadMore: () => {}, loading: false };
 
-interface Extra {
-  from?: { latitude: number; longitude: number } | null;
-  pick?: { id: string | null; onPick: (pin: unknown) => void; onLayer: (layer: string) => void };
-  /** Wide browsing offers a drink's best only once a style is picked. */
-  kinds?: string[];
-}
+/** `kinds`: a style's best needs one picked. `title`: the list's, "Drinks anywhere" browsing. */
+interface Extra { from?: { latitude: number; longitude: number } | null; pick?: { id: string | null; onPick: (pin: unknown) => void }; kinds?: string[]; layer?: MapLayer; topBars?: boolean; browse?: React.ReactNode; title?: string }
 
-function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side', search = '', extra: Extra = {}) {
+function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } | null = null, mode: 'side' | 'sheet' = 'side', search = '', { title = 'Martinis anywhere', ...extra }: Extra = {}) {
   mockDrinks = drinks;
   mockBars = [{ ...bar, drinks: drinks.length }];
   return renderWithTamagui(
@@ -114,7 +113,8 @@ function renderPane(drinks: DiscoverDrink[], pick: { id: string; name: string } 
       onArea={() => {}}
       drink={pick}
       filter={{ kinds: extra.kinds ?? [], search, area }}
-      results={{ drinks, more, barsById: new Map([[bar.id, bar]]), isLoading: false, title: 'Martinis anywhere' }}
+      results={{ drinks, more, barsById: new Map([[bar.id, bar]]), isLoading: false, title }}
+      layer="drinks"
       {...extra}
     />
   );
@@ -159,10 +159,6 @@ test('searching, pins name the best match and a tapped bar leads with the drink,
   ];
   await renderPane(drinks, { id: 'martini', name: 'Martini' }, 'sheet', 'martini');
 
-  // The layers read as a sort while searching.
-  expect(screen.getByRole('radio', { name: 'Best match' })).toBeTruthy();
-  expect(screen.getByRole('radio', { name: 'Top rated' })).toBeTruthy();
-  expect(screen.queryByRole('radio', { name: 'Top bars' })).toBeNull();
   // The weaker match sits under its own heading, saying why.
   expect(screen.getByText('Also mentions “martini”')).toBeTruthy();
   expect(screen.getByText(/Has Martini Rosso/)).toBeTruthy();
@@ -211,13 +207,12 @@ test('an early bar\'s card has no top drinks block', async () => {
   expect(screen.queryByText('Top drinks here')).toBeNull();
 });
 
-test('Best Martini lists every martini at the bar, scores beside the scored ones only', async () => {
+test('Martinis best first lists every martini at the bar, scores beside the scored ones only', async () => {
   mockTopDrinks = [];
   mockScores = { d2: 9.2 };
   const drinks = [drink('d1', 'House Martini', ['martini']), drink('d2', 'Gibson', ['martini']), drink('d3', 'Bamboo')];
-  await renderPane(drinks, { id: 'martini', name: 'Martini' }, 'side', '', { kinds: ['gin'] });
+  await renderPane(drinks, { id: 'martini', name: 'Martini' }, 'side', '', { kinds: ['martini'], layer: 'best' });
 
-  await fireEvent.press(screen.getByRole('radio', { name: 'Best Martini' }));
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage" }));
 
   // A style is picked, so the card leads with its best martini (one 9.2, no "ranked by" line), then the next.
@@ -229,27 +224,32 @@ test('Best Martini lists every martini at the bar, scores beside the scored ones
 
 test('searching on a phone with somewhere to count from, Nearest lists the closest first with how far', async () => {
   const drinks = [drink('d1', 'Dirty Martini', [], { kind: 'name', text: null }), drink('d2', 'Gibson', [], { kind: 'riff', text: 'Martini' }, 'Riff on a Martini')];
-  await renderPane(drinks, null, 'sheet', 'martini', { from: { latitude: -37.8, longitude: 144.97 } });
-  await fireEvent.press(screen.getByRole('radio', { name: 'Nearest' }));
+  await renderPane(drinks, null, 'sheet', 'martini', { from: { latitude: -37.8, longitude: 144.97 }, layer: 'nearest' });
   const rows = screen.getAllByText(/^(Dirty Martini|Gibson)$/).map((n) => n.props.children?.props?.text ?? n.props.children);
   expect(rows).toEqual(['Gibson', 'Dirty Martini']);
   // Metres or miles, as the device's region uses.
   expect(screen.getByText(/400 m|0\.2 mi/)).toBeTruthy();
 });
 
-test('browsing on a phone, Nearest sits beside the mixed list; none without somewhere to count from', async () => {
-  await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', '', { from: { latitude: -37.8, longitude: 144.97 } });
-  expect(screen.getByRole('radio', { name: 'Nearest' })).toBeTruthy();
-  await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', 'martini');
-  expect(screen.queryByRole('radio', { name: 'Nearest' })).toBeNull();
+test('phones: the sheet says what the map shows, the shelves lead only while browsing, and See all lists the top bars', async () => {
+  const { Text } = jest.requireActual<typeof import('react-native')>('react-native');
+  const shelves = <Text>the shelves</Text>;
+  await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', '', { browse: shelves, title: 'Drinks anywhere' });
+  expect(screen.getByRole('heading', { name: 'Drinks anywhere' })).toBeTruthy();
+  expect(screen.getByText('the shelves')).toBeTruthy();
+  expect(screen.getByRole('heading', { name: 'All drinks anywhere' })).toBeTruthy();
+  await renderPane([drink('d1', 'Dirty Martini', ['martini'])], { id: 'martini', name: 'Martini' }, 'sheet', '', { browse: shelves, kinds: ['martini'], layer: 'best' });
+  expect(screen.queryByText('the shelves')).toBeNull();
+  // Top bars' See all lists the bars in the sheet, in place of the drinks.
+  await renderPane([drink('d1', 'Dirty Martini')], null, 'sheet', '', { topBars: true });
+  expect(screen.getByRole('heading', { name: 'Top bars anywhere' })).toBeTruthy();
+  expect(screen.getByText('No bars anywhere on Cocktail yet.')).toBeTruthy();
+  expect(screen.queryByText('Dirty Martini')).toBeNull();
 });
 
 test('on wide screens a tapped pin goes to the list, not a card over the map', async () => {
   const onPick = jest.fn();
-  const onLayer = jest.fn();
-  await renderPane([drink('d1', 'Dirty Martini', [], { kind: 'name', text: null })], { id: 'martini', name: 'Martini' }, 'side', 'martini', { pick: { id: null, onPick, onLayer } });
-  // Searching, the sort chips sit in the list pane (DeskSearchResults), not over the map.
-  expect(screen.queryByRole('radio', { name: 'Top rated' })).toBeNull();
+  await renderPane([drink('d1', 'Dirty Martini', [], { kind: 'name', text: null })], { id: 'martini', name: 'Martini' }, 'side', 'martini', { pick: { id: null, onPick } });
   await fireEvent.press(screen.getByRole('button', { name: "pin Caretaker's Cottage (Dirty Martini)" }));
   expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ id: bar.id }));
   expect(screen.queryByRole('button', { name: 'Open drink' })).toBeNull();
@@ -278,7 +278,7 @@ test("the wide list's tapped bar shows Top rated scores, as the map does", async
 test('switching to a city fits its bars, not the last area\'s still on screen', async () => {
   const nyc: DiscoverBar = { ...bar, id: 'b2', name: 'Dante', city: 'New York', countryCode: 'US', latitude: 40.73, longitude: -74.0, drinks: 3 };
   const results = { drinks: [], more, barsById: new Map(), isLoading: false, title: 'Drinks' };
-  const pane = (where: Area) => <DiscoverMapPane mode="side" area={where} onArea={() => {}} drink={null} filter={{ kinds: [], search: '', area: where }} results={results} />;
+  const pane = (where: Area) => <DiscoverMapPane mode="side" area={where} onArea={() => {}} drink={null} filter={{ kinds: [], search: '', area: where }} results={results} layer="drinks" />;
   mockBarsQuery = { data: [{ ...bar, drinks: 2 }, nyc], isPending: false, isPlaceholderData: false };
   const { rerender } = await renderWithTamagui(pane(area));
   const anywhere = mockCamera;

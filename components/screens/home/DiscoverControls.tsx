@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
-import { BackHandler, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { BackHandler, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Body, Chip, DsText, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
+import { Body, DsText, GlassButton, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { fontFamilies, layout, radius, space } from '@/constants/tokens';
 import type { Area } from '@/lib/nearMe';
@@ -120,42 +120,6 @@ export function FiltersButton({ filters, onPress }: { filters: number; onPress: 
   );
 }
 
-/** The List / Map pill's height: its buttons in the track's padding. */
-export const VIEW_PILL = layout.minTapTarget + space.xs;
-const VIEW_BUTTON = VIEW_PILL - 2 * space.xs;
-
-const VIEWS = [
-  { value: 'list', label: 'List', icon: 'list.bullet' },
-  { value: 'map', label: 'Map', icon: 'map.fill' },
-] as const;
-
-/**
- * List / Map, floating over the phone's content (discover-options-proposal),
- * as Airbnb and Yelp have it. It stays put as the list scrolls. The one
- * showing is a solid ink pill.
- */
-export function ViewPill({ showing, onChange }: { showing: 'list' | 'map'; onChange: (view: 'list' | 'map') => void }) {
-  const ds = useDs();
-  return (
-    <GlassSurface interactive style={[styles.track, styles.lifted, { shadowColor: ds.c.ground }]}>
-      <View role="radiogroup" accessibilityLabel="Show as" style={styles.views}>
-        {VIEWS.map((v) => {
-          const on = v.value === showing;
-          const ink = on ? ds.c.ground : ds.c.ink;
-          return (
-            <PressableScale key={v.value} role="radio" aria-checked={on} accessibilityLabel={v.label} onPress={() => onChange(v.value)} style={[styles.view, on ? { backgroundColor: ds.c.ink } : null]}>
-              <IconSymbol name={v.icon} size={16} color={ink} />
-              <DsText variant="label" color={ink}>
-                {v.label}
-              </DsText>
-            </PressableScale>
-          );
-        })}
-      </View>
-    </GlassSurface>
-  );
-}
-
 /** "Search this area", once the person has moved the map. */
 export function SearchHere({ onPress }: { onPress: () => void }) {
   return (
@@ -165,54 +129,12 @@ export function SearchHere({ onPress }: { onPress: () => void }) {
   );
 }
 
-export type MapLayer = 'drinks' | 'best' | 'bars' | 'nearest';
-
-interface MapLayersProps {
-  layer: MapLayer;
-  onLayer: (layer: MapLayer) => void;
-  /** The drink picked on Discover, for "Best Martini". */
-  drinkName: string | null;
-  searching: boolean;
-  /** Whether there's a place to measure Nearest from. */
-  nearest: boolean;
-  /** Over the map, in a glass track: the unpicked ones rest bare. */
-  onGlass?: boolean;
-}
-
-/**
- * What the map shows: the matching drinks, a drink's best ("Best Martini")
- * or the top bars. Searching, they read as a sort of what was found: Best
- * match, Top rated, and Nearest when there's somewhere to measure from.
- */
-export function MapLayers({ layer, onLayer, drinkName, searching, nearest, onGlass }: MapLayersProps) {
-  const look = onGlass ? 'glass' : 'outline';
-  return (
-    <View role="radiogroup" accessibilityLabel="Show on the map" style={[styles.chips, onGlass ? styles.glassChips : null]}>
-      <Chip look={look} label={searching ? 'Best match' : 'Drinks'} selected={layer === 'drinks'} onPress={() => onLayer('drinks')} />
-      {drinkName ? <Chip look={look} label={searching ? 'Top rated' : `Best ${drinkName}`} selected={layer === 'best'} onPress={() => onLayer('best')} /> : null}
-      {nearest ? <Chip look={look} label="Nearest" selected={layer === 'nearest'} onPress={() => onLayer('nearest')} /> : null}
-      {searching ? null : <Chip look={look} label="Top bars" selected={layer === 'bars'} onPress={() => onLayer('bars')} />}
-    </View>
-  );
-}
-
-/** The layers over the map in a glass track, scrolling sideways when they don't fit (a phone's four, with Nearest). */
-export function GlassLayers(props: Omit<MapLayersProps, 'onGlass'>) {
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.edge} contentContainerStyle={styles.edgeRow}>
-      <GlassSurface style={styles.track}>
-        <MapLayers {...props} onGlass />
-      </GlassSurface>
-    </ScrollView>
-  );
-}
+/** How the drinks are ordered (DiscoverOptions.tsx): mixed (browsing; "Best match" searching), a style's best first ("Top rated" searching), or nearest. */
+export type MapLayer = 'drinks' | 'best' | 'nearest';
 
 const styles = StyleSheet.create({
-  chips: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
-  glassChips: { gap: space.xs + 2 },
   center: { alignItems: 'center' },
   flex: { flex: 1, minWidth: 0 },
-  shrink: { flexShrink: 1 },
   // 48 tall, as every Discover board draws its search (disc-desk-browse, disc-map).
   pill: {
     flexDirection: 'row',
@@ -235,11 +157,4 @@ const styles = StyleSheet.create({
   count: { minWidth: 20, height: 20, paddingHorizontal: space.xs, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   countText: { fontFamily: fontFamilies.bodySemiBold },
   corner: { position: 'absolute', top: -space.xs, right: -space.xs },
-  track: { padding: space.xs, borderRadius: radius.pill },
-  // Edge to edge, so the track scrolls out under the screen's sides.
-  edge: { marginHorizontal: -space.lg, flexGrow: 0 },
-  edgeRow: { paddingHorizontal: space.lg },
-  lifted: { shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 24, elevation: 6 },
-  views: { flexDirection: 'row', gap: 2 },
-  view: { flexDirection: 'row', alignItems: 'center', gap: space.xs + 2, minHeight: VIEW_BUTTON, paddingHorizontal: space.lg, borderRadius: radius.pill, borderCurve: 'continuous' },
 });

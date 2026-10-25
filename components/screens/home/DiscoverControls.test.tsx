@@ -2,7 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithTamagui } from '@/jest.setup';
 
-import { BackPill, FiltersButton, SearchPill, ViewPill } from './DiscoverControls';
+import { BackPill, FiltersButton, SearchPill } from './DiscoverControls';
 import { scrollAwayStep } from './DiscoverHeader';
 import { placeSections } from './DiscoverPlace';
 import { FiltersSheet } from './DiscoverSheet';
@@ -83,18 +83,9 @@ test('the place menu: near me, this area, anywhere, then the cities; the one in 
   expect(placeSections({ ...where, area: { kind: 'anywhere' } }, [])).toHaveLength(1);
 });
 
-test('Filters says how many are on; List / Map switches the view', async () => {
-  const onView = jest.fn();
-  await renderWithTamagui(
-    <>
-      <FiltersButton filters={2} onPress={() => {}} />
-      <ViewPill showing="list" onChange={onView} />
-    </>
-  );
+test('Filters says how many are on', async () => {
+  await renderWithTamagui(<FiltersButton filters={2} onPress={() => {}} />);
   expect(screen.getByRole('button', { name: 'Filters, 2 on' })).toBeTruthy();
-  expect(screen.getByRole('radio', { name: 'List', checked: true })).toBeTruthy();
-  await fireEvent.press(screen.getByRole('radio', { name: 'Map' }));
-  expect(onView).toHaveBeenCalledWith('map');
 });
 
 test('the header goes after a scroll down and comes back after a small scroll up', () => {

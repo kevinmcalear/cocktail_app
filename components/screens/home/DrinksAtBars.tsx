@@ -2,19 +2,21 @@ import { getLocales } from 'expo-localization';
 import { createContext, useContext, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, Headline, PressableScale, RowScore, Segmented, scoreWords as rowScoreWords, useDs, type MatchTextProps } from '@/components/ds';
+import { Caption, DsText, Headline, PressableScale, RowScore, scoreWords as rowScoreWords, useDs, type MatchTextProps } from '@/components/ds';
 import { DrinkRow } from '@/components/screens/DrinkRow';
 import { DiscoverShelves } from '@/components/screens/home/DiscoverShelves';
+import type { MapLayer } from '@/components/screens/home/DiscoverControls';
+import { TopBarsShelf } from '@/components/screens/home/TopBars';
 import { ListNote } from '@/components/screens/rankings/RankingLists';
 import { space } from '@/constants/tokens';
-import { useRowScores } from '@/hooks/useBestDrink';
+import { useBestDrink, useRowScores } from '@/hooks/useBestDrink';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
 import { useDiscoverShelves } from '@/hooks/useDiscoverShelves';
 import { useVersionLabel } from '@/hooks/useSpecMatches';
-import { drinkReason, type BarScore, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
+import { byScore, drinkReason, type BarScore, type DiscoverDrink, type DrinkFilter } from '@/lib/discoverDrinks';
 import { isStrong } from '@/lib/discoverMatch';
 import { itemHref } from '@/lib/itemRoutes';
-import { formatDistance, usesMiles, type Area } from '@/lib/nearMe';
+import { formatDistance, usesMiles } from '@/lib/nearMe';
 import { formatScore } from '@/lib/ranking';
 
 const place = (b: DiscoverDrink['bar']) => [b.locality, b.city].filter(Boolean).join(', ');
@@ -145,6 +147,17 @@ export function DrinkAtBarList({ drinks, limit = 8, scores, more, query, onOpen,
   );
 }
 
+/**
+ * Discover's shelves with nothing picked (disc-map-browse, approved 24 Oct):
+ * For your taste, Top bars here, Top-rated, the style most bars pour, Low &
+ * no. The phone sheet and the wide list both open with them. `around`: the
+ * mixed list they're picked from; signed out, only Top bars shows.
+ */
+export function BrowseShelves({ filter, around, enabled, onKind, onTopBars, onShowBar }: { filter: DrinkFilter; around: DiscoverDrink[]; enabled: boolean; onKind?: (kind: string) => void; onTopBars: () => void; onShowBar?: (barId: string | null) => void }) {
+  const shelves = useDiscoverShelves(filter, around, enabled);
+  return <DiscoverShelves shelves={shelves} second={<TopBarsShelf area={filter.area} onSeeAll={onTopBars} onShowBar={onShowBar} />} onKind={onKind} onShowBar={onShowBar} />;
+}
+
 interface DrinksHereProps {
   title: string;
   drinks: DiscoverDrink[];
@@ -153,51 +166,47 @@ interface DrinksHereProps {
   signedIn: boolean;
   /** What to say when nothing matches. */
   empty: string;
-  /** Where: the bars' scores under each drink come from its top bars. */
-  area: Area;
-  /** Mixed | Nearest: the same drinks closest first, counted from `from` (no switch without it). */
-  near?: { filter: DrinkFilter; from: { latitude: number; longitude: number } | null; onNow: boolean };
+  /** Discover's filter, with its area. Browsing on now with no filter, the shelves come first. */
+  filter: DrinkFilter;
+  onNow: boolean;
+  /** A style picked: its best first, or nearest (OptionChips); `drink` is its classic, for each bar's own score. */
+  order: { layer: MapLayer; drink: { id: string; name: string } | null; from: { latitude: number; longitude: number } | null };
   /** A shelf's See all: list just that kind. */
   onKind?: (kind: string) => void;
+  /** Top bars' See all. */
+  onTopBars: () => void;
   /** A shelf card under the pointer: open that bar on the map. */
   onShowBar?: (barId: string | null) => void;
 }
 
-const SORTS = [
-  { value: 'mixed', label: 'Mixed' },
-  { value: 'nearest', label: 'Nearest' },
-] as const;
-
 /**
- * "Martinis near you": the drinks at bars that match, mixed a bar at a time,
- * or Nearest (option A, Kevin 15 Oct). Browsing on now with no filter, shelves
- * come first and this reads "All drinks near you" (option B, Kevin 15 Oct).
+ * The wide list (disc-desk-browse, approved 24 Oct), as the phone sheet: with
+ * nothing picked, the shelves, then "All drinks near you" mixed a bar at a
+ * time (option A, Kevin 15 Oct). A style picked: "Martinis near you", best
+ * first or nearest, as the options row orders it.
  */
-export function DrinksHere({ title, drinks: mixed, more: mixedMore, isLoading: mixedLoading, signedIn, empty, area, near, onKind, onShowBar }: DrinksHereProps) {
-  const [sort, setSort] = useState<'mixed' | 'nearest'>('mixed');
-  const nearest = sort === 'nearest' && !!near?.from;
-  const closest = useDiscoverList(near?.filter ?? { kinds: [], search: '', area }, { from: near?.from ?? null, onNow: near?.onNow, enabled: nearest });
-  const drinks = nearest ? closest.drinks : mixed;
-  const more = nearest ? { total: closest.totals?.drinks ?? null, hasMore: closest.hasMore, loadMore: closest.loadMore, loading: closest.isLoadingMore } : mixedMore;
-  const isLoading = nearest ? closest.isLoading : mixedLoading;
-  const scores = useRowScores(drinks, area, signedIn);
-  const browsing = signedIn && !!near && near.onNow && !near.filter.kinds.length && !near.filter.notHad && !mixedLoading;
-  const shelves = useDiscoverShelves(near?.filter ?? { kinds: [], search: '', area }, mixed, browsing);
+export function DrinksHere({ title, drinks: mixed, more: mixedMore, isLoading: mixedLoading, signedIn, empty, filter, onNow, order, onKind, onTopBars, onShowBar }: DrinksHereProps) {
+  const picked = filter.kinds.length > 0;
+  const nearest = picked && order.layer === 'nearest' && !!order.from;
+  const bestFirst = picked && !nearest;
+  const best = useBestDrink(order.drink, filter, { load: bestFirst, active: bestFirst });
+  const closest = useDiscoverList(filter, { from: order.from, onNow, enabled: nearest });
+  const drinks = best.scores ? byScore(best.picked, best.scores.drinks) : nearest ? closest.drinks : mixed;
+  const more = bestFirst ? undefined : nearest ? { total: closest.totals?.drinks ?? null, hasMore: closest.hasMore, loadMore: closest.loadMore, loading: closest.isLoadingMore } : mixedMore;
+  const isLoading = bestFirst ? best.isLoading : nearest ? closest.isLoading : mixedLoading;
+  const rows = useRowScores(drinks, filter.area, signedIn && !best.scores);
+  const scores = best.scores ?? rows;
+  const browsing = !picked && onNow && !filter.notHad;
   let body;
   if (!signedIn) body = <ListNote>Sign in to see the drinks bars pour.</ListNote>;
   else if (isLoading) body = <ListNote>Loading…</ListNote>;
   else if (!drinks.length) body = <ListNote>{empty}</ListNote>;
-  else body = <DrinkAtBarList drinks={drinks} more={more} scores={scores} onShowBar={onShowBar} />;
+  else body = <DrinkAtBarList key={order.layer} drinks={drinks} more={more} scores={scores} onShowBar={onShowBar} />;
   return (
     <>
-      <DiscoverShelves shelves={shelves} onKind={onKind} onShowBar={onShowBar} />
+      {browsing ? <BrowseShelves filter={filter} around={mixed} enabled={signedIn && !mixedLoading} onKind={onKind} onTopBars={onTopBars} onShowBar={onShowBar} /> : null}
       <View style={styles.section}>
-        <View style={styles.head}>
-          <Headline role="heading" style={styles.title}>
-            {shelves.length ? title.replace(/^Drinks/, 'All drinks') : title}
-          </Headline>
-          {near?.from && signedIn ? <Segmented options={SORTS} value={sort} onChange={setSort} variant="pill" choice accessibilityLabel="Order" /> : null}
-        </View>
+        <Headline role="heading">{browsing ? title.replace(/^Drinks/, 'All drinks') : title}</Headline>
         {body}
       </View>
     </>
@@ -206,8 +215,6 @@ export function DrinksHere({ title, drinks: mixed, more: mixedMore, isLoading: m
 
 const styles = StyleSheet.create({
   section: { gap: space.xs },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, flexWrap: 'wrap' },
-  title: { flexShrink: 1 },
   more: { alignItems: 'flex-start', paddingTop: space.sm },
   also: { paddingTop: space.lg },
 });
