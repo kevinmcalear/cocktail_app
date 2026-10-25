@@ -496,6 +496,8 @@ export interface MyPersonClaim {
   id: string;
   status: 'pending' | 'approved';
   created_at: string;
+  /** The bar page asked to confirm it ("<bar> confirms you"), if any. */
+  confirm_bar: string | null;
   profile: { id: string; handle: string; display_name: string };
 }
 
@@ -508,15 +510,15 @@ export function useMyPersonClaim() {
     queryFn: async (): Promise<MyPersonClaim | null> => {
       const { data, error } = await supabase
         .from('profile_claims')
-        .select('id, status, created_at, profile:profiles!inner(id, handle, display_name, kind)')
+        .select('id, status, created_at, evidence, profile:profiles!inner(id, handle, display_name, kind)')
         .eq('user_id', userId!)
         .eq('profile.kind', 'person')
         .in('status', ['pending', 'approved'])
         .order('created_at', { ascending: false })
         .limit(1);
       if (error) throw error;
-      const row = (data ?? [])[0] as unknown as { id: string; status: 'pending' | 'approved'; created_at: string; profile: { id: string; handle: string; display_name: string } } | undefined;
-      return row ? { id: row.id, status: row.status, created_at: row.created_at, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
+      const row = (data ?? [])[0] as unknown as { id: string; status: 'pending' | 'approved'; created_at: string; evidence: { confirm_bar?: string } | null; profile: { id: string; handle: string; display_name: string } } | undefined;
+      return row ? { id: row.id, status: row.status, created_at: row.created_at, confirm_bar: row.evidence?.confirm_bar ?? null, profile: { id: row.profile.id, handle: row.profile.handle, display_name: row.profile.display_name } } : null;
     },
   });
 }

@@ -17,6 +17,8 @@ import { SetupChromeProvider, SetupFooter, SetupPage, useSetupChrome } from './S
 export function ClaimSent({ claim, onNext }: { claim: MyPersonClaim; onNext: () => void }) {
   const chrome = useSetupChrome();
   const { data: profile } = useProfile(claim.profile.id);
+  // "<bar> confirms you": its Admin, not a moderator, checks it.
+  const bar = useProfile(claim.confirm_bar).data?.display_name;
   const page = (
     <SetupPage footer={<SetupFooter label="Keep going" onPress={onNext} />}>
       {profile ? <Waiting profile={profile} /> : null}
@@ -29,7 +31,9 @@ export function ClaimSent({ claim, onNext }: { claim: MyPersonClaim; onNext: () 
       value={{
         ...chrome,
         title: 'Claim sent',
-        intro: 'A person checks it, usually within a day. We tell you here once it’s yours.',
+        intro: claim.confirm_bar
+          ? `${bar ?? 'The bar'}’s Admin confirms it, usually the same day. We tell you here once it’s yours.`
+          : 'A person checks it, usually within a day. We tell you here once it’s yours.',
         progress: { at: 3, of: 4, label: 'Step 3 of 4' },
         mark: <Clock />,
       }}
