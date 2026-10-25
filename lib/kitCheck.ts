@@ -37,7 +37,7 @@ export interface CheckDrink {
 }
 
 export interface CheckKit {
-  glasses: readonly { glass: SketchGlass; name: string | null }[];
+  glasses: readonly { id: string; glass: SketchGlass; name: string | null; model_id: string | null }[];
   ice: readonly { id: string; name: string; shape: string; draw_as: string | null; source: string | null }[];
   /** Ours by id. */
   tools: readonly string[];
@@ -82,7 +82,7 @@ const toolWord = (id: string) => {
   const name = (equipmentById(id)?.name ?? id).toLowerCase();
   // "shaker tins", "hawthorne and julep strainers" are plural by their last word; "a mixing glass and bar spoon".
   const last = name.replace(/\s*\(.*\)$/, '').split(' ').pop() ?? '';
-  return /[^s]s$/.test(last) ? name : `a ${name}`;
+  return /[^s]s$/.test(last) ? name : `${/^[aeiou]/.test(name) ? 'an' : 'a'} ${name}`;
 };
 
 /** The tools an ice made here needs and the venue lacks, following what it starts from (each ice once). */

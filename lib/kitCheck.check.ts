@@ -6,7 +6,7 @@ assert.deepEqual(methodTools(['Shake', 'Dry shake']), ['shaker', 'strainers']);
 assert.deepEqual(methodTools(['Build']), []);
 
 const kit = {
-  glasses: [{ glass: 'rocks' as const, name: 'Rocks 300 ml' }, { glass: 'highball' as const, name: null }],
+  glasses: [{ id: 'r', glass: 'rocks' as const, name: 'Rocks 300 ml', model_id: null }, { id: 'h', glass: 'highball' as const, name: null, model_id: null }],
   ice: [
     { id: 'clear', name: 'Clear cube · 50 mm', shape: 'large', draw_as: null, source: 'made' },
     { id: 'block', name: 'Block', shape: 'block', draw_as: null, source: 'made' },
@@ -39,6 +39,7 @@ assert.equal(aviation.glass?.ok, false);
 assert.equal(aviation.ice[0].ok, true);
 assert.deepEqual(aviation.tools?.missing, ['shaker']);
 assert.equal(aviation.needs, 'Needs a coupe and shaker tins');
+assert.equal(kitCheck({ glass: null, ice: [], methods: ['Shake'] }, { ...kit, tools: ['jigger'] }).needs, 'Needs shaker tins and hawthorne and julep strainers');
 
 // Nothing listed is nothing checked; a glass the drawings don't know isn't checked.
 // A made ice's recipe tools aren't checked against a Kit with no tools.
