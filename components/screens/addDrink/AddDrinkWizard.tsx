@@ -41,6 +41,7 @@ import { NotesStep } from './TextSteps';
 import { ServeGuessCard } from './ServeGuessCard';
 import { SketchHeader } from './SketchHeader';
 import { useLineStock } from './StockToggle';
+import { useVenueLines } from './useDeskLines';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { WizardFooter } from './WizardChrome';
 import { WizardFrame } from './WizardFrame';
@@ -159,6 +160,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const tellUsAbout = { drinkName: draft.name, barId, barName: barId ? venueName : null, draftId: draft.id ?? null };
   const coreIds = new Set(dropdowns?.coreIngredientIds ?? []);
   const stock = useLineStock({ barId, venueName, drinkName: draft.name.trim(), ingredients, lines: draft.lines, pinned: !desk });
+  const venueLines = useVenueLines({ draft, set, barId: desk ? null : barId, venueName, ingredients, coreIds });
   const copy = STEP_COPY[step];
   const methods = choiceList(COMMON_METHODS, dropdowns?.methods ?? []);
   const glasses = choiceList(COMMON_GLASSES, dropdowns?.glassware ?? []);
@@ -219,7 +221,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
             coreIds={coreIds}
             shelf={barId ? undefined : new Set(shelfIds ?? [])}
             backBar={barId ? stock.backBar : undefined}
-            stock={stock}
+            stock={stock} {...venueLines.lines}
           />
         );
       case 'method':
@@ -253,7 +255,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         return (
           <>
             {firstRound ? <RoundStrip onSkip={onClose} /> : null}
-            <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} />
+            <ReviewStep draft={draft} set={set} onJump={go} barId={barId} venueName={venueName} hasProfile={!!me} barVariants={barVariants} barIce={barIceKinds} />{venueLines.cost}
           </>
         );
     }
