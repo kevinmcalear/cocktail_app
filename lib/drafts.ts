@@ -1,4 +1,3 @@
-import { reportError } from '@/lib/monitoring';
 import { supabase } from '@/lib/supabase';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 
@@ -104,9 +103,9 @@ export async function resolveIngredientId(id: string, drafts: any[], name?: stri
     }
 
     // The ingredient is published by now, so a draft that won't delete is only
-    // reported: throwing would make the caller publish it again on retry.
+    // logged: throwing would make the caller publish it again on retry.
     const { error: draftError } = await supabase.from('drafts').delete().eq('id', draft.id);
-    if (draftError) reportError(draftError, { where: 'resolveIngredientId', step: 'delete draft' });
+    if (draftError) console.warn('The published ingredient kept its draft', draftError);
 
     return ingredientId;
 }

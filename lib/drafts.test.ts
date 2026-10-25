@@ -2,7 +2,6 @@ import { resolveIngredientId } from '@/lib/drafts';
 
 const mockDeletes: string[] = [];
 let mockCategoryError: { message: string } | null = null;
-jest.mock('@/lib/monitoring', () => ({ reportError: jest.fn() }));
 // 'gin' exists; 'gone' was merged into another ingredient and deleted.
 jest.mock('@/lib/supabase', () => ({
   supabase: {
