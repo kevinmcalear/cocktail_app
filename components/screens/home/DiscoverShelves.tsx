@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useContext, useState } from 'react';
+import { Fragment, useContext, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Caption, DrinkImage, DsText, Headline, PalateFlower, PressableScale, useBreakpoint, useDs, useGutter } from '@/components/ds';
@@ -116,43 +116,47 @@ export function TileGrid({ drinks, rows = 2, atBar, showAll, onShowBar, style }:
  * screens, one drink per bar, with See all setting its filter on the list
  * below. Empty shelves never reach here.
  */
-export function DiscoverShelves({ shelves, onKind, onShowBar }: { shelves: Shelf[]; onKind?: (kind: string) => void; /** Hovering a card opens its bar on the map. */ onShowBar?: (barId: string | null) => void }) {
+export function DiscoverShelves({ shelves, second, onKind, onShowBar }: { shelves: Shelf[]; /** Goes after the first shelf (Top bars, TopBarsShelf). */ second?: ReactNode; onKind?: (kind: string) => void; /** Hovering a card opens its bar on the map. */ onShowBar?: (barId: string | null) => void }) {
   const gutter = useGutter();
   const ds = useDs();
   const wide = useBreakpoint() !== 'phone';
-  return shelves.map((s) => (
-    <View key={s.key} role="region" aria-label={s.title} style={styles.shelf}>
-      <View>
-        <View style={styles.head}>
-          <Headline role="heading" style={styles.flex}>
-            {s.title}
-          </Headline>
-          {s.kind && onKind ? (
-            <PressableScale accessibilityLabel={`See all: ${s.title}`} hitSlop={12} onPress={() => onKind(s.kind!)}>
-              <DsText variant="caption" color={ds.accentText}>
-                See all
-              </DsText>
-            </PressableScale>
-          ) : null}
+  if (!shelves.length) return second ?? null;
+  return shelves.map((s, i) => (
+    <Fragment key={s.key}>
+      <View role="region" aria-label={s.title} style={styles.shelf}>
+        <View>
+          <View style={styles.head}>
+            <Headline role="heading" style={styles.flex}>
+              {s.title}
+            </Headline>
+            {s.kind && onKind ? (
+              <PressableScale accessibilityLabel={`See all: ${s.title}`} hitSlop={12} onPress={() => onKind(s.kind!)}>
+                <DsText variant="caption" color={ds.accentText}>
+                  See all
+                </DsText>
+              </PressableScale>
+            ) : null}
+          </View>
+          {s.taste ? <TasteLine note={s.note} /> : <Caption tone="muted">{s.note}</Caption>}
         </View>
-        {s.taste ? <TasteLine note={s.note} /> : <Caption tone="muted">{s.note}</Caption>}
+        {wide ? (
+          // A shelf with no See all opens its own rest in place.
+          <TileGrid drinks={s.drinks} showAll={s.kind && onKind ? undefined : 'Show all'} onShowBar={onShowBar} />
+        ) : (
+        // Runs to the screen's edges, so a cut-off tile says there's more.
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -gutter }} contentContainerStyle={{ paddingHorizontal: gutter }}>
+          <View role="list" style={styles.row}>
+            {s.drinks.map((d) => (
+              <View role="listitem" key={d.id}>
+                <ShelfTile drink={d} onShowBar={onShowBar} />
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+        )}
       </View>
-      {wide ? (
-        // A shelf with no See all opens its own rest in place.
-        <TileGrid drinks={s.drinks} showAll={s.kind && onKind ? undefined : 'Show all'} onShowBar={onShowBar} />
-      ) : (
-      // Runs to the screen's edges, so a cut-off tile says there's more.
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -gutter }} contentContainerStyle={{ paddingHorizontal: gutter }}>
-        <View role="list" style={styles.row}>
-          {s.drinks.map((d) => (
-            <View role="listitem" key={d.id}>
-              <ShelfTile drink={d} onShowBar={onShowBar} />
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-      )}
-    </View>
+      {i === 0 ? second : null}
+    </Fragment>
   ));
 }
 

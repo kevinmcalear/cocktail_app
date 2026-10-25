@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import type { DiscoverDrink } from './discoverDrinks';
-import { byTaste, chipIds, onePerBar, pickShelves, SHELF_MAX, stylesByBars, topStyle, waysTitle } from './discoverShelves';
+import { byTaste, chipIds, onePerBar, pickShelves, SHELF_MAX, stylesByBars, topRated, topStyle, waysTitle } from './discoverShelves';
 import type { Profile } from './flavor';
 
 const drink = (id: string, barId: string, styles: string[] = []): DiscoverDrink => ({
@@ -57,16 +57,17 @@ assert.equal(waysTitle('sour', 10), 'Sours, ten ways');
 // --- shelves: in order, a shelf under three drinks hidden, titles from where ---
 const around = [drink('a1', 'a'), drink('b1', 'b'), drink('c1', 'c'), drink('d1', 'd')];
 const three = [drink('m1', 'a', ['martini']), drink('m2', 'b', ['martini']), drink('m3', 'c', ['martini'])];
-const all = pickShelves({ where: 'near you', around, style: 'martini', styled: three, zero: three });
+const all = pickShelves({ where: 'near you', around, rated: three, style: 'martini', styled: three, zero: three });
 assert.deepEqual(
   all.map((s) => [s.title, s.kind]),
   [
     ['On menus around you', null],
+    ['Top-rated around you', null],
     ['Martinis, three ways', 'martini'],
-    ['Zero-proof near you', 'zero-proof'],
+    ['Low & no near you', 'zero-proof'],
   ],
 );
-assert.equal(all[1].note, 'The style poured most around here');
+assert.equal(all[2].note, 'The style poured most around here');
 assert.equal(all[0].note, 'One from each bar', 'until a taste orders it (hooks/useDiscoverShelves)');
 const thin = pickShelves({ where: 'in Brooklyn', around, style: 'martini', styled: [drink('m1', 'a'), drink('m2', 'a'), drink('m3', 'b')], zero: [] });
 assert.deepEqual(
@@ -75,6 +76,10 @@ assert.deepEqual(
   'three Martinis at two bars is two drinks after one per bar: hidden; no zero-proof: hidden',
 );
 assert.deepEqual(pickShelves({ where: 'near you', around: around.slice(0, 2), style: null, styled: [], zero: [] }), [], 'two bars: nothing');
+
+// --- top-rated: scored drinks only, best first, one per bar ---
+const rated = topRated([drink('x1', 'a'), drink('x2', 'a'), drink('y1', 'b'), drink('z1', 'c')], { x1: 7, x2: 9, z1: 8 });
+assert.deepEqual(ids(rated), ['x2', 'z1'], "bar a's best only; b has no score");
 
 // --- closest to your taste, one bar each; a drink with no profile goes last ---
 const sweet = (n: number) => ({ sweet: n }) as Profile;

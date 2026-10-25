@@ -12,6 +12,7 @@ const PAGES = new Set([
   'components/screens/ingredient/IngredientScreen.tsx', // the page's body over its hero picture
   'components/screens/ingredient/edit/IngredientEditScreen.tsx', // the same body, editing in place
   'components/screens/home/MyBarTablet.tsx', // the section cards' panels, in the page
+  'components/screens/home/mapSheetChrome.tsx', // the phone map's results panel, docked on the map as Google Maps' is (phone widths only)
 ]);
 const SHEET = 'components/ds/Sheet.tsx';
 

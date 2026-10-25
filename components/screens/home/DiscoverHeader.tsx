@@ -40,7 +40,8 @@ export function DiscoverHeader({ query, onSearch, onClear, place, filters, onFil
       <FiltersButton filters={filters} onPress={onFilters} />
     </View>
   );
-  return <ScreenHeader title="Discover" center={pill} />;
+  // A search (or a picked style) needs the room: you step aside, as the board draws it.
+  return <ScreenHeader title="Discover" center={pill} you={!query.trim() || !!bar} />;
 }
 
 /** Scrolled this far past the top before the header may go, and the travel either way that hides or brings it back. */
