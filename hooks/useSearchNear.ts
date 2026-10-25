@@ -60,7 +60,7 @@ export type MaybeNear<T> = T & { near?: boolean };
  */
 export async function withNear<T extends { id: string }>(
   term: string,
-  kind: NearKind,
+  kind: NearKind | 'maker',
   plain: Promise<T[]>,
   read: (ids: string[]) => Promise<T[]>,
   signal: AbortSignal
@@ -74,7 +74,7 @@ export async function withNear<T extends { id: string }>(
   return [...rows, ...near];
 }
 
-async function nearIds(term: string, kind: NearKind, signal: AbortSignal): Promise<string[]> {
+async function nearIds(term: string, kind: NearKind | 'maker', signal: AbortSignal): Promise<string[]> {
   const { data, error } = await supabase.rpc('search_near', { p_query: term, p_kinds: [kind], p_limit: 4 }).abortSignal(signal);
   if (error) throw error;
   return ((data ?? []) as NearRow[]).map((r) => r.id);

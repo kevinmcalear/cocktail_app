@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { originalsByIds, type Original } from '@/hooks/useProfiles';
+import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { supabase } from '@/lib/supabase';
 
 export interface MakerBottle {
@@ -114,15 +115,20 @@ const MAKER_REF = 'id, handle, display_name, kind';
 /** Makers by name, for a picker: optionally only those that make `makes` ("ice", "glassware", "bottles"). */
 export function useMakerSearch(term: string, makes?: string) {
   const q = term.trim();
+  // Makers spelled close too ("steelite utpia": Steelite-Utopia), marked `near`; they need an account.
+  const close = !!useUserId();
   return useQuery({
-    queryKey: ['maker-search', q, makes ?? null],
+    queryKey: ['maker-search', q, makes ?? null, close],
     enabled: q.length >= 2,
-    queryFn: async (): Promise<MakerRef[]> => {
-      let query = supabase.from('profiles').select(MAKER_REF).eq('kind', 'maker').ilike('display_name', `%${q.replace(/[\\%_]/g, '\\$&')}%`);
-      if (makes) query = query.contains('makes', [makes]);
-      const { data, error } = await query.order('display_name').limit(8);
-      if (error) throw error;
-      return (data ?? []) as MakerRef[];
+    queryFn: async ({ signal }): Promise<MaybeNear<MakerRef>[]> => {
+      const read = async (ids?: string[]): Promise<MakerRef[]> => {
+        let query = supabase.from('profiles').select(MAKER_REF).eq('kind', 'maker');
+        if (makes) query = query.contains('makes', [makes]);
+        const { data, error } = await (ids ? query.in('id', ids) : query.ilike('display_name', `%${q.replace(/[\\%_]/g, '\\$&')}%`).order('display_name').limit(8)).abortSignal(signal);
+        if (error) throw error;
+        return (data ?? []) as MakerRef[];
+      };
+      return close ? withNear(q, 'maker', read(), read, signal) : read();
     },
   });
 }
