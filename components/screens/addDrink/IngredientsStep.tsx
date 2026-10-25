@@ -7,7 +7,7 @@ import { useExpiring } from '@/hooks/useExpiring';
 import { linePrep, perDrinkLines } from '@/lib/batchLines';
 import { guessUnit, newLine, pickByName, typedUnit, type StepProps, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { dropIndex } from '@/lib/dropIndex';
-import { houseNudge } from '@/lib/makeItHouse';
+import { houseNudge, houseWord } from '@/lib/makeItHouse';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 import type { TypedPour } from '@/lib/paste';
 import { bottleKindRow, guessBottleKind } from '@/lib/newBottle';
@@ -15,6 +15,7 @@ import type { PrepDraft } from '@/lib/prepKinds';
 import { suggestAmount, tidyAmount } from '@/lib/specDefaults';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import type { Technique } from '@/lib/techniques';
+import { looksMadeInHouse } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
@@ -23,6 +24,7 @@ import { DragRow } from './DragRow';
 import { BalanceCard } from './GoesWith';
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { IngredientSuggestions } from './IngredientSuggestions';
+import { LineChoices, unmatched } from './LineChoices';
 import { LineRow } from './LineRow';
 import { PasteSpecPanel } from './PasteSpecPanel';
 import type { LineStock } from './StockToggle';
@@ -108,13 +110,11 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   };
   // A bottle you buy, with what its name says it is, filled in on its card under the line.
   const core = ingredients.filter((i) => coreIds?.has(i.id));
-  const newBottle = (name: string, pour?: TypedPour) => {
+  const bottleFor = (name: string): WizardLine['bottle'] => {
     const kind = guessBottleKind(name);
-    const line = add({ id: null, name }, undefined, false, pour, {
-      bottle: { kind, kindId: bottleKindRow(name, kind, core, ingredients)?.id ?? null, abv: '', supplier: null, packAmount: '', packUnit: 'ml', packPrice: '' },
-    });
-    onNewBottle?.(line.key);
+    return { kind, kindId: bottleKindRow(name, kind, core, ingredients)?.id ?? null, abv: '', supplier: null, packAmount: '', packUnit: 'ml', packPrice: '' };
   };
+  const newBottle = (name: string, pour?: TypedPour) => onNewBottle?.(add({ id: null, name }, undefined, false, pour, { bottle: bottleFor(name) }).key);
   const change = (key: string, c: Partial<WizardLine>) => set({ lines: draft.lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
   const remove = (line: WizardLine) => {
     setRemoved({ line, at: draft.lines.indexOf(line) });
@@ -177,9 +177,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                       label={`Swap ${l.name} for…`}
                       autoFocus
                       onCancel={() => setSwapKey(null)}
-                      onPick={(p) => {
+                      onPick={(p, _pour, named) => {
                         // A different ingredient isn't the house prep that was here.
-                        change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined, bottle: undefined });
+                        change(l.key, { id: p.id, name: p.name, prep: undefined, technique: undefined, bottle: undefined, named: named || undefined });
                         setSwapKey(null);
                       }}
                       onMake={
@@ -208,7 +208,21 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                     below={
                       <>
                         {lineBelow?.(l)}
-                        {prep.card(l.key)}
+                        {/* A line that matched nothing asks what it is, until its recipe opens under it (step 10). */}
+                        {prep.card(l.key) ??
+                          (forDrink && unmatched(l) ? (
+                            <LineChoices
+                              line={l}
+                              venueName={bar?.name ?? null}
+                              onMake={(name) => make(name, l.key)}
+                              onBottle={() => {
+                                change(l.key, { bottle: bottleFor(l.name) });
+                                onNewBottle?.(l.key);
+                              }}
+                              // As the search's "Just add the name": one that sounds made here is a recipe to write later.
+                              onName={() => change(l.key, houseWord(l.name) || looksMadeInHouse(l.name) ? { later: true } : { named: true })}
+                            />
+                          ) : null)}
                       </>
                     }
                     stock={stock?.toggle(l)}
@@ -250,7 +264,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
         label={draft.lines.length ? 'Add another ingredient' : 'Add an ingredient'}
         placeholder={placeholder}
         amounts
-        onPick={(pick, pour) => add(pick, undefined, false, pour)}
+        onPick={(pick, pour, named) => add(pick, undefined, false, pour, named ? { named } : undefined)}
         onTyping={setTyping}
         onMake={forDrink ? (name, pour) => make(name, undefined, pour) : undefined}
         onBottle={forDrink && onNewBottle ? newBottle : undefined}

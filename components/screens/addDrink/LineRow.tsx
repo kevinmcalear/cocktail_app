@@ -73,7 +73,7 @@ export function LineRow({ line, onChange, onRemove, onSwap, onEditPrep, units: u
         ? { text: 'House-made, recipe to write', accent: true }
         : line.technique
           ? { text: `House-made: ${techniqueById(line.technique)?.name ?? 'your recipe'}`, accent: true }
-          : { text: 'New, added when you save', accent: false };
+          : { text: line.bottle ? 'A bottle you buy, added when you save' : 'New, added when you save', accent: false };
   // The bottle, then remove: beside the name on a phone, so the controls under it keep their width.
   const ends = (
     <>

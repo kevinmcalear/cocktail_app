@@ -17,6 +17,9 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { layout, space } from "@/constants/tokens";
 import { useBackBarIds } from "@/hooks/useBackBar";
 import type { WizardPick } from "@/lib/drinkWizard";
+import { sameIngredient } from "@/lib/ingredientNames";
+import { houseName } from "@/lib/makeItHouse";
+import { capitalizeFirst } from "@/lib/stringUtils";
 import { bottlesFor } from "@/lib/swapBottle";
 
 import type { DrinkEditor } from "./EditParts";
@@ -31,7 +34,8 @@ interface IngredientPickSheetProps {
   /** Ingredients already in the spec: not suggested again. */
   inSpec: readonly string[];
   onPick: (p: WizardPick) => void;
-  onNew: (name: string) => void;
+  /** A new one, by its name: made in-house (`made`, the recipe steps), else a bottle you buy. */
+  onNew: (name: string, made?: boolean) => void;
   onClose: () => void;
 }
 
@@ -119,6 +123,11 @@ export function IngredientPickSheet({
         brands
         backBar={barId ? backBar : undefined}
         onPick={(p) => (p.id ? onPick(p) : onNew(p.name))}
+        // A name that matches nothing: make it in-house (without "house" in its name), a bottle you buy, or just the name (owner-setup-path, step 10).
+        // The name without "house", unless that is one already ("House falernum" isn’t Falernum).
+        onMake={(name) => onNew(sameIngredient(houseName(name), ingredients) ? capitalizeFirst(name) : houseName(name), true)}
+        onBottle={(name) => onNew(name)}
+        ownVersion={false}
       />
       {typing ? null : loading ? (
         <Body tone="muted">Loading ingredients…</Body>
