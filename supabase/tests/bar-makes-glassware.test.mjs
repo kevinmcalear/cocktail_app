@@ -56,8 +56,9 @@ describe('a bar page may make glassware', () => {
 
   test('a bar that makes glassware may make a venue glass', async () => {
     const err = await refused(
-      `INSERT INTO public.bar_glassware (profile_id, glass, name, maker_profile_id)
-       SELECT (SELECT id FROM public.profiles WHERE handle = 'smugglerscovesf'), 'tiki', 'House mug', (SELECT id FROM public.profiles WHERE handle = 'tonga.hut')`
+      // Not its main tiki glass: Smuggler's Cove already has one (bar_glassware_default_key).
+      `INSERT INTO public.bar_glassware (profile_id, glass, name, maker_profile_id, is_default)
+       SELECT (SELECT id FROM public.profiles WHERE handle = 'smugglerscovesf'), 'tiki', 'House mug', (SELECT id FROM public.profiles WHERE handle = 'tonga.hut'), false`
     );
     assert.equal(err, null);
   });
