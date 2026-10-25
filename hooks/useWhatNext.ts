@@ -5,6 +5,7 @@ import { cocktailQuery } from '@/hooks/useCocktails';
 import { useCreateDrink } from '@/hooks/useCreateDrink';
 import { useDrinkLists, type DrinkList } from '@/hooks/useDiscover';
 import { useViewAs } from '@/hooks/useViewAs';
+import { allRows } from '@/lib/allRows';
 import { draftFromSpec, EMPTY_DRAFT, newDraftId, type SourceSpec } from '@/lib/drinkWizard';
 import { supabase } from '@/lib/supabase';
 import { CLASSIC_COUNT, haveClassics, topClassics } from '@/lib/whatNext';
@@ -92,4 +93,20 @@ export function useAddClassics(barId: string | null | undefined) {
     onSettled: () => client.invalidateQueries({ queryKey: ['bar-classics', barId] }),
   });
   return { ...mutation, done };
+}
+
+/**
+ * The ingredients with a recipe you can see (item_prep): made in-house, not
+ * bottles, so the brands step's search leaves them out (a banana-infused rum,
+ * a house grenadine). A bought one is a product and stays.
+ */
+export function useRecipeIds() {
+  return useQuery({
+    queryKey: ['recipe-ids'],
+    staleTime: 60 * 60_000,
+    queryFn: async (): Promise<string[]> => {
+      const rows = await allRows((from, to) => supabase.from('item_prep').select('item_id').order('item_id').range(from, to));
+      return rows.map((r) => r.item_id);
+    },
+  });
 }
