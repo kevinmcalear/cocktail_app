@@ -17,13 +17,16 @@ interface MenuMoreSheetProps {
   status: MenuStatus;
   visible: boolean;
   onClose: () => void;
+  /** A home menu's night and guests, moved here when Shopping list took its place on the page. */
+  onNight?: () => void;
 }
 
 /**
  * The rest of what you can do with a menu: copy it, put it on or take it off,
- * file a venue's draft under R&D (or back), delete it.
+ * file a venue's draft under R&D (or back), delete it. A home menu also sets
+ * its date and guests here.
  */
-export function MenuMoreSheet({ menu, status, visible, onClose }: MenuMoreSheetProps) {
+export function MenuMoreSheet({ menu, status, visible, onClose, onNight }: MenuMoreSheetProps) {
   const router = useRouter();
   const create = useCreateMenu();
   const end = useEndMenu();
@@ -111,6 +114,17 @@ export function MenuMoreSheet({ menu, status, visible, onClose }: MenuMoreSheetP
 
   return (
     <MenuSheet visible={visible && !asking} onClose={onClose} title={menu.name}>
+      {onNight ? (
+        <Button
+          label="Date and guests"
+          icon="calendar"
+          variant="secondary"
+          onPress={() => {
+            onClose();
+            onNight();
+          }}
+        />
+      ) : null}
       <Button label="Duplicate as a new draft" icon="doc.on.doc" variant="secondary" onPress={duplicate} disabled={busy} />
       {rnd ? null : status === 'on' || status === 'upcoming' ? (
         <Button label={status === 'on' ? 'Take it off now' : 'Unschedule'} icon="xmark" variant="secondary" onPress={takeOff} disabled={busy} />

@@ -10,6 +10,8 @@ import { NOTE_KINDS, NOTE_MIN, noteWord } from '@/lib/flavor';
 import { itemHref } from '@/lib/itemRoutes';
 import { lastedLine } from '@/lib/myBarText';
 
+import { BottleShopping } from '../shopping/BottleShopping';
+
 import type { AwayGroup } from './MakeRows';
 
 /** Bottles to buy listed under With your shelf. */
@@ -33,7 +35,7 @@ const day = (iso: string, year = false) => new Date(iso).toLocaleDateString('en-
  * A bottle on your shelf, over My Bar (board home-mybar-bottle): what it is,
  * what it tastes like, what it makes with the rest of your shelf or what one
  * more bottle would open, and Finished it, which moves it to Your old bottles
- * with how long it lasted. Running low waits for the shopping list (b37, later).
+ * with how long it lasted. Running low and Buy it again go to the shopping list (BottleShopping).
  */
 export function BottleSheet({ item, shelf, canMake, oneAway, onAdd, onFinish, onClose }: BottleSheetProps) {
   const [old, setOld] = useState(false);
@@ -140,10 +142,7 @@ function Bottle({ item, shelf, canMake, oneAway, onAdd, onFinish, onOld, onPage 
         ))}
         <TextLink label={`Every drink with ${item.name}`} onPress={page} />
       </View>
-      <View style={styles.block}>
-        <Button label="Finished it, take it off my shelf" variant="danger" onPress={() => onFinish(item.id)} />
-        <Caption tone="muted">It moves to Your old bottles, so you can buy it again.</Caption>
-      </View>
+      <BottleShopping item={item} onFinish={onFinish} onPage={onPage} />
       {mine.length || finished.length ? (
         <View style={styles.block}>
           <View style={styles.oldHead}>

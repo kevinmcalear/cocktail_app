@@ -173,6 +173,8 @@ const G = {
   wineglass: { d: GLASS + 'M12 12.5V20M8.5 20h7', f: GLASS },
   'wineglass.fill': filled({ d: GLASS + 'M12 12.5V20M8.5 20h7', f: GLASS }),
   'mug.fill': filled({ d: BEER + 'M15 11h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2M6 5.5c1-1.5 3-1.5 4.5 0 1.5-1.5 3.5-1.5 4.5 0', f: BEER }),
+  // The shopping list's basket (shopping B1).
+  basket: { d: 'M4 9h16l-1.5 10.5a1.5 1.5 0 0 1-1.5 1.3H7a1.5 1.5 0 0 1-1.5-1.3zM9 9V7a3 3 0 0 1 6 0v2', f: 'M4 9h16l-1.5 10.5a1.5 1.5 0 0 1-1.5 1.3H7a1.5 1.5 0 0 1-1.5-1.3z' },
   flask: { d: FLASK + 'M7.6 14.5h8.8', f: FLASK_FILL },
   'hammer.fill': filled({ d: 'M14.5 6.5l3 3M4 20l8.5-8.5M11 5l4-1.5 5.5 5.5L19 13l-8-8z', f: 'M11 5l4-1.5 5.5 5.5L19 13z' }),
   snowflake: { d: 'M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5M9.5 4.5L12 7l2.5-2.5M9.5 19.5L12 17l2.5 2.5' },

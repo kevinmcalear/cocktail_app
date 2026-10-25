@@ -54,5 +54,7 @@ export function useShelfCheck(itemId: string, lines: SpecLine[]) {
   const kind = askedForKind ? first?.name : kindOfFirst;
   const inSpec = new Set(lines.map((l) => l.ingredientId));
   const closest = first && kind ? bar.shelf.find((b) => b.kind?.toLowerCase() === kind.toLowerCase() && b.id !== first.id && !inSpec.has(b.id)) : undefined;
-  return { check, missingName: line?.ingredient ?? first?.name ?? null, closest: closest?.name ?? null };
+  // The bottles to buy, for Add to shopping.
+  const buy = verdict && !verdict.ready ? verdict.buy : [];
+  return { check, missingName: line?.ingredient ?? first?.name ?? null, closest: closest?.name ?? null, buy };
 }

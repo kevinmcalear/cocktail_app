@@ -11,6 +11,8 @@ import { itemHref } from '@/lib/itemRoutes';
 import { groupLine, needsLine, pairName, sourceCaption, usesLine } from '@/lib/myBarText';
 import { servedCaption } from '@/lib/servedAt';
 
+import { ToBuyButton } from '../shopping/ToBuy';
+
 import { BarMark } from './BarMark';
 import { CheckList } from './CheckList';
 
@@ -143,6 +145,7 @@ export const BottleGroup = memo(function BottleGroup({ id, group, open, onOpen, 
           </Body>
           <Caption tone="muted">{groupLine(drinks.length, mine)}</Caption>
         </View>
+        <ToBuyButton bottles={bottles} />
         <Button label={bottles.length > 1 ? 'Add both' : 'Add'} variant="secondary" size="sm" accessibilityLabel={`Add ${name} to your shelf`} onPress={() => onAdd(bottles.map((b) => b.id))} />
       </View>
       {(open ? drinks : drinks.slice(0, PER_BOTTLE)).map((d) => (
