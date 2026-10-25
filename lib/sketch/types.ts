@@ -104,7 +104,7 @@ export function readSketchInputs(raw: unknown): SketchInputs | null {
 /** A stored build, kept only as far as this app can paint it. */
 function readBuild(raw: unknown): SketchLayer[] | null {
   if (!Array.isArray(raw)) return null;
-  const named = raw.filter((l) => l && typeof l === 'object' && has(SKETCH_ICES, l.kind) && l.kind !== 'none').map((l) => ({ name: String(l.kind), n: l.n, to: l.to, ...readIceLook(l) }));
+  const named = raw.filter((l) => l && typeof l === 'object' && has(SKETCH_ICES, l.kind) && l.kind !== 'none').map((l) => ({ ...l, name: String(l.kind) }));
   return sketchBuild(named);
 }
 

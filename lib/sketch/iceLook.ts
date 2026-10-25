@@ -12,8 +12,8 @@ import type { IceLook } from './types';
 export interface BoxLook extends IceLook {
   /** The drink's surface, for what's under it. */
   surface: number;
-  /** Faces another piece rests on or sits under, whose edges are joins. */
-  seam?: 'top' | 'bottom' | 'both';
+  /** The face another piece rests on or sits under, whose edges are joins. */
+  seam?: 'top' | 'bottom';
 }
 
 const centre = (pts: Pt[]): Pt => [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
@@ -76,7 +76,10 @@ function stampRing(P: Painter, c: Pt, u: Pt, v: Pt) {
   P.line(ring(0.3), { weight: 0.5, alpha: 0.8, passes: 1, over: 0.3, gaps: 0, wob: 0.3 });
 }
 
-/** Something frozen in the middle, drawn as a small prism: a coloured face and its pencil edges. */
+/**
+ * Something frozen in the middle, drawn as a small prism: a coloured face and its pencil edges.
+ * ponytail: one shape and colour for whatever is frozen in; a flower or a herb would need its own drawing, keyed by a kind PR 1 doesn't store yet.
+ */
 function prism(P: Painter, c: Pt, size: number) {
   const s = size;
   const front: Pt[] = [[c[0] - s * 0.5, c[1] + s * 0.32], [c[0] + s * 0.4, c[1] + s * 0.36], [c[0] - s * 0.05, c[1] - s * 0.5]];

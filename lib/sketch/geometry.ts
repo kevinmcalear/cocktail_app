@@ -60,7 +60,7 @@ export const GLASS_MM: Record<SketchGlass, number> = {
 /** Drawing units per mm in this glass: its drawn height over its real one. */
 export function unitsPerMm(g: GlassShape, glass: SketchGlass, glassMm?: number | null): number {
   const ground = g.stemmed ? g.foot![0] : bottomOf(g);
-  return (ground - g.rim) / (glassMm || GLASS_MM[glass]);
+  return (ground - g.rim) / (glassMm && glassMm >= 40 && glassMm <= 400 ? glassMm : GLASS_MM[glass]);
 }
 
 export interface GlassVariant {
