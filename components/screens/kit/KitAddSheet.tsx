@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Body, Button, Caption, Headline, PressableScale, Sheet, SheetScrollView, useDs, useSheetClose } from '@/components/ds';
+import { Body, Button, Caption, Headline, PressableScale, Sheet, SheetScrollView, TextLink, useDs, useSheetClose } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import type { IconName } from '@/components/ds';
 import { radius, space } from '@/constants/tokens';
@@ -44,6 +44,8 @@ export interface KitAddSheetProps {
   onNext: () => void;
   saving?: boolean;
   error?: string | null;
+  /** After question 1, what it is and where it was named: "Sphere · From the Old Fashioned", with Change. */
+  answered?: { what: string; from?: string; onChange: () => void };
 }
 
 /**
@@ -52,7 +54,7 @@ export interface KitAddSheetProps {
  * come from, one more only when it matters). The same sheet and buttons; only
  * the words change. A centred dialog on the web (Sheet).
  */
-export function KitAddSheet({ visible, onClose, label, step, total, question, onNext, saving, error }: KitAddSheetProps) {
+export function KitAddSheet({ visible, onClose, label, step, total, question, onNext, saving, error, answered }: KitAddSheetProps) {
   const ds = useDs();
   return (
     <Sheet visible={visible} onClose={onClose} accessibilityLabel={label} keyboard>
@@ -67,6 +69,15 @@ export function KitAddSheet({ visible, onClose, label, step, total, question, on
           <Caption tone="muted" style={styles.flex}>{`${step + 1} of ${total}`}</Caption>
           <CloseButton />
         </View>
+        {answered && step > 0 ? (
+          <View style={[styles.answered, { backgroundColor: ds.c.raised }]}>
+            <View style={styles.flex}>
+              <Body numberOfLines={1}>{answered.what}</Body>
+              {answered.from ? <Caption tone="muted">{answered.from}</Caption> : null}
+            </View>
+            <TextLink label="Change" onPress={answered.onChange} />
+          </View>
+        ) : null}
         <View style={styles.stack}>
           <Headline role="heading">{question.title}</Headline>
           {question.intro ? <Body tone="muted">{question.intro}</Body> : null}
@@ -141,6 +152,7 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', gap: space.sm, paddingTop: space.sm },
   flex: { flex: 1, minWidth: 0 },
   choice: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderWidth: 1, borderRadius: radius.card, borderCurve: 'continuous' },
+  answered: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.card, borderCurve: 'continuous' },
   close: { width: 36, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   choiceMark: { width: 40, height: 40, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
 });

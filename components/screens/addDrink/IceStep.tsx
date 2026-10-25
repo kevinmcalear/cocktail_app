@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Caption } from '@/components/ds';
 import { TellUs, type TellUsAbout } from '@/components/feedback/TellUs';
+import { IcePrompt } from '@/components/screens/kit/IcePrompt';
 import { space } from '@/constants/tokens';
 import type { BarGlass } from '@/hooks/useBarGlassware';
 import type { VenueIce } from '@/hooks/useVenueIce';
@@ -30,6 +31,8 @@ interface IceStepProps extends StepProps {
   barGlasses?: readonly BarGlass[];
   barVariants?: readonly string[];
   venueName?: string | null;
+  /** The venue the drink is at: an ice it doesn't pour asks to be added (IcePrompt). */
+  barId?: string | null;
   /** Under the list, beside it (the parent's spacing): "Doing something different? Tell us". */
   tellUs?: TellUsAbout;
 }
@@ -41,7 +44,7 @@ interface IceStepProps extends StepProps {
  * build from the bottom up (cubes under pebble, a spear on a cube) with quick
  * builds, the venue's ice first, and one suggestion at a time.
  */
-export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit = [], barGlasses, barVariants = [], venueName, tellUs }: IceStepProps) {
+export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit = [], barGlasses, barVariants = [], venueName, barId, tellUs }: IceStepProps) {
   const [adding, setAdding] = useState(false);
   const made = methodIceLabel(draft.methods.map((m) => m.name));
   const mine = barIce.length ? { has: (p: WizardPick) => isVenueIce(barIce, p.name), label: 'Your ice', restLabel: 'Other ice' } : undefined;
@@ -103,6 +106,7 @@ export function IceStep({ draft, set, ices, barIce, suggested, why, compact, kit
           ) : (
             <PickStep label="In the glass" ownLabel="Other ice" compact={compact} options={ices} selected={draft.ice ? [draft.ice] : []} onChange={([ice]) => set({ ice: ice ?? null, iceBuild: null })} suggested={suggested} why={why} mine={mine} />
           )}
+          <IcePrompt barId={barId} ice={top?.ice} drink={draft.name} />
           {tip ? (
             <IceTipCard
               tip={tip}

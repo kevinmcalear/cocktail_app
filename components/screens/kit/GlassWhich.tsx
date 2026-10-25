@@ -25,7 +25,7 @@ export interface GlassWhichValue {
  * glass from the catalog (maker, name or code). Not there? Name your own:
  * its shape and its name, drawn as that shape.
  */
-export function GlassWhich({ value, onChange, venueModelIds, venueName }: { value: GlassWhichValue; onChange: (v: GlassWhichValue) => void; venueModelIds?: readonly string[]; venueName?: string }) {
+export function GlassWhich({ value, onChange, venueModelIds, venueName, shape }: { value: GlassWhichValue; onChange: (v: GlassWhichValue) => void; venueModelIds?: readonly string[]; venueName?: string; /** The search starts on this shape (a drink named it). */ shape?: SketchGlass | null }) {
   const set = (patch: Partial<GlassWhichValue>) => onChange({ ...value, ...patch });
 
   if (value.mode === 'find') {
@@ -34,6 +34,7 @@ export function GlassWhich({ value, onChange, venueModelIds, venueName }: { valu
         <GlassModelPicker
           venueModelIds={venueModelIds}
           venueName={venueName}
+          initialGlass={shape ?? null}
           onPick={(m) => onChange({ ...value, mode: 'picked', model: m, glass: m.glass, variant: m.variant })}
           onDescribe={() => set({ mode: 'own', model: null })}
           describeLabel="Not there? Name your own"
