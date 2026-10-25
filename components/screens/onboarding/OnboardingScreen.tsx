@@ -7,6 +7,7 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useMyInvites, type MyInvite } from '@/hooks/useBarInvites';
 import { useFinishOnboarding, useSaveOnboardingName, useSaveWorkplace } from '@/hooks/useOnboarding';
 import { useMyProfile } from '@/hooks/useMyProfile';
+import { useMyPersonClaim } from '@/hooks/useProfiles';
 import { inviteJobTitle, needsOnboarding, nextStep, stepProgress, type OnboardingStep, type StepChoice } from '@/lib/onboarding';
 import { useAppMode } from '@/store/useAppMode';
 
@@ -42,6 +43,8 @@ export function OnboardingScreen() {
   const { user, loading } = useAuth();
   const profile = useMyProfile();
   const invites = useMyInvites();
+  // A claim sent from "Find your bar or your name" skips the career steps, so the bar counts the shorter way.
+  const { data: personClaim } = useMyPersonClaim();
   const finish = useFinishOnboarding();
   const saveProfile = useSaveOnboardingName();
   const saveJob = useSaveWorkplace();
@@ -207,7 +210,7 @@ export function OnboardingScreen() {
         eyebrow: step === 'bring' && !home ? 'Last step' : joined ? joined.bar_name : null,
         // The invited path wears the venue's brand, its name in the accent; "Last step" is quiet.
         eyebrowTone: joined && step !== 'bring' ? 'accent' : 'muted',
-        progress: stepProgress(step, !!joined),
+        progress: stepProgress(step, !!joined, trail, step === 'find' && personClaim ? 'claim' : 'no'),
         onBack: first ? undefined : back,
       }}
     >

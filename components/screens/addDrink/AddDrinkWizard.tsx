@@ -34,6 +34,7 @@ import { FinishStep } from './FinishStep';
 import { FoamerHint } from './FoamerHint';
 import { MethodStep } from './MethodStep';
 import { PublishStep } from './PublishStep';
+import { useNextOnceChecked } from './useNextOnceChecked';
 import { ReviewStep } from './ReviewStep';
 import { IceStep } from './IceStep';
 import { NameStepBody } from './NameStepBody';
@@ -186,6 +187,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Still asking about the name as typed (a failed or offline ask doesn't hold anything up).
   const checking = !!onBar.checking || !!onPlace.checking;
   const waits = desk ? stepWaits('name', draft, atBar, null, checking) || stepWaits('credits', draft, null, atPlace) : stepWaits(step, draft, atBar, atPlace, checking);
+  const tryNext = useNextOnceChecked(checking, stepWaits(step, draft, atBar, atPlace), next);
   if (desk) {
     return (
       <DrinkDesk
@@ -207,7 +209,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const body = (() => {
     switch (step) {
       case 'name':
-        return <NameStepBody {...{ draft, set, barId, venueName, classic, resumed }} match={atBar} onStartOver={startOver} onDone={() => canSave(draft) && !waits && next()} onStarted={() => go('ingredients')} />;
+        return <NameStepBody {...{ draft, set, barId, venueName, classic, resumed }} match={atBar} onStartOver={startOver} onDone={() => canSave(draft) && tryNext()} onStarted={() => go('ingredients')} />;
       case 'ingredients':
         return (
           <IngredientsStep
@@ -283,10 +285,10 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         <WizardFooter
           nextLabel={step === 'review' ? (create.isPending ? 'Saving…' : firstRound ? 'Save as our house spec' : 'Save drink') : `Next: ${STEP_COPY[following].short.toLowerCase()}`}
           optional={copy.optional && !waits}
-          canNext={(step === 'name' || step === 'review' ? canSave(draft) : true) && !waits}
+          canNext={(step === 'name' || step === 'review' ? canSave(draft) : true) && !stepWaits(step, draft, atBar, atPlace)}
           saving={create.isPending}
           onSkip={next}
-          onNext={next}
+          onNext={tryNext}
           notice={step === 'ingredients' ? stock.note : null}
         />
       }

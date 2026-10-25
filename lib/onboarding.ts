@@ -73,24 +73,26 @@ export function inviteStepLabel(step: OnboardingStep): string | null {
   return at < 0 ? null : `Step ${at + 1} of ${INVITE_STEP_NAMES.length}`;
 }
 
-/** Where each main-path step sits on the four-segment bar (b29). */
-const MAIN_STEP_AT: Partial<Record<OnboardingStep, number>> = { name: 1, hospitality: 1, find: 2, work: 2, past: 3, menus: 4, drinks: 4, taste: 4, units: 4, bring: 4 };
-
 /**
- * The setup bar for a step: "Step 2 of 4" on the main path, "Almost done" on
- * taste and units, the bar alone on Bring in (its title says "Last step").
- * The invited path counts its own three, the third being the app.
+ * The setup bar for a step: "Step 3 of 6", counting the screens on the path
+ * they're on. The steps behind are the ones they came through (trail); the
+ * steps ahead follow nextStep, the claim branch once they've claimed and
+ * otherwise the shorter way (home cooks skip the career steps; once they say
+ * yes the career steps count). Bring in shows the bar alone (its title says
+ * "Last step"). The invited path counts its own three, the third being the app.
  */
-export function stepProgress(step: OnboardingStep, joined = false): { at: number; of: number; label: string | null } | null {
+export function stepProgress(step: OnboardingStep, joined = false, trail: readonly OnboardingStep[] = [], choice: StepChoice = 'no'): { at: number; of: number; label: string | null } | null {
   if (joined) {
     const at = INVITE_STEPS.indexOf(step);
     return at < 0 ? null : { at: at + 1, of: INVITE_STEP_NAMES.length, label: `Step ${at + 1} of ${INVITE_STEP_NAMES.length}` };
   }
-  const at = MAIN_STEP_AT[step];
-  if (!at) return null;
-  if (step === 'bring') return { at, of: 4, label: null };
-  if (step === 'taste' || step === 'units') return { at, of: 4, label: 'Almost done' };
-  return { at, of: 4, label: `Step ${at} of 4` };
+  if (step === 'invite') return null;
+  const behind = trail.filter((s) => s !== 'invite').length;
+  let ahead = 0;
+  for (let s: OnboardingStep | 'done' = nextStep(step, choice); s !== 'done'; s = nextStep(s)) ahead += 1;
+  const at = behind + 1;
+  const of = at + ahead;
+  return { at, of, label: step === 'bring' ? null : `Step ${at} of ${of}` };
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

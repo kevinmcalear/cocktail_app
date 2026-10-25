@@ -161,7 +161,7 @@ export function LibraryScreen() {
   const count = (value: Show) => (value === 'staff' ? (staff.data?.length ?? 0) : lists[value].length);
   const groups = filterGroups(!!activeId, canCost, extras);
   const pick = (value: Show) => router.setParams({ show: value, menu: undefined, kind: undefined });
-  const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick };
+  const filterSet: FilterSet = { ...splitFilters(groups), show, count, onPick: pick, nothing: !isLoading && !staff.isLoading && groups.flat().every((f) => count(f.value) === 0) };
   const columns = COLUMNS[breakpoint];
   const staffView = show === 'staff' && !!activeId;
   // The last tiles scroll clear of the phone's filter dock.
