@@ -58,6 +58,16 @@ describe('drafts in your account', () => {
     assert.equal(data[0].draft_data.draft.name, 'Salty Boy, changed');
   });
 
+  test('clearing a slot takes out the account copy only if it is no newer than the one cleared', async () => {
+    const { client, id } = users.maker;
+    await client.from('drafts').upsert({ ...row(id, 'home', 'Newer, from the web'), draft_data: { draft: { name: 'Newer' }, step: 'name', updatedAt: 30 } }, { onConflict: 'user_id,entity_type,slot' });
+    const older = await client.from('drafts').delete().eq('user_id', id).eq('entity_type', 'drink_wizard').eq('slot', 'home').lte('draft_data->updatedAt', 20).select();
+    assert.equal(older.error, null);
+    assert.deepEqual(older.data, []);
+    const same = await client.from('drafts').delete().eq('user_id', id).eq('entity_type', 'drink_wizard').eq('slot', 'home').lte('draft_data->updatedAt', 30).select();
+    assert.equal(same.data.length, 1);
+  });
+
   test('nobody else reads, changes or removes a home draft', async () => {
     const { client } = users.other;
     const { data } = await client.from('drafts').select('id').eq('user_id', users.maker.id);

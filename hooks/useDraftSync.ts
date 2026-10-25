@@ -38,7 +38,7 @@ async function push(userId: string, slot: string, k: KeptDraft) {
   sentAt.set(slot, Date.now());
   const place = slot.split('|')[0];
   const { error } = await supabase.from('drafts').upsert(
-    { user_id: userId, entity_type: KIND, slot, bar_id: place === 'home' ? null : place, draft_data: forAccount(k) as unknown as Json, updated_at: new Date(k.updatedAt).toISOString() },
+    { user_id: userId, entity_type: KIND, slot, bar_id: place === 'home' ? null : place, draft_data: forAccount(k) as unknown as Json },
     { onConflict: 'user_id,entity_type,slot' }
   );
   if (error) throw error;
@@ -57,7 +57,7 @@ async function forget(userId: string) {
   const never = cleared.filter((c) => !seen.includes(c.place)).map((c) => c.place);
   if (never.length) forgot(never);
   for (const c of cleared.filter((x) => seen.includes(x.place))) {
-    const { error } = await supabase.from('drafts').delete().eq('user_id', userId).eq('entity_type', KIND).eq('slot', c.place).lte('updated_at', new Date(c.at).toISOString());
+    const { error } = await supabase.from('drafts').delete().eq('user_id', userId).eq('entity_type', KIND).eq('slot', c.place).lte('draft_data->updatedAt', c.at);
     if (error) continue;
     forgot([c.place]);
     useDraftSyncStore.setState((s) => ({ seen: s.seen.filter((x) => x !== c.place) }));
