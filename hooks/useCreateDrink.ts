@@ -77,8 +77,10 @@ type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
 async function draftPrice(draft: WizardDraft, barId: string): Promise<string | null> {
   const typed = formatPrice(draft.price);
   const minor = (draft as { priceMinor?: unknown }).priceMinor;
-  if (typed || typeof minor !== 'number') return typed;
-  const { data } = await supabase.from('bars').select('currency').eq('id', barId).maybeSingle();
+  if (typed || typeof minor !== 'number' || !Number.isFinite(minor)) return typed;
+  // The currency decides the units (yen have none); not knowing it keeps the draft to try again.
+  const { data, error } = await supabase.from('bars').select('currency').eq('id', barId).maybeSingle();
+  if (error) throw error;
   return priceText(minor, data?.currency ?? '');
 }
 
