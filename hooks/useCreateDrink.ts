@@ -19,6 +19,7 @@ import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import type { ImageAngle } from '@/lib/itemImages';
 import { formatPrice } from '@/lib/menus';
+import { priceText } from '@/lib/money';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
@@ -68,10 +69,19 @@ type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
  * again doesn't leave a copy; the draft stays on the device until this
  * succeeds.
  */
-/** A draft saved before prices were typed text kept the number (WizardDraft.priceMinor). */
-function legacyPriceMinor(draft: WizardDraft): number | null {
+/**
+ * The drink's typed price. A draft saved before prices were typed text
+ * (20261103100000) kept the number only (WizardDraft.priceMinor), so that
+ * becomes the price in the bar's currency.
+ */
+async function draftPrice(draft: WizardDraft, barId: string): Promise<string | null> {
+  const typed = formatPrice(draft.price);
   const minor = (draft as { priceMinor?: unknown }).priceMinor;
-  return typeof minor === 'number' ? minor : null;
+  if (typed || typeof minor !== 'number' || !Number.isFinite(minor)) return typed;
+  // The currency decides the units (yen have none); not knowing it keeps the draft to try again.
+  const { data, error } = await supabase.from('bars').select('currency').eq('id', barId).maybeSingle();
+  if (error) throw error;
+  return priceText(minor, data?.currency ?? '');
 }
 
 export function useCreateDrink() {
@@ -272,10 +282,7 @@ export function useCreateDrink() {
         creator_profile_id: creatorId,
         origin_bar_profile_id: originBar,
         origin_year: draft.originYear ?? null,
-        price: barId ? formatPrice(draft.price) : null,
-        // ponytail: a draft saved before 20261103100000 has the number only;
-        // the database turns it into the typed price. Drop with price_minor.
-        ...(barId && !formatPrice(draft.price) && legacyPriceMinor(draft) != null ? { price_minor: legacyPriceMinor(draft) } : {}),
+        price: barId ? await draftPrice(draft, barId) : null,
         // You can claim your own credit; anyone else's starts as suggested.
         credit_status: creatorId && creatorId === myProfileId && !otherBar ? 'claimed' : null,
       };
