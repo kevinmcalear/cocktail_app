@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { useMakingKit } from '@/hooks/useBarKit';
 import { useCatalogRecipe } from '@/hooks/usePrepCard';
@@ -53,8 +53,11 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
   const [version, setVersion] = useState(0);
   // A name the catalog has a sourced recipe for starts from it, until the maker changes anything.
   const [touched, setTouched] = useState(false);
+  // The draft as last set, for leaving straight after a level below put its recipe on a line (the trail's higher levels).
+  const latest = useRef<PrepDraft | null>(null);
   // What it contains follows its lines: a line taken out takes its allergen with it (hand-set allergens stay).
   const setDraft = (d: PrepDraft) => {
+    latest.current = d;
     setTouched(true);
     setDraftState(withFacts(d));
   };
@@ -100,6 +103,10 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
   };
   return {
     draft,
+    /** The draft as it is right now, even mid-event: what leaving keeps. */
+    current: () => latest.current ?? draft,
+    /** Anything changed since it opened, a level below's recipe put on a line included. */
+    changed: () => latest.current !== null,
     setDraft,
     view,
     setView,
