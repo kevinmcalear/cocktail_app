@@ -4,7 +4,7 @@ import { ensureIngredient } from '@/hooks/useCreateIngredient';
 import { useIceStartsFrom, useSaveIceRecipe } from '@/hooks/useIceRecipe';
 import { useItemPrep } from '@/hooks/usePrepCard';
 import type { VenueIce } from '@/hooks/useVenueIce';
-import { iceWay, iceWaySteps, type IceStep, type IceWayKey } from '@/lib/iceRecipes';
+import { fillIceStep, iceWay, iceWaySteps, type IceStep, type IceWayKey } from '@/lib/iceRecipes';
 import { ICE_YIELD_UNITS, newStepField, prepCardInput, prepFields, samePrepCard, type PrepFields } from '@/lib/prepCardForm';
 
 import type { StartsFromPick } from './StartsFromSheet';
@@ -17,7 +17,7 @@ import type { StartsFromPick } from './StartsFromSheet';
  */
 export function useIceRecipeEdit(barId: string, ice: VenueIce | null) {
   const iceId = ice?.id ?? null;
-  const { data: card } = useItemPrep(iceId);
+  const { data: card, error: prepError } = useItemPrep(iceId);
   const from = useIceStartsFrom(iceId);
   const save = useSaveIceRecipe(iceId ?? '');
   const [fields, setFields] = useState<PrepFields | null>(null);
@@ -36,7 +36,10 @@ export function useIceRecipeEdit(barId: string, ice: VenueIce | null) {
   }
 
   const set = (patch: Partial<PrepFields>) => setFields((f) => (f ? { ...f, ...patch } : f));
-  const toStep = (s: IceStep) => newStepField(s.body, '', s.tools);
+  const toStep = (s: IceStep) => {
+    const filled = fillIceStep(s, ice ?? {});
+    return newStepField(filled.body, '', filled.tools);
+  };
 
   const start = (way: IceWayKey, pick: StartsFromPick) => {
     if (!fields || !ice) return;
@@ -55,7 +58,8 @@ export function useIceRecipeEdit(barId: string, ice: VenueIce | null) {
     try {
       // A flavour typed by name is found, or added, the way the drink wizard does.
       const fromId = startsFrom ? (startsFrom.id ?? (await ensureIngredient({ id: null, name: startsFrom.name }, barId, new Map()))) : null;
-      await save.mutateAsync({ startsFrom: fromId, card: input });
+      const changed = fromId !== (saved?.from?.id ?? null);
+      await save.mutateAsync({ startsFrom: changed ? fromId : undefined, card: input });
       const pick = startsFrom && fromId ? { id: fromId, name: startsFrom.name } : null;
       setStartsFrom(pick);
       setSaved({ fields, from: pick });
@@ -67,5 +71,6 @@ export function useIceRecipeEdit(barId: string, ice: VenueIce | null) {
     }
   };
 
-  return { fields, set, startsFrom, setStartsFrom, start, template, dirty, submit, saving: save.isPending, problem, loading: !fields, toStep };
+  const loadError = from.error ?? prepError;
+  return { fields, set, startsFrom, setStartsFrom, start, template, dirty, submit, saving: save.isPending, problem, loadError, toStep };
 }

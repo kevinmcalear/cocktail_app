@@ -42,21 +42,42 @@ export function useIceStartsFrom(iceId: string | null | undefined) {
   });
 }
 
+/** The venue's other ice that start from this one: never offered as what it starts from, so a chain can't loop. */
+export function useIcesStartingFrom(iceId: string | null | undefined) {
+  return useQuery({
+    queryKey: ['ices-starting-from', iceId],
+    enabled: !!iceId,
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase.from('recipes').select('recipe_item_id, item:items!recipe_item_id!inner(item_type)').eq('ingredient_item_id', iceId!).eq('item.item_type', 'ice');
+      if (error) throw error;
+      return (data ?? []).flatMap((r) => (r.recipe_item_id ? [r.recipe_item_id] : []));
+    },
+  });
+}
+
 export interface IceRecipeInput {
-  /** The item it starts from; null for water. */
-  startsFrom: string | null;
+  /** The item it starts from; null for water. Undefined leaves the line as it is (and its note). */
+  startsFrom?: string | null;
   card: PrepCardInput;
 }
 
-/** Replace what an ice starts from, then its card and steps. */
+/**
+ * Replace what an ice starts from (only when it changed), then its card and steps.
+ * ponytail: separate writes like a house prep's savePrepCard, so a dropped
+ * connection mid-save can leave part of it; one RPC (a migration) if that bites.
+ */
 export async function saveIceRecipe(iceId: string, { startsFrom, card }: IceRecipeInput) {
+  if (startsFrom !== undefined) await replaceStartsFrom(iceId, startsFrom);
+  await savePrepCard(iceId, card);
+}
+
+async function replaceStartsFrom(iceId: string, startsFrom: string | null) {
   const gone = await supabase.from('recipes').delete().eq('recipe_item_id', iceId);
   if (gone.error) throw gone.error;
   if (startsFrom) {
     const added = await supabase.from('recipes').insert({ recipe_item_id: iceId, ingredient_item_id: startsFrom, sort_order: 0 });
     if (added.error) throw added.error;
   }
-  await savePrepCard(iceId, card);
 }
 
 const EMPTY_PREP: PrepCardInput['prep'] = { yield_amount: null, yield_unit: null, shelf_life_hours: null, lead_time_minutes: null, lead_time_note: null, storage: null, actions: [] };
@@ -77,6 +98,9 @@ export function useSaveIceRecipe(iceId: string) {
     onSettled: () => {
       void client.invalidateQueries({ queryKey: iceStartsFromKey(iceId) });
       void client.invalidateQueries({ queryKey: ['item-prep', iceId] });
+      void client.invalidateQueries({ queryKey: ['ices-starting-from'] });
+      // A flavour typed by name may be a new ingredient of the venue's.
+      void client.invalidateQueries({ queryKey: ['venue-ingredients'] });
     },
   });
 }
