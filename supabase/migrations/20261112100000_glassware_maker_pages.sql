@@ -59,7 +59,7 @@ DROP TABLE maker_in;
 -- Arc's brands. Moderators set a maker's group; a migration may.
 UPDATE public.profiles b SET part_of_profile_id = g.id
   FROM public.profiles g
- WHERE g.handle = 'arc' AND g.kind = 'maker'
+ WHERE g.kind = 'maker' AND (g.handle = 'arc' OR lower(g.display_name) = 'arc')
    AND b.handle IN ('arcoroc', 'chef.sommelier') AND b.kind = 'maker' AND b.part_of_profile_id IS NULL;
 
 -- --- Tiki bars ---

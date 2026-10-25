@@ -20,7 +20,7 @@ import { parseArgs } from 'node:util';
 
 import { createClient } from '@supabase/supabase-js';
 
-export const MANIFEST = 'supabase/seeds/maker-logos.json';
+export const MANIFEST = new URL('../supabase/seeds/maker-logos.json', import.meta.url);
 /** "<handle>.e1a2b3c.png": the page's handle, then its background colour. */
 export const FILE_NAME = /^([a-z0-9][a-z0-9._-]*)\.e[0-9a-f]{6}\.png$/;
 
@@ -43,6 +43,8 @@ async function main() {
   }
   const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   const { logos } = JSON.parse(readFileSync(MANIFEST, 'utf8'));
+  const missing = logos.filter((l) => !existsSync(join(args.dir, l.file)));
+  if (missing.length) throw new Error(`Missing files in ${args.dir}: ${missing.map((l) => l.file).join(', ')}`);
 
   const { data: pages, error } = await db.from('profiles').select('id, handle, kind, avatar_url').in('handle', logos.map((l) => l.handle));
   if (error) throw error;
@@ -53,7 +55,6 @@ async function main() {
     if (!page) { counts.no_page++; console.log(`no page   ${logo.handle}`); continue; }
     if (page.avatar_url) { counts.has_logo++; continue; }
     const file = join(args.dir, logo.file);
-    if (!existsSync(file)) throw new Error(`Missing file ${file}`);
     const path = bucketPath(page.kind, logo.file);
     console.log(`${args.apply ? 'set' : 'would set'} ${logo.handle} -> avatars/${path}`);
     counts.set++;
